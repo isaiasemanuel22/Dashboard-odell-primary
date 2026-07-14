@@ -1,0 +1,33 @@
+<article class="list-card customer-card">
+  <a [routerLink]="['/clientes', customer.id]" class="card-link customer-card__body">
+    <div class="avatar">{{ customer.name.charAt(0) }}</div>
+    <div>
+      <h3>{{ customer.name }}</h3>
+      @if (customer.company) {
+        <p class="company">{{ customer.company }}</p>
+      }
+      <div class="contact">
+        <span>✉️ {{ customer.email }}</span>
+        <span>📞 {{ customer.phone }}</span>
+        <span>📅 Cliente desde {{ customer.createdAt | dateShort }}</span>
+      </div>
+    </div>
+  </a>
+
+  <div class="card-actions">
+    <div class="db-button-group">
+      <db-button
+        label="Editar"
+        variant="secondary"
+        format="solid"
+        (clicked)="edit.emit(customer)"
+      />
+      <db-button
+        label="Eliminar"
+        variant="delete"
+        format="solid"
+        (clicked)="delete.emit(customer)"
+      />
+    </div>
+  </div>
+</article>

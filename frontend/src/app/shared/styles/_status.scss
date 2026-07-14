@@ -1,0 +1,81 @@
+@use 'variables' as *;
+
+.status {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: $radius-xs;
+
+  &.pendiente {
+    background: $color-warning-bg;
+    color: $color-warning-accent;
+  }
+
+  &.en_produccion {
+    background: #ede9fe;
+    color: #6d28d9;
+  }
+
+  &.completado {
+    background: #d1fae5;
+    color: #047857;
+  }
+
+  &.entregado {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  &.cancelado {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  &.por_hacer {
+    background: $color-warning-bg;
+    color: $color-warning-accent;
+  }
+
+  &.en_proceso {
+    background: #ede9fe;
+    color: #6d28d9;
+  }
+
+  &.bloqueado {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  &.en_revision {
+    background: #ede9fe;
+    color: #7c3aed;
+  }
+
+  &.terminado {
+    background: #d1fae5;
+    color: #047857;
+  }
+
+  &.cancelado {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+}
+
+.stock-alert {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 0.2rem 0.5rem;
+  border-radius: $radius-xs;
+
+  &.low,
+  &.alert {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
+
+  &.ok {
+    background: #d1fae5;
+    color: #047857;
+  }
+}

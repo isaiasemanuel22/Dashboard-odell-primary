@@ -1,0 +1,234 @@
+@if (loading) {
+  <db-skeleton variant="detail" />
+} @else {
+  <db-state-message
+    [loading]="false"
+    [empty]="notFound || !order"
+    emptyMessage="Pedido no encontrado."
+  >
+    <db-button
+      emptyActions
+      label="Volver a pedidos"
+      variant="secondary"
+      format="soft"
+      routerLink="/pedidos"
+    />
+  </db-state-message>
+}
+
+@if (!loading && order && !notFound) {
+  <header class="page-header detail-header">
+    <div>
+      <a routerLink="/pedidos" class="back-link">← Pedidos</a>
+      <div class="title-row">
+        <h2>Pedido {{ order.id }}</h2>
+        <db-status-badge
+          [statusClass]="order.status"
+          [label]="order.status | orderStatusLabel"
+        />
+      </div>
+      <p class="meta-line">Creado: {{ order.createdAt | dateShort }}</p>
+    </div>
+  </header>
+
+  <div class="detail-layout">
+    <section class="panel">
+      <h3>Cliente</h3>
+      <dl class="detail-list">
+        <div>
+          <dt>Nombre</dt>
+          <dd>
+            <a [routerLink]="['/clientes', order.customerId]" class="customer-link">
+              {{ order.customerName }}
+            </a>
+          </dd>
+        </div>
+        <div>
+          <dt>Servicios</dt>
+          <dd><db-service-badges [types]="order.services" /></dd>
+        </div>
+        <div>
+          <dt>Entrega prevista</dt>
+          <dd>{{ order.dueDate | dateShort }}</dd>
+        </div>
+        @if (order.notes) {
+          <div>
+            <dt>Notas</dt>
+            <dd>{{ order.notes }}</dd>
+          </div>
+        }
+      </dl>
+    </section>
+
+    <div class="detail-main">
+      <section class="panel">
+        <h3>Líneas del pedido</h3>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Servicio</th>
+              <th>Concepto / producto</th>
+              <th>Cant.</th>
+              <th>Precio unit.</th>
+              <th>Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of order.items; track $index) {
+              <tr>
+                <td>{{ item.serviceType | serviceTypeLabel }}</td>
+                <td>
+                  @if (item.productId) {
+                    <a [routerLink]="['/productos', item.productId]" class="product-link">
+                      {{ item.productName }}
+                    </a>
+                  } @else {
+                    {{ item.productName }}
+                  }
+                </td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.unitPrice | currencyArs }}</td>
+                <td>{{ item.quantity * item.unitPrice | currencyArs }}</td>
+              </tr>
+            }
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="4"><strong>Total</strong></td>
+              <td><strong>{{ order.total | currencyArs }}</strong></td>
+            </tr>
+          </tfoot>
+        </table>
+      </section>
+
+      <section class="panel">
+        <div class="panel-header-row">
+          <h3>Tareas del pedido</h3>
+          <db-button
+            label="Ir al tablero"
+            variant="primary"
+            format="link"
+            routerLink="/cola"
+          />
+        </div>
+        @if (tasks.length) {
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Tarea</th>
+                <th>Servicio</th>
+                <th>Estado</th>
+                <th>Ubicación</th>
+                <th>Entrega</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (task of tasks; track task.id) {
+                <tr [class]="priorityTierClass(task.priority)">
+                  <td><strong>{{ task.productName }}</strong></td>
+                  <td>{{ task.type | serviceTypeLabel }}</td>
+                  <td>
+                    <db-status-badge
+                      [statusClass]="task.status"
+                      [label]="task.status | printJobStatusLabel"
+                    />
+                  </td>
+                  <td>{{ task.active ? 'Tablero' : 'Pendiente' }}</td>
+                  <td>{{ task.dueDate | dateShort }}</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        } @else if (order.status === 'entregado') {
+          <p class="empty-group">Pedido entregado — las tareas ya no aparecen en la cola de trabajo.</p>
+        } @else {
+          <p class="empty-group">No hay tareas generadas para este pedido.</p>
+        }
+      </section>
+
+      <section class="panel status-panel">
+        <h3>Estado del pedido</h3>
+        <div class="status-row">
+          <db-select
+            label="Estado"
+            [(ngModel)]="statusDraft"
+            name="statusDraft"
+            [options]="statusOptions"
+          />
+          <db-button
+            [label]="statusLoading ? 'Actualizando...' : 'Actualizar estado'"
+            variant="primary"
+            format="solid"
+            [disabled]="statusLoading || statusDraft === order.status"
+            (clicked)="updateStatus()"
+          />
+        </div>
+      </section>
+
+      <section class="panel status-history-panel">
+        <h3>Historial de estado</h3>
+        @if (statusHistory.length) {
+          <ol class="status-history">
+            @for (entry of statusHistory; track entry.id) {
+              <li class="status-history__item">
+                <div class="status-history__marker" aria-hidden="true"></div>
+                <div class="status-history__content">
+                  <div class="status-history__row">
+                    <time [dateTime]="entry.changedAt">
+                      {{ entry.changedAt | dateTime }}
+                    </time>
+                    <span class="status-history__source">
+                      {{ sourceLabels[entry.source] }}
+                    </span>
+                  </div>
+                  <p class="status-history__transition">
+                    {{ historyTransition(entry) }}
+                  </p>
+                  <db-status-badge
+                    [statusClass]="entry.toStatus"
+                    [label]="entry.toStatus | orderStatusLabel"
+                  />
+                </div>
+              </li>
+            }
+          </ol>
+        } @else {
+          <p class="empty-group">Sin cambios de estado registrados.</p>
+        }
+      </section>
+
+      <section class="panel description-panel">
+        <div class="description-panel__header">
+          <h3>Descripción</h3>
+          @if (order.description) {
+            <span class="description-panel__count">
+              {{ order.description.length }}/{{ descriptionMaxLength }}
+            </span>
+          }
+        </div>
+        <div class="order-description">
+          @if (order.description) {
+            {{ order.description }}
+          } @else {
+            <span class="order-description--empty">Sin descripción</span>
+          }
+        </div>
+      </section>
+    </div>
+
+    <footer class="panel detail-actions">
+      <db-button
+        label="Editar pedido"
+        variant="primary"
+        format="solid"
+        (clicked)="openEdit()"
+      />
+      <db-button
+        label="Eliminar"
+        variant="delete"
+        format="solid"
+        (clicked)="deleteOrder()"
+      />
+    </footer>
+  </div>
+}

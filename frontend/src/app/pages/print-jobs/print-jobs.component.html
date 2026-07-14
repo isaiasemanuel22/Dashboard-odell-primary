@@ -1,0 +1,145 @@
+<header class="page-header">
+  <div>
+    <h2>Cola de trabajo</h2>
+    <p>Tablero de tareas activas — arrastrá las cards entre columnas</p>
+  </div>
+</header>
+
+@if (loading) {
+  <db-skeleton variant="cards" [count]="4" />
+} @else if (error) {
+  <db-state-message [empty]="true" [emptyMessage]="error">
+    <db-button
+      emptyActions
+      label="Reintentar"
+      variant="secondary"
+      format="soft"
+      (clicked)="loadJobs()"
+    />
+  </db-state-message>
+} @else {
+  @if (statusNotice) {
+    <p class="status-notice">{{ statusNotice }}</p>
+  }
+
+  <section class="work-board" [class.work-board--updating]="updating">
+    @for (column of columns; track column.status) {
+      <div
+        class="board-column"
+        [class]="'board-column--' + column.status"
+      >
+        <header class="board-column__header">
+          <h3>{{ column.label }}</h3>
+          <span class="board-column__count">{{ boardColumns[column.status].length }}</span>
+        </header>
+
+        <div
+          class="board-column__body"
+          cdkDropList
+          [id]="column.status"
+          [cdkDropListData]="boardColumns[column.status]"
+          [cdkDropListConnectedTo]="connectedLists"
+          (cdkDropListDropped)="dropOnBoard($event, column.status)"
+        >
+          @for (job of boardColumns[column.status]; track job.id) {
+            <div class="board-card" cdkDrag [cdkDragData]="job">
+              <db-button
+                cdkDragHandle
+                label="⠿"
+                variant="secondary"
+                format="bare"
+                extraClass="board-card__handle"
+                ariaLabel="Arrastrar tarea"
+              />
+              <app-print-job-card
+                [job]="job"
+                [compact]="true"
+                [orderStatus]="orderStatusByOrderId[job.orderId]"
+              />
+            </div>
+          } @empty {
+            <p class="board-column__empty">Sin tareas</p>
+          }
+        </div>
+      </div>
+    }
+  </section>
+
+  <section class="backlog-section panel">
+    <header class="backlog-section__header">
+      <div>
+        <h3>Otras tareas</h3>
+        <p class="panel-desc">
+          Tareas en «Por hacer» que aún no están en el tablero.
+          Arrastrá una al tablero o usá «Agregar al tablero».
+        </p>
+      </div>
+      <span class="backlog-section__count">{{ backlogJobs.length }}</span>
+    </header>
+
+    @if (backlogJobs.length) {
+      <div class="table-card backlog-table-wrap">
+        <table class="data-table backlog-table">
+          <thead>
+            <tr>
+              <th class="backlog-table__priority-col" aria-label="Prioridad"></th>
+              <th>Nombre</th>
+              <th>Servicio</th>
+              <th>Cliente</th>
+              <th>Entrega</th>
+              <th class="actions">Acciones</th>
+            </tr>
+          </thead>
+          <tbody
+            cdkDropList
+            [id]="backlogListId"
+            [cdkDropListData]="backlogJobs"
+            [cdkDropListConnectedTo]="connectedLists"
+            (cdkDropListDropped)="dropOnBacklog($event)"
+          >
+            @for (job of backlogJobs; track job.id) {
+              <tr
+                [class]="'backlog-row ' + priorityTierClass(job.priority)"
+                cdkDrag
+                [cdkDragData]="job"
+              >
+                <td class="backlog-table__priority-col" cdkDragHandle>
+                  <span class="priority-pill">
+                    {{ priorityLabel[priorityTierClass(job.priority)] }}
+                  </span>
+                </td>
+                <td>
+                  <a [routerLink]="['/pedidos', job.orderId]" class="order-link">
+                    <strong>{{ job.productName }}</strong>
+                  </a>
+                </td>
+                <td><db-service-badge [type]="job.type" /></td>
+                <td>{{ job.customerName }}</td>
+                <td>{{ job.dueDate | dateShort }}</td>
+                <td class="actions">
+                  <div class="db-button-group">
+                    <db-button
+                      label="Ver pedido"
+                      variant="primary"
+                      format="link"
+                      [routerLink]="['/pedidos', job.orderId]"
+                    />
+                    <db-button
+                      label="Agregar al tablero"
+                      variant="secondary"
+                      format="soft"
+                      [disabled]="updating"
+                      (clicked)="addToBoard(job)"
+                    />
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    } @else {
+      <p class="empty-group">No hay tareas pendientes fuera del tablero.</p>
+    }
+  </section>
+}

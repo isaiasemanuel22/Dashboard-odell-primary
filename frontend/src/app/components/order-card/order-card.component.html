@@ -1,0 +1,84 @@
+<article class="order-card">
+  <div class="order-card__body">
+    <header class="order-card__header">
+      <a [routerLink]="['/pedidos', order.id]" class="order-card__title">
+        <span class="order-card__id">{{ order.id }}</span>
+        <h3>{{ order.customerName }}</h3>
+      </a>
+      <aside class="order-card__summary">
+        <db-status-badge
+          [statusClass]="order.status"
+          [label]="order.status | orderStatusLabel"
+        />
+        <div class="order-card__due">
+          <span>Entrega</span>
+          <strong>{{ order.dueDate | dateShort }}</strong>
+        </div>
+      </aside>
+    </header>
+
+    <section class="order-card__details">
+      <db-service-badges [types]="order.services" variant="solid" />
+
+      @if (order.items.length) {
+        <ul class="order-card__items">
+          @for (item of previewItems(order); track $index) {
+            <li class="order-card__item">
+              <span class="order-card__item-service">
+                {{ item.serviceType | serviceTypeLabel }}
+              </span>
+              @if (item.productId) {
+                <a [routerLink]="['/productos', item.productId]" class="product-link">
+                  {{ item.quantity }}× {{ item.productName }}
+                </a>
+              } @else {
+                <span>{{ item.quantity }}× {{ item.productName }}</span>
+              }
+            </li>
+          }
+          @if (hiddenItemsCount(order); as extra) {
+            @if (extra > 0) {
+              <li class="order-card__item order-card__item--more">+{{ extra }} más</li>
+            }
+          }
+        </ul>
+      }
+
+      @if (order.description) {
+        <p class="order-card__description">{{ order.description }}</p>
+      }
+
+      @if (order.notes) {
+        <p class="order-card__notes">{{ order.notes }}</p>
+      }
+
+      <div class="order-card__total">
+        <span>Total</span>
+        <strong>{{ order.total | currencyArs }}</strong>
+      </div>
+    </section>
+  </div>
+
+  <div class="card-actions">
+    <div class="db-button-group">
+      <db-button
+        label="Ver"
+        variant="primary-outline"
+        format="solid"
+        [routerLink]="['/pedidos', order.id]"
+      />
+      <db-button
+        label="Editar"
+        variant="secondary"
+        format="soft"
+        (clicked)="edit.emit(order)"
+      />
+      <db-button
+        label="Eliminar"
+        variant="delete"
+        format="soft"
+        (clicked)="delete.emit(order)"
+      />
+    </div>
+  </div>
+</article>

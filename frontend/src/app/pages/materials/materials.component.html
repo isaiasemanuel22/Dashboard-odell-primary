@@ -1,0 +1,16 @@
+<header class="page-header">
+  <div>
+    <h2>Materiales</h2>
+    <p>Inventario de filamentos, tintas y insumos</p>
+  </div>
+</header>
+
+@if (materials$ | async; as materials) {
+  @if (materials.length) {
+    <app-materials-table [materials]="materials" />
+  } @else {
+    <db-state-message [empty]="true" emptyMessage="No hay materiales registrados." />
+  }
+} @else {
+  <db-state-message [loading]="true" loadingMessage="Cargando materiales..." />
+}

@@ -1,0 +1,61 @@
+<db-form>
+  <form (ngSubmit)="onSubmit()">
+    <db-input
+      label="Nombre"
+      [(ngModel)]="name"
+      name="name"
+      placeholder="Ej: María González"
+      [required]="true"
+    />
+
+    <db-input
+      label="Email"
+      type="email"
+      [(ngModel)]="email"
+      name="email"
+      placeholder="cliente@empresa.com"
+      [required]="true"
+    />
+
+    <db-input
+      label="Teléfono"
+      [(ngModel)]="phone"
+      name="phone"
+      placeholder="+54 11 1234-5678"
+      [required]="true"
+    />
+
+    <db-input
+      label="Empresa"
+      [(ngModel)]="company"
+      name="company"
+      placeholder="Opcional"
+    />
+
+    @if (error) {
+      <db-form-error>{{ error }}</db-form-error>
+    }
+
+    <db-form-footer>
+      <db-button
+        label="Cancelar"
+        variant="cancel"
+        format="soft"
+        (clicked)="cancel.emit()"
+      />
+      <db-button
+        [label]="
+          loading
+            ? 'Guardando...'
+            : isEditing
+              ? 'Guardar cambios'
+              : 'Crear cliente'
+        "
+        variant="primary"
+        format="solid"
+        buttonType="submit"
+        [disabled]="loading || !name.trim() || !email.trim() || !phone.trim()"
+      />
+    </db-form-footer>
+  </form>
+</db-form>

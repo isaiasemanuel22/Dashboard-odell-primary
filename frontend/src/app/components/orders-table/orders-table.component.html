@@ -1,0 +1,175 @@
+@if (embedded) {
+  <table class="data-table">
+    <thead>
+      <tr>
+        @if (!compact) { <th>ID</th> }
+        <th>Cliente</th>
+        <th>Servicios</th>
+        @if (!compact) { <th>Productos</th> }
+        <th>Estado</th>
+        <th>Total</th>
+        <th>Entrega</th>
+        @if (showActions) { <th class="actions">Acciones</th> }
+      </tr>
+    </thead>
+    <tbody>
+      @for (order of orders; track order.id) {
+        <tr>
+          @if (!compact) {
+            <td class="mono">
+              @if (showActions) {
+                <a [routerLink]="['/pedidos', order.id]" class="order-link">{{ order.id }}</a>
+              } @else {
+                {{ order.id }}
+              }
+            </td>
+          }
+          <td>
+            <strong>{{ order.customerName }}</strong>
+            @if (!compact && order.description) {
+              <small>{{ order.description }}</small>
+            }
+            @if (!compact && order.notes) { <small class="order-notes">{{ order.notes }}</small> }
+          </td>
+          <td><db-service-badges [types]="order.services" /></td>
+          @if (!compact) {
+            <td>
+              @for (item of order.items; track $index) {
+                <div class="item-line">
+                  <span class="item-service">{{ item.serviceType | serviceTypeLabel }}:</span>
+                  @if (item.productId) {
+                    <a [routerLink]="['/productos', item.productId]" class="product-link">
+                      {{ item.quantity }}× {{ item.productName }}
+                    </a>
+                  } @else {
+                    {{ item.quantity }}× {{ item.productName }}
+                  }
+                </div>
+              }
+            </td>
+          }
+          <td>
+            <db-status-badge
+              [statusClass]="order.status"
+              [label]="order.status | orderStatusLabel"
+            />
+          </td>
+          <td>{{ order.total | currencyArs }}</td>
+          <td>{{ order.dueDate | dateShort }}</td>
+          @if (showActions) {
+            <td class="actions">
+              <div class="db-button-group">
+                <db-button
+                  label="Ver"
+                  variant="primary"
+                  format="link"
+                  [routerLink]="['/pedidos', order.id]"
+                />
+                <db-button
+                  label="Editar"
+                  variant="secondary"
+                  format="inline"
+                  (clicked)="edit.emit(order)"
+                />
+                <db-button
+                  label="Eliminar"
+                  variant="delete"
+                  format="inline"
+                  (clicked)="delete.emit(order)"
+                />
+              </div>
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+} @else {
+  <div class="table-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          @if (!compact) { <th>ID</th> }
+          <th>Cliente</th>
+          <th>Servicios</th>
+          @if (!compact) { <th>Productos</th> }
+          <th>Estado</th>
+          <th>Total</th>
+          <th>Entrega</th>
+          @if (showActions) { <th class="actions">Acciones</th> }
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of orders; track order.id) {
+          <tr>
+            @if (!compact) {
+              <td class="mono">
+                @if (showActions) {
+                  <a [routerLink]="['/pedidos', order.id]" class="order-link">{{ order.id }}</a>
+                } @else {
+                  {{ order.id }}
+                }
+              </td>
+            }
+            <td>
+              <strong>{{ order.customerName }}</strong>
+              @if (!compact && order.description) {
+                <small>{{ order.description }}</small>
+              }
+              @if (!compact && order.notes) { <small class="order-notes">{{ order.notes }}</small> }
+            </td>
+            <td><db-service-badges [types]="order.services" /></td>
+            @if (!compact) {
+              <td>
+                @for (item of order.items; track $index) {
+                  <div class="item-line">
+                    <span class="item-service">{{ item.serviceType | serviceTypeLabel }}:</span>
+                    @if (item.productId) {
+                      <a [routerLink]="['/productos', item.productId]" class="product-link">
+                        {{ item.quantity }}× {{ item.productName }}
+                      </a>
+                    } @else {
+                      {{ item.quantity }}× {{ item.productName }}
+                    }
+                  </div>
+                }
+              </td>
+            }
+            <td>
+              <db-status-badge
+                [statusClass]="order.status"
+                [label]="order.status | orderStatusLabel"
+              />
+            </td>
+            <td>{{ order.total | currencyArs }}</td>
+            <td>{{ order.dueDate | dateShort }}</td>
+            @if (showActions) {
+              <td class="actions">
+                <div class="db-button-group">
+                  <db-button
+                  label="Ver"
+                  variant="primary"
+                  format="link"
+                  [routerLink]="['/pedidos', order.id]"
+                />
+                  <db-button
+                    label="Editar"
+                    variant="secondary"
+                    format="inline"
+                    (clicked)="edit.emit(order)"
+                  />
+                  <db-button
+                    label="Eliminar"
+                    variant="delete"
+                    format="inline"
+                    (clicked)="delete.emit(order)"
+                  />
+                </div>
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

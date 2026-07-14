@@ -1,0 +1,113 @@
+import {
+  IsBoolean,
+  IsEnum,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsString,
+  Min,
+} from 'class-validator';
+import { PartialType } from '@nestjs/mapped-types';
+import { FilamentType, ProductType, ResinType } from '../enums';
+
+export class CreateCategoryDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsString({ each: true })
+  productTypes!: string[];
+}
+
+export class CreateProductDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsEnum(ProductType)
+  type!: ProductType;
+
+  @IsOptional()
+  @IsString({ each: true })
+  images?: string[];
+
+  @IsOptional()
+  @IsString({ each: true })
+  categoryIds?: string[];
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  price?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  cost?: number;
+
+  @IsOptional()
+  @IsString()
+  size?: string;
+
+  @IsOptional()
+  @IsBoolean()
+  published?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  grams?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  printTimeHours?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  workTimeHours?: number;
+
+  @IsOptional()
+  @IsString()
+  brand?: string;
+
+  @IsOptional()
+  @IsEnum(FilamentType)
+  filamentType?: FilamentType;
+
+  @IsOptional()
+  @IsEnum(ResinType)
+  resinType?: ResinType;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  washMinutes?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  cureMinutes?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  pressMinutes?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  assemblyTimeHours?: number;
+
+  @IsOptional()
+  @IsNumber()
+  suggestedPrice?: number | null;
+
+  @IsOptional()
+  components?: { productId: string; quantity: number }[];
+}
+
+export class UpdateProductDto extends PartialType(CreateProductDto) {}
+
+export class ProductPricingInputDto extends PartialType(CreateProductDto) {}

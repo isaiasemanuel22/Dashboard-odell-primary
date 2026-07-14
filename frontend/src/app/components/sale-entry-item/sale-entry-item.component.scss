@@ -1,0 +1,17 @@
+@use '../../shared/styles/variables' as *;
+
+:host {
+  display: contents;
+}
+
+.sale-entry-item {
+  margin-bottom: 0.2rem;
+  font-size: 0.875rem;
+  color: $color-text-label;
+
+  &__price {
+    margin-left: 0.35rem;
+    color: $color-text-subtle;
+    font-size: 0.8rem;
+  }
+}

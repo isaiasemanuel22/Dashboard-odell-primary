@@ -1,0 +1,17 @@
+<section class="sales-stats-grid">
+  <app-sale-stat-card
+    label="Ingresos del mes"
+    [value]="stats.monthlyRevenue"
+    variant="accent"
+  />
+  <app-sale-stat-card
+    label="Ingresos de pedidos"
+    [value]="stats.monthlyOrdersRevenue"
+    [detail]="stats.monthlyOrdersCount + ' pedido(s)'"
+  />
+  <app-sale-stat-card
+    label="Ingresos de ventas"
+    [value]="stats.monthlyRetailRevenue"
+    [detail]="stats.monthlyRetailCount + ' venta(s)'"
+  />
+</section>

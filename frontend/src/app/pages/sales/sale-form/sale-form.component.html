@@ -1,0 +1,110 @@
+<db-form>
+    <db-fieldset legend="Agregar producto al carrito">
+      <db-form-grid>
+        <db-select
+          label="Producto"
+          [(ngModel)]="productId"
+          name="productId"
+          placeholder="Seleccionar producto"
+          [options]="productOptions"
+          [required]="true"
+          (ngModelChange)="onProductChange()"
+        />
+        <db-input
+          label="Cantidad"
+          type="number"
+          [(ngModel)]="pickQuantity"
+          name="pickQuantity"
+          [min]="1"
+          step="1"
+          [required]="true"
+        />
+      </db-form-grid>
+
+      @if (pickerError) {
+        <db-form-error>{{ pickerError }}</db-form-error>
+      }
+
+      <div class="cart-actions">
+        <db-button
+          label="+ Agregar al carrito"
+          variant="secondary"
+          format="soft"
+          extraClass="add-line"
+          [disabled]="!productId"
+          (clicked)="addToCart()"
+        />
+      </div>
+    </db-fieldset>
+
+    <db-fieldset legend="Carrito">
+      @if (cart.length) {
+        <div class="cart-table-wrap">
+          <table class="cart-table">
+            <thead>
+              <tr>
+                <th>Producto</th>
+                <th>Cant.</th>
+                <th>P. unit.</th>
+                <th>Subtotal</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (line of cart; track line.key) {
+                <app-sale-cart-line
+                  [line]="line"
+                  (quantityChange)="updateLineQuantity(line, $event)"
+                  (remove)="removeFromCart(line.key)"
+                />
+              }
+            </tbody>
+            <tfoot>
+              <tr>
+                <td colspan="3"><strong>Total de la venta</strong></td>
+                <td colspan="2"><strong>{{ cartTotal | currencyArs }}</strong></td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      } @else {
+        <p class="empty-cart">
+          Todavía no hay productos en el carrito. Agregá los que se retiran en el local.
+        </p>
+      }
+    </db-fieldset>
+
+    <db-textarea
+      label="Notas"
+      [(ngModel)]="notes"
+      name="notes"
+      placeholder="Opcional"
+      [rows]="2"
+    />
+
+    @if (error) {
+      <db-form-error>{{ error }}</db-form-error>
+    }
+
+    <db-form-footer>
+      <db-button
+        label="Cancelar"
+        variant="cancel"
+        format="soft"
+        (clicked)="cancel.emit()"
+      />
+      <db-button
+        [label]="
+          loading
+            ? 'Guardando...'
+            : isEditing
+              ? 'Guardar cambios'
+              : 'Cerrar venta'
+        "
+        variant="primary"
+        format="solid"
+        [disabled]="!canCloseSale"
+        (clicked)="closeSale()"
+      />
+    </db-form-footer>
+  </db-form>

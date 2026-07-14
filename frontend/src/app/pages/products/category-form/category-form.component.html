@@ -1,0 +1,43 @@
+<db-form>
+  <form (ngSubmit)="onSubmit()">
+    <db-input
+      label="Nombre"
+      [(ngModel)]="name"
+      name="name"
+      placeholder="Ej: Accesorios"
+      [required]="true"
+    />
+
+    <db-fieldset legend="Aplica a">
+      <db-checkbox-group>
+        @for (option of typeOptions; track option.value) {
+          <db-checkbox
+            [label]="option.label"
+            [checked]="isSelected(option.value)"
+            (checkedChange)="onTypeCheck(option.value, $event)"
+          />
+        }
+      </db-checkbox-group>
+    </db-fieldset>
+
+    @if (error) {
+      <db-form-error>{{ error }}</db-form-error>
+    }
+
+    <db-form-footer>
+      <db-button
+        label="Cancelar"
+        variant="cancel"
+        format="soft"
+        (clicked)="cancel.emit()"
+      />
+      <db-button
+        [label]="loading ? 'Guardando...' : 'Crear categoría'"
+        variant="primary"
+        format="solid"
+        buttonType="submit"
+        [disabled]="loading || !name.trim() || selectedTypes.length === 0"
+      />
+    </db-form-footer>
+  </form>
+</db-form>

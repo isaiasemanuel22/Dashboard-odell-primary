@@ -1,0 +1,196 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+model AppSettings {
+  id                    Int   @id @default(1)
+  electricityCostPerKwh Float @map("electricity_cost_per_kwh")
+  laborCostPerHour      Float @map("labor_cost_per_hour")
+  profitMargins         Json  @map("profit_margins")
+  paperPricesPerSqm     Json  @map("paper_prices_per_sqm")
+  powerConsumptions     Json  @map("power_consumptions")
+  machineCosts          Json  @map("machine_costs")
+  processProfiles       Json  @default("[]") @map("process_profiles")
+  filamentPrices        Json  @map("filament_prices")
+  resinPrices           Json  @map("resin_prices")
+
+  @@map("app_settings")
+}
+
+model Category {
+  id           String   @id @db.VarChar(64)
+  name         String   @db.VarChar(255)
+  productTypes Json     @map("product_types")
+  createdAt    DateTime @map("created_at")
+
+  @@map("categories")
+}
+
+model Customer {
+  id        String   @id @db.VarChar(64)
+  name      String   @db.VarChar(255)
+  email     String   @db.VarChar(255)
+  phone     String   @db.VarChar(64)
+  company   String?  @db.VarChar(255)
+  createdAt DateTime @map("created_at")
+
+  orders Order[]
+
+  @@map("customers")
+}
+
+model Product {
+  id                String   @id @db.VarChar(64)
+  name              String   @db.VarChar(255)
+  images            Json
+  updatedAt         DateTime @map("updated_at")
+  price             Float
+  cost              Float
+  profit            Float
+  categoryIds       Json     @map("category_ids")
+  type              String   @db.VarChar(32)
+  size              String   @db.VarChar(128)
+  published         Boolean  @default(true)
+  components        Json
+  assemblyTimeHours Float    @default(0) @map("assembly_time_hours")
+  grams             Float?
+  printTimeHours    Float?   @map("print_time_hours")
+  workTimeHours     Float?   @map("work_time_hours")
+  brand             String?  @db.VarChar(128)
+  filamentType      String?  @map("filament_type") @db.VarChar(32)
+  resinType         String?  @map("resin_type") @db.VarChar(32)
+  washMinutes       Float?   @map("wash_minutes")
+  cureMinutes       Float?   @map("cure_minutes")
+  pressMinutes      Float?   @map("press_minutes")
+
+  @@map("products")
+}
+
+model Supply {
+  id                String   @id @db.VarChar(64)
+  name              String   @db.VarChar(255)
+  type              String   @db.VarChar(32)
+  filamentType      String?  @map("filament_type") @db.VarChar(32)
+  resinType         String?  @map("resin_type") @db.VarChar(32)
+  brand             String?  @db.VarChar(128)
+  unit              String   @db.VarChar(32)
+  quantity          Float
+  minStock          Float    @map("min_stock")
+  unitPrice         Float    @map("unit_price")
+  priceFromSettings Boolean  @default(false) @map("price_from_settings")
+  supplier          String?  @db.VarChar(255)
+  updatedAt         DateTime @map("updated_at")
+
+  @@map("supplies")
+}
+
+model Impreso {
+  id        String   @id @db.VarChar(64)
+  name      String   @db.VarChar(255)
+  paperType String   @map("paper_type") @db.VarChar(32)
+  widthCm   Float    @map("width_cm")
+  heightCm  Float    @map("height_cm")
+  updatedAt DateTime @map("updated_at")
+
+  @@map("impresos")
+}
+
+model Material {
+  id        String @id @db.VarChar(64)
+  name      String @db.VarChar(255)
+  type      String @db.VarChar(32)
+  quantity  Float
+  unit      String @db.VarChar(32)
+  minStock  Float  @map("min_stock")
+  supplier  String @db.VarChar(255)
+
+  @@map("materials")
+}
+
+model Order {
+  id           String   @id @db.VarChar(64)
+  customerId   String   @map("customer_id") @db.VarChar(64)
+  customerName String   @map("customer_name") @db.VarChar(255)
+  services     Json
+  status       String   @db.VarChar(32)
+  total        Float
+  description  String?  @db.Text
+  notes        String?  @db.Text
+  createdAt    DateTime @map("created_at")
+  dueDate      DateTime @map("due_date")
+  statusHistory Json    @default("[]") @map("status_history")
+
+  customer Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  items    OrderItem[]
+
+  @@index([customerId])
+  @@map("orders")
+}
+
+model OrderItem {
+  id          String @id @db.VarChar(80)
+  orderId     String @map("order_id") @db.VarChar(64)
+  sortIndex   Int    @map("sort_index")
+  serviceType String @map("service_type") @db.VarChar(32)
+  productId   String? @map("product_id") @db.VarChar(64)
+  productName String @map("product_name") @db.VarChar(255)
+  quantity    Int
+  unitPrice   Float  @map("unit_price")
+
+  order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  @@index([orderId])
+  @@map("order_items")
+}
+
+model PrintJob {
+  id             String    @id @db.VarChar(64)
+  orderId        String    @map("order_id") @db.VarChar(64)
+  orderItemIndex Int       @map("order_item_index")
+  customerName   String    @map("customer_name") @db.VarChar(255)
+  productName    String    @map("product_name") @db.VarChar(255)
+  productId      String?   @map("product_id") @db.VarChar(64)
+  type           String    @db.VarChar(32)
+  status         String    @db.VarChar(32)
+  active         Boolean   @default(false)
+  priority       Int
+  machine        String    @db.VarChar(128)
+  estimatedHours Float     @map("estimated_hours")
+  dueDate        DateTime  @map("due_date")
+  startedAt      DateTime? @map("started_at")
+  completedAt    DateTime? @map("completed_at")
+
+  @@index([orderId])
+  @@map("print_jobs")
+}
+
+model RetailSale {
+  id        String           @id @db.VarChar(64)
+  total     Float
+  notes     String?          @db.Text
+  soldAt    DateTime         @map("sold_at")
+  createdAt DateTime         @map("created_at")
+  items     RetailSaleItem[]
+
+  @@map("retail_sales")
+}
+
+model RetailSaleItem {
+  id           String @id @db.VarChar(80)
+  retailSaleId String @map("retail_sale_id") @db.VarChar(64)
+  sortIndex    Int    @map("sort_index")
+  productId    String? @map("product_id") @db.VarChar(64)
+  productName  String @map("product_name") @db.VarChar(255)
+  quantity     Int
+  unitPrice    Float  @map("unit_price")
+  lineTotal    Float  @map("line_total")
+
+  retailSale RetailSale @relation(fields: [retailSaleId], references: [id], onDelete: Cascade)
+
+  @@index([retailSaleId])
+  @@map("retail_sale_items")
+}

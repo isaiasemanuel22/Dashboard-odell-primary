@@ -1,0 +1,42 @@
+@if (label) {
+  <db-form-field
+    [label]="label"
+    [hint]="hint || charCountHint"
+    [error]="error"
+    [required]="required"
+    [forId]="textareaId"
+  >
+    <textarea
+      [id]="textareaId"
+      [class]="textareaClass"
+      [name]="name"
+      [placeholder]="placeholder"
+      [required]="required"
+      [rows]="rows"
+      [maxlength]="maxLength ?? null"
+      [readonly]="readonly"
+      [disabled]="disabled"
+      [ngModel]="value"
+      (ngModelChange)="onInput($event)"
+      (blur)="onBlur()"
+    ></textarea>
+  </db-form-field>
+} @else {
+  <textarea
+    [id]="textareaId"
+    [class]="textareaClass"
+    [name]="name"
+    [placeholder]="placeholder"
+    [required]="required"
+    [rows]="rows"
+    [maxlength]="maxLength ?? null"
+    [readonly]="readonly"
+    [disabled]="disabled"
+    [ngModel]="value"
+    (ngModelChange)="onInput($event)"
+    (blur)="onBlur()"
+  ></textarea>
+  @if (maxLength) {
+    <span class="db-textarea-counter">{{ charCountHint }}</span>
+  }
+}

@@ -1,0 +1,162 @@
+<db-form>
+    <form (ngSubmit)="onSubmit()">
+      <db-form-grid>
+        <db-select
+          label="Cliente"
+          [(ngModel)]="customerId"
+          name="customerId"
+          placeholder="Seleccionar cliente"
+          [options]="customerOptions"
+          [required]="true"
+        />
+
+        <db-input
+          label="Fecha de entrega"
+          type="date"
+          [(ngModel)]="dueDate"
+          name="dueDate"
+          [required]="true"
+        />
+
+        @if (isEditing) {
+          <db-select
+            label="Estado"
+            [(ngModel)]="status"
+            name="status"
+            [options]="orderStatusOptions"
+          />
+        }
+      </db-form-grid>
+
+      <db-fieldset legend="Servicios incluidos">
+        <p class="services-hint">
+          Un pedido puede incluir impresión 3D, diseño y/o estampado. Cada servicio generará tareas individuales en la cola de trabajo.
+        </p>
+        <db-checkbox-group>
+          @for (option of serviceTypeOptions; track option.value) {
+            <db-checkbox
+              [label]="option.label"
+              [checked]="isServiceSelected(option.value)"
+              (checkedChange)="onServiceCheck(option.value, $event)"
+            />
+          }
+        </db-checkbox-group>
+      </db-fieldset>
+
+      <db-form-grid-full>
+        <db-textarea
+          label="Descripción"
+          [(ngModel)]="description"
+          name="description"
+          placeholder="Describí el pedido: qué se necesita, cantidades, contexto del cliente..."
+          [rows]="6"
+          [maxLength]="descriptionMaxLength"
+        />
+      </db-form-grid-full>
+
+      <db-form-grid-full>
+        <db-textarea
+          label="Notas"
+          [(ngModel)]="notes"
+          name="notes"
+          placeholder="Detalles internos: talles, colores, acabados..."
+          [rows]="3"
+        />
+      </db-form-grid-full>
+
+      <db-fieldset legend="Líneas de trabajo">
+        @if (!selectedServices.length) {
+          <p class="empty-group">Seleccioná al menos un servicio para agregar líneas.</p>
+        } @else {
+          <div class="order-lines">
+            @for (line of lines; track $index; let i = $index) {
+              <div class="order-line">
+                <db-select
+                  label="Servicio"
+                  [(ngModel)]="line.serviceType"
+                  [name]="'service-' + i"
+                  [options]="lineServiceOptions()"
+                  (ngModelChange)="onLineServiceChange(line)"
+                />
+
+                @if (isDesignService(line.serviceType)) {
+                  <db-input
+                    label="Concepto de diseño"
+                    [(ngModel)]="line.customName"
+                    [name]="'design-' + i"
+                    placeholder="Ej: Diseño de logo"
+                  />
+                } @else {
+                  <db-select
+                    label="Producto"
+                    [(ngModel)]="line.productId"
+                    [name]="'product-' + i"
+                    placeholder="Seleccionar producto"
+                    [options]="productOptionsForLine(line)"
+                    (ngModelChange)="onProductChange(line)"
+                  />
+                }
+
+                <db-input
+                  label="Cant."
+                  type="number"
+                  [(ngModel)]="line.quantity"
+                  [name]="'qty-' + i"
+                  [min]="1"
+                  [step]="1"
+                />
+
+                <db-input
+                  label="Precio unit."
+                  type="number"
+                  [(ngModel)]="line.unitPrice"
+                  [name]="'price-' + i"
+                  [min]="0"
+                  [step]="1"
+                />
+
+                <db-button
+                  label="✕"
+                  variant="delete"
+                  format="icon"
+                  extraClass="remove-line"
+                  ariaLabel="Quitar línea"
+                  (clicked)="removeLine(i)"
+                />
+              </div>
+            }
+          </div>
+
+          <db-button
+            label="+ Agregar línea"
+            variant="secondary"
+            format="soft"
+            extraClass="add-line"
+            (clicked)="addLine()"
+          />
+        }
+
+        <p class="order-total">Total: <strong>{{ total | currencyArs }}</strong></p>
+      </db-fieldset>
+
+      @if (error) {
+        <db-form-error>{{ error }}</db-form-error>
+      }
+
+      <db-form-footer>
+        <db-button
+          label="Cancelar"
+          variant="cancel"
+          format="soft"
+          (clicked)="cancel.emit()"
+        />
+        <db-button
+          [label]="loading ? 'Guardando...' : (isEditing ? 'Guardar cambios' : 'Crear pedido')"
+          variant="primary"
+          format="solid"
+          buttonType="submit"
+          [disabled]="loading || !canSubmit()"
+        />
+      </db-form-footer>
+    </form>
+  </db-form>

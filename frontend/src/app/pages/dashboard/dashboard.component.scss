@@ -1,0 +1,104 @@
+@use '../../shared/styles/variables' as *;
+
+.quick-actions {
+  margin-bottom: 1.5rem;
+
+  h3 {
+    margin: 0 0 0.75rem;
+    font-size: 1rem;
+    color: $color-text;
+  }
+}
+
+.quick-actions__grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 0.75rem;
+}
+
+.quick-action {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: 100%;
+  padding: 0.9rem 1rem;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  box-shadow: $shadow-card;
+  text-decoration: none;
+  color: $color-text;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    border-color: $color-primary;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(15, 23, 42, 0.08);
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.quick-action__icon {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.quick-action__label {
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.panels {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 1rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.type-stats {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.type-info {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.35rem;
+  font-size: 0.875rem;
+  color: $color-text-label;
+}
+
+.bar-track {
+  height: 8px;
+  background: $color-border;
+  border-radius: $radius-pill;
+  overflow: hidden;
+}
+
+.bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, $color-primary, $color-primary-end);
+  border-radius: $radius-pill;
+  transition: width 0.4s ease;
+}

@@ -1,0 +1,106 @@
+<db-form>
+  <form (ngSubmit)="onSubmit()">
+    <db-select
+      label="Tipo de insumo"
+      [(ngModel)]="type"
+      name="type"
+      [options]="supplyTypeOptions"
+      (ngModelChange)="onTypeChange()"
+    />
+
+    <db-input
+      label="Nombre"
+      [(ngModel)]="name"
+      name="name"
+      [required]="true"
+    />
+
+    @if (isFilament) {
+      <db-select
+        label="Tipo de filamento"
+        [(ngModel)]="filamentType"
+        name="filamentType"
+        [options]="filamentTypeOptions"
+        (ngModelChange)="onMaterialChange()"
+      />
+    }
+
+    @if (isResin) {
+      <db-select
+        label="Tipo de resina"
+        [(ngModel)]="resinType"
+        name="resinType"
+        [options]="resinTypeOptions"
+        (ngModelChange)="onMaterialChange()"
+      />
+    }
+
+    @if (needsMaterialType) {
+      <db-input
+        label="Marca"
+        [(ngModel)]="brand"
+        name="brand"
+        [required]="true"
+        (ngModelChange)="onMaterialChange()"
+      />
+    }
+
+    <db-form-grid>
+      <db-input
+        [label]="'Cantidad (' + unit + ')'"
+        type="number"
+        [(ngModel)]="quantity"
+        name="quantity"
+        [min]="0"
+        step="0.01"
+        [required]="true"
+      />
+      <db-input
+        label="Stock mínimo"
+        type="number"
+        [(ngModel)]="minStock"
+        name="minStock"
+        [min]="0"
+        step="0.01"
+        [required]="true"
+      />
+    </db-form-grid>
+
+    <db-input
+      [label]="'Precio unitario (ARS/' + unit + ')'"
+      [hint]="priceHint"
+      type="number"
+      [(ngModel)]="unitPrice"
+      name="unitPrice"
+      [min]="0"
+      [readonly]="!priceEditable"
+      [required]="true"
+    />
+
+    <db-input
+      label="Proveedor (opcional)"
+      [(ngModel)]="supplier"
+      name="supplier"
+    />
+
+    @if (error) {
+      <db-form-error>{{ error }}</db-form-error>
+    }
+
+    <db-form-footer>
+      <db-button
+        label="Cancelar"
+        variant="cancel"
+        format="soft"
+        (clicked)="cancel.emit()"
+      />
+      <db-button
+        [label]="loading ? 'Guardando...' : (supply ? 'Guardar' : 'Crear insumo')"
+        variant="primary"
+        format="solid"
+        buttonType="submit"
+        [disabled]="loading"
+      />
+    </db-form-footer>
+  </form>
+</db-form>

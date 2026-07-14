@@ -1,0 +1,36 @@
+@use '../../shared/styles/variables' as *;
+
+.monthly-trends {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  @media (max-width: 1024px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.trend-panel {
+  h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: $color-text;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    font-size: 0.8rem;
+    color: $color-text-muted;
+  }
+}
+
+.trend-panel__header {
+  margin-bottom: 1rem;
+}
+
+.chart-container {
+  position: relative;
+  height: 280px;
+  width: 100%;
+}

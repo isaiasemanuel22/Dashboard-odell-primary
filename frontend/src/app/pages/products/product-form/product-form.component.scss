@@ -1,0 +1,103 @@
+@use '../../../shared/styles/variables' as *;
+
+.category-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-bottom: 0.75rem;
+
+  db-select {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}
+
+.selected-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.65rem 0.75rem;
+  background: $color-surface-muted;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+}
+
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.5rem 0.25rem 0.65rem;
+  background: $color-primary-bg;
+  color: $color-primary-dark;
+  border-radius: $radius-pill;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(79, 70, 229, 0.15);
+  color: $color-primary-dark;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(79, 70, 229, 0.25);
+  }
+}
+
+.category-empty,
+.category-hint,
+.components-desc,
+.components-empty,
+.published-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: $color-text-muted;
+  line-height: 1.45;
+}
+
+.category-hint {
+  margin-top: 0.5rem;
+}
+
+.published-hint {
+  margin-top: 0.35rem;
+}
+
+.component-picker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-bottom: 0.75rem;
+
+  db-select {
+    flex: 2;
+    min-width: 200px;
+  }
+
+  db-input {
+    flex: 0 0 100px;
+  }
+
+  .btn {
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+}

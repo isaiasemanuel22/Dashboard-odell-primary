@@ -1,0 +1,47 @@
+// Design tokens — paleta derivada del logo (lobo geométrico)
+// Vivido #00aae4 · Medio #139bd0 · Claro #8ed7f7 · Negro #000000
+
+$color-brand-vivid: #00aae4;
+$color-brand: #139bd0;
+$color-brand-deep: #0d7aaa;
+$color-brand-light: #8ed7f7;
+$color-brand-pale: #d9f1fb;
+
+$color-text: #0f172a;
+$color-text-muted: #64748b;
+$color-text-label: #334155;
+$color-text-subtle: #94a3b8;
+$color-border: #cce5f0;
+$color-border-input: #b8d9e8;
+$color-surface: #fff;
+$color-surface-muted: #f6fbfe;
+$color-surface-subtle: #edf5f9;
+
+$color-primary: $color-brand-vivid;
+$color-primary-dark: $color-brand-deep;
+$color-primary-end: $color-brand;
+$color-primary-bg: #e8f7fd;
+$color-primary-focus: rgba(0, 170, 228, 0.18);
+
+/** Placeholder de imagen — tinte claro del logo, distinto del fondo de página */
+$color-image-bg: $color-brand-pale;
+
+$color-error: #dc2626;
+$color-success: #059669;
+$color-warning-bg: #fef3c7;
+$color-warning-text: #92400e;
+$color-warning-accent: #b45309;
+
+$color-sidebar-from: #0c1a24;
+$color-sidebar-to: #061018;
+$color-sidebar-text: #e2e8f0;
+$color-sidebar-text-muted: #94a3b8;
+
+$radius-xs: 6px;
+$radius-sm: 8px;
+$radius-md: 14px;
+$radius-lg: 16px;
+$radius-pill: 99px;
+$shadow-modal: 0 20px 60px rgba(6, 16, 24, 0.25);
+$shadow-card: 0 1px 3px rgba(6, 16, 24, 0.08);
+$shadow-primary: 0 4px 14px rgba(0, 170, 228, 0.35);

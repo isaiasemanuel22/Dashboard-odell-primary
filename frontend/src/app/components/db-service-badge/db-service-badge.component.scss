@@ -1,0 +1,23 @@
+@use '../../shared/styles/variables' as *;
+
+.db-service-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.65rem;
+  border-radius: $radius-xs;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.db-service-badge--default {
+  background: $color-primary-bg;
+  color: $color-primary-dark;
+}
+
+.db-service-badge--solid {
+  background: $color-surface;
+  color: $color-primary-dark;
+  border: 1px solid $color-border-input;
+  box-shadow: 0 1px 2px rgba(6, 16, 24, 0.04);
+}

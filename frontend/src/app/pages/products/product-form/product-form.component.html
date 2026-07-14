@@ -1,0 +1,331 @@
+<db-form>
+    <form (ngSubmit)="onSubmit()">
+      <db-form-grid>
+        <db-select
+          label="Tipo"
+          [(ngModel)]="type"
+          name="type"
+          [options]="productTypeOptions"
+          (ngModelChange)="onTypeChange()"
+        />
+
+        <db-input
+          label="Nombre"
+          [(ngModel)]="name"
+          name="name"
+          [required]="true"
+        />
+
+        <db-form-grid-full>
+          <db-checkbox
+            label="Publicado en catálogo"
+            [(ngModel)]="published"
+            name="published"
+          />
+          <p class="published-hint">
+            Desactivá esta opción para piezas internas o productos personalizados que no formen parte del catálogo, pero sigan disponibles en armados y presupuestos.
+          </p>
+        </db-form-grid-full>
+
+        <db-form-grid-full>
+          <db-input
+            label="Tamaño"
+            [(ngModel)]="size"
+            name="size"
+            [placeholder]="sizePlaceholder"
+            [required]="true"
+          />
+        </db-form-grid-full>
+
+        @if (isFdm && !hasComponents) {
+          <db-form-grid-full>
+            <db-select
+              label="Tipo de filamento"
+              [(ngModel)]="filamentType"
+              name="filamentType"
+              [options]="filamentTypeOptions"
+              (ngModelChange)="onProductionFieldChange()"
+            />
+          </db-form-grid-full>
+        }
+
+        @if (isResina && !hasComponents) {
+          <db-form-grid-full>
+            <db-select
+              label="Tipo de resina"
+              [(ngModel)]="resinType"
+              name="resinType"
+              [options]="resinTypeOptions"
+              (ngModelChange)="onProductionFieldChange()"
+            />
+          </db-form-grid-full>
+        }
+
+        @if (is3D && !hasComponents) {
+          <db-input
+            label="Gramos"
+            type="number"
+            [(ngModel)]="grams"
+            name="grams"
+            [min]="0.1"
+            [step]="0.1"
+            [required]="true"
+            (ngModelChange)="onProductionFieldChange()"
+          />
+          <db-input
+            label="Tiempo de impresión (h)"
+            type="number"
+            [(ngModel)]="printTimeHours"
+            name="printTimeHours"
+            [min]="0"
+            [step]="0.1"
+            [required]="true"
+            (ngModelChange)="onProductionFieldChange()"
+          />
+          <db-form-grid-full>
+            <db-input
+              label="Tiempo de trabajo (h)"
+              type="number"
+              [(ngModel)]="workTimeHours"
+              name="workTimeHours"
+              [min]="0"
+              [step]="0.1"
+              [required]="true"
+              (ngModelChange)="onProductionFieldChange()"
+            />
+          </db-form-grid-full>
+          @if (isResina) {
+            <db-input
+              label="Lavado (min)"
+              type="number"
+              [(ngModel)]="washMinutes"
+              name="washMinutes"
+              [min]="0"
+              [step]="0.5"
+              (ngModelChange)="onProductionFieldChange()"
+            />
+            <db-input
+              label="Curado (min)"
+              type="number"
+              [(ngModel)]="cureMinutes"
+              name="cureMinutes"
+              [min]="0"
+              [step]="0.5"
+              (ngModelChange)="onProductionFieldChange()"
+            />
+          }
+        }
+
+        @if (isEstampado && !hasComponents) {
+          <db-input
+            label="Minutos por ciclo de plancha"
+            type="number"
+            [(ngModel)]="pressMinutes"
+            name="pressMinutes"
+            [min]="0"
+            [step]="0.5"
+            (ngModelChange)="onProductionFieldChange()"
+          />
+          <db-form-grid-full>
+            <db-input
+              label="Tiempo de trabajo (h)"
+              type="number"
+              [(ngModel)]="workTimeHours"
+              name="workTimeHoursEstampado"
+              [min]="0"
+              [step]="0.1"
+              (ngModelChange)="onProductionFieldChange()"
+            />
+          </db-form-grid-full>
+        }
+      </db-form-grid>
+
+      <db-fieldset legend="Piezas incluidas">
+        <p class="components-desc">
+          Armá productos compuestos agregando otros productos (publicados o internos). Ej: base, tablero, piezas de juego.
+        </p>
+        <div class="component-picker">
+          <db-select
+            label="Agregar pieza"
+            [(ngModel)]="componentPicker"
+            name="componentPicker"
+            placeholder="Seleccionar producto..."
+            [options]="availableComponentOptions"
+            [disabled]="!canAddComponent"
+          />
+          <db-input
+            label="Cantidad"
+            type="number"
+            [(ngModel)]="componentQty"
+            name="componentQty"
+            [min]="1"
+            [step]="1"
+          />
+          <db-button
+            label="+ Agregar pieza"
+            variant="secondary"
+            format="soft"
+            [disabled]="!componentPicker || componentQty < 1"
+            (clicked)="addComponent()"
+          />
+        </div>
+
+        @if (components.length) {
+          <app-product-components-table
+            mode="edit"
+            [components]="components"
+            [catalog]="catalogProducts"
+            (remove)="removeComponent($event)"
+          />
+
+          <db-input
+            label="Tiempo de armado (h)"
+            type="number"
+            [(ngModel)]="assemblyTimeHours"
+            name="assemblyTimeHours"
+            [min]="0"
+            [step]="0.1"
+            (ngModelChange)="onComponentsChange()"
+          />
+        } @else {
+          <p class="components-empty">
+            Sin piezas: el costo se calcula desde gramos y tiempos de producción.
+          </p>
+        }
+      </db-fieldset>
+
+      <db-fieldset [legend]="'Categorías (mín. 1, máx. 5) — ' + categoryIds.length + '/5'">
+        <div class="category-picker">
+          <db-select
+            label="Agregar categoría"
+            [(ngModel)]="categoryPicker"
+            name="categoryPicker"
+            placeholder="Seleccionar categoría..."
+            [options]="unselectedCategoryOptions"
+            [disabled]="!canAddCategory"
+            (ngModelChange)="onCategorySelected($event)"
+          />
+          <db-button
+            label="+ Nueva categoría"
+            variant="secondary"
+            format="soft"
+            (clicked)="openCategoryForm()"
+          />
+        </div>
+
+        @if (selectedCategories.length) {
+          <div class="selected-categories">
+            @for (cat of selectedCategories; track cat.id) {
+              <span class="category-chip">
+                {{ cat.name }}
+                <db-button
+                  label="×"
+                  variant="secondary"
+                  format="chip"
+                  [ariaLabel]="'Quitar ' + cat.name"
+                  (clicked)="removeCategory(cat.id)"
+                />
+              </span>
+            }
+          </div>
+        } @else {
+          <p class="category-empty">Seleccioná al menos una categoría.</p>
+        }
+
+        @if (filteredCategories.length === 0) {
+          <p class="category-hint">
+            No hay categorías para este tipo de producto. Creá una con el botón de arriba.
+          </p>
+        }
+      </db-fieldset>
+
+      <db-fieldset legend="Imágenes">
+        <db-file-upload
+          [(ngModel)]="images"
+          name="images"
+          [thumbAlt]="name"
+          [uploadFn]="uploadProductImage"
+        />
+      </db-fieldset>
+
+      <db-fieldset legend="Precios">
+        @if (calculatingCost) {
+          <p class="pricing-hint">Calculando costo...</p>
+        }
+
+        @if (costBreakdown) {
+          <div class="cost-breakdown">
+            <span>Material: {{ costBreakdown.materialCost | currencyArs }}</span>
+            <span>Energía: {{ costBreakdown.energyCost | currencyArs }}</span>
+            <span>Máquina: {{ costBreakdown.machineCost | currencyArs }}</span>
+            <span>Mano de obra: {{ costBreakdown.laborCost | currencyArs }}</span>
+          </div>
+        }
+
+        <div class="pricing-panel">
+          <div class="pricing-stat">
+            <span>Costo</span>
+            <strong>{{ cost | currencyArs }}</strong>
+          </div>
+
+          <div class="pricing-stat">
+            <span>Precio</span>
+            <strong>{{ finalPrice | currencyArs }}</strong>
+          </div>
+
+          <div
+            class="pricing-stat"
+            [class.pricing-stat--profit]="profit >= 0"
+            [class.pricing-stat--loss]="profit < 0"
+          >
+            <span>Ganancia</span>
+            <strong [class.negative]="profit < 0">{{ profit | currencyArs }}</strong>
+          </div>
+
+          <div class="pricing-stat pricing-stat--editable">
+            <span>Precio sugerido (opcional)</span>
+            <input
+              type="number"
+              class="pricing-stat__input"
+              [(ngModel)]="suggestedPrice"
+              name="suggestedPrice"
+              [min]="0"
+              placeholder="—"
+            />
+          </div>
+        </div>
+
+        @if (isEstampado && !hasComponents && !canAutoCalculateCost) {
+          <p class="pricing-hint">
+            Ingresá los minutos de plancha o tiempo de trabajo para calcular el costo automáticamente.
+          </p>
+        }
+        @if (is3D && !hasComponents && !canAutoCalculateCost) {
+          <p class="pricing-hint">Ingresá los gramos para calcular el costo automáticamente.</p>
+        }
+        @if (hasComponents && !components.length) {
+          <p class="pricing-hint">Agregá al menos una pieza para calcular el costo del producto compuesto.</p>
+        }
+      </db-fieldset>
+
+      @if (error) {
+        <db-form-error>{{ error }}</db-form-error>
+      }
+
+      <db-form-footer>
+        <db-button
+          label="Cancelar"
+          variant="cancel"
+          format="soft"
+          (clicked)="cancel.emit()"
+        />
+        <db-button
+          [label]="loading ? 'Guardando...' : (product ? 'Guardar cambios' : 'Crear producto')"
+          variant="primary"
+          format="solid"
+          buttonType="submit"
+          [disabled]="loading || !name.trim() || categoryIds.length < 1"
+        />
+      </db-form-footer>
+    </form>
+  </db-form>

@@ -1,0 +1,19 @@
+<div class="db-form-field">
+  @if (label) {
+    <label class="db-form-field__label" [attr.for]="forId || null">
+      <span class="db-form-field__label-text">{{ label }}</span>
+      @if (required) {
+        <span class="db-form-field__required" aria-hidden="true">*</span>
+      }
+    </label>
+  }
+  <div class="db-form-field__control">
+    @if (hint) {
+      <p class="db-form-hint">{{ hint }}</p>
+    }
+    <ng-content />
+    @if (error) {
+      <p class="db-form-error">{{ error }}</p>
+    }
+  </div>
+</div>

@@ -1,0 +1,34 @@
+<tr class="sale-cart-line">
+  <td>
+    @if (line.productId) {
+      <a [routerLink]="['/productos', line.productId]" class="product-link">
+        {{ line.productName }}
+      </a>
+    } @else {
+      {{ line.productName }}
+    }
+  </td>
+  <td>
+    <input
+      class="sale-cart-line__qty"
+      type="number"
+      [ngModel]="line.quantity"
+      [name]="'qty-' + line.key"
+      min="1"
+      step="1"
+      (ngModelChange)="onQuantityChange($event)"
+    />
+  </td>
+  <td>{{ line.unitPrice | currencyArs }}</td>
+  <td>{{ lineTotal | currencyArs }}</td>
+  <td class="sale-cart-line__actions">
+    <div class="db-button-group">
+      <db-button
+        label="Quitar"
+        variant="delete"
+        format="inline"
+        (clicked)="remove.emit()"
+      />
+    </div>
+  </td>
+</tr>

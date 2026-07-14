@@ -1,0 +1,43 @@
+<div class="layout">
+  <aside class="sidebar">
+    <div class="brand">
+      <img class="brand-logo" src="/logo.png" alt="Odell Dashboard" width="40" height="40" />
+      <div>
+        <h1>Odell</h1>
+        <p>Dashboard</p>
+      </div>
+    </div>
+
+    <nav>
+      @for (item of navItems; track item.route) {
+        <a
+          [routerLink]="item.route"
+          routerLinkActive="active"
+          [routerLinkActiveOptions]="{ exact: item.route === '/dashboard', paths: 'subset', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored' }"
+        >
+          <span class="icon">{{ item.icon }}</span>
+          {{ item.label }}
+        </a>
+      }
+    </nav>
+
+    @if (authEnabled) {
+      <div class="sidebar-user">
+        @if (user$ | async; as user) {
+          <p class="sidebar-user__email">{{ user.email }}</p>
+        }
+        <db-button
+          label="Cerrar sesión"
+          variant="inverse"
+          format="soft"
+          [block]="true"
+          (clicked)="logout()"
+        />
+      </div>
+    }
+  </aside>
+
+  <main class="content">
+    <router-outlet />
+  </main>
+</div>

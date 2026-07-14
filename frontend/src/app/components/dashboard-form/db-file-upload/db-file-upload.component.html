@@ -1,0 +1,79 @@
+@if (label) {
+  <db-form-field
+    [label]="label"
+    [hint]="hint"
+    [error]="error || uploadError"
+    [forId]="inputId"
+  >
+    <div class="db-file-upload__row">
+      @for (file of files; track file; let i = $index) {
+        <div class="db-file-upload__thumb">
+          <img [src]="file" [alt]="thumbAlt || 'Archivo'" />
+          <db-button
+            label="✕"
+            variant="delete"
+            format="overlay"
+            [disabled]="disabled || uploading"
+            ariaLabel="Eliminar archivo"
+            (clicked)="removeFile(i)"
+          />
+        </div>
+      }
+      @if (canAddMore) {
+        <label class="db-file-upload__add" [attr.for]="inputId">
+          @if (uploading) {
+            {{ uploadingLabel }}
+          } @else {
+            {{ addLabel }}
+          }
+          <input
+            [id]="inputId"
+            type="file"
+            [accept]="accept"
+            [multiple]="multiple"
+            [disabled]="disabled || uploading"
+            (change)="onFileInputChange($event)"
+          />
+        </label>
+      }
+    </div>
+  </db-form-field>
+} @else {
+  <div class="db-file-upload">
+    <div class="db-file-upload__row">
+      @for (file of files; track file; let i = $index) {
+        <div class="db-file-upload__thumb">
+          <img [src]="file" [alt]="thumbAlt || 'Archivo'" />
+          <db-button
+            label="✕"
+            variant="delete"
+            format="overlay"
+            [disabled]="disabled || uploading"
+            ariaLabel="Eliminar archivo"
+            (clicked)="removeFile(i)"
+          />
+        </div>
+      }
+      @if (canAddMore) {
+        <label class="db-file-upload__add" [attr.for]="inputId">
+          @if (uploading) {
+            {{ uploadingLabel }}
+          } @else {
+            {{ addLabel }}
+          }
+          <input
+            [id]="inputId"
+            type="file"
+            [accept]="accept"
+            [multiple]="multiple"
+            [disabled]="disabled || uploading"
+            (change)="onFileInputChange($event)"
+          />
+        </label>
+      }
+    </div>
+    @if (error || uploadError) {
+      <db-form-error>{{ error || uploadError }}</db-form-error>
+    }
+  </div>
+}

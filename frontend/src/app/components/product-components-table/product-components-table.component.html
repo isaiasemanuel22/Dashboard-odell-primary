@@ -1,0 +1,39 @@
+<table class="components-table">
+  <thead>
+    <tr>
+      <th>Pieza</th>
+      <th>Cant.</th>
+      <th>Costo</th>
+      @if (mode === 'edit') {
+        <th>Precio</th>
+        <th></th>
+      }
+    </tr>
+  </thead>
+  <tbody>
+    @for (item of components; track item.productId) {
+      <tr>
+        <td>
+          @if (mode === 'read') {
+            <a [routerLink]="['/productos', item.productId]">{{ getName(item.productId) }}</a>
+          } @else {
+            {{ getName(item.productId) }}
+          }
+        </td>
+        <td>{{ item.quantity }}</td>
+        <td>{{ getLineCost(item) | currencyArs }}</td>
+        @if (mode === 'edit') {
+          <td>{{ getLinePrice(item) | currencyArs }}</td>
+          <td>
+            <db-button
+              label="Quitar"
+              variant="delete"
+              format="inline"
+              (clicked)="remove.emit(item.productId)"
+            />
+          </td>
+        }
+      </tr>
+    }
+  </tbody>
+</table>

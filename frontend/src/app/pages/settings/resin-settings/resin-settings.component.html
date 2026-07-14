@@ -1,0 +1,120 @@
+@if (settings) {
+  <db-form>
+    <div class="panels">
+      @if (message) {
+        <p class="message">{{ message }}</p>
+      }
+
+      <section class="panel">
+        <h3>Precios de resinas por marca</h3>
+        <p class="panel-desc">
+          Precio por litro según marca y tipo de resina. Se usa al cargar insumos y calcular costos de productos en resina.
+        </p>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Marca</th>
+              <th>Tipo</th>
+              <th>Precio/L</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of settings.resinPrices; track item.id) {
+              <tr [class.is-editing]="editingId === item.id">
+                @if (editingId === item.id) {
+                  <td>
+                    <db-input
+                      [(ngModel)]="editForm.brand"
+                      [name]="'editResinBrand' + item.id"
+                      placeholder="Marca"
+                    />
+                  </td>
+                  <td>
+                    <db-select
+                      [(ngModel)]="editForm.resinType"
+                      [name]="'editResinType' + item.id"
+                      [options]="resinTypeOptions"
+                    />
+                  </td>
+                  <td>
+                    <db-input
+                      type="number"
+                      [(ngModel)]="editForm.pricePerLiter"
+                      [name]="'editResinPrice' + item.id"
+                      placeholder="$/L"
+                      [min]="0"
+                    />
+                  </td>
+                  <td class="actions">
+                    <div class="db-button-group">
+                      <db-button
+                        label="Guardar"
+                        variant="primary"
+                        format="inline"
+                        (clicked)="saveEdit()"
+                      />
+                      <db-button
+                        label="Cancelar"
+                        variant="cancel"
+                        format="inline"
+                        (clicked)="cancelEdit()"
+                      />
+                    </div>
+                  </td>
+                } @else {
+                  <td>{{ item.brand }}</td>
+                  <td>{{ item.resinType | resinTypeLabel }}</td>
+                  <td>{{ item.pricePerLiter | currencyArs }}</td>
+                  <td class="actions">
+                    <div class="db-button-group">
+                      <db-button
+                        label="Editar"
+                        variant="primary"
+                        format="inline"
+                        (clicked)="startEdit(item)"
+                      />
+                      <db-button
+                        label="Eliminar"
+                        variant="delete"
+                        format="inline"
+                        (clicked)="deleteResinPrice(item.id)"
+                      />
+                    </div>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+        <div class="inline-form">
+          <db-input
+            [(ngModel)]="newResin.brand"
+            name="newResinBrand"
+            placeholder="Marca"
+          />
+          <db-select
+            [(ngModel)]="newResin.resinType"
+            name="newResinType"
+            [options]="resinTypeOptions"
+          />
+          <db-input
+            type="number"
+            [(ngModel)]="newResin.pricePerLiter"
+            name="newResinPrice"
+            placeholder="$/L"
+            [min]="0"
+          />
+          <db-button
+            label="+ Agregar"
+            variant="secondary"
+            format="soft"
+            (clicked)="addResinPrice()"
+          />
+        </div>
+      </section>
+    </div>
+  </db-form>
+} @else {
+  <db-state-message [loading]="true" loadingMessage="Cargando configuración..." />
+}

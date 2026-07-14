@@ -1,0 +1,27 @@
+@use './app/shared/styles/variables';
+@use './app/shared/styles/buttons';
+@use './app/shared/styles/forms';
+@use './app/shared/styles/modal';
+@use './app/shared/styles/page';
+@use './app/shared/styles/badges';
+@use './app/shared/styles/pricing';
+@use './app/shared/styles/tables';
+@use './app/shared/styles/cards';
+@use './app/shared/styles/status';
+@use './app/shared/styles/priority';
+@use './app/shared/styles/listings';
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  font-family: 'Inter', 'Segoe UI', system-ui, -apple-system, sans-serif;
+  background: variables.$color-surface-subtle;
+  color: variables.$color-text;
+  -webkit-font-smoothing: antialiased;
+}

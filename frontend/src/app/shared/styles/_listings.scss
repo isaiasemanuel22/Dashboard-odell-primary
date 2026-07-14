@@ -1,0 +1,107 @@
+@use 'variables' as *;
+
+@mixin list-grid($min: 300px) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax($min, 1fr));
+  gap: 1.25rem;
+}
+
+.products-grid {
+  @include list-grid(300px);
+}
+
+.customers-grid {
+  @include list-grid(320px);
+}
+
+.jobs-grid {
+  @include list-grid(280px);
+}
+
+.low-stock {
+  background: #fffbeb;
+}
+
+.table-card .actions,
+.data-table .actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.panel-desc {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: $color-text-muted;
+}
+
+.panel-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+
+  h3 {
+    margin: 0 0 0.35rem;
+  }
+}
+
+.empty-group {
+  margin: 0;
+  font-size: 0.875rem;
+  color: $color-text-subtle;
+}
+
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+  margin-top: 1rem;
+
+  db-input,
+  db-select {
+    flex: 1;
+    min-width: 140px;
+  }
+
+  .btn {
+    flex-shrink: 0;
+  }
+}
+
+.item-line {
+  font-size: 0.8rem;
+  color: $color-text-label;
+}
+
+.table-card small,
+.data-table small {
+  display: block;
+  color: $color-text-subtle;
+  font-size: 0.75rem;
+  margin-top: 0.15rem;
+}
+
+.order-link,
+.btn-link,
+.product-link {
+  color: $color-primary;
+  font-weight: 500;
+  font-size: 0.8rem;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.item-service {
+  color: $color-text-subtle;
+  font-size: 0.75rem;
+  margin-right: 0.25rem;
+}
+
+.order-notes {
+  color: $color-text-subtle;
+  font-style: italic;
+}

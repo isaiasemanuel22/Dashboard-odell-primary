@@ -1,0 +1,17 @@
+.orders-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.25rem;
+}
+
+.orders-list {
+  display: block;
+  height: min(70vh, 900px);
+  margin-top: 1rem;
+
+  app-order-card {
+    display: block;
+    margin-bottom: 1rem;
+  }
+}

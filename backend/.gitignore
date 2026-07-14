@@ -1,0 +1,8 @@
+node_modules
+dist
+uploads
+.env
+generated
+firebase-service-account.json
+
+/generated/prisma

@@ -1,0 +1,27 @@
+<header class="page-header">
+  <div>
+    <h2>Ajustes</h2>
+    <p>Configuración general del emprendimiento</p>
+  </div>
+  <db-button
+    label="Resetear"
+    variant="delete"
+    format="soft"
+    (clicked)="openResetModal()"
+  />
+</header>
+
+<div class="settings-shell">
+  <nav class="settings-nav">
+    <a routerLink="valores-generales" routerLinkActive="active">
+      Valores generales
+    </a>
+    <a routerLink="filamento" routerLinkActive="active">Filamento</a>
+    <a routerLink="resina" routerLinkActive="active">Resina</a>
+    <a routerLink="impresos" routerLinkActive="active">Impresos</a>
+    <a routerLink="ganancias" routerLinkActive="active">Ganancias</a>
+  </nav>
+  <div class="settings-content">
+    <router-outlet />
+  </div>
+</div>

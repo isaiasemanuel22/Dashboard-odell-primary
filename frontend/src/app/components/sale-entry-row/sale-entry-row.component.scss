@@ -1,0 +1,20 @@
+@use '../../shared/styles/variables' as *;
+
+:host {
+  display: contents;
+}
+
+.sale-entry-row {
+  &__items {
+    margin: 0;
+    padding-left: 1rem;
+    list-style: disc;
+  }
+
+  &__customer {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.75rem;
+    color: $color-text-subtle;
+  }
+}

@@ -1,0 +1,23 @@
+<div class="table-card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Origen</th>
+        <th>Fecha</th>
+        <th>Detalle</th>
+        <th>Total</th>
+        <th class="actions">Acciones</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (entry of entries; track entry.id) {
+        <app-sale-entry-row
+          [entry]="entry"
+          (edit)="edit.emit($event)"
+          (delete)="delete.emit($event)"
+        />
+      }
+    </tbody>
+  </table>
+</div>

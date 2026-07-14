@@ -1,0 +1,171 @@
+@if (loading) {
+  <db-skeleton variant="detail" />
+} @else {
+  <db-state-message
+    [loading]="false"
+    [empty]="notFound || !product"
+    emptyMessage="Producto no encontrado."
+  >
+    <db-button
+      emptyActions
+      label="Volver al catálogo"
+      variant="secondary"
+      format="soft"
+      routerLink="/productos"
+    />
+  </db-state-message>
+}
+
+@if (!loading && product && !notFound) {
+  <header class="page-header detail-header">
+    <div>
+      <a routerLink="/productos" class="back-link">← Productos</a>
+      <div class="title-row">
+        <h2>{{ product.name }}</h2>
+        <app-product-badges
+          [type]="product.type"
+          [published]="product.published"
+          internalLabel="Producto interno"
+        />
+      </div>
+      <p>Actualizado: {{ product.updatedAt | dateShort }}</p>
+    </div>
+  </header>
+
+  <div class="detail-layout">
+    <section class="panel gallery-panel">
+      <div class="main-image">
+        @if (selectedImage) {
+          <img [src]="selectedImage" [alt]="product.name" />
+        } @else {
+          <div class="no-image">Sin imagen</div>
+        }
+      </div>
+      @if (product.images.length > 1) {
+        <div class="thumbnails">
+          @for (image of product.images; track image; let i = $index) {
+            <db-button
+              format="bare"
+              extraClass="thumb"
+              [active]="selectedImageIndex === i"
+              [ariaLabel]="product.name + ' ' + (i + 1)"
+              (clicked)="selectImage(i)"
+            >
+              <img [src]="image" [alt]="product.name + ' ' + (i + 1)" />
+            </db-button>
+          }
+        </div>
+      }
+    </section>
+
+    <div class="detail-panels">
+      <section class="panel">
+        <h3>Precios</h3>
+        <app-product-pricing
+          layout="grid"
+          [price]="product.price"
+          [cost]="product.cost"
+          [profit]="product.profit"
+          [showMargin]="true"
+          priceLabel="Precio de venta"
+        />
+      </section>
+
+      <section class="panel">
+        <h3>Información general</h3>
+        <dl class="detail-list">
+          <div>
+            <dt>Tamaño</dt>
+            <dd>{{ product.size }}</dd>
+          </div>
+          @if (categoryNames.length) {
+            <div>
+              <dt>Categorías</dt>
+              <dd>
+                <div class="tag-list">
+                  @for (name of categoryNames; track name) {
+                    <span class="tag">{{ name }}</span>
+                  }
+                </div>
+              </dd>
+            </div>
+          }
+        </dl>
+      </section>
+
+      @if (hasComponents) {
+        <section class="panel">
+          <h3>Piezas incluidas</h3>
+          <app-product-components-table
+            mode="read"
+            [components]="product.components"
+            [catalog]="catalogProducts"
+          />
+          @if (product.assemblyTimeHours > 0) {
+            <p class="assembly-note">Tiempo de armado: {{ product.assemblyTimeHours }} h</p>
+          }
+        </section>
+      }
+
+      @if (isProduct3D(product) && !hasComponents) {
+        <section class="panel">
+          <h3>Producción 3D</h3>
+          <dl class="detail-list">
+            @if (product.brand) {
+              <div>
+                <dt>Marca</dt>
+                <dd>{{ product.brand }}</dd>
+              </div>
+            }
+            @if (product.filamentType) {
+              <div>
+                <dt>Tipo de filamento</dt>
+                <dd>{{ product.filamentType | filamentTypeLabel }}</dd>
+              </div>
+            }
+            @if (product.resinType) {
+              <div>
+                <dt>Tipo de resina</dt>
+                <dd>{{ product.resinType | resinTypeLabel }}</dd>
+              </div>
+            }
+            <div>
+              <dt>Peso</dt>
+              <dd>{{ product.grams }} g</dd>
+            </div>
+            <div>
+              <dt>Tiempo de impresión</dt>
+              <dd>{{ product.printTimeHours }} h</dd>
+            </div>
+            <div>
+              <dt>Tiempo de trabajo</dt>
+              <dd>{{ product.workTimeHours }} h</dd>
+            </div>
+          </dl>
+        </section>
+      }
+    </div>
+
+    <footer class="panel detail-actions">
+      <db-button
+        [label]="publishLoading ? 'Guardando...' : publishActionLabel"
+        [variant]="isPublished ? 'secondary' : 'primary'"
+        format="solid"
+        [disabled]="publishLoading"
+        (clicked)="togglePublished()"
+      />
+      <db-button
+        label="Editar producto"
+        variant="primary"
+        format="solid"
+        (clicked)="openEdit()"
+      />
+      <db-button
+        label="Eliminar"
+        variant="delete"
+        format="solid"
+        (clicked)="deleteProduct()"
+      />
+    </footer>
+  </div>
+}

@@ -1,0 +1,9 @@
+@use '../styles/db-form';
+
+:host {
+  display: inline-flex;
+}
+
+label {
+  cursor: inherit;
+}

@@ -1,0 +1,20 @@
+@use '../../shared/styles/variables' as *;
+
+:host {
+  display: contents;
+}
+
+.sale-cart-line {
+  &__qty {
+    width: 4.5rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid $color-border-input;
+    border-radius: $radius-sm;
+    font: inherit;
+  }
+
+  &__actions {
+    text-align: right;
+    white-space: nowrap;
+  }
+}

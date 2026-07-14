@@ -1,0 +1,36 @@
+@use 'variables' as *;
+
+@mixin priority-accent {
+  &.priority-high {
+    --priority-color: #ef4444;
+    --priority-bg: #fee2e2;
+    border-left-color: #ef4444;
+  }
+
+  &.priority-medium {
+    --priority-color: #b45309;
+    --priority-bg: #fef3c7;
+    border-left-color: #f59e0b;
+  }
+
+  &.priority-normal {
+    --priority-color: $color-brand-deep;
+    --priority-bg: $color-primary-bg;
+    border-left-color: $color-primary;
+  }
+
+  &.priority-low {
+    --priority-color: #64748b;
+    --priority-bg: #f1f5f9;
+    border-left-color: #94a3b8;
+  }
+}
+
+.priority-pill {
+  font-size: 0.7rem;
+  font-weight: 600;
+  padding: 0.15rem 0.45rem;
+  border-radius: $radius-xs;
+  background: var(--priority-bg, #f1f5f9);
+  color: var(--priority-color, #64748b);
+}

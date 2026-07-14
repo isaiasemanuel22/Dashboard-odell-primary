@@ -1,0 +1,10 @@
+<li class="sale-entry-item">
+  @if (item.productId) {
+    <a [routerLink]="['/productos', item.productId]" class="product-link">
+      {{ item.quantity }}× {{ item.productName }}
+    </a>
+  } @else {
+    <span>{{ item.quantity }}× {{ item.productName }}</span>
+  }
+  <span class="sale-entry-item__price">{{ item.lineTotal | currencyArs }}</span>
+</li>

@@ -1,0 +1,17 @@
+<article
+  class="sale-stat-card"
+  [class.sale-stat-card--accent]="variant === 'accent'"
+  [class.sale-stat-card--warning]="variant === 'warning'"
+>
+  <span class="sale-stat-card__label">{{ label }}</span>
+  <strong class="sale-stat-card__value">
+    @if (currency) {
+      {{ value | currencyArs }}
+    } @else {
+      {{ value }}
+    }
+  </strong>
+  @if (detail) {
+    <small class="sale-stat-card__detail">{{ detail }}</small>
+  }
+</article>

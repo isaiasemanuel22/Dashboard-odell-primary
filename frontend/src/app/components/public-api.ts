@@ -1,0 +1,31 @@
+export * from './dashboard-form/public-api';
+export * from './db-button';
+
+// Listados y UI compartida
+export * from './db-state-message/db-state-message.component';
+export * from './db-skeleton/db-skeleton.component';
+export * from './db-service-badge/db-service-badge.component';
+export type { DbServiceBadgeVariant } from './db-service-badge/db-service-badge.component';
+export * from './db-service-badges/db-service-badges.component';
+export * from './db-status-badge/db-status-badge.component';
+export * from './db-stock-badge/db-stock-badge.component';
+export * from './db-list-toolbar/db-list-toolbar.component';
+export * from './product-badges/product-badges.component';
+export * from './product-pricing/product-pricing.component';
+export * from './product-components-table/product-components-table.component';
+export * from './product-card/product-card.component';
+export * from './customer-card/customer-card.component';
+export * from './print-job-card/print-job-card.component';
+export * from './order-card/order-card.component';
+export * from './orders-table/orders-table.component';
+export * from './sales-table/sales-table.component';
+export * from './sale-stat-card/sale-stat-card.component';
+export * from './sales-stats-grid/sales-stats-grid.component';
+export * from './dashboard-monthly-trends/dashboard-monthly-trends.component';
+export * from './sale-entry-row/sale-entry-row.component';
+export * from './sale-entry-item/sale-entry-item.component';
+export * from './sale-source-badge/sale-source-badge.component';
+export * from './sale-cart-line/sale-cart-line.component';
+export type { SaleCartLine } from './sale-cart-line/sale-cart-line.component';
+export * from './materials-table/materials-table.component';
+export * from './supplies-table/supplies-table.component';

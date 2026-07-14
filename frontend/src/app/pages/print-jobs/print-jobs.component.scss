@@ -1,0 +1,238 @@
+@use '../../shared/styles/variables' as *;
+@use '../../shared/styles/priority' as priority;
+
+.status-notice {
+  margin: 0 0 1rem;
+  padding: 0.65rem 0.85rem;
+  font-size: 0.875rem;
+  color: $color-brand-deep;
+  background: $color-primary-bg;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+}
+
+.work-board {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(220px, 1fr));
+  gap: 0.75rem;
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+
+  &--updating {
+    opacity: 0.85;
+    pointer-events: none;
+  }
+}
+
+.board-column {
+  display: flex;
+  flex-direction: column;
+  min-height: 420px;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  overflow: hidden;
+}
+
+.board-column__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.75rem 0.85rem;
+  border-bottom: 1px solid $color-border;
+  background: $color-surface-subtle;
+
+  h3 {
+    margin: 0;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $color-text;
+  }
+}
+
+.board-column__count {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: $color-text-subtle;
+  background: $color-surface;
+  border: 1px solid $color-border;
+  border-radius: 999px;
+  min-width: 1.5rem;
+  text-align: center;
+  padding: 0.1rem 0.4rem;
+}
+
+.board-column__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  padding: 0.65rem;
+  min-height: 360px;
+}
+
+.board-column__empty {
+  margin: auto;
+  font-size: 0.8rem;
+  color: $color-text-subtle;
+  text-align: center;
+}
+
+.board-column--por_hacer .board-column__header {
+  border-top: 3px solid #f59e0b;
+}
+
+.board-column--en_proceso .board-column__header {
+  border-top: 3px solid $color-primary-end;
+}
+
+.board-column--bloqueado .board-column__header {
+  border-top: 3px solid #ef4444;
+}
+
+.board-column--en_revision .board-column__header {
+  border-top: 3px solid #8b5cf6;
+}
+
+.board-column--terminado .board-column__header {
+  border-top: 3px solid #10b981;
+}
+
+.board-column--cancelado .board-column__header {
+  border-top: 3px solid #94a3b8;
+}
+
+.board-card {
+  display: flex;
+  gap: 0.35rem;
+  align-items: flex-start;
+
+  app-print-job-card {
+    flex: 1;
+    min-width: 0;
+  }
+}
+
+.board-card__handle {
+  flex-shrink: 0;
+  margin-top: 0.85rem;
+  padding: 0.15rem 0.25rem;
+  border: none;
+  background: transparent;
+  color: $color-text-subtle;
+  font-size: 0.9rem;
+  line-height: 1;
+  cursor: grab;
+  border-radius: $radius-xs;
+
+  &:hover {
+    color: $color-text-muted;
+    background: $color-surface-subtle;
+  }
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.board-card.cdk-drag-preview {
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+}
+
+.board-column__body.cdk-drop-list-dragging .board-card:not(.cdk-drag-placeholder) {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.cdk-drag-placeholder {
+  opacity: 0.35;
+}
+
+.backlog-section {
+  margin-top: 0.5rem;
+}
+
+.backlog-section__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h3 {
+    margin: 0 0 0.35rem;
+  }
+}
+
+.backlog-section__count {
+  flex-shrink: 0;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: $color-text-muted;
+  background: $color-surface-subtle;
+  border-radius: 999px;
+  padding: 0.25rem 0.65rem;
+}
+
+.backlog-table-wrap {
+  overflow-x: auto;
+}
+
+.backlog-table {
+  min-width: 640px;
+
+  tbody {
+    min-height: 48px;
+  }
+}
+
+.backlog-table__priority-col {
+  width: 5.5rem;
+  white-space: nowrap;
+}
+
+.backlog-row {
+  @include priority.priority-accent;
+  box-shadow: inset 4px 0 0 var(--priority-color, #94a3b8);
+
+  td {
+    vertical-align: middle;
+  }
+}
+
+.backlog-table__priority-col {
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+}
+
+.backlog-row.cdk-drag-preview {
+  display: table;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.18);
+  background: $color-surface;
+}
+
+.backlog-table tbody.cdk-drop-list-dragging .backlog-row:not(.cdk-drag-placeholder) {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+@media (max-width: 1400px) {
+  .work-board {
+    grid-template-columns: repeat(3, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .work-board {
+    grid-template-columns: repeat(2, minmax(240px, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .work-board {
+    grid-template-columns: 1fr;
+  }
+}

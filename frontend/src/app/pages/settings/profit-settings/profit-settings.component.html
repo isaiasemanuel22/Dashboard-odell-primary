@@ -1,0 +1,59 @@
+@if (settings) {
+  <db-form>
+    <div class="panels">
+      @if (message) {
+        <p class="message">{{ message }}</p>
+      }
+
+      <section class="panel">
+        <h3>Márgenes de ganancia por servicio</h3>
+        <p class="panel-desc">
+          Porcentaje de ganancia sobre el precio de venta. El sistema calcula
+          <strong>precio = costo ÷ (1 − margen/100)</strong> al crear o editar productos,
+          salvo que indiques un precio sugerido manual.
+        </p>
+
+        <db-form-grid [columns]="3">
+          @for (field of marginFields; track field.service) {
+            <db-input
+              [label]="field.label + ' (%)'"
+              type="number"
+              [ngModel]="marginValue(field.service)"
+              (ngModelChange)="setMargin(field.service, $event)"
+              [name]="'margin-' + field.service"
+              [min]="0"
+              [max]="99"
+              [step]="1"
+            />
+          }
+        </db-form-grid>
+
+        <ul class="margin-hints">
+          @for (field of marginFields; track field.service) {
+            <li>
+              <strong>{{ field.label }}:</strong> {{ field.hint }}
+              @if (marginValue(field.service) > 0) {
+                <span class="margin-example">
+                  Ej.: costo $1.000 → precio
+                  {{ examplePrice(1000, marginValue(field.service)) | number:'1.0-0' }}
+                </span>
+              }
+            </li>
+          }
+        </ul>
+
+        <div class="save-row">
+          <db-button
+            [label]="saving ? 'Guardando...' : 'Guardar márgenes'"
+            variant="primary"
+            format="solid"
+            [disabled]="saving"
+            (clicked)="saveMargins()"
+          />
+        </div>
+      </section>
+    </div>
+  </db-form>
+} @else {
+  <db-state-message [loading]="true" loadingMessage="Cargando márgenes..." />
+}

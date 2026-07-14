@@ -1,0 +1,45 @@
+@if (label) {
+  <db-form-field
+    [label]="label"
+    [hint]="hint"
+    [error]="error"
+    [required]="required"
+    [forId]="inputId"
+  >
+    <input
+      [id]="inputId"
+      [class]="inputClass"
+      [type]="type"
+      [name]="name"
+      [placeholder]="placeholder"
+      [required]="required"
+      [readonly]="readonly"
+      [disabled]="disabled"
+      [min]="min"
+      [max]="max"
+      [step]="step"
+      [attr.list]="list"
+      [ngModel]="value"
+      (ngModelChange)="onInput($event)"
+      (blur)="onBlur()"
+    />
+  </db-form-field>
+} @else {
+  <input
+    [id]="inputId"
+    [class]="inputClass"
+    [type]="type"
+    [name]="name"
+    [placeholder]="placeholder"
+    [required]="required"
+    [readonly]="readonly"
+    [disabled]="disabled"
+    [min]="min"
+    [max]="max"
+    [step]="step"
+    [attr.list]="list"
+    [ngModel]="value"
+    (ngModelChange)="onInput($event)"
+    (blur)="onBlur()"
+  />
+}

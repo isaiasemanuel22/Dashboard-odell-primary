@@ -1,0 +1,53 @@
+<tr class="sale-entry-row">
+  <td>
+    @if (entry.orderId) {
+      <a [routerLink]="['/pedidos', entry.orderId]" class="order-link">
+        {{ entry.saleId }}
+      </a>
+    } @else {
+      <strong>{{ entry.saleId }}</strong>
+    }
+  </td>
+  <td>
+    <app-sale-source-badge [source]="entry.source" />
+  </td>
+  <td>{{ entry.soldAt | dateShort }}</td>
+  <td>
+    <ul class="sale-entry-row__items">
+      @for (item of entry.items; track $index) {
+        <app-sale-entry-item [item]="item" />
+      }
+    </ul>
+    @if (entry.customerName && entry.source === SaleSource.ORDER) {
+      <small class="sale-entry-row__customer">Cliente: {{ entry.customerName }}</small>
+    }
+  </td>
+  <td>{{ entry.total | currencyArs }}</td>
+  <td class="actions">
+    @if (entry.editable) {
+      <div class="db-button-group">
+        <db-button
+          label="Editar"
+          variant="secondary"
+          format="inline"
+          (clicked)="edit.emit(entry)"
+        />
+        <db-button
+          label="Eliminar"
+          variant="delete"
+          format="inline"
+          (clicked)="delete.emit(entry)"
+        />
+      </div>
+    } @else if (entry.orderId) {
+      <div class="db-button-group">
+        <db-button
+          label="Ver pedido"
+          variant="primary"
+          format="link"
+          [routerLink]="['/pedidos', entry.orderId]"
+        />
+      </div>
+    }
+  </td>
+</tr>

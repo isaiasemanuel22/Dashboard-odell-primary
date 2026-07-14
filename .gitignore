@@ -1,0 +1,26 @@
+# Dependencies
+**/node_modules
+
+# Build outputs
+backend/dist
+frontend/dist
+frontend/.angular/cache
+
+# Environment & secrets
+**/.env
+backend/firebase-service-account.json
+backend/uploads
+backend/generated
+
+# IDE / editor
+.idea/
+.cursor/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# OS
+.DS_Store
+Thumbs.db

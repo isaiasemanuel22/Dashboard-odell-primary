@@ -1,0 +1,48 @@
+@use '../../../shared/styles/variables' as *;
+
+.services-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.875rem;
+  color: $color-text-muted;
+}
+
+.order-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.order-line {
+  display: grid;
+  grid-template-columns: 140px 1fr 90px 120px auto;
+  gap: 0.75rem;
+  align-items: end;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.remove-line {
+  margin-bottom: 0.35rem;
+  color: $color-text-muted;
+
+  &:hover {
+    color: $color-error;
+  }
+}
+
+.add-line {
+  margin-top: 0.75rem;
+}
+
+.order-total {
+  margin: 1rem 0 0;
+  font-size: 0.95rem;
+  color: $color-text-label;
+
+  strong {
+    color: $color-text;
+    font-size: 1.1rem;
+  }
+}

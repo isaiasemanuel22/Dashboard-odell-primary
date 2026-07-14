@@ -1,0 +1,112 @@
+@if (loadError) {
+  <db-state-message
+    [empty]="true"
+    emptyMessage="No se pudo cargar el dashboard."
+  >
+    <p emptyActions class="hint">
+      Verificá que el backend esté corriendo:
+      <code>cd backend && npm run start:dev</code>
+    </p>
+  </db-state-message>
+} @else {
+  @if (stats$ | async; as stats) {
+    <header class="page-header">
+      <div>
+        <h2>Dashboard</h2>
+        <p>Resumen de tu emprendimiento de impresión 3D y estampados</p>
+      </div>
+    </header>
+
+    <section class="quick-actions" aria-label="Acciones rápidas">
+      <h3>Acciones rápidas</h3>
+      <div class="quick-actions__grid">
+        @for (action of quickActions; track action.id) {
+          <button
+            type="button"
+            class="quick-action"
+            (click)="openForm(action.id)"
+          >
+            <span class="quick-action__icon" aria-hidden="true">{{ action.icon }}</span>
+            <span class="quick-action__label">{{ action.label }}</span>
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="stats-grid">
+      <article class="stat-card">
+        <span class="label">Ingresos del mes</span>
+        <strong>{{ stats.monthlyRevenue | currencyArs }}</strong>
+      </article>
+      <article class="stat-card">
+        <span class="label">Pedidos totales</span>
+        <strong>{{ stats.totalOrders }}</strong>
+      </article>
+      <article class="stat-card warning">
+        <span class="label">Pendientes</span>
+        <strong>{{ stats.pendingOrders }}</strong>
+      </article>
+      <article class="stat-card accent">
+        <span class="label">En producción</span>
+        <strong>{{ stats.inProductionOrders }}</strong>
+      </article>
+      <article class="stat-card">
+        <span class="label">En proceso</span>
+        <strong>{{ stats.activePrintJobs }}</strong>
+      </article>
+      <article class="stat-card">
+        <span class="label">Por hacer (tablero)</span>
+        <strong>{{ stats.queuedPrintJobs }}</strong>
+      </article>
+      <article class="stat-card">
+        <span class="label">Clientes</span>
+        <strong>{{ stats.totalCustomers }}</strong>
+      </article>
+      <article class="stat-card danger">
+        <span class="label">Stock bajo</span>
+        <strong>{{ stats.lowStockMaterials }}</strong>
+      </article>
+    </section>
+
+    @if (stats.monthlyTrend.length) {
+      <app-dashboard-monthly-trends [trends]="stats.monthlyTrend" />
+    }
+
+    <section class="panels">
+      <article class="panel">
+        <h3>Pedidos recientes</h3>
+        @if (stats.recentOrders.length) {
+          <app-orders-table
+            [orders]="stats.recentOrders"
+            [compact]="true"
+            [embedded]="true"
+          />
+        } @else {
+          <db-state-message [empty]="true" emptyMessage="Sin pedidos abiertos." />
+        }
+      </article>
+
+      <article class="panel">
+        <h3>Pedidos por servicio</h3>
+        <div class="type-stats">
+          @for (item of stats.ordersByType; track item.type) {
+            <div class="type-bar">
+              <div class="type-info">
+                <span>{{ item.type | serviceTypeLabel }}</span>
+                <strong>{{ item.count }}</strong>
+              </div>
+              <div class="bar-track">
+                <div
+                  class="bar-fill"
+                  [style.width.%]="stats.totalOrders ? (item.count / stats.totalOrders) * 100 : 0"
+                ></div>
+              </div>
+            </div>
+          }
+        </div>
+      </article>
+    </section>
+  } @else {
+    <db-state-message [loading]="true" loadingMessage="Cargando dashboard..." />
+  }
+}

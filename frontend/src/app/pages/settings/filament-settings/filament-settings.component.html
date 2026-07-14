@@ -1,0 +1,121 @@
+@if (settings) {
+  <db-form>
+    <div class="panels">
+      @if (message) {
+        <p class="message">{{ message }}</p>
+      }
+
+      <section class="panel">
+        <h3>Precios de filamentos por marca</h3>
+        <p class="panel-desc">
+          Precio por kilogramo según marca y tipo de material. Se usa al cargar insumos y calcular costos de productos FDM.
+          Al modificar un precio, los insumos de filamento vinculados (misma marca y tipo) se actualizan automáticamente.
+        </p>
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Marca</th>
+              <th>Tipo</th>
+              <th>Precio/kg</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of settings.filamentPrices; track item.id) {
+              <tr [class.is-editing]="editingId === item.id">
+                @if (editingId === item.id) {
+                  <td>
+                    <db-input
+                      [(ngModel)]="editForm.brand"
+                      [name]="'editFilamentBrand' + item.id"
+                      placeholder="Marca"
+                    />
+                  </td>
+                  <td>
+                    <db-select
+                      [(ngModel)]="editForm.materialType"
+                      [name]="'editFilamentType' + item.id"
+                      [options]="filamentTypeOptions"
+                    />
+                  </td>
+                  <td>
+                    <db-input
+                      type="number"
+                      [(ngModel)]="editForm.pricePerKg"
+                      [name]="'editFilamentPrice' + item.id"
+                      placeholder="$/kg"
+                      [min]="0"
+                    />
+                  </td>
+                  <td class="actions">
+                    <div class="db-button-group">
+                      <db-button
+                        label="Guardar"
+                        variant="primary"
+                        format="inline"
+                        (clicked)="saveEdit()"
+                      />
+                      <db-button
+                        label="Cancelar"
+                        variant="cancel"
+                        format="inline"
+                        (clicked)="cancelEdit()"
+                      />
+                    </div>
+                  </td>
+                } @else {
+                  <td>{{ item.brand }}</td>
+                  <td>{{ item.materialType | filamentTypeLabel }}</td>
+                  <td>{{ item.pricePerKg | currencyArs }}</td>
+                  <td class="actions">
+                    <div class="db-button-group">
+                      <db-button
+                        label="Editar"
+                        variant="primary"
+                        format="inline"
+                        (clicked)="startEdit(item)"
+                      />
+                      <db-button
+                        label="Eliminar"
+                        variant="delete"
+                        format="inline"
+                        (clicked)="deleteFilamentPrice(item.id)"
+                      />
+                    </div>
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+        <div class="inline-form">
+          <db-input
+            [(ngModel)]="newFilament.brand"
+            name="newFilamentBrand"
+            placeholder="Marca"
+          />
+          <db-select
+            [(ngModel)]="newFilament.materialType"
+            name="newFilamentType"
+            [options]="filamentTypeOptions"
+          />
+          <db-input
+            type="number"
+            [(ngModel)]="newFilament.pricePerKg"
+            name="newFilamentPrice"
+            placeholder="$/kg"
+            [min]="0"
+          />
+          <db-button
+            label="+ Agregar"
+            variant="secondary"
+            format="soft"
+            (clicked)="addFilamentPrice()"
+          />
+        </div>
+      </section>
+    </div>
+  </db-form>
+} @else {
+  <db-state-message [loading]="true" loadingMessage="Cargando configuración..." />
+}

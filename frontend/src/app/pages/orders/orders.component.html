@@ -1,0 +1,62 @@
+<header class="page-header">
+  <div>
+    <h2>Pedidos</h2>
+    <p>Gestión de pedidos de impresión 3D y estampados</p>
+  </div>
+  <div class="header-actions">
+    <db-button
+      label="+ Nuevo pedido"
+      variant="primary"
+      format="solid"
+      (clicked)="openCreateOrder()"
+    />
+  </div>
+</header>
+
+<div class="orders-filters">
+  <db-list-toolbar
+    [filters]="statusFilters"
+    [activeFilter]="statusFilter"
+    [search]="search"
+    searchPlaceholder="Buscar por cliente, producto o ID..."
+    (filterChange)="setStatusFilter($event)"
+    (searchChange)="search = $event"
+  />
+
+  <db-list-toolbar
+    [filters]="serviceFilters"
+    [activeFilter]="serviceFilter"
+    [showSearch]="false"
+    (filterChange)="setServiceFilter($event)"
+  />
+</div>
+
+@if (loading) {
+  <db-skeleton variant="cards" [count]="5" />
+} @else {
+  <db-state-message
+    [loading]="false"
+    [empty]="filteredOrders.length === 0"
+    [emptyMessage]="emptyMessage"
+  >
+    <db-button
+      emptyActions
+      label="Crear primer pedido"
+      variant="primary"
+      format="solid"
+      (clicked)="openCreateOrder()"
+    />
+  </db-state-message>
+
+  @if (filteredOrders.length) {
+    <cdk-virtual-scroll-viewport itemSize="160" class="orders-list">
+      @for (order of filteredOrders; track order.id) {
+        <app-order-card
+          [order]="order"
+          (edit)="openEditOrder($event)"
+          (delete)="deleteOrder($event)"
+        />
+      }
+    </cdk-virtual-scroll-viewport>
+  }
+}

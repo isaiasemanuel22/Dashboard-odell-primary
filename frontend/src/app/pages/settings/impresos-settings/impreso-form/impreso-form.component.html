@@ -1,0 +1,68 @@
+<db-form>
+  <form (ngSubmit)="onSubmit()">
+    <db-input
+      label="Nombre"
+      [(ngModel)]="name"
+      name="name"
+      placeholder="Ej: Logo, Estampa 25×25"
+      [required]="true"
+    />
+
+    <db-select
+      label="Tipo de papel"
+      [(ngModel)]="paperType"
+      name="paperType"
+      [options]="paperTypeOptions"
+      (ngModelChange)="onDimensionsChange()"
+    />
+
+    <db-form-grid>
+      <db-input
+        label="Ancho (cm)"
+        type="number"
+        [(ngModel)]="widthCm"
+        name="widthCm"
+        [min]="0.1"
+        [step]="0.1"
+        [required]="true"
+        (ngModelChange)="onDimensionsChange()"
+      />
+      <db-input
+        label="Alto (cm)"
+        type="number"
+        [(ngModel)]="heightCm"
+        name="heightCm"
+        [min]="0.1"
+        [step]="0.1"
+        [required]="true"
+        (ngModelChange)="onDimensionsChange()"
+      />
+    </db-form-grid>
+
+    <div class="cost-preview">
+      <span>Tamaño: {{ dimensionsLabel }}</span>
+      <strong>Costo estimado del papel: {{ estimatedCost | currencyArs }}</strong>
+      <small>Calculado con los precios por m² configurados arriba</small>
+    </div>
+
+    @if (error) {
+      <db-form-error>{{ error }}</db-form-error>
+    }
+
+    <db-form-footer>
+      <db-button
+        label="Cancelar"
+        variant="cancel"
+        format="soft"
+        (clicked)="cancel.emit()"
+      />
+      <db-button
+        [label]="loading ? 'Guardando...' : (impreso ? 'Guardar cambios' : 'Crear impreso')"
+        variant="primary"
+        format="solid"
+        buttonType="submit"
+        [disabled]="loading || !name.trim() || widthCm <= 0 || heightCm <= 0"
+      />
+    </db-form-footer>
+  </form>
+</db-form>

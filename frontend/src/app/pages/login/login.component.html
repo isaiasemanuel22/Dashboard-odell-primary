@@ -1,0 +1,70 @@
+<div class="login-page">
+  <div class="login-card">
+    <div class="login-brand">
+      <img src="/logo.png" alt="Odell Dashboard" width="56" height="56" />
+      <h1>Odell Dashboard</h1>
+      <p>Iniciá sesión para continuar</p>
+    </div>
+
+    @if (!firebaseConfigured) {
+      <div class="login-alert">
+        Firebase no está configurado. Completá las claves en
+        <code>frontend/src/environments/environment.ts</code>.
+      </div>
+    } @else {
+      <db-button
+        icon="G"
+        variant="google"
+        format="soft"
+        [block]="true"
+        [label]="loading ? 'Ingresando…' : 'Continuar con Google'"
+        [disabled]="loading"
+        (clicked)="loginWithGoogle()"
+      />
+
+      <div class="login-divider">
+        <span>o con email</span>
+      </div>
+
+      <form (ngSubmit)="onSubmit()" class="login-form">
+        <label>
+          Email
+          <input
+            type="email"
+            name="email"
+            [(ngModel)]="email"
+            autocomplete="username"
+            [disabled]="loading"
+            required
+          />
+        </label>
+
+        <label>
+          Contraseña
+          <input
+            type="password"
+            name="password"
+            [(ngModel)]="password"
+            autocomplete="current-password"
+            [disabled]="loading"
+            required
+          />
+        </label>
+
+        @if (error) {
+          <p class="login-error">{{ error }}</p>
+        }
+
+        <db-button
+          variant="primary"
+          format="solid"
+          buttonType="submit"
+          [block]="true"
+          extraClass="login-submit"
+          [label]="loading ? 'Ingresando…' : 'Ingresar'"
+          [disabled]="loading"
+        />
+      </form>
+    }
+  </div>
+</div>

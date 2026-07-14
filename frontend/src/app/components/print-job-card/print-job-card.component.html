@@ -1,0 +1,37 @@
+<article
+  [class]="'list-card job-card ' + priorityClass + (compact ? ' job-card--compact' : '')"
+>
+  <div class="job-header">
+    <db-service-badge [type]="job.type" />
+    <span class="priority-pill">{{ priorityLabel }}</span>
+  </div>
+  <h3>
+    <a [routerLink]="['/pedidos', job.orderId]" class="job-order-link">
+      {{ job.productName }}
+    </a>
+  </h3>
+  <p class="customer">{{ job.customerName }}</p>
+  @if (orderStatus) {
+    <p class="order-status-line">
+      Pedido:
+      <db-status-badge
+        [statusClass]="orderStatus"
+        [label]="orderStatus | orderStatusLabel"
+      />
+    </p>
+  }
+  <div class="job-meta">
+    <span>{{ job.machine }}</span>
+    <span>{{ job.estimatedHours }}h est.</span>
+  </div>
+  @if (compact) {
+    <a [routerLink]="['/pedidos', job.orderId]" class="job-order-link job-order-link--meta">
+      Ver pedido
+    </a>
+  } @else {
+    <db-status-badge
+      [statusClass]="job.status"
+      [label]="job.status | printJobStatusLabel"
+    />
+  }
+</article>

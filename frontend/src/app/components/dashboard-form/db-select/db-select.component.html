@@ -1,0 +1,49 @@
+@if (label) {
+  <db-form-field
+    [label]="label"
+    [hint]="hint"
+    [error]="error"
+    [required]="required"
+    [forId]="selectId"
+  >
+    <select
+      [id]="selectId"
+      [class]="selectClass"
+      [name]="name"
+      [required]="required"
+      [disabled]="disabled"
+      [ngModel]="value"
+      (ngModelChange)="onSelect($event)"
+      (blur)="onBlur()"
+    >
+      @if (placeholder) {
+        <option value="" disabled>{{ placeholder }}</option>
+      }
+      @for (opt of options; track opt.value) {
+        <option [ngValue]="opt.value" [disabled]="opt.disabled ?? false">
+          {{ opt.label }}
+        </option>
+      }
+    </select>
+  </db-form-field>
+} @else {
+  <select
+    [id]="selectId"
+    [class]="selectClass"
+    [name]="name"
+    [required]="required"
+    [disabled]="disabled"
+    [ngModel]="value"
+    (ngModelChange)="onSelect($event)"
+    (blur)="onBlur()"
+  >
+    @if (placeholder) {
+      <option value="" disabled>{{ placeholder }}</option>
+    }
+    @for (opt of options; track opt.value) {
+      <option [ngValue]="opt.value" [disabled]="opt.disabled ?? false">
+        {{ opt.label }}
+      </option>
+    }
+  </select>
+}

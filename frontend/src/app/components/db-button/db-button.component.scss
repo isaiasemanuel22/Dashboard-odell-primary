@@ -1,0 +1,389 @@
+@use '../../shared/styles/variables' as *;
+
+:host {
+  display: inline-block;
+}
+
+:host(.db-button-host--block) {
+  display: block;
+  width: 100%;
+}
+
+:host:has(.db-button--overlay) {
+  position: absolute;
+  top: 2px;
+  right: 2px;
+  line-height: 0;
+}
+
+.db-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.65rem;
+  text-decoration: none;
+  box-sizing: border-box;
+  line-height: 1.2;
+}
+
+.db-button--block {
+  width: 100%;
+}
+
+@mixin action-inline {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s ease;
+
+  &:hover:not(:disabled) {
+    opacity: 0.85;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@mixin action-solid-base {
+  border-radius: $radius-sm;
+  padding: 0.55rem 1rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s ease, background 0.15s ease, color 0.15s ease,
+    border-color 0.15s ease;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@mixin action-solid {
+  @include action-solid-base;
+  border: 1px solid $color-border;
+  background: #fff;
+  color: #475569;
+
+  &:hover:not(:disabled) {
+    border-color: $color-primary;
+    color: $color-primary;
+  }
+}
+
+@mixin action-soft-base {
+  @include action-solid-base;
+  border: 1px solid $color-border;
+}
+
+// — inline —
+
+.db-button--inline.db-button--primary {
+  @include action-inline;
+  color: $color-primary;
+}
+
+.db-button--inline.db-button--delete {
+  @include action-inline;
+  color: $color-error;
+}
+
+.db-button--inline.db-button--cancel,
+.db-button--inline.db-button--secondary {
+  @include action-inline;
+  color: $color-text-muted;
+}
+
+// — solid —
+
+.db-button--solid.db-button--primary {
+  @include action-solid-base;
+  border: none;
+  background: linear-gradient(90deg, $color-primary, $color-primary-end);
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    opacity: 0.9;
+  }
+}
+
+.db-button--solid.db-button--delete {
+  @include action-solid-base;
+  border: 1px solid $color-error;
+  background: #fff;
+  color: $color-error;
+
+  &:hover:not(:disabled) {
+    background: $color-error;
+    border-color: $color-error;
+    color: #fff;
+  }
+}
+
+.db-button--solid.db-button--primary-outline {
+  @include action-solid-base;
+  border: 1px solid $color-border;
+  background: $color-surface;
+  color: $color-primary;
+
+  &:hover:not(:disabled) {
+    border-color: $color-primary;
+    background: $color-primary-bg;
+    color: $color-primary-dark;
+  }
+}
+
+.db-button--solid.db-button--cancel,
+.db-button--solid.db-button--secondary {
+  @include action-solid;
+  color: $color-text-muted;
+
+  &:hover:not(:disabled) {
+    border-color: $color-text-muted;
+    color: $color-text;
+  }
+}
+
+// — soft —
+
+.db-button--soft.db-button--primary {
+  @include action-soft-base;
+  background: $color-primary-bg;
+  color: $color-primary;
+  border-color: $color-border;
+
+  &:hover:not(:disabled) {
+    background: $color-brand-pale;
+    border-color: $color-primary;
+    color: $color-primary-dark;
+  }
+}
+
+.db-button--soft.db-button--primary-outline {
+  @include action-soft-base;
+  background: $color-surface;
+  color: $color-primary;
+  border-color: $color-border-input;
+
+  &:hover:not(:disabled) {
+    background: $color-primary-bg;
+    border-color: $color-primary;
+    color: $color-primary-dark;
+  }
+}
+
+.db-button--soft.db-button--delete {
+  @include action-soft-base;
+  background: #fef2f2;
+  color: $color-error;
+  border-color: #fecaca;
+
+  &:hover:not(:disabled) {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+  }
+}
+
+.db-button--soft.db-button--cancel,
+.db-button--soft.db-button--secondary,
+.db-button--soft.db-button--google {
+  @include action-soft-base;
+  background: $color-surface-subtle;
+  color: $color-text-label;
+
+  &:hover:not(:disabled) {
+    background: $color-brand-pale;
+    border-color: $color-border-input;
+    color: $color-text;
+  }
+}
+
+.db-button--soft.db-button--google {
+  background: $color-surface;
+  border-color: $color-border-input;
+  color: $color-text;
+  padding: 0.8rem 1rem;
+
+  &:hover:not(:disabled) {
+    background: $color-surface-muted;
+  }
+}
+
+.db-button--soft.db-button--inverse {
+  @include action-soft-base;
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.12);
+  color: $color-sidebar-text;
+
+  &:hover:not(:disabled) {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.12);
+    color: $color-sidebar-text;
+  }
+}
+
+// — link —
+
+.db-button--link {
+  @include action-inline;
+  color: $color-primary;
+
+  &:hover:not(:disabled) {
+    text-decoration: underline;
+    opacity: 1;
+  }
+}
+
+// — icon —
+
+.db-button--icon {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1;
+  padding: 0.25rem;
+  color: $color-text-muted;
+  transition: color 0.15s ease, opacity 0.15s ease;
+
+  &:hover:not(:disabled) {
+    color: $color-text;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.db-button--icon.db-button--delete {
+  &:hover:not(:disabled) {
+    color: $color-error;
+  }
+}
+
+// — filter —
+
+.db-button--filter {
+  padding: 0.45rem 0.9rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-pill;
+  background: #fff;
+  color: $color-text-muted;
+  font-weight: 500;
+  font-size: 0.875rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) {
+    border-color: $color-primary;
+    color: $color-primary;
+  }
+
+  &.db-button--active {
+    background: linear-gradient(90deg, $color-primary, $color-primary-end);
+    border-color: transparent;
+    color: #fff;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// — overlay —
+
+.db-button--overlay {
+  width: 20px;
+  height: 20px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.6);
+  color: #fff;
+  font-size: 0.65rem;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// — chip —
+
+.db-button--chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(79, 70, 229, 0.15);
+  color: $color-primary-dark;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+  font-family: inherit;
+
+  &:hover:not(:disabled) {
+    background: rgba(79, 70, 229, 0.25);
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// — bare (estilos definidos por el contenedor) —
+
+.db-button--bare {
+  border: none;
+  background: none;
+  padding: 0;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: stretch;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+// — icons —
+
+.db-button__icon--google {
+  display: grid;
+  place-items: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #dadce0;
+  color: #4285f4;
+  font-weight: 700;
+  font-size: 0.85rem;
+  line-height: 1;
+  flex-shrink: 0;
+}

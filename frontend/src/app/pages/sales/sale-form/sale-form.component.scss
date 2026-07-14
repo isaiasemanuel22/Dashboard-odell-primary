@@ -1,0 +1,42 @@
+@use '../../../shared/styles/variables' as *;
+
+.cart-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 0.5rem;
+}
+
+.empty-cart {
+  margin: 0;
+  font-size: 0.875rem;
+  color: $color-text-muted;
+}
+
+.cart-table-wrap {
+  overflow-x: auto;
+}
+
+.cart-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th,
+  td {
+    padding: 0.65rem 0.5rem;
+    border-bottom: 1px solid $color-border;
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  th {
+    color: $color-text-label;
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+
+  tfoot td {
+    border-bottom: none;
+    padding-top: 0.85rem;
+  }
+}

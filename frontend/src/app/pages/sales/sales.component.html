@@ -1,0 +1,71 @@
+<header class="page-header">
+  <div>
+    <h2>Ventas</h2>
+    <p>Ingresos y ventas del mes corriente</p>
+  </div>
+  <div class="header-actions">
+    <db-button
+      label="+ Agregar venta"
+      variant="primary"
+      format="solid"
+      (clicked)="openCreateSale()"
+    />
+  </div>
+</header>
+
+@if (loadError) {
+  <db-state-message
+    [empty]="true"
+    emptyMessage="No se pudo cargar la información de ventas."
+  >
+    <db-button
+      emptyActions
+      label="Reintentar"
+      variant="secondary"
+      format="soft"
+      (clicked)="loadData()"
+    />
+  </db-state-message>
+} @else if (loading) {
+  <db-state-message [loading]="true" loadingMessage="Cargando ventas..." />
+} @else {
+  @if (stats) {
+    <app-sales-stats-grid [stats]="stats" />
+  }
+
+  <section class="panel">
+    <div class="panel-header-row">
+      <div>
+        <h3>Listado de ventas del mes</h3>
+        <p class="panel-desc">
+          Ventas de mostrador y pedidos entregados con fecha de entrega en el mes corriente.
+        </p>
+      </div>
+    </div>
+
+    <db-list-toolbar
+      [filters]="filters"
+      [activeFilter]="salesFilter"
+      [search]="search"
+      searchPlaceholder="Buscar por ID, producto o cliente..."
+      (filterChange)="setSalesFilter($event)"
+      (searchChange)="search = $event"
+    />
+
+    @if (filteredEntries.length) {
+      <app-sales-table
+        [entries]="filteredEntries"
+        (edit)="openEditSale($event)"
+        (delete)="deleteSale($event)"
+      />
+    } @else {
+      <p class="empty-group">
+        {{
+          search.trim() || salesFilter !== 'all'
+            ? 'No hay ventas que coincidan con el filtro.'
+            : 'No hay ventas registradas en el mes corriente.'
+        }}
+      </p>
+    }
+  </section>
+}

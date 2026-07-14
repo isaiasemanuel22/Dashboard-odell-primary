@@ -1,0 +1,51 @@
+@use 'variables' as *;
+
+.badge,
+.type-badge {
+  background: $color-primary-bg;
+  color: $color-primary-dark;
+  padding: 0.25rem 0.65rem;
+  border-radius: $radius-xs;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.type-badge--overlay {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  background: rgba(255, 255, 255, 0.95);
+  color: $color-primary;
+  padding: 0.2rem 0.6rem;
+}
+
+.internal-badge {
+  background: $color-warning-bg;
+  color: $color-warning-text;
+  padding: 0.25rem 0.65rem;
+  border-radius: $radius-xs;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.internal-badge--overlay {
+  position: absolute;
+  top: 0.75rem;
+  right: 0.75rem;
+  padding: 0.2rem 0.6rem;
+}
+
+.tag {
+  background: $color-primary-bg;
+  color: $color-primary-dark;
+  padding: 0.2rem 0.55rem;
+  border-radius: $radius-pill;
+  font-size: 0.8rem;
+  font-weight: 500;
+}
+
+.tag-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}

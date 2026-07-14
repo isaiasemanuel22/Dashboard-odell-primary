@@ -1,0 +1,25 @@
+<section class="monthly-trends" aria-label="Evolución mensual">
+  <article class="panel trend-panel">
+    <header class="trend-panel__header">
+      <div>
+        <h3>Pedidos recibidos</h3>
+        <p>Volumen de pedidos ingresados mes a mes</p>
+      </div>
+    </header>
+    <div class="chart-container">
+      <canvas #ordersCanvas aria-label="Gráfico de pedidos recibidos por mes"></canvas>
+    </div>
+  </article>
+
+  <article class="panel trend-panel">
+    <header class="trend-panel__header">
+      <div>
+        <h3>Ingresos totales</h3>
+        <p>Ventas de mostrador + pedidos completados o entregados</p>
+      </div>
+    </header>
+    <div class="chart-container">
+      <canvas #revenueCanvas aria-label="Gráfico de ingresos totales por mes"></canvas>
+    </div>
+  </article>
+</section>

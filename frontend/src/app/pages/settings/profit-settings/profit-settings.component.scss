@@ -1,0 +1,36 @@
+@use '../../../shared/styles/variables' as *;
+
+.panel-desc {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: $color-text-muted;
+  line-height: 1.5;
+}
+
+.margin-hints {
+  margin: 1rem 0 0;
+  padding-left: 1.25rem;
+  font-size: 0.875rem;
+  color: $color-text-label;
+
+  li + li {
+    margin-top: 0.5rem;
+  }
+}
+
+.margin-example {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.8rem;
+  color: $color-text-subtle;
+}
+
+.save-row {
+  margin-top: 1rem;
+}
+
+.message {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: $color-primary;
+}

@@ -1,0 +1,13 @@
+@use '../styles/db-form';
+
+:host {
+  display: block;
+}
+
+.db-textarea-counter {
+  display: block;
+  margin-top: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--db-field-hint-color, #64748b);
+  text-align: right;
+}

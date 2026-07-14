@@ -1,0 +1,15 @@
+<div [ngClass]="modalClass()">
+  <header [ngClass]="headerClass()">
+    <h3>{{ title }}</h3>
+    <db-button
+      label="✕"
+      variant="secondary"
+      format="icon"
+      ariaLabel="Cerrar"
+      (clicked)="close.emit()"
+    />
+  </header>
+  <div class="modal__body">
+    <ng-content />
+  </div>
+</div>

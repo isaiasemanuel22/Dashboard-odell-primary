@@ -1,0 +1,26 @@
+<div [class]="layout === 'grid' ? 'pricing-grid' : 'pricing'">
+  <div [class]="layout === 'grid' ? 'pricing-item' : ''">
+    <small>{{ priceLabel }}</small>
+    <strong>{{ price | currencyArs }}</strong>
+  </div>
+  <div [class]="layout === 'grid' ? 'pricing-item' : ''">
+    <small>{{ costLabel }}</small>
+    @if (layout === 'grid') {
+      <span>{{ cost | currencyArs }}</span>
+    } @else {
+      <span>{{ cost | currencyArs }}</span>
+    }
+  </div>
+  <div [class]="layout === 'grid' ? 'pricing-item' : ''">
+    <small>{{ profitLabel }}</small>
+    <span class="profit" [class.negative]="profit < 0">
+      {{ profit | currencyArs }}
+    </span>
+  </div>
+  @if (showMargin && marginPercent !== null) {
+    <div class="pricing-item">
+      <small>Margen</small>
+      <span [class.negative]="profit < 0">{{ marginPercent }}%</span>
+    </div>
+  }
+</div>

@@ -1,0 +1,10 @@
+<input
+  class="db-checkbox__input"
+  type="checkbox"
+  [id]="checkboxId"
+  [name]="name"
+  [checked]="checked"
+  [disabled]="disabled"
+  (change)="onToggle($event)"
+/>
+<label [attr.for]="checkboxId">{{ label }}</label>

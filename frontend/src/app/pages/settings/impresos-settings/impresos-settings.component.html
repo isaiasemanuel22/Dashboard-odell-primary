@@ -1,0 +1,119 @@
+@if (settings) {
+  <db-form>
+    <div class="panels">
+      @if (message) {
+        <p class="message">{{ message }}</p>
+      }
+
+      <section class="panel">
+        <h3>Precio del papel ($/m²)</h3>
+        <p class="panel-desc">
+          Costo del material por metro cuadrado. Se aplica al calcular el precio de cada tamaño de impreso.
+        </p>
+        <db-form-grid [columns]="3">
+          <db-input
+            label="Papel sublimación"
+            type="number"
+            [(ngModel)]="settings.paperPricesPerSqm.sublimacion"
+            name="paperSublimacion"
+            [min]="0"
+            [step]="0.01"
+          />
+          <db-input
+            label="Papel DTF"
+            type="number"
+            [(ngModel)]="settings.paperPricesPerSqm.dtf"
+            name="paperDtf"
+            [min]="0"
+            [step]="0.01"
+          />
+          <db-input
+            label="Papel DTF UV"
+            type="number"
+            [(ngModel)]="settings.paperPricesPerSqm.dtfUv"
+            name="paperDtfUv"
+            [min]="0"
+            [step]="0.01"
+          />
+        </db-form-grid>
+        <div class="save-row">
+          <db-button
+            [label]="savingPaper ? 'Guardando...' : 'Guardar precios del papel'"
+            variant="primary"
+            format="solid"
+            [disabled]="savingPaper"
+            (clicked)="savePaperPrices()"
+          />
+        </div>
+      </section>
+
+      <section class="panel panel-header-row">
+        <div>
+          <h3>Tamaños de impresos</h3>
+          <p class="panel-desc">
+            Catálogo de tamaños (logo, estampas, etc.) con costo calculado según tipo de papel y dimensiones.
+          </p>
+        </div>
+        <db-button
+          label="+ Nuevo impreso"
+          variant="primary"
+          format="solid"
+          (clicked)="openCreate()"
+        />
+      </section>
+
+      @if (loadingImpresos) {
+        <db-state-message [loading]="true" loadingMessage="Cargando impresos..." />
+      } @else {
+        @for (group of paperGroups; track group.type) {
+          <section class="panel">
+            <h4>{{ group.label }}</h4>
+            @if (group.items.length === 0) {
+              <p class="empty-group">Sin impresos de este tipo.</p>
+            } @else {
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>Nombre</th>
+                    <th>Tamaño</th>
+                    <th>Área (m²)</th>
+                    <th>Costo papel</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (item of group.items; track item.id) {
+                    <tr>
+                      <td><strong>{{ item.name }}</strong></td>
+                      <td>{{ formatDimensions(item) }}</td>
+                      <td>{{ item.areaSqm }}</td>
+                      <td>{{ item.paperCost | currencyArs }}</td>
+                      <td class="actions">
+                        <div class="db-button-group">
+                          <db-button
+                            label="Editar"
+                            variant="primary"
+                            format="inline"
+                            (clicked)="openEdit(item)"
+                          />
+                          <db-button
+                            label="Eliminar"
+                            variant="delete"
+                            format="inline"
+                            (clicked)="deleteImpreso(item)"
+                          />
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            }
+          </section>
+        }
+      }
+    </div>
+  </db-form>
+} @else {
+  <db-state-message [loading]="true" loadingMessage="Cargando configuración..." />
+}

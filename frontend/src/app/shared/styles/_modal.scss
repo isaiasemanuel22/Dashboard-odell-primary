@@ -1,0 +1,94 @@
+@use 'variables' as *;
+
+@use 'variables' as *;
+
+.form-dialog-backdrop {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+.cdk-overlay-pane.form-dialog-panel {
+  width: 100%;
+  max-height: 90vh;
+
+  .modal {
+    max-height: 90vh;
+  }
+}
+
+.cdk-overlay-pane.form-dialog-panel--sm {
+  max-width: 420px;
+}
+
+.cdk-overlay-pane.form-dialog-panel--md {
+  max-width: 480px;
+}
+
+.cdk-overlay-pane.form-dialog-panel--lg {
+  max-width: 640px;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: 1rem;
+}
+
+.modal {
+  background: #fff;
+  border-radius: $radius-lg;
+  width: 100%;
+  box-shadow: $shadow-modal;
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+
+  &--sm {
+    max-width: 420px;
+  }
+
+  &--md {
+    max-width: 480px;
+  }
+
+  &--lg {
+    max-width: 640px;
+  }
+}
+
+.modal__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.25rem 1.5rem;
+  border-bottom: 1px solid $color-border;
+  flex-shrink: 0;
+
+  h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    color: $color-text;
+  }
+
+  &--sticky {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 1;
+  }
+}
+
+.modal__body {
+  padding: 1.5rem;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal__footer {
+  padding: 0 1.5rem 1.5rem;
+  flex-shrink: 0;
+}

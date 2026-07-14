@@ -1,0 +1,120 @@
+@use 'variables' as *;
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+
+  h2 {
+    margin: 0;
+    font-size: 1.75rem;
+    color: $color-text;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    color: $color-text-muted;
+  }
+}
+
+.header-actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.toolbar-right {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.type-filters {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.panel,
+.table-card {
+  background: $color-surface;
+  border-radius: $radius-md;
+  padding: 1.25rem;
+  box-shadow: $shadow-card;
+
+  h3 {
+    margin: 0 0 1rem;
+    font-size: 1rem;
+    color: $color-text;
+  }
+}
+
+.table-card {
+  padding: 1rem;
+  overflow-x: auto;
+}
+
+.panels {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.message {
+  background: #ecfdf5;
+  color: $color-success;
+  padding: 0.75rem 1rem;
+  border-radius: $radius-sm;
+  margin: 0;
+  font-size: 0.875rem;
+}
+
+.loading,
+.empty {
+  padding: 3rem;
+  text-align: center;
+  color: $color-text-muted;
+
+  p {
+    margin-bottom: 1rem;
+  }
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+
+  th,
+  td {
+    padding: 0.65rem 0.5rem;
+    text-align: left;
+    border-bottom: 1px solid $color-border;
+  }
+
+  th {
+    color: $color-text-muted;
+    font-weight: 600;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+}
+
+.save-row {
+  display: flex;
+  justify-content: flex-end;
+}

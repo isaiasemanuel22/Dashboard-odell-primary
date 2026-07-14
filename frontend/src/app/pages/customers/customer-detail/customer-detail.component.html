@@ -1,0 +1,105 @@
+<db-state-message
+  [loading]="loading"
+  [empty]="!loading && (notFound || !customer)"
+  loadingMessage="Cargando cliente..."
+  emptyMessage="Cliente no encontrado."
+>
+  <db-button
+    emptyActions
+    label="Volver a clientes"
+    variant="secondary"
+    format="soft"
+    routerLink="/clientes"
+  />
+</db-state-message>
+
+@if (!loading && customer && !notFound) {
+  <header class="page-header detail-header">
+    <div>
+      <a routerLink="/clientes" class="back-link">← Clientes</a>
+      <div class="title-row">
+        <div class="avatar">{{ customer.name.charAt(0) }}</div>
+        <div>
+          <h2>{{ customer.name }}</h2>
+          @if (customer.company) {
+            <p class="company">{{ customer.company }}</p>
+          }
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <div class="detail-layout">
+    <section class="panel customer-info">
+      <h3>Contacto</h3>
+      <dl class="detail-list">
+        <div>
+          <dt>Email</dt>
+          <dd>{{ customer.email }}</dd>
+        </div>
+        <div>
+          <dt>Teléfono</dt>
+          <dd>{{ customer.phone }}</dd>
+        </div>
+        <div>
+          <dt>Cliente desde</dt>
+          <dd>{{ customer.createdAt | dateShort }}</dd>
+        </div>
+      </dl>
+    </section>
+
+    <div class="detail-main">
+      <div class="stats-row">
+        <div class="stat-card">
+          <span class="label">Pedidos totales</span>
+          <strong>{{ orders.length }}</strong>
+        </div>
+        <div class="stat-card accent">
+          <span class="label">En curso</span>
+          <strong>{{ activeOrders.length }}</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Finalizados</span>
+          <strong>{{ finishedOrders.length }}</strong>
+        </div>
+        <div class="stat-card">
+          <span class="label">Facturado (finalizados)</span>
+          <strong>{{ totalSpent | currencyArs }}</strong>
+        </div>
+      </div>
+
+      <section class="panel">
+        <h3>Pedidos en curso</h3>
+        @if (activeOrders.length) {
+          <app-orders-table [orders]="activeOrders" [embedded]="true" />
+        } @else {
+          <p class="empty-group">No hay pedidos pendientes o en producción.</p>
+        }
+      </section>
+
+      <section class="panel">
+        <h3>Pedidos finalizados</h3>
+        @if (finishedOrders.length) {
+          <app-orders-table [orders]="finishedOrders" [embedded]="true" />
+        } @else {
+          <p class="empty-group">Todavía no hay pedidos completados o entregados.</p>
+        }
+      </section>
+    </div>
+
+    <footer class="panel detail-actions">
+      <db-button
+        label="Editar cliente"
+        variant="primary"
+        format="solid"
+        (clicked)="openEdit()"
+      />
+      <db-button
+        label="Eliminar"
+        variant="delete"
+        format="solid"
+        (clicked)="deleteCustomer()"
+      />
+    </footer>
+  </div>
+}

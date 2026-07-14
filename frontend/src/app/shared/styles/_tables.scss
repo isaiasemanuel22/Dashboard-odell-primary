@@ -1,0 +1,51 @@
+@use 'variables' as *;
+
+.components-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+  margin-bottom: 0.75rem;
+
+  th,
+  td {
+    padding: 0.55rem 0.4rem;
+    text-align: left;
+    border-bottom: 1px solid $color-border;
+  }
+
+  th {
+    font-size: 0.75rem;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  td:last-child {
+    text-align: right;
+  }
+
+  a {
+    color: $color-primary;
+    text-decoration: none;
+    font-weight: 500;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.data-table tr.is-editing td {
+  vertical-align: middle;
+}
+
+.data-table tr.is-editing db-input,
+.data-table tr.is-editing db-select {
+  min-width: 120px;
+}
+
+.mono {
+  font-family: ui-monospace, monospace;
+  font-size: 0.8rem;
+  color: $color-text-muted;
+}

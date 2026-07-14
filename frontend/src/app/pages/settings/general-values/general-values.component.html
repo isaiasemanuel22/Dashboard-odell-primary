@@ -1,0 +1,163 @@
+@if (settings) {
+  <db-form>
+    <div class="panels">
+      @if (message) {
+        <p class="message">{{ message }}</p>
+      }
+
+      <section class="panel">
+        <h3>Energía y mano de obra</h3>
+        <db-form-grid>
+          <db-input
+            label="Costo de luz ($/kWh)"
+            type="number"
+            [(ngModel)]="settings.electricityCostPerKwh"
+            name="electricityCostPerKwh"
+            [min]="0"
+            [step]="0.01"
+          />
+          <db-input
+            label="Costo mano de obra ($/h)"
+            type="number"
+            [(ngModel)]="settings.laborCostPerHour"
+            name="laborCostPerHour"
+            [min]="0"
+          />
+        </db-form-grid>
+        <div class="save-row panel-save">
+          <db-button
+            [label]="saving ? 'Guardando...' : 'Guardar energía y mano de obra'"
+            variant="primary"
+            format="solid"
+            [disabled]="saving"
+            (clicked)="saveGeneral()"
+          />
+        </div>
+      </section>
+
+      <section class="panel">
+        <h3>Perfiles de máquina</h3>
+        <p class="panel-desc">
+          Cada tarjeta es un equipo. Elegí un tipo de producto o dejá "Todos".
+          Los tiempos de uso se cargan al crear el producto.
+        </p>
+
+        <div class="profile-list">
+          @for (profile of settings.machineProfiles; track profile.id) {
+            <article class="profile-card">
+              <header class="profile-card__header">
+                <div class="profile-card__title">
+                  <h4>{{ profile.name.trim() || 'Nuevo equipo' }}</h4>
+                  <span class="profile-card__badge">{{ roleLabels[profile.role] }}</span>
+                  @if (productTypeLabel(profile); as typeLabel) {
+                    <span class="profile-card__badge profile-card__badge--muted">
+                      {{ typeLabel }}
+                    </span>
+                  }
+                </div>
+                <db-button
+                  label="Eliminar"
+                  variant="delete"
+                  format="soft"
+                  (clicked)="removeMachineProfile(profile.id)"
+                />
+              </header>
+
+              <db-form-grid>
+                <db-input
+                  label="Equipo"
+                  [(ngModel)]="profile.name"
+                  [name]="'mpName' + profile.id"
+                  placeholder="Nombre del equipo"
+                />
+                <db-select
+                  label="Rol"
+                  [(ngModel)]="profile.role"
+                  [name]="'mpRole' + profile.id"
+                  [options]="roleOptions"
+                  (ngModelChange)="onRoleChange(profile)"
+                />
+                <db-select
+                  label="Tipo producto"
+                  [ngModel]="productTypeValue(profile)"
+                  (ngModelChange)="setProductType(profile, $event)"
+                  [name]="'mpType' + profile.id"
+                  [options]="productTypeSelectOptions"
+                />
+                <db-input
+                  label="Consumo (Watts)"
+                  type="number"
+                  [(ngModel)]="profile.watts"
+                  [name]="'mpWatts' + profile.id"
+                  [min]="0"
+                />
+                <db-input
+                  label="Costo máquina ($/h)"
+                  type="number"
+                  [(ngModel)]="profile.costPerHour"
+                  [name]="'mpCost' + profile.id"
+                  [min]="0"
+                />
+              </db-form-grid>
+
+              @if (isWash(profile)) {
+                <div class="profile-card__section">
+                  <p class="profile-card__section-title">Lavado</p>
+                  <db-form-grid>
+                    <db-select
+                      label="Insumo de lavado"
+                      [(ngModel)]="profile.washSupplyId"
+                      [name]="'mpSupply' + profile.id"
+                      [options]="supplyOptions"
+                    />
+                    <db-input
+                      label="ml por baño"
+                      type="number"
+                      [(ngModel)]="profile.consumptionMl"
+                      [name]="'mpConsumption' + profile.id"
+                      [min]="0"
+                      [step]="1"
+                    />
+                    <db-input
+                      label="Usos por baño"
+                      type="number"
+                      [(ngModel)]="profile.washBathUses"
+                      [name]="'mpBathUses' + profile.id"
+                      [min]="0"
+                      [step]="1"
+                      placeholder="10"
+                    />
+                  </db-form-grid>
+                  <p class="field-hint">Si usos/baño es 0 o vacío, se usan 10 por defecto.</p>
+                </div>
+              }
+            </article>
+          } @empty {
+            <p class="profile-empty">No hay perfiles de máquina. Agregá uno para empezar.</p>
+          }
+        </div>
+
+        <div class="inline-form">
+          <db-button
+            label="+ Agregar perfil de máquina"
+            variant="secondary"
+            format="soft"
+            (clicked)="addMachineProfile()"
+          />
+        </div>
+
+        <div class="save-row panel-save">
+          <db-button
+            [label]="savingProfiles ? 'Guardando...' : 'Guardar perfiles de máquina'"
+            variant="primary"
+            format="solid"
+            [disabled]="savingProfiles"
+            (clicked)="saveMachineProfiles()"
+          />
+        </div>
+      </section>
+    </div>
+  </db-form>
+} @else {
+  <db-state-message [loading]="true" loadingMessage="Cargando configuración..." />
+}

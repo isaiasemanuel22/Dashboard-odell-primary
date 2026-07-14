@@ -1,0 +1,76 @@
+<header class="page-header">
+  <div>
+    <h2>Productos</h2>
+    <p>Catálogo de impresión 3D (FDM / Resina) y estampados</p>
+  </div>
+  <div class="header-actions">
+    <db-button
+      label="+ Categoría"
+      variant="secondary"
+      format="soft"
+      (clicked)="openCategoryForm()"
+    />
+    <db-button
+      label="+ Nuevo producto"
+      variant="primary"
+      format="solid"
+      (clicked)="openCreateProduct()"
+    />
+  </div>
+</header>
+
+<div class="products-filters">
+  <db-list-toolbar
+    [filters]="typeFilters"
+    [activeFilter]="typeFilter"
+    [search]="search"
+    searchPlaceholder="Buscar producto..."
+    (filterChange)="setTypeFilter($event)"
+    (searchChange)="search = $event"
+  >
+    <select [(ngModel)]="categoryFilter" class="category-select">
+      <option value="all">Todas las categorías</option>
+      @for (cat of visibleCategories; track cat.id) {
+        <option [value]="cat.id">{{ cat.name }}</option>
+      }
+    </select>
+  </db-list-toolbar>
+
+  <db-list-toolbar
+    [filters]="publishedFilters"
+    [activeFilter]="publishedFilter"
+    [showSearch]="false"
+    (filterChange)="setPublishedFilter($event)"
+  />
+</div>
+
+@if (loading) {
+  <db-skeleton variant="cards" [count]="6" />
+} @else {
+  <db-state-message
+    [loading]="false"
+    [empty]="filteredProducts.length === 0"
+    [emptyMessage]="emptyMessage"
+  >
+    <db-button
+      emptyActions
+      label="Crear primer producto"
+      variant="primary"
+      format="solid"
+      (clicked)="openCreateProduct()"
+    />
+  </db-state-message>
+
+  @if (filteredProducts.length) {
+    <div class="products-grid">
+      @for (product of filteredProducts; track product.id) {
+        <app-product-card
+          [product]="product"
+          [categories]="categories"
+          (edit)="openEditProduct($event)"
+          (delete)="deleteProduct($event)"
+        />
+      }
+    </div>
+  }
+}

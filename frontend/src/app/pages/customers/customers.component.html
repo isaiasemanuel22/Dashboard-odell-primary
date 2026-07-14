@@ -1,0 +1,52 @@
+<header class="page-header">
+  <div>
+    <h2>Clientes</h2>
+    <p>Base de clientes del emprendimiento</p>
+  </div>
+  <div class="header-actions">
+    <db-button
+      label="+ Nuevo cliente"
+      variant="primary"
+      format="solid"
+      (clicked)="openCreateCustomer()"
+    />
+  </div>
+</header>
+
+<db-list-toolbar
+  [filters]="[]"
+  [search]="search"
+  searchPlaceholder="Buscar por nombre, email, teléfono o empresa..."
+  (searchChange)="search = $event"
+/>
+
+<db-state-message
+  [loading]="loading"
+  [empty]="!loading && filteredCustomers.length === 0"
+  loadingMessage="Cargando clientes..."
+  [emptyMessage]="
+    search.trim()
+      ? 'No hay clientes que coincidan con la búsqueda.'
+      : 'No hay clientes registrados.'
+  "
+>
+  <db-button
+    emptyActions
+    label="Crear primer cliente"
+    variant="primary"
+    format="solid"
+    (clicked)="openCreateCustomer()"
+  />
+</db-state-message>
+
+@if (!loading && filteredCustomers.length) {
+  <div class="customers-grid">
+    @for (customer of filteredCustomers; track customer.id) {
+      <app-customer-card
+        [customer]="customer"
+        (edit)="openEditCustomer($event)"
+        (delete)="deleteCustomer($event)"
+      />
+    }
+  </div>
+}

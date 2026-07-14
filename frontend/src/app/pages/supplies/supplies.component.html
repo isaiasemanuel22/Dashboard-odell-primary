@@ -1,0 +1,43 @@
+<header class="page-header">
+  <div>
+    <h2>Insumos</h2>
+    <p>Control de filamentos, resinas, tintas, textiles y más</p>
+  </div>
+  <db-button
+    label="+ Nuevo insumo"
+    variant="primary"
+    format="solid"
+    (clicked)="openCreate()"
+  />
+</header>
+
+<db-list-toolbar
+  [filters]="typeFilters"
+  [activeFilter]="typeFilter"
+  [search]="search"
+  (filterChange)="typeFilter = $event"
+  (searchChange)="search = $event"
+/>
+
+<db-state-message
+  [loading]="loading"
+  [empty]="!loading && filteredSupplies.length === 0"
+  loadingMessage="Cargando insumos..."
+  emptyMessage="No hay insumos para mostrar."
+>
+  <db-button
+    emptyActions
+    label="Crear primer insumo"
+    variant="primary"
+    format="solid"
+    (clicked)="openCreate()"
+  />
+</db-state-message>
+
+@if (!loading && filteredSupplies.length) {
+  <app-supplies-table
+    [supplies]="filteredSupplies"
+    (edit)="openEdit($event)"
+    (delete)="deleteSupply($event)"
+  />
+}
