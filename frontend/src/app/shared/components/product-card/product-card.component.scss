@@ -1,0 +1,32 @@
+@use '../../styles/variables' as *;
+@use '../../styles/cards' as cards;
+
+.product-card {
+  @include cards.card-shell;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.card-body {
+  .categories {
+    margin: 0 0 0.75rem;
+    font-size: 0.8rem;
+    color: $color-primary;
+  }
+}
+
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 1rem;
+  font-size: 0.8rem;
+  color: $color-text-muted;
+  margin-bottom: 0.75rem;
+}
+
+.updated {
+  margin: 0;
+  font-size: 0.75rem;
+  color: $color-text-subtle;
+}

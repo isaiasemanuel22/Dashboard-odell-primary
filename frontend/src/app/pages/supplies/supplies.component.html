@@ -12,10 +12,10 @@
 </header>
 
 <db-list-toolbar
-  [filters]="typeFilters"
-  [activeFilter]="typeFilter"
+  [filters]="categoryFilters"
+  [activeFilter]="categoryFilter"
   [search]="search"
-  (filterChange)="typeFilter = $event"
+  (filterChange)="categoryFilter = $event"
   (searchChange)="search = $event"
 />
 

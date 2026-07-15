@@ -1,0 +1,16 @@
+<article class="list-card job-card" [class]="job.status">
+  <div class="job-header">
+    <db-service-badge [type]="job.type" />
+    <span class="priority">Prioridad {{ job.priority }}</span>
+  </div>
+  <h3>{{ job.productName }}</h3>
+  <p class="customer">{{ job.customerName }}</p>
+  <div class="job-meta">
+    <span>🖨️ {{ job.machine }}</span>
+    <span>⏱️ {{ job.estimatedHours }}h est.</span>
+  </div>
+  <db-status-badge
+    [statusClass]="job.status"
+    [label]="job.status | printJobStatusLabel"
+  />
+</article>

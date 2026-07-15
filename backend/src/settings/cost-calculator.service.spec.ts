@@ -14,6 +14,7 @@ describe('CostCalculatorService', () => {
     store.generalSettings = {
       ...store.generalSettings,
       electricityCostPerKwh: 100,
+      errorMarginPercent: 10,
       laborCostPerHour: 500,
       machineProfiles: createDefaultMachineProfiles().map((profile) =>
         profile.id === 'mp-res-wash'
@@ -51,6 +52,24 @@ describe('CostCalculatorService', () => {
     service = new CostCalculatorService(store);
   });
 
+  it('aplica margen de error sobre material, energía y máquina', () => {
+    const result = service.calculateCost({
+      type: ProductType.FDM,
+      grams: 100,
+      printTimeHours: 2,
+      workTimeHours: 0,
+      brand: 'Test',
+      filamentType: 'pla' as never,
+    });
+
+    const base =
+      result.materialCost + result.energyCost + result.machineCost;
+    expect(result.errorMarginCost).toBe(Math.round(base * 0.1));
+    expect(result.totalCost).toBe(
+      base + result.errorMarginCost + result.laborCost,
+    );
+  });
+
   it('calcula costo FDM con material, energía y mano de obra', () => {
     const result = service.calculateCost({
       type: ProductType.FDM,
@@ -82,6 +101,39 @@ describe('CostCalculatorService', () => {
     expect(result.machineCost).toBeGreaterThan(0);
   });
 
+  it('incluye costo de papel en productos estampados con dimensiones', () => {
+    store.generalSettings.paperPricesPerSqm.dtf = 6500;
+
+    const result = service.calculateCost({
+      type: ProductType.ESTAMPADO,
+      estampadoPrints: [
+        {
+          id: 'p1',
+          paperType: 'dtf' as never,
+          widthCm: 10,
+          heightCm: 10,
+        },
+      ],
+      pressMinutes: 0,
+      workTimeHours: 0,
+    });
+
+    expect(result.materialCost).toBe(65);
+  });
+
+  it('suma minutos de plancha según cantidad de bajadas', () => {
+    const result = service.calculateCost({
+      type: ProductType.ESTAMPADO,
+      estampadoPressCycles: [
+        { id: 'c1', pressMinutes: 2, bajadas: 3 },
+      ],
+      workTimeHours: 0,
+    });
+
+    expect(result.energyCost).toBeGreaterThan(0);
+    expect(result.machineCost).toBeGreaterThan(0);
+  });
+
   it('calcula costo de estampado por ciclo de plancha', () => {
     const result = service.calculateCost({
       type: ProductType.ESTAMPADO,
@@ -91,6 +143,35 @@ describe('CostCalculatorService', () => {
 
     expect(result.energyCost).toBeGreaterThan(0);
     expect(result.laborCost).toBe(250);
+  });
+
+  it('usa precio promedio por tipo cuando el producto no tiene marca', () => {
+    store.generalSettings.filamentTypeAverages = { pla: 20000 } as never;
+
+    const result = service.calculateCost({
+      type: ProductType.FDM,
+      grams: 1000,
+      printTimeHours: 0,
+      workTimeHours: 0,
+      filamentType: 'pla' as never,
+    });
+
+    expect(result.materialCost).toBe(20000);
+  });
+
+  it('usa precio por marca cuando se indica marca en el cálculo', () => {
+    store.generalSettings.filamentTypeAverages = { pla: 20000 } as never;
+
+    const result = service.calculateCost({
+      type: ProductType.FDM,
+      grams: 1000,
+      printTimeHours: 0,
+      workTimeHours: 0,
+      brand: 'Test',
+      filamentType: 'pla' as never,
+    });
+
+    expect(result.materialCost).toBe(10000);
   });
 
   it('calcula costo de papel por área', () => {

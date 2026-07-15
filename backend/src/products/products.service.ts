@@ -6,21 +6,24 @@ import {
 import { ProductType } from '../common/enums';
 import {
   CreateProductDto,
-  ProductPricingInputDto,
-  UpdateProductDto,
-} from '../common/dto';
-import {
   Product,
   Product3D,
   ProductEstampado,
   ProductComponent,
+  ProductCombo,
   ProductOverview,
   ProductPricingInput,
   ProductPricingResult,
+  UpdateProductDto,
 } from '../common/interfaces';
 import { ProductPricingService } from './product-pricing.service';
 import { ProductRepository } from '../store/repositories/product.repository';
 import { StoreService } from '../store/store.service';
+import {
+  normalizeEstampadoPressCycles,
+  normalizeEstampadoPrints,
+  normalizeEstampadoSupplies,
+} from './estampado-product.util';
 
 @Injectable()
 export class ProductsService {
@@ -62,10 +65,16 @@ export class ProductsService {
 
   create(data: CreateProductDto): Product {
     this.validateProductData(data);
-    const pricing = this.pricing.resolvePricing(data);
+    const pricing = this.pricing.resolvePricing(
+      this.pricing.toPricingInput(data),
+    );
     const now = new Date().toISOString();
     const components = data.components ?? [];
     const assemblyTimeHours = Number(data.assemblyTimeHours) || 0;
+    const includesPieces =
+      data.type === ProductType.COMBO ||
+      data.includesPieces === true ||
+      components.length > 0;
     const base = {
       id: this.store.nextId('prod', this.store.products),
       name: data.name.trim(),
@@ -75,28 +84,50 @@ export class ProductsService {
       cost: pricing.cost,
       profit: pricing.profit,
       categoryIds: data.categoryIds ?? [],
-      size: (data.size ?? '').trim(),
+      size: (data.size ?? '').trim() || (data.type === ProductType.COMBO ? 'Combo' : ''),
       published: data.published !== false,
+      includesPieces,
       components,
       assemblyTimeHours,
     };
 
     let product: Product;
-    if (data.type === ProductType.ESTAMPADO) {
+    if (data.type === ProductType.COMBO) {
+      product = {
+        ...base,
+        type: ProductType.COMBO,
+        includesPieces: true,
+      };
+    } else if (data.type === ProductType.ESTAMPADO) {
+      const prints = normalizeEstampadoPrints(
+        data.estampadoPrints ?? data.prints,
+        {
+          paperType: data.paperType,
+          impresoId: data.impresoId,
+          widthCm: data.widthCm,
+          heightCm: data.heightCm,
+        },
+      );
+      const pressCycles = normalizeEstampadoPressCycles(
+        data.estampadoPressCycles ?? data.pressCycles,
+        data.pressMinutes,
+      );
+      const supplies = normalizeEstampadoSupplies(
+        data.estampadoSupplies ?? data.supplies,
+      );
       product = {
         ...base,
         type: ProductType.ESTAMPADO,
-        pressMinutes:
-          data.pressMinutes !== undefined
-            ? Number(data.pressMinutes) || undefined
-            : undefined,
         workTimeHours: Number(data.workTimeHours) || 0,
+        prints,
+        pressCycles,
+        supplies,
       };
     } else {
-      const dto = data as Omit<Product3D, 'id' | 'updatedAt' | 'profit'>;
+      const dto = data;
       product = {
         ...base,
-        type: dto.type,
+        type: dto.type as ProductType.FDM | ProductType.RESINA,
         grams: Number(dto.grams) || 0,
         printTimeHours: Number(dto.printTimeHours) || 0,
         workTimeHours: Number(dto.workTimeHours) || 0,
@@ -175,14 +206,23 @@ export class ProductsService {
                 : (existing as Product3D).cureMinutes,
           }
         : {
-            pressMinutes:
-              'pressMinutes' in data && data.pressMinutes !== undefined
-                ? data.pressMinutes
-                : (existing as ProductEstampado).pressMinutes,
             workTimeHours:
               'workTimeHours' in data && data.workTimeHours !== undefined
                 ? data.workTimeHours
                 : (existing as ProductEstampado).workTimeHours,
+            estampadoPrints:
+              'estampadoPrints' in data && data.estampadoPrints !== undefined
+                ? data.estampadoPrints
+                : 'prints' in data && data.prints !== undefined
+                  ? data.prints
+                  : (existing as ProductEstampado).prints,
+            estampadoPressCycles:
+              'estampadoPressCycles' in data &&
+              data.estampadoPressCycles !== undefined
+                ? data.estampadoPressCycles
+                : 'pressCycles' in data && data.pressCycles !== undefined
+                  ? data.pressCycles
+                  : (existing as ProductEstampado).pressCycles,
           }),
     } as CreateProductDto;
     this.validateProductData(mergedForValidation, true, id);
@@ -203,11 +243,43 @@ export class ProductsService {
       images: data.images ?? existing.images,
       published:
         data.published !== undefined ? data.published !== false : existing.published !== false,
+      includesPieces:
+        mergedType === ProductType.COMBO ||
+        data.includesPieces === true ||
+        mergedComponents.length > 0,
       components: mergedComponents,
       assemblyTimeHours: mergedAssembly,
     } as Product;
 
-    if (existing.type !== ProductType.ESTAMPADO) {
+    if (mergedType === ProductType.COMBO || existing.type === ProductType.COMBO) {
+      (updated as Product).type = ProductType.COMBO;
+      (updated as Product).includesPieces = true;
+    } else if (existing.type === ProductType.ESTAMPADO) {
+      const current = updated as ProductEstampado;
+      if ('workTimeHours' in data && data.workTimeHours !== undefined) {
+        current.workTimeHours = Number(data.workTimeHours) || 0;
+      }
+      if ('estampadoPrints' in data && data.estampadoPrints !== undefined) {
+        current.prints = normalizeEstampadoPrints(data.estampadoPrints);
+      } else if ('prints' in data && data.prints !== undefined) {
+        current.prints = normalizeEstampadoPrints(data.prints);
+      }
+      if (
+        'estampadoPressCycles' in data &&
+        data.estampadoPressCycles !== undefined
+      ) {
+        current.pressCycles = normalizeEstampadoPressCycles(
+          data.estampadoPressCycles,
+        );
+      } else if ('pressCycles' in data && data.pressCycles !== undefined) {
+        current.pressCycles = normalizeEstampadoPressCycles(data.pressCycles);
+      }
+      if ('estampadoSupplies' in data && data.estampadoSupplies !== undefined) {
+        current.supplies = normalizeEstampadoSupplies(data.estampadoSupplies);
+      } else if ('supplies' in data && data.supplies !== undefined) {
+        current.supplies = normalizeEstampadoSupplies(data.supplies);
+      }
+    } else {
       const current = updated as Product3D;
       if (data.type && data.type !== existing.type) {
         current.type = data.type as ProductType.FDM | ProductType.RESINA;
@@ -238,15 +310,6 @@ export class ProductsService {
         current.cureMinutes =
           Number(data.cureMinutes) || undefined;
       }
-    } else {
-      const current = updated as ProductEstampado;
-      if ('pressMinutes' in data && data.pressMinutes !== undefined) {
-        current.pressMinutes =
-          Number(data.pressMinutes) || undefined;
-      }
-      if ('workTimeHours' in data && data.workTimeHours !== undefined) {
-        current.workTimeHours = Number(data.workTimeHours) || 0;
-      }
     }
 
     const index = this.store.products.findIndex((p) => p.id === id);
@@ -269,11 +332,11 @@ export class ProductsService {
     this.products.remove(id);
   }
 
-  previewPricing(input: ProductPricingInputDto): ProductPricingResult {
+  previewPricing(input: ProductPricingInput): ProductPricingResult {
     if (input.components?.length) {
       this.validateComponents(null, input.components);
     }
-    return this.pricing.resolvePricing(input as ProductPricingInput);
+    return this.pricing.resolvePricing(input);
   }
 
   private validateProductData(
@@ -306,8 +369,20 @@ export class ProductsService {
     }
 
     if (!isUpdate || data.size !== undefined) {
-      if (!data.size?.trim()) {
+      const size =
+        (data.size ?? '').trim() ||
+        (data.type === ProductType.COMBO ? 'Combo' : '');
+      if (!size) {
         throw new BadRequestException('El tamaño es obligatorio');
+      }
+    }
+
+    if (data.type === ProductType.COMBO) {
+      const components = data.components ?? [];
+      if (!components.length) {
+        throw new BadRequestException(
+          'Un combo debe incluir al menos una pieza',
+        );
       }
     }
 
@@ -336,7 +411,11 @@ export class ProductsService {
       this.validateComponents(productId, components);
     }
 
-    const hasComponents = components.length > 0;
+    const includesPieces =
+      data.type === ProductType.COMBO ||
+      data.includesPieces === true ||
+      components.length > 0;
+    const hasComponents = includesPieces && components.length > 0;
 
     if (data.type === ProductType.FDM || data.type === ProductType.RESINA) {
       const dto = data as Partial<Product3D>;

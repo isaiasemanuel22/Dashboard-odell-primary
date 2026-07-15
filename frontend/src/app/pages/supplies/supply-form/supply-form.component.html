@@ -1,10 +1,18 @@
 <db-form>
-  <form (ngSubmit)="onSubmit()">
+  <form (ngSubmit)="onSubmit()" autocomplete="off">
+    <db-select
+      label="Categoría"
+      [(ngModel)]="category"
+      name="category"
+      [options]="supplyCategoryOptions"
+      (ngModelChange)="onCategoryChange()"
+    />
+
     <db-select
       label="Tipo de insumo"
       [(ngModel)]="type"
       name="type"
-      [options]="supplyTypeOptions"
+      [options]="filteredSupplyTypeOptions"
       (ngModelChange)="onTypeChange()"
     />
 
@@ -21,7 +29,17 @@
         [(ngModel)]="filamentType"
         name="filamentType"
         [options]="filamentTypeOptions"
-        (ngModelChange)="onMaterialChange()"
+        (ngModelChange)="onFilamentTypeChange()"
+      />
+
+      <db-select
+        label="Marca (desde Ajustes)"
+        [(ngModel)]="brand"
+        name="brand"
+        [required]="true"
+        placeholder="Seleccionar marca..."
+        [options]="filamentBrandOptions"
+        (ngModelChange)="onBrandChange()"
       />
     }
 
@@ -31,17 +49,17 @@
         [(ngModel)]="resinType"
         name="resinType"
         [options]="resinTypeOptions"
-        (ngModelChange)="onMaterialChange()"
+        (ngModelChange)="onResinTypeChange()"
       />
-    }
 
-    @if (needsMaterialType) {
-      <db-input
-        label="Marca"
+      <db-select
+        label="Marca (desde Ajustes)"
         [(ngModel)]="brand"
         name="brand"
         [required]="true"
-        (ngModelChange)="onMaterialChange()"
+        placeholder="Seleccionar marca..."
+        [options]="resinBrandOptions"
+        (ngModelChange)="onBrandChange()"
       />
     }
 
@@ -83,8 +101,8 @@
       name="supplier"
     />
 
-    @if (error) {
-      <db-form-error>{{ error }}</db-form-error>
+    @if (error || configError) {
+      <db-form-error>{{ error || configError }}</db-form-error>
     }
 
     <db-form-footer>

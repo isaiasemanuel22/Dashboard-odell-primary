@@ -1,0 +1,29 @@
+<div class="toolbar">
+  @if (filters.length) {
+    <div class="type-filters">
+      @for (filter of filters; track filter.value) {
+        <button
+          type="button"
+          class="filter-btn"
+          [class.active]="activeFilter === filter.value"
+          (click)="onFilterClick(filter.value)"
+        >
+          {{ filter.label }}
+        </button>
+      }
+    </div>
+  }
+
+  <div class="toolbar-right">
+    @if (showSearch) {
+      <input
+        type="search"
+        [ngModel]="search"
+        (ngModelChange)="onSearchInput($event)"
+        [placeholder]="searchPlaceholder"
+        class="search-input"
+      />
+    }
+    <ng-content />
+  </div>
+</div>

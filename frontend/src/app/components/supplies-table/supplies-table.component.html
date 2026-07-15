@@ -3,6 +3,7 @@
     <thead>
       <tr>
         <th>Nombre</th>
+        <th>Categoría</th>
         <th>Tipo</th>
         <th>Material</th>
         <th>Marca</th>
@@ -16,6 +17,7 @@
       @for (s of supplies; track s.id) {
         <tr [class.low-stock]="isLowStock(s)">
           <td><strong>{{ s.name }}</strong></td>
+          <td>{{ s.category | supplyCategoryLabel }}</td>
           <td>{{ s.type | supplyTypeLabel }}</td>
           <td>{{ materialLabel(s) }}</td>
           <td>{{ s.brand ?? '—' }}</td>

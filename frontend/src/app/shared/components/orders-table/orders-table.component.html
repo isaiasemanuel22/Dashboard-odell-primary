@@ -1,0 +1,85 @@
+@if (embedded) {
+  <table class="data-table">
+    <thead>
+      <tr>
+        @if (!compact) { <th>ID</th> }
+        <th>Cliente</th>
+        <th>Servicio</th>
+        @if (!compact) { <th>Productos</th> }
+        <th>Estado</th>
+        <th>Total</th>
+        <th>Entrega</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (order of orders; track order.id) {
+        <tr>
+          @if (!compact) { <td class="mono">{{ order.id }}</td> }
+          <td>
+            <strong>{{ order.customerName }}</strong>
+            @if (!compact && order.notes) { <small>{{ order.notes }}</small> }
+          </td>
+          <td><db-service-badge [type]="order.type" /></td>
+          @if (!compact) {
+            <td>
+              @for (item of order.items; track item.productId) {
+                <div class="item-line">{{ item.quantity }}× {{ item.productName }}</div>
+              }
+            </td>
+          }
+          <td>
+            <db-status-badge
+              [statusClass]="order.status"
+              [label]="order.status | orderStatusLabel"
+            />
+          </td>
+          <td>{{ order.total | currencyArs }}</td>
+          <td>{{ order.dueDate | dateShort }}</td>
+        </tr>
+      }
+    </tbody>
+  </table>
+} @else {
+  <div class="table-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          @if (!compact) { <th>ID</th> }
+          <th>Cliente</th>
+          <th>Servicio</th>
+          @if (!compact) { <th>Productos</th> }
+          <th>Estado</th>
+          <th>Total</th>
+          <th>Entrega</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (order of orders; track order.id) {
+          <tr>
+            @if (!compact) { <td class="mono">{{ order.id }}</td> }
+            <td>
+              <strong>{{ order.customerName }}</strong>
+              @if (!compact && order.notes) { <small>{{ order.notes }}</small> }
+            </td>
+            <td><db-service-badge [type]="order.type" /></td>
+            @if (!compact) {
+              <td>
+                @for (item of order.items; track item.productId) {
+                  <div class="item-line">{{ item.quantity }}× {{ item.productName }}</div>
+                }
+              </td>
+            }
+            <td>
+              <db-status-badge
+                [statusClass]="order.status"
+                [label]="order.status | orderStatusLabel"
+              />
+            </td>
+            <td>{{ order.total | currencyArs }}</td>
+            <td>{{ order.dueDate | dateShort }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}

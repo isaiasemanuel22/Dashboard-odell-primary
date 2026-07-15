@@ -30,6 +30,7 @@ export class ImpresosController {
     return this.impresosService.previewCost(
       data.paperType as PaperType,
       data.widthCm,
+      data.lengthCm,
       data.heightCm,
     );
   }

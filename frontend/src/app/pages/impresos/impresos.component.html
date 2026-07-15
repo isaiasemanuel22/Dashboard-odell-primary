@@ -1,0 +1,67 @@
+<header class="page-header">
+  <div>
+    <h2>Impresos</h2>
+    <p>Tamaños de papeles impresos (logo, estampas, etc.)</p>
+  </div>
+  <button type="button" class="btn primary" (click)="openCreate()">+ Nuevo impreso</button>
+</header>
+
+<div class="toolbar">
+  <div class="type-filters">
+    @for (filter of typeFilters; track filter.value) {
+      <button
+        type="button"
+        class="filter-btn"
+        [class.active]="paperFilter === filter.value"
+        (click)="paperFilter = filter.value"
+      >
+        {{ filter.label }}
+      </button>
+    }
+  </div>
+  <input type="search" [(ngModel)]="search" placeholder="Buscar..." class="search-input" />
+</div>
+
+@if (loading) {
+  <div class="loading">Cargando impresos...</div>
+} @else {
+  <div class="table-card">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Tipo de papel</th>
+          <th>Tamaño</th>
+          <th>Área (m²)</th>
+          <th>Costo papel</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (item of filteredImpresos; track item.id) {
+          <tr>
+            <td><strong>{{ item.name }}</strong></td>
+            <td>{{ item.paperType | paperTypeLabel }}</td>
+            <td>{{ formatDimensions(item) }}</td>
+            <td>{{ item.areaSqm }}</td>
+            <td>{{ item.paperCost | currencyArs }}</td>
+            <td class="actions">
+              <button type="button" (click)="openEdit(item)">Editar</button>
+              <button type="button" class="danger" (click)="deleteImpreso(item)">Eliminar</button>
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (showForm) {
+  <app-impreso-form
+    [impreso]="editing"
+    [loading]="formLoading"
+    [error]="formError"
+    (save)="onSave($event)"
+    (cancel)="closeForm()"
+  />
+}

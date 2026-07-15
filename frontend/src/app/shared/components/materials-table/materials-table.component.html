@@ -1,0 +1,28 @@
+<div class="table-card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Material</th>
+        <th>Tipo</th>
+        <th>Stock</th>
+        <th>Mínimo</th>
+        <th>Proveedor</th>
+        <th>Estado</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (material of materials; track material.id) {
+        <tr [class.low-stock]="isLowStock(material.quantity, material.minStock)">
+          <td><strong>{{ material.name }}</strong></td>
+          <td><db-service-badge [type]="material.type" /></td>
+          <td>{{ material.quantity }} {{ material.unit }}</td>
+          <td>{{ material.minStock }} {{ material.unit }}</td>
+          <td>{{ material.supplier }}</td>
+          <td>
+            <db-stock-badge [low]="isLowStock(material.quantity, material.minStock)" />
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

@@ -1,0 +1,42 @@
+@import '../../styles/variables';
+
+@mixin action-link {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s ease;
+
+  &:hover:not(:disabled) {
+    opacity: 0.85;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.db-btn-edit {
+  @include action-link;
+  color: $color-primary;
+}
+
+.db-btn-delete {
+  @include action-link;
+  color: $color-error;
+}
+
+.db-btn-cancel {
+  @include action-link;
+  color: $color-text-muted;
+}
+
+.db-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+}

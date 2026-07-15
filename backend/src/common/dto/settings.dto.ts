@@ -50,6 +50,11 @@ export class UpdateGeneralSettingsDto {
   laborCostPerHour?: number;
 
   @IsOptional()
+  @IsNumber()
+  @Min(0)
+  errorMarginPercent?: number;
+
+  @IsOptional()
   profitMargins?: Record<string, number>;
 
   @IsOptional()
@@ -60,6 +65,12 @@ export class UpdateGeneralSettingsDto {
 
   @IsOptional()
   machineProfiles?: unknown[];
+
+  @IsOptional()
+  filamentTypeAverages?: Record<string, number>;
+
+  @IsOptional()
+  resinTypeAverages?: Record<string, number>;
 }
 
 export class PowerConsumptionEntryDto {
@@ -181,6 +192,11 @@ export class CreateImpresoDto {
   @Min(0.0001)
   widthCm!: number;
 
+  @IsOptional()
+  @IsNumber()
+  @Min(0.0001)
+  lengthCm?: number;
+
   @IsNumber()
   @Min(0.0001)
   heightCm!: number;
@@ -195,6 +211,11 @@ export class ImpresoPreviewCostDto {
   @IsNumber()
   @Min(0.0001)
   widthCm!: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.0001)
+  lengthCm?: number;
 
   @IsNumber()
   @Min(0.0001)
@@ -222,6 +243,10 @@ export class CreateSupplyDto {
   @IsString()
   @IsNotEmpty()
   name!: string;
+
+  @IsOptional()
+  @IsString()
+  category?: string;
 
   @IsString()
   type!: string;

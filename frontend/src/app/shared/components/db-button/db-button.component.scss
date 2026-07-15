@@ -1,0 +1,89 @@
+@import '../../styles/variables';
+
+:host {
+  display: inline-block;
+  margin: 1rem;
+}
+
+@mixin action-inline {
+  background: none;
+  border: none;
+  padding: 0;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: inherit;
+  transition: opacity 0.15s ease;
+
+  &:hover:not(:disabled) {
+    opacity: 0.85;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+@mixin action-solid {
+  border: 1px solid $color-border;
+  background: #fff;
+  border-radius: 6px;
+  padding: 0.3rem 0.6rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  color: #475569;
+  transition: border-color 0.15s ease, color 0.15s ease;
+
+  &:hover:not(:disabled) {
+    border-color: $color-primary;
+    color: $color-primary;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.db-button--inline.db-button--primary {
+  @include action-inline;
+  color: $color-primary;
+}
+
+.db-button--inline.db-button--delete {
+  @include action-inline;
+  color: $color-error;
+}
+
+.db-button--inline.db-button--cancel,
+.db-button--inline.db-button--secondary {
+  @include action-inline;
+  color: $color-text-muted;
+}
+
+.db-button--solid.db-button--primary {
+  @include action-solid;
+}
+
+.db-button--solid.db-button--delete {
+  @include action-solid;
+
+  &:hover:not(:disabled) {
+    border-color: $color-error;
+    color: $color-error;
+  }
+}
+
+.db-button--solid.db-button--cancel,
+.db-button--solid.db-button--secondary {
+  @include action-solid;
+  color: $color-text-muted;
+
+  &:hover:not(:disabled) {
+    border-color: $color-text-muted;
+    color: $color-text;
+  }
+}

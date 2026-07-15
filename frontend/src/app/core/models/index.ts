@@ -8,6 +8,14 @@ export enum ProductType {
   FDM = 'fdm',
   RESINA = 'resina',
   ESTAMPADO = 'estampado',
+  COMBO = 'combo',
+}
+
+export enum SupplyCategory {
+  FDM = 'fdm',
+  RESINA = 'resina',
+  ESTAMPADO = 'estampado',
+  GENERAL = 'general',
 }
 
 export enum OrderStatus {
@@ -132,6 +140,8 @@ export interface MachineProfile {
 
 export interface GeneralSettings {
   electricityCostPerKwh: number;
+  /** % sobre material + energía + máquina, aplicado al costo de producto. */
+  errorMarginPercent: number;
   powerConsumptions: PowerConsumptionConfig[];
   machineCosts: MachineCostConfig[];
   laborCostPerHour: number;
@@ -139,6 +149,10 @@ export interface GeneralSettings {
   paperPricesPerSqm: PaperPricesPerSqm;
   filamentPrices: FilamentPriceConfig[];
   resinPrices: ResinPriceConfig[];
+  /** Precio $/kg por tipo; usado al costear productos FDM (sin marca). */
+  filamentTypeAverages: Partial<Record<FilamentType, number>>;
+  /** Precio $/L por tipo; usado al costear productos resina (sin marca). */
+  resinTypeAverages: Partial<Record<ResinType, number>>;
   machineProfiles: MachineProfile[];
 }
 
@@ -147,6 +161,7 @@ export interface Impreso {
   name: string;
   paperType: PaperType;
   widthCm: number;
+  lengthCm?: number;
   heightCm: number;
   updatedAt: string;
 }
@@ -167,6 +182,7 @@ export type UpdateImpresoPayload = Partial<CreateImpresoPayload>;
 export interface Supply {
   id: string;
   name: string;
+  category: SupplyCategory;
   type: SupplyType;
   filamentType?: FilamentType;
   resinType?: ResinType;
@@ -184,6 +200,7 @@ export interface CostBreakdown {
   materialCost: number;
   energyCost: number;
   machineCost: number;
+  errorMarginCost: number;
   laborCost: number;
   totalCost: number;
 }
@@ -199,6 +216,9 @@ export interface CalculateCostPayload {
   washMinutes?: number;
   cureMinutes?: number;
   pressMinutes?: number;
+  estampadoPrints?: EstampadoPrintSpec[];
+  estampadoPressCycles?: EstampadoPressCycle[];
+  estampadoSupplies?: EstampadoSupplyLine[];
 }
 
 export interface ProductPricingInput {
@@ -217,6 +237,9 @@ export interface ProductPricingInput {
   washMinutes?: number;
   cureMinutes?: number;
   pressMinutes?: number;
+  estampadoPrints?: EstampadoPrintSpec[];
+  estampadoPressCycles?: EstampadoPressCycle[];
+  estampadoSupplies?: EstampadoSupplyLine[];
 }
 
 export interface ProductPricingResult {
@@ -252,6 +275,8 @@ export interface ProductBase {
   size: string;
   /** Visible en el catálogo general; los internos siguen disponibles en piezas y presupuestos */
   published: boolean;
+  /** Si true, el costo se calcula desde piezas incluidas */
+  includesPieces: boolean;
   components: ProductComponent[];
   assemblyTimeHours: number;
 }
@@ -268,13 +293,43 @@ export interface Product3D extends ProductBase {
   resinType?: ResinType;
 }
 
-export interface ProductEstampado extends ProductBase {
-  type: ProductType.ESTAMPADO;
-  pressMinutes?: number;
-  workTimeHours?: number;
+export interface EstampadoPrintSpec {
+  id: string;
+  paperType: PaperType;
+  impresoId?: string;
+  widthCm?: number;
+  lengthCm?: number;
+  heightCm?: number;
+  label?: string;
 }
 
-export type Product = Product3D | ProductEstampado;
+export interface EstampadoPressCycle {
+  id: string;
+  pressMinutes: number;
+  bajadas: number;
+  label?: string;
+}
+
+export interface EstampadoSupplyLine {
+  id: string;
+  supplyId: string;
+  quantity: number;
+  label?: string;
+}
+
+export interface ProductEstampado extends ProductBase {
+  type: ProductType.ESTAMPADO;
+  workTimeHours?: number;
+  prints: EstampadoPrintSpec[];
+  pressCycles: EstampadoPressCycle[];
+  supplies: EstampadoSupplyLine[];
+}
+
+export interface ProductCombo extends ProductBase {
+  type: ProductType.COMBO;
+}
+
+export type Product = Product3D | ProductEstampado | ProductCombo;
 
 export function isProduct3D(product: Product): product is Product3D {
   return isProductType3D(product.type);
@@ -287,8 +342,11 @@ export function isProductType3D(type: ProductType): boolean {
 export type CreateProductPayload = (
   | Omit<Product3D, 'id' | 'updatedAt' | 'profit'>
   | Omit<ProductEstampado, 'id' | 'updatedAt' | 'profit'>
+  | Omit<ProductCombo, 'id' | 'updatedAt' | 'profit'>
 ) & {
   suggestedPrice?: number | null;
+  includesPieces?: boolean;
+  supplies?: EstampadoSupplyLine[];
 };
 
 export type UpdateProductPayload = Partial<CreateProductPayload>;

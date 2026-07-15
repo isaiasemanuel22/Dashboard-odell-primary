@@ -8,6 +8,14 @@ export enum ProductType {
   FDM = 'fdm',
   RESINA = 'resina',
   ESTAMPADO = 'estampado',
+  COMBO = 'combo',
+}
+
+export enum SupplyCategory {
+  FDM = 'fdm',
+  RESINA = 'resina',
+  ESTAMPADO = 'estampado',
+  GENERAL = 'general',
 }
 
 export enum OrderStatus {

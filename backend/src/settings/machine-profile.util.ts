@@ -170,6 +170,7 @@ function findLegacyMatch<
     [ProductType.FDM]: ['fdm'],
     [ProductType.RESINA]: ['resina'],
     [ProductType.ESTAMPADO]: ['estampado', 'prensa', 'plancha', 'estamp'],
+    [ProductType.COMBO]: [],
   };
 
   return items.find((item) =>

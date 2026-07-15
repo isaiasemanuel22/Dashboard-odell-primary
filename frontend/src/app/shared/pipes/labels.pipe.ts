@@ -7,6 +7,7 @@ import {
   ProductType,
   ResinType,
   ServiceType,
+  SupplyCategory,
   SupplyType,
 } from '../../core/models';
 import {
@@ -17,8 +18,10 @@ import {
   PRODUCT_TYPE_LABELS,
   RESIN_TYPE_LABELS,
   SERVICE_TYPE_LABELS,
+  SUPPLY_CATEGORY_LABELS,
   SUPPLY_TYPE_LABELS,
 } from '../constants/labels';
+import { resolveMediaUrl } from '../utils/media-url.util';
 
 @Pipe({ name: 'serviceTypeLabel', standalone: true })
 export class ServiceTypeLabelPipe implements PipeTransform {
@@ -45,6 +48,20 @@ export class PaperTypeLabelPipe implements PipeTransform {
 export class SupplyTypeLabelPipe implements PipeTransform {
   transform(value: SupplyType): string {
     return SUPPLY_TYPE_LABELS[value] ?? value;
+  }
+}
+
+@Pipe({ name: 'supplyCategoryLabel', standalone: true })
+export class SupplyCategoryLabelPipe implements PipeTransform {
+  transform(value: SupplyCategory): string {
+    return SUPPLY_CATEGORY_LABELS[value] ?? value;
+  }
+}
+
+@Pipe({ name: 'mediaUrl', standalone: true })
+export class MediaUrlPipe implements PipeTransform {
+  transform(value: string | null | undefined): string | null {
+    return resolveMediaUrl(value);
   }
 }
 

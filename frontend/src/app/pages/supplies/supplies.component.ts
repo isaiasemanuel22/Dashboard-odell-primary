@@ -1,5 +1,5 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { Supply, SupplyType } from '../../core/models';
+import { Supply, SupplyCategory } from '../../core/models';
 import { SuppliesService } from '../../core/services/settings.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import {
@@ -9,9 +9,9 @@ import {
   SuppliesTableComponent,
 } from '@general-components';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
-import { supplyTypeFilters } from '../../shared/utils/list-filters';
+import { supplyCategoryFilters } from '../../shared/utils/list-filters';
 
-type TypeFilter = SupplyType | 'all';
+type CategoryFilter = SupplyCategory | 'all';
 
 @Component({
   selector: 'app-supplies',
@@ -33,9 +33,9 @@ export class SuppliesComponent implements OnInit {
   supplies: Supply[] = [];
   loading = true;
   search = '';
-  typeFilter: TypeFilter = 'all';
+  categoryFilter: CategoryFilter = 'all';
 
-  readonly typeFilters = supplyTypeFilters();
+  readonly categoryFilters = supplyCategoryFilters();
 
   ngOnInit(): void {
     this.loadSupplies();
@@ -49,8 +49,9 @@ export class SuppliesComponent implements OnInit {
       const matchesSearch =
         !this.search ||
         s.name.toLowerCase().includes(this.search.toLowerCase());
-      const matchesType = this.typeFilter === 'all' || s.type === this.typeFilter;
-      return matchesSearch && matchesType;
+      const matchesCategory =
+        this.categoryFilter === 'all' || s.category === this.categoryFilter;
+      return matchesSearch && matchesCategory;
     });
   }
 
@@ -68,7 +69,9 @@ export class SuppliesComponent implements OnInit {
   }
 
   openCreate(): void {
-    this.formDialogs.openSupply().subscribe((saved) => {
+    const defaultCategory =
+      this.categoryFilter === 'all' ? undefined : this.categoryFilter;
+    this.formDialogs.openSupply(null, defaultCategory).subscribe((saved) => {
       if (saved) this.loadSupplies();
     });
   }

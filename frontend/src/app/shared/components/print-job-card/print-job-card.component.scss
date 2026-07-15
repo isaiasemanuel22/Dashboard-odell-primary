@@ -1,0 +1,56 @@
+@use '../../styles/variables' as *;
+@use '../../styles/cards' as cards;
+
+.job-card {
+  @include cards.card-shell;
+  padding: 1.25rem;
+  border-left: 4px solid $color-primary;
+
+  &.imprimiendo {
+    border-left-color: $color-primary-end;
+  }
+
+  &.en_cola {
+    border-left-color: #f59e0b;
+  }
+
+  &.terminado {
+    border-left-color: #10b981;
+  }
+
+  &.fallido {
+    border-left-color: #ef4444;
+  }
+
+  h3 {
+    margin: 0.75rem 0 0.25rem;
+    font-size: 1rem;
+    color: $color-text;
+  }
+
+  .customer {
+    margin: 0 0 1rem;
+    color: $color-text-muted;
+    font-size: 0.875rem;
+  }
+}
+
+.job-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.priority {
+  font-size: 0.75rem;
+  color: $color-text-subtle;
+}
+
+.job-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  font-size: 0.8rem;
+  color: $color-text-label;
+  margin-bottom: 0.75rem;
+}

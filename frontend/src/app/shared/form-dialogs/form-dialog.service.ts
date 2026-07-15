@@ -10,6 +10,7 @@ import {
   ProductType,
   RetailSale,
   Supply,
+  SupplyCategory,
 } from '../../core/models';
 import { formDialogConfig } from './form-dialog.config';
 import { ModalSize } from './modal-size';
@@ -61,8 +62,11 @@ export class FormDialogService {
     );
   }
 
-  openSupply(supply: Supply | null = null): Observable<Supply | undefined> {
-    return this.open(SupplyFormDialogComponent, { supply }, 'md', {
+  openSupply(
+    supply: Supply | null = null,
+    defaultCategory?: SupplyCategory,
+  ): Observable<Supply | undefined> {
+    return this.open(SupplyFormDialogComponent, { supply, defaultCategory }, 'md', {
       ariaLabel: supply ? 'Editar insumo' : 'Nuevo insumo',
     });
   }

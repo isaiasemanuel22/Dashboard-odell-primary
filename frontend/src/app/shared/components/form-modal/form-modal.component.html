@@ -1,0 +1,13 @@
+<div class="modal-backdrop" (click)="close.emit()">
+  <div [ngClass]="modalClass()" (click)="$event.stopPropagation()">
+    <header [ngClass]="headerClass()">
+      <h3>{{ title }}</h3>
+      <button type="button" class="btn-icon" aria-label="Cerrar" (click)="close.emit()">
+        ✕
+      </button>
+    </header>
+    <div class="modal__body">
+      <ng-content />
+    </div>
+  </div>
+</div>

@@ -6,7 +6,11 @@ import {
   Output,
 } from '@angular/core';
 import { Supply } from '../../core/models';
-import { CurrencyArsPipe, SupplyTypeLabelPipe } from '../../shared/pipes/labels.pipe';
+import {
+  CurrencyArsPipe,
+  SupplyCategoryLabelPipe,
+  SupplyTypeLabelPipe,
+} from '../../shared/pipes/labels.pipe';
 import { DbStockBadgeComponent } from '../db-stock-badge/db-stock-badge.component';
 import { DbButtonComponent } from '@general-components';
 
@@ -15,6 +19,7 @@ import { DbButtonComponent } from '@general-components';
   standalone: true,
   imports: [
     CurrencyArsPipe,
+    SupplyCategoryLabelPipe,
     SupplyTypeLabelPipe,
     DbStockBadgeComponent,
     DbButtonComponent,

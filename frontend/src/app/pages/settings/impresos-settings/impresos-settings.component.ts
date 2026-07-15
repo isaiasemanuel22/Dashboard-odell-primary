@@ -12,6 +12,7 @@ import {
 import { ImpresosService } from '../../../core/services/impresos.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
+import { formatPrintDimensionsCm } from '../../../shared/utils/estampado.helpers';
 import { FormDialogService } from '../../../shared/form-dialogs/public-api';
 import {
   DbButtonComponent,
@@ -142,6 +143,10 @@ export class ImpresosSettingsComponent implements OnInit {
   }
 
   formatDimensions(item: ImpresoWithCost): string {
-    return `${item.widthCm} × ${item.heightCm} cm`;
+    return formatPrintDimensionsCm(
+      item.widthCm,
+      item.lengthCm,
+      item.heightCm,
+    );
   }
 }

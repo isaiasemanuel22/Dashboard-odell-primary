@@ -37,7 +37,15 @@ Con Google no hace falta crear usuarios a mano; se registran al primer login.
 
 Al guardar las claves, la app redirige a `/login` antes de entrar al dashboard.
 
-## 4. Storage (imágenes de productos)
+## 4. Storage (imágenes de productos, opcional)
+
+Por defecto las imágenes se suben al **backend** (`backend/uploads/`), sin depender de Firebase Storage.
+
+Para usar Firebase Storage en producción, en `environment.prod.ts`:
+
+```typescript
+productImageStorage: 'firebase',
+```
 
 En Firebase Console → **Storage** → **Get started**.
 
@@ -75,7 +83,7 @@ Reiniciá el backend. Sin este archivo la API sigue abierta (modo desarrollo).
 | Componente | Sin Firebase configurado | Con Firebase |
 |------------|-------------------------|--------------|
 | Login | No se exige | Pantalla `/login` |
-| Imágenes | Subida local `/uploads` | Firebase Storage |
+| Imágenes | Subida local `/uploads` (por defecto) | Firebase Storage solo si configurás `productImageStorage: 'firebase'` en el frontend **y** reglas/CORS de Storage |
 | API | Sin token | Header `Authorization: Bearer …` |
 
 ## 7. Tiempo real (SSE)

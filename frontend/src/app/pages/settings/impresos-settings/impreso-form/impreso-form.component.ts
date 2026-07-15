@@ -26,6 +26,10 @@ import {
   PaperType,
 } from '../../../../core/models';
 import { ImpresosService } from '../../../../core/services/impresos.service';
+import {
+  formatPrintDimensionsCm,
+  hasValidPrintSize,
+} from '../../../../shared/utils/estampado.helpers';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 
 const PAPER_TYPE_OPTIONS: DbSelectOption[] = [
@@ -66,6 +70,7 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
   name = '';
   paperType = PaperType.DTF;
   widthCm = 0;
+  lengthCm = 0;
   heightCm = 0;
   estimatedCost = 0;
 
@@ -82,8 +87,11 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
   }
 
   get dimensionsLabel(): string {
-    if (this.widthCm <= 0 || this.heightCm <= 0) return '—';
-    return `${this.widthCm} × ${this.heightCm} cm`;
+    return formatPrintDimensionsCm(
+      this.widthCm,
+      this.lengthCm || undefined,
+      this.heightCm,
+    );
   }
 
   onDimensionsChange(): void {
@@ -95,6 +103,8 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
       name: this.name.trim(),
       paperType: this.paperType,
       widthCm: Number(this.widthCm),
+      lengthCm:
+        Number(this.lengthCm) > 0 ? Number(this.lengthCm) : undefined,
       heightCm: Number(this.heightCm),
     });
   }
@@ -104,11 +114,13 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
       this.name = this.impreso.name;
       this.paperType = this.impreso.paperType;
       this.widthCm = this.impreso.widthCm;
+      this.lengthCm = this.impreso.lengthCm ?? 0;
       this.heightCm = this.impreso.heightCm;
     } else {
       this.name = '';
       this.paperType = PaperType.DTF;
       this.widthCm = 0;
+      this.lengthCm = 0;
       this.heightCm = 0;
     }
     this.scheduleCostPreview();
@@ -127,7 +139,7 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
   }
 
   private loadCostPreview(): void {
-    if (this.widthCm <= 0 || this.heightCm <= 0) {
+    if (!hasValidPrintSize(this.widthCm, this.lengthCm, this.heightCm)) {
       this.estimatedCost = 0;
       return;
     }
@@ -136,6 +148,8 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
       .previewCost({
         paperType: this.paperType,
         widthCm: Number(this.widthCm),
+        lengthCm:
+          Number(this.lengthCm) > 0 ? Number(this.lengthCm) : undefined,
         heightCm: Number(this.heightCm),
       })
       .subscribe({

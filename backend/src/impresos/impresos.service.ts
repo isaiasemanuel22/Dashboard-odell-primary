@@ -11,6 +11,7 @@ import {
   ImpresoWithCost,
   UpdateImpresoDto,
 } from '../common/interfaces';
+import { resolvePrintAreaSecondCm } from '../products/estampado-product.util';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
 import { StoreService } from '../store/store.service';
 
@@ -45,12 +46,14 @@ export class ImpresosService {
   previewCost(
     paperType: PaperType,
     widthCm: number,
+    lengthCm: number | undefined,
     heightCm: number,
   ): ImpresoCostPreview {
+    const areaSecond = resolvePrintAreaSecondCm(lengthCm, heightCm);
     return this.costCalculator.calculateImpresoPaperCost(
       paperType,
       widthCm,
-      heightCm,
+      areaSecond,
     );
   }
 
@@ -61,6 +64,10 @@ export class ImpresosService {
       name: data.name.trim(),
       paperType: data.paperType,
       widthCm: Number(data.widthCm),
+      lengthCm:
+        data.lengthCm != null && data.lengthCm > 0
+          ? Number(data.lengthCm)
+          : undefined,
       heightCm: Number(data.heightCm),
       updatedAt: new Date().toISOString(),
     };
@@ -77,6 +84,7 @@ export class ImpresosService {
       name: data.name ?? existing.name,
       paperType: data.paperType ?? existing.paperType,
       widthCm: data.widthCm ?? existing.widthCm,
+      lengthCm: data.lengthCm ?? existing.lengthCm,
       heightCm: data.heightCm ?? existing.heightCm,
     };
     this.validate(merged);
@@ -86,6 +94,10 @@ export class ImpresosService {
       name: merged.name.trim(),
       paperType: merged.paperType,
       widthCm: Number(merged.widthCm),
+      lengthCm:
+        merged.lengthCm != null && merged.lengthCm > 0
+          ? Number(merged.lengthCm)
+          : undefined,
       heightCm: Number(merged.heightCm),
       updatedAt: new Date().toISOString(),
     };
@@ -110,18 +122,25 @@ export class ImpresosService {
     if (!Object.values(PaperType).includes(data.paperType)) {
       throw new BadRequestException('Tipo de papel inválido');
     }
-    if (Number(data.widthCm) <= 0 || Number(data.heightCm) <= 0) {
+    if (
+      Number(data.widthCm) <= 0 ||
+      resolvePrintAreaSecondCm(data.lengthCm, data.heightCm) <= 0
+    ) {
       throw new BadRequestException(
-        'Ancho y alto deben ser mayores a 0',
+        'Ancho y alto deben ser mayores a 0 (largo opcional)',
       );
     }
   }
 
   private enrich(impreso: Impreso): ImpresoWithCost {
+    const areaSecond = resolvePrintAreaSecondCm(
+      impreso.lengthCm,
+      impreso.heightCm,
+    );
     const { areaSqm, paperCost } = this.costCalculator.calculateImpresoPaperCost(
       impreso.paperType,
       impreso.widthCm,
-      impreso.heightCm,
+      areaSecond,
     );
 
     return {

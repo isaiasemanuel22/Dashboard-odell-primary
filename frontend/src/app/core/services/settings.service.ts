@@ -11,6 +11,7 @@ import {
   PowerConsumptionConfig,
   ResinPriceConfig,
   Supply,
+  SupplyCategory,
   SupplyType,
 } from '../models';
 
@@ -159,9 +160,10 @@ export class SuppliesService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getSupplies(type?: SupplyType): Observable<Supply[]> {
+  getSupplies(type?: SupplyType, category?: SupplyCategory): Observable<Supply[]> {
     let params = new HttpParams();
     if (type) params = params.set('type', type);
+    if (category) params = params.set('category', category);
     return this.http.get<Supply[]>(this.baseUrl, { params });
   }
 

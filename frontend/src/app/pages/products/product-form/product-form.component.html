@@ -1,5 +1,7 @@
-<db-form>
-    <form (ngSubmit)="onSubmit()">
+        @if (is3D && !hasComponents && !canAutoCalculateCost) {
+          <p class="pricing-hint">Ingresá los gramos para calcular el costo automáticamente.</p>
+        }<db-form>
+    <form (ngSubmit)="onSubmit()" autocomplete="off">
       <db-form-grid>
         <db-select
           label="Tipo"
@@ -17,27 +19,267 @@
         />
 
         <db-form-grid-full>
-          <db-checkbox
-            label="Publicado en catálogo"
-            [(ngModel)]="published"
-            name="published"
-          />
-          <p class="published-hint">
-            Desactivá esta opción para piezas internas o productos personalizados que no formen parte del catálogo, pero sigan disponibles en armados y presupuestos.
-          </p>
+          <div class="product-flags">
+            @if (showIncludesPiecesCheckbox) {
+              <db-checkbox
+                label="Publicado en catálogo"
+                [(ngModel)]="published"
+                name="published"
+              />
+              <db-checkbox
+                label="Incluye piezas"
+                [ngModel]="includesPieces"
+                (ngModelChange)="onIncludesPiecesChange($event)"
+                name="includesPieces"
+              />
+            }
+          </div>
+          @if (showIncludesPiecesCheckbox) {
+            <p class="published-hint">
+              Desactivá «Publicado en catálogo» para piezas internas. Activá «Incluye piezas» si el producto se arma a partir de otros productos.
+            </p>
+          }
         </db-form-grid-full>
 
-        <db-form-grid-full>
-          <db-input
-            label="Tamaño"
-            [(ngModel)]="size"
-            name="size"
-            [placeholder]="sizePlaceholder"
-            [required]="true"
-          />
-        </db-form-grid-full>
+        @if (showProductionFields && showGenericSizeField) {
+          <db-form-grid-full>
+            <div class="estampado-size-fields">
+              <db-input
+                label="Ancho (cm)"
+                type="number"
+                [(ngModel)]="sizeWidthCm"
+                name="sizeWidthCm"
+                [min]="0.1"
+                [step]="0.1"
+                [required]="true"
+              />
+              <db-input
+                label="Largo (cm)"
+                type="number"
+                [(ngModel)]="sizeLengthCm"
+                name="sizeLengthCm"
+                [min]="0.1"
+                [step]="0.1"
+              />
+              <db-input
+                label="Alto (cm)"
+                type="number"
+                [(ngModel)]="sizeHeightCm"
+                name="sizeHeightCm"
+                [min]="0.1"
+                [step]="0.1"
+                [required]="true"
+              />
+            </div>
+          </db-form-grid-full>
+        }
 
-        @if (isFdm && !hasComponents) {
+        @if (showProductionFields && isEstampado) {
+          <db-form-grid-full>
+            <db-fieldset legend="Impresos">
+              <p class="components-desc">
+                Agregá cada tamaño de papel o transfer que lleva el producto.
+              </p>
+              @for (print of prints; track print.id) {
+                <div class="estampado-item">
+                  <div class="estampado-item__header">
+                    <strong>Impreso {{ $index + 1 }}</strong>
+                    @if (prints.length > 1) {
+                      <db-button
+                        label="Quitar"
+                        variant="delete"
+                        format="inline"
+                        (clicked)="removePrint(print.id)"
+                      />
+                    }
+                  </div>
+                  <div class="estampado-item__grid">
+                    <db-input
+                      label="Etiqueta (opcional)"
+                      [(ngModel)]="print.label"
+                      [name]="'printLabel' + print.id"
+                      placeholder="Ej: Pecho, Espalda"
+                      (ngModelChange)="onEstampadoConfigChange()"
+                    />
+                    <db-select
+                      label="Tipo de papel"
+                      [(ngModel)]="print.paperType"
+                      [name]="'printPaperType' + print.id"
+                      [options]="paperTypeOptions"
+                      (ngModelChange)="onPrintPaperTypeChange(print)"
+                    />
+                    <db-select
+                      label="Desde catálogo (opcional)"
+                      [(ngModel)]="print.impresoId"
+                      [name]="'printImpreso' + print.id"
+                      placeholder="Elegir tamaño del catálogo..."
+                      [options]="filteredImpresoOptionsFor(print.paperType)"
+                      (ngModelChange)="onPrintImpresoChange(print)"
+                    />
+                    <div class="estampado-size-fields">
+                      <db-input
+                        label="Ancho (cm)"
+                        type="number"
+                        [(ngModel)]="print.widthCm"
+                        [name]="'printWidth' + print.id"
+                        [min]="0.1"
+                        [step]="0.1"
+                        (ngModelChange)="onPrintDimensionsChange(print)"
+                      />
+                      <db-input
+                        label="Largo (cm)"
+                        type="number"
+                        [(ngModel)]="print.lengthCm"
+                        [name]="'printLength' + print.id"
+                        [min]="0.1"
+                        [step]="0.1"
+                        (ngModelChange)="onPrintDimensionsChange(print)"
+                      />
+                      <db-input
+                        label="Alto (cm)"
+                        type="number"
+                        [(ngModel)]="print.heightCm"
+                        [name]="'printHeight' + print.id"
+                        [min]="0.1"
+                        [step]="0.1"
+                        (ngModelChange)="onPrintDimensionsChange(print)"
+                      />
+                    </div>
+                  </div>
+                </div>
+              }
+              <db-button
+                label="+ Agregar impreso"
+                variant="secondary"
+                format="soft"
+                (clicked)="addPrint()"
+              />
+            </db-fieldset>
+          </db-form-grid-full>
+
+          <db-form-grid-full>
+            <db-fieldset legend="Insumos">
+              <p class="components-desc">
+                Seleccioná insumos del catálogo (Insumos → Estampado): remeras, tinta, film, etc. El costo se calcula con el precio unitario del stock.
+              </p>
+              @for (line of supplyLines; track line.id) {
+                <div class="estampado-item">
+                  <div class="estampado-item__header">
+                    <strong>Insumo {{ $index + 1 }}</strong>
+                    <db-button
+                      label="Quitar"
+                      variant="delete"
+                      format="inline"
+                      (clicked)="removeSupplyLine(line.id)"
+                    />
+                  </div>
+                  <div class="estampado-item__grid">
+                    <db-input
+                      label="Etiqueta (opcional)"
+                      [(ngModel)]="line.label"
+                      [name]="'supplyLabel' + line.id"
+                      placeholder="Ej: Remera base"
+                      (ngModelChange)="onEstampadoConfigChange()"
+                    />
+                    <db-select
+                      label="Insumo"
+                      [(ngModel)]="line.supplyId"
+                      [name]="'supplyId' + line.id"
+                      placeholder="Seleccionar insumo..."
+                      [options]="filteredSupplyOptionsFor(line)"
+                      (ngModelChange)="onEstampadoConfigChange()"
+                    />
+                    <db-input
+                      label="Cantidad"
+                      type="number"
+                      [(ngModel)]="line.quantity"
+                      [name]="'supplyQty' + line.id"
+                      [min]="0.01"
+                      [step]="0.01"
+                      (ngModelChange)="onEstampadoConfigChange()"
+                    />
+                  </div>
+                </div>
+              }
+              <db-button
+                label="+ Agregar insumo"
+                variant="secondary"
+                format="soft"
+                (clicked)="addSupplyLine()"
+              />
+            </db-fieldset>
+          </db-form-grid-full>
+
+          <db-form-grid-full>
+            <db-fieldset legend="Bajadas de plancha">
+              <p class="components-desc">
+                Cada bajada es un ciclo de plancha con su duración y cantidad de repeticiones.
+              </p>
+              @for (cycle of pressCycles; track cycle.id) {
+                <div class="estampado-item">
+                  <div class="estampado-item__header">
+                    <strong>Bajada {{ $index + 1 }}</strong>
+                    @if (pressCycles.length > 1) {
+                      <db-button
+                        label="Quitar"
+                        variant="delete"
+                        format="inline"
+                        (clicked)="removePressCycle(cycle.id)"
+                      />
+                    }
+                  </div>
+                  <div class="estampado-item__grid">
+                    <db-input
+                      label="Etiqueta (opcional)"
+                      [(ngModel)]="cycle.label"
+                      [name]="'cycleLabel' + cycle.id"
+                      placeholder="Ej: Frente, Espalda"
+                      (ngModelChange)="onEstampadoConfigChange()"
+                    />
+                    <db-input
+                      label="Minutos por bajada"
+                      type="number"
+                      [(ngModel)]="cycle.pressMinutes"
+                      [name]="'cycleMinutes' + cycle.id"
+                      [min]="0"
+                      [step]="0.5"
+                      (ngModelChange)="onEstampadoConfigChange()"
+                    />
+                    <db-input
+                      label="Cantidad de bajadas"
+                      type="number"
+                      [(ngModel)]="cycle.bajadas"
+                      [name]="'cycleCount' + cycle.id"
+                      [min]="1"
+                      [step]="1"
+                      (ngModelChange)="onEstampadoConfigChange()"
+                    />
+                  </div>
+                </div>
+              }
+              <db-button
+                label="+ Agregar bajada"
+                variant="secondary"
+                format="soft"
+                (clicked)="addPressCycle()"
+              />
+            </db-fieldset>
+          </db-form-grid-full>
+
+          <db-form-grid-full>
+            <db-input
+              label="Tiempo de mano de obra (h)"
+              type="number"
+              [(ngModel)]="workTimeHours"
+              name="workTimeHoursEstampado"
+              [min]="0"
+              [step]="0.1"
+              (ngModelChange)="onProductionFieldChange()"
+            />
+          </db-form-grid-full>
+        }
+
+        @if (showProductionFields && isFdm) {
           <db-form-grid-full>
             <db-select
               label="Tipo de filamento"
@@ -49,7 +291,7 @@
           </db-form-grid-full>
         }
 
-        @if (isResina && !hasComponents) {
+        @if (showProductionFields && isResina) {
           <db-form-grid-full>
             <db-select
               label="Tipo de resina"
@@ -61,7 +303,7 @@
           </db-form-grid-full>
         }
 
-        @if (is3D && !hasComponents) {
+        @if (showProductionFields && is3D) {
           <db-input
             label="Gramos"
             type="number"
@@ -84,7 +326,7 @@
           />
           <db-form-grid-full>
             <db-input
-              label="Tiempo de trabajo (h)"
+              label="Tiempo de mano de obra (h)"
               type="number"
               [(ngModel)]="workTimeHours"
               name="workTimeHours"
@@ -115,31 +357,9 @@
             />
           }
         }
-
-        @if (isEstampado && !hasComponents) {
-          <db-input
-            label="Minutos por ciclo de plancha"
-            type="number"
-            [(ngModel)]="pressMinutes"
-            name="pressMinutes"
-            [min]="0"
-            [step]="0.5"
-            (ngModelChange)="onProductionFieldChange()"
-          />
-          <db-form-grid-full>
-            <db-input
-              label="Tiempo de trabajo (h)"
-              type="number"
-              [(ngModel)]="workTimeHours"
-              name="workTimeHoursEstampado"
-              [min]="0"
-              [step]="0.1"
-              (ngModelChange)="onProductionFieldChange()"
-            />
-          </db-form-grid-full>
-        }
       </db-form-grid>
 
+      @if (showComponentsSection) {
       <db-fieldset legend="Piezas incluidas">
         <p class="components-desc">
           Armá productos compuestos agregando otros productos (publicados o internos). Ej: base, tablero, piezas de juego.
@@ -193,6 +413,7 @@
           </p>
         }
       </db-fieldset>
+      }
 
       <db-fieldset [legend]="'Categorías (mín. 1, máx. 5) — ' + categoryIds.length + '/5'">
         <div class="category-picker">
@@ -240,7 +461,11 @@
       </db-fieldset>
 
       <db-fieldset legend="Imágenes">
+        <p class="components-desc">
+          Elegí las fotos y revisalas en la vista previa. Podés subirlas con el botón o guardar el producto y se subirán solas.
+        </p>
         <db-file-upload
+          #imageUpload
           [(ngModel)]="images"
           name="images"
           [thumbAlt]="name"
@@ -258,6 +483,7 @@
             <span>Material: {{ costBreakdown.materialCost | currencyArs }}</span>
             <span>Energía: {{ costBreakdown.energyCost | currencyArs }}</span>
             <span>Máquina: {{ costBreakdown.machineCost | currencyArs }}</span>
+            <span>Margen error: {{ costBreakdown.errorMarginCost | currencyArs }}</span>
             <span>Mano de obra: {{ costBreakdown.laborCost | currencyArs }}</span>
           </div>
         }
@@ -291,25 +517,26 @@
               name="suggestedPrice"
               [min]="0"
               placeholder="—"
+              autocomplete="off"
             />
           </div>
         </div>
 
-        @if (isEstampado && !hasComponents && !canAutoCalculateCost) {
+        @if (isEstampado && showProductionFields && !canAutoCalculateCost) {
           <p class="pricing-hint">
-            Ingresá los minutos de plancha o tiempo de trabajo para calcular el costo automáticamente.
+            Completá al menos un impreso, un insumo, una bajada de plancha o tiempo de mano de obra para calcular el costo.
           </p>
         }
-        @if (is3D && !hasComponents && !canAutoCalculateCost) {
+        @if (is3D && showProductionFields && !canAutoCalculateCost) {
           <p class="pricing-hint">Ingresá los gramos para calcular el costo automáticamente.</p>
         }
-        @if (hasComponents && !components.length) {
+        @if (usesPieceAssembly && !components.length) {
           <p class="pricing-hint">Agregá al menos una pieza para calcular el costo del producto compuesto.</p>
         }
       </db-fieldset>
 
-      @if (error) {
-        <db-form-error>{{ error }}</db-form-error>
+      @if (error || imageUploadError) {
+        <db-form-error>{{ error || imageUploadError }}</db-form-error>
       }
 
       <db-form-footer>
@@ -320,11 +547,11 @@
           (clicked)="cancel.emit()"
         />
         <db-button
-          [label]="loading ? 'Guardando...' : (product ? 'Guardar cambios' : 'Crear producto')"
+          [label]="savingImages ? 'Subiendo imágenes...' : (loading ? 'Guardando...' : (product ? 'Guardar cambios' : 'Crear producto'))"
           variant="primary"
           format="solid"
           buttonType="submit"
-          [disabled]="loading || !name.trim() || categoryIds.length < 1"
+          [disabled]="loading || savingImages || !name.trim() || categoryIds.length < 1"
         />
       </db-form-footer>
     </form>

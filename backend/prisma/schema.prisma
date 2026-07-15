@@ -8,8 +8,9 @@ datasource db {
 
 model AppSettings {
   id                    Int   @id @default(1)
-  electricityCostPerKwh Float @map("electricity_cost_per_kwh")
-  laborCostPerHour      Float @map("labor_cost_per_hour")
+  electricityCostPerKwh Float @default(0) @map("electricity_cost_per_kwh")
+  laborCostPerHour      Float @default(0) @map("labor_cost_per_hour")
+  errorMarginPercent    Float @default(0) @map("error_margin_percent")
   profitMargins         Json  @map("profit_margins")
   paperPricesPerSqm     Json  @map("paper_prices_per_sqm")
   powerConsumptions     Json  @map("power_consumptions")
@@ -17,6 +18,8 @@ model AppSettings {
   processProfiles       Json  @default("[]") @map("process_profiles")
   filamentPrices        Json  @map("filament_prices")
   resinPrices           Json  @map("resin_prices")
+  filamentTypeAverages  Json  @default("{}") @map("filament_type_averages")
+  resinTypeAverages     Json  @default("{}") @map("resin_type_averages")
 
   @@map("app_settings")
 }
@@ -66,6 +69,14 @@ model Product {
   washMinutes       Float?   @map("wash_minutes")
   cureMinutes       Float?   @map("cure_minutes")
   pressMinutes      Float?   @map("press_minutes")
+  paperType         String?  @map("paper_type") @db.VarChar(32)
+  impresoId         String?  @map("impreso_id") @db.VarChar(64)
+  widthCm           Float?   @map("width_cm")
+  heightCm          Float?   @map("height_cm")
+  estampadoPrints       Json @default("[]") @map("estampado_prints")
+  estampadoPressCycles  Json @default("[]") @map("estampado_press_cycles")
+  estampadoSupplies     Json @default("[]") @map("estampado_supplies")
+  includesPieces        Boolean @default(false) @map("includes_pieces")
 
   @@map("products")
 }
@@ -73,6 +84,7 @@ model Product {
 model Supply {
   id                String   @id @db.VarChar(64)
   name              String   @db.VarChar(255)
+  category          String   @default("general") @db.VarChar(32)
   type              String   @db.VarChar(32)
   filamentType      String?  @map("filament_type") @db.VarChar(32)
   resinType         String?  @map("resin_type") @db.VarChar(32)
@@ -93,6 +105,7 @@ model Impreso {
   name      String   @db.VarChar(255)
   paperType String   @map("paper_type") @db.VarChar(32)
   widthCm   Float    @map("width_cm")
+  lengthCm  Float?   @map("length_cm")
   heightCm  Float    @map("height_cm")
   updatedAt DateTime @map("updated_at")
 

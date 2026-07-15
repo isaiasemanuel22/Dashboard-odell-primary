@@ -9,6 +9,7 @@ import {
 export function mapSettingsFromDb(row: {
   electricityCostPerKwh: number;
   laborCostPerHour: number;
+  errorMarginPercent?: number;
   profitMargins: Prisma.JsonValue;
   paperPricesPerSqm: Prisma.JsonValue;
   powerConsumptions: Prisma.JsonValue;
@@ -16,10 +17,13 @@ export function mapSettingsFromDb(row: {
   processProfiles?: Prisma.JsonValue;
   filamentPrices: Prisma.JsonValue;
   resinPrices: Prisma.JsonValue;
+  filamentTypeAverages?: Prisma.JsonValue;
+  resinTypeAverages?: Prisma.JsonValue;
 }): GeneralSettings {
   const rawProfiles = fromJson<unknown[]>(row.processProfiles ?? []);
   const base: GeneralSettings = {
     electricityCostPerKwh: row.electricityCostPerKwh,
+    errorMarginPercent: row.errorMarginPercent ?? 0,
     laborCostPerHour: row.laborCostPerHour,
     profitMargins: fromJson<GeneralSettings['profitMargins']>(
       row.profitMargins,
@@ -36,6 +40,12 @@ export function mapSettingsFromDb(row: {
       row.filamentPrices,
     ),
     resinPrices: fromJson<GeneralSettings['resinPrices']>(row.resinPrices),
+    filamentTypeAverages: fromJson<GeneralSettings['filamentTypeAverages']>(
+      row.filamentTypeAverages ?? {},
+    ),
+    resinTypeAverages: fromJson<GeneralSettings['resinTypeAverages']>(
+      row.resinTypeAverages ?? {},
+    ),
   };
 
   base.machineProfiles = parseMachineProfilesFromDb(rawProfiles, base);
@@ -50,6 +60,7 @@ export function mapSettingsToDb(settings: GeneralSettings) {
 
   return {
     electricityCostPerKwh: normalized.electricityCostPerKwh,
+    errorMarginPercent: normalized.errorMarginPercent,
     laborCostPerHour: normalized.laborCostPerHour,
     profitMargins: toInputJson(normalized.profitMargins),
     paperPricesPerSqm: toInputJson(normalized.paperPricesPerSqm),
@@ -58,5 +69,7 @@ export function mapSettingsToDb(settings: GeneralSettings) {
     processProfiles: toInputJson(normalized.machineProfiles),
     filamentPrices: toInputJson(normalized.filamentPrices),
     resinPrices: toInputJson(normalized.resinPrices),
+    filamentTypeAverages: toInputJson(normalized.filamentTypeAverages),
+    resinTypeAverages: toInputJson(normalized.resinTypeAverages),
   };
 }

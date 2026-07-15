@@ -1,0 +1,21 @@
+.cost-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+  font-size: 0.875rem;
+  color: #475569;
+
+  strong {
+    color: #0f172a;
+    font-size: 1rem;
+  }
+
+  small {
+    font-size: 0.75rem;
+    color: #64748b;
+  }
+}

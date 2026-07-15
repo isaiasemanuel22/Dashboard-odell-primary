@@ -1,6 +1,17 @@
 import { Prisma } from '@prisma/client';
-import { Product, Product3D } from '../../common/interfaces';
+import {
+  Product,
+  Product3D,
+  ProductCombo,
+  ProductEstampado,
+} from '../../common/interfaces';
+import { ProductType } from '../../common/enums';
 import { fromJson, toInputJson } from '../../prisma/json.util';
+import {
+  normalizeEstampadoPressCycles,
+  normalizeEstampadoPrints,
+  normalizeEstampadoSupplies,
+} from '../../products/estampado-product.util';
 
 export function mapProductFromDb(row: {
   id: string;
@@ -14,6 +25,7 @@ export function mapProductFromDb(row: {
   type: string;
   size: string;
   published: boolean;
+  includesPieces?: boolean;
   components: Prisma.JsonValue;
   assemblyTimeHours: number;
   grams: number | null;
@@ -25,11 +37,19 @@ export function mapProductFromDb(row: {
   washMinutes: number | null;
   cureMinutes: number | null;
   pressMinutes: number | null;
+  paperType: string | null;
+  impresoId: string | null;
+  widthCm: number | null;
+  heightCm: number | null;
+  estampadoPrints?: Prisma.JsonValue;
+  estampadoPressCycles?: Prisma.JsonValue;
+  estampadoSupplies?: Prisma.JsonValue;
 }): Product {
+  const components = fromJson<Product['components']>(row.components);
   const base = {
     id: row.id,
     name: row.name,
-    images: fromJson<Product['images']>(row.images),
+    images: fromJson<string[]>(row.images) ?? [],
     updatedAt: row.updatedAt.toISOString(),
     price: row.price,
     cost: row.cost,
@@ -38,16 +58,44 @@ export function mapProductFromDb(row: {
     type: row.type as Product['type'],
     size: row.size,
     published: row.published,
-    components: fromJson<Product['components']>(row.components),
+    includesPieces:
+      row.includesPieces === true ||
+      components.length > 0 ||
+      row.type === ProductType.COMBO,
+    components,
     assemblyTimeHours: row.assemblyTimeHours,
   };
 
-  if (row.type === 'estampado') {
+  if (row.type === ProductType.COMBO) {
     return {
       ...base,
-      pressMinutes: row.pressMinutes ?? undefined,
+      type: ProductType.COMBO,
+      includesPieces: true,
+    } as ProductCombo;
+  }
+
+  if (row.type === ProductType.ESTAMPADO) {
+    const legacy = {
+      paperType: (row.paperType as ProductEstampado['paperType']) ?? undefined,
+      impresoId: row.impresoId ?? undefined,
+      widthCm: row.widthCm ?? undefined,
+      heightCm: row.heightCm ?? undefined,
+    };
+    return {
+      ...base,
       workTimeHours: row.workTimeHours ?? undefined,
-    } as Product;
+      prints: normalizeEstampadoPrints(
+        fromJson<ProductEstampado['prints']>(row.estampadoPrints ?? []),
+        legacy,
+      ),
+      pressCycles: normalizeEstampadoPressCycles(
+        fromJson<ProductEstampado['pressCycles']>(row.estampadoPressCycles ?? []),
+        row.pressMinutes ?? undefined,
+      ),
+      supplies: normalizeEstampadoSupplies(
+        fromJson<ProductEstampado['supplies']>(row.estampadoSupplies ?? []),
+      ),
+    } as ProductEstampado;
   }
 
   return {
@@ -64,6 +112,10 @@ export function mapProductFromDb(row: {
 }
 
 export function mapProductToDb(product: Product) {
+  const estampado =
+    product.type === ProductType.ESTAMPADO ? (product as ProductEstampado) : null;
+  const isCombo = product.type === ProductType.COMBO;
+
   return {
     id: product.id,
     name: product.name,
@@ -76,18 +128,31 @@ export function mapProductToDb(product: Product) {
     type: product.type,
     size: product.size,
     published: product.published !== false,
+    includesPieces:
+      isCombo || product.includesPieces === true || product.components.length > 0,
     components: toInputJson(product.components),
     assemblyTimeHours: product.assemblyTimeHours,
-    grams: 'grams' in product ? product.grams : null,
-    printTimeHours: 'printTimeHours' in product ? product.printTimeHours : null,
-    workTimeHours: 'workTimeHours' in product ? product.workTimeHours : null,
-    brand: 'brand' in product ? (product.brand ?? null) : null,
+    grams: !isCombo && 'grams' in product ? product.grams : null,
+    printTimeHours:
+      !isCombo && 'printTimeHours' in product ? product.printTimeHours : null,
+    workTimeHours:
+      !isCombo && 'workTimeHours' in product ? product.workTimeHours : null,
+    brand: !isCombo && 'brand' in product ? (product.brand ?? null) : null,
     filamentType:
-      'filamentType' in product ? (product.filamentType ?? null) : null,
-    resinType: 'resinType' in product ? (product.resinType ?? null) : null,
-    washMinutes: 'washMinutes' in product ? (product.washMinutes ?? null) : null,
-    cureMinutes: 'cureMinutes' in product ? (product.cureMinutes ?? null) : null,
-    pressMinutes:
-      'pressMinutes' in product ? (product.pressMinutes ?? null) : null,
+      !isCombo && 'filamentType' in product ? (product.filamentType ?? null) : null,
+    resinType:
+      !isCombo && 'resinType' in product ? (product.resinType ?? null) : null,
+    washMinutes:
+      !isCombo && 'washMinutes' in product ? (product.washMinutes ?? null) : null,
+    cureMinutes:
+      !isCombo && 'cureMinutes' in product ? (product.cureMinutes ?? null) : null,
+    pressMinutes: null,
+    paperType: null,
+    impresoId: null,
+    widthCm: null,
+    heightCm: null,
+    estampadoPrints: toInputJson(estampado?.prints ?? []),
+    estampadoPressCycles: toInputJson(estampado?.pressCycles ?? []),
+    estampadoSupplies: toInputJson(estampado?.supplies ?? []),
   };
 }

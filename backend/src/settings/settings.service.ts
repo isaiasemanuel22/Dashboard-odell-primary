@@ -38,6 +38,14 @@ export class SettingsService {
     if (data.laborCostPerHour !== undefined) {
       assertNonNegativeNumber(data.laborCostPerHour, 'laborCostPerHour');
     }
+    if (data.errorMarginPercent !== undefined) {
+      const margin = Number(data.errorMarginPercent);
+      if (!Number.isFinite(margin) || margin < 0 || margin > 100) {
+        throw new BadRequestException(
+          'El margen de error debe estar entre 0 y 100',
+        );
+      }
+    }
     if (data.profitMargins) {
       for (const [key, value] of Object.entries(data.profitMargins)) {
         const margin = Number(value);
@@ -46,6 +54,16 @@ export class SettingsService {
             `Margen inválido para ${key}: debe estar entre 0 y 99`,
           );
         }
+      }
+    }
+    if (data.filamentTypeAverages) {
+      for (const [key, value] of Object.entries(data.filamentTypeAverages)) {
+        assertNonNegativeNumber(value, `filamentTypeAverages.${key}`);
+      }
+    }
+    if (data.resinTypeAverages) {
+      for (const [key, value] of Object.entries(data.resinTypeAverages)) {
+        assertNonNegativeNumber(value, `resinTypeAverages.${key}`);
       }
     }
 
@@ -59,6 +77,14 @@ export class SettingsService {
       profitMargins: {
         ...this.store.generalSettings.profitMargins,
         ...(data.profitMargins ?? {}),
+      },
+      filamentTypeAverages: {
+        ...this.store.generalSettings.filamentTypeAverages,
+        ...(data.filamentTypeAverages ?? {}),
+      },
+      resinTypeAverages: {
+        ...this.store.generalSettings.resinTypeAverages,
+        ...(data.resinTypeAverages ?? {}),
       },
       machineProfiles:
         data.machineProfiles ??
@@ -182,6 +208,7 @@ export class SettingsService {
       ...data,
     };
     this.store.generalSettings.resinPrices.push(entry);
+    this.syncResinSupplies(entry);
     return entry;
   }
 
@@ -199,7 +226,9 @@ export class SettingsService {
       ...this.store.generalSettings.resinPrices[index],
       ...data,
     };
-    return this.store.generalSettings.resinPrices[index];
+    const updated = this.store.generalSettings.resinPrices[index];
+    this.syncResinSupplies(updated);
+    return updated;
   }
 
   removeResinPrice(id: string): void {
@@ -217,6 +246,21 @@ export class SettingsService {
         supply.filamentType === filamentPrice.materialType
       ) {
         supply.unitPrice = filamentPrice.pricePerKg;
+        supply.updatedAt = now;
+      }
+    }
+  }
+
+  private syncResinSupplies(resinPrice: ResinPriceConfig): void {
+    const now = new Date().toISOString();
+    for (const supply of this.store.supplies) {
+      if (
+        supply.type === SupplyType.RESINA &&
+        supply.priceFromSettings &&
+        supply.brand?.toLowerCase() === resinPrice.brand.toLowerCase() &&
+        supply.resinType === resinPrice.resinType
+      ) {
+        supply.unitPrice = resinPrice.pricePerLiter;
         supply.updatedAt = now;
       }
     }

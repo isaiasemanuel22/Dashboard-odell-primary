@@ -51,7 +51,7 @@
               [ariaLabel]="product.name + ' ' + (i + 1)"
               (clicked)="selectImage(i)"
             >
-              <img [src]="image" [alt]="product.name + ' ' + (i + 1)" />
+              <img [src]="image | mediaUrl" [alt]="product.name + ' ' + (i + 1)" />
             </db-button>
           }
         </div>
@@ -138,7 +138,7 @@
               <dd>{{ product.printTimeHours }} h</dd>
             </div>
             <div>
-              <dt>Tiempo de trabajo</dt>
+              <dt>Tiempo de mano de obra</dt>
               <dd>{{ product.workTimeHours }} h</dd>
             </div>
           </dl>
@@ -169,3 +169,4 @@
     </footer>
   </div>
 }
+

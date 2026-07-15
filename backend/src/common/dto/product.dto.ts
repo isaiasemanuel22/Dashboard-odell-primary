@@ -8,7 +8,12 @@ import {
   Min,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
-import { FilamentType, ProductType, ResinType } from '../enums';
+import { FilamentType, PaperType, ProductType, ResinType } from '../enums';
+import {
+  EstampadoPressCycle,
+  EstampadoPrintSpec,
+  EstampadoSupplyLine,
+} from '../interfaces';
 
 export class CreateCategoryDto {
   @IsString()
@@ -54,6 +59,10 @@ export class CreateProductDto {
   published?: boolean;
 
   @IsOptional()
+  @IsBoolean()
+  includesPieces?: boolean;
+
+  @IsOptional()
   @IsNumber()
   @Min(0)
   grams?: number;
@@ -96,6 +105,47 @@ export class CreateProductDto {
   pressMinutes?: number;
 
   @IsOptional()
+  @IsEnum(PaperType)
+  paperType?: PaperType;
+
+  @IsOptional()
+  @IsString()
+  impresoId?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.0001)
+  widthCm?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.0001)
+  lengthCm?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.0001)
+  heightCm?: number;
+
+  @IsOptional()
+  estampadoPrints?: EstampadoPrintSpec[];
+
+  @IsOptional()
+  estampadoPressCycles?: EstampadoPressCycle[];
+
+  @IsOptional()
+  prints?: EstampadoPrintSpec[];
+
+  @IsOptional()
+  pressCycles?: EstampadoPressCycle[];
+
+  @IsOptional()
+  estampadoSupplies?: EstampadoSupplyLine[];
+
+  @IsOptional()
+  supplies?: EstampadoSupplyLine[];
+
+  @IsOptional()
   @IsNumber()
   @Min(0)
   assemblyTimeHours?: number;
@@ -110,4 +160,7 @@ export class CreateProductDto {
 
 export class UpdateProductDto extends PartialType(CreateProductDto) {}
 
-export class ProductPricingInputDto extends PartialType(CreateProductDto) {}
+export class ProductPricingInputDto extends PartialType(CreateProductDto) {
+  @IsEnum(ProductType)
+  type!: ProductType;
+}

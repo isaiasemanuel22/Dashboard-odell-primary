@@ -10,6 +10,7 @@ import {
 import { StoreState } from './store.state';
 import { Product, Order } from '../common/interfaces';
 import { createDefaultMachineProfiles } from '../settings/machine-profile.util';
+import { inferSupplyCategory } from '../supplies/supply-category.util';
 import { ensureOrderStatusHistory } from '../orders/order-status-history.util';
 
 export function createEmptyState(): StoreState {
@@ -32,6 +33,9 @@ export function createEmptyState(): StoreState {
       },
       filamentPrices: [],
       resinPrices: [],
+      errorMarginPercent: 0,
+      filamentTypeAverages: {},
+      resinTypeAverages: {},
     },
     supplies: [],
     impresos: [],
@@ -125,6 +129,9 @@ export function createSeedState(): StoreState {
         pricePerLiter: 30000,
       },
     ],
+    errorMarginPercent: 5,
+    filamentTypeAverages: {},
+    resinTypeAverages: {},
   };
 
   const supplies = [
@@ -842,10 +849,18 @@ export function createSeedState(): StoreState {
 
   return {
     generalSettings,
-    supplies,
+    supplies: supplies.map((supply) => ({
+      ...supply,
+      category: inferSupplyCategory(supply.type),
+    })),
     impresos,
     categories,
-    products: products as Product[],
+    products: products.map((product) => ({
+      ...product,
+      includesPieces:
+        product.type === ProductType.COMBO ||
+        (product.components?.length ?? 0) > 0,
+    })) as Product[],
     customers,
     orders,
     printJobs,

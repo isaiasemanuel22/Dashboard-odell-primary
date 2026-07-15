@@ -1,0 +1,50 @@
+<div class="table-card">
+  <table class="data-table">
+    <thead>
+      <tr>
+        <th>Nombre</th>
+        <th>Tipo</th>
+        <th>Material</th>
+        <th>Marca</th>
+        <th>Stock</th>
+        <th>Precio/u</th>
+        <th>Estado</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (s of supplies; track s.id) {
+        <tr [class.low-stock]="isLowStock(s)">
+          <td><strong>{{ s.name }}</strong></td>
+          <td>{{ s.type | supplyTypeLabel }}</td>
+          <td>{{ materialLabel(s) }}</td>
+          <td>{{ s.brand ?? '—' }}</td>
+          <td>{{ s.quantity }} {{ s.unit }}</td>
+          <td>{{ s.unitPrice | currencyArs }}</td>
+          <td>
+            <db-stock-badge
+              [low]="isLowStock(s)"
+              [showIcon]="false"
+            />
+          </td>
+          <td class="actions">
+            <div class="db-button-group">
+              <db-button
+                label="Editar"
+                variant="primary"
+                format="inline"
+                (clicked)="edit.emit(s)"
+              />
+              <db-button
+                label="Eliminar"
+                variant="delete"
+                format="inline"
+                (clicked)="delete.emit(s)"
+              />
+            </div>
+          </td>
+        </tr>
+      }
+    </tbody>
+  </table>
+</div>

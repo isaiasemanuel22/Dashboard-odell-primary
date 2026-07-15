@@ -2,12 +2,16 @@ import { Injectable } from '@nestjs/common';
 import { ProductType } from '../common/enums';
 import {
   Product3D,
-  ProductEstampado,
   ProductPricingInput,
   ProductPricingResult,
 } from '../common/interfaces';
 import { CreateProductDto } from '../common/dto';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
+import {
+  normalizeEstampadoPressCycles,
+  normalizeEstampadoPrints,
+  normalizeEstampadoSupplies,
+} from './estampado-product.util';
 
 @Injectable()
 export class ProductPricingService {
@@ -19,12 +23,13 @@ export class ProductPricingService {
 
   toPricingInput(merged: CreateProductDto): ProductPricingInput {
     const product3d =
-      merged.type !== ProductType.ESTAMPADO
+      merged.type === ProductType.FDM || merged.type === ProductType.RESINA
         ? (merged as Partial<Product3D>)
         : null;
-    const productEstampado =
+
+    const estampadoData =
       merged.type === ProductType.ESTAMPADO
-        ? (merged as Partial<ProductEstampado>)
+        ? (merged as CreateProductDto)
         : null;
 
     return {
@@ -36,13 +41,28 @@ export class ProductPricingService {
       cost: merged.cost,
       grams: product3d?.grams,
       printTimeHours: product3d?.printTimeHours,
-      workTimeHours: product3d?.workTimeHours ?? productEstampado?.workTimeHours,
+      workTimeHours: product3d?.workTimeHours ?? estampadoData?.workTimeHours,
       brand: product3d?.brand,
       filamentType: product3d?.filamentType,
       resinType: product3d?.resinType,
       washMinutes: product3d?.washMinutes,
       cureMinutes: product3d?.cureMinutes,
-      pressMinutes: productEstampado?.pressMinutes,
+      estampadoPrints: normalizeEstampadoPrints(
+        estampadoData?.estampadoPrints ?? estampadoData?.prints,
+        {
+          paperType: estampadoData?.paperType,
+          impresoId: estampadoData?.impresoId,
+          widthCm: estampadoData?.widthCm,
+          heightCm: estampadoData?.heightCm,
+        },
+      ),
+      estampadoPressCycles: normalizeEstampadoPressCycles(
+        estampadoData?.estampadoPressCycles ?? estampadoData?.pressCycles,
+        estampadoData?.pressMinutes,
+      ),
+      estampadoSupplies: normalizeEstampadoSupplies(
+        estampadoData?.estampadoSupplies ?? estampadoData?.supplies,
+      ),
     };
   }
 }

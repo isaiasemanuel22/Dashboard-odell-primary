@@ -1,0 +1,14 @@
+<article class="list-card customer-card">
+  <div class="avatar">{{ customer.name.charAt(0) }}</div>
+  <div>
+    <h3>{{ customer.name }}</h3>
+    @if (customer.company) {
+      <p class="company">{{ customer.company }}</p>
+    }
+    <div class="contact">
+      <span>✉️ {{ customer.email }}</span>
+      <span>📞 {{ customer.phone }}</span>
+      <span>📅 Cliente desde {{ customer.createdAt | dateShort }}</span>
+    </div>
+  </div>
+</article>

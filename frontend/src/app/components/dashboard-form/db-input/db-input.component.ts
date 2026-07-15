@@ -42,6 +42,7 @@ export class DbInputComponent implements ControlValueAccessor, OnChanges {
   @Input() readonly = false;
   @Input() disabled = false;
   @Input() list?: string;
+  @Input() autocomplete = 'off';
 
   readonly inputId = `db-input-${++dbInputId}`;
   value: string | number = '';

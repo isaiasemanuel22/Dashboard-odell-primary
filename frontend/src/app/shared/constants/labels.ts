@@ -7,6 +7,7 @@ import {
   ResinType,
   SaleSource,
   ServiceType,
+  SupplyCategory,
   SupplyType,
 } from '../../core/models';
 
@@ -20,6 +21,14 @@ export const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
   [ProductType.FDM]: 'FDM',
   [ProductType.RESINA]: 'Resina',
   [ProductType.ESTAMPADO]: 'Estampado',
+  [ProductType.COMBO]: 'Combo',
+};
+
+export const SUPPLY_CATEGORY_LABELS: Record<SupplyCategory, string> = {
+  [SupplyCategory.FDM]: 'FDM',
+  [SupplyCategory.RESINA]: 'Resina',
+  [SupplyCategory.ESTAMPADO]: 'Estampado',
+  [SupplyCategory.GENERAL]: 'General',
 };
 
 export const PAPER_TYPE_LABELS: Record<PaperType, string> = {

@@ -6,7 +6,7 @@ import {
   inject,
 } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { Supply } from '../../core/models';
+import { Supply, SupplyCategory } from '../../core/models';
 import { SuppliesService } from '../../core/services/settings.service';
 import { FormDialogShellComponent } from '../../components/form-dialog-shell/form-dialog-shell.component';
 import { extractApiErrorMessage } from '../utils/api-error';
@@ -14,6 +14,7 @@ import { SupplyFormComponent } from '../../pages/supplies/supply-form/supply-for
 
 export interface SupplyFormDialogData {
   supply: Supply | null;
+  defaultCategory?: SupplyCategory;
 }
 
 @Component({
@@ -27,6 +28,7 @@ export interface SupplyFormDialogData {
     >
       <app-supply-form
         [supply]="supply"
+        [defaultCategory]="defaultCategory"
         [loading]="loading"
         [error]="error"
         (save)="save($event)"
@@ -43,11 +45,13 @@ export class SupplyFormDialogComponent implements OnInit {
   private readonly data = inject<SupplyFormDialogData>(DIALOG_DATA);
 
   supply: Supply | null = null;
+  defaultCategory?: SupplyCategory;
   loading = false;
   error = '';
 
   ngOnInit(): void {
     this.supply = this.data.supply;
+    this.defaultCategory = this.data.defaultCategory;
   }
 
   save(data: Partial<Supply>): void {

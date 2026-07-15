@@ -8,7 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { SupplyType } from '../common/enums';
+import { SupplyCategory, SupplyType } from '../common/enums';
 import {
   CreateSupplyDto,
   SupplyDefaultPriceDto,
@@ -21,8 +21,11 @@ export class SuppliesController {
   constructor(private readonly suppliesService: SuppliesService) {}
 
   @Get()
-  findAll(@Query('type') type?: SupplyType) {
-    return this.suppliesService.findAll(type);
+  findAll(
+    @Query('type') type?: SupplyType,
+    @Query('category') category?: SupplyCategory,
+  ) {
+    return this.suppliesService.findAll(type, category);
   }
 
   @Get('low-stock')

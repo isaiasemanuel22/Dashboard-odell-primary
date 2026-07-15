@@ -1,3 +1,73 @@
+<ng-template #uploadContent>
+  <div class="db-file-upload__row">
+    @for (file of files; track file; let i = $index) {
+      <div class="db-file-upload__thumb">
+        <img [src]="file" [alt]="thumbAlt || 'Imagen subida'" />
+        <db-button
+          label="✕"
+          variant="delete"
+          format="overlay"
+          [disabled]="disabled || uploading"
+          ariaLabel="Eliminar imagen"
+          (clicked)="removeFile(i)"
+        />
+      </div>
+    }
+
+    @for (item of staged; track item.id) {
+      <div class="db-file-upload__thumb db-file-upload__thumb--pending">
+        <img [src]="item.previewUrl" [alt]="thumbAlt || 'Vista previa'" />
+        <span class="db-file-upload__badge">Pendiente</span>
+        <db-button
+          label="✕"
+          variant="delete"
+          format="overlay"
+          [disabled]="disabled || uploading"
+          ariaLabel="Quitar vista previa"
+          (clicked)="removeStaged(item.id)"
+        />
+      </div>
+    }
+
+    @if (canAddMore) {
+      <label class="db-file-upload__add" [attr.for]="inputId">
+        @if (uploading) {
+          {{ uploadingLabel }}
+        } @else {
+          {{ addLabel }}
+        }
+        <input
+          [id]="inputId"
+          type="file"
+          [accept]="accept"
+          [multiple]="multiple"
+          [disabled]="disabled || uploading"
+          (change)="onFileInputChange($event)"
+        />
+      </label>
+    }
+  </div>
+
+  @if (hasStaged && uploadFn && previewBeforeUpload) {
+    <div class="db-file-upload__actions">
+      <db-button
+        [label]="uploading ? uploadingLabel : uploadLabel + ' (' + staged.length + ')'"
+        variant="primary"
+        format="soft"
+        [disabled]="disabled || uploading"
+        (clicked)="uploadStaged()"
+      />
+      <db-button
+        label="Descartar pendientes"
+        variant="cancel"
+        format="soft"
+        [disabled]="disabled || uploading"
+        (clicked)="clearStaged()"
+      />
+    </div>
+  }
+</ng-template>
+
 @if (label) {
   <db-form-field
     [label]="label"
@@ -5,73 +75,11 @@
     [error]="error || uploadError"
     [forId]="inputId"
   >
-    <div class="db-file-upload__row">
-      @for (file of files; track file; let i = $index) {
-        <div class="db-file-upload__thumb">
-          <img [src]="file" [alt]="thumbAlt || 'Archivo'" />
-          <db-button
-            label="✕"
-            variant="delete"
-            format="overlay"
-            [disabled]="disabled || uploading"
-            ariaLabel="Eliminar archivo"
-            (clicked)="removeFile(i)"
-          />
-        </div>
-      }
-      @if (canAddMore) {
-        <label class="db-file-upload__add" [attr.for]="inputId">
-          @if (uploading) {
-            {{ uploadingLabel }}
-          } @else {
-            {{ addLabel }}
-          }
-          <input
-            [id]="inputId"
-            type="file"
-            [accept]="accept"
-            [multiple]="multiple"
-            [disabled]="disabled || uploading"
-            (change)="onFileInputChange($event)"
-          />
-        </label>
-      }
-    </div>
+    <ng-container *ngTemplateOutlet="uploadContent" />
   </db-form-field>
 } @else {
   <div class="db-file-upload">
-    <div class="db-file-upload__row">
-      @for (file of files; track file; let i = $index) {
-        <div class="db-file-upload__thumb">
-          <img [src]="file" [alt]="thumbAlt || 'Archivo'" />
-          <db-button
-            label="✕"
-            variant="delete"
-            format="overlay"
-            [disabled]="disabled || uploading"
-            ariaLabel="Eliminar archivo"
-            (clicked)="removeFile(i)"
-          />
-        </div>
-      }
-      @if (canAddMore) {
-        <label class="db-file-upload__add" [attr.for]="inputId">
-          @if (uploading) {
-            {{ uploadingLabel }}
-          } @else {
-            {{ addLabel }}
-          }
-          <input
-            [id]="inputId"
-            type="file"
-            [accept]="accept"
-            [multiple]="multiple"
-            [disabled]="disabled || uploading"
-            (change)="onFileInputChange($event)"
-          />
-        </label>
-      }
-    </div>
+    <ng-container *ngTemplateOutlet="uploadContent" />
     @if (error || uploadError) {
       <db-form-error>{{ error || uploadError }}</db-form-error>
     }

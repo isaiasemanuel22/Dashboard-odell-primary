@@ -8,6 +8,7 @@ import {
   ResinType,
   SaleSource,
   ServiceType,
+  SupplyCategory,
   SupplyType,
 } from './enums';
 
@@ -76,6 +77,8 @@ export interface MachineProfile {
 
 export interface GeneralSettings {
   electricityCostPerKwh: number;
+  /** % sobre material + energía + máquina, aplicado al costo de producto. */
+  errorMarginPercent: number;
   powerConsumptions: PowerConsumptionConfig[];
   machineCosts: MachineCostConfig[];
   machineProfiles: MachineProfile[];
@@ -84,6 +87,10 @@ export interface GeneralSettings {
   paperPricesPerSqm: PaperPricesPerSqm;
   filamentPrices: FilamentPriceConfig[];
   resinPrices: ResinPriceConfig[];
+  /** Precio $/kg por tipo; usado al costear productos FDM (sin marca). */
+  filamentTypeAverages: Partial<Record<FilamentType, number>>;
+  /** Precio $/L por tipo; usado al costear productos resina (sin marca). */
+  resinTypeAverages: Partial<Record<ResinType, number>>;
 }
 
 export interface Impreso {
@@ -91,6 +98,7 @@ export interface Impreso {
   name: string;
   paperType: PaperType;
   widthCm: number;
+  lengthCm?: number;
   heightCm: number;
   updatedAt: string;
 }
@@ -106,6 +114,7 @@ export type UpdateImpresoDto = Partial<CreateImpresoDto>;
 export interface Supply {
   id: string;
   name: string;
+  category: SupplyCategory;
   type: SupplyType;
   filamentType?: FilamentType;
   resinType?: ResinType;
@@ -123,6 +132,7 @@ export interface CostBreakdown {
   materialCost: number;
   energyCost: number;
   machineCost: number;
+  errorMarginCost: number;
   laborCost: number;
   totalCost: number;
 }
@@ -139,6 +149,12 @@ export interface CalculateCostDto {
   brand?: string;
   filamentType?: FilamentType;
   resinType?: ResinType;
+  paperType?: PaperType;
+  widthCm?: number;
+  heightCm?: number;
+  estampadoPrints?: EstampadoPrintSpec[];
+  estampadoPressCycles?: EstampadoPressCycle[];
+  estampadoSupplies?: EstampadoSupplyLine[];
 }
 
 export interface ImpresoCostPreview {
@@ -163,6 +179,13 @@ export interface ProductPricingInput {
   brand?: string;
   filamentType?: FilamentType;
   resinType?: ResinType;
+  paperType?: PaperType;
+  widthCm?: number;
+  heightCm?: number;
+  estampadoPrints?: EstampadoPrintSpec[];
+  estampadoPressCycles?: EstampadoPressCycle[];
+  estampadoSupplies?: EstampadoSupplyLine[];
+  includesPieces?: boolean;
 }
 
 export interface ProductPricingResult {
@@ -191,6 +214,8 @@ export interface ProductBase {
   size: string;
   /** Visible en el catálogo general; los internos siguen disponibles en piezas y presupuestos */
   published: boolean;
+  /** Si true, el costo se calcula desde piezas incluidas en lugar de producción directa */
+  includesPieces: boolean;
   components: ProductComponent[];
   assemblyTimeHours: number;
 }
@@ -207,13 +232,51 @@ export interface Product3D extends ProductBase {
   resinType?: ResinType;
 }
 
-export interface ProductEstampado extends ProductBase {
-  type: ProductType.ESTAMPADO;
-  pressMinutes?: number;
-  workTimeHours?: number;
+export interface EstampadoPrintSpec {
+  id: string;
+  paperType: PaperType;
+  impresoId?: string;
+  widthCm?: number;
+  lengthCm?: number;
+  heightCm?: number;
+  label?: string;
 }
 
-export type Product = Product3D | ProductEstampado;
+export interface EstampadoPressCycle {
+  id: string;
+  /** Minutos por bajada (ciclo de plancha). */
+  pressMinutes: number;
+  /** Cantidad de bajadas con esa duración. */
+  bajadas: number;
+  label?: string;
+}
+
+export interface EstampadoSupplyLine {
+  id: string;
+  supplyId: string;
+  quantity: number;
+  label?: string;
+}
+
+export interface ProductEstampado extends ProductBase {
+  type: ProductType.ESTAMPADO;
+  workTimeHours?: number;
+  prints: EstampadoPrintSpec[];
+  pressCycles: EstampadoPressCycle[];
+  supplies: EstampadoSupplyLine[];
+  /** @deprecated Migrado a `prints` / `pressCycles`. */
+  pressMinutes?: number;
+  paperType?: PaperType;
+  impresoId?: string;
+  widthCm?: number;
+  heightCm?: number;
+}
+
+export interface ProductCombo extends ProductBase {
+  type: ProductType.COMBO;
+}
+
+export type Product = Product3D | ProductEstampado | ProductCombo;
 
 export interface Customer {
   id: string;
@@ -321,6 +384,21 @@ export interface RetailSale {
   createdAt: string;
 }
 
+export type CreateRetailSaleItemDto = {
+  productId?: string;
+  productName?: string;
+  quantity: number;
+  unitPrice: number;
+};
+
+export type CreateRetailSaleDto = {
+  items: CreateRetailSaleItemDto[];
+  notes?: string;
+  soldAt?: string;
+};
+
+export type UpdateRetailSaleDto = Partial<CreateRetailSaleDto>;
+
 export interface SaleEntryItem {
   productId?: string;
   productName: string;
@@ -387,3 +465,41 @@ export interface MonthlyTrendPoint {
   revenue: number;
 }
 
+/** Payload de creación/actualización alineado con el DTO HTTP. */
+export type CreateProductDto = {
+  name: string;
+  type: ProductType;
+  images?: string[];
+  categoryIds?: string[];
+  price?: number;
+  cost?: number;
+  size?: string;
+  published?: boolean;
+  includesPieces?: boolean;
+  grams?: number;
+  printTimeHours?: number;
+  workTimeHours?: number;
+  brand?: string;
+  filamentType?: FilamentType;
+  resinType?: ResinType;
+  washMinutes?: number;
+  cureMinutes?: number;
+  pressMinutes?: number;
+  paperType?: PaperType;
+  impresoId?: string;
+  widthCm?: number;
+  lengthCm?: number;
+  heightCm?: number;
+  estampadoPrints?: EstampadoPrintSpec[];
+  estampadoPressCycles?: EstampadoPressCycle[];
+  estampadoSupplies?: EstampadoSupplyLine[];
+  prints?: EstampadoPrintSpec[];
+  pressCycles?: EstampadoPressCycle[];
+  supplies?: EstampadoSupplyLine[];
+  assemblyTimeHours?: number;
+  /** Precio manual que reemplaza la suma de componentes. */
+  suggestedPrice?: number | null;
+  components?: ProductComponent[];
+};
+
+export type UpdateProductDto = Partial<CreateProductDto>;

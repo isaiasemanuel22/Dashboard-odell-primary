@@ -8,7 +8,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { Category, Product, isProduct3D } from '../../core/models';
 import { resolveCategoryNamesText } from '../../shared/utils/product.helpers';
-import { DateShortPipe } from '../../shared/pipes/labels.pipe';
+import { DateShortPipe, MediaUrlPipe } from '../../shared/pipes/labels.pipe';
 import { ProductBadgesComponent } from '../product-badges/product-badges.component';
 import { ProductPricingComponent } from '../product-pricing/product-pricing.component';
 import { DbButtonComponent } from '@general-components';
@@ -19,6 +19,7 @@ import { DbButtonComponent } from '@general-components';
   imports: [
     RouterLink,
     DateShortPipe,
+    MediaUrlPipe,
     ProductBadgesComponent,
     ProductPricingComponent,
     DbButtonComponent,

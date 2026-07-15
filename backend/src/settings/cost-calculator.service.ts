@@ -23,6 +23,17 @@ import {
   calcWashSupplyCost,
   getMachineProfilesForProductType,
 } from './machine-profile.util';
+import {
+  resolveFilamentPricePerKg,
+  resolveResinPricePerLiter,
+} from './material-type-price.util';
+import {
+  normalizeEstampadoPressCycles,
+  normalizeEstampadoPrints,
+  normalizeEstampadoSupplies,
+  resolvePrintDimensions,
+  totalEstampadoPressMinutes,
+} from '../products/estampado-product.util';
 
 const RESIN_DENSITY_G_PER_ML = 1.1;
 
@@ -36,19 +47,33 @@ export class CostCalculatorService {
 
     const printTimeHours = Number(dto.printTimeHours) || 0;
     const workTimeHours = Number(dto.workTimeHours) || 0;
+    const pressMinutes =
+      dto.type === ProductType.ESTAMPADO
+        ? totalEstampadoPressMinutes(
+            dto.estampadoPressCycles,
+            dto.pressMinutes,
+          )
+        : Number(dto.pressMinutes) || 0;
     const materialCost = this.calculateMaterialCost(dto, settings);
     const overhead = calculateMachineOverhead(settings, dto.type, {
       printTimeHours,
       washMinutes: dto.washMinutes,
       cureMinutes: dto.cureMinutes,
-      pressMinutes: dto.pressMinutes,
+      pressMinutes,
     });
     const laborCost = workTimeHours * settings.laborCostPerHour;
+    const errorMarginCost = this.calculateErrorMarginCost(
+      materialCost,
+      overhead.energyCost,
+      overhead.machineCost,
+      settings,
+    );
 
     const totalCost = Math.round(
       materialCost +
         overhead.energyCost +
         overhead.machineCost +
+        errorMarginCost +
         laborCost,
     );
 
@@ -56,6 +81,7 @@ export class CostCalculatorService {
       materialCost: Math.round(materialCost),
       energyCost: overhead.energyCost,
       machineCost: overhead.machineCost,
+      errorMarginCost,
       laborCost: Math.round(laborCost),
       totalCost,
     };
@@ -110,14 +136,22 @@ export class CostCalculatorService {
   ): CostBreakdown {
     const partsCost = this.sumComponentsCost(components);
     const assemblyHours = Number(assemblyTimeHours) || 0;
+    const settings = this.store.generalSettings;
+    const errorMarginCost = this.calculateErrorMarginCost(
+      partsCost,
+      0,
+      0,
+      settings,
+    );
 
     if (assemblyHours <= 0) {
       return {
         materialCost: partsCost,
         energyCost: 0,
         machineCost: 0,
+        errorMarginCost,
         laborCost: 0,
-        totalCost: partsCost,
+        totalCost: partsCost + errorMarginCost,
       };
     }
 
@@ -132,8 +166,9 @@ export class CostCalculatorService {
       materialCost: partsCost,
       energyCost: 0,
       machineCost: 0,
+      errorMarginCost,
       laborCost: laborBreakdown.laborCost,
-      totalCost: partsCost + laborBreakdown.laborCost,
+      totalCost: partsCost + errorMarginCost + laborBreakdown.laborCost,
     };
   }
 
@@ -159,8 +194,14 @@ export class CostCalculatorService {
         cost = Number(input.cost) || 0;
       }
     } else if (input.type === ProductType.ESTAMPADO) {
-      const pressMinutes = Number(input.pressMinutes) || 0;
-      if (pressMinutes > 0 || Number(input.workTimeHours) > 0) {
+      const workTimeHours = Number(input.workTimeHours) || 0;
+      const totalPressMinutes = totalEstampadoPressMinutes(
+        input.estampadoPressCycles,
+        input.pressMinutes,
+      );
+      const hasPaperCost = this.hasEstampadoPaperCost(input);
+      const hasSupplyCost = this.hasEstampadoSupplyCost(input);
+      if (totalPressMinutes > 0 || workTimeHours > 0 || hasPaperCost || hasSupplyCost) {
         breakdown = this.calculateCost(this.toCalculateCostDto(input));
         cost = breakdown.totalCost;
       } else {
@@ -222,6 +263,8 @@ export class CostCalculatorService {
         return this.getMarginForService(ServiceType.IMPRESION_3D);
       case ProductType.ESTAMPADO:
         return this.getMarginForService(ServiceType.ESTAMPADO);
+      case ProductType.COMBO:
+        return this.getMarginForService(ServiceType.IMPRESION_3D);
       default:
         return 0;
     }
@@ -349,7 +392,37 @@ export class CostCalculatorService {
       brand: input.brand,
       filamentType: input.filamentType,
       resinType: input.resinType,
+      paperType: input.paperType,
+      widthCm: input.widthCm,
+      heightCm: input.heightCm,
+      estampadoPrints: input.estampadoPrints,
+      estampadoPressCycles: input.estampadoPressCycles,
+      estampadoSupplies: input.estampadoSupplies,
     };
+  }
+
+  private hasEstampadoSupplyCost(input: ProductPricingInput): boolean {
+    return normalizeEstampadoSupplies(input.estampadoSupplies).length > 0;
+  }
+
+  private hasEstampadoPaperCost(input: ProductPricingInput): boolean {
+    const prints = normalizeEstampadoPrints(input.estampadoPrints, {
+      paperType: input.paperType,
+      impresoId: undefined,
+      widthCm: input.widthCm,
+      heightCm: input.heightCm,
+    });
+    if (prints.length) {
+      return prints.some(
+        (print) =>
+          resolvePrintDimensions(print, (id) =>
+            this.store.getImpresoById(id),
+          ) != null,
+      );
+    }
+    const widthCm = Number(input.widthCm) || 0;
+    const heightCm = Number(input.heightCm) || 0;
+    return Boolean(input.paperType) && widthCm > 0 && heightCm > 0;
   }
 
   private calculateMaterialCost(
@@ -367,7 +440,62 @@ export class CostCalculatorService {
         calcWashSupplyCost(settings, this.store.supplies, dto.type)
       );
     }
+    if (dto.type === ProductType.ESTAMPADO) {
+      return this.calcEstampadoMaterialCost(dto);
+    }
     return 0;
+  }
+
+  private calcEstampadoMaterialCost(dto: CalculateCostDto): number {
+    const prints = normalizeEstampadoPrints(dto.estampadoPrints, {
+      paperType: dto.paperType,
+      impresoId: undefined,
+      widthCm: dto.widthCm,
+      heightCm: dto.heightCm,
+    });
+
+    let paperCost = 0;
+    if (prints.length) {
+      paperCost = prints.reduce((sum, print) => {
+        const dims = resolvePrintDimensions(print, (id) =>
+          this.store.getImpresoById(id),
+        );
+        if (!dims) {
+          return sum;
+        }
+        return (
+          sum +
+          this.calculateImpresoPaperCost(
+            dims.paperType,
+            dims.widthCm,
+            dims.heightCm,
+          ).paperCost
+        );
+      }, 0);
+    } else {
+      const widthCm = Number(dto.widthCm) || 0;
+      const heightCm = Number(dto.heightCm) || 0;
+      if (dto.paperType && widthCm > 0 && heightCm > 0) {
+        paperCost = this.calculateImpresoPaperCost(
+          dto.paperType,
+          widthCm,
+          heightCm,
+        ).paperCost;
+      }
+    }
+
+    const supplyCost = normalizeEstampadoSupplies(dto.estampadoSupplies).reduce(
+      (sum, line) => {
+        const supply = this.store.getSupplyById(line.supplyId);
+        if (!supply) {
+          return sum;
+        }
+        return sum + Number(supply.unitPrice) * Number(line.quantity);
+      },
+      0,
+    );
+
+    return paperCost + supplyCost;
   }
 
   private getPaperPricePerSqm(paperType: PaperType): number {
@@ -390,7 +518,9 @@ export class CostCalculatorService {
     grams: number,
     settings: GeneralSettings,
   ): number {
-    const pricePerKg = this.getDefaultFilamentPrice(brand, materialType);
+    const pricePerKg = brand
+      ? this.getDefaultFilamentPrice(brand, materialType)
+      : resolveFilamentPricePerKg(settings, materialType);
     if (pricePerKg === null) return 0;
     return (grams / 1000) * pricePerKg;
   }
@@ -401,9 +531,28 @@ export class CostCalculatorService {
     grams: number,
     settings: GeneralSettings,
   ): number {
-    const pricePerLiter = this.getDefaultResinPrice(brand, resinType);
+    const pricePerLiter = brand
+      ? this.getDefaultResinPrice(brand, resinType)
+      : resolveResinPricePerLiter(settings, resinType);
     if (pricePerLiter === null) return 0;
     const liters = grams / (RESIN_DENSITY_G_PER_ML * 1000);
     return liters * pricePerLiter;
+  }
+
+  private calculateErrorMarginCost(
+    materialCost: number,
+    energyCost: number,
+    machineCost: number,
+    settings: GeneralSettings,
+  ): number {
+    const percent = Math.min(
+      Math.max(Number(settings.errorMarginPercent) || 0, 0),
+      100,
+    );
+    if (percent === 0) {
+      return 0;
+    }
+    const base = materialCost + energyCost + machineCost;
+    return Math.round(base * (percent / 100));
   }
 }

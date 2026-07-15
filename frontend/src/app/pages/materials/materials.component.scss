@@ -1,0 +1,17 @@
+@use '../../shared/styles/variables' as *;
+
+.low-stock {
+  background: #fffbeb;
+}
+
+.stock-alert {
+  color: $color-warning-accent;
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.stock-ok {
+  color: $color-success;
+  font-size: 0.8rem;
+  font-weight: 600;
+}

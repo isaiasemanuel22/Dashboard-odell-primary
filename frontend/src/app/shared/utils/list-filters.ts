@@ -1,12 +1,12 @@
-import { SupplyType } from '../../core/models';
-import { SUPPLY_TYPE_LABELS } from '../constants/labels';
+import { SupplyCategory } from '../../core/models';
+import { SUPPLY_CATEGORY_LABELS } from '../constants/labels';
 import { ListFilterOption } from '../../components/db-list-toolbar/db-list-toolbar.component';
 
-export function supplyTypeFilters(): ListFilterOption<SupplyType | 'all'>[] {
+export function supplyCategoryFilters(): ListFilterOption<SupplyCategory | 'all'>[] {
   return [
     { value: 'all', label: 'Todos' },
-    ...Object.entries(SUPPLY_TYPE_LABELS).map(([value, label]) => ({
-      value: value as SupplyType,
+    ...Object.entries(SUPPLY_CATEGORY_LABELS).map(([value, label]) => ({
+      value: value as SupplyCategory,
       label,
     })),
   ];

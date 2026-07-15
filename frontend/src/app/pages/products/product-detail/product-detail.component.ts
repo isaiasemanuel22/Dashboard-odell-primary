@@ -1,4 +1,4 @@
-import {
+import { ProductFormComponent } from '../product-form/product-form.component';import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -34,8 +34,10 @@ import { resolveCategoryNames, isProductPublished } from '../../../shared/utils/
 import {
   DateShortPipe,
   FilamentTypeLabelPipe,
+  MediaUrlPipe,
   ResinTypeLabelPipe,
 } from '../../../shared/pipes/labels.pipe';
+import { resolveMediaUrl } from '../../../shared/utils/media-url.util';
 
 @Component({
   selector: 'app-product-detail',
@@ -44,6 +46,7 @@ import {
     RouterLink,
     DateShortPipe,
     FilamentTypeLabelPipe,
+    MediaUrlPipe,
     ResinTypeLabelPipe,
     DbButtonComponent,
     DbSkeletonComponent,
@@ -112,7 +115,9 @@ export class ProductDetailComponent implements OnInit {
 
   get selectedImage(): string | null {
     if (!this.product?.images.length) return null;
-    return this.product.images[this.selectedImageIndex] ?? this.product.images[0];
+    const url =
+      this.product.images[this.selectedImageIndex] ?? this.product.images[0];
+    return resolveMediaUrl(url);
   }
 
   get hasComponents(): boolean {

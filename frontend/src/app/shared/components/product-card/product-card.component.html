@@ -1,0 +1,57 @@
+<article class="list-card product-card">
+  <a [routerLink]="['/productos', product.id]" class="card-link">
+    <div class="card-image">
+      @if (product.images.length) {
+        <img [src]="product.images[0]" [alt]="product.name" />
+      } @else {
+        <div class="no-image">Sin imagen</div>
+      }
+      <app-product-badges
+        [type]="product.type"
+        [published]="product.published"
+        [overlay]="true"
+      />
+    </div>
+
+    <div class="card-body">
+      <h3>{{ product.name }}</h3>
+      <p class="categories">{{ categoryNames }}</p>
+
+      <div class="meta">
+        <span>📐 {{ product.size }}</span>
+        @if (product.components.length) {
+          <span>🧩 {{ product.components.length }} pieza(s)</span>
+        } @else if (isProduct3D(product)) {
+          <span>⚖️ {{ product.grams }}g</span>
+          <span>🖨️ {{ product.printTimeHours }}h imp.</span>
+          <span>🔧 {{ product.workTimeHours }}h trab.</span>
+        }
+      </div>
+
+      <app-product-pricing
+        [price]="product.price"
+        [cost]="product.cost"
+        [profit]="product.profit"
+      />
+
+      <p class="updated">Actualizado: {{ product.updatedAt | dateShort }}</p>
+    </div>
+  </a>
+
+  <div class="card-actions">
+    <div class="db-button-group">
+      <db-button
+        label="Editar"
+        variant="primary"
+        format="inline"
+        (clicked)="edit.emit(product)"
+      />
+      <db-button
+        label="Eliminar"
+        variant="delete"
+        format="inline"
+        (clicked)="delete.emit(product)"
+      />
+    </div>
+  </div>
+</article>
