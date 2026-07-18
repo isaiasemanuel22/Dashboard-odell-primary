@@ -1,2 +1,2 @@
-release: npx prisma db push
+release: bash scripts/heroku-release.sh
 web: node dist/src/main.js
