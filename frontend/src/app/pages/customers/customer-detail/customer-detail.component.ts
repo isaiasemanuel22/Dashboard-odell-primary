@@ -102,6 +102,22 @@ export class CustomerDetailComponent implements OnInit {
     });
   }
 
+  addOrder(): void {
+    if (!this.customer) return;
+
+    this.formDialogs
+      .openOrder(null, { presetCustomerId: this.customer.id })
+      .subscribe((saved) => {
+        if (saved) {
+          this.orders = [saved, ...this.orders];
+        }
+      });
+  }
+
+  addSale(): void {
+    this.formDialogs.openSale().subscribe();
+  }
+
   deleteCustomer(): void {
     if (!this.customer) return;
     if (!confirm(`¿Eliminar a "${this.customer.name}"?`)) return;

@@ -28,6 +28,11 @@ import {
   RetailSaleRepository,
 } from '../store/repositories';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
+import {
+  calculateItemsSubtotal,
+  calculateTotalWithDiscount,
+  normalizeDiscountFields,
+} from '../common/utils/discount.util';
 import { isRevenueOrder } from './sales-order.util';
 
 @Injectable()
@@ -79,6 +84,14 @@ export class SalesService {
       })),
       notes: data.notes !== undefined ? data.notes : current.notes,
       soldAt: data.soldAt ?? current.soldAt,
+      discountPercent:
+        data.discountPercent !== undefined
+          ? data.discountPercent
+          : current.discountPercent,
+      discountAmount:
+        data.discountAmount !== undefined
+          ? data.discountAmount
+          : current.discountAmount,
     };
 
     const updated = this.buildRetailSale(merged, id, current.createdAt);
@@ -107,13 +120,18 @@ export class SalesService {
   }
 
   private toRetailEntry(sale: RetailSale): SaleEntry {
+    const items = sale.items.map((item) => ({ ...item }));
+    const economics = this.computeEntryEconomics(items, sale.total);
+
     return {
       id: `retail-${sale.id}`,
       source: SaleSource.RETAIL,
       saleId: sale.id,
       customerName: 'Mostrador',
-      items: sale.items.map((item) => ({ ...item })),
+      items,
       total: sale.total,
+      cost: economics.cost,
+      profit: economics.profit,
       soldAt: sale.soldAt,
       notes: sale.notes,
       retailSaleId: sale.id,
@@ -129,6 +147,7 @@ export class SalesService {
       unitPrice: item.unitPrice,
       lineTotal: item.quantity * item.unitPrice,
     }));
+    const economics = this.computeEntryEconomics(items, order.total);
 
     return {
       id: `order-${order.id}`,
@@ -137,10 +156,29 @@ export class SalesService {
       customerName: order.customerName,
       items,
       total: order.total,
+      cost: economics.cost,
+      profit: economics.profit,
       soldAt: order.dueDate,
       notes: order.description,
       orderId: order.id,
       editable: false,
+    };
+  }
+
+  private computeEntryEconomics(
+    items: SaleEntryItem[],
+    total: number,
+  ): { cost: number; profit: number } {
+    const cost = items.reduce((sum, item) => {
+      const unitCost = item.productId
+        ? this.costCalculator.resolveCatalogUnitCost(item.productId)
+        : this.costCalculator.resolveDesignUnitCost(item.unitPrice);
+      return sum + unitCost * item.quantity;
+    }, 0);
+
+    return {
+      cost,
+      profit: total - cost,
     };
   }
 
@@ -160,9 +198,13 @@ export class SalesService {
       (sum, entry) => sum + entry.total,
       0,
     );
+    const monthlyCost = entries.reduce((sum, entry) => sum + entry.cost, 0);
+    const monthlyProfit = entries.reduce((sum, entry) => sum + entry.profit, 0);
 
     return {
       monthlyRevenue: monthlyRetailRevenue + monthlyOrdersRevenue,
+      monthlyCost,
+      monthlyProfit,
       monthlyOrdersRevenue,
       monthlyRetailRevenue,
       monthlyOrdersCount: orderEntries.length,
@@ -180,13 +222,17 @@ export class SalesService {
     }
 
     const items = data.items.map((item) => this.buildRetailItem(item));
-    const total = items.reduce((sum, item) => sum + item.lineTotal, 0);
+    const discount = normalizeDiscountFields(data);
+    const subtotal = calculateItemsSubtotal(items);
+    const total = calculateTotalWithDiscount(subtotal, discount);
     const now = new Date().toISOString();
 
     return {
       id: id ?? this.retailSales.nextId(),
       items,
       total,
+      discountPercent: discount.discountPercent,
+      discountAmount: discount.discountAmount,
       notes: data.notes?.trim() || undefined,
       soldAt: data.soldAt ?? now,
       createdAt: createdAt ?? now,

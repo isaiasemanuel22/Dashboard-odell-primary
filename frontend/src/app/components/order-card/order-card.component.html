@@ -45,7 +45,7 @@
       }
 
       @if (order.description) {
-        <p class="order-card__description">{{ order.description }}</p>
+        <p class="order-card__description">{{ order.description | plainText:160 }}</p>
       }
 
       @if (order.notes) {

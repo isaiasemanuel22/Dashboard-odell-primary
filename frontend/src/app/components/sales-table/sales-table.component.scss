@@ -1,3 +1,18 @@
 @use '../../shared/styles/listings' as *;
+@use '../../shared/styles/variables' as *;
 
 @include virtual-table-viewport;
+
+.sales-table {
+  .sales-table__col-total {
+    color: $color-primary-dark;
+  }
+
+  .sales-table__col-cost {
+    color: $color-error;
+  }
+
+  .sales-table__col-profit {
+    color: $color-success;
+  }
+}

@@ -22,7 +22,14 @@
       <small class="sale-entry-row__customer">Cliente: {{ entry.customerName }}</small>
     }
   </td>
-  <td>{{ entry.total | currencyArs }}</td>
+  <td class="sale-entry-row__total">{{ entry.total | currencyArs }}</td>
+  <td class="sale-entry-row__cost">{{ entry.cost | currencyArs }}</td>
+  <td
+    class="sale-entry-row__profit"
+    [class.sale-entry-row__profit--negative]="entry.profit < 0"
+  >
+    {{ entry.profit | currencyArs }}
+  </td>
   <td class="actions">
     @if (entry.editable) {
       <div class="db-button-group">

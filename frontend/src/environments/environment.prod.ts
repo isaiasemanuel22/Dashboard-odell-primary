@@ -1,7 +1,6 @@
 export const environment = {
   production: true,
-  /** IP o hostname del servidor central, ej: http://192.168.1.50:3000/api */
-  apiUrl: 'http://localhost:3000/api',
+  apiUrl: "http://localhost:3000/api",
   productImageStorage: 'firebase' as 'backend' | 'firebase',
   firebase: {
     apiKey: 'AIzaSyBXqQBoiPR97ZxTBmStvlpNccejCM5DD4k',

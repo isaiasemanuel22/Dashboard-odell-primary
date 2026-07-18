@@ -9,6 +9,7 @@ export { DbInputComponent } from './db-input/db-input.component';
 export { DbSelectComponent } from './db-select/db-select.component';
 export type { DbSelectOption } from './db-select/db-select.types';
 export { DbTextareaComponent } from './db-textarea/db-textarea.component';
+export { DbRichTextEditorComponent } from './db-rich-text-editor/db-rich-text-editor.component';
 export {
   DbCheckboxComponent,
   DbCheckboxGroupComponent,

@@ -2,7 +2,13 @@ import {
   Category,
   Product,
   ProductComponent,
+  ServiceProfitMargins,
+  ServiceType,
 } from '../../core/models';
+import {
+  costFromPriceAndMargin,
+  normalizeProfitMargins,
+} from './pricing.util';
 
 export function findProductById(
   catalog: Product[],
@@ -45,6 +51,46 @@ export function sumComponentsCost(
     (sum, item) => sum + getComponentLineCost(catalog, item.productId, item.quantity),
     0,
   );
+}
+
+export function calculateCatalogLinesCost(
+  lines: Array<{ productId?: string; quantity: number }>,
+  catalog: Product[],
+): number {
+  return lines.reduce((sum, line) => {
+    if (!line.productId) return sum;
+    return sum + getComponentLineCost(catalog, line.productId, line.quantity);
+  }, 0);
+}
+
+export function calculateOrderLinesCost(
+  lines: Array<{
+    serviceType?: ServiceType;
+    productId?: string;
+    quantity: number;
+    unitCost?: number;
+    unitPrice?: number;
+  }>,
+  catalog: Product[],
+  profitMargins: ServiceProfitMargins,
+): number {
+  const margins = normalizeProfitMargins(profitMargins);
+
+  return lines.reduce((sum, line) => {
+    if (line.productId) {
+      return sum + getComponentLineCost(catalog, line.productId, line.quantity);
+    }
+
+    if (line.serviceType === ServiceType.DISENO) {
+      const unitCost =
+        line.unitCost != null && line.unitCost >= 0
+          ? line.unitCost
+          : costFromPriceAndMargin(line.unitPrice ?? 0, margins.diseno);
+      return sum + unitCost * line.quantity;
+    }
+
+    return sum;
+  }, 0);
 }
 
 export function sumComponentsPrice(

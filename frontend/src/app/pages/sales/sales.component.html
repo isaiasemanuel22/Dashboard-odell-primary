@@ -5,6 +5,13 @@
   </div>
   <div class="header-actions">
     <db-button
+      label="Generar reporte"
+      variant="secondary"
+      format="soft"
+      [disabled]="loading || !entries.length"
+      (clicked)="generateReport()"
+    />
+    <db-button
       label="+ Agregar venta"
       variant="primary"
       format="solid"

@@ -3,6 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   DestroyRef,
+  HostListener,
   OnInit,
   inject,
 } from '@angular/core';
@@ -13,10 +14,12 @@ import {
   OrderStatus,
   OrderStatusHistoryEntry,
   PrintJob,
+  Customer,
 } from '../../../core/models';
 import { RealtimeEvent } from '../../../core/models/realtime.model';
 import { OrdersService } from '../../../core/services/orders.service';
 import { PrintJobsService } from '../../../core/services/print-jobs.service';
+import { CustomerCatalogService } from '../../../core/services/customer-catalog.service';
 import { RealtimeCatalogSyncService } from '../../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
 import {
@@ -32,6 +35,8 @@ import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import {
   orderStatusOptions,
   ORDER_DESCRIPTION_MAX_LENGTH,
+  calculateOrderSubtotal,
+  calculateOrderDiscount,
 } from '../../../shared/utils/order.helpers';
 import {
   ORDER_STATUS_CHANGE_SOURCE_LABELS,
@@ -44,6 +49,8 @@ import {
   OrderStatusLabelPipe,
   PrintJobStatusLabelPipe,
   ServiceTypeLabelPipe,
+  RichTextPipe,
+  PlainTextLengthPipe,
 } from '../../../shared/pipes/labels.pipe';
 import { priorityTierClass } from '../../../shared/utils/priority.helpers';
 
@@ -59,6 +66,8 @@ import { priorityTierClass } from '../../../shared/utils/priority.helpers';
     OrderStatusLabelPipe,
     PrintJobStatusLabelPipe,
     ServiceTypeLabelPipe,
+    RichTextPipe,
+    PlainTextLengthPipe,
     DbSelectComponent,
     DbButtonComponent,
     DbSkeletonComponent,
@@ -78,6 +87,7 @@ export class OrderDetailComponent implements OnInit {
   private readonly catalogSync = inject(RealtimeCatalogSyncService);
   private readonly realtime = inject(RealtimeService);
   private readonly formDialogs = inject(FormDialogService);
+  private readonly customerCatalog = inject(CustomerCatalogService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -86,13 +96,32 @@ export class OrderDetailComponent implements OnInit {
   loading = true;
   notFound = false;
 
+  assignCustomerId = '';
+  assignLoading = false;
+  private customers: Customer[] = [];
+
   statusDraft: OrderStatus = OrderStatus.PENDIENTE;
   statusLoading = false;
+  previewImageUrl: string | null = null;
 
   readonly statusOptions = orderStatusOptions();
   readonly descriptionMaxLength = ORDER_DESCRIPTION_MAX_LENGTH;
   readonly priorityTierClass = priorityTierClass;
   readonly sourceLabels = ORDER_STATUS_CHANGE_SOURCE_LABELS;
+
+  get orderSubtotal(): number {
+    if (!this.order) return 0;
+    return calculateOrderSubtotal(this.order.items);
+  }
+
+  get orderDiscount(): number {
+    if (!this.order) return 0;
+    return calculateOrderDiscount(
+      this.order.items,
+      this.order.discountPercent ?? 0,
+      this.order.discountAmount ?? 0,
+    );
+  }
 
   get statusHistory(): OrderStatusHistoryEntry[] {
     if (!this.order?.statusHistory?.length) return [];
@@ -109,7 +138,21 @@ export class OrderDetailComponent implements OnInit {
     return `${ORDER_STATUS_LABELS[entry.fromStatus]} → ${ORDER_STATUS_LABELS[entry.toStatus]}`;
   }
 
+  get customerOptions() {
+    return this.customers.map((customer) => ({
+      value: customer.id,
+      label: customer.company
+        ? `${customer.name} (${customer.company})`
+        : customer.name,
+    }));
+  }
+
   ngOnInit(): void {
+    this.customerCatalog.getCustomers().subscribe((customers) => {
+      this.customers = customers;
+      this.cdr.markForCheck();
+    });
+
     this.route.paramMap.subscribe((params) => {
       const id = params.get('id');
       if (!id) {
@@ -195,6 +238,52 @@ export class OrderDetailComponent implements OnInit {
     });
   }
 
+  assignCustomer(): void {
+    if (!this.order || !this.assignCustomerId || this.assignLoading) return;
+
+    this.assignLoading = true;
+    this.cdr.markForCheck();
+
+    this.ordersService
+      .updateOrder(this.order.id, { customerId: this.assignCustomerId })
+      .subscribe({
+        next: (updated) => {
+          this.assignLoading = false;
+          this.order = updated;
+          this.assignCustomerId = '';
+          this.reloadTasks(updated.id);
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.assignLoading = false;
+          this.cdr.markForCheck();
+          alert(
+            extractApiErrorMessage(err, 'No se pudo asignar el cliente'),
+          );
+        },
+      });
+  }
+
+  openNewCustomer(): void {
+    if (!this.order) return;
+
+    this.formDialogs.openCustomer().subscribe((customer) => {
+      if (!customer) return;
+
+      const exists = this.customers.some((item) => item.id === customer.id);
+      this.customers = exists
+        ? this.customers.map((item) =>
+            item.id === customer.id ? customer : item,
+          )
+        : [...this.customers, customer].sort((a, b) =>
+            a.name.localeCompare(b.name, 'es'),
+          );
+
+      this.assignCustomerId = customer.id;
+      this.assignCustomer();
+    });
+  }
+
   deleteOrder(): void {
     if (!this.order) return;
     if (!confirm(`¿Eliminar el pedido ${this.order.id}?`)) return;
@@ -230,5 +319,25 @@ export class OrderDetailComponent implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  onDescriptionClick(event: MouseEvent): void {
+    const target = event.target;
+    if (!(target instanceof HTMLImageElement)) return;
+    if (!target.closest('.order-description')) return;
+
+    this.previewImageUrl = target.currentSrc || target.src;
+    this.cdr.markForCheck();
+  }
+
+  closeImagePreview(): void {
+    if (!this.previewImageUrl) return;
+    this.previewImageUrl = null;
+    this.cdr.markForCheck();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    this.closeImagePreview();
   }
 }

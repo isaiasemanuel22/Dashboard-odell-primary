@@ -10,6 +10,9 @@
 @use './app/shared/styles/status';
 @use './app/shared/styles/priority';
 @use './app/shared/styles/listings';
+@use './app/shared/styles/rich-content';
+
+@import 'quill/dist/quill.snow.css';
 
 *,
 *::before,

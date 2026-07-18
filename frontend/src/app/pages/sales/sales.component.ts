@@ -17,6 +17,7 @@ import {
 } from '@general-components';
 import { SALE_SOURCE_LABELS } from '../../shared/constants/labels';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
+import { downloadSalesReportCsv } from '../../shared/utils/sales-report.util';
 import {
   clearCreateQuery,
   shouldOpenCreateFromQuery,
@@ -152,5 +153,10 @@ export class SalesComponent implements OnInit {
         this.loadError = true;
       },
     });
+  }
+
+  generateReport(): void {
+    if (!this.stats || !this.entries.length) return;
+    downloadSalesReportCsv(this.stats, this.entries);
   }
 }

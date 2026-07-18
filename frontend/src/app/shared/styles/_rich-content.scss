@@ -1,0 +1,22 @@
+@use 'variables' as *;
+
+// Estilos globales: el HTML de [innerHTML] no recibe encapsulación de Angular.
+.order-description.rich-content img {
+  width: 100px;
+  height: 100px;
+  max-width: 100px;
+  max-height: 100px;
+  object-fit: cover;
+  border-radius: $radius-xs;
+  margin: 0 0.35rem 0 0;
+  display: inline-block;
+  vertical-align: middle;
+  border: 1px solid $color-border;
+  cursor: zoom-in;
+  transition: opacity 0.15s ease, box-shadow 0.15s ease;
+
+  &:hover {
+    opacity: 0.92;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.12);
+  }
+}

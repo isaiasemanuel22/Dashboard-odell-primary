@@ -286,12 +286,34 @@ export class CostCalculatorService {
     return Math.round(cost * (1 + markup / 100));
   }
 
+  costFromPriceAndMargin(price: number, marginPercent: number): number {
+    const markup = Math.min(Math.max(Number(marginPercent) || 0, 0), 999);
+    if (price <= 0) return 0;
+    if (markup === 0) return Math.round(price);
+    return Math.round(price / (1 + markup / 100));
+  }
+
+  resolveDesignUnitCost(unitPrice: number): number {
+    const margins = normalizeProfitMargins(
+      this.store.generalSettings.profitMargins,
+    );
+    return this.costFromPriceAndMargin(unitPrice, margins.diseno);
+  }
+
   resolveCatalogUnitPrice(productId: string): number {
     const product = this.store.getProductById(productId);
     if (!product) {
       throw new BadRequestException(`Producto ${productId} no encontrado`);
     }
     return product.price;
+  }
+
+  resolveCatalogUnitCost(productId: string): number {
+    const product = this.store.getProductById(productId);
+    if (!product) {
+      return 0;
+    }
+    return product.cost;
   }
 
   resolveOrderUnitPrice(
@@ -302,6 +324,11 @@ export class CostCalculatorService {
     if (serviceType === ServiceType.DISENO || !productId) {
       return clientUnitPrice;
     }
+
+    if (Number.isFinite(clientUnitPrice) && clientUnitPrice > 0) {
+      return clientUnitPrice;
+    }
+
     return this.resolveCatalogUnitPrice(productId);
   }
 

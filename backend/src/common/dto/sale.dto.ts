@@ -32,6 +32,16 @@ export class CreateRetailSaleDto {
   @IsOptional()
   @IsString()
   soldAt?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discountPercent?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discountAmount?: number;
 }
 
 export class UpdateRetailSaleDto extends PartialType(CreateRetailSaleDto) {}

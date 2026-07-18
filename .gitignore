@@ -5,6 +5,7 @@
 backend/dist
 frontend/dist
 frontend/.angular/cache
+.firebase
 
 # Environment & secrets
 **/.env

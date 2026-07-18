@@ -23,6 +23,7 @@ import { OrderFormComponent } from '../../pages/orders/order-form/order-form.com
 
 export interface OrderFormDialogData {
   order: Order | null;
+  presetCustomerId?: string;
 }
 
 @Component({
@@ -39,10 +40,12 @@ export interface OrderFormDialogData {
         [order]="order"
         [customers]="customers"
         [products]="products"
+        [presetCustomerId]="presetCustomerId"
         [loading]="loading"
         [error]="error"
         (save)="save($event)"
         (cancel)="cancel()"
+        (customerCreated)="onCustomerCreated($event)"
       />
     </app-form-dialog-shell>
   `,
@@ -57,6 +60,7 @@ export class OrderFormDialogComponent implements OnInit {
   private readonly data = inject<OrderFormDialogData>(DIALOG_DATA);
 
   order: Order | null = null;
+  presetCustomerId = '';
   customers: Customer[] = [];
   products: Product[] = [];
   loading = false;
@@ -64,6 +68,7 @@ export class OrderFormDialogComponent implements OnInit {
 
   ngOnInit(): void {
     this.order = this.data.order;
+    this.presetCustomerId = this.data.presetCustomerId ?? '';
     this.resetState();
     this.loadCatalogs();
   }
@@ -95,6 +100,18 @@ export class OrderFormDialogComponent implements OnInit {
 
   cancel(): void {
     this.dialogRef.close();
+  }
+
+  onCustomerCreated(customer: Customer): void {
+    const exists = this.customers.some((item) => item.id === customer.id);
+    this.customers = exists
+      ? this.customers.map((item) =>
+          item.id === customer.id ? customer : item,
+        )
+      : [...this.customers, customer].sort((a, b) =>
+          a.name.localeCompare(b.name, 'es'),
+        );
+    this.cdr.markForCheck();
   }
 
   private loadCatalogs(): void {

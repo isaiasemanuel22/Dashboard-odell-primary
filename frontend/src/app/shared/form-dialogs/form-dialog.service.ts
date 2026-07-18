@@ -33,10 +33,18 @@ export class FormDialogService {
     });
   }
 
-  openOrder(order: Order | null = null): Observable<Order | undefined> {
-    return this.open(OrderFormDialogComponent, { order }, 'lg', {
-      ariaLabel: order ? 'Editar pedido' : 'Nuevo pedido',
-    });
+  openOrder(
+    order: Order | null = null,
+    options?: { presetCustomerId?: string },
+  ): Observable<Order | undefined> {
+    return this.open(
+      OrderFormDialogComponent,
+      { order, presetCustomerId: options?.presetCustomerId },
+      'lg',
+      {
+        ariaLabel: order ? 'Editar pedido' : 'Nuevo pedido',
+      },
+    );
   }
 
   openProduct(product: Product | null = null): Observable<Product | undefined> {

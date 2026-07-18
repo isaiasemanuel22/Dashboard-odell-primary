@@ -24,7 +24,9 @@ describe('SalesService order revenue', () => {
       retailSales,
       orders,
       products,
-      {} as CostCalculatorService,
+      {
+        resolveCatalogUnitCost: () => 0,
+      } as CostCalculatorService,
     );
   });
 

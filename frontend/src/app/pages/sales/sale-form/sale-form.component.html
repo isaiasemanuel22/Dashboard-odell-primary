@@ -61,9 +61,28 @@
             </tbody>
             <tfoot>
               <tr>
+                <td colspan="3">Subtotal</td>
+                <td colspan="2">{{ cartSubtotal | currencyArs }}</td>
+              </tr>
+              @if (cartDiscount > 0) {
+                <tr class="cart-table__discount">
+                  <td colspan="3">Descuento</td>
+                  <td colspan="2">-{{ cartDiscount | currencyArs }}</td>
+                </tr>
+              }
+              <tr class="cart-table__total">
                 <td colspan="3"><strong>Total de la venta</strong></td>
                 <td colspan="2"><strong>{{ cartTotal | currencyArs }}</strong></td>
               </tr>
+              @if (hasDiscount) {
+                <tr
+                  class="cart-table__profit"
+                  [class.cart-table__profit--loss]="cartProfit < 0"
+                >
+                  <td colspan="3"><strong>Ganancia</strong></td>
+                  <td colspan="2"><strong>{{ cartProfit | currencyArs }}</strong></td>
+                </tr>
+              }
             </tfoot>
           </table>
         </div>
@@ -72,6 +91,38 @@
           Todavía no hay productos en el carrito. Agregá los que se retiran en el local.
         </p>
       }
+    </db-fieldset>
+
+    <db-fieldset legend="Descuento">
+      <db-form-grid>
+        <db-select
+          label="Tipo"
+          [(ngModel)]="discountMode"
+          name="discountMode"
+          [options]="discountModeOptions"
+        />
+        @if (discountMode === 'percent') {
+          <db-input
+            label="Porcentaje (%)"
+            type="number"
+            [(ngModel)]="discountPercent"
+            name="discountPercent"
+            [min]="0"
+            [max]="100"
+            [step]="1"
+          />
+        }
+        @if (discountMode === 'amount') {
+          <db-input
+            label="Monto ($)"
+            type="number"
+            [(ngModel)]="discountAmount"
+            name="discountAmount"
+            [min]="0"
+            [step]="1"
+          />
+        }
+      </db-form-grid>
     </db-fieldset>
 
     <db-textarea

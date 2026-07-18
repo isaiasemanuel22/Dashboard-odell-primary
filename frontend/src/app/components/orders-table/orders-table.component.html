@@ -27,7 +27,7 @@
           <td>
             <strong>{{ order.customerName }}</strong>
             @if (!compact && order.description) {
-              <small>{{ order.description }}</small>
+              <small>{{ order.description | plainText:80 }}</small>
             }
             @if (!compact && order.notes) { <small class="order-notes">{{ order.notes }}</small> }
           </td>
@@ -114,7 +114,7 @@
             <td>
               <strong>{{ order.customerName }}</strong>
               @if (!compact && order.description) {
-                <small>{{ order.description }}</small>
+                <small>{{ order.description | plainText:80 }}</small>
               }
               @if (!compact && order.notes) { <small class="order-notes">{{ order.notes }}</small> }
             </td>

@@ -1,5 +1,6 @@
 import { OrderStatus, ServiceType } from '../common/enums';
 import { Order } from '../common/interfaces';
+import { plainTextFromHtml } from './rich-text.util';
 
 const CLOSED_ORDER_STATUSES: OrderStatus[] = [
   OrderStatus.COMPLETADO,
@@ -44,7 +45,7 @@ export function filterOrders(orders: Order[], filters: OrderListFilters): Order[
       [
         order.id,
         order.customerName,
-        order.description ?? '',
+        plainTextFromHtml(order.description),
         order.notes ?? '',
         ...order.items.map((item) => item.productName),
       ]

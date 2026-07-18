@@ -6,6 +6,11 @@ import {
 import { OrderStatus, ServiceType } from '../common/enums';
 import { Order, OrderItem, OrderOverview } from '../common/interfaces';
 import { CreateOrderDto, UpdateOrderDto } from '../common/dto';
+import {
+  calculateItemsSubtotal,
+  calculateTotalWithDiscount,
+  normalizeDiscountFields,
+} from '../common/utils/discount.util';
 import { filterOrders, OrderListFilters } from './order-filter.util';
 import {
   assertOrderStatusTransition,
@@ -22,6 +27,12 @@ import {
   ProductRepository,
 } from '../store/repositories';
 import { shouldPurgeTerminalOrder } from './order-retention.util';
+import {
+  ORDER_RICH_TEXT_MAX_LENGTH,
+  hasRichTextContent,
+  plainTextFromHtml,
+  sanitizeRichTextHtml,
+} from './rich-text.util';
 
 @Injectable()
 export class OrdersService {
@@ -60,25 +71,25 @@ export class OrdersService {
   }
 
   create(data: CreateOrderDto): Order {
-    const customer = this.customers.findById(data.customerId);
-    if (!customer) {
-      throw new BadRequestException('Cliente no válido');
-    }
+    const { customerId, customerName } = this.resolveCustomer(data.customerId);
     if (!data.dueDate?.trim()) {
       throw new BadRequestException('La fecha de entrega es obligatoria');
     }
 
     const items = this.normalizeItems(data.items);
     const services = this.normalizeServices(data.services, items);
+    const discount = normalizeDiscountFields(data);
     const order: Order = {
       id: this.orders.nextId(),
       createdAt: new Date().toISOString(),
-      customerId: customer.id,
-      customerName: customer.name,
+      customerId,
+      customerName,
       services,
       items,
       status: data.status ?? OrderStatus.PENDIENTE,
-      total: this.calculateTotal(items),
+      total: this.calculateTotal(items, discount),
+      discountPercent: discount.discountPercent,
+      discountAmount: discount.discountAmount,
       description: this.normalizeDescription(data.description),
       notes: data.notes?.trim() || undefined,
       dueDate: data.dueDate.trim(),
@@ -106,12 +117,9 @@ export class OrdersService {
     let customerName = current.customerName;
 
     if (data.customerId !== undefined) {
-      const customer = this.customers.findById(data.customerId);
-      if (!customer) {
-        throw new BadRequestException('Cliente no válido');
-      }
-      customerId = customer.id;
-      customerName = customer.name;
+      const resolved = this.resolveCustomer(data.customerId);
+      customerId = resolved.customerId;
+      customerName = resolved.customerName;
     }
 
     const items =
@@ -129,6 +137,17 @@ export class OrdersService {
       assertOrderStatusTransition(current.status, data.status);
     }
 
+    const discount = normalizeDiscountFields({
+      discountPercent:
+        data.discountPercent !== undefined
+          ? data.discountPercent
+          : current.discountPercent,
+      discountAmount:
+        data.discountAmount !== undefined
+          ? data.discountAmount
+          : current.discountAmount,
+    });
+
     const updated: Order = {
       ...current,
       ...data,
@@ -136,7 +155,9 @@ export class OrdersService {
       customerName,
       services,
       items,
-      total: this.calculateTotal(items),
+      total: this.calculateTotal(items, discount),
+      discountPercent: discount.discountPercent,
+      discountAmount: discount.discountAmount,
       description:
         data.description !== undefined
           ? this.normalizeDescription(data.description)
@@ -297,18 +318,42 @@ export class OrdersService {
     });
   }
 
-  private calculateTotal(items: OrderItem[]): number {
-    return items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+  private calculateTotal(
+    items: OrderItem[],
+    discount: ReturnType<typeof normalizeDiscountFields>,
+  ): number {
+    const subtotal = calculateItemsSubtotal(items);
+    return calculateTotalWithDiscount(subtotal, discount);
   }
 
   private normalizeDescription(description?: string): string | undefined {
-    const trimmed = description?.trim();
-    if (!trimmed) return undefined;
-    if (trimmed.length > 1000) {
+    const sanitized = sanitizeRichTextHtml(description);
+    if (!hasRichTextContent(sanitized)) return undefined;
+
+    const plainLength = plainTextFromHtml(sanitized).length;
+    if (plainLength > ORDER_RICH_TEXT_MAX_LENGTH) {
       throw new BadRequestException(
-        'La descripción no puede superar los 1000 caracteres',
+        `La descripción no puede superar los ${ORDER_RICH_TEXT_MAX_LENGTH} caracteres`,
       );
     }
-    return trimmed;
+
+    return sanitized;
+  }
+
+  private resolveCustomer(customerId?: string | null): {
+    customerId: string | null;
+    customerName: string;
+  } {
+    const trimmed = customerId?.trim();
+    if (!trimmed) {
+      return { customerId: null, customerName: 'Sin cliente' };
+    }
+
+    const customer = this.customers.findById(trimmed);
+    if (!customer) {
+      throw new BadRequestException('Cliente no válido');
+    }
+
+    return { customerId: customer.id, customerName: customer.name };
   }
 }

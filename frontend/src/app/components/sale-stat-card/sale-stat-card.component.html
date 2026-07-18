@@ -2,6 +2,11 @@
   class="sale-stat-card"
   [class.sale-stat-card--accent]="variant === 'accent'"
   [class.sale-stat-card--warning]="variant === 'warning'"
+  [class.sale-stat-card--revenue]="variant === 'revenue'"
+  [class.sale-stat-card--revenue-soft]="variant === 'revenue-soft'"
+  [class.sale-stat-card--cost]="variant === 'cost'"
+  [class.sale-stat-card--profit]="variant === 'profit'"
+  [class.sale-stat-card--profit-negative]="variant === 'profit' && value < 0"
 >
   <span class="sale-stat-card__label">{{ label }}</span>
   <strong class="sale-stat-card__value">

@@ -5,6 +5,9 @@
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
+    "build:prod": "node scripts/prepare-prod-env.mjs && ng build --configuration production",
+    "deploy": "npm run build:prod && firebase deploy --only hosting --project dashboard-odell-2",
+    "deploy:preview": "npm run build:prod && firebase hosting:channel:deploy preview --expires 7d --project dashboard-odell-2",
     "build:stats": "ng build --stats-json",
     "analyze": "npm run build:stats && npx --yes esbuild-visualizer --metadata dist/frontend/stats.json --open",
     "watch": "ng build --watch --configuration development",
@@ -22,6 +25,8 @@
     "@angular/router": "^19.2.0",
     "chart.js": "^4.5.1",
     "firebase": "^12.16.0",
+    "ngx-quill": "^27.1.2",
+    "quill": "^2.0.3",
     "rxjs": "~7.8.0",
     "tslib": "^2.3.0",
     "zone.js": "~0.15.0"

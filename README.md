@@ -96,6 +96,7 @@ Abrir `http://localhost:4200`
 
 - Los datos se persisten en **MySQL** (Prisma). Sin `DATABASE_URL` la app arranca en memoria (no guarda cambios).
 - **Firebase** (opcional): login + imágenes en la nube. Ver [docs/FIREBASE.md](docs/FIREBASE.md).
+- **Deploy frontend**: Firebase Hosting. Ver [docs/DEPLOY-FRONTEND.md](docs/DEPLOY-FRONTEND.md).
 - Varias PCs pueden usar la misma API; los cambios se sincronizan en tiempo real (SSE).
 - Subidas de imágenes siguen en la carpeta `backend/uploads/` (no en la DB).
 - Scripts útiles en `backend/`: `npm run db:push`, `npm run db:migrate`, `npm run db:studio`.

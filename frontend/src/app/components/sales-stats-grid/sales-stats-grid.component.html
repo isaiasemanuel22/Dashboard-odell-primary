@@ -2,16 +2,28 @@
   <app-sale-stat-card
     label="Ingresos del mes"
     [value]="stats.monthlyRevenue"
-    variant="accent"
+    variant="revenue"
+  />
+  <app-sale-stat-card
+    label="Costos del mes"
+    [value]="stats.monthlyCost"
+    variant="cost"
+  />
+  <app-sale-stat-card
+    label="Ganancias del mes"
+    [value]="stats.monthlyProfit"
+    variant="profit"
   />
   <app-sale-stat-card
     label="Ingresos de pedidos"
     [value]="stats.monthlyOrdersRevenue"
     [detail]="stats.monthlyOrdersCount + ' pedido(s)'"
+    variant="revenue-soft"
   />
   <app-sale-stat-card
     label="Ingresos de ventas"
     [value]="stats.monthlyRetailRevenue"
     [detail]="stats.monthlyRetailCount + ' venta(s)'"
+    variant="revenue-soft"
   />
 </section>

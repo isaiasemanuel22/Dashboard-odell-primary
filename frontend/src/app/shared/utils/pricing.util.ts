@@ -83,3 +83,14 @@ export function priceFromCostAndMargin(
   if (markup === 0) return Math.round(cost);
   return Math.round(cost * (1 + markup / 100));
 }
+
+/** Inverso de priceFromCostAndMargin: estima costo desde precio y margen del servicio. */
+export function costFromPriceAndMargin(
+  price: number,
+  marginPercent: number,
+): number {
+  const markup = Math.min(Math.max(Number(marginPercent) || 0, 0), 999);
+  if (price <= 0) return 0;
+  if (markup === 0) return Math.round(price);
+  return Math.round(price / (1 + markup / 100));
+}

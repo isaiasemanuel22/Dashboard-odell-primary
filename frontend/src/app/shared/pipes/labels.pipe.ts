@@ -1,4 +1,5 @@
-import { Pipe, PipeTransform } from '@angular/core';
+import { Pipe, PipeTransform, inject } from '@angular/core';
+import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   FilamentType,
   OrderStatus,
@@ -22,6 +23,11 @@ import {
   SUPPLY_TYPE_LABELS,
 } from '../constants/labels';
 import { resolveMediaUrl } from '../utils/media-url.util';
+import {
+  excerptPlainText,
+  plainTextFromHtml,
+  sanitizeRichTextHtml,
+} from '../utils/rich-text.util';
 
 @Pipe({ name: 'serviceTypeLabel', standalone: true })
 export class ServiceTypeLabelPipe implements PipeTransform {
@@ -133,5 +139,30 @@ export class ProfitMarginPipe implements PipeTransform {
   transform(price: number, profit: number): number | null {
     if (price <= 0) return null;
     return Math.round((profit / price) * 100);
+  }
+}
+
+@Pipe({ name: 'richText', standalone: true })
+export class RichTextPipe implements PipeTransform {
+  private readonly sanitizer = inject(DomSanitizer);
+
+  transform(value: string | null | undefined): SafeHtml {
+    return this.sanitizer.bypassSecurityTrustHtml(
+      sanitizeRichTextHtml(value),
+    );
+  }
+}
+
+@Pipe({ name: 'plainText', standalone: true })
+export class PlainTextPipe implements PipeTransform {
+  transform(value: string | null | undefined, maxLength = 120): string {
+    return excerptPlainText(value, maxLength);
+  }
+}
+
+@Pipe({ name: 'plainTextLength', standalone: true })
+export class PlainTextLengthPipe implements PipeTransform {
+  transform(value: string | null | undefined): number {
+    return plainTextFromHtml(value).length;
   }
 }

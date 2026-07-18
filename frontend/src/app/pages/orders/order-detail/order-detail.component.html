@@ -33,14 +33,28 @@
 
   <div class="detail-layout">
     <section class="panel">
-      <h3>Cliente</h3>
+      <div class="panel-header-row">
+        <h3>Cliente</h3>
+        @if (!order.customerId) {
+          <db-button
+            label="Cliente nuevo"
+            variant="secondary"
+            format="soft"
+            (clicked)="openNewCustomer()"
+          />
+        }
+      </div>
       <dl class="detail-list">
         <div>
           <dt>Nombre</dt>
           <dd>
-            <a [routerLink]="['/clientes', order.customerId]" class="customer-link">
-              {{ order.customerName }}
-            </a>
+            @if (order.customerId) {
+              <a [routerLink]="['/clientes', order.customerId]" class="customer-link">
+                {{ order.customerName }}
+              </a>
+            } @else {
+              <span class="no-customer">Sin cliente asignado</span>
+            }
           </dd>
         </div>
         <div>
@@ -58,6 +72,25 @@
           </div>
         }
       </dl>
+
+      @if (!order.customerId) {
+        <div class="assign-customer">
+          <db-select
+            label="Asignar cliente existente"
+            [(ngModel)]="assignCustomerId"
+            name="assignCustomerId"
+            placeholder="Seleccionar cliente"
+            [options]="customerOptions"
+          />
+          <db-button
+            [label]="assignLoading ? 'Asignando...' : 'Agregar cliente'"
+            variant="primary"
+            format="solid"
+            [disabled]="assignLoading || !assignCustomerId"
+            (clicked)="assignCustomer()"
+          />
+        </div>
+      }
     </section>
 
     <div class="detail-main">
@@ -93,6 +126,16 @@
             }
           </tbody>
           <tfoot>
+            <tr>
+              <td colspan="4"><strong>Subtotal</strong></td>
+              <td><strong>{{ orderSubtotal | currencyArs }}</strong></td>
+            </tr>
+            @if (orderDiscount > 0) {
+              <tr class="order-discount-row">
+                <td colspan="4"><strong>Descuento</strong></td>
+                <td><strong>-{{ orderDiscount | currencyArs }}</strong></td>
+              </tr>
+            }
             <tr>
               <td colspan="4"><strong>Total</strong></td>
               <td><strong>{{ order.total | currencyArs }}</strong></td>
@@ -202,13 +245,13 @@
           <h3>Descripción</h3>
           @if (order.description) {
             <span class="description-panel__count">
-              {{ order.description.length }}/{{ descriptionMaxLength }}
+              {{ order.description | plainTextLength }}/{{ descriptionMaxLength }}
             </span>
           }
         </div>
-        <div class="order-description">
+        <div class="order-description rich-content" (click)="onDescriptionClick($event)">
           @if (order.description) {
-            {{ order.description }}
+            <div [innerHTML]="order.description | richText"></div>
           } @else {
             <span class="order-description--empty">Sin descripción</span>
           }
@@ -231,4 +274,29 @@
       />
     </footer>
   </div>
+
+  @if (previewImageUrl) {
+    <div
+      class="image-lightbox"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Vista ampliada de imagen"
+      (click)="closeImagePreview()"
+    >
+      <button
+        type="button"
+        class="image-lightbox__close"
+        aria-label="Cerrar"
+        (click)="closeImagePreview(); $event.stopPropagation()"
+      >
+        ×
+      </button>
+      <img
+        class="image-lightbox__img"
+        [src]="previewImageUrl"
+        alt="Vista ampliada"
+        (click)="$event.stopPropagation()"
+      />
+    </div>
+  }
 }

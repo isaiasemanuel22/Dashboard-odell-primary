@@ -126,18 +126,20 @@ model Material {
 
 model Order {
   id           String   @id @db.VarChar(64)
-  customerId   String   @map("customer_id") @db.VarChar(64)
+  customerId   String?  @map("customer_id") @db.VarChar(64)
   customerName String   @map("customer_name") @db.VarChar(255)
   services     Json
   status       String   @db.VarChar(32)
   total        Float
+  discountPercent Float @default(0) @map("discount_percent")
+  discountAmount  Float @default(0) @map("discount_amount")
   description  String?  @db.Text
   notes        String?  @db.Text
   createdAt    DateTime @map("created_at")
   dueDate      DateTime @map("due_date")
   statusHistory Json    @default("[]") @map("status_history")
 
-  customer Customer    @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  customer Customer?   @relation(fields: [customerId], references: [id], onDelete: Restrict)
   items    OrderItem[]
 
   @@index([customerId])
@@ -182,9 +184,11 @@ model PrintJob {
 }
 
 model RetailSale {
-  id        String           @id @db.VarChar(64)
-  total     Float
-  notes     String?          @db.Text
+  id              String           @id @db.VarChar(64)
+  total           Float
+  discountPercent Float            @default(0) @map("discount_percent")
+  discountAmount  Float            @default(0) @map("discount_amount")
+  notes           String?          @db.Text
   soldAt    DateTime         @map("sold_at")
   createdAt DateTime         @map("created_at")
   items     RetailSaleItem[]

@@ -19,6 +19,8 @@ export function mapRetailSaleItemFromDb(item: {
 export function mapRetailSaleFromDb(row: {
   id: string;
   total: number;
+  discountPercent?: number;
+  discountAmount?: number;
   notes: string | null;
   soldAt: Date;
   createdAt: Date;
@@ -33,6 +35,8 @@ export function mapRetailSaleFromDb(row: {
   return {
     id: row.id,
     total: row.total,
+    discountPercent: row.discountPercent ?? 0,
+    discountAmount: row.discountAmount ?? 0,
     notes: row.notes ?? undefined,
     soldAt: row.soldAt.toISOString(),
     createdAt: row.createdAt.toISOString(),
@@ -44,6 +48,8 @@ export function mapRetailSaleToDb(sale: RetailSale) {
   return {
     id: sale.id,
     total: sale.total,
+    discountPercent: sale.discountPercent ?? 0,
+    discountAmount: sale.discountAmount ?? 0,
     notes: sale.notes ?? null,
     soldAt: new Date(sale.soldAt),
     createdAt: new Date(sale.createdAt),

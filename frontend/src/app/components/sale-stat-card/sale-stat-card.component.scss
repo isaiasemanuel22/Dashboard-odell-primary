@@ -28,12 +28,50 @@
     color: $color-text-subtle;
   }
 
-  &--accent {
+  &--accent,
+  &--revenue {
     border-color: $color-primary;
     background: linear-gradient(180deg, $color-surface 0%, $color-primary-bg 100%);
+
+    .sale-stat-card__value {
+      color: $color-primary-dark;
+    }
   }
 
-  &--warning &__value {
-    color: $color-warning-accent;
+  &--revenue-soft {
+    border-color: $color-border;
+    background: $color-surface-muted;
+
+    .sale-stat-card__value {
+      color: $color-primary-dark;
+    }
+  }
+
+  &--warning,
+  &--cost {
+    border-color: #fecaca;
+    background: #fef2f2;
+
+    .sale-stat-card__value {
+      color: $color-error;
+    }
+  }
+
+  &--profit {
+    border-color: #bbf7d0;
+    background: #f0fdf4;
+
+    .sale-stat-card__value {
+      color: $color-success;
+    }
+  }
+
+  &--profit-negative {
+    border-color: #fecaca;
+    background: #fef2f2;
+
+    .sale-stat-card__value {
+      color: $color-error;
+    }
   }
 }

@@ -24,6 +24,7 @@ import {
   OrderCardComponent,
 } from '@general-components';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
+import { plainTextFromHtml } from '../../shared/utils/rich-text.util';
 import {
   clearCreateQuery,
   shouldOpenCreateFromQuery,
@@ -91,7 +92,7 @@ export class OrdersComponent implements OnInit {
       [
         order.id,
         order.customerName,
-        order.description ?? '',
+        plainTextFromHtml(order.description),
         order.notes ?? '',
         ...order.items.map((item) => item.productName),
       ]

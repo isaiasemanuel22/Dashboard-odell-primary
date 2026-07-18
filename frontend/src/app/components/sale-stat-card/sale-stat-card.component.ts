@@ -1,7 +1,14 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 
-export type SaleStatCardVariant = 'default' | 'accent' | 'warning';
+export type SaleStatCardVariant =
+  | 'default'
+  | 'accent'
+  | 'warning'
+  | 'revenue'
+  | 'revenue-soft'
+  | 'cost'
+  | 'profit';
 
 @Component({
   selector: 'app-sale-stat-card',

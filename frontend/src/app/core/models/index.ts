@@ -384,12 +384,14 @@ export interface OrderStatusHistoryEntry {
 
 export interface Order {
   id: string;
-  customerId: string;
+  customerId: string | null;
   customerName: string;
   services: ServiceType[];
   items: OrderItem[];
   status: OrderStatus;
   total: number;
+  discountPercent?: number;
+  discountAmount?: number;
   description?: string;
   notes?: string;
   createdAt: string;
@@ -399,8 +401,10 @@ export interface Order {
 
 export type CreateOrderPayload = Omit<
   Order,
-  'id' | 'createdAt' | 'customerName' | 'total' | 'statusHistory'
->;
+  'id' | 'createdAt' | 'customerName' | 'total' | 'statusHistory' | 'customerId'
+> & {
+  customerId?: string | null;
+};
 
 export type UpdateOrderPayload = Partial<CreateOrderPayload>;
 
@@ -409,6 +413,8 @@ export interface OrderLineDraft {
   productId?: string;
   customName?: string;
   quantity: number;
+  /** Solo líneas de diseño: costo unitario estimado (UI). */
+  unitCost?: number;
   unitPrice: number;
 }
 
@@ -504,6 +510,8 @@ export interface RetailSale {
   id: string;
   items: RetailSaleItem[];
   total: number;
+  discountPercent?: number;
+  discountAmount?: number;
   notes?: string;
   soldAt: string;
   createdAt: string;
@@ -520,6 +528,8 @@ export type CreateRetailSalePayload = {
   items: CreateRetailSaleItemPayload[];
   notes?: string;
   soldAt?: string;
+  discountPercent?: number;
+  discountAmount?: number;
 };
 
 export type UpdateRetailSalePayload = Partial<CreateRetailSalePayload>;
@@ -539,6 +549,8 @@ export interface SaleEntry {
   customerName?: string;
   items: SaleEntryItem[];
   total: number;
+  cost: number;
+  profit: number;
   soldAt: string;
   notes?: string;
   orderId?: string;
@@ -548,6 +560,8 @@ export interface SaleEntry {
 
 export interface SalesStats {
   monthlyRevenue: number;
+  monthlyCost: number;
+  monthlyProfit: number;
   monthlyOrdersRevenue: number;
   monthlyRetailRevenue: number;
   monthlyOrdersCount: number;

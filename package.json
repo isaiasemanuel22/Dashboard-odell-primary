@@ -1,0 +1,12 @@
+{
+  "name": "odell-dashboard",
+  "private": true,
+  "scripts": {
+    "frontend:build": "npm run build:prod --prefix frontend",
+    "frontend:deploy": "npm run frontend:build && firebase deploy --only hosting",
+    "frontend:deploy:preview": "npm run frontend:build && firebase hosting:channel:deploy preview --expires 7d"
+  },
+  "devDependencies": {
+    "firebase-tools": "^14.16.0"
+  }
+}

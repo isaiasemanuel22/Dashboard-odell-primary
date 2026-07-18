@@ -17,4 +17,23 @@
     font-size: 0.75rem;
     color: $color-text-subtle;
   }
+
+  &__total {
+    font-weight: 600;
+    color: $color-primary-dark;
+  }
+
+  &__cost {
+    font-weight: 600;
+    color: $color-error;
+  }
+
+  &__profit {
+    font-weight: 600;
+    color: $color-success;
+
+    &--negative {
+      color: $color-error;
+    }
+  }
 }

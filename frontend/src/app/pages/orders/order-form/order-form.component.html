@@ -1,14 +1,22 @@
 <db-form>
     <form (ngSubmit)="onSubmit()">
       <db-form-grid>
-        <db-select
-          label="Cliente"
-          [(ngModel)]="customerId"
-          name="customerId"
-          placeholder="Seleccionar cliente"
-          [options]="customerOptions"
-          [required]="true"
-        />
+        <div class="customer-field">
+          <db-select
+            label="Cliente"
+            [(ngModel)]="customerId"
+            name="customerId"
+            placeholder="Opcional — seleccionar cliente"
+            [options]="customerOptions"
+          />
+          <db-button
+            label="Cliente nuevo"
+            variant="secondary"
+            format="soft"
+            extraClass="new-customer-btn"
+            (clicked)="openNewCustomer()"
+          />
+        </div>
 
         <db-input
           label="Fecha de entrega"
@@ -44,13 +52,13 @@
       </db-fieldset>
 
       <db-form-grid-full>
-        <db-textarea
+        <db-rich-text-editor
           label="Descripción"
           [(ngModel)]="description"
           name="description"
-          placeholder="Describí el pedido: qué se necesita, cantidades, contexto del cliente..."
-          [rows]="6"
+          placeholder="Describí el pedido: qué se necesita, cantidades, referencias visuales..."
           [maxLength]="descriptionMaxLength"
+          [uploadFn]="uploadDescriptionImage"
         />
       </db-form-grid-full>
 
@@ -71,58 +79,97 @@
           <div class="order-lines">
             @for (line of lines; track $index; let i = $index) {
               <div class="order-line">
-                <db-select
-                  label="Servicio"
-                  [(ngModel)]="line.serviceType"
-                  [name]="'service-' + i"
-                  [options]="lineServiceOptions()"
-                  (ngModelChange)="onLineServiceChange(line)"
-                />
-
-                @if (isDesignService(line.serviceType)) {
-                  <db-input
-                    label="Concepto de diseño"
-                    [(ngModel)]="line.customName"
-                    [name]="'design-' + i"
-                    placeholder="Ej: Diseño de logo"
-                  />
-                } @else {
+                <div class="order-line__main">
                   <db-select
-                    label="Producto"
-                    [(ngModel)]="line.productId"
-                    [name]="'product-' + i"
-                    placeholder="Seleccionar producto"
-                    [options]="productOptionsForLine(line)"
-                    (ngModelChange)="onProductChange(line)"
+                    label="Servicio"
+                    [(ngModel)]="line.serviceType"
+                    [name]="'service-' + i"
+                    [options]="lineServiceOptions()"
+                    (ngModelChange)="onLineServiceChange(line)"
                   />
-                }
 
-                <db-input
-                  label="Cant."
-                  type="number"
-                  [(ngModel)]="line.quantity"
-                  [name]="'qty-' + i"
-                  [min]="1"
-                  [step]="1"
-                />
+                  @if (isDesignService(line.serviceType)) {
+                    <db-input
+                      label="Concepto de diseño"
+                      [(ngModel)]="line.customName"
+                      [name]="'design-' + i"
+                      placeholder="Ej: Diseño de logo"
+                    />
+                  } @else {
+                    <db-select
+                      label="Producto"
+                      [(ngModel)]="line.productId"
+                      [name]="'product-' + i"
+                      placeholder="Seleccionar producto"
+                      [options]="productOptionsForLine(line)"
+                      (ngModelChange)="onProductChange(line)"
+                    />
+                  }
 
-                <db-input
-                  label="Precio unit."
-                  type="number"
-                  [(ngModel)]="line.unitPrice"
-                  [name]="'price-' + i"
-                  [min]="0"
-                  [step]="1"
-                />
+                  <db-input
+                    label="Cant."
+                    type="number"
+                    [(ngModel)]="line.quantity"
+                    [name]="'qty-' + i"
+                    [min]="1"
+                    [step]="1"
+                  />
 
-                <db-button
-                  label="✕"
-                  variant="delete"
-                  format="icon"
-                  extraClass="remove-line"
-                  ariaLabel="Quitar línea"
-                  (clicked)="removeLine(i)"
-                />
+                  <db-button
+                    label="✕"
+                    variant="delete"
+                    format="icon"
+                    extraClass="remove-line"
+                    ariaLabel="Quitar línea"
+                    (clicked)="removeLine(i)"
+                  />
+                </div>
+
+                <div class="order-line__pricing">
+                  <p class="order-line__pricing-label">Costos</p>
+
+                  @if (isDesignService(line.serviceType)) {
+                    <db-input
+                      label="Costo unit."
+                      type="number"
+                      [ngModel]="line.unitCost ?? 0"
+                      (ngModelChange)="onDesignUnitCostChange(line, $event)"
+                      [name]="'cost-' + i"
+                      [min]="0"
+                      [step]="1"
+                    />
+                    <db-input
+                      label="Precio unit."
+                      type="number"
+                      [ngModel]="line.unitPrice"
+                      (ngModelChange)="onDesignUnitPriceChange(line, $event)"
+                      [name]="'price-' + i"
+                      [min]="0"
+                      [step]="1"
+                    />
+                    <p class="order-line__pricing-hint">
+                      Vinculados con margen de diseño ({{ designMargin }}%).
+                    </p>
+                  } @else {
+                    <div class="order-line__readonly">
+                      <span class="order-line__readonly-label">Costo unit.</span>
+                      <span class="order-line__readonly-value">
+                        {{ productUnitCost(line) | currencyArs }}
+                      </span>
+                    </div>
+                    <db-input
+                      label="Precio unit."
+                      type="number"
+                      [(ngModel)]="line.unitPrice"
+                      [name]="'price-' + i"
+                      [min]="0"
+                      [step]="1"
+                    />
+                    <p class="order-line__pricing-hint">
+                      Costo tomado del catálogo de productos.
+                    </p>
+                  }
+                </div>
               </div>
             }
           </div>
@@ -136,7 +183,63 @@
           />
         }
 
-        <p class="order-total">Total: <strong>{{ total | currencyArs }}</strong></p>
+        <div class="order-discount">
+          <db-form-grid>
+            <db-select
+              label="Descuento"
+              [(ngModel)]="discountMode"
+              name="discountMode"
+              [options]="discountModeOptions"
+            />
+            @if (discountMode === 'percent') {
+              <db-input
+                label="Porcentaje (%)"
+                type="number"
+                [(ngModel)]="discountPercent"
+                name="discountPercent"
+                [min]="0"
+                [max]="100"
+                [step]="1"
+              />
+            }
+            @if (discountMode === 'amount') {
+              <db-input
+                label="Monto ($)"
+                type="number"
+                [(ngModel)]="discountAmount"
+                name="discountAmount"
+                [min]="0"
+                [step]="1"
+              />
+            }
+          </db-form-grid>
+        </div>
+
+        <div class="order-summary">
+          <p class="order-summary__row">
+            <span>Subtotal</span>
+            <strong>{{ subtotal | currencyArs }}</strong>
+          </p>
+          @if (discountApplied > 0) {
+            <p class="order-summary__row order-summary__row--discount">
+              <span>Descuento</span>
+              <strong>-{{ discountApplied | currencyArs }}</strong>
+            </p>
+          }
+          <p class="order-summary__row order-summary__row--total">
+            <span>Total</span>
+            <strong>{{ total | currencyArs }}</strong>
+          </p>
+          @if (showProfitPreview) {
+            <p
+              class="order-summary__row order-summary__row--profit"
+              [class.order-summary__row--loss]="profit < 0"
+            >
+              <span>Ganancia</span>
+              <strong>{{ profit | currencyArs }}</strong>
+            </p>
+          }
+        </div>
       </db-fieldset>
 
       @if (error) {

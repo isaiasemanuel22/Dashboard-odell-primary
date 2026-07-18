@@ -21,7 +21,7 @@ export const FINISHED_ORDER_STATUSES: OrderStatus[] = [
   OrderStatus.ENTREGADO,
 ];
 
-export const ORDER_DESCRIPTION_MAX_LENGTH = 1000;
+export const ORDER_DESCRIPTION_MAX_LENGTH = 20_000;
 
 export function isActiveOrder(status: OrderStatus): boolean {
   return ACTIVE_ORDER_STATUSES.includes(status);
@@ -39,8 +39,53 @@ export function isClosedOrder(status: OrderStatus): boolean {
   );
 }
 
-export function calculateOrderTotal(items: OrderLineDraft[] | OrderItem[]): number {
-  return items.reduce((sum, item) => sum + item.quantity * item.unitPrice, 0);
+import {
+  calculateItemsSubtotal,
+  calculateTotalWithDiscount,
+  calculateDiscountValue,
+} from './discount.util';
+
+export function calculateOrderSubtotal(
+  items: OrderLineDraft[] | OrderItem[],
+): number {
+  return calculateItemsSubtotal(items);
+}
+
+export function calculateLinePriceTotal(
+  line: Pick<OrderLineDraft, 'quantity' | 'unitPrice'>,
+): number {
+  const quantity = Number(line.quantity) || 0;
+  const unitPrice = Number(line.unitPrice) || 0;
+  if (quantity <= 0 || unitPrice < 0) return 0;
+  return quantity * unitPrice;
+}
+
+export function isLineBillable(line: OrderLineDraft): boolean {
+  return calculateLinePriceTotal(line) > 0;
+}
+
+export function calculateOrderTotal(
+  items: OrderLineDraft[] | OrderItem[],
+  discountPercent = 0,
+  discountAmount = 0,
+): number {
+  return calculateTotalWithDiscount(
+    calculateOrderSubtotal(items),
+    discountPercent,
+    discountAmount,
+  );
+}
+
+export function calculateOrderDiscount(
+  items: OrderLineDraft[] | OrderItem[],
+  discountPercent = 0,
+  discountAmount = 0,
+): number {
+  return calculateDiscountValue(
+    calculateOrderSubtotal(items),
+    discountPercent,
+    discountAmount,
+  );
 }
 
 export function serviceTypeFromProduct(product: Product): ServiceType {
@@ -136,6 +181,7 @@ export function createEmptyLine(serviceType: ServiceType): OrderLineDraft {
     productId: isDesignService(serviceType) ? undefined : '',
     customName: isDesignService(serviceType) ? '' : undefined,
     quantity: 1,
+    unitCost: isDesignService(serviceType) ? 0 : undefined,
     unitPrice: 0,
   };
 }

@@ -89,6 +89,18 @@
 
     <footer class="panel detail-actions">
       <db-button
+        label="Agregar pedido"
+        variant="primary"
+        format="soft"
+        (clicked)="addOrder()"
+      />
+      <db-button
+        label="Agregar venta"
+        variant="secondary"
+        format="soft"
+        (clicked)="addSale()"
+      />
+      <db-button
         label="Editar cliente"
         variant="primary"
         format="solid"

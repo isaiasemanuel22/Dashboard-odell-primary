@@ -21,11 +21,13 @@ export function mapOrderItemFromDb(item: {
 
 export function mapOrderFromDb(row: {
   id: string;
-  customerId: string;
+  customerId: string | null;
   customerName: string;
   services: Prisma.JsonValue;
   status: string;
   total: number;
+  discountPercent?: number;
+  discountAmount?: number;
   description: string | null;
   notes: string | null;
   createdAt: Date;
@@ -47,6 +49,8 @@ export function mapOrderFromDb(row: {
     items: row.items.map((item) => mapOrderItemFromDb(item)),
     status: row.status as Order['status'],
     total: row.total,
+    discountPercent: row.discountPercent ?? 0,
+    discountAmount: row.discountAmount ?? 0,
     description: row.description ?? undefined,
     notes: row.notes ?? undefined,
     createdAt: row.createdAt.toISOString(),
@@ -65,6 +69,8 @@ export function mapOrderToDb(order: Order) {
     services: toInputJson(order.services),
     status: order.status,
     total: order.total,
+    discountPercent: order.discountPercent ?? 0,
+    discountAmount: order.discountAmount ?? 0,
     description: order.description ?? null,
     notes: order.notes ?? null,
     createdAt: new Date(order.createdAt),

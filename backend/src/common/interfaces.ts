@@ -309,12 +309,14 @@ export interface OrderStatusHistoryEntry {
 
 export interface Order {
   id: string;
-  customerId: string;
+  customerId: string | null;
   customerName: string;
   services: ServiceType[];
   items: OrderItem[];
   status: OrderStatus;
   total: number;
+  discountPercent?: number;
+  discountAmount?: number;
   description?: string;
   notes?: string;
   createdAt: string;
@@ -381,6 +383,8 @@ export interface RetailSale {
   id: string;
   items: RetailSaleItem[];
   total: number;
+  discountPercent?: number;
+  discountAmount?: number;
   notes?: string;
   soldAt: string;
   createdAt: string;
@@ -397,6 +401,8 @@ export type CreateRetailSaleDto = {
   items: CreateRetailSaleItemDto[];
   notes?: string;
   soldAt?: string;
+  discountPercent?: number;
+  discountAmount?: number;
 };
 
 export type UpdateRetailSaleDto = Partial<CreateRetailSaleDto>;
@@ -416,6 +422,8 @@ export interface SaleEntry {
   customerName?: string;
   items: SaleEntryItem[];
   total: number;
+  cost: number;
+  profit: number;
   soldAt: string;
   notes?: string;
   orderId?: string;
@@ -425,6 +433,8 @@ export interface SaleEntry {
 
 export interface SalesStats {
   monthlyRevenue: number;
+  monthlyCost: number;
+  monthlyProfit: number;
   monthlyOrdersRevenue: number;
   monthlyRetailRevenue: number;
   monthlyOrdersCount: number;

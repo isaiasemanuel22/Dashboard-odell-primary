@@ -270,7 +270,9 @@ export function createRandomSeedState(): StoreState {
     const remapped: Order = {
       ...order,
       id: nextId(order.id, 'ord'),
-      customerId: customerIdMap.get(order.customerId) ?? order.customerId,
+      customerId: order.customerId
+        ? customerIdMap.get(order.customerId) ?? order.customerId
+        : null,
       total: jitter(order.total, 0.1),
       createdAt: daysAgo(randInt(1, 60)),
       dueDate: daysAgo(-randInt(2, 25)),

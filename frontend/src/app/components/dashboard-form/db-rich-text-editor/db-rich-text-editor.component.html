@@ -1,0 +1,27 @@
+<db-form-field
+  [label]="label"
+  [hint]="hint || charCount"
+  [error]="error || uploadError"
+  [required]="false"
+  [forId]="editorId"
+>
+  <div class="rich-text" [class.rich-text--disabled]="disabled">
+    @if (uploadingImage) {
+      <p class="rich-text__status">Subiendo imagen…</p>
+    }
+    <quill-editor
+      [id]="editorId"
+      theme="snow"
+      format="html"
+      bounds="self"
+      [modules]="modules"
+      [placeholder]="placeholder"
+      [readOnly]="disabled"
+      [maxLength]="maxLength"
+      [styles]="editorStyles"
+      [ngModel]="value"
+      (ngModelChange)="onModelChange($event)"
+      (onBlur)="onBlur()"
+    />
+  </div>
+</db-form-field>

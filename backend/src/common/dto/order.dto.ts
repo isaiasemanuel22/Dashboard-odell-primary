@@ -55,9 +55,9 @@ export class OrderItemDto {
 }
 
 export class CreateOrderDto {
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  customerId!: string;
+  customerId?: string;
 
   @IsOptional()
   @IsEnum(ServiceType, { each: true })
@@ -77,12 +77,22 @@ export class CreateOrderDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(1000)
+  @MaxLength(20000)
   description?: string;
 
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discountPercent?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  discountAmount?: number;
 }
 
 export class UpdateOrderDto extends PartialType(CreateOrderDto) {}
