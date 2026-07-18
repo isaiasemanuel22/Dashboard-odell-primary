@@ -15,9 +15,11 @@ export class FirebaseAdminService implements OnModuleInit {
 
   onModuleInit(): void {
     const credentialsPath = this.config.firebaseServiceAccountPath;
-    if (!credentialsPath) {
+    const credentialsJson = this.config.firebaseServiceAccountJson;
+
+    if (!credentialsPath && !credentialsJson) {
       const message =
-        'FIREBASE_SERVICE_ACCOUNT_PATH no configurada. API sin autenticación.';
+        'Firebase Admin sin credenciales (PATH o JSON). API sin autenticación.';
       if (this.config.requireAuth) {
         throw new Error(message);
       }
@@ -26,10 +28,10 @@ export class FirebaseAdminService implements OnModuleInit {
     }
 
     try {
-      const absolutePath = resolve(process.cwd(), credentialsPath);
-      const serviceAccount = JSON.parse(
-        readFileSync(absolutePath, 'utf8'),
-      ) as ServiceAccount;
+      const serviceAccount = this.loadServiceAccount(
+        credentialsJson,
+        credentialsPath,
+      );
 
       const projectId = serviceAccount.projectId;
       this.storageBucket =
@@ -66,6 +68,18 @@ export class FirebaseAdminService implements OnModuleInit {
       throw new Error('Firebase Admin no está configurado');
     }
     return getAuth(this.app).verifyIdToken(token);
+  }
+
+  private loadServiceAccount(
+    credentialsJson: string | undefined,
+    credentialsPath: string | undefined,
+  ): ServiceAccount {
+    if (credentialsJson) {
+      return JSON.parse(credentialsJson) as ServiceAccount;
+    }
+
+    const absolutePath = resolve(process.cwd(), credentialsPath!);
+    return JSON.parse(readFileSync(absolutePath, 'utf8')) as ServiceAccount;
   }
 
   private errorMessage(error: unknown): string {

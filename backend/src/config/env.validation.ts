@@ -5,6 +5,8 @@ export interface AppEnv {
   CORS_ORIGINS: string[];
   AUTO_SEED: boolean;
   FIREBASE_SERVICE_ACCOUNT_PATH?: string;
+  /** JSON minificado de la cuenta de servicio (Heroku / PaaS). */
+  FIREBASE_SERVICE_ACCOUNT_JSON?: string;
   FIREBASE_STORAGE_BUCKET?: string;
   PRODUCT_IMAGE_STORAGE: 'backend' | 'firebase';
   REQUIRE_DATABASE: boolean;
@@ -18,14 +20,15 @@ export function validateEnv(
   const isProd = nodeEnv === 'production';
   const databaseUrl = optionalString(config.DATABASE_URL);
   const firebasePath = optionalString(config.FIREBASE_SERVICE_ACCOUNT_PATH);
+  const firebaseJson = optionalString(config.FIREBASE_SERVICE_ACCOUNT_JSON);
 
   if (isProd && !databaseUrl) {
     throw new Error('DATABASE_URL es obligatoria en producción');
   }
 
-  if (isProd && !firebasePath) {
+  if (isProd && !firebasePath && !firebaseJson) {
     throw new Error(
-      'FIREBASE_SERVICE_ACCOUNT_PATH es obligatoria en producción',
+      'FIREBASE_SERVICE_ACCOUNT_PATH o FIREBASE_SERVICE_ACCOUNT_JSON es obligatoria en producción',
     );
   }
 
@@ -51,6 +54,7 @@ export function validateEnv(
     CORS_ORIGINS: corsOrigins,
     AUTO_SEED: parseBoolean(config.AUTO_SEED, false),
     FIREBASE_SERVICE_ACCOUNT_PATH: firebasePath,
+    FIREBASE_SERVICE_ACCOUNT_JSON: firebaseJson,
     FIREBASE_STORAGE_BUCKET: optionalString(config.FIREBASE_STORAGE_BUCKET),
     PRODUCT_IMAGE_STORAGE: productImageStorage,
     REQUIRE_DATABASE: parseBoolean(config.REQUIRE_DATABASE, isProd),

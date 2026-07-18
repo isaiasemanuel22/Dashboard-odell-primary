@@ -34,6 +34,10 @@ export class AppConfigService {
     return this.config.get('FIREBASE_SERVICE_ACCOUNT_PATH', { infer: true });
   }
 
+  get firebaseServiceAccountJson(): string | undefined {
+    return this.config.get('FIREBASE_SERVICE_ACCOUNT_JSON', { infer: true });
+  }
+
   get firebaseStorageBucket(): string | undefined {
     return this.config.get('FIREBASE_STORAGE_BUCKET', { infer: true });
   }
