@@ -1,2 +1,1 @@
-release: bash scripts/heroku-release.sh
 web: node dist/src/main.js

@@ -22,6 +22,7 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:push": "prisma db push && prisma generate",
+    "db:push:heroku": "bash scripts/heroku-db-push.sh",
     "db:clear": "npx ts-node --transpile-only scripts/clear-database.ts",
     "db:studio": "prisma studio",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
