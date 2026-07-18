@@ -1,0 +1,32 @@
+# Deploy del frontend Angular (monorepo: base = frontend/)
+# En Netlify UI → Environment variables:
+#   API_URL = https://odell-dashboard-api-dfb6810b38bf.herokuapp.com/api
+
+[build]
+  base = "frontend"
+  command = "npm ci && npm run build:prod"
+  publish = "dist/frontend/browser"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NPM_FLAGS = "--registry=https://registry.npmjs.org"
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
+
+[[headers]]
+  for = "/*.js"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/*.css"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
