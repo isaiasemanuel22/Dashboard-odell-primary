@@ -1,4 +1,4 @@
-import { ProductFormComponent } from '../product-form/product-form.component';import {
+import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -26,6 +26,7 @@ import {
   DbStateMessageComponent,
   ProductBadgesComponent,
   ProductComponentsTableComponent,
+  ProductImageCarouselComponent,
   ProductPricingComponent,
 } from '@general-components';
 import { FormDialogService } from '../../../shared/form-dialogs/public-api';
@@ -34,10 +35,8 @@ import { resolveCategoryNames, isProductPublished } from '../../../shared/utils/
 import {
   DateShortPipe,
   FilamentTypeLabelPipe,
-  MediaUrlPipe,
   ResinTypeLabelPipe,
 } from '../../../shared/pipes/labels.pipe';
-import { resolveMediaUrl } from '../../../shared/utils/media-url.util';
 
 @Component({
   selector: 'app-product-detail',
@@ -46,12 +45,12 @@ import { resolveMediaUrl } from '../../../shared/utils/media-url.util';
     RouterLink,
     DateShortPipe,
     FilamentTypeLabelPipe,
-    MediaUrlPipe,
     ResinTypeLabelPipe,
     DbButtonComponent,
     DbSkeletonComponent,
     DbStateMessageComponent,
     ProductBadgesComponent,
+    ProductImageCarouselComponent,
     ProductPricingComponent,
     ProductComponentsTableComponent,
   ],
@@ -76,7 +75,6 @@ export class ProductDetailComponent implements OnInit {
   catalogProducts: Product[] = [];
   loading = true;
   notFound = false;
-  selectedImageIndex = 0;
 
   publishLoading = false;
 
@@ -113,13 +111,6 @@ export class ProductDetailComponent implements OnInit {
     return resolveCategoryNames(this.product.categoryIds, this.categories);
   }
 
-  get selectedImage(): string | null {
-    if (!this.product?.images.length) return null;
-    const url =
-      this.product.images[this.selectedImageIndex] ?? this.product.images[0];
-    return resolveMediaUrl(url);
-  }
-
   get hasComponents(): boolean {
     return (this.product?.components?.length ?? 0) > 0;
   }
@@ -130,11 +121,6 @@ export class ProductDetailComponent implements OnInit {
 
   get publishActionLabel(): string {
     return this.isPublished ? 'Despublicar' : 'Publicar';
-  }
-
-  selectImage(index: number): void {
-    this.selectedImageIndex = index;
-    this.cdr.markForCheck();
   }
 
   openEdit(): void {
@@ -233,7 +219,6 @@ export class ProductDetailComponent implements OnInit {
 
     this.loading = true;
     this.notFound = false;
-    this.selectedImageIndex = 0;
     this.cdr.markForCheck();
 
     return this.productsService.getProductOverview(id).pipe(

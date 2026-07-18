@@ -11,7 +11,7 @@ import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { FILE_STORAGE } from './file-storage.interface';
 import type { FileStorage } from './file-storage.interface';
-import { UPLOADS_DIR } from './upload.paths';
+import { ensureUploadsDir } from './upload.paths';
 import {
   isAllowedImageExtension,
   validateUploadedImage,
@@ -26,7 +26,7 @@ export class UploadController {
     FileInterceptor('file', {
       storage: diskStorage({
         destination: (_req, _file, cb) => {
-          cb(null, UPLOADS_DIR);
+          cb(null, ensureUploadsDir());
         },
         filename: (_req, file, cb) => {
           if (!isAllowedImageExtension(file.originalname)) {
@@ -56,7 +56,7 @@ export class UploadController {
       },
     }),
   )
-  uploadFile(@UploadedFile() file: Express.Multer.File) {
+  async uploadFile(@UploadedFile() file: Express.Multer.File) {
     this.storage.ensureReady();
 
     if (!file) {
@@ -69,6 +69,7 @@ export class UploadController {
       throw new BadRequestException(validation.reason);
     }
 
-    return { url: this.storage.saveUploadedFile(file).publicUrl };
+    const stored = await this.storage.saveUploadedFile(file);
+    return { url: stored.publicUrl };
   }
 }

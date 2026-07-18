@@ -185,4 +185,25 @@ describe('CostCalculatorService', () => {
     expect(result.areaSqm).toBe(1);
     expect(result.paperCost).toBe(4000);
   });
+
+  it('aplica el margen de ganancia configurado en Ajustes → Ganancias', () => {
+    store.generalSettings.profitMargins = {
+      impresion_3d: 55,
+      diseno: 50,
+      estampado: 25,
+    };
+
+    const result = service.calculateProductPricing({
+      type: ProductType.FDM,
+      grams: 100,
+      printTimeHours: 2,
+      workTimeHours: 0,
+      brand: 'Test',
+      filamentType: 'pla' as never,
+    });
+
+    expect(result.cost).toBeGreaterThan(0);
+    expect(result.configuredMarginPercent).toBe(55);
+    expect(result.price).toBe(Math.round(result.cost * 1.55));
+  });
 });

@@ -1,18 +1,19 @@
 <article class="list-card product-card">
-  <a [routerLink]="['/productos', product.id]" class="card-link">
-    <div class="card-image">
-      @if (product.images.length) {
-        <img [src]="product.images[0] | mediaUrl" [alt]="product.name" />
-      } @else {
-        <div class="no-image">Sin imagen</div>
-      }
-      <app-product-badges
-        [type]="product.type"
-        [published]="product.published"
-        [overlay]="true"
-      />
-    </div>
+  <div class="card-image">
+    <app-product-image-carousel
+      [images]="product.images"
+      [alt]="product.name"
+      variant="card"
+      [link]="['/productos', product.id]"
+    />
+    <app-product-badges
+      [type]="product.type"
+      [published]="product.published"
+      [overlay]="true"
+    />
+  </div>
 
+  <a [routerLink]="['/productos', product.id]" class="card-link">
     <div class="card-body">
       <h3>{{ product.name }}</h3>
       <p class="categories">{{ categoryNames }}</p>

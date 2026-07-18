@@ -14,6 +14,7 @@ export * from './product-badges/product-badges.component';
 export * from './product-pricing/product-pricing.component';
 export * from './product-components-table/product-components-table.component';
 export * from './product-card/product-card.component';
+export * from './product-image-carousel/product-image-carousel.component';
 export * from './customer-card/customer-card.component';
 export * from './print-job-card/print-job-card.component';
 export * from './order-card/order-card.component';

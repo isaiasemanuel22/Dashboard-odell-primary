@@ -508,6 +508,15 @@
             <strong [class.negative]="profit < 0">{{ profit | currencyArs }}</strong>
           </div>
 
+          @if (profitMargins && !usesPieceAssembly && !(suggestedPrice != null && suggestedPrice > 0)) {
+            <div class="pricing-stat">
+              <span>Margen sobre costo ({{ configuredProfitMarginLabel }})</span>
+              <strong>
+                {{ displayedProfitMargin }}%
+              </strong>
+            </div>
+          }
+
           <div class="pricing-stat pricing-stat--editable">
             <span>Precio sugerido (opcional)</span>
             <input

@@ -6,6 +6,7 @@ import {
   assertNonNegativeNumber,
 } from '../common/validators/domain.validators';
 import { ensureMachineProfiles } from './machine-profile.util';
+import { mergeProfitMargins, normalizeProfitMargins } from './profit-margins.util';
 import {
   FilamentPriceConfig,
   GeneralSettings,
@@ -28,7 +29,10 @@ export class SettingsService {
     this.store.generalSettings.machineProfiles = ensureMachineProfiles(
       this.store.generalSettings,
     );
-    return this.store.generalSettings;
+    this.store.generalSettings.profitMargins = normalizeProfitMargins(
+      this.store.generalSettings.profitMargins,
+    );
+    return structuredClone(this.store.generalSettings);
   }
 
   updateGeneralSettings(data: Partial<GeneralSettings>): GeneralSettings {
@@ -49,9 +53,9 @@ export class SettingsService {
     if (data.profitMargins) {
       for (const [key, value] of Object.entries(data.profitMargins)) {
         const margin = Number(value);
-        if (!Number.isFinite(margin) || margin < 0 || margin > 99) {
+        if (!Number.isFinite(margin) || margin < 0 || margin > 999) {
           throw new BadRequestException(
-            `Margen inválido para ${key}: debe estar entre 0 y 99`,
+            `Margen inválido para ${key}: debe estar entre 0 y 999`,
           );
         }
       }
@@ -74,10 +78,10 @@ export class SettingsService {
         ...this.store.generalSettings.paperPricesPerSqm,
         ...(data.paperPricesPerSqm ?? {}),
       },
-      profitMargins: {
-        ...this.store.generalSettings.profitMargins,
-        ...(data.profitMargins ?? {}),
-      },
+      profitMargins: mergeProfitMargins(
+        this.store.generalSettings.profitMargins,
+        data.profitMargins,
+      ),
       filamentTypeAverages: {
         ...this.store.generalSettings.filamentTypeAverages,
         ...(data.filamentTypeAverages ?? {}),
@@ -93,7 +97,15 @@ export class SettingsService {
     this.store.generalSettings.machineProfiles = ensureMachineProfiles(
       this.store.generalSettings,
     );
-    return this.store.generalSettings;
+    this.storeChange.recordChange({
+      collections: ['settings'],
+      realtime: {
+        scopes: ['settings', 'products'],
+        action: 'update',
+        entity: 'settings',
+      },
+    });
+    return structuredClone(this.store.generalSettings);
   }
 
   addPowerConsumption(

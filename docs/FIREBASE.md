@@ -37,19 +37,27 @@ Con Google no hace falta crear usuarios a mano; se registran al primer login.
 
 Al guardar las claves, la app redirige a `/login` antes de entrar al dashboard.
 
-## 4. Storage (imágenes de productos, opcional)
+## 4. Storage (imágenes de productos)
 
-Por defecto las imágenes se suben al **backend** (`backend/uploads/`), sin depender de Firebase Storage.
-
-Para usar Firebase Storage en producción, en `environment.prod.ts`:
+En `environment.ts` / `environment.prod.ts`:
 
 ```typescript
 productImageStorage: 'firebase',
 ```
 
-En Firebase Console → **Storage** → **Get started**.
+En Firebase Console → **Storage** → **Get started** (obligatorio la primera vez).
 
-Reglas recomendadas (solo usuarios logueados pueden subir; todos pueden ver):
+Las imágenes se suben con **POST /api/upload** desde el frontend; el **backend** las guarda en Firebase Storage con la cuenta de servicio (evita errores CORS del navegador).
+
+En `backend/.env`:
+
+```env
+FIREBASE_SERVICE_ACCOUNT_PATH=firebase-service-account.json
+PRODUCT_IMAGE_STORAGE=firebase
+FIREBASE_STORAGE_BUCKET=dashboard-odell-2.firebasestorage.app
+```
+
+Reglas recomendadas (lectura pública; escritura solo vía Admin SDK en backend):
 
 ```
 rules_version = '2';
@@ -57,7 +65,7 @@ service firebase.storage {
   match /b/{bucket}/o {
     match /products/{allPaths=**} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if false;
     }
   }
 }
@@ -83,7 +91,7 @@ Reiniciá el backend. Sin este archivo la API sigue abierta (modo desarrollo).
 | Componente | Sin Firebase configurado | Con Firebase |
 |------------|-------------------------|--------------|
 | Login | No se exige | Pantalla `/login` |
-| Imágenes | Subida local `/uploads` (por defecto) | Firebase Storage solo si configurás `productImageStorage: 'firebase'` en el frontend **y** reglas/CORS de Storage |
+| Imágenes | Subida local `/uploads` | Backend → Firebase Storage (`PRODUCT_IMAGE_STORAGE=firebase`) |
 | API | Sin token | Header `Authorization: Bearer …` |
 
 ## 7. Tiempo real (SSE)

@@ -9,6 +9,7 @@ import { AppConfigService } from '../config/app-config.service';
 export class FirebaseAdminService implements OnModuleInit {
   private readonly logger = new Logger(FirebaseAdminService.name);
   private app: App | null = null;
+  private storageBucket: string | null = null;
 
   constructor(private readonly config: AppConfigService) {}
 
@@ -30,10 +31,16 @@ export class FirebaseAdminService implements OnModuleInit {
         readFileSync(absolutePath, 'utf8'),
       ) as ServiceAccount;
 
+      const projectId = serviceAccount.projectId;
+      this.storageBucket =
+        this.config.firebaseStorageBucket ??
+        (projectId ? `${projectId}.firebasestorage.app` : null);
+
       this.app =
         getApps()[0] ??
         initializeApp({
           credential: cert(serviceAccount),
+          storageBucket: this.storageBucket ?? undefined,
         });
 
       this.logger.log('Firebase Admin inicializado');
@@ -48,6 +55,10 @@ export class FirebaseAdminService implements OnModuleInit {
 
   isEnabled(): boolean {
     return this.app !== null;
+  }
+
+  getStorageBucket(): string | null {
+    return this.storageBucket;
   }
 
   async verifyIdToken(token: string): Promise<DecodedIdToken> {

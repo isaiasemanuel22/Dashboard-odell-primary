@@ -5,6 +5,8 @@ export interface AppEnv {
   CORS_ORIGINS: string[];
   AUTO_SEED: boolean;
   FIREBASE_SERVICE_ACCOUNT_PATH?: string;
+  FIREBASE_STORAGE_BUCKET?: string;
+  PRODUCT_IMAGE_STORAGE: 'backend' | 'firebase';
   REQUIRE_DATABASE: boolean;
   REQUIRE_AUTH: boolean;
 }
@@ -37,6 +39,11 @@ export function validateEnv(
     throw new Error('PORT debe ser un número positivo');
   }
 
+  const productImageStorage =
+    String(config.PRODUCT_IMAGE_STORAGE ?? '').trim().toLowerCase() === 'firebase'
+      ? 'firebase'
+      : 'backend';
+
   return {
     NODE_ENV: nodeEnv,
     PORT: port,
@@ -44,6 +51,8 @@ export function validateEnv(
     CORS_ORIGINS: corsOrigins,
     AUTO_SEED: parseBoolean(config.AUTO_SEED, false),
     FIREBASE_SERVICE_ACCOUNT_PATH: firebasePath,
+    FIREBASE_STORAGE_BUCKET: optionalString(config.FIREBASE_STORAGE_BUCKET),
+    PRODUCT_IMAGE_STORAGE: productImageStorage,
     REQUIRE_DATABASE: parseBoolean(config.REQUIRE_DATABASE, isProd),
     REQUIRE_AUTH: parseBoolean(config.REQUIRE_AUTH, isProd),
   };

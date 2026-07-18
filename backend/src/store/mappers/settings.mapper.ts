@@ -5,6 +5,7 @@ import {
   ensureMachineProfiles,
   parseMachineProfilesFromDb,
 } from '../../settings/machine-profile.util';
+import { normalizeProfitMargins } from '../../settings/profit-margins.util';
 
 export function mapSettingsFromDb(row: {
   electricityCostPerKwh: number;
@@ -48,6 +49,7 @@ export function mapSettingsFromDb(row: {
     ),
   };
 
+  base.profitMargins = normalizeProfitMargins(base.profitMargins);
   base.machineProfiles = parseMachineProfilesFromDb(rawProfiles, base);
   return base;
 }
@@ -55,6 +57,7 @@ export function mapSettingsFromDb(row: {
 export function mapSettingsToDb(settings: GeneralSettings) {
   const normalized = {
     ...settings,
+    profitMargins: normalizeProfitMargins(settings.profitMargins),
     machineProfiles: ensureMachineProfiles(settings),
   };
 

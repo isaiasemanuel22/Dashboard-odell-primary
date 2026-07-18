@@ -1,8 +1,8 @@
 export const environment = {
   production: false,
   apiUrl: '/api',
-  /** Imágenes de productos: 'backend' → backend/uploads (recomendado en local). */
-  productImageStorage: 'backend' as 'backend' | 'firebase',
+  /** Imágenes de productos: 'firebase' → Firebase Storage; 'backend' → uploads locales. */
+  productImageStorage: 'firebase' as 'backend' | 'firebase',
   firebase: {
     apiKey: 'AIzaSyBXqQBoiPR97ZxTBmStvlpNccejCM5DD4k',
     authDomain: 'dashboard-odell-2.firebaseapp.com',

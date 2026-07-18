@@ -8,6 +8,10 @@
   flex-direction: column;
 }
 
+.card-image {
+  position: relative;
+}
+
 .card-body {
   .categories {
     margin: 0 0 0.75rem;

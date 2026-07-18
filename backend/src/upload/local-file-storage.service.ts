@@ -1,19 +1,21 @@
-import { Injectable } from '@nestjs/common';
-import { existsSync, mkdirSync, unlinkSync } from 'fs';
+import { Injectable, OnModuleInit } from '@nestjs/common';
+import { unlinkSync } from 'fs';
 import { FileStorage } from './file-storage.interface';
-import { UPLOADS_DIR } from './upload.paths';
+import { UPLOADS_DIR, ensureUploadsDir } from './upload.paths';
 
 @Injectable()
-export class LocalFileStorageService implements FileStorage {
+export class LocalFileStorageService implements FileStorage, OnModuleInit {
   readonly uploadsDir = UPLOADS_DIR;
 
-  ensureReady(): void {
-    if (!existsSync(this.uploadsDir)) {
-      mkdirSync(this.uploadsDir, { recursive: true });
-    }
+  onModuleInit(): void {
+    this.ensureReady();
   }
 
-  saveUploadedFile(file: Express.Multer.File) {
+  ensureReady(): void {
+    ensureUploadsDir();
+  }
+
+  async saveUploadedFile(file: Express.Multer.File) {
     return {
       filename: file.filename,
       publicUrl: `/uploads/${file.filename}`,

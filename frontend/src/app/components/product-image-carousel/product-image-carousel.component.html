@@ -1,0 +1,106 @@
+<div
+  class="carousel-wrapper"
+  [class.carousel-wrapper--detail]="variant === 'detail'"
+>
+  <div
+    class="carousel"
+    [class.carousel--card]="variant === 'card'"
+    [class.carousel--detail]="variant === 'detail'"
+    [class.carousel--dir-next]="slideDirection === 'next'"
+    [class.carousel--dir-prev]="slideDirection === 'prev'"
+    tabindex="0"
+    role="region"
+    [attr.aria-label]="'Imágenes de ' + alt"
+    (keydown)="onKeydown($event)"
+  >
+    @if (hasImages) {
+      <div class="carousel-viewport">
+        @for (image of resolvedImages; track image; let i = $index) {
+          <div
+            class="carousel-slide"
+            [class.carousel-slide--active]="i === currentIndex"
+            [style.background-image]="slideBackground(image)"
+            role="img"
+            [attr.aria-label]="
+              i === currentIndex ? alt + ' — foto ' + (i + 1) : null
+            "
+            [attr.aria-hidden]="i !== currentIndex"
+          ></div>
+        }
+      </div>
+
+      @if (link) {
+        <a
+          [routerLink]="link"
+          class="carousel-slide-link"
+          [attr.aria-label]="'Ver ' + alt"
+        ></a>
+      }
+
+      @if (hasMultiple) {
+        <button
+          type="button"
+          class="carousel-nav carousel-nav--prev"
+          aria-label="Imagen anterior"
+          (click)="prev($event)"
+        >
+          ‹
+        </button>
+        <button
+          type="button"
+          class="carousel-nav carousel-nav--next"
+          aria-label="Imagen siguiente"
+          (click)="next($event)"
+        >
+          ›
+        </button>
+
+        @if (variant === 'detail') {
+          <span class="carousel-counter" aria-hidden="true">{{ counterLabel }}</span>
+        }
+
+        @if (variant === 'card') {
+          <div
+            class="carousel-dots carousel-dots--overlay"
+            role="tablist"
+            [attr.aria-label]="'Seleccionar imagen de ' + alt"
+          >
+            @for (image of resolvedImages; track image; let i = $index) {
+              <button
+                type="button"
+                class="carousel-dot"
+                role="tab"
+                [class.carousel-dot--active]="currentIndex === i"
+                [attr.aria-selected]="currentIndex === i"
+                [attr.aria-label]="'Imagen ' + (i + 1)"
+                (click)="goTo(i, $event)"
+              ></button>
+            }
+          </div>
+        }
+      }
+    } @else {
+      <div class="carousel-empty">Sin imagen</div>
+    }
+  </div>
+
+  @if (hasMultiple && variant === 'detail') {
+    <div
+      class="carousel-dots"
+      role="tablist"
+      [attr.aria-label]="'Seleccionar imagen de ' + alt"
+    >
+      @for (image of resolvedImages; track image; let i = $index) {
+        <button
+          type="button"
+          class="carousel-dot carousel-dot--detail"
+          role="tab"
+          [class.carousel-dot--active]="currentIndex === i"
+          [attr.aria-selected]="currentIndex === i"
+          [attr.aria-label]="'Imagen ' + (i + 1)"
+          (click)="goTo(i, $event)"
+        ></button>
+      }
+    </div>
+  }
+</div>

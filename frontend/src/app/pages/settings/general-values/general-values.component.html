@@ -7,6 +7,10 @@
 
       <section class="panel">
         <h3>Energía y mano de obra</h3>
+        <p class="panel-desc">
+          El margen de error se aplica sobre material + energía + desgaste de máquina
+          al calcular el costo de un producto.
+        </p>
         <db-form-grid>
           <db-input
             label="Costo de luz ($/kWh)"
@@ -22,6 +26,16 @@
             [(ngModel)]="settings.laborCostPerHour"
             name="laborCostPerHour"
             [min]="0"
+          />
+          <db-input
+            label="Margen de error (%)"
+            type="number"
+            [(ngModel)]="settings.errorMarginPercent"
+            name="errorMarginPercent"
+            [min]="0"
+            [max]="100"
+            [step]="1"
+            hint="Porcentaje general sobre material, luz y máquina"
           />
         </db-form-grid>
         <div class="save-row panel-save">

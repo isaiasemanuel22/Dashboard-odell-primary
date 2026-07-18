@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   CalculateCostPayload,
@@ -18,17 +18,28 @@ import {
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
   private readonly baseUrl = `${environment.apiUrl}/settings`;
+  private readonly generalSettings$ = new BehaviorSubject<GeneralSettings | null>(
+    null,
+  );
 
   constructor(private readonly http: HttpClient) {}
 
+  watchGeneralSettings(): Observable<GeneralSettings | null> {
+    return this.generalSettings$.asObservable();
+  }
+
   getGeneralSettings(): Observable<GeneralSettings> {
-    return this.http.get<GeneralSettings>(`${this.baseUrl}/general`);
+    return this.http.get<GeneralSettings>(`${this.baseUrl}/general`).pipe(
+      tap((settings) => this.generalSettings$.next(settings)),
+    );
   }
 
   updateGeneralSettings(
     data: Partial<GeneralSettings>,
   ): Observable<GeneralSettings> {
-    return this.http.patch<GeneralSettings>(`${this.baseUrl}/general`, data);
+    return this.http.patch<GeneralSettings>(`${this.baseUrl}/general`, data).pipe(
+      tap((settings) => this.generalSettings$.next(settings)),
+    );
   }
 
   addFilamentPrice(

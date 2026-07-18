@@ -9,6 +9,7 @@ import { LoggingInterceptor } from './common/interceptors/logging.interceptor';
 import { EtagInterceptor } from './common/interceptors/etag.interceptor';
 import { requestIdMiddleware } from './common/middleware/request-id.middleware';
 import { AppConfigService } from './config/app-config.service';
+import { ensureUploadsDir } from './upload/upload.paths';
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
@@ -33,6 +34,7 @@ async function bootstrap() {
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'If-None-Match'],
     exposedHeaders: ['X-Request-Id', 'ETag'],
   });
+  ensureUploadsDir();
   app.useStaticAssets(join(process.cwd(), 'uploads'), { prefix: '/uploads' });
   app.enableShutdownHooks();
 

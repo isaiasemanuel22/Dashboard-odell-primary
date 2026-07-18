@@ -34,28 +34,11 @@
 
   <div class="detail-layout">
     <section class="panel gallery-panel">
-      <div class="main-image">
-        @if (selectedImage) {
-          <img [src]="selectedImage" [alt]="product.name" />
-        } @else {
-          <div class="no-image">Sin imagen</div>
-        }
-      </div>
-      @if (product.images.length > 1) {
-        <div class="thumbnails">
-          @for (image of product.images; track image; let i = $index) {
-            <db-button
-              format="bare"
-              extraClass="thumb"
-              [active]="selectedImageIndex === i"
-              [ariaLabel]="product.name + ' ' + (i + 1)"
-              (clicked)="selectImage(i)"
-            >
-              <img [src]="image | mediaUrl" [alt]="product.name + ' ' + (i + 1)" />
-            </db-button>
-          }
-        </div>
-      }
+      <app-product-image-carousel
+        [images]="product.images"
+        [alt]="product.name"
+        variant="detail"
+      />
     </section>
 
     <div class="detail-panels">

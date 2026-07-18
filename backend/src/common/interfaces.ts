@@ -39,7 +39,7 @@ export interface PaperPricesPerSqm {
   dtfUv: number;
 }
 
-/** Margen de ganancia sobre el precio de venta (%), por tipo de servicio. */
+/** Margen de ganancia sobre el costo (%), por tipo de servicio. */
 export interface ServiceProfitMargins {
   impresion_3d: number;
   diseno: number;
@@ -193,6 +193,8 @@ export interface ProductPricingResult {
   price: number;
   profit: number;
   marginPercent: number;
+  /** Margen configurado en Ajustes → Ganancias (% sobre costo). */
+  configuredMarginPercent?: number;
   breakdown: CostBreakdown | null;
 }
 

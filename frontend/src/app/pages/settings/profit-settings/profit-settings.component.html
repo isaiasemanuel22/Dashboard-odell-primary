@@ -8,8 +8,8 @@
       <section class="panel">
         <h3>Márgenes de ganancia por servicio</h3>
         <p class="panel-desc">
-          Porcentaje de ganancia sobre el precio de venta. El sistema calcula
-          <strong>precio = costo ÷ (1 − margen/100)</strong> al crear o editar productos,
+          Porcentaje de ganancia sobre el costo. El sistema calcula
+          <strong>precio = costo × (1 + margen/100)</strong> al crear o editar productos,
           salvo que indiques un precio sugerido manual.
         </p>
 
@@ -22,7 +22,7 @@
               (ngModelChange)="setMargin(field.service, $event)"
               [name]="'margin-' + field.service"
               [min]="0"
-              [max]="99"
+              [max]="999"
               [step]="1"
             />
           }

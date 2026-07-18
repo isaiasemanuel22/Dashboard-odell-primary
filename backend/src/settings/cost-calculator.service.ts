@@ -34,6 +34,7 @@ import {
   resolvePrintDimensions,
   totalEstampadoPressMinutes,
 } from '../products/estampado-product.util';
+import { normalizeProfitMargins } from './profit-margins.util';
 
 const RESIN_DENSITY_G_PER_ML = 1.1;
 
@@ -213,12 +214,14 @@ export class CostCalculatorService {
 
     const price = this.resolveProductPrice(input, hasComponents, cost);
     const profit = price - cost;
+    const configuredMarginPercent = this.getMarginForProductType(input.type);
 
     return {
       cost,
       price,
       profit,
       marginPercent: price > 0 ? Math.round((profit / price) * 100) : 0,
+      configuredMarginPercent,
       breakdown,
     };
   }
@@ -236,7 +239,10 @@ export class CostCalculatorService {
     }
 
     if (hasComponents) {
-      return this.sumComponentsPrice(input.components ?? []);
+      const componentsPrice = this.sumComponentsPrice(input.components ?? []);
+      if (componentsPrice > 0) {
+        return componentsPrice;
+      }
     }
 
     const margin = this.getMarginForProductType(input.type);
@@ -248,11 +254,9 @@ export class CostCalculatorService {
   }
 
   getMarginForService(service: ServiceType): number {
-    const margins = this.store.generalSettings.profitMargins ?? {
-      impresion_3d: 0,
-      diseno: 0,
-      estampado: 0,
-    };
+    const margins = normalizeProfitMargins(
+      this.store.generalSettings.profitMargins,
+    );
     return margins[service] ?? 0;
   }
 
@@ -275,11 +279,11 @@ export class CostCalculatorService {
   }
 
   priceFromCostAndMargin(cost: number, marginPercent: number): number {
-    const margin = Math.min(Math.max(Number(marginPercent) || 0, 0), 99);
-    if (margin === 0) {
+    const markup = Math.min(Math.max(Number(marginPercent) || 0, 0), 999);
+    if (markup === 0) {
       return Math.round(cost);
     }
-    return Math.round(cost / (1 - margin / 100));
+    return Math.round(cost * (1 + markup / 100));
   }
 
   resolveCatalogUnitPrice(productId: string): number {

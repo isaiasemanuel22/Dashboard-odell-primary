@@ -79,6 +79,7 @@ export class GeneralValuesComponent implements OnInit {
   loadSettings(): void {
     this.settingsService.getGeneralSettings().subscribe((s) => {
       this.settings = structuredClone(s);
+      this.settings.errorMarginPercent ??= 0;
     });
   }
 
@@ -100,6 +101,7 @@ export class GeneralValuesComponent implements OnInit {
       .updateGeneralSettings({
         electricityCostPerKwh: this.settings.electricityCostPerKwh,
         laborCostPerHour: this.settings.laborCostPerHour,
+        errorMarginPercent: this.settings.errorMarginPercent,
       })
       .subscribe({
         next: (s) => {
