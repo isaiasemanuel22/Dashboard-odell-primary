@@ -1,7 +1,13 @@
 {
   "name": "odell-dashboard",
   "private": true,
+  "engines": {
+    "node": "20.x",
+    "npm": "10.8.2"
+  },
   "scripts": {
+    "heroku-postbuild": "npm ci --prefix backend && npm run build --prefix backend",
+    "start": "node backend/dist/src/main.js",
     "frontend:build": "npm run build:prod --prefix frontend",
     "frontend:deploy": "npm run frontend:build && npx netlify-cli deploy --prod --dir=frontend/dist/frontend/browser",
     "frontend:deploy:preview": "npm run frontend:build && npx netlify-cli deploy --dir=frontend/dist/frontend/browser"
