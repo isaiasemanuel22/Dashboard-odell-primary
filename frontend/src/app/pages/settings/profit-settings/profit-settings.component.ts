@@ -94,7 +94,7 @@ export class ProfitSettingsComponent implements OnInit {
   }
 
   loadSettings(): void {
-    this.settingsService.getGeneralSettings().subscribe((settings) => {
+    this.settingsService.getGeneralSettings(true).subscribe((settings) => {
       this.settings = {
         ...structuredClone(settings),
         profitMargins: normalizeProfitMargins(settings.profitMargins),

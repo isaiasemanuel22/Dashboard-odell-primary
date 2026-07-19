@@ -1,11 +1,9 @@
-# Deploy del frontend Angular (monorepo: base = frontend/)
-# En Netlify UI → Environment variables:
-#   API_URL = https://odell-dashboard-api-dfb6810b38bf.herokuapp.com/api
+# Monorepo: rutas desde la raíz del repo (no usar base = frontend en la UI)
+# Variable en Netlify: API_URL=https://odell-dashboard-api-dfb6810b38bf.herokuapp.com/api
 
 [build]
-  base = "frontend"
-  command = "npm ci && npm run build:prod"
-  publish = "dist/frontend/browser"
+  command = "cd frontend && npm ci && npm run build:prod"
+  publish = "frontend/dist/frontend/browser"
 
 [build.environment]
   NODE_VERSION = "20"

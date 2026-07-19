@@ -8,6 +8,8 @@ export { DbFormErrorComponent } from './db-form-error/db-form-error.component';
 export { DbInputComponent } from './db-input/db-input.component';
 export { DbSelectComponent } from './db-select/db-select.component';
 export type { DbSelectOption } from './db-select/db-select.types';
+export { DbAutocompleteComponent } from './db-autocomplete/db-autocomplete.component';
+export type { DbAutocompleteOption } from './db-autocomplete/db-autocomplete.types';
 export { DbTextareaComponent } from './db-textarea/db-textarea.component';
 export { DbRichTextEditorComponent } from './db-rich-text-editor/db-rich-text-editor.component';
 export {

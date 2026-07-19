@@ -1,6 +1,6 @@
 export const environment = {
   production: true,
-  apiUrl: "http://localhost:3000/api",
+  apiUrl: "https://odell-dashboard-api-dfb6810b38bf.herokuapp.com/api",
   productImageStorage: 'firebase' as 'backend' | 'firebase',
   firebase: {
     apiKey: 'AIzaSyBXqQBoiPR97ZxTBmStvlpNccejCM5DD4k',

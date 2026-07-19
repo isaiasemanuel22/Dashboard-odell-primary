@@ -1,47 +1,31 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, of, shareReplay } from 'rxjs';
+import { Observable } from 'rxjs';
 import { Customer } from '../models';
-import { CustomersService } from './customers.service';
-import { removeById, upsertById } from '../utils/replace-in-store';
+import { CatalogFacade } from '../../store/catalog/catalog.facade';
 
 @Injectable({ providedIn: 'root' })
 export class CustomerCatalogService {
-  private readonly customersService = inject(CustomersService);
-  private cache$: Observable<Customer[]> | null = null;
-  private snapshot: Customer[] = [];
+  private readonly catalogFacade = inject(CatalogFacade);
 
   getCustomers(refresh = false): Observable<Customer[]> {
-    if (refresh) {
-      this.cache$ = null;
-    }
-    if (!this.cache$) {
-      this.cache$ = this.customersService.getCustomers().pipe(
-        shareReplay(1),
-      );
-      this.cache$.subscribe((customers) => {
-        this.snapshot = customers;
-      });
-    }
-    return this.cache$;
+    return this.catalogFacade.getCustomersOnce(refresh);
   }
 
   seed(customers: Customer[]): void {
-    this.snapshot = [...customers];
-    this.cache$ = of(this.snapshot).pipe(shareReplay(1));
+    for (const customer of customers) {
+      this.catalogFacade.upsertCustomer(customer);
+    }
   }
 
   upsert(customer: Customer): void {
-    this.snapshot = upsertById(this.snapshot, customer);
-    this.cache$ = of([...this.snapshot]).pipe(shareReplay(1));
+    this.catalogFacade.upsertCustomer(customer);
   }
 
   remove(id: string): void {
-    this.snapshot = removeById(this.snapshot, id);
-    this.cache$ = of([...this.snapshot]).pipe(shareReplay(1));
+    this.catalogFacade.removeCustomer(id);
   }
 
   invalidate(): void {
-    this.cache$ = null;
-    this.snapshot = [];
+    this.catalogFacade.invalidate();
   }
 }

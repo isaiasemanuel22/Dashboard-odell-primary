@@ -88,7 +88,7 @@ export enum MachineProfileRole {
 export interface FilamentPriceConfig {
   id: string;
   brand: string;
-  materialType: FilamentType;
+  materialType: string;
   pricePerKg: number;
 }
 

@@ -212,6 +212,14 @@ export class CostCalculatorService {
       cost = Number(input.cost) || 0;
     }
 
+    const storedCost = Number(input.cost) || 0;
+    if (cost <= 0 && storedCost > 0) {
+      cost = storedCost;
+      if (breakdown?.totalCost === 0) {
+        breakdown = null;
+      }
+    }
+
     const price = this.resolveProductPrice(input, hasComponents, cost);
     const profit = price - cost;
     const configuredMarginPercent = this.getMarginForProductType(input.type);

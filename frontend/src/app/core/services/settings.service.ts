@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   CalculateCostPayload,
@@ -14,132 +14,143 @@ import {
   SupplyCategory,
   SupplyType,
 } from '../models';
+import { SettingsFacade } from '../../store/settings/settings.facade';
+import { SuppliesFacade } from '../../store/supplies/supplies.facade';
 
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
   private readonly baseUrl = `${environment.apiUrl}/settings`;
-  private readonly generalSettings$ = new BehaviorSubject<GeneralSettings | null>(
-    null,
-  );
-
-  constructor(private readonly http: HttpClient) {}
+  private readonly http = inject(HttpClient);
+  private readonly settingsFacade = inject(SettingsFacade);
 
   watchGeneralSettings(): Observable<GeneralSettings | null> {
-    return this.generalSettings$.asObservable();
+    return this.settingsFacade.watchGeneralSettings();
   }
 
-  getGeneralSettings(): Observable<GeneralSettings> {
-    return this.http.get<GeneralSettings>(`${this.baseUrl}/general`).pipe(
-      tap((settings) => this.generalSettings$.next(settings)),
-    );
+  peekGeneralSettings(): GeneralSettings | null {
+    return this.settingsFacade.peekGeneralSettings();
+  }
+
+  getGeneralSettings(refresh = false): Observable<GeneralSettings> {
+    return this.settingsFacade.ensureLoaded(refresh);
   }
 
   updateGeneralSettings(
     data: Partial<GeneralSettings>,
   ): Observable<GeneralSettings> {
-    return this.http.patch<GeneralSettings>(`${this.baseUrl}/general`, data).pipe(
-      tap((settings) => this.generalSettings$.next(settings)),
-    );
+    return this.http
+      .patch<GeneralSettings>(`${this.baseUrl}/general`, data)
+      .pipe(tap((settings) => this.settingsFacade.setGeneral(settings)));
   }
 
   addFilamentPrice(
     data: Omit<FilamentPriceConfig, 'id'>,
   ): Observable<FilamentPriceConfig> {
-    return this.http.post<FilamentPriceConfig>(
-      `${this.baseUrl}/general/filament-prices`,
-      data,
-    );
+    return this.http
+      .post<FilamentPriceConfig>(`${this.baseUrl}/general/filament-prices`, data)
+      .pipe(tap((entry) => this.upsertFilamentPrice(entry)));
   }
 
   updateFilamentPrice(
     id: string,
     data: Partial<Omit<FilamentPriceConfig, 'id'>>,
   ): Observable<FilamentPriceConfig> {
-    return this.http.patch<FilamentPriceConfig>(
-      `${this.baseUrl}/general/filament-prices/${id}`,
-      data,
-    );
+    return this.http
+      .patch<FilamentPriceConfig>(
+        `${this.baseUrl}/general/filament-prices/${id}`,
+        data,
+      )
+      .pipe(tap((entry) => this.upsertFilamentPrice(entry)));
   }
 
   deleteFilamentPrice(id: string): Observable<{ deleted: boolean }> {
-    return this.http.delete<{ deleted: boolean }>(
-      `${this.baseUrl}/general/filament-prices/${id}`,
-    );
+    return this.http
+      .delete<{ deleted: boolean }>(
+        `${this.baseUrl}/general/filament-prices/${id}`,
+      )
+      .pipe(tap(() => this.removeFilamentPrice(id)));
   }
 
   addResinPrice(
     data: Omit<ResinPriceConfig, 'id'>,
   ): Observable<ResinPriceConfig> {
-    return this.http.post<ResinPriceConfig>(
-      `${this.baseUrl}/general/resin-prices`,
-      data,
-    );
+    return this.http
+      .post<ResinPriceConfig>(`${this.baseUrl}/general/resin-prices`, data)
+      .pipe(tap(() => this.settingsFacade.load(true)));
   }
 
   updateResinPrice(
     id: string,
     data: Partial<Omit<ResinPriceConfig, 'id'>>,
   ): Observable<ResinPriceConfig> {
-    return this.http.patch<ResinPriceConfig>(
-      `${this.baseUrl}/general/resin-prices/${id}`,
-      data,
-    );
+    return this.http
+      .patch<ResinPriceConfig>(`${this.baseUrl}/general/resin-prices/${id}`, data)
+      .pipe(tap(() => this.settingsFacade.load(true)));
   }
 
   deleteResinPrice(id: string): Observable<{ deleted: boolean }> {
-    return this.http.delete<{ deleted: boolean }>(
-      `${this.baseUrl}/general/resin-prices/${id}`,
-    );
+    return this.http
+      .delete<{ deleted: boolean }>(`${this.baseUrl}/general/resin-prices/${id}`)
+      .pipe(tap(() => this.settingsFacade.load(true)));
   }
 
   addPowerConsumption(
     data: Omit<PowerConsumptionConfig, 'id'>,
   ): Observable<PowerConsumptionConfig> {
-    return this.http.post<PowerConsumptionConfig>(
-      `${this.baseUrl}/general/power-consumptions`,
-      data,
-    );
+    return this.http
+      .post<PowerConsumptionConfig>(
+        `${this.baseUrl}/general/power-consumptions`,
+        data,
+      )
+      .pipe(tap(() => this.settingsFacade.load(true)));
   }
 
   updatePowerConsumption(
     id: string,
     data: Partial<Omit<PowerConsumptionConfig, 'id'>>,
   ): Observable<PowerConsumptionConfig> {
-    return this.http.patch<PowerConsumptionConfig>(
-      `${this.baseUrl}/general/power-consumptions/${id}`,
-      data,
-    );
+    return this.http
+      .patch<PowerConsumptionConfig>(
+        `${this.baseUrl}/general/power-consumptions/${id}`,
+        data,
+      )
+      .pipe(tap(() => this.settingsFacade.load(true)));
   }
 
   deletePowerConsumption(id: string): Observable<{ deleted: boolean }> {
-    return this.http.delete<{ deleted: boolean }>(
-      `${this.baseUrl}/general/power-consumptions/${id}`,
-    );
+    return this.http
+      .delete<{ deleted: boolean }>(
+        `${this.baseUrl}/general/power-consumptions/${id}`,
+      )
+      .pipe(tap(() => this.settingsFacade.load(true)));
   }
 
   addMachineCost(
     data: Omit<MachineCostConfig, 'id'>,
   ): Observable<MachineCostConfig> {
-    return this.http.post<MachineCostConfig>(
-      `${this.baseUrl}/general/machine-costs`,
-      data,
-    );
+    return this.http
+      .post<MachineCostConfig>(`${this.baseUrl}/general/machine-costs`, data)
+      .pipe(tap(() => this.settingsFacade.load(true)));
   }
 
   updateMachineCost(
     id: string,
     data: Partial<Omit<MachineCostConfig, 'id'>>,
   ): Observable<MachineCostConfig> {
-    return this.http.patch<MachineCostConfig>(
-      `${this.baseUrl}/general/machine-costs/${id}`,
-      data,
-    );
+    return this.http
+      .patch<MachineCostConfig>(
+        `${this.baseUrl}/general/machine-costs/${id}`,
+        data,
+      )
+      .pipe(tap(() => this.settingsFacade.load(true)));
   }
 
   deleteMachineCost(id: string): Observable<{ deleted: boolean }> {
-    return this.http.delete<{ deleted: boolean }>(
-      `${this.baseUrl}/general/machine-costs/${id}`,
-    );
+    return this.http
+      .delete<{ deleted: boolean }>(
+        `${this.baseUrl}/general/machine-costs/${id}`,
+      )
+      .pipe(tap(() => this.settingsFacade.load(true)));
   }
 
   calculateCost(data: CalculateCostPayload): Observable<CostBreakdown> {
@@ -163,19 +174,48 @@ export class SettingsService {
       code,
     });
   }
+
+  private upsertFilamentPrice(entry: FilamentPriceConfig): void {
+    const current = this.settingsFacade.peekGeneralSettings();
+    if (!current) {
+      this.settingsFacade.load(true);
+      return;
+    }
+
+    const exists = current.filamentPrices.some((price) => price.id === entry.id);
+    this.settingsFacade.setGeneral({
+      ...current,
+      filamentPrices: exists
+        ? current.filamentPrices.map((price) =>
+            price.id === entry.id ? entry : price,
+          )
+        : [...current.filamentPrices, entry],
+    });
+  }
+
+  private removeFilamentPrice(id: string): void {
+    const current = this.settingsFacade.peekGeneralSettings();
+    if (!current) {
+      this.settingsFacade.load(true);
+      return;
+    }
+
+    this.settingsFacade.setGeneral({
+      ...current,
+      filamentPrices: current.filamentPrices.filter((price) => price.id !== id),
+    });
+  }
 }
 
 @Injectable({ providedIn: 'root' })
 export class SuppliesService {
   private readonly baseUrl = `${environment.apiUrl}/supplies`;
-
-  constructor(private readonly http: HttpClient) {}
+  private readonly http = inject(HttpClient);
+  private readonly suppliesFacade = inject(SuppliesFacade);
 
   getSupplies(type?: SupplyType, category?: SupplyCategory): Observable<Supply[]> {
-    let params = new HttpParams();
-    if (type) params = params.set('type', type);
-    if (category) params = params.set('category', category);
-    return this.http.get<Supply[]>(this.baseUrl, { params });
+    this.suppliesFacade.load(false, type, category);
+    return this.suppliesFacade.supplies(type, category);
   }
 
   getLowStock(): Observable<Supply[]> {
@@ -195,17 +235,29 @@ export class SuppliesService {
   }
 
   createSupply(data: Omit<Supply, 'id' | 'updatedAt'>): Observable<Supply> {
-    return this.http.post<Supply>(this.baseUrl, data);
+    return this.http.post<Supply>(this.baseUrl, data).pipe(
+      tap((supply) => {
+        this.suppliesFacade.upsertSupply(supply);
+      }),
+    );
   }
 
   updateSupply(
     id: string,
     data: Partial<Omit<Supply, 'id'>>,
   ): Observable<Supply> {
-    return this.http.patch<Supply>(`${this.baseUrl}/${id}`, data);
+    return this.http.patch<Supply>(`${this.baseUrl}/${id}`, data).pipe(
+      tap((supply) => {
+        this.suppliesFacade.upsertSupply(supply);
+      }),
+    );
   }
 
   deleteSupply(id: string): Observable<{ deleted: boolean }> {
-    return this.http.delete<{ deleted: boolean }>(`${this.baseUrl}/${id}`);
+    return this.http.delete<{ deleted: boolean }>(`${this.baseUrl}/${id}`).pipe(
+      tap(() => {
+        this.suppliesFacade.removeSupply(id);
+      }),
+    );
   }
 }

@@ -206,4 +206,27 @@ describe('CostCalculatorService', () => {
     expect(result.configuredMarginPercent).toBe(55);
     expect(result.price).toBe(Math.round(result.cost * 1.55));
   });
+
+  it('usa costo guardado y nuevo margen cuando el recálculo automático da 0', () => {
+    store.generalSettings.profitMargins = {
+      impresion_3d: 50,
+      diseno: 50,
+      estampado: 35,
+    };
+    store.generalSettings.filamentPrices = [];
+
+    const result = service.calculateProductPricing({
+      type: ProductType.FDM,
+      grams: 100,
+      printTimeHours: 0,
+      workTimeHours: 0,
+      filamentType: 'pla' as never,
+      cost: 4000,
+      price: 6000,
+    });
+
+    expect(result.cost).toBe(4000);
+    expect(result.configuredMarginPercent).toBe(50);
+    expect(result.price).toBe(6000);
+  });
 });

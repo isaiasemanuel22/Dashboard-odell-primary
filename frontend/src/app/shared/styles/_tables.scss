@@ -40,7 +40,8 @@
 }
 
 .data-table tr.is-editing db-input,
-.data-table tr.is-editing db-select {
+.data-table tr.is-editing db-select,
+.data-table tr.is-editing db-autocomplete {
   min-width: 120px;
 }
 

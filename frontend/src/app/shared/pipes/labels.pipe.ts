@@ -73,8 +73,9 @@ export class MediaUrlPipe implements PipeTransform {
 
 @Pipe({ name: 'filamentTypeLabel', standalone: true })
 export class FilamentTypeLabelPipe implements PipeTransform {
-  transform(value: FilamentType): string {
-    return FILAMENT_TYPE_LABELS[value] ?? value;
+  transform(value: string | FilamentType | null | undefined): string {
+    if (!value) return '';
+    return FILAMENT_TYPE_LABELS[value as FilamentType] ?? value.toUpperCase();
   }
 }
 

@@ -145,7 +145,11 @@ export function shouldTrackHttpMutation(path: string, method: string): boolean {
   if (!['POST', 'PATCH', 'PUT', 'DELETE'].includes(method.toUpperCase())) {
     return false;
   }
-  if (path.includes('/events/') || path.includes('/preview-')) {
+  if (
+    path.includes('/events/') ||
+    path.includes('/preview-') ||
+    path.includes('/calculate-cost')
+  ) {
     return false;
   }
   return true;

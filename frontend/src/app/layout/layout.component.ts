@@ -3,7 +3,7 @@ import { AsyncPipe } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { AuthService } from '../core/auth/auth.service';
 import { RealtimeService } from '../core/services/realtime.service';
-import { ReferenceDataService } from '../core/services/reference-data.service';
+import { StoreBootstrapService } from '../store/store-bootstrap.service';
 import { DbButtonComponent } from '@general-components';
 
 interface NavItem {
@@ -21,7 +21,7 @@ interface NavItem {
 })
 export class LayoutComponent implements OnInit {
   private readonly realtime = inject(RealtimeService);
-  private readonly referenceData = inject(ReferenceDataService);
+  private readonly storeBootstrap = inject(StoreBootstrapService);
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -42,7 +42,7 @@ export class LayoutComponent implements OnInit {
 
   ngOnInit(): void {
     void this.realtime.connect();
-    void this.referenceData.load().subscribe();
+    this.storeBootstrap.bootstrap();
     this.destroyRef.onDestroy(() => this.realtime.disconnect());
   }
 

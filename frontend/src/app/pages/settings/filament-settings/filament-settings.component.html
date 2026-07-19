@@ -32,10 +32,12 @@
                     />
                   </td>
                   <td>
-                    <db-select
+                    <db-autocomplete
                       [(ngModel)]="editForm.materialType"
                       [name]="'editFilamentType' + item.id"
+                      placeholder="Tipo"
                       [options]="filamentTypeOptions"
+                      (optionCreated)="onFilamentTypeCreated($event)"
                     />
                   </td>
                   <td>
@@ -94,10 +96,12 @@
             name="newFilamentBrand"
             placeholder="Marca"
           />
-          <db-select
+          <db-autocomplete
             [(ngModel)]="newFilament.materialType"
             name="newFilamentType"
+            placeholder="Tipo"
             [options]="filamentTypeOptions"
+            (optionCreated)="onFilamentTypeCreated($event)"
           />
           <db-input
             type="number"

@@ -21,6 +21,9 @@ describe('route-registry', () => {
     expect(shouldTrackHttpMutation('/api/products/preview-pricing', 'POST')).toBe(
       false,
     );
+    expect(shouldTrackHttpMutation('/api/settings/calculate-cost', 'POST')).toBe(
+      false,
+    );
     expect(shouldTrackHttpMutation('/api/products', 'GET')).toBe(false);
   });
 

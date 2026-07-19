@@ -1,0 +1,115 @@
+@if (label) {
+  <db-form-field
+    [label]="label"
+    [hint]="hint"
+    [error]="error"
+    [required]="required"
+    [forId]="inputId"
+  >
+    <div class="db-autocomplete">
+      <input
+        #inputRef
+        [id]="inputId"
+        [class]="inputClass"
+        type="text"
+        [name]="name"
+        [placeholder]="placeholder"
+        [required]="required"
+        [disabled]="disabled"
+        autocomplete="off"
+        autocapitalize="off"
+        autocorrect="off"
+        spellcheck="false"
+        role="combobox"
+        [attr.aria-expanded]="isOpen"
+        aria-autocomplete="list"
+        [ngModel]="query"
+        (ngModelChange)="onQueryChange($event)"
+        (focus)="onFocus()"
+        (blur)="onInputBlur()"
+        (keydown)="onInputKeydown($event)"
+      />
+
+      @if (isOpen && (filteredOptions.length > 0 || showCreateOption)) {
+        <ul class="db-autocomplete__list" role="listbox">
+          @for (option of filteredOptions; track option.value; let index = $index) {
+            <li
+              class="db-autocomplete__option"
+              [class.is-active]="highlightedIndex === index"
+              role="option"
+              (mousedown)="onOptionMouseDown($event)"
+              (click)="selectOption(option)"
+            >
+              {{ option.label }}
+            </li>
+          }
+
+          @if (showCreateOption) {
+            <li
+              class="db-autocomplete__option db-autocomplete__option--create"
+              [class.is-active]="highlightedIndex === filteredOptions.length"
+              role="option"
+              (mousedown)="onOptionMouseDown($event)"
+              (click)="selectCreateOption()"
+            >
+              {{ createLabel(query.trim()) }}
+            </li>
+          }
+        </ul>
+      }
+    </div>
+  </db-form-field>
+} @else {
+  <div class="db-autocomplete">
+    <input
+      #inputRef
+      [id]="inputId"
+      [class]="inputClass"
+      type="text"
+      [name]="name"
+      [placeholder]="placeholder"
+      [required]="required"
+      [disabled]="disabled"
+      autocomplete="off"
+      autocapitalize="off"
+      autocorrect="off"
+      spellcheck="false"
+      role="combobox"
+      [attr.aria-expanded]="isOpen"
+      aria-autocomplete="list"
+      [ngModel]="query"
+      (ngModelChange)="onQueryChange($event)"
+      (focus)="onFocus()"
+      (blur)="onInputBlur()"
+      (keydown)="onInputKeydown($event)"
+    />
+
+    @if (isOpen && (filteredOptions.length > 0 || showCreateOption)) {
+      <ul class="db-autocomplete__list" role="listbox">
+        @for (option of filteredOptions; track option.value; let index = $index) {
+          <li
+            class="db-autocomplete__option"
+            [class.is-active]="highlightedIndex === index"
+            role="option"
+            (mousedown)="onOptionMouseDown($event)"
+            (click)="selectOption(option)"
+          >
+            {{ option.label }}
+          </li>
+        }
+
+        @if (showCreateOption) {
+          <li
+            class="db-autocomplete__option db-autocomplete__option--create"
+            [class.is-active]="highlightedIndex === filteredOptions.length"
+            role="option"
+            (mousedown)="onOptionMouseDown($event)"
+            (click)="selectCreateOption()"
+          >
+            {{ createLabel(query.trim()) }}
+          </li>
+        }
+      </ul>
+    }
+  </div>
+}

@@ -12,7 +12,7 @@ import {
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { firstValueFrom, switchMap, tap } from 'rxjs';
+import { firstValueFrom, Subscription } from 'rxjs';
 import {
   Category,
   CostBreakdown,
@@ -37,11 +37,10 @@ import {
 import { ProductCatalogService } from '../../../core/services/product-catalog.service';
 import { MediaUploadService } from '../../../core/services/media-upload.service';
 import { ProductsService } from '../../../core/services/products.service';
+import { ProductPricingService } from '../../../core/services/product-pricing.service';
 import { ImpresosService } from '../../../core/services/impresos.service';
-import {
-  SettingsService,
-  SuppliesService,
-} from '../../../core/services/settings.service';
+import { SuppliesService } from '../../../core/services/settings.service';
+import { SettingsFacade } from '../../../store/settings/settings.facade';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import {
   productComponentSelectLabel,
@@ -64,6 +63,7 @@ import {
   marginLabelForProductType,
   normalizeProfitMargins,
   priceFromCostAndMargin,
+  totalCostFromBreakdown,
 } from '../../../shared/utils/pricing.util';
 import {
   filamentTypeOptions,
@@ -114,9 +114,10 @@ import { FormDialogService } from '../../../shared/form-dialogs/public-api';
 })
 export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   private readonly productsService = inject(ProductsService);
+  private readonly productPricing = inject(ProductPricingService);
   private readonly impresosService = inject(ImpresosService);
   private readonly suppliesService = inject(SuppliesService);
-  private readonly settingsService = inject(SettingsService);
+  private readonly settingsFacade = inject(SettingsFacade);
   private readonly mediaUpload = inject(MediaUploadService);
   private readonly catalogService = inject(ProductCatalogService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -173,17 +174,19 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   computedPrice: number | null = null;
   appliedMarginPercent: number | null = null;
   profitMargins: GeneralSettings['profitMargins'] | null = null;
-  private settingsSubscription = this.settingsService
+  private settingsSubscription = this.settingsFacade
     .watchGeneralSettings()
     .subscribe((settings) => {
       if (!settings) return;
       this.profitMargins = normalizeProfitMargins(settings.profitMargins);
+      this.recalculatePriceFromCost();
       this.cdr.markForCheck();
     });
   savingImages = false;
   imageUploadError = '';
 
   private costCalcTimer: ReturnType<typeof setTimeout> | null = null;
+  private pricingPreviewSub: Subscription | null = null;
 
   readonly uploadProductImage: DbFileUploadFn = (file) =>
     firstValueFrom(this.mediaUpload.uploadProductImage(file));
@@ -191,11 +194,12 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   ngOnInit(): void {
     this.categoriesList = [...this.categories];
     this.loadCatalog();
-    this.settingsService.getGeneralSettings().subscribe((settings) => {
-      this.profitMargins = normalizeProfitMargins(settings.profitMargins);
-      this.scheduleCostCalculation();
-      this.cdr.markForCheck();
-    });
+    const cached = this.settingsFacade.peekGeneralSettings();
+    if (cached) {
+      this.profitMargins = normalizeProfitMargins(cached.profitMargins);
+    } else {
+      this.settingsFacade.load();
+    }
     this.impresosService.getImpresos().subscribe((items) => {
       this.impresos = items;
       if (this.isEstampado) {
@@ -222,6 +226,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
 
   ngOnDestroy(): void {
     this.settingsSubscription.unsubscribe();
+    this.pricingPreviewSub?.unsubscribe();
     this.clearCostCalcTimer();
   }
 
@@ -293,6 +298,17 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     return marginLabelForProductType(this.type);
   }
 
+  get effectiveCost(): number {
+    const direct = Number(this.cost) || Number(this.product?.cost) || 0;
+    if (direct > 0) {
+      return direct;
+    }
+    if (this.costBreakdown) {
+      return totalCostFromBreakdown(this.costBreakdown);
+    }
+    return 0;
+  }
+
   get finalPrice(): number {
     if (this.suggestedPrice != null && Number(this.suggestedPrice) > 0) {
       return Number(this.suggestedPrice);
@@ -303,18 +319,15 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     if (this.computedPrice != null) {
       return this.computedPrice;
     }
-    const costValue = Number(this.cost) || 0;
+    const costValue = this.effectiveCost;
     if (costValue > 0 && this.profitMargins) {
       return priceFromCostAndMargin(costValue, this.configuredProfitMargin);
-    }
-    if (this.product && !this.canAutoCalculateCost) {
-      return this.product.price;
     }
     return costValue;
   }
 
   get profit(): number {
-    return this.finalPrice - (Number(this.cost) || 0);
+    return this.finalPrice - this.effectiveCost;
   }
 
   get filteredCategories(): Category[] {
@@ -624,7 +637,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       type: this.type,
       size: this.buildProductSize().trim(),
       price: this.finalPrice,
-      cost: Number(this.cost),
+      cost: this.effectiveCost,
       suggestedPrice: this.suggestedPrice,
       categoryIds: this.categoryIds,
       images: this.images,
@@ -657,7 +670,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private loadCatalog(): void {
-    this.catalogService.getAllProducts(true).subscribe((products) => {
+    this.catalogService.getAllProducts(false).subscribe((products) => {
       this.catalogProducts = products;
     });
   }
@@ -666,7 +679,6 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     this.clearCostCalcTimer();
     if (!this.canAutoCalculateCost) {
       if (this.isEstampado && !this.usesPieceAssembly) {
-        this.computedPrice = null;
         this.costBreakdown = null;
         if (!this.product) {
           this.cost = 0;
@@ -676,12 +688,13 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
         this.costBreakdown = null;
         this.computedPrice = null;
       }
+      this.recalculatePriceFromCost();
       return;
     }
 
     this.computedPrice = null;
     this.appliedMarginPercent = null;
-    this.costCalcTimer = setTimeout(() => this.calculateCost(), 350);
+    this.costCalcTimer = setTimeout(() => this.calculateCost(), 500);
   }
 
   private clearCostCalcTimer(): void {
@@ -705,42 +718,88 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private runPricingPreview(): void {
+    const settings = this.settingsFacade.peekGeneralSettings();
+    if (!settings) return;
+
+    this.pricingPreviewSub?.unsubscribe();
     this.calculatingCost = true;
-    this.settingsService
-      .getGeneralSettings()
-      .pipe(
-        tap((settings) => {
-          this.profitMargins = normalizeProfitMargins(settings.profitMargins);
-        }),
-        switchMap(() =>
-          this.productsService.previewPricing(this.buildPricingInput()),
-        ),
-      )
+    this.pricingPreviewSub = this.productPricing
+      .preview(this.buildPricingInput(), this.catalogProducts, settings)
       .subscribe({
         next: (result) => {
           this.costBreakdown = result.breakdown;
-          this.cost = result.cost;
-          this.computedPrice = result.price;
+          const resolvedCost =
+            result.cost > 0
+              ? result.cost
+              : result.breakdown
+                ? totalCostFromBreakdown(result.breakdown)
+                : 0;
+          this.cost = resolvedCost;
+          this.computedPrice =
+            result.price > 0
+              ? result.price
+              : resolvedCost > 0
+                ? priceFromCostAndMargin(
+                    resolvedCost,
+                    result.configuredMarginPercent ??
+                      this.configuredProfitMargin,
+                  )
+                : 0;
           this.appliedMarginPercent =
             result.configuredMarginPercent ?? result.marginPercent;
           this.calculatingCost = false;
+          this.pricingPreviewSub = null;
           this.cdr.markForCheck();
         },
         error: () => {
+          this.recalculatePriceFromCost();
           this.calculatingCost = false;
+          this.pricingPreviewSub = null;
           this.cdr.markForCheck();
         },
       });
   }
 
+  private recalculatePriceFromCost(): void {
+    const settings = this.settingsFacade.peekGeneralSettings();
+    if (!settings) return;
+
+    if (this.suggestedPrice != null && Number(this.suggestedPrice) > 0) {
+      return;
+    }
+
+    if (this.usesPieceAssembly) {
+      this.computedPrice = this.componentsPriceTotal;
+      this.appliedMarginPercent = this.configuredProfitMargin;
+      return;
+    }
+
+    const costValue = this.effectiveCost;
+    if (costValue <= 0) {
+      return;
+    }
+
+    const result = this.productPricing.applyMarginToCost(
+      this.buildPricingInput(),
+      costValue,
+      this.catalogProducts,
+      settings,
+    );
+    this.cost = costValue;
+    this.computedPrice = result.price;
+    this.appliedMarginPercent = result.configuredMarginPercent ?? null;
+  }
+
   private buildPricingInput() {
+    const storedCost =
+      Number(this.cost) || Number(this.product?.cost) || 0;
+
     return {
       type: this.type,
       components: this.usesPieceAssembly ? this.components : [],
       assemblyTimeHours: Number(this.assemblyTimeHours) || 0,
       suggestedPrice: this.suggestedPrice,
-      price: 0,
-      cost: 0,
+      cost: storedCost,
       ...(this.isCombo
         ? {}
         : this.is3D

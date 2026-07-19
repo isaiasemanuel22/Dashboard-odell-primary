@@ -77,7 +77,7 @@ export class GeneralValuesComponent implements OnInit {
   }
 
   loadSettings(): void {
-    this.settingsService.getGeneralSettings().subscribe((s) => {
+    this.settingsService.getGeneralSettings(true).subscribe((s) => {
       this.settings = structuredClone(s);
       this.settings.errorMarginPercent ??= 0;
     });

@@ -1,6 +1,6 @@
-import { Injectable } from '@angular/core';
-import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Injectable, inject } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   CreateImpresoPayload,
@@ -9,17 +9,17 @@ import {
   PaperType,
   UpdateImpresoPayload,
 } from '../models';
+import { ImpresosFacade } from '../../store/impresos/impresos.facade';
 
 @Injectable({ providedIn: 'root' })
 export class ImpresosService {
   private readonly baseUrl = `${environment.apiUrl}/impresos`;
-
-  constructor(private readonly http: HttpClient) {}
+  private readonly http = inject(HttpClient);
+  private readonly impresosFacade = inject(ImpresosFacade);
 
   getImpresos(paperType?: PaperType): Observable<ImpresoWithCost[]> {
-    let params = new HttpParams();
-    if (paperType) params = params.set('paperType', paperType);
-    return this.http.get<ImpresoWithCost[]>(this.baseUrl, { params });
+    this.impresosFacade.load(false, paperType);
+    return this.impresosFacade.impresos(paperType);
   }
 
   previewCost(data: {
@@ -35,17 +35,23 @@ export class ImpresosService {
   }
 
   createImpreso(data: CreateImpresoPayload): Observable<ImpresoWithCost> {
-    return this.http.post<ImpresoWithCost>(this.baseUrl, data);
+    return this.http.post<ImpresoWithCost>(this.baseUrl, data).pipe(
+      tap((impreso) => this.impresosFacade.upsertImpreso(impreso)),
+    );
   }
 
   updateImpreso(
     id: string,
     data: UpdateImpresoPayload,
   ): Observable<ImpresoWithCost> {
-    return this.http.patch<ImpresoWithCost>(`${this.baseUrl}/${id}`, data);
+    return this.http.patch<ImpresoWithCost>(`${this.baseUrl}/${id}`, data).pipe(
+      tap((impreso) => this.impresosFacade.upsertImpreso(impreso)),
+    );
   }
 
   deleteImpreso(id: string): Observable<{ deleted: boolean }> {
-    return this.http.delete<{ deleted: boolean }>(`${this.baseUrl}/${id}`);
+    return this.http.delete<{ deleted: boolean }>(`${this.baseUrl}/${id}`).pipe(
+      tap(() => this.impresosFacade.removeImpreso(id)),
+    );
   }
 }

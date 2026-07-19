@@ -1,0 +1,45 @@
+@use '../styles/db-form';
+@use '../../../shared/styles/variables' as *;
+
+:host {
+  display: block;
+}
+
+.db-autocomplete {
+  position: relative;
+}
+
+.db-autocomplete__list {
+  position: absolute;
+  top: calc(100% + 0.25rem);
+  left: 0;
+  right: 0;
+  z-index: 20;
+  margin: 0;
+  padding: 0.35rem 0;
+  list-style: none;
+  background: #fff;
+  border: 1px solid $color-border-input;
+  border-radius: $radius-sm;
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.12);
+  max-height: 220px;
+  overflow-y: auto;
+}
+
+.db-autocomplete__option {
+  padding: 0.55rem 0.75rem;
+  font-size: 0.9rem;
+  color: $color-text;
+  cursor: pointer;
+
+  &.is-active,
+  &:hover {
+    background: rgba(37, 99, 235, 0.08);
+  }
+
+  &--create {
+    color: $color-primary;
+    font-weight: 500;
+    border-top: 1px solid $color-border;
+  }
+}

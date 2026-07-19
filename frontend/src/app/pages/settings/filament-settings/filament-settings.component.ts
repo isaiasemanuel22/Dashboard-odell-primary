@@ -1,21 +1,27 @@
 import {
   Component,
+  OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { FilamentType, FilamentPriceConfig, GeneralSettings } from '../../../core/models';
+import { Subscription } from 'rxjs';
+import { FilamentPriceConfig, FilamentType, GeneralSettings } from '../../../core/models';
 import { SettingsService } from '../../../core/services/settings.service';
-import { filamentTypeOptions } from '../../../shared/utils/select-options';
+import {
+  buildFilamentTypeOptions,
+  normalizeFilamentType,
+} from '../../../shared/utils/filament-type.util';
 import {
   CurrencyArsPipe,
   FilamentTypeLabelPipe,
 } from '../../../shared/pipes/labels.pipe';
 import {
+  DbAutocompleteComponent,
+  DbAutocompleteOption,
   DbButtonComponent,
   DbFormComponent,
   DbInputComponent,
-  DbSelectComponent,
   DbStateMessageComponent,
 } from '@general-components';
 
@@ -26,7 +32,7 @@ import {
     FormsModule,
     DbFormComponent,
     DbInputComponent,
-    DbSelectComponent,
+    DbAutocompleteComponent,
     DbButtonComponent,
     CurrencyArsPipe,
     FilamentTypeLabelPipe,
@@ -35,42 +41,55 @@ import {
   templateUrl: './filament-settings.component.html',
   styleUrl: './filament-settings.component.scss',
 })
-export class FilamentSettingsComponent implements OnInit {
+export class FilamentSettingsComponent implements OnInit, OnDestroy {
   private readonly settingsService = inject(SettingsService);
+  private settingsSub?: Subscription;
 
   settings: GeneralSettings | null = null;
   message = '';
 
-  newFilament = { brand: '', materialType: FilamentType.PLA, pricePerKg: 0 };
+  newFilament = { brand: '', materialType: FilamentType.PLA as string, pricePerKg: 0 };
   editingId: string | null = null;
-  editForm = { brand: '', materialType: FilamentType.PLA, pricePerKg: 0 };
-
-  readonly filamentTypeOptions = filamentTypeOptions();
+  editForm = { brand: '', materialType: FilamentType.PLA as string, pricePerKg: 0 };
+  extraFilamentTypes: string[] = [];
 
   ngOnInit(): void {
-    this.loadSettings();
+    this.settingsSub = this.settingsService.watchGeneralSettings().subscribe((settings) => {
+      this.settings = settings ? structuredClone(settings) : null;
+    });
+    this.settingsService.getGeneralSettings(false).subscribe();
   }
 
-  loadSettings(): void {
-    this.settingsService.getGeneralSettings().subscribe((s) => {
-      this.settings = structuredClone(s);
-    });
+  ngOnDestroy(): void {
+    this.settingsSub?.unsubscribe();
+  }
+
+  get filamentTypeOptions(): DbAutocompleteOption[] {
+    return buildFilamentTypeOptions(
+      this.settings?.filamentPrices ?? [],
+      this.extraFilamentTypes,
+    );
   }
 
   addFilamentPrice(): void {
-    if (!this.newFilament.brand.trim()) return;
-    this.settingsService.addFilamentPrice(this.newFilament).subscribe({
-      next: () => {
-        this.newFilament = {
-          brand: '',
-          materialType: FilamentType.PLA,
-          pricePerKg: 0,
-        };
-        this.message =
-          'Precio de filamento agregado. Los insumos vinculados se actualizaron.';
-        this.loadSettings();
-      },
-    });
+    if (!this.newFilament.brand.trim() || !this.newFilament.materialType.trim()) return;
+
+    this.settingsService
+      .addFilamentPrice({
+        ...this.newFilament,
+        materialType: normalizeFilamentType(this.newFilament.materialType),
+      })
+      .subscribe({
+        next: () => {
+          this.newFilament = {
+            brand: '',
+            materialType: FilamentType.PLA,
+            pricePerKg: 0,
+          };
+          this.message =
+            'Precio de filamento agregado. Los insumos vinculados se actualizaron.';
+        },
+      });
   }
 
   startEdit(item: FilamentPriceConfig): void {
@@ -87,22 +106,34 @@ export class FilamentSettingsComponent implements OnInit {
   }
 
   saveEdit(): void {
-    if (!this.editingId || !this.editForm.brand.trim()) return;
-    this.settingsService.updateFilamentPrice(this.editingId, this.editForm).subscribe({
-      next: () => {
-        this.message =
-          'Precio de filamento actualizado. Los insumos vinculados se actualizaron.';
-        this.editingId = null;
-        this.loadSettings();
-      },
-    });
+    if (!this.editingId || !this.editForm.brand.trim() || !this.editForm.materialType.trim()) {
+      return;
+    }
+
+    this.settingsService
+      .updateFilamentPrice(this.editingId, {
+        ...this.editForm,
+        materialType: normalizeFilamentType(this.editForm.materialType),
+      })
+      .subscribe({
+        next: () => {
+          this.message =
+            'Precio de filamento actualizado. Los insumos vinculados se actualizaron.';
+          this.editingId = null;
+        },
+      });
   }
 
   deleteFilamentPrice(id: string): void {
     if (!confirm('¿Eliminar este precio de filamento?')) return;
     this.settingsService.deleteFilamentPrice(id).subscribe(() => {
       this.message = 'Precio eliminado';
-      this.loadSettings();
     });
+  }
+
+  onFilamentTypeCreated(type: string): void {
+    const normalized = normalizeFilamentType(type);
+    if (!normalized || this.extraFilamentTypes.includes(normalized)) return;
+    this.extraFilamentTypes = [...this.extraFilamentTypes, normalized];
   }
 }

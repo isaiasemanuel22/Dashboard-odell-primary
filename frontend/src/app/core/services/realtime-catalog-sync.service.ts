@@ -1,16 +1,18 @@
 import { Injectable, inject } from '@angular/core';
 import { RealtimeEvent } from '../models/realtime.model';
-import { CategoryCatalogService } from './category-catalog.service';
-import { CustomerCatalogService } from './customer-catalog.service';
-import { ProductCatalogService } from './product-catalog.service';
-import { ReferenceDataService } from './reference-data.service';
+import { CatalogFacade } from '../../store/catalog/catalog.facade';
+import { ImpresosFacade } from '../../store/impresos/impresos.facade';
+import { SettingsFacade } from '../../store/settings/settings.facade';
+import { SuppliesFacade } from '../../store/supplies/supplies.facade';
+import { StoreBootstrapService } from '../../store/store-bootstrap.service';
 
 @Injectable({ providedIn: 'root' })
 export class RealtimeCatalogSyncService {
-  private readonly customerCatalog = inject(CustomerCatalogService);
-  private readonly categoryCatalog = inject(CategoryCatalogService);
-  private readonly productCatalog = inject(ProductCatalogService);
-  private readonly referenceData = inject(ReferenceDataService);
+  private readonly catalogFacade = inject(CatalogFacade);
+  private readonly settingsFacade = inject(SettingsFacade);
+  private readonly impresosFacade = inject(ImpresosFacade);
+  private readonly suppliesFacade = inject(SuppliesFacade);
+  private readonly storeBootstrap = inject(StoreBootstrapService);
 
   handleEvent(event: RealtimeEvent): void {
     if (event.scope === 'all') {
@@ -26,13 +28,13 @@ export class RealtimeCatalogSyncService {
     if (event.action === 'delete' && event.id) {
       switch (event.entity) {
         case 'customer':
-          this.customerCatalog.remove(event.id);
+          this.catalogFacade.removeCustomer(event.id);
           break;
         case 'product':
-          this.productCatalog.remove(event.id);
+          this.catalogFacade.removeProduct(event.id);
           break;
         case 'category':
-          this.categoryCatalog.remove(event.id);
+          this.catalogFacade.removeCategory(event.id);
           break;
         default:
           this.invalidateForScope(event.scope);
@@ -44,20 +46,28 @@ export class RealtimeCatalogSyncService {
   }
 
   private invalidateAll(): void {
-    this.referenceData.invalidate();
-    this.customerCatalog.invalidate();
-    this.categoryCatalog.invalidate();
-    this.productCatalog.invalidate();
+    this.catalogFacade.invalidate();
+    this.settingsFacade.invalidate();
+    this.impresosFacade.invalidate();
+    this.suppliesFacade.invalidate();
+    this.storeBootstrap.bootstrap(true);
   }
 
   private invalidateForScope(scope: RealtimeEvent['scope']): void {
     switch (scope) {
       case 'customers':
-        this.customerCatalog.invalidate();
+        this.catalogFacade.load(true);
         break;
       case 'products':
-        this.categoryCatalog.invalidate();
-        this.productCatalog.invalidate();
+        this.catalogFacade.load(true);
+        break;
+      case 'settings':
+        this.settingsFacade.load(true);
+        this.impresosFacade.load(true);
+        this.suppliesFacade.load(true);
+        break;
+      case 'supplies':
+        this.suppliesFacade.load(true);
         break;
       default:
         break;
