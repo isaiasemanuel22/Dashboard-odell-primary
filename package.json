@@ -6,7 +6,7 @@
     "npm": "10.8.2"
   },
   "scripts": {
-    "heroku-postbuild": "npm ci --prefix backend && npm run build --prefix backend",
+    "heroku-postbuild": "npm ci --prefix backend --include=dev && npm run build --prefix backend && npm prune --prefix backend --omit=dev",
     "start": "node backend/dist/src/main.js",
     "frontend:build": "npm run build:prod --prefix frontend",
     "frontend:deploy": "npm run frontend:build && npx netlify-cli deploy --prod --dir=frontend/dist/frontend/browser",
