@@ -2,10 +2,11 @@
   "name": "frontend",
   "version": "0.0.0",
   "scripts": {
+    "prestart": "node scripts/prepare-env.mjs development",
     "ng": "ng",
     "start": "ng serve",
     "build": "ng build",
-    "build:prod": "node scripts/prepare-prod-env.mjs && ng build --configuration production",
+    "build:prod": "node scripts/prepare-env.mjs production && ng build --configuration production",
     "deploy": "npm run build:prod && npx netlify-cli deploy --prod --dir=dist/frontend/browser",
     "deploy:preview": "npm run build:prod && npx netlify-cli deploy --dir=dist/frontend/browser",
     "build:stats": "ng build --stats-json",

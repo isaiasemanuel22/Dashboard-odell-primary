@@ -5,10 +5,13 @@
 backend/dist
 frontend/dist
 frontend/.angular/cache
+frontend/dashboard-odell-v2
 .firebase
 
 # Environment & secrets
 **/.env
+**/.env.local
+**/.env.*.local
 backend/firebase-service-account.json
 backend/uploads
 backend/generated

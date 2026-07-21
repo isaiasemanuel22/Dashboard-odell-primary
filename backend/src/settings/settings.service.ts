@@ -5,14 +5,17 @@ import { StorePersistenceService } from '../store/store-persistence.service';
 import {
   assertNonNegativeNumber,
 } from '../common/validators/domain.validators';
-import { ensureMachineProfiles } from './machine-profile.util';
+import { ensureMachineProfiles, normalizeMachineProfiles } from './machine-profile.util';
 import { mergeProfitMargins, normalizeProfitMargins } from './profit-margins.util';
 import {
   FilamentPriceConfig,
   GeneralSettings,
   MachineCostConfig,
+  MachineProfile,
+  PaperPricesPerSqm,
   PowerConsumptionConfig,
   ResinPriceConfig,
+  ServiceProfitMargins,
 } from '../common/interfaces';
 import { SupplyType } from '../common/enums';
 import { StoreService } from '../store/store.service';
@@ -36,6 +39,101 @@ export class SettingsService {
   }
 
   updateGeneralSettings(data: Partial<GeneralSettings>): GeneralSettings {
+    if (data.filamentTypeAverages) {
+      for (const [key, value] of Object.entries(data.filamentTypeAverages)) {
+        assertNonNegativeNumber(value, `filamentTypeAverages.${key}`);
+      }
+    }
+    if (data.resinTypeAverages) {
+      for (const [key, value] of Object.entries(data.resinTypeAverages)) {
+        assertNonNegativeNumber(value, `resinTypeAverages.${key}`);
+      }
+    }
+
+    this.store.generalSettings = {
+      ...this.store.generalSettings,
+      filamentTypeAverages: {
+        ...this.store.generalSettings.filamentTypeAverages,
+        ...(data.filamentTypeAverages ?? {}),
+      },
+      resinTypeAverages: {
+        ...this.store.generalSettings.resinTypeAverages,
+        ...(data.resinTypeAverages ?? {}),
+      },
+    };
+    this.recordSettingsChange(['settings']);
+    return structuredClone(this.store.generalSettings);
+  }
+
+  /**
+   * Router legacy para PATCH /settings/general.
+   * Evita `{ ...store, ...dto }` que pisaba campos con `undefined` cuando el body era parcial.
+   */
+  patchGeneralSettings(data: {
+    electricityCostPerKwh?: number;
+    laborCostPerHour?: number;
+    errorMarginPercent?: number;
+    profitMargins?: Partial<ServiceProfitMargins>;
+    paperPricesPerSqm?: Partial<PaperPricesPerSqm>;
+    machineProfiles?: unknown[];
+    filamentTypeAverages?: Partial<GeneralSettings['filamentTypeAverages']>;
+    resinTypeAverages?: Partial<GeneralSettings['resinTypeAverages']>;
+  }): GeneralSettings {
+    if (
+      data.electricityCostPerKwh !== undefined ||
+      data.laborCostPerHour !== undefined ||
+      data.errorMarginPercent !== undefined
+    ) {
+      this.updateCoreValues({
+        electricityCostPerKwh: data.electricityCostPerKwh,
+        laborCostPerHour: data.laborCostPerHour,
+        errorMarginPercent: data.errorMarginPercent,
+      });
+    }
+
+    if (data.profitMargins !== undefined) {
+      this.updateProfitMargins(data.profitMargins);
+    }
+
+    if (data.paperPricesPerSqm !== undefined) {
+      this.updatePaperPrices(data.paperPricesPerSqm);
+    }
+
+    if (data.machineProfiles !== undefined) {
+      this.replaceMachineProfiles(
+        data.machineProfiles as MachineProfile[],
+      );
+    }
+
+    if (
+      data.filamentTypeAverages !== undefined ||
+      data.resinTypeAverages !== undefined
+    ) {
+      this.updateGeneralSettings({
+        filamentTypeAverages: data.filamentTypeAverages,
+        resinTypeAverages: data.resinTypeAverages,
+      });
+    }
+
+    return this.getGeneralSettings();
+  }
+
+  private replaceMachineProfiles(profiles: MachineProfile[]): void {
+    this.store.generalSettings.machineProfiles = ensureMachineProfiles({
+      ...this.store.generalSettings,
+      machineProfiles: normalizeMachineProfiles(profiles),
+    });
+    this.recordSettingsChange(['settings', 'products']);
+  }
+
+  updateCoreValues(data: {
+    electricityCostPerKwh?: number;
+    laborCostPerHour?: number;
+    errorMarginPercent?: number;
+  }): Pick<
+    GeneralSettings,
+    'electricityCostPerKwh' | 'laborCostPerHour' | 'errorMarginPercent'
+  > {
     if (data.electricityCostPerKwh !== undefined) {
       assertNonNegativeNumber(data.electricityCostPerKwh, 'electricityCostPerKwh');
     }
@@ -50,62 +148,127 @@ export class SettingsService {
         );
       }
     }
-    if (data.profitMargins) {
-      for (const [key, value] of Object.entries(data.profitMargins)) {
-        const margin = Number(value);
-        if (!Number.isFinite(margin) || margin < 0 || margin > 999) {
-          throw new BadRequestException(
-            `Margen inválido para ${key}: debe estar entre 0 y 999`,
-          );
-        }
-      }
+
+    if (data.electricityCostPerKwh !== undefined) {
+      this.store.generalSettings.electricityCostPerKwh = data.electricityCostPerKwh;
     }
-    if (data.filamentTypeAverages) {
-      for (const [key, value] of Object.entries(data.filamentTypeAverages)) {
-        assertNonNegativeNumber(value, `filamentTypeAverages.${key}`);
-      }
+    if (data.laborCostPerHour !== undefined) {
+      this.store.generalSettings.laborCostPerHour = data.laborCostPerHour;
     }
-    if (data.resinTypeAverages) {
-      for (const [key, value] of Object.entries(data.resinTypeAverages)) {
-        assertNonNegativeNumber(value, `resinTypeAverages.${key}`);
+    if (data.errorMarginPercent !== undefined) {
+      this.store.generalSettings.errorMarginPercent = data.errorMarginPercent;
+    }
+
+    this.recordSettingsChange(['settings', 'products']);
+    return {
+      electricityCostPerKwh: this.store.generalSettings.electricityCostPerKwh,
+      laborCostPerHour: this.store.generalSettings.laborCostPerHour,
+      errorMarginPercent: this.store.generalSettings.errorMarginPercent,
+    };
+  }
+
+  updateProfitMargins(
+    profitMargins: Partial<ServiceProfitMargins>,
+  ): ServiceProfitMargins {
+    for (const [key, value] of Object.entries(profitMargins)) {
+      const margin = Number(value);
+      if (!Number.isFinite(margin) || margin < 0 || margin > 999) {
+        throw new BadRequestException(
+          `Margen inválido para ${key}: debe estar entre 0 y 999`,
+        );
       }
     }
 
-    this.store.generalSettings = {
-      ...this.store.generalSettings,
-      ...data,
-      paperPricesPerSqm: {
-        ...this.store.generalSettings.paperPricesPerSqm,
-        ...(data.paperPricesPerSqm ?? {}),
-      },
-      profitMargins: mergeProfitMargins(
-        this.store.generalSettings.profitMargins,
-        data.profitMargins,
-      ),
-      filamentTypeAverages: {
-        ...this.store.generalSettings.filamentTypeAverages,
-        ...(data.filamentTypeAverages ?? {}),
-      },
-      resinTypeAverages: {
-        ...this.store.generalSettings.resinTypeAverages,
-        ...(data.resinTypeAverages ?? {}),
-      },
-      machineProfiles:
-        data.machineProfiles ??
-        ensureMachineProfiles(this.store.generalSettings),
-    };
-    this.store.generalSettings.machineProfiles = ensureMachineProfiles(
-      this.store.generalSettings,
+    this.store.generalSettings.profitMargins = mergeProfitMargins(
+      this.store.generalSettings.profitMargins,
+      profitMargins,
     );
-    this.storeChange.recordChange({
-      collections: ['settings'],
-      realtime: {
-        scopes: ['settings', 'products'],
-        action: 'update',
-        entity: 'settings',
+    this.recordSettingsChange(['settings', 'products']);
+    return structuredClone(this.store.generalSettings.profitMargins);
+  }
+
+  updatePaperPrices(
+    paperPricesPerSqm: Partial<PaperPricesPerSqm>,
+  ): PaperPricesPerSqm {
+    for (const [key, value] of Object.entries(paperPricesPerSqm)) {
+      assertNonNegativeNumber(value, `paperPricesPerSqm.${key}`);
+    }
+
+    this.store.generalSettings.paperPricesPerSqm = {
+      ...this.store.generalSettings.paperPricesPerSqm,
+      ...paperPricesPerSqm,
+    };
+    this.recordSettingsChange(['settings']);
+    return structuredClone(this.store.generalSettings.paperPricesPerSqm);
+  }
+
+  getMachineProfiles(): MachineProfile[] {
+    return structuredClone(
+      ensureMachineProfiles(this.store.generalSettings),
+    );
+  }
+
+  addMachineProfile(
+    data: Omit<MachineProfile, 'id'>,
+  ): MachineProfile {
+    const profiles = ensureMachineProfiles(this.store.generalSettings);
+    const normalized = normalizeMachineProfiles([
+      {
+        id: 'tmp',
+        ...data,
       },
-    });
-    return structuredClone(this.store.generalSettings);
+    ]);
+    if (normalized.length === 0) {
+      throw new BadRequestException('El perfil de máquina debe tener nombre');
+    }
+
+    const entry: MachineProfile = {
+      ...normalized[0],
+      id: this.store.nextId('mp', profiles),
+    };
+    this.store.generalSettings.machineProfiles = [...profiles, entry];
+    this.recordSettingsChange(['settings', 'products']);
+    return structuredClone(entry);
+  }
+
+  updateMachineProfile(
+    id: string,
+    data: Partial<Omit<MachineProfile, 'id'>>,
+  ): MachineProfile {
+    const profiles = ensureMachineProfiles(this.store.generalSettings);
+    const index = profiles.findIndex((profile) => profile.id === id);
+    if (index === -1) {
+      throw new NotFoundException('Perfil de máquina no encontrado');
+    }
+
+    const merged = normalizeMachineProfiles([
+      {
+        ...profiles[index],
+        ...data,
+        id,
+      },
+    ]);
+    if (merged.length === 0) {
+      throw new BadRequestException('El perfil de máquina debe tener nombre');
+    }
+
+    profiles[index] = merged[0];
+    this.store.generalSettings.machineProfiles = profiles;
+    this.recordSettingsChange(['settings', 'products']);
+    return structuredClone(profiles[index]);
+  }
+
+  removeMachineProfile(id: string): void {
+    const profiles = ensureMachineProfiles(this.store.generalSettings);
+    const exists = profiles.some((profile) => profile.id === id);
+    if (!exists) {
+      throw new NotFoundException('Perfil de máquina no encontrado');
+    }
+
+    this.store.generalSettings.machineProfiles = profiles.filter(
+      (profile) => profile.id !== id,
+    );
+    this.recordSettingsChange(['settings', 'products']);
   }
 
   addPowerConsumption(
@@ -286,5 +449,18 @@ export class SettingsService {
     await this.persistence.clearDatabase();
     this.storeChange.notifyAll('update');
     return { reset: true };
+  }
+
+  private recordSettingsChange(
+    scopes: Array<'settings' | 'products' | 'supplies'> = ['settings'],
+  ): void {
+    this.storeChange.recordChange({
+      collections: ['settings'],
+      realtime: {
+        scopes,
+        action: 'update',
+        entity: 'settings',
+      },
+    });
   }
 }

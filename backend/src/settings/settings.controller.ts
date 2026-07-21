@@ -3,11 +3,17 @@ import {
   CalculateCostDto,
   FilamentPriceDto,
   MachineCostEntryDto,
+  MachineProfileDto,
   PowerConsumptionEntryDto,
   ResetDatabaseDto,
   ResinPriceDto,
   SupplyDefaultPriceDto,
+  UpdateCoreValuesDto,
+  LegacyPatchGeneralSettingsDto,
   UpdateGeneralSettingsDto,
+  UpdateMachineProfileDto,
+  UpdatePaperPricesDto,
+  UpdateProfitMarginsDto,
 } from '../common/dto';
 import { CostCalculatorService } from './cost-calculator.service';
 import { SettingsService } from './settings.service';
@@ -25,8 +31,47 @@ export class SettingsController {
   }
 
   @Patch('general')
-  updateGeneral(@Body() data: UpdateGeneralSettingsDto) {
-    return this.settingsService.updateGeneralSettings(data as never);
+  updateGeneral(@Body() data: LegacyPatchGeneralSettingsDto) {
+    return this.settingsService.patchGeneralSettings(data);
+  }
+
+  @Patch('core-values')
+  updateCoreValues(@Body() data: UpdateCoreValuesDto) {
+    return this.settingsService.updateCoreValues(data);
+  }
+
+  @Patch('profit-margins')
+  updateProfitMargins(@Body() data: UpdateProfitMarginsDto) {
+    return this.settingsService.updateProfitMargins(data.profitMargins);
+  }
+
+  @Patch('paper-prices')
+  updatePaperPrices(@Body() data: UpdatePaperPricesDto) {
+    return this.settingsService.updatePaperPrices(data.paperPricesPerSqm);
+  }
+
+  @Get('machine-profiles')
+  getMachineProfiles() {
+    return this.settingsService.getMachineProfiles();
+  }
+
+  @Post('machine-profiles')
+  addMachineProfile(@Body() data: MachineProfileDto) {
+    return this.settingsService.addMachineProfile(data as never);
+  }
+
+  @Patch('machine-profiles/:id')
+  updateMachineProfile(
+    @Param('id') id: string,
+    @Body() data: UpdateMachineProfileDto,
+  ) {
+    return this.settingsService.updateMachineProfile(id, data as never);
+  }
+
+  @Delete('machine-profiles/:id')
+  removeMachineProfile(@Param('id') id: string) {
+    this.settingsService.removeMachineProfile(id);
+    return { deleted: true };
   }
 
   @Post('general/filament-prices')

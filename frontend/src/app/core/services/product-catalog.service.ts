@@ -21,6 +21,10 @@ export class ProductCatalogService {
     this.catalogFacade.upsertProduct(product);
   }
 
+  refreshAfterCreate(): void {
+    this.catalogFacade.productCreated();
+  }
+
   remove(id: string): void {
     this.catalogFacade.removeProduct(id);
   }

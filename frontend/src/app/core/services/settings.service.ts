@@ -8,14 +8,23 @@ import {
   FilamentPriceConfig,
   GeneralSettings,
   MachineCostConfig,
+  MachineProfile,
+  PaperPricesPerSqm,
   PowerConsumptionConfig,
   ResinPriceConfig,
+  ServiceProfitMargins,
   Supply,
   SupplyCategory,
   SupplyType,
 } from '../models';
 import { SettingsFacade } from '../../store/settings/settings.facade';
 import { SuppliesFacade } from '../../store/supplies/supplies.facade';
+
+export interface CoreValuesSettings {
+  electricityCostPerKwh: number;
+  laborCostPerHour: number;
+  errorMarginPercent: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class SettingsService {
@@ -35,12 +44,71 @@ export class SettingsService {
     return this.settingsFacade.ensureLoaded(refresh);
   }
 
-  updateGeneralSettings(
-    data: Partial<GeneralSettings>,
-  ): Observable<GeneralSettings> {
+  updateCoreValues(
+    data: Partial<CoreValuesSettings>,
+  ): Observable<CoreValuesSettings> {
     return this.http
-      .patch<GeneralSettings>(`${this.baseUrl}/general`, data)
-      .pipe(tap((settings) => this.settingsFacade.setGeneral(settings)));
+      .patch<CoreValuesSettings>(`${this.baseUrl}/core-values`, data)
+      .pipe(tap((values) => this.patchSettings(values)));
+  }
+
+  updateProfitMargins(
+    profitMargins: ServiceProfitMargins,
+  ): Observable<ServiceProfitMargins> {
+    return this.http
+      .patch<ServiceProfitMargins>(`${this.baseUrl}/profit-margins`, {
+        profitMargins,
+      })
+      .pipe(
+        tap((margins) =>
+          this.patchSettings({
+            profitMargins: margins,
+          }),
+        ),
+      );
+  }
+
+  updatePaperPrices(
+    paperPricesPerSqm: PaperPricesPerSqm,
+  ): Observable<PaperPricesPerSqm> {
+    return this.http
+      .patch<PaperPricesPerSqm>(`${this.baseUrl}/paper-prices`, {
+        paperPricesPerSqm,
+      })
+      .pipe(
+        tap((prices) =>
+          this.patchSettings({
+            paperPricesPerSqm: prices,
+          }),
+        ),
+      );
+  }
+
+  getMachineProfiles(): Observable<MachineProfile[]> {
+    return this.http.get<MachineProfile[]>(`${this.baseUrl}/machine-profiles`);
+  }
+
+  addMachineProfile(
+    data: Omit<MachineProfile, 'id'>,
+  ): Observable<MachineProfile> {
+    return this.http
+      .post<MachineProfile>(`${this.baseUrl}/machine-profiles`, data)
+      .pipe(tap((profile) => this.upsertMachineProfile(profile)));
+  }
+
+  updateMachineProfile(
+    id: string,
+    data: Partial<Omit<MachineProfile, 'id'>>,
+  ): Observable<MachineProfile> {
+    return this.http
+      .patch<MachineProfile>(`${this.baseUrl}/machine-profiles/${id}`, data)
+      .pipe(tap((profile) => this.upsertMachineProfile(profile)));
+  }
+
+  deleteMachineProfile(id: string): Observable<{ deleted: boolean }> {
+    return this.http
+      .delete<{ deleted: boolean }>(`${this.baseUrl}/machine-profiles/${id}`)
+      .pipe(tap(() => this.removeMachineProfile(id)));
   }
 
   addFilamentPrice(
@@ -76,7 +144,7 @@ export class SettingsService {
   ): Observable<ResinPriceConfig> {
     return this.http
       .post<ResinPriceConfig>(`${this.baseUrl}/general/resin-prices`, data)
-      .pipe(tap(() => this.settingsFacade.load(true)));
+      .pipe(tap((entry) => this.upsertResinPrice(entry)));
   }
 
   updateResinPrice(
@@ -85,13 +153,13 @@ export class SettingsService {
   ): Observable<ResinPriceConfig> {
     return this.http
       .patch<ResinPriceConfig>(`${this.baseUrl}/general/resin-prices/${id}`, data)
-      .pipe(tap(() => this.settingsFacade.load(true)));
+      .pipe(tap((entry) => this.upsertResinPrice(entry)));
   }
 
   deleteResinPrice(id: string): Observable<{ deleted: boolean }> {
     return this.http
       .delete<{ deleted: boolean }>(`${this.baseUrl}/general/resin-prices/${id}`)
-      .pipe(tap(() => this.settingsFacade.load(true)));
+      .pipe(tap(() => this.removeResinPrice(id)));
   }
 
   addPowerConsumption(
@@ -175,6 +243,19 @@ export class SettingsService {
     });
   }
 
+  private patchSettings(partial: Partial<GeneralSettings>): void {
+    const current = this.settingsFacade.peekGeneralSettings();
+    if (!current) {
+      this.settingsFacade.load(true);
+      return;
+    }
+
+    this.settingsFacade.setGeneral({
+      ...current,
+      ...partial,
+    });
+  }
+
   private upsertFilamentPrice(entry: FilamentPriceConfig): void {
     const current = this.settingsFacade.peekGeneralSettings();
     if (!current) {
@@ -203,6 +284,70 @@ export class SettingsService {
     this.settingsFacade.setGeneral({
       ...current,
       filamentPrices: current.filamentPrices.filter((price) => price.id !== id),
+    });
+  }
+
+  private upsertResinPrice(entry: ResinPriceConfig): void {
+    const current = this.settingsFacade.peekGeneralSettings();
+    if (!current) {
+      this.settingsFacade.load(true);
+      return;
+    }
+
+    const exists = current.resinPrices.some((price) => price.id === entry.id);
+    this.settingsFacade.setGeneral({
+      ...current,
+      resinPrices: exists
+        ? current.resinPrices.map((price) =>
+            price.id === entry.id ? entry : price,
+          )
+        : [...current.resinPrices, entry],
+    });
+  }
+
+  private removeResinPrice(id: string): void {
+    const current = this.settingsFacade.peekGeneralSettings();
+    if (!current) {
+      this.settingsFacade.load(true);
+      return;
+    }
+
+    this.settingsFacade.setGeneral({
+      ...current,
+      resinPrices: current.resinPrices.filter((price) => price.id !== id),
+    });
+  }
+
+  private upsertMachineProfile(profile: MachineProfile): void {
+    const current = this.settingsFacade.peekGeneralSettings();
+    if (!current) {
+      this.settingsFacade.load(true);
+      return;
+    }
+
+    const exists = current.machineProfiles.some((item) => item.id === profile.id);
+    this.settingsFacade.setGeneral({
+      ...current,
+      machineProfiles: exists
+        ? current.machineProfiles.map((item) =>
+            item.id === profile.id ? profile : item,
+          )
+        : [...current.machineProfiles, profile],
+    });
+  }
+
+  private removeMachineProfile(id: string): void {
+    const current = this.settingsFacade.peekGeneralSettings();
+    if (!current) {
+      this.settingsFacade.load(true);
+      return;
+    }
+
+    this.settingsFacade.setGeneral({
+      ...current,
+      machineProfiles: current.machineProfiles.filter(
+        (profile) => profile.id !== id,
+      ),
     });
   }
 }

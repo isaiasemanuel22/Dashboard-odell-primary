@@ -1,9 +1,11 @@
 import {
   Component,
+  OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { forkJoin, Subscription } from 'rxjs';
 import {
   GeneralSettings,
   MachineProfile,
@@ -38,9 +40,10 @@ import { productTypeOptions } from '../../../shared/utils/select-options';
   templateUrl: './general-values.component.html',
   styleUrl: './general-values.component.scss',
 })
-export class GeneralValuesComponent implements OnInit {
+export class GeneralValuesComponent implements OnInit, OnDestroy {
   private readonly settingsService = inject(SettingsService);
   private readonly suppliesService = inject(SuppliesService);
+  private settingsSub?: Subscription;
 
   settings: GeneralSettings | null = null;
   supplies: Supply[] = [];
@@ -70,17 +73,19 @@ export class GeneralValuesComponent implements OnInit {
   };
 
   ngOnInit(): void {
-    this.loadSettings();
+    this.settingsSub = this.settingsService.watchGeneralSettings().subscribe((settings) => {
+      if (!settings || this.saving || this.savingProfiles) return;
+      this.settings = structuredClone(settings);
+      this.settings.errorMarginPercent ??= 0;
+    });
+    this.settingsService.getGeneralSettings(false).subscribe();
     this.suppliesService.getSupplies().subscribe((items) => {
       this.supplies = items;
     });
   }
 
-  loadSettings(): void {
-    this.settingsService.getGeneralSettings(true).subscribe((s) => {
-      this.settings = structuredClone(s);
-      this.settings.errorMarginPercent ??= 0;
-    });
+  ngOnDestroy(): void {
+    this.settingsSub?.unsubscribe();
   }
 
   get supplyOptions(): DbSelectOption[] {
@@ -98,14 +103,19 @@ export class GeneralValuesComponent implements OnInit {
     this.saving = true;
     this.message = '';
     this.settingsService
-      .updateGeneralSettings({
+      .updateCoreValues({
         electricityCostPerKwh: this.settings.electricityCostPerKwh,
         laborCostPerHour: this.settings.laborCostPerHour,
         errorMarginPercent: this.settings.errorMarginPercent,
       })
       .subscribe({
-        next: (s) => {
-          this.settings = structuredClone(s);
+        next: (values) => {
+          if (this.settings) {
+            this.settings = {
+              ...this.settings,
+              ...values,
+            };
+          }
           this.saving = false;
           this.message = 'Valores guardados correctamente';
         },
@@ -118,25 +128,47 @@ export class GeneralValuesComponent implements OnInit {
 
   saveMachineProfiles(): void {
     if (!this.settings) return;
+
+    const profiles = this.settings.machineProfiles.filter((profile) =>
+      profile.name.trim(),
+    );
+    if (profiles.length === 0) {
+      this.message = 'Agregá al menos un perfil con nombre';
+      return;
+    }
+
     this.savingProfiles = true;
     this.message = '';
-    this.settingsService
-      .updateGeneralSettings({
-        machineProfiles: this.settings.machineProfiles.filter((profile) =>
-          profile.name.trim(),
-        ),
-      })
-      .subscribe({
-        next: (s) => {
-          this.settings = structuredClone(s);
-          this.savingProfiles = false;
-          this.message = 'Perfiles de máquina guardados';
-        },
-        error: () => {
-          this.savingProfiles = false;
-          this.message = 'Error al guardar perfiles';
-        },
-      });
+
+    const requests = profiles.map((profile) => {
+      const payload = this.toMachineProfilePayload(profile);
+      if (this.isTemporaryProfile(profile.id)) {
+        return this.settingsService.addMachineProfile(payload);
+      }
+      return this.settingsService.updateMachineProfile(profile.id, payload);
+    });
+
+    forkJoin(requests).subscribe({
+      next: (savedProfiles) => {
+        if (this.settings) {
+          const savedIds = new Set(savedProfiles.map((profile) => profile.id));
+          const untouched = this.settings.machineProfiles.filter(
+            (profile) =>
+              !profile.name.trim() && !savedIds.has(profile.id),
+          );
+          this.settings = {
+            ...this.settings,
+            machineProfiles: [...savedProfiles, ...untouched],
+          };
+        }
+        this.savingProfiles = false;
+        this.message = 'Perfiles de máquina guardados';
+      },
+      error: () => {
+        this.savingProfiles = false;
+        this.message = 'Error al guardar perfiles';
+      },
+    });
   }
 
   addMachineProfile(): void {
@@ -144,7 +176,7 @@ export class GeneralValuesComponent implements OnInit {
     this.settings.machineProfiles = [
       ...this.settings.machineProfiles,
       {
-        id: `mp-${Date.now()}`,
+        id: `tmp-mp-${Date.now()}`,
         name: '',
         role: MachineProfileRole.PRINT,
         watts: 0,
@@ -156,9 +188,26 @@ export class GeneralValuesComponent implements OnInit {
   removeMachineProfile(id: string): void {
     if (!this.settings) return;
     if (!confirm('¿Eliminar este perfil de máquina?')) return;
-    this.settings.machineProfiles = this.settings.machineProfiles.filter(
-      (profile) => profile.id !== id,
-    );
+
+    if (this.isTemporaryProfile(id)) {
+      this.settings.machineProfiles = this.settings.machineProfiles.filter(
+        (profile) => profile.id !== id,
+      );
+      return;
+    }
+
+    this.settingsService.deleteMachineProfile(id).subscribe({
+      next: () => {
+        if (!this.settings) return;
+        this.settings.machineProfiles = this.settings.machineProfiles.filter(
+          (profile) => profile.id !== id,
+        );
+        this.message = 'Perfil eliminado';
+      },
+      error: () => {
+        this.message = 'Error al eliminar perfil';
+      },
+    });
   }
 
   isWash(profile: MachineProfile): boolean {
@@ -188,5 +237,24 @@ export class GeneralValuesComponent implements OnInit {
       this.productTypeOptions.find((option) => option.value === profile.productType)
         ?.label ?? profile.productType
     );
+  }
+
+  private isTemporaryProfile(id: string): boolean {
+    return id.startsWith('tmp-mp-');
+  }
+
+  private toMachineProfilePayload(
+    profile: MachineProfile,
+  ): Omit<MachineProfile, 'id'> {
+    return {
+      name: profile.name.trim(),
+      role: profile.role,
+      watts: profile.watts,
+      costPerHour: profile.costPerHour,
+      productType: profile.productType,
+      washSupplyId: profile.washSupplyId,
+      consumptionMl: profile.consumptionMl,
+      washBathUses: profile.washBathUses,
+    };
   }
 }

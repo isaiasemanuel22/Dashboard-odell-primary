@@ -1,9 +1,11 @@
 import {
   Component,
+  OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import {
   GeneralSettings,
   ImpresoWithCost,
@@ -43,10 +45,11 @@ interface PaperGroup {
   templateUrl: './impresos-settings.component.html',
   styleUrl: './impresos-settings.component.scss',
 })
-export class ImpresosSettingsComponent implements OnInit {
+export class ImpresosSettingsComponent implements OnInit, OnDestroy {
   private readonly settingsService = inject(SettingsService);
   private readonly impresosService = inject(ImpresosService);
   private readonly formDialogs = inject(FormDialogService);
+  private settingsSub?: Subscription;
 
   settings: GeneralSettings | null = null;
   impresos: ImpresoWithCost[] = [];
@@ -61,8 +64,16 @@ export class ImpresosSettingsComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.loadSettings();
+    this.settingsSub = this.settingsService.watchGeneralSettings().subscribe((settings) => {
+      if (!settings || this.savingPaper) return;
+      this.settings = structuredClone(settings);
+    });
+    this.settingsService.getGeneralSettings(false).subscribe();
     this.loadImpresos();
+  }
+
+  ngOnDestroy(): void {
+    this.settingsSub?.unsubscribe();
   }
 
   get paperGroups(): PaperGroup[] {
@@ -73,12 +84,6 @@ export class ImpresosSettingsComponent implements OnInit {
         .filter((item) => item.paperType === type)
         .sort((a, b) => a.name.localeCompare(b.name, 'es')),
     }));
-  }
-
-  loadSettings(): void {
-    this.settingsService.getGeneralSettings(true).subscribe((s) => {
-      this.settings = structuredClone(s);
-    });
   }
 
   loadImpresos(): void {
@@ -99,12 +104,15 @@ export class ImpresosSettingsComponent implements OnInit {
     this.savingPaper = true;
     this.message = '';
     this.settingsService
-      .updateGeneralSettings({
-        paperPricesPerSqm: this.settings.paperPricesPerSqm,
-      })
+      .updatePaperPrices(this.settings.paperPricesPerSqm)
       .subscribe({
-        next: (s) => {
-          this.settings = structuredClone(s);
+        next: (prices) => {
+          if (this.settings) {
+            this.settings = {
+              ...this.settings,
+              paperPricesPerSqm: prices,
+            };
+          }
           this.savingPaper = false;
           this.message = 'Precios del papel guardados';
           this.loadImpresos();

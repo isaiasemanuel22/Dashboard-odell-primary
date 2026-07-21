@@ -1,9 +1,11 @@
 import {
   Component,
+  OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { GeneralSettings, ResinPriceConfig, ResinType } from '../../../core/models';
 import { SettingsService } from '../../../core/services/settings.service';
 import { resinTypeOptions } from '../../../shared/utils/select-options';
@@ -35,8 +37,9 @@ import {
   templateUrl: './resin-settings.component.html',
   styleUrl: './resin-settings.component.scss',
 })
-export class ResinSettingsComponent implements OnInit {
+export class ResinSettingsComponent implements OnInit, OnDestroy {
   private readonly settingsService = inject(SettingsService);
+  private settingsSub?: Subscription;
 
   settings: GeneralSettings | null = null;
   message = '';
@@ -48,13 +51,15 @@ export class ResinSettingsComponent implements OnInit {
   readonly resinTypeOptions = resinTypeOptions();
 
   ngOnInit(): void {
-    this.loadSettings();
+    this.settingsSub = this.settingsService.watchGeneralSettings().subscribe((settings) => {
+      if (!settings || this.editingId) return;
+      this.settings = structuredClone(settings);
+    });
+    this.settingsService.getGeneralSettings(false).subscribe();
   }
 
-  loadSettings(): void {
-    this.settingsService.getGeneralSettings(true).subscribe((s) => {
-      this.settings = structuredClone(s);
-    });
+  ngOnDestroy(): void {
+    this.settingsSub?.unsubscribe();
   }
 
   addResinPrice(): void {
@@ -67,7 +72,6 @@ export class ResinSettingsComponent implements OnInit {
           pricePerLiter: 0,
         };
         this.message = 'Precio de resina agregado';
-        this.loadSettings();
       },
     });
   }
@@ -91,7 +95,6 @@ export class ResinSettingsComponent implements OnInit {
       next: () => {
         this.message = 'Precio de resina actualizado';
         this.editingId = null;
-        this.loadSettings();
       },
     });
   }
@@ -100,7 +103,6 @@ export class ResinSettingsComponent implements OnInit {
     if (!confirm('¿Eliminar este precio de resina?')) return;
     this.settingsService.deleteResinPrice(id).subscribe(() => {
       this.message = 'Precio eliminado';
-      this.loadSettings();
     });
   }
 }

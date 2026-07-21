@@ -38,4 +38,11 @@ export class CatalogEffects {
       ),
     ),
   );
+
+  readonly reloadAfterProductCreated$ = createEffect(() =>
+    this.actions$.pipe(
+      ofType(CatalogActions.productCreated),
+      map(() => CatalogActions.load({ refresh: true })),
+    ),
+  );
 }

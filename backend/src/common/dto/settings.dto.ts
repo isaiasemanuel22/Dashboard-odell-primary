@@ -3,12 +3,24 @@ import {
   IsEnum,
   IsNotEmpty,
   IsNumber,
+  IsObject,
   IsOptional,
   IsString,
   Min,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
-import { ServiceType } from '../enums';
+import {
+  FilamentType,
+  PaperType,
+  ProductType,
+  ResinType,
+  ServiceType,
+} from '../enums';
+import {
+  EstampadoPressCycle,
+  EstampadoPrintSpec,
+  EstampadoSupplyLine,
+} from '../interfaces';
 
 export class UpdateMaterialDto {
   @IsOptional()
@@ -40,6 +52,17 @@ export class UpdateMaterialDto {
 
 export class UpdateGeneralSettingsDto {
   @IsOptional()
+  @IsObject()
+  filamentTypeAverages?: Record<string, number>;
+
+  @IsOptional()
+  @IsObject()
+  resinTypeAverages?: Record<string, number>;
+}
+
+/** Compatibilidad: PATCH /settings/general con campos parciales (clientes legacy). */
+export class LegacyPatchGeneralSettingsDto {
+  @IsOptional()
   @IsNumber()
   @Min(0)
   electricityCostPerKwh?: number;
@@ -55,23 +78,89 @@ export class UpdateGeneralSettingsDto {
   errorMarginPercent?: number;
 
   @IsOptional()
+  @IsObject()
   profitMargins?: Record<string, number>;
 
   @IsOptional()
+  @IsObject()
   paperPricesPerSqm?: Record<string, number>;
-
-  @IsOptional()
-  processProfiles?: unknown[];
 
   @IsOptional()
   machineProfiles?: unknown[];
 
   @IsOptional()
+  @IsObject()
   filamentTypeAverages?: Record<string, number>;
 
   @IsOptional()
+  @IsObject()
   resinTypeAverages?: Record<string, number>;
 }
+
+export class UpdateCoreValuesDto {
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  electricityCostPerKwh?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  laborCostPerHour?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  errorMarginPercent?: number;
+}
+
+export class UpdateProfitMarginsDto {
+  @IsObject()
+  profitMargins!: Record<string, number>;
+}
+
+export class UpdatePaperPricesDto {
+  @IsObject()
+  paperPricesPerSqm!: Record<string, number>;
+}
+
+export class MachineProfileDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  role!: string;
+
+  @IsNumber()
+  @Min(0)
+  watts!: number;
+
+  @IsNumber()
+  @Min(0)
+  costPerHour!: number;
+
+  @IsOptional()
+  @IsString()
+  productType?: string;
+
+  @IsOptional()
+  @IsString()
+  washSupplyId?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  consumptionMl?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  washBathUses?: number;
+}
+
+export class UpdateMachineProfileDto extends PartialType(MachineProfileDto) {}
 
 export class PowerConsumptionEntryDto {
   @IsString()
@@ -134,8 +223,8 @@ export class ResinPriceDto {
 }
 
 export class CalculateCostDto {
-  @IsString()
-  type!: string;
+  @IsEnum(ProductType)
+  type!: ProductType;
 
   @IsOptional()
   @IsNumber()
@@ -153,16 +242,21 @@ export class CalculateCostDto {
   workTimeHours?: number;
 
   @IsOptional()
+  @IsNumber()
+  @Min(0)
+  quantity?: number;
+
+  @IsOptional()
   @IsString()
   brand?: string;
 
   @IsOptional()
-  @IsString()
-  filamentType?: string;
+  @IsEnum(FilamentType)
+  filamentType?: FilamentType;
 
   @IsOptional()
-  @IsString()
-  resinType?: string;
+  @IsEnum(ResinType)
+  resinType?: ResinType;
 
   @IsOptional()
   @IsNumber()
@@ -178,6 +272,29 @@ export class CalculateCostDto {
   @IsNumber()
   @Min(0)
   pressMinutes?: number;
+
+  @IsOptional()
+  @IsEnum(PaperType)
+  paperType?: PaperType;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.0001)
+  widthCm?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.0001)
+  heightCm?: number;
+
+  @IsOptional()
+  estampadoPrints?: EstampadoPrintSpec[];
+
+  @IsOptional()
+  estampadoPressCycles?: EstampadoPressCycle[];
+
+  @IsOptional()
+  estampadoSupplies?: EstampadoSupplyLine[];
 }
 
 export class CreateImpresoDto {

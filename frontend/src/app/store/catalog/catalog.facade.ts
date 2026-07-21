@@ -94,6 +94,10 @@ export class CatalogFacade {
     this.store.dispatch(CatalogActions.upsertProduct({ product }));
   }
 
+  productCreated(): void {
+    this.store.dispatch(CatalogActions.productCreated());
+  }
+
   removeProduct(id: string): void {
     this.store.dispatch(CatalogActions.removeProduct({ id }));
   }

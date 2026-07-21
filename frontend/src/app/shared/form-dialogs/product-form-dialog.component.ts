@@ -77,7 +77,11 @@ export class ProductFormDialogComponent implements OnInit {
     request.subscribe({
       next: (saved) => {
         this.loading = false;
-        this.productCatalog.upsert(saved);
+        if (this.product) {
+          this.productCatalog.upsert(saved);
+        } else {
+          this.productCatalog.refreshAfterCreate();
+        }
         this.dialogRef.close(saved);
       },
       error: (err) => {

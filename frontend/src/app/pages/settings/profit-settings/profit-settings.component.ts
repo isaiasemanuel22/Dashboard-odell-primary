@@ -2,10 +2,12 @@ import { DecimalPipe } from '@angular/common';
 import {
   ChangeDetectorRef,
   Component,
+  OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Subscription } from 'rxjs';
 import { GeneralSettings, ServiceType } from '../../../core/models';
 import { SettingsService } from '../../../core/services/settings.service';
 import { SERVICE_TYPE_LABELS } from '../../../shared/constants/labels';
@@ -39,9 +41,10 @@ interface MarginField {
   templateUrl: './profit-settings.component.html',
   styleUrl: './profit-settings.component.scss',
 })
-export class ProfitSettingsComponent implements OnInit {
+export class ProfitSettingsComponent implements OnInit, OnDestroy {
   private readonly settingsService = inject(SettingsService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private settingsSub?: Subscription;
 
   settings: GeneralSettings | null = null;
   saving = false;
@@ -66,7 +69,19 @@ export class ProfitSettingsComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    this.loadSettings();
+    this.settingsSub = this.settingsService.watchGeneralSettings().subscribe((settings) => {
+      if (!settings || this.saving) return;
+      this.settings = {
+        ...structuredClone(settings),
+        profitMargins: normalizeProfitMargins(settings.profitMargins),
+      };
+      this.cdr.markForCheck();
+    });
+    this.settingsService.getGeneralSettings(false).subscribe();
+  }
+
+  ngOnDestroy(): void {
+    this.settingsSub?.unsubscribe();
   }
 
   marginValue(service: ServiceType): number {
@@ -93,16 +108,6 @@ export class ProfitSettingsComponent implements OnInit {
     return Math.round(cost * (1 + markup / 100));
   }
 
-  loadSettings(): void {
-    this.settingsService.getGeneralSettings(true).subscribe((settings) => {
-      this.settings = {
-        ...structuredClone(settings),
-        profitMargins: normalizeProfitMargins(settings.profitMargins),
-      };
-      this.cdr.markForCheck();
-    });
-  }
-
   saveMargins(): void {
     if (!this.settings) return;
 
@@ -120,22 +125,23 @@ export class ProfitSettingsComponent implements OnInit {
     this.saving = true;
     this.message = '';
 
-    this.settingsService
-      .updateGeneralSettings({
-        profitMargins,
-      })
-      .subscribe({
-        next: (saved) => {
-          this.settings = structuredClone(saved);
-          this.saving = false;
-          this.message = 'Márgenes guardados correctamente';
-          this.cdr.markForCheck();
-        },
-        error: () => {
-          this.saving = false;
-          this.message = 'Error al guardar los márgenes';
-          this.cdr.markForCheck();
-        },
-      });
+    this.settingsService.updateProfitMargins(profitMargins).subscribe({
+      next: (saved) => {
+        if (this.settings) {
+          this.settings = {
+            ...this.settings,
+            profitMargins: saved,
+          };
+        }
+        this.saving = false;
+        this.message = 'Márgenes guardados correctamente';
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.saving = false;
+        this.message = 'Error al guardar los márgenes';
+        this.cdr.markForCheck();
+      },
+    });
   }
 }

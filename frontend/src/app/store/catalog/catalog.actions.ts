@@ -9,6 +9,7 @@ export const CatalogActions = createActionGroup({
     'Load Failure': props<{ error: string }>(),
 
     'Upsert Product': props<{ product: Product }>(),
+    'Product Created': emptyProps(),
     'Remove Product': props<{ id: string }>(),
     'Upsert Customer': props<{ customer: Customer }>(),
     'Remove Customer': props<{ id: string }>(),
