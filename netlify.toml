@@ -1,9 +1,10 @@
-# Monorepo: rutas desde la raíz del repo (no usar base = frontend en la UI)
+# Base = frontend (monorepo). En Netlify UI: Base directory = frontend (o vacío si usás solo este toml).
 # Variable en Netlify: API_URL=https://odell-dashboard-api-dfb6810b38bf.herokuapp.com/api
 
 [build]
-  command = "cd frontend && npm ci && npm run build:prod"
-  publish = "frontend/dist/frontend/browser"
+  base = "frontend"
+  command = "npm ci && npm run build:prod"
+  publish = "dist/frontend/browser"
 
 [build.environment]
   NODE_VERSION = "20"
