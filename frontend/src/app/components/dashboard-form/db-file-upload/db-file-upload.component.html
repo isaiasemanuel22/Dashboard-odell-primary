@@ -2,7 +2,7 @@
   <div class="db-file-upload__row">
     @for (file of files; track file; let i = $index) {
       <div class="db-file-upload__thumb">
-        <img [src]="file" [alt]="thumbAlt || 'Imagen subida'" />
+        <img [src]="file | mediaUrl" [alt]="thumbAlt || 'Imagen subida'" />
         <db-button
           label="✕"
           variant="delete"

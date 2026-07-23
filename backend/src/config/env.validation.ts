@@ -42,10 +42,13 @@ export function validateEnv(
     throw new Error('PORT debe ser un número positivo');
   }
 
+  const storageRaw = String(config.PRODUCT_IMAGE_STORAGE ?? '').trim().toLowerCase();
   const productImageStorage =
-    String(config.PRODUCT_IMAGE_STORAGE ?? '').trim().toLowerCase() === 'firebase'
-      ? 'firebase'
-      : 'backend';
+    storageRaw === 'backend'
+      ? 'backend'
+      : storageRaw === 'firebase' || isProd
+        ? 'firebase'
+        : 'backend';
 
   return {
     NODE_ENV: nodeEnv,

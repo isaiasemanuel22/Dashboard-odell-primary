@@ -15,6 +15,7 @@ import {
 import { DbFormFieldComponent } from '../db-form-field/db-form-field.component';
 import { DbFormErrorComponent } from '../db-form-error/db-form-error.component';
 import { DbButtonComponent } from '../../db-button/db-button.component';
+import { MediaUrlPipe } from '../../../shared/pipes/labels.pipe';
 import {
   DbFileUploadFn,
   DbFileUploadStagedItem,
@@ -25,7 +26,7 @@ let dbFileUploadId = 0;
 @Component({
   selector: 'db-file-upload',
   standalone: true,
-  imports: [FormsModule, NgTemplateOutlet, DbFormFieldComponent, DbFormErrorComponent, DbButtonComponent],
+  imports: [FormsModule, NgTemplateOutlet, DbFormFieldComponent, DbFormErrorComponent, DbButtonComponent, MediaUrlPipe],
   templateUrl: './db-file-upload.component.html',
   styleUrl: './db-file-upload.component.scss',
   providers: [

@@ -2,7 +2,7 @@
   <a [routerLink]="['/productos', product.id]" class="card-link">
     <div class="card-image">
       @if (product.images.length) {
-        <img [src]="product.images[0]" [alt]="product.name" />
+        <img [src]="product.images[0] | mediaUrl" [alt]="product.name" />
       } @else {
         <div class="no-image">Sin imagen</div>
       }
