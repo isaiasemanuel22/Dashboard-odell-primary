@@ -11,7 +11,7 @@
     </tr>
   </thead>
   <tbody>
-    @for (item of components; track item.productId) {
+    @for (item of components; track item.productId + ':' + item.quantity) {
       <tr>
         <td>
           @if (mode === 'read') {

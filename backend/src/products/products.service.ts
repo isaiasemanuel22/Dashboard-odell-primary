@@ -24,6 +24,7 @@ import {
   normalizeEstampadoPrints,
   normalizeEstampadoSupplies,
 } from './estampado-product.util';
+import { normalizeProductComponents } from './product-component.util';
 
 @Injectable()
 export class ProductsService {
@@ -69,7 +70,7 @@ export class ProductsService {
       this.pricing.toPricingInput(data),
     );
     const now = new Date().toISOString();
-    const components = data.components ?? [];
+    const components = normalizeProductComponents(data.components ?? []);
     const assemblyTimeHours = Number(data.assemblyTimeHours) || 0;
     const includesPieces =
       data.type === ProductType.COMBO ||
@@ -154,7 +155,9 @@ export class ProductsService {
   update(id: string, data: UpdateProductDto): Product {
     const existing = this.findOne(id);
     const mergedType = (data.type ?? existing.type) as ProductType;
-    const mergedComponents = data.components ?? existing.components ?? [];
+    const mergedComponents = normalizeProductComponents(
+      data.components !== undefined ? data.components : existing.components ?? [],
+    );
     const mergedAssembly =
       data.assemblyTimeHours !== undefined
         ? Number(data.assemblyTimeHours) || 0

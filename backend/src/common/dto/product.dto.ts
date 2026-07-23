@@ -1,4 +1,6 @@
+import { Type } from 'class-transformer';
 import {
+  IsArray,
   IsBoolean,
   IsEnum,
   IsNotEmpty,
@@ -6,6 +8,7 @@ import {
   IsOptional,
   IsString,
   Min,
+  ValidateNested,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 import { FilamentType, PaperType, ProductType, ResinType } from '../enums';
@@ -14,6 +17,16 @@ import {
   EstampadoPrintSpec,
   EstampadoSupplyLine,
 } from '../interfaces';
+
+export class ProductComponentDto {
+  @IsString()
+  @IsNotEmpty()
+  productId!: string;
+
+  @IsNumber()
+  @Min(1)
+  quantity!: number;
+}
 
 export class CreateCategoryDto {
   @IsString()
@@ -155,7 +168,10 @@ export class CreateProductDto {
   suggestedPrice?: number | null;
 
   @IsOptional()
-  components?: { productId: string; quantity: number }[];
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductComponentDto)
+  components?: ProductComponentDto[];
 }
 
 export class UpdateProductDto extends PartialType(CreateProductDto) {}

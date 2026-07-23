@@ -44,6 +44,7 @@ import { SettingsFacade } from '../../../store/settings/settings.facade';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import {
   productComponentSelectLabel,
+  normalizeProductComponents,
   sumComponentsCost,
   sumComponentsPrice,
 } from '../../../shared/utils/product.helpers';
@@ -672,6 +673,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   private loadCatalog(): void {
     this.catalogService.getAllProducts(false).subscribe((products) => {
       this.catalogProducts = products;
+      this.cdr.markForCheck();
     });
   }
 
@@ -830,7 +832,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       this.suggestedPrice = null;
       this.categoryIds = [...this.product.categoryIds];
       this.images = [...this.product.images];
-      this.components = [...(this.product.components ?? [])];
+      this.components = normalizeProductComponents(this.product.components ?? []);
       this.assemblyTimeHours = this.product.assemblyTimeHours ?? 0;
       this.published = this.product.published !== false;
       this.includesPieces =

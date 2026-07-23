@@ -12,6 +12,7 @@ import {
   normalizeEstampadoPrints,
   normalizeEstampadoSupplies,
 } from '../../products/estampado-product.util';
+import { normalizeProductComponents } from '../../products/product-component.util';
 
 export function mapProductFromDb(row: {
   id: string;
@@ -45,7 +46,7 @@ export function mapProductFromDb(row: {
   estampadoPressCycles?: Prisma.JsonValue;
   estampadoSupplies?: Prisma.JsonValue;
 }): Product {
-  const components = fromJson<Product['components']>(row.components);
+  const components = normalizeProductComponents(fromJson(row.components));
   const base = {
     id: row.id,
     name: row.name,
