@@ -27,10 +27,19 @@ describe('domain.validators', () => {
     ).toThrow(BadRequestException);
   });
 
-  it('rechicha cambios desde tareas terminadas', () => {
+  it('permite reabrir tareas terminadas', () => {
     expect(() =>
       assertPrintJobStatusTransition(
         PrintJobStatus.TERMINADO,
+        PrintJobStatus.EN_PROCESO,
+      ),
+    ).not.toThrow();
+  });
+
+  it('rechaza cambios desde tareas canceladas', () => {
+    expect(() =>
+      assertPrintJobStatusTransition(
+        PrintJobStatus.CANCELADO,
         PrintJobStatus.EN_PROCESO,
       ),
     ).toThrow(BadRequestException);

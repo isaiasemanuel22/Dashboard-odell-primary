@@ -25,9 +25,10 @@ import {
   DbButtonComponent,
   PrintJobCardComponent,
 } from '@general-components';
-import { ORDER_STATUS_LABELS, WORK_BOARD_COLUMNS } from '../../shared/constants/labels';
+import { ORDER_STATUS_LABELS, PRINT_JOB_STATUS_LABELS, WORK_BOARD_COLUMNS } from '../../shared/constants/labels';
 import { DateShortPipe } from '../../shared/pipes/labels.pipe';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
+import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import {
   priorityTierClass,
   PRIORITY_TIER_LABELS,
@@ -54,6 +55,7 @@ export class PrintJobsComponent implements OnInit {
   private readonly printJobsService = inject(PrintJobsService);
   private readonly catalogSync = inject(RealtimeCatalogSyncService);
   private readonly realtime = inject(RealtimeService);
+  private readonly formDialogs = inject(FormDialogService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -120,6 +122,30 @@ export class PrintJobsComponent implements OnInit {
     const job = event.previousContainer.data[event.previousIndex];
     const fromBacklog = event.previousContainer.id === this.backlogListId;
 
+    if (
+      job.status === PrintJobStatus.TERMINADO &&
+      targetStatus !== PrintJobStatus.TERMINADO
+    ) {
+      this.confirmReopenFinished(job, targetStatus, () => {
+        this.applyBoardMove(
+          event,
+          job,
+          targetStatus,
+          fromBacklog,
+        );
+      });
+      return;
+    }
+
+    this.applyBoardMove(event, job, targetStatus, fromBacklog);
+  }
+
+  private applyBoardMove(
+    event: CdkDragDrop<PrintJob[]>,
+    job: PrintJob,
+    targetStatus: PrintJobStatus,
+    fromBacklog: boolean,
+  ): void {
     transferArrayItem(
       event.previousContainer.data,
       event.container.data,
@@ -128,6 +154,28 @@ export class PrintJobsComponent implements OnInit {
     );
 
     this.persistMove(job, targetStatus, true, fromBacklog);
+  }
+
+  private confirmReopenFinished(
+    job: PrintJob,
+    targetStatus: PrintJobStatus,
+    onConfirm: () => void,
+  ): void {
+    const targetLabel = PRINT_JOB_STATUS_LABELS[targetStatus];
+
+    this.formDialogs
+      .openConfirm({
+        title: 'Reabrir tarea terminada',
+        message: `«${job.productName}» está terminada. ¿Querés moverla a «${targetLabel}»?`,
+        confirmLabel: 'Sí, reabrir',
+        cancelLabel: 'Cancelar',
+        confirmVariant: 'primary',
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          onConfirm();
+        }
+      });
   }
 
   dropOnBacklog(event: CdkDragDrop<PrintJob[]>): void {

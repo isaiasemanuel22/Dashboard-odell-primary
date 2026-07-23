@@ -85,10 +85,7 @@ export function assertPrintJobStatusTransition(
   assertPrintJobStatus(next);
   if (current === next) return;
 
-  if (
-    current === PrintJobStatus.CANCELADO ||
-    current === PrintJobStatus.TERMINADO
-  ) {
+  if (current === PrintJobStatus.CANCELADO) {
     throw new BadRequestException(
       `No se puede cambiar el estado de una tarea ${current}`,
     );

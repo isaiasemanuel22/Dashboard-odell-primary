@@ -15,6 +15,7 @@ import {
 import { formDialogConfig } from './form-dialog.config';
 import { ModalSize } from './modal-size';
 import { CategoryFormDialogComponent } from './category-form-dialog.component';
+import { ConfirmDialogComponent, ConfirmDialogData } from './confirm-dialog.component';
 import { CustomerFormDialogComponent } from './customer-form-dialog.component';
 import { ImpresoFormDialogComponent } from './impreso-form-dialog.component';
 import { OrderFormDialogComponent } from './order-form-dialog.component';
@@ -91,6 +92,15 @@ export class FormDialogService {
     return this.open(ResetDatabaseDialogComponent, {}, 'sm', {
       ariaLabel: 'Resetear base de datos',
     });
+  }
+
+  openConfirm(data: ConfirmDialogData): Observable<boolean> {
+    const ref = this.dialog.open(ConfirmDialogComponent, {
+      ...formDialogConfig('sm'),
+      ariaLabel: data.title,
+      data,
+    });
+    return ref.closed as Observable<boolean>;
   }
 
   private open<TData, TResult>(
