@@ -52,7 +52,13 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException(`Producto ${id} no encontrado`);
     }
-    return product;
+    return {
+      ...product,
+      components: normalizeProductComponents(
+        product.components,
+        this.store.products,
+      ),
+    };
   }
 
   getOverview(id: string): ProductOverview {

@@ -12,12 +12,13 @@ import {
 
 export function normalizeProductComponents(
   raw: ProductComponent[] | unknown,
+  catalog?: Pick<Product, 'id' | 'name'>[],
 ): ProductComponent[] {
   if (raw == null) return [];
 
   if (Array.isArray(raw)) {
     return raw
-      .map((item) => normalizeOneProductComponent(item))
+      .map((item) => normalizeOneProductComponent(item, catalog))
       .filter((item): item is ProductComponent => item !== null);
   }
 
@@ -28,6 +29,7 @@ export function normalizeProductComponents(
           typeof value === 'object' && value !== null
             ? value
             : { productId: key, quantity: value },
+          catalog,
         ),
       )
       .filter((item): item is ProductComponent => item !== null);
@@ -36,7 +38,10 @@ export function normalizeProductComponents(
   return [];
 }
 
-function normalizeOneProductComponent(item: unknown): ProductComponent | null {
+function normalizeOneProductComponent(
+  item: unknown,
+  catalog?: Pick<Product, 'id' | 'name'>[],
+): ProductComponent | null {
   if (typeof item === 'string') {
     const productId = item.trim();
     return productId ? { productId, quantity: 1 } : null;
@@ -45,12 +50,7 @@ function normalizeOneProductComponent(item: unknown): ProductComponent | null {
   if (!item || typeof item !== 'object') return null;
 
   const record = item as Record<string, unknown>;
-  const productId = pickString(record, [
-    'productId',
-    'product_id',
-    'productID',
-    'id',
-  ]);
+  const productId = resolveComponentProductId(record, catalog);
   if (!productId) return null;
 
   const quantityRaw =
@@ -60,7 +60,65 @@ function normalizeOneProductComponent(item: unknown): ProductComponent | null {
   return { productId, quantity };
 }
 
-function pickString(
+function resolveComponentProductId(
+  record: Record<string, unknown>,
+  catalog?: Pick<Product, 'id' | 'name'>[],
+): string | null {
+  const direct = pickComponentString(record, [
+    'productId',
+    'product_id',
+    'productID',
+    'pieceId',
+    'piece_id',
+    'product',
+    'ref',
+  ]);
+  if (direct) return direct;
+
+  const nestedProduct = record['product'];
+  if (nestedProduct && typeof nestedProduct === 'object') {
+    const nestedRecord = nestedProduct as Record<string, unknown>;
+    const nestedId = pickComponentString(nestedRecord, [
+      'productId',
+      'product_id',
+      'id',
+    ]);
+    if (nestedId) return nestedId;
+
+    const byNestedName = resolveComponentProductIdByName(
+      pickComponentString(nestedRecord, ['name']),
+      catalog,
+    );
+    if (byNestedName) return byNestedName;
+  }
+
+  const byName = resolveComponentProductIdByName(
+    pickComponentString(record, ['name', 'productName', 'pieceName', 'piece']),
+    catalog,
+  );
+  if (byName) return byName;
+
+  const fallbackId = pickComponentString(record, ['id']);
+  if (!fallbackId) return null;
+  if (catalog?.some((entry) => entry.id === fallbackId)) return fallbackId;
+  if (/^prod-/i.test(fallbackId)) return fallbackId;
+
+  return null;
+}
+
+function resolveComponentProductIdByName(
+  name: string | null,
+  catalog?: Pick<Product, 'id' | 'name'>[],
+): string | null {
+  if (!name || !catalog?.length) return null;
+  const normalized = name.trim().toLowerCase();
+  return (
+    catalog.find((entry) => entry.name.trim().toLowerCase() === normalized)
+      ?.id ?? null
+  );
+}
+
+function pickComponentString(
   record: Record<string, unknown>,
   keys: string[],
 ): string | null {

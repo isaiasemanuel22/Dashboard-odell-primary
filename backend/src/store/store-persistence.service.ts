@@ -13,6 +13,7 @@ import {
 import { Prisma } from '@prisma/client';
 import { GeneralSettings, Order, PrintJob, RetailSale } from '../common/interfaces';
 import { PrismaService } from '../prisma/prisma.service';
+import { resolveAllProductComponents } from '../products/product-component.util';
 import {
   mapCategoryFromDb,
   mapCategoryToDb,
@@ -255,7 +256,9 @@ export class StorePersistenceService
       generalSettings: mapSettingsFromDb(settingsRow),
       categories: categories.map((row) => mapCategoryFromDb(row)),
       customers: customers.map((row) => mapCustomerFromDb(row)),
-      products: products.map((row) => mapProductFromDb(row)),
+      products: resolveAllProductComponents(
+        products.map((row) => mapProductFromDb(row)),
+      ),
       supplies: supplies.map((row) => mapSupplyFromDb(row)),
       impresos: impresos.map((row) => mapImpresoFromDb(row)),
       materials: materials.map((row) => mapMaterialFromDb(row)),

@@ -31,7 +31,7 @@ import {
 } from '@general-components';
 import { FormDialogService } from '../../../shared/form-dialogs/public-api';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
-import { resolveCategoryNames, isProductPublished } from '../../../shared/utils/product.helpers';
+import { resolveCategoryNames, isProductPublished, normalizeProductComponents } from '../../../shared/utils/product.helpers';
 import {
   DateShortPipe,
   FilamentTypeLabelPipe,
@@ -111,8 +111,15 @@ export class ProductDetailComponent implements OnInit {
     return resolveCategoryNames(this.product.categoryIds, this.categories);
   }
 
+  get resolvedComponents() {
+    return normalizeProductComponents(
+      this.product?.components ?? [],
+      this.catalogProducts,
+    );
+  }
+
   get hasComponents(): boolean {
-    return (this.product?.components?.length ?? 0) > 0;
+    return this.resolvedComponents.length > 0;
   }
 
   get isPublished(): boolean {

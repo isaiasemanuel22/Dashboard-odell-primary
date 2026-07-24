@@ -673,6 +673,15 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   private loadCatalog(): void {
     this.catalogService.getAllProducts(false).subscribe((products) => {
       this.catalogProducts = products;
+      if (this.product) {
+        this.components = normalizeProductComponents(
+          this.product.components ?? [],
+          this.catalogProducts,
+        );
+        if (this.components.length > 0) {
+          this.includesPieces = true;
+        }
+      }
       this.cdr.markForCheck();
     });
   }
@@ -832,7 +841,10 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       this.suggestedPrice = null;
       this.categoryIds = [...this.product.categoryIds];
       this.images = [...this.product.images];
-      this.components = normalizeProductComponents(this.product.components ?? []);
+      this.components = normalizeProductComponents(
+        this.product.components ?? [],
+        this.catalogProducts,
+      );
       this.assemblyTimeHours = this.product.assemblyTimeHours ?? 0;
       this.published = this.product.published !== false;
       this.includesPieces =

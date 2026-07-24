@@ -81,7 +81,7 @@
           <h3>Piezas incluidas</h3>
           <app-product-components-table
             mode="read"
-            [components]="product.components"
+            [components]="resolvedComponents"
             [catalog]="catalogProducts"
           />
           @if (product.assemblyTimeHours > 0) {
