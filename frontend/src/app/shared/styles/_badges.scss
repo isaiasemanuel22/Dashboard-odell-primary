@@ -17,6 +17,7 @@
   background: rgba(255, 255, 255, 0.95);
   color: $color-primary;
   padding: 0.2rem 0.6rem;
+  z-index: 10;
 }
 
 .internal-badge {
@@ -32,6 +33,8 @@
   position: absolute;
   top: 0.75rem;
   right: 0.75rem;
+  z-index: 10;
+
   padding: 0.2rem 0.6rem;
 }
 
