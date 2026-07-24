@@ -94,6 +94,7 @@ export class OrdersService {
       notes: data.notes?.trim() || undefined,
       dueDate: data.dueDate.trim(),
       statusHistory: [],
+      priceHistory: [],
     };
     appendOrderStatusHistory(
       order,

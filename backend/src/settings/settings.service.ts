@@ -1,4 +1,4 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { DATABASE_RESET_CODE } from '../common/dto';
 import { StoreChangeService } from '../store/store-change.service';
 import { StorePersistenceService } from '../store/store-persistence.service';
@@ -19,6 +19,9 @@ import {
 } from '../common/interfaces';
 import { SupplyType } from '../common/enums';
 import { StoreService } from '../store/store.service';
+import { PricingSyncService } from '../pricing/pricing-sync.service';
+import type { OrderPriceChangeTrigger } from '../orders/order-price-history.util';
+import { RealtimeScope } from '../realtime/realtime.types';
 
 @Injectable()
 export class SettingsService {
@@ -26,6 +29,8 @@ export class SettingsService {
     private readonly store: StoreService,
     private readonly persistence: StorePersistenceService,
     private readonly storeChange: StoreChangeService,
+    @Inject(forwardRef(() => PricingSyncService))
+    private readonly pricingSync: PricingSyncService,
   ) {}
 
   getGeneralSettings(): GeneralSettings {
@@ -279,6 +284,7 @@ export class SettingsService {
       ...data,
     };
     this.store.generalSettings.powerConsumptions.push(entry);
+    this.recordSettingsChange(['settings', 'products']);
     return entry;
   }
 
@@ -299,12 +305,14 @@ export class SettingsService {
       ...this.store.generalSettings.powerConsumptions[index],
       ...data,
     };
+    this.recordSettingsChange(['settings', 'products']);
     return this.store.generalSettings.powerConsumptions[index];
   }
 
   removePowerConsumption(id: string): void {
     this.store.generalSettings.powerConsumptions =
       this.store.generalSettings.powerConsumptions.filter((p) => p.id !== id);
+    this.recordSettingsChange(['settings', 'products']);
   }
 
   addMachineCost(data: Omit<MachineCostConfig, 'id'>): MachineCostConfig {
@@ -313,6 +321,7 @@ export class SettingsService {
       ...data,
     };
     this.store.generalSettings.machineCosts.push(entry);
+    this.recordSettingsChange(['settings', 'products']);
     return entry;
   }
 
@@ -333,12 +342,14 @@ export class SettingsService {
       ...this.store.generalSettings.machineCosts[index],
       ...data,
     };
+    this.recordSettingsChange(['settings', 'products']);
     return this.store.generalSettings.machineCosts[index];
   }
 
   removeMachineCost(id: string): void {
     this.store.generalSettings.machineCosts =
       this.store.generalSettings.machineCosts.filter((m) => m.id !== id);
+    this.recordSettingsChange(['settings', 'products']);
   }
 
   addFilamentPrice(
@@ -350,6 +361,7 @@ export class SettingsService {
     };
     this.store.generalSettings.filamentPrices.push(entry);
     this.syncFilamentSupplies(entry);
+    this.recordSettingsChange(['settings', 'supplies', 'products']);
     return entry;
   }
 
@@ -369,12 +381,14 @@ export class SettingsService {
     };
     const updated = this.store.generalSettings.filamentPrices[index];
     this.syncFilamentSupplies(updated);
+    this.recordSettingsChange(['settings', 'supplies', 'products']);
     return updated;
   }
 
   removeFilamentPrice(id: string): void {
     this.store.generalSettings.filamentPrices =
       this.store.generalSettings.filamentPrices.filter((p) => p.id !== id);
+    this.recordSettingsChange(['settings', 'products']);
   }
 
   addResinPrice(data: Omit<ResinPriceConfig, 'id'>): ResinPriceConfig {
@@ -384,6 +398,7 @@ export class SettingsService {
     };
     this.store.generalSettings.resinPrices.push(entry);
     this.syncResinSupplies(entry);
+    this.recordSettingsChange(['settings', 'supplies', 'products']);
     return entry;
   }
 
@@ -403,12 +418,14 @@ export class SettingsService {
     };
     const updated = this.store.generalSettings.resinPrices[index];
     this.syncResinSupplies(updated);
+    this.recordSettingsChange(['settings', 'supplies', 'products']);
     return updated;
   }
 
   removeResinPrice(id: string): void {
     this.store.generalSettings.resinPrices =
       this.store.generalSettings.resinPrices.filter((p) => p.id !== id);
+    this.recordSettingsChange(['settings', 'products']);
   }
 
   private syncFilamentSupplies(filamentPrice: FilamentPriceConfig): void {
@@ -452,12 +469,17 @@ export class SettingsService {
   }
 
   private recordSettingsChange(
-    scopes: Array<'settings' | 'products' | 'supplies'> = ['settings'],
+    scopes: Array<'settings' | 'products' | 'supplies' | 'orders'> = ['settings'],
+    trigger: OrderPriceChangeTrigger = 'settings',
   ): void {
+    this.pricingSync.syncAllProductsAndOrders(trigger);
+
     this.storeChange.recordChange({
       collections: ['settings'],
       realtime: {
-        scopes,
+        scopes: [
+          ...new Set([...scopes, 'products', 'orders']),
+        ] as RealtimeScope[],
         action: 'update',
         entity: 'settings',
       },

@@ -240,6 +240,43 @@
         }
       </section>
 
+      <section class="panel status-history-panel">
+        <h3>Historial de precios</h3>
+        @if (priceHistory.length) {
+          <ol class="status-history">
+            @for (entry of priceHistory; track entry.id) {
+              <li class="status-history__item">
+                <div class="status-history__marker" aria-hidden="true"></div>
+                <div class="status-history__content">
+                  <div class="status-history__row">
+                    <time [dateTime]="entry.changedAt">
+                      {{ entry.changedAt | dateTime }}
+                    </time>
+                    <span class="status-history__source">
+                      {{ priceTriggerLabels[entry.trigger] }}
+                    </span>
+                  </div>
+                  <p class="status-history__transition">
+                    {{ entry.productName }}:
+                    {{ entry.previousUnitPrice | currencyArs }}
+                    →
+                    {{ entry.newUnitPrice | currencyArs }}
+                  </p>
+                  <p class="status-history__transition">
+                    Total pedido:
+                    {{ entry.previousOrderTotal | currencyArs }}
+                    →
+                    {{ entry.newOrderTotal | currencyArs }}
+                  </p>
+                </div>
+              </li>
+            }
+          </ol>
+        } @else {
+          <p class="empty-group">Sin cambios de precio registrados.</p>
+        }
+      </section>
+
       <section class="panel description-panel">
         <div class="description-panel__header">
           <h3>Descripción</h3>

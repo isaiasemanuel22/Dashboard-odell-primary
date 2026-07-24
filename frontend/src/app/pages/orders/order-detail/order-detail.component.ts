@@ -13,6 +13,7 @@ import {
   Order,
   OrderStatus,
   OrderStatusHistoryEntry,
+  OrderPriceHistoryEntry,
   PrintJob,
   Customer,
 } from '../../../core/models';
@@ -108,6 +109,11 @@ export class OrderDetailComponent implements OnInit {
   readonly descriptionMaxLength = ORDER_DESCRIPTION_MAX_LENGTH;
   readonly priorityTierClass = priorityTierClass;
   readonly sourceLabels = ORDER_STATUS_CHANGE_SOURCE_LABELS;
+  readonly priceTriggerLabels: Record<OrderPriceHistoryEntry['trigger'], string> = {
+    settings: 'Ajustes del sistema',
+    supply_price: 'Precio de insumo',
+    product_update: 'Actualización de producto',
+  };
 
   get orderSubtotal(): number {
     if (!this.order) return 0;
@@ -126,6 +132,14 @@ export class OrderDetailComponent implements OnInit {
   get statusHistory(): OrderStatusHistoryEntry[] {
     if (!this.order?.statusHistory?.length) return [];
     return [...this.order.statusHistory].sort(
+      (a, b) =>
+        new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime(),
+    );
+  }
+
+  get priceHistory(): OrderPriceHistoryEntry[] {
+    if (!this.order?.priceHistory?.length) return [];
+    return [...this.order.priceHistory].sort(
       (a, b) =>
         new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime(),
     );

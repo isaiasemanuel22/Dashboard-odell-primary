@@ -17,6 +17,7 @@ import {
   UpdateProductDto,
 } from '../common/interfaces';
 import { ProductPricingService } from './product-pricing.service';
+import { PricingSyncService } from '../pricing/pricing-sync.service';
 import { ProductRepository } from '../store/repositories/product.repository';
 import { StoreService } from '../store/store.service';
 import {
@@ -36,6 +37,7 @@ export class ProductsService {
     private readonly store: StoreService,
     private readonly products: ProductRepository,
     private readonly pricing: ProductPricingService,
+    private readonly pricingSync: PricingSyncService,
   ) {}
 
   findAll(type?: ProductType, includeUnpublished = false): Product[] {
@@ -164,6 +166,7 @@ export class ProductsService {
 
   update(id: string, data: UpdateProductDto): Product {
     const existing = this.findOne(id);
+    const previousPrice = existing.price;
     const mergedType = (data.type ?? existing.type) as ProductType;
     const mergedComponents = normalizeProductComponents(
       data.components !== undefined ? data.components : existing.components ?? [],
@@ -330,6 +333,7 @@ export class ProductsService {
       throw new NotFoundException(`Producto ${id} no encontrado`);
     }
     this.products.save(updated);
+    this.pricingSync.syncAfterProductSave(id, previousPrice);
     return updated;
   }
 

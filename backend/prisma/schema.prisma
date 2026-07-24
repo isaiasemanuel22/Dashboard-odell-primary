@@ -138,6 +138,7 @@ model Order {
   createdAt    DateTime @map("created_at")
   dueDate      DateTime @map("due_date")
   statusHistory Json    @default("[]") @map("status_history")
+  priceHistory  Json    @default("[]") @map("price_history")
 
   customer Customer?   @relation(fields: [customerId], references: [id], onDelete: Restrict)
   items    OrderItem[]

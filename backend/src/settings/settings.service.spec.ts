@@ -37,8 +37,11 @@ describe('SettingsService.patchGeneralSettings', () => {
     const storeChange = {
       recordChange: jest.fn(),
     } as unknown as StoreChangeService;
+    const pricingSync = {
+      syncAllProductsAndOrders: jest.fn(),
+    } as unknown as import('../pricing/pricing-sync.service').PricingSyncService;
 
-    return new SettingsService(store, persistence, storeChange);
+    return new SettingsService(store, persistence, storeChange, pricingSync);
   }
 
   it('no borra core values al actualizar solo paperPricesPerSqm', () => {

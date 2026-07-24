@@ -33,6 +33,7 @@ export function mapOrderFromDb(row: {
   createdAt: Date;
   dueDate: Date;
   statusHistory: Prisma.JsonValue;
+  priceHistory?: Prisma.JsonValue;
   items: Array<{
     serviceType: string;
     productId: string | null;
@@ -56,6 +57,7 @@ export function mapOrderFromDb(row: {
     createdAt: row.createdAt.toISOString(),
     dueDate: row.dueDate.toISOString(),
     statusHistory: fromJson<Order['statusHistory']>(row.statusHistory) ?? [],
+    priceHistory: fromJson<Order['priceHistory']>(row.priceHistory ?? []) ?? [],
   };
   ensureOrderStatusHistory(order);
   return order;
@@ -76,6 +78,7 @@ export function mapOrderToDb(order: Order) {
     createdAt: new Date(order.createdAt),
     dueDate: new Date(order.dueDate),
     statusHistory: toInputJson(order.statusHistory ?? []),
+    priceHistory: toInputJson(order.priceHistory ?? []),
   };
 }
 

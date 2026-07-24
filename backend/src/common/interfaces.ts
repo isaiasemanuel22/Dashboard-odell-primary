@@ -307,6 +307,24 @@ export interface OrderStatusHistoryEntry {
   source: OrderStatusChangeSource;
 }
 
+export type OrderPriceChangeTrigger =
+  | 'settings'
+  | 'supply_price'
+  | 'product_update';
+
+export interface OrderPriceHistoryEntry {
+  id: string;
+  changedAt: string;
+  trigger: OrderPriceChangeTrigger;
+  itemIndex: number;
+  productId: string;
+  productName: string;
+  previousUnitPrice: number;
+  newUnitPrice: number;
+  previousOrderTotal: number;
+  newOrderTotal: number;
+}
+
 export interface Order {
   id: string;
   customerId: string | null;
@@ -322,6 +340,7 @@ export interface Order {
   createdAt: string;
   dueDate: string;
   statusHistory?: OrderStatusHistoryEntry[];
+  priceHistory?: OrderPriceHistoryEntry[];
 }
 
 export interface OrderOverview {

@@ -11,6 +11,8 @@ import {
 } from '../common/enums';
 import { Supply } from '../common/interfaces';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
+import { PricingSyncService } from '../pricing/pricing-sync.service';
+import { StoreChangeService } from '../store/store-change.service';
 import { SupplyRepository } from '../store/repositories';
 import {
   inferSupplyCategory,
@@ -35,6 +37,8 @@ export class SuppliesService {
   constructor(
     private readonly supplies: SupplyRepository,
     private readonly costCalculator: CostCalculatorService,
+    private readonly pricingSync: PricingSyncService,
+    private readonly storeChange: StoreChangeService,
   ) {}
 
   findAll(type?: SupplyType, category?: SupplyCategory): Supply[] {
@@ -90,11 +94,28 @@ export class SuppliesService {
       merged.priceFromSettings = false;
     }
 
-    return this.supplies.save({
+    const saved = this.supplies.save({
       ...merged,
       id: existing.id,
       updatedAt: new Date().toISOString(),
     } as Supply);
+
+    if (
+      data.unitPrice !== undefined &&
+      Number(data.unitPrice) !== Number(existing.unitPrice)
+    ) {
+      this.pricingSync.syncAllProductsAndOrders('supply_price');
+      this.storeChange.recordChange({
+        collections: ['supplies'],
+        realtime: {
+          scopes: ['supplies', 'products', 'orders'],
+          action: 'update',
+          entity: 'settings',
+        },
+      });
+    }
+
+    return saved;
   }
 
   remove(id: string): void {
