@@ -9,7 +9,7 @@ echo "Scaling web to 0 on ${APP}..."
 heroku ps:scale web=0 --app "$APP"
 
 echo "Running prisma db push..."
-heroku run npx prisma db push --app "$APP"
+heroku run "cd backend && npx --yes prisma db push --accept-data-loss" --app "$APP"
 
 echo "Scaling web back to 1..."
 heroku ps:scale web=1 --app "$APP"
