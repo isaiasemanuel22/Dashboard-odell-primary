@@ -39,12 +39,6 @@ Al guardar las claves, la app redirige a `/login` antes de entrar al dashboard.
 
 ## 4. Storage (imágenes de productos)
 
-En `environment.ts` / `environment.prod.ts`:
-
-```typescript
-productImageStorage: 'firebase',
-```
-
 En Firebase Console → **Storage** → **Get started** (obligatorio la primera vez).
 
 Las imágenes se suben con **POST /api/upload** desde el frontend; el **backend** las guarda en Firebase Storage con la cuenta de servicio (evita errores CORS del navegador).
@@ -53,7 +47,6 @@ En `backend/.env`:
 
 ```env
 FIREBASE_SERVICE_ACCOUNT_PATH=firebase-service-account.json
-PRODUCT_IMAGE_STORAGE=firebase
 FIREBASE_STORAGE_BUCKET=dashboard-odell-2.firebasestorage.app
 ```
 
@@ -91,7 +84,7 @@ Reiniciá el backend. Sin este archivo la API sigue abierta (modo desarrollo).
 | Componente | Sin Firebase configurado | Con Firebase |
 |------------|-------------------------|--------------|
 | Login | No se exige | Pantalla `/login` |
-| Imágenes | Subida local `/uploads` | Backend → Firebase Storage (`PRODUCT_IMAGE_STORAGE=firebase`) |
+| Imágenes | No se pueden subir | Backend → Firebase Storage |
 | API | Sin token | Header `Authorization: Bearer …` |
 
 ## 7. Tiempo real (SSE)

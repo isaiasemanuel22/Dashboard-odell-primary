@@ -846,7 +846,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       this.images = sanitizedImages.images;
       this.legacyImagesNotice =
         sanitizedImages.removedCount > 0
-          ? 'Las fotos guardadas en el servidor ya no existen. Volvé a subirlas; se guardarán en Firebase Storage.'
+          ? 'Hay fotos con URLs antiguas que ya no funcionan. Volvé a subirlas; se guardarán en Firebase Storage.'
           : '';
       this.components = normalizeProductComponents(
         this.product.components ?? [],

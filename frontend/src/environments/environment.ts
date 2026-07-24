@@ -2,7 +2,6 @@
 export const environment = {
   production: false,
   apiUrl: "/api",
-  productImageStorage: 'backend' as 'backend' | 'firebase',
   firebase: {
     apiKey: "AIzaSyBXqQBoiPR97ZxTBmStvlpNccejCM5DD4k",
     authDomain: "dashboard-odell-2.firebaseapp.com",

@@ -98,5 +98,5 @@ Abrir `http://localhost:4200`
 - **Firebase** (opcional): login + imágenes en la nube. Ver [docs/FIREBASE.md](docs/FIREBASE.md).
 - **Deploy frontend**: Netlify (ver `netlify.toml`). Backend en Heroku u otro host.
 - Varias PCs pueden usar la misma API; los cambios se sincronizan en tiempo real (SSE).
-- Subidas de imágenes siguen en la carpeta `backend/uploads/` (no en la DB).
+- Las imágenes de productos se guardan en **Firebase Storage** (URLs https en MySQL). Ver [docs/FIREBASE.md](docs/FIREBASE.md).
 - Scripts útiles en `backend/`: `npm run db:push`, `npm run db:migrate`, `npm run db:studio`.

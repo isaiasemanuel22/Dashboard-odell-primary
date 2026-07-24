@@ -6,40 +6,29 @@ import {
 import { BadRequestException } from '@nestjs/common';
 
 describe('product-image.util', () => {
-  const originalEnv = process.env.NODE_ENV;
-
-  afterEach(() => {
-    process.env.NODE_ENV = originalEnv;
-  });
-
-  it('filtra /uploads en producción al normalizar', () => {
-    process.env.NODE_ENV = 'production';
+  it('filtra URLs que no sean https al normalizar', () => {
     expect(
       normalizeProductImages([
         '/uploads/foo.jpg',
+        'http://example.com/foo.jpg',
         'https://firebasestorage.googleapis.com/v0/b/x/o/y?alt=media',
       ]),
     ).toEqual(['https://firebasestorage.googleapis.com/v0/b/x/o/y?alt=media']);
   });
 
-  it('conserva /uploads en desarrollo', () => {
-    process.env.NODE_ENV = 'development';
-    expect(normalizeProductImages(['/uploads/foo.jpg'])).toEqual([
-      '/uploads/foo.jpg',
-    ]);
-  });
-
-  it('rechaza /uploads al validar en producción', () => {
+  it('rechaza URLs que no sean https al validar', () => {
     expect(() =>
-      validateProductImageUrls(['/uploads/foo.jpg'], true),
+      validateProductImageUrls(['/uploads/foo.jpg']),
+    ).toThrow(BadRequestException);
+    expect(() =>
+      validateProductImageUrls(['http://example.com/foo.jpg']),
     ).toThrow(BadRequestException);
   });
 
-  it('acepta URLs https en producción', () => {
+  it('acepta URLs https', () => {
     expect(() =>
       validateProductImageUrls(
         ['https://firebasestorage.googleapis.com/v0/b/x/o/y?alt=media'],
-        true,
       ),
     ).not.toThrow();
   });

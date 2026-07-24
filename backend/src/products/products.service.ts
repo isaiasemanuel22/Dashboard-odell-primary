@@ -382,10 +382,7 @@ export class ProductsService {
     }
 
     if (!isUpdate || data.images !== undefined) {
-      validateProductImageUrls(
-        data.images,
-        process.env.NODE_ENV === 'production',
-      );
+      validateProductImageUrls(data.images);
     }
 
     if (data.type === ProductType.COMBO) {

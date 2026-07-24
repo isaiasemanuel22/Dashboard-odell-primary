@@ -41,12 +41,6 @@ module.exports = {
     changeOrigin: true,
     logLevel: 'warn',
   },
-  '/uploads': {
-    target,
-    secure: false,
-    changeOrigin: true,
-    logLevel: 'warn',
-  },
 };
 
 console.log('[proxy] API →', target);

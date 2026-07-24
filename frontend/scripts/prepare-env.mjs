@@ -54,15 +54,6 @@ if (isProd && !apiUrl) {
   process.exit(1);
 }
 
-const storageRaw = (
-  isProd
-    ? (process.env.PRODUCT_IMAGE_STORAGE ?? fileEnv.PRODUCT_IMAGE_STORAGE ?? 'firebase')
-    : (fileEnv.PRODUCT_IMAGE_STORAGE ?? process.env.PRODUCT_IMAGE_STORAGE ?? 'backend')
-)
-  .trim()
-  .toLowerCase();
-const productImageStorage = storageRaw === 'firebase' ? 'firebase' : 'backend';
-
 const firebase = {
   apiKey: fileEnv.FIREBASE_API_KEY ?? defaultFirebase.apiKey,
   authDomain: fileEnv.FIREBASE_AUTH_DOMAIN ?? defaultFirebase.authDomain,
@@ -77,7 +68,6 @@ const content = `/** Generado por scripts/prepare-env.mjs — no editar a mano *
 export const environment = {
   production: ${isProd},
   apiUrl: ${JSON.stringify(apiUrl)},
-  productImageStorage: '${productImageStorage}' as 'backend' | 'firebase',
   firebase: {
     apiKey: ${JSON.stringify(firebase.apiKey)},
     authDomain: ${JSON.stringify(firebase.authDomain)},
@@ -100,4 +90,3 @@ console.log(
   `[prepare-env] ${isProd ? 'production' : 'development'} → ${outFile.replace(root + '/', '')}`,
 );
 console.log('[prepare-env] apiUrl =', apiUrl);
-console.log('[prepare-env] productImageStorage =', productImageStorage);

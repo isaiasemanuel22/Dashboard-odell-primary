@@ -42,10 +42,6 @@ export class AppConfigService {
     return this.config.get('FIREBASE_STORAGE_BUCKET', { infer: true });
   }
 
-  get productImageStorage(): 'backend' | 'firebase' {
-    return this.config.get('PRODUCT_IMAGE_STORAGE', { infer: true });
-  }
-
   get requireDatabase(): boolean {
     return this.config.get('REQUIRE_DATABASE', { infer: true });
   }

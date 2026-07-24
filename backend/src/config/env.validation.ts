@@ -8,7 +8,6 @@ export interface AppEnv {
   /** JSON minificado de la cuenta de servicio (Heroku / PaaS). */
   FIREBASE_SERVICE_ACCOUNT_JSON?: string;
   FIREBASE_STORAGE_BUCKET?: string;
-  PRODUCT_IMAGE_STORAGE: 'backend' | 'firebase';
   REQUIRE_DATABASE: boolean;
   REQUIRE_AUTH: boolean;
 }
@@ -42,14 +41,6 @@ export function validateEnv(
     throw new Error('PORT debe ser un número positivo');
   }
 
-  const storageRaw = String(config.PRODUCT_IMAGE_STORAGE ?? '').trim().toLowerCase();
-  const productImageStorage =
-    storageRaw === 'backend'
-      ? 'backend'
-      : storageRaw === 'firebase' || isProd
-        ? 'firebase'
-        : 'backend';
-
   return {
     NODE_ENV: nodeEnv,
     PORT: port,
@@ -59,7 +50,6 @@ export function validateEnv(
     FIREBASE_SERVICE_ACCOUNT_PATH: firebasePath,
     FIREBASE_SERVICE_ACCOUNT_JSON: firebaseJson,
     FIREBASE_STORAGE_BUCKET: optionalString(config.FIREBASE_STORAGE_BUCKET),
-    PRODUCT_IMAGE_STORAGE: productImageStorage,
     REQUIRE_DATABASE: parseBoolean(config.REQUIRE_DATABASE, isProd),
     REQUIRE_AUTH: parseBoolean(config.REQUIRE_AUTH, isProd),
   };
