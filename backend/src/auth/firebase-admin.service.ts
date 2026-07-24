@@ -1,4 +1,4 @@
-import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { App, cert, getApps, initializeApp, ServiceAccount } from 'firebase-admin/app';
@@ -6,14 +6,16 @@ import { DecodedIdToken, getAuth } from 'firebase-admin/auth';
 import { AppConfigService } from '../config/app-config.service';
 
 @Injectable()
-export class FirebaseAdminService implements OnModuleInit {
+export class FirebaseAdminService {
   private readonly logger = new Logger(FirebaseAdminService.name);
   private app: App | null = null;
   private storageBucket: string | null = null;
 
-  constructor(private readonly config: AppConfigService) {}
+  constructor(private readonly config: AppConfigService) {
+    this.initialize();
+  }
 
-  onModuleInit(): void {
+  private initialize(): void {
     const credentialsPath = this.config.firebaseServiceAccountPath;
     const credentialsJson = this.config.firebaseServiceAccountJson;
 
