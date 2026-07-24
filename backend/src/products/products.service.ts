@@ -371,15 +371,6 @@ export class ProductsService {
       }
     }
 
-    if (!isUpdate || data.size !== undefined) {
-      const size =
-        (data.size ?? '').trim() ||
-        (data.type === ProductType.COMBO ? 'Combo' : '');
-      if (!size) {
-        throw new BadRequestException('El tamaño es obligatorio');
-      }
-    }
-
     if (data.type === ProductType.COMBO) {
       const components = data.components ?? [];
       if (!components.length) {
