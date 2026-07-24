@@ -17,7 +17,7 @@ echo "Scaling web to 0 on ${APP}..."
 heroku ps:scale web=0 --app "$APP"
 
 echo "Running prisma db push in backend/..."
-heroku run bash -lc "cd backend && npx --yes prisma@${PRISMA_VERSION} db push --accept-data-loss" --app "$APP"
+heroku run "cd backend && npx --yes prisma@${PRISMA_VERSION} db push --accept-data-loss" --app "$APP"
 
 trap - EXIT
 scale_web_up
