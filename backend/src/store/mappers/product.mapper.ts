@@ -13,6 +13,7 @@ import {
   normalizeEstampadoSupplies,
 } from '../../products/estampado-product.util';
 import { normalizeProductComponents } from '../../products/product-component.util';
+import { normalizeProductImages } from '../../products/product-image.util';
 
 export function mapProductFromDb(row: {
   id: string;
@@ -50,7 +51,7 @@ export function mapProductFromDb(row: {
   const base = {
     id: row.id,
     name: row.name,
-    images: fromJson<string[]>(row.images) ?? [],
+    images: normalizeProductImages(fromJson<string[]>(row.images) ?? []),
     updatedAt: row.updatedAt.toISOString(),
     price: row.price,
     cost: row.cost,

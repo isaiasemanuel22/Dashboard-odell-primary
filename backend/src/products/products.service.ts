@@ -25,6 +25,10 @@ import {
   normalizeEstampadoSupplies,
 } from './estampado-product.util';
 import { normalizeProductComponents } from './product-component.util';
+import {
+  normalizeProductImages,
+  validateProductImageUrls,
+} from './product-image.util';
 
 @Injectable()
 export class ProductsService {
@@ -85,7 +89,7 @@ export class ProductsService {
     const base = {
       id: this.store.nextId('prod', this.store.products),
       name: data.name.trim(),
-      images: data.images ?? [],
+      images: normalizeProductImages(data.images ?? []),
       updatedAt: now,
       price: pricing.price,
       cost: pricing.cost,
@@ -249,7 +253,7 @@ export class ProductsService {
       profit: pricing.profit,
       updatedAt: new Date().toISOString(),
       categoryIds: data.categoryIds ?? existing.categoryIds,
-      images: data.images ?? existing.images,
+      images: normalizeProductImages(data.images ?? existing.images),
       published:
         data.published !== undefined ? data.published !== false : existing.published !== false,
       includesPieces:
@@ -375,6 +379,13 @@ export class ProductsService {
       if (data.cost === undefined || Number(data.cost) < 0) {
         throw new BadRequestException('El costo debe ser mayor o igual a 0');
       }
+    }
+
+    if (!isUpdate || data.images !== undefined) {
+      validateProductImageUrls(
+        data.images,
+        process.env.NODE_ENV === 'production',
+      );
     }
 
     if (data.type === ProductType.COMBO) {

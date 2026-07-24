@@ -462,6 +462,9 @@
         <p class="components-desc">
           Elegí las fotos y revisalas en la vista previa. Podés subirlas con el botón o guardar el producto y se subirán solas.
         </p>
+        @if (legacyImagesNotice) {
+          <p class="components-desc legacy-images-notice">{{ legacyImagesNotice }}</p>
+        }
         <db-file-upload
           #imageUpload
           [(ngModel)]="images"

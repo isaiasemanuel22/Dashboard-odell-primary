@@ -17,11 +17,24 @@ export function resolveMediaUrl(url: string | null | undefined): string | null {
     : `/${url.replace(/^\/+/, '')}`;
 
   if (normalized.startsWith('/uploads/')) {
+    if (environment.production) return null;
     const origin = apiOrigin();
     if (origin) return `${origin}${normalized}`;
   }
 
   return normalized;
+}
+
+/** Filtra URLs legacy (/uploads) al editar en producción. */
+export function sanitizePersistableProductImages(
+  urls: string[] | null | undefined,
+): { images: string[]; removedCount: number } {
+  const source = urls ?? [];
+  if (!environment.production) {
+    return { images: [...source], removedCount: 0 };
+  }
+  const images = source.filter((url) => /^https:\/\//i.test(url.trim()));
+  return { images, removedCount: source.length - images.length };
 }
 
 export function resolveMediaUrls(urls: string[] | null | undefined): string[] {

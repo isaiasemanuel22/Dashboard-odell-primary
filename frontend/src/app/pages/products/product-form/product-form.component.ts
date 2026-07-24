@@ -73,6 +73,7 @@ import {
   resinTypeOptions,
 } from '../../../shared/utils/select-options';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
+import { sanitizePersistableProductImages } from '../../../shared/utils/media-url.util';
 import {
   DbCheckboxComponent,
   DbFieldsetComponent,
@@ -185,6 +186,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     });
   savingImages = false;
   imageUploadError = '';
+  legacyImagesNotice = '';
 
   private costCalcTimer: ReturnType<typeof setTimeout> | null = null;
   private pricingPreviewSub: Subscription | null = null;
@@ -840,7 +842,12 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       this.cost = this.product.cost;
       this.suggestedPrice = null;
       this.categoryIds = [...this.product.categoryIds];
-      this.images = [...this.product.images];
+      const sanitizedImages = sanitizePersistableProductImages(this.product.images);
+      this.images = sanitizedImages.images;
+      this.legacyImagesNotice =
+        sanitizedImages.removedCount > 0
+          ? 'Las fotos guardadas en el servidor ya no existen. Volvé a subirlas; se guardarán en Firebase Storage.'
+          : '';
       this.components = normalizeProductComponents(
         this.product.components ?? [],
         this.catalogProducts,
@@ -893,6 +900,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       this.suggestedPrice = null;
       this.categoryIds = [];
       this.images = [];
+      this.legacyImagesNotice = '';
       this.components = [];
       this.assemblyTimeHours = 0;
       this.published = true;
