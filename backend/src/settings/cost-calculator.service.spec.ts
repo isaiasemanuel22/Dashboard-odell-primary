@@ -229,4 +229,36 @@ describe('CostCalculatorService', () => {
     expect(result.configuredMarginPercent).toBe(50);
     expect(result.price).toBe(6000);
   });
+
+  it('no aplica margen de error en productos armados por piezas', () => {
+    store.generalSettings.errorMarginPercent = 10;
+    store.products.push({
+      id: 'piece-1',
+      name: 'Pieza',
+      type: ProductType.FDM,
+      images: [],
+      updatedAt: '2026-07-01T10:00:00.000Z',
+      price: 2000,
+      cost: 1000,
+      profit: 1000,
+      categoryIds: [],
+      size: '5 cm',
+      published: true,
+      components: [],
+      assemblyTimeHours: 0,
+      grams: 10,
+      printTimeHours: 1,
+      workTimeHours: 0,
+    });
+    store.indexProduct(store.products[0]!);
+
+    const result = service.calculateCompositeCost(
+      [{ productId: 'piece-1', quantity: 2 }],
+      0,
+    );
+
+    expect(result.materialCost).toBe(2000);
+    expect(result.errorMarginCost).toBe(0);
+    expect(result.totalCost).toBe(2000);
+  });
 });

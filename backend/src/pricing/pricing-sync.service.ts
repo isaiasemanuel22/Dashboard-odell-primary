@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { OrderStatus, ProductType } from '../common/enums';
+import { OrderStatus } from '../common/enums';
 import { Order, Product } from '../common/interfaces';
 import {
   calculateItemsSubtotal,
@@ -54,7 +54,7 @@ export class PricingSyncService {
       });
     }
 
-    this.recalculateParentCombos(priceChanges);
+    this.recalculateCompositeProducts(priceChanges);
     this.syncOrderPrices(priceChanges, 'product_update');
     this.notifyChanges(priceChanges.size > 0);
   }
@@ -63,20 +63,11 @@ export class PricingSyncService {
     const priceChanges = new Map<string, ProductPriceChange>();
 
     for (const product of [...this.store.products]) {
-      if (product.type === ProductType.COMBO) continue;
+      if (this.hasComponents(product)) continue;
       this.applyProductRecalc(product, priceChanges);
     }
 
-    for (let pass = 0; pass < 12; pass++) {
-      let changed = false;
-      for (const product of [...this.store.products]) {
-        if (product.type !== ProductType.COMBO) continue;
-        if (this.applyProductRecalc(product, priceChanges)) {
-          changed = true;
-        }
-      }
-      if (!changed) break;
-    }
+    this.recalculateCompositeProducts(priceChanges);
 
     if (priceChanges.size > 0) {
       this.logger.log(
@@ -87,19 +78,23 @@ export class PricingSyncService {
     return priceChanges;
   }
 
-  private recalculateParentCombos(
+  private recalculateCompositeProducts(
     priceChanges: Map<string, ProductPriceChange>,
   ): void {
     for (let pass = 0; pass < 12; pass++) {
       let changed = false;
       for (const product of [...this.store.products]) {
-        if (product.type !== ProductType.COMBO) continue;
+        if (!this.hasComponents(product)) continue;
         if (this.applyProductRecalc(product, priceChanges)) {
           changed = true;
         }
       }
       if (!changed) break;
     }
+  }
+
+  private hasComponents(product: Product): boolean {
+    return (product.components ?? []).length > 0;
   }
 
   private applyProductRecalc(

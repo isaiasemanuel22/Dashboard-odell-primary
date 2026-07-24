@@ -17,7 +17,6 @@ import {
 } from '../../shared/utils/product.helpers';
 import { isEstampadoPrintValid } from '../../shared/utils/estampado.helpers';
 import {
-  calculateErrorMarginCost,
   getMarginForProductType,
   normalizeProfitMargins,
   resolveProductPrice,
@@ -121,12 +120,7 @@ export class ProductPricingService {
     const storedCost = Number(input.cost) || 0;
 
     if (hasComponents) {
-      return this.calculateCompositeCost(
-        input,
-        catalog,
-        settings,
-        components,
-      );
+      return this.calculateCompositeCost(input, catalog, components);
     }
 
     if (input.type === ProductType.FDM || input.type === ProductType.RESINA) {
@@ -164,20 +158,15 @@ export class ProductPricingService {
   private calculateCompositeCost(
     input: ProductPricingInput,
     catalog: Product[],
-    settings: GeneralSettings,
     components: ProductPricingInput['components'],
   ): Observable<{ cost: number; breakdown: CostBreakdown | null }> {
     const partsCost = sumComponentsCost(catalog, components ?? []);
-    const errorMarginCost = calculateErrorMarginCost(
-      partsCost,
-      0,
-      0,
-      settings.errorMarginPercent,
-    );
+    // El margen de error ya está incluido en el costo de cada pieza.
+    const errorMarginCost = 0;
     const assemblyHours = Number(input.assemblyTimeHours) || 0;
 
     if (assemblyHours <= 0) {
-      const totalCost = partsCost + errorMarginCost;
+      const totalCost = partsCost;
       return of({
         cost: totalCost,
         breakdown: {
@@ -200,8 +189,7 @@ export class ProductPricingService {
       })
       .pipe(
         map((laborBreakdown) => {
-          const totalCost =
-            partsCost + errorMarginCost + laborBreakdown.laborCost;
+          const totalCost = partsCost + laborBreakdown.laborCost;
           return {
             cost: totalCost,
             breakdown: {

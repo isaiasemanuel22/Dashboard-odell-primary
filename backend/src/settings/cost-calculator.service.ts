@@ -137,13 +137,8 @@ export class CostCalculatorService {
   ): CostBreakdown {
     const partsCost = this.sumComponentsCost(components);
     const assemblyHours = Number(assemblyTimeHours) || 0;
-    const settings = this.store.generalSettings;
-    const errorMarginCost = this.calculateErrorMarginCost(
-      partsCost,
-      0,
-      0,
-      settings,
-    );
+    // El margen de error ya está incluido en el costo de cada pieza.
+    const errorMarginCost = 0;
 
     if (assemblyHours <= 0) {
       return {
@@ -152,7 +147,7 @@ export class CostCalculatorService {
         machineCost: 0,
         errorMarginCost,
         laborCost: 0,
-        totalCost: partsCost + errorMarginCost,
+        totalCost: partsCost,
       };
     }
 
@@ -169,7 +164,7 @@ export class CostCalculatorService {
       machineCost: 0,
       errorMarginCost,
       laborCost: laborBreakdown.laborCost,
-      totalCost: partsCost + errorMarginCost + laborBreakdown.laborCost,
+      totalCost: partsCost + laborBreakdown.laborCost,
     };
   }
 
