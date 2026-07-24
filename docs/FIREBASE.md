@@ -39,7 +39,9 @@ Al guardar las claves, la app redirige a `/login` antes de entrar al dashboard.
 
 ## 4. Storage (imágenes de productos)
 
-En Firebase Console → **Storage** → **Get started** (obligatorio la primera vez).
+En Firebase Console → **Storage** → **Comenzar** / **Get started** (obligatorio la primera vez).
+
+> **Si el upload devuelve 500 con "The specified bucket does not exist"**, el bucket todavía no fue creado. Hay que completar ese paso en la consola (desde septiembre 2024 suele requerir plan **Blaze**; el uso básico sigue dentro del tier gratuito). Copiá el nombre exacto del bucket (p. ej. `dashboard-odell-2.firebasestorage.app`) a `FIREBASE_STORAGE_BUCKET` en Heroku.
 
 Las imágenes se suben con **POST /api/upload** desde el frontend; el **backend** las guarda en Firebase Storage con la cuenta de servicio (evita errores CORS del navegador).
 

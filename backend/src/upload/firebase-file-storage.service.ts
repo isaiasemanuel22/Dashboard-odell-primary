@@ -1,4 +1,8 @@
-import { Injectable, Logger } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+} from '@nestjs/common';
 import { randomUUID } from 'crypto';
 import { readFileSync, unlinkSync } from 'fs';
 import { getStorage } from 'firebase-admin/storage';
@@ -42,7 +46,7 @@ export class FirebaseFileStorageService implements FileStorage {
       this.logger.error(
         `Error al subir a Firebase Storage: ${this.errorMessage(error)}`,
       );
-      throw error;
+      throw this.toUploadException(error, bucketName);
     } finally {
       this.deleteFile(file.path);
     }
@@ -63,6 +67,17 @@ export class FirebaseFileStorageService implements FileStorage {
     } catch {
       // Ignorar error al borrar archivo temporal.
     }
+  }
+
+  private toUploadException(error: unknown, bucketName: string): Error {
+    const raw = this.errorMessage(error);
+    if (/bucket does not exist|notFound/i.test(raw)) {
+      return new ServiceUnavailableException(
+        `Firebase Storage no está activo (bucket "${bucketName}" inexistente). ` +
+          'En Firebase Console → Storage → "Comenzar", y verificá FIREBASE_STORAGE_BUCKET.',
+      );
+    }
+    return error instanceof Error ? error : new Error(raw);
   }
 
   private errorMessage(error: unknown): string {

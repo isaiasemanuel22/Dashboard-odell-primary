@@ -6,7 +6,7 @@ import { ProductsService } from './products.service';
 export class MediaUploadService {
   private readonly productsService = inject(ProductsService);
 
-  /** Sube vía POST /api/upload; el backend guarda en Firebase Storage o en disco local. */
+  /** Sube vía POST /api/upload; el backend guarda en Firebase Storage. */
   uploadProductImage(file: File): Observable<string> {
     return this.productsService
       .uploadImage(file)
