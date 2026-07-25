@@ -16,6 +16,8 @@ import {
   EstampadoPressCycle,
   EstampadoPrintSpec,
   EstampadoSupplyLine,
+  FdmFilamentLine,
+  ProductAttachment,
 } from '../interfaces';
 
 export class ProductComponentDto {
@@ -26,6 +28,49 @@ export class ProductComponentDto {
   @IsNumber()
   @Min(1)
   quantity!: number;
+}
+
+export class FdmFilamentLineDto {
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
+  @IsEnum(FilamentType)
+  filamentType!: FilamentType;
+
+  @IsNumber()
+  @Min(0.1)
+  grams!: number;
+
+  @IsOptional()
+  @IsString()
+  brand?: string;
+
+  @IsOptional()
+  @IsString()
+  label?: string;
+}
+
+export class ProductAttachmentDto {
+  @IsString()
+  @IsNotEmpty()
+  id!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  url!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  mimeType!: string;
+
+  @IsNumber()
+  @Min(0)
+  size!: number;
 }
 
 export class CreateCategoryDto {
@@ -48,6 +93,12 @@ export class CreateProductDto {
   @IsOptional()
   @IsString({ each: true })
   images?: string[];
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProductAttachmentDto)
+  attachments?: ProductAttachmentDto[];
 
   @IsOptional()
   @IsString({ each: true })
@@ -97,6 +148,12 @@ export class CreateProductDto {
   @IsOptional()
   @IsEnum(FilamentType)
   filamentType?: FilamentType;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FdmFilamentLineDto)
+  filaments?: FdmFilamentLineDto[];
 
   @IsOptional()
   @IsEnum(ResinType)

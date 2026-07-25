@@ -1,7 +1,7 @@
 /** Generado por scripts/prepare-env.mjs — no editar a mano */
 export const environment = {
   production: true,
-  apiUrl: "https://odell-dashboard-api-dfb6810b38bf.herokuapp.com/api",
+  apiUrl: "/api",
   firebase: {
     apiKey: "AIzaSyBXqQBoiPR97ZxTBmStvlpNccejCM5DD4k",
     authDomain: "dashboard-odell-2.firebaseapp.com",

@@ -1,6 +1,4 @@
 import { Injectable } from '@nestjs/common';
-import { MessageEvent } from '@nestjs/common';
-import { Observable, Subject, interval, map, merge } from 'rxjs';
 import {
   RealtimeAction,
   RealtimeEntity,
@@ -14,9 +12,11 @@ export interface RealtimeNotifyOptions {
   id?: string;
 }
 
+const MAX_BUFFERED_EVENTS = 250;
+
 @Injectable()
 export class RealtimeService {
-  private readonly events$ = new Subject<RealtimeEvent>();
+  private readonly recentEvents: RealtimeEvent[] = [];
 
   notify(
     scopes: RealtimeScope | RealtimeScope[],
@@ -26,7 +26,7 @@ export class RealtimeService {
     const unique = scopeList.length ? [...new Set(scopeList)] : (['all'] as RealtimeScope[]);
     const at = new Date().toISOString();
     for (const scope of unique) {
-      this.events$.next({
+      this.pushEvent({
         scope,
         at,
         action: options?.action,
@@ -36,20 +36,23 @@ export class RealtimeService {
     }
   }
 
-  stream(): Observable<MessageEvent> {
-    const heartbeat = interval(30_000).pipe(
-      map(
-        () =>
-          ({
-            data: { type: 'ping', at: new Date().toISOString() },
-          }) as MessageEvent,
-      ),
-    );
+  getEventsSince(since?: string): RealtimeEvent[] {
+    if (!since?.trim()) {
+      return [...this.recentEvents];
+    }
 
-    const changes = this.events$.pipe(
-      map((event) => ({ data: event }) as MessageEvent),
-    );
+    const sinceMs = Date.parse(since);
+    if (Number.isNaN(sinceMs)) {
+      return [...this.recentEvents];
+    }
 
-    return merge(changes, heartbeat);
+    return this.recentEvents.filter((event) => Date.parse(event.at) > sinceMs);
+  }
+
+  private pushEvent(event: RealtimeEvent): void {
+    this.recentEvents.push(event);
+    if (this.recentEvents.length > MAX_BUFFERED_EVENTS) {
+      this.recentEvents.splice(0, this.recentEvents.length - MAX_BUFFERED_EVENTS);
+    }
   }
 }

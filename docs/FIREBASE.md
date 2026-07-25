@@ -89,9 +89,9 @@ Reiniciá el backend. Sin este archivo la API sigue abierta (modo desarrollo).
 | Imágenes | No se pueden subir | Backend → Firebase Storage |
 | API | Sin token | Header `Authorization: Bearer …` |
 
-## 7. Tiempo real (SSE)
+## 7. Sincronización entre PCs
 
-El stream `/api/events/stream` queda público porque el navegador no envía headers custom en `EventSource`. El resto de la API sí requiere token cuando Firebase Admin está activo.
+El frontend consulta `GET /api/events/poll?since=...` cada ~15 segundos (solo con la pestaña visible). Usa el mismo token Bearer que el resto de la API.
 
 ## Costos
 

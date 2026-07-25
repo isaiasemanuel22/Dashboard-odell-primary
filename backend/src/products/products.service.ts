@@ -25,11 +25,20 @@ import {
   normalizeEstampadoPrints,
   normalizeEstampadoSupplies,
 } from './estampado-product.util';
+import {
+  resolveFdmFilaments,
+  storedFdmFilaments,
+  totalFdmFilamentGrams,
+} from './fdm-product.util';
 import { normalizeProductComponents } from './product-component.util';
 import {
   normalizeProductImages,
   validateProductImageUrls,
 } from './product-image.util';
+import {
+  normalizeProductAttachments,
+  validateProductAttachments,
+} from './product-attachment.util';
 
 @Injectable()
 export class ProductsService {
@@ -92,6 +101,7 @@ export class ProductsService {
       id: this.store.nextId('prod', this.store.products),
       name: data.name.trim(),
       images: normalizeProductImages(data.images ?? []),
+      attachments: normalizeProductAttachments(data.attachments ?? []),
       updatedAt: now,
       price: pricing.price,
       cost: pricing.cost,
@@ -138,15 +148,23 @@ export class ProductsService {
       };
     } else {
       const dto = data;
+      const fdmFields =
+        dto.type === ProductType.FDM
+          ? this.resolveFdmProductFields(dto)
+          : null;
       product = {
         ...base,
         type: dto.type as ProductType.FDM | ProductType.RESINA,
-        grams: Number(dto.grams) || 0,
+        grams: fdmFields?.grams ?? (Number(dto.grams) || 0),
         printTimeHours: Number(dto.printTimeHours) || 0,
         workTimeHours: Number(dto.workTimeHours) || 0,
         brand: dto.brand?.trim(),
         filamentType:
-          dto.type === ProductType.FDM ? dto.filamentType : undefined,
+          dto.type === ProductType.FDM
+            ? fdmFields?.filamentType
+            : undefined,
+        filaments:
+          dto.type === ProductType.FDM ? fdmFields?.filaments : undefined,
         resinType:
           dto.type === ProductType.RESINA ? dto.resinType : undefined,
         washMinutes:
@@ -208,6 +226,10 @@ export class ProductsService {
               'filamentType' in data && data.filamentType !== undefined
                 ? data.filamentType
                 : (existing as Product3D).filamentType,
+            filaments:
+              'filaments' in data && data.filaments !== undefined
+                ? data.filaments
+                : (existing as Product3D).filaments,
             resinType:
               'resinType' in data && data.resinType !== undefined
                 ? data.resinType
@@ -257,6 +279,11 @@ export class ProductsService {
       updatedAt: new Date().toISOString(),
       categoryIds: data.categoryIds ?? existing.categoryIds,
       images: normalizeProductImages(data.images ?? existing.images),
+      attachments: normalizeProductAttachments(
+        data.attachments !== undefined
+          ? data.attachments
+          : existing.attachments ?? [],
+      ),
       published:
         data.published !== undefined ? data.published !== false : existing.published !== false,
       includesPieces:
@@ -314,6 +341,12 @@ export class ProductsService {
       }
       if ('filamentType' in data && data.filamentType !== undefined) {
         current.filamentType = data.filamentType;
+      }
+      if ('filaments' in data && data.filaments !== undefined) {
+        const fdmFields = this.resolveFdmProductFields(data, current);
+        current.filaments = fdmFields.filaments;
+        current.grams = fdmFields.grams;
+        current.filamentType = fdmFields.filamentType;
       }
       if ('resinType' in data && data.resinType !== undefined) {
         current.resinType = data.resinType;
@@ -387,6 +420,14 @@ export class ProductsService {
 
     if (!isUpdate || data.images !== undefined) {
       validateProductImageUrls(data.images);
+    }
+
+    if (!isUpdate || data.attachments !== undefined) {
+      validateProductAttachments(
+        data.attachments !== undefined
+          ? normalizeProductAttachments(data.attachments)
+          : undefined,
+      );
     }
 
     if (data.type === ProductType.COMBO) {
@@ -466,6 +507,29 @@ export class ProductsService {
         );
       }
     }
+  }
+
+  private resolveFdmProductFields(
+    data: Partial<CreateProductDto>,
+    fallback?: Product3D,
+  ) {
+    const filaments = storedFdmFilaments(
+      resolveFdmFilaments({
+        filaments: data.filaments ?? fallback?.filaments,
+        grams: data.grams ?? fallback?.grams,
+        filamentType: data.filamentType ?? fallback?.filamentType,
+        brand: data.brand ?? fallback?.brand,
+      }),
+    );
+    const grams = filaments.length
+      ? totalFdmFilamentGrams(filaments)
+      : Number(data.grams ?? fallback?.grams) || 0;
+    const filamentType =
+      filaments.length === 1
+        ? filaments[0]!.filamentType
+        : data.filamentType ?? fallback?.filamentType;
+
+    return { filaments, grams, filamentType };
   }
 
   private validateComponents(

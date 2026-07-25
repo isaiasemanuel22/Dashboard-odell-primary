@@ -12,8 +12,13 @@ import {
   normalizeEstampadoPrints,
   normalizeEstampadoSupplies,
 } from '../../products/estampado-product.util';
+import {
+  normalizeFdmFilaments,
+  totalFdmFilamentGrams,
+} from '../../products/fdm-product.util';
 import { normalizeProductComponents } from '../../products/product-component.util';
 import { normalizeProductImages } from '../../products/product-image.util';
+import { normalizeProductAttachments } from '../../products/product-attachment.util';
 
 export function mapProductFromDb(row: {
   id: string;
@@ -46,12 +51,15 @@ export function mapProductFromDb(row: {
   estampadoPrints?: Prisma.JsonValue;
   estampadoPressCycles?: Prisma.JsonValue;
   estampadoSupplies?: Prisma.JsonValue;
+  fdmFilaments?: Prisma.JsonValue;
+  attachments?: Prisma.JsonValue;
 }): Product {
   const components = normalizeProductComponents(fromJson(row.components));
   const base = {
     id: row.id,
     name: row.name,
     images: normalizeProductImages(fromJson<string[]>(row.images) ?? []),
+    attachments: normalizeProductAttachments(fromJson(row.attachments ?? [])),
     updatedAt: row.updatedAt.toISOString(),
     price: row.price,
     cost: row.cost,
@@ -109,6 +117,11 @@ export function mapProductFromDb(row: {
     cureMinutes: row.cureMinutes ?? undefined,
     brand: row.brand ?? undefined,
     filamentType: row.filamentType as Product3D['filamentType'],
+    filaments: normalizeFdmFilaments(fromJson(row.fdmFilaments ?? []), {
+      grams: row.grams ?? undefined,
+      filamentType: row.filamentType as Product3D['filamentType'],
+      brand: row.brand ?? undefined,
+    }),
     resinType: row.resinType as Product3D['resinType'],
   } as Product;
 }
@@ -116,12 +129,25 @@ export function mapProductFromDb(row: {
 export function mapProductToDb(product: Product) {
   const estampado =
     product.type === ProductType.ESTAMPADO ? (product as ProductEstampado) : null;
+  const product3d =
+    product.type === ProductType.FDM || product.type === ProductType.RESINA
+      ? (product as Product3D)
+      : null;
   const isCombo = product.type === ProductType.COMBO;
+  const fdmFilaments =
+    product3d?.type === ProductType.FDM
+      ? normalizeFdmFilaments(product3d.filaments, {
+          grams: product3d.grams,
+          filamentType: product3d.filamentType,
+          brand: product3d.brand,
+        }).filter((line) => line.grams > 0)
+      : [];
 
   return {
     id: product.id,
     name: product.name,
     images: toInputJson(product.images),
+    attachments: toInputJson(product.attachments ?? []),
     updatedAt: new Date(product.updatedAt),
     price: product.price,
     cost: product.cost,
@@ -134,7 +160,12 @@ export function mapProductToDb(product: Product) {
       isCombo || product.includesPieces === true || product.components.length > 0,
     components: toInputJson(product.components),
     assemblyTimeHours: product.assemblyTimeHours,
-    grams: !isCombo && 'grams' in product ? product.grams : null,
+    grams:
+      !isCombo && product3d
+        ? product3d.type === ProductType.FDM && fdmFilaments.length
+          ? totalFdmFilamentGrams(fdmFilaments)
+          : product3d.grams
+        : null,
     printTimeHours:
       !isCombo && 'printTimeHours' in product ? product.printTimeHours : null,
     workTimeHours:
@@ -156,5 +187,6 @@ export function mapProductToDb(product: Product) {
     estampadoPrints: toInputJson(estampado?.prints ?? []),
     estampadoPressCycles: toInputJson(estampado?.pressCycles ?? []),
     estampadoSupplies: toInputJson(estampado?.supplies ?? []),
+    fdmFilaments: toInputJson(fdmFilaments),
   };
 }

@@ -1,0 +1,95 @@
+<ng-template #uploadContent>
+  <div class="db-attachment-upload__list">
+    @for (attachment of attachments; track attachment.id; let i = $index) {
+      <div class="db-attachment-upload__item">
+        <a
+          class="db-attachment-upload__link"
+          [href]="attachment.url"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <span class="db-attachment-upload__name">{{ attachment.name }}</span>
+          <span class="db-attachment-upload__meta">
+            {{ formatFileSize(attachment.size) }} · {{ attachment.mimeType }}
+          </span>
+        </a>
+        <button
+          type="button"
+          class="db-attachment-upload__remove"
+          [disabled]="disabled || uploading"
+          (click)="removeAttachment(i)"
+          aria-label="Quitar adjunto"
+        >
+          ×
+        </button>
+      </div>
+    }
+
+    @for (item of staged; track item.id) {
+      <div class="db-attachment-upload__item db-attachment-upload__item--pending">
+        <div class="db-attachment-upload__pending">
+          <span class="db-attachment-upload__name">{{ item.file.name }}</span>
+          <span class="db-attachment-upload__badge">Pendiente</span>
+        </div>
+        <button
+          type="button"
+          class="db-attachment-upload__remove"
+          [disabled]="disabled || uploading"
+          (click)="removeStaged(item.id)"
+          aria-label="Quitar archivo pendiente"
+        >
+          ×
+        </button>
+      </div>
+    }
+  </div>
+
+  @if (canAddMore) {
+    <label class="db-attachment-upload__add" [attr.for]="inputId">
+      @if (uploading) {
+        {{ uploadingLabel }}
+      } @else {
+        {{ addLabel }}
+      }
+      <input
+        [id]="inputId"
+        type="file"
+        [multiple]="multiple"
+        [disabled]="disabled || uploading"
+        (change)="onFileInputChange($event)"
+      />
+    </label>
+  }
+
+  @if (hasStaged && uploadFn && previewBeforeUpload) {
+    <div class="db-attachment-upload__actions">
+      <db-button
+        [label]="uploading ? uploadingLabel : uploadLabel + ' (' + staged.length + ')'"
+        variant="secondary"
+        format="soft"
+        [disabled]="disabled || uploading"
+        (clicked)="uploadStaged()"
+      />
+      <db-button
+        label="Cancelar"
+        variant="secondary"
+        format="soft"
+        [disabled]="disabled || uploading"
+        (clicked)="clearStaged()"
+      />
+    </div>
+  }
+</ng-template>
+
+@if (label) {
+  <db-form-field [label]="label" [hint]="hint" [error]="error || uploadError">
+    <ng-container *ngTemplateOutlet="uploadContent" />
+  </db-form-field>
+} @else {
+  <div class="db-attachment-upload">
+    <ng-container *ngTemplateOutlet="uploadContent" />
+    @if (error || uploadError) {
+      <db-form-error>{{ error || uploadError }}</db-form-error>
+    }
+  </div>
+}

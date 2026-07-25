@@ -63,9 +63,8 @@ export function mapOrderFromDb(row: {
   return order;
 }
 
-export function mapOrderToDb(order: Order) {
+function mapOrderScalarsToDb(order: Order) {
   return {
-    id: order.id,
     customerId: order.customerId,
     customerName: order.customerName,
     services: toInputJson(order.services),
@@ -80,6 +79,18 @@ export function mapOrderToDb(order: Order) {
     statusHistory: toInputJson(order.statusHistory ?? []),
     priceHistory: toInputJson(order.priceHistory ?? []),
   };
+}
+
+/** Usa campos escalares (unchecked) para evitar ambigüedad con relaciones en upsert. */
+export function mapOrderToDbCreate(order: Order): Prisma.OrderUncheckedCreateInput {
+  return {
+    id: order.id,
+    ...mapOrderScalarsToDb(order),
+  };
+}
+
+export function mapOrderToDbUpdate(order: Order): Prisma.OrderUncheckedUpdateInput {
+  return mapOrderScalarsToDb(order);
 }
 
 export function mapOrderItemToDb(orderId: string, index: number, item: OrderItem) {

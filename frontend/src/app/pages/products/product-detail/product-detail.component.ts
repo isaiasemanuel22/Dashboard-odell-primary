@@ -6,21 +6,27 @@ import {
   OnInit,
   inject,
 } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { firstValueFrom } from 'rxjs';
 import { catchError, map, of, switchMap } from 'rxjs';
 import {
   Category,
   Product,
+  ProductAttachment,
   isProduct3D,
 } from '../../../core/models';
 import { RealtimeEvent } from '../../../core/models/realtime.model';
 import { CategoryCatalogService } from '../../../core/services/category-catalog.service';
+import { MediaUploadService } from '../../../core/services/media-upload.service';
 import { ProductCatalogService } from '../../../core/services/product-catalog.service';
 import { ProductsService } from '../../../core/services/products.service';
 import { RealtimeCatalogSyncService } from '../../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
 import {
+  DbAttachmentUploadComponent,
+  DbAttachmentUploadFn,
   DbButtonComponent,
   DbSkeletonComponent,
   DbStateMessageComponent,
@@ -29,6 +35,7 @@ import {
   ProductImageCarouselComponent,
   ProductPricingComponent,
 } from '@general-components';
+import { normalizeProductAttachments } from '../../../shared/utils/product-attachment.helpers';
 import { FormDialogService } from '../../../shared/form-dialogs/public-api';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import { resolveCategoryNames, isProductPublished, normalizeProductComponents } from '../../../shared/utils/product.helpers';
@@ -42,11 +49,13 @@ import {
   selector: 'app-product-detail',
   standalone: true,
   imports: [
+    FormsModule,
     RouterLink,
     DateShortPipe,
     FilamentTypeLabelPipe,
     ResinTypeLabelPipe,
     DbButtonComponent,
+    DbAttachmentUploadComponent,
     DbSkeletonComponent,
     DbStateMessageComponent,
     ProductBadgesComponent,
@@ -69,14 +78,21 @@ export class ProductDetailComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly formDialogs = inject(FormDialogService);
+  private readonly mediaUpload = inject(MediaUploadService);
 
   product: Product | null = null;
+  attachments: ProductAttachment[] = [];
   categories: Category[] = [];
   catalogProducts: Product[] = [];
   loading = true;
   notFound = false;
 
   publishLoading = false;
+  attachmentsSaving = false;
+  attachmentsError = '';
+
+  readonly uploadProductAttachment: DbAttachmentUploadFn = (file) =>
+    firstValueFrom(this.mediaUpload.uploadProductAttachment(file));
 
   isProduct3D = isProduct3D;
 
@@ -90,6 +106,7 @@ export class ProductDetailComponent implements OnInit {
       .subscribe((result) => {
         if (!result) return;
         this.product = result.product;
+        this.attachments = normalizeProductAttachments(result.product.attachments);
         this.categories = result.categories;
         this.catalogProducts = result.catalog;
         this.loading = false;
@@ -101,7 +118,7 @@ export class ProductDetailComponent implements OnInit {
       'products',
       (event) => this.handleRealtime(event),
       {
-        skip: () => this.publishLoading,
+        skip: () => this.publishLoading || this.attachmentsSaving,
       },
     );
   }
@@ -138,6 +155,7 @@ export class ProductDetailComponent implements OnInit {
         this.formDialogs.openProduct(fresh).subscribe((updated) => {
           if (!updated) return;
           this.product = updated;
+          this.attachments = normalizeProductAttachments(updated.attachments);
           this.catalogService.upsert(updated);
           this.cdr.markForCheck();
         });
@@ -210,11 +228,46 @@ export class ProductDetailComponent implements OnInit {
     this.loadProduct(id).subscribe((result) => {
       if (!result) return;
       this.product = result.product;
+      this.attachments = normalizeProductAttachments(result.product.attachments);
       this.categories = result.categories;
       this.catalogProducts = result.catalog;
       this.loading = false;
       this.cdr.markForCheck();
     });
+  }
+
+  onAttachmentsChange(next: ProductAttachment[]): void {
+    if (!this.product || this.attachmentsSaving) return;
+
+    const previous = this.product;
+    const previousAttachments = this.attachments;
+    this.attachments = next;
+    this.attachmentsSaving = true;
+    this.attachmentsError = '';
+    this.product = { ...this.product, attachments: next };
+    this.cdr.markForCheck();
+
+    this.productsService
+      .updateProduct(previous.id, { attachments: next })
+      .subscribe({
+        next: (updated) => {
+          this.attachmentsSaving = false;
+          this.product = updated;
+          this.attachments = normalizeProductAttachments(updated.attachments);
+          this.catalogService.upsert(updated);
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.attachmentsSaving = false;
+          this.product = previous;
+          this.attachments = previousAttachments;
+          this.attachmentsError = extractApiErrorMessage(
+            err,
+            'No se pudieron guardar los archivos adjuntos',
+          );
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   private loadProduct(id: string | null) {

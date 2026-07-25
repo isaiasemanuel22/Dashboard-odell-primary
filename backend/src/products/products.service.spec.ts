@@ -11,6 +11,7 @@ describe('ProductsService', () => {
     name: 'Test',
     type: ProductType.FDM,
     images: [],
+    attachments: [],
     updatedAt: '2026-07-01T10:00:00.000Z',
     price: 1000,
     cost: 500,

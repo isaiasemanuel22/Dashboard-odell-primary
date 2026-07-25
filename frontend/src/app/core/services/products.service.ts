@@ -84,4 +84,20 @@ export class ProductsService {
       formData,
     );
   }
+
+  uploadAttachment(file: File): Observable<{
+    url: string;
+    name: string;
+    mimeType: string;
+    size: number;
+  }> {
+    const formData = new FormData();
+    formData.append('file', file);
+    return this.http.post<{
+      url: string;
+      name: string;
+      mimeType: string;
+      size: number;
+    }>(`${this.baseUrl}/upload/attachment`, formData);
+  }
 }

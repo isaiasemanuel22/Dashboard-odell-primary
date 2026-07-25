@@ -148,6 +148,7 @@ export interface CalculateCostDto {
   quantity?: number;
   brand?: string;
   filamentType?: FilamentType;
+  filaments?: FdmFilamentLine[];
   resinType?: ResinType;
   paperType?: PaperType;
   widthCm?: number;
@@ -178,6 +179,7 @@ export interface ProductPricingInput {
   quantity?: number;
   brand?: string;
   filamentType?: FilamentType;
+  filaments?: FdmFilamentLine[];
   resinType?: ResinType;
   paperType?: PaperType;
   widthCm?: number;
@@ -207,6 +209,7 @@ export interface ProductBase {
   id: string;
   name: string;
   images: string[];
+  attachments: ProductAttachment[];
   updatedAt: string;
   price: number;
   cost: number;
@@ -231,6 +234,7 @@ export interface Product3D extends ProductBase {
   cureMinutes?: number;
   brand?: string;
   filamentType?: FilamentType;
+  filaments?: FdmFilamentLine[];
   resinType?: ResinType;
 }
 
@@ -258,6 +262,22 @@ export interface EstampadoSupplyLine {
   supplyId: string;
   quantity: number;
   label?: string;
+}
+
+export interface FdmFilamentLine {
+  id: string;
+  filamentType: FilamentType;
+  grams: number;
+  brand?: string;
+  label?: string;
+}
+
+export interface ProductAttachment {
+  id: string;
+  name: string;
+  url: string;
+  mimeType: string;
+  size: number;
 }
 
 export interface ProductEstampado extends ProductBase {
@@ -501,6 +521,7 @@ export type CreateProductDto = {
   name: string;
   type: ProductType;
   images?: string[];
+  attachments?: ProductAttachment[];
   categoryIds?: string[];
   price?: number;
   cost?: number;
@@ -512,6 +533,7 @@ export type CreateProductDto = {
   workTimeHours?: number;
   brand?: string;
   filamentType?: FilamentType;
+  filaments?: FdmFilamentLine[];
   resinType?: ResinType;
   washMinutes?: number;
   cureMinutes?: number;

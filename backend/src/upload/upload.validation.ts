@@ -61,3 +61,44 @@ export function validateUploadedImage(
 
   return { ok: true, mime: detectedMime };
 }
+
+const BLOCKED_ATTACHMENT_EXTENSIONS = new Set([
+  '.exe',
+  '.bat',
+  '.cmd',
+  '.com',
+  '.msi',
+  '.scr',
+  '.ps1',
+  '.sh',
+  '.bash',
+  '.dll',
+  '.so',
+  '.dylib',
+  '.jar',
+  '.app',
+  '.deb',
+  '.rpm',
+  '.apk',
+]);
+
+export function isBlockedAttachmentExtension(filename: string): boolean {
+  const extension = extname(filename).toLowerCase();
+  return BLOCKED_ATTACHMENT_EXTENSIONS.has(extension);
+}
+
+export function validateUploadedAttachment(
+  file: Express.Multer.File,
+): { ok: true; mime: string } | { ok: false; reason: string } {
+  const name = file.originalname?.trim() ?? '';
+  if (!name) {
+    return { ok: false, reason: 'El archivo debe tener un nombre' };
+  }
+
+  if (isBlockedAttachmentExtension(name)) {
+    return { ok: false, reason: 'Tipo de archivo no permitido' };
+  }
+
+  const mime = file.mimetype?.trim() || 'application/octet-stream';
+  return { ok: true, mime };
+}

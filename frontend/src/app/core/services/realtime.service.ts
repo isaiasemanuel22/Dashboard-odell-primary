@@ -1,71 +1,60 @@
 import { DestroyRef, Injectable, inject } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Observable, Subject, debounceTime, filter, map } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { Observable, Subject, debounceTime, filter, firstValueFrom, map } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { AuthService } from '../auth/auth.service';
 import {
   RealtimeEvent,
-  RealtimeMessage,
   RealtimeScope,
-  isRealtimeEvent,
 } from '../models/realtime.model';
 
 export interface SmartReloadOptions {
   skip?: () => boolean;
 }
 
+interface RealtimePollResponse {
+  events: RealtimeEvent[];
+  serverTime: string;
+}
+
+const POLL_INTERVAL_MS = 15_000;
+
 @Injectable({ providedIn: 'root' })
 export class RealtimeService {
-  private readonly auth = inject(AuthService);
+  private readonly http = inject(HttpClient);
   private readonly eventSubject = new Subject<RealtimeEvent>();
-  private eventSource: EventSource | null = null;
+  private pollTimer: ReturnType<typeof setInterval> | null = null;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
-  private connecting = false;
+  private polling = false;
+  private lastPollAt = new Date(0).toISOString();
+  private readonly onVisibilityChange = () => {
+    if (document.visibilityState === 'visible') {
+      void this.poll();
+    }
+  };
 
   readonly events$ = this.eventSubject.asObservable();
 
-  async connect(): Promise<void> {
-    if (this.eventSource || this.connecting) return;
-    this.connecting = true;
+  connect(): void {
+    if (this.pollTimer) return;
 
-    try {
-      let url = `${environment.apiUrl}/events/stream`;
-      const token = await this.auth.getIdToken();
-      if (token) {
-        url += `?token=${encodeURIComponent(token)}`;
+    void this.poll();
+    this.pollTimer = setInterval(() => {
+      if (document.visibilityState === 'visible') {
+        void this.poll();
       }
+    }, POLL_INTERVAL_MS);
 
-      this.eventSource = new EventSource(url);
-
-      this.eventSource.onopen = () => {
-        this.connecting = false;
-      };
-
-      this.eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data as string) as RealtimeMessage;
-          if (isRealtimeEvent(data)) {
-            this.eventSubject.next(data);
-          }
-        } catch {
-          // Ignorar mensajes mal formados.
-        }
-      };
-
-      this.eventSource.onerror = () => {
-        this.connecting = false;
-        this.close();
-        this.scheduleReconnect();
-      };
-    } catch {
-      this.connecting = false;
-      this.scheduleReconnect();
-    }
+    document.addEventListener('visibilitychange', this.onVisibilityChange);
   }
 
   disconnect(): void {
     this.clearReconnect();
-    this.close();
+    if (this.pollTimer) {
+      clearInterval(this.pollTimer);
+      this.pollTimer = null;
+    }
+    document.removeEventListener('visibilitychange', this.onVisibilityChange);
   }
 
   watchEvents(
@@ -79,12 +68,10 @@ export class RealtimeService {
     );
   }
 
-  /** Emite cuando llega un cambio relevante para los scopes indicados. */
   watchScopes(scopes: RealtimeScope | RealtimeScope[]): Observable<void> {
     return this.watchEvents(scopes).pipe(map(() => void 0));
   }
 
-  /** Suscripción con limpieza automática al destruir el componente. */
   bindReload(
     destroyRef: DestroyRef,
     scopes: RealtimeScope | RealtimeScope[],
@@ -113,11 +100,34 @@ export class RealtimeService {
       });
   }
 
+  private async poll(): Promise<void> {
+    if (this.polling) return;
+    this.polling = true;
+
+    try {
+      const response = await firstValueFrom(
+        this.http.get<RealtimePollResponse>(`${environment.apiUrl}/events/poll`, {
+          params: { since: this.lastPollAt },
+        }),
+      );
+
+      this.lastPollAt = response.serverTime;
+      for (const event of response.events) {
+        this.eventSubject.next(event);
+      }
+      this.clearReconnect();
+    } catch {
+      this.scheduleReconnect();
+    } finally {
+      this.polling = false;
+    }
+  }
+
   private scheduleReconnect(): void {
     if (this.reconnectTimer) return;
     this.reconnectTimer = setTimeout(() => {
       this.reconnectTimer = null;
-      void this.connect();
+      void this.poll();
     }, 5000);
   }
 
@@ -125,10 +135,5 @@ export class RealtimeService {
     if (!this.reconnectTimer) return;
     clearTimeout(this.reconnectTimer);
     this.reconnectTimer = null;
-  }
-
-  private close(): void {
-    this.eventSource?.close();
-    this.eventSource = null;
   }
 }

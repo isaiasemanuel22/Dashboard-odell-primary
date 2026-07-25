@@ -15,6 +15,10 @@ import {
   normalizeEstampadoPrints,
   normalizeEstampadoSupplies,
 } from './estampado-product.util';
+import {
+  normalizeFdmFilaments,
+  resolveFdmFilaments,
+} from './fdm-product.util';
 import { normalizeProductComponents } from './product-component.util';
 
 @Injectable()
@@ -62,6 +66,14 @@ export class ProductPricingService {
     }
 
     const product3d = product as Product3D;
+    const filaments =
+      product3d.type === ProductType.FDM
+        ? normalizeFdmFilaments(product3d.filaments, {
+            grams: product3d.grams,
+            filamentType: product3d.filamentType,
+            brand: product3d.brand,
+          })
+        : [];
     return {
       type: product3d.type,
       components,
@@ -73,6 +85,7 @@ export class ProductPricingService {
       workTimeHours: product3d.workTimeHours,
       brand: product3d.brand,
       filamentType: product3d.filamentType,
+      filaments,
       resinType: product3d.resinType,
       washMinutes: product3d.washMinutes,
       cureMinutes: product3d.cureMinutes,
@@ -90,6 +103,16 @@ export class ProductPricingService {
         ? (merged as CreateProductDto)
         : null;
 
+    const filaments =
+      merged.type === ProductType.FDM
+        ? resolveFdmFilaments({
+            filaments: product3d?.filaments,
+            grams: product3d?.grams,
+            filamentType: product3d?.filamentType,
+            brand: product3d?.brand,
+          })
+        : [];
+
     return {
       type: merged.type,
       components: merged.components,
@@ -102,6 +125,7 @@ export class ProductPricingService {
       workTimeHours: product3d?.workTimeHours ?? estampadoData?.workTimeHours,
       brand: product3d?.brand,
       filamentType: product3d?.filamentType,
+      filaments,
       resinType: product3d?.resinType,
       washMinutes: product3d?.washMinutes,
       cureMinutes: product3d?.cureMinutes,

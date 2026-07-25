@@ -25,7 +25,8 @@ import {
   mapMaterialToDb,
   mapOrderFromDb,
   mapOrderItemToDb,
-  mapOrderToDb,
+  mapOrderToDbCreate,
+  mapOrderToDbUpdate,
   mapPrintJobFromDb,
   mapPrintJobToDb,
   mapProductFromDb,
@@ -405,8 +406,8 @@ export class StorePersistenceService
     for (const order of orders) {
       await tx.order.upsert({
         where: { id: order.id },
-        create: mapOrderToDb(order),
-        update: mapOrderToDb(order),
+        create: mapOrderToDbCreate(order),
+        update: mapOrderToDbUpdate(order),
       });
 
       await tx.orderItem.deleteMany({ where: { orderId: order.id } });

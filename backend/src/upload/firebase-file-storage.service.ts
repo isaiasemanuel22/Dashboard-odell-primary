@@ -21,7 +21,7 @@ export class FirebaseFileStorageService implements FileStorage {
     ensureUploadsDir();
   }
 
-  async saveUploadedFile(file: Express.Multer.File) {
+  async saveUploadedFile(file: Express.Multer.File, folder = 'products') {
     const bucketName = this.firebaseAdmin.getStorageBucket();
     if (!this.firebaseAdmin.isEnabled() || !bucketName) {
       throw new Error('Firebase Storage no está configurado');
@@ -29,7 +29,7 @@ export class FirebaseFileStorageService implements FileStorage {
 
     const safeName = file.originalname.replace(/[^\w.\-]+/g, '_');
     const filename = `${Date.now()}-${safeName}`;
-    const objectPath = `products/${filename}`;
+    const objectPath = `${folder.replace(/\/+$/, '')}/${filename}`;
     const token = randomUUID();
 
     try {

@@ -279,13 +279,60 @@
 
         @if (showProductionFields && isFdm) {
           <db-form-grid-full>
-            <db-select
-              label="Tipo de filamento"
-              [(ngModel)]="filamentType"
-              name="filamentType"
-              [options]="filamentTypeOptions"
-              (ngModelChange)="onProductionFieldChange()"
-            />
+            <db-fieldset legend="Filamentos">
+              <p class="components-desc">
+                Sumá cada filamento usado en la impresión. El costo de material es la suma de todos.
+              </p>
+              @for (line of filamentLines; track line.id) {
+                <div class="estampado-item">
+                  <div class="estampado-item__header">
+                    <strong>Filamento {{ $index + 1 }}</strong>
+                    @if (filamentLines.length > 1) {
+                      <db-button
+                        label="Quitar"
+                        variant="delete"
+                        format="inline"
+                        (clicked)="removeFilamentLine(line.id)"
+                      />
+                    }
+                  </div>
+                  <div class="estampado-item__grid">
+                    <db-input
+                      label="Etiqueta (opcional)"
+                      [(ngModel)]="line.label"
+                      [name]="'filamentLabel' + line.id"
+                      placeholder="Ej: Base PLA"
+                      (ngModelChange)="onProductionFieldChange()"
+                    />
+                    <db-select
+                      label="Tipo de filamento"
+                      [(ngModel)]="line.filamentType"
+                      [name]="'filamentType' + line.id"
+                      [options]="filamentTypeOptions"
+                      (ngModelChange)="onProductionFieldChange()"
+                    />
+                    <db-input
+                      label="Gramos"
+                      type="number"
+                      [(ngModel)]="line.grams"
+                      [name]="'filamentGrams' + line.id"
+                      [min]="0.1"
+                      [step]="0.1"
+                      (ngModelChange)="onProductionFieldChange()"
+                    />
+                  </div>
+                </div>
+              }
+              <db-button
+                label="+ Agregar filamento"
+                variant="secondary"
+                format="soft"
+                (clicked)="addFilamentLine()"
+              />
+              <p class="components-desc filament-total">
+                Total: {{ totalFilamentGrams }} g
+              </p>
+            </db-fieldset>
           </db-form-grid-full>
         }
 
@@ -302,16 +349,18 @@
         }
 
         @if (showProductionFields && is3D) {
-          <db-input
-            label="Gramos"
-            type="number"
-            [(ngModel)]="grams"
-            name="grams"
-            [min]="0.1"
-            [step]="0.1"
-            [required]="true"
-            (ngModelChange)="onProductionFieldChange()"
-          />
+          @if (isResina) {
+            <db-input
+              label="Gramos"
+              type="number"
+              [(ngModel)]="grams"
+              name="grams"
+              [min]="0.1"
+              [step]="0.1"
+              [required]="true"
+              (ngModelChange)="onProductionFieldChange()"
+            />
+          }
           <db-input
             label="Tiempo de impresión (h)"
             type="number"
@@ -474,6 +523,21 @@
         />
       </db-fieldset>
 
+      <db-fieldset legend="Archivos adjuntos">
+        <p class="components-desc">
+          Podés adjuntar planos, STL, PDF u otros archivos de referencia. Se suben a Firebase Storage.
+        </p>
+        <db-attachment-upload
+          #attachmentUpload
+          [(ngModel)]="attachments"
+          name="attachments"
+          [uploadFn]="uploadProductAttachment"
+        />
+        @if (attachmentUploadError) {
+          <db-form-error>{{ attachmentUploadError }}</db-form-error>
+        }
+      </db-fieldset>
+
       <db-fieldset legend="Precios">
         @if (calculatingCost) {
           <p class="pricing-hint">Calculando costo...</p>
@@ -557,11 +621,11 @@
           (clicked)="cancel.emit()"
         />
         <db-button
-          [label]="savingImages ? 'Subiendo imágenes...' : (loading ? 'Guardando...' : (product ? 'Guardar cambios' : 'Crear producto'))"
+          [label]="savingImages || savingAttachments ? 'Subiendo archivos...' : (loading ? 'Guardando...' : (product ? 'Guardar cambios' : 'Crear producto'))"
           variant="primary"
           format="solid"
           buttonType="submit"
-          [disabled]="loading || savingImages || !name.trim() || categoryIds.length < 1"
+          [disabled]="loading || savingImages || savingAttachments || !name.trim() || categoryIds.length < 1"
         />
       </db-form-footer>
     </form>

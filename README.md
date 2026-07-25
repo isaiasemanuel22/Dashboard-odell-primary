@@ -97,6 +97,6 @@ Abrir `http://localhost:4200`
 - Los datos se persisten en **MySQL** (Prisma). Sin `DATABASE_URL` la app arranca en memoria (no guarda cambios).
 - **Firebase** (opcional): login + imágenes en la nube. Ver [docs/FIREBASE.md](docs/FIREBASE.md).
 - **Deploy frontend**: Netlify (ver `netlify.toml`). Backend en Heroku u otro host.
-- Varias PCs pueden usar la misma API; los cambios se sincronizan en tiempo real (SSE).
+- Varias PCs pueden usar la misma API; los cambios se sincronizan por polling (`GET /api/events/poll` cada ~15 s).
 - Las imágenes de productos se guardan en **Firebase Storage** (URLs https en MySQL). Ver [docs/FIREBASE.md](docs/FIREBASE.md).
 - Scripts útiles en `backend/`: `npm run db:push`, `npm run db:migrate`, `npm run db:studio`.

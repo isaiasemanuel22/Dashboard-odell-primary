@@ -14,6 +14,7 @@ import type { FileStorage } from './file-storage.interface';
 import { ensureUploadsDir } from './upload.paths';
 import {
   isAllowedImageExtension,
+  validateUploadedAttachment,
   validateUploadedImage,
 } from './upload.validation';
 
@@ -71,5 +72,45 @@ export class UploadController {
 
     const stored = await this.storage.saveUploadedFile(file);
     return { url: stored.publicUrl };
+  }
+
+  @Post('attachment')
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: (_req, _file, cb) => {
+          cb(null, ensureUploadsDir());
+        },
+        filename: (_req, file, cb) => {
+          const safeName = file.originalname.replace(/[^\w.\-]+/g, '_');
+          cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`);
+        },
+      }),
+      limits: { fileSize: 25 * 1024 * 1024 },
+    }),
+  )
+  async uploadAttachment(@UploadedFile() file: Express.Multer.File) {
+    this.storage.ensureReady();
+
+    if (!file) {
+      throw new BadRequestException('No se recibió ningún archivo');
+    }
+
+    const validation = validateUploadedAttachment(file);
+    if (!validation.ok) {
+      this.storage.deleteFile(file.path);
+      throw new BadRequestException(validation.reason);
+    }
+
+    const stored = await this.storage.saveUploadedFile(
+      file,
+      'products/attachments',
+    );
+    return {
+      url: stored.publicUrl,
+      name: file.originalname.trim(),
+      mimeType: validation.mime,
+      size: file.size,
+    };
   }
 }

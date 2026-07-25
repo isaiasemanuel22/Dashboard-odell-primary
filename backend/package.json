@@ -15,6 +15,7 @@
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "kill:dev": "bash scripts/kill-dev.sh",
     "start": "npm run kill:dev && nest start",
+    "prestart:dev": "prisma generate",
     "start:dev": "npm run kill:dev && nest start --watch",
     "start:debug": "npm run kill:dev && nest start --debug --watch",
     "start:prod": "npm run kill:dev && node dist/src/main.js",

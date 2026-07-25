@@ -30,6 +30,7 @@ describe('OrdersService.getOverview', () => {
       name: 'Pieza',
       type: ProductType.FDM,
       images: [],
+      attachments: [],
       updatedAt: '2026-07-01T10:00:00.000Z',
       price: 100,
       cost: 50,

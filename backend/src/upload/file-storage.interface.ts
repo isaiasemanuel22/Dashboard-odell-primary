@@ -7,7 +7,10 @@ export interface StoredFile {
 export interface FileStorage {
   readonly uploadsDir: string;
   ensureReady(): void;
-  saveUploadedFile(file: Express.Multer.File): Promise<StoredFile>;
+  saveUploadedFile(
+    file: Express.Multer.File,
+    folder?: string,
+  ): Promise<StoredFile>;
   deleteFile(absolutePath: string): void;
 }
 

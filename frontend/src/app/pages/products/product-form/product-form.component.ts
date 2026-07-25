@@ -20,11 +20,13 @@ import {
   EstampadoPressCycle,
   EstampadoPrintSpec,
   EstampadoSupplyLine,
+  FdmFilamentLine,
   FilamentType,
   GeneralSettings,
   ImpresoWithCost,
   PaperType,
   Product,
+  ProductAttachment,
   ProductComponent,
   ProductEstampado,
   ProductType,
@@ -60,6 +62,13 @@ import {
   syncEstampadoPrintFromImpreso,
 } from '../../../shared/utils/estampado.helpers';
 import {
+  createEmptyFdmFilamentLine,
+  hasValidFdmFilamentInput,
+  normalizeFdmFilaments,
+  storedFdmFilaments,
+  totalFdmFilamentGrams,
+} from '../../../shared/utils/fdm.helpers';
+import {
   getMarginForProductType,
   marginLabelForProductType,
   normalizeProfitMargins,
@@ -74,7 +83,10 @@ import {
 } from '../../../shared/utils/select-options';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import { sanitizePersistableProductImages } from '../../../shared/utils/media-url.util';
+import { normalizeProductAttachments } from '../../../shared/utils/product-attachment.helpers';
 import {
+  DbAttachmentUploadComponent,
+  DbAttachmentUploadFn,
   DbCheckboxComponent,
   DbFieldsetComponent,
   DbFileUploadComponent,
@@ -105,6 +117,7 @@ import { FormDialogService } from '../../../shared/form-dialogs/public-api';
     DbCheckboxComponent,
     DbFieldsetComponent,
     DbFileUploadComponent,
+    DbAttachmentUploadComponent,
     DbFormErrorComponent,
     DbFormFooterComponent,
     DbButtonComponent,
@@ -134,6 +147,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   @Output() categoriesChange = new EventEmitter<Category[]>();
 
   @ViewChild('imageUpload') imageUpload?: DbFileUploadComponent;
+  @ViewChild('attachmentUpload') attachmentUpload?: DbAttachmentUploadComponent;
 
   readonly productTypeOptions = productTypeOptions();
   readonly filamentTypeOptions = filamentTypeOptions();
@@ -155,6 +169,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   suggestedPrice: number | null = null;
   categoryIds: string[] = [];
   images: string[] = [];
+  attachments: ProductAttachment[] = [];
   grams = 0;
   printTimeHours = 0;
   workTimeHours = 0;
@@ -163,6 +178,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   prints: EstampadoPrintSpec[] = [];
   pressCycles: EstampadoPressCycle[] = [];
   supplyLines: EstampadoSupplyLine[] = [];
+  filamentLines: FdmFilamentLine[] = [createEmptyFdmFilamentLine()];
   filamentType = FilamentType.PLA;
   resinType = ResinType.ESTANDAR;
   components: ProductComponent[] = [];
@@ -186,6 +202,8 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     });
   savingImages = false;
   imageUploadError = '';
+  savingAttachments = false;
+  attachmentUploadError = '';
   legacyImagesNotice = '';
 
   private costCalcTimer: ReturnType<typeof setTimeout> | null = null;
@@ -193,6 +211,9 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
 
   readonly uploadProductImage: DbFileUploadFn = (file) =>
     firstValueFrom(this.mediaUpload.uploadProductImage(file));
+
+  readonly uploadProductAttachment: DbAttachmentUploadFn = (file) =>
+    firstValueFrom(this.mediaUpload.uploadProductAttachment(file));
 
   ngOnInit(): void {
     this.categoriesList = [...this.categories];
@@ -368,6 +389,10 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     return this.availableComponentOptions.length > 0 && this.componentQty >= 1;
   }
 
+  get totalFilamentGrams(): number {
+    return totalFdmFilamentGrams(this.filamentLines);
+  }
+
   get formattedSize(): string {
     return formatPrintDimensionsCm(
       this.sizeWidthCm,
@@ -429,6 +454,8 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     if (this.isCombo) return this.components.length > 0;
     if (this.usesPieceAssembly) return this.components.length > 0;
     if (this.isEstampado) return this.hasEstampadoPricingInput();
+    if (this.isFdm) return hasValidFdmFilamentInput(this.filamentLines);
+    if (this.isResina) return Number(this.grams) > 0;
     if (!this.is3D) return false;
     return Number(this.grams) > 0;
   }
@@ -442,6 +469,22 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       this.componentQty = 1;
     }
     this.onComponentsChange();
+  }
+
+  addFilamentLine(): void {
+    this.filamentLines = [
+      ...this.filamentLines,
+      createEmptyFdmFilamentLine(),
+    ];
+    this.onProductionFieldChange();
+  }
+
+  removeFilamentLine(lineId: string): void {
+    this.filamentLines = this.filamentLines.filter((line) => line.id !== lineId);
+    if (!this.filamentLines.length) {
+      this.filamentLines = [createEmptyFdmFilamentLine()];
+    }
+    this.onProductionFieldChange();
   }
 
   addSupplyLine(): void {
@@ -465,6 +508,9 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     this.categoryPicker = '';
     if (this.isEstampado && !this.prints.length) {
       this.initEstampadoDefaults();
+    }
+    if (this.isFdm && !this.filamentLines.length) {
+      this.filamentLines = [createEmptyFdmFilamentLine()];
     }
     this.costBreakdown = null;
     this.computedPrice = null;
@@ -619,6 +665,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
 
   async onSubmit(): Promise<void> {
     this.imageUploadError = '';
+    this.attachmentUploadError = '';
 
     if (this.imageUpload?.hasPendingUploads) {
       this.savingImages = true;
@@ -635,6 +682,21 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       this.images = [...this.imageUpload.files];
     }
 
+    if (this.attachmentUpload?.hasPendingUploads) {
+      this.savingAttachments = true;
+      this.cdr.markForCheck();
+      const uploaded = await this.attachmentUpload.ensureUploaded();
+      this.savingAttachments = false;
+      if (!uploaded) {
+        this.attachmentUploadError =
+          this.attachmentUpload.uploadError ||
+          'No se pudieron subir los archivos pendientes. Revisá la conexión e intentá de nuevo.';
+        this.cdr.markForCheck();
+        return;
+      }
+      this.attachments = [...this.attachmentUpload.attachments];
+    }
+
     const payload: CreateProductPayload = {
       name: this.name.trim(),
       type: this.type,
@@ -644,6 +706,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       suggestedPrice: this.suggestedPrice,
       categoryIds: this.categoryIds,
       images: this.images,
+      attachments: this.attachments,
       published: this.isCombo ? true : this.published,
       includesPieces: this.isCombo || this.includesPieces,
       components: this.usesPieceAssembly ? this.components : [],
@@ -653,10 +716,20 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
         ? {}
         : this.is3D
           ? {
-              grams: Number(this.grams) || 0,
+              grams: this.isFdm
+                ? this.totalFilamentGrams
+                : Number(this.grams) || 0,
               printTimeHours: Number(this.printTimeHours) || 0,
               workTimeHours: Number(this.workTimeHours) || 0,
-              filamentType: this.isFdm ? this.filamentType : undefined,
+              filaments: this.isFdm
+                ? storedFdmFilaments(this.filamentLines)
+                : undefined,
+              filamentType:
+                this.isFdm && this.filamentLines.length === 1
+                  ? this.filamentLines[0]!.filamentType
+                  : this.isFdm
+                    ? this.filamentType
+                    : undefined,
               resinType: this.isResina ? this.resinType : undefined,
               washMinutes: this.isResina ? Number(this.washMinutes) || undefined : undefined,
               cureMinutes: this.isResina ? Number(this.cureMinutes) || undefined : undefined,
@@ -725,7 +798,8 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
 
     if (!this.is3D && !this.isEstampado) return;
 
-    if (this.is3D && Number(this.grams) <= 0) return;
+    if (this.is3D && this.isResina && Number(this.grams) <= 0) return;
+    if (this.isFdm && !hasValidFdmFilamentInput(this.filamentLines)) return;
 
     this.runPricingPreview();
   }
@@ -817,10 +891,20 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
         ? {}
         : this.is3D
           ? {
-              grams: Number(this.grams) || 0,
+              grams: this.isFdm
+                ? this.totalFilamentGrams
+                : Number(this.grams) || 0,
               printTimeHours: Number(this.printTimeHours) || 0,
               workTimeHours: Number(this.workTimeHours) || 0,
-              filamentType: this.isFdm ? this.filamentType : undefined,
+              filaments: this.isFdm
+                ? storedFdmFilaments(this.filamentLines)
+                : undefined,
+              filamentType:
+                this.isFdm && this.filamentLines.length === 1
+                  ? this.filamentLines[0]!.filamentType
+                  : this.isFdm
+                    ? this.filamentType
+                    : undefined,
               resinType: this.isResina ? this.resinType : undefined,
               washMinutes: this.isResina ? Number(this.washMinutes) || undefined : undefined,
               cureMinutes: this.isResina ? Number(this.cureMinutes) || undefined : undefined,
@@ -844,6 +928,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       this.categoryIds = [...this.product.categoryIds];
       const sanitizedImages = sanitizePersistableProductImages(this.product.images);
       this.images = sanitizedImages.images;
+      this.attachments = normalizeProductAttachments(this.product.attachments);
       this.legacyImagesNotice =
         sanitizedImages.removedCount > 0
           ? 'Hay fotos con URLs antiguas que ya no funcionan. Volvé a subirlas; se guardarán en Firebase Storage.'
@@ -868,6 +953,16 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
         this.printTimeHours = this.product.printTimeHours;
         this.workTimeHours = this.product.workTimeHours;
         this.filamentType = this.product.filamentType ?? FilamentType.PLA;
+        this.filamentLines = structuredClone(
+          normalizeFdmFilaments(this.product.filaments, {
+            grams: this.product.grams,
+            filamentType: this.product.filamentType,
+            brand: this.product.brand,
+          }),
+        );
+        if (!this.filamentLines.length && this.product.type === ProductType.FDM) {
+          this.filamentLines = [createEmptyFdmFilamentLine(this.filamentType)];
+        }
         this.resinType = this.product.resinType ?? ResinType.ESTANDAR;
         this.washMinutes = this.product.washMinutes ?? 0;
         this.cureMinutes = this.product.cureMinutes ?? 0;
@@ -900,6 +995,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       this.suggestedPrice = null;
       this.categoryIds = [];
       this.images = [];
+      this.attachments = [];
       this.legacyImagesNotice = '';
       this.components = [];
       this.assemblyTimeHours = 0;
@@ -913,6 +1009,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       this.prints = [];
       this.pressCycles = [];
       this.supplyLines = [];
+      this.filamentLines = [createEmptyFdmFilamentLine()];
       this.filamentType = FilamentType.PLA;
       this.resinType = ResinType.ESTANDAR;
     }

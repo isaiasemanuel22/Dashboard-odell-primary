@@ -20,3 +20,8 @@ export { DbFieldsetComponent } from './db-fieldset/db-fieldset.component';
 export { DbFormFooterComponent } from './db-form-footer/db-form-footer.component';
 export { DbFileUploadComponent } from './db-file-upload/db-file-upload.component';
 export type { DbFileUploadFn } from './db-file-upload/db-file-upload.types';
+export { DbAttachmentUploadComponent } from './db-attachment-upload/db-attachment-upload.component';
+export type {
+  DbAttachmentUploadFn,
+  UploadedAttachmentMeta,
+} from './db-attachment-upload/db-attachment-upload.types';

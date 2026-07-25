@@ -76,7 +76,9 @@ model Product {
   estampadoPrints       Json @default("[]") @map("estampado_prints")
   estampadoPressCycles  Json @default("[]") @map("estampado_press_cycles")
   estampadoSupplies     Json @default("[]") @map("estampado_supplies")
+  fdmFilaments          Json @default("[]") @map("fdm_filaments")
   includesPieces        Boolean @default(false) @map("includes_pieces")
+  attachments           Json    @default("[]") @map("attachments")
 
   @@map("products")
 }

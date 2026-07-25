@@ -22,6 +22,7 @@ describe('OrderTasksService', () => {
       id: 'prod-1',
       name: 'Pieza',
       images: [],
+      attachments: [],
       updatedAt: new Date().toISOString(),
       price: 1000,
       cost: 500,

@@ -16,6 +16,7 @@ import {
   sumComponentsPrice,
 } from '../../shared/utils/product.helpers';
 import { isEstampadoPrintValid } from '../../shared/utils/estampado.helpers';
+import { hasValidFdmFilamentInput } from '../../shared/utils/fdm.helpers';
 import {
   getMarginForProductType,
   normalizeProfitMargins,
@@ -124,8 +125,15 @@ export class ProductPricingService {
     }
 
     if (input.type === ProductType.FDM || input.type === ProductType.RESINA) {
+      const hasFdmMaterial =
+        input.type === ProductType.FDM &&
+        hasValidFdmFilamentInput(input.filaments ?? []);
       const grams = Number(input.grams) || 0;
-      if (grams > 0) {
+      if (
+        hasFdmMaterial ||
+        (input.type === ProductType.RESINA && grams > 0) ||
+        (input.type === ProductType.FDM && grams > 0 && !(input.filaments?.length))
+      ) {
         return this.settingsService
           .calculateCost(this.toCalculateCostPayload(input))
           .pipe(
@@ -231,6 +239,7 @@ export class ProductPricingService {
       workTimeHours: input.workTimeHours,
       brand: input.brand,
       filamentType: input.filamentType,
+      filaments: input.filaments,
       resinType: input.resinType,
       washMinutes: input.washMinutes,
       cureMinutes: input.cureMinutes,

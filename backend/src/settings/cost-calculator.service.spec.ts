@@ -237,6 +237,7 @@ describe('CostCalculatorService', () => {
       name: 'Pieza',
       type: ProductType.FDM,
       images: [],
+      attachments: [],
       updatedAt: '2026-07-01T10:00:00.000Z',
       price: 2000,
       cost: 1000,
@@ -260,5 +261,30 @@ describe('CostCalculatorService', () => {
     expect(result.materialCost).toBe(2000);
     expect(result.errorMarginCost).toBe(0);
     expect(result.totalCost).toBe(2000);
+  });
+
+  it('suma el costo de múltiples filamentos FDM', () => {
+    store.generalSettings.profitMargins = {
+      impresion_3d: 0,
+      diseno: 0,
+      estampado: 0,
+    };
+    store.generalSettings.filamentTypeAverages = {
+      pla: 10000,
+      tpu: 20000,
+    } as never;
+
+    const result = service.calculateCost({
+      type: ProductType.FDM,
+      grams: 0,
+      printTimeHours: 0,
+      workTimeHours: 0,
+      filaments: [
+        { id: 'ff-1', filamentType: 'pla' as never, grams: 50 },
+        { id: 'ff-2', filamentType: 'tpu' as never, grams: 20 },
+      ],
+    });
+
+    expect(result.materialCost).toBe(900);
   });
 });

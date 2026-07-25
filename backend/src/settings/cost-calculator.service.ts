@@ -34,6 +34,10 @@ import {
   resolvePrintDimensions,
   totalEstampadoPressMinutes,
 } from '../products/estampado-product.util';
+import {
+  hasValidFdmFilamentInput,
+  resolveFdmFilaments,
+} from '../products/fdm-product.util';
 import { normalizeProfitMargins } from './profit-margins.util';
 
 const RESIN_DENSITY_G_PER_ML = 1.1;
@@ -182,8 +186,15 @@ export class CostCalculatorService {
       );
       cost = breakdown.totalCost;
     } else if (input.type === ProductType.FDM || input.type === ProductType.RESINA) {
+      const fdmFilaments =
+        input.type === ProductType.FDM ? resolveFdmFilaments(input) : [];
+      const hasFdmMaterial = hasValidFdmFilamentInput(fdmFilaments);
       const grams = Number(input.grams) || 0;
-      if (grams > 0) {
+      if (
+        hasFdmMaterial ||
+        (input.type === ProductType.RESINA && grams > 0) ||
+        (input.type === ProductType.FDM && grams > 0 && !fdmFilaments.length)
+      ) {
         breakdown = this.calculateCost(this.toCalculateCostDto(input));
         cost = breakdown.totalCost;
       } else {
@@ -425,6 +436,7 @@ export class CostCalculatorService {
       quantity: input.quantity,
       brand: input.brand,
       filamentType: input.filamentType,
+      filaments: input.filaments,
       resinType: input.resinType,
       paperType: input.paperType,
       widthCm: input.widthCm,
@@ -466,6 +478,20 @@ export class CostCalculatorService {
     const grams = Number(dto.grams) || 0;
 
     if (dto.type === ProductType.FDM) {
+      const filaments = resolveFdmFilaments(dto);
+      if (filaments.length) {
+        return filaments.reduce(
+          (sum, line) =>
+            sum +
+            this.calcFilamentCost(
+              line.brand,
+              line.filamentType,
+              line.grams,
+              settings,
+            ),
+          0,
+        );
+      }
       return this.calcFilamentCost(dto.brand, dto.filamentType, grams, settings);
     }
     if (dto.type === ProductType.RESINA) {
