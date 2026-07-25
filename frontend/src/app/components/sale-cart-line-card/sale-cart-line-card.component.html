@@ -1,0 +1,33 @@
+<article class="sale-cart-line-card">
+  <div class="sale-cart-line-card__main">
+    @if (line.productId) {
+      <a [routerLink]="['/productos', line.productId]" class="sale-cart-line-card__name">
+        {{ line.productName }}
+      </a>
+    } @else {
+      <strong class="sale-cart-line-card__name">{{ line.productName }}</strong>
+    }
+    <span class="sale-cart-line-card__unit">{{ line.unitPrice | currencyArs }} c/u</span>
+  </div>
+
+  <div class="sale-cart-line-card__controls">
+    <label class="sale-cart-line-card__qty">
+      <span>Cant.</span>
+      <input
+        type="number"
+        [ngModel]="line.quantity"
+        [name]="'qty-card-' + line.key"
+        min="1"
+        step="1"
+        (ngModelChange)="onQuantityChange($event)"
+      />
+    </label>
+    <strong class="sale-cart-line-card__total">{{ lineTotal | currencyArs }}</strong>
+    <db-button
+      label="Quitar"
+      variant="delete"
+      format="inline"
+      (clicked)="remove.emit()"
+    />
+  </div>
+</article>

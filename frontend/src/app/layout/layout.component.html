@@ -1,11 +1,26 @@
-<div class="layout">
-  <aside class="sidebar">
+<div class="layout" [class.layout--nav-open]="navOpen" [class.layout--compact-nav]="hideBottomNav">
+  <div
+    class="sidebar-backdrop"
+    [class.sidebar-backdrop--visible]="navOpen"
+    (click)="closeNav()"
+    aria-hidden="true"
+  ></div>
+
+  <aside class="sidebar" [class.sidebar--open]="navOpen">
     <div class="brand">
       <img class="brand-logo" src="/logo.png" alt="Odell Dashboard" width="40" height="40" />
       <div>
         <h1>Odell</h1>
         <p>Dashboard</p>
       </div>
+      <button
+        type="button"
+        class="sidebar__close"
+        aria-label="Cerrar menú"
+        (click)="closeNav()"
+      >
+        ×
+      </button>
     </div>
 
     <nav>
@@ -14,6 +29,7 @@
           [routerLink]="item.route"
           routerLinkActive="active"
           [routerLinkActiveOptions]="{ exact: item.route === '/dashboard', paths: 'subset', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored' }"
+          (click)="closeNav()"
         >
           <span class="icon">{{ item.icon }}</span>
           {{ item.label }}
@@ -37,7 +53,43 @@
     }
   </aside>
 
-  <main class="content">
-    <router-outlet />
-  </main>
+  <div class="layout-main">
+    <header class="mobile-header">
+      <button
+        type="button"
+        class="mobile-header__menu"
+        aria-label="Abrir menú"
+        (click)="openNav()"
+      >
+        ☰
+      </button>
+      <div class="mobile-header__brand">
+        <img src="/logo.png" alt="" width="28" height="28" />
+        <span>Odell</span>
+      </div>
+      <div class="mobile-header__spacer"></div>
+    </header>
+
+    <main class="content">
+      <router-outlet />
+    </main>
+
+    <nav class="bottom-nav" aria-label="Navegación principal" [class.bottom-nav--hidden]="hideBottomNav">
+      @for (item of bottomNavItems; track item.route) {
+        <a
+          class="bottom-nav__item"
+          [routerLink]="item.route"
+          routerLinkActive="bottom-nav__item--active"
+          [routerLinkActiveOptions]="{ exact: item.exact ?? false, paths: 'subset', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored' }"
+        >
+          <span class="bottom-nav__icon">{{ item.icon }}</span>
+          <span class="bottom-nav__label">{{ item.label }}</span>
+        </a>
+      }
+      <button type="button" class="bottom-nav__item" (click)="openNav()">
+        <span class="bottom-nav__icon">☰</span>
+        <span class="bottom-nav__label">Más</span>
+      </button>
+    </nav>
+  </div>
 </div>

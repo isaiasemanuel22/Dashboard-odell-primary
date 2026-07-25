@@ -235,4 +235,13 @@
   .work-board {
     grid-template-columns: 1fr;
   }
+
+  .board-card__handle {
+    min-width: 2.5rem;
+    min-height: 2.5rem;
+  }
+
+  .page-header p {
+    font-size: 0.85rem;
+  }
 }

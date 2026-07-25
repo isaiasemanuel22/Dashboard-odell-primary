@@ -67,3 +67,54 @@
     }
   }
 }
+
+.cart-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.cart-summary {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-top: 0.85rem;
+  padding: 0.85rem;
+  border-radius: $radius-sm;
+  background: $color-surface-subtle;
+
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-size: 0.875rem;
+
+    &--discount strong {
+      color: $color-error;
+    }
+
+    &--total strong {
+      color: $color-primary-dark;
+      font-size: 1rem;
+    }
+
+    &--profit strong {
+      color: $color-success;
+    }
+
+    &--loss strong {
+      color: $color-error;
+    }
+  }
+}
+
+:host ::ng-deep .sale-form--mobile .sale-form__footer--sticky {
+  position: sticky;
+  bottom: 0;
+  z-index: 2;
+  margin: 0 -1rem -1rem;
+  padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom, 0));
+  background: rgba(255, 255, 255, 0.96);
+  border-top: 1px solid $color-border;
+  backdrop-filter: blur(8px);
+}

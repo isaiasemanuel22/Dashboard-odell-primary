@@ -1,0 +1,73 @@
+@use '../../shared/styles/variables' as *;
+@use '../../shared/styles/cards' as cards;
+
+.sale-entry-card {
+  @include cards.card-shell;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  padding: 1rem;
+  border: 1px solid $color-border;
+}
+
+.sale-entry-card__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.sale-entry-card__id {
+  font-size: 0.95rem;
+  color: $color-text;
+}
+
+.sale-entry-card__date {
+  margin: 0.2rem 0 0;
+  font-size: 0.8rem;
+  color: $color-text-muted;
+}
+
+.sale-entry-card__items {
+  margin: 0;
+  padding-left: 1rem;
+  list-style: disc;
+}
+
+.sale-entry-card__customer {
+  margin: 0;
+  font-size: 0.8rem;
+  color: $color-text-subtle;
+}
+
+.sale-entry-card__totals {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  border-radius: $radius-sm;
+  background: $color-surface-subtle;
+
+  span {
+    display: block;
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: $color-text-muted;
+  }
+
+  strong {
+    font-size: 0.95rem;
+    color: $color-primary-dark;
+  }
+}
+
+.sale-entry-card__profit--negative {
+  color: $color-error !important;
+}
+
+.sale-entry-card__actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}

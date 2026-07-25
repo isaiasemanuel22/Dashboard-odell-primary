@@ -1,11 +1,12 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   SaleEntry,
   SaleSource,
   SalesStats,
 } from '../../core/models';
 import { RealtimeService } from '../../core/services/realtime.service';
+import { BreakpointService } from '../../core/services/breakpoint.service';
 import { SalesService } from '../../core/services/sales.service';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import {
@@ -30,6 +31,7 @@ type SalesFilter = 'all' | SaleSource;
   selector: 'app-sales',
   standalone: true,
   imports: [
+    RouterLink,
     DbListToolbarComponent,
     DbStateMessageComponent,
     DbButtonComponent,
@@ -46,6 +48,7 @@ export class SalesComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly breakpoint = inject(BreakpointService);
 
   loading = true;
   loadError = false;
@@ -102,6 +105,11 @@ export class SalesComponent implements OnInit {
   }
 
   openCreateSale(): void {
+    if (this.breakpoint.isMobile()) {
+      void this.router.navigate(['/ventas/nueva']);
+      return;
+    }
+
     this.formDialogs.openSale().subscribe((saved) => {
       if (saved) this.onSaleSaved();
     });
@@ -109,6 +117,11 @@ export class SalesComponent implements OnInit {
 
   openEditSale(entry: SaleEntry): void {
     if (!entry.retailSaleId) return;
+
+    if (this.breakpoint.isMobile()) {
+      void this.router.navigate(['/ventas', entry.retailSaleId, 'editar']);
+      return;
+    }
 
     this.salesService.getRetailSale(entry.retailSaleId).subscribe({
       next: (sale) => {

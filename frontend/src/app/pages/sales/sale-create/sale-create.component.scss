@@ -1,0 +1,26 @@
+@use '../../../shared/styles/variables' as *;
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 0.35rem;
+  font-size: 0.875rem;
+  color: $color-text-muted;
+  text-decoration: none;
+
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+.sale-create-header h2 {
+  margin: 0;
+}
+
+.sale-create-loading {
+  margin: 0;
+  color: $color-text-muted;
+}
+
+.sale-create-panel {
+  padding-bottom: 0;
+}

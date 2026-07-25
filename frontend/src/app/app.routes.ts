@@ -24,10 +24,29 @@ export const routes: Routes = [
       },
       {
         path: 'ventas',
-        loadComponent: () =>
-          import('./pages/sales/sales.component').then(
-            (m) => m.SalesComponent,
-          ),
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./pages/sales/sales.component').then(
+                (m) => m.SalesComponent,
+              ),
+          },
+          {
+            path: 'nueva',
+            loadComponent: () =>
+              import('./pages/sales/sale-create/sale-create.component').then(
+                (m) => m.SaleCreateComponent,
+              ),
+          },
+          {
+            path: ':id/editar',
+            loadComponent: () =>
+              import('./pages/sales/sale-create/sale-create.component').then(
+                (m) => m.SaleCreateComponent,
+              ),
+          },
+        ],
       },
       {
         path: 'pedidos',

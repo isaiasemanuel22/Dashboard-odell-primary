@@ -5,6 +5,7 @@ import {
   OnChanges,
   Output,
   SimpleChanges,
+  inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
@@ -24,7 +25,9 @@ import {
   DbButtonComponent,
   SaleCartLine,
   SaleCartLineComponent,
+  SaleCartLineCardComponent,
 } from '@general-components';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import { DbSelectOption } from '../../../components/dashboard-form/db-select/db-select.types';
 import {
@@ -54,16 +57,21 @@ let cartLineKey = 0;
     DbFormFooterComponent,
     DbButtonComponent,
     SaleCartLineComponent,
+    SaleCartLineCardComponent,
     CurrencyArsPipe,
   ],
   templateUrl: './sale-form.component.html',
   styleUrl: './sale-form.component.scss',
 })
 export class SaleFormComponent implements OnChanges {
+  private readonly breakpoint = inject(BreakpointService);
+
   @Input() sale: RetailSale | null = null;
   @Input() products: Product[] = [];
   @Input() loading = false;
   @Input() error = '';
+  /** `auto` usa cards en mobile; `mobile` fuerza cards; `desktop` fuerza tabla. */
+  @Input() layout: 'auto' | 'mobile' | 'desktop' = 'auto';
   @Output() save = new EventEmitter<CreateRetailSalePayload>();
   @Output() cancel = new EventEmitter<void>();
 
@@ -137,6 +145,12 @@ export class SaleFormComponent implements OnChanges {
 
   get canCloseSale(): boolean {
     return this.cart.length > 0 && !this.loading;
+  }
+
+  get useCardLayout(): boolean {
+    if (this.layout === 'mobile') return true;
+    if (this.layout === 'desktop') return false;
+    return this.breakpoint.isMobile();
   }
 
   ngOnChanges(changes: SimpleChanges): void {

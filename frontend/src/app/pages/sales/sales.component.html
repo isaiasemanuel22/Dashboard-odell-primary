@@ -15,10 +15,13 @@
       label="+ Agregar venta"
       variant="primary"
       format="solid"
+      extraClass="desktop-only"
       (clicked)="openCreateSale()"
     />
   </div>
 </header>
+
+<a routerLink="/ventas/nueva" class="mobile-fab">+ Nueva venta</a>
 
 @if (loadError) {
   <db-state-message

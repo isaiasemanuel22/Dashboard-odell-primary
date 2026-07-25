@@ -1,0 +1,61 @@
+@use '../../shared/styles/variables' as *;
+
+.sale-cart-line-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 0.85rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-surface;
+}
+
+.sale-cart-line-card__main {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.sale-cart-line-card__name {
+  font-size: 0.95rem;
+  color: $color-text;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.sale-cart-line-card__unit {
+  font-size: 0.8rem;
+  color: $color-text-muted;
+}
+
+.sale-cart-line-card__controls {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.sale-cart-line-card__qty {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  font-size: 0.72rem;
+  color: $color-text-muted;
+
+  input {
+    width: 4.5rem;
+    min-height: 2.5rem;
+    padding: 0.35rem 0.5rem;
+    border: 1px solid $color-border-input;
+    border-radius: $radius-sm;
+    font: inherit;
+  }
+}
+
+.sale-cart-line-card__total {
+  margin-left: auto;
+  color: $color-primary-dark;
+}
