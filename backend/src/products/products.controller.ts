@@ -25,6 +25,18 @@ export class ProductsController {
     return this.productsService.previewPricing(data);
   }
 
+  @Get('pricing-fields')
+  getPricingFields() {
+    return this.productsService.getPricingFields();
+  }
+
+  @Post('sync-pricing')
+  syncPricing() {
+    return {
+      fields: this.productsService.syncPricingToDatabase(),
+    };
+  }
+
   @Get(':id/overview')
   getOverview(@Param('id') id: string) {
     return this.productsService.getOverview(id);

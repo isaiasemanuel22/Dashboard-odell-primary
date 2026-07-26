@@ -1,5 +1,5 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { Category, Customer, Product, ReferenceData } from '../../core/models';
+import { Category, Customer, Product, ProductPricingFields, ReferenceData } from '../../core/models';
 
 export const CatalogActions = createActionGroup({
   source: 'Catalog',
@@ -15,6 +15,8 @@ export const CatalogActions = createActionGroup({
     'Remove Customer': props<{ id: string }>(),
     'Upsert Category': props<{ category: Category }>(),
     'Remove Category': props<{ id: string }>(),
+
+    'Apply Pricing Fields': props<{ fields: ProductPricingFields[] }>(),
 
     Invalidate: emptyProps(),
   },

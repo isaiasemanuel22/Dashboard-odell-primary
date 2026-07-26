@@ -47,9 +47,9 @@ export class ImpresosService {
     paperType: PaperType,
     widthCm: number,
     lengthCm: number | undefined,
-    heightCm: number,
+    heightCm?: number,
   ): ImpresoCostPreview {
-    const areaSecond = resolvePrintAreaSecondCm(lengthCm, heightCm);
+    const areaSecond = resolvePrintAreaSecondCm(lengthCm, heightCm ?? 0);
     return this.costCalculator.calculateImpresoPaperCost(
       paperType,
       widthCm,
@@ -68,7 +68,7 @@ export class ImpresosService {
         data.lengthCm != null && data.lengthCm > 0
           ? Number(data.lengthCm)
           : undefined,
-      heightCm: Number(data.heightCm),
+      heightCm: Number(data.heightCm) || 0,
       updatedAt: new Date().toISOString(),
     };
     this.store.impresos.push(impreso);
@@ -98,7 +98,7 @@ export class ImpresosService {
         merged.lengthCm != null && merged.lengthCm > 0
           ? Number(merged.lengthCm)
           : undefined,
-      heightCm: Number(merged.heightCm),
+      heightCm: Number(merged.heightCm) || 0,
       updatedAt: new Date().toISOString(),
     };
 
@@ -127,7 +127,7 @@ export class ImpresosService {
       resolvePrintAreaSecondCm(data.lengthCm, data.heightCm) <= 0
     ) {
       throw new BadRequestException(
-        'Ancho y alto deben ser mayores a 0 (largo opcional)',
+        'Ancho y largo deben ser mayores a 0',
       );
     }
   }

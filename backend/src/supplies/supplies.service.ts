@@ -11,7 +11,6 @@ import {
 } from '../common/enums';
 import { Supply } from '../common/interfaces';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
-import { PricingSyncService } from '../pricing/pricing-sync.service';
 import { StoreChangeService } from '../store/store-change.service';
 import { SupplyRepository } from '../store/repositories';
 import {
@@ -37,7 +36,6 @@ export class SuppliesService {
   constructor(
     private readonly supplies: SupplyRepository,
     private readonly costCalculator: CostCalculatorService,
-    private readonly pricingSync: PricingSyncService,
     private readonly storeChange: StoreChangeService,
   ) {}
 
@@ -104,11 +102,10 @@ export class SuppliesService {
       data.unitPrice !== undefined &&
       Number(data.unitPrice) !== Number(existing.unitPrice)
     ) {
-      this.pricingSync.syncAllProductsAndOrders('supply_price');
       this.storeChange.recordChange({
         collections: ['supplies'],
         realtime: {
-          scopes: ['supplies', 'products', 'orders'],
+          scopes: ['supplies'],
           action: 'update',
           entity: 'settings',
         },

@@ -26,7 +26,7 @@ export class ImpresosService {
     paperType: PaperType;
     widthCm: number;
     lengthCm?: number;
-    heightCm: number;
+    heightCm?: number;
   }): Observable<ImpresoCostPreview> {
     return this.http.post<ImpresoCostPreview>(
       `${this.baseUrl}/preview-cost`,

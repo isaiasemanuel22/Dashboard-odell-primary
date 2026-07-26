@@ -254,6 +254,14 @@ export interface ProductPricingResult {
   breakdown: CostBreakdown | null;
 }
 
+export interface ProductPricingFields {
+  id: string;
+  price: number;
+  cost: number;
+  profit: number;
+  updatedAt: string;
+}
+
 export interface Category {
   id: string;
   name: string;

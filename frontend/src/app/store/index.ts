@@ -3,6 +3,7 @@ import { provideEffects } from '@ngrx/effects';
 import { provideStore } from '@ngrx/store';
 import { provideStoreDevtools } from '@ngrx/store-devtools';
 import { CatalogEffects } from './catalog/catalog.effects';
+import { CatalogPricingEffects } from './catalog/catalog-pricing.effects';
 import { catalogReducer } from './catalog/catalog.reducer';
 import { ImpresosEffects } from './impresos/impresos.effects';
 import { impresosReducer } from './impresos/impresos.reducer';
@@ -20,6 +21,7 @@ export const storeProviders = [
   }),
   provideEffects(
     CatalogEffects,
+    CatalogPricingEffects,
     SettingsEffects,
     ImpresosEffects,
     SuppliesEffects,

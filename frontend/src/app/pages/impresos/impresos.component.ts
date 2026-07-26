@@ -1,11 +1,12 @@
 import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ImpresoWithCost, PaperType } from '../../core/models';
+import { ImpresoWithCost, PaperType, CreateImpresoPayload } from '../../core/models';
 import { ImpresosService } from '../../core/services/impresos.service';
 import {
   CurrencyArsPipe,
   PaperTypeLabelPipe,
 } from '../../shared/pipes/labels.pipe';
+import { formatPrintDimensionsCm } from '../../shared/utils/estampado.helpers';
 import { ImpresoFormComponent } from './impreso-form/impreso-form.component';
 
 type PaperFilter = PaperType | 'all';
@@ -92,12 +93,7 @@ export class ImpresosComponent implements OnInit {
     this.saveImpreso(payload);
   }
 
-  saveImpreso(payload: {
-    name: string;
-    paperType: PaperType;
-    widthCm: number;
-    heightCm: number;
-  }): void {
+  saveImpreso(payload: CreateImpresoPayload): void {
     this.formLoading = true;
     this.formError = '';
 
@@ -126,6 +122,9 @@ export class ImpresosComponent implements OnInit {
   }
 
   formatDimensions(item: ImpresoWithCost): string {
-    return `${item.widthCm} × ${item.heightCm} cm`;
+    return formatPrintDimensionsCm(
+      item.widthCm,
+      item.lengthCm && item.lengthCm > 0 ? item.lengthCm : item.heightCm,
+    );
   }
 }

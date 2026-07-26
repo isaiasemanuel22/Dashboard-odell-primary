@@ -37,9 +37,9 @@ export class PricingSyncService {
   ) {}
 
   syncAllProductsAndOrders(trigger: OrderPriceChangeTrigger): void {
-    const priceChanges = this.recalculateAllProducts();
+    const { priceChanges, recalculated } = this.recalculateAllProducts();
     this.syncOrderPrices(priceChanges, trigger);
-    this.notifyChanges(priceChanges.size > 0);
+    this.notifyChanges(recalculated || priceChanges.size > 0);
   }
 
   syncAfterProductSave(productId: string, previousPrice: number): void {
@@ -54,20 +54,28 @@ export class PricingSyncService {
       });
     }
 
-    this.recalculateCompositeProducts(priceChanges);
+    const compositeRecalculated = this.recalculateCompositeProducts(priceChanges);
     this.syncOrderPrices(priceChanges, 'product_update');
-    this.notifyChanges(priceChanges.size > 0);
+    this.notifyChanges(priceChanges.size > 0 || compositeRecalculated);
   }
 
-  private recalculateAllProducts(): Map<string, ProductPriceChange> {
+  private recalculateAllProducts(): {
+    priceChanges: Map<string, ProductPriceChange>;
+    recalculated: boolean;
+  } {
     const priceChanges = new Map<string, ProductPriceChange>();
+    let recalculated = false;
 
     for (const product of [...this.store.products]) {
       if (this.hasComponents(product)) continue;
-      this.applyProductRecalc(product, priceChanges);
+      if (this.applyProductRecalc(product, priceChanges)) {
+        recalculated = true;
+      }
     }
 
-    this.recalculateCompositeProducts(priceChanges);
+    if (this.recalculateCompositeProducts(priceChanges)) {
+      recalculated = true;
+    }
 
     if (priceChanges.size > 0) {
       this.logger.log(
@@ -75,22 +83,25 @@ export class PricingSyncService {
       );
     }
 
-    return priceChanges;
+    return { priceChanges, recalculated };
   }
 
   private recalculateCompositeProducts(
     priceChanges: Map<string, ProductPriceChange>,
-  ): void {
+  ): boolean {
+    let recalculated = false;
     for (let pass = 0; pass < 12; pass++) {
       let changed = false;
       for (const product of [...this.store.products]) {
         if (!this.hasComponents(product)) continue;
         if (this.applyProductRecalc(product, priceChanges)) {
           changed = true;
+          recalculated = true;
         }
       }
       if (!changed) break;
     }
+    return recalculated;
   }
 
   private hasComponents(product: Product): boolean {

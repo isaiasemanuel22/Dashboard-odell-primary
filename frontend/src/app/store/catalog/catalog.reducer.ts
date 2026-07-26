@@ -70,5 +70,38 @@ export const catalogReducer = createReducer(
     ...state,
     categories: categoriesAdapter.removeOne(id, state.categories),
   })),
+  on(CatalogActions.applyPricingFields, (state, { fields }) => {
+    if (!fields.length) return state;
+
+    const changes = fields
+      .map((field) => {
+        const existing = state.products.entities[field.id];
+        if (!existing) return null;
+        if (
+          existing.price === field.price &&
+          existing.cost === field.cost &&
+          existing.profit === field.profit
+        ) {
+          return null;
+        }
+        return {
+          id: field.id,
+          changes: {
+            price: field.price,
+            cost: field.cost,
+            profit: field.profit,
+            updatedAt: field.updatedAt,
+          },
+        };
+      })
+      .filter((change): change is NonNullable<typeof change> => change !== null);
+
+    if (!changes.length) return state;
+
+    return {
+      ...state,
+      products: productsAdapter.updateMany(changes, state.products),
+    };
+  }),
   on(CatalogActions.invalidate, () => initialCatalogState),
 );

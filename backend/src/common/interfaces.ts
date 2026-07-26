@@ -200,6 +200,15 @@ export interface ProductPricingResult {
   breakdown: CostBreakdown | null;
 }
 
+/** Campos de pricing devueltos por GET /products/pricing-fields. */
+export interface ProductPricingFields {
+  id: string;
+  price: number;
+  cost: number;
+  profit: number;
+  updatedAt: string;
+}
+
 export interface ProductComponent {
   productId: string;
   quantity: number;

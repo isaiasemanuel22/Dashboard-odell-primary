@@ -1,4 +1,4 @@
-import { BadRequestException, forwardRef, Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DATABASE_RESET_CODE } from '../common/dto';
 import { StoreChangeService } from '../store/store-change.service';
 import { StorePersistenceService } from '../store/store-persistence.service';
@@ -19,8 +19,6 @@ import {
 } from '../common/interfaces';
 import { SupplyType } from '../common/enums';
 import { StoreService } from '../store/store.service';
-import { PricingSyncService } from '../pricing/pricing-sync.service';
-import type { OrderPriceChangeTrigger } from '../orders/order-price-history.util';
 import { RealtimeScope } from '../realtime/realtime.types';
 
 @Injectable()
@@ -29,8 +27,6 @@ export class SettingsService {
     private readonly store: StoreService,
     private readonly persistence: StorePersistenceService,
     private readonly storeChange: StoreChangeService,
-    @Inject(forwardRef(() => PricingSyncService))
-    private readonly pricingSync: PricingSyncService,
   ) {}
 
   getGeneralSettings(): GeneralSettings {
@@ -469,16 +465,15 @@ export class SettingsService {
   }
 
   private recordSettingsChange(
-    scopes: Array<'settings' | 'products' | 'supplies' | 'orders'> = ['settings'],
-    trigger: OrderPriceChangeTrigger = 'settings',
+    persistCollections: Array<
+      'settings' | 'products' | 'supplies' | 'orders'
+    > = ['settings'],
   ): void {
-    this.pricingSync.syncAllProductsAndOrders(trigger);
-
     this.storeChange.recordChange({
-      collections: ['settings'],
+      collections: persistCollections,
       realtime: {
         scopes: [
-          ...new Set([...scopes, 'products', 'orders']),
+          ...new Set(persistCollections),
         ] as RealtimeScope[],
         action: 'update',
         entity: 'settings',

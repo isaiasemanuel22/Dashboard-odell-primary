@@ -33,13 +33,13 @@ import {
   SuppliesService,
 } from '../../../core/services/settings.service';
 import {
-  filamentTypeOptions,
   inferSupplyCategory,
   resinTypeOptions,
   supplyCategoryOptions,
   supplyTypeOptionsForCategory,
   supplyTypesForCategory,
 } from '../../../shared/utils/select-options';
+import { buildFilamentTypeOptions } from '../../../shared/utils/filament-type.util';
 
 @Component({
   selector: 'app-supply-form',
@@ -69,7 +69,6 @@ export class SupplyFormComponent implements OnInit, OnChanges {
   @Output() cancel = new EventEmitter<void>();
 
   readonly supplyCategoryOptions = supplyCategoryOptions();
-  readonly filamentTypeOptions = filamentTypeOptions();
   readonly resinTypeOptions = resinTypeOptions();
 
   filamentPrices: FilamentPriceConfig[] = [];
@@ -93,6 +92,13 @@ export class SupplyFormComponent implements OnInit, OnChanges {
 
   get filteredSupplyTypeOptions() {
     return supplyTypeOptionsForCategory(this.category);
+  }
+
+  get filamentTypeOptions(): DbSelectOption[] {
+    return buildFilamentTypeOptions(
+      this.filamentPrices,
+      this.filamentType ? [this.filamentType] : [],
+    );
   }
 
   get filamentBrandOptions(): DbSelectOption[] {

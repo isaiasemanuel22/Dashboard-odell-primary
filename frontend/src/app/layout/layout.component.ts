@@ -54,7 +54,7 @@ export class LayoutComponent implements OnInit {
   ];
 
   ngOnInit(): void {
-    void this.realtime.connect();
+    this.realtime.connectIfEnabled();
     this.storeBootstrap.bootstrap();
     this.destroyRef.onDestroy(() => this.realtime.disconnect());
 

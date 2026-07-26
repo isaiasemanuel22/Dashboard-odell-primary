@@ -14,11 +14,13 @@ import {
   ProductOverview,
   ProductPricingInput,
   ProductPricingResult,
+  ProductPricingFields,
   UpdateProductDto,
 } from '../common/interfaces';
 import { ProductPricingService } from './product-pricing.service';
 import { PricingSyncService } from '../pricing/pricing-sync.service';
 import { ProductRepository } from '../store/repositories/product.repository';
+import { StoreChangeService } from '../store/store-change.service';
 import { StoreService } from '../store/store.service';
 import {
   normalizeEstampadoPressCycles,
@@ -47,6 +49,7 @@ export class ProductsService {
     private readonly products: ProductRepository,
     private readonly pricing: ProductPricingService,
     private readonly pricingSync: PricingSyncService,
+    private readonly storeChange: StoreChangeService,
   ) {}
 
   findAll(type?: ProductType, includeUnpublished = false): Product[] {
@@ -179,7 +182,8 @@ export class ProductsService {
     }
 
     this.products.create(product);
-    return product;
+    this.pricingSync.syncAfterProductSave(product.id, product.price);
+    return this.findOne(product.id);
   }
 
   update(id: string, data: UpdateProductDto): Product {
@@ -387,6 +391,30 @@ export class ProductsService {
       this.validateComponents(null, input.components);
     }
     return this.pricing.resolvePricing(input);
+  }
+
+  getPricingFields(): ProductPricingFields[] {
+    return this.store.products.map((product) => ({
+      id: product.id,
+      price: product.price,
+      cost: product.cost,
+      profit: product.profit,
+      updatedAt: product.updatedAt,
+    }));
+  }
+
+  /** Recalcula y persiste precios de todo el catálogo y pedidos abiertos (bajo demanda). */
+  syncPricingToDatabase(): ProductPricingFields[] {
+    this.pricingSync.syncAllProductsAndOrders('settings');
+    this.storeChange.recordChange({
+      collections: ['products', 'orders'],
+      realtime: {
+        scopes: ['products', 'orders', 'dashboard', 'sales'],
+        action: 'update',
+        entity: 'product',
+      },
+    });
+    return this.getPricingFields();
   }
 
   private validateProductData(

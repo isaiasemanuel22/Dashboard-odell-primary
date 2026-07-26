@@ -26,6 +26,10 @@ import {
 import { SettingsService } from '../../../core/services/settings.service';
 import { FormModalComponent } from '../../../shared/components/form-modal/form-modal.component';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
+import {
+  formatPrintDimensionsCm,
+  hasValidPrintSize,
+} from '../../../shared/utils/estampado.helpers';
 
 const PAPER_TYPE_OPTIONS: DbSelectOption[] = [
   { value: PaperType.SUBLIMACION, label: 'Sublimación' },
@@ -64,7 +68,7 @@ export class ImpresoFormComponent implements OnChanges {
   name = '';
   paperType = PaperType.DTF;
   widthCm = 0;
-  heightCm = 0;
+  lengthCm = 0;
   settings: GeneralSettings | null = null;
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -74,15 +78,23 @@ export class ImpresoFormComponent implements OnChanges {
   }
 
   get estimatedCost(): number {
-    if (!this.settings || this.widthCm <= 0 || this.heightCm <= 0) return 0;
-    const areaSqm = (this.widthCm * this.heightCm) / 10000;
+    if (
+      !this.settings ||
+      !hasValidPrintSize(this.widthCm, this.lengthCm, 0)
+    ) {
+      return 0;
+    }
+    const areaSqm = (this.widthCm * this.lengthCm) / 10000;
     const pricePerSqm = this.getPricePerSqm(this.paperType);
     return Math.round(areaSqm * pricePerSqm);
   }
 
   get dimensionsLabel(): string {
-    if (this.widthCm <= 0 || this.heightCm <= 0) return '—';
-    return `${this.widthCm} × ${this.heightCm} cm`;
+    return formatPrintDimensionsCm(this.widthCm, this.lengthCm);
+  }
+
+  onDimensionsChange(): void {
+    // fuerza recálculo del getter estimatedCost
   }
 
   onSubmit(): void {
@@ -90,7 +102,8 @@ export class ImpresoFormComponent implements OnChanges {
       name: this.name.trim(),
       paperType: this.paperType,
       widthCm: Number(this.widthCm),
-      heightCm: Number(this.heightCm),
+      lengthCm: Number(this.lengthCm),
+      heightCm: 0,
     });
   }
 
@@ -103,12 +116,15 @@ export class ImpresoFormComponent implements OnChanges {
       this.name = this.impreso.name;
       this.paperType = this.impreso.paperType;
       this.widthCm = this.impreso.widthCm;
-      this.heightCm = this.impreso.heightCm;
+      this.lengthCm =
+        this.impreso.lengthCm && this.impreso.lengthCm > 0
+          ? this.impreso.lengthCm
+          : this.impreso.heightCm;
     } else {
       this.name = '';
       this.paperType = PaperType.DTF;
       this.widthCm = 0;
-      this.heightCm = 0;
+      this.lengthCm = 0;
     }
   }
 

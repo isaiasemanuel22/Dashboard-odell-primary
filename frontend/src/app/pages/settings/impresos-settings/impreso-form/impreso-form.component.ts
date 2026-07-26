@@ -71,7 +71,6 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
   paperType = PaperType.DTF;
   widthCm = 0;
   lengthCm = 0;
-  heightCm = 0;
   estimatedCost = 0;
 
   private previewTimer: ReturnType<typeof setTimeout> | null = null;
@@ -87,11 +86,7 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
   }
 
   get dimensionsLabel(): string {
-    return formatPrintDimensionsCm(
-      this.widthCm,
-      this.lengthCm || undefined,
-      this.heightCm,
-    );
+    return formatPrintDimensionsCm(this.widthCm, this.lengthCm);
   }
 
   onDimensionsChange(): void {
@@ -103,9 +98,8 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
       name: this.name.trim(),
       paperType: this.paperType,
       widthCm: Number(this.widthCm),
-      lengthCm:
-        Number(this.lengthCm) > 0 ? Number(this.lengthCm) : undefined,
-      heightCm: Number(this.heightCm),
+      lengthCm: Number(this.lengthCm),
+      heightCm: 0,
     });
   }
 
@@ -114,14 +108,15 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
       this.name = this.impreso.name;
       this.paperType = this.impreso.paperType;
       this.widthCm = this.impreso.widthCm;
-      this.lengthCm = this.impreso.lengthCm ?? 0;
-      this.heightCm = this.impreso.heightCm;
+      this.lengthCm =
+        this.impreso.lengthCm && this.impreso.lengthCm > 0
+          ? this.impreso.lengthCm
+          : this.impreso.heightCm;
     } else {
       this.name = '';
       this.paperType = PaperType.DTF;
       this.widthCm = 0;
       this.lengthCm = 0;
-      this.heightCm = 0;
     }
     this.scheduleCostPreview();
   }
@@ -139,7 +134,7 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
   }
 
   private loadCostPreview(): void {
-    if (!hasValidPrintSize(this.widthCm, this.lengthCm, this.heightCm)) {
+    if (!hasValidPrintSize(this.widthCm, this.lengthCm, 0)) {
       this.estimatedCost = 0;
       return;
     }
@@ -148,9 +143,8 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
       .previewCost({
         paperType: this.paperType,
         widthCm: Number(this.widthCm),
-        lengthCm:
-          Number(this.lengthCm) > 0 ? Number(this.lengthCm) : undefined,
-        heightCm: Number(this.heightCm),
+        lengthCm: Number(this.lengthCm),
+        heightCm: 0,
       })
       .subscribe({
         next: (preview) => {

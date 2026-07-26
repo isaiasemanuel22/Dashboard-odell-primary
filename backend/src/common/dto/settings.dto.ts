@@ -314,9 +314,10 @@ export class CreateImpresoDto {
   @Min(0.0001)
   lengthCm?: number;
 
+  @IsOptional()
   @IsNumber()
-  @Min(0.0001)
-  heightCm!: number;
+  @Min(0)
+  heightCm?: number;
 }
 
 export class UpdateImpresoDto extends PartialType(CreateImpresoDto) {}
@@ -334,9 +335,10 @@ export class ImpresoPreviewCostDto {
   @Min(0.0001)
   lengthCm?: number;
 
+  @IsOptional()
   @IsNumber()
-  @Min(0.0001)
-  heightCm!: number;
+  @Min(0)
+  heightCm?: number;
 }
 
 export class SupplyDefaultPriceDto {

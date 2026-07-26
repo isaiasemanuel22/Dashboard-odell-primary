@@ -50,6 +50,20 @@
       </section>
 
       <section class="panel">
+        <h3>Sincronización</h3>
+        <p class="panel-desc">
+          Si está activo, este navegador consulta cambios cada ~15 s y actualiza
+          listados (productos, pedidos, ventas, etc.) cuando otra persona modifica datos.
+        </p>
+        <db-checkbox
+          label="Mantener sincronizado"
+          [ngModel]="realtimeSyncEnabled"
+          (ngModelChange)="onRealtimeSyncChange($event)"
+          name="realtimeSyncEnabled"
+        />
+      </section>
+
+      <section class="panel">
         <h3>Perfiles de máquina</h3>
         <p class="panel-desc">
           Cada tarjeta es un equipo. Elegí un tipo de producto o dejá "Todos".

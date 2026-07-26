@@ -456,7 +456,11 @@
           />
         } @else {
           <p class="components-empty">
-            Sin piezas: el costo se calcula desde gramos y tiempos de producción.
+            @if (isEstampado) {
+              Agregá al menos una pieza para calcular el costo del producto compuesto.
+            } @else {
+              Sin piezas: el costo se calcula desde gramos y tiempos de producción.
+            }
           </p>
         }
       </db-fieldset>

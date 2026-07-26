@@ -79,15 +79,21 @@ export class ProductPricingService {
     settings: GeneralSettings,
   ): Observable<ProductPricingResult> {
     const storedCost = Number(input.cost) || 0;
+    const hasComponents = (input.components ?? []).length > 0;
 
     return this.resolveCost(input, catalog, settings).pipe(
       map(({ cost, breakdown }) => {
-        const resolvedCost =
-          cost <= 0 && storedCost > 0 ? storedCost : cost;
+        const resolvedCost = hasComponents
+          ? cost
+          : cost <= 0 && storedCost > 0
+            ? storedCost
+            : cost;
         const resolvedBreakdown =
-          cost <= 0 && storedCost > 0 && breakdown?.totalCost === 0
-            ? null
-            : breakdown;
+          hasComponents || cost > 0 || storedCost <= 0
+            ? breakdown
+            : breakdown?.totalCost === 0
+              ? null
+              : breakdown;
 
         return this.buildResult(
           input,

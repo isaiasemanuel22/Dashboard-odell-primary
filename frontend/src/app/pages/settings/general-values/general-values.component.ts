@@ -14,8 +14,10 @@ import {
   Supply,
 } from '../../../core/models';
 import { SettingsService, SuppliesService } from '../../../core/services/settings.service';
+import { RealtimeService } from '../../../core/services/realtime.service';
 import {
   DbButtonComponent,
+  DbCheckboxComponent,
   DbFormComponent,
   DbFormGridComponent,
   DbInputComponent,
@@ -34,6 +36,7 @@ import { productTypeOptions } from '../../../shared/utils/select-options';
     DbFormGridComponent,
     DbInputComponent,
     DbSelectComponent,
+    DbCheckboxComponent,
     DbButtonComponent,
     DbStateMessageComponent,
   ],
@@ -43,6 +46,7 @@ import { productTypeOptions } from '../../../shared/utils/select-options';
 export class GeneralValuesComponent implements OnInit, OnDestroy {
   private readonly settingsService = inject(SettingsService);
   private readonly suppliesService = inject(SuppliesService);
+  private readonly realtime = inject(RealtimeService);
   private settingsSub?: Subscription;
 
   settings: GeneralSettings | null = null;
@@ -50,6 +54,7 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
   saving = false;
   savingProfiles = false;
   message = '';
+  realtimeSyncEnabled = false;
 
   readonly roleOptions: DbSelectOption[] = [
     { value: MachineProfileRole.PRINT, label: 'Impresión' },
@@ -73,6 +78,7 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
   };
 
   ngOnInit(): void {
+    this.realtimeSyncEnabled = this.realtime.isSyncEnabled();
     this.settingsSub = this.settingsService.watchGeneralSettings().subscribe((settings) => {
       if (!settings || this.saving || this.savingProfiles) return;
       this.settings = structuredClone(settings);
@@ -124,6 +130,14 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
           this.message = 'Error al guardar';
         },
       });
+  }
+
+  onRealtimeSyncChange(enabled: boolean): void {
+    this.realtimeSyncEnabled = enabled;
+    this.realtime.setSyncEnabled(enabled);
+    this.message = enabled
+      ? 'Sincronización automática activada en este navegador'
+      : 'Sincronización automática desactivada en este navegador';
   }
 
   saveMachineProfiles(): void {

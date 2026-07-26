@@ -7,6 +7,10 @@ import {
   RealtimeEvent,
   RealtimeScope,
 } from '../models/realtime.model';
+import {
+  readRealtimeSyncEnabled,
+  writeRealtimeSyncEnabled,
+} from './realtime-sync.preference';
 
 export interface SmartReloadOptions {
   skip?: () => boolean;
@@ -35,7 +39,29 @@ export class RealtimeService {
 
   readonly events$ = this.eventSubject.asObservable();
 
+  isSyncEnabled(): boolean {
+    return readRealtimeSyncEnabled();
+  }
+
+  setSyncEnabled(enabled: boolean): void {
+    writeRealtimeSyncEnabled(enabled);
+    if (enabled) {
+      this.connect();
+      return;
+    }
+    this.disconnect();
+  }
+
+  connectIfEnabled(): void {
+    if (this.isSyncEnabled()) {
+      this.connect();
+    }
+  }
+
   connect(): void {
+    if (!this.isSyncEnabled()) {
+      return;
+    }
     if (this.pollTimer) return;
 
     void this.poll();
@@ -101,6 +127,9 @@ export class RealtimeService {
   }
 
   private async poll(): Promise<void> {
+    if (!this.isSyncEnabled()) {
+      return;
+    }
     if (this.polling) return;
     this.polling = true;
 

@@ -153,8 +153,7 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
   formatDimensions(item: ImpresoWithCost): string {
     return formatPrintDimensionsCm(
       item.widthCm,
-      item.lengthCm,
-      item.heightCm,
+      item.lengthCm && item.lengthCm > 0 ? item.lengthCm : item.heightCm,
     );
   }
 }

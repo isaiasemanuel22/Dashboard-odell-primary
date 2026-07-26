@@ -37,6 +37,7 @@ import {
   isProductType3D,
 } from '../../../core/models';
 import { ProductCatalogService } from '../../../core/services/product-catalog.service';
+import { CatalogFacade } from '../../../store/catalog/catalog.facade';
 import { MediaUploadService } from '../../../core/services/media-upload.service';
 import { ProductsService } from '../../../core/services/products.service';
 import { ProductPricingService } from '../../../core/services/product-pricing.service';
@@ -76,11 +77,11 @@ import {
   totalCostFromBreakdown,
 } from '../../../shared/utils/pricing.util';
 import {
-  filamentTypeOptions,
   paperTypeOptions,
   productTypeOptions,
   resinTypeOptions,
 } from '../../../shared/utils/select-options';
+import { buildFilamentTypeOptions } from '../../../shared/utils/filament-type.util';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import { sanitizePersistableProductImages } from '../../../shared/utils/media-url.util';
 import { normalizeProductAttachments } from '../../../shared/utils/product-attachment.helpers';
@@ -135,6 +136,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   private readonly settingsFacade = inject(SettingsFacade);
   private readonly mediaUpload = inject(MediaUploadService);
   private readonly catalogService = inject(ProductCatalogService);
+  private readonly catalogFacade = inject(CatalogFacade);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly formDialogs = inject(FormDialogService);
 
@@ -150,7 +152,6 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   @ViewChild('attachmentUpload') attachmentUpload?: DbAttachmentUploadComponent;
 
   readonly productTypeOptions = productTypeOptions();
-  readonly filamentTypeOptions = filamentTypeOptions();
   readonly resinTypeOptions = resinTypeOptions();
   readonly paperTypeOptions = paperTypeOptions();
 
@@ -192,10 +193,12 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   computedPrice: number | null = null;
   appliedMarginPercent: number | null = null;
   profitMargins: GeneralSettings['profitMargins'] | null = null;
+  private generalSettings: GeneralSettings | null = null;
   private settingsSubscription = this.settingsFacade
     .watchGeneralSettings()
     .subscribe((settings) => {
       if (!settings) return;
+      this.generalSettings = settings;
       this.profitMargins = normalizeProfitMargins(settings.profitMargins);
       this.recalculatePriceFromCost();
       this.cdr.markForCheck();
@@ -208,6 +211,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
 
   private costCalcTimer: ReturnType<typeof setTimeout> | null = null;
   private pricingPreviewSub: Subscription | null = null;
+  private catalogSubscription: Subscription | null = null;
 
   readonly uploadProductImage: DbFileUploadFn = (file) =>
     firstValueFrom(this.mediaUpload.uploadProductImage(file));
@@ -220,6 +224,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     this.loadCatalog();
     const cached = this.settingsFacade.peekGeneralSettings();
     if (cached) {
+      this.generalSettings = cached;
       this.profitMargins = normalizeProfitMargins(cached.profitMargins);
     } else {
       this.settingsFacade.load();
@@ -251,6 +256,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   ngOnDestroy(): void {
     this.settingsSubscription.unsubscribe();
     this.pricingPreviewSub?.unsubscribe();
+    this.catalogSubscription?.unsubscribe();
     this.clearCostCalcTimer();
   }
 
@@ -322,7 +328,38 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     return marginLabelForProductType(this.type);
   }
 
+  get filamentTypeOptions(): DbSelectOption[] {
+    const fromLines = this.filamentLines
+      .map((line) => line.filamentType)
+      .filter(Boolean);
+    const extraTypes = [
+      ...fromLines,
+      ...(this.filamentType ? [this.filamentType] : []),
+    ];
+    return buildFilamentTypeOptions(
+      this.generalSettings?.filamentPrices ?? [],
+      extraTypes,
+    );
+  }
+
   get effectiveCost(): number {
+    if (this.usesPieceAssembly) {
+      if (!this.components.length) {
+        return 0;
+      }
+      if (this.costBreakdown) {
+        const fromBreakdown = totalCostFromBreakdown(this.costBreakdown);
+        if (fromBreakdown > 0) {
+          return fromBreakdown;
+        }
+      }
+      const calculated = Number(this.cost) || 0;
+      if (calculated > 0) {
+        return calculated;
+      }
+      return this.componentsCostTotal;
+    }
+
     const direct = Number(this.cost) || Number(this.product?.cost) || 0;
     if (direct > 0) {
       return direct;
@@ -338,7 +375,18 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       return Number(this.suggestedPrice);
     }
     if (this.usesPieceAssembly) {
-      return this.componentsPriceTotal;
+      const partsPrice = this.componentsPriceTotal;
+      if (partsPrice > 0) {
+        return partsPrice;
+      }
+      if (this.computedPrice != null && Number(this.computedPrice) > 0) {
+        return Number(this.computedPrice);
+      }
+      const costValue = this.effectiveCost;
+      if (costValue > 0 && this.profitMargins) {
+        return priceFromCostAndMargin(costValue, this.configuredProfitMargin);
+      }
+      return partsPrice;
     }
     if (this.computedPrice != null) {
       return this.computedPrice;
@@ -467,6 +515,12 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       this.assemblyTimeHours = 0;
       this.componentPicker = '';
       this.componentQty = 1;
+    }
+    this.costBreakdown = null;
+    this.computedPrice = null;
+    this.appliedMarginPercent = null;
+    if (this.usesPieceAssembly) {
+      this.cost = 0;
     }
     this.onComponentsChange();
   }
@@ -616,7 +670,30 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   onComponentsChange(): void {
+    if (this.usesPieceAssembly) {
+      this.applyPieceAssemblyTotals();
+    }
     this.scheduleCostCalculation();
+  }
+
+  private applyPieceAssemblyTotals(): void {
+    if (!this.components.length) {
+      this.cost = 0;
+      this.computedPrice = null;
+      this.costBreakdown = null;
+      return;
+    }
+
+    const partsCost = this.componentsCostTotal;
+    const partsPrice = this.componentsPriceTotal;
+    this.cost = partsCost;
+    this.computedPrice =
+      partsPrice > 0
+        ? partsPrice
+        : partsCost > 0 && this.profitMargins
+          ? priceFromCostAndMargin(partsCost, this.configuredProfitMargin)
+          : null;
+    this.cdr.markForCheck();
   }
 
   onCategorySelected(id: string): void {
@@ -746,19 +823,26 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   }
 
   private loadCatalog(): void {
-    this.catalogService.getAllProducts(false).subscribe((products) => {
-      this.catalogProducts = products;
-      if (this.product) {
-        this.components = normalizeProductComponents(
-          this.product.components ?? [],
-          this.catalogProducts,
-        );
-        if (this.components.length > 0) {
-          this.includesPieces = true;
+    this.catalogSubscription?.unsubscribe();
+    this.catalogFacade.load(false);
+    this.catalogSubscription = this.catalogFacade.products$.subscribe(
+      (products) => {
+        this.catalogProducts = products;
+        if (this.product) {
+          this.components = normalizeProductComponents(
+            this.product.components ?? [],
+            this.catalogProducts,
+          );
+          if (this.components.length > 0) {
+            this.includesPieces = true;
+          }
         }
-      }
-      this.cdr.markForCheck();
-    });
+        if (this.canAutoCalculateCost || this.usesPieceAssembly) {
+          this.scheduleCostCalculation();
+        }
+        this.cdr.markForCheck();
+      },
+    );
   }
 
   private scheduleCostCalculation(): void {
@@ -806,8 +890,21 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
 
   private runPricingPreview(): void {
     const settings = this.settingsFacade.peekGeneralSettings();
-    if (!settings) return;
+    if (!settings) {
+      this.settingsFacade.ensureLoaded().subscribe({
+        next: (loaded) => this.runPricingPreviewWithSettings(loaded),
+        error: () => {
+          this.recalculatePriceFromCost();
+          this.cdr.markForCheck();
+        },
+      });
+      return;
+    }
 
+    this.runPricingPreviewWithSettings(settings);
+  }
+
+  private runPricingPreviewWithSettings(settings: GeneralSettings): void {
     this.pricingPreviewSub?.unsubscribe();
     this.calculatingCost = true;
     this.pricingPreviewSub = this.productPricing
@@ -821,17 +918,37 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
               : result.breakdown
                 ? totalCostFromBreakdown(result.breakdown)
                 : 0;
-          this.cost = resolvedCost;
-          this.computedPrice =
-            result.price > 0
-              ? result.price
-              : resolvedCost > 0
-                ? priceFromCostAndMargin(
-                    resolvedCost,
-                    result.configuredMarginPercent ??
-                      this.configuredProfitMargin,
-                  )
-                : 0;
+
+          if (this.usesPieceAssembly) {
+            this.cost =
+              resolvedCost > 0 ? resolvedCost : this.componentsCostTotal;
+            const partsPrice = this.componentsPriceTotal;
+            this.computedPrice =
+              partsPrice > 0
+                ? partsPrice
+                : result.price > 0
+                  ? result.price
+                  : this.cost > 0
+                    ? priceFromCostAndMargin(
+                        this.cost,
+                        result.configuredMarginPercent ??
+                          this.configuredProfitMargin,
+                      )
+                    : null;
+          } else {
+            this.cost = resolvedCost;
+            this.computedPrice =
+              result.price > 0
+                ? result.price
+                : resolvedCost > 0
+                  ? priceFromCostAndMargin(
+                      resolvedCost,
+                      result.configuredMarginPercent ??
+                        this.configuredProfitMargin,
+                    )
+                  : 0;
+          }
+
           this.appliedMarginPercent =
             result.configuredMarginPercent ?? result.marginPercent;
           this.calculatingCost = false;
@@ -856,7 +973,15 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     if (this.usesPieceAssembly) {
-      this.computedPrice = this.componentsPriceTotal;
+      const partsCost = this.componentsCostTotal;
+      const partsPrice = this.componentsPriceTotal;
+      this.cost = partsCost;
+      this.computedPrice =
+        partsPrice > 0
+          ? partsPrice
+          : partsCost > 0
+            ? priceFromCostAndMargin(partsCost, this.configuredProfitMargin)
+            : null;
       this.appliedMarginPercent = this.configuredProfitMargin;
       return;
     }
@@ -886,7 +1011,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       components: this.usesPieceAssembly ? this.components : [],
       assemblyTimeHours: Number(this.assemblyTimeHours) || 0,
       suggestedPrice: this.suggestedPrice,
-      cost: storedCost,
+      cost: this.usesPieceAssembly ? 0 : storedCost,
       ...(this.isCombo
         ? {}
         : this.is3D
