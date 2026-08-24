@@ -11,6 +11,8 @@ import { SettingsEffects } from './settings/settings.effects';
 import { settingsReducer } from './settings/settings.reducer';
 import { SuppliesEffects } from './supplies/supplies.effects';
 import { suppliesReducer } from './supplies/supplies.reducer';
+import { ProductFormPricingEffects } from './product-form-pricing/product-form-pricing.effects';
+import { productFormPricingReducer } from './product-form-pricing/product-form-pricing.reducer';
 
 export const storeProviders = [
   provideStore({
@@ -18,6 +20,7 @@ export const storeProviders = [
     settings: settingsReducer,
     impresos: impresosReducer,
     supplies: suppliesReducer,
+    productFormPricing: productFormPricingReducer,
   }),
   provideEffects(
     CatalogEffects,
@@ -25,6 +28,7 @@ export const storeProviders = [
     SettingsEffects,
     ImpresosEffects,
     SuppliesEffects,
+    ProductFormPricingEffects,
   ),
   ...(isDevMode()
     ? [
@@ -43,6 +47,7 @@ export { CatalogFacade } from './catalog/catalog.facade';
 export { SettingsFacade } from './settings/settings.facade';
 export { ImpresosFacade } from './impresos/impresos.facade';
 export { SuppliesFacade } from './supplies/supplies.facade';
+export { ProductFormPricingFacade } from './product-form-pricing/product-form-pricing.facade';
 export { StoreBootstrapService } from './store-bootstrap.service';
 
 export { CatalogActions } from './catalog/catalog.actions';

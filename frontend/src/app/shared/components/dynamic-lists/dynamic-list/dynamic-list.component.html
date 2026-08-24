@@ -1,0 +1,104 @@
+@if (config) {
+  <db-fieldset [legend]="config.legend">
+    @if (config.description) {
+      <p class="components-desc">{{ config.description }}</p>
+    }
+
+    <div [formGroup]="formGroup">
+      <div formArrayName="items">
+        @for (
+          itemGroup of itemsArray.controls;
+          track trackByIndex($index, itemGroup);
+          let i = $index
+        ) {
+          <div class="dynamic-list-item" [formGroupName]="i">
+            <div class="dynamic-list-item__header">
+              <strong>{{ config.itemLabel(i) }}</strong>
+              @if (canRemove()) {
+                <db-button
+                  label="Quitar"
+                  variant="delete"
+                  format="inline"
+                  (clicked)="onRemove(i)"
+                />
+              }
+            </div>
+
+            <div class="dynamic-list-item__grid">
+              @for (field of config.fields; track fieldTrack($index, field)) {
+                @switch (field.type) {
+                  @case ('input') {
+                    <db-input
+                      [class.dynamic-list-field--full]="field.fullWidth"
+                      [label]="field.label"
+                      [type]="field.inputType || 'text'"
+                      [formControlName]="field.name"
+                      [placeholder]="field.placeholder ?? ''"
+                      [min]="field.min"
+                      [max]="field.max"
+                      [step]="field.step"
+                      [required]="field.required ?? false"
+                    />
+                  }
+                  @case ('select') {
+                    <db-select
+                      [class.dynamic-list-field--full]="field.fullWidth"
+                      [label]="field.label"
+                      [formControlName]="field.name"
+                      [placeholder]="field.placeholder ?? ''"
+                      [options]="selectOptions(field, i)"
+                      [required]="field.required ?? false"
+                    />
+                  }
+                  @case ('textarea') {
+                    <db-textarea
+                      [class.dynamic-list-field--full]="field.fullWidth"
+                      [label]="field.label"
+                      [formControlName]="field.name"
+                      [placeholder]="field.placeholder ?? ''"
+                    />
+                  }
+                  @case ('dimensions') {
+                    <div class="dynamic-list-dimensions">
+                      <db-input
+                        [label]="field.widthLabel ?? 'Ancho (cm)'"
+                        type="number"
+                        [formControlName]="field.widthName"
+                        [min]="field.min ?? 0.1"
+                        [step]="field.step ?? 0.1"
+                      />
+                      <db-input
+                        [label]="field.lengthLabel ?? 'Largo (cm)'"
+                        type="number"
+                        [formControlName]="field.lengthName"
+                        [min]="field.min ?? 0.1"
+                        [step]="field.step ?? 0.1"
+                      />
+                    </div>
+                  }
+                }
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <db-button
+      [label]="config.addButtonLabel"
+      variant="secondary"
+      format="soft"
+      (clicked)="onAdd()"
+    />
+
+    @if (!itemsArray.length && config.emptyMessage) {
+      <p class="components-empty">{{ config.emptyMessage }}</p>
+    }
+
+    @if (config.totalLabel && config.totalValueFn) {
+      <p class="components-desc dynamic-list-total">
+        {{ config.totalLabel }}: {{ config.totalValueFn(itemsArray.getRawValue()) }}
+      </p>
+    }
+  </db-fieldset>
+}

@@ -24,6 +24,11 @@ import { OrderFormComponent } from '../../pages/orders/order-form/order-form.com
 export interface OrderFormDialogData {
   order: Order | null;
   presetCustomerId?: string;
+  presetCartLines?: Array<{
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+  }>;
 }
 
 @Component({
@@ -41,6 +46,7 @@ export interface OrderFormDialogData {
         [customers]="customers"
         [products]="products"
         [presetCustomerId]="presetCustomerId"
+        [presetCartLines]="presetCartLines"
         [loading]="loading"
         [error]="error"
         (save)="save($event)"
@@ -61,6 +67,7 @@ export class OrderFormDialogComponent implements OnInit {
 
   order: Order | null = null;
   presetCustomerId = '';
+  presetCartLines: NonNullable<OrderFormDialogData['presetCartLines']> = [];
   customers: Customer[] = [];
   products: Product[] = [];
   loading = false;
@@ -69,6 +76,7 @@ export class OrderFormDialogComponent implements OnInit {
   ngOnInit(): void {
     this.order = this.data.order;
     this.presetCustomerId = this.data.presetCustomerId ?? '';
+    this.presetCartLines = this.data.presetCartLines ?? [];
     this.resetState();
     this.loadCatalogs();
   }

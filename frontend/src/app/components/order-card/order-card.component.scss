@@ -147,6 +147,13 @@
   letter-spacing: 0.03em;
 }
 
+.order-card__fulfillment {
+  display: block;
+  margin-top: 0.15rem;
+  color: $color-text-muted;
+  font-size: 0.7rem;
+}
+
 .order-card__total {
   align-self: flex-end;
   display: flex;

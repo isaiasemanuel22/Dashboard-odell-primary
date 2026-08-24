@@ -115,6 +115,7 @@ export class ProductsService {
       includesPieces,
       components,
       assemblyTimeHours,
+      stock: Math.max(0, Math.trunc(Number(data.stock) || 0)),
     };
 
     let product: Product;
@@ -190,9 +191,16 @@ export class ProductsService {
     const existing = this.findOne(id);
     const previousPrice = existing.price;
     const mergedType = (data.type ?? existing.type) as ProductType;
-    const mergedComponents = normalizeProductComponents(
+    let mergedComponents = normalizeProductComponents(
       data.components !== undefined ? data.components : existing.components ?? [],
     );
+    if (
+      mergedComponents.length === 0 &&
+      (existing.components ?? []).length > 0 &&
+      data.includesPieces !== false
+    ) {
+      mergedComponents = normalizeProductComponents(existing.components ?? []);
+    }
     const mergedAssembly =
       data.assemblyTimeHours !== undefined
         ? Number(data.assemblyTimeHours) || 0
@@ -201,8 +209,14 @@ export class ProductsService {
     const mergedForValidation = {
       name: data.name ?? existing.name,
       type: mergedType,
-      price: data.price ?? existing.price,
-      cost: data.cost ?? existing.cost,
+      price:
+        data.price != null && Number(data.price) > 0
+          ? Number(data.price)
+          : existing.price,
+      cost:
+        data.cost != null && Number(data.cost) > 0
+          ? Number(data.cost)
+          : existing.cost,
       size: data.size ?? existing.size,
       categoryIds: data.categoryIds ?? existing.categoryIds,
       components: mergedComponents,
@@ -296,6 +310,10 @@ export class ProductsService {
         mergedComponents.length > 0,
       components: mergedComponents,
       assemblyTimeHours: mergedAssembly,
+      stock:
+        data.stock !== undefined
+          ? Math.max(0, Math.trunc(Number(data.stock) || 0))
+          : existing.stock ?? 0,
     } as Product;
 
     if (mergedType === ProductType.COMBO || existing.type === ProductType.COMBO) {
@@ -371,7 +389,7 @@ export class ProductsService {
     }
     this.products.save(updated);
     this.pricingSync.syncAfterProductSave(id, previousPrice);
-    return updated;
+    return this.findOne(id);
   }
 
   remove(id: string): void {

@@ -1,4 +1,4 @@
-import { OrderStatus, ServiceType } from '../common/enums';
+import { OrderStatus, ProductType, ServiceType } from '../common/enums';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
 import {
   OrderRepository,
@@ -26,6 +26,8 @@ describe('SalesService order revenue', () => {
       products,
       {
         resolveCatalogUnitCost: () => 0,
+        resolveCatalogUnitPrice: () => 100,
+        resolveDesignUnitCost: () => 0,
       } as CostCalculatorService,
     );
   });
@@ -82,5 +84,35 @@ describe('SalesService order revenue', () => {
     expect(orderEntries[0].orderId).toBe('ord-delivered');
     expect(stats.monthlyOrdersRevenue).toBe(2500);
     expect(stats.monthlyOrdersCount).toBe(1);
+  });
+
+  it('valida y descuenta stock en ventas retail', () => {
+    store.products.push({
+      id: 'prod-stock',
+      name: 'Producto terminado',
+      type: ProductType.COMBO,
+      images: [],
+      attachments: [],
+      updatedAt: new Date().toISOString(),
+      price: 100,
+      cost: 50,
+      profit: 50,
+      categoryIds: [],
+      size: 'u',
+      published: true,
+      includesPieces: true,
+      components: [],
+      assemblyTimeHours: 0,
+      stock: 2,
+    });
+    service.createRetail({
+      items: [{ productId: 'prod-stock', quantity: 2, unitPrice: 0 }],
+    });
+
+    expect(store.products[0].stock).toBe(0);
+    service.createRetail({
+      items: [{ productId: 'prod-stock', quantity: 1, unitPrice: 0 }],
+    });
+    expect(store.products[0].stock).toBe(0);
   });
 });

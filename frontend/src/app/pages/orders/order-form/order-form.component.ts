@@ -13,14 +13,11 @@ import {
   Customer,
   Order,
   OrderLineDraft,
-  OrderStatus,
   Product,
   ServiceType,
 } from '../../../core/models';
 import { SettingsService } from '../../../core/services/settings.service';
 import {
-  DbCheckboxComponent,
-  DbCheckboxGroupComponent,
   DbFieldsetComponent,
   DbFormComponent,
   DbFormErrorComponent,
@@ -38,6 +35,7 @@ import {
   buildOrderItems,
   calculateOrderDiscount,
   calculateOrderSubtotal,
+  deriveOrderServices,
   isLineBillable,
   calculateOrderTotal,
   createEmptyLine,
@@ -45,7 +43,8 @@ import {
   isDesignService,
   isLineValid,
   lineFromOrderItem,
-  orderStatusOptions,
+  orderLinesFromSaleCart,
+  orderLineStockHint,
   ORDER_DESCRIPTION_MAX_LENGTH,
   productMatchesServiceType,
   serviceTypeOptions,
@@ -55,6 +54,7 @@ import {
 import {
   productComponentSelectLabel,
   calculateOrderLinesCost,
+  resolveProductUnitCost,
 } from '../../../shared/utils/product.helpers';
 import {
   DEFAULT_PROFIT_MARGINS,
@@ -86,8 +86,6 @@ import { DbSelectOption } from '../../../components/dashboard-form/db-select/db-
     DbSelectComponent,
     DbInputComponent,
     DbFieldsetComponent,
-    DbCheckboxGroupComponent,
-    DbCheckboxComponent,
     DbTextareaComponent,
     DbRichTextEditorComponent,
     DbFormErrorComponent,
@@ -110,13 +108,17 @@ export class OrderFormComponent implements OnChanges, OnInit {
   @Input() customers: Customer[] = [];
   @Input() products: Product[] = [];
   @Input() presetCustomerId = '';
+  @Input() presetCartLines: Array<{
+    productId: string;
+    quantity: number;
+    unitPrice: number;
+  }> = [];
   @Input() loading = false;
   @Input() error = '';
   @Output() save = new EventEmitter<{
     customerId?: string;
     services: ServiceType[];
     items: ReturnType<typeof buildOrderItems>;
-    status: OrderStatus;
     notes?: string;
     description?: string;
     dueDate: string;
@@ -127,8 +129,6 @@ export class OrderFormComponent implements OnChanges, OnInit {
   @Output() customerCreated = new EventEmitter<Customer>();
 
   customerId = '';
-  selectedServices: ServiceType[] = [ServiceType.IMPRESION_3D];
-  status: OrderStatus = OrderStatus.PENDIENTE;
   dueDate = defaultDueDate();
   description = '';
   notes = '';
@@ -139,7 +139,6 @@ export class OrderFormComponent implements OnChanges, OnInit {
   profitMargins = DEFAULT_PROFIT_MARGINS;
 
   readonly serviceTypeOptions = serviceTypeOptions();
-  readonly orderStatusOptions = orderStatusOptions();
   readonly discountModeOptions: DbSelectOption[] = [
     { value: 'none', label: 'Sin descuento' },
     { value: 'percent', label: 'Porcentaje (%)' },
@@ -230,7 +229,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['order'] || changes['products'] || changes['presetCustomerId']) {
+    if (
+      changes['order'] ||
+      changes['products'] ||
+      changes['presetCustomerId'] ||
+      changes['presetCartLines']
+    ) {
       this.resetForm();
     }
   }
@@ -239,29 +243,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return SERVICE_TYPE_LABELS[serviceType];
   }
 
-  isServiceSelected(serviceType: ServiceType): boolean {
-    return this.selectedServices.includes(serviceType);
-  }
-
-  onServiceCheck(serviceType: ServiceType, checked: boolean): void {
-    if (checked) {
-      if (!this.selectedServices.includes(serviceType)) {
-        this.selectedServices = [...this.selectedServices, serviceType];
-      }
-      return;
-    }
-
-    this.selectedServices = this.selectedServices.filter((s) => s !== serviceType);
-    this.lines = this.lines.filter((line) => line.serviceType !== serviceType);
-    if (!this.lines.length && this.selectedServices.length) {
-      this.lines = [createEmptyLine(this.selectedServices[0])];
-    }
-  }
-
   lineServiceOptions() {
-    return this.serviceTypeOptions.filter((option) =>
-      this.selectedServices.includes(option.value),
-    );
+    return this.serviceTypeOptions;
   }
 
   productOptionsForLine(line: OrderLineDraft) {
@@ -316,18 +299,21 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   productUnitCost(line: OrderLineDraft): number {
     const product = this.products.find((p) => p.id === line.productId);
-    return product?.cost ?? 0;
+    return resolveProductUnitCost(product, this.products);
+  }
+
+  lineStockHint(line: OrderLineDraft): string | null {
+    const product = this.products.find((p) => p.id === line.productId);
+    return orderLineStockHint(line, product);
   }
 
   addLine(): void {
-    const serviceType = this.selectedServices[0] ?? ServiceType.IMPRESION_3D;
-    this.lines = [...this.lines, createEmptyLine(serviceType)];
+    this.lines = [...this.lines, createEmptyLine(ServiceType.IMPRESION_3D)];
   }
 
   removeLine(index: number): void {
     if (this.lines.length === 1) {
-      const serviceType = this.selectedServices[0] ?? ServiceType.IMPRESION_3D;
-      this.lines = [createEmptyLine(serviceType)];
+      this.lines = [createEmptyLine(ServiceType.IMPRESION_3D)];
       return;
     }
     this.lines = this.lines.filter((_, i) => i !== index);
@@ -344,16 +330,14 @@ export class OrderFormComponent implements OnChanges, OnInit {
       customerId?: string;
       services: ServiceType[];
       items: ReturnType<typeof buildOrderItems>;
-      status: OrderStatus;
       notes?: string;
       description?: string;
       dueDate: string;
       discountPercent?: number;
       discountAmount?: number;
     } = {
-      services: [...this.selectedServices],
+      services: deriveOrderServices(validLines),
       items: buildOrderItems(validLines, this.products),
-      status: this.status,
       description: hasRichTextContent(this.description)
         ? sanitizeRichTextHtml(this.description)
         : undefined,
@@ -381,7 +365,6 @@ export class OrderFormComponent implements OnChanges, OnInit {
   canSubmit(): boolean {
     return (
       !!this.dueDate &&
-      this.selectedServices.length > 0 &&
       plainTextFromHtml(this.description).length <= this.descriptionMaxLength &&
       this.lines.some((line) => isLineValid(line))
     );
@@ -390,8 +373,6 @@ export class OrderFormComponent implements OnChanges, OnInit {
   private resetForm(): void {
     if (this.order) {
       this.customerId = this.order.customerId ?? '';
-      this.selectedServices = [...this.order.services];
-      this.status = this.order.status;
       this.dueDate = toDateInputValue(this.order.dueDate);
       this.description = this.order.description ?? '';
       this.notes = this.order.notes ?? '';
@@ -402,10 +383,17 @@ export class OrderFormComponent implements OnChanges, OnInit {
       );
       this.discountPercent = this.order.discountPercent ?? 0;
       this.discountAmount = this.order.discountAmount ?? 0;
+    } else if (this.presetCartLines.length && this.products.length) {
+      this.customerId = this.presetCustomerId;
+      this.dueDate = defaultDueDate();
+      this.description = '';
+      this.notes = '';
+      this.lines = orderLinesFromSaleCart(this.presetCartLines, this.products);
+      this.discountMode = 'none';
+      this.discountPercent = 0;
+      this.discountAmount = 0;
     } else {
       this.customerId = this.presetCustomerId;
-      this.selectedServices = [ServiceType.IMPRESION_3D];
-      this.status = OrderStatus.PENDIENTE;
       this.dueDate = defaultDueDate();
       this.description = '';
       this.notes = '';

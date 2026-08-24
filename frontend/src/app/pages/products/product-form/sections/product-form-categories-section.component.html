@@ -1,0 +1,45 @@
+<db-fieldset [legend]="'Categorías (mín. 1, máx. 5) — ' + categoryIds.length + '/5'">
+  <div class="category-picker">
+    <db-select
+      label="Agregar categoría"
+      name="categoryPicker"
+      [(ngModel)]="categoryPicker"
+      [ngModelOptions]="{ standalone: true }"
+      placeholder="Seleccionar categoría..."
+      [options]="unselectedCategoryOptions"
+      [disabled]="!canAddCategory"
+      (ngModelChange)="onPickerChange($event)"
+    />
+    <db-button
+      label="+ Nueva categoría"
+      variant="secondary"
+      format="soft"
+      (clicked)="openCategoryForm()"
+    />
+  </div>
+
+  @if (selectedCategoriesList.length) {
+    <div class="selected-categories">
+      @for (cat of selectedCategoriesList; track cat.id) {
+        <span class="category-chip">
+          {{ cat.name }}
+          <db-button
+            label="×"
+            variant="secondary"
+            format="chip"
+            [ariaLabel]="'Quitar ' + cat.name"
+            (clicked)="removeCategory(cat.id)"
+          />
+        </span>
+      }
+    </div>
+  } @else {
+    <p class="category-empty">Seleccioná al menos una categoría.</p>
+  }
+
+  @if (filteredCategoriesList.length === 0) {
+    <p class="category-hint">
+      No hay categorías para este tipo de producto. Creá una con el botón de arriba.
+    </p>
+  }
+</db-fieldset>

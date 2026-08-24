@@ -1,9 +1,11 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, map } from 'rxjs';
+import { normalizePrintJobs } from '../../shared/utils/task.helpers';
 import { environment } from '../../../environments/environment';
 import {
   CreateOrderPayload,
+  CreateOrderDeliveryPayload,
   Order,
   OrderOverview,
   OrderStatus,
@@ -40,7 +42,12 @@ export class OrdersService {
   }
 
   getOrderOverview(id: string): Observable<OrderOverview> {
-    return this.http.get<OrderOverview>(`${this.baseUrl}/orders/${id}/overview`);
+    return this.http.get<OrderOverview>(`${this.baseUrl}/orders/${id}/overview`).pipe(
+      map((overview) => ({
+        ...overview,
+        tasks: normalizePrintJobs(overview.tasks),
+      })),
+    );
   }
 
   createOrder(data: CreateOrderPayload): Observable<Order> {
@@ -55,6 +62,16 @@ export class OrdersService {
     return this.http.patch<Order>(`${this.baseUrl}/orders/${id}/status`, {
       status,
     });
+  }
+
+  createDelivery(
+    id: string,
+    data: CreateOrderDeliveryPayload,
+  ): Observable<unknown> {
+    return this.http.post(
+      `${this.baseUrl}/orders/${id}/deliveries`,
+      data,
+    );
   }
 
   deleteOrder(id: string): Observable<{ deleted: boolean }> {

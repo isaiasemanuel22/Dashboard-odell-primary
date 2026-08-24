@@ -66,6 +66,7 @@ export class SalesService {
 
   createRetail(data: CreateRetailSaleDto): RetailSale {
     const sale = this.buildRetailSale(data);
+    this.applyRetailStockChange([], sale.items);
     return this.retailSales.create(sale);
   }
 
@@ -95,13 +96,16 @@ export class SalesService {
     };
 
     const updated = this.buildRetailSale(merged, id, current.createdAt);
+    this.applyRetailStockChange(current.items, updated.items);
     return this.retailSales.save(updated);
   }
 
   removeRetail(id: string): void {
-    if (!this.retailSales.findById(id)) {
+    const sale = this.retailSales.findById(id);
+    if (!sale) {
       throw new NotFoundException(`Venta ${id} no encontrada`);
     }
+    this.applyRetailStockChange(sale.items, []);
     this.retailSales.remove(id);
   }
 
@@ -276,5 +280,40 @@ export class SalesService {
       unitPrice,
       lineTotal: quantity * unitPrice,
     };
+  }
+
+  private applyRetailStockChange(
+    previous: RetailSaleItem[],
+    next: RetailSaleItem[],
+  ): void {
+    const deltas = new Map<string, number>();
+    for (const item of previous) {
+      if (item.productId) {
+        deltas.set(
+          item.productId,
+          (deltas.get(item.productId) ?? 0) + item.quantity,
+        );
+      }
+    }
+    for (const item of next) {
+      if (item.productId) {
+        deltas.set(
+          item.productId,
+          (deltas.get(item.productId) ?? 0) - item.quantity,
+        );
+      }
+    }
+
+    for (const [productId, delta] of deltas) {
+      const product = this.products.findById(productId);
+      if (!product) {
+        throw new NotFoundException(`Producto ${productId} no encontrado`);
+      }
+    }
+    for (const [productId, delta] of deltas) {
+      const product = this.products.findById(productId)!;
+      product.stock = Math.max(0, (product.stock ?? 0) + delta);
+      this.products.save(product);
+    }
   }
 }

@@ -1,0 +1,119 @@
+<db-form-grid [formGroup]="form">
+  @if (showProductionFields && showGenericSizeField) {
+    <db-form-grid-full>
+      <div class="estampado-size-fields">
+        <db-input
+          label="Ancho (cm)"
+          type="number"
+          formControlName="sizeWidthCm"
+          [min]="0.1"
+          [step]="0.1"
+        />
+        <db-input
+          label="Largo (cm)"
+          type="number"
+          formControlName="sizeLengthCm"
+          [min]="0.1"
+          [step]="0.1"
+        />
+        <db-input
+          label="Alto (cm)"
+          type="number"
+          formControlName="sizeHeightCm"
+          [min]="0.1"
+          [step]="0.1"
+        />
+      </div>
+    </db-form-grid-full>
+  }
+
+  @if (showProductionFields && isEstampado) {
+    <db-form-grid-full>
+      <app-print-spec-list formControlName="prints" />
+    </db-form-grid-full>
+
+    <db-form-grid-full>
+      <app-supply-line-list formControlName="supplyLines" />
+    </db-form-grid-full>
+
+    <db-form-grid-full>
+      <app-press-cycle-list formControlName="pressCycles" />
+    </db-form-grid-full>
+
+    <db-form-grid-full>
+      <db-input
+        label="Tiempo de mano de obra (h)"
+        type="number"
+        formControlName="workTimeHours"
+        [min]="0"
+        [step]="0.1"
+      />
+    </db-form-grid-full>
+  }
+
+  @if (showProductionFields && isFdm) {
+    <db-form-grid-full>
+      <app-filament-line-list
+        formControlName="filamentLines"
+        [primaryFilamentType]="filamentType"
+      />
+    </db-form-grid-full>
+  }
+
+  @if (showProductionFields && isResina) {
+    <db-form-grid-full>
+      <db-select
+        label="Tipo de resina"
+        formControlName="resinType"
+        [options]="resinTypeOptions"
+      />
+    </db-form-grid-full>
+  }
+
+  @if (showProductionFields && is3D) {
+    @if (isResina) {
+      <db-input
+        label="Gramos"
+        type="number"
+        formControlName="grams"
+        [min]="0.1"
+        [step]="0.1"
+        [required]="true"
+      />
+    }
+    <db-input
+      label="Tiempo de impresión (h)"
+      type="number"
+      formControlName="printTimeHours"
+      [min]="0"
+      [step]="0.1"
+      [required]="true"
+    />
+    <db-form-grid-full>
+      <db-input
+        label="Tiempo de mano de obra (h)"
+        type="number"
+        formControlName="workTimeHours"
+        [min]="0"
+        [step]="0.1"
+        [required]="true"
+      />
+    </db-form-grid-full>
+    @if (isResina) {
+      <db-input
+        label="Lavado (min)"
+        type="number"
+        formControlName="washMinutes"
+        [min]="0"
+        [step]="0.5"
+      />
+      <db-input
+        label="Curado (min)"
+        type="number"
+        formControlName="cureMinutes"
+        [min]="0"
+        [step]="0.5"
+      />
+    }
+  }
+</db-form-grid>

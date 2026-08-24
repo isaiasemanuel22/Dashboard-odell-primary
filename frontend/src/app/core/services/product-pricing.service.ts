@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { Observable, map, of, switchMap } from 'rxjs';
+import { Observable, map, of } from 'rxjs';
 import {
   CalculateCostPayload,
   CostBreakdown,
@@ -10,7 +10,7 @@ import {
   ProductType,
 } from '../models';
 import { SettingsFacade } from '../../store/settings/settings.facade';
-import { SettingsService } from './settings.service';
+import { ProductCostCalculationService } from './product-cost-calculation.service';
 import {
   sumComponentsCost,
   sumComponentsPrice,
@@ -27,7 +27,7 @@ import {
 @Injectable({ providedIn: 'root' })
 export class ProductPricingService {
   private readonly settingsFacade = inject(SettingsFacade);
-  private readonly settingsService = inject(SettingsService);
+  private readonly costCalculation = inject(ProductCostCalculationService);
 
   preview(
     input: ProductPricingInput,
@@ -36,11 +36,11 @@ export class ProductPricingService {
   ): Observable<ProductPricingResult> {
     const resolvedSettings = settings ?? this.settingsFacade.peekGeneralSettings();
     if (resolvedSettings) {
-      return this.previewWithSettings(input, catalog, resolvedSettings);
+      return of(this.previewWithSettings(input, catalog, resolvedSettings));
     }
 
     return this.settingsFacade.ensureLoaded().pipe(
-      switchMap((loaded) => this.previewWithSettings(input, catalog, loaded)),
+      map((loaded) => this.previewWithSettings(input, catalog, loaded)),
     );
   }
 
@@ -77,32 +77,28 @@ export class ProductPricingService {
     input: ProductPricingInput,
     catalog: Product[],
     settings: GeneralSettings,
-  ): Observable<ProductPricingResult> {
+  ): ProductPricingResult {
     const storedCost = Number(input.cost) || 0;
     const hasComponents = (input.components ?? []).length > 0;
+    const { cost, breakdown } = this.resolveCost(input, catalog, settings);
+    const resolvedCost = hasComponents
+      ? cost
+      : cost <= 0 && storedCost > 0
+        ? storedCost
+        : cost;
+    const resolvedBreakdown =
+      hasComponents || cost > 0 || storedCost <= 0
+        ? breakdown
+        : breakdown?.totalCost === 0
+          ? null
+          : breakdown;
 
-    return this.resolveCost(input, catalog, settings).pipe(
-      map(({ cost, breakdown }) => {
-        const resolvedCost = hasComponents
-          ? cost
-          : cost <= 0 && storedCost > 0
-            ? storedCost
-            : cost;
-        const resolvedBreakdown =
-          hasComponents || cost > 0 || storedCost <= 0
-            ? breakdown
-            : breakdown?.totalCost === 0
-              ? null
-              : breakdown;
-
-        return this.buildResult(
-          input,
-          catalog,
-          settings,
-          resolvedCost,
-          resolvedBreakdown,
-        );
-      }),
+    return this.buildResult(
+      input,
+      catalog,
+      settings,
+      resolvedCost,
+      resolvedBreakdown,
     );
   }
 
@@ -121,13 +117,13 @@ export class ProductPricingService {
     input: ProductPricingInput,
     catalog: Product[],
     settings: GeneralSettings,
-  ): Observable<{ cost: number; breakdown: CostBreakdown | null }> {
+  ): { cost: number; breakdown: CostBreakdown | null } {
     const components = input.components ?? [];
     const hasComponents = components.length > 0;
     const storedCost = Number(input.cost) || 0;
 
     if (hasComponents) {
-      return this.calculateCompositeCost(input, catalog, components);
+      return this.calculateCompositeCost(input, catalog, components, settings);
     }
 
     if (input.type === ProductType.FDM || input.type === ProductType.RESINA) {
@@ -140,48 +136,41 @@ export class ProductPricingService {
         (input.type === ProductType.RESINA && grams > 0) ||
         (input.type === ProductType.FDM && grams > 0 && !(input.filaments?.length))
       ) {
-        return this.settingsService
-          .calculateCost(this.toCalculateCostPayload(input))
-          .pipe(
-            map((breakdown) => ({
-              cost: totalCostFromBreakdown(breakdown),
-              breakdown,
-            })),
-          );
+        const breakdown = this.calculateBreakdown(input, settings);
+        return {
+          cost: totalCostFromBreakdown(breakdown),
+          breakdown,
+        };
       }
     }
 
     if (input.type === ProductType.ESTAMPADO && this.canCalculateEstampado(input)) {
-      return this.settingsService
-        .calculateCost(this.toCalculateCostPayload(input))
-        .pipe(
-          map((breakdown) => ({
-            cost: totalCostFromBreakdown(breakdown),
-            breakdown,
-          })),
-        );
+      const breakdown = this.calculateBreakdown(input, settings);
+      return {
+        cost: totalCostFromBreakdown(breakdown),
+        breakdown,
+      };
     }
 
-    const cost = storedCost;
-    return of({
-      cost,
-      breakdown: cost > 0 ? null : null,
-    });
+    return {
+      cost: storedCost,
+      breakdown: null,
+    };
   }
 
   private calculateCompositeCost(
     input: ProductPricingInput,
     catalog: Product[],
     components: ProductPricingInput['components'],
-  ): Observable<{ cost: number; breakdown: CostBreakdown | null }> {
+    settings: GeneralSettings,
+  ): { cost: number; breakdown: CostBreakdown | null } {
     const partsCost = sumComponentsCost(catalog, components ?? []);
-    // El margen de error ya está incluido en el costo de cada pieza.
     const errorMarginCost = 0;
     const assemblyHours = Number(input.assemblyTimeHours) || 0;
 
     if (assemblyHours <= 0) {
       const totalCost = partsCost;
-      return of({
+      return {
         cost: totalCost,
         breakdown: {
           materialCost: partsCost,
@@ -191,32 +180,41 @@ export class ProductPricingService {
           laborCost: 0,
           totalCost,
         },
-      });
+      };
     }
 
-    return this.settingsService
-      .calculateCost({
+    const laborBreakdown = this.costCalculation.calculateCost(
+      {
         type: input.type,
         grams: 0,
         printTimeHours: 0,
         workTimeHours: assemblyHours,
-      })
-      .pipe(
-        map((laborBreakdown) => {
-          const totalCost = partsCost + laborBreakdown.laborCost;
-          return {
-            cost: totalCost,
-            breakdown: {
-              materialCost: partsCost,
-              energyCost: 0,
-              machineCost: 0,
-              errorMarginCost,
-              laborCost: laborBreakdown.laborCost,
-              totalCost,
-            },
-          };
-        }),
-      );
+      },
+      { settings },
+    );
+    const totalCost = partsCost + laborBreakdown.laborCost;
+
+    return {
+      cost: totalCost,
+      breakdown: {
+        materialCost: partsCost,
+        energyCost: 0,
+        machineCost: 0,
+        errorMarginCost,
+        laborCost: laborBreakdown.laborCost,
+        totalCost,
+      },
+    };
+  }
+
+  private calculateBreakdown(
+    input: ProductPricingInput,
+    settings: GeneralSettings,
+  ): CostBreakdown {
+    return this.costCalculation.calculateCost(
+      this.toCalculateCostPayload(input),
+      { settings },
+    );
   }
 
   private canCalculateEstampado(input: ProductPricingInput): boolean {

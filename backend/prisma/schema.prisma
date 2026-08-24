@@ -79,6 +79,7 @@ model Product {
   fdmFilaments          Json @default("[]") @map("fdm_filaments")
   includesPieces        Boolean @default(false) @map("includes_pieces")
   attachments           Json    @default("[]") @map("attachments")
+  stock                 Int     @default(0)
 
   @@map("products")
 }
@@ -141,6 +142,7 @@ model Order {
   dueDate      DateTime @map("due_date")
   statusHistory Json    @default("[]") @map("status_history")
   priceHistory  Json    @default("[]") @map("price_history")
+  deliveryHistory Json  @default("[]") @map("delivery_history")
 
   customer Customer?   @relation(fields: [customerId], references: [id], onDelete: Restrict)
   items    OrderItem[]
@@ -158,6 +160,11 @@ model OrderItem {
   productName String @map("product_name") @db.VarChar(255)
   quantity    Int
   unitPrice   Float  @map("unit_price")
+  deliveredQuantity Int @default(0) @map("delivered_quantity")
+  reservedQuantity Int @default(0) @map("reserved_quantity")
+  productionRequiredQuantity Int @default(0) @map("production_required_quantity")
+  producedQuantity Int @default(0) @map("produced_quantity")
+  deliveredFromProductionQuantity Int @default(0) @map("delivered_from_production_quantity")
 
   order Order @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
@@ -181,6 +188,12 @@ model PrintJob {
   dueDate        DateTime  @map("due_date")
   startedAt      DateTime? @map("started_at")
   completedAt    DateTime? @map("completed_at")
+  taskType        String    @default("SERVICE") @map("task_type") @db.VarChar(32)
+  quantity        Int       @default(1)
+  archived        Boolean   @default(false)
+  blockedReason   String?   @map("blocked_reason") @db.VarChar(255)
+  responsibleUserId String? @map("responsible_user_id") @db.VarChar(128)
+  suppliesAvailableNotifiedAt DateTime? @map("supplies_available_notified_at")
 
   @@index([orderId])
   @@map("print_jobs")

@@ -19,6 +19,7 @@
 
       <div class="meta">
         <span>📐 {{ product.size }}</span>
+        <span>📦 {{ productPhysicalStock(product) }} terminados</span>
         @if (product.components.length) {
           <span>🧩 {{ product.components.length }} pieza(s)</span>
         } @else if (isProduct3D(product)) {
@@ -29,9 +30,9 @@
       </div>
 
       <app-product-pricing
-        [price]="product.price"
-        [cost]="product.cost"
-        [profit]="product.profit"
+        [price]="displayPrice"
+        [cost]="displayCost"
+        [profit]="displayProfit"
       />
 
       <p class="updated">Actualizado: {{ product.updatedAt | dateShort }}</p>

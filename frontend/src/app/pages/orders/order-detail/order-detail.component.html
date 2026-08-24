@@ -94,6 +94,17 @@
     </section>
 
     <div class="detail-main">
+      @if (alerts.length) {
+        <section class="operational-alerts" aria-label="Alertas operativas">
+          @for (alertItem of alerts; track alertItem.code + '-' + $index) {
+            <div [class]="'operational-alert operational-alert--' + alertItem.severity">
+              <strong>Atención</strong>
+              <span>{{ alertItem.message }}</span>
+            </div>
+          }
+        </section>
+      }
+
       <section class="panel">
         <h3>Líneas del pedido</h3>
         <table class="data-table">
@@ -102,6 +113,12 @@
               <th>Servicio</th>
               <th>Concepto / producto</th>
               <th>Cant.</th>
+              <th>Stock</th>
+              <th>A producir</th>
+              <th>Reservado</th>
+              <th>Producido</th>
+              <th>Entregado</th>
+              <th>Pendiente</th>
               <th>Precio unit.</th>
               <th>Subtotal</th>
             </tr>
@@ -120,6 +137,12 @@
                   }
                 </td>
                 <td>{{ item.quantity }}</td>
+                <td>{{ item.fromStock ?? 0 }}</td>
+                <td>{{ item.toProduce ?? 0 }}</td>
+                <td>{{ item.reserved ?? 0 }}</td>
+                <td>{{ item.produced ?? 0 }}</td>
+                <td>{{ item.delivered ?? 0 }}</td>
+                <td><strong>{{ item.pending ?? item.quantity }}</strong></td>
                 <td>{{ item.unitPrice | currencyArs }}</td>
                 <td>{{ item.quantity * item.unitPrice | currencyArs }}</td>
               </tr>
@@ -127,17 +150,17 @@
           </tbody>
           <tfoot>
             <tr>
-              <td colspan="4"><strong>Subtotal</strong></td>
+              <td colspan="10"><strong>Subtotal</strong></td>
               <td><strong>{{ orderSubtotal | currencyArs }}</strong></td>
             </tr>
             @if (orderDiscount > 0) {
               <tr class="order-discount-row">
-                <td colspan="4"><strong>Descuento</strong></td>
+                <td colspan="10"><strong>Descuento</strong></td>
                 <td><strong>-{{ orderDiscount | currencyArs }}</strong></td>
               </tr>
             }
             <tr>
-              <td colspan="4"><strong>Total</strong></td>
+              <td colspan="10"><strong>Total</strong></td>
               <td><strong>{{ order.total | currencyArs }}</strong></td>
             </tr>
           </tfoot>
@@ -159,7 +182,7 @@
             <thead>
               <tr>
                 <th>Tarea</th>
-                <th>Servicio</th>
+                <th>Tipo</th>
                 <th>Estado</th>
                 <th>Ubicación</th>
                 <th>Entrega</th>
@@ -169,7 +192,7 @@
               @for (task of tasks; track task.id) {
                 <tr [class]="priorityTierClass(task.priority)">
                   <td><strong>{{ task.productName }}</strong></td>
-                  <td>{{ task.type | serviceTypeLabel }}</td>
+                  <td>{{ taskKindLabels[task.taskKind] }}</td>
                   <td>
                     <db-status-badge
                       [statusClass]="task.status"
@@ -179,6 +202,11 @@
                   <td>{{ task.active ? 'Tablero' : 'Pendiente' }}</td>
                   <td>{{ task.dueDate | dateShort }}</td>
                 </tr>
+                @if (task.status === 'bloqueado' && task.blockedReason) {
+                  <tr class="task-block-reason">
+                    <td colspan="5">Bloqueo: {{ task.blockedReason }}</td>
+                  </tr>
+                }
               }
             </tbody>
           </table>
@@ -191,21 +219,50 @@
 
       <section class="panel status-panel">
         <h3>Estado del pedido</h3>
-        <div class="status-row">
-          <db-select
-            label="Estado"
-            [(ngModel)]="statusDraft"
-            name="statusDraft"
-            [options]="statusOptions"
-          />
-          <db-button
-            [label]="statusLoading ? 'Actualizando...' : 'Actualizar estado'"
-            variant="primary"
-            format="solid"
-            [disabled]="statusLoading || statusDraft === order.status"
-            (clicked)="updateStatus()"
-          />
-        </div>
+        <p class="automatic-status">
+          El estado se calcula automáticamente desde las tareas y entregas.
+        </p>
+      </section>
+
+      <section class="panel">
+        <h3>Entregas</h3>
+        @if (order.status !== 'cancelado' && order.status !== 'entregado') {
+          <div class="delivery-form">
+            @for (item of order.items; track $index; let itemIndex = $index) {
+              @if ((item.pending ?? item.quantity) > 0) {
+                <db-input
+                  [label]="item.productName + ' (máx. ' + (item.pending ?? item.quantity) + ')'"
+                  type="number"
+                  [(ngModel)]="deliveryDraft[itemIndex]"
+                  [name]="'delivery-' + itemIndex"
+                  [min]="0"
+                  [max]="item.pending ?? item.quantity"
+                  step="1"
+                />
+              }
+            }
+            <db-button
+              [label]="deliveryLoading ? 'Registrando...' : 'Registrar entrega'"
+              variant="primary"
+              format="solid"
+              [disabled]="!canRegisterDelivery"
+              (clicked)="registerDelivery()"
+            />
+          </div>
+        }
+        @if (deliveries.length) {
+          <ul class="delivery-list">
+            @for (delivery of deliveries; track delivery.id) {
+              <li>
+                <strong>{{ delivery.deliveredAt | dateTime }}</strong>
+                <span>{{ delivery.items.length }} línea(s)</span>
+                @if (delivery.notes) { <span>{{ delivery.notes }}</span> }
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="empty-group">Todavía no se registraron entregas.</p>
+        }
       </section>
 
       <section class="panel status-history-panel">
@@ -303,6 +360,15 @@
         format="solid"
         (clicked)="openEdit()"
       />
+      @if (order.status !== 'cancelado') {
+        <db-button
+          [label]="statusLoading ? 'Cancelando...' : 'Cancelar pedido'"
+          variant="delete"
+          format="soft"
+          [disabled]="statusLoading"
+          (clicked)="cancelOrder()"
+        />
+      }
       <db-button
         label="Eliminar"
         variant="delete"

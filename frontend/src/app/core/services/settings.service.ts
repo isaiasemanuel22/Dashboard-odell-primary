@@ -3,8 +3,6 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
-  CalculateCostPayload,
-  CostBreakdown,
   FilamentPriceConfig,
   GeneralSettings,
   MachineCostConfig,
@@ -219,10 +217,6 @@ export class SettingsService {
         `${this.baseUrl}/general/machine-costs/${id}`,
       )
       .pipe(tap(() => this.settingsFacade.load(true)));
-  }
-
-  calculateCost(data: CalculateCostPayload): Observable<CostBreakdown> {
-    return this.http.post<CostBreakdown>(`${this.baseUrl}/calculate-cost`, data);
   }
 
   getSupplyDefaultPrice(data: {

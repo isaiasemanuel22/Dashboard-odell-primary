@@ -20,8 +20,9 @@ export enum SupplyCategory {
 
 export enum OrderStatus {
   PENDIENTE = 'pendiente',
-  EN_PRODUCCION = 'en_produccion',
-  COMPLETADO = 'completado',
+  EN_PROGRESO = 'en_progreso',
+  TERMINADO = 'terminado',
+  PARCIALMENTE_ENTREGADO = 'parcialmente_entregado',
   ENTREGADO = 'entregado',
   CANCELADO = 'cancelado',
 }
@@ -34,6 +35,15 @@ export enum PrintJobStatus {
   TERMINADO = 'terminado',
   CANCELADO = 'cancelado',
 }
+
+export enum TaskKind {
+  PREPARE_ORDER = 'prepare_order',
+  PRODUCTION = 'production',
+  SERVICE = 'service',
+  INTERNAL = 'internal',
+}
+
+export type OrderItemKind = 'product' | 'service';
 
 export enum SaleSource {
   RETAIL = 'retail',
@@ -300,6 +310,16 @@ export interface ProductBase {
   includesPieces: boolean;
   components: ProductComponent[];
   assemblyTimeHours: number;
+  /** Stock físico de producto terminado (contrato API). */
+  stock?: number;
+  /** Alias de compatibilidad en UI; preferir `stock` desde el backend. */
+  finishedStock?: number;
+}
+
+export interface ProductStockOverview {
+  physical: number;
+  reserved: number;
+  available: number;
 }
 
 export interface Product3D extends ProductBase {
@@ -393,12 +413,22 @@ export interface Customer {
 export type CreateCustomerPayload = Omit<Customer, 'id' | 'createdAt'>;
 export type UpdateCustomerPayload = Partial<CreateCustomerPayload>;
 
-export interface OrderItem {
+export interface OrderItemPayload {
   serviceType: ServiceType;
   productId?: string;
   productName: string;
   quantity: number;
   unitPrice: number;
+}
+
+export interface OrderItem extends OrderItemPayload {
+  itemKind?: OrderItemKind;
+  fromStock?: number;
+  toProduce?: number;
+  reserved?: number;
+  produced?: number;
+  delivered?: number;
+  pending?: number;
 }
 
 export type OrderStatusChangeSource = 'manual' | 'auto';
@@ -445,13 +475,22 @@ export interface Order {
   dueDate: string;
   statusHistory?: OrderStatusHistoryEntry[];
   priceHistory?: OrderPriceHistoryEntry[];
+  deliveryHistory?: OrderDelivery[];
 }
 
 export type CreateOrderPayload = Omit<
   Order,
-  'id' | 'createdAt' | 'customerName' | 'total' | 'statusHistory' | 'customerId'
+  | 'id'
+  | 'createdAt'
+  | 'customerName'
+  | 'total'
+  | 'status'
+  | 'statusHistory'
+  | 'customerId'
+  | 'items'
 > & {
   customerId?: string | null;
+  items: OrderItemPayload[];
 };
 
 export type UpdateOrderPayload = Partial<CreateOrderPayload>;
@@ -474,6 +513,7 @@ export interface PrintJob {
   productName: string;
   productId?: string;
   type: ServiceType;
+  taskKind: TaskKind;
   status: PrintJobStatus;
   active: boolean;
   priority: number;
@@ -482,6 +522,7 @@ export interface PrintJob {
   dueDate: string;
   startedAt?: string;
   completedAt?: string;
+  blockedReason?: string;
 }
 
 export interface UpdatePrintJobPayload {
@@ -496,12 +537,40 @@ export interface PrintJobUpdateResult extends PrintJob {
 export interface OrderOverview {
   order: Order;
   tasks: PrintJob[];
+  alerts: OrderAlert[];
+  deliveries?: OrderDelivery[];
 }
 
 export interface ProductOverview {
   product: Product;
   categories: Category[];
   catalogProducts: Product[];
+  stock: ProductStockOverview;
+}
+
+export interface OrderAlert {
+  code: string;
+  message: string;
+  severity: 'info' | 'warning' | 'error';
+  itemIndex?: number;
+}
+
+export interface OrderDeliveryItem {
+  orderItemIndex: number;
+  quantity: number;
+}
+
+export interface OrderDelivery {
+  id: string;
+  orderId?: string;
+  items: OrderDeliveryItem[];
+  deliveredAt: string;
+  notes?: string;
+}
+
+export interface CreateOrderDeliveryPayload {
+  items: OrderDeliveryItem[];
+  notes?: string;
 }
 
 export interface PrintJobsBoard {

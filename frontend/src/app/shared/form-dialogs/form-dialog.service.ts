@@ -19,6 +19,7 @@ import { ConfirmDialogComponent, ConfirmDialogData } from './confirm-dialog.comp
 import { CustomerFormDialogComponent } from './customer-form-dialog.component';
 import { ImpresoFormDialogComponent } from './impreso-form-dialog.component';
 import { OrderFormDialogComponent } from './order-form-dialog.component';
+import type { OrderFormDialogData } from './order-form-dialog.component';
 import { ProductFormDialogComponent } from './product-form-dialog.component';
 import { ResetDatabaseDialogComponent } from './reset-database-dialog.component';
 import { SaleFormDialogComponent } from './sale-form-dialog.component';
@@ -36,11 +37,18 @@ export class FormDialogService {
 
   openOrder(
     order: Order | null = null,
-    options?: { presetCustomerId?: string },
+    options?: {
+      presetCustomerId?: string;
+      presetCartLines?: OrderFormDialogData['presetCartLines'];
+    },
   ): Observable<Order | undefined> {
     return this.open(
       OrderFormDialogComponent,
-      { order, presetCustomerId: options?.presetCustomerId },
+      {
+        order,
+        presetCustomerId: options?.presetCustomerId,
+        presetCartLines: options?.presetCartLines,
+      },
       'lg',
       {
         ariaLabel: order ? 'Editar pedido' : 'Nuevo pedido',

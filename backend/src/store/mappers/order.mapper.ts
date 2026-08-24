@@ -2,6 +2,13 @@ import { Prisma } from '@prisma/client';
 import { Order, OrderItem } from '../../common/interfaces';
 import { ensureOrderStatusHistory } from '../../orders/order-status-history.util';
 import { fromJson, toInputJson } from '../../prisma/json.util';
+import { OrderStatus } from '../../common/enums';
+
+function normalizeOrderStatus(status: string): OrderStatus {
+  if (status === 'en_produccion') return OrderStatus.EN_PROGRESO;
+  if (status === 'completado') return OrderStatus.TERMINADO;
+  return status as OrderStatus;
+}
 
 export function mapOrderItemFromDb(item: {
   serviceType: string;
@@ -9,6 +16,11 @@ export function mapOrderItemFromDb(item: {
   productName: string;
   quantity: number;
   unitPrice: number;
+  deliveredQuantity?: number;
+  reservedQuantity?: number;
+  productionRequiredQuantity?: number;
+  producedQuantity?: number;
+  deliveredFromProductionQuantity?: number;
 }): OrderItem {
   return {
     serviceType: item.serviceType as OrderItem['serviceType'],
@@ -16,6 +28,12 @@ export function mapOrderItemFromDb(item: {
     productName: item.productName,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    deliveredQuantity: item.deliveredQuantity ?? 0,
+    reservedQuantity: item.reservedQuantity ?? 0,
+    productionRequiredQuantity: item.productionRequiredQuantity ?? 0,
+    producedQuantity: item.producedQuantity ?? 0,
+    deliveredFromProductionQuantity:
+      item.deliveredFromProductionQuantity ?? 0,
   };
 }
 
@@ -34,12 +52,18 @@ export function mapOrderFromDb(row: {
   dueDate: Date;
   statusHistory: Prisma.JsonValue;
   priceHistory?: Prisma.JsonValue;
+  deliveryHistory?: Prisma.JsonValue;
   items: Array<{
     serviceType: string;
     productId: string | null;
     productName: string;
     quantity: number;
     unitPrice: number;
+    deliveredQuantity?: number;
+    reservedQuantity?: number;
+    productionRequiredQuantity?: number;
+    producedQuantity?: number;
+    deliveredFromProductionQuantity?: number;
   }>;
 }): Order {
   const order: Order = {
@@ -48,7 +72,7 @@ export function mapOrderFromDb(row: {
     customerName: row.customerName,
     services: fromJson<Order['services']>(row.services),
     items: row.items.map((item) => mapOrderItemFromDb(item)),
-    status: row.status as Order['status'],
+    status: normalizeOrderStatus(row.status),
     total: row.total,
     discountPercent: row.discountPercent ?? 0,
     discountAmount: row.discountAmount ?? 0,
@@ -58,6 +82,8 @@ export function mapOrderFromDb(row: {
     dueDate: row.dueDate.toISOString(),
     statusHistory: fromJson<Order['statusHistory']>(row.statusHistory) ?? [],
     priceHistory: fromJson<Order['priceHistory']>(row.priceHistory ?? []) ?? [],
+    deliveryHistory:
+      fromJson<Order['deliveryHistory']>(row.deliveryHistory ?? []) ?? [],
   };
   ensureOrderStatusHistory(order);
   return order;
@@ -78,6 +104,7 @@ function mapOrderScalarsToDb(order: Order) {
     dueDate: new Date(order.dueDate),
     statusHistory: toInputJson(order.statusHistory ?? []),
     priceHistory: toInputJson(order.priceHistory ?? []),
+    deliveryHistory: toInputJson(order.deliveryHistory ?? []),
   };
 }
 
@@ -103,5 +130,11 @@ export function mapOrderItemToDb(orderId: string, index: number, item: OrderItem
     productName: item.productName,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    deliveredQuantity: item.deliveredQuantity ?? 0,
+    reservedQuantity: item.reservedQuantity ?? 0,
+    productionRequiredQuantity: item.productionRequiredQuantity ?? 0,
+    producedQuantity: item.producedQuantity ?? 0,
+    deliveredFromProductionQuantity:
+      item.deliveredFromProductionQuantity ?? 0,
   };
 }

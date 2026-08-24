@@ -9,13 +9,16 @@ import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import {
   CreateRetailSalePayload,
   Product,
+  ProductStockOverview,
   RetailSale,
   UpdateRetailSalePayload,
 } from '../../core/models';
 import { ProductsService } from '../../core/services/products.service';
 import { SalesService } from '../../core/services/sales.service';
+import { SaleCartService } from '../../core/services/sale-cart.service';
 import { FormDialogShellComponent } from '../../components/form-dialog-shell/form-dialog-shell.component';
 import { extractApiErrorMessage } from '../utils/api-error';
+import { productStockOverview } from '../utils/stock.helpers';
 import { SaleFormComponent } from '../../pages/sales/sale-form/sale-form.component';
 
 export interface SaleFormDialogData {
@@ -35,6 +38,7 @@ export interface SaleFormDialogData {
       <app-sale-form
         [sale]="sale"
         [products]="products"
+        [stockByProductId]="stockByProductId"
         [loading]="loading"
         [error]="error"
         (save)="save($event)"
@@ -47,12 +51,14 @@ export interface SaleFormDialogData {
 export class SaleFormDialogComponent implements OnInit {
   private readonly salesService = inject(SalesService);
   private readonly productsService = inject(ProductsService);
+  private readonly saleCart = inject(SaleCartService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly dialogRef = inject(DialogRef<RetailSale>);
   private readonly data = inject<SaleFormDialogData>(DIALOG_DATA);
 
   sale: RetailSale | null = null;
   products: Product[] = [];
+  stockByProductId: Record<string, ProductStockOverview> = {};
   loading = false;
   error = '';
 
@@ -77,6 +83,9 @@ export class SaleFormDialogComponent implements OnInit {
     request.subscribe({
       next: (saved) => {
         this.loading = false;
+        if (!this.sale) {
+          this.saleCart.clear();
+        }
         this.dialogRef.close(saved);
       },
       error: (err) => {
@@ -95,6 +104,12 @@ export class SaleFormDialogComponent implements OnInit {
     this.productsService.getProducts(undefined, { all: true }).subscribe({
       next: (products) => {
         this.products = products;
+        this.stockByProductId = Object.fromEntries(
+          products.map((product) => [
+            product.id,
+            productStockOverview(product),
+          ]),
+        );
         this.cdr.markForCheck();
       },
     });

@@ -8,6 +8,14 @@ export const CatalogActions = createActionGroup({
     'Load Success': props<{ data: ReferenceData }>(),
     'Load Failure': props<{ error: string }>(),
 
+    'Load Products': props<{ all?: boolean; refresh?: boolean }>(),
+    'Load Products Success': props<{ products: Product[] }>(),
+    'Load Products Failure': props<{ error: string }>(),
+
+    'Load All Products': props<{ refresh?: boolean }>(),
+    'Load All Products Success': props<{ products: Product[] }>(),
+    'Load All Products Failure': props<{ error: string }>(),
+
     'Upsert Product': props<{ product: Product }>(),
     'Product Created': emptyProps(),
     'Remove Product': props<{ id: string }>(),

@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import {
   CreateRetailSalePayload,
   Product,
+  ProductStockOverview,
   RetailSale,
 } from '../../../core/models';
 import {
@@ -28,7 +29,10 @@ import {
   SaleCartLineCardComponent,
 } from '@general-components';
 import { BreakpointService } from '../../../core/services/breakpoint.service';
+import { SaleCartService } from '../../../core/services/sale-cart.service';
+import { Router } from '@angular/router';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
+import { FormDialogService } from '../../../shared/form-dialogs/public-api';
 import { DbSelectOption } from '../../../components/dashboard-form/db-select/db-select.types';
 import {
   DiscountMode,
@@ -39,6 +43,7 @@ import {
   discountPayloadFromMode,
 } from '../../../shared/utils/discount.util';
 import { calculateCatalogLinesCost } from '../../../shared/utils/product.helpers';
+import { productStockOverview, canCloseRetailSale } from '../../../shared/utils/stock.helpers';
 
 let cartLineKey = 0;
 
@@ -65,9 +70,13 @@ let cartLineKey = 0;
 })
 export class SaleFormComponent implements OnChanges {
   private readonly breakpoint = inject(BreakpointService);
+  private readonly saleCart = inject(SaleCartService);
+  private readonly formDialogs = inject(FormDialogService);
+  private readonly router = inject(Router);
 
   @Input() sale: RetailSale | null = null;
   @Input() products: Product[] = [];
+  @Input() stockByProductId: Record<string, ProductStockOverview> = {};
   @Input() loading = false;
   @Input() error = '';
   /** `auto` usa cards en mobile; `mobile` fuerza cards; `desktop` fuerza tabla. */
@@ -77,7 +86,7 @@ export class SaleFormComponent implements OnChanges {
 
   productId = '';
   pickQuantity = 1;
-  cart: SaleCartLine[] = [];
+  private editCart: SaleCartLine[] = [];
   notes = '';
   pickerError = '';
   discountMode: DiscountMode = 'none';
@@ -94,11 +103,20 @@ export class SaleFormComponent implements OnChanges {
     return this.sale !== null;
   }
 
+  get cart(): SaleCartLine[] {
+    return this.isEditing ? this.editCart : this.saleCart.getLines();
+  }
+
   get productOptions(): DbSelectOption[] {
     return this.products.map((product) => ({
       value: product.id,
-      label: `${product.name} · ${this.formatPrice(product.price)}`,
+      label: `${product.name} · ${this.formatPrice(product.price)} · ${this.availableStock(product.id)} disp.`,
+      disabled: this.availableStock(product.id) < 1,
     }));
+  }
+
+  get hasAvailableProducts(): boolean {
+    return this.products.some((product) => this.availableStock(product.id) > 0);
   }
 
   get cartSubtotal(): number {
@@ -144,6 +162,15 @@ export class SaleFormComponent implements OnChanges {
   }
 
   get canCloseSale(): boolean {
+    return (
+      !this.loading &&
+      canCloseRetailSale(this.cart, (productId) =>
+        this.availableStock(productId),
+      )
+    );
+  }
+
+  get hasCartItems(): boolean {
     return this.cart.length > 0 && !this.loading;
   }
 
@@ -156,11 +183,18 @@ export class SaleFormComponent implements OnChanges {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['sale'] || changes['products']) {
       this.resetForm();
+    } else if (changes['stockByProductId'] && !this.productId) {
+      this.productId =
+        this.products.find((product) => this.availableStock(product.id) > 0)
+          ?.id ?? '';
     }
   }
 
   onProductChange(): void {
-    this.pickerError = '';
+    this.pickerError =
+      this.productId && this.availableStock(this.productId) < 1
+        ? 'Este producto no tiene stock disponible. Creá un pedido para producirlo.'
+        : '';
   }
 
   addToCart(): void {
@@ -179,27 +213,44 @@ export class SaleFormComponent implements OnChanges {
     }
 
     const existing = this.cart.find((line) => line.productId === product.id);
-    if (existing) {
-      existing.quantity += quantity;
+
+    if (this.isEditing) {
+      if (existing) {
+        existing.quantity += quantity;
+      } else {
+        this.editCart.push({
+          key: `line-${++cartLineKey}`,
+          productId: product.id,
+          productName: product.name,
+          quantity,
+          unitPrice: product.price,
+        });
+      }
     } else {
-      this.cart.push({
-        key: `line-${++cartLineKey}`,
-        productId: product.id,
-        productName: product.name,
-        quantity,
-        unitPrice: product.price,
-      });
+      const result = this.saleCart.addProduct(product, quantity);
+      if (!result.ok) {
+        this.pickerError = result.error ?? 'No se pudo agregar al carrito';
+        return;
+      }
     }
 
     this.pickQuantity = 1;
   }
 
   removeFromCart(key: string): void {
-    this.cart = this.cart.filter((line) => line.key !== key);
+    if (this.isEditing) {
+      this.editCart = this.editCart.filter((line) => line.key !== key);
+      return;
+    }
+    this.saleCart.removeLine(key);
   }
 
   updateLineQuantity(line: SaleCartLine, quantity: number): void {
-    line.quantity = quantity;
+    if (this.isEditing) {
+      line.quantity = quantity;
+      return;
+    }
+    this.saleCart.updateLineQuantity(line.key, quantity);
   }
 
   closeSale(): void {
@@ -225,12 +276,41 @@ export class SaleFormComponent implements OnChanges {
     });
   }
 
+  createOrder(): void {
+    if (!this.cart.length || this.isEditing) return;
+
+    this.formDialogs
+      .openOrder(null, {
+        presetCartLines: this.cart.map((line) => ({
+          productId: line.productId,
+          quantity: line.quantity,
+          unitPrice: line.unitPrice,
+        })),
+      })
+      .subscribe((order) => {
+        if (!order) return;
+        this.saleCart.clear();
+        void this.router.navigate(['/pedidos', order.id]);
+      });
+  }
+
+  cancelCart(): void {
+    if (this.isEditing) {
+      this.cancel.emit();
+      return;
+    }
+    this.saleCart.clear();
+    this.cancel.emit();
+  }
+
   private resetForm(): void {
     this.pickerError = '';
     this.notes = '';
     this.pickQuantity = 1;
-    this.productId = this.products[0]?.id ?? '';
-    this.cart = [];
+    this.productId =
+      this.products.find((product) => this.availableStock(product.id) > 0)?.id ??
+      '';
+    this.editCart = [];
     this.discountMode = 'none';
     this.discountPercent = 0;
     this.discountAmount = 0;
@@ -243,7 +323,7 @@ export class SaleFormComponent implements OnChanges {
       );
       this.discountPercent = this.sale.discountPercent ?? 0;
       this.discountAmount = this.sale.discountAmount ?? 0;
-      this.cart = this.sale.items.map((item) => ({
+      this.editCart = this.sale.items.map((item) => ({
         key: `line-${++cartLineKey}`,
         productId: item.productId ?? '',
         productName: item.productName,
@@ -259,5 +339,14 @@ export class SaleFormComponent implements OnChanges {
       currency: 'ARS',
       maximumFractionDigits: 0,
     }).format(value);
+  }
+
+  availableStock(productId: string): number {
+    const product = this.products.find((item) => item.id === productId);
+    const overview = this.stockByProductId[productId];
+    if (product) {
+      return productStockOverview(product, overview).available;
+    }
+    return Math.max(0, Math.trunc(Number(overview?.available) || 0));
   }
 }

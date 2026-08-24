@@ -6,9 +6,10 @@ import {
   OnInit,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router } from '@angular/router';
-import { forkJoin } from 'rxjs';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { combineLatest } from 'rxjs';
 import {
   Category,
   Product,
@@ -17,11 +18,11 @@ import {
 } from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
 import { CategoryCatalogService } from '../../core/services/category-catalog.service';
-import { ProductCatalogService } from '../../core/services/product-catalog.service';
 import { ProductsService } from '../../core/services/products.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../core/services/realtime.service';
-import { removeById, upsertById } from '../../core/utils/replace-in-store';
+import { SaleCartService } from '../../core/services/sale-cart.service';
+import { CatalogFacade } from '../../store/catalog/catalog.facade';
 import {
   DbListToolbarComponent,
   DbSkeletonComponent,
@@ -47,6 +48,7 @@ type TypeFilter = ProductType | 'all';
   standalone: true,
   imports: [
     FormsModule,
+    RouterLink,
     DbStateMessageComponent,
     DbSkeletonComponent,
     DbListToolbarComponent,
@@ -58,8 +60,8 @@ type TypeFilter = ProductType | 'all';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductsComponent implements OnInit {
+  private readonly catalog = inject(CatalogFacade);
   private readonly productsService = inject(ProductsService);
-  private readonly catalogService = inject(ProductCatalogService);
   private readonly categoryCatalog = inject(CategoryCatalogService);
   private readonly catalogSync = inject(RealtimeCatalogSyncService);
   private readonly realtime = inject(RealtimeService);
@@ -68,10 +70,12 @@ export class ProductsComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly formDialogs = inject(FormDialogService);
+  private readonly saleCart = inject(SaleCartService);
 
   products: Product[] = [];
   categories: Category[] = [];
   loading = true;
+  cartItemCount = 0;
   search = '';
   typeFilter: TypeFilter = 'all';
   categoryFilter = 'all';
@@ -87,7 +91,28 @@ export class ProductsComponent implements OnInit {
   readonly publishedFilters = publishedProductFilters();
 
   ngOnInit(): void {
-    this.loadData();
+    combineLatest([
+      this.catalog.products$,
+      this.catalog.loading$,
+      this.categoryCatalog.getCategories(),
+    ])
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(([products, loading, categories]) => {
+        this.products = products;
+        this.loading = loading;
+        this.categories = categories;
+        this.cdr.markForCheck();
+      });
+
+    this.reloadProducts();
+
+    this.saleCart.lines$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((lines) => {
+        this.cartItemCount = lines.reduce((sum, line) => sum + line.quantity, 0);
+        this.cdr.markForCheck();
+      });
+
     this.realtime.bindSmartReload(this.destroyRef, 'products', (event) =>
       this.handleRealtime(event),
     );
@@ -136,26 +161,12 @@ export class ProductsComponent implements OnInit {
 
   isProduct3D = isProduct3D;
 
-  loadData(): void {
-    this.loading = true;
-    this.cdr.markForCheck();
-    forkJoin({
-      products: this.productsService.getProducts(undefined, {
-        all: this.publishedFilter !== 'published',
-      }),
-      categories: this.categoryCatalog.getCategories(),
-    }).subscribe({
-      next: ({ products, categories }) => {
-        this.products = products;
-        this.categories = categories;
-        this.loading = false;
-        this.cdr.markForCheck();
-      },
-      error: () => {
-        this.loading = false;
-        this.cdr.markForCheck();
-      },
+  reloadProducts(): void {
+    this.catalog.loadProducts({
+      all: this.publishedFilter !== 'published',
+      refresh: true,
     });
+    this.catalog.loadAllProducts(true);
   }
 
   setTypeFilter(filter: TypeFilter): void {
@@ -167,12 +178,12 @@ export class ProductsComponent implements OnInit {
   setPublishedFilter(filter: PublishedProductFilter): void {
     if (this.publishedFilter === filter) return;
     this.publishedFilter = filter;
-    this.loadData();
+    this.reloadProducts();
   }
 
   openCreateProduct(): void {
     this.formDialogs.openProduct().subscribe((saved) => {
-      if (saved) this.onProductSaved(saved);
+      if (saved) this.reloadProducts();
     });
   }
 
@@ -180,7 +191,7 @@ export class ProductsComponent implements OnInit {
     this.productsService.getProduct(product.id).subscribe({
       next: (fresh) => {
         this.formDialogs.openProduct(fresh).subscribe((saved) => {
-          if (saved) this.onProductSaved(saved);
+          if (saved) this.reloadProducts();
         });
       },
       error: (err) => {
@@ -189,39 +200,39 @@ export class ProductsComponent implements OnInit {
     });
   }
 
-  onProductSaved(saved: Product): void {
-    this.products = upsertById(this.products, saved);
-    this.cdr.markForCheck();
-  }
-
   deleteProduct(product: Product): void {
     if (!confirm(`¿Eliminar "${product.name}"?`)) return;
 
-    const previous = this.products;
-    this.products = removeById(this.products, product.id);
-    this.cdr.markForCheck();
-
     this.productsService.deleteProduct(product.id).subscribe({
-      next: () => this.catalogService.remove(product.id),
-      error: () => {
-        this.products = previous;
-        this.cdr.markForCheck();
+      next: () => this.reloadProducts(),
+      error: (err) => {
+        alert(extractApiErrorMessage(err, 'No se pudo eliminar el producto'));
       },
     });
+  }
+
+  addProductToCart(product: Product): void {
+    const result = this.saleCart.addProduct(product, 1);
+    if (!result.ok) {
+      alert(result.error ?? 'No se pudo agregar al carrito');
+    }
   }
 
   openCategoryForm(): void {
     this.formDialogs.openCategory().subscribe((category) => {
       if (category) {
         this.categoryCatalog.upsert(category);
-        this.categories = upsertById(this.categories, category);
         this.cdr.markForCheck();
       }
     });
   }
 
   private handleRealtime(event: RealtimeEvent): void {
+    if (event.scope === 'products' || event.scope === 'all') {
+      this.reloadProducts();
+      return;
+    }
+
     this.catalogSync.handleEvent(event);
-    this.loadData();
   }
 }

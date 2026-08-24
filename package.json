@@ -10,7 +10,7 @@
     "predev": "node frontend/scripts/prepare-env.mjs development",
     "dev": "concurrently -k -n backend,frontend -c blue,magenta \"npm run dev:backend\" \"npm run dev:frontend\"",
     "dev:backend": "npm run start:dev --prefix backend",
-    "dev:frontend": "npm run start --prefix frontend",
+    "dev:frontend": "bash scripts/wait-for-backend.sh && npm run start --prefix frontend",
     "db:push": "npm run db:push --prefix backend",
     "db:generate": "npm run db:generate --prefix backend",
     "db:push:heroku": "npm run db:push:heroku --prefix backend",

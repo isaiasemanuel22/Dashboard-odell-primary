@@ -16,6 +16,22 @@ const CACHEABLE_SEGMENTS = [
   '/print-jobs/board',
 ];
 
+function invalidateCacheForMutation(url: string): void {
+  for (const key of [...responseCache.keys()]) {
+    if (key.includes(url.split('?')[0] ?? url)) {
+      responseCache.delete(key);
+      continue;
+    }
+
+    for (const segment of CACHEABLE_SEGMENTS) {
+      if (url.includes(segment) && key.includes(segment)) {
+        responseCache.delete(key);
+        break;
+      }
+    }
+  }
+}
+
 function storeResponse(key: string, event: HttpResponse<unknown>): void {
   const etag = event.headers.get('ETag');
   if (etag && event.body !== undefined) {
@@ -37,7 +53,18 @@ function cachedSuccess(
 
 export const etagInterceptor: HttpInterceptorFn = (req, next) => {
   if (req.method !== 'GET') {
-    return next(req);
+    return next(req).pipe(
+      switchMap((event) => {
+        if (
+          event instanceof HttpResponse &&
+          event.status >= 200 &&
+          event.status < 300
+        ) {
+          invalidateCacheForMutation(req.url);
+        }
+        return [event];
+      }),
+    );
   }
 
   const isCacheable = CACHEABLE_SEGMENTS.some((segment) =>

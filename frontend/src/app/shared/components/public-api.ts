@@ -12,3 +12,4 @@ export * from './print-job-card/print-job-card.component';
 export * from './orders-table/orders-table.component';
 export * from './materials-table/materials-table.component';
 export * from './supplies-table/supplies-table.component';
+export * from './dynamic-lists/public-api';

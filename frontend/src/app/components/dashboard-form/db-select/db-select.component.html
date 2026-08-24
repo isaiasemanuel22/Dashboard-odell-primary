@@ -13,6 +13,7 @@
       [required]="required"
       [disabled]="disabled"
       [ngModel]="value"
+      [ngModelOptions]="{ standalone: true }"
       (ngModelChange)="onSelect($event)"
       (blur)="onBlur()"
     >
@@ -34,6 +35,7 @@
     [required]="required"
     [disabled]="disabled"
     [ngModel]="value"
+    [ngModelOptions]="{ standalone: true }"
     (ngModelChange)="onSelect($event)"
     (blur)="onBlur()"
   >

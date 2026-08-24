@@ -46,9 +46,9 @@
         <h3>Precios</h3>
         <app-product-pricing
           layout="grid"
-          [price]="product.price"
-          [cost]="product.cost"
-          [profit]="product.profit"
+          [price]="displayPrice"
+          [cost]="displayCost"
+          [profit]="displayProfit"
           [showMargin]="true"
           priceLabel="Precio de venta"
         />
@@ -74,6 +74,27 @@
             </div>
           }
         </dl>
+      </section>
+
+      <section class="panel">
+        <h3>Stock terminado</h3>
+        <dl class="stock-overview">
+          <div>
+            <dt>Físico</dt>
+            <dd>{{ stockOverview.physical }}</dd>
+          </div>
+          <div>
+            <dt>Reservado</dt>
+            <dd>{{ stockOverview.reserved }}</dd>
+          </div>
+          <div class="stock-overview__available">
+            <dt>Disponible</dt>
+            <dd>{{ stockOverview.available }}</dd>
+          </div>
+        </dl>
+        <p class="attachments-hint">
+          Reservado y disponible son valores calculados por el backend.
+        </p>
       </section>
 
       <section class="panel">

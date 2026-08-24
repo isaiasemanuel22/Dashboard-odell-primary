@@ -1,0 +1,73 @@
+<db-fieldset legend="Precios">
+  @if (vm$ | async; as vm) {
+    @if (vm.calculating) {
+      <p class="pricing-hint">Calculando costo...</p>
+    }
+
+    @if (vm.costBreakdown) {
+      <div class="cost-breakdown">
+        <span>Material: {{ vm.costBreakdown.materialCost | currencyArs }}</span>
+        <span>Energía: {{ vm.costBreakdown.energyCost | currencyArs }}</span>
+        <span>Máquina: {{ vm.costBreakdown.machineCost | currencyArs }}</span>
+        <span>Margen error: {{ vm.costBreakdown.errorMarginCost | currencyArs }}</span>
+        <span>Mano de obra: {{ vm.costBreakdown.laborCost | currencyArs }}</span>
+      </div>
+    }
+
+    <div class="pricing-panel">
+      <div class="pricing-stat">
+        <span>Costo</span>
+        <strong>{{ vm.totalCost | currencyArs }}</strong>
+      </div>
+
+      <div class="pricing-stat">
+        <span>Precio</span>
+        <strong>{{ vm.price | currencyArs }}</strong>
+      </div>
+
+      <div
+        class="pricing-stat"
+        [class.pricing-stat--profit]="vm.profit >= 0"
+        [class.pricing-stat--loss]="vm.profit < 0"
+      >
+        <span>Ganancia</span>
+        <strong [class.negative]="vm.profit < 0">{{ vm.profit | currencyArs }}</strong>
+      </div>
+
+      @if (
+        facade.profitMargins
+        && !facade.usesPieceAssembly
+        && !(facade.suggestedPrice != null && facade.suggestedPrice > 0)
+      ) {
+        <div class="pricing-stat">
+          <span>Margen sobre costo ({{ vm.profitMarginLabel }})</span>
+          <strong>{{ vm.profitMarginPercent }}%</strong>
+        </div>
+      }
+
+      <div class="pricing-stat pricing-stat--editable" [formGroup]="form">
+        <span>Precio sugerido (opcional)</span>
+        <input
+          type="number"
+          class="pricing-stat__input"
+          formControlName="suggestedPrice"
+          [min]="0"
+          placeholder="—"
+          autocomplete="off"
+        />
+      </div>
+    </div>
+  }
+
+  @if (facade.isEstampado && facade.showProductionFields && !facade.canAutoCalculateCost) {
+    <p class="pricing-hint">
+      Completá al menos un impreso, un insumo, una bajada de plancha o tiempo de mano de obra para calcular el costo.
+    </p>
+  }
+  @if (facade.is3D && facade.showProductionFields && !facade.canAutoCalculateCost) {
+    <p class="pricing-hint">Ingresá los gramos para calcular el costo automáticamente.</p>
+  }
+  @if (facade.usesPieceAssembly && !facade.components.length) {
+    <p class="pricing-hint">Agregá al menos una pieza para calcular el costo del producto compuesto.</p>
+  }
+</db-fieldset>

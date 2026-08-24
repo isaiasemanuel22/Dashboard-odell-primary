@@ -222,6 +222,11 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsNumber()
+  @Min(0)
+  stock?: number;
+
+  @IsOptional()
+  @IsNumber()
   suggestedPrice?: number | null;
 
   @IsOptional()

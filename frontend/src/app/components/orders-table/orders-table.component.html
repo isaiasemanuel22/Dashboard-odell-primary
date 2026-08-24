@@ -44,6 +44,10 @@
                   } @else {
                     {{ item.quantity }}× {{ item.productName }}
                   }
+                  <small>
+                    {{ item.delivered ?? 0 }} entregado ·
+                    {{ item.pending ?? item.quantity }} pendiente
+                  </small>
                 </div>
               }
             </td>
@@ -131,6 +135,10 @@
                     } @else {
                       {{ item.quantity }}× {{ item.productName }}
                     }
+                    <small>
+                      {{ item.delivered ?? 0 }} entregado ·
+                      {{ item.pending ?? item.quantity }} pendiente
+                    </small>
                   </div>
                 }
               </td>

@@ -22,6 +22,7 @@ export class PrintJobsService {
   findAll(): PrintJob[] {
     return [...this.store.printJobs]
       .filter((job) => this.orderTasks.isVisibleInQueue(job.orderId))
+      .filter((job) => !job.archived)
       .sort((a, b) => b.priority - a.priority);
   }
 
@@ -41,10 +42,6 @@ export class PrintJobsService {
   }
 
   findByOrderId(orderId: string): PrintJob[] {
-    if (!this.orderTasks.isVisibleInQueue(orderId)) {
-      return [];
-    }
-
     return this.store.printJobs
       .filter((job) => job.orderId === orderId)
       .sort((a, b) => a.orderItemIndex - b.orderItemIndex);
@@ -58,12 +55,17 @@ export class PrintJobsService {
     return job;
   }
 
-  update(id: string, dto: UpdatePrintJobDto): PrintJobUpdateResult {
+  update(
+    id: string,
+    dto: UpdatePrintJobDto,
+    actorUserId?: string,
+  ): PrintJobUpdateResult {
     const job = this.findOne(id);
 
     if (dto.status !== undefined) {
       assertPrintJobStatus(dto.status);
       assertPrintJobStatusTransition(job.status, dto.status);
+      this.orderTasks.beforeStatusChange(job, dto.status, actorUserId);
       job.status = dto.status;
       if (dto.status !== PrintJobStatus.POR_HACER) {
         job.active = true;
@@ -82,12 +84,17 @@ export class PrintJobsService {
       }
     }
 
+    if (dto.responsibleUserId !== undefined) {
+      job.responsibleUserId = dto.responsibleUserId.trim() || undefined;
+    }
+
     if (dto.active !== undefined) {
       job.active = dto.active;
       if (
         !dto.active &&
         job.status !== PrintJobStatus.TERMINADO &&
-        job.status !== PrintJobStatus.CANCELADO
+        job.status !== PrintJobStatus.CANCELADO &&
+        job.status !== PrintJobStatus.BLOQUEADO
       ) {
         job.status = PrintJobStatus.POR_HACER;
         job.startedAt = undefined;
@@ -95,7 +102,7 @@ export class PrintJobsService {
       }
     }
 
-    this.orderTasks.syncOrderStatusFromTasks(job.orderId);
+    this.orderTasks.afterStatusChange(job);
 
     const order = this.store.getOrderById(job.orderId);
 
@@ -105,7 +112,11 @@ export class PrintJobsService {
     };
   }
 
-  updateStatus(id: string, status: PrintJobStatus): PrintJobUpdateResult {
-    return this.update(id, { status });
+  updateStatus(
+    id: string,
+    status: PrintJobStatus,
+    actorUserId?: string,
+  ): PrintJobUpdateResult {
+    return this.update(id, { status }, actorUserId);
   }
 }

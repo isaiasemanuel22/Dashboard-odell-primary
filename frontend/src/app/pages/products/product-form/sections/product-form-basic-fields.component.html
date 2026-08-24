@@ -1,0 +1,60 @@
+<db-form-grid>
+  <db-select
+    label="Tipo"
+    name="type"
+    [(ngModel)]="type"
+    [ngModelOptions]="{ standalone: true }"
+    [options]="productTypeOptions"
+    (ngModelChange)="onFieldChange()"
+  />
+
+  <db-input
+    label="Nombre"
+    name="name"
+    [(ngModel)]="name"
+    [ngModelOptions]="{ standalone: true }"
+    [required]="true"
+    (ngModelChange)="onFieldChange()"
+  />
+
+  <db-input
+    label="Stock terminado"
+    type="number"
+    name="finishedStock"
+    [(ngModel)]="finishedStock"
+    [ngModelOptions]="{ standalone: true }"
+    [min]="0"
+    step="1"
+    placeholder="0"
+    (ngModelChange)="onFieldChange()"
+  />
+
+  <db-form-grid-full>
+    <div class="product-flags">
+      @if (showIncludesPiecesCheckbox) {
+        <db-checkbox
+          label="Publicado en catálogo"
+          name="published"
+          [(ngModel)]="published"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="onFieldChange()"
+        />
+        <db-checkbox
+          label="Incluye piezas"
+          name="includesPieces"
+          [(ngModel)]="includesPieces"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="onFieldChange()"
+        />
+      }
+    </div>
+    @if (showIncludesPiecesCheckbox) {
+      <p class="published-hint">
+        Desactivá «Publicado en catálogo» para piezas internas. Activá «Incluye piezas» si el producto se arma a partir de otros productos.
+      </p>
+    }
+    <p class="published-hint">
+      Stock terminado opcional (por defecto 0). Es el stock físico; reservado y disponible los calcula el backend.
+    </p>
+  </db-form-grid-full>
+</db-form-grid>

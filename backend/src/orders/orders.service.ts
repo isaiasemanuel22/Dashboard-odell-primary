@@ -3,8 +3,18 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { OrderStatus, ServiceType } from '../common/enums';
-import { Order, OrderItem, OrderOverview } from '../common/interfaces';
+import {
+  OrderStatus,
+  PrintJobStatus,
+  ServiceType,
+  TaskType,
+} from '../common/enums';
+import {
+  Order,
+  OrderDeliveryLine,
+  OrderItem,
+  OrderOverview,
+} from '../common/interfaces';
 import { CreateOrderDto, UpdateOrderDto } from '../common/dto';
 import {
   calculateItemsSubtotal,
@@ -12,9 +22,6 @@ import {
   normalizeDiscountFields,
 } from '../common/utils/discount.util';
 import { filterOrders, OrderListFilters } from './order-filter.util';
-import {
-  assertOrderStatusTransition,
-} from '../common/validators/domain.validators';
 import {
   appendOrderStatusHistory,
 } from './order-status-history.util';
@@ -26,7 +33,6 @@ import {
   OrderRepository,
   ProductRepository,
 } from '../store/repositories';
-import { shouldPurgeTerminalOrder } from './order-retention.util';
 import {
   ORDER_RICH_TEXT_MAX_LENGTH,
   hasRichTextContent,
@@ -67,6 +73,7 @@ export class OrdersService {
     return {
       order,
       tasks: this.printJobs.findByOrderId(id),
+      alerts: this.orderTasks.buildOperationalAlerts(order),
     };
   }
 
@@ -77,7 +84,7 @@ export class OrdersService {
     }
 
     const items = this.normalizeItems(data.items);
-    const services = this.normalizeServices(data.services, items);
+    const services = this.normalizeServices(items);
     const discount = normalizeDiscountFields(data);
     const order: Order = {
       id: this.orders.nextId(),
@@ -86,7 +93,7 @@ export class OrdersService {
       customerName,
       services,
       items,
-      status: data.status ?? OrderStatus.PENDIENTE,
+      status: OrderStatus.PENDIENTE,
       total: this.calculateTotal(items, discount),
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
@@ -95,12 +102,13 @@ export class OrdersService {
       dueDate: data.dueDate.trim(),
       statusHistory: [],
       priceHistory: [],
+      deliveryHistory: [],
     };
     appendOrderStatusHistory(
       order,
       null,
       order.status,
-      'manual',
+      'auto',
       order.createdAt,
     );
     this.orders.create(order);
@@ -126,8 +134,8 @@ export class OrdersService {
     const items =
       data.items !== undefined ? this.normalizeItems(data.items) : current.items;
     const services =
-      data.services !== undefined || data.items !== undefined
-        ? this.normalizeServices(data.services ?? current.services, items)
+      data.items !== undefined
+        ? this.normalizeServices(items)
         : current.services;
 
     if (data.dueDate !== undefined && !data.dueDate.trim()) {
@@ -135,7 +143,9 @@ export class OrdersService {
     }
 
     if (data.status !== undefined && data.status !== current.status) {
-      assertOrderStatusTransition(current.status, data.status);
+      throw new BadRequestException(
+        'El estado normal del pedido se deriva automáticamente',
+      );
     }
 
     const discount = normalizeDiscountFields({
@@ -186,60 +196,131 @@ export class OrdersService {
 
   updateStatus(id: string, status: OrderStatus): Order {
     const order = this.findOne(id);
-    assertOrderStatusTransition(order.status, status);
+    if (
+      status !== OrderStatus.CANCELADO &&
+      !(order.status === OrderStatus.CANCELADO && status === OrderStatus.PENDIENTE)
+    ) {
+      throw new BadRequestException(
+        'Solo se permite cancelar o reabrir manualmente un pedido',
+      );
+    }
     const previousStatus = order.status;
     order.status = status;
     if (!order.statusHistory) {
       order.statusHistory = [];
     }
     appendOrderStatusHistory(order, previousStatus, status, 'manual');
+    if (status === OrderStatus.CANCELADO) {
+      this.orderTasks.releaseReservations(order);
+    } else {
+      for (const task of this.printJobs.findByOrderId(order.id)) {
+        if (task.status !== PrintJobStatus.CANCELADO) continue;
+        task.status =
+          task.taskType === TaskType.PREPARE_ORDER
+            ? PrintJobStatus.BLOQUEADO
+            : PrintJobStatus.POR_HACER;
+        task.archived = false;
+      }
+    }
     this.orderTasks.syncOrderTasks(order);
     return order;
   }
 
   remove(id: string): void {
-    if (!this.orders.findById(id)) {
-      throw new NotFoundException(`Pedido ${id} no encontrado`);
+    this.updateStatus(id, OrderStatus.CANCELADO);
+  }
+
+  deliver(id: string, lines: OrderDeliveryLine[]): Order {
+    const order = this.findOne(id);
+    if (order.status === OrderStatus.CANCELADO) {
+      throw new BadRequestException('No se puede entregar un pedido cancelado');
     }
-    this.orderTasks.removeTasksForOrder(id);
-    this.orders.remove(id);
+    if (!lines?.length) {
+      throw new BadRequestException('La entrega debe incluir al menos un ítem');
+    }
+
+    const normalized = lines.map((line) => ({
+      orderItemIndex: Number(line.orderItemIndex),
+      quantity: Number(line.quantity),
+    }));
+    const seen = new Set<number>();
+    for (const line of normalized) {
+      if (
+        !Number.isInteger(line.orderItemIndex) ||
+        !Number.isInteger(line.quantity) ||
+        line.quantity <= 0 ||
+        seen.has(line.orderItemIndex)
+      ) {
+        throw new BadRequestException('Línea de entrega inválida o duplicada');
+      }
+      seen.add(line.orderItemIndex);
+      const item = order.items[line.orderItemIndex];
+      if (!item) {
+        throw new BadRequestException('El ítem de entrega no existe');
+      }
+      const pending = item.quantity - (item.deliveredQuantity ?? 0);
+      const available = item.productId
+        ? (item.reservedQuantity ?? 0) +
+          Math.max(
+            (item.producedQuantity ?? 0) -
+              (item.deliveredFromProductionQuantity ?? 0),
+            0,
+          )
+        : pending;
+      if (line.quantity > pending || line.quantity > available) {
+        throw new BadRequestException(
+          `No hay cantidad disponible para entregar "${item.productName}"`,
+        );
+      }
+    }
+
+    for (const line of normalized) {
+      const item = order.items[line.orderItemIndex]!;
+      const fromStock = Math.min(line.quantity, item.reservedQuantity ?? 0);
+      if (fromStock > 0 && item.productId) {
+        const product = this.products.findById(item.productId);
+        if (!product || (product.stock ?? 0) < fromStock) {
+          throw new BadRequestException(
+            `Stock físico inconsistente para "${item.productName}"`,
+          );
+        }
+        product.stock = (product.stock ?? 0) - fromStock;
+        this.products.save(product);
+        item.reservedQuantity = (item.reservedQuantity ?? 0) - fromStock;
+      }
+      item.deliveredFromProductionQuantity =
+        (item.deliveredFromProductionQuantity ?? 0) +
+        (line.quantity - fromStock);
+      item.deliveredQuantity =
+        (item.deliveredQuantity ?? 0) + line.quantity;
+    }
+
+    order.deliveryHistory ??= [];
+    order.deliveryHistory.push({
+      id: `delivery-${order.deliveryHistory.length + 1}`,
+      deliveredAt: new Date().toISOString(),
+      items: normalized,
+    });
+    this.orderTasks.syncOrderStatusFromTasks(order.id);
+    return order;
   }
 
   purgeExpiredTerminalOrders(): number {
-    const expiredIds = this.orders
-      .findAll()
-      .filter((order) => shouldPurgeTerminalOrder(order))
-      .map((order) => order.id);
-
-    for (const id of expiredIds) {
-      this.remove(id);
-    }
-
-    return expiredIds.length;
+    // Los pedidos y sus tareas forman parte del historial operativo.
+    // La retención ya no puede purgarlos físicamente.
+    return 0;
   }
 
-  private normalizeServices(
-    services: ServiceType[] | undefined,
-    items: OrderItem[],
-  ): ServiceType[] {
-    const fromItems = [...new Set(items.map((item) => item.serviceType))];
-    const merged = [...new Set([...(services ?? []), ...fromItems])];
+  private normalizeServices(items: OrderItem[]): ServiceType[] {
+    const services = [...new Set(items.map((item) => item.serviceType))];
 
-    if (!merged.length) {
+    if (!services.length) {
       throw new BadRequestException(
         'El pedido debe incluir al menos un servicio',
       );
     }
 
-    for (const item of items) {
-      if (!merged.includes(item.serviceType)) {
-        throw new BadRequestException(
-          `El ítem "${item.productName}" no corresponde a un servicio incluido en el pedido`,
-        );
-      }
-    }
-
-    return merged;
+    return services;
   }
 
   private normalizeItems(items: OrderItem[]): OrderItem[] {
@@ -315,6 +396,12 @@ export class OrdersService {
         productName: resolvedProductName,
         quantity,
         unitPrice: resolvedUnitPrice,
+        deliveredQuantity: item.deliveredQuantity ?? 0,
+        reservedQuantity: item.reservedQuantity ?? 0,
+        productionRequiredQuantity: item.productionRequiredQuantity ?? 0,
+        producedQuantity: item.producedQuantity ?? 0,
+        deliveredFromProductionQuantity:
+          item.deliveredFromProductionQuantity ?? 0,
       };
     });
   }

@@ -38,6 +38,7 @@ import {
   hasValidFdmFilamentInput,
   resolveFdmFilaments,
 } from '../products/fdm-product.util';
+import { normalizeProductComponents } from '../products/product-component.util';
 import { normalizeProfitMargins } from './profit-margins.util';
 
 const RESIN_DENSITY_G_PER_ML = 1.1;
@@ -112,26 +113,98 @@ export class CostCalculatorService {
 
   sumComponentsCost(components: ProductComponent[]): number {
     return components.reduce((sum, item) => {
-      const part = this.store.getProductById(item.productId);
-      if (!part) {
-        throw new BadRequestException(
-          `Producto pieza ${item.productId} no encontrado`,
-        );
-      }
-      return sum + part.cost * Number(item.quantity);
+      const unitCost = this.resolveProductUnitCost(item.productId);
+      return sum + unitCost * Number(item.quantity);
     }, 0);
+  }
+
+  resolveProductUnitCost(
+    productId: string,
+    visiting: Set<string> = new Set(),
+  ): number {
+    if (visiting.has(productId)) {
+      return 0;
+    }
+
+    const product = this.store.getProductById(productId);
+    if (!product) {
+      throw new BadRequestException(
+        `Producto pieza ${productId} no encontrado`,
+      );
+    }
+
+    const components = normalizeProductComponents(
+      product.components,
+      this.store.products,
+    );
+    const usesPieceAssembly =
+      product.type === ProductType.COMBO ||
+      product.includesPieces === true ||
+      components.length > 0;
+
+    if (!usesPieceAssembly || components.length === 0) {
+      return product.cost ?? 0;
+    }
+
+    visiting.add(productId);
+    const partsCost = components.reduce((sum, item) => {
+      return (
+        sum +
+        this.resolveProductUnitCost(item.productId, visiting) *
+          Number(item.quantity)
+      );
+    }, 0);
+    visiting.delete(productId);
+
+    return partsCost;
   }
 
   sumComponentsPrice(components: ProductComponent[]): number {
     return components.reduce((sum, item) => {
-      const part = this.store.getProductById(item.productId);
-      if (!part) {
-        throw new BadRequestException(
-          `Producto pieza ${item.productId} no encontrado`,
-        );
-      }
-      return sum + part.price * Number(item.quantity);
+      const unitPrice = this.resolveProductUnitPrice(item.productId);
+      return sum + unitPrice * Number(item.quantity);
     }, 0);
+  }
+
+  resolveProductUnitPrice(
+    productId: string,
+    visiting: Set<string> = new Set(),
+  ): number {
+    if (visiting.has(productId)) {
+      return 0;
+    }
+
+    const product = this.store.getProductById(productId);
+    if (!product) {
+      throw new BadRequestException(
+        `Producto pieza ${productId} no encontrado`,
+      );
+    }
+
+    const components = normalizeProductComponents(
+      product.components,
+      this.store.products,
+    );
+    const usesPieceAssembly =
+      product.type === ProductType.COMBO ||
+      product.includesPieces === true ||
+      components.length > 0;
+
+    if (!usesPieceAssembly || components.length === 0) {
+      return product.price ?? 0;
+    }
+
+    visiting.add(productId);
+    const partsPrice = components.reduce((sum, item) => {
+      return (
+        sum +
+        this.resolveProductUnitPrice(item.productId, visiting) *
+          Number(item.quantity)
+      );
+    }, 0);
+    visiting.delete(productId);
+
+    return partsPrice;
   }
 
   calculateCompositeCost(
@@ -141,15 +214,13 @@ export class CostCalculatorService {
   ): CostBreakdown {
     const partsCost = this.sumComponentsCost(components);
     const assemblyHours = Number(assemblyTimeHours) || 0;
-    // El margen de error ya está incluido en el costo de cada pieza.
-    const errorMarginCost = 0;
 
     if (assemblyHours <= 0) {
       return {
         materialCost: partsCost,
         energyCost: 0,
         machineCost: 0,
-        errorMarginCost,
+        errorMarginCost: 0,
         laborCost: 0,
         totalCost: partsCost,
       };
@@ -166,7 +237,7 @@ export class CostCalculatorService {
       materialCost: partsCost,
       energyCost: 0,
       machineCost: 0,
-      errorMarginCost,
+      errorMarginCost: 0,
       laborCost: laborBreakdown.laborCost,
       totalCost: partsCost + laborBreakdown.laborCost,
     };
@@ -323,11 +394,11 @@ export class CostCalculatorService {
   }
 
   resolveCatalogUnitCost(productId: string): number {
-    const product = this.store.getProductById(productId);
-    if (!product) {
+    try {
+      return this.resolveProductUnitCost(productId);
+    } catch {
       return 0;
     }
-    return product.cost;
   }
 
   resolveOrderUnitPrice(

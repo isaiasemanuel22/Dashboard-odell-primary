@@ -1,5 +1,5 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import {
   SaleEntry,
   SaleSource,
@@ -19,10 +19,6 @@ import {
 import { SALE_SOURCE_LABELS } from '../../shared/constants/labels';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { downloadSalesReportCsv } from '../../shared/utils/sales-report.util';
-import {
-  clearCreateQuery,
-  shouldOpenCreateFromQuery,
-} from '../../shared/utils/create-from-query.util';
 import { ListFilterOption } from '../../components/db-list-toolbar/db-list-toolbar.component';
 
 type SalesFilter = 'all' | SaleSource;
@@ -31,7 +27,6 @@ type SalesFilter = 'all' | SaleSource;
   selector: 'app-sales',
   standalone: true,
   imports: [
-    RouterLink,
     DbListToolbarComponent,
     DbStateMessageComponent,
     DbButtonComponent,
@@ -46,7 +41,6 @@ export class SalesComponent implements OnInit {
   private readonly realtime = inject(RealtimeService);
   private readonly formDialogs = inject(FormDialogService);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly breakpoint = inject(BreakpointService);
 
@@ -68,11 +62,6 @@ export class SalesComponent implements OnInit {
     this.realtime.bindReload(this.destroyRef, ['sales', 'orders'], () =>
       this.loadData(),
     );
-
-    if (shouldOpenCreateFromQuery(this.route)) {
-      this.openCreateSale();
-      clearCreateQuery(this.router);
-    }
   }
 
   get filteredEntries(): SaleEntry[] {
@@ -102,17 +91,6 @@ export class SalesComponent implements OnInit {
 
   setSalesFilter(filter: SalesFilter): void {
     this.salesFilter = filter;
-  }
-
-  openCreateSale(): void {
-    if (this.breakpoint.isMobile()) {
-      void this.router.navigate(['/ventas/nueva']);
-      return;
-    }
-
-    this.formDialogs.openSale().subscribe((saved) => {
-      if (saved) this.onSaleSaved();
-    });
   }
 
   openEditSale(entry: SaleEntry): void {

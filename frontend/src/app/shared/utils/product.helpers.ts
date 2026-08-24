@@ -2,6 +2,7 @@ import {
   Category,
   Product,
   ProductComponent,
+  ProductType,
   ServiceProfitMargins,
   ServiceType,
 } from '../../core/models';
@@ -136,6 +137,66 @@ export function findProductById(
   return catalog.find((p) => p.id === id);
 }
 
+export function productUsesPieceAssembly(
+  product: Pick<Product, 'type' | 'includesPieces' | 'components'> | undefined,
+): boolean {
+  if (!product) return false;
+  const components = normalizeProductComponents(product.components ?? []);
+  return (
+    product.type === ProductType.COMBO ||
+    product.includesPieces === true ||
+    components.length > 0
+  );
+}
+
+export function resolveProductUnitCost(
+  product: Pick<Product, 'id' | 'type' | 'includesPieces' | 'components' | 'cost'> | undefined,
+  catalog: Product[],
+  visiting: Set<string> = new Set(),
+): number {
+  if (!product) return 0;
+  if (visiting.has(product.id)) return product.cost ?? 0;
+
+  const components = normalizeProductComponents(product.components ?? [], catalog);
+  if (!productUsesPieceAssembly({ ...product, components }) || components.length === 0) {
+    return product.cost ?? 0;
+  }
+
+  visiting.add(product.id);
+  const partsCost = components.reduce((sum, item) => {
+    const part = findProductById(catalog, item.productId);
+    const qty = Math.max(1, Number(item.quantity) || 1);
+    return sum + resolveProductUnitCost(part, catalog, visiting) * qty;
+  }, 0);
+  visiting.delete(product.id);
+
+  return partsCost;
+}
+
+export function resolveProductUnitPrice(
+  product: Pick<Product, 'id' | 'type' | 'includesPieces' | 'components' | 'price'> | undefined,
+  catalog: Product[],
+  visiting: Set<string> = new Set(),
+): number {
+  if (!product) return 0;
+  if (visiting.has(product.id)) return product.price ?? 0;
+
+  const components = normalizeProductComponents(product.components ?? [], catalog);
+  if (!productUsesPieceAssembly({ ...product, components }) || components.length === 0) {
+    return product.price ?? 0;
+  }
+
+  visiting.add(product.id);
+  const partsPrice = components.reduce((sum, item) => {
+    const part = findProductById(catalog, item.productId);
+    const qty = Math.max(1, Number(item.quantity) || 1);
+    return sum + resolveProductUnitPrice(part, catalog, visiting) * qty;
+  }, 0);
+  visiting.delete(product.id);
+
+  return partsPrice;
+}
+
 export function getProductName(
   catalog: Product[],
   id: string,
@@ -151,7 +212,7 @@ export function getComponentLineCost(
 ): number {
   const part = findProductById(catalog, productId);
   const qty = Math.max(1, Number(quantity) || 1);
-  return (part?.cost ?? 0) * qty;
+  return resolveProductUnitCost(part, catalog) * qty;
 }
 
 export function getComponentLinePrice(
@@ -161,7 +222,7 @@ export function getComponentLinePrice(
 ): number {
   const part = findProductById(catalog, productId);
   const qty = Math.max(1, Number(quantity) || 1);
-  return (part?.price ?? 0) * qty;
+  return resolveProductUnitPrice(part, catalog) * qty;
 }
 
 export function sumComponentsCost(

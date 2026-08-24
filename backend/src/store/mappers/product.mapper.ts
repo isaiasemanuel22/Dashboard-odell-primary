@@ -53,6 +53,7 @@ export function mapProductFromDb(row: {
   estampadoSupplies?: Prisma.JsonValue;
   fdmFilaments?: Prisma.JsonValue;
   attachments?: Prisma.JsonValue;
+  stock?: number;
 }): Product {
   const components = normalizeProductComponents(fromJson(row.components));
   const base = {
@@ -74,6 +75,7 @@ export function mapProductFromDb(row: {
       row.type === ProductType.COMBO,
     components,
     assemblyTimeHours: row.assemblyTimeHours,
+    stock: row.stock ?? 0,
   };
 
   if (row.type === ProductType.COMBO) {
@@ -188,5 +190,6 @@ export function mapProductToDb(product: Product) {
     estampadoPressCycles: toInputJson(estampado?.pressCycles ?? []),
     estampadoSupplies: toInputJson(estampado?.supplies ?? []),
     fdmFilaments: toInputJson(fdmFilaments),
+    stock: Math.max(0, Math.trunc(product.stock ?? 0)),
   };
 }

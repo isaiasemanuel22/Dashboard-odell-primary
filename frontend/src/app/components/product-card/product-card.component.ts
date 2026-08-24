@@ -32,12 +32,18 @@ import { DbButtonComponent } from '@general-components';
 export class ProductCardComponent {
   @Input({ required: true }) product!: Product;
   @Input({ required: true }) categories!: Category[];
+  @Input() showAddToCart = false;
   @Output() edit = new EventEmitter<Product>();
   @Output() delete = new EventEmitter<Product>();
+  @Output() addToCart = new EventEmitter<Product>();
 
   isProduct3D = isProduct3D;
 
   get categoryNames(): string {
     return resolveCategoryNamesText(this.product.categoryIds, this.categories);
+  }
+
+  get canAddToCart(): boolean {
+    return this.product.published !== false;
   }
 }

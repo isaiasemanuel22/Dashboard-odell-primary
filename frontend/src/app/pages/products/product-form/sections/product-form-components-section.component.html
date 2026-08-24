@@ -1,0 +1,60 @@
+<db-fieldset legend="Piezas incluidas">
+  <p class="components-desc">
+    Armá productos compuestos agregando otros productos (publicados o internos). Ej: base, tablero, piezas de juego.
+  </p>
+  <div class="component-picker">
+    <db-select
+      label="Agregar pieza"
+      name="componentPicker"
+      [(ngModel)]="componentPicker"
+      [ngModelOptions]="{ standalone: true }"
+      placeholder="Seleccionar producto..."
+      [options]="availableComponentOptions"
+      [disabled]="!canAddComponent"
+    />
+    <db-input
+      label="Cantidad"
+      name="componentQty"
+      type="number"
+      [(ngModel)]="componentQty"
+      [ngModelOptions]="{ standalone: true }"
+      [min]="1"
+      [step]="1"
+    />
+    <db-button
+      label="+ Agregar pieza"
+      variant="secondary"
+      format="soft"
+      [disabled]="!componentPicker || componentQty < 1"
+      (clicked)="addComponent()"
+    />
+  </div>
+
+  @if (components.length) {
+    <app-product-components-table
+      mode="edit"
+      [components]="components"
+      [catalog]="catalogProducts"
+      (remove)="removeComponent($event)"
+    />
+
+    <db-input
+      label="Tiempo de armado (h)"
+      name="assemblyTimeHours"
+      type="number"
+      [(ngModel)]="assemblyTimeHours"
+      [ngModelOptions]="{ standalone: true }"
+      [min]="0"
+      [step]="0.1"
+      (ngModelChange)="onFieldChange()"
+    />
+  } @else {
+    <p class="components-empty">
+      @if (isEstampado) {
+        Agregá al menos una pieza para calcular el costo del producto compuesto.
+      } @else {
+        Sin piezas: el costo se calcula desde gramos y tiempos de producción.
+      }
+    </p>
+  }
+</db-fieldset>

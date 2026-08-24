@@ -157,3 +157,153 @@ export function parseSizeFieldsFromString(size: string): {
 export function printUsesCustomSize(print: EstampadoPrintSpec): boolean {
   return !print.impresoId;
 }
+
+export function normalizeEstampadoPrints(
+  prints: EstampadoPrintSpec[] | undefined,
+  legacy?: {
+    paperType?: PaperType;
+    impresoId?: string;
+    widthCm?: number;
+    lengthCm?: number;
+    heightCm?: number;
+  },
+): EstampadoPrintSpec[] {
+  if (prints?.length) {
+    return prints.map((print) => ({
+      id: print.id || createEstampadoPrintId(),
+      paperType: print.paperType,
+      impresoId: print.impresoId?.trim() || undefined,
+      widthCm:
+        print.widthCm != null && print.widthCm > 0 ? print.widthCm : undefined,
+      lengthCm:
+        print.lengthCm != null && print.lengthCm > 0
+          ? print.lengthCm
+          : undefined,
+      heightCm:
+        print.heightCm != null && print.heightCm > 0 ? print.heightCm : undefined,
+      label: print.label?.trim() || undefined,
+    }));
+  }
+
+  if (
+    legacy?.paperType &&
+    (legacy.impresoId ||
+      hasValidPrintSize(legacy.widthCm, legacy.lengthCm, legacy.heightCm))
+  ) {
+    return [
+      {
+        id: createEstampadoPrintId(),
+        paperType: legacy.paperType,
+        impresoId: legacy.impresoId,
+        widthCm: legacy.widthCm,
+        lengthCm: legacy.lengthCm,
+        heightCm: legacy.heightCm,
+      },
+    ];
+  }
+
+  return [];
+}
+
+export function normalizeEstampadoSupplies(
+  supplies: EstampadoSupplyLine[] | undefined,
+): EstampadoSupplyLine[] {
+  if (!supplies?.length) {
+    return [];
+  }
+  return supplies
+    .map((line) => ({
+      id: line.id || createEstampadoSupplyLineId(),
+      supplyId: line.supplyId?.trim() ?? '',
+      quantity: Math.max(Number(line.quantity) || 0, 0),
+      label: line.label?.trim() || undefined,
+    }))
+    .filter((line) => line.supplyId && line.quantity > 0);
+}
+
+export function normalizeEstampadoPressCycles(
+  cycles: EstampadoPressCycle[] | undefined,
+  legacyPressMinutes?: number,
+): EstampadoPressCycle[] {
+  if (cycles?.length) {
+    return cycles.map((cycle) => ({
+      id: cycle.id || createEstampadoPressCycleId(),
+      pressMinutes: Math.max(Number(cycle.pressMinutes) || 0, 0),
+      bajadas: Math.max(Number(cycle.bajadas) || 1, 1),
+      label: cycle.label?.trim() || undefined,
+    }));
+  }
+
+  if (legacyPressMinutes != null && legacyPressMinutes > 0) {
+    return [
+      {
+        id: createEstampadoPressCycleId(),
+        pressMinutes: legacyPressMinutes,
+        bajadas: 1,
+      },
+    ];
+  }
+
+  return [];
+}
+
+export function resolvePrintDimensions(
+  print: EstampadoPrintSpec,
+  getImpresoById: (id: string) => ImpresoWithCost | undefined,
+): {
+  paperType: PaperType;
+  widthCm: number;
+  lengthCm?: number;
+  heightCm: number;
+} | null {
+  if (print.impresoId) {
+    const impreso = getImpresoById(print.impresoId);
+    if (!impreso) {
+      return null;
+    }
+    const areaSecond = resolvePrintAreaSecondCm(
+      impreso.lengthCm,
+      impreso.heightCm,
+    );
+    if (impreso.widthCm <= 0 || areaSecond <= 0) {
+      return null;
+    }
+    return {
+      paperType: impreso.paperType,
+      widthCm: impreso.widthCm,
+      lengthCm: impreso.lengthCm,
+      heightCm: areaSecond,
+    };
+  }
+
+  const widthCm = Number(print.widthCm) || 0;
+  const lengthCm =
+    print.lengthCm != null && print.lengthCm > 0 ? print.lengthCm : undefined;
+  const heightCm = Number(print.heightCm) || 0;
+  const areaSecond = resolvePrintAreaSecondCm(lengthCm, heightCm);
+  if (!print.paperType || widthCm <= 0 || areaSecond <= 0) {
+    return null;
+  }
+
+  return {
+    paperType: print.paperType,
+    widthCm,
+    lengthCm,
+    heightCm: areaSecond,
+  };
+}
+
+export function totalEstampadoPressMinutes(
+  cycles: EstampadoPressCycle[] | undefined,
+  legacyPressMinutes?: number,
+): number {
+  const normalized = normalizeEstampadoPressCycles(
+    cycles,
+    legacyPressMinutes,
+  );
+  return normalized.reduce(
+    (sum, cycle) =>
+      sum + (Number(cycle.pressMinutes) || 0) * (Number(cycle.bajadas) || 1),
+    0,
+  );
+}

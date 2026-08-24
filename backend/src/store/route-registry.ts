@@ -20,7 +20,7 @@ const PATH_RULES: PathRule[] = [
   {
     matches: (path) => path.includes('/orders'),
     meta: {
-      collections: ['orders', 'printJobs'],
+      collections: ['orders', 'printJobs', 'products'],
       scopes: ['orders', 'print-jobs', 'dashboard', 'sales'],
       entity: 'order',
     },
@@ -28,7 +28,7 @@ const PATH_RULES: PathRule[] = [
   {
     matches: (path) => path.includes('/print-jobs'),
     meta: {
-      collections: ['printJobs', 'orders'],
+      collections: ['printJobs', 'orders', 'products'],
       scopes: ['print-jobs', 'orders', 'dashboard'],
       entity: 'print-job',
     },
@@ -36,7 +36,7 @@ const PATH_RULES: PathRule[] = [
   {
     matches: (path) => path.includes('/sales'),
     meta: {
-      collections: ['retailSales'],
+      collections: ['retailSales', 'products'],
       scopes: ['sales', 'dashboard'],
       entity: 'sale',
     },
@@ -68,8 +68,8 @@ const PATH_RULES: PathRule[] = [
   {
     matches: (path) => path.includes('/supplies'),
     meta: {
-      collections: ['supplies'],
-      scopes: ['supplies'],
+      collections: ['supplies', 'printJobs'],
+      scopes: ['supplies', 'print-jobs'],
       entity: 'supply',
     },
   },
@@ -147,8 +147,7 @@ export function shouldTrackHttpMutation(path: string, method: string): boolean {
   }
   if (
     path.includes('/events/') ||
-    path.includes('/preview-') ||
-    path.includes('/calculate-cost')
+    path.includes('/preview-')
   ) {
     return false;
   }

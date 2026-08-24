@@ -37,7 +37,13 @@ describe('ProductsService', () => {
       toPricingInput: jest.fn((input: unknown) => input),
     } as unknown as ProductPricingService;
 
-    return new ProductsService(store, new ProductRepository(store), pricing);
+    return new ProductsService(
+      store,
+      new ProductRepository(store),
+      pricing,
+      { syncAfterProductSave: jest.fn() } as never,
+      { recordChange: jest.fn() } as never,
+    );
   }
 
   it('despublica un producto con published=false', () => {

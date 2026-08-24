@@ -11,8 +11,7 @@ export const selectCatalogState =
   createFeatureSelector<CatalogState>('catalog');
 
 const {
-  selectAll: selectAllProducts,
-  selectEntities: selectProductEntities,
+  selectAll: selectAllListProducts,
 } = productsAdapter.getSelectors();
 
 const {
@@ -39,7 +38,22 @@ export const selectCatalogError = createSelector(
 );
 
 export const selectProducts = createSelector(selectCatalogState, (state) =>
-  selectAllProducts(state.products),
+  selectAllListProducts(state.products),
+);
+
+export const selectAllCatalogProducts = createSelector(
+  selectCatalogState,
+  (state) => selectAllListProducts(state.allProducts),
+);
+
+export const selectAllProductsLoaded = createSelector(
+  selectCatalogState,
+  (state) => state.allProductsLoaded,
+);
+
+export const selectAllProductsLoading = createSelector(
+  selectCatalogState,
+  (state) => state.allProductsLoading,
 );
 
 export const selectCustomers = createSelector(selectCatalogState, (state) =>
@@ -51,9 +65,15 @@ export const selectCategories = createSelector(selectCatalogState, (state) =>
 );
 
 export const selectProductById = (id: string) =>
-  createSelector(selectCatalogState, (state) =>
-    selectProductEntities(state.products)[id] ?? null,
-  );
+  createSelector(selectCatalogState, (state) => {
+    const allEntities = productsAdapter.getSelectors().selectEntities(
+      state.allProducts,
+    );
+    const listEntities = productsAdapter.getSelectors().selectEntities(
+      state.products,
+    );
+    return allEntities[id] ?? listEntities[id] ?? null;
+  });
 
 export const selectCategoriesByType = (type?: ProductType) =>
   createSelector(selectCategories, (categories) =>

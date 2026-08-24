@@ -5,6 +5,12 @@
   </div>
   <div class="header-actions">
     <db-button
+      [label]="cartItemCount ? `Carrito (${cartItemCount})` : 'Carrito'"
+      variant="secondary"
+      format="soft"
+      routerLink="/ventas/nueva"
+    />
+    <db-button
       label="+ Categoría"
       variant="secondary"
       format="soft"
@@ -67,8 +73,10 @@
         <app-product-card
           [product]="product"
           [categories]="categories"
+          [showAddToCart]="true"
           (edit)="openEditProduct($event)"
           (delete)="deleteProduct($event)"
+          (addToCart)="addProductToCart($event)"
         />
       }
     </div>

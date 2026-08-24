@@ -29,6 +29,7 @@ export * from './sale-source-badge/sale-source-badge.component';
 export * from './sale-cart-line/sale-cart-line.component';
 export type { SaleCartLine } from './sale-cart-line/sale-cart-line.component';
 export * from './sale-cart-line-card/sale-cart-line-card.component';
+export * from './sale-cart-footer/sale-cart-footer.component';
 export * from './sale-entry-card/sale-entry-card.component';
 export * from './materials-table/materials-table.component';
 export * from './supplies-table/supplies-table.component';

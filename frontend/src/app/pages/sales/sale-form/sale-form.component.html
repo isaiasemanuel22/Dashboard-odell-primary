@@ -1,41 +1,4 @@
 <db-form [class.sale-form--mobile]="useCardLayout">
-    <db-fieldset legend="Agregar producto al carrito">
-      <db-form-grid>
-        <db-select
-          label="Producto"
-          [(ngModel)]="productId"
-          name="productId"
-          placeholder="Seleccionar producto"
-          [options]="productOptions"
-          [required]="true"
-          (ngModelChange)="onProductChange()"
-        />
-        <db-input
-          label="Cantidad"
-          type="number"
-          [(ngModel)]="pickQuantity"
-          name="pickQuantity"
-          [min]="1"
-          step="1"
-          [required]="true"
-        />
-      </db-form-grid>
-
-      @if (pickerError) {
-        <db-form-error>{{ pickerError }}</db-form-error>
-      }
-
-      <div class="cart-actions">
-        <db-button
-          label="+ Agregar al carrito"
-          variant="secondary"
-          format="soft"
-          extraClass="add-line"
-          [disabled]="!productId"
-          (clicked)="addToCart()"
-        />
-      </div>
-    </db-fieldset>
 
     <db-fieldset legend="Carrito">
       @if (cart.length) {
@@ -179,8 +142,17 @@
         label="Cancelar"
         variant="cancel"
         format="soft"
-        (clicked)="cancel.emit()"
+        (clicked)="cancelCart()"
       />
+      @if (!isEditing) {
+        <db-button
+          label="Crear pedido"
+          variant="secondary"
+          format="soft"
+          [disabled]="!hasCartItems"
+          (clicked)="createOrder()"
+        />
+      }
       <db-button
         [label]="
           loading

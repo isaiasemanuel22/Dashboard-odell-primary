@@ -1,4 +1,5 @@
-import { Body, Controller, Get, Param, Patch, Query } from '@nestjs/common';
+import { Body, Controller, Get, Param, Patch, Query, Req } from '@nestjs/common';
+import type { Request } from 'express';
 import {
   UpdatePrintJobDto,
   UpdatePrintJobStatusDto,
@@ -28,12 +29,24 @@ export class PrintJobsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() dto: UpdatePrintJobDto) {
-    return this.printJobsService.update(id, dto);
+  update(
+    @Param('id') id: string,
+    @Body() dto: UpdatePrintJobDto,
+    @Req() request: Request,
+  ) {
+    return this.printJobsService.update(id, dto, request.user?.uid);
   }
 
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body() body: UpdatePrintJobStatusDto) {
-    return this.printJobsService.updateStatus(id, body.status);
+  updateStatus(
+    @Param('id') id: string,
+    @Body() body: UpdatePrintJobStatusDto,
+    @Req() request: Request,
+  ) {
+    return this.printJobsService.updateStatus(
+      id,
+      body.status,
+      request.user?.uid,
+    );
   }
 }

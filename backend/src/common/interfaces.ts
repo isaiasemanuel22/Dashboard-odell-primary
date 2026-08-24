@@ -10,6 +10,7 @@ import {
   ServiceType,
   SupplyCategory,
   SupplyType,
+  TaskType,
 } from './enums';
 
 export interface Category {
@@ -232,6 +233,8 @@ export interface ProductBase {
   includesPieces: boolean;
   components: ProductComponent[];
   assemblyTimeHours: number;
+  /** Unidades terminadas en stock físico. */
+  stock?: number;
 }
 
 export interface Product3D extends ProductBase {
@@ -324,6 +327,11 @@ export interface OrderItem {
   productName: string;
   quantity: number;
   unitPrice: number;
+  deliveredQuantity?: number;
+  reservedQuantity?: number;
+  productionRequiredQuantity?: number;
+  producedQuantity?: number;
+  deliveredFromProductionQuantity?: number;
 }
 
 export type OrderStatusChangeSource = 'manual' | 'auto';
@@ -370,11 +378,31 @@ export interface Order {
   dueDate: string;
   statusHistory?: OrderStatusHistoryEntry[];
   priceHistory?: OrderPriceHistoryEntry[];
+  deliveryHistory?: OrderDeliveryHistoryEntry[];
+}
+
+export interface OrderDeliveryLine {
+  orderItemIndex: number;
+  quantity: number;
+}
+
+export interface OrderDeliveryHistoryEntry {
+  id: string;
+  deliveredAt: string;
+  items: OrderDeliveryLine[];
 }
 
 export interface OrderOverview {
   order: Order;
   tasks: PrintJob[];
+  alerts?: OrderAlert[];
+}
+
+export interface OrderAlert {
+  code: string;
+  message: string;
+  severity: 'info' | 'warning' | 'error';
+  itemIndex?: number;
 }
 
 export interface ProductOverview {
@@ -403,6 +431,8 @@ export interface PrintJob {
   productName: string;
   productId?: string;
   type: ServiceType;
+  taskType?: TaskType;
+  quantity?: number;
   status: PrintJobStatus;
   /** Si true, la tarea está en el tablero de trabajo activo. */
   active: boolean;
@@ -412,11 +442,16 @@ export interface PrintJob {
   dueDate: string;
   startedAt?: string;
   completedAt?: string;
+  archived?: boolean;
+  blockedReason?: string;
+  responsibleUserId?: string;
+  suppliesAvailableNotifiedAt?: string;
 }
 
 export interface UpdatePrintJobDto {
   status?: PrintJobStatus;
   active?: boolean;
+  responsibleUserId?: string;
 }
 
 export interface RetailSaleItem {
@@ -562,6 +597,7 @@ export type CreateProductDto = {
   /** Precio manual que reemplaza la suma de componentes. */
   suggestedPrice?: number | null;
   components?: ProductComponent[];
+  stock?: number;
 };
 
 export type UpdateProductDto = Partial<CreateProductDto>;

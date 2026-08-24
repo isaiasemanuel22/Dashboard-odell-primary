@@ -1,0 +1,30 @@
+<db-fieldset legend="Imágenes">
+  <p class="components-desc">
+    Elegí las fotos y revisalas en la vista previa. Podés subirlas con el botón o guardar el producto y se subirán solas.
+  </p>
+  @if (facade.legacyImagesNotice) {
+    <p class="components-desc legacy-images-notice">{{ facade.legacyImagesNotice }}</p>
+  }
+  <div [formGroup]="facade.form">
+    <db-file-upload
+      formControlName="images"
+      [thumbAlt]="facade.name"
+      [uploadFn]="uploadProductImage"
+    />
+  </div>
+</db-fieldset>
+
+<db-fieldset legend="Archivos adjuntos">
+  <p class="components-desc">
+    Podés adjuntar planos, STL, PDF u otros archivos de referencia. Se suben a Firebase Storage.
+  </p>
+  <div [formGroup]="facade.form">
+    <db-attachment-upload
+      formControlName="attachments"
+      [uploadFn]="uploadProductAttachment"
+    />
+  </div>
+  @if (facade.attachmentUploadError) {
+    <db-form-error>{{ facade.attachmentUploadError }}</db-form-error>
+  }
+</db-fieldset>

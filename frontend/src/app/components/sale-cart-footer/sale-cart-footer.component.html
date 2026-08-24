@@ -1,0 +1,59 @@
+@if (lines$ | async; as lines) {
+  <footer class="sale-cart-footer">
+    <div class="sale-cart-footer__header">
+      <h3>Carrito</h3>
+      @if (lines.length) {
+        <span class="sale-cart-footer__subtotal">{{ subtotal(lines) | currencyArs }}</span>
+      }
+    </div>
+
+    <ul class="sale-cart-footer__list">
+      @for (line of lines; track line.key) {
+        <li class="sale-cart-footer__item">
+          <div class="sale-cart-footer__item-main">
+            <span class="sale-cart-footer__name">{{ line.productName }}</span>
+            <span class="sale-cart-footer__meta">
+              ×{{ line.quantity }} · {{ lineTotal(line) | currencyArs }}
+            </span>
+          </div>
+          <button
+            type="button"
+            class="sale-cart-footer__remove"
+            [attr.aria-label]="'Quitar ' + line.productName"
+            (click)="removeLine(line.key)"
+          >
+            ×
+          </button>
+        </li>
+      }
+      <li class="sale-cart-footer__item sale-cart-footer__item--action">
+        <a routerLink="/productos" class="sale-cart-footer__add-link">
+          Agregar productos
+        </a>
+      </li>
+    </ul>
+
+    <div class="sale-cart-footer__actions">
+      <db-button
+        label="Cancelar"
+        variant="cancel"
+        format="soft"
+        (clicked)="cancelCart()"
+      />
+      <db-button
+        label="Crear pedido"
+        variant="secondary"
+        format="soft"
+        [disabled]="!lines.length"
+        (clicked)="createOrder(lines)"
+      />
+      <db-button
+        label="Cerrar venta"
+        variant="primary"
+        format="solid"
+        [disabled]="!canCloseSale(lines)"
+        routerLink="/ventas/nueva"
+      />
+    </div>
+  </footer>
+}

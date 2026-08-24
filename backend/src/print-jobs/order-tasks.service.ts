@@ -1,6 +1,13 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { OrderStatus, PrintJobStatus, ProductType, ServiceType } from '../common/enums';
-import { Order, OrderItem, PrintJob, Product3D } from '../common/interfaces';
+import { BadRequestException, ForbiddenException, Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  OrderStatus,
+  PrintJobStatus,
+  ProductType,
+  ServiceType,
+  SupplyType,
+  TaskType,
+} from '../common/enums';
+import { Order, OrderItem, OrderAlert, PrintJob, Product3D } from '../common/interfaces';
 import { appendOrderStatusHistory } from '../orders/order-status-history.util';
 import { StoreService } from '../store/store.service';
 
@@ -13,15 +20,9 @@ export class OrderTasksService implements OnModuleInit {
   }
 
   syncAll(): void {
-    const orderIds = new Set(this.store.orders.map((order) => order.id));
-
     for (const order of this.store.orders) {
       this.syncOrderTasks(order);
     }
-
-    this.store.printJobs = this.store.printJobs.filter((job) =>
-      orderIds.has(job.orderId),
-    );
 
     for (const order of this.store.orders) {
       if (!this.isTerminalOrder(order.status)) {
@@ -32,7 +33,7 @@ export class OrderTasksService implements OnModuleInit {
 
   syncOrderTasks(order: Order): void {
     if (order.status === OrderStatus.ENTREGADO) {
-      this.removeTasksForOrder(order.id);
+      this.archiveTasksForOrder(order.id);
       return;
     }
 
@@ -41,17 +42,22 @@ export class OrderTasksService implements OnModuleInit {
       return;
     }
 
+    order.items.forEach((item) => this.ensureFulfillment(item));
+
     order.items.forEach((item, index) => {
-      const existing = this.findTask(order.id, index, item);
-      if (existing) {
-        this.updateTaskMetadata(existing, order, item, index);
+      if (item.productId) {
+        this.planCatalogItemFulfillment(order, item, index);
         return;
       }
-      this.store.printJobs.push(this.createTask(order, item, index));
+      this.ensureItemTask(order, item, index, TaskType.SERVICE);
     });
 
-    this.removeStaleTasks(order);
-    this.applyOrderStatusToTasks(order);
+    if (order.items.some((item) => !!item.productId)) {
+      this.ensurePrepareTask(order);
+    }
+
+    this.cancelStaleTasks(order);
+    this.syncOrderStatusFromTasks(order.id);
   }
 
   /** Deriva el estado del pedido a partir de sus tareas y lo persiste. */
@@ -60,9 +66,19 @@ export class OrderTasksService implements OnModuleInit {
     if (!order || this.isTerminalOrder(order.status)) return;
 
     const tasks = this.getTasksForOrder(orderId);
-    if (!tasks.length) return;
-
-    const nextStatus = this.deriveOrderStatus(tasks);
+    const delivered = order.items.reduce(
+      (sum, item) => sum + (item.deliveredQuantity ?? 0),
+      0,
+    );
+    const requested = order.items.reduce((sum, item) => sum + item.quantity, 0);
+    const nextStatus =
+      requested > 0 && delivered >= requested
+        ? OrderStatus.ENTREGADO
+        : delivered > 0
+          ? OrderStatus.PARCIALMENTE_ENTREGADO
+          : tasks.length
+            ? this.deriveOrderStatus(tasks)
+            : OrderStatus.PENDIENTE;
     if (order.status !== nextStatus) {
       const previousStatus = order.status;
       order.status = nextStatus;
@@ -70,16 +86,156 @@ export class OrderTasksService implements OnModuleInit {
         order.statusHistory = [];
       }
       appendOrderStatusHistory(order, previousStatus, nextStatus, 'auto');
-      if (nextStatus === OrderStatus.COMPLETADO) {
-        this.applyOrderStatusToTasks(order);
+      if (nextStatus === OrderStatus.ENTREGADO) {
+        this.archiveTasksForOrder(order.id);
       }
     }
   }
 
+  /** Conservado por compatibilidad: el dominio operativo nunca borra historial. */
   removeTasksForOrder(orderId: string): void {
-    this.store.printJobs = this.store.printJobs.filter(
-      (job) => job.orderId !== orderId,
-    );
+    this.archiveTasksForOrder(orderId);
+  }
+
+  beforeStatusChange(
+    job: PrintJob,
+    next: PrintJobStatus,
+    actorUserId?: string,
+  ): void {
+    if (
+      job.status === PrintJobStatus.BLOQUEADO &&
+      next !== PrintJobStatus.BLOQUEADO &&
+      job.taskType === TaskType.PRODUCTION
+    ) {
+      if (!actorUserId || !job.responsibleUserId) {
+        throw new ForbiddenException(
+          'La tarea bloqueada requiere responsable e identidad autenticada',
+        );
+      }
+      if (actorUserId !== job.responsibleUserId) {
+        throw new ForbiddenException(
+          'Solo el responsable actual puede desbloquear la tarea',
+        );
+      }
+      if (
+        job.taskType === TaskType.PRODUCTION &&
+        !this.hasProductionSupplies(job)
+      ) {
+        throw new BadRequestException(
+          'Los insumos requeridos todavía no están disponibles',
+        );
+      }
+      job.blockedReason = undefined;
+      job.suppliesAvailableNotifiedAt = undefined;
+    }
+
+    if (
+      job.taskType === TaskType.PREPARE_ORDER &&
+      next === PrintJobStatus.EN_PROCESO
+    ) {
+      this.reserveStockAndCreateProduction(job.orderId);
+    }
+  }
+
+  afterStatusChange(job: PrintJob): void {
+    if (
+      job.taskType === TaskType.PRODUCTION &&
+      job.status === PrintJobStatus.TERMINADO &&
+      job.orderItemIndex >= 0
+    ) {
+      const order = this.store.getOrderById(job.orderId);
+      const item = order?.items[job.orderItemIndex];
+      if (item) {
+        item.producedQuantity = Math.max(
+          item.producedQuantity ?? 0,
+          job.quantity ?? item.productionRequiredQuantity ?? 0,
+        );
+      }
+    }
+    this.syncOrderStatusFromTasks(job.orderId);
+  }
+
+  notifySupplyAvailability(): void {
+    const now = new Date().toISOString();
+    for (const job of this.store.printJobs) {
+      if (
+        job.taskType === TaskType.PRODUCTION &&
+        job.status === PrintJobStatus.BLOQUEADO &&
+        !job.suppliesAvailableNotifiedAt &&
+        this.hasProductionSupplies(job)
+      ) {
+        job.suppliesAvailableNotifiedAt = now;
+      }
+    }
+  }
+
+  releaseReservations(order: Order): void {
+    for (const item of order.items) {
+      item.reservedQuantity = 0;
+      item.productionRequiredQuantity = 0;
+    }
+  }
+
+  buildOperationalAlerts(order: Order): OrderAlert[] {
+    const alerts: OrderAlert[] = [];
+    const tasks = this.getTasksForOrder(order.id);
+
+    order.items.forEach((item, index) => {
+      if (!item.productId) return;
+
+      const pending = Math.max(
+        item.quantity - (item.deliveredQuantity ?? 0),
+        0,
+      );
+      if (pending <= 0) return;
+
+      const available = this.getAvailableStock(item.productId, order.id);
+      const coveredByStock = Math.min(pending, available);
+      const toProduce = Math.max(
+        (item.productionRequiredQuantity ?? 0) ||
+          pending - coveredByStock - (item.producedQuantity ?? 0),
+        0,
+      );
+
+      if (coveredByStock < pending) {
+        alerts.push({
+          code: 'insufficient_stock',
+          message:
+            coveredByStock === 0
+              ? `${item.productName}: sin stock disponible; requiere producción (${pending} un.).`
+              : `${item.productName}: stock parcial (${coveredByStock} de ${pending}); faltan ${toProduce} por producir.`,
+          severity: 'warning',
+          itemIndex: index,
+        });
+      }
+
+      const productionTask = tasks.find(
+        (task) =>
+          task.taskType === TaskType.PRODUCTION &&
+          task.orderItemIndex === index &&
+          task.status !== PrintJobStatus.CANCELADO,
+      );
+      if (
+        productionTask?.status === PrintJobStatus.BLOQUEADO &&
+        productionTask.blockedReason
+      ) {
+        alerts.push({
+          code: 'production_blocked',
+          message: `${item.productName}: ${productionTask.blockedReason}.`,
+          severity: 'warning',
+          itemIndex: index,
+        });
+      }
+    });
+
+    return alerts;
+  }
+
+  archiveTasksForOrder(orderId: string): void {
+    for (const job of this.getTasksForOrder(orderId)) {
+      job.active = false;
+      job.archived = true;
+    }
   }
 
   private getTasksForOrder(orderId: string): PrintJob[] {
@@ -104,26 +260,29 @@ export class OrderTasksService implements OnModuleInit {
     );
 
     if (!openTasks.length) {
-      return OrderStatus.CANCELADO;
+      return OrderStatus.PENDIENTE;
     }
 
     if (openTasks.every((task) => task.status === PrintJobStatus.TERMINADO)) {
-      return OrderStatus.COMPLETADO;
+      return OrderStatus.TERMINADO;
     }
 
-    if (openTasks.some((task) => this.isTaskInProduction(task))) {
-      return OrderStatus.EN_PRODUCCION;
+    if (openTasks.some((task) => this.isTaskInProgress(task))) {
+      return OrderStatus.EN_PROGRESO;
     }
 
     return OrderStatus.PENDIENTE;
   }
 
-  private isTaskInProduction(task: PrintJob): boolean {
+  private isTaskInProgress(task: PrintJob): boolean {
     return (
       task.status === PrintJobStatus.EN_PROCESO ||
-      task.status === PrintJobStatus.BLOQUEADO ||
       task.status === PrintJobStatus.EN_REVISION
     );
+  }
+
+  private isTaskInProduction(task: PrintJob): boolean {
+    return this.isTaskInProgress(task);
   }
 
   private applyOrderStatusToTasks(order: Order): void {
@@ -178,13 +337,259 @@ export class OrderTasksService implements OnModuleInit {
 
   private finalizeCancelledTasks(order: Order): void {
     for (const job of this.getTasksForOrder(order.id)) {
-      if (job.status !== PrintJobStatus.CANCELADO) {
+      if (
+        job.status !== PrintJobStatus.CANCELADO &&
+        job.status !== PrintJobStatus.TERMINADO
+      ) {
         job.status = PrintJobStatus.CANCELADO;
         job.active = false;
       }
     }
 
-    this.removeStaleTasks(order);
+    this.releaseReservations(order);
+  }
+
+  private ensureFulfillment(item: OrderItem): void {
+    item.deliveredQuantity ??= 0;
+    item.reservedQuantity ??= 0;
+    item.productionRequiredQuantity ??= 0;
+    item.producedQuantity ??= 0;
+    item.deliveredFromProductionQuantity ??= 0;
+  }
+
+  private ensurePrepareTask(order: Order): void {
+    const existing = this.store.printJobs.find(
+      (job) =>
+        job.orderId === order.id && job.taskType === TaskType.PREPARE_ORDER,
+    );
+    if (existing) {
+      existing.customerName = order.customerName;
+      existing.productName = `Preparar pedido #${order.id}`;
+      existing.dueDate = order.dueDate;
+      existing.archived = false;
+      return;
+    }
+
+    this.store.printJobs.push({
+      id: this.store.nextId('job', this.store.printJobs),
+      orderId: order.id,
+      orderItemIndex: -1,
+      customerName: order.customerName,
+      productName: `Preparar pedido #${order.id}`,
+      type: ServiceType.DISENO,
+      taskType: TaskType.PREPARE_ORDER,
+      quantity: 1,
+      status: PrintJobStatus.BLOQUEADO,
+      blockedReason: 'Esperando inicio de preparación',
+      active: false,
+      archived: false,
+      priority: this.calcPriority(order.dueDate),
+      machine: 'Ventas',
+      estimatedHours: 1,
+      dueDate: order.dueDate,
+    });
+  }
+
+  private ensureItemTask(
+    order: Order,
+    item: OrderItem,
+    itemIndex: number,
+    taskType: TaskType,
+  ): PrintJob {
+    const existing = this.store.printJobs.find(
+      (job) =>
+        job.orderId === order.id &&
+        job.orderItemIndex === itemIndex &&
+        job.taskType === taskType,
+    );
+    if (existing) {
+      this.updateTaskMetadata(existing, order, item, itemIndex);
+      existing.quantity =
+        taskType === TaskType.PRODUCTION
+          ? item.productionRequiredQuantity
+          : item.quantity;
+      if (taskType === TaskType.PRODUCTION) {
+        existing.productName = `Hacer ${existing.quantity} ${item.productName}`;
+      }
+      existing.archived = false;
+      return existing;
+    }
+
+    const task = this.createTask(order, item, itemIndex);
+    task.taskType = taskType;
+    task.quantity =
+      taskType === TaskType.PRODUCTION
+        ? item.productionRequiredQuantity
+        : item.quantity;
+    task.productName =
+      taskType === TaskType.PRODUCTION
+        ? `Hacer ${task.quantity} ${item.productName}`
+        : item.productName;
+    task.archived = false;
+    if (taskType === TaskType.PRODUCTION && !this.hasProductionSupplies(task)) {
+      task.status = PrintJobStatus.BLOQUEADO;
+      task.blockedReason = 'Insumos insuficientes';
+    }
+    this.store.printJobs.push(task);
+    return task;
+  }
+
+  private planCatalogItemFulfillment(
+    order: Order,
+    item: OrderItem,
+    index: number,
+  ): void {
+    if (!item.productId) return;
+
+    this.ensureFulfillment(item);
+    const product = this.store.getProductById(item.productId);
+    if (!product) return;
+
+    if ((item.reservedQuantity ?? 0) > 0) {
+      if ((item.productionRequiredQuantity ?? 0) > 0) {
+        this.ensureItemTask(order, item, index, TaskType.PRODUCTION);
+      } else {
+        this.cancelOpenProductionTask(order.id, index);
+      }
+      return;
+    }
+
+    const pending = Math.max(
+      item.quantity - (item.deliveredQuantity ?? 0),
+      0,
+    );
+    const available = this.getAvailableStock(item.productId, order.id);
+    item.productionRequiredQuantity = Math.max(
+      pending - available - (item.producedQuantity ?? 0),
+      0,
+    );
+
+    if (item.productionRequiredQuantity > 0) {
+      this.ensureItemTask(order, item, index, TaskType.PRODUCTION);
+    } else {
+      this.cancelOpenProductionTask(order.id, index);
+    }
+  }
+
+  private cancelOpenProductionTask(orderId: string, itemIndex: number): void {
+    const job = this.store.printJobs.find(
+      (candidate) =>
+        candidate.orderId === orderId &&
+        candidate.orderItemIndex === itemIndex &&
+        candidate.taskType === TaskType.PRODUCTION &&
+        candidate.status !== PrintJobStatus.TERMINADO &&
+        candidate.status !== PrintJobStatus.CANCELADO,
+    );
+    if (!job) return;
+    job.status = PrintJobStatus.CANCELADO;
+    job.active = false;
+  }
+
+  private getAvailableStock(productId: string, excludeOrderId: string): number {
+    const product = this.store.getProductById(productId);
+    if (!product) return 0;
+
+    const reservedElsewhere = this.store.orders.reduce((sum, candidate) => {
+      if (
+        candidate.id === excludeOrderId ||
+        candidate.status === OrderStatus.CANCELADO ||
+        candidate.status === OrderStatus.ENTREGADO
+      ) {
+        return sum;
+      }
+      return (
+        sum +
+        candidate.items
+          .filter((line) => line.productId === productId)
+          .reduce((subtotal, line) => subtotal + (line.reservedQuantity ?? 0), 0)
+      );
+    }, 0);
+
+    return Math.max((product.stock ?? 0) - reservedElsewhere, 0);
+  }
+
+  private reserveStockAndCreateProduction(orderId: string): void {
+    const order = this.store.getOrderById(orderId);
+    if (!order) return;
+
+    order.items.forEach((item, index) => {
+      if (!item.productId) return;
+      this.ensureFulfillment(item);
+      const product = this.store.getProductById(item.productId);
+      if (!product) return;
+
+      const pending = Math.max(
+        item.quantity - (item.deliveredQuantity ?? 0),
+        0,
+      );
+      const available = this.getAvailableStock(item.productId, order.id);
+      item.reservedQuantity = Math.min(pending, available);
+      item.productionRequiredQuantity = Math.max(
+        pending - item.reservedQuantity - (item.producedQuantity ?? 0),
+        0,
+      );
+
+      if (item.productionRequiredQuantity > 0) {
+        this.ensureItemTask(order, item, index, TaskType.PRODUCTION);
+      } else {
+        this.cancelOpenProductionTask(order.id, index);
+      }
+    });
+  }
+
+  private hasProductionSupplies(job: PrintJob): boolean {
+    if (!job.productId) return true;
+    const product = this.store.getProductById(job.productId);
+    if (!product) return false;
+    const quantity = Math.max(job.quantity ?? 1, 1);
+
+    if (product.type === ProductType.FDM) {
+      const lines =
+        product.filaments?.length
+          ? product.filaments
+          : product.filamentType
+            ? [{ filamentType: product.filamentType, grams: product.grams }]
+            : [];
+      return lines.every((line) => {
+        const availableGrams = this.store.supplies
+          .filter(
+            (supply) =>
+              supply.type === SupplyType.FILAMENTO &&
+              supply.filamentType === line.filamentType,
+          )
+          .reduce((sum, supply) => sum + supply.quantity * 1000, 0);
+        return availableGrams >= line.grams * quantity;
+      });
+    }
+
+    if (product.type === ProductType.RESINA && product.resinType) {
+      const availableMl = this.store.supplies
+        .filter(
+          (supply) =>
+            supply.type === SupplyType.RESINA &&
+            supply.resinType === product.resinType,
+        )
+        .reduce((sum, supply) => sum + supply.quantity * 1000, 0);
+      return availableMl >= product.grams * quantity;
+    }
+
+    return true;
+  }
+
+  private cancelStaleTasks(order: Order): void {
+    for (const job of this.getTasksForOrder(order.id)) {
+      if (
+        job.taskType === TaskType.SERVICE &&
+        (job.orderItemIndex < 0 ||
+          !order.items[job.orderItemIndex] ||
+          order.items[job.orderItemIndex]?.productId)
+      ) {
+        if (job.status !== PrintJobStatus.TERMINADO) {
+          job.status = PrintJobStatus.CANCELADO;
+          job.active = false;
+        }
+      }
+    }
   }
 
   private findTask(

@@ -34,6 +34,10 @@
               } @else {
                 <span>{{ item.quantity }}× {{ item.productName }}</span>
               }
+              <small class="order-card__fulfillment">
+                {{ item.delivered ?? 0 }} entregado ·
+                {{ item.pending ?? item.quantity }} pendiente
+              </small>
             </li>
           }
           @if (hiddenItemsCount(order); as extra) {

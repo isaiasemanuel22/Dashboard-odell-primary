@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import {
   CreateOrderDto,
+  CreateOrderDeliveryDto,
   UpdateOrderDto,
   UpdateStatusDto,
 } from '../common/dto';
@@ -60,6 +61,14 @@ export class OrdersController {
   @Patch(':id/status')
   updateStatus(@Param('id') id: string, @Body() body: UpdateStatusDto) {
     return this.ordersService.updateStatus(id, body.status);
+  }
+
+  @Post(':id/deliveries')
+  deliver(
+    @Param('id') id: string,
+    @Body() body: CreateOrderDeliveryDto,
+  ) {
+    return this.ordersService.deliver(id, body.items);
   }
 
   @Delete(':id')

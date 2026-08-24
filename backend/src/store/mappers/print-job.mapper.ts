@@ -16,6 +16,12 @@ export function mapPrintJobFromDb(row: {
   dueDate: Date;
   startedAt: Date | null;
   completedAt: Date | null;
+  taskType?: string;
+  quantity?: number;
+  archived?: boolean;
+  blockedReason?: string | null;
+  responsibleUserId?: string | null;
+  suppliesAvailableNotifiedAt?: Date | null;
 }): PrintJob {
   return {
     id: row.id,
@@ -33,6 +39,13 @@ export function mapPrintJobFromDb(row: {
     dueDate: row.dueDate.toISOString(),
     startedAt: row.startedAt?.toISOString(),
     completedAt: row.completedAt?.toISOString(),
+    taskType: (row.taskType ?? 'SERVICE') as PrintJob['taskType'],
+    quantity: row.quantity ?? 1,
+    archived: row.archived ?? false,
+    blockedReason: row.blockedReason ?? undefined,
+    responsibleUserId: row.responsibleUserId ?? undefined,
+    suppliesAvailableNotifiedAt:
+      row.suppliesAvailableNotifiedAt?.toISOString(),
   };
 }
 
@@ -53,5 +66,13 @@ export function mapPrintJobToDb(job: PrintJob) {
     dueDate: new Date(job.dueDate),
     startedAt: job.startedAt ? new Date(job.startedAt) : null,
     completedAt: job.completedAt ? new Date(job.completedAt) : null,
+    taskType: job.taskType ?? 'SERVICE',
+    quantity: job.quantity ?? 1,
+    archived: job.archived ?? false,
+    blockedReason: job.blockedReason ?? null,
+    responsibleUserId: job.responsibleUserId ?? null,
+    suppliesAvailableNotifiedAt: job.suppliesAvailableNotifiedAt
+      ? new Date(job.suppliesAvailableNotifiedAt)
+      : null,
   };
 }

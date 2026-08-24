@@ -9,14 +9,16 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   CreateRetailSalePayload,
   Product,
+  ProductStockOverview,
   RetailSale,
   UpdateRetailSalePayload,
 } from '../../../core/models';
 import { ProductsService } from '../../../core/services/products.service';
 import { SalesService } from '../../../core/services/sales.service';
-import { DbButtonComponent } from '@general-components';
+import { SaleCartService } from '../../../core/services/sale-cart.service';
 import { SaleFormComponent } from '../sale-form/sale-form.component';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
+import { productStockOverview } from '../../../shared/utils/stock.helpers';
 
 @Component({
   selector: 'app-sale-create',
@@ -31,10 +33,12 @@ export class SaleCreateComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly salesService = inject(SalesService);
   private readonly productsService = inject(ProductsService);
+  private readonly saleCart = inject(SaleCartService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   sale: RetailSale | null = null;
   products: Product[] = [];
+  stockByProductId: Record<string, ProductStockOverview> = {};
   loading = false;
   loadingSale = false;
   error = '';
@@ -80,6 +84,9 @@ export class SaleCreateComponent implements OnInit {
     request.subscribe({
       next: () => {
         this.loading = false;
+        if (!this.sale) {
+          this.saleCart.clear();
+        }
         void this.router.navigate(['/ventas']);
       },
       error: (err) => {
@@ -98,6 +105,12 @@ export class SaleCreateComponent implements OnInit {
     this.productsService.getProducts(undefined, { all: true }).subscribe({
       next: (products) => {
         this.products = products;
+        this.stockByProductId = Object.fromEntries(
+          products.map((product) => [
+            product.id,
+            productStockOverview(product),
+          ]),
+        );
         this.cdr.markForCheck();
       },
     });

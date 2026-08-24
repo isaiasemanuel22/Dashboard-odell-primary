@@ -14,6 +14,8 @@ import {
   OrderStatus,
   OrderStatusHistoryEntry,
   OrderPriceHistoryEntry,
+  OrderAlert,
+  OrderDelivery,
   PrintJob,
   Customer,
 } from '../../../core/models';
@@ -25,6 +27,7 @@ import { RealtimeCatalogSyncService } from '../../../core/services/realtime-cata
 import { RealtimeService } from '../../../core/services/realtime.service';
 import {
   DbButtonComponent,
+  DbInputComponent,
   DbSelectComponent,
   DbServiceBadgesComponent,
   DbSkeletonComponent,
@@ -34,7 +37,6 @@ import {
 import { FormDialogService } from '../../../shared/form-dialogs/public-api';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import {
-  orderStatusOptions,
   ORDER_DESCRIPTION_MAX_LENGTH,
   calculateOrderSubtotal,
   calculateOrderDiscount,
@@ -42,6 +44,7 @@ import {
 import {
   ORDER_STATUS_CHANGE_SOURCE_LABELS,
   ORDER_STATUS_LABELS,
+  TASK_KIND_LABELS,
 } from '../../../shared/constants/labels';
 import {
   CurrencyArsPipe,
@@ -71,6 +74,7 @@ import { priorityTierClass } from '../../../shared/utils/priority.helpers';
     PlainTextLengthPipe,
     DbSelectComponent,
     DbButtonComponent,
+    DbInputComponent,
     DbSkeletonComponent,
     DbStateMessageComponent,
     DbStatusBadgeComponent,
@@ -94,6 +98,10 @@ export class OrderDetailComponent implements OnInit {
 
   order: Order | null = null;
   tasks: PrintJob[] = [];
+  alerts: OrderAlert[] = [];
+  deliveries: OrderDelivery[] = [];
+  deliveryDraft: number[] = [];
+  deliveryLoading = false;
   loading = true;
   notFound = false;
 
@@ -101,14 +109,13 @@ export class OrderDetailComponent implements OnInit {
   assignLoading = false;
   private customers: Customer[] = [];
 
-  statusDraft: OrderStatus = OrderStatus.PENDIENTE;
   statusLoading = false;
   previewImageUrl: string | null = null;
 
-  readonly statusOptions = orderStatusOptions();
   readonly descriptionMaxLength = ORDER_DESCRIPTION_MAX_LENGTH;
   readonly priorityTierClass = priorityTierClass;
   readonly sourceLabels = ORDER_STATUS_CHANGE_SOURCE_LABELS;
+  readonly taskKindLabels = TASK_KIND_LABELS;
   readonly priceTriggerLabels: Record<OrderPriceHistoryEntry['trigger'], string> = {
     settings: 'Ajustes del sistema',
     supply_price: 'Precio de insumo',
@@ -142,6 +149,13 @@ export class OrderDetailComponent implements OnInit {
     return [...this.order.priceHistory].sort(
       (a, b) =>
         new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime(),
+    );
+  }
+
+  get canRegisterDelivery(): boolean {
+    return (
+      !this.deliveryLoading &&
+      this.deliveryDraft.some((quantity) => Number(quantity) > 0)
     );
   }
 
@@ -197,7 +211,10 @@ export class OrderDetailComponent implements OnInit {
       next: (overview) => {
         this.order = overview.order;
         this.tasks = overview.tasks;
-        this.statusDraft = overview.order.status;
+        this.alerts = overview.alerts ?? [];
+        this.deliveries =
+          overview.deliveries ?? overview.order.deliveryHistory ?? [];
+        this.deliveryDraft = overview.order.items.map(() => 0);
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -209,32 +226,30 @@ export class OrderDetailComponent implements OnInit {
     });
   }
 
-  updateStatus(): void {
+  cancelOrder(): void {
     if (!this.order || this.statusLoading) return;
-    if (this.statusDraft === this.order.status) return;
+    if (this.order.status === OrderStatus.CANCELADO) return;
+    if (!confirm(`¿Cancelar el pedido ${this.order.id}?`)) return;
 
     const previousStatus = this.order.status;
-    this.order = { ...this.order, status: this.statusDraft };
     this.statusLoading = true;
     this.cdr.markForCheck();
 
     this.ordersService
-      .updateOrderStatus(this.order.id, this.statusDraft)
+      .updateOrderStatus(this.order.id, OrderStatus.CANCELADO)
       .subscribe({
         next: (updated) => {
           this.statusLoading = false;
           this.order = updated;
-          this.statusDraft = updated.status;
-          this.reloadTasks(updated.id);
+          this.loadOrder(updated.id);
           this.cdr.markForCheck();
         },
         error: (err) => {
           this.statusLoading = false;
           this.order = { ...this.order!, status: previousStatus };
-          this.statusDraft = previousStatus;
           this.cdr.markForCheck();
           alert(
-            extractApiErrorMessage(err, 'No se pudo actualizar el estado'),
+            extractApiErrorMessage(err, 'No se pudo cancelar el pedido'),
           );
         },
       });
@@ -246,7 +261,6 @@ export class OrderDetailComponent implements OnInit {
     this.formDialogs.openOrder(this.order).subscribe((updated) => {
       if (!updated) return;
       this.order = updated;
-      this.statusDraft = updated.status;
       this.reloadTasks(updated.id);
       this.cdr.markForCheck();
     });
@@ -331,6 +345,31 @@ export class OrderDetailComponent implements OnInit {
       next: (tasks) => {
         this.tasks = tasks;
         this.cdr.markForCheck();
+      },
+    });
+  }
+
+  registerDelivery(): void {
+    if (!this.order || this.deliveryLoading) return;
+    const items = this.deliveryDraft
+      .map((quantity, orderItemIndex) => ({
+        orderItemIndex,
+        quantity: Math.trunc(Number(quantity) || 0),
+      }))
+      .filter((item) => item.quantity > 0);
+    if (!items.length) return;
+
+    this.deliveryLoading = true;
+    this.ordersService.createDelivery(this.order.id, { items }).subscribe({
+      next: () => {
+        this.deliveryLoading = false;
+        this.loadOrder(this.order!.id);
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.deliveryLoading = false;
+        this.cdr.markForCheck();
+        alert(extractApiErrorMessage(err, 'No se pudo registrar la entrega'));
       },
     });
   }

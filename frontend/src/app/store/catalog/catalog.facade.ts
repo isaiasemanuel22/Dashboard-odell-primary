@@ -7,6 +7,9 @@ import {
   selectCatalogError,
   selectCatalogLoaded,
   selectCatalogLoading,
+  selectAllCatalogProducts,
+  selectAllProductsLoaded,
+  selectAllProductsLoading,
   selectCategories,
   selectCategoriesByType,
   selectCustomers,
@@ -19,6 +22,9 @@ export class CatalogFacade {
   private readonly store = inject(Store);
 
   readonly products$ = this.store.select(selectProducts);
+  readonly allProducts$ = this.store.select(selectAllCatalogProducts);
+  readonly allProductsLoaded$ = this.store.select(selectAllProductsLoaded);
+  readonly allProductsLoading$ = this.store.select(selectAllProductsLoading);
   readonly customers$ = this.store.select(selectCustomers);
   readonly categories$ = this.store.select(selectCategories);
   readonly loaded$ = this.store.select(selectCatalogLoaded);
@@ -27,6 +33,33 @@ export class CatalogFacade {
 
   load(refresh = false): void {
     this.store.dispatch(CatalogActions.load({ refresh }));
+  }
+
+  loadProducts(options: { all?: boolean; refresh?: boolean } = {}): void {
+    this.store.dispatch(CatalogActions.loadProducts(options));
+  }
+
+  loadAllProducts(refresh = false): void {
+    this.store.dispatch(CatalogActions.loadAllProducts({ refresh }));
+  }
+
+  getAllProductsOnce(refresh = false): Observable<Product[]> {
+    return this.waitForAllProductsLoaded(refresh);
+  }
+
+  private waitForAllProductsLoaded(refresh = false): Observable<Product[]> {
+    this.loadAllProducts(refresh);
+    return combineLatest([
+      this.allProducts$,
+      this.allProductsLoaded$,
+      this.error$,
+    ]).pipe(
+      filter(([, loaded, error]) => loaded || error !== null),
+      take(1),
+      switchMap(([products, , error]) =>
+        error ? throwError(() => new Error(error)) : of(products),
+      ),
+    );
   }
 
   /** Emite una vez cuando el catálogo está listo (compatible con forkJoin). */

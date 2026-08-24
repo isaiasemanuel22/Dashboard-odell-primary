@@ -20,10 +20,15 @@ export enum SupplyCategory {
 
 export enum OrderStatus {
   PENDIENTE = 'pendiente',
-  EN_PRODUCCION = 'en_produccion',
-  COMPLETADO = 'completado',
+  EN_PROGRESO = 'en_progreso',
+  TERMINADO = 'terminado',
+  PARCIALMENTE_ENTREGADO = 'parcialmente_entregado',
   ENTREGADO = 'entregado',
   CANCELADO = 'cancelado',
+  /** @deprecated Compatibilidad de código; se persiste el valor objetivo. */
+  EN_PRODUCCION = 'en_progreso',
+  /** @deprecated Compatibilidad de código; se persiste el valor objetivo. */
+  COMPLETADO = 'terminado',
 }
 
 export enum PrintJobStatus {
@@ -33,6 +38,13 @@ export enum PrintJobStatus {
   EN_REVISION = 'en_revision',
   TERMINADO = 'terminado',
   CANCELADO = 'cancelado',
+}
+
+export enum TaskType {
+  PREPARE_ORDER = 'PREPARE_ORDER',
+  PRODUCTION = 'PRODUCTION',
+  SERVICE = 'SERVICE',
+  INTERNAL = 'INTERNAL',
 }
 
 export enum SaleSource {

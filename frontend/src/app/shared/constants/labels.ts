@@ -9,6 +9,7 @@ import {
   ServiceType,
   SupplyCategory,
   SupplyType,
+  TaskKind,
 } from '../../core/models';
 
 export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
@@ -71,8 +72,9 @@ export const RESIN_TYPE_LABELS: Record<ResinType, string> = {
 
 export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   [OrderStatus.PENDIENTE]: 'Pendiente',
-  [OrderStatus.EN_PRODUCCION]: 'En producción',
-  [OrderStatus.COMPLETADO]: 'Completado',
+  [OrderStatus.EN_PROGRESO]: 'En progreso',
+  [OrderStatus.TERMINADO]: 'Terminado',
+  [OrderStatus.PARCIALMENTE_ENTREGADO]: 'Parcialmente entregado',
   [OrderStatus.ENTREGADO]: 'Entregado',
   [OrderStatus.CANCELADO]: 'Cancelado',
 };
@@ -86,12 +88,19 @@ export const ORDER_STATUS_CHANGE_SOURCE_LABELS: Record<
 };
 
 export const PRINT_JOB_STATUS_LABELS: Record<PrintJobStatus, string> = {
-  [PrintJobStatus.POR_HACER]: 'Por hacer',
-  [PrintJobStatus.EN_PROCESO]: 'En proceso',
+  [PrintJobStatus.POR_HACER]: 'Pendiente',
+  [PrintJobStatus.EN_PROCESO]: 'En progreso',
   [PrintJobStatus.BLOQUEADO]: 'Bloqueado',
   [PrintJobStatus.EN_REVISION]: 'En revisión',
   [PrintJobStatus.TERMINADO]: 'Terminado',
   [PrintJobStatus.CANCELADO]: 'Cancelado',
+};
+
+export const TASK_KIND_LABELS: Record<TaskKind, string> = {
+  [TaskKind.PREPARE_ORDER]: 'Preparar pedido',
+  [TaskKind.PRODUCTION]: 'Producción',
+  [TaskKind.SERVICE]: 'Servicio',
+  [TaskKind.INTERNAL]: 'Interna',
 };
 
 export const SALE_SOURCE_LABELS: Record<SaleSource, string> = {
@@ -100,8 +109,8 @@ export const SALE_SOURCE_LABELS: Record<SaleSource, string> = {
 };
 
 export const WORK_BOARD_COLUMNS: { status: PrintJobStatus; label: string }[] = [
-  { status: PrintJobStatus.POR_HACER, label: 'Por hacer' },
-  { status: PrintJobStatus.EN_PROCESO, label: 'En proceso' },
+  { status: PrintJobStatus.POR_HACER, label: 'Pendiente' },
+  { status: PrintJobStatus.EN_PROCESO, label: 'En progreso' },
   { status: PrintJobStatus.BLOQUEADO, label: 'Bloqueado' },
   { status: PrintJobStatus.EN_REVISION, label: 'En revisión' },
   { status: PrintJobStatus.TERMINADO, label: 'Terminado' },

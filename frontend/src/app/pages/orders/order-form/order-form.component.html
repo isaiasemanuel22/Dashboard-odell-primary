@@ -26,30 +26,7 @@
           [required]="true"
         />
 
-        @if (isEditing) {
-          <db-select
-            label="Estado"
-            [(ngModel)]="status"
-            name="status"
-            [options]="orderStatusOptions"
-          />
-        }
       </db-form-grid>
-
-      <db-fieldset legend="Servicios incluidos">
-        <p class="services-hint">
-          Un pedido puede incluir impresión 3D, diseño y/o estampado. Cada servicio generará tareas individuales en la cola de trabajo.
-        </p>
-        <db-checkbox-group>
-          @for (option of serviceTypeOptions; track option.value) {
-            <db-checkbox
-              [label]="option.label"
-              [checked]="isServiceSelected(option.value)"
-              (checkedChange)="onServiceCheck(option.value, $event)"
-            />
-          }
-        </db-checkbox-group>
-      </db-fieldset>
 
       <db-form-grid-full>
         <db-rich-text-editor
@@ -73,10 +50,10 @@
       </db-form-grid-full>
 
       <db-fieldset legend="Líneas de trabajo">
-        @if (!selectedServices.length) {
-          <p class="empty-group">Seleccioná al menos un servicio para agregar líneas.</p>
-        } @else {
-          <div class="order-lines">
+        <p class="lines-hint">
+          Podés mezclar impresión 3D, diseño y estampado en el mismo pedido. Cada línea genera tareas individuales en la cola de trabajo.
+        </p>
+        <div class="order-lines">
             @for (line of lines; track $index; let i = $index) {
               <div class="order-line">
                 <div class="order-line__main">
@@ -169,6 +146,9 @@
                       Costo tomado del catálogo de productos.
                     </p>
                   }
+                  @if (lineStockHint(line); as stockHint) {
+                    <p class="order-line__stock-hint">{{ stockHint }}</p>
+                  }
                 </div>
               </div>
             }
@@ -181,7 +161,6 @@
             extraClass="add-line"
             (clicked)="addLine()"
           />
-        }
 
         <div class="order-discount">
           <db-form-grid>

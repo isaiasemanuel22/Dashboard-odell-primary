@@ -1,6 +1,7 @@
 import {
   Order,
   OrderItem,
+  OrderItemPayload,
   OrderLineDraft,
   OrderStatus,
   Product,
@@ -10,14 +11,16 @@ import {
 import { ListFilterOption } from '../../components/db-list-toolbar/db-list-toolbar.component';
 import { ORDER_STATUS_LABELS, SERVICE_TYPE_LABELS } from '../constants/labels';
 import { labelsToSelectOptions } from './select-options';
+import { productPhysicalStock } from './stock.helpers';
 
 export const ACTIVE_ORDER_STATUSES: OrderStatus[] = [
   OrderStatus.PENDIENTE,
-  OrderStatus.EN_PRODUCCION,
+  OrderStatus.EN_PROGRESO,
 ];
 
 export const FINISHED_ORDER_STATUSES: OrderStatus[] = [
-  OrderStatus.COMPLETADO,
+  OrderStatus.TERMINADO,
+  OrderStatus.PARCIALMENTE_ENTREGADO,
   OrderStatus.ENTREGADO,
 ];
 
@@ -33,7 +36,8 @@ export function isFinishedOrder(status: OrderStatus): boolean {
 
 export function isClosedOrder(status: OrderStatus): boolean {
   return (
-    status === OrderStatus.COMPLETADO ||
+    status === OrderStatus.TERMINADO ||
+    status === OrderStatus.PARCIALMENTE_ENTREGADO ||
     status === OrderStatus.ENTREGADO ||
     status === OrderStatus.CANCELADO
   );
@@ -112,6 +116,33 @@ export function productMatchesServiceType(
   return product.type === ProductType.ESTAMPADO;
 }
 
+export function orderLineStockHint(
+  line: Pick<OrderLineDraft, 'serviceType' | 'productId' | 'quantity'>,
+  product: Pick<Product, 'stock' | 'finishedStock'> | undefined,
+): string | null {
+  if (isDesignService(line.serviceType) || !line.productId || !product) {
+    return null;
+  }
+
+  const requested = Math.max(Math.trunc(Number(line.quantity) || 0), 0);
+  if (requested <= 0) return null;
+
+  const available = productPhysicalStock(product);
+  if (requested <= available) return null;
+
+  if (available === 0) {
+    return 'Sin stock disponible: al confirmar se creará una tarea de producción.';
+  }
+
+  return `Stock insuficiente (${available} disponible): faltan ${requested - available} unidades por producir.`;
+}
+
+export function deriveOrderServices(
+  lines: Array<{ serviceType: ServiceType }>,
+): ServiceType[] {
+  return [...new Set(lines.map((line) => line.serviceType))];
+}
+
 export function orderIncludesService(
   order: Order,
   service: ServiceType,
@@ -122,7 +153,7 @@ export function orderIncludesService(
 export function buildOrderItems(
   lines: OrderLineDraft[],
   catalog: Product[],
-): OrderItem[] {
+): OrderItemPayload[] {
   return lines
     .filter((line) => isLineValid(line))
     .map((line) => {
@@ -155,6 +186,23 @@ export function isLineValid(line: OrderLineDraft): boolean {
   }
 
   return !!line.productId;
+}
+
+export function orderLinesFromSaleCart(
+  lines: Array<{ productId: string; quantity: number; unitPrice: number }>,
+  products: Product[],
+): OrderLineDraft[] {
+  return lines.map((line) => {
+    const product = products.find((item) => item.id === line.productId);
+    return {
+      serviceType: product
+        ? serviceTypeFromProduct(product)
+        : ServiceType.IMPRESION_3D,
+      productId: line.productId,
+      quantity: line.quantity,
+      unitPrice: line.unitPrice,
+    };
+  });
 }
 
 export function lineFromOrderItem(item: OrderItem): OrderLineDraft {

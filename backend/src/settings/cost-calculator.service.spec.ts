@@ -230,6 +230,54 @@ describe('CostCalculatorService', () => {
     expect(result.price).toBe(6000);
   });
 
+  it('resuelve costo de producto armado como suma de piezas', () => {
+    store.products.push(
+      {
+        id: 'piece-1',
+        name: 'Pieza',
+        type: ProductType.FDM,
+        images: [],
+        attachments: [],
+        updatedAt: '2026-07-01T10:00:00.000Z',
+        price: 2000,
+        cost: 1000,
+        profit: 1000,
+        categoryIds: [],
+        size: '5 cm',
+        published: true,
+        components: [],
+        assemblyTimeHours: 0,
+        grams: 10,
+        printTimeHours: 1,
+        workTimeHours: 0,
+      },
+      {
+        id: 'combo-1',
+        name: 'Combo',
+        type: ProductType.FDM,
+        includesPieces: true,
+        images: [],
+        attachments: [],
+        updatedAt: '2026-07-01T10:00:00.000Z',
+        price: 9999,
+        cost: 9999,
+        profit: 0,
+        categoryIds: [],
+        size: '10 cm',
+        published: true,
+        components: [{ productId: 'piece-1', quantity: 2 }],
+        assemblyTimeHours: 0,
+        grams: 100,
+        printTimeHours: 5,
+        workTimeHours: 0,
+      },
+    );
+    store.indexProduct(store.products[0]!);
+    store.indexProduct(store.products[1]!);
+
+    expect(service.resolveProductUnitCost('combo-1')).toBe(2000);
+  });
+
   it('no aplica margen de error en productos armados por piezas', () => {
     store.generalSettings.errorMarginPercent = 10;
     store.products.push({

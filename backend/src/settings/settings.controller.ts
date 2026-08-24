@@ -1,6 +1,5 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import {
-  CalculateCostDto,
   FilamentPriceDto,
   MachineCostEntryDto,
   MachineProfileDto,
@@ -148,11 +147,6 @@ export class SettingsController {
   removeMachineCost(@Param('id') id: string) {
     this.settingsService.removeMachineCost(id);
     return { deleted: true };
-  }
-
-  @Post('calculate-cost')
-  calculateCost(@Body() data: CalculateCostDto) {
-    return this.costCalculator.calculateCost(data as never);
   }
 
   @Post('supply-default-price')

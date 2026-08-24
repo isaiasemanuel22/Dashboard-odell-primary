@@ -43,6 +43,7 @@ describe('OrdersService.getOverview', () => {
       grams: 10,
       printTimeHours: 1,
       workTimeHours: 0,
+      stock: 2,
     });
     state.orders.push({
       id: 'ord-1',
@@ -80,5 +81,31 @@ describe('OrdersService.getOverview', () => {
     expect(overview.customers).toBeUndefined();
     expect(overview.products).toBeUndefined();
     expect(Array.isArray(overview.tasks)).toBe(true);
+  });
+
+  it('registra entrega parcial y descuenta solo stock reservado', () => {
+    const order = store.orders[0]!;
+    order.items = [
+      {
+        serviceType: ProductType.FDM as never,
+        productId: 'prod-1',
+        productName: 'Pieza',
+        quantity: 3,
+        unitPrice: 100,
+        reservedQuantity: 2,
+        producedQuantity: 1,
+        deliveredQuantity: 0,
+        productionRequiredQuantity: 1,
+        deliveredFromProductionQuantity: 0,
+      },
+    ];
+
+    service.deliver(order.id, [{ orderItemIndex: 0, quantity: 1 }]);
+
+    expect(order.items[0].deliveredQuantity).toBe(1);
+    expect(order.items[0].reservedQuantity).toBe(1);
+    expect(store.products[0].stock).toBe(1);
+    expect(order.status).toBe(OrderStatus.PARCIALMENTE_ENTREGADO);
+    expect(order.deliveryHistory).toHaveLength(1);
   });
 });

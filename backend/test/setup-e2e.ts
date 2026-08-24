@@ -13,5 +13,13 @@ jest.mock('firebase-admin/auth', () => ({
   })),
 }));
 
+jest.mock('firebase-admin/storage', () => ({
+  getStorage: jest.fn(() => ({
+    bucket: jest.fn(() => ({
+      exists: jest.fn(async () => [true]),
+    })),
+  })),
+}));
+
 process.env.REQUIRE_AUTH ??= 'false';
 process.env.NODE_ENV ??= 'test';

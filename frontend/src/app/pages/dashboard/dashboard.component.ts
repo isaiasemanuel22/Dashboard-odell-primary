@@ -21,7 +21,7 @@ import {
   OrdersTableComponent,
 } from '@general-components';
 
-type QuickActionId = 'sale' | 'order' | 'product' | 'customer';
+type QuickActionId = 'order' | 'product' | 'customer';
 
 @Component({
   selector: 'app-dashboard',
@@ -53,7 +53,6 @@ export class DashboardComponent implements OnInit {
     label: string;
     icon: string;
   }[] = [
-    { id: 'sale', label: 'Agregar venta', icon: '💰' },
     { id: 'order', label: 'Nuevo pedido', icon: '📦' },
     { id: 'product', label: 'Nuevo producto', icon: '🏷️' },
     { id: 'customer', label: 'Nuevo cliente', icon: '👤' },
@@ -82,11 +81,6 @@ export class DashboardComponent implements OnInit {
 
   openForm(action: QuickActionId): void {
     switch (action) {
-      case 'sale':
-        this.formDialogs.openSale().subscribe((saved) => {
-          if (saved) this.refresh$.next();
-        });
-        break;
       case 'order':
         this.formDialogs.openOrder().subscribe((saved) => {
           if (saved) this.refresh$.next();

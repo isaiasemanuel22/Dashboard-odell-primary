@@ -10,7 +10,7 @@
   justify-self: start;
 }
 
-.services-hint {
+.lines-hint {
   margin: 0 0 0.75rem;
   font-size: 0.875rem;
   color: $color-text-muted;
@@ -72,6 +72,13 @@
     margin: 0;
     font-size: 0.8rem;
     color: $color-text-muted;
+  }
+
+  &__stock-hint {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 0.8rem;
+    color: $color-warning-accent;
   }
 
   &__readonly {

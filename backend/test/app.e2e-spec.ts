@@ -20,6 +20,7 @@ describe('Dashboard API (e2e)', () => {
   it('/api/dashboard/stats (GET)', () => {
     return request(app.getHttpServer())
       .get('/api/dashboard/stats')
+      .set('Authorization', 'Bearer test-token')
       .expect(200)
       .expect((res) => {
         expect(res.body).toHaveProperty('totalOrders');
@@ -40,10 +41,57 @@ describe('Dashboard API (e2e)', () => {
   it('/api/customers (GET) responde lista', () => {
     return request(app.getHttpServer())
       .get('/api/customers')
+      .set('Authorization', 'Bearer test-token')
       .expect(200)
       .expect((res) => {
         expect(Array.isArray(res.body)).toBe(true);
       });
+  });
+
+  it('confirma pedido con producto y crea Preparar pedido bloqueada', async () => {
+    const customers = await request(app.getHttpServer())
+      .get('/api/customers')
+      .set('Authorization', 'Bearer test-token');
+    const products = await request(app.getHttpServer())
+      .get('/api/products')
+      .set('Authorization', 'Bearer test-token');
+    const customer = customers.body[0];
+    const product = products.body.find(
+      (item: { type: string }) => item.type === 'fdm',
+    );
+
+    const created = await request(app.getHttpServer())
+      .post('/api/orders')
+      .set('Authorization', 'Bearer test-token')
+      .send({
+        customerId: customer.id,
+        dueDate: '2026-09-01T18:00:00.000Z',
+        items: [
+          {
+            serviceType: 'impresion_3d',
+            productId: product.id,
+            productName: product.name,
+            quantity: 2,
+            unitPrice: product.price,
+          },
+        ],
+      })
+      .expect(201);
+
+    const overview = await request(app.getHttpServer())
+      .get(`/api/orders/${created.body.id}/overview`)
+      .set('Authorization', 'Bearer test-token')
+      .expect(200);
+
+    expect(overview.body.order.status).toBe('pendiente');
+    expect(overview.body.tasks).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          taskType: 'PREPARE_ORDER',
+          status: 'bloqueado',
+        }),
+      ]),
+    );
   });
 
   afterEach(async () => {

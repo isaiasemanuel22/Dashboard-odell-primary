@@ -31,6 +31,26 @@ export class UpdatePrintJobDto {
   @IsOptional()
   @IsBoolean()
   active?: boolean;
+
+  @IsOptional()
+  @IsString()
+  responsibleUserId?: string;
+}
+
+export class OrderDeliveryLineDto {
+  @IsNumber()
+  @Min(0)
+  orderItemIndex!: number;
+
+  @IsNumber()
+  @Min(0.0001)
+  quantity!: number;
+}
+
+export class CreateOrderDeliveryDto {
+  @ValidateNested({ each: true })
+  @Type(() => OrderDeliveryLineDto)
+  items!: OrderDeliveryLineDto[];
 }
 
 export class OrderItemDto {

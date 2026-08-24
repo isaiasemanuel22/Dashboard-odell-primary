@@ -13,7 +13,7 @@ import {
 } from 'rxjs';
 import { CatalogPricingSyncService } from '../../core/services/catalog-pricing-sync.service';
 import { CatalogActions } from './catalog.actions';
-import { selectCatalogLoaded, selectProducts } from './catalog.selectors';
+import { selectAllCatalogProducts, selectAllProductsLoaded } from './catalog.selectors';
 import { SettingsActions } from '../settings/settings.actions';
 import { selectGeneralSettings, selectSettingsLoaded } from '../settings/settings.selectors';
 import { SuppliesActions } from '../supplies/supplies.actions';
@@ -37,12 +37,14 @@ export class CatalogPricingEffects {
       ofType(...this.pricingInputActions),
       debounceTime(400),
       withLatestFrom(
-        this.store.select(selectCatalogLoaded),
+        this.store.select(selectAllProductsLoaded),
         this.store.select(selectSettingsLoaded),
       ),
-      filter(([, catalogLoaded, settingsLoaded]) => catalogLoaded && settingsLoaded),
+      filter(([, allProductsLoaded, settingsLoaded]) =>
+        allProductsLoaded && settingsLoaded,
+      ),
       switchMap(() =>
-        this.store.select(selectProducts).pipe(
+        this.store.select(selectAllCatalogProducts).pipe(
           take(1),
           withLatestFrom(this.store.select(selectGeneralSettings)),
           filter(([products, settings]) => products.length > 0 && settings !== null),
@@ -60,15 +62,21 @@ export class CatalogPricingEffects {
   /** Tras cargar catálogo + ajustes, alinea pricing local con la configuración actual. */
   readonly refreshLocalPricingAfterLoad$ = createEffect(() =>
     this.actions$.pipe(
-      ofType(CatalogActions.loadSuccess, SettingsActions.loadSuccess),
+      ofType(
+        CatalogActions.loadSuccess,
+        CatalogActions.loadAllProductsSuccess,
+        SettingsActions.loadSuccess,
+      ),
       debounceTime(100),
       withLatestFrom(
-        this.store.select(selectCatalogLoaded),
+        this.store.select(selectAllProductsLoaded),
         this.store.select(selectSettingsLoaded),
       ),
-      filter(([, catalogLoaded, settingsLoaded]) => catalogLoaded && settingsLoaded),
+      filter(([, allProductsLoaded, settingsLoaded]) =>
+        allProductsLoaded && settingsLoaded,
+      ),
       switchMap(() =>
-        this.store.select(selectProducts).pipe(
+        this.store.select(selectAllCatalogProducts).pipe(
           take(1),
           withLatestFrom(this.store.select(selectGeneralSettings)),
           filter(([products, settings]) => products.length > 0 && settings !== null),

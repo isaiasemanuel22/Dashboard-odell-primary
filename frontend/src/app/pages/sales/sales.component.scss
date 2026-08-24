@@ -1,1 +1,10 @@
-// Estilos de panel y listados en hojas compartidas (_listings.scss, _page.scss)
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+  padding-bottom: 7.5rem;
+
+  @include mobile.mobile-only {
+    padding-bottom: calc(7.5rem + mobile.$mobile-bottom-nav-height);
+  }
+}

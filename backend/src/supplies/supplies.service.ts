@@ -13,6 +13,7 @@ import { Supply } from '../common/interfaces';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
 import { StoreChangeService } from '../store/store-change.service';
 import { SupplyRepository } from '../store/repositories';
+import { OrderTasksService } from '../print-jobs/order-tasks.service';
 import {
   inferSupplyCategory,
 } from './supply-category.util';
@@ -37,6 +38,7 @@ export class SuppliesService {
     private readonly supplies: SupplyRepository,
     private readonly costCalculator: CostCalculatorService,
     private readonly storeChange: StoreChangeService,
+    private readonly orderTasks: OrderTasksService,
   ) {}
 
   findAll(type?: SupplyType, category?: SupplyCategory): Supply[] {
@@ -110,6 +112,13 @@ export class SuppliesService {
           entity: 'settings',
         },
       });
+    }
+
+    if (
+      data.quantity !== undefined &&
+      Number(data.quantity) > Number(existing.quantity)
+    ) {
+      this.orderTasks.notifySupplyAvailability();
     }
 
     return saved;

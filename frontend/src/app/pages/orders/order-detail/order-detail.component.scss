@@ -155,6 +155,70 @@
   }
 }
 
+.automatic-status {
+  margin: 0;
+  color: $color-text-muted;
+}
+
+.operational-alerts {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.operational-alert {
+  display: flex;
+  gap: 0.5rem;
+  padding: 0.8rem 1rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+  background: $color-primary-bg;
+
+  &--warning {
+    border-color: #f59e0b;
+    background: $color-warning-bg;
+    color: $color-warning-text;
+  }
+
+  &--error {
+    border-color: $color-error;
+    background: #fee2e2;
+    color: #991b1b;
+  }
+}
+
+.task-block-reason td {
+  padding-top: 0;
+  color: $color-error;
+  font-size: 0.8rem;
+}
+
+.delivery-list {
+  display: grid;
+  gap: 0.6rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem 1rem;
+    padding: 0.7rem;
+    border-radius: $radius-sm;
+    background: $color-surface-muted;
+  }
+}
+
+.delivery-form {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem;
+  align-items: end;
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid $color-border;
+}
+
 .description-panel__header {
   display: flex;
   align-items: baseline;

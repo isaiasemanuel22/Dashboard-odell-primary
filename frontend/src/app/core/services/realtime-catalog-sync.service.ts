@@ -59,7 +59,8 @@ export class RealtimeCatalogSyncService {
         this.catalogFacade.load(true);
         break;
       case 'products':
-        this.catalogFacade.load(true);
+        this.catalogFacade.loadProducts({ all: true, refresh: true });
+        this.catalogFacade.loadAllProducts(true);
         break;
       case 'settings':
         this.settingsFacade.load(true);

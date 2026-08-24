@@ -78,3 +78,21 @@
   color: $color-text-label;
   margin-bottom: 0.75rem;
 }
+
+.task-kind {
+  display: inline-block;
+  margin-top: 0.6rem;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: $color-primary-dark;
+}
+
+.blocked-message {
+  margin: 0 0 0.65rem;
+  padding: 0.55rem;
+  border-radius: $radius-xs;
+  background: #fee2e2;
+  color: #991b1b;
+  font-size: 0.75rem;
+}

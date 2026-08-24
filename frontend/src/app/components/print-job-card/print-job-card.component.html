@@ -5,6 +5,7 @@
     <db-service-badge [type]="job.type" />
     <span class="priority-pill">{{ priorityLabel }}</span>
   </div>
+  <span class="task-kind">{{ taskKindLabels[job.taskKind] }}</span>
   <h3>
     <a [routerLink]="['/pedidos', job.orderId]" class="job-order-link">
       {{ job.productName }}
@@ -24,6 +25,11 @@
     <span>{{ job.machine }}</span>
     <span>{{ job.estimatedHours }}h est.</span>
   </div>
+  @if (job.status === 'bloqueado') {
+    <p class="blocked-message">
+      {{ job.blockedReason || 'Tarea bloqueada por una condición operativa.' }}
+    </p>
+  }
   @if (compact) {
     <a [routerLink]="['/pedidos', job.orderId]" class="job-order-link job-order-link--meta">
       Ver pedido

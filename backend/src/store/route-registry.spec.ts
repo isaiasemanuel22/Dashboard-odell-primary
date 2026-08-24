@@ -9,19 +9,19 @@ import {
 describe('route-registry', () => {
   it('resuelve colecciones y scopes por ruta', () => {
     expect(routeMutationMetaFromPath('/api/orders')).toEqual({
-      collections: ['orders', 'printJobs'],
+      collections: ['orders', 'printJobs', 'products'],
       scopes: ['orders', 'print-jobs', 'dashboard', 'sales'],
       entity: 'order',
     });
-    expect(collectionsFromPath('/api/sales/retail')).toEqual(['retailSales']);
+    expect(collectionsFromPath('/api/sales/retail')).toEqual([
+      'retailSales',
+      'products',
+    ]);
   });
 
   it('detecta mutaciones HTTP rastreables', () => {
     expect(shouldTrackHttpMutation('/api/products', 'POST')).toBe(true);
     expect(shouldTrackHttpMutation('/api/products/preview-pricing', 'POST')).toBe(
-      false,
-    );
-    expect(shouldTrackHttpMutation('/api/settings/calculate-cost', 'POST')).toBe(
       false,
     );
     expect(shouldTrackHttpMutation('/api/products', 'GET')).toBe(false);

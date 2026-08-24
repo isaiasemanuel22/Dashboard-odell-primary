@@ -15,6 +15,7 @@ import {
   Category,
   Product,
   ProductAttachment,
+  ProductStockOverview,
   isProduct3D,
 } from '../../../core/models';
 import { RealtimeEvent } from '../../../core/models/realtime.model';
@@ -24,6 +25,7 @@ import { ProductCatalogService } from '../../../core/services/product-catalog.se
 import { ProductsService } from '../../../core/services/products.service';
 import { RealtimeCatalogSyncService } from '../../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
+import { productStockOverview } from '../../../shared/utils/stock.helpers';
 import {
   DbAttachmentUploadComponent,
   DbAttachmentUploadFn,
@@ -38,7 +40,7 @@ import {
 import { normalizeProductAttachments } from '../../../shared/utils/product-attachment.helpers';
 import { FormDialogService } from '../../../shared/form-dialogs/public-api';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
-import { resolveCategoryNames, isProductPublished, normalizeProductComponents } from '../../../shared/utils/product.helpers';
+import { resolveCategoryNames, isProductPublished, normalizeProductComponents, resolveProductUnitCost, resolveProductUnitPrice } from '../../../shared/utils/product.helpers';
 import {
   DateShortPipe,
   FilamentTypeLabelPipe,
@@ -84,6 +86,7 @@ export class ProductDetailComponent implements OnInit {
   attachments: ProductAttachment[] = [];
   categories: Category[] = [];
   catalogProducts: Product[] = [];
+  stock: ProductStockOverview | null = null;
   loading = true;
   notFound = false;
 
@@ -95,6 +98,10 @@ export class ProductDetailComponent implements OnInit {
     firstValueFrom(this.mediaUpload.uploadProductAttachment(file));
 
   isProduct3D = isProduct3D;
+
+  get stockOverview(): ProductStockOverview {
+    return productStockOverview(this.product ?? { stock: 0 }, this.stock);
+  }
 
   ngOnInit(): void {
     this.route.paramMap
@@ -109,6 +116,7 @@ export class ProductDetailComponent implements OnInit {
         this.attachments = normalizeProductAttachments(result.product.attachments);
         this.categories = result.categories;
         this.catalogProducts = result.catalog;
+        this.stock = result.stock;
         this.loading = false;
         this.cdr.markForCheck();
       });
@@ -139,6 +147,29 @@ export class ProductDetailComponent implements OnInit {
     return this.resolvedComponents.length > 0;
   }
 
+  get displayCost(): number {
+    if (!this.product) return 0;
+    if (this.hasComponents) {
+      const partsCost = resolveProductUnitCost(this.product, this.catalogProducts);
+      const stored = this.product.cost ?? 0;
+      return Math.max(partsCost, stored);
+    }
+    return this.product.cost ?? 0;
+  }
+
+  get displayPrice(): number {
+    if (!this.product) return 0;
+    if (this.hasComponents) {
+      return resolveProductUnitPrice(this.product, this.catalogProducts);
+    }
+    return this.product.price ?? 0;
+  }
+
+  get displayProfit(): number {
+    if (!this.product) return 0;
+    return this.displayPrice - this.displayCost;
+  }
+
   get isPublished(): boolean {
     return this.product ? isProductPublished(this.product) : false;
   }
@@ -154,10 +185,7 @@ export class ProductDetailComponent implements OnInit {
       next: (fresh) => {
         this.formDialogs.openProduct(fresh).subscribe((updated) => {
           if (!updated) return;
-          this.product = updated;
-          this.attachments = normalizeProductAttachments(updated.attachments);
-          this.catalogService.upsert(updated);
-          this.cdr.markForCheck();
+          this.reloadCurrentProduct();
         });
       },
       error: (err) => {
@@ -173,7 +201,7 @@ export class ProductDetailComponent implements OnInit {
     const id = this.product.id;
     this.productsService.deleteProduct(id).subscribe({
       next: () => {
-        this.catalogService.remove(id);
+        this.catalogService.loadProducts({ all: true, refresh: true });
         this.router.navigate(['/productos']);
       },
     });
@@ -199,7 +227,7 @@ export class ProductDetailComponent implements OnInit {
         next: (updated) => {
           this.publishLoading = false;
           this.product = updated;
-          this.catalogService.upsert(updated);
+          this.catalogService.loadProducts({ all: true, refresh: true });
           this.cdr.markForCheck();
         },
         error: (err) => {
@@ -231,6 +259,7 @@ export class ProductDetailComponent implements OnInit {
       this.attachments = normalizeProductAttachments(result.product.attachments);
       this.categories = result.categories;
       this.catalogProducts = result.catalog;
+      this.stock = result.stock;
       this.loading = false;
       this.cdr.markForCheck();
     });
@@ -254,7 +283,7 @@ export class ProductDetailComponent implements OnInit {
           this.attachmentsSaving = false;
           this.product = updated;
           this.attachments = normalizeProductAttachments(updated.attachments);
-          this.catalogService.upsert(updated);
+          this.catalogService.loadProducts({ all: true, refresh: true });
           this.cdr.markForCheck();
         },
         error: (err) => {
@@ -282,10 +311,11 @@ export class ProductDetailComponent implements OnInit {
     this.cdr.markForCheck();
 
     return this.productsService.getProductOverview(id).pipe(
-      map(({ product, categories, catalogProducts }) => ({
+      map(({ product, categories, catalogProducts, stock }) => ({
         product,
         categories,
         catalog: catalogProducts,
+        stock,
       })),
       catchError((err) => {
         this.loading = false;

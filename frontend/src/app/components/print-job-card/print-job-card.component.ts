@@ -11,6 +11,7 @@ import {
 } from '../../shared/utils/priority.helpers';
 import { DbServiceBadgeComponent } from '../db-service-badge/db-service-badge.component';
 import { DbStatusBadgeComponent } from '../db-status-badge/db-status-badge.component';
+import { TASK_KIND_LABELS } from '../../shared/constants/labels';
 
 @Component({
   selector: 'app-print-job-card',
@@ -31,6 +32,7 @@ export class PrintJobCardComponent {
   /** Vista compacta para el tablero kanban (sin badge de estado). */
   @Input() compact = false;
   @Input() orderStatus?: OrderStatus;
+  readonly taskKindLabels = TASK_KIND_LABELS;
 
   get priorityClass(): string {
     return priorityTierClass(this.job.priority);
