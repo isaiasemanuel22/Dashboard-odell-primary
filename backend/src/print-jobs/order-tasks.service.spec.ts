@@ -4,7 +4,10 @@ import {
   PrintJobStatus,
   ServiceType,
   TaskType,
+  FilamentType,
+  SupplyType,
 } from '../common/enums';
+import { INDISTINTO_COLOR_ID } from '../common/color.util';
 import { OrderTasksService } from './order-tasks.service';
 import { StoreService } from '../store/store.service';
 import { createEmptyState } from '../store/store.seed';
@@ -223,6 +226,152 @@ describe('OrderTasksService', () => {
     expect(store.printJobs.every((job) => job.status === 'cancelado')).toBe(
       true,
     );
+  });
+
+  it('exige insumo con color específico cuando el producto FDM lo define', () => {
+    store.generalSettings.colors = [
+      { id: 'clr-black', name: 'Negro', hex: '#000000' },
+      { id: 'clr-white', name: 'Blanco', hex: '#FFFFFF' },
+    ];
+    store.supplies.push(
+      {
+        id: 'sup-black',
+        name: 'PLA Negro',
+        category: 'fdm',
+        type: SupplyType.FILAMENTO,
+        filamentType: FilamentType.PLA,
+        brand: 'FilAr',
+        unit: 'kg',
+        quantity: 1,
+        minStock: 0,
+        unitPrice: 10000,
+        priceFromSettings: false,
+        colorId: 'clr-black',
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'sup-white',
+        name: 'PLA Blanco',
+        category: 'fdm',
+        type: SupplyType.FILAMENTO,
+        filamentType: FilamentType.PLA,
+        brand: 'FilAr',
+        unit: 'kg',
+        quantity: 1,
+        minStock: 0,
+        unitPrice: 10000,
+        priceFromSettings: false,
+        colorId: 'clr-white',
+        updatedAt: new Date().toISOString(),
+      },
+    );
+    store.products[0] = {
+      ...store.products[0],
+      stock: 0,
+      filaments: [
+        {
+          id: 'ff-1',
+          filamentType: FilamentType.PLA,
+          grams: 50,
+          colorId: 'clr-black',
+        },
+      ],
+    };
+
+    const order = {
+      id: 'ord-color',
+      customerId: 'cust-1',
+      customerName: 'Cliente Test',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Pieza negra',
+          quantity: 1,
+          unitPrice: 1000,
+        },
+      ],
+      status: OrderStatus.PENDIENTE,
+      total: 1000,
+      createdAt: new Date().toISOString(),
+      dueDate: new Date().toISOString(),
+    };
+
+    store.orders.push(order);
+    service.syncOrderTasks(order);
+
+    const production = store.printJobs.find(
+      (task) => task.taskType === TaskType.PRODUCTION,
+    );
+    expect(production).toBeDefined();
+    expect(production?.status).not.toBe(PrintJobStatus.BLOQUEADO);
+
+    store.supplies = store.supplies.filter((supply) => supply.id !== 'sup-black');
+    service.syncOrderTasks(order);
+
+    expect(
+      store.printJobs.find((task) => task.taskType === TaskType.PRODUCTION)
+        ?.status,
+    ).toBe(PrintJobStatus.BLOQUEADO);
+  });
+
+  it('ignora el color cuando el producto FDM usa indistinto', () => {
+    store.supplies.push({
+      id: 'sup-any',
+      name: 'PLA Genérico',
+      category: 'fdm',
+      type: SupplyType.FILAMENTO,
+      filamentType: FilamentType.PLA,
+      brand: 'FilAr',
+      unit: 'kg',
+      quantity: 0.1,
+      minStock: 0,
+      unitPrice: 10000,
+      priceFromSettings: false,
+      colorId: 'clr-other',
+      updatedAt: new Date().toISOString(),
+    });
+    store.products[0] = {
+      ...store.products[0],
+      stock: 0,
+      filaments: [
+        {
+          id: 'ff-1',
+          filamentType: FilamentType.PLA,
+          grams: 50,
+          colorId: INDISTINTO_COLOR_ID,
+        },
+      ],
+    };
+
+    const order = {
+      id: 'ord-indistinto',
+      customerId: 'cust-1',
+      customerName: 'Cliente Test',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity: 1,
+          unitPrice: 1000,
+        },
+      ],
+      status: OrderStatus.PENDIENTE,
+      total: 1000,
+      createdAt: new Date().toISOString(),
+      dueDate: new Date().toISOString(),
+    };
+
+    store.orders.push(order);
+    service.syncOrderTasks(order);
+
+    expect(
+      store.printJobs.find((task) => task.taskType === TaskType.PRODUCTION)
+        ?.status,
+    ).not.toBe(PrintJobStatus.BLOQUEADO);
   });
 });
 

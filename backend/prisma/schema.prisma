@@ -20,6 +20,7 @@ model AppSettings {
   resinPrices           Json  @map("resin_prices")
   filamentTypeAverages  Json  @default("{}") @map("filament_type_averages")
   resinTypeAverages     Json  @default("{}") @map("resin_type_averages")
+  colors                Json  @default("[]")
 
   @@map("app_settings")
 }
@@ -80,6 +81,7 @@ model Product {
   includesPieces        Boolean @default(false) @map("includes_pieces")
   attachments           Json    @default("[]") @map("attachments")
   stock                 Int     @default(0)
+  colorId               String? @map("color_id") @db.VarChar(64)
 
   @@map("products")
 }
@@ -98,6 +100,7 @@ model Supply {
   unitPrice         Float    @map("unit_price")
   priceFromSettings Boolean  @default(false) @map("price_from_settings")
   supplier          String?  @db.VarChar(255)
+  colorId           String?  @map("color_id") @db.VarChar(64)
   updatedAt         DateTime @map("updated_at")
 
   @@map("supplies")

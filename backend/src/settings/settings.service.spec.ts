@@ -27,11 +27,20 @@ describe('SettingsService.patchGeneralSettings', () => {
     resinPrices: [],
     filamentTypeAverages: {},
     resinTypeAverages: {},
+    colors: [],
   });
 
   function createService(initial: GeneralSettings): SettingsService {
     const store = {
       generalSettings: structuredClone(initial),
+      supplies: [],
+      nextId: (prefix: string, items: { id: string }[]) => {
+        const max = items.reduce((acc, item) => {
+          const match = item.id.match(new RegExp(`^${prefix}-(\\d+)$`));
+          return match ? Math.max(acc, Number(match[1])) : acc;
+        }, 0);
+        return `${prefix}-${max + 1}`;
+      },
     } as StoreService;
     const persistence = {} as StorePersistenceService;
     const storeChange = {
@@ -56,5 +65,19 @@ describe('SettingsService.patchGeneralSettings', () => {
     expect(result.laborCostPerHour).toBe(1000);
     expect(result.errorMarginPercent).toBe(30);
     expect(result.paperPricesPerSqm.sublimacion).toBe(5000);
+  });
+
+  it('agrega, actualiza y elimina colores del catálogo', () => {
+    const service = createService(baseSettings());
+
+    const created = service.addColor({ name: 'Negro', hex: '#000000' });
+    expect(created.id).toBeTruthy();
+    expect(service.getGeneralSettings().colors).toHaveLength(1);
+
+    const updated = service.updateColor(created.id, { name: 'Negro intenso' });
+    expect(updated.name).toBe('Negro intenso');
+
+    service.removeColor(created.id);
+    expect(service.getGeneralSettings().colors).toHaveLength(0);
   });
 });

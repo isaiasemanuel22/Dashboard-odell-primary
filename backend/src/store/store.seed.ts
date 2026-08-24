@@ -36,6 +36,7 @@ export function createEmptyState(): StoreState {
       errorMarginPercent: 0,
       filamentTypeAverages: {},
       resinTypeAverages: {},
+      colors: [],
     },
     supplies: [],
     impresos: [],
@@ -132,6 +133,7 @@ export function createSeedState(): StoreState {
     errorMarginPercent: 5,
     filamentTypeAverages: {},
     resinTypeAverages: {},
+    colors: [],
   };
 
   const supplies = [

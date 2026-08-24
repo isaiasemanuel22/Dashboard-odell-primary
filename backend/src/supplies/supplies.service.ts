@@ -10,8 +10,13 @@ import {
   SupplyType,
 } from '../common/enums';
 import { Supply } from '../common/interfaces';
+import {
+  supplyRequiresColor,
+  validateSupplyColorId,
+} from '../common/color.util';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
 import { StoreChangeService } from '../store/store-change.service';
+import { StoreService } from '../store/store.service';
 import { SupplyRepository } from '../store/repositories';
 import { OrderTasksService } from '../print-jobs/order-tasks.service';
 import {
@@ -36,6 +41,7 @@ const SUPPLY_UNITS: Record<SupplyType, string> = {
 export class SuppliesService {
   constructor(
     private readonly supplies: SupplyRepository,
+    private readonly store: StoreService,
     private readonly costCalculator: CostCalculatorService,
     private readonly storeChange: StoreChangeService,
     private readonly orderTasks: OrderTasksService,
@@ -159,6 +165,13 @@ export class SuppliesService {
     if (!data.unit) {
       data.unit = SUPPLY_UNITS[data.type];
     }
+    if (data.type && supplyRequiresColor(data.type)) {
+      validateSupplyColorId(
+        this.store.generalSettings.colors ?? [],
+        data.colorId,
+        true,
+      );
+    }
   }
 
   private normalizeSupply(
@@ -181,6 +194,7 @@ export class SuppliesService {
       unitPrice: Number(data.unitPrice) || 0,
       priceFromSettings: data.priceFromSettings === true,
       supplier: data.supplier?.trim() || undefined,
+      colorId: data.colorId,
     };
   }
 }

@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  ColorConfig,
   FilamentPriceConfig,
   GeneralSettings,
   MachineCostConfig,
@@ -160,6 +161,27 @@ export class SettingsService {
       .pipe(tap(() => this.removeResinPrice(id)));
   }
 
+  addColor(data: Omit<ColorConfig, 'id'>): Observable<ColorConfig> {
+    return this.http
+      .post<ColorConfig>(`${this.baseUrl}/general/colors`, data)
+      .pipe(tap((entry) => this.upsertColor(entry)));
+  }
+
+  updateColor(
+    id: string,
+    data: Partial<Omit<ColorConfig, 'id'>>,
+  ): Observable<ColorConfig> {
+    return this.http
+      .patch<ColorConfig>(`${this.baseUrl}/general/colors/${id}`, data)
+      .pipe(tap((entry) => this.upsertColor(entry)));
+  }
+
+  deleteColor(id: string): Observable<{ deleted: boolean }> {
+    return this.http
+      .delete<{ deleted: boolean }>(`${this.baseUrl}/general/colors/${id}`)
+      .pipe(tap(() => this.removeColor(id)));
+  }
+
   addPowerConsumption(
     data: Omit<PowerConsumptionConfig, 'id'>,
   ): Observable<PowerConsumptionConfig> {
@@ -309,6 +331,36 @@ export class SettingsService {
     this.settingsFacade.setGeneral({
       ...current,
       resinPrices: current.resinPrices.filter((price) => price.id !== id),
+    });
+  }
+
+  private upsertColor(entry: ColorConfig): void {
+    const current = this.settingsFacade.peekGeneralSettings();
+    if (!current) {
+      this.settingsFacade.load(true);
+      return;
+    }
+
+    const colors = current.colors ?? [];
+    const exists = colors.some((color) => color.id === entry.id);
+    this.settingsFacade.setGeneral({
+      ...current,
+      colors: exists
+        ? colors.map((color) => (color.id === entry.id ? entry : color))
+        : [...colors, entry],
+    });
+  }
+
+  private removeColor(id: string): void {
+    const current = this.settingsFacade.peekGeneralSettings();
+    if (!current) {
+      this.settingsFacade.load(true);
+      return;
+    }
+
+    this.settingsFacade.setGeneral({
+      ...current,
+      colors: (current.colors ?? []).filter((color) => color.id !== id),
     });
   }
 

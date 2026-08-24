@@ -142,6 +142,13 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'colores',
+            loadComponent: () =>
+              import('./pages/settings/color-settings/color-settings.component').then(
+                (m) => m.ColorSettingsComponent,
+              ),
+          },
+          {
             path: 'resina',
             loadComponent: () =>
               import('./pages/settings/resin-settings/resin-settings.component').then(

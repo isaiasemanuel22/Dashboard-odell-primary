@@ -6,6 +6,7 @@ import {
   FilamentType,
   ResinType,
   ProductEstampado,
+  INDISTINTO_COLOR_ID,
 } from '../models';
 import {
   createEmptyFdmFilamentLine,
@@ -49,6 +50,7 @@ export interface ProductFormState {
   filamentLines: any[];
   filamentType: FilamentType;
   resinType: ResinType;
+  colorId: string;
   components: any[];
   assemblyTimeHours: number;
   published: boolean;
@@ -78,6 +80,7 @@ export type ProductFormGroup = FormGroup<{
   washMinutes: FormControl<number>;
   cureMinutes: FormControl<number>;
   resinType: FormControl<ResinType>;
+  colorId: FormControl<string>;
   filamentType: FormControl<FilamentType>;
   assemblyTimeHours: FormControl<number>;
   suggestedPrice: FormControl<number | null>;
@@ -128,6 +131,7 @@ export class ProductFormStateManagerService {
       filamentLines: [createEmptyFdmFilamentLine()],
       filamentType: FilamentType.PLA,
       resinType: ResinType.ESTANDAR,
+      colorId: INDISTINTO_COLOR_ID,
       components: [],
       assemblyTimeHours: 0,
       published: true,
@@ -171,6 +175,7 @@ export class ProductFormStateManagerService {
       washMinutes: new FormControl(state.washMinutes, { nonNullable: true }),
       cureMinutes: new FormControl(state.cureMinutes, { nonNullable: true }),
       resinType: new FormControl(state.resinType, { nonNullable: true }),
+      colorId: new FormControl(state.colorId, { nonNullable: true }),
       filamentType: new FormControl(state.filamentType, { nonNullable: true }),
       assemblyTimeHours: new FormControl(state.assemblyTimeHours, {
         nonNullable: true,
@@ -213,6 +218,7 @@ export class ProductFormStateManagerService {
         washMinutes: state.washMinutes,
         cureMinutes: state.cureMinutes,
         resinType: state.resinType,
+        colorId: state.colorId,
         filamentType: state.filamentType,
         assemblyTimeHours: state.assemblyTimeHours,
         suggestedPrice: state.suggestedPrice,
@@ -292,6 +298,7 @@ export class ProductFormStateManagerService {
         state.filamentLines = [createEmptyFdmFilamentLine(state.filamentType)];
       }
       state.resinType = product.resinType ?? ResinType.ESTANDAR;
+      state.colorId = product.colorId ?? INDISTINTO_COLOR_ID;
       state.washMinutes = product.washMinutes ?? 0;
       state.cureMinutes = product.cureMinutes ?? 0;
     } else {

@@ -3,6 +3,7 @@ import {
   EstampadoPrintSpec,
   EstampadoSupplyLine,
   ImpresoWithCost,
+  INDISTINTO_COLOR_ID,
   PaperType,
 } from '../../core/models';
 
@@ -23,6 +24,7 @@ export function createEmptyEstampadoSupplyLine(): EstampadoSupplyLine {
     id: createEstampadoSupplyLineId(),
     supplyId: '',
     quantity: 1,
+    colorId: INDISTINTO_COLOR_ID,
   };
 }
 

@@ -63,6 +63,25 @@
       />
     }
 
+    @if (showColorField) {
+      <div class="color-field">
+        @if (selectedColorHex) {
+          <span
+            class="color-swatch"
+            [style.background-color]="selectedColorHex"
+          ></span>
+        }
+        <db-select
+          label="Color"
+          [(ngModel)]="colorId"
+          name="colorId"
+          [required]="true"
+          placeholder="Seleccionar color..."
+          [options]="colorOptions"
+        />
+      </div>
+    }
+
     <db-form-grid>
       <db-input
         [label]="'Cantidad (' + unit + ')'"

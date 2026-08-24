@@ -1,4 +1,4 @@
-import { FdmFilamentLine, FilamentType } from '../../core/models';
+import { FdmFilamentLine, FilamentType, INDISTINTO_COLOR_ID } from '../../core/models';
 
 export function createFdmFilamentLineId(): string {
   return `ff-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -11,6 +11,7 @@ export function createEmptyFdmFilamentLine(
     id: createFdmFilamentLineId(),
     filamentType,
     grams: 0,
+    colorId: INDISTINTO_COLOR_ID,
   };
 }
 
@@ -29,6 +30,7 @@ export function normalizeFdmFilaments(
       grams: Math.max(0, Number(line.grams) || 0),
       brand: line.brand?.trim() || undefined,
       label: line.label?.trim() || undefined,
+      colorId: line.colorId?.trim() || INDISTINTO_COLOR_ID,
     }));
   }
 

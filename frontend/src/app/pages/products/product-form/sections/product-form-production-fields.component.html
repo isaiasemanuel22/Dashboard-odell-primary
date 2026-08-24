@@ -68,6 +68,13 @@
         [options]="resinTypeOptions"
       />
     </db-form-grid-full>
+    <db-form-grid-full>
+      <db-select
+        label="Color"
+        formControlName="colorId"
+        [options]="resinColorOptions"
+      />
+    </db-form-grid-full>
   }
 
   @if (showProductionFields && is3D) {

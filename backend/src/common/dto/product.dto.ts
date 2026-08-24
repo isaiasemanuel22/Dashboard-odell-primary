@@ -49,6 +49,10 @@ export class FdmFilamentLineDto {
   @IsOptional()
   @IsString()
   label?: string;
+
+  @IsOptional()
+  @IsString()
+  colorId?: string;
 }
 
 export class ProductAttachmentDto {
@@ -158,6 +162,10 @@ export class CreateProductDto {
   @IsOptional()
   @IsEnum(ResinType)
   resinType?: ResinType;
+
+  @IsOptional()
+  @IsString()
+  colorId?: string;
 
   @IsOptional()
   @IsNumber()

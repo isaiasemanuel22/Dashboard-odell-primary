@@ -17,9 +17,13 @@ import {
   FdmFilamentLine,
   FilamentType,
   GeneralSettings,
+  Supply,
+  SupplyCategory,
 } from '../../../../core/models';
 import { SettingsFacade } from '../../../../store/settings/settings.facade';
+import { SuppliesService } from '../../../../core/services/settings.service';
 import { buildFilamentTypeOptions } from '../../../utils/filament-type.util';
+import { buildColorOptions } from '../../../utils/color.helpers';
 import {
   createEmptyFdmFilamentLine,
   totalFdmFilamentGrams,
@@ -58,9 +62,11 @@ export class FilamentLineListComponent
   initialValue: FdmFilamentLine[] | null = null;
 
   private readonly settingsFacade = inject(SettingsFacade);
+  private readonly suppliesService = inject(SuppliesService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
   private generalSettings: GeneralSettings | null = null;
+  private fdmSupplies: Supply[] = [];
   private onChange: (value: FdmFilamentLine[]) => void = () => {};
   private onTouched: () => void = () => {};
 
@@ -91,6 +97,12 @@ export class FilamentLineListComponent
         optionsFn: (item, items) => this.getFilamentTypeOptions(item, items),
       },
       {
+        type: 'select',
+        name: 'colorId',
+        label: 'Color',
+        optionsFn: (item) => this.getColorOptions(item),
+      },
+      {
         type: 'input',
         name: 'grams',
         label: 'Gramos',
@@ -107,6 +119,14 @@ export class FilamentLineListComponent
       .pipe(takeUntil(this.destroy$))
       .subscribe((settings) => {
         this.generalSettings = settings;
+        this.cdr.markForCheck();
+      });
+
+    this.suppliesService
+      .getSupplies(undefined, SupplyCategory.FDM)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((items) => {
+        this.fdmSupplies = items;
         this.cdr.markForCheck();
       });
   }
@@ -151,6 +171,14 @@ export class FilamentLineListComponent
     return buildFilamentTypeOptions(
       this.generalSettings?.filamentPrices ?? [],
       extraTypes,
+    );
+  }
+
+  private getColorOptions(line: FdmFilamentLine): DbSelectOption[] {
+    return buildColorOptions(
+      this.fdmSupplies,
+      this.generalSettings?.colors ?? [],
+      { filamentType: line.filamentType },
     );
   }
 }

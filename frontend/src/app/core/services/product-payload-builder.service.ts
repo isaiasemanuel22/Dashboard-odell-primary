@@ -41,6 +41,7 @@ export interface ProductPayloadInput {
   filamentType: FilamentType;
   filamentLines: FdmFilamentLine[];
   resinType: ResinType;
+  colorId: string;
   washMinutes: number;
   cureMinutes: number;
   prints: EstampadoPrintSpec[];
@@ -138,6 +139,7 @@ export class ProductPayloadBuilderService {
                     ? input.filamentType
                     : undefined,
               resinType: input.isResina ? input.resinType : undefined,
+              colorId: input.isResina ? input.colorId : undefined,
               washMinutes: input.isResina ? Number(input.washMinutes) || undefined : undefined,
               cureMinutes: input.isResina ? Number(input.cureMinutes) || undefined : undefined,
             }
@@ -180,6 +182,7 @@ export class ProductPayloadBuilderService {
     filamentType: FilamentType,
     isResina: boolean,
     resinType: ResinType,
+    colorId: string,
     washMinutes: number,
     cureMinutes: number,
     prints: EstampadoPrintSpec[],
@@ -209,6 +212,7 @@ export class ProductPayloadBuilderService {
                     ? filamentType
                     : undefined,
               resinType: isResina ? resinType : undefined,
+              colorId: isResina ? colorId : undefined,
               washMinutes: isResina ? Number(washMinutes) || undefined : undefined,
               cureMinutes: isResina ? Number(cureMinutes) || undefined : undefined,
             }

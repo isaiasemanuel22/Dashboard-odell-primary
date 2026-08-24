@@ -1,5 +1,6 @@
 import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import {
+  ColorConfigDto,
   FilamentPriceDto,
   MachineCostEntryDto,
   MachineProfileDto,
@@ -108,6 +109,22 @@ export class SettingsController {
   @Delete('general/resin-prices/:id')
   removeResinPrice(@Param('id') id: string) {
     this.settingsService.removeResinPrice(id);
+    return { deleted: true };
+  }
+
+  @Post('general/colors')
+  addColor(@Body() data: ColorConfigDto) {
+    return this.settingsService.addColor(data);
+  }
+
+  @Patch('general/colors/:id')
+  updateColor(@Param('id') id: string, @Body() data: Partial<ColorConfigDto>) {
+    return this.settingsService.updateColor(id, data);
+  }
+
+  @Delete('general/colors/:id')
+  removeColor(@Param('id') id: string) {
+    this.settingsService.removeColor(id);
     return { deleted: true };
   }
 

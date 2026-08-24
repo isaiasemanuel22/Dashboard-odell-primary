@@ -102,6 +102,14 @@ export interface FilamentPriceConfig {
   pricePerKg: number;
 }
 
+export interface ColorConfig {
+  id: string;
+  name: string;
+  hex: string;
+}
+
+export const INDISTINTO_COLOR_ID = 'indistinto';
+
 export interface ResinPriceConfig {
   id: string;
   brand: string;
@@ -164,6 +172,7 @@ export interface GeneralSettings {
   /** Precio $/L por tipo; usado al costear productos resina (sin marca). */
   resinTypeAverages: Partial<Record<ResinType, number>>;
   machineProfiles: MachineProfile[];
+  colors: ColorConfig[];
 }
 
 export interface Impreso {
@@ -204,6 +213,7 @@ export interface Supply {
   unitPrice: number;
   priceFromSettings: boolean;
   supplier?: string;
+  colorId?: string;
   updatedAt: string;
 }
 
@@ -333,6 +343,7 @@ export interface Product3D extends ProductBase {
   filamentType?: FilamentType;
   filaments?: FdmFilamentLine[];
   resinType?: ResinType;
+  colorId?: string;
 }
 
 export interface EstampadoPrintSpec {
@@ -357,6 +368,7 @@ export interface EstampadoSupplyLine {
   supplyId: string;
   quantity: number;
   label?: string;
+  colorId?: string;
 }
 
 export interface FdmFilamentLine {
@@ -365,6 +377,7 @@ export interface FdmFilamentLine {
   grams: number;
   brand?: string;
   label?: string;
+  colorId?: string;
 }
 
 export interface ProductEstampado extends ProductBase {

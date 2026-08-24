@@ -16,6 +16,7 @@ export function mapSupplyFromDb(row: {
   unitPrice: number;
   priceFromSettings: boolean;
   supplier: string | null;
+  colorId?: string | null;
   updatedAt: Date;
 }): Supply {
   return {
@@ -32,6 +33,7 @@ export function mapSupplyFromDb(row: {
     unitPrice: row.unitPrice,
     priceFromSettings: row.priceFromSettings,
     supplier: row.supplier ?? undefined,
+    colorId: row.colorId ?? undefined,
     updatedAt: row.updatedAt.toISOString(),
   };
 }
@@ -51,6 +53,7 @@ export function mapSupplyToDb(supply: Supply) {
     unitPrice: supply.unitPrice,
     priceFromSettings: supply.priceFromSettings,
     supplier: supply.supplier ?? null,
+    colorId: supply.colorId ?? null,
     updatedAt: new Date(supply.updatedAt),
   };
 }

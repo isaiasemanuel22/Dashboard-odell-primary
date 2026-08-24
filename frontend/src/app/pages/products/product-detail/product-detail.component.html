@@ -148,6 +148,7 @@
                         }
                         {{ line.filamentType | filamentTypeLabel }}:
                         {{ line.grams }} g
+                        · {{ colorLabel(line.colorId) }}
                       </li>
                     }
                   </ul>
@@ -163,6 +164,15 @@
               <div>
                 <dt>Tipo de resina</dt>
                 <dd>{{ product.resinType | resinTypeLabel }}</dd>
+              </div>
+              <div>
+                <dt>Color</dt>
+                <dd class="color-value">
+                  @if (colorHex(product.colorId); as hex) {
+                    <span class="color-swatch" [style.background-color]="hex"></span>
+                  }
+                  {{ colorLabel(product.colorId) }}
+                </dd>
               </div>
             }
             <div>

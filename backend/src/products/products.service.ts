@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { ProductType } from '../common/enums';
+import { resolveProductColorId } from '../common/color.util';
 import {
   CreateProductDto,
   Product,
@@ -171,6 +172,13 @@ export class ProductsService {
           dto.type === ProductType.FDM ? fdmFields?.filaments : undefined,
         resinType:
           dto.type === ProductType.RESINA ? dto.resinType : undefined,
+        colorId:
+          dto.type === ProductType.RESINA
+            ? resolveProductColorId(
+                this.store.generalSettings.colors ?? [],
+                dto.colorId,
+              )
+            : undefined,
         washMinutes:
           dto.type === ProductType.RESINA && dto.washMinutes !== undefined
             ? Number(dto.washMinutes) || undefined
@@ -260,6 +268,10 @@ export class ProductsService {
               'cureMinutes' in data && data.cureMinutes !== undefined
                 ? data.cureMinutes
                 : (existing as Product3D).cureMinutes,
+            colorId:
+              'colorId' in data && data.colorId !== undefined
+                ? data.colorId
+                : (existing as Product3D).colorId,
           }
         : {
             workTimeHours:
@@ -372,6 +384,12 @@ export class ProductsService {
       }
       if ('resinType' in data && data.resinType !== undefined) {
         current.resinType = data.resinType;
+      }
+      if ('colorId' in data && data.colorId !== undefined) {
+        current.colorId = resolveProductColorId(
+          this.store.generalSettings.colors ?? [],
+          typeof data.colorId === 'string' ? data.colorId : undefined,
+        );
       }
       if ('washMinutes' in data && data.washMinutes !== undefined) {
         current.washMinutes =
@@ -551,6 +569,30 @@ export class ProductsService {
         throw new BadRequestException(
           'El tiempo de armado debe ser mayor o igual a 0',
         );
+      }
+    }
+
+    const colors = this.store.generalSettings.colors ?? [];
+    if (data.type === ProductType.FDM) {
+      const filaments = resolveFdmFilaments({
+        filaments: data.filaments,
+        grams: data.grams,
+        filamentType: data.filamentType,
+        brand: data.brand,
+      });
+      for (const line of filaments) {
+        resolveProductColorId(colors, line.colorId);
+      }
+    }
+    if (data.type === ProductType.RESINA && data.colorId !== undefined) {
+      resolveProductColorId(colors, data.colorId);
+    }
+    if (data.type === ProductType.ESTAMPADO) {
+      const supplyLines = normalizeEstampadoSupplies(
+        data.estampadoSupplies ?? data.supplies,
+      );
+      for (const line of supplyLines) {
+        resolveProductColorId(colors, line.colorId);
       }
     }
   }

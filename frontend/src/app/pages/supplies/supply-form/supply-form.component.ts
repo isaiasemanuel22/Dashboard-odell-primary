@@ -20,6 +20,7 @@ import {
   DbSelectOption,
 } from '@general-components';
 import {
+  ColorConfig,
   FilamentPriceConfig,
   FilamentType,
   ResinPriceConfig,
@@ -40,6 +41,7 @@ import {
   supplyTypesForCategory,
 } from '../../../shared/utils/select-options';
 import { buildFilamentTypeOptions } from '../../../shared/utils/filament-type.util';
+import { supplyRequiresColor } from '../../../shared/utils/color.helpers';
 
 @Component({
   selector: 'app-supply-form',
@@ -73,6 +75,7 @@ export class SupplyFormComponent implements OnInit, OnChanges {
 
   filamentPrices: FilamentPriceConfig[] = [];
   resinPrices: ResinPriceConfig[] = [];
+  colorCatalog: ColorConfig[] = [];
   settingsLoading = true;
 
   name = '';
@@ -81,6 +84,7 @@ export class SupplyFormComponent implements OnInit, OnChanges {
   filamentType = FilamentType.PLA;
   resinType = ResinType.ESTANDAR;
   brand = '';
+  colorId = '';
   unit = 'kg';
   quantity = 0;
   minStock = 0;
@@ -162,6 +166,21 @@ export class SupplyFormComponent implements OnInit, OnChanges {
     return this.isFilament || this.isResin;
   }
 
+  get showColorField(): boolean {
+    return supplyRequiresColor(this.type);
+  }
+
+  get colorOptions(): DbSelectOption[] {
+    return this.colorCatalog.map((color) => ({
+      value: color.id,
+      label: color.name,
+    }));
+  }
+
+  get selectedColorHex(): string | undefined {
+    return this.colorCatalog.find((color) => color.id === this.colorId)?.hex;
+  }
+
   onCategoryChange(): void {
     const allowed = supplyTypesForCategory(this.category);
     if (!allowed.includes(this.type)) {
@@ -174,6 +193,7 @@ export class SupplyFormComponent implements OnInit, OnChanges {
     this.category = inferSupplyCategory(this.type);
     this.setDefaultUnit();
     this.brand = '';
+    this.colorId = '';
     this.unitPrice = 0;
     this.priceFromSettings = false;
     this.configError = '';
@@ -202,6 +222,10 @@ export class SupplyFormComponent implements OnInit, OnChanges {
         : 'Seleccioná una marca de la lista de Ajustes → Resinas.';
       return;
     }
+    if (this.showColorField && !this.colorId) {
+      this.configError = 'Seleccioná un color del catálogo (Ajustes → Colores).';
+      return;
+    }
 
     const payload: Partial<Supply> = {
       name: this.name.trim(),
@@ -221,6 +245,9 @@ export class SupplyFormComponent implements OnInit, OnChanges {
       payload.resinType = this.resinType;
       payload.brand = this.brand.trim();
     }
+    if (this.showColorField) {
+      payload.colorId = this.colorId;
+    }
     this.save.emit(payload);
   }
 
@@ -230,6 +257,7 @@ export class SupplyFormComponent implements OnInit, OnChanges {
       next: (settings) => {
         this.filamentPrices = settings.filamentPrices ?? [];
         this.resinPrices = settings.resinPrices ?? [];
+        this.colorCatalog = settings.colors ?? [];
         this.settingsLoading = false;
         this.applyConfiguredPrice();
       },
@@ -292,6 +320,7 @@ export class SupplyFormComponent implements OnInit, OnChanges {
       this.unitPrice = this.supply.unitPrice;
       this.priceFromSettings = this.supply.priceFromSettings;
       this.supplier = this.supply.supplier ?? '';
+      this.colorId = this.supply.colorId ?? '';
       this.applyConfiguredPrice();
     } else {
       this.name = '';
@@ -305,6 +334,7 @@ export class SupplyFormComponent implements OnInit, OnChanges {
       this.unitPrice = 0;
       this.priceFromSettings = false;
       this.supplier = '';
+      this.colorId = '';
       this.configError = '';
       this.syncPriceEditable();
       this.setDefaultUnit();

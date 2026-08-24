@@ -1,0 +1,58 @@
+@use '../../../shared/styles/variables' as *;
+
+.message {
+  margin: 0 0 1rem;
+  color: $color-success;
+}
+
+.panel-desc {
+  margin: 0 0 1rem;
+  color: $color-text-muted;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 1rem;
+
+  th,
+  td {
+    padding: 0.5rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid $color-border;
+  }
+
+  th {
+    font-weight: 600;
+    color: $color-text-muted;
+  }
+}
+
+.color-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.color-swatch {
+  width: 1.25rem;
+  height: 1.25rem;
+  border-radius: 50%;
+  border: 1px solid $color-border;
+  flex-shrink: 0;
+}
+
+.actions {
+  white-space: nowrap;
+}
+
+.inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: flex-end;
+}
+
+.inline-form db-input {
+  min-width: 10rem;
+}

@@ -8,6 +8,7 @@ import {
 import { ensureMachineProfiles, normalizeMachineProfiles } from './machine-profile.util';
 import { mergeProfitMargins, normalizeProfitMargins } from './profit-margins.util';
 import {
+  ColorConfig,
   FilamentPriceConfig,
   GeneralSettings,
   MachineCostConfig,
@@ -18,6 +19,7 @@ import {
   ServiceProfitMargins,
 } from '../common/interfaces';
 import { SupplyType } from '../common/enums';
+import { validateColorConfig } from '../common/color.util';
 import { StoreService } from '../store/store.service';
 import { RealtimeScope } from '../realtime/realtime.types';
 
@@ -422,6 +424,52 @@ export class SettingsService {
     this.store.generalSettings.resinPrices =
       this.store.generalSettings.resinPrices.filter((p) => p.id !== id);
     this.recordSettingsChange(['settings', 'products']);
+  }
+
+  addColor(data: Omit<ColorConfig, 'id'>): ColorConfig {
+    const validated = validateColorConfig(data);
+    const entry: ColorConfig = {
+      id: this.store.nextId('clr', this.store.generalSettings.colors ?? []),
+      ...validated,
+    };
+    if (!this.store.generalSettings.colors) {
+      this.store.generalSettings.colors = [];
+    }
+    this.store.generalSettings.colors.push(entry);
+    this.recordSettingsChange(['settings']);
+    return entry;
+  }
+
+  updateColor(
+    id: string,
+    data: Partial<Omit<ColorConfig, 'id'>>,
+  ): ColorConfig {
+    const colors = this.store.generalSettings.colors ?? [];
+    const index = colors.findIndex((color) => color.id === id);
+    if (index === -1) {
+      throw new NotFoundException('Color no encontrado');
+    }
+    const current = colors[index];
+    const validated = validateColorConfig({
+      name: data.name ?? current.name,
+      hex: data.hex ?? current.hex,
+    });
+    colors[index] = { ...current, ...validated };
+    this.recordSettingsChange(['settings']);
+    return colors[index];
+  }
+
+  removeColor(id: string): void {
+    const inUse = this.store.supplies.some((supply) => supply.colorId === id);
+    if (inUse) {
+      throw new BadRequestException(
+        'No se puede eliminar: el color está asignado a uno o más insumos',
+      );
+    }
+    this.store.generalSettings.colors = (
+      this.store.generalSettings.colors ?? []
+    ).filter((color) => color.id !== id);
+    this.recordSettingsChange(['settings']);
   }
 
   private syncFilamentSupplies(filamentPrice: FilamentPriceConfig): void {

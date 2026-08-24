@@ -13,6 +13,7 @@ import { firstValueFrom } from 'rxjs';
 import { catchError, map, of, switchMap } from 'rxjs';
 import {
   Category,
+  ColorConfig,
   Product,
   ProductAttachment,
   ProductStockOverview,
@@ -25,7 +26,12 @@ import { ProductCatalogService } from '../../../core/services/product-catalog.se
 import { ProductsService } from '../../../core/services/products.service';
 import { RealtimeCatalogSyncService } from '../../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
+import { SettingsService } from '../../../core/services/settings.service';
 import { productStockOverview } from '../../../shared/utils/stock.helpers';
+import {
+  resolveColorHex,
+  resolveColorLabel,
+} from '../../../shared/utils/color.helpers';
 import {
   DbAttachmentUploadComponent,
   DbAttachmentUploadFn,
@@ -81,8 +87,10 @@ export class ProductDetailComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly formDialogs = inject(FormDialogService);
   private readonly mediaUpload = inject(MediaUploadService);
+  private readonly settingsService = inject(SettingsService);
 
   product: Product | null = null;
+  colorCatalog: ColorConfig[] = [];
   attachments: ProductAttachment[] = [];
   categories: Category[] = [];
   catalogProducts: Product[] = [];
@@ -99,11 +107,26 @@ export class ProductDetailComponent implements OnInit {
 
   isProduct3D = isProduct3D;
 
+  colorLabel(colorId?: string): string {
+    return resolveColorLabel(colorId, this.colorCatalog);
+  }
+
+  colorHex(colorId?: string): string | undefined {
+    return resolveColorHex(colorId, this.colorCatalog);
+  }
+
   get stockOverview(): ProductStockOverview {
     return productStockOverview(this.product ?? { stock: 0 }, this.stock);
   }
 
   ngOnInit(): void {
+    this.settingsService.getGeneralSettings().subscribe({
+      next: (settings) => {
+        this.colorCatalog = settings.colors ?? [];
+        this.cdr.markForCheck();
+      },
+    });
+
     this.route.paramMap
       .pipe(
         map((params) => params.get('id')),

@@ -13,11 +13,14 @@ import {
 } from '@angular/forms';
 import {
   EstampadoSupplyLine,
+  GeneralSettings,
   Supply,
   SupplyCategory,
 } from '../../../../core/models';
 import { SuppliesService } from '../../../../core/services/settings.service';
+import { SettingsFacade } from '../../../../store/settings/settings.facade';
 import { createEmptyEstampadoSupplyLine } from '../../../utils/estampado.helpers';
+import { buildColorOptions } from '../../../utils/color.helpers';
 import { DbSelectOption } from '@general-components';
 import { Subject, takeUntil } from 'rxjs';
 import {
@@ -51,9 +54,11 @@ export class SupplyLineListComponent
   initialValue: EstampadoSupplyLine[] | null = null;
 
   private readonly suppliesService = inject(SuppliesService);
+  private readonly settingsFacade = inject(SettingsFacade);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
   private suppliesCatalog: Supply[] = [];
+  private generalSettings: GeneralSettings | null = null;
   private onChange: (value: EstampadoSupplyLine[]) => void = () => {};
   private onTouched: () => void = () => {};
 
@@ -81,6 +86,12 @@ export class SupplyLineListComponent
         optionsFn: (item, items) => this.getSupplyOptionsFor(item, items),
       },
       {
+        type: 'select',
+        name: 'colorId',
+        label: 'Color',
+        optionsFn: (item) => this.getColorOptions(item),
+      },
+      {
         type: 'input',
         name: 'quantity',
         label: 'Cantidad',
@@ -92,6 +103,14 @@ export class SupplyLineListComponent
   };
 
   ngOnInit(): void {
+    this.settingsFacade
+      .watchGeneralSettings()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((settings) => {
+        this.generalSettings = settings;
+        this.cdr.markForCheck();
+      });
+
     this.suppliesService
       .getSupplies(undefined, SupplyCategory.ESTAMPADO)
       .pipe(takeUntil(this.destroy$))
@@ -144,5 +163,13 @@ export class SupplyLineListComponent
         value: supply.id,
         label: `${supply.name} (${supply.unit})`,
       }));
+  }
+
+  private getColorOptions(line: EstampadoSupplyLine): DbSelectOption[] {
+    return buildColorOptions(
+      this.suppliesCatalog,
+      this.generalSettings?.colors ?? [],
+      { supplyId: line.supplyId },
+    );
   }
 }

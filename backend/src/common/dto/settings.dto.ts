@@ -222,6 +222,16 @@ export class ResinPriceDto {
   pricePerLiter!: number;
 }
 
+export class ColorConfigDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  hex!: string;
+}
+
 export class CalculateCostDto {
   @IsEnum(ProductType)
   type!: ProductType;
@@ -404,6 +414,10 @@ export class CreateSupplyDto {
   @IsOptional()
   @IsString()
   supplier?: string;
+
+  @IsOptional()
+  @IsString()
+  colorId?: string;
 }
 
 export class UpdateSupplyDto extends PartialType(CreateSupplyDto) {}

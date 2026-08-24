@@ -1,16 +1,32 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  Input,
+  OnDestroy,
+  OnInit,
+  inject,
+} from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
+import { Subject, takeUntil } from 'rxjs';
 import {
   FilamentType,
+  GeneralSettings,
   ProductType,
+  Supply,
+  SupplyCategory,
+  SupplyType,
   isProductType3D,
 } from '../../../../core/models';
+import { SuppliesService } from '../../../../core/services/settings.service';
 import { ProductFormGroup } from '../../../../core/services/product-form-state-manager.service';
+import { SettingsFacade } from '../../../../store/settings/settings.facade';
 import {
   DbFormGridComponent,
   DbFormGridFullComponent,
   DbInputComponent,
   DbSelectComponent,
+  DbSelectOption,
 } from '@general-components';
 import {
   FilamentLineListComponent,
@@ -18,6 +34,7 @@ import {
   PrintSpecListComponent,
   SupplyLineListComponent,
 } from '../../../../shared/components/dynamic-lists/public-api';
+import { buildColorOptions } from '../../../../shared/utils/color.helpers';
 import { resinTypeOptions } from '../../../../shared/utils/select-options';
 
 @Component({
@@ -38,12 +55,49 @@ import { resinTypeOptions } from '../../../../shared/utils/select-options';
   styleUrl: '../product-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProductFormProductionFieldsComponent {
+export class ProductFormProductionFieldsComponent implements OnInit, OnDestroy {
   @Input({ required: true }) form!: ProductFormGroup;
   @Input({ required: true }) productType!: ProductType;
   @Input() includesPieces = false;
 
+  private readonly settingsFacade = inject(SettingsFacade);
+  private readonly suppliesService = inject(SuppliesService);
+  private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroy$ = new Subject<void>();
+
+  private generalSettings: GeneralSettings | null = null;
+  private resinSupplies: Supply[] = [];
+
   readonly resinTypeOptions = resinTypeOptions();
+
+  ngOnInit(): void {
+    this.settingsFacade
+      .watchGeneralSettings()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((settings) => {
+        this.generalSettings = settings;
+        this.cdr.markForCheck();
+      });
+
+    this.suppliesService
+      .getSupplies(undefined, SupplyCategory.RESINA)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((items) => {
+        this.resinSupplies = items.filter(
+          (supply) => supply.type === SupplyType.RESINA,
+        );
+        this.cdr.markForCheck();
+      });
+
+    this.form.controls.resinType.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.cdr.markForCheck());
+  }
+
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
 
   get showProductionFields(): boolean {
     return this.productType !== ProductType.COMBO && !this.includesPieces;
@@ -74,5 +128,13 @@ export class ProductFormProductionFieldsComponent {
 
   get filamentType(): FilamentType {
     return this.form.controls.filamentType.value;
+  }
+
+  get resinColorOptions(): DbSelectOption[] {
+    return buildColorOptions(
+      this.resinSupplies,
+      this.generalSettings?.colors ?? [],
+      { resinType: this.form.controls.resinType.value },
+    );
   }
 }

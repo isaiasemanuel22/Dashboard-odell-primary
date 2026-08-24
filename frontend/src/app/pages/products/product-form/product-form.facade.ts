@@ -309,6 +309,7 @@ export class ProductFormFacade {
       filamentType: v.filamentType,
       filamentLines: v.filamentLines,
       resinType: v.resinType,
+      colorId: v.colorId,
       washMinutes: v.washMinutes,
       cureMinutes: v.cureMinutes,
       prints: v.prints,

@@ -7,7 +7,8 @@ import {
   SupplyType,
   TaskType,
 } from '../common/enums';
-import { Order, OrderItem, OrderAlert, PrintJob, Product3D } from '../common/interfaces';
+import { Order, OrderItem, OrderAlert, PrintJob, Product3D, Supply } from '../common/interfaces';
+import { isIndistintoColor } from '../common/color.util';
 import { appendOrderStatusHistory } from '../orders/order-status-history.util';
 import { StoreService } from '../store/store.service';
 
@@ -410,6 +411,16 @@ export class OrderTasksService implements OnModuleInit {
           : item.quantity;
       if (taskType === TaskType.PRODUCTION) {
         existing.productName = `Hacer ${existing.quantity} ${item.productName}`;
+        if (!this.hasProductionSupplies(existing)) {
+          existing.status = PrintJobStatus.BLOQUEADO;
+          existing.blockedReason = 'Insumos insuficientes';
+        } else if (
+          existing.status === PrintJobStatus.BLOQUEADO &&
+          existing.blockedReason === 'Insumos insuficientes'
+        ) {
+          existing.status = PrintJobStatus.POR_HACER;
+          existing.blockedReason = undefined;
+        }
       }
       existing.archived = false;
       return existing;
@@ -555,7 +566,8 @@ export class OrderTasksService implements OnModuleInit {
           .filter(
             (supply) =>
               supply.type === SupplyType.FILAMENTO &&
-              supply.filamentType === line.filamentType,
+              supply.filamentType === line.filamentType &&
+              this.supplyMatchesColor(supply, line.colorId),
           )
           .reduce((sum, supply) => sum + supply.quantity * 1000, 0);
         return availableGrams >= line.grams * quantity;
@@ -567,13 +579,21 @@ export class OrderTasksService implements OnModuleInit {
         .filter(
           (supply) =>
             supply.type === SupplyType.RESINA &&
-            supply.resinType === product.resinType,
+            supply.resinType === product.resinType &&
+            this.supplyMatchesColor(supply, product.colorId),
         )
         .reduce((sum, supply) => sum + supply.quantity * 1000, 0);
       return availableMl >= product.grams * quantity;
     }
 
     return true;
+  }
+
+  private supplyMatchesColor(supply: Supply, colorId?: string): boolean {
+    if (isIndistintoColor(colorId)) {
+      return true;
+    }
+    return supply.colorId === colorId;
   }
 
   private cancelStaleTasks(order: Order): void {

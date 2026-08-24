@@ -20,6 +20,7 @@ export function mapSettingsFromDb(row: {
   resinPrices: Prisma.JsonValue;
   filamentTypeAverages?: Prisma.JsonValue;
   resinTypeAverages?: Prisma.JsonValue;
+  colors?: Prisma.JsonValue;
 }): GeneralSettings {
   const rawProfiles = fromJson<unknown[]>(row.processProfiles ?? []);
   const base: GeneralSettings = {
@@ -47,6 +48,7 @@ export function mapSettingsFromDb(row: {
     resinTypeAverages: fromJson<GeneralSettings['resinTypeAverages']>(
       row.resinTypeAverages ?? {},
     ),
+    colors: fromJson<GeneralSettings['colors']>(row.colors ?? []),
   };
 
   base.profitMargins = normalizeProfitMargins(base.profitMargins);
@@ -74,5 +76,6 @@ export function mapSettingsToDb(settings: GeneralSettings) {
     resinPrices: toInputJson(normalized.resinPrices),
     filamentTypeAverages: toInputJson(normalized.filamentTypeAverages),
     resinTypeAverages: toInputJson(normalized.resinTypeAverages),
+    colors: toInputJson(normalized.colors ?? []),
   };
 }

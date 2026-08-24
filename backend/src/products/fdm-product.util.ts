@@ -1,4 +1,8 @@
 import { FilamentType } from '../common/enums';
+import {
+  INDISTINTO_COLOR_ID,
+  normalizeProductColorId,
+} from '../common/color.util';
 import { FdmFilamentLine } from '../common/interfaces';
 
 export function createFdmFilamentLineId(): string {
@@ -12,6 +16,7 @@ export function createEmptyFdmFilamentLine(
     id: createFdmFilamentLineId(),
     filamentType,
     grams: 0,
+    colorId: INDISTINTO_COLOR_ID,
   };
 }
 
@@ -95,6 +100,10 @@ function normalizeOneFdmFilamentLine(item: unknown): FdmFilamentLine | null {
     typeof record.label === 'string' && record.label.trim()
       ? record.label.trim()
       : undefined;
+  const colorId =
+    normalizeProductColorId(
+      typeof record.colorId === 'string' ? record.colorId : undefined,
+    ) ?? INDISTINTO_COLOR_ID;
 
   return {
     id:
@@ -105,5 +114,6 @@ function normalizeOneFdmFilamentLine(item: unknown): FdmFilamentLine | null {
     grams,
     brand,
     label,
+    colorId,
   };
 }

@@ -1,5 +1,9 @@
 import { PaperType } from '../common/enums';
 import {
+  INDISTINTO_COLOR_ID,
+  normalizeProductColorId,
+} from '../common/color.util';
+import {
   EstampadoPressCycle,
   EstampadoPrintSpec,
   EstampadoSupplyLine,
@@ -118,6 +122,8 @@ export function normalizeEstampadoSupplies(
       supplyId: line.supplyId?.trim() ?? '',
       quantity: Math.max(Number(line.quantity) || 0, 0),
       label: line.label?.trim() || undefined,
+      colorId:
+        normalizeProductColorId(line.colorId) ?? INDISTINTO_COLOR_ID,
     }))
     .filter((line) => line.supplyId && line.quantity > 0);
 }

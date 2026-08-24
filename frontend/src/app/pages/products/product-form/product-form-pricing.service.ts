@@ -528,6 +528,7 @@ export class ProductFormPricingService {
       v.filamentType,
       v.type === ProductType.RESINA,
       v.resinType,
+      v.colorId,
       v.washMinutes,
       v.cureMinutes,
       v.prints,

@@ -54,6 +54,7 @@ export function mapProductFromDb(row: {
   fdmFilaments?: Prisma.JsonValue;
   attachments?: Prisma.JsonValue;
   stock?: number;
+  colorId?: string | null;
 }): Product {
   const components = normalizeProductComponents(fromJson(row.components));
   const base = {
@@ -125,6 +126,7 @@ export function mapProductFromDb(row: {
       brand: row.brand ?? undefined,
     }),
     resinType: row.resinType as Product3D['resinType'],
+    colorId: row.colorId ?? undefined,
   } as Product;
 }
 
@@ -191,5 +193,9 @@ export function mapProductToDb(product: Product) {
     estampadoSupplies: toInputJson(estampado?.supplies ?? []),
     fdmFilaments: toInputJson(fdmFilaments),
     stock: Math.max(0, Math.trunc(product.stock ?? 0)),
+    colorId:
+      product3d?.type === ProductType.RESINA
+        ? (product3d.colorId ?? null)
+        : null,
   };
 }
