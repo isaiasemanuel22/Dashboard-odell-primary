@@ -1,29 +1,36 @@
 <section class="sales-stats-grid">
-  <app-sale-stat-card
-    label="Ingresos del mes"
-    [value]="stats.monthlyRevenue"
-    variant="revenue"
-  />
-  <app-sale-stat-card
-    label="Costos del mes"
-    [value]="stats.monthlyCost"
-    variant="cost"
-  />
-  <app-sale-stat-card
-    label="Ganancias del mes"
-    [value]="stats.monthlyProfit"
-    variant="profit"
-  />
-  <app-sale-stat-card
-    label="Ingresos de pedidos"
-    [value]="stats.monthlyOrdersRevenue"
-    [detail]="stats.monthlyOrdersCount + ' pedido(s)'"
-    variant="revenue-soft"
-  />
-  <app-sale-stat-card
-    label="Ingresos de ventas"
-    [value]="stats.monthlyRetailRevenue"
-    [detail]="stats.monthlyRetailCount + ' venta(s)'"
-    variant="revenue-soft"
-  />
+  <div class="sales-stats-grid__cards">
+    <app-sale-stat-card
+      label="Ingresos del mes"
+      [value]="stats.monthlyRevenue"
+      [breakdown]="revenueBreakdown"
+      variant="revenue"
+    />
+    <app-sale-stat-card
+      label="Costos del mes"
+      [value]="stats.monthlyCost"
+      [breakdown]="costBreakdown"
+      variant="cost"
+    />
+    <app-sale-stat-card
+      label="Ganancias del mes"
+      [value]="stats.monthlyProfit"
+      [breakdown]="profitBreakdown"
+      variant="profit"
+    />
+    <app-sale-stat-card
+      label="Ingresos de pedidos"
+      [value]="stats.monthlyOrdersRevenue"
+      [detail]="stats.monthlyOrdersCount + ' pedido(s)'"
+      variant="revenue-soft"
+    />
+    <app-sale-stat-card
+      label="Ingresos de ventas"
+      [value]="stats.monthlyRetailRevenue"
+      [detail]="stats.monthlyRetailCount + ' venta(s)'"
+      variant="revenue-soft"
+    />
+  </div>
+
+  <app-area-profit-balance [balances]="stats.profitByArea" />
 </section>

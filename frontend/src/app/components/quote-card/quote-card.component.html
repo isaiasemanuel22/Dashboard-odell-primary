@@ -1,0 +1,78 @@
+<article class="quote-card">
+  <div class="quote-card__body">
+    <header class="quote-card__header">
+      <a [routerLink]="['/presupuestos', quote.id]" class="quote-card__title">
+        <span class="quote-card__id">{{ quote.id }}</span>
+        <h3>{{ quote.customerName }}</h3>
+      </a>
+      <aside class="quote-card__summary">
+        <db-status-badge
+          [statusClass]="quote.status"
+          [label]="quote.status | quoteStatusLabel"
+        />
+        <div class="quote-card__date">
+          <span>Fecha</span>
+          <strong>{{ quote.quotedAt | dateShort }}</strong>
+        </div>
+      </aside>
+    </header>
+
+    <section class="quote-card__details">
+      <db-service-badges [types]="quote.services" variant="solid" />
+
+      @if (quote.items.length) {
+        <ul class="quote-card__items">
+          @for (item of previewItems(quote); track $index) {
+            <li class="quote-card__item">
+              <span class="quote-card__item-service">
+                {{ item.serviceType | serviceTypeLabel }}
+              </span>
+              @if (item.productId) {
+                <a [routerLink]="['/productos', item.productId]" class="product-link">
+                  {{ item.quantity }}× {{ item.productName }}
+                </a>
+              } @else {
+                <span>{{ item.quantity }}× {{ item.productName }}</span>
+              }
+            </li>
+          }
+          @if (hiddenItemsCount(quote); as extra) {
+            @if (extra > 0) {
+              <li class="quote-card__item quote-card__item--more">+{{ extra }} más</li>
+            }
+          }
+        </ul>
+      }
+
+      <div class="quote-card__total">
+        <span>Total</span>
+        <strong>{{ quote.total | currencyArs }}</strong>
+      </div>
+    </section>
+  </div>
+
+  <div class="card-actions">
+    <div class="db-button-group">
+      <db-button
+        label="Ver"
+        variant="primary-outline"
+        format="solid"
+        [routerLink]="['/presupuestos', quote.id]"
+      />
+      @if (canEdit(quote)) {
+        <db-button
+          label="Editar"
+          variant="secondary"
+          format="soft"
+          (clicked)="edit.emit(quote)"
+        />
+      }
+      <db-button
+        label="Eliminar"
+        variant="delete"
+        format="soft"
+        (clicked)="delete.emit(quote)"
+      />
+    </div>
+  </div>
+</article>

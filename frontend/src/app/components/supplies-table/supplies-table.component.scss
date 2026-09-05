@@ -1,3 +1,15 @@
-@use '../../shared/styles/listings' as *;
+@use '../../shared/styles/variables' as *;
 
-@include virtual-table-viewport;
+.color-value {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.color-swatch {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 1px solid $color-border;
+  flex-shrink: 0;
+}

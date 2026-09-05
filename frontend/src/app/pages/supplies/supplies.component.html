@@ -37,6 +37,7 @@
 @if (!loading && filteredSupplies.length) {
   <app-supplies-table
     [supplies]="filteredSupplies"
+    [colorCatalog]="colorCatalog"
     (edit)="openEdit($event)"
     (delete)="deleteSupply($event)"
   />

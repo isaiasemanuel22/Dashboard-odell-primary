@@ -1,9 +1,11 @@
 import {
   Component,
+  DestroyRef,
   OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, Subscription } from 'rxjs';
 import {
@@ -47,6 +49,7 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
   private readonly settingsService = inject(SettingsService);
   private readonly suppliesService = inject(SuppliesService);
   private readonly realtime = inject(RealtimeService);
+  private readonly destroyRef = inject(DestroyRef);
   private settingsSub?: Subscription;
 
   settings: GeneralSettings | null = null;
@@ -85,9 +88,12 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
       this.settings.errorMarginPercent ??= 0;
     });
     this.settingsService.getGeneralSettings(false).subscribe();
-    this.suppliesService.getSupplies().subscribe((items) => {
-      this.supplies = items;
-    });
+    this.suppliesService
+      .watchSupplies()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((items) => {
+        this.supplies = items;
+      });
   }
 
   ngOnDestroy(): void {

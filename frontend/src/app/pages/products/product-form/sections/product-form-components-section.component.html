@@ -5,12 +5,13 @@
   <div class="component-picker">
     <db-select
       label="Agregar pieza"
-      name="componentPicker"
+      name="piecePicker"
       [(ngModel)]="componentPicker"
       [ngModelOptions]="{ standalone: true }"
       placeholder="Seleccionar producto..."
       [options]="availableComponentOptions"
-      [disabled]="!canAddComponent"
+      [disabled]="catalogLoading && !availableComponentOptions.length"
+      [hint]="pickerHint"
     />
     <db-input
       label="Cantidad"
@@ -25,7 +26,7 @@
       label="+ Agregar pieza"
       variant="secondary"
       format="soft"
-      [disabled]="!componentPicker || componentQty < 1"
+      [disabled]="!canAddComponent || !componentPicker || componentQty < 1"
       (clicked)="addComponent()"
     />
   </div>
@@ -35,7 +36,10 @@
       mode="edit"
       [components]="components"
       [catalog]="catalogProducts"
+      [colorCatalog]="colorCatalog"
+      [supplies]="supplies"
       (remove)="removeComponent($event)"
+      (colorChange)="updateComponentColor($event.productId, $event.colorId)"
     />
 
     <db-input

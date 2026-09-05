@@ -7,7 +7,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
-import { SaleCartLine } from '../sale-cart-line/sale-cart-line.component';
+import type { SaleCartLine } from '../sale-cart-line/sale-cart-line.types';
 import { DbButtonComponent } from '../db-button/db-button.component';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 

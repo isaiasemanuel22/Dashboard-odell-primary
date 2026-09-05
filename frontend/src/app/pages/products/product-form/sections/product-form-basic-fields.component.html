@@ -44,13 +44,14 @@
           name="includesPieces"
           [(ngModel)]="includesPieces"
           [ngModelOptions]="{ standalone: true }"
+          (checkedChange)="onIncludesPiecesChange($event)"
           (ngModelChange)="onFieldChange()"
         />
       }
     </div>
     @if (showIncludesPiecesCheckbox) {
       <p class="published-hint">
-        Desactivá «Publicado en catálogo» para piezas internas. Activá «Incluye piezas» si el producto se arma a partir de otros productos.
+        Desactivá «Publicado en catálogo» para piezas internas. Activá «Incluye piezas» para armar el producto a partir de otros productos del catálogo (aparece la sección «Piezas incluidas»).
       </p>
     }
     <p class="published-hint">

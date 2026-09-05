@@ -13,6 +13,7 @@ model AppSettings {
   errorMarginPercent    Float @default(0) @map("error_margin_percent")
   profitMargins         Json  @map("profit_margins")
   paperPricesPerSqm     Json  @map("paper_prices_per_sqm")
+  paperReferenceSheets  Json  @default("{}") @map("paper_reference_sheets")
   powerConsumptions     Json  @map("power_consumptions")
   machineCosts          Json  @map("machine_costs")
   processProfiles       Json  @default("[]") @map("process_profiles")
@@ -43,6 +44,7 @@ model Customer {
   createdAt DateTime @map("created_at")
 
   orders Order[]
+  quotes Quote[]
 
   @@map("customers")
 }
@@ -90,7 +92,6 @@ model Supply {
   id                String   @id @db.VarChar(64)
   name              String   @db.VarChar(255)
   category          String   @default("general") @db.VarChar(32)
-  type              String   @db.VarChar(32)
   filamentType      String?  @map("filament_type") @db.VarChar(32)
   resinType         String?  @map("resin_type") @db.VarChar(32)
   brand             String?  @db.VarChar(128)
@@ -163,6 +164,15 @@ model OrderItem {
   productName String @map("product_name") @db.VarChar(255)
   quantity    Int
   unitPrice   Float  @map("unit_price")
+  includesPrint Boolean @default(false) @map("includes_print")
+  printPaperType String? @map("print_paper_type") @db.VarChar(32)
+  printWidthCm Float? @map("print_width_cm")
+  printLengthCm Float? @map("print_length_cm")
+  printImpresoId String? @map("print_impreso_id") @db.VarChar(64)
+  designUnitPrice Float? @map("design_unit_price")
+  printTimeHours Float? @map("print_time_hours")
+  grams         Float?
+  filamentType  String? @map("filament_type") @db.VarChar(32)
   deliveredQuantity Int @default(0) @map("delivered_quantity")
   reservedQuantity Int @default(0) @map("reserved_quantity")
   productionRequiredQuantity Int @default(0) @map("production_required_quantity")
@@ -173,6 +183,52 @@ model OrderItem {
 
   @@index([orderId])
   @@map("order_items")
+}
+
+model Quote {
+  id              String   @id @db.VarChar(64)
+  customerId      String?  @map("customer_id") @db.VarChar(64)
+  customerName    String   @map("customer_name") @db.VarChar(255)
+  services        Json
+  status          String   @default("borrador") @db.VarChar(32)
+  total           Float
+  discountPercent Float    @default(0) @map("discount_percent")
+  discountAmount  Float    @default(0) @map("discount_amount")
+  quotedAt        DateTime @map("quoted_at")
+  createdAt       DateTime @map("created_at")
+  orderId         String?  @map("order_id") @db.VarChar(64)
+
+  customer Customer?  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  items    QuoteItem[]
+
+  @@index([customerId])
+  @@index([orderId])
+  @@map("quotes")
+}
+
+model QuoteItem {
+  id              String  @id @db.VarChar(80)
+  quoteId         String  @map("quote_id") @db.VarChar(64)
+  sortIndex       Int     @map("sort_index")
+  serviceType     String  @map("service_type") @db.VarChar(32)
+  productId       String? @map("product_id") @db.VarChar(64)
+  productName     String  @map("product_name") @db.VarChar(255)
+  quantity        Int
+  unitPrice       Float   @map("unit_price")
+  includesPrint   Boolean @default(false) @map("includes_print")
+  printPaperType  String? @map("print_paper_type") @db.VarChar(32)
+  printWidthCm    Float?  @map("print_width_cm")
+  printLengthCm   Float?  @map("print_length_cm")
+  printImpresoId  String? @map("print_impreso_id") @db.VarChar(64)
+  designUnitPrice Float?  @map("design_unit_price")
+  printTimeHours  Float?  @map("print_time_hours")
+  grams           Float?
+  filamentType    String? @map("filament_type") @db.VarChar(32)
+
+  quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+
+  @@index([quoteId])
+  @@map("quote_items")
 }
 
 model PrintJob {
@@ -229,4 +285,105 @@ model RetailSaleItem {
 
   @@index([retailSaleId])
   @@map("retail_sale_items")
+}
+
+model TreasuryExpense {
+  id          String   @id @db.VarChar(64)
+  direction    String   @default("expense") @db.VarChar(16)
+  category    String   @db.VarChar(32)
+  name        String   @default("") @db.VarChar(255)
+  quantity    Float    @default(1)
+  unitPrice   Float    @default(0) @map("unit_price")
+  amount      Float
+  description String?  @db.VarChar(255)
+  referenceId String?  @map("reference_id") @db.VarChar(64)
+  occurredAt  DateTime @map("occurred_at")
+  createdAt   DateTime @map("created_at")
+
+  @@index([referenceId])
+  @@map("treasury_expenses")
+}
+
+model WorkArea {
+  id        String   @id @db.VarChar(64)
+  name      String   @db.VarChar(128)
+  slug      String   @unique @db.VarChar(64)
+  active    Boolean  @default(true)
+  sortOrder Int      @default(0) @map("sort_order")
+  createdAt DateTime @map("created_at")
+  updatedAt DateTime @map("updated_at")
+
+  rolePermissions         RolePermission[]
+  userPermissionOverrides UserPermissionOverride[]
+
+  @@map("work_areas")
+}
+
+model AppRole {
+  id          String   @id @db.VarChar(64)
+  name        String   @db.VarChar(128)
+  description String?  @db.VarChar(255)
+  isSystem    Boolean  @default(false) @map("is_system")
+  createdAt   DateTime @map("created_at")
+  updatedAt   DateTime @map("updated_at")
+
+  permissions RolePermission[]
+  userRoles   UserRole[]
+
+  @@map("app_roles")
+}
+
+model RolePermission {
+  id     String  @id @db.VarChar(64)
+  roleId String  @map("role_id") @db.VarChar(64)
+  areaId String? @map("area_id") @db.VarChar(64)
+  action String  @db.VarChar(32)
+
+  role AppRole   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  area WorkArea? @relation(fields: [areaId], references: [id], onDelete: Cascade)
+
+  @@unique([roleId, areaId, action])
+  @@index([roleId])
+  @@map("role_permissions")
+}
+
+model AppUser {
+  id          String   @id @db.VarChar(64)
+  firebaseUid String?  @unique @map("firebase_uid") @db.VarChar(128)
+  email       String   @db.VarChar(255)
+  displayName String   @map("display_name") @db.VarChar(255)
+  active      Boolean  @default(true)
+  createdAt   DateTime @map("created_at")
+  updatedAt   DateTime @map("updated_at")
+
+  userRoles             UserRole[]
+  permissionOverrides   UserPermissionOverride[]
+
+  @@map("app_users")
+}
+
+model UserRole {
+  userId String @map("user_id") @db.VarChar(64)
+  roleId String @map("role_id") @db.VarChar(64)
+
+  user AppUser @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role AppRole @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+model UserPermissionOverride {
+  id      String  @id @db.VarChar(64)
+  userId  String  @map("user_id") @db.VarChar(64)
+  areaId  String? @map("area_id") @db.VarChar(64)
+  action  String  @db.VarChar(32)
+  granted Boolean @default(true)
+
+  user AppUser   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  area WorkArea? @relation(fields: [areaId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, areaId, action])
+  @@index([userId])
+  @@map("user_permission_overrides")
 }

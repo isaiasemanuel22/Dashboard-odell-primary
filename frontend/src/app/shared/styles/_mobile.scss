@@ -39,7 +39,8 @@ $mobile-header-height: 3.5rem;
       font-size: 1.35rem;
     }
 
-    .header-actions {
+    .header-actions:has(db-button),
+    .header-actions:has(.db-button) {
       width: 100%;
 
       db-button,

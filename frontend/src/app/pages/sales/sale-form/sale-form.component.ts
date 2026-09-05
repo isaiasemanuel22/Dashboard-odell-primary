@@ -345,7 +345,7 @@ export class SaleFormComponent implements OnChanges {
     const product = this.products.find((item) => item.id === productId);
     const overview = this.stockByProductId[productId];
     if (product) {
-      return productStockOverview(product, overview).available;
+      return productStockOverview(product, overview, this.products).available;
     }
     return Math.max(0, Math.trunc(Number(overview?.available) || 0));
   }

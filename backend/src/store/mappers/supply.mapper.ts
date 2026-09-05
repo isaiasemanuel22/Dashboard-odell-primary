@@ -1,12 +1,11 @@
-import { SupplyCategory, SupplyType } from '../../common/enums';
+import { SupplyCategory } from '../../common/enums';
 import { Supply } from '../../common/interfaces';
-import { inferSupplyCategory } from '../../supplies/supply-category.util';
+import { normalizeSupplyCategory } from '../../supplies/supply-category.util';
 
 export function mapSupplyFromDb(row: {
   id: string;
   name: string;
   category?: string | null;
-  type: string;
   filamentType: string | null;
   resinType: string | null;
   brand: string | null;
@@ -22,8 +21,7 @@ export function mapSupplyFromDb(row: {
   return {
     id: row.id,
     name: row.name,
-    category: (row.category as Supply['category']) ?? inferSupplyCategory(row.type as SupplyType),
-    type: row.type as Supply['type'],
+    category: normalizeSupplyCategory(row.category ?? undefined),
     filamentType: row.filamentType as Supply['filamentType'],
     resinType: row.resinType as Supply['resinType'],
     brand: row.brand ?? undefined,
@@ -43,7 +41,6 @@ export function mapSupplyToDb(supply: Supply) {
     id: supply.id,
     name: supply.name,
     category: supply.category,
-    type: supply.type,
     filamentType: supply.filamentType ?? null,
     resinType: supply.resinType ?? null,
     brand: supply.brand ?? null,

@@ -11,8 +11,8 @@ import { SettingsEffects } from './settings/settings.effects';
 import { settingsReducer } from './settings/settings.reducer';
 import { SuppliesEffects } from './supplies/supplies.effects';
 import { suppliesReducer } from './supplies/supplies.reducer';
-import { ProductFormPricingEffects } from './product-form-pricing/product-form-pricing.effects';
-import { productFormPricingReducer } from './product-form-pricing/product-form-pricing.reducer';
+import { ProductFormPricingEffects } from '../pages/products/product-form/store/product-form-pricing/product-form-pricing.effects';
+import { productFormPricingReducer } from '../pages/products/product-form/store/product-form-pricing/product-form-pricing.reducer';
 
 export const storeProviders = [
   provideStore({
@@ -47,7 +47,7 @@ export { CatalogFacade } from './catalog/catalog.facade';
 export { SettingsFacade } from './settings/settings.facade';
 export { ImpresosFacade } from './impresos/impresos.facade';
 export { SuppliesFacade } from './supplies/supplies.facade';
-export { ProductFormPricingFacade } from './product-form-pricing/product-form-pricing.facade';
+export { ProductFormPricingFacade } from '../pages/products/product-form/store/product-form-pricing/product-form-pricing.facade';
 export { StoreBootstrapService } from './store-bootstrap.service';
 
 export { CatalogActions } from './catalog/catalog.actions';

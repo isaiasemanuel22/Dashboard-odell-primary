@@ -5,6 +5,11 @@ import {
   ensureMachineProfiles,
   parseMachineProfilesFromDb,
 } from '../../settings/machine-profile.util';
+import {
+  normalizePaperReferenceSheets,
+  referenceSheetFromPricePerSqm,
+  syncPaperPricesFromReferenceSheets,
+} from '../../common/paper-cost.util';
 import { normalizeProfitMargins } from '../../settings/profit-margins.util';
 
 export function mapSettingsFromDb(row: {
@@ -13,6 +18,7 @@ export function mapSettingsFromDb(row: {
   errorMarginPercent?: number;
   profitMargins: Prisma.JsonValue;
   paperPricesPerSqm: Prisma.JsonValue;
+  paperReferenceSheets?: Prisma.JsonValue;
   powerConsumptions: Prisma.JsonValue;
   machineCosts: Prisma.JsonValue;
   processProfiles?: Prisma.JsonValue;
@@ -23,6 +29,13 @@ export function mapSettingsFromDb(row: {
   colors?: Prisma.JsonValue;
 }): GeneralSettings {
   const rawProfiles = fromJson<unknown[]>(row.processProfiles ?? []);
+  const paperPricesPerSqm = fromJson<GeneralSettings['paperPricesPerSqm']>(
+      row.paperPricesPerSqm,
+    );
+  const rawSheets = fromJson<Partial<GeneralSettings['paperReferenceSheets']>>(
+    row.paperReferenceSheets ?? {},
+  );
+  const hasSavedSheets = Object.keys(rawSheets).length > 0;
   const base: GeneralSettings = {
     electricityCostPerKwh: row.electricityCostPerKwh,
     errorMarginPercent: row.errorMarginPercent ?? 0,
@@ -30,8 +43,10 @@ export function mapSettingsFromDb(row: {
     profitMargins: fromJson<GeneralSettings['profitMargins']>(
       row.profitMargins,
     ),
-    paperPricesPerSqm: fromJson<GeneralSettings['paperPricesPerSqm']>(
-      row.paperPricesPerSqm,
+    paperPricesPerSqm,
+    paperReferenceSheets: normalizePaperReferenceSheets(
+      rawSheets,
+      paperPricesPerSqm,
     ),
     powerConsumptions: fromJson<GeneralSettings['powerConsumptions']>(
       row.powerConsumptions,
@@ -52,6 +67,11 @@ export function mapSettingsFromDb(row: {
   };
 
   base.profitMargins = normalizeProfitMargins(base.profitMargins);
+  if (hasSavedSheets) {
+    base.paperPricesPerSqm = syncPaperPricesFromReferenceSheets(
+      base.paperReferenceSheets,
+    );
+  }
   base.machineProfiles = parseMachineProfilesFromDb(rawProfiles, base);
   return base;
 }
@@ -68,7 +88,10 @@ export function mapSettingsToDb(settings: GeneralSettings) {
     errorMarginPercent: normalized.errorMarginPercent,
     laborCostPerHour: normalized.laborCostPerHour,
     profitMargins: toInputJson(normalized.profitMargins),
-    paperPricesPerSqm: toInputJson(normalized.paperPricesPerSqm),
+    paperPricesPerSqm: toInputJson(
+      syncPaperPricesFromReferenceSheets(normalized.paperReferenceSheets),
+    ),
+    paperReferenceSheets: toInputJson(normalized.paperReferenceSheets),
     powerConsumptions: toInputJson(normalized.powerConsumptions),
     machineCosts: toInputJson(normalized.machineCosts),
     processProfiles: toInputJson(normalized.machineProfiles),

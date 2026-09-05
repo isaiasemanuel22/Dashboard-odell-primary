@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { SupplyType } from './enums';
+import { SupplyCategory } from './enums';
 import { ColorConfig } from './interfaces';
 
 export const INDISTINTO_COLOR_ID = 'indistinto';
@@ -73,19 +73,11 @@ export function isIndistintoColor(colorId?: string | null): boolean {
   return !colorId || colorId === INDISTINTO_COLOR_ID;
 }
 
-export function supplyRequiresColor(type: SupplyType): boolean {
+export function supplyRequiresColor(category: SupplyCategory): boolean {
   return (
-    type === SupplyType.FILAMENTO ||
-    type === SupplyType.RESINA ||
-    [
-      SupplyType.TINTA,
-      SupplyType.REMERA,
-      SupplyType.TAZA,
-      SupplyType.BUZO,
-      SupplyType.GORRA,
-      SupplyType.FILM,
-      SupplyType.VINILO,
-    ].includes(type)
+    category === SupplyCategory.FDM ||
+    category === SupplyCategory.RESINA ||
+    category === SupplyCategory.ESTAMPADO
   );
 }
 

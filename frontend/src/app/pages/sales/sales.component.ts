@@ -18,7 +18,8 @@ import {
 } from '@general-components';
 import { SALE_SOURCE_LABELS } from '../../shared/constants/labels';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
-import { downloadSalesReportCsv } from '../../shared/utils/sales-report.util';
+import { downloadSalesReportPdf } from '../../shared/utils/sales-report.util';
+import { ProductsService } from '../../core/services/products.service';
 import { ListFilterOption } from '../../components/db-list-toolbar/db-list-toolbar.component';
 
 type SalesFilter = 'all' | SaleSource;
@@ -38,6 +39,7 @@ type SalesFilter = 'all' | SaleSource;
 })
 export class SalesComponent implements OnInit {
   private readonly salesService = inject(SalesService);
+  private readonly productsService = inject(ProductsService);
   private readonly realtime = inject(RealtimeService);
   private readonly formDialogs = inject(FormDialogService);
   private readonly destroyRef = inject(DestroyRef);
@@ -148,6 +150,14 @@ export class SalesComponent implements OnInit {
 
   generateReport(): void {
     if (!this.stats || !this.entries.length) return;
-    downloadSalesReportCsv(this.stats, this.entries);
+
+    this.productsService.getProducts(undefined, { all: true }).subscribe({
+      next: (products) => {
+        downloadSalesReportPdf(this.stats!, this.entries, products);
+      },
+      error: (err) => {
+        alert(extractApiErrorMessage(err, 'No se pudo generar el reporte'));
+      },
+    });
   }
 }

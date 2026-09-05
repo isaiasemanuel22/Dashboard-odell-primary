@@ -7,11 +7,9 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { SaleEntry, SaleSource } from '../../core/models';
-import {
-  DbButtonComponent,
-  SaleEntryItemComponent,
-  SaleSourceBadgeComponent,
-} from '@general-components';
+import { DbButtonComponent } from '../db-button/db-button.component';
+import { SaleEntryItemComponent } from '../sale-entry-item/sale-entry-item.component';
+import { SaleSourceBadgeComponent } from '../sale-source-badge/sale-source-badge.component';
 import { CurrencyArsPipe, DateShortPipe } from '../../shared/pipes/labels.pipe';
 
 @Component({

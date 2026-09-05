@@ -16,7 +16,7 @@ import {
 } from '../../shared/pipes/labels.pipe';
 import { DbServiceBadgesComponent } from '../db-service-badges/db-service-badges.component';
 import { DbStatusBadgeComponent } from '../db-status-badge/db-status-badge.component';
-import { DbButtonComponent } from '@general-components';
+import { DbButtonComponent } from '../db-button/db-button.component';
 
 @Component({
   selector: 'app-order-card',

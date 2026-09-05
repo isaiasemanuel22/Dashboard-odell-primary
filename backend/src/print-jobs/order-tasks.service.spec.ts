@@ -5,7 +5,6 @@ import {
   ServiceType,
   TaskType,
   FilamentType,
-  SupplyType,
 } from '../common/enums';
 import { INDISTINTO_COLOR_ID } from '../common/color.util';
 import { OrderTasksService } from './order-tasks.service';
@@ -113,7 +112,7 @@ describe('OrderTasksService', () => {
     )!;
     service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO);
 
-    expect(order.items[0].reservedQuantity).toBe(2);
+    expect(order.items[0].reservedQuantity).toBe(5);
     expect(order.items[0].productionRequiredQuantity).toBe(3);
     expect(
       store.printJobs.find((task) => task.taskType === TaskType.PRODUCTION)
@@ -148,7 +147,7 @@ describe('OrderTasksService', () => {
     service.syncOrderTasks(order);
 
     expect(order.items[0].productionRequiredQuantity).toBe(2);
-    expect(order.items[0].reservedQuantity).toBe(0);
+    expect(order.items[0].reservedQuantity).toBe(2);
     expect(
       store.printJobs.find((task) => task.taskType === TaskType.PRODUCTION),
     ).toMatchObject({
@@ -161,6 +160,55 @@ describe('OrderTasksService', () => {
         severity: 'warning',
       }),
     ]);
+  });
+
+  it('acumula reservas entre pedidos aunque superen el stock físico', () => {
+    const first = {
+      id: 'ord-1',
+      customerId: 'cust-1',
+      customerName: 'Cliente Test',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity: 5,
+          unitPrice: 1000,
+        },
+      ],
+      status: OrderStatus.PENDIENTE,
+      total: 5000,
+      createdAt: new Date().toISOString(),
+      dueDate: new Date().toISOString(),
+    };
+    const second = {
+      id: 'ord-2',
+      customerId: 'cust-1',
+      customerName: 'Cliente Test',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity: 3,
+          unitPrice: 1000,
+        },
+      ],
+      status: OrderStatus.PENDIENTE,
+      total: 3000,
+      createdAt: new Date().toISOString(),
+      dueDate: new Date().toISOString(),
+    };
+
+    store.orders.push(first, second);
+    service.syncOrderTasks(first);
+    service.syncOrderTasks(second);
+
+    expect(first.items[0].reservedQuantity).toBe(5);
+    expect(second.items[0].reservedQuantity).toBe(3);
+    expect(store.products[0].stock).toBe(2);
   });
 
   it('considera una tarea bloqueada como pedido pendiente', () => {
@@ -238,7 +286,6 @@ describe('OrderTasksService', () => {
         id: 'sup-black',
         name: 'PLA Negro',
         category: 'fdm',
-        type: SupplyType.FILAMENTO,
         filamentType: FilamentType.PLA,
         brand: 'FilAr',
         unit: 'kg',
@@ -253,7 +300,6 @@ describe('OrderTasksService', () => {
         id: 'sup-white',
         name: 'PLA Blanco',
         category: 'fdm',
-        type: SupplyType.FILAMENTO,
         filamentType: FilamentType.PLA,
         brand: 'FilAr',
         unit: 'kg',
@@ -321,7 +367,6 @@ describe('OrderTasksService', () => {
       id: 'sup-any',
       name: 'PLA Genérico',
       category: 'fdm',
-      type: SupplyType.FILAMENTO,
       filamentType: FilamentType.PLA,
       brand: 'FilAr',
       unit: 'kg',

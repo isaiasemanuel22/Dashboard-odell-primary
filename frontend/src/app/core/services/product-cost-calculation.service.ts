@@ -11,6 +11,10 @@ import {
   ResinType,
   Supply,
 } from '../models';
+import {
+  calculatePaperCostFromPricePerSqm,
+  paperReferenceKey,
+} from '../../shared/utils/paper-cost.util';
 import { selectImpresos } from '../../store/impresos/impresos.selectors';
 import { selectSupplies } from '../../store/supplies/supplies.selectors';
 import { resolveFdmFilaments } from '../../shared/utils/fdm.helpers';
@@ -110,13 +114,9 @@ export class ProductCostCalculationService {
     widthCm: number,
     heightCm: number,
   ): number {
-    if (widthCm <= 0 || heightCm <= 0) {
-      return 0;
-    }
-
-    const areaSqm = (widthCm * heightCm) / 10000;
-    const pricePerSqm = this.getPaperPricePerSqm(settings, paperType);
-    return Math.round(areaSqm * pricePerSqm);
+    const pricePerSqm =
+      settings.paperPricesPerSqm[paperReferenceKey(paperType)];
+    return calculatePaperCostFromPricePerSqm(pricePerSqm, widthCm, heightCm);
   }
 
   private calculateMaterialCost(
@@ -206,23 +206,6 @@ export class ProductCostCalculationService {
     );
 
     return paperCost + supplyCost;
-  }
-
-  private getPaperPricePerSqm(
-    settings: GeneralSettings,
-    paperType: PaperType,
-  ): number {
-    const prices = settings.paperPricesPerSqm;
-    switch (paperType) {
-      case PaperType.SUBLIMACION:
-        return prices.sublimacion;
-      case PaperType.DTF:
-        return prices.dtf;
-      case PaperType.DTF_UV:
-        return prices.dtfUv;
-      default:
-        return 0;
-    }
   }
 
   private getDefaultFilamentPrice(

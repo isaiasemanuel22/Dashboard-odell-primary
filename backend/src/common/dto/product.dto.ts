@@ -28,6 +28,10 @@ export class ProductComponentDto {
   @IsNumber()
   @Min(1)
   quantity!: number;
+
+  @IsOptional()
+  @IsString()
+  colorId?: string;
 }
 
 export class FdmFilamentLineDto {

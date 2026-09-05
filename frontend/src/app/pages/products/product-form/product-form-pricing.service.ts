@@ -8,11 +8,11 @@ import {
   isProductType3D,
 } from '../../../core/models';
 import { ProductPricingService } from '../../../core/services/product-pricing.service';
-import { ProductCostCalculatorService } from '../../../core/services/product-cost-calculator.service';
-import { ProductPayloadBuilderService } from '../../../core/services/product-payload-builder.service';
+import { ProductCostCalculatorService } from './services/product-cost-calculator.service';
+import { ProductPayloadBuilderService } from './services/product-payload-builder.service';
 import { SettingsFacade } from '../../../store/settings/settings.facade';
-import { ProductFormPricingFacade } from '../../../store/product-form-pricing/product-form-pricing.facade';
-import { ProductFormGroup } from '../../../core/services/product-form-state-manager.service';
+import { ProductFormPricingFacade } from './store/product-form-pricing/product-form-pricing.facade';
+import { ProductFormGroup } from './services/product-form-state-manager.service';
 import {
   getMarginForProductType,
   marginLabelForProductType,

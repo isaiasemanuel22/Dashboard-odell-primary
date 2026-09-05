@@ -47,7 +47,7 @@ export class SettingsController {
 
   @Patch('paper-prices')
   updatePaperPrices(@Body() data: UpdatePaperPricesDto) {
-    return this.settingsService.updatePaperPrices(data.paperPricesPerSqm);
+    return this.settingsService.updatePaperPrices(data.paperReferenceSheets);
   }
 
   @Get('machine-profiles')
@@ -169,7 +169,7 @@ export class SettingsController {
   @Post('supply-default-price')
   getSupplyDefaultPrice(@Body() data: SupplyDefaultPriceDto) {
     return this.costCalculator.getUnitPriceForSupply(
-      data.type as import('../common/enums').SupplyType,
+      data.category,
       data.brand,
       data.filamentType as import('../common/enums').FilamentType,
       data.resinType as import('../common/enums').ResinType,

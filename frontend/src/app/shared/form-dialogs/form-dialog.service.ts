@@ -8,19 +8,21 @@ import {
   Order,
   Product,
   ProductType,
+  Quote,
   RetailSale,
   Supply,
   SupplyCategory,
 } from '../../core/models';
 import { formDialogConfig } from './form-dialog.config';
 import { ModalSize } from './modal-size';
-import { CategoryFormDialogComponent } from './category-form-dialog.component';
+import { CategoryFormDialogComponent } from '../../components/category-form-dialog/category-form-dialog.component';
 import { ConfirmDialogComponent, ConfirmDialogData } from './confirm-dialog.component';
 import { CustomerFormDialogComponent } from './customer-form-dialog.component';
 import { ImpresoFormDialogComponent } from './impreso-form-dialog.component';
 import { OrderFormDialogComponent } from './order-form-dialog.component';
+import { QuoteFormDialogComponent } from './quote-form-dialog.component';
 import type { OrderFormDialogData } from './order-form-dialog.component';
-import { ProductFormDialogComponent } from './product-form-dialog.component';
+import { ProductFormDialogComponent } from '../../components/product-form-dialog/product-form-dialog.component';
 import { ResetDatabaseDialogComponent } from './reset-database-dialog.component';
 import { SaleFormDialogComponent } from './sale-form-dialog.component';
 import { SupplyFormDialogComponent } from './supply-form-dialog.component';
@@ -54,6 +56,21 @@ export class FormDialogService {
         ariaLabel: order ? 'Editar pedido' : 'Nuevo pedido',
       },
     );
+  }
+
+  openOrderFromQuote(quote: Quote): Observable<Order | undefined> {
+    return this.open(
+      OrderFormDialogComponent,
+      { order: null, presetQuote: quote },
+      'lg',
+      { ariaLabel: 'Generar pedido desde presupuesto' },
+    );
+  }
+
+  openQuote(quote: Quote | null = null): Observable<Quote | undefined> {
+    return this.open(QuoteFormDialogComponent, { quote }, 'lg', {
+      ariaLabel: quote ? 'Editar presupuesto' : 'Nuevo presupuesto',
+    });
   }
 
   openProduct(product: Product | null = null): Observable<Product | undefined> {

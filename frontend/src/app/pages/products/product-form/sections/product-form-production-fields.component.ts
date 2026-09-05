@@ -15,25 +15,26 @@ import {
   ProductType,
   Supply,
   SupplyCategory,
-  SupplyType,
+  INDISTINTO_COLOR_ID,
   isProductType3D,
 } from '../../../../core/models';
 import { SuppliesService } from '../../../../core/services/settings.service';
-import { ProductFormGroup } from '../../../../core/services/product-form-state-manager.service';
+import { ProductFormGroup } from '../services/product-form-state-manager.service';
 import { SettingsFacade } from '../../../../store/settings/settings.facade';
 import {
   DbFormGridComponent,
   DbFormGridFullComponent,
   DbInputComponent,
+  DbColorSelectComponent,
   DbSelectComponent,
-  DbSelectOption,
-} from '@general-components';
+} from '@dashboard-form';
+import type { DbColorSelectOption } from '@dashboard-form';
 import {
   FilamentLineListComponent,
   PressCycleListComponent,
   PrintSpecListComponent,
   SupplyLineListComponent,
-} from '../../../../shared/components/dynamic-lists/public-api';
+} from '../dynamic-lists/public-api';
 import { buildColorOptions } from '../../../../shared/utils/color.helpers';
 import { resinTypeOptions } from '../../../../shared/utils/select-options';
 
@@ -45,6 +46,7 @@ import { resinTypeOptions } from '../../../../shared/utils/select-options';
     DbFormGridComponent,
     DbFormGridFullComponent,
     DbInputComponent,
+    DbColorSelectComponent,
     DbSelectComponent,
     PrintSpecListComponent,
     SupplyLineListComponent,
@@ -80,18 +82,19 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnDestroy {
       });
 
     this.suppliesService
-      .getSupplies(undefined, SupplyCategory.RESINA)
+      .watchSupplies(SupplyCategory.RESINA)
       .pipe(takeUntil(this.destroy$))
       .subscribe((items) => {
-        this.resinSupplies = items.filter(
-          (supply) => supply.type === SupplyType.RESINA,
-        );
+        this.resinSupplies = items.filter((supply) => Boolean(supply.resinType));
         this.cdr.markForCheck();
       });
 
     this.form.controls.resinType.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => this.cdr.markForCheck());
+      .subscribe(() => {
+        this.form.controls.colorId.setValue(INDISTINTO_COLOR_ID);
+        this.cdr.markForCheck();
+      });
   }
 
   ngOnDestroy(): void {
@@ -130,7 +133,7 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnDestroy {
     return this.form.controls.filamentType.value;
   }
 
-  get resinColorOptions(): DbSelectOption[] {
+  get resinColorOptions(): DbColorSelectOption[] {
     return buildColorOptions(
       this.resinSupplies,
       this.generalSettings?.colors ?? [],

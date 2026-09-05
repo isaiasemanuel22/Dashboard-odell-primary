@@ -143,8 +143,19 @@
                 <td>{{ item.produced ?? 0 }}</td>
                 <td>{{ item.delivered ?? 0 }}</td>
                 <td><strong>{{ item.pending ?? item.quantity }}</strong></td>
-                <td>{{ item.unitPrice | currencyArs }}</td>
-                <td>{{ item.quantity * item.unitPrice | currencyArs }}</td>
+                <td>
+                  @if (isDesignService(item.serviceType)) {
+                    {{ (item.designUnitPrice ?? item.unitPrice) | currencyArs }}
+                    @if (item.includesPrint) {
+                      <span class="order-item__print-unit">
+                        + {{ printUnitPrice(item) | currencyArs }}/u
+                      </span>
+                    }
+                  } @else {
+                    {{ item.unitPrice | currencyArs }}
+                  }
+                </td>
+                <td>{{ lineSubtotal(item) | currencyArs }}</td>
               </tr>
             }
           </tbody>

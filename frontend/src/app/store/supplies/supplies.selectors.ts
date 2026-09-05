@@ -1,5 +1,5 @@
 import { createFeatureSelector, createSelector } from '@ngrx/store';
-import { SupplyCategory, SupplyType } from '../../core/models';
+import { SupplyCategory } from '../../core/models';
 import { suppliesAdapter, SuppliesState } from './supplies.reducer';
 
 export const selectSuppliesState =
@@ -22,16 +22,11 @@ export const selectSupplies = createSelector(selectSuppliesState, (state) =>
 );
 
 export const selectSuppliesFiltered = (options?: {
-  type?: SupplyType;
   category?: SupplyCategory;
 }) =>
   createSelector(selectSupplies, (supplies) => {
-    let result = supplies;
-    if (options?.type) {
-      result = result.filter((supply) => supply.type === options.type);
+    if (!options?.category) {
+      return supplies;
     }
-    if (options?.category) {
-      result = result.filter((supply) => supply.category === options.category);
-    }
-    return result;
+    return supplies.filter((supply) => supply.category === options.category);
   });

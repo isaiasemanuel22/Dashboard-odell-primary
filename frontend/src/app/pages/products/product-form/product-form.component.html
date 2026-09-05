@@ -1,24 +1,22 @@
 <db-form>
   <form [formGroup]="facade.form" (ngSubmit)="onSubmit()" autocomplete="off">
     <app-product-form-basic-fields
-      [value]="basicFields"
+      [value]="basicFields ?? facade.basicFieldsValue"
       [productTypeOptions]="facade.productTypeOptions"
       (valueChange)="onBasicFieldsChange($event)"
     />
     <app-product-form-production-fields
       [form]="facade.form"
       [productType]="productType"
-      [includesPieces]="basicFields?.includesPieces ?? false"
+      [includesPieces]="facade.includesPieces"
     />
 
-    @if (showComponentsSection) {
-      <app-product-form-components-section
-        [productType]="productType"
-        [editingProductId]="product?.id ?? null"
-        [value]="componentsValue"
-        (valueChange)="onComponentsChange($event)"
-      />
-    }
+    <app-product-form-components-section
+      [productType]="productType"
+      [editingProductId]="product?.id ?? null"
+      [value]="componentsValue ?? facade.componentsValue"
+      (valueChange)="onComponentsChange($event)"
+    />
 
     <app-product-form-categories-section
       [productType]="productType"

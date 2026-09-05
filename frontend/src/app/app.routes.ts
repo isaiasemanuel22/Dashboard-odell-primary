@@ -23,6 +23,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'billetera',
+        loadComponent: () =>
+          import('./pages/wallet/wallet.component').then(
+            (m) => m.WalletComponent,
+          ),
+      },
+      {
         path: 'ventas',
         children: [
           {
@@ -63,6 +70,25 @@ export const routes: Routes = [
             loadComponent: () =>
               import('./pages/orders/order-detail/order-detail.component').then(
                 (m) => m.OrderDetailComponent,
+              ),
+          },
+        ],
+      },
+      {
+        path: 'presupuestos',
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./pages/quotes/quotes.component').then(
+                (m) => m.QuotesComponent,
+              ),
+          },
+          {
+            path: ':id',
+            loadComponent: () =>
+              import('./pages/quotes/quote-detail/quote-detail.component').then(
+                (m) => m.QuoteDetailComponent,
               ),
           },
         ],
@@ -168,6 +194,37 @@ export const routes: Routes = [
               import('./pages/settings/profit-settings/profit-settings.component').then(
                 (m) => m.ProfitSettingsComponent,
               ),
+          },
+          {
+            path: 'usuarios',
+            loadComponent: () =>
+              import('./pages/settings/user-access/user-access-layout.component').then(
+                (m) => m.UserAccessLayoutComponent,
+              ),
+            children: [
+              { path: '', redirectTo: 'usuarios', pathMatch: 'full' },
+              {
+                path: 'usuarios',
+                loadComponent: () =>
+                  import('./pages/settings/user-access/users-admin-page.component').then(
+                    (m) => m.UsersAdminPageComponent,
+                  ),
+              },
+              {
+                path: 'roles',
+                loadComponent: () =>
+                  import('./pages/settings/user-access/roles-admin-page.component').then(
+                    (m) => m.RolesAdminPageComponent,
+                  ),
+              },
+              {
+                path: 'areas',
+                loadComponent: () =>
+                  import('./pages/settings/user-access/work-areas-admin-page.component').then(
+                    (m) => m.WorkAreasAdminPageComponent,
+                  ),
+              },
+            ],
           },
         ],
       },

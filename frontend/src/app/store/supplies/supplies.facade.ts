@@ -1,7 +1,7 @@
 import { inject, Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { Observable } from 'rxjs';
-import { Supply, SupplyCategory, SupplyType } from '../../core/models';
+import { Supply, SupplyCategory } from '../../core/models';
 import { SuppliesActions } from './supplies.actions';
 import {
   selectSuppliesFiltered,
@@ -16,18 +16,19 @@ export class SuppliesFacade {
   readonly loaded$ = this.store.select(selectSuppliesLoaded);
   readonly loading$ = this.store.select(selectSuppliesLoading);
 
-  load(refresh = false, supplyType?: SupplyType, category?: SupplyCategory): void {
+  load(refresh = false, category?: SupplyCategory): void {
     this.store.dispatch(
-      SuppliesActions.load({ refresh, supplyType, category }),
+      SuppliesActions.load({ refresh, category }),
     );
   }
 
-  supplies(
-    supplyType?: SupplyType,
-    category?: SupplyCategory,
-  ): Observable<Supply[]> {
+  refresh(): void {
+    this.load(true);
+  }
+
+  supplies(category?: SupplyCategory): Observable<Supply[]> {
     return this.store.select(
-      selectSuppliesFiltered({ type: supplyType, category }),
+      selectSuppliesFiltered({ category }),
     );
   }
 

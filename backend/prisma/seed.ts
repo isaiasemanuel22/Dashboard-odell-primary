@@ -1,26 +1,23 @@
 import { PrismaClient } from '@prisma/client';
 import { toInputJson } from '../src/prisma/json.util';
 import { createSeedState } from '../src/store/store.seed';
+import { mapSettingsToDb } from '../src/store/mappers/settings.mapper';
 
 const prisma = new PrismaClient();
 
 async function main() {
   const state = createSeedState();
+  const settingsData = mapSettingsToDb(state.generalSettings);
 
   await prisma.appSettings.upsert({
     where: { id: 1 },
     create: {
       id: 1,
-      electricityCostPerKwh: state.generalSettings.electricityCostPerKwh,
-      laborCostPerHour: state.generalSettings.laborCostPerHour,
-      profitMargins: toInputJson(state.generalSettings.profitMargins),
-      paperPricesPerSqm: toInputJson(state.generalSettings.paperPricesPerSqm),
-      powerConsumptions: toInputJson(state.generalSettings.powerConsumptions),
-      machineCosts: toInputJson(state.generalSettings.machineCosts),
-      filamentPrices: toInputJson(state.generalSettings.filamentPrices),
-      resinPrices: toInputJson(state.generalSettings.resinPrices),
+      ...settingsData,
     },
-    update: {},
+    update: {
+      colors: settingsData.colors,
+    },
   });
 
   for (const row of state.categories) {

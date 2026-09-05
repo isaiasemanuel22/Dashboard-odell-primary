@@ -14,11 +14,17 @@ import {
   MachineCostConfig,
   MachineProfile,
   PaperPricesPerSqm,
+  PaperReferenceSheets,
   PowerConsumptionConfig,
   ResinPriceConfig,
   ServiceProfitMargins,
 } from '../common/interfaces';
-import { SupplyType } from '../common/enums';
+import {
+  normalizePaperReferenceSheets,
+  referenceSheetFromPricePerSqm,
+  syncPaperPricesFromReferenceSheets,
+} from '../common/paper-cost.util';
+import { SupplyCategory } from '../common/enums';
 import { validateColorConfig } from '../common/color.util';
 import { StoreService } from '../store/store.service';
 import { RealtimeScope } from '../realtime/realtime.types';
@@ -38,6 +44,15 @@ export class SettingsService {
     this.store.generalSettings.profitMargins = normalizeProfitMargins(
       this.store.generalSettings.profitMargins,
     );
+    this.store.generalSettings.paperReferenceSheets =
+      normalizePaperReferenceSheets(
+        this.store.generalSettings.paperReferenceSheets,
+        this.store.generalSettings.paperPricesPerSqm,
+      );
+    this.store.generalSettings.paperPricesPerSqm =
+      syncPaperPricesFromReferenceSheets(
+        this.store.generalSettings.paperReferenceSheets,
+      );
     return structuredClone(this.store.generalSettings);
   }
 
@@ -78,6 +93,7 @@ export class SettingsService {
     errorMarginPercent?: number;
     profitMargins?: Partial<ServiceProfitMargins>;
     paperPricesPerSqm?: Partial<PaperPricesPerSqm>;
+    paperReferenceSheets?: Partial<PaperReferenceSheets>;
     machineProfiles?: unknown[];
     filamentTypeAverages?: Partial<GeneralSettings['filamentTypeAverages']>;
     resinTypeAverages?: Partial<GeneralSettings['resinTypeAverages']>;
@@ -98,8 +114,33 @@ export class SettingsService {
       this.updateProfitMargins(data.profitMargins);
     }
 
-    if (data.paperPricesPerSqm !== undefined) {
-      this.updatePaperPrices(data.paperPricesPerSqm);
+    if (data.paperReferenceSheets !== undefined) {
+      this.updatePaperPrices(data.paperReferenceSheets);
+    } else if (data.paperPricesPerSqm !== undefined) {
+      const sheets = this.store.generalSettings.paperReferenceSheets;
+      const partial: Partial<PaperReferenceSheets> = {};
+      if (data.paperPricesPerSqm.sublimacion != null) {
+        partial.sublimacion = referenceSheetFromPricePerSqm(
+          data.paperPricesPerSqm.sublimacion,
+          sheets.sublimacion.widthCm,
+          sheets.sublimacion.lengthCm,
+        );
+      }
+      if (data.paperPricesPerSqm.dtf != null) {
+        partial.dtf = referenceSheetFromPricePerSqm(
+          data.paperPricesPerSqm.dtf,
+          sheets.dtf.widthCm,
+          sheets.dtf.lengthCm,
+        );
+      }
+      if (data.paperPricesPerSqm.dtfUv != null) {
+        partial.dtfUv = referenceSheetFromPricePerSqm(
+          data.paperPricesPerSqm.dtfUv,
+          sheets.dtfUv.widthCm,
+          sheets.dtfUv.lengthCm,
+        );
+      }
+      this.updatePaperPrices(partial);
     }
 
     if (data.machineProfiles !== undefined) {
@@ -191,18 +232,29 @@ export class SettingsService {
   }
 
   updatePaperPrices(
-    paperPricesPerSqm: Partial<PaperPricesPerSqm>,
-  ): PaperPricesPerSqm {
-    for (const [key, value] of Object.entries(paperPricesPerSqm)) {
-      assertNonNegativeNumber(value, `paperPricesPerSqm.${key}`);
+    paperReferenceSheets: Partial<PaperReferenceSheets>,
+  ): PaperReferenceSheets {
+    for (const [key, sheet] of Object.entries(paperReferenceSheets)) {
+      if (!sheet) continue;
+      assertNonNegativeNumber(sheet.widthCm, `paperReferenceSheets.${key}.widthCm`);
+      assertNonNegativeNumber(sheet.lengthCm, `paperReferenceSheets.${key}.lengthCm`);
+      assertNonNegativeNumber(sheet.price, `paperReferenceSheets.${key}.price`);
     }
 
-    this.store.generalSettings.paperPricesPerSqm = {
-      ...this.store.generalSettings.paperPricesPerSqm,
-      ...paperPricesPerSqm,
-    };
+    this.store.generalSettings.paperReferenceSheets =
+      normalizePaperReferenceSheets(
+        {
+          ...this.store.generalSettings.paperReferenceSheets,
+          ...paperReferenceSheets,
+        },
+        this.store.generalSettings.paperPricesPerSqm,
+      );
+    this.store.generalSettings.paperPricesPerSqm =
+      syncPaperPricesFromReferenceSheets(
+        this.store.generalSettings.paperReferenceSheets,
+      );
     this.recordSettingsChange(['settings']);
-    return structuredClone(this.store.generalSettings.paperPricesPerSqm);
+    return structuredClone(this.store.generalSettings.paperReferenceSheets);
   }
 
   getMachineProfiles(): MachineProfile[] {
@@ -476,7 +528,7 @@ export class SettingsService {
     const now = new Date().toISOString();
     for (const supply of this.store.supplies) {
       if (
-        supply.type === SupplyType.FILAMENTO &&
+        supply.category === SupplyCategory.FDM &&
         supply.priceFromSettings &&
         supply.brand?.toLowerCase() === filamentPrice.brand.toLowerCase() &&
         supply.filamentType === filamentPrice.materialType
@@ -491,7 +543,8 @@ export class SettingsService {
     const now = new Date().toISOString();
     for (const supply of this.store.supplies) {
       if (
-        supply.type === SupplyType.RESINA &&
+        supply.category === SupplyCategory.RESINA &&
+        supply.resinType &&
         supply.priceFromSettings &&
         supply.brand?.toLowerCase() === resinPrice.brand.toLowerCase() &&
         supply.resinType === resinPrice.resinType

@@ -27,21 +27,17 @@ import {
   ResinType,
   Supply,
   SupplyCategory,
-  SupplyType,
 } from '../../../core/models';
+import { SettingsService } from '../../../core/services/settings.service';
 import {
-  SettingsService,
-  SuppliesService,
-} from '../../../core/services/settings.service';
-import {
-  inferSupplyCategory,
   resinTypeOptions,
   supplyCategoryOptions,
-  supplyTypeOptionsForCategory,
-  supplyTypesForCategory,
 } from '../../../shared/utils/select-options';
 import { buildFilamentTypeOptions } from '../../../shared/utils/filament-type.util';
-import { supplyRequiresColor } from '../../../shared/utils/color.helpers';
+import {
+  defaultSupplyUnit,
+  supplyUnitOptions,
+} from '../../../shared/utils/supply-unit.util';
 
 @Component({
   selector: 'app-supply-form',
@@ -60,7 +56,6 @@ import { supplyRequiresColor } from '../../../shared/utils/color.helpers';
   styleUrl: './supply-form.component.scss',
 })
 export class SupplyFormComponent implements OnInit, OnChanges {
-  private readonly suppliesService = inject(SuppliesService);
   private readonly settingsService = inject(SettingsService);
 
   @Input() supply: Supply | null = null;
@@ -80,7 +75,6 @@ export class SupplyFormComponent implements OnInit, OnChanges {
 
   name = '';
   category = SupplyCategory.FDM;
-  type = SupplyType.FILAMENTO;
   filamentType = FilamentType.PLA;
   resinType = ResinType.ESTANDAR;
   brand = '';
@@ -93,10 +87,6 @@ export class SupplyFormComponent implements OnInit, OnChanges {
   supplier = '';
   priceEditable = true;
   configError = '';
-
-  get filteredSupplyTypeOptions() {
-    return supplyTypeOptionsForCategory(this.category);
-  }
 
   get filamentTypeOptions(): DbSelectOption[] {
     return buildFilamentTypeOptions(
@@ -155,19 +145,19 @@ export class SupplyFormComponent implements OnInit, OnChanges {
   }
 
   get isFilament(): boolean {
-    return this.type === SupplyType.FILAMENTO;
+    return this.category === SupplyCategory.FDM;
   }
 
   get isResin(): boolean {
-    return this.type === SupplyType.RESINA;
-  }
-
-  get needsMaterialType(): boolean {
-    return this.isFilament || this.isResin;
+    return this.category === SupplyCategory.RESINA;
   }
 
   get showColorField(): boolean {
-    return supplyRequiresColor(this.type);
+    return (
+      this.category === SupplyCategory.FDM ||
+      this.category === SupplyCategory.RESINA ||
+      this.category === SupplyCategory.ESTAMPADO
+    );
   }
 
   get colorOptions(): DbSelectOption[] {
@@ -177,27 +167,19 @@ export class SupplyFormComponent implements OnInit, OnChanges {
     }));
   }
 
+  get unitOptions(): DbSelectOption[] {
+    return supplyUnitOptions(this.unit).map((option) => ({
+      value: option.value,
+      label: option.label,
+    }));
+  }
+
   get selectedColorHex(): string | undefined {
     return this.colorCatalog.find((color) => color.id === this.colorId)?.hex;
   }
 
   onCategoryChange(): void {
-    const allowed = supplyTypesForCategory(this.category);
-    if (!allowed.includes(this.type)) {
-      this.type = allowed[0];
-    }
-    this.onTypeChange();
-  }
-
-  onTypeChange(): void {
-    this.category = inferSupplyCategory(this.type);
-    this.setDefaultUnit();
-    this.brand = '';
-    this.colorId = '';
-    this.unitPrice = 0;
-    this.priceFromSettings = false;
-    this.configError = '';
-    this.syncPriceEditable();
+    this.onCategoryFieldsChange();
   }
 
   onFilamentTypeChange(): void {
@@ -216,7 +198,8 @@ export class SupplyFormComponent implements OnInit, OnChanges {
 
   onSubmit(): void {
     this.configError = '';
-    if (this.needsMaterialType && !this.priceFromSettings) {
+
+    if ((this.isFilament || this.isResin) && !this.priceFromSettings) {
       this.configError = this.isFilament
         ? 'Seleccioná una marca de la lista de Ajustes → Filamentos.'
         : 'Seleccioná una marca de la lista de Ajustes → Resinas.';
@@ -230,7 +213,6 @@ export class SupplyFormComponent implements OnInit, OnChanges {
     const payload: Partial<Supply> = {
       name: this.name.trim(),
       category: this.category,
-      type: this.type,
       unit: this.unit,
       quantity: Number(this.quantity),
       minStock: Number(this.minStock),
@@ -309,8 +291,7 @@ export class SupplyFormComponent implements OnInit, OnChanges {
   private resetForm(): void {
     if (this.supply) {
       this.name = this.supply.name;
-      this.category = this.supply.category ?? inferSupplyCategory(this.supply.type);
-      this.type = this.supply.type;
+      this.category = this.supply.category;
       this.filamentType = this.supply.filamentType ?? FilamentType.PLA;
       this.resinType = this.supply.resinType ?? ResinType.ESTANDAR;
       this.brand = this.supply.brand ?? '';
@@ -325,7 +306,6 @@ export class SupplyFormComponent implements OnInit, OnChanges {
     } else {
       this.name = '';
       this.category = this.defaultCategory ?? SupplyCategory.FDM;
-      this.type = supplyTypesForCategory(this.category)[0];
       this.filamentType = FilamentType.PLA;
       this.resinType = ResinType.ESTANDAR;
       this.brand = '';
@@ -341,6 +321,16 @@ export class SupplyFormComponent implements OnInit, OnChanges {
     }
   }
 
+  private onCategoryFieldsChange(): void {
+    this.setDefaultUnit();
+    this.brand = '';
+    this.colorId = '';
+    this.unitPrice = 0;
+    this.priceFromSettings = false;
+    this.configError = '';
+    this.syncPriceEditable();
+  }
+
   private syncPriceEditable(): void {
     if (this.isFilament || this.isResin) {
       this.priceEditable = !this.priceFromSettings;
@@ -350,20 +340,7 @@ export class SupplyFormComponent implements OnInit, OnChanges {
   }
 
   private setDefaultUnit(): void {
-    const units: Record<SupplyType, string> = {
-      [SupplyType.FILAMENTO]: 'kg',
-      [SupplyType.RESINA]: 'L',
-      [SupplyType.ALCOHOL]: 'L',
-      [SupplyType.TINTA]: 'ml',
-      [SupplyType.REMERA]: 'unidad',
-      [SupplyType.TAZA]: 'unidad',
-      [SupplyType.BUZO]: 'unidad',
-      [SupplyType.GORRA]: 'unidad',
-      [SupplyType.FILM]: 'hoja',
-      [SupplyType.VINILO]: 'm',
-      [SupplyType.OTRO]: 'unidad',
-    };
-    this.unit = units[this.type];
+    this.unit = defaultSupplyUnit(this.category);
   }
 
   private formatArs(value: number): string {

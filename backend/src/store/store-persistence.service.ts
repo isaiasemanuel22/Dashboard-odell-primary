@@ -11,7 +11,7 @@ import {
   StoreCollection,
 } from './store.collections';
 import { Prisma } from '@prisma/client';
-import { GeneralSettings, Order, PrintJob, RetailSale } from '../common/interfaces';
+import { GeneralSettings, Order, PrintJob, Quote, RetailSale } from '../common/interfaces';
 import { PrismaService } from '../prisma/prisma.service';
 import { resolveAllProductComponents } from '../products/product-component.util';
 import {
@@ -31,6 +31,10 @@ import {
   mapPrintJobToDb,
   mapProductFromDb,
   mapProductToDb,
+  mapQuoteFromDb,
+  mapQuoteItemToDb,
+  mapQuoteToDbCreate,
+  mapQuoteToDbUpdate,
   mapRetailSaleFromDb,
   mapRetailSaleItemToDb,
   mapRetailSaleToDb,
@@ -38,6 +42,8 @@ import {
   mapSettingsToDb,
   mapSupplyFromDb,
   mapSupplyToDb,
+  mapTreasuryExpenseFromDb,
+  mapTreasuryExpenseToDb,
 } from './mappers';
 import { createEmptyState, createSeedState } from './store.seed';
 import { StoreService } from './store.service';
@@ -220,6 +226,17 @@ export class StorePersistenceService
     return count === 0;
   }
 
+  private async loadTreasuryExpenses() {
+    try {
+      return await this.db.treasuryExpense.findMany();
+    } catch (error) {
+      this.logger.warn(
+        `No se pudieron cargar egresos de billetera (${this.errorMessage(error)}).`,
+      );
+      return [];
+    }
+  }
+
   private async loadState(): Promise<StoreState> {
     const [
       settingsRow,
@@ -230,8 +247,10 @@ export class StorePersistenceService
       impresos,
       materials,
       orders,
+      quotes,
       printJobs,
       retailSales,
+      treasuryExpenses,
     ] = await Promise.all([
       this.db.appSettings.findUnique({ where: { id: 1 } }),
       this.db.category.findMany(),
@@ -243,10 +262,14 @@ export class StorePersistenceService
       this.db.order.findMany({
         include: { items: { orderBy: { sortIndex: 'asc' } } },
       }),
+      this.db.quote.findMany({
+        include: { items: { orderBy: { sortIndex: 'asc' } } },
+      }),
       this.db.printJob.findMany(),
       this.db.retailSale.findMany({
         include: { items: { orderBy: { sortIndex: 'asc' } } },
       }),
+      this.loadTreasuryExpenses(),
     ]);
 
     if (!settingsRow) {
@@ -264,8 +287,12 @@ export class StorePersistenceService
       impresos: impresos.map((row) => mapImpresoFromDb(row)),
       materials: materials.map((row) => mapMaterialFromDb(row)),
       orders: orders.map((row) => mapOrderFromDb(row)),
+      quotes: quotes.map((row) => mapQuoteFromDb(row)),
       printJobs: printJobs.map((row) => mapPrintJobFromDb(row)),
       retailSales: retailSales.map((row) => mapRetailSaleFromDb(row)),
+      treasuryExpenses: treasuryExpenses.map((row) =>
+        mapTreasuryExpenseFromDb(row),
+      ),
     };
   }
 
@@ -360,6 +387,9 @@ export class StorePersistenceService
       if (dirty.has('orders')) {
         await this.syncOrders(tx, state.orders);
       }
+      if (dirty.has('quotes')) {
+        await this.syncQuotes(tx, state.quotes);
+      }
       if (dirty.has('printJobs')) {
         await this.syncCollection(
           tx,
@@ -375,6 +405,28 @@ export class StorePersistenceService
       }
       if (dirty.has('retailSales')) {
         await this.syncRetailSales(tx, state.retailSales);
+      }
+      if (dirty.has('treasuryExpenses')) {
+        try {
+          await this.syncCollection(
+            tx,
+            state.treasuryExpenses,
+            (ids) =>
+              tx.treasuryExpense.deleteMany({
+                where: { id: { notIn: ids } },
+              }),
+            (row) =>
+              tx.treasuryExpense.upsert({
+                where: { id: row.id },
+                create: mapTreasuryExpenseToDb(row),
+                update: mapTreasuryExpenseToDb(row),
+              }),
+          );
+        } catch (error) {
+          this.logger.warn(
+            `No se pudieron guardar egresos de billetera (${this.errorMessage(error)}).`,
+          );
+        }
       }
     });
   }
@@ -414,6 +466,34 @@ export class StorePersistenceService
       for (const [index, item] of order.items.entries()) {
         await tx.orderItem.create({
           data: mapOrderItemToDb(order.id, index, item),
+        });
+      }
+    }
+  }
+
+  private async syncQuotes(
+    tx: Prisma.TransactionClient,
+    quotes: Quote[],
+  ): Promise<void> {
+    const quoteIds = quotes.map((quote) => quote.id);
+    await tx.quoteItem.deleteMany({
+      where: { quoteId: { notIn: quoteIds.length ? quoteIds : ['__none__'] } },
+    });
+    await tx.quote.deleteMany({
+      where: { id: { notIn: quoteIds.length ? quoteIds : ['__none__'] } },
+    });
+
+    for (const quote of quotes) {
+      await tx.quote.upsert({
+        where: { id: quote.id },
+        create: mapQuoteToDbCreate(quote),
+        update: mapQuoteToDbUpdate(quote),
+      });
+
+      await tx.quoteItem.deleteMany({ where: { quoteId: quote.id } });
+      for (const [index, item] of quote.items.entries()) {
+        await tx.quoteItem.create({
+          data: mapQuoteItemToDb(quote.id, index, item),
         });
       }
     }

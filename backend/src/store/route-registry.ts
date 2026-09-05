@@ -18,6 +18,22 @@ type PathRule = {
 
 const PATH_RULES: PathRule[] = [
   {
+    matches: (path) => /\/quotes\/[^/]+\/order/.test(path),
+    meta: {
+      collections: ['quotes', 'orders', 'printJobs', 'products'],
+      scopes: ['dashboard', 'quotes', 'orders', 'print-jobs'],
+      entity: 'order',
+    },
+  },
+  {
+    matches: (path) => path.includes('/quotes'),
+    meta: {
+      collections: ['quotes'],
+      scopes: ['dashboard', 'quotes'],
+      entity: 'quote',
+    },
+  },
+  {
     matches: (path) => path.includes('/orders'),
     meta: {
       collections: ['orders', 'printJobs', 'products'],
@@ -68,9 +84,17 @@ const PATH_RULES: PathRule[] = [
   {
     matches: (path) => path.includes('/supplies'),
     meta: {
-      collections: ['supplies', 'printJobs'],
-      scopes: ['supplies', 'print-jobs'],
+      collections: ['supplies', 'printJobs', 'treasuryExpenses'],
+      scopes: ['supplies', 'print-jobs', 'dashboard'],
       entity: 'supply',
+    },
+  },
+  {
+    matches: (path) => path.includes('/treasury'),
+    meta: {
+      collections: ['treasuryExpenses', 'supplies'],
+      scopes: ['dashboard', 'supplies'],
+      entity: 'settings',
     },
   },
   {

@@ -11,7 +11,7 @@ import {
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
-import { OrderStatus, PrintJobStatus, ServiceType } from '../enums';
+import { OrderStatus, FilamentType, PaperType, PrintJobStatus, ServiceType } from '../enums';
 
 export class UpdateStatusDto {
   @IsEnum(OrderStatus)
@@ -72,6 +72,47 @@ export class OrderItemDto {
   @IsNumber()
   @Min(0)
   unitPrice!: number;
+
+  @IsOptional()
+  @IsBoolean()
+  includesPrint?: boolean;
+
+  @IsOptional()
+  @IsEnum(PaperType)
+  printPaperType?: PaperType;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.1)
+  printWidthCm?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.1)
+  printLengthCm?: number;
+
+  @IsOptional()
+  @IsString()
+  printImpresoId?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  designUnitPrice?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  printTimeHours?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  grams?: number;
+
+  @IsOptional()
+  @IsEnum(FilamentType)
+  filamentType?: FilamentType;
 }
 
 export class CreateOrderDto {

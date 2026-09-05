@@ -23,9 +23,9 @@ import {
   DbFormComponent,
   DbFormErrorComponent,
   DbFormFooterComponent,
-  DbButtonComponent,
-} from '@general-components';
-import { ProductFormPricingFacade } from '../../../store/product-form-pricing/product-form-pricing.facade';
+} from '@dashboard-form';
+import { DbButtonComponent } from '../../../components/db-button/db-button.component';
+import { ProductFormPricingFacade } from './store/product-form-pricing/product-form-pricing.facade';
 import { ProductFormFacade } from './product-form.facade';
 import { ProductFormPricingService } from './product-form-pricing.service';
 import { ProductFormBasicFieldsComponent, ProductFormBasicFieldsValue } from './sections/product-form-basic-fields.component';
@@ -87,17 +87,17 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     return this.basicFields?.type ?? this.facade.type;
   }
 
-  get showComponentsSection(): boolean {
-    const includesPieces =
-      this.basicFields?.includesPieces ?? this.facade.includesPieces;
-    return this.productType === ProductType.COMBO || includesPieces;
-  }
-
   ngOnInit(): void {
     this.facade.init(this.product);
     this.syncBasicFields();
     this.syncCategoryIds();
     this.syncComponentsValue();
+    this.facade.form.controls.includesPieces.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.cdr.markForCheck());
+    this.facade.form.controls.components.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.cdr.markForCheck());
     this.facade.basicFieldsSync$
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
@@ -134,6 +134,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     if (previousType !== value.type) {
       this.pricingStore.setProductType(value.type);
     }
+    this.syncComponentsValue();
     this.cdr.markForCheck();
   }
 
@@ -179,9 +180,9 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       this.facade.patchBasicFields(this.basicFieldsSection.readValue());
     }
 
-    if (this.componentsSection) {
-      this.facade.patchComponentsValue(this.componentsSection.readValue());
-    }
+    this.facade.patchComponentsValue(
+      this.componentsSection?.readValue() ?? this.facade.componentsValue,
+    );
 
     if (this.categoriesSection) {
       this.facade.patchCategoryIds(this.categoriesSection.readValue());

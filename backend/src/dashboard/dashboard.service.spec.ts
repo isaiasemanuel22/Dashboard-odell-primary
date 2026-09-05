@@ -1,6 +1,7 @@
-import { OrderStatus } from '../common/enums';
+import { OrderStatus, PrintJobStatus } from '../common/enums';
 import { DashboardService } from './dashboard.service';
 import { SalesService } from '../sales/sales.service';
+import { TreasuryService } from '../treasury/treasury.service';
 import {
   OrderRepository,
   ProductRepository,
@@ -22,7 +23,9 @@ describe('DashboardService', () => {
       new ProductRepository(store),
       {} as never,
     );
-    service = new DashboardService(store, sales);
+    service = new DashboardService(store, sales, {
+      getAvailableBalance: () => sales.getTotalIncome(),
+    } as TreasuryService);
   });
 
   it('calcula tendencia mensual de pedidos e ingresos', () => {
@@ -94,5 +97,65 @@ describe('DashboardService', () => {
     const stats = service.getStats();
 
     expect(stats.recentOrders.map((order) => order.id)).toEqual(['ord-open']);
+  });
+
+  it('expone la billetera como dinero disponible del emprendimiento', () => {
+    store.retailSales.push({
+      id: 'sale-1',
+      items: [],
+      total: 5000,
+      soldAt: '2026-07-01T12:00:00.000Z',
+      createdAt: '2026-07-01T12:00:00.000Z',
+    });
+
+    const stats = service.getStats();
+
+    expect(stats.walletBalance).toBe(5000);
+  });
+
+  it('arma notificaciones operativas para el dashboard', () => {
+    store.supplies.push({
+      id: 'sup-1',
+      name: 'PLA negro',
+      category: 'fdm',
+      unit: 'kg',
+      quantity: 0.2,
+      minStock: 1,
+      unitPrice: 1000,
+      priceFromSettings: false,
+      updatedAt: '2026-07-01T12:00:00.000Z',
+    });
+
+    store.printJobs.push({
+      id: 'job-1',
+      orderId: 'ord-1',
+      orderItemIndex: 0,
+      customerName: 'Cliente',
+      productName: 'Pieza demo',
+      type: 'fdm',
+      status: PrintJobStatus.BLOQUEADO,
+      active: true,
+      priority: 1,
+      machine: 'Ender',
+      estimatedHours: 2,
+      dueDate: '2026-07-10T18:00:00.000Z',
+      taskType: 'PRODUCTION',
+      quantity: 1,
+      archived: false,
+      blockedReason: 'Insumos insuficientes',
+      suppliesAvailableNotifiedAt: '2026-07-09T10:00:00.000Z',
+    });
+
+    const stats = service.getStats();
+
+    expect(stats.notifications.some((item) => item.id === 'low-stock-sup-1')).toBe(
+      true,
+    );
+    expect(stats.notifications.some((item) => item.id === 'blocked-job-1')).toBe(
+      true,
+    );
+    expect(
+      stats.notifications.find((item) => item.id === 'blocked-job-1')?.type,
+    ).toBe('success');
   });
 });

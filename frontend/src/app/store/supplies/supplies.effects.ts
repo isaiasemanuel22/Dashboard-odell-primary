@@ -2,7 +2,7 @@ import { inject, Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Actions, createEffect, ofType } from '@ngrx/effects';
 import { Store } from '@ngrx/store';
-import { catchError, exhaustMap, filter, map, of, withLatestFrom } from 'rxjs';
+import { catchError, filter, map, of, switchMap, withLatestFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Supply } from '../../core/models';
 import { SuppliesActions } from './supplies.actions';
@@ -19,7 +19,7 @@ export class SuppliesEffects {
       ofType(SuppliesActions.load),
       withLatestFrom(this.store.select(selectSuppliesLoaded)),
       filter(([action, loaded]) => Boolean(action.refresh) || !loaded),
-      exhaustMap(() =>
+      switchMap(() =>
         this.http.get<Supply[]>(`${environment.apiUrl}/supplies`).pipe(
           map((supplies) => SuppliesActions.loadSuccess({ supplies })),
           catchError((error: unknown) =>

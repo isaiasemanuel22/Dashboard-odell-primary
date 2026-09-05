@@ -33,7 +33,8 @@ import {
   calculateTotalWithDiscount,
   normalizeDiscountFields,
 } from '../common/utils/discount.util';
-import { isRevenueOrder } from './sales-order.util';
+import { isRevenueOrder, resolveOrderSoldAt } from './sales-order.util';
+import { computeAreaProfitBalances } from './profit-area.util';
 
 @Injectable()
 export class SalesService {
@@ -54,6 +55,10 @@ export class SalesService {
       stats: this.computeStats(entries),
       entries,
     };
+  }
+
+  getTotalIncome(): number {
+    return this.buildEntries().reduce((sum, entry) => sum + entry.total, 0);
   }
 
   findRetailSale(id: string): RetailSale {
@@ -150,6 +155,10 @@ export class SalesService {
       quantity: item.quantity,
       unitPrice: item.unitPrice,
       lineTotal: item.quantity * item.unitPrice,
+      serviceType: item.serviceType,
+      printTimeHours: item.printTimeHours,
+      grams: item.grams,
+      filamentType: item.filamentType,
     }));
     const economics = this.computeEntryEconomics(items, order.total);
 
@@ -162,7 +171,7 @@ export class SalesService {
       total: order.total,
       cost: economics.cost,
       profit: economics.profit,
-      soldAt: order.dueDate,
+      soldAt: resolveOrderSoldAt(order),
       notes: order.description,
       orderId: order.id,
       editable: false,
@@ -174,9 +183,7 @@ export class SalesService {
     total: number,
   ): { cost: number; profit: number } {
     const cost = items.reduce((sum, item) => {
-      const unitCost = item.productId
-        ? this.costCalculator.resolveCatalogUnitCost(item.productId)
-        : this.costCalculator.resolveDesignUnitCost(item.unitPrice);
+      const unitCost = this.costCalculator.resolveOrderItemUnitCost(item);
       return sum + unitCost * item.quantity;
     }, 0);
 
@@ -202,8 +209,29 @@ export class SalesService {
       (sum, entry) => sum + entry.total,
       0,
     );
-    const monthlyCost = entries.reduce((sum, entry) => sum + entry.cost, 0);
-    const monthlyProfit = entries.reduce((sum, entry) => sum + entry.profit, 0);
+    const monthlyRetailCost = retailEntries.reduce(
+      (sum, entry) => sum + entry.cost,
+      0,
+    );
+    const monthlyOrdersCost = orderEntries.reduce(
+      (sum, entry) => sum + entry.cost,
+      0,
+    );
+    const monthlyRetailProfit = retailEntries.reduce(
+      (sum, entry) => sum + entry.profit,
+      0,
+    );
+    const monthlyOrdersProfit = orderEntries.reduce(
+      (sum, entry) => sum + entry.profit,
+      0,
+    );
+    const monthlyCost = monthlyRetailCost + monthlyOrdersCost;
+    const monthlyProfit = monthlyRetailProfit + monthlyOrdersProfit;
+    const profitByArea = computeAreaProfitBalances(
+      entries,
+      (item) => this.costCalculator.resolveOrderItemUnitCost(item),
+      (productId) => this.products.findById(productId) ?? null,
+    );
 
     return {
       monthlyRevenue: monthlyRetailRevenue + monthlyOrdersRevenue,
@@ -211,8 +239,13 @@ export class SalesService {
       monthlyProfit,
       monthlyOrdersRevenue,
       monthlyRetailRevenue,
+      monthlyOrdersCost,
+      monthlyRetailCost,
+      monthlyOrdersProfit,
+      monthlyRetailProfit,
       monthlyOrdersCount: orderEntries.length,
       monthlyRetailCount: retailEntries.length,
+      profitByArea,
     };
   }
 

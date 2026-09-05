@@ -40,7 +40,10 @@ import {
   ORDER_DESCRIPTION_MAX_LENGTH,
   calculateOrderSubtotal,
   calculateOrderDiscount,
+  calculateLinePriceTotal,
+  isDesignService,
 } from '../../../shared/utils/order.helpers';
+import { resolveLinePrintUnitPrice } from '../../../shared/utils/design-print.util';
 import {
   ORDER_STATUS_CHANGE_SOURCE_LABELS,
   ORDER_STATUS_LABELS,
@@ -115,6 +118,15 @@ export class OrderDetailComponent implements OnInit {
   readonly descriptionMaxLength = ORDER_DESCRIPTION_MAX_LENGTH;
   readonly priorityTierClass = priorityTierClass;
   readonly sourceLabels = ORDER_STATUS_CHANGE_SOURCE_LABELS;
+  readonly isDesignService = isDesignService;
+
+  lineSubtotal(item: Order['items'][number]): number {
+    return calculateLinePriceTotal(item);
+  }
+
+  printUnitPrice(item: Order['items'][number]): number {
+    return resolveLinePrintUnitPrice(item);
+  }
   readonly taskKindLabels = TASK_KIND_LABELS;
   readonly priceTriggerLabels: Record<OrderPriceHistoryEntry['trigger'], string> = {
     settings: 'Ajustes del sistema',

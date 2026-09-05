@@ -6,7 +6,7 @@ import {
   ProductType,
   ResinType,
   ServiceType,
-  SupplyType,
+  SupplyCategory,
 } from '../common/enums';
 import {
   CalculateCostDto,
@@ -18,6 +18,12 @@ import {
   ProductPricingResult,
 } from '../common/interfaces';
 import { StoreService } from '../store/store.service';
+import { calculatePaperCostFromPricePerSqm } from '../common/paper-cost.util';
+import { isDesignService } from '../common/service-type.util';
+import {
+  buildFdmCostInput,
+  isFdmQuoteConfigured,
+} from '../orders/order-fdm-quote.util';
 import {
   calculateMachineOverhead,
   calcWashSupplyCost,
@@ -104,10 +110,15 @@ export class CostCalculatorService {
 
     const areaSqm = (widthCm * heightCm) / 10000;
     const pricePerSqm = this.getPaperPricePerSqm(paperType);
+    const paperCost = calculatePaperCostFromPricePerSqm(
+      pricePerSqm,
+      widthCm,
+      heightCm,
+    );
 
     return {
       areaSqm: Math.round(areaSqm * 10000) / 10000,
-      paperCost: Math.round(areaSqm * pricePerSqm),
+      paperCost,
     };
   }
 
@@ -378,11 +389,18 @@ export class CostCalculatorService {
     return Math.round(price / (1 + markup / 100));
   }
 
-  resolveDesignUnitCost(unitPrice: number): number {
+  resolveDesignUnitCost(
+    unitPrice: number,
+    serviceType: ServiceType = ServiceType.DISENO_GRAFICO,
+  ): number {
     const margins = normalizeProfitMargins(
       this.store.generalSettings.profitMargins,
     );
-    return this.costFromPriceAndMargin(unitPrice, margins.diseno);
+    const margin =
+      serviceType === ServiceType.MODELADO
+        ? margins.modelado
+        : margins.diseno_grafico;
+    return this.costFromPriceAndMargin(unitPrice, margin);
   }
 
   resolveCatalogUnitPrice(productId: string): number {
@@ -401,12 +419,42 @@ export class CostCalculatorService {
     }
   }
 
+  resolveFdmQuoteUnitCost(
+    item: Parameters<typeof buildFdmCostInput>[0],
+  ): number {
+    if (!isFdmQuoteConfigured(item)) return 0;
+    return this.calculateCost(buildFdmCostInput(item)).totalCost;
+  }
+
+  resolveOrderItemUnitCost(item: {
+    productId?: string;
+    unitPrice: number;
+    serviceType?: ServiceType;
+    grams?: number;
+    printTimeHours?: number;
+    filamentType?: FilamentType;
+  }): number {
+    if (
+      item.serviceType === ServiceType.IMPRESION_3D &&
+      isFdmQuoteConfigured(item)
+    ) {
+      return this.resolveFdmQuoteUnitCost(item);
+    }
+    if (item.productId) {
+      return this.resolveCatalogUnitCost(item.productId);
+    }
+    return this.resolveDesignUnitCost(
+      item.unitPrice,
+      item.serviceType ?? ServiceType.DISENO_GRAFICO,
+    );
+  }
+
   resolveOrderUnitPrice(
     serviceType: ServiceType,
     productId: string | undefined,
     clientUnitPrice: number,
   ): number {
-    if (serviceType === ServiceType.DISENO || !productId) {
+    if (isDesignService(serviceType) || !productId) {
       return clientUnitPrice;
     }
 
@@ -462,32 +510,32 @@ export class CostCalculatorService {
   }
 
   getUnitPriceForSupply(
-    type: SupplyType,
+    category: SupplyCategory,
     brand?: string,
     filamentType?: FilamentType,
     resinType?: ResinType,
   ): { unitPrice: number; unit: string; fromSettings: boolean } | null {
-    if (type === SupplyType.FILAMENTO) {
+    if (category === SupplyCategory.FDM) {
       const price = this.getDefaultFilamentPrice(brand, filamentType);
       if (price === null) return null;
       return { unitPrice: price, unit: 'kg', fromSettings: true };
     }
-    if (type === SupplyType.RESINA) {
+    if (category === SupplyCategory.RESINA && resinType) {
       const price = this.getDefaultResinPrice(brand, resinType);
       if (price === null) return null;
       return { unitPrice: price, unit: 'L', fromSettings: true };
     }
-    if (type === SupplyType.ALCOHOL) {
-      const alcoholSupplies = this.store.supplies.filter(
-        (supply) => supply.type === SupplyType.ALCOHOL,
+    if (category === SupplyCategory.RESINA && !resinType) {
+      const washSupplies = this.store.supplies.filter(
+        (supply) => supply.category === SupplyCategory.RESINA && !supply.resinType,
       );
-      if (!alcoholSupplies.length) return null;
-      const total = alcoholSupplies.reduce(
+      if (!washSupplies.length) return null;
+      const total = washSupplies.reduce(
         (sum, supply) => sum + Number(supply.unitPrice),
         0,
       );
       return {
-        unitPrice: total / alcoholSupplies.length,
+        unitPrice: total / washSupplies.length,
         unit: 'L',
         fromSettings: false,
       };

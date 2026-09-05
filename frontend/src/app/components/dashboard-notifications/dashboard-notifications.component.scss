@@ -1,0 +1,192 @@
+@use '../../shared/styles/variables' as *;
+@use '../../shared/styles/mobile' as mobile;
+
+.notifications {
+  position: relative;
+}
+
+.notifications__trigger {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.5rem;
+  height: 2.5rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-pill;
+  background: $color-surface;
+  box-shadow: $shadow-card;
+  cursor: pointer;
+  transition:
+    border-color 0.15s ease,
+    background 0.15s ease;
+
+  &:hover,
+  &--active {
+    border-color: $color-primary;
+    background: $color-primary-bg;
+  }
+
+  &:focus-visible {
+    outline: 2px solid $color-primary;
+    outline-offset: 2px;
+  }
+}
+
+.notifications__icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.notifications__badge {
+  position: absolute;
+  top: -0.25rem;
+  right: -0.25rem;
+  min-width: 1.1rem;
+  height: 1.1rem;
+  padding: 0 0.25rem;
+  border-radius: $radius-pill;
+  background: #dc2626;
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  line-height: 1.1rem;
+  text-align: center;
+}
+
+.notifications__backdrop {
+  display: none;
+}
+
+.notifications__panel {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  z-index: 50;
+  width: min(22rem, calc(100vw - 2rem));
+  max-height: min(24rem, calc(100vh - 8rem));
+  overflow: auto;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-surface;
+  box-shadow: 0 16px 40px rgba(15, 23, 42, 0.12);
+}
+
+.notifications__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.85rem 1rem;
+  border-bottom: 1px solid $color-border;
+  position: sticky;
+  top: 0;
+  background: $color-surface;
+  z-index: 1;
+
+  h3 {
+    margin: 0;
+    font-size: 0.95rem;
+    color: $color-text;
+  }
+}
+
+.notifications__count {
+  padding: 0.15rem 0.45rem;
+  border-radius: $radius-pill;
+  background: $color-surface-subtle;
+  color: $color-text-muted;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.notifications__empty {
+  margin: 0;
+  padding: 1.25rem 1rem;
+  color: $color-text-muted;
+  font-size: 0.875rem;
+}
+
+.notifications__list {
+  list-style: none;
+  margin: 0;
+  padding: 0.35rem;
+}
+
+.notifications__item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  padding: 0.75rem 0.85rem;
+  border-radius: $radius-sm;
+  text-decoration: none;
+  color: inherit;
+  transition: background 0.15s ease;
+
+  strong {
+    font-size: 0.85rem;
+    color: $color-text;
+  }
+
+  span {
+    font-size: 0.8rem;
+    color: $color-text-muted;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+  }
+
+  &:hover {
+    background: $color-surface-subtle;
+  }
+
+  &--warning strong {
+    color: #b45309;
+  }
+
+  &--success strong {
+    color: #047857;
+  }
+
+  &--info strong {
+    color: #2563eb;
+  }
+}
+
+@include mobile.mobile-only {
+  .notifications__backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 140;
+    background: rgba(15, 23, 42, 0.4);
+  }
+
+  .notifications__panel {
+    position: fixed;
+    top: auto;
+    bottom: calc(#{mobile.$mobile-bottom-nav-height} + 0.75rem);
+    left: 1rem;
+    right: 1rem;
+    width: auto;
+    max-height: min(
+      28rem,
+      calc(100vh - #{mobile.$mobile-header-height} - #{mobile.$mobile-bottom-nav-height} - 2rem)
+    );
+    z-index: 150;
+    border-radius: $radius-md;
+    box-shadow: 0 20px 48px rgba(15, 23, 42, 0.18);
+  }
+
+  .notifications__item {
+    min-height: 44px;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 420px) {
+  .notifications__panel {
+    left: 0.75rem;
+    right: 0.75rem;
+    bottom: calc(#{mobile.$mobile-bottom-nav-height} + 0.5rem);
+  }
+}

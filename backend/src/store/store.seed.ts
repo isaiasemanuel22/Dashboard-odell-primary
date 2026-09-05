@@ -5,13 +5,25 @@ import {
   ServiceType,
   FilamentType,
   ResinType,
-  SupplyType,
+  SupplyCategory,
 } from '../common/enums';
 import { StoreState } from './store.state';
 import { Product, Order } from '../common/interfaces';
 import { createDefaultMachineProfiles } from '../settings/machine-profile.util';
-import { inferSupplyCategory } from '../supplies/supply-category.util';
 import { ensureOrderStatusHistory } from '../orders/order-status-history.util';
+import { DEFAULT_COLOR_CATALOG } from './default-colors.seed';
+import {
+  normalizePaperReferenceSheets,
+  syncPaperPricesFromReferenceSheets,
+} from '../common/paper-cost.util';
+
+function defaultPaperReferenceSheets() {
+  return normalizePaperReferenceSheets(undefined, {
+    sublimacion: 4500,
+    dtf: 6500,
+    dtfUv: 8500,
+  });
+}
 
 export function createEmptyState(): StoreState {
   return {
@@ -23,7 +35,8 @@ export function createEmptyState(): StoreState {
       laborCostPerHour: 0,
       profitMargins: {
         impresion_3d: 40,
-        diseno: 50,
+        diseno_grafico: 50,
+        modelado: 50,
         estampado: 35,
       },
       paperPricesPerSqm: {
@@ -31,12 +44,17 @@ export function createEmptyState(): StoreState {
         dtf: 0,
         dtfUv: 0,
       },
+      paperReferenceSheets: normalizePaperReferenceSheets(undefined, {
+        sublimacion: 0,
+        dtf: 0,
+        dtfUv: 0,
+      }),
       filamentPrices: [],
       resinPrices: [],
       errorMarginPercent: 0,
       filamentTypeAverages: {},
       resinTypeAverages: {},
-      colors: [],
+      colors: [...DEFAULT_COLOR_CATALOG],
     },
     supplies: [],
     impresos: [],
@@ -44,9 +62,11 @@ export function createEmptyState(): StoreState {
     products: [],
     customers: [],
     orders: [],
+    quotes: [],
     printJobs: [],
     retailSales: [],
     materials: [],
+    treasuryExpenses: [],
   };
 }
 
@@ -70,14 +90,14 @@ export function createSeedState(): StoreState {
     laborCostPerHour: 800,
     profitMargins: {
       impresion_3d: 40,
-      diseno: 50,
+      diseno_grafico: 50,
+      modelado: 50,
       estampado: 35,
     },
-    paperPricesPerSqm: {
-      sublimacion: 4500,
-      dtf: 6500,
-      dtfUv: 8500,
-    },
+    paperPricesPerSqm: syncPaperPricesFromReferenceSheets(
+      defaultPaperReferenceSheets(),
+    ),
+    paperReferenceSheets: defaultPaperReferenceSheets(),
     filamentPrices: [
       {
         id: 'fp-1',
@@ -133,14 +153,14 @@ export function createSeedState(): StoreState {
     errorMarginPercent: 5,
     filamentTypeAverages: {},
     resinTypeAverages: {},
-    colors: [],
+    colors: [...DEFAULT_COLOR_CATALOG],
   };
 
   const supplies = [
     {
       id: 'sup-1',
       name: 'Filamento PLA Negro',
-      type: SupplyType.FILAMENTO,
+      category: SupplyCategory.FDM,
       filamentType: FilamentType.PLA,
       brand: 'FilAr',
       unit: 'kg',
@@ -149,12 +169,13 @@ export function createSeedState(): StoreState {
       unitPrice: 18000,
       priceFromSettings: true,
       supplier: 'FilAr 3D',
+      colorId: 'clr-1',
       updatedAt: '2026-07-01T00:00:00.000Z',
     },
     {
       id: 'sup-2',
       name: 'Filamento ABS Blanco',
-      type: SupplyType.FILAMENTO,
+      category: SupplyCategory.FDM,
       filamentType: FilamentType.ABS,
       brand: 'FilAr',
       unit: 'kg',
@@ -163,12 +184,13 @@ export function createSeedState(): StoreState {
       unitPrice: 22000,
       priceFromSettings: true,
       supplier: 'FilAr 3D',
+      colorId: 'clr-2',
       updatedAt: '2026-07-01T00:00:00.000Z',
     },
     {
       id: 'sup-3',
       name: 'Resina translúcida',
-      type: SupplyType.RESINA,
+      category: SupplyCategory.RESINA,
       resinType: ResinType.TRANSLUCIDA,
       brand: 'Elegoo',
       unit: 'L',
@@ -177,12 +199,13 @@ export function createSeedState(): StoreState {
       unitPrice: 35000,
       priceFromSettings: true,
       supplier: 'Elegoo Store',
+      colorId: 'clr-50',
       updatedAt: '2026-06-15T00:00:00.000Z',
     },
     {
       id: 'sup-3b',
       name: 'Alcohol isopropílico 99%',
-      type: SupplyType.ALCOHOL,
+      category: SupplyCategory.RESINA,
       unit: 'L',
       quantity: 2,
       minStock: 0.5,
@@ -194,37 +217,40 @@ export function createSeedState(): StoreState {
     {
       id: 'sup-4',
       name: 'Tinta DTF CMYK',
-      type: SupplyType.TINTA,
+      category: SupplyCategory.ESTAMPADO,
       unit: 'ml',
       quantity: 500,
       minStock: 200,
       unitPrice: 12,
       priceFromSettings: false,
       supplier: 'Textil Ink',
+      colorId: 'clr-10',
       updatedAt: '2026-06-20T00:00:00.000Z',
     },
     {
       id: 'sup-5',
       name: 'Remeras algodón 180g',
-      type: SupplyType.REMERA,
+      category: SupplyCategory.ESTAMPADO,
       unit: 'unidad',
       quantity: 45,
       minStock: 20,
       unitPrice: 3500,
       priceFromSettings: false,
       supplier: 'Textil Mayorista',
+      colorId: 'clr-2',
       updatedAt: '2026-07-03T00:00:00.000Z',
     },
     {
       id: 'sup-6',
       name: 'Tazas cerámica blanca',
-      type: SupplyType.TAZA,
+      category: SupplyCategory.ESTAMPADO,
       unit: 'unidad',
       quantity: 30,
       minStock: 10,
       unitPrice: 2800,
       priceFromSettings: false,
       supplier: 'Sublimación AR',
+      colorId: 'clr-2',
       updatedAt: '2026-06-28T00:00:00.000Z',
     },
   ];
@@ -531,9 +557,9 @@ export function createSeedState(): StoreState {
       assemblyTimeHours: 1,
       type: ProductType.FDM,
       size: '18 × 18 × 25 cm',
-      grams: 0,
-      printTimeHours: 0,
-      workTimeHours: 0,
+      grams: 202,
+      printTimeHours: 13.5,
+      workTimeHours: 3.2,
       filamentType: FilamentType.PLA,
     },
   ];
@@ -660,10 +686,10 @@ export function createSeedState(): StoreState {
       id: 'ord-4',
       customerId: 'cust-4',
       customerName: 'Emprendimientos Norte',
-      services: [ServiceType.ESTAMPADO, ServiceType.DISENO],
+      services: [ServiceType.ESTAMPADO, ServiceType.DISENO_GRAFICO],
       items: [
         {
-          serviceType: ServiceType.DISENO,
+          serviceType: ServiceType.DISENO_GRAFICO,
           productName: 'Diseño de logo corporativo',
           quantity: 1,
           unitPrice: 15000,
@@ -708,13 +734,13 @@ export function createSeedState(): StoreState {
       customerId: 'cust-1',
       customerName: 'María González',
       services: [
-        ServiceType.DISENO,
+        ServiceType.DISENO_GRAFICO,
         ServiceType.IMPRESION_3D,
         ServiceType.ESTAMPADO,
       ],
       items: [
         {
-          serviceType: ServiceType.DISENO,
+          serviceType: ServiceType.DISENO_GRAFICO,
           productName: 'Modelado 3D y arte vectorial',
           quantity: 1,
           unitPrice: 22000,
@@ -861,10 +887,7 @@ export function createSeedState(): StoreState {
 
   return {
     generalSettings,
-    supplies: supplies.map((supply) => ({
-      ...supply,
-      category: inferSupplyCategory(supply.type),
-    })),
+    supplies,
     impresos,
     categories,
     products: products.map((product) => ({
@@ -875,8 +898,10 @@ export function createSeedState(): StoreState {
     })) as Product[],
     customers,
     orders,
+    quotes: [],
     printJobs,
     retailSales,
     materials,
+    treasuryExpenses: [],
   };
 }

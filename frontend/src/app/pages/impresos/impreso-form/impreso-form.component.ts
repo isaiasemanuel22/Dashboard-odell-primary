@@ -24,12 +24,17 @@ import {
   PaperType,
 } from '../../../core/models';
 import { SettingsService } from '../../../core/services/settings.service';
-import { FormModalComponent } from '../../../shared/components/form-modal/form-modal.component';
+import { FormModalComponent } from '@general-components';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import {
   formatPrintDimensionsCm,
   hasValidPrintSize,
 } from '../../../shared/utils/estampado.helpers';
+import {
+  calculatePaperCostFromPricePerSqm,
+  paperReferenceKey,
+  pricePerSqmFromReferenceSheet,
+} from '../../../shared/utils/paper-cost.util';
 
 const PAPER_TYPE_OPTIONS: DbSelectOption[] = [
   { value: PaperType.SUBLIMACION, label: 'Sublimación' },
@@ -84,9 +89,13 @@ export class ImpresoFormComponent implements OnChanges {
     ) {
       return 0;
     }
-    const areaSqm = (this.widthCm * this.lengthCm) / 10000;
-    const pricePerSqm = this.getPricePerSqm(this.paperType);
-    return Math.round(areaSqm * pricePerSqm);
+    const pricePerSqm =
+      this.settings.paperPricesPerSqm[paperReferenceKey(this.paperType)];
+    return calculatePaperCostFromPricePerSqm(
+      pricePerSqm,
+      this.widthCm,
+      this.lengthCm,
+    );
   }
 
   get dimensionsLabel(): string {
@@ -130,16 +139,6 @@ export class ImpresoFormComponent implements OnChanges {
 
   private getPricePerSqm(type: PaperType): number {
     if (!this.settings) return 0;
-    const prices = this.settings.paperPricesPerSqm;
-    switch (type) {
-      case PaperType.SUBLIMACION:
-        return prices.sublimacion;
-      case PaperType.DTF:
-        return prices.dtf;
-      case PaperType.DTF_UV:
-        return prices.dtfUv;
-      default:
-        return 0;
-    }
+    return this.settings.paperPricesPerSqm[paperReferenceKey(type)];
   }
 }

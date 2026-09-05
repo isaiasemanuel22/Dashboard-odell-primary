@@ -9,10 +9,10 @@ import {
 import { ReactiveFormsModule } from '@angular/forms';
 import { AsyncPipe } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
-import { DbFieldsetComponent } from '@general-components';
-import { ProductFormGroup } from '../../../../core/services/product-form-state-manager.service';
+import { DbFieldsetComponent } from '@dashboard-form';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
-import { ProductFormPricingFacade } from '../../../../store/product-form-pricing/product-form-pricing.facade';
+import { ProductFormGroup } from '../services/product-form-state-manager.service';
+import { ProductFormPricingFacade } from '../store/product-form-pricing/product-form-pricing.facade';
 import { ProductFormFacade } from '../product-form.facade';
 
 @Component({

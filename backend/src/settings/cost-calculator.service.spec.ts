@@ -4,6 +4,14 @@ import { StoreService } from '../store/store.service';
 import { createEmptyState } from '../store/store.seed';
 import { createDefaultMachineProfiles } from './machine-profile.util';
 
+function setPaperPricePerSqm(
+  store: StoreService,
+  key: 'sublimacion' | 'dtf' | 'dtfUv',
+  pricePerSqm: number,
+): void {
+  store.generalSettings.paperPricesPerSqm[key] = pricePerSqm;
+}
+
 describe('CostCalculatorService', () => {
   let store: StoreService;
   let service: CostCalculatorService;
@@ -102,7 +110,7 @@ describe('CostCalculatorService', () => {
   });
 
   it('incluye costo de papel en productos estampados con dimensiones', () => {
-    store.generalSettings.paperPricesPerSqm.dtf = 6500;
+    setPaperPricePerSqm(store, 'dtf', 6500);
 
     const result = service.calculateCost({
       type: ProductType.ESTAMPADO,
@@ -175,7 +183,7 @@ describe('CostCalculatorService', () => {
   });
 
   it('calcula costo de papel por área', () => {
-    store.generalSettings.paperPricesPerSqm.sublimacion = 4000;
+    setPaperPricePerSqm(store, 'sublimacion', 4000);
     const result = service.calculateImpresoPaperCost(
       'sublimacion' as never,
       100,
@@ -189,7 +197,8 @@ describe('CostCalculatorService', () => {
   it('aplica el margen de ganancia configurado en Ajustes → Ganancias', () => {
     store.generalSettings.profitMargins = {
       impresion_3d: 55,
-      diseno: 50,
+      diseno_grafico: 50,
+      modelado: 50,
       estampado: 25,
     };
 
@@ -210,7 +219,8 @@ describe('CostCalculatorService', () => {
   it('usa costo guardado y nuevo margen cuando el recálculo automático da 0', () => {
     store.generalSettings.profitMargins = {
       impresion_3d: 50,
-      diseno: 50,
+      diseno_grafico: 50,
+      modelado: 50,
       estampado: 35,
     };
     store.generalSettings.filamentPrices = [];
@@ -314,7 +324,8 @@ describe('CostCalculatorService', () => {
   it('suma el costo de múltiples filamentos FDM', () => {
     store.generalSettings.profitMargins = {
       impresion_3d: 0,
-      diseno: 0,
+      diseno_grafico: 0,
+      modelado: 0,
       estampado: 0,
     };
     store.generalSettings.filamentTypeAverages = {

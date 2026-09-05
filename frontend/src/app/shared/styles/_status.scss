@@ -65,6 +65,26 @@
     background: #f1f5f9;
     color: #64748b;
   }
+
+  &.borrador {
+    background: #fef3c7;
+    color: #b45309;
+  }
+
+  &.enviado {
+    background: #dbeafe;
+    color: #1d4ed8;
+  }
+
+  &.aceptado {
+    background: #d1fae5;
+    color: #047857;
+  }
+
+  &.rechazado {
+    background: #fee2e2;
+    color: #b91c1c;
+  }
 }
 
 .stock-alert {

@@ -12,7 +12,7 @@ import { DateShortPipe } from '../../shared/pipes/labels.pipe';
 import { ProductBadgesComponent } from '../product-badges/product-badges.component';
 import { ProductImageCarouselComponent } from '../product-image-carousel/product-image-carousel.component';
 import { ProductPricingComponent } from '../product-pricing/product-pricing.component';
-import { DbButtonComponent } from '@general-components';
+import { DbButtonComponent } from '../db-button/db-button.component';
 
 @Component({
   selector: 'app-product-card',

@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { Supply, SupplyCategory } from '../../core/models';
-import { SuppliesService } from '../../core/services/settings.service';
-import { RealtimeService } from '../../core/services/realtime.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ColorConfig, Supply, SupplyCategory } from '../../core/models';
+import { SuppliesService, SettingsService } from '../../core/services/settings.service';
 import {
   DbListToolbarComponent,
   DbStateMessageComponent,
@@ -10,6 +10,7 @@ import {
 } from '@general-components';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import { supplyCategoryFilters } from '../../shared/utils/list-filters';
+import { SuppliesFacade } from '../../store/supplies/supplies.facade';
 
 type CategoryFilter = SupplyCategory | 'all';
 
@@ -26,11 +27,13 @@ type CategoryFilter = SupplyCategory | 'all';
 })
 export class SuppliesComponent implements OnInit {
   private readonly suppliesService = inject(SuppliesService);
-  private readonly realtime = inject(RealtimeService);
+  private readonly suppliesFacade = inject(SuppliesFacade);
+  private readonly settingsService = inject(SettingsService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly formDialogs = inject(FormDialogService);
 
   supplies: Supply[] = [];
+  colorCatalog: ColorConfig[] = [];
   loading = true;
   search = '';
   categoryFilter: CategoryFilter = 'all';
@@ -38,10 +41,34 @@ export class SuppliesComponent implements OnInit {
   readonly categoryFilters = supplyCategoryFilters();
 
   ngOnInit(): void {
-    this.loadSupplies();
-    this.realtime.bindReload(this.destroyRef, 'supplies', () =>
-      this.loadSupplies(),
-    );
+    this.loadColorCatalog();
+
+    this.suppliesFacade.loading$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((loading) => {
+        this.loading = loading;
+      });
+
+    this.suppliesService
+      .watchSupplies()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((items) => {
+        this.supplies = items;
+      });
+  }
+
+  private loadColorCatalog(): void {
+    const cached = this.settingsService.peekGeneralSettings();
+    if (cached) {
+      this.colorCatalog = cached.colors ?? [];
+      return;
+    }
+
+    this.settingsService.getGeneralSettings().subscribe({
+      next: (settings) => {
+        this.colorCatalog = settings.colors ?? [];
+      },
+    });
   }
 
   get filteredSupplies(): Supply[] {
@@ -55,35 +82,18 @@ export class SuppliesComponent implements OnInit {
     });
   }
 
-  loadSupplies(): void {
-    this.loading = true;
-    this.suppliesService.getSupplies().subscribe({
-      next: (items) => {
-        this.supplies = items;
-        this.loading = false;
-      },
-      error: () => {
-        this.loading = false;
-      },
-    });
-  }
-
   openCreate(): void {
     const defaultCategory =
       this.categoryFilter === 'all' ? undefined : this.categoryFilter;
-    this.formDialogs.openSupply(null, defaultCategory).subscribe((saved) => {
-      if (saved) this.loadSupplies();
-    });
+    this.formDialogs.openSupply(null, defaultCategory).subscribe();
   }
 
   openEdit(supply: Supply): void {
-    this.formDialogs.openSupply(supply).subscribe((saved) => {
-      if (saved) this.loadSupplies();
-    });
+    this.formDialogs.openSupply(supply).subscribe();
   }
 
   deleteSupply(supply: Supply): void {
     if (!confirm(`¿Eliminar "${supply.name}"?`)) return;
-    this.suppliesService.deleteSupply(supply.id).subscribe(() => this.loadSupplies());
+    this.suppliesService.deleteSupply(supply.id).subscribe();
   }
 }

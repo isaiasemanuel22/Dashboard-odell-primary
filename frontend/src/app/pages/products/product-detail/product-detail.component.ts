@@ -46,7 +46,16 @@ import {
 import { normalizeProductAttachments } from '../../../shared/utils/product-attachment.helpers';
 import { FormDialogService } from '../../../shared/form-dialogs/public-api';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
-import { resolveCategoryNames, isProductPublished, normalizeProductComponents, resolveProductUnitCost, resolveProductUnitPrice } from '../../../shared/utils/product.helpers';
+import {
+  isProductPublished,
+  normalizeProductComponents,
+  resolveCategoryNames,
+  resolveProductGrams,
+  resolveProductPrintTimeHours,
+  resolveProductWorkTimeHours,
+  resolveProductUnitCost,
+  resolveProductUnitPrice,
+} from '../../../shared/utils/product.helpers';
 import {
   DateShortPipe,
   FilamentTypeLabelPipe,
@@ -117,6 +126,27 @@ export class ProductDetailComponent implements OnInit {
 
   get stockOverview(): ProductStockOverview {
     return productStockOverview(this.product ?? { stock: 0 }, this.stock);
+  }
+
+  get displayGrams(): number {
+    if (!this.product || !isProduct3D(this.product)) {
+      return 0;
+    }
+    return resolveProductGrams(this.product, this.catalogProducts);
+  }
+
+  get displayPrintTimeHours(): number {
+    if (!this.product || !isProduct3D(this.product)) {
+      return 0;
+    }
+    return resolveProductPrintTimeHours(this.product, this.catalogProducts);
+  }
+
+  get displayWorkTimeHours(): number {
+    if (!this.product || !isProduct3D(this.product)) {
+      return 0;
+    }
+    return resolveProductWorkTimeHours(this.product, this.catalogProducts);
   }
 
   ngOnInit(): void {

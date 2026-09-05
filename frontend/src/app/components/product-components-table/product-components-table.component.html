@@ -3,6 +3,7 @@
     <tr>
       <th>Pieza</th>
       <th>Cant.</th>
+      <th>Color</th>
       <th>Costo</th>
       @if (mode === 'edit') {
         <th>Precio</th>
@@ -21,6 +22,25 @@
           }
         </td>
         <td>{{ item.quantity }}</td>
+        <td>
+          @if (mode === 'edit') {
+            <db-color-select
+              [ngModel]="item.colorId"
+              (ngModelChange)="onColorChange(item.productId, $event)"
+              [ngModelOptions]="{ standalone: true }"
+              [options]="colorOptions(item)"
+            />
+          } @else {
+            <span class="color-badge">
+              <span
+                class="color-badge__swatch"
+                [class.color-badge__swatch--indistinto]="!colorHex(item.colorId)"
+                [style.background-color]="colorHex(item.colorId) || null"
+              ></span>
+              <span>{{ colorLabel(item.colorId) }}</span>
+            </span>
+          }
+        </td>
         <td>{{ getLineCost(item) | currencyArs }}</td>
         @if (mode === 'edit') {
           <td>{{ getLinePrice(item) | currencyArs }}</td>

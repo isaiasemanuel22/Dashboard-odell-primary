@@ -28,6 +28,7 @@ describe('SalesService order revenue', () => {
         resolveCatalogUnitCost: () => 0,
         resolveCatalogUnitPrice: () => 100,
         resolveDesignUnitCost: () => 0,
+        resolveOrderItemUnitCost: () => 0,
       } as CostCalculatorService,
     );
   });
@@ -84,6 +85,58 @@ describe('SalesService order revenue', () => {
     expect(orderEntries[0].orderId).toBe('ord-delivered');
     expect(stats.monthlyOrdersRevenue).toBe(2500);
     expect(stats.monthlyOrdersCount).toBe(1);
+  });
+
+  it('usa la fecha de entrega real para ubicar la venta en el mes', () => {
+    const now = new Date();
+    const dueDate = new Date(
+      now.getFullYear(),
+      now.getMonth() + 2,
+      15,
+      18,
+      0,
+      0,
+    ).toISOString();
+    const deliveredAt = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      now.getDate(),
+      12,
+      0,
+      0,
+    ).toISOString();
+
+    store.orders.push({
+      id: 'ord-delivered-today',
+      customerId: 'cust-1',
+      customerName: 'Carla',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productName: 'Pieza',
+          quantity: 1,
+          unitPrice: 3000,
+        },
+      ],
+      status: OrderStatus.ENTREGADO,
+      total: 3000,
+      createdAt: dueDate,
+      dueDate,
+      deliveryHistory: [
+        {
+          id: 'delivery-1',
+          deliveredAt,
+          items: [{ orderItemIndex: 0, quantity: 1 }],
+        },
+      ],
+    });
+
+    const { entries } = service.getOverview();
+    const orderEntries = entries.filter((entry) => entry.orderId);
+
+    expect(orderEntries).toHaveLength(1);
+    expect(orderEntries[0]?.soldAt).toBe(deliveredAt);
   });
 
   it('valida y descuenta stock en ventas retail', () => {

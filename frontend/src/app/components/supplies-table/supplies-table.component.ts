@@ -5,14 +5,18 @@ import {
   Input,
   Output,
 } from '@angular/core';
-import { Supply } from '../../core/models';
+import { ColorConfig, Supply } from '../../core/models';
 import {
   CurrencyArsPipe,
   SupplyCategoryLabelPipe,
-  SupplyTypeLabelPipe,
 } from '../../shared/pipes/labels.pipe';
+import {
+  resolveColorHex,
+  resolveColorLabel,
+  supplyRequiresColor,
+} from '../../shared/utils/color.helpers';
 import { DbStockBadgeComponent } from '../db-stock-badge/db-stock-badge.component';
-import { DbButtonComponent } from '@general-components';
+import { DbButtonComponent } from '../db-button/db-button.component';
 
 @Component({
   selector: 'app-supplies-table',
@@ -20,15 +24,16 @@ import { DbButtonComponent } from '@general-components';
   imports: [
     CurrencyArsPipe,
     SupplyCategoryLabelPipe,
-    SupplyTypeLabelPipe,
     DbStockBadgeComponent,
     DbButtonComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './supplies-table.component.html',
+  styleUrl: './supplies-table.component.scss',
 })
 export class SuppliesTableComponent {
   @Input({ required: true }) supplies!: Supply[];
+  @Input() colorCatalog: ColorConfig[] = [];
   @Output() edit = new EventEmitter<Supply>();
   @Output() delete = new EventEmitter<Supply>();
 
@@ -40,5 +45,17 @@ export class SuppliesTableComponent {
     if (s.filamentType) return s.filamentType.toUpperCase();
     if (s.resinType) return s.resinType;
     return '—';
+  }
+
+  showColor(s: Supply): boolean {
+    return supplyRequiresColor(s.category);
+  }
+
+  colorLabel(s: Supply): string {
+    return resolveColorLabel(s.colorId, this.colorCatalog);
+  }
+
+  colorHex(s: Supply): string | undefined {
+    return resolveColorHex(s.colorId, this.colorCatalog);
   }
 }

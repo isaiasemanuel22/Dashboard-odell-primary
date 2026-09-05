@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { OrderStatus } from '../common/enums';
-import { Order, Product } from '../common/interfaces';
+import { OrderStatus, ProductType } from '../common/enums';
+import { Order, Product, Product3D } from '../common/interfaces';
 import {
   calculateItemsSubtotal,
   calculateTotalWithDiscount,
@@ -9,6 +9,7 @@ import {
 import { appendOrderPriceHistory } from '../orders/order-price-history.util';
 import type { OrderPriceChangeTrigger } from '../orders/order-price-history.util';
 import { ProductPricingService } from '../products/product-pricing.service';
+import { sumComponentsProductionMetrics } from '../products/product-production.util';
 import { OrderRepository, ProductRepository } from '../store/repositories';
 import { StoreChangeService } from '../store/store-change.service';
 import { StoreService } from '../store/store.service';
@@ -118,11 +119,13 @@ export class PricingSyncService {
     const result = this.pricing.resolvePricing(
       this.pricing.productToPricingInput(current),
     );
+    const productionMetrics = this.resolveCompositeProductionMetrics(current);
 
     if (
       result.price === current.price &&
       result.cost === current.cost &&
-      result.profit === current.profit
+      result.profit === current.profit &&
+      !productionMetrics?.changed
     ) {
       return false;
     }
@@ -134,6 +137,7 @@ export class PricingSyncService {
       cost: result.cost,
       profit: result.profit,
       updatedAt: new Date().toISOString(),
+      ...(productionMetrics?.values ?? {}),
     };
 
     this.products.save(updated);
@@ -146,6 +150,40 @@ export class PricingSyncService {
     }
 
     return true;
+  }
+
+  private resolveCompositeProductionMetrics(
+    product: Product,
+  ): { changed: boolean; values: Pick<Product3D, 'grams' | 'printTimeHours' | 'workTimeHours'> } | null {
+    if (!this.hasComponents(product)) {
+      return null;
+    }
+
+    if (
+      product.type !== ProductType.FDM &&
+      product.type !== ProductType.RESINA
+    ) {
+      return null;
+    }
+
+    const current = product as Product3D;
+    const metrics = sumComponentsProductionMetrics(
+      this.store,
+      product.components ?? [],
+      { assemblyTimeHours: product.assemblyTimeHours },
+    );
+
+    return {
+      changed:
+        current.grams !== metrics.grams ||
+        current.printTimeHours !== metrics.printTimeHours ||
+        current.workTimeHours !== metrics.workTimeHours,
+      values: {
+        grams: metrics.grams,
+        printTimeHours: metrics.printTimeHours,
+        workTimeHours: metrics.workTimeHours,
+      },
+    };
   }
 
   private syncOrderPrices(

@@ -1,0 +1,851 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Manual de usuario — Odell Dashboard</title>
+  <style>
+    :root {
+      --primary: #1e3a5f;
+      --accent: #2563eb;
+      --text: #1f2937;
+      --muted: #6b7280;
+      --border: #e5e7eb;
+      --bg: #f8fafc;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: "Segoe UI", system-ui, sans-serif;
+      color: var(--text);
+      line-height: 1.6;
+      font-size: 10.5pt;
+      margin: 0;
+    }
+    @page { size: A4; margin: 16mm 14mm 18mm 14mm; }
+    @media print {
+      .page-break { page-break-before: always; }
+      .no-break { page-break-inside: avoid; }
+    }
+    .cover {
+      min-height: 250mm;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      page-break-after: always;
+      padding: 1rem 0;
+    }
+    .cover h1 { font-size: 2.2rem; color: var(--primary); margin: 0 0 0.4rem; }
+    .cover .sub { font-size: 1.15rem; color: var(--muted); margin-bottom: 2rem; }
+    .cover-box {
+      border: 2px solid var(--primary);
+      border-radius: 8px;
+      padding: 1rem 1.25rem;
+      margin: 1.5rem 0;
+      background: var(--bg);
+    }
+    h2 {
+      color: var(--primary);
+      font-size: 1.25rem;
+      margin: 1.5rem 0 0.6rem;
+      padding-bottom: 0.3rem;
+      border-bottom: 2px solid var(--accent);
+    }
+    h3 { color: var(--primary); font-size: 1.02rem; margin: 1.1rem 0 0.4rem; }
+    h4 { font-size: 0.95rem; margin: 0.85rem 0 0.3rem; color: #374151; }
+    p { margin: 0.4rem 0 0.6rem; }
+    ul, ol { margin: 0.3rem 0 0.7rem 1.2rem; }
+    li { margin: 0.2rem 0; }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.5rem 0 0.85rem;
+      font-size: 0.92rem;
+    }
+    th, td {
+      border: 1px solid var(--border);
+      padding: 0.4rem 0.5rem;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: var(--bg); color: var(--primary); }
+    .note, .tip, .important {
+      border-left: 4px solid;
+      padding: 0.55rem 0.75rem;
+      margin: 0.7rem 0;
+      border-radius: 0 6px 6px 0;
+      page-break-inside: avoid;
+    }
+    .note { background: #eff6ff; border-color: var(--accent); }
+    .tip { background: #ecfdf5; border-color: #10b981; }
+    .important { background: #fffbeb; border-color: #f59e0b; }
+    .steps {
+      counter-reset: step;
+      list-style: none;
+      padding: 0;
+      margin: 0.5rem 0 1rem;
+    }
+    .steps li {
+      counter-increment: step;
+      padding: 0.45rem 0 0.45rem 2.2rem;
+      position: relative;
+      border-bottom: 1px dotted var(--border);
+    }
+    .steps li::before {
+      content: counter(step);
+      position: absolute;
+      left: 0;
+      top: 0.4rem;
+      width: 1.5rem;
+      height: 1.5rem;
+      background: var(--accent);
+      color: #fff;
+      border-radius: 50%;
+      text-align: center;
+      font-size: 0.8rem;
+      line-height: 1.5rem;
+      font-weight: 600;
+    }
+    .toc { page-break-after: always; }
+    .toc ol { list-style: none; padding: 0; }
+    .toc li {
+      padding: 0.25rem 0;
+      border-bottom: 1px dotted var(--border);
+    }
+    .toc .part { font-weight: 700; color: var(--primary); margin-top: 0.6rem; }
+    .ui { font-weight: 600; color: var(--primary); }
+    .footer {
+      margin-top: 2rem;
+      padding-top: 0.5rem;
+      border-top: 1px solid var(--border);
+      color: var(--muted);
+      font-size: 0.85rem;
+    }
+  </style>
+</head>
+<body>
+
+<header class="cover">
+  <p style="color:var(--muted);font-size:0.9rem;">Manual de usuario · Uso productivo</p>
+  <h1>Odell Dashboard</h1>
+  <p class="sub">Guía completa para el día a día del negocio</p>
+  <div class="cover-box">
+    <p><strong>Odell</strong> es un emprendimiento de impresión 3D, estampados, diseño gráfico y modelado. Este manual explica cómo usar la aplicación para vender, producir, cotizar y administrar el negocio.</p>
+    <p>Está pensado para quienes trabajan en el local: ventas, producción, diseño y administración. No requiere conocimientos técnicos.</p>
+  </div>
+  <p style="color:var(--muted);">Versión 2.0 · Agosto 2026</p>
+</header>
+
+<nav class="toc">
+  <h2>Índice</h2>
+  <ol>
+    <li class="part">Parte I — Primeros pasos</li>
+    <li>1. Introducción: cómo funciona Odell</li>
+    <li>2. Iniciar sesión</li>
+    <li>3. Conocer la pantalla principal</li>
+    <li>4. Navegación en computadora y celular</li>
+    <li class="part">Parte II — Operación diaria</li>
+    <li>5. Dashboard: resumen del negocio</li>
+    <li>6. Ventas de mostrador</li>
+    <li>7. Pedidos</li>
+    <li>8. Presupuestos</li>
+    <li>9. Cola de trabajo</li>
+    <li class="part">Parte III — Catálogo e inventario</li>
+    <li>10. Productos</li>
+    <li>11. Insumos</li>
+    <li>12. Clientes</li>
+    <li class="part">Parte IV — Configuración</li>
+    <li>13. Ajustes generales</li>
+    <li>14. Precios, costos y ganancias</li>
+    <li class="part">Parte V — Guías prácticas</li>
+    <li>15. Escenarios frecuentes paso a paso</li>
+    <li>16. Reglas importantes que conviene recordar</li>
+    <li>17. Preguntas frecuentes</li>
+    <li>18. Glosario</li>
+  </ol>
+</nav>
+
+<!-- PARTE I -->
+<section>
+  <h2>1. Introducción: cómo funciona Odell</h2>
+
+  <h3>1.1 ¿Qué hace esta aplicación?</h3>
+  <p>Odell Dashboard centraliza todo lo que pasa en el negocio:</p>
+  <ul>
+    <li>Vender productos listos en el local (mostrador).</li>
+    <li>Tomar pedidos cuando hay que producir o falta stock.</li>
+    <li>Enviar presupuestos antes de confirmar un trabajo.</li>
+    <li>Organizar la producción en un tablero de tareas.</li>
+    <li>Llevar el catálogo de productos, clientes e insumos.</li>
+    <li>Ver ingresos, costos y ganancias del mes.</li>
+  </ul>
+
+  <h3>1.2 Las dos formas de vender</h3>
+  <table>
+    <tr><th>Modalidad</th><th>Cuándo usarla</th><th>Qué necesitás</th></tr>
+    <tr>
+      <td><strong>Venta de mostrador</strong></td>
+      <td>El cliente se lleva el producto en el momento.</td>
+      <td>Producto <strong>publicado</strong> en el catálogo y con <strong>stock disponible</strong>.</td>
+    </tr>
+    <tr>
+      <td><strong>Pedido</strong></td>
+      <td>Hay que fabricar, hay servicios (diseño, modelado…) o no alcanza el stock.</td>
+      <td><strong>Cliente obligatorio</strong>. Fecha de entrega prevista.</td>
+    </tr>
+  </table>
+
+  <div class="important">
+    <strong>Publicado no es lo mismo que disponible.</strong> Un producto puede estar en el catálogo (publicado) pero sin unidades listas. En ese caso no podés cerrar una venta de mostrador: tenés que crear un pedido.
+  </div>
+
+  <h3>1.3 Conceptos que vas a ver seguido</h3>
+  <table>
+    <tr><th>Término</th><th>Significado en la práctica</th></tr>
+    <tr><td>Producto publicado</td><td>Aparece en el catálogo y se puede vender en mostrador si hay stock.</td></tr>
+    <tr><td>Producto interno</td><td>No se vende solo; se usa como pieza de otro producto (ej.: una pieza de un combo).</td></tr>
+    <tr><td>Stock terminado</td><td>Unidades del producto ya fabricadas y listas para entregar.</td></tr>
+    <tr><td>Insumo</td><td>Material de producción: filamento, resina, remeras, tinta, film DTF, etc.</td></tr>
+    <tr><td>Presupuesto</td><td>Cotización para el cliente antes de confirmar el trabajo.</td></tr>
+    <tr><td>Tarea</td><td>Trabajo concreto en la cola: producir, diseñar, preparar un pedido, etc.</td></tr>
+    <tr><td>Servicio</td><td>Tipo de trabajo: Impresión 3D, Diseño gráfico, Modelado o Estampado.</td></tr>
+  </table>
+</section>
+
+<section class="page-break">
+  <h2>2. Iniciar sesión</h2>
+  <p>Al abrir la aplicación verás la pantalla de <strong>Odell Dashboard</strong> con el mensaje «Iniciá sesión para continuar».</p>
+
+  <h3>2.1 Opción A — Continuar con Google</h3>
+  <ol class="steps">
+    <li>Pulsá el botón <span class="ui">Continuar con Google</span>.</li>
+    <li>Elegí tu cuenta de Google en la ventana que se abre.</li>
+    <li>La aplicación te llevará al Dashboard.</li>
+  </ol>
+  <p>Si el navegador bloquea la ventana emergente, permitila e intentá de nuevo.</p>
+
+  <h3>2.2 Opción B — Email y contraseña</h3>
+  <ol class="steps">
+    <li>Debajo del separador «o con email», completá tu <span class="ui">Email</span>.</li>
+    <li>Completá tu <span class="ui">Contraseña</span>.</li>
+    <li>Pulsá <span class="ui">Ingresar</span>.</li>
+  </ol>
+
+  <h3>2.3 Problemas frecuentes al ingresar</h3>
+  <table>
+    <tr><th>Mensaje</th><th>Qué hacer</th></tr>
+    <tr><td>Email o contraseña incorrectos</td><td>Verificá que estén bien escritos. Si usás Google normalmente, probá ese método.</td></tr>
+    <tr><td>Demasiados intentos</td><td>Esperá unos minutos e intentá de nuevo.</td></tr>
+    <tr><td>El email no es válido</td><td>Revisá el formato del correo (ej.: nombre@dominio.com).</td></tr>
+    <tr><td>Cerraste la ventana de Google</td><td>Volvé a pulsar «Continuar con Google» y completá el proceso.</td></tr>
+  </table>
+
+  <h3>2.4 Cerrar sesión</h3>
+  <p>En el menú lateral, abajo, verás tu email y el botón <span class="ui">Cerrar sesión</span>.</p>
+</section>
+
+<section>
+  <h2>3. Conocer la pantalla principal</h2>
+  <p>Una vez dentro, la pantalla se divide en:</p>
+  <ul>
+    <li><strong>Menú lateral (izquierda):</strong> acceso a todas las secciones. En celular se abre con el botón de menú o desde «Más».</li>
+    <li><strong>Área central:</strong> el contenido de la sección que elijas.</li>
+    <li><strong>Encabezado de cada página:</strong> título, descripción breve y botones de acción (crear, filtrar, etc.).</li>
+  </ul>
+
+  <h3>3.1 Menú principal</h3>
+  <table>
+    <tr><th>Sección</th><th>Para qué sirve</th></tr>
+    <tr><td>Dashboard</td><td>Resumen del mes: ingresos, pedidos, tareas, alertas.</td></tr>
+    <tr><td>Ventas</td><td>Ingresos del mes, ventas de mostrador y pedidos entregados.</td></tr>
+    <tr><td>Pedidos</td><td>Crear y seguir pedidos de clientes.</td></tr>
+    <tr><td>Presupuestos</td><td>Cotizaciones antes de confirmar un trabajo.</td></tr>
+    <tr><td>Cola de trabajo</td><td>Tablero de tareas de producción y servicios.</td></tr>
+    <tr><td>Productos</td><td>Catálogo de productos (FDM, resina, estampado, combos).</td></tr>
+    <tr><td>Insumos</td><td>Stock de materiales (filamento, resina, textiles, tintas…).</td></tr>
+    <tr><td>Clientes</td><td>Base de datos de clientes.</td></tr>
+    <tr><td>Ajustes</td><td>Configuración de precios, materiales, máquinas y márgenes.</td></tr>
+  </table>
+</section>
+
+<section>
+  <h2>4. Navegación en computadora y celular</h2>
+
+  <h3>4.1 En computadora</h3>
+  <p>Usá el menú lateral para ir a cualquier sección. Los formularios de creación (pedido, producto, cliente…) suelen abrirse en ventanas modales sobre la pantalla actual.</p>
+
+  <h3>4.2 En celular</h3>
+  <p>La barra inferior tiene accesos rápidos:</p>
+  <table>
+    <tr><th>Botón</th><th>Destino</th></tr>
+    <tr><td>Ventas</td><td>Sección Ventas</td></tr>
+    <tr><td>Pedidos</td><td>Sección Pedidos</td></tr>
+    <tr><td>Cola</td><td>Cola de trabajo</td></tr>
+    <tr><td>Inicio</td><td>Dashboard</td></tr>
+    <tr><td>Más</td><td>Abre el menú completo (Productos, Clientes, Ajustes…)</td></tr>
+  </table>
+  <p>La barra inferior se oculta mientras cargás o editás una venta de mostrador, para dar más espacio al carrito.</p>
+</section>
+
+<!-- PARTE II -->
+<section class="page-break">
+  <h2>5. Dashboard — Resumen del negocio</h2>
+  <p><em>«Resumen de tu emprendimiento de impresión 3D y estampados»</em></p>
+
+  <h3>5.1 Acciones rápidas</h3>
+  <p>Desde el Dashboard podés abrir directamente:</p>
+  <ul>
+    <li><span class="ui">Nuevo pedido</span></li>
+    <li><span class="ui">Nuevo presupuesto</span></li>
+    <li><span class="ui">Nuevo producto</span></li>
+    <li><span class="ui">Nuevo cliente</span></li>
+  </ul>
+
+  <h3>5.2 Indicadores del mes</h3>
+  <table>
+    <tr><th>Indicador</th><th>Qué te dice</th></tr>
+    <tr><td>Ingresos del mes</td><td>Plata que entró por ventas y pedidos entregados.</td></tr>
+    <tr><td>Pedidos totales</td><td>Cantidad de pedidos registrados.</td></tr>
+    <tr><td>Pendientes</td><td>Pedidos que aún no empezaron producción.</td></tr>
+    <tr><td>En producción</td><td>Pedidos con tareas en curso.</td></tr>
+    <tr><td>En proceso / Por hacer (tablero)</td><td>Tareas activas o en espera en la cola.</td></tr>
+    <tr><td>Clientes</td><td>Total de clientes registrados.</td></tr>
+    <tr><td>Stock bajo</td><td>Insumos que están por debajo del mínimo configurado.</td></tr>
+  </table>
+
+  <h3>5.3 Gráficos y listados</h3>
+  <ul>
+    <li><strong>Pedidos recientes:</strong> los últimos pedidos abiertos.</li>
+    <li><strong>Pedidos por servicio:</strong> cuántos pedidos hay de 3D, estampado, diseño y modelado.</li>
+    <li><strong>Tendencia mensual:</strong> evolución de pedidos e ingresos.</li>
+  </ul>
+
+  <div class="tip">Revisá el Dashboard al inicio del día para ver pendientes, stock bajo y tareas en cola.</div>
+</section>
+
+<section class="page-break">
+  <h2>6. Ventas de mostrador</h2>
+  <p><em>«Ingresos y ventas del mes corriente»</em></p>
+
+  <h3>6.1 ¿Qué muestra esta sección?</h3>
+  <ul>
+    <li><strong>Estadísticas del mes:</strong> ingresos, costos y ganancias (de ventas de mostrador y de pedidos entregados).</li>
+    <li><strong>Balance por área:</strong> desglose por Impresión 3D, Estampado, Diseño gráfico y Modelado.</li>
+    <li><strong>Listado de ventas:</strong> cada operación del mes con origen Mostrador o Pedido.</li>
+  </ul>
+
+  <h3>6.2 Cómo hacer una venta de mostrador</h3>
+  <ol class="steps">
+    <li>Andá a <span class="ui">Productos</span>.</li>
+    <li>Filtrá por <span class="ui">Publicados</span> si querés ver solo lo vendible en el local.</li>
+    <li>En cada producto, pulsá <span class="ui">Agregar al carrito</span> (solo funciona si hay stock).</li>
+    <li>Pulsá <span class="ui">Carrito</span> (muestra la cantidad de ítems) o andá a <span class="ui">Ventas → Nueva venta</span>.</li>
+    <li>Revisá productos, cantidades y precios. Ajustá cantidades si hace falta.</li>
+    <li>Opcional: aplicá un descuento (sin descuento, porcentaje o monto fijo) y agregá notas.</li>
+    <li>Pulsá <span class="ui">Cerrar venta</span>.</li>
+  </ol>
+
+  <div class="important">
+    Solo podés cerrar la venta si hay <strong>stock suficiente</strong> para todos los productos del carrito. Si falta stock, usá <span class="ui">Crear pedido</span> para convertir el carrito en un pedido de producción.
+  </div>
+
+  <h3>6.3 Filtros del listado</h3>
+  <ul>
+    <li><span class="ui">Todas</span> — ventas de mostrador y pedidos entregados.</li>
+    <li><span class="ui">Mostrador</span> — solo ventas directas del local.</li>
+    <li><span class="ui">Pedido</span> — ingresos que vienen de pedidos ya entregados.</li>
+  </ul>
+
+  <h3>6.4 Otras acciones</h3>
+  <ul>
+    <li><span class="ui">Generar reporte</span> — exporta un archivo CSV del mes.</li>
+    <li><span class="ui">Editar</span> / <span class="ui">Eliminar</span> — sobre ventas de mostrador del mes.</li>
+    <li><span class="ui">Ver pedido</span> — en entradas que vienen de un pedido entregado.</li>
+  </ul>
+
+  <h3>6.5 Reglas de la venta de mostrador</h3>
+  <ul>
+    <li>Solo productos <strong>publicados</strong>.</li>
+    <li>Stock suficiente para cerrar.</li>
+    <li>El cliente es <strong>opcional</strong> (puede ser venta anónima).</li>
+    <li>Al cerrar, el stock se descuenta automáticamente.</li>
+  </ul>
+</section>
+
+<section class="page-break">
+  <h2>7. Pedidos</h2>
+  <p><em>«Gestión de pedidos de impresión 3D y estampados»</em></p>
+
+  <h3>7.1 Cuándo crear un pedido</h3>
+  <ul>
+    <li>El cliente quiere un producto publicado pero <strong>no hay stock</strong>.</li>
+    <li>Es un producto <strong>personalizado</strong> o hecho a medida.</li>
+    <li>Incluye <strong>servicios</strong> (diseño gráfico, modelado, etc.).</li>
+    <li>Varios ítems juntos (productos + servicios).</li>
+    <li>Desde el carrito, con <span class="ui">Crear pedido</span>, cuando no alcanza el stock para venta directa.</li>
+  </ul>
+
+  <h3>7.2 Crear un pedido — paso a paso</h3>
+  <ol class="steps">
+    <li>Pulsá <span class="ui">+ Nuevo pedido</span> (en Pedidos o desde el Dashboard).</li>
+    <li>Seleccioná el <span class="ui">Cliente</span> (obligatorio). Si no existe, usá <span class="ui">Cliente nuevo</span>.</li>
+    <li>Indicá la <span class="ui">Fecha de entrega</span>.</li>
+    <li>Completá <span class="ui">Descripción</span> (qué necesita el cliente) y <span class="ui">Notas</span> internas si hace falta.</li>
+    <li>En <span class="ui">Líneas de trabajo</span>, agregá cada ítem:
+      <ul>
+        <li><strong>Servicio:</strong> Impresión 3D, Diseño gráfico, Modelado o Estampado.</li>
+        <li><strong>Producto</strong> del catálogo o un concepto personalizado.</li>
+        <li><strong>Cantidad</strong> y revisá precio/costo.</li>
+      </ul>
+    </li>
+    <li>Si aplica, configurá descuento global.</li>
+    <li>Revisá Subtotal, Total y Ganancia.</li>
+    <li>Pulsá <span class="ui">Crear pedido</span>.</li>
+  </ol>
+
+  <h3>7.3 Tipos de línea especiales</h3>
+  <h4>Impresión 3D sin producto en catálogo</h4>
+  <p>Completá tipo de filamento, gramos y horas de impresión. El sistema calcula el precio.</p>
+
+  <h4>Diseño gráfico con impresión incluida</h4>
+  <p>Marcá «Incluye impresión», elegí tipo (DTF, sublimación…) y tamaño del catálogo de impresos o medidas manuales.</p>
+
+  <h3>7.4 Estados del pedido</h3>
+  <p>El estado se actualiza <strong>solo</strong> según las tareas y las entregas. No lo cambiás manualmente (salvo cancelar).</p>
+  <table>
+    <tr><th>Estado</th><th>Significado</th></tr>
+    <tr><td>Pendiente</td><td>Aún no empezó la producción.</td></tr>
+    <tr><td>En progreso</td><td>Hay tareas en curso.</td></tr>
+    <tr><td>Terminado</td><td>Todas las tareas de producción finalizadas.</td></tr>
+    <tr><td>Parcialmente entregado</td><td>Se entregó una parte al cliente.</td></tr>
+    <tr><td>Entregado</td><td>Todo entregado.</td></tr>
+    <tr><td>Cancelado</td><td>Pedido anulado.</td></tr>
+  </table>
+
+  <h3>7.5 Detalle del pedido</h3>
+  <p>Al abrir un pedido verás:</p>
+  <ul>
+    <li><strong>Cliente</strong> — datos y enlace a su ficha.</li>
+    <li><strong>Alertas operativas</strong> — avisos importantes (stock, insumos, etc.).</li>
+    <li><strong>Líneas del pedido</strong> — cantidades, stock, reservado, producido, entregado, pendiente, precios.</li>
+    <li><strong>Tareas del pedido</strong> — qué hay en la cola; botón <span class="ui">Ir al tablero</span>.</li>
+    <li><strong>Entregas</strong> — registrar entregas parciales.</li>
+    <li><strong>Historial de estado</strong> y <strong>Historial de precios</strong>.</li>
+  </ul>
+
+  <h3>7.6 Registrar una entrega parcial</h3>
+  <ol class="steps">
+    <li>Abrí el detalle del pedido.</li>
+    <li>En la sección <span class="ui">Entregas</span>, indicá cuántas unidades entregás de cada ítem.</li>
+    <li>Pulsá <span class="ui">Registrar entrega</span>.</li>
+    <li>Repetí hasta completar todo el pedido.</li>
+  </ol>
+
+  <h3>7.7 Editar o cancelar</h3>
+  <ul>
+    <li><span class="ui">Editar pedido</span> — disponible mientras esté Pendiente o En progreso.</li>
+    <li><span class="ui">Cancelar pedido</span> — anula el pedido (te pedirá confirmación).</li>
+    <li><span class="ui">Eliminar</span> — borra el registro (solo si corresponde).</li>
+  </ul>
+
+  <h3>7.8 Filtros del listado</h3>
+  <p>Estado: Abiertos, Todos, Pendiente, En progreso, Terminado, Parcialmente entregado, Entregado, Cancelado.</p>
+  <p>Servicio: Todos, Impresión 3D, Diseño gráfico, Modelado, Estampado.</p>
+  <p>Buscador: por cliente, producto o ID del pedido.</p>
+</section>
+
+<section class="page-break">
+  <h2>8. Presupuestos</h2>
+  <p><em>«Cotizaciones para clientes antes de confirmar un pedido»</em></p>
+
+  <h3>8.1 Cuándo usar un presupuesto</h3>
+  <ul>
+    <li>El cliente pide algo que <strong>todavía no existe</strong> en el catálogo.</li>
+    <li>Querés enviar un precio antes de comprometer producción.</li>
+    <li>El trabajo incluye servicios a cotizar (diseño, modelado, impresión a medida).</li>
+  </ul>
+
+  <h3>8.2 Crear un presupuesto</h3>
+  <ol class="steps">
+    <li>Pulsá <span class="ui">+ Nuevo presupuesto</span>.</li>
+    <li>Seleccioná cliente (recomendado) y completá las líneas igual que en un pedido.</li>
+    <li>Revisá totales y descuento si aplica.</li>
+    <li>Pulsá <span class="ui">Crear presupuesto</span>.</li>
+  </ol>
+
+  <h3>8.3 Estados del presupuesto</h3>
+  <table>
+    <tr><th>Estado</th><th>Qué hacer después</th></tr>
+    <tr><td>Borrador</td><td>Seguir editando internamente.</td></tr>
+    <tr><td>Enviado</td><td>Esperar respuesta del cliente.</td></tr>
+    <tr><td>Aceptado</td><td>Generar el pedido.</td></tr>
+    <tr><td>Rechazado / Cancelado</td><td>No procede; queda registrado.</td></tr>
+  </table>
+
+  <h3>8.4 Del presupuesto al pedido</h3>
+  <ol class="steps">
+    <li>Abrí el presupuesto aceptado (o marcá el estado como Aceptado).</li>
+    <li>Pulsá <span class="ui">Generar pedido</span> (o «Ver pedido» si ya se generó).</li>
+    <li>El sistema crea el pedido y, si el producto era nuevo, lo agrega al catálogo como <strong>producto interno / no publicado</strong>.</li>
+    <li>Seguí el pedido en la Cola de trabajo.</li>
+  </ol>
+</section>
+
+<section class="page-break">
+  <h2>9. Cola de trabajo</h2>
+  <p><em>«Tablero de tareas activas — arrastrá las cards entre columnas»</em></p>
+
+  <h3>9.1 ¿Para quién es?</h3>
+  <p>Para operadores de producción, diseño y ventas que ejecutan el trabajo diario. Cada pedido confirmado genera tareas automáticamente.</p>
+
+  <h3>9.2 Columnas del tablero</h3>
+  <table>
+    <tr><th>Columna</th><th>Significado</th></tr>
+    <tr><td>Pendiente</td><td>Lista para empezar.</td></tr>
+    <tr><td>En progreso</td><td>Alguien la está haciendo.</td></tr>
+    <tr><td>Bloqueado</td><td>No se puede avanzar (ej.: faltan insumos).</td></tr>
+    <tr><td>En revisión</td><td>Trabajo terminado, falta control de calidad.</td></tr>
+    <tr><td>Terminado</td><td>Lista; el pedido puede avanzar.</td></tr>
+    <tr><td>Cancelado</td><td>Tarea anulada.</td></tr>
+  </table>
+
+  <h3>9.3 Tipos de tarea</h3>
+  <ul>
+    <li><strong>Preparar pedido</strong> — armar y preparar ítems que ya están disponibles (área Ventas).</li>
+    <li><strong>Producción</strong> — fabricar unidades que faltan.</li>
+    <li><strong>Servicio</strong> — diseño, modelado u otro servicio manual.</li>
+    <li><strong>Interna</strong> — tarea interna del taller.</li>
+  </ul>
+
+  <h3>9.4 Cómo usar el tablero</h3>
+  <ol class="steps">
+    <li>Revisá las tareas en <span class="ui">Pendiente</span> o en «Otras tareas» (backlog).</li>
+    <li>Arrastrá una tarjeta a <span class="ui">En progreso</span> cuando empieces.</li>
+    <li>Al terminar, movela a <span class="ui">En revisión</span> o <span class="ui">Terminado</span>.</li>
+    <li>Desde el backlog, usá <span class="ui">Agregar al tablero</span> o arrastrá la tarea al tablero del día.</li>
+    <li>Pulsá <span class="ui">Ver pedido</span> en una tarjeta para ver el contexto completo.</li>
+  </ol>
+
+  <h3>9.5 Tareas bloqueadas</h3>
+  <p>Si falta un insumo, la tarea puede quedar en <span class="ui">Bloqueado</span>. Cuando repongas el material en <span class="ui">Insumos</span>, mové la tarea de vuelta a Pendiente o En progreso.</p>
+
+  <div class="note">Mover una tarea <strong>Terminada</strong> hacia atrás pide confirmación («¿Querés reabrir esta tarea?»).</div>
+
+  <h3>9.6 Prioridades</h3>
+  <p>Las tarjetas muestran prioridad: Alta, Media, Normal o Baja. Usala para ordenar el trabajo del día.</p>
+</section>
+
+<!-- PARTE III -->
+<section class="page-break">
+  <h2>10. Productos</h2>
+  <p><em>«Catálogo de impresión 3D (FDM / Resina) y estampados»</em></p>
+
+  <h3>10.1 Tipos de producto</h3>
+  <table>
+    <tr><th>Tipo</th><th>Ejemplo</th></tr>
+    <tr><td>FDM</td><td>Piezas impresas en filamento (PLA, PETG…).</td></tr>
+    <tr><td>Resina</td><td>Piezas impresas en resina (SLA).</td></tr>
+    <tr><td>Estampado</td><td>Remeras, tazas, productos sublimados o DTF.</td></tr>
+    <tr><td>Combo</td><td>Producto armado con otras piezas del catálogo.</td></tr>
+  </table>
+
+  <h3>10.2 Listado de productos</h3>
+  <p><strong>Botones:</strong> Carrito · + Categoría · + Nuevo producto</p>
+  <p><strong>Filtros:</strong> Tipo (FDM, Resina, Estampado) · Publicados / No publicados · Categoría · Búsqueda por nombre</p>
+  <p><strong>Por producto:</strong> Agregar al carrito · Editar · Eliminar</p>
+
+  <h3>10.3 Crear o editar un producto</h3>
+
+  <h4>Datos básicos</h4>
+  <ul>
+    <li><span class="ui">Tipo</span>, <span class="ui">Nombre</span></li>
+    <li><span class="ui">Stock terminado</span> — unidades listas para vender</li>
+    <li><span class="ui">Publicado en catálogo</span> — si aparece para venta de mostrador</li>
+    <li><span class="ui">Incluye piezas</span> — si el producto se arma con otros productos</li>
+  </ul>
+
+  <h4>Producción (según el tipo)</h4>
+  <ul>
+    <li><strong>FDM:</strong> filamentos (tipo, color, gramos), tiempo de impresión, mano de obra.</li>
+    <li><strong>Resina:</strong> tipo, color, gramos, tiempos de impresión, lavado y curado.</li>
+    <li><strong>Estampado:</strong> medidas, impresos, insumos (remeras, tintas…), bajadas de plancha, mano de obra.</li>
+    <li><strong>Con piezas:</strong> no cargás producción manual; se calcula desde las piezas.</li>
+  </ul>
+
+  <div class="note no-break">
+    <strong>Productos con piezas — el sistema calcula automáticamente:</strong>
+    <ul>
+      <li><strong>Stock:</strong> depende del stock de cada pieza. Si no alcanzan para armar al menos 1 unidad, no hay stock disponible.</li>
+      <li><strong>Gramos e impresión:</strong> suma de las piezas.</li>
+      <li><strong>Mano de obra:</strong> tiempo de armado + mano de obra de las piezas.</li>
+    </ul>
+  </div>
+
+  <h4>Piezas incluidas</h4>
+  <p>Agregá cada pieza del catálogo con su cantidad y el <span class="ui">Tiempo de armado (h)</span>. El costo y precio pueden calcularse desde las piezas.</p>
+
+  <h4>Categorías, imágenes y adjuntos</h4>
+  <ul>
+    <li>Entre 1 y 5 categorías por producto.</li>
+    <li>Fotos para el catálogo.</li>
+    <li>Archivos adjuntos: planos, STL, PDF, etc.</li>
+  </ul>
+
+  <h4>Precios</h4>
+  <p>El sistema muestra el desglose: Material, Energía, Máquina, Margen de error, Mano de obra → <strong>Costo</strong>, <strong>Precio</strong> y <strong>Ganancia</strong>. Podés usar un precio sugerido o ajustar manualmente.</p>
+
+  <h3>10.4 Ficha del producto</h3>
+  <p>Al abrir un producto ves: imágenes, precios, categorías, stock (físico, reservado, disponible), producción, piezas incluidas y adjuntos. Desde ahí podés editarlo o publicarlo/despublicarlo.</p>
+
+  <h3>10.5 Stock terminado — reglas prácticas</h3>
+  <ul>
+    <li>Cargás el stock manualmente al crear o editar el producto.</li>
+    <li>Al confirmar un pedido, el sistema <strong>reserva</strong> stock.</li>
+    <li>El descuento real ocurre al <strong>entregar</strong> el pedido o al <strong>cerrar una venta</strong> de mostrador.</li>
+    <li>Si piden 5 y hay 2 en stock: 2 salen del stock y 3 se producen.</li>
+  </ul>
+</section>
+
+<section class="page-break">
+  <h2>11. Insumos</h2>
+  <p><em>«Control de filamentos, resinas, tintas, textiles y más»</em></p>
+
+  <h3>11.1 Qué registrar acá</h3>
+  <p>Todo material que consumís para producir: filamentos, resinas, remeras en blanco, tintas, films DTF, alcohol, etc.</p>
+
+  <h3>11.2 Crear un insumo</h3>
+  <ol class="steps">
+    <li>Pulsá <span class="ui">+ Nuevo insumo</span>.</li>
+    <li>Elegí <span class="ui">Categoría</span> (FDM, Resina, Estampado, General) y <span class="ui">Tipo de insumo</span>.</li>
+    <li>Completá nombre, cantidad, unidad, precio unitario y stock mínimo.</li>
+    <li>Para filamento/resina: tipo, marca (desde Ajustes) y color si aplica.</li>
+    <li>Pulsá <span class="ui">Crear insumo</span>.</li>
+  </ol>
+
+  <h3>11.3 Columnas del listado</h3>
+  <p>Nombre · Categoría · Tipo · Material · Color · Marca · Stock · Precio/u · Estado (OK / Stock bajo)</p>
+
+  <h3>11.4 Por qué importa mantenerlos actualizados</h3>
+  <ul>
+    <li>El <strong>costo de los productos</strong> se calcula con estos precios.</li>
+    <li>Stock bajo aparece en el <strong>Dashboard</strong>.</li>
+    <li>Si falta material, las tareas pueden quedar <strong>Bloqueadas</strong> en la cola.</li>
+    <li>En pedidos ya confirmados, el precio al cliente no cambia; la ganancia interna sí si cambiás costos.</li>
+  </ul>
+</section>
+
+<section class="page-break">
+  <h2>12. Clientes</h2>
+  <p><em>«Base de clientes del emprendimiento»</em></p>
+
+  <h3>12.1 Datos del cliente</h3>
+  <p>Nombre, email, teléfono, empresa (opcional).</p>
+
+  <h3>12.2 Crear un cliente</h3>
+  <ol class="steps">
+    <li>Pulsá <span class="ui">+ Nuevo cliente</span>.</li>
+    <li>Completá los datos.</li>
+    <li>Pulsá <span class="ui">Crear cliente</span>.</li>
+  </ol>
+  <p>También podés crear un cliente desde el formulario de pedido o presupuesto con <span class="ui">Cliente nuevo</span>.</p>
+
+  <h3>12.3 Ficha del cliente</h3>
+  <p>Muestra pedidos activos, pedidos finalizados, total gastado y acceso rápido a cada pedido.</p>
+
+  <div class="important"><strong>Todo pedido requiere cliente.</strong> La venta de mostrador puede ser sin cliente.</div>
+</section>
+
+<!-- PARTE IV -->
+<section class="page-break">
+  <h2>13. Ajustes</h2>
+  <p><em>«Configuración general del emprendimiento»</em></p>
+  <p>Esta sección define cómo se calculan costos y precios. Conviene que la modifique quien administra el negocio.</p>
+
+  <h3>13.1 Valores generales</h3>
+  <ul>
+    <li><span class="ui">Costo de luz ($/kWh)</span> — para calcular energía de las máquinas.</li>
+    <li><span class="ui">Costo mano de obra ($/h)</span> — valor hora de trabajo manual.</li>
+    <li><span class="ui">Margen de error (%)</span> — contingencia sobre material + energía + máquina.</li>
+    <li><span class="ui">Mantener sincronizado</span> — mantiene los datos actualizados entre dispositivos que usan la app al mismo tiempo.</li>
+    <li><span class="ui">Perfiles de máquina</span> — cada equipo (impresora, lavadora, curado, plancha): consumo, costo por hora, insumos de lavado.</li>
+  </ul>
+
+  <h3>13.2 Filamento</h3>
+  <p>Tabla de precios por <strong>marca + tipo</strong> (PLA, PETG, TPU, ABS…) en $/kg. Usada al calcular productos FDM.</p>
+
+  <h3>13.3 Colores</h3>
+  <p>Catálogo de colores con nombre y código. Se usa en productos, insumos y selectores visuales.</p>
+
+  <h3>13.4 Resina</h3>
+  <p>Precios por marca y tipo de resina en $/litro.</p>
+
+  <h3>13.5 Impresos</h3>
+  <ul>
+    <li><strong>Pliegos de referencia</strong> — tamaño y precio del pliego para DTF, DTF UV y sublimación.</li>
+    <li><strong>Tamaños de impresos</strong> — catálogo de medidas (nombre, papel, dimensiones, costo calculado).</li>
+  </ul>
+
+  <h3>13.6 Ganancias</h3>
+  <p>Márgenes de ganancia (%) por área:</p>
+  <ul>
+    <li>Impresión 3D</li>
+    <li>Diseño gráfico</li>
+    <li>Modelado</li>
+    <li>Estampado</li>
+  </ul>
+  <p>El precio de venta de un producto se obtiene aplicando el margen correspondiente sobre el costo.</p>
+
+  <div class="warn important">
+    Si cambiás precios de insumos o márgenes, los <strong>productos recalculan su costo</strong>. Los pedidos ya confirmados mantienen el precio acordado al cliente; la ganancia interna puede cambiar.
+  </div>
+</section>
+
+<section>
+  <h2>14. Precios, costos y ganancias</h2>
+
+  <h3>14.1 En cada producto</h3>
+  <ul>
+    <li><strong>Costo</strong> = materiales + energía + máquina + mano de obra + margen de error.</li>
+    <li><strong>Precio</strong> = costo + margen de ganancia del área.</li>
+    <li><strong>Ganancia</strong> = precio − costo.</li>
+  </ul>
+
+  <h3>14.2 En pedidos y presupuestos</h3>
+  <p>Cada línea tiene precio y costo. Al final ves subtotal, descuento, total y ganancia total del pedido.</p>
+
+  <h3>14.3 En Ventas del mes</h3>
+  <p>Estadísticas de ingresos, costos y ganancias, con desglose por ventas de mostrador y pedidos entregados, y balance por área de servicio.</p>
+
+  <h3>14.4 Historial de precios en pedidos</h3>
+  <p>Si cambian los costos después de confirmar un pedido, el detalle registra las variaciones para que veas cómo impacta en la ganancia.</p>
+</section>
+
+<!-- PARTE V -->
+<section class="page-break">
+  <h2>15. Escenarios frecuentes — paso a paso</h2>
+
+  <h3>Escenario A — Cliente compra y se lleva el producto ya</h3>
+  <ol class="steps">
+    <li>Productos → filtrar Publicados → Agregar al carrito.</li>
+    <li>Carrito → Cerrar venta.</li>
+    <li>Listo: stock descontado, ingreso en Ventas del mes.</li>
+  </ol>
+
+  <h3>Escenario B — Cliente quiere un producto publicado pero no hay stock</h3>
+  <ol class="steps">
+    <li>Crear pedido con el cliente y el producto.</li>
+    <li>Confirmar → se generan tareas en la Cola.</li>
+    <li>Producir → Preparar pedido → Entregar al cliente.</li>
+  </ol>
+
+  <h3>Escenario C — Trabajo nuevo que hay que cotizar primero</h3>
+  <ol class="steps">
+    <li>Nuevo presupuesto con líneas detalladas.</li>
+    <li>Enviar al cliente → marcar Aceptado.</li>
+    <li>Generar pedido → producir → entregar.</li>
+  </ol>
+
+  <h3>Escenario D — Diseño gráfico + impresión DTF</h3>
+  <ol class="steps">
+    <li>En el pedido o presupuesto, línea «Diseño gráfico».</li>
+    <li>Nombre del trabajo, horas, marcar «Incluye impresión».</li>
+    <li>Elegir tamaño del catálogo de impresos o medidas manuales.</li>
+    <li>Confirmar y seguir en la Cola.</li>
+  </ol>
+
+  <h3>Escenario E — Impresión 3D a medida (sin producto en catálogo)</h3>
+  <ol class="steps">
+    <li>Línea «Impresión 3D» sin producto de catálogo.</li>
+    <li>Completar filamento, gramos y horas.</li>
+    <li>Revisar precio calculado → confirmar pedido.</li>
+  </ol>
+
+  <h3>Escenario F — Producto combo armado con piezas</h3>
+  <ol class="steps">
+    <li>Crear piezas internas (no publicadas) con su producción.</li>
+    <li>Crear producto final con «Incluye piezas» y agregar componentes.</li>
+    <li>Indicar tiempo de armado. El sistema calcula gramos, horas y stock.</li>
+    <li>Publicar si se vende en mostrador.</li>
+  </ol>
+
+  <h3>Escenario G — Entrega parcial de un pedido grande</h3>
+  <ol class="steps">
+    <li>Detalle del pedido → Entregas.</li>
+    <li>Indicar cantidades parciales → Registrar entrega.</li>
+    <li>Repetir hasta completar. El estado pasa a Parcialmente entregado y luego Entregado.</li>
+  </ol>
+
+  <h3>Escenario H — Faltan insumos y la tarea está bloqueada</h3>
+  <ol class="steps">
+    <li>Insumos → actualizar stock del material faltante.</li>
+    <li>Cola de trabajo → mover la tarea de Bloqueado a Pendiente o En progreso.</li>
+  </ol>
+</section>
+
+<section class="page-break">
+  <h2>16. Reglas importantes que conviene recordar</h2>
+  <ol>
+    <li><strong>Venta de mostrador</strong> = producto publicado + stock. Cliente opcional.</li>
+    <li><strong>Pedido</strong> = cliente obligatorio. Puede mezclar productos y servicios.</li>
+    <li>El <strong>estado del pedido</strong> lo calcula el sistema; vos cancelás o registrás entregas.</li>
+    <li>Al confirmar un pedido se <strong>reserva stock</strong>; al entregar se descuenta.</li>
+    <li>Lo producido para un pedido <strong>no suma al stock general</strong> automáticamente.</li>
+    <li>Los <strong>servicios</strong> (diseño, modelado) los agregás vos en las líneas; no se infieren solos.</li>
+    <li>Productos con <strong>piezas</strong>: stock, gramos y horas se calculan desde las piezas.</li>
+    <li>Cambiar precios de insumos recalcula costos; el precio al cliente en pedidos confirmados se mantiene.</li>
+    <li>Presupuesto aceptado → generar pedido → producto nuevo queda <strong>no publicado</strong> hasta que decidas publicarlo.</li>
+    <li>Revisá el Dashboard al inicio del día: pendientes, stock bajo, tareas en cola.</li>
+  </ol>
+</section>
+
+<section>
+  <h2>17. Preguntas frecuentes</h2>
+
+  <h4>¿Por qué no puedo cerrar una venta?</h4>
+  <p>Probablemente falta stock o el producto no está publicado. Verificá en Productos el stock disponible o creá un pedido.</p>
+
+  <h4>¿Por qué un producto publicado no aparece para vender?</h4>
+  <p>Puede no tener stock disponible, o estar filtrado como «No publicados» en el listado.</p>
+
+  <h4>¿Puedo editar un pedido ya creado?</h4>
+  <p>Sí, si está Pendiente o En progreso. Agregar o quitar líneas actualiza las tareas automáticamente.</p>
+
+  <h4>¿Cómo sé qué tareas tengo hoy?</h4>
+  <p>Andá a Cola de trabajo. Revisá el tablero y la sección «Otras tareas».</p>
+
+  <h4>¿Un presupuesto y un pedido son lo mismo?</h4>
+  <p>No. El presupuesto es la cotización. El pedido es el compromiso de producción. Primero presupuesto (si hace falta), después pedido.</p>
+
+  <h4>¿Qué diferencia hay entre producto publicado e interno?</h4>
+  <p>Publicado = se vende en mostrador. Interno = pieza o producto personalizado que no se ofrece directamente.</p>
+
+  <h4>¿Cómo exporto las ventas del mes?</h4>
+  <p>En Ventas, pulsá «Generar reporte» para obtener un archivo CSV.</p>
+
+  <h4>¿Varias personas pueden usar la app a la vez?</h4>
+  <p>Sí. Activá «Mantener sincronizado» en Ajustes → Valores generales para que los cambios se reflejen entre equipos.</p>
+</section>
+
+<section class="page-break">
+  <h2>18. Glosario</h2>
+  <table>
+    <tr><th>Término</th><th>Definición</th></tr>
+    <tr><td>Mostrador</td><td>Venta directa en el local; entrega inmediata.</td></tr>
+    <tr><td>Stock terminado</td><td>Unidades del producto ya fabricadas y listas.</td></tr>
+    <tr><td>Stock reservado</td><td>Unidades apartadas para un pedido confirmado.</td></tr>
+    <tr><td>Stock disponible</td><td>Lo que queda libre para nuevas ventas o pedidos.</td></tr>
+    <tr><td>Pieza / componente</td><td>Producto usado para armar otro (ej.: base de un combo).</td></tr>
+    <tr><td>Combo</td><td>Producto formado por varias piezas.</td></tr>
+    <tr><td>Impreso</td><td>Tamaño de estampa en papel (DTF, sublimación, etc.).</td></tr>
+    <tr><td>FDM</td><td>Impresión 3D con filamento.</td></tr>
+    <tr><td>Cola / tablero</td><td>Donde se organizan las tareas de trabajo.</td></tr>
+    <tr><td>Margen</td><td>Porcentaje de ganancia sobre el costo.</td></tr>
+    <tr><td>Preparar pedido</td><td>Tarea de armado y entrega de ítems ya disponibles.</td></tr>
+  </table>
+
+  <div class="footer">
+    <p><strong>Odell Dashboard</strong> — Manual de usuario para uso productivo.</p>
+    <p>Ante dudas sobre un caso particular, consultá con quien administra el negocio o revisá el detalle del pedido/producto en la aplicación.</p>
+  </div>
+</section>
+
+</body>
+</html>

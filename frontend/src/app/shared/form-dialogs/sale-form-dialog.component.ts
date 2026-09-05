@@ -107,7 +107,7 @@ export class SaleFormDialogComponent implements OnInit {
         this.stockByProductId = Object.fromEntries(
           products.map((product) => [
             product.id,
-            productStockOverview(product),
+            productStockOverview(product, undefined, products),
           ]),
         );
         this.cdr.markForCheck();

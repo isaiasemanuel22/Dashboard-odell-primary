@@ -106,5 +106,10 @@ describe('ProductsService', () => {
     expect(overview.product.id).toBe('prod-1');
     expect(overview.categories).toHaveLength(1);
     expect(overview.catalogProducts).toHaveLength(1);
+    expect(overview.stock).toEqual({
+      physical: 0,
+      reserved: 0,
+      available: 0,
+    });
   });
 });

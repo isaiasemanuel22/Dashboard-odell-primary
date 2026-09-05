@@ -1,6 +1,6 @@
 import { FilamentPriceConfig, FilamentType } from '../../core/models';
 import { FILAMENT_TYPE_LABELS } from '../constants/labels';
-import { DbAutocompleteOption } from '@general-components';
+import type { DbAutocompleteOption } from '@dashboard-form/db-autocomplete/db-autocomplete.types';
 import { filamentTypeOptions } from './select-options';
 
 export function normalizeFilamentType(value: string): string {

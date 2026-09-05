@@ -1,0 +1,230 @@
+@use '../../../shared/styles/variables' as *;
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+
+  h2 {
+    margin: 0;
+    font-size: 1.75rem;
+    color: $color-text;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    color: $color-text-muted;
+  }
+}
+
+.user-access-shell {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 1.5rem;
+  align-items: start;
+
+  @media (max-width: 768px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.user-access-nav {
+  background: $color-surface;
+  border-radius: $radius-md;
+  padding: 0.75rem;
+  box-shadow: $shadow-card;
+
+  a {
+    display: block;
+    padding: 0.65rem 0.85rem;
+    border-radius: $radius-sm;
+    color: $color-text-muted;
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.9rem;
+
+    &:hover {
+      background: $color-surface-subtle;
+      color: $color-text;
+    }
+
+    &.active {
+      background: $color-primary-bg;
+      color: $color-primary-dark;
+    }
+  }
+}
+
+.user-access-content {
+  min-width: 0;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    color: $color-text;
+  }
+}
+
+.access-table-wrap {
+  overflow-x: auto;
+}
+
+.access-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9rem;
+
+  th,
+  td {
+    padding: 0.65rem 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid $color-border;
+    vertical-align: top;
+  }
+
+  th {
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    text-transform: uppercase;
+    color: $color-text-label;
+  }
+}
+
+.access-table__actions {
+  text-align: right;
+  white-space: nowrap;
+}
+
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.45rem;
+  border-radius: $radius-sm;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.badge--system {
+  background: #eef2ff;
+  color: #4338ca;
+}
+
+.badge--inactive {
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.badge--active {
+  background: #ecfdf5;
+  color: #047857;
+}
+
+.permission-grid {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.permission-grid__section h4 {
+  margin: 0 0 0.5rem;
+  font-size: 0.9rem;
+  color: $color-text;
+}
+
+.permission-grid__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+
+  th,
+  td {
+    padding: 0.4rem 0.5rem;
+    border: 1px solid $color-border;
+    text-align: center;
+  }
+
+  th:first-child,
+  td:first-child {
+    text-align: left;
+    font-weight: 500;
+  }
+}
+
+.form-grid {
+  display: grid;
+  gap: 0.85rem;
+}
+
+.form-field {
+  display: grid;
+  gap: 0.35rem;
+
+  label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: $color-text-label;
+  }
+
+  input,
+  select,
+  textarea {
+    width: 100%;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid $color-border;
+    border-radius: $radius-sm;
+    font: inherit;
+    background: $color-surface;
+    color: $color-text;
+  }
+
+  textarea {
+    min-height: 4rem;
+    resize: vertical;
+  }
+}
+
+.checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.role-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.role-tag {
+  padding: 0.15rem 0.45rem;
+  border-radius: $radius-sm;
+  background: $color-surface-subtle;
+  color: $color-text-muted;
+  font-size: 0.78rem;
+}
+
+.form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1rem;
+}
+
+.error-banner {
+  margin-bottom: 1rem;
+  padding: 0.75rem 0.9rem;
+  border-radius: $radius-sm;
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #b91c1c;
+  font-size: 0.9rem;
+}

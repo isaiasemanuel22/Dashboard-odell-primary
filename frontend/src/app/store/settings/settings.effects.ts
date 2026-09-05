@@ -5,8 +5,23 @@ import { Store } from '@ngrx/store';
 import { catchError, exhaustMap, filter, map, of, withLatestFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { GeneralSettings } from '../../core/models';
+import {
+  normalizePaperReferenceSheets,
+} from '../../shared/utils/paper-cost.util';
 import { SettingsActions } from './settings.actions';
 import { selectSettingsLoaded } from './settings.selectors';
+
+function normalizeSettings(settings: GeneralSettings): GeneralSettings {
+  const paperReferenceSheets = normalizePaperReferenceSheets(
+    settings.paperReferenceSheets,
+    settings.paperPricesPerSqm,
+  );
+
+  return {
+    ...settings,
+    paperReferenceSheets,
+  };
+}
 
 @Injectable()
 export class SettingsEffects {
@@ -23,7 +38,11 @@ export class SettingsEffects {
         this.http
           .get<GeneralSettings>(`${environment.apiUrl}/settings/general`)
           .pipe(
-            map((settings) => SettingsActions.loadSuccess({ settings })),
+            map((settings) =>
+              SettingsActions.loadSuccess({
+                settings: normalizeSettings(settings),
+              }),
+            ),
             catchError((error: unknown) =>
               of(
                 SettingsActions.loadFailure({

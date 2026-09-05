@@ -1,0 +1,87 @@
+@use '../../shared/styles/variables' as *;
+
+.area-profit-balance {
+  &__header {
+    margin-bottom: 1rem;
+
+    h3 {
+      margin: 0 0 0.25rem;
+      font-size: 1.05rem;
+    }
+
+    p {
+      margin: 0;
+      color: $color-text-muted;
+      font-size: 0.875rem;
+    }
+  }
+
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+  }
+}
+
+.area-card {
+  padding: 1rem 1.1rem;
+  border: 1px solid $color-border;
+  border-radius: $radius-md;
+  background: $color-surface;
+
+  h4 {
+    margin: 0 0 0.85rem;
+    font-size: 0.95rem;
+    color: $color-text-label;
+  }
+
+  dl {
+    margin: 0;
+    display: grid;
+    gap: 0.65rem;
+  }
+
+  dt {
+    margin: 0;
+    font-size: 0.78rem;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  dd {
+    margin: 0.15rem 0 0;
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: $color-text;
+  }
+
+  &__profit dd {
+    color: $color-primary-dark;
+  }
+
+  &__sources {
+    margin-top: 1rem;
+    padding-top: 0.85rem;
+    border-top: 1px solid $color-border;
+    display: grid;
+    gap: 0.45rem;
+  }
+}
+
+.source-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.875rem;
+
+  &__label {
+    color: $color-text-muted;
+  }
+
+  &__value {
+    font-weight: 600;
+    color: $color-text-label;
+  }
+}

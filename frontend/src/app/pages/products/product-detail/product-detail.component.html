@@ -119,6 +119,7 @@
             mode="read"
             [components]="resolvedComponents"
             [catalog]="catalogProducts"
+            [colorCatalog]="colorCatalog"
           />
           @if (product.assemblyTimeHours > 0) {
             <p class="assembly-note">Tiempo de armado: {{ product.assemblyTimeHours }} h</p>
@@ -126,68 +127,84 @@
         </section>
       }
 
-            @if (isProduct3D(product) && !hasComponents) {
-        <section class="panel">
+            @if (isProduct3D(product)) {
+        <section class="panel production-panel">
           <h3>Producción 3D</h3>
-          <dl class="detail-list">
-            @if (product.brand) {
-              <div>
-                <dt>Marca</dt>
-                <dd>{{ product.brand }}</dd>
+
+          <div class="production-stats">
+            <div class="production-stat">
+              <span class="production-stat__label">Peso</span>
+              <strong class="production-stat__value">{{ displayGrams }} g</strong>
+            </div>
+            <div class="production-stat">
+              <span class="production-stat__label">Impresión</span>
+              <strong class="production-stat__value">{{ displayPrintTimeHours }} h</strong>
+            </div>
+            <div class="production-stat">
+              <span class="production-stat__label">Mano de obra</span>
+              <strong class="production-stat__value">{{ displayWorkTimeHours }} h</strong>
+            </div>
+            @if (product.washMinutes) {
+              <div class="production-stat">
+                <span class="production-stat__label">Lavado</span>
+                <strong class="production-stat__value">{{ product.washMinutes }} min</strong>
               </div>
             }
-            @if (product.filaments?.length) {
-              <div>
-                <dt>Filamentos</dt>
-                <dd>
-                  <ul class="filament-list">
-                    @for (line of product.filaments; track line.id) {
-                      <li>
-                        @if (line.label) {
-                          {{ line.label }} —
-                        }
-                        {{ line.filamentType | filamentTypeLabel }}:
-                        {{ line.grams }} g
-                        · {{ colorLabel(line.colorId) }}
-                      </li>
+            @if (product.cureMinutes) {
+              <div class="production-stat">
+                <span class="production-stat__label">Curado</span>
+                <strong class="production-stat__value">{{ product.cureMinutes }} min</strong>
+              </div>
+            }
+          </div>
+
+          @if (!hasComponents && product.brand) {
+            <p class="production-brand">Marca: <strong>{{ product.brand }}</strong></p>
+          }
+
+          @if (!hasComponents && product.resinType) {
+            <div class="production-color-card">
+              <div
+                class="production-color-card__swatch"
+                [class.production-color-card__swatch--indistinto]="!colorHex(product.colorId)"
+                [style.background-color]="colorHex(product.colorId) || null"
+              ></div>
+              <div class="production-color-card__body">
+                <span class="production-color-card__eyebrow">Color de resina</span>
+                <strong class="production-color-card__title">{{ colorLabel(product.colorId) }}</strong>
+                <span class="production-color-card__meta">{{ product.resinType | resinTypeLabel }}</span>
+                @if (colorHex(product.colorId); as hex) {
+                  <span class="production-color-card__hex">{{ hex }}</span>
+                }
+              </div>
+            </div>
+          }
+
+          @if (!hasComponents && product.filaments?.length) {
+            <div class="filament-cards">
+              @for (line of product.filaments; track line.id) {
+                <article class="filament-card">
+                  <div
+                    class="filament-card__swatch"
+                    [class.filament-card__swatch--indistinto]="!colorHex(line.colorId)"
+                    [style.background-color]="colorHex(line.colorId) || null"
+                  ></div>
+                  <div class="filament-card__body">
+                    @if (line.label) {
+                      <span class="filament-card__label">{{ line.label }}</span>
                     }
-                  </ul>
-                </dd>
-              </div>
-            } @else if (product.filamentType) {
-              <div>
-                <dt>Tipo de filamento</dt>
-                <dd>{{ product.filamentType | filamentTypeLabel }}</dd>
-              </div>
-            }
-            @if (product.resinType) {
-              <div>
-                <dt>Tipo de resina</dt>
-                <dd>{{ product.resinType | resinTypeLabel }}</dd>
-              </div>
-              <div>
-                <dt>Color</dt>
-                <dd class="color-value">
-                  @if (colorHex(product.colorId); as hex) {
-                    <span class="color-swatch" [style.background-color]="hex"></span>
-                  }
-                  {{ colorLabel(product.colorId) }}
-                </dd>
-              </div>
-            }
-            <div>
-              <dt>Peso</dt>
-              <dd>{{ product.grams }} g</dd>
+                    <strong class="filament-card__type">{{ line.filamentType | filamentTypeLabel }}</strong>
+                    <span class="filament-card__grams">{{ line.grams }} g</span>
+                    <span class="filament-card__color">{{ colorLabel(line.colorId) }}</span>
+                  </div>
+                </article>
+              }
             </div>
-            <div>
-              <dt>Tiempo de impresión</dt>
-              <dd>{{ product.printTimeHours }} h</dd>
-            </div>
-            <div>
-              <dt>Tiempo de mano de obra</dt>
-              <dd>{{ product.workTimeHours }} h</dd>
-            </div>
-          </dl>
+          } @else if (!hasComponents && product.filamentType) {
+            <p class="production-brand">
+              Filamento: <strong>{{ product.filamentType | filamentTypeLabel }}</strong>
+            </p>
+          }
         </section>
       }
     </div>

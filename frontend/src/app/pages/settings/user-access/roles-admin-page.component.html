@@ -1,0 +1,161 @@
+<div class="panel-header">
+  <h3>Roles</h3>
+  <db-button
+    label="+ Nuevo rol"
+    variant="primary"
+    format="solid"
+    (clicked)="openCreate()"
+  />
+</div>
+
+@if (error && !modalOpen) {
+  <div class="error-banner">{{ error }}</div>
+}
+
+<db-state-message
+  [loading]="loading"
+  [empty]="!loading && roles.length === 0"
+  loadingMessage="Cargando roles..."
+  emptyMessage="Todavía no hay roles configurados."
+>
+  <db-button
+    emptyActions
+    label="Crear primer rol"
+    variant="primary"
+    format="solid"
+    (clicked)="openCreate()"
+  />
+</db-state-message>
+
+@if (!loading && roles.length) {
+  <div class="access-table-wrap">
+    <table class="access-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Descripción</th>
+          <th>Permisos</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (role of roles; track role.id) {
+          <tr>
+            <td>
+              {{ role.name }}
+              @if (role.isSystem) {
+                <span class="badge badge--system">Sistema</span>
+              }
+            </td>
+            <td>{{ role.description || '—' }}</td>
+            <td>{{ permissionCount(role) }}</td>
+            <td class="access-table__actions">
+              <db-button
+                label="Editar"
+                variant="secondary"
+                format="soft"
+                (clicked)="openEdit(role)"
+              />
+              @if (!role.isSystem) {
+                <db-button
+                  label="Eliminar"
+                  variant="delete"
+                  format="soft"
+                  (clicked)="deleteRole(role)"
+                />
+              }
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (modalOpen) {
+  <app-form-modal
+    [title]="editing ? 'Editar rol' : 'Nuevo rol'"
+    size="lg"
+    [stickyHeader]="true"
+    (close)="closeModal()"
+  >
+    @if (error) {
+      <div class="error-banner">{{ error }}</div>
+    }
+
+    <div class="form-grid">
+      <div class="form-field">
+        <label for="role-name">Nombre</label>
+        <input id="role-name" [(ngModel)]="form.name" />
+      </div>
+      <div class="form-field">
+        <label for="role-description">Descripción</label>
+        <textarea id="role-description" [(ngModel)]="form.description"></textarea>
+      </div>
+    </div>
+
+    <div class="permission-grid">
+      <section class="permission-grid__section">
+        <h4>Permisos por área</h4>
+        <table class="permission-grid__table">
+          <thead>
+            <tr>
+              <th>Área</th>
+              @for (action of workActions; track action) {
+                <th>{{ actionLabels[action] }}</th>
+              }
+            </tr>
+          </thead>
+          <tbody>
+            @for (area of areas; track area.id) {
+              <tr>
+                <td>{{ area.name }}</td>
+                @for (action of workActions; track action) {
+                  <td>
+                    <input
+                      type="checkbox"
+                      [checked]="hasWorkPermission(area.id, action)"
+                      (change)="toggleWorkPermission(area.id, action, $any($event.target).checked)"
+                    />
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </section>
+
+      <section class="permission-grid__section">
+        <h4>Administración</h4>
+        @for (action of adminActions; track action) {
+          <div class="checkbox-row">
+            <input
+              [id]="'admin-' + action"
+              type="checkbox"
+              [checked]="hasAdminPermission(action)"
+              (change)="toggleAdminPermission(action, $any($event.target).checked)"
+            />
+            <label [for]="'admin-' + action">{{ actionLabels[action] }}</label>
+          </div>
+        }
+      </section>
+    </div>
+
+    <div class="form-actions">
+      <db-button
+        label="Cancelar"
+        variant="secondary"
+        format="soft"
+        [disabled]="saving"
+        (clicked)="closeModal()"
+      />
+      <db-button
+        [label]="saving ? 'Guardando…' : 'Guardar'"
+        variant="primary"
+        format="solid"
+        [disabled]="saving"
+        (clicked)="save()"
+      />
+    </div>
+  </app-form-modal>
+}

@@ -1,4 +1,5 @@
 import { MachineProfileRole, ProductType } from '../common/enums';
+import { normalizePaperReferenceSheets } from '../common/paper-cost.util';
 import {
   calcWashSupplyCost,
   createDefaultMachineProfiles,
@@ -13,8 +14,18 @@ describe('machine-profile.util', () => {
     laborCostPerHour: 500,
     powerConsumptions: [],
     machineCosts: [],
-    profitMargins: { impresion_3d: 0, diseno: 0, estampado: 0 },
+    profitMargins: {
+      impresion_3d: 0,
+      diseno_grafico: 0,
+      modelado: 0,
+      estampado: 0,
+    },
     paperPricesPerSqm: { sublimacion: 0, dtf: 0, dtfUv: 0 },
+    paperReferenceSheets: normalizePaperReferenceSheets(undefined, {
+      sublimacion: 0,
+      dtf: 0,
+      dtfUv: 0,
+    }),
     filamentPrices: [],
     resinPrices: [],
     machineProfiles: createDefaultMachineProfiles().map((profile) =>

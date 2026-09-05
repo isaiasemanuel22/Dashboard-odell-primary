@@ -8,8 +8,10 @@ import {
   Order,
   PrintJob,
   Product,
+  Quote,
   RetailSale,
   Supply,
+  TreasuryExpense,
 } from '../common/interfaces';
 import { createSeedState } from './store.seed';
 import { StoreState } from './store.state';
@@ -27,14 +29,17 @@ export class StoreService {
   products: Product[] = [];
   customers: Customer[] = [];
   orders: Order[] = [];
+  quotes: Quote[] = [];
   printJobs: PrintJob[] = [];
   retailSales: RetailSale[] = [];
   materials: Material[] = [];
+  treasuryExpenses: TreasuryExpense[] = [];
 
   private categoryIndexLen = -1;
   private productIndexLen = -1;
   private customerIndexLen = -1;
   private orderIndexLen = -1;
+  private quoteIndexLen = -1;
   private printJobIndexLen = -1;
   private materialIndexLen = -1;
   private supplyIndexLen = -1;
@@ -45,6 +50,7 @@ export class StoreService {
   private productById = new Map<string, Product>();
   private customerById = new Map<string, Customer>();
   private orderById = new Map<string, Order>();
+  private quoteById = new Map<string, Quote>();
   private printJobById = new Map<string, PrintJob>();
   private materialById = new Map<string, Material>();
   private supplyById = new Map<string, Supply>();
@@ -59,9 +65,11 @@ export class StoreService {
     this.products = state.products;
     this.customers = state.customers;
     this.orders = state.orders;
+    this.quotes = state.quotes;
     this.printJobs = state.printJobs;
     this.retailSales = state.retailSales;
     this.materials = state.materials;
+    this.treasuryExpenses = state.treasuryExpenses;
     this.invalidateIndexes();
   }
 
@@ -74,9 +82,11 @@ export class StoreService {
       products: this.products,
       customers: this.customers,
       orders: this.orders,
+      quotes: this.quotes,
       printJobs: this.printJobs,
       retailSales: this.retailSales,
       materials: this.materials,
+      treasuryExpenses: this.treasuryExpenses,
     };
   }
 
@@ -188,6 +198,30 @@ export class StoreService {
     return removed;
   }
 
+  getQuoteById(id: string): Quote | undefined {
+    this.ensureQuoteIndex();
+    return this.quoteById.get(id);
+  }
+
+  indexQuote(quote: Quote): void {
+    this.ensureQuoteIndex();
+    this.quoteById.set(quote.id, quote);
+  }
+
+  replaceQuote(quote: Quote): void {
+    replaceInCollection(this.quotes, quote.id, quote);
+    this.indexQuote(quote);
+  }
+
+  removeQuote(id: string): boolean {
+    const removed = removeFromCollection(this.quotes, id);
+    if (removed) {
+      this.quoteById.delete(id);
+      this.quoteIndexLen = this.quotes.length;
+    }
+    return removed;
+  }
+
   getPrintJobById(id: string): PrintJob | undefined {
     this.ensurePrintJobIndex();
     return this.printJobById.get(id);
@@ -265,8 +299,16 @@ export class StoreService {
     return this.nextId('ord', this.orders);
   }
 
+  nextQuoteId(): string {
+    return this.nextId('qte', this.quotes);
+  }
+
   nextRetailSaleId(): string {
     return this.nextId('sale', this.retailSales);
+  }
+
+  nextTreasuryExpenseId(): string {
+    return this.nextId('treasury', this.treasuryExpenses);
   }
 
   private invalidateIndexes(): void {
@@ -274,6 +316,7 @@ export class StoreService {
     this.productIndexLen = -1;
     this.customerIndexLen = -1;
     this.orderIndexLen = -1;
+    this.quoteIndexLen = -1;
     this.printJobIndexLen = -1;
     this.materialIndexLen = -1;
     this.supplyIndexLen = -1;
@@ -303,6 +346,12 @@ export class StoreService {
     if (this.orderIndexLen === this.orders.length) return;
     this.orderById = new Map(this.orders.map((item) => [item.id, item]));
     this.orderIndexLen = this.orders.length;
+  }
+
+  private ensureQuoteIndex(): void {
+    if (this.quoteIndexLen === this.quotes.length) return;
+    this.quoteById = new Map(this.quotes.map((item) => [item.id, item]));
+    this.quoteIndexLen = this.quotes.length;
   }
 
   private ensurePrintJobIndex(): void {

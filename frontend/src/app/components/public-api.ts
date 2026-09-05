@@ -1,5 +1,6 @@
 export * from './dashboard-form/public-api';
 export * from './db-button';
+export * from './form-modal';
 
 // Listados y UI compartida
 export * from './db-state-message/db-state-message.component';
@@ -15,19 +16,24 @@ export * from './product-pricing/product-pricing.component';
 export * from './product-components-table/product-components-table.component';
 export * from './product-card/product-card.component';
 export * from './product-image-carousel/product-image-carousel.component';
+export * from './product-form-dialog/product-form-dialog.component';
+export * from './category-form-dialog/category-form-dialog.component';
 export * from './customer-card/customer-card.component';
 export * from './print-job-card/print-job-card.component';
 export * from './order-card/order-card.component';
+export * from './quote-card/quote-card.component';
 export * from './orders-table/orders-table.component';
 export * from './sales-table/sales-table.component';
 export * from './sale-stat-card/sale-stat-card.component';
 export * from './sales-stats-grid/sales-stats-grid.component';
+export * from './area-profit-balance/area-profit-balance.component';
 export * from './dashboard-monthly-trends/dashboard-monthly-trends.component';
+export * from './dashboard-notifications/dashboard-notifications.component';
 export * from './sale-entry-row/sale-entry-row.component';
 export * from './sale-entry-item/sale-entry-item.component';
 export * from './sale-source-badge/sale-source-badge.component';
 export * from './sale-cart-line/sale-cart-line.component';
-export type { SaleCartLine } from './sale-cart-line/sale-cart-line.component';
+export type { SaleCartLine } from './sale-cart-line/sale-cart-line.types';
 export * from './sale-cart-line-card/sale-cart-line-card.component';
 export * from './sale-cart-footer/sale-cart-footer.component';
 export * from './sale-entry-card/sale-entry-card.component';

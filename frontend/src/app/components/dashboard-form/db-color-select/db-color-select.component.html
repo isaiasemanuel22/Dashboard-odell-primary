@@ -1,0 +1,99 @@
+@if (label) {
+  <db-form-field
+    [label]="label"
+    [hint]="hint"
+    [error]="error"
+    [required]="required"
+    [forId]="groupId"
+  >
+    <ng-container *ngTemplateOutlet="picker" />
+  </db-form-field>
+} @else {
+  <ng-container *ngTemplateOutlet="picker" />
+}
+
+<ng-template #picker>
+  <div class="db-color-select" [id]="groupId">
+    @if (selectedOption(); as selected) {
+      <button
+        type="button"
+        class="db-color-select__preview"
+        [disabled]="disabled"
+        [attr.aria-expanded]="panelOpen"
+        aria-haspopup="dialog"
+        [attr.aria-label]="label ? 'Elegir ' + label : 'Elegir color'"
+        (click)="openPanel()"
+      >
+        <span
+          class="db-color-select__swatch db-color-select__swatch--preview"
+          [class.db-color-select__swatch--indistinto]="!selected.hex"
+          [style.background-color]="selected.hex || null"
+        ></span>
+        <div class="db-color-select__preview-text">
+          <span class="db-color-select__preview-label">{{ selected.label }}</span>
+          @if (selected.hex) {
+            <span class="db-color-select__preview-hex">{{ selected.hex }}</span>
+          } @else {
+            <span class="db-color-select__preview-hint">Click para elegir color</span>
+          }
+        </div>
+        <span class="db-color-select__chevron" aria-hidden="true">▾</span>
+      </button>
+    }
+  </div>
+
+  @if (panelOpen) {
+    <div
+      class="db-color-select__backdrop"
+      role="presentation"
+      (click)="closePanel()"
+    >
+      <div
+        class="db-color-select__panel"
+        role="dialog"
+        aria-modal="true"
+        [attr.aria-label]="label ? 'Elegir ' + label : 'Elegir color'"
+        (click)="$event.stopPropagation()"
+      >
+        <header class="db-color-select__panel-header">
+          <h4 class="db-color-select__panel-title">
+            {{ label || 'Color' }}
+          </h4>
+          <button
+            type="button"
+            class="db-color-select__panel-close"
+            aria-label="Cerrar"
+            (click)="closePanel()"
+          >
+            ✕
+          </button>
+        </header>
+
+        <div class="db-color-select__options">
+          @for (opt of options; track opt.value) {
+            <button
+              type="button"
+              class="db-color-select__option"
+              [class.db-color-select__option--active]="isSelected(opt.value)"
+              [disabled]="disabled || opt.disabled"
+              [attr.aria-selected]="isSelected(opt.value)"
+              (click)="pick(opt.value)"
+            >
+              <span
+                class="db-color-select__swatch"
+                [class.db-color-select__swatch--indistinto]="!opt.hex"
+                [style.background-color]="opt.hex || null"
+              ></span>
+              <span class="db-color-select__option-text">
+                <span class="db-color-select__option-label">{{ opt.label }}</span>
+                @if (opt.hex) {
+                  <span class="db-color-select__option-hex">{{ opt.hex }}</span>
+                }
+              </span>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</ng-template>

@@ -10,13 +10,9 @@ import { RouterLink } from '@angular/router';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 import { DbButtonComponent } from '../db-button/db-button.component';
 
-export interface SaleCartLine {
-  key: string;
-  productId: string;
-  productName: string;
-  quantity: number;
-  unitPrice: number;
-}
+import type { SaleCartLine } from './sale-cart-line.types';
+
+export type { SaleCartLine } from './sale-cart-line.types';
 
 @Component({
   selector: 'app-sale-cart-line',

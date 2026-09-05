@@ -1,12 +1,11 @@
 import { createActionGroup, emptyProps, props } from '@ngrx/store';
-import { Supply, SupplyCategory, SupplyType } from '../../core/models';
+import { Supply, SupplyCategory } from '../../core/models';
 
 export const SuppliesActions = createActionGroup({
   source: 'Supplies',
   events: {
     Load: props<{
       refresh?: boolean;
-      supplyType?: SupplyType;
       category?: SupplyCategory;
     }>(),
     'Load Success': props<{ supplies: Supply[] }>(),

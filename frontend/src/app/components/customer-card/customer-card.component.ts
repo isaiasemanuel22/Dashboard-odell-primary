@@ -8,7 +8,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { Customer } from '../../core/models';
 import { DateShortPipe } from '../../shared/pipes/labels.pipe';
-import { DbButtonComponent } from '@general-components';
+import { DbButtonComponent } from '../db-button/db-button.component';
 
 @Component({
   selector: 'app-customer-card',

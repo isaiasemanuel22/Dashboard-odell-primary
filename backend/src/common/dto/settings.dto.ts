@@ -15,6 +15,7 @@ import {
   ProductType,
   ResinType,
   ServiceType,
+  SupplyCategory,
 } from '../enums';
 import {
   EstampadoPressCycle,
@@ -121,7 +122,7 @@ export class UpdateProfitMarginsDto {
 
 export class UpdatePaperPricesDto {
   @IsObject()
-  paperPricesPerSqm!: Record<string, number>;
+  paperReferenceSheets!: Record<string, Record<string, number>>;
 }
 
 export class MachineProfileDto {
@@ -352,8 +353,8 @@ export class ImpresoPreviewCostDto {
 }
 
 export class SupplyDefaultPriceDto {
-  @IsString()
-  type!: string;
+  @IsEnum(SupplyCategory)
+  category!: SupplyCategory;
 
   @IsOptional()
   @IsString()
@@ -373,12 +374,8 @@ export class CreateSupplyDto {
   @IsNotEmpty()
   name!: string;
 
-  @IsOptional()
-  @IsString()
-  category?: string;
-
-  @IsString()
-  type!: string;
+  @IsEnum(SupplyCategory)
+  category!: SupplyCategory;
 
   @IsString()
   unit!: string;

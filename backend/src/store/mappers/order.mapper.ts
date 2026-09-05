@@ -1,8 +1,9 @@
 import { Prisma } from '@prisma/client';
+import { OrderStatus } from '../../common/enums';
 import { Order, OrderItem } from '../../common/interfaces';
 import { ensureOrderStatusHistory } from '../../orders/order-status-history.util';
 import { fromJson, toInputJson } from '../../prisma/json.util';
-import { OrderStatus } from '../../common/enums';
+import { normalizeServiceType } from '../../common/service-type.util';
 
 function normalizeOrderStatus(status: string): OrderStatus {
   if (status === 'en_produccion') return OrderStatus.EN_PROGRESO;
@@ -16,6 +17,15 @@ export function mapOrderItemFromDb(item: {
   productName: string;
   quantity: number;
   unitPrice: number;
+  includesPrint?: boolean;
+  printPaperType?: string | null;
+  printWidthCm?: number | null;
+  printLengthCm?: number | null;
+  printImpresoId?: string | null;
+  designUnitPrice?: number | null;
+  printTimeHours?: number | null;
+  grams?: number | null;
+  filamentType?: string | null;
   deliveredQuantity?: number;
   reservedQuantity?: number;
   productionRequiredQuantity?: number;
@@ -23,11 +33,22 @@ export function mapOrderItemFromDb(item: {
   deliveredFromProductionQuantity?: number;
 }): OrderItem {
   return {
-    serviceType: item.serviceType as OrderItem['serviceType'],
+    serviceType:
+      normalizeServiceType(item.serviceType) ??
+      (item.serviceType as OrderItem['serviceType']),
     productId: item.productId ?? undefined,
     productName: item.productName,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    includesPrint: item.includesPrint ?? undefined,
+    printPaperType: (item.printPaperType as OrderItem['printPaperType']) ?? undefined,
+    printWidthCm: item.printWidthCm ?? undefined,
+    printLengthCm: item.printLengthCm ?? undefined,
+    printImpresoId: item.printImpresoId ?? undefined,
+    designUnitPrice: item.designUnitPrice ?? undefined,
+    printTimeHours: item.printTimeHours ?? undefined,
+    grams: item.grams ?? undefined,
+    filamentType: (item.filamentType as OrderItem['filamentType']) ?? undefined,
     deliveredQuantity: item.deliveredQuantity ?? 0,
     reservedQuantity: item.reservedQuantity ?? 0,
     productionRequiredQuantity: item.productionRequiredQuantity ?? 0,
@@ -59,6 +80,8 @@ export function mapOrderFromDb(row: {
     productName: string;
     quantity: number;
     unitPrice: number;
+    printImpresoId?: string | null;
+    designUnitPrice?: number | null;
     deliveredQuantity?: number;
     reservedQuantity?: number;
     productionRequiredQuantity?: number;
@@ -130,6 +153,15 @@ export function mapOrderItemToDb(orderId: string, index: number, item: OrderItem
     productName: item.productName,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    includesPrint: item.includesPrint ?? false,
+    printPaperType: item.printPaperType ?? null,
+    printWidthCm: item.printWidthCm ?? null,
+    printLengthCm: item.printLengthCm ?? null,
+    printImpresoId: item.printImpresoId ?? null,
+    designUnitPrice: item.designUnitPrice ?? null,
+    printTimeHours: item.printTimeHours ?? null,
+    grams: item.grams ?? null,
+    filamentType: item.filamentType ?? null,
     deliveredQuantity: item.deliveredQuantity ?? 0,
     reservedQuantity: item.reservedQuantity ?? 0,
     productionRequiredQuantity: item.productionRequiredQuantity ?? 0,

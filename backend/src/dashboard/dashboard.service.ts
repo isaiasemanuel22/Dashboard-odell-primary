@@ -1,9 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { OrderStatus, PrintJobStatus, ServiceType } from '../common/enums';
-import { DashboardStats, MonthlyTrendPoint } from '../common/interfaces';
+import {
+  DashboardNotification,
+  DashboardStats,
+  MonthlyTrendPoint,
+} from '../common/interfaces';
 import { SalesService } from '../sales/sales.service';
-import { isRevenueOrder } from '../sales/sales-order.util';
+import { isRevenueOrder, resolveOrderSoldAt } from '../sales/sales-order.util';
 import { StoreService } from '../store/store.service';
+import { TreasuryService } from '../treasury/treasury.service';
+import { computeDebtorBalances } from '../treasury/treasury-debtor.util';
 
 const MONTH_LABELS = [
   'Ene',
@@ -33,6 +39,7 @@ export class DashboardService {
   constructor(
     private readonly store: StoreService,
     private readonly salesService: SalesService,
+    private readonly treasuryService: TreasuryService,
   ) {}
 
   getStats(): DashboardStats {
@@ -60,6 +67,7 @@ export class DashboardService {
         (o) => o.status === OrderStatus.EN_PRODUCCION,
       ).length,
       monthlyRevenue,
+      walletBalance: this.treasuryService.getAvailableBalance(),
       activePrintJobs: this.store.printJobs.filter(
         (j) => j.active && j.status === PrintJobStatus.EN_PROCESO,
       ).length,
@@ -73,7 +81,81 @@ export class DashboardService {
       ordersByType,
       recentOrders,
       monthlyTrend: this.buildMonthlyTrend(),
+      notifications: this.buildNotifications(),
     };
+  }
+
+  private buildNotifications(): DashboardNotification[] {
+    const notifications: DashboardNotification[] = [];
+
+    const lowStockSupplies = this.store.supplies.filter(
+      (supply) => supply.quantity <= supply.minStock,
+    );
+    if (lowStockSupplies.length === 1) {
+      const supply = lowStockSupplies[0]!;
+      notifications.push({
+        id: `low-stock-${supply.id}`,
+        type: 'warning',
+        title: 'Stock bajo',
+        message: `${supply.name}: ${supply.quantity} ${supply.unit} (mín. ${supply.minStock})`,
+        route: '/insumos',
+      });
+    } else if (lowStockSupplies.length > 1) {
+      notifications.push({
+        id: 'low-stock-summary',
+        type: 'warning',
+        title: 'Stock bajo',
+        message: `${lowStockSupplies.length} insumos por debajo del mínimo`,
+        route: '/insumos',
+      });
+    }
+
+    const blockedTasks = this.store.printJobs.filter(
+      (job) =>
+        job.active &&
+        !job.archived &&
+        job.status === PrintJobStatus.BLOQUEADO,
+    );
+    for (const job of blockedTasks) {
+      const suppliesReady = !!job.suppliesAvailableNotifiedAt;
+      notifications.push({
+        id: `blocked-${job.id}`,
+        type: suppliesReady ? 'success' : 'warning',
+        title: suppliesReady ? 'Insumos disponibles' : 'Tarea bloqueada',
+        message: suppliesReady
+          ? `${job.productName}: podés desbloquear la producción`
+          : `${job.productName}${job.blockedReason ? ` — ${job.blockedReason}` : ''}`,
+        route: '/cola',
+      });
+    }
+
+    const pendingOrders = this.store.orders.filter(
+      (order) => order.status === OrderStatus.PENDIENTE,
+    ).length;
+    if (pendingOrders > 0) {
+      notifications.push({
+        id: 'pending-orders',
+        type: 'info',
+        title: 'Pedidos pendientes',
+        message:
+          pendingOrders === 1
+            ? '1 pedido esperando iniciar'
+            : `${pendingOrders} pedidos esperando iniciar`,
+        route: '/pedidos',
+      });
+    }
+
+    for (const debtor of computeDebtorBalances(this.store.treasuryExpenses)) {
+      notifications.push({
+        id: `debtor-${debtor.name.toLocaleLowerCase('es')}`,
+        type: 'warning',
+        title: 'Préstamo pendiente',
+        message: `${debtor.name} debe $${debtor.amount.toLocaleString('es-AR')}`,
+        route: '/billetera',
+      });
+    }
+
+    return notifications;
   }
 
   private buildMonthlyTrend(): MonthlyTrendPoint[] {
@@ -128,8 +210,8 @@ export class DashboardService {
     const ordersRevenue = this.store.orders
       .filter((order) => {
         if (!isRevenueOrder(order)) return false;
-        const dueDate = new Date(order.dueDate);
-        return dueDate >= monthStart && dueDate <= monthEnd;
+        const soldAt = new Date(resolveOrderSoldAt(order));
+        return soldAt >= monthStart && soldAt <= monthEnd;
       })
       .reduce((sum, order) => sum + order.total, 0);
 

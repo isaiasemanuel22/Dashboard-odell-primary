@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { SupplyType } from '../../common/enums';
+import { SupplyCategory } from '../../common/enums';
 import { Supply } from '../../common/interfaces';
 import { StoreService } from '../store.service';
 
@@ -7,13 +7,13 @@ import { StoreService } from '../store.service';
 export class SupplyRepository {
   constructor(private readonly store: StoreService) {}
 
-  findAll(type?: SupplyType): Supply[] {
+  findAll(category?: SupplyCategory): Supply[] {
     const items = [...this.store.supplies].sort(
       (a, b) =>
         new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     );
-    if (!type) return items;
-    return items.filter((s) => s.type === type);
+    if (!category) return items;
+    return items.filter((s) => s.category === category);
   }
 
   findLowStock(): Supply[] {

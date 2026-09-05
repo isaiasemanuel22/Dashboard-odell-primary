@@ -10,17 +10,17 @@ import {
 } from '../../../core/models';
 import { CatalogFacade } from '../../../store/catalog/catalog.facade';
 import { SettingsFacade } from '../../../store/settings/settings.facade';
-import { ProductFormPricingFacade } from '../../../store/product-form-pricing/product-form-pricing.facade';
+import { ProductFormPricingFacade } from './store/product-form-pricing/product-form-pricing.facade';
 import { SuppliesFacade } from '../../../store/supplies/supplies.facade';
 import { MediaUploadService } from '../../../core/services/media-upload.service';
 import { ImpresosService } from '../../../core/services/impresos.service';
-import { ProductPayloadBuilderService } from '../../../core/services/product-payload-builder.service';
+import { ProductPayloadBuilderService } from './services/product-payload-builder.service';
 import {
   ProductFormGroup,
   ProductFormState,
   ProductFormStateManagerService,
-} from '../../../core/services/product-form-state-manager.service';
-import { normalizeProductComponents } from '../../../shared/utils/product.helpers';
+} from './services/product-form-state-manager.service';
+import { normalizeProductComponents, sumComponentsProductionMetrics } from '../../../shared/utils/product.helpers';
 import {
   createEmptyEstampadoPressCycle,
   createEmptyEstampadoPrint,
@@ -34,10 +34,10 @@ import {
   productTypeOptions,
   resinTypeOptions,
 } from '../../../shared/utils/select-options';
-import {
+import type {
   DbAttachmentUploadFn,
   DbFileUploadFn,
-} from '@general-components';
+} from '@dashboard-form';
 import { ProductFormPricingService } from './product-form-pricing.service';
 import { ProductFormBasicFieldsValue } from './sections/product-form-basic-fields.component';
 import { ProductFormComponentsValue } from './sections/product-form-components-section.component';
@@ -282,6 +282,29 @@ export class ProductFormFacade {
       v.type === ProductType.COMBO ||
       v.includesPieces ||
       v.components.length > 0;
+    let grams = v.grams;
+    let printTimeHours = v.printTimeHours;
+    let workTimeHours = v.workTimeHours;
+    let totalFilamentGrams = totalFdmFilamentGrams(v.filamentLines);
+
+    if (
+      usesPieceAssembly &&
+      isProductType3D(v.type) &&
+      v.components.length > 0
+    ) {
+      const metrics = sumComponentsProductionMetrics(
+        this.catalogProducts,
+        v.components,
+        { assemblyTimeHours: v.assemblyTimeHours },
+      );
+      grams = metrics.grams;
+      printTimeHours = metrics.printTimeHours;
+      workTimeHours = metrics.workTimeHours;
+      if (v.type === ProductType.FDM) {
+        totalFilamentGrams = metrics.grams;
+      }
+    }
+
     return this.payloadBuilder.buildCreatePayload({
       type: v.type,
       name: v.name,
@@ -301,10 +324,10 @@ export class ProductFormFacade {
       finishedStock: v.finishedStock,
       components: v.components,
       assemblyTimeHours: v.assemblyTimeHours,
-      grams: v.grams,
-      totalFilamentGrams: totalFdmFilamentGrams(v.filamentLines),
-      printTimeHours: v.printTimeHours,
-      workTimeHours: v.workTimeHours,
+      grams,
+      totalFilamentGrams,
+      printTimeHours,
+      workTimeHours,
       filaments: storedFdmFilaments(v.filamentLines),
       filamentType: v.filamentType,
       filamentLines: v.filamentLines,
@@ -393,10 +416,11 @@ export class ProductFormFacade {
             this.product.components ?? [],
             this.catalogProducts,
           );
-          this.form.patchValue({ components: normalized }, { emitEvent: false });
-          if (normalized.length > 0) {
+          const currentComponents = this.form.controls.components.value;
+          // No pisar piezas que el usuario ya agregó mientras cargaba el catálogo.
+          if (currentComponents.length === 0 && normalized.length > 0) {
             this.form.patchValue(
-              { includesPieces: true },
+              { components: normalized, includesPieces: true },
               { emitEvent: false },
             );
             this.notifyBasicFieldsSync();

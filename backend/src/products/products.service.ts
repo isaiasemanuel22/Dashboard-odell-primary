@@ -42,6 +42,11 @@ import {
   normalizeProductAttachments,
   validateProductAttachments,
 } from './product-attachment.util';
+import { buildProductStockOverview } from './product-stock.util';
+import {
+  sumComponentsProductionMetrics,
+  withResolvedProductionMetrics,
+} from './product-production.util';
 
 @Injectable()
 export class ProductsService {
@@ -62,8 +67,10 @@ export class ProductsService {
       (a, b) =>
         new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     );
-    if (!type) return products;
-    return products.filter((p) => p.type === type);
+    if (!type) return products.map((p) => withResolvedProductionMetrics(this.store, p));
+    return products
+      .filter((p) => p.type === type)
+      .map((p) => withResolvedProductionMetrics(this.store, p));
   }
 
   findOne(id: string): Product {
@@ -71,13 +78,13 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException(`Producto ${id} no encontrado`);
     }
-    return {
+    return withResolvedProductionMetrics(this.store, {
       ...product,
       components: normalizeProductComponents(
         product.components,
         this.store.products,
       ),
-    };
+    });
   }
 
   getOverview(id: string): ProductOverview {
@@ -86,6 +93,7 @@ export class ProductsService {
       product,
       categories: [...this.store.categories],
       catalogProducts: [...this.store.products],
+      stock: buildProductStockOverview(this.store, id),
     };
   }
 
@@ -190,7 +198,9 @@ export class ProductsService {
       };
     }
 
-    this.products.create(product);
+    this.products.create(
+      this.applyCompositeProductionMetrics(product, components),
+    );
     this.pricingSync.syncAfterProductSave(product.id, product.price);
     return this.findOne(product.id);
   }
@@ -405,7 +415,9 @@ export class ProductsService {
     if (index === -1) {
       throw new NotFoundException(`Producto ${id} no encontrado`);
     }
-    this.products.save(updated);
+    this.products.save(
+      this.applyCompositeProductionMetrics(updated, mergedComponents),
+    );
     this.pricingSync.syncAfterProductSave(id, previousPrice);
     return this.findOne(id);
   }
@@ -659,6 +671,11 @@ export class ProductsService {
         productId,
         new Set<string>(),
       );
+
+      resolveProductColorId(
+        this.store.generalSettings.colors ?? [],
+        component.colorId,
+      );
     }
   }
 
@@ -685,5 +702,28 @@ export class ProductsService {
     for (const child of product.components) {
       this.assertNoComponentCycle(child.productId, rootId, visited);
     }
+  }
+
+  private applyCompositeProductionMetrics(
+    product: Product,
+    components: ProductComponent[],
+  ): Product {
+    if (
+      components.length === 0 ||
+      (product.type !== ProductType.FDM &&
+        product.type !== ProductType.RESINA)
+    ) {
+      return product;
+    }
+
+    const metrics = sumComponentsProductionMetrics(this.store, components, {
+      assemblyTimeHours: product.assemblyTimeHours,
+    });
+    return {
+      ...product,
+      grams: metrics.grams,
+      printTimeHours: metrics.printTimeHours,
+      workTimeHours: metrics.workTimeHours,
+    };
   }
 }

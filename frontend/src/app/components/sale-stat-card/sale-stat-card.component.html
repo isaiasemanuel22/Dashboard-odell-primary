@@ -19,4 +19,18 @@
   @if (detail) {
     <small class="sale-stat-card__detail">{{ detail }}</small>
   }
+  @if (breakdown.length) {
+    <div class="sale-stat-card__breakdown">
+      @for (row of breakdown; track row.label) {
+        <div class="sale-stat-card__breakdown-row">
+          <span>{{ row.label }}</span>
+          @if (currency) {
+            <span>{{ row.value | currencyArs }}</span>
+          } @else {
+            <span>{{ row.value }}</span>
+          }
+        </div>
+      }
+    </div>
+  }
 </article>

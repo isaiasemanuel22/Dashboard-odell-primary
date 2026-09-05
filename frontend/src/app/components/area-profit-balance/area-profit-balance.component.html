@@ -1,0 +1,42 @@
+<section class="area-profit-balance">
+  <header class="area-profit-balance__header">
+    <h3>Balance por área</h3>
+    <p>
+      Ingresos, costos y ganancias del mes — ventas de mostrador y pedidos
+      entregados — por área de servicio.
+    </p>
+  </header>
+
+  <div class="area-profit-balance__grid">
+    @for (balance of balances; track balance.area) {
+      <article class="area-card">
+        <h4>{{ areaLabel(balance.area) }}</h4>
+        <dl class="area-card__totals">
+          <div>
+            <dt>Ingresos</dt>
+            <dd>{{ balance.revenue | currencyArs }}</dd>
+          </div>
+          <div>
+            <dt>Costos</dt>
+            <dd>{{ balance.cost | currencyArs }}</dd>
+          </div>
+          <div class="area-card__profit">
+            <dt>Ganancia</dt>
+            <dd>{{ balance.profit | currencyArs }}</dd>
+          </div>
+        </dl>
+
+        <div class="area-card__sources">
+          <div class="source-row">
+            <span class="source-row__label">Ventas</span>
+            <span class="source-row__value">{{ balance.retail.profit | currencyArs }}</span>
+          </div>
+          <div class="source-row">
+            <span class="source-row__label">Pedidos</span>
+            <span class="source-row__value">{{ balance.orders.profit | currencyArs }}</span>
+          </div>
+        </div>
+      </article>
+    }
+  </div>
+</section>

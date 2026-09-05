@@ -6,8 +6,10 @@ import {
   MaterialRepository,
   OrderRepository,
   ProductRepository,
+  QuoteRepository,
   RetailSaleRepository,
   SupplyRepository,
+  TreasuryExpenseRepository,
 } from './repositories';
 import { StoreChangeService } from './store-change.service';
 import { StorePersistenceService } from './store-persistence.service';
@@ -22,11 +24,13 @@ import { StoreService } from './store.service';
     StoreChangeService,
     CustomerRepository,
     OrderRepository,
+    QuoteRepository,
     ProductRepository,
     RetailSaleRepository,
     CategoryRepository,
     SupplyRepository,
     MaterialRepository,
+    TreasuryExpenseRepository,
   ],
   exports: [
     StoreService,
@@ -34,11 +38,13 @@ import { StoreService } from './store.service';
     StoreChangeService,
     CustomerRepository,
     OrderRepository,
+    QuoteRepository,
     ProductRepository,
     RetailSaleRepository,
     CategoryRepository,
     SupplyRepository,
     MaterialRepository,
+    TreasuryExpenseRepository,
   ],
 })
 export class StoreModule {}

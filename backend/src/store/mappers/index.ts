@@ -6,5 +6,7 @@ export * from './supply.mapper';
 export * from './impreso.mapper';
 export * from './material.mapper';
 export * from './order.mapper';
+export * from './quote.mapper';
 export * from './print-job.mapper';
 export * from './retail-sale.mapper';
+export * from './treasury-expense.mapper';

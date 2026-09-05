@@ -1,0 +1,146 @@
+<div class="panel-header">
+  <h3>Usuarios</h3>
+  <db-button
+    label="+ Nuevo usuario"
+    variant="primary"
+    format="solid"
+    (clicked)="openCreate()"
+  />
+</div>
+
+@if (error && !modalOpen) {
+  <div class="error-banner">{{ error }}</div>
+}
+
+<db-state-message
+  [loading]="loading"
+  [empty]="!loading && users.length === 0"
+  loadingMessage="Cargando usuarios..."
+  emptyMessage="Todavía no hay usuarios registrados."
+>
+  <db-button
+    emptyActions
+    label="Crear primer usuario"
+    variant="primary"
+    format="solid"
+    (clicked)="openCreate()"
+  />
+</db-state-message>
+
+@if (!loading && users.length) {
+  <div class="access-table-wrap">
+    <table class="access-table">
+      <thead>
+        <tr>
+          <th>Nombre</th>
+          <th>Email</th>
+          <th>Roles</th>
+          <th>Estado</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (user of users; track user.id) {
+          <tr>
+            <td>{{ user.displayName }}</td>
+            <td>{{ user.email }}</td>
+            <td>
+              <div class="role-tags">
+                @for (roleId of user.roleIds; track roleId) {
+                  <span class="role-tag">{{ roleName(roleId) }}</span>
+                } @empty {
+                  <span class="role-tag">Sin roles</span>
+                }
+              </div>
+            </td>
+            <td>
+              <span
+                class="badge"
+                [class.badge--active]="user.active"
+                [class.badge--inactive]="!user.active"
+              >
+                {{ user.active ? 'Activo' : 'Inactivo' }}
+              </span>
+            </td>
+            <td class="access-table__actions">
+              <db-button
+                label="Editar"
+                variant="secondary"
+                format="soft"
+                (clicked)="openEdit(user)"
+              />
+              <db-button
+                label="Eliminar"
+                variant="delete"
+                format="soft"
+                (clicked)="deleteUser(user)"
+              />
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (modalOpen) {
+  <app-form-modal
+    [title]="editing ? 'Editar usuario' : 'Nuevo usuario'"
+    size="md"
+    (close)="closeModal()"
+  >
+    @if (error) {
+      <div class="error-banner">{{ error }}</div>
+    }
+
+    <div class="form-grid">
+      <div class="form-field">
+        <label for="user-name">Nombre</label>
+        <input id="user-name" [(ngModel)]="form.displayName" />
+      </div>
+      <div class="form-field">
+        <label for="user-email">Email</label>
+        <input id="user-email" type="email" [(ngModel)]="form.email" />
+      </div>
+      <div class="form-field">
+        <label for="user-firebase">Firebase UID (opcional)</label>
+        <input id="user-firebase" [(ngModel)]="form.firebaseUid" />
+      </div>
+      <div class="checkbox-row">
+        <input id="user-active" type="checkbox" [(ngModel)]="form.active" />
+        <label for="user-active">Usuario activo</label>
+      </div>
+      <div class="form-field">
+        <label>Roles</label>
+        @for (role of roles; track role.id) {
+          <div class="checkbox-row">
+            <input
+              [id]="'role-' + role.id"
+              type="checkbox"
+              [checked]="form.roleIds.includes(role.id)"
+              (change)="toggleRole(role.id, $any($event.target).checked)"
+            />
+            <label [for]="'role-' + role.id">{{ role.name }}</label>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="form-actions">
+      <db-button
+        label="Cancelar"
+        variant="secondary"
+        format="soft"
+        [disabled]="saving"
+        (clicked)="closeModal()"
+      />
+      <db-button
+        [label]="saving ? 'Guardando…' : 'Guardar'"
+        variant="primary"
+        format="solid"
+        [disabled]="saving"
+        (clicked)="save()"
+      />
+    </div>
+  </app-form-modal>
+}

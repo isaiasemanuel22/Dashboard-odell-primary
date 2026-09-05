@@ -1,17 +1,31 @@
 import { ServiceType } from '../common/enums';
 import { ServiceProfitMargins } from '../common/interfaces';
+import { LEGACY_DESIGN_SERVICE } from '../common/service-type.util';
 
 export const DEFAULT_PROFIT_MARGINS: ServiceProfitMargins = {
   impresion_3d: 40,
-  diseno: 50,
+  diseno_grafico: 50,
+  modelado: 50,
   estampado: 35,
 };
 
 function readMargin(
   raw: Record<string, unknown>,
-  service: ServiceType,
+  key: keyof ServiceProfitMargins,
 ): number | undefined {
-  const value = raw[service];
+  const value = raw[key];
+  if (value === undefined || value === null || value === '') {
+    return undefined;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return undefined;
+  }
+  return Math.min(Math.max(parsed, 0), 999);
+}
+
+function readLegacyDesignMargin(raw: Record<string, unknown>): number | undefined {
+  const value = raw[LEGACY_DESIGN_SERVICE];
   if (value === undefined || value === null || value === '') {
     return undefined;
   }
@@ -28,14 +42,20 @@ export function normalizeProfitMargins(raw: unknown): ServiceProfitMargins {
     raw && typeof raw === 'object'
       ? (raw as Record<string, unknown>)
       : {};
+  const legacyDiseno = readLegacyDesignMargin(source);
 
   return {
     impresion_3d:
       readMargin(source, ServiceType.IMPRESION_3D) ??
       DEFAULT_PROFIT_MARGINS.impresion_3d,
-    diseno:
-      readMargin(source, ServiceType.DISENO) ??
-      DEFAULT_PROFIT_MARGINS.diseno,
+    diseno_grafico:
+      readMargin(source, ServiceType.DISENO_GRAFICO) ??
+      legacyDiseno ??
+      DEFAULT_PROFIT_MARGINS.diseno_grafico,
+    modelado:
+      readMargin(source, ServiceType.MODELADO) ??
+      legacyDiseno ??
+      DEFAULT_PROFIT_MARGINS.modelado,
     estampado:
       readMargin(source, ServiceType.ESTAMPADO) ??
       DEFAULT_PROFIT_MARGINS.estampado,

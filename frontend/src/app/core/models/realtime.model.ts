@@ -2,6 +2,7 @@ export type RealtimeScope =
   | 'all'
   | 'dashboard'
   | 'orders'
+  | 'quotes'
   | 'products'
   | 'sales'
   | 'customers'
@@ -14,6 +15,7 @@ export type RealtimeAction = 'create' | 'update' | 'delete';
 
 export type RealtimeEntity =
   | 'order'
+  | 'quote'
   | 'product'
   | 'customer'
   | 'category'

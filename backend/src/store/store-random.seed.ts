@@ -359,6 +359,7 @@ export function createRandomSeedState(): StoreState {
     products,
     customers,
     orders,
+    quotes: [],
     printJobs: [],
     retailSales: base.retailSales.map((sale, saleIndex) => {
       const id = remapId('sale', run, saleIndex + 1);
@@ -388,6 +389,7 @@ export function createRandomSeedState(): StoreState {
       id: nextId(mat.id, 'mat'),
       quantity: randFloat(0.2, mat.quantity * 1.5, 1),
     })),
+    treasuryExpenses: [],
   };
 
   addExtraCustomers(state, run, state.customers.length + 1);

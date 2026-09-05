@@ -11,7 +11,7 @@ import { AsyncPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { Product } from '../../core/models';
-import { SaleCartLine } from '../sale-cart-line/sale-cart-line.component';
+import type { SaleCartLine } from '../sale-cart-line/sale-cart-line.types';
 import { DbButtonComponent } from '../db-button/db-button.component';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 import { SaleCartService } from '../../core/services/sale-cart.service';
@@ -95,6 +95,8 @@ export class SaleCartFooterComponent implements OnInit {
 
   private availableStock(productId: string): number {
     const product = this.products.find((item) => item.id === productId);
-    return product ? productStockOverview(product).available : 0;
+    return product
+      ? productStockOverview(product, undefined, this.products).available
+      : 0;
   }
 }

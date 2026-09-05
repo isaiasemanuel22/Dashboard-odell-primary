@@ -10,6 +10,11 @@ export type SaleStatCardVariant =
   | 'cost'
   | 'profit';
 
+export interface SaleStatBreakdownRow {
+  label: string;
+  value: number;
+}
+
 @Component({
   selector: 'app-sale-stat-card',
   standalone: true,
@@ -22,6 +27,7 @@ export class SaleStatCardComponent {
   @Input({ required: true }) label!: string;
   @Input({ required: true }) value!: number;
   @Input() detail = '';
+  @Input() breakdown: SaleStatBreakdownRow[] = [];
   @Input() variant: SaleStatCardVariant = 'default';
   @Input() currency = true;
 }

@@ -7,6 +7,7 @@ import {
   inject,
 } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
 import { Subject, catchError, of, startWith, switchMap } from 'rxjs';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { RealtimeService } from '../../core/services/realtime.service';
@@ -18,20 +19,23 @@ import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import {
   DbStateMessageComponent,
   DashboardMonthlyTrendsComponent,
+  DashboardNotificationsComponent,
   OrdersTableComponent,
 } from '@general-components';
 
-type QuickActionId = 'order' | 'product' | 'customer';
+type QuickActionId = 'order' | 'quote' | 'product' | 'customer';
 
 @Component({
   selector: 'app-dashboard',
   standalone: true,
   imports: [
     AsyncPipe,
+    RouterLink,
     CurrencyArsPipe,
     ServiceTypeLabelPipe,
     DbStateMessageComponent,
     DashboardMonthlyTrendsComponent,
+    DashboardNotificationsComponent,
     OrdersTableComponent,
   ],
   templateUrl: './dashboard.component.html',
@@ -54,6 +58,7 @@ export class DashboardComponent implements OnInit {
     icon: string;
   }[] = [
     { id: 'order', label: 'Nuevo pedido', icon: '📦' },
+    { id: 'quote', label: 'Nuevo presupuesto', icon: '📝' },
     { id: 'product', label: 'Nuevo producto', icon: '🏷️' },
     { id: 'customer', label: 'Nuevo cliente', icon: '👤' },
   ];
@@ -83,6 +88,11 @@ export class DashboardComponent implements OnInit {
     switch (action) {
       case 'order':
         this.formDialogs.openOrder().subscribe((saved) => {
+          if (saved) this.refresh$.next();
+        });
+        break;
+      case 'quote':
+        this.formDialogs.openQuote().subscribe((saved) => {
           if (saved) this.refresh$.next();
         });
         break;

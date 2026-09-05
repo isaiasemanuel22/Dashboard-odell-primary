@@ -17,6 +17,23 @@ h4 {
   color: $color-text-label;
 }
 
+.paper-sheet-group {
+  margin-bottom: 1.25rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px dashed $color-border;
+
+  &:last-of-type {
+    border-bottom: none;
+    margin-bottom: 0.75rem;
+  }
+
+  &__hint {
+    margin: 0.35rem 0 0;
+    font-size: 0.82rem;
+    color: $color-text-muted;
+  }
+}
+
 .empty-group {
   margin: 0;
   font-size: 0.875rem;

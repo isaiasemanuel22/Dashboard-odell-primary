@@ -46,10 +46,13 @@ export class DbAutocompleteComponent implements ControlValueAccessor, OnChanges 
   @Input() name = '';
   @Input() disabled = false;
   @Input() allowCreate = true;
+  @Input() preserveCase = false;
+  @Input() minFilterChars = 0;
   @Input() createLabel = (query: string) => `Crear "${query}"`;
   @Input() options: DbAutocompleteOption[] = [];
 
   @Output() optionCreated = new EventEmitter<string>();
+  @Output() optionSelected = new EventEmitter<DbAutocompleteOption>();
 
   @ViewChild('inputRef') inputRef?: ElementRef<HTMLInputElement>;
 
@@ -80,7 +83,7 @@ export class DbAutocompleteComponent implements ControlValueAccessor, OnChanges 
 
   get filteredOptions(): DbAutocompleteOption[] {
     const normalizedQuery = this.query.trim().toLowerCase();
-    if (!normalizedQuery) {
+    if (normalizedQuery.length < this.minFilterChars) {
       return this.options;
     }
 
@@ -91,8 +94,12 @@ export class DbAutocompleteComponent implements ControlValueAccessor, OnChanges 
     );
   }
 
+  get canFilter(): boolean {
+    return this.query.trim().length >= this.minFilterChars;
+  }
+
   get showCreateOption(): boolean {
-    if (!this.allowCreate) return false;
+    if (!this.allowCreate || !this.canFilter) return false;
 
     const trimmed = this.query.trim();
     if (!trimmed) return false;
@@ -125,6 +132,11 @@ export class DbAutocompleteComponent implements ControlValueAccessor, OnChanges 
     if (this.disabled) return;
     this.isOpen = true;
     this.highlightedIndex = -1;
+  }
+
+  focusInput(): void {
+    this.inputRef?.nativeElement.focus();
+    this.onFocus();
   }
 
   onQueryChange(nextQuery: string): void {
@@ -177,6 +189,7 @@ export class DbAutocompleteComponent implements ControlValueAccessor, OnChanges 
 
   selectOption(option: DbAutocompleteOption): void {
     this.applyValue(option.value, option.label);
+    this.optionSelected.emit(option);
     this.closeDropdown();
     this.inputRef?.nativeElement.blur();
   }
@@ -227,10 +240,11 @@ export class DbAutocompleteComponent implements ControlValueAccessor, OnChanges 
 
     if (exactMatch) {
       this.applyValue(exactMatch.value, exactMatch.label);
+      this.optionSelected.emit(exactMatch);
       return;
     }
 
-    if (this.allowCreate) {
+    if (this.allowCreate && this.canFilter) {
       const normalized = this.normalizeValue(trimmed);
       this.applyValue(normalized, this.displayLabelForValue(normalized));
       this.optionCreated.emit(normalized);
@@ -275,10 +289,11 @@ export class DbAutocompleteComponent implements ControlValueAccessor, OnChanges 
     const match = this.options.find(
       (option) => option.value.toLowerCase() === value.toLowerCase(),
     );
-    return match?.label ?? value.toUpperCase();
+    return match?.label ?? (this.preserveCase ? value : value.toUpperCase());
   }
 
   private normalizeValue(value: string): string {
-    return value.trim().toLowerCase();
+    const trimmed = value.trim();
+    return this.preserveCase ? trimmed : trimmed.toLowerCase();
   }
 }

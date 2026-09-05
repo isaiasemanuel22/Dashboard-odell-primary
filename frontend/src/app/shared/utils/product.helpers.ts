@@ -1,5 +1,7 @@
 import {
   Category,
+  FilamentType,
+  INDISTINTO_COLOR_ID,
   Product,
   ProductComponent,
   ProductType,
@@ -8,8 +10,11 @@ import {
 } from '../../core/models';
 import {
   costFromPriceAndMargin,
+  getMarginForService,
   normalizeProfitMargins,
 } from './pricing.util';
+import { isDesignService } from './service-type.util';
+import { isFdmQuoteConfigured, isImpresion3DLine } from './order-fdm-quote.util';
 
 export function normalizeProductComponents(
   raw: ProductComponent[] | unknown,
@@ -45,7 +50,9 @@ function normalizeOneProductComponent(
 ): ProductComponent | null {
   if (typeof item === 'string') {
     const productId = item.trim();
-    return productId ? { productId, quantity: 1 } : null;
+    return productId
+      ? { productId, quantity: 1, colorId: INDISTINTO_COLOR_ID }
+      : null;
   }
 
   if (!item || typeof item !== 'object') return null;
@@ -57,8 +64,13 @@ function normalizeOneProductComponent(
   const quantityRaw =
     record['quantity'] ?? record['qty'] ?? record['count'] ?? record['amount'] ?? 1;
   const quantity = Math.max(1, Math.floor(Number(quantityRaw) || 1));
+  const colorIdRaw = pickComponentString(record, ['colorId', 'color_id']);
+  const colorId =
+    colorIdRaw && colorIdRaw !== INDISTINTO_COLOR_ID
+      ? colorIdRaw
+      : INDISTINTO_COLOR_ID;
 
-  return { productId, quantity };
+  return { productId, quantity, colorId };
 }
 
 function resolveComponentProductId(
@@ -252,6 +264,12 @@ export function calculateOrderLinesCost(
     quantity: number;
     unitCost?: number;
     unitPrice?: number;
+    designUnitPrice?: number;
+    includesPrint?: boolean;
+    printUnitCost?: number;
+    printTimeHours?: number;
+    grams?: number;
+    filamentType?: FilamentType;
   }>,
   catalog: Product[],
   profitMargins: ServiceProfitMargins,
@@ -259,16 +277,30 @@ export function calculateOrderLinesCost(
   const margins = normalizeProfitMargins(profitMargins);
 
   return lines.reduce((sum, line) => {
+    if (
+      line.serviceType &&
+      isImpresion3DLine(line.serviceType) &&
+      isFdmQuoteConfigured(line) &&
+      line.unitCost != null &&
+      line.unitCost >= 0
+    ) {
+      return sum + line.unitCost * line.quantity;
+    }
+
     if (line.productId) {
       return sum + getComponentLineCost(catalog, line.productId, line.quantity);
     }
 
-    if (line.serviceType === ServiceType.DISENO) {
-      const unitCost =
+    if (line.serviceType && isDesignService(line.serviceType)) {
+      const designCost =
         line.unitCost != null && line.unitCost >= 0
           ? line.unitCost
-          : costFromPriceAndMargin(line.unitPrice ?? 0, margins.diseno);
-      return sum + unitCost * line.quantity;
+          : costFromPriceAndMargin(
+              line.designUnitPrice ?? line.unitPrice ?? 0,
+              getMarginForService(line.serviceType, margins),
+            );
+      const printCost = line.includesPrint ? line.printUnitCost ?? 0 : 0;
+      return sum + designCost + printCost * line.quantity;
     }
 
     return sum;
@@ -283,6 +315,195 @@ export function sumComponentsPrice(
     (sum, item) => sum + getComponentLinePrice(catalog, item.productId, item.quantity),
     0,
   );
+}
+
+function isProduct3DType(type: ProductType | undefined): boolean {
+  return type === ProductType.FDM || type === ProductType.RESINA;
+}
+
+/** Redondea horas de producción a un decimal. */
+export function roundProductionHours(value: number): number {
+  return Math.round(Math.max(0, Number(value) || 0) * 10) / 10;
+}
+
+export function resolveProductGrams(
+  product:
+    | (Pick<Product, 'id' | 'type' | 'includesPieces' | 'components'> & {
+        grams?: number;
+      })
+    | undefined,
+  catalog: Product[],
+  visiting: Set<string> = new Set(),
+): number {
+  if (!product?.id || visiting.has(product.id)) {
+    return 0;
+  }
+
+  const components = normalizeProductComponents(product.components ?? [], catalog);
+  if (!productUsesPieceAssembly(product) || components.length === 0) {
+    return Math.max(0, Number(product.grams) || 0);
+  }
+
+  if (!isProduct3DType(product.type)) {
+    return 0;
+  }
+
+  visiting.add(product.id);
+  const total = components.reduce((sum, item) => {
+    const part = findProductById(catalog, item.productId);
+    const qty = Math.max(1, Number(item.quantity) || 1);
+    return sum + resolveProductGrams(part, catalog, visiting) * qty;
+  }, 0);
+  visiting.delete(product.id);
+
+  return total;
+}
+
+export function resolveProductPrintTimeHours(
+  product:
+    | (Pick<Product, 'id' | 'type' | 'includesPieces' | 'components'> & {
+        printTimeHours?: number;
+      })
+    | undefined,
+  catalog: Product[],
+  visiting: Set<string> = new Set(),
+): number {
+  if (!product?.id || visiting.has(product.id)) {
+    return 0;
+  }
+
+  const components = normalizeProductComponents(product.components ?? [], catalog);
+  if (!productUsesPieceAssembly(product) || components.length === 0) {
+    return roundProductionHours(Number(product.printTimeHours) || 0);
+  }
+
+  if (!isProduct3DType(product.type)) {
+    return 0;
+  }
+
+  visiting.add(product.id);
+  const total = components.reduce((sum, item) => {
+    const part = findProductById(catalog, item.productId);
+    const qty = Math.max(1, Number(item.quantity) || 1);
+    return sum + resolveProductPrintTimeHoursRaw(part, catalog, visiting) * qty;
+  }, 0);
+  visiting.delete(product.id);
+
+  return roundProductionHours(total);
+}
+
+function resolveProductPrintTimeHoursRaw(
+  product:
+    | (Pick<Product, 'id' | 'type' | 'includesPieces' | 'components'> & {
+        printTimeHours?: number;
+      })
+    | undefined,
+  catalog: Product[],
+  visiting: Set<string> = new Set(),
+): number {
+  if (!product?.id || visiting.has(product.id)) {
+    return 0;
+  }
+
+  const components = normalizeProductComponents(product.components ?? [], catalog);
+  if (!productUsesPieceAssembly(product) || components.length === 0) {
+    return Math.max(0, Number(product.printTimeHours) || 0);
+  }
+
+  if (!isProduct3DType(product.type)) {
+    return 0;
+  }
+
+  visiting.add(product.id);
+  const total = components.reduce((sum, item) => {
+    const part = findProductById(catalog, item.productId);
+    const qty = Math.max(1, Number(item.quantity) || 1);
+    return sum + resolveProductPrintTimeHoursRaw(part, catalog, visiting) * qty;
+  }, 0);
+  visiting.delete(product.id);
+
+  return total;
+}
+
+export function resolveProductWorkTimeHours(
+  product:
+    | (Pick<
+        Product,
+        'id' | 'type' | 'includesPieces' | 'components' | 'assemblyTimeHours'
+      > & {
+        workTimeHours?: number;
+      })
+    | undefined,
+  catalog: Product[],
+  visiting: Set<string> = new Set(),
+): number {
+  return roundProductionHours(
+    resolveProductWorkTimeHoursRaw(product, catalog, visiting),
+  );
+}
+
+function resolveProductWorkTimeHoursRaw(
+  product:
+    | (Pick<
+        Product,
+        'id' | 'type' | 'includesPieces' | 'components' | 'assemblyTimeHours'
+      > & {
+        workTimeHours?: number;
+      })
+    | undefined,
+  catalog: Product[],
+  visiting: Set<string> = new Set(),
+): number {
+  if (!product?.id || visiting.has(product.id)) {
+    return 0;
+  }
+
+  const components = normalizeProductComponents(product.components ?? [], catalog);
+  if (!productUsesPieceAssembly(product) || components.length === 0) {
+    return Math.max(0, Number(product.workTimeHours) || 0);
+  }
+
+  if (!isProduct3DType(product.type)) {
+    return 0;
+  }
+
+  visiting.add(product.id);
+  const partsWork = components.reduce((sum, item) => {
+    const part = findProductById(catalog, item.productId);
+    const qty = Math.max(1, Number(item.quantity) || 1);
+    return sum + resolveProductWorkTimeHoursRaw(part, catalog, visiting) * qty;
+  }, 0);
+  visiting.delete(product.id);
+
+  return (Number(product.assemblyTimeHours) || 0) + partsWork;
+}
+
+export function sumComponentsProductionMetrics(
+  catalog: Product[],
+  components: ProductComponent[],
+  options?: { assemblyTimeHours?: number },
+  visiting: Set<string> = new Set(),
+): { grams: number; printTimeHours: number; workTimeHours: number } {
+  let grams = 0;
+  let printTimeHours = 0;
+  let partsWork = 0;
+
+  for (const component of components) {
+    const part = findProductById(catalog, component.productId);
+    const qty = Math.max(1, Number(component.quantity) || 1);
+    grams += resolveProductGrams(part, catalog, visiting) * qty;
+    printTimeHours +=
+      resolveProductPrintTimeHoursRaw(part, catalog, visiting) * qty;
+    partsWork += resolveProductWorkTimeHoursRaw(part, catalog, visiting) * qty;
+  }
+
+  return {
+    grams,
+    printTimeHours: roundProductionHours(printTimeHours),
+    workTimeHours: roundProductionHours(
+      (Number(options?.assemblyTimeHours) || 0) + partsWork,
+    ),
+  };
 }
 
 export function resolveCategoryNames(

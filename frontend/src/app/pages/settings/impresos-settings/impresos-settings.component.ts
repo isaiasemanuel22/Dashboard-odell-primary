@@ -15,6 +15,7 @@ import { ImpresosService } from '../../../core/services/impresos.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import { formatPrintDimensionsCm } from '../../../shared/utils/estampado.helpers';
+import { pricePerSqmFromReferenceSheet } from '../../../shared/utils/paper-cost.util';
 import { FormDialogService } from '../../../shared/form-dialogs/public-api';
 import {
   DbButtonComponent,
@@ -23,6 +24,11 @@ import {
   DbInputComponent,
   DbStateMessageComponent,
 } from '@general-components';
+
+interface PaperSheetGroup {
+  key: keyof GeneralSettings['paperReferenceSheets'];
+  label: string;
+}
 
 interface PaperGroup {
   type: PaperType;
@@ -61,6 +67,12 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
     { type: PaperType.DTF, label: 'DTF' },
     { type: PaperType.DTF_UV, label: 'DTF UV' },
     { type: PaperType.SUBLIMACION, label: 'Sublimación' },
+  ];
+
+  readonly paperSheetGroups: PaperSheetGroup[] = [
+    { key: 'dtf', label: 'DTF' },
+    { key: 'dtfUv', label: 'DTF UV' },
+    { key: 'sublimacion', label: 'Sublimación' },
   ];
 
   ngOnInit(): void {
@@ -104,17 +116,17 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
     this.savingPaper = true;
     this.message = '';
     this.settingsService
-      .updatePaperPrices(this.settings.paperPricesPerSqm)
+      .updatePaperReferenceSheets(this.settings.paperReferenceSheets)
       .subscribe({
-        next: (prices) => {
+        next: (sheets) => {
           if (this.settings) {
             this.settings = {
               ...this.settings,
-              paperPricesPerSqm: prices,
+              paperReferenceSheets: sheets,
             };
           }
           this.savingPaper = false;
-          this.message = 'Precios del papel guardados';
+          this.message = 'Pliegos de referencia guardados';
           this.loadImpresos();
         },
         error: () => {
@@ -148,6 +160,11 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
       this.loadImpresos();
       this.message = 'Impreso eliminado';
     });
+  }
+
+  pricePerSqm(key: keyof GeneralSettings['paperReferenceSheets']): number {
+    if (!this.settings) return 0;
+    return pricePerSqmFromReferenceSheet(this.settings.paperReferenceSheets[key]);
   }
 
   formatDimensions(item: ImpresoWithCost): string {

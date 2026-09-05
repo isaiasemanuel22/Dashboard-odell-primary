@@ -8,14 +8,6 @@
       (ngModelChange)="onCategoryChange()"
     />
 
-    <db-select
-      label="Tipo de insumo"
-      [(ngModel)]="type"
-      name="type"
-      [options]="filteredSupplyTypeOptions"
-      (ngModelChange)="onTypeChange()"
-    />
-
     <db-input
       label="Nombre"
       [(ngModel)]="name"
@@ -81,6 +73,14 @@
         />
       </div>
     }
+
+    <db-select
+      label="Unidad de medida"
+      [(ngModel)]="unit"
+      name="unit"
+      [required]="true"
+      [options]="unitOptions"
+    />
 
     <db-form-grid>
       <db-input

@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  FilamentType,
   OrderStatus,
   PrintJobStatus,
   ServiceType,
@@ -17,14 +18,20 @@ import {
 } from '../common/interfaces';
 import { CreateOrderDto, UpdateOrderDto } from '../common/dto';
 import {
-  calculateItemsSubtotal,
   calculateTotalWithDiscount,
   normalizeDiscountFields,
 } from '../common/utils/discount.util';
+import { calculateOrderItemsSubtotal } from './order-pricing.util';
 import { filterOrders, OrderListFilters } from './order-filter.util';
 import {
   appendOrderStatusHistory,
 } from './order-status-history.util';
+import { normalizeServiceType, isDesignService } from '../common/service-type.util';
+import { isDesignPrintConfigured } from './design-print.util';
+import {
+  isCustomFdmOrderLine,
+  isFdmQuoteConfigured,
+} from './order-fdm-quote.util';
 import { OrderTasksService } from '../print-jobs/order-tasks.service';
 import { PrintJobsService } from '../print-jobs/print-jobs.service';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
@@ -83,7 +90,7 @@ export class OrdersService {
       throw new BadRequestException('La fecha de entrega es obligatoria');
     }
 
-    const items = this.normalizeItems(data.items);
+    const items = this.normalizeOrderItems(data.items);
     const services = this.normalizeServices(items);
     const discount = normalizeDiscountFields(data);
     const order: Order = {
@@ -132,7 +139,9 @@ export class OrdersService {
     }
 
     const items =
-      data.items !== undefined ? this.normalizeItems(data.items) : current.items;
+      data.items !== undefined
+        ? this.normalizeOrderItems(data.items)
+        : current.items;
     const services =
       data.items !== undefined
         ? this.normalizeServices(items)
@@ -323,7 +332,7 @@ export class OrdersService {
     return services;
   }
 
-  private normalizeItems(items: OrderItem[]): OrderItem[] {
+  normalizeOrderItems(items: OrderItem[]): OrderItem[] {
     if (!items?.length) {
       throw new BadRequestException(
         'El pedido debe incluir al menos una línea de trabajo',
@@ -331,13 +340,13 @@ export class OrdersService {
     }
 
     return items.map((item, index) => {
-      const serviceType = item.serviceType;
+      const serviceType = normalizeServiceType(item.serviceType);
       const productName = item.productName?.trim();
       const quantity = Number(item.quantity);
       const unitPrice = Number(item.unitPrice);
       const productId = item.productId?.trim() || undefined;
 
-      if (!serviceType || !Object.values(ServiceType).includes(serviceType)) {
+      if (!serviceType) {
         throw new BadRequestException(
           `Línea ${index + 1}: servicio inválido`,
         );
@@ -349,16 +358,38 @@ export class OrdersService {
         );
       }
 
-      if (serviceType === ServiceType.DISENO && productId) {
+      if (isDesignService(serviceType) && productId) {
         throw new BadRequestException(
           `Línea ${index + 1}: el diseño no debe vincularse a un producto del catálogo`,
         );
       }
 
-      if (serviceType !== ServiceType.DISENO && !productId) {
+      if (
+        serviceType === ServiceType.DISENO_GRAFICO &&
+        item.includesPrint &&
+        !isDesignPrintConfigured(item)
+      ) {
+        throw new BadRequestException(
+          `Línea ${index + 1}: completá tipo de impresión y tamaño (ancho × alto)`,
+        );
+      }
+
+      if (
+        !isDesignService(serviceType) &&
+        !productId &&
+        !isCustomFdmOrderLine({ serviceType, productId })
+      ) {
         throw new BadRequestException(
           `Línea ${index + 1}: producto inválido`,
         );
+      }
+
+      if (isCustomFdmOrderLine({ serviceType, productId })) {
+        if (!isFdmQuoteConfigured(item)) {
+          throw new BadRequestException(
+            `Línea ${index + 1}: completá tipo de filamento y gramos u horas de impresión`,
+          );
+        }
       }
 
       if (!Number.isFinite(quantity) || quantity <= 0) {
@@ -380,7 +411,7 @@ export class OrdersService {
       );
 
       let resolvedProductName = productName;
-      if (serviceType !== ServiceType.DISENO && productId) {
+      if (!isDesignService(serviceType) && productId) {
         const product = this.products.findById(productId);
         if (!product) {
           throw new BadRequestException(
@@ -390,12 +421,48 @@ export class OrdersService {
         resolvedProductName = product.name;
       }
 
+      const fdmFields =
+        serviceType === ServiceType.IMPRESION_3D
+          ? {
+              printTimeHours:
+                item.printTimeHours != null
+                  ? Number(item.printTimeHours)
+                  : undefined,
+              grams: item.grams != null ? Number(item.grams) : undefined,
+              filamentType: item.filamentType as FilamentType | undefined,
+            }
+          : {};
+
       return {
         serviceType,
         productId,
         productName: resolvedProductName,
         quantity,
         unitPrice: resolvedUnitPrice,
+        ...fdmFields,
+        includesPrint:
+          serviceType === ServiceType.DISENO_GRAFICO
+            ? (item.includesPrint ?? undefined)
+            : undefined,
+        printPaperType:
+          serviceType === ServiceType.DISENO_GRAFICO
+            ? item.printPaperType
+            : undefined,
+        printWidthCm:
+          serviceType === ServiceType.DISENO_GRAFICO
+            ? item.printWidthCm
+            : undefined,
+        printLengthCm:
+          serviceType === ServiceType.DISENO_GRAFICO
+            ? item.printLengthCm
+            : undefined,
+        printImpresoId:
+          serviceType === ServiceType.DISENO_GRAFICO
+            ? item.printImpresoId?.trim() || undefined
+            : undefined,
+        designUnitPrice: isDesignService(serviceType)
+          ? Number(item.designUnitPrice ?? item.unitPrice)
+          : undefined,
         deliveredQuantity: item.deliveredQuantity ?? 0,
         reservedQuantity: item.reservedQuantity ?? 0,
         productionRequiredQuantity: item.productionRequiredQuantity ?? 0,
@@ -410,7 +477,7 @@ export class OrdersService {
     items: OrderItem[],
     discount: ReturnType<typeof normalizeDiscountFields>,
   ): number {
-    const subtotal = calculateItemsSubtotal(items);
+    const subtotal = calculateOrderItemsSubtotal(items);
     return calculateTotalWithDiscount(subtotal, discount);
   }
 

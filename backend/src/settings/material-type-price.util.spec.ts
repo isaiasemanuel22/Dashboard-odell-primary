@@ -1,5 +1,6 @@
 import { FilamentType, ResinType } from '../common/enums';
 import { GeneralSettings } from '../common/interfaces';
+import { normalizePaperReferenceSheets } from '../common/paper-cost.util';
 import {
   averageFilamentPriceByType,
   averageResinPriceByType,
@@ -17,8 +18,18 @@ function baseSettings(
     machineCosts: [],
     machineProfiles: [],
     laborCostPerHour: 0,
-    profitMargins: { impresion_3d: 0, diseno: 0, estampado: 0 },
+    profitMargins: {
+      impresion_3d: 0,
+      diseno_grafico: 0,
+      modelado: 0,
+      estampado: 0,
+    },
     paperPricesPerSqm: { sublimacion: 0, dtf: 0, dtfUv: 0 },
+    paperReferenceSheets: normalizePaperReferenceSheets(undefined, {
+      sublimacion: 0,
+      dtf: 0,
+      dtfUv: 0,
+    }),
     filamentPrices: [],
     resinPrices: [],
     filamentTypeAverages: {},

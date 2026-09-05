@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
-import { SaleCartLine } from '@general-components';
+import type { SaleCartLine } from '../../components/sale-cart-line/sale-cart-line.types';
 import { Product } from '../models';
 
 let cartLineKey = 0;

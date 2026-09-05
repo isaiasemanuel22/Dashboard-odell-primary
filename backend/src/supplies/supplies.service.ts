@@ -7,7 +7,6 @@ import {
   FilamentType,
   ResinType,
   SupplyCategory,
-  SupplyType,
 } from '../common/enums';
 import { Supply } from '../common/interfaces';
 import {
@@ -20,22 +19,9 @@ import { StoreService } from '../store/store.service';
 import { SupplyRepository } from '../store/repositories';
 import { OrderTasksService } from '../print-jobs/order-tasks.service';
 import {
-  inferSupplyCategory,
+  defaultSupplyUnit,
+  normalizeSupplyCategory,
 } from './supply-category.util';
-
-const SUPPLY_UNITS: Record<SupplyType, string> = {
-  [SupplyType.FILAMENTO]: 'kg',
-  [SupplyType.RESINA]: 'L',
-  [SupplyType.ALCOHOL]: 'L',
-  [SupplyType.TINTA]: 'ml',
-  [SupplyType.REMERA]: 'unidad',
-  [SupplyType.TAZA]: 'unidad',
-  [SupplyType.BUZO]: 'unidad',
-  [SupplyType.GORRA]: 'unidad',
-  [SupplyType.FILM]: 'hoja',
-  [SupplyType.VINILO]: 'm',
-  [SupplyType.OTRO]: 'unidad',
-};
 
 @Injectable()
 export class SuppliesService {
@@ -47,12 +33,8 @@ export class SuppliesService {
     private readonly orderTasks: OrderTasksService,
   ) {}
 
-  findAll(type?: SupplyType, category?: SupplyCategory): Supply[] {
-    let items = this.supplies.findAll(type);
-    if (category) {
-      items = items.filter((supply) => supply.category === category);
-    }
-    return items;
+  findAll(category?: SupplyCategory): Supply[] {
+    return this.supplies.findAll(category);
   }
 
   findLowStock(): Supply[] {
@@ -68,13 +50,13 @@ export class SuppliesService {
   }
 
   resolveDefaultPrice(data: {
-    type: SupplyType;
+    category: SupplyCategory;
     brand?: string;
     filamentType?: FilamentType;
     resinType?: ResinType;
   }) {
     return this.costCalculator.getUnitPriceForSupply(
-      data.type,
+      data.category,
       data.brand,
       data.filamentType,
       data.resinType,
@@ -93,7 +75,7 @@ export class SuppliesService {
     this.validateSupply(merged);
 
     if (
-      merged.type === SupplyType.FILAMENTO &&
+      merged.category === SupplyCategory.FDM &&
       data.unitPrice !== undefined &&
       data.unitPrice !== existing.unitPrice
     ) {
@@ -130,6 +112,62 @@ export class SuppliesService {
     return saved;
   }
 
+  increaseStock(supplyId: string, delta: number): Supply {
+    return this.recordPurchase(supplyId, { quantityDelta: delta });
+  }
+
+  recordPurchase(
+    supplyId: string,
+    data: { quantityDelta: number; unitPrice?: number },
+    options: { persist?: boolean; notify?: boolean } = {},
+  ): Supply {
+    const persist = options.persist !== false;
+    const notify = options.notify !== false;
+    const delta = Number(data.quantityDelta);
+    if (!Number.isFinite(delta) || delta <= 0) {
+      throw new BadRequestException('La cantidad debe ser mayor a cero');
+    }
+
+    const existing = this.findOne(supplyId);
+    const nextQuantity = Number(existing.quantity) + delta;
+    const unitPrice =
+      data.unitPrice !== undefined ? Number(data.unitPrice) : undefined;
+    const unitPriceChanged =
+      unitPrice !== undefined &&
+      Math.round(unitPrice) !== Math.round(Number(existing.unitPrice));
+
+    const saved = this.supplies.save({
+      ...existing,
+      quantity: nextQuantity,
+      ...(unitPriceChanged
+        ? { unitPrice, priceFromSettings: false }
+        : {}),
+      updatedAt: new Date().toISOString(),
+    });
+
+    if (persist) {
+      this.storeChange.recordChange({
+        collections: ['supplies'],
+        realtime: {
+          scopes: ['supplies', 'print-jobs', 'dashboard'],
+          action: 'update',
+          entity: 'supply',
+          id: supplyId,
+        },
+      });
+    }
+
+    if (notify) {
+      this.orderTasks.notifySupplyAvailability();
+    }
+
+    return saved;
+  }
+
+  notifySupplyAvailability(): void {
+    this.orderTasks.notifySupplyAvailability();
+  }
+
   remove(id: string): void {
     if (!this.supplies.findById(id)) {
       throw new NotFoundException(`Insumo ${id} no encontrado`);
@@ -141,20 +179,23 @@ export class SuppliesService {
     if (!data.name?.trim()) {
       throw new BadRequestException('El nombre es obligatorio');
     }
-    if (!data.type || !Object.values(SupplyType).includes(data.type)) {
-      throw new BadRequestException('Tipo de insumo inválido');
-    }
+
+    const category = normalizeSupplyCategory(data.category);
     if (data.quantity !== undefined && Number(data.quantity) < 0) {
       throw new BadRequestException('La cantidad no puede ser negativa');
     }
-    if (data.type === SupplyType.FILAMENTO && !data.filamentType) {
+    if (category === SupplyCategory.FDM && !data.filamentType) {
       throw new BadRequestException('Seleccioná el tipo de filamento');
     }
-    if (data.type === SupplyType.RESINA && !data.resinType) {
-      throw new BadRequestException('Seleccioná el tipo de resina');
+    if (
+      category === SupplyCategory.RESINA &&
+      data.resinType &&
+      !data.brand?.trim()
+    ) {
+      throw new BadRequestException('La marca es obligatoria');
     }
     if (
-      (data.type === SupplyType.FILAMENTO || data.type === SupplyType.RESINA) &&
+      category === SupplyCategory.FDM &&
       !data.brand?.trim()
     ) {
       throw new BadRequestException('La marca es obligatoria');
@@ -163,9 +204,9 @@ export class SuppliesService {
       throw new BadRequestException('El precio no puede ser negativo');
     }
     if (!data.unit) {
-      data.unit = SUPPLY_UNITS[data.type];
+      data.unit = defaultSupplyUnit(category);
     }
-    if (data.type && supplyRequiresColor(data.type)) {
+    if (supplyRequiresColor(category)) {
       validateSupplyColorId(
         this.store.generalSettings.colors ?? [],
         data.colorId,
@@ -175,20 +216,16 @@ export class SuppliesService {
   }
 
   private normalizeSupply(
-    data: Partial<Supply> & Pick<Supply, 'name' | 'type'>,
+    data: Partial<Supply> & Pick<Supply, 'name'>,
   ): Omit<Supply, 'id' | 'updatedAt'> {
-    const category =
-      data.category && Object.values(SupplyCategory).includes(data.category)
-        ? data.category
-        : inferSupplyCategory(data.type);
+    const category = normalizeSupplyCategory(data.category);
     return {
       name: data.name.trim(),
       category,
-      type: data.type,
       filamentType: data.filamentType,
       resinType: data.resinType,
       brand: data.brand?.trim(),
-      unit: data.unit ?? SUPPLY_UNITS[data.type],
+      unit: data.unit ?? defaultSupplyUnit(category),
       quantity: Number(data.quantity) || 0,
       minStock: Number(data.minStock) || 0,
       unitPrice: Number(data.unitPrice) || 0,

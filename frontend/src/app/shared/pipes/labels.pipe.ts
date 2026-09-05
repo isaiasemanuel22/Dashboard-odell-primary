@@ -3,24 +3,24 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   FilamentType,
   OrderStatus,
+  QuoteStatus,
   PaperType,
   PrintJobStatus,
   ProductType,
   ResinType,
   ServiceType,
   SupplyCategory,
-  SupplyType,
 } from '../../core/models';
 import {
   FILAMENT_TYPE_LABELS,
   ORDER_STATUS_LABELS,
+  QUOTE_STATUS_LABELS,
   PAPER_TYPE_LABELS,
   PRINT_JOB_STATUS_LABELS,
   PRODUCT_TYPE_LABELS,
   RESIN_TYPE_LABELS,
   SERVICE_TYPE_LABELS,
   SUPPLY_CATEGORY_LABELS,
-  SUPPLY_TYPE_LABELS,
 } from '../constants/labels';
 import { resolveMediaUrl } from '../utils/media-url.util';
 import {
@@ -47,13 +47,6 @@ export class ProductTypeLabelPipe implements PipeTransform {
 export class PaperTypeLabelPipe implements PipeTransform {
   transform(value: PaperType): string {
     return PAPER_TYPE_LABELS[value] ?? value;
-  }
-}
-
-@Pipe({ name: 'supplyTypeLabel', standalone: true })
-export class SupplyTypeLabelPipe implements PipeTransform {
-  transform(value: SupplyType): string {
-    return SUPPLY_TYPE_LABELS[value] ?? value;
   }
 }
 
@@ -90,6 +83,13 @@ export class ResinTypeLabelPipe implements PipeTransform {
 export class OrderStatusLabelPipe implements PipeTransform {
   transform(value: OrderStatus): string {
     return ORDER_STATUS_LABELS[value] ?? value;
+  }
+}
+
+@Pipe({ name: 'quoteStatusLabel', standalone: true })
+export class QuoteStatusLabelPipe implements PipeTransform {
+  transform(value: QuoteStatus): string {
+    return QUOTE_STATUS_LABELS[value] ?? value;
   }
 }
 

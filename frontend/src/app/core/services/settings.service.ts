@@ -14,10 +14,10 @@ import {
   ServiceProfitMargins,
   Supply,
   SupplyCategory,
-  SupplyType,
 } from '../models';
 import { SettingsFacade } from '../../store/settings/settings.facade';
 import { SuppliesFacade } from '../../store/supplies/supplies.facade';
+import { pricePerSqmFromReferenceSheet } from '../../shared/utils/paper-cost.util';
 
 export interface CoreValuesSettings {
   electricityCostPerKwh: number;
@@ -62,6 +62,28 @@ export class SettingsService {
         tap((margins) =>
           this.patchSettings({
             profitMargins: margins,
+          }),
+        ),
+      );
+  }
+
+  updatePaperReferenceSheets(
+    paperReferenceSheets: GeneralSettings['paperReferenceSheets'],
+  ): Observable<GeneralSettings['paperReferenceSheets']> {
+    return this.http
+      .patch<GeneralSettings['paperReferenceSheets']>(
+        `${this.baseUrl}/paper-prices`,
+        { paperReferenceSheets },
+      )
+      .pipe(
+        tap((sheets) =>
+          this.patchSettings({
+            paperReferenceSheets: sheets,
+            paperPricesPerSqm: {
+              sublimacion: pricePerSqmFromReferenceSheet(sheets.sublimacion),
+              dtf: pricePerSqmFromReferenceSheet(sheets.dtf),
+              dtfUv: pricePerSqmFromReferenceSheet(sheets.dtfUv),
+            },
           }),
         ),
       );
@@ -242,7 +264,7 @@ export class SettingsService {
   }
 
   getSupplyDefaultPrice(data: {
-    type: SupplyType;
+    category: SupplyCategory;
     brand?: string;
     filamentType?: string;
     resinType?: string;
@@ -404,9 +426,23 @@ export class SuppliesService {
   private readonly http = inject(HttpClient);
   private readonly suppliesFacade = inject(SuppliesFacade);
 
-  getSupplies(type?: SupplyType, category?: SupplyCategory): Observable<Supply[]> {
-    this.suppliesFacade.load(false, type, category);
-    return this.suppliesFacade.supplies(type, category);
+  getSupplies(
+    category?: SupplyCategory,
+    refresh = false,
+  ): Observable<Supply[]> {
+    return this.watchSupplies(category, refresh);
+  }
+
+  watchSupplies(
+    category?: SupplyCategory,
+    refresh = false,
+  ): Observable<Supply[]> {
+    this.suppliesFacade.load(refresh, category);
+    return this.suppliesFacade.supplies(category);
+  }
+
+  refreshSupplies(category?: SupplyCategory): Observable<Supply[]> {
+    return this.watchSupplies(category, true);
   }
 
   getLowStock(): Observable<Supply[]> {
@@ -414,7 +450,7 @@ export class SuppliesService {
   }
 
   getDefaultPrice(data: {
-    type: SupplyType;
+    category: SupplyCategory;
     brand?: string;
     filamentType?: string;
     resinType?: string;

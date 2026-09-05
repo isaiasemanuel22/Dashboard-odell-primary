@@ -4,6 +4,7 @@ import { StorePersistenceService } from '../store/store-persistence.service';
 import { StoreChangeService } from '../store/store-change.service';
 import { GeneralSettings } from '../common/interfaces';
 import { ServiceType } from '../common/enums';
+import { normalizePaperReferenceSheets } from '../common/paper-cost.util';
 
 describe('SettingsService.patchGeneralSettings', () => {
   const baseSettings = (): GeneralSettings => ({
@@ -12,7 +13,8 @@ describe('SettingsService.patchGeneralSettings', () => {
     errorMarginPercent: 30,
     profitMargins: {
       [ServiceType.IMPRESION_3D]: 350,
-      [ServiceType.DISENO]: 50,
+      [ServiceType.DISENO_GRAFICO]: 50,
+      [ServiceType.MODELADO]: 50,
       [ServiceType.ESTAMPADO]: 35,
     },
     paperPricesPerSqm: {
@@ -20,6 +22,11 @@ describe('SettingsService.patchGeneralSettings', () => {
       dtfUv: 0,
       sublimacion: 2500,
     },
+    paperReferenceSheets: normalizePaperReferenceSheets(undefined, {
+      dtf: 0,
+      dtfUv: 0,
+      sublimacion: 2500,
+    }),
     powerConsumptions: [],
     machineCosts: [],
     machineProfiles: [],

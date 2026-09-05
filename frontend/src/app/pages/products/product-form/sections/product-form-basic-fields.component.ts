@@ -4,6 +4,7 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnInit,
   Output,
   inject,
 } from '@angular/core';
@@ -15,8 +16,8 @@ import {
   DbFormGridFullComponent,
   DbInputComponent,
   DbSelectComponent,
-  DbSelectOption,
-} from '@general-components';
+} from '@dashboard-form';
+import type { DbSelectOption } from '@dashboard-form';
 
 export interface ProductFormBasicFieldsValue {
   type: ProductType;
@@ -41,7 +42,7 @@ export interface ProductFormBasicFieldsValue {
   styleUrl: '../product-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProductFormBasicFieldsComponent {
+export class ProductFormBasicFieldsComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   @Input({ required: true }) productTypeOptions!: DbSelectOption[];
@@ -54,7 +55,7 @@ export class ProductFormBasicFieldsComponent {
   includesPieces = false;
   finishedStock = 0;
 
-  private loaded = false;
+  private ready = false;
   private lastEmitted: ProductFormBasicFieldsValue | null = null;
 
   @Input() set value(value: ProductFormBasicFieldsValue | null) {
@@ -71,8 +72,17 @@ export class ProductFormBasicFieldsComponent {
     }
 
     this.lastEmitted = { ...value };
-    this.loaded = true;
+    this.ready = true;
     this.cdr.markForCheck();
+  }
+
+  ngOnInit(): void {
+    queueMicrotask(() => {
+      if (!this.ready) {
+        this.ready = true;
+        this.cdr.markForCheck();
+      }
+    });
   }
 
   get showIncludesPiecesCheckbox(): boolean {
@@ -80,8 +90,23 @@ export class ProductFormBasicFieldsComponent {
   }
 
   onFieldChange(): void {
-    if (!this.loaded) {
+    const next = this.currentValue();
+    if (!this.ready) {
+      this.ready = true;
+    }
+
+    if (this.isSameValue(next, this.lastEmitted)) {
       return;
+    }
+
+    this.lastEmitted = { ...next };
+    this.valueChange.emit(next);
+  }
+
+  onIncludesPiecesChange(checked: boolean): void {
+    this.includesPieces = checked;
+    if (!this.ready) {
+      this.ready = true;
     }
 
     const next = this.currentValue();
@@ -91,6 +116,7 @@ export class ProductFormBasicFieldsComponent {
 
     this.lastEmitted = { ...next };
     this.valueChange.emit(next);
+    this.cdr.markForCheck();
   }
 
   readValue(): ProductFormBasicFieldsValue {

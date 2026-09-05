@@ -1,6 +1,7 @@
 export enum ServiceType {
   IMPRESION_3D = 'impresion_3d',
-  DISENO = 'diseno',
+  DISENO_GRAFICO = 'diseno_grafico',
+  MODELADO = 'modelado',
   ESTAMPADO = 'estampado',
 }
 
@@ -16,6 +17,14 @@ export enum SupplyCategory {
   RESINA = 'resina',
   ESTAMPADO = 'estampado',
   GENERAL = 'general',
+}
+
+export enum QuoteStatus {
+  BORRADOR = 'borrador',
+  ENVIADO = 'enviado',
+  ACEPTADO = 'aceptado',
+  RECHAZADO = 'rechazado',
+  CANCELADO = 'cancelado',
 }
 
 export enum OrderStatus {
@@ -52,18 +61,20 @@ export enum SaleSource {
   ORDER = 'order',
 }
 
-export enum SupplyType {
-  FILAMENTO = 'filamento',
-  RESINA = 'resina',
-  ALCOHOL = 'alcohol',
-  TINTA = 'tinta',
-  REMERA = 'remera',
-  TAZA = 'taza',
-  BUZO = 'buzo',
-  GORRA = 'gorra',
-  FILM = 'film',
-  VINILO = 'vinilo',
-  OTRO = 'otro',
+export enum TreasuryExpenseCategory {
+  SUPPLY_PURCHASE = 'supply_purchase',
+  WITHDRAWAL = 'withdrawal',
+  SALARY = 'salary',
+  TRANSPORT = 'transport',
+  PAYMENT = 'payment',
+  LOAN = 'loan',
+  LOAN_REPAYMENT = 'loan_repayment',
+  OTHER = 'other',
+}
+
+export enum TreasuryMovementDirection {
+  INCOME = 'income',
+  EXPENSE = 'expense',
 }
 
 export enum FilamentType {
@@ -96,3 +107,29 @@ export enum MachineProfileRole {
   CURE = 'cure',
   PRESS = 'press',
 }
+
+/** Acciones de permiso por área (§22 BUSINESS-RULES). */
+export enum PermissionAction {
+  VIEW = 'view',
+  CREATE = 'create',
+  MODIFY = 'modify',
+  CANCEL = 'cancel',
+  APPROVE = 'approve',
+  MANAGE_USERS = 'manage_users',
+  MANAGE_ROLES = 'manage_roles',
+  MANAGE_AREAS = 'manage_areas',
+}
+
+export const WORK_PERMISSION_ACTIONS: PermissionAction[] = [
+  PermissionAction.VIEW,
+  PermissionAction.CREATE,
+  PermissionAction.MODIFY,
+  PermissionAction.CANCEL,
+  PermissionAction.APPROVE,
+];
+
+export const ADMIN_PERMISSION_ACTIONS: PermissionAction[] = [
+  PermissionAction.MANAGE_USERS,
+  PermissionAction.MANAGE_ROLES,
+  PermissionAction.MANAGE_AREAS,
+];

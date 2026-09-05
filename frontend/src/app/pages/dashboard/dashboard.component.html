@@ -10,26 +10,40 @@
   </db-state-message>
 } @else {
   @if (stats$ | async; as stats) {
-    <header class="page-header">
-      <div>
+    <header class="page-header dashboard-header">
+      <div class="dashboard-header__main">
         <h2>Dashboard</h2>
         <p>Resumen de tu emprendimiento de impresión 3D y estampados</p>
+      </div>
+      <div class="header-actions dashboard-header__actions">
+        <app-dashboard-notifications [notifications]="stats.notifications" />
       </div>
     </header>
 
     <section class="quick-actions" aria-label="Acciones rápidas">
       <h3>Acciones rápidas</h3>
-      <div class="quick-actions__grid">
-        @for (action of quickActions; track action.id) {
-          <button
-            type="button"
-            class="quick-action"
-            (click)="openForm(action.id)"
-          >
-            <span class="quick-action__icon" aria-hidden="true">{{ action.icon }}</span>
-            <span class="quick-action__label">{{ action.label }}</span>
-          </button>
-        }
+      <div class="quick-actions__row">
+        <div class="quick-actions__grid">
+          @for (action of quickActions; track action.id) {
+            <button
+              type="button"
+              class="quick-action"
+              (click)="openForm(action.id)"
+            >
+              <span class="quick-action__icon" aria-hidden="true">{{ action.icon }}</span>
+              <span class="quick-action__label">{{ action.label }}</span>
+            </button>
+          }
+        </div>
+
+        <a class="wallet-balance wallet-balance--link" routerLink="/billetera" aria-label="Ir a billetera">
+          <span class="wallet-balance__icon" aria-hidden="true">💼</span>
+          <div class="wallet-balance__content">
+            <span class="wallet-balance__label">Billetera</span>
+            <strong class="wallet-balance__amount">{{ stats.walletBalance | currencyArs }}</strong>
+            <span class="wallet-balance__hint">Dinero disponible en el emprendimiento</span>
+          </div>
+        </a>
       </div>
     </section>
 

@@ -12,20 +12,20 @@ describe('normalizeProductComponents', () => {
       normalizeProductComponents([
         { productId: 'prod-7', quantity: 2 },
       ]),
-    ).toEqual([{ productId: 'prod-7', quantity: 2 }]);
+    ).toEqual([{ productId: 'prod-7', quantity: 2, colorId: 'indistinto' }]);
   });
 
   it('acepta ids sueltos como strings', () => {
     expect(normalizeProductComponents(['prod-7', 'prod-8'])).toEqual([
-      { productId: 'prod-7', quantity: 1 },
-      { productId: 'prod-8', quantity: 1 },
+      { productId: 'prod-7', quantity: 1, colorId: 'indistinto' },
+      { productId: 'prod-8', quantity: 1, colorId: 'indistinto' },
     ]);
   });
 
   it('acepta alias legacy id/qty', () => {
     expect(
       normalizeProductComponents([{ id: 'prod-9', qty: 28 }]),
-    ).toEqual([{ productId: 'prod-9', quantity: 28 }]);
+    ).toEqual([{ productId: 'prod-9', quantity: 28, colorId: 'indistinto' }]);
   });
 
   it('convierte mapas productId → cantidad', () => {
@@ -35,8 +35,8 @@ describe('normalizeProductComponents', () => {
         'prod-8': 2,
       }),
     ).toEqual([
-      { productId: 'prod-7', quantity: 1 },
-      { productId: 'prod-8', quantity: 2 },
+      { productId: 'prod-7', quantity: 1, colorId: 'indistinto' },
+      { productId: 'prod-8', quantity: 2, colorId: 'indistinto' },
     ]);
   });
 
@@ -51,15 +51,15 @@ describe('normalizeProductComponents', () => {
         catalog,
       ),
     ).toEqual([
-      { productId: 'prod-7', quantity: 1 },
-      { productId: 'prod-8', quantity: 1 },
-      { productId: 'prod-9', quantity: 28 },
+      { productId: 'prod-7', quantity: 1, colorId: 'indistinto' },
+      { productId: 'prod-8', quantity: 1, colorId: 'indistinto' },
+      { productId: 'prod-9', quantity: 28, colorId: 'indistinto' },
     ]);
   });
 
   it('acepta product como id de pieza', () => {
     expect(
       normalizeProductComponents([{ product: 'prod-7', quantity: 2 }]),
-    ).toEqual([{ productId: 'prod-7', quantity: 2 }]);
+    ).toEqual([{ productId: 'prod-7', quantity: 2, colorId: 'indistinto' }]);
   });
 });

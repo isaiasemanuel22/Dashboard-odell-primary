@@ -3,18 +3,34 @@ import {
   ServiceProfitMargins,
   ServiceType,
 } from '../../core/models';
+import { LEGACY_DESIGN_SERVICE } from './service-type.util';
 
 export const DEFAULT_PROFIT_MARGINS: ServiceProfitMargins = {
   impresion_3d: 40,
-  diseno: 50,
+  diseno_grafico: 50,
+  modelado: 50,
   estampado: 35,
 };
 
 function readMargin(
   raw: Record<string, ServiceProfitMargins | number | undefined>,
-  service: ServiceType,
+  key: keyof ServiceProfitMargins,
 ): number | undefined {
-  const value = raw[service];
+  const value = raw[key];
+  if (value === undefined || value === null || value === ('' as unknown)) {
+    return undefined;
+  }
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed)) {
+    return undefined;
+  }
+  return Math.min(Math.max(parsed, 0), 999);
+}
+
+function readLegacyDesignMargin(
+  raw: Record<string, ServiceProfitMargins | number | undefined>,
+): number | undefined {
+  const value = raw[LEGACY_DESIGN_SERVICE as keyof ServiceProfitMargins];
   if (value === undefined || value === null || value === ('' as unknown)) {
     return undefined;
   }
@@ -30,18 +46,32 @@ export function normalizeProfitMargins(raw: unknown): ServiceProfitMargins {
     raw && typeof raw === 'object'
       ? (raw as Record<string, ServiceProfitMargins | number | undefined>)
       : {};
+  const legacyDiseno = readLegacyDesignMargin(source);
 
   return {
     impresion_3d:
       readMargin(source, ServiceType.IMPRESION_3D) ??
       DEFAULT_PROFIT_MARGINS.impresion_3d,
-    diseno:
-      readMargin(source, ServiceType.DISENO) ??
-      DEFAULT_PROFIT_MARGINS.diseno,
+    diseno_grafico:
+      readMargin(source, ServiceType.DISENO_GRAFICO) ??
+      legacyDiseno ??
+      DEFAULT_PROFIT_MARGINS.diseno_grafico,
+    modelado:
+      readMargin(source, ServiceType.MODELADO) ??
+      legacyDiseno ??
+      DEFAULT_PROFIT_MARGINS.modelado,
     estampado:
       readMargin(source, ServiceType.ESTAMPADO) ??
       DEFAULT_PROFIT_MARGINS.estampado,
   };
+}
+
+export function getMarginForService(
+  service: ServiceType,
+  margins: ServiceProfitMargins,
+): number {
+  const normalized = normalizeProfitMargins(margins);
+  return normalized[service as keyof ServiceProfitMargins] ?? 0;
 }
 
 export function getMarginForProductType(

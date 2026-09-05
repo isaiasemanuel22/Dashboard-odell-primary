@@ -9,12 +9,14 @@ import {
 import { ReactiveFormsModule } from '@angular/forms';
 import {
   DbAttachmentUploadComponent,
-  DbAttachmentUploadFn,
   DbFieldsetComponent,
   DbFileUploadComponent,
-  DbFileUploadFn,
   DbFormErrorComponent,
-} from '@general-components';
+} from '@dashboard-form';
+import type {
+  DbAttachmentUploadFn,
+  DbFileUploadFn,
+} from '@dashboard-form';
 import { ProductFormFacade } from '../product-form.facade';
 
 @Component({

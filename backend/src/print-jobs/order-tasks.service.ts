@@ -4,13 +4,24 @@ import {
   PrintJobStatus,
   ProductType,
   ServiceType,
-  SupplyType,
+  SupplyCategory,
   TaskType,
 } from '../common/enums';
 import { Order, OrderItem, OrderAlert, PrintJob, Product3D, Supply } from '../common/interfaces';
 import { isIndistintoColor } from '../common/color.util';
 import { appendOrderStatusHistory } from '../orders/order-status-history.util';
 import { StoreService } from '../store/store.service';
+import { isDesignService } from '../common/service-type.util';
+import {
+  designPrintMachineLabel,
+  designPrintTaskName,
+  isDesignPrintConfigured,
+} from '../orders/design-print.util';
+import {
+  isCustomFdmOrderLine,
+  isFdmQuoteConfigured,
+} from '../orders/order-fdm-quote.util';
+import { buildProductStockOverview } from '../products/product-stock.util';
 
 @Injectable()
 export class OrderTasksService implements OnModuleInit {
@@ -51,6 +62,16 @@ export class OrderTasksService implements OnModuleInit {
         return;
       }
       this.ensureItemTask(order, item, index, TaskType.SERVICE);
+      if (isDesignPrintConfigured(item)) {
+        this.planDesignPrintFulfillment(order, item, index);
+      } else if (
+        isCustomFdmOrderLine(item) &&
+        isFdmQuoteConfigured(item)
+      ) {
+        this.planCustomFdmFulfillment(order, item, index);
+      } else {
+        this.cancelOpenProductionTask(order.id, index);
+      }
     });
 
     if (order.items.some((item) => !!item.productId)) {
@@ -377,7 +398,7 @@ export class OrderTasksService implements OnModuleInit {
       orderItemIndex: -1,
       customerName: order.customerName,
       productName: `Preparar pedido #${order.id}`,
-      type: ServiceType.DISENO,
+      type: order.services[0] ?? ServiceType.IMPRESION_3D,
       taskType: TaskType.PREPARE_ORDER,
       quantity: 1,
       status: PrintJobStatus.BLOQUEADO,
@@ -404,14 +425,14 @@ export class OrderTasksService implements OnModuleInit {
         job.taskType === taskType,
     );
     if (existing) {
-      this.updateTaskMetadata(existing, order, item, itemIndex);
+      this.updateTaskMetadata(existing, order, item, itemIndex, taskType);
       existing.quantity =
         taskType === TaskType.PRODUCTION
           ? item.productionRequiredQuantity
           : item.quantity;
       if (taskType === TaskType.PRODUCTION) {
-        existing.productName = `Hacer ${existing.quantity} ${item.productName}`;
-        if (!this.hasProductionSupplies(existing)) {
+        existing.productName = this.productionTaskName(item);
+        if (item.productId && !this.hasProductionSupplies(existing)) {
           existing.status = PrintJobStatus.BLOQUEADO;
           existing.blockedReason = 'Insumos insuficientes';
         } else if (
@@ -426,7 +447,7 @@ export class OrderTasksService implements OnModuleInit {
       return existing;
     }
 
-    const task = this.createTask(order, item, itemIndex);
+    const task = this.createTask(order, item, itemIndex, taskType);
     task.taskType = taskType;
     task.quantity =
       taskType === TaskType.PRODUCTION
@@ -434,15 +455,63 @@ export class OrderTasksService implements OnModuleInit {
         : item.quantity;
     task.productName =
       taskType === TaskType.PRODUCTION
-        ? `Hacer ${task.quantity} ${item.productName}`
+        ? this.productionTaskName(item, task.quantity)
         : item.productName;
     task.archived = false;
-    if (taskType === TaskType.PRODUCTION && !this.hasProductionSupplies(task)) {
+    if (
+      taskType === TaskType.PRODUCTION &&
+      item.productId &&
+      !this.hasProductionSupplies(task)
+    ) {
       task.status = PrintJobStatus.BLOQUEADO;
       task.blockedReason = 'Insumos insuficientes';
     }
     this.store.printJobs.push(task);
     return task;
+  }
+
+  private planDesignPrintFulfillment(
+    order: Order,
+    item: OrderItem,
+    index: number,
+  ): void {
+    this.ensureFulfillment(item);
+    const pending = Math.max(
+      item.quantity - (item.deliveredQuantity ?? 0),
+      0,
+    );
+    item.productionRequiredQuantity = Math.max(
+      pending - (item.producedQuantity ?? 0),
+      0,
+    );
+
+    if (item.productionRequiredQuantity > 0) {
+      this.ensureItemTask(order, item, index, TaskType.PRODUCTION);
+    } else {
+      this.cancelOpenProductionTask(order.id, index);
+    }
+  }
+
+  private planCustomFdmFulfillment(
+    order: Order,
+    item: OrderItem,
+    index: number,
+  ): void {
+    this.ensureFulfillment(item);
+    const pending = Math.max(
+      item.quantity - (item.deliveredQuantity ?? 0),
+      0,
+    );
+    item.productionRequiredQuantity = Math.max(
+      pending - (item.producedQuantity ?? 0),
+      0,
+    );
+
+    if (item.productionRequiredQuantity > 0) {
+      this.ensureItemTask(order, item, index, TaskType.PRODUCTION);
+    } else {
+      this.cancelOpenProductionTask(order.id, index);
+    }
   }
 
   private planCatalogItemFulfillment(
@@ -456,20 +525,14 @@ export class OrderTasksService implements OnModuleInit {
     const product = this.store.getProductById(item.productId);
     if (!product) return;
 
-    if ((item.reservedQuantity ?? 0) > 0) {
-      if ((item.productionRequiredQuantity ?? 0) > 0) {
-        this.ensureItemTask(order, item, index, TaskType.PRODUCTION);
-      } else {
-        this.cancelOpenProductionTask(order.id, index);
-      }
-      return;
-    }
-
     const pending = Math.max(
       item.quantity - (item.deliveredQuantity ?? 0),
       0,
     );
     const available = this.getAvailableStock(item.productId, order.id);
+
+    // Reserva la cantidad pendiente del pedido; puede superar el stock físico.
+    item.reservedQuantity = pending;
     item.productionRequiredQuantity = Math.max(
       pending - available - (item.producedQuantity ?? 0),
       0,
@@ -497,26 +560,9 @@ export class OrderTasksService implements OnModuleInit {
   }
 
   private getAvailableStock(productId: string, excludeOrderId: string): number {
-    const product = this.store.getProductById(productId);
-    if (!product) return 0;
-
-    const reservedElsewhere = this.store.orders.reduce((sum, candidate) => {
-      if (
-        candidate.id === excludeOrderId ||
-        candidate.status === OrderStatus.CANCELADO ||
-        candidate.status === OrderStatus.ENTREGADO
-      ) {
-        return sum;
-      }
-      return (
-        sum +
-        candidate.items
-          .filter((line) => line.productId === productId)
-          .reduce((subtotal, line) => subtotal + (line.reservedQuantity ?? 0), 0)
-      );
-    }, 0);
-
-    return Math.max((product.stock ?? 0) - reservedElsewhere, 0);
+    return buildProductStockOverview(this.store, productId, {
+      excludeOrderId,
+    }).available;
   }
 
   private reserveStockAndCreateProduction(orderId: string): void {
@@ -525,26 +571,7 @@ export class OrderTasksService implements OnModuleInit {
 
     order.items.forEach((item, index) => {
       if (!item.productId) return;
-      this.ensureFulfillment(item);
-      const product = this.store.getProductById(item.productId);
-      if (!product) return;
-
-      const pending = Math.max(
-        item.quantity - (item.deliveredQuantity ?? 0),
-        0,
-      );
-      const available = this.getAvailableStock(item.productId, order.id);
-      item.reservedQuantity = Math.min(pending, available);
-      item.productionRequiredQuantity = Math.max(
-        pending - item.reservedQuantity - (item.producedQuantity ?? 0),
-        0,
-      );
-
-      if (item.productionRequiredQuantity > 0) {
-        this.ensureItemTask(order, item, index, TaskType.PRODUCTION);
-      } else {
-        this.cancelOpenProductionTask(order.id, index);
-      }
+      this.planCatalogItemFulfillment(order, item, index);
     });
   }
 
@@ -565,7 +592,7 @@ export class OrderTasksService implements OnModuleInit {
         const availableGrams = this.store.supplies
           .filter(
             (supply) =>
-              supply.type === SupplyType.FILAMENTO &&
+              supply.category === SupplyCategory.FDM &&
               supply.filamentType === line.filamentType &&
               this.supplyMatchesColor(supply, line.colorId),
           )
@@ -578,7 +605,7 @@ export class OrderTasksService implements OnModuleInit {
       const availableMl = this.store.supplies
         .filter(
           (supply) =>
-            supply.type === SupplyType.RESINA &&
+            supply.category === SupplyCategory.RESINA &&
             supply.resinType === product.resinType &&
             this.supplyMatchesColor(supply, product.colorId),
         )
@@ -632,7 +659,12 @@ export class OrderTasksService implements OnModuleInit {
     );
   }
 
-  private createTask(order: Order, item: OrderItem, itemIndex: number): PrintJob {
+  private createTask(
+    order: Order,
+    item: OrderItem,
+    itemIndex: number,
+    taskType: TaskType,
+  ): PrintJob {
     return {
       id: this.store.nextId('job', this.store.printJobs),
       orderId: order.id,
@@ -644,10 +676,21 @@ export class OrderTasksService implements OnModuleInit {
       status: PrintJobStatus.POR_HACER,
       active: order.status === OrderStatus.EN_PRODUCCION,
       priority: this.calcPriority(order.dueDate),
-      machine: this.defaultMachine(item),
-      estimatedHours: this.estimateHours(item),
+      machine: this.defaultMachine(item, taskType),
+      estimatedHours: this.estimateHours(item, taskType),
       dueDate: order.dueDate,
     };
+  }
+
+  private productionTaskName(item: OrderItem, quantity?: number): string {
+    if (isDesignPrintConfigured(item)) {
+      return designPrintTaskName({
+        ...item,
+        productionRequiredQuantity: quantity ?? item.productionRequiredQuantity,
+      });
+    }
+    const qty = quantity ?? item.productionRequiredQuantity ?? item.quantity;
+    return `Hacer ${qty} ${item.productName}`;
   }
 
   private updateTaskMetadata(
@@ -655,16 +698,20 @@ export class OrderTasksService implements OnModuleInit {
     order: Order,
     item: OrderItem,
     itemIndex: number,
+    taskType: TaskType = job.taskType ?? TaskType.SERVICE,
   ): void {
     job.orderItemIndex = itemIndex;
     job.customerName = order.customerName;
-    job.productName = item.productName;
+    job.productName =
+      taskType === TaskType.PRODUCTION
+        ? this.productionTaskName(item, job.quantity)
+        : item.productName;
     job.productId = item.productId;
     job.type = item.serviceType;
     job.dueDate = order.dueDate;
     job.priority = this.calcPriority(order.dueDate);
-    job.machine = this.defaultMachine(item);
-    job.estimatedHours = this.estimateHours(item);
+    job.machine = this.defaultMachine(item, taskType);
+    job.estimatedHours = this.estimateHours(item, taskType);
   }
 
   private removeStaleTasks(order: Order): void {
@@ -685,12 +732,18 @@ export class OrderTasksService implements OnModuleInit {
     return 1;
   }
 
-  private defaultMachine(item: OrderItem): string {
-    if (item.serviceType === ServiceType.DISENO) {
-      const name = item.productName.toLowerCase();
-      if (name.includes('modelado') || name.includes('3d')) {
-        return 'Modelado 3D';
-      }
+  private defaultMachine(item: OrderItem, taskType: TaskType = TaskType.SERVICE): string {
+    if (
+      taskType === TaskType.PRODUCTION &&
+      isDesignPrintConfigured(item)
+    ) {
+      return designPrintMachineLabel(item.printPaperType);
+    }
+
+    if (item.serviceType === ServiceType.MODELADO) {
+      return 'Modelado 3D';
+    }
+    if (item.serviceType === ServiceType.DISENO_GRAFICO) {
       return 'Diseño gráfico';
     }
 
@@ -705,7 +758,21 @@ export class OrderTasksService implements OnModuleInit {
     return 'Estampado';
   }
 
-  private estimateHours(item: OrderItem): number {
+  private estimateHours(item: OrderItem, taskType: TaskType = TaskType.SERVICE): number {
+    if (
+      taskType === TaskType.PRODUCTION &&
+      isDesignPrintConfigured(item)
+    ) {
+      return Math.max(1, item.quantity);
+    }
+
+    if (item.printTimeHours) {
+      return Math.max(
+        1,
+        Math.ceil(Number(item.printTimeHours) * item.quantity),
+      );
+    }
+
     if (item.productId) {
       const product = this.store.products.find((p) => p.id === item.productId);
       if (product) {
@@ -726,8 +793,10 @@ export class OrderTasksService implements OnModuleInit {
     }
 
     switch (item.serviceType) {
-      case ServiceType.DISENO:
+      case ServiceType.DISENO_GRAFICO:
         return 4;
+      case ServiceType.MODELADO:
+        return 6;
       case ServiceType.IMPRESION_3D:
         return 6;
       case ServiceType.ESTAMPADO:

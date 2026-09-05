@@ -18,40 +18,49 @@
           />
         </div>
 
-        <db-input
-          label="Fecha de entrega"
-          type="date"
-          [(ngModel)]="dueDate"
-          name="dueDate"
-          [required]="true"
-        />
+        @if (isQuoteForm) {
+          <div class="quote-date-field">
+            <span class="quote-date-field__label">Fecha del presupuesto</span>
+            <span class="quote-date-field__value">{{ quotedAtLabel }}</span>
+          </div>
+        } @else {
+          <db-input
+            label="Fecha de entrega"
+            type="date"
+            [(ngModel)]="dueDate"
+            name="dueDate"
+            [required]="true"
+          />
+        }
 
       </db-form-grid>
 
-      <db-form-grid-full>
-        <db-rich-text-editor
-          label="Descripción"
-          [(ngModel)]="description"
-          name="description"
-          placeholder="Describí el pedido: qué se necesita, cantidades, referencias visuales..."
-          [maxLength]="descriptionMaxLength"
-          [uploadFn]="uploadDescriptionImage"
-        />
-      </db-form-grid-full>
+      @if (!isQuoteForm) {
+        <db-form-grid-full>
+          <db-rich-text-editor
+            label="Descripción"
+            [(ngModel)]="description"
+            name="description"
+            placeholder="Describí el pedido: qué se necesita, cantidades, referencias visuales..."
+            [maxLength]="descriptionMaxLength"
+            [uploadFn]="uploadDescriptionImage"
+          />
+        </db-form-grid-full>
 
-      <db-form-grid-full>
-        <db-textarea
-          label="Notas"
-          [(ngModel)]="notes"
-          name="notes"
-          placeholder="Detalles internos: talles, colores, acabados..."
-          [rows]="3"
-        />
-      </db-form-grid-full>
+        <db-form-grid-full>
+          <db-textarea
+            label="Notas"
+            [(ngModel)]="notes"
+            name="notes"
+            placeholder="Detalles internos: talles, colores, acabados..."
+            [rows]="3"
+          />
+        </db-form-grid-full>
+      }
 
       <db-fieldset legend="Líneas de trabajo">
         <p class="lines-hint">
-          Podés mezclar impresión 3D, diseño y estampado en el mismo pedido. Cada línea genera tareas individuales en la cola de trabajo.
+          {{ linesHint }}
         </p>
         <div class="order-lines">
             @for (line of lines; track $index; let i = $index) {
@@ -67,10 +76,19 @@
 
                   @if (isDesignService(line.serviceType)) {
                     <db-input
-                      label="Concepto de diseño"
+                      label="Concepto"
                       [(ngModel)]="line.customName"
                       [name]="'design-' + i"
-                      placeholder="Ej: Diseño de logo"
+                      [placeholder]="line.serviceType === ServiceType.MODELADO ? 'Ej: Modelado de pieza' : 'Ej: Diseño de logo'"
+                    />
+                  } @else if (isImpresion3DLine(line.serviceType)) {
+                    <db-select
+                      label="Producto"
+                      [(ngModel)]="line.productId"
+                      [name]="'product-' + i"
+                      placeholder="Opcional — presupuesto manual"
+                      [options]="productOptionsForLine(line)"
+                      (ngModelChange)="onProductChange(line)"
                     />
                   } @else {
                     <db-select
@@ -84,7 +102,7 @@
                   }
 
                   <db-input
-                    label="Cant."
+                    [label]="line.includesPrint ? 'Cant. impresiones' : 'Cant.'"
                     type="number"
                     [(ngModel)]="line.quantity"
                     [name]="'qty-' + i"
@@ -102,12 +120,103 @@
                   />
                 </div>
 
+                @if (isImpresion3DLine(line.serviceType) && !line.productId) {
+                  <div class="order-line__fdm-concept">
+                    <db-input
+                      label="Concepto"
+                      [(ngModel)]="line.customName"
+                      [name]="'fdm-concept-' + i"
+                      placeholder="Ej: Soporte para celular"
+                    />
+                  </div>
+                }
+
+                @if (shouldShowFdmQuoteFields(line, productForLine(line))) {
+                  <div class="order-line__fdm">
+                    <db-select
+                      label="Tipo de filamento"
+                      [(ngModel)]="line.filamentType"
+                      [name]="'filament-' + i"
+                      placeholder="Seleccionar material"
+                      [options]="filamentTypeOptions"
+                      (ngModelChange)="onFdmQuoteChange(line)"
+                    />
+                    <db-input
+                      label="Gramos"
+                      type="number"
+                      [(ngModel)]="line.grams"
+                      [name]="'grams-' + i"
+                      [min]="0"
+                      [step]="1"
+                      (ngModelChange)="onFdmQuoteChange(line)"
+                    />
+                    <db-input
+                      label="Horas de impresión"
+                      type="number"
+                      [(ngModel)]="line.printTimeHours"
+                      [name]="'print-hours-' + i"
+                      [min]="0"
+                      [step]="0.1"
+                      (ngModelChange)="onFdmQuoteChange(line)"
+                    />
+                  </div>
+                }
+
+                @if (isGraphicDesignService(line.serviceType)) {
+                  <div class="order-line__print">
+                    <db-checkbox
+                      label="Incluye impresión"
+                      [ngModel]="!!line.includesPrint"
+                      (ngModelChange)="onIncludesPrintChange(line, $event)"
+                      [name]="'includes-print-' + i"
+                    />
+
+                    @if (line.includesPrint) {
+                      <div class="order-line__print-fields">
+                        <db-select
+                          label="Tipo de impresión"
+                          [(ngModel)]="line.printPaperType"
+                          [name]="'print-type-' + i"
+                          [options]="paperTypeOptions"
+                          (ngModelChange)="onPrintPaperTypeChange(line)"
+                        />
+                        <db-select
+                          label="Tamaño del catálogo"
+                          [(ngModel)]="line.printImpresoId"
+                          [name]="'print-impreso-' + i"
+                          placeholder="Opcional — elegir tamaño..."
+                          [options]="impresoOptionsForLine(line)"
+                          (ngModelChange)="onPrintImpresoChange(line)"
+                        />
+                        <db-input
+                          label="Ancho (cm)"
+                          type="number"
+                          [(ngModel)]="line.printWidthCm"
+                          [name]="'print-width-' + i"
+                          [min]="0.1"
+                          [step]="0.1"
+                          (ngModelChange)="onPrintDimensionsChange(line)"
+                        />
+                        <db-input
+                          label="Alto (cm)"
+                          type="number"
+                          [(ngModel)]="line.printLengthCm"
+                          [name]="'print-height-' + i"
+                          [min]="0.1"
+                          [step]="0.1"
+                          (ngModelChange)="onPrintDimensionsChange(line)"
+                        />
+                      </div>
+                    }
+                  </div>
+                }
+
                 <div class="order-line__pricing">
                   <p class="order-line__pricing-label">Costos</p>
 
                   @if (isDesignService(line.serviceType)) {
                     <db-input
-                      label="Costo unit."
+                      label="Costo diseño"
                       type="number"
                       [ngModel]="line.unitCost ?? 0"
                       (ngModelChange)="onDesignUnitCostChange(line, $event)"
@@ -116,22 +225,39 @@
                       [step]="1"
                     />
                     <db-input
-                      label="Precio unit."
+                      label="Precio diseño"
                       type="number"
-                      [ngModel]="line.unitPrice"
+                      [ngModel]="designUnitPriceForLine(line)"
                       (ngModelChange)="onDesignUnitPriceChange(line, $event)"
                       [name]="'price-' + i"
                       [min]="0"
                       [step]="1"
                     />
+                    @if (line.includesPrint) {
+                      <div class="order-line__readonly">
+                        <span class="order-line__readonly-label">Impresión unit. (al costo)</span>
+                        <span class="order-line__readonly-value">
+                          {{ line.printUnitCost ?? 0 | currencyArs }}
+                        </span>
+                      </div>
+                      <div class="order-line__readonly">
+                        <span class="order-line__readonly-label">Subtotal línea</span>
+                        <span class="order-line__readonly-value">
+                          {{ linePriceTotal(line) | currencyArs }}
+                        </span>
+                      </div>
+                    }
                     <p class="order-line__pricing-hint">
-                      Vinculados con margen de diseño ({{ designMargin }}%).
+                      Diseño vinculado con margen de {{ serviceLabel(line.serviceType) }} ({{ designMarginFor(line) }}%). Se cobra una sola vez por línea.
+                      @if (line.includesPrint) {
+                        Las impresiones se cobran por unidad según cantidad.
+                      }
                     </p>
                   } @else {
                     <div class="order-line__readonly">
                       <span class="order-line__readonly-label">Costo unit.</span>
                       <span class="order-line__readonly-value">
-                        {{ productUnitCost(line) | currencyArs }}
+                        {{ lineUnitCost(line) | currencyArs }}
                       </span>
                     </div>
                     <db-input
@@ -143,7 +269,7 @@
                       [step]="1"
                     />
                     <p class="order-line__pricing-hint">
-                      Costo tomado del catálogo de productos.
+                      {{ fdmPricingHint(line) }}
                     </p>
                   }
                   @if (lineStockHint(line); as stockHint) {
@@ -233,7 +359,7 @@
           (clicked)="cancel.emit()"
         />
         <db-button
-          [label]="loading ? 'Guardando...' : (isEditing ? 'Guardar cambios' : 'Crear pedido')"
+          [label]="submitLabel"
           variant="primary"
           format="solid"
           buttonType="submit"

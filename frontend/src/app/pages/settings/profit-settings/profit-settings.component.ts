@@ -57,14 +57,19 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
       hint: 'Aplica a productos FDM y resina.',
     },
     {
+      service: ServiceType.DISENO_GRAFICO,
+      label: SERVICE_TYPE_LABELS[ServiceType.DISENO_GRAFICO],
+      hint: 'Referencia para líneas de diseño gráfico en pedidos.',
+    },
+    {
+      service: ServiceType.MODELADO,
+      label: SERVICE_TYPE_LABELS[ServiceType.MODELADO],
+      hint: 'Referencia para líneas de modelado en pedidos.',
+    },
+    {
       service: ServiceType.ESTAMPADO,
       label: SERVICE_TYPE_LABELS[ServiceType.ESTAMPADO],
       hint: 'Aplica a productos de estampado.',
-    },
-    {
-      service: ServiceType.DISENO,
-      label: SERVICE_TYPE_LABELS[ServiceType.DISENO],
-      hint: 'Referencia para servicios de diseño en pedidos.',
     },
   ];
 

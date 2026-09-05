@@ -939,3 +939,545 @@ silenciosamente: debe señalarse la discrepancia y proponer una solución.
 
 Si este documento no define una regla necesaria para implementar una
 funcionalidad, la IA debe pedir aclaración en lugar de inventarla.
+
+---
+
+## 25. Anexo — Comportamiento implementado en la aplicación (estado actual)
+
+> **Alcance de este anexo**
+>
+> Las secciones 1 a 23 describen reglas de negocio confirmadas por el
+> propietario (comportamiento objetivo). La sección 24 define cómo debe
+> interpretarlas la IA.
+>
+> **Este anexo no modifica ni reemplaza lo anterior.** Documenta únicamente
+> funcionalidades y reglas que **existen hoy en el código** y que **no
+> estaban contempladas** en las secciones previas.
+>
+> Cuando algo de este anexo difiera de las secciones 1–23, prevalece lo
+> definido en este documento como regla objetivo; el anexo sirve para
+> identificar brechas entre objetivo e implementación.
+
+### 25.1 Billetera (tesorería operativa)
+
+Odell incluye una pantalla **Billetera** (`/billetera`) y un saldo
+**Disponible en cuenta** visible también en el Dashboard.
+
+El saldo disponible se calcula así:
+
+```text
+Disponible =
+    ingresos por ventas
+  + ingresos manuales (billetera)
+  − egresos (billetera)
+```
+
+Donde:
+
+- **Ingresos por ventas:** suma del total de todas las ventas registradas
+  (mostrador + pedidos entregados). Ver §25.3.
+- **Ingresos manuales:** registros de billetera con dirección `Ingreso`.
+- **Egresos:** registros de billetera con dirección `Egreso`, incluidas
+  las compras de insumos.
+
+La billetera permite **crear registros** (no editar ni eliminar registros
+existentes en la implementación actual).
+
+#### 25.1.1 Movimiento simple
+
+Registro con nombre libre, monto, fecha y tipo:
+
+- **Ingreso** — suma al saldo disponible.
+- **Egreso** — resta del saldo disponible.
+
+La fecha:
+
+- es obligatoria;
+- no puede ser posterior al día actual;
+- se ingresa como fecha calendario (sin hora).
+
+El formulario sugiere nombres usados previamente en movimientos simples
+(categoría «otro»).
+
+#### 25.1.2 Compra de insumos
+
+Modo alternativo del formulario de billetera. Por cada insumo comprado se
+registra:
+
+- insumo (del catálogo de insumos);
+- cantidad (en la unidad configurada del insumo);
+- gasto real en la compra;
+- valor unitario de lista del proveedor.
+
+Si el insumo **no existe** en el catálogo, el usuario puede **crearlo desde
+el mismo formulario de compra** (botón «Crear insumo»). Al guardarlo:
+
+- se agrega al catálogo de insumos;
+- se incorpora automáticamente como línea de la compra en curso, con
+  cantidad 1 y precio unitario según lo definido en el alta;
+- el usuario puede ajustar cantidad, gasto y valor unitario antes de
+  confirmar la compra.
+
+Reglas:
+
+- Se crea **un egreso por cada insumo** de la compra.
+- El monto total de la compra debe coincidir con la suma de los gastos por
+  insumo.
+- Al guardar, el **stock del insumo aumenta** en la cantidad comprada.
+- Si el valor unitario informado difiere del registrado en el insumo, se
+  **actualiza el precio unitario** del insumo y deja de tomarse desde
+  Ajustes (`priceFromSettings = false`).
+- Las compras de insumos **no se registran automáticamente** al editar stock
+  manualmente en la pantalla de Insumos; el único flujo automático de
+  stock + egreso es la compra desde Billetera.
+
+En el formulario, por cada línea se muestra en vivo la diferencia:
+
+```text
+diferencia = gasto − cantidad × valor unitario
+```
+
+- Negativa → ahorro respecto al precio de lista.
+- Positiva → sobrepago respecto al precio de lista.
+- Cero → precio de lista (o precio editado que coincide con lo pagado).
+
+Los registros de compra quedan vinculados al insumo (`referenceId`).
+
+#### 25.1.2.1 Atomicidad de compras múltiples
+
+Una compra puede incluir **varios insumos en una sola operación**. En ese
+caso:
+
+1. El sistema **valida todas las líneas** antes de aplicar cambios (insumos
+   existentes, cantidades, montos, coherencia con el total).
+2. Si alguna línea falla la validación, **no se registra ningún egreso ni
+   se modifica ningún stock**.
+3. Si la validación es correcta, se aplican **en un único paso** todos los
+   egresos y todos los incrementos de stock.
+4. Tras persistir, se emite **una sola notificación** de disponibilidad de
+   insumos (para tareas bloqueadas), no una por línea.
+
+Regla operativa:
+
+```text
+compra con N insumos = todo o nada
+```
+
+Si falla la línea 2 de 3, la línea 1 **no** debe quedar registrada ni con
+stock actualizado.
+
+#### 25.1.3 Categorías de movimiento (modelo de datos)
+
+El sistema modela categorías adicionales (`supply_purchase`, `withdrawal`,
+`salary`, `transport`, `payment`, `loan`, `other`). En la implementación
+actual de la UI se utilizan explícitamente:
+
+- `supply_purchase` — compra de insumos;
+- `other` — movimientos simples (ingreso/egreso);
+- `payment` — pago entregado a una persona (botón **Pagar**);
+- `loan` — préstamo entregado a una persona (botón **Prestar**).
+
+#### 25.1.4 Pago y préstamo a persona
+
+Desde la pantalla Billetera, los botones **Pagar** y **Prestar** abren
+formularios dedicados con:
+
+- fecha (misma regla que §25.1.1);
+- persona destinataria (autocompletado con nombres usados antes en pagos o
+  préstamos);
+- monto.
+
+Ambos registran un **egreso** que descuenta del saldo disponible:
+
+- **Pagar** → categoría `payment`, descripción «Pago a {persona}».
+- **Prestar** → categoría `loan`, descripción «Préstamo a {persona}».
+
+En la tabla de registros, la columna **Nombre** muestra la persona y
+**Movimiento** indica «Pago» o «Préstamo».
+
+Debajo de los registros, la tabla **Deudores** lista cada persona con saldo
+pendiente de préstamo (`préstamos − devoluciones`). Solo aparecen quienes
+deben un monto mayor a cero. Cada fila incluye el botón **Devolver**, que
+abre un formulario con fecha y monto (parcial o total). La devolución:
+
+- se registra como ingreso en billetera (`loan_repayment`);
+- reduce la deuda de esa persona;
+- aparece en la tabla de registros como movimiento «Devolución».
+
+---
+
+### 25.2 Dashboard
+
+Además de las métricas de pedidos y producción, el Dashboard muestra:
+
+- **Disponible en cuenta** — saldo de billetera (§25.1).
+- **Ingresos del mes** — ventas del mes calendario actual (§25.3).
+- **Tendencia mensual** — últimos 6 meses: cantidad de pedidos creados e
+  ingresos por ventas en cada mes.
+- **Pedidos recientes** — hasta 5 pedidos activos (excluye entregados,
+  terminados y cancelados).
+- **Insumos con stock bajo** — cantidad de insumos cuya cantidad es menor o
+  igual al stock mínimo.
+
+El acceso a Billetera está disponible desde el menú lateral y desde la
+tarjeta de saldo en el Dashboard.
+
+---
+
+### 25.3 Ventas — implementación actual
+
+Pantalla **Ventas** (`/ventas`) con:
+
+- listado de operaciones del **mes calendario actual**;
+- alta y edición de **ventas de mostrador**;
+- exportación de **reporte mensual en PDF**.
+
+#### 25.3.1 Fuentes de ingreso
+
+```text
+Ingreso total (billetera y acumulado histórico de ventas) =
+    ventas de mostrador
+  + pedidos en estado ENTREGADO
+```
+
+- **Mostrador:** ventas registradas en la pantalla Ventas → Nueva venta.
+  Cliente mostrado como «Mostrador». Son editables y eliminables.
+- **Pedidos:** solo los pedidos **entregados** cuentan como venta. La fecha
+  de venta es la de la **última entrega** registrada (no la fecha pactada
+  del pedido).
+
+Los pedidos en cualquier otro estado **no** suman ingresos ni aparecen en
+el listado mensual de ventas.
+
+#### 25.3.2 Economía por operación
+
+Por cada venta (mostrador o pedido entregado) se calculan:
+
+```text
+costo  = Σ (costo unitario del ítem × cantidad)
+ganancia = total cobrado − costo
+```
+
+El costo unitario se resuelve con la calculadora de costos vigente al
+momento de la consulta (insumos, ajustes, tipo de producto/servicio).
+
+#### 25.3.3 Balance por área (vista de ventas)
+
+La pantalla de Ventas muestra desglose por **área de ganancia**:
+
+- Impresión 3D
+- Estampado
+- Diseño gráfico
+- Modelado 3D
+
+Para cada área: ingresos, costos y ganancia del mes, separados entre
+**mostrador** y **pedidos**.
+
+Reglas de asignación implementadas:
+
+- Productos tipo **estampado** → área Estampado.
+- Resto de productos con `productId` → área Impresión 3D.
+- Ítems de servicio → área según `serviceType` del ítem.
+- Servicios de diseño (diseño gráfico / modelado) computan costo con
+  multiplicador de cantidad = 1 (no por unidades del ítem).
+
+> **Nota:** Este desglose es **informativo para ventas del mes**. No
+> implementa el libro de movimientos `DEVENGADO` / `DISPONIBLE`, retiros,
+> préstamos ni balance «Deudas y préstamos» descritos en §21.
+
+#### 25.3.4 Reporte mensual PDF
+
+El botón de exportación genera un PDF con:
+
+1. Balance del mes (ingresos, costos, ganancia).
+2. Balance por área.
+3. Detalle por área y producto/servicio (cantidad, costo, ganancia, total).
+
+Solo incluye operaciones del mes calendario en curso.
+
+#### 25.3.5 Descuentos
+
+Ventas de mostrador, pedidos y presupuestos admiten **un solo tipo** de
+descuento por operación:
+
+- porcentaje (0–100 %), **o**
+- monto fijo en pesos.
+
+No se permiten ambos simultáneamente. El total se calcula sobre el subtotal
+de ítems.
+
+#### 25.3.6 Venta de mostrador y stock
+
+Al crear, editar o eliminar una venta de mostrador, el stock del producto
+publicado se descuenta o revierte automáticamente según los ítems del
+carrito.
+
+---
+
+### 25.4 Presupuestos — implementación actual
+
+Pantalla **Presupuestos** (`/presupuestos`) con listado y detalle.
+
+Estados implementados (alineados con §5):
+
+```text
+borrador → enviado → aceptado | rechazado | cancelado
+```
+
+Reglas codificadas:
+
+- Un presupuesto **cerrado** (aceptado, rechazado o cancelado) no se puede
+  editar ni cambiar de estado.
+- Un presupuesto **aceptado** no se puede eliminar.
+- Desde un presupuesto **aceptado** se puede generar **un pedido** (si aún
+  no tiene uno vinculado).
+- El pedido generado hereda ítems, descuento y cliente del presupuesto.
+- La fecha de entrega pactada del pedido generado se fija a **7 días** desde
+  la conversión.
+- El presupuesto puede crearse sin cliente (nombre «Sin cliente»).
+
+La conversión presupuesto → pedido **copia los ítems**; la creación
+automática de productos de catálogo no publicados al aceptar queda sujeta
+a lo definido en §5 (comportamiento de producto al aceptar).
+
+---
+
+### 25.5 Insumos — implementación ampliada
+
+Pantalla **Insumos** (`/insumos`). La ruta `/materiales` redirige a
+Insumos.
+
+#### 25.5.1 Categorías
+
+**Categorías del insumo:** FDM, Resina, Estampado, General.
+
+La categoría es la **única clasificación** del insumo. No existe un campo
+«tipo» separado en el modelo ni en el formulario.
+
+| Categoría  | Campos relevantes |
+|------------|-------------------|
+| FDM        | tipo de filamento, marca, color |
+| Resina     | tipo de resina, marca, color (alcohol: categoría Resina sin tipo de resina) |
+| Estampado  | precio manual; puede requerir color |
+| General    | precio manual |
+
+Filamento y resina requieren marca desde Ajustes; FDM, Resina y Estampado
+pueden requerir color del catálogo.
+
+#### 25.5.2 Unidad de medida
+
+Cada insumo tiene una **unidad de medida** configurable: unidad, kg, g, L,
+ml, m, cm, hoja, rollo.
+
+Al cambiar la categoría se sugiere una unidad por defecto (ej. FDM → kg,
+Resina → L). El usuario puede elegir otra.
+
+Stock, stock mínimo y precio unitario se expresan en esa unidad.
+
+#### 25.5.3 Precio desde Ajustes
+
+Filamentos y resinas pueden tomar el **precio unitario desde las listas de
+Ajustes** (por tipo de material y marca). En ese caso:
+
+- el precio en el formulario de insumo es de solo lectura;
+- la unidad se alinea a kg (filamento) o L (resina);
+- si el precio se modifica manualmente o por una compra en Billetera, pasa a
+  precio manual.
+
+#### 25.5.4 Stock bajo
+
+Un insumo está en stock bajo cuando `cantidad ≤ stock mínimo`. El Dashboard
+cuenta cuántos insumos cumplen esa condición.
+
+#### 25.5.5 Entidad Material (legacy)
+
+Existe además una entidad **Material** en el modelo de datos (módulo
+Materials) con stock y proveedor. La UI principal de inventario operativo
+usa **Insumos**. La relación exacta Material ↔ Insumo sigue **POR DEFINIR**
+(§9.1).
+
+#### 25.5.6 Sincronización de stock en la interfaz
+
+El catálogo de insumos se mantiene en un **store centralizado** (NgRx) en
+el frontend. Todas las pantallas que consumen insumos se suscriben a ese
+store (`watchSupplies`), no a lecturas aisladas que quedan obsoletas.
+
+Comportamiento implementado:
+
+- **Carga inicial:** al abrir una pantalla que necesita insumos, el store
+  carga el listado completo desde la API si aún no estaba cargado.
+- **Refresh global:** el layout principal escucha eventos de sincronización
+  en tiempo real del scope `supplies` y dispara un refresh del store. Todas
+  las pantallas abiertas reciben el stock actualizado sin recargar la página.
+- **Compra desde Billetera:** tras guardar una compra, la pantalla de
+  Billetera fuerza además un refresh explícito del store de insumos.
+- **Alta, edición o eliminación en Insumos:** el store se actualiza con la
+  respuesta del API (`upsert` / `remove`); no requiere refetch completo.
+- **Formularios de producto y Ajustes:** filamentos, resinas, insumos de
+  estampado, componentes y selectores de insumo en Valores generales usan
+  la misma suscripción persistente; ven cambios de stock y precio cuando el
+  store se refresca.
+
+El refresh siempre trae el **listado completo** de insumos (sin filtros en
+API) para no vaciar el store con subconjuntos parciales.
+
+---
+
+### 25.6 Productos — tipos implementados
+
+Los productos del catálogo se clasifican en:
+
+```text
+fdm | resina | estampado | combo
+```
+
+- **FDM / Resina:** impresión 3D; costos con filamento/resina, tiempos de
+  máquina, mano de obra y margen.
+- **Estampado:** insumos de estampado, ciclos de prensa, impresiones.
+- **Combo:** producto compuesto por otros productos (piezas); el stock
+  disponible puede derivar del ensamblaje de piezas.
+
+Campo **publicado** (`published`): controla visibilidad en venta directa
+y listados públicos. El API puede incluir no publicados con parámetro
+`all=true`.
+
+Productos pueden tener **componentes** (otros productos del catálogo) para
+ensamblaje y recálculo de costo/precio de combos.
+
+---
+
+### 25.7 Cola de tareas (print jobs)
+
+La pantalla **Cola** (`/cola`) gestiona las tareas de producción y servicio
+vinculadas a pedidos.
+
+Estados de tarea en código:
+
+```text
+por_hacer → en_proceso → en_revision → terminado
+           ↘ bloqueado ↗
+           → cancelado
+```
+
+Tipos de tarea:
+
+```text
+PREPARE_ORDER | PRODUCTION | SERVICE | INTERNAL
+```
+
+Comportamiento implementado relevante:
+
+- Las tareas se **sincronizan automáticamente** al crear o modificar
+  pedidos.
+- Pedido **entregado** → tareas archivadas (salen del tablero activo).
+- Pedido **cancelado** → tareas abiertas pasan a canceladas; terminadas se
+  conservan.
+- Tarea **bloqueada** por falta de insumos: notificación al repone stock,
+  pero **no se desbloquea sola**; el responsable debe avanzarla.
+- El estado del pedido se **recalcula** a partir de tareas y entregas
+  (prioridad de entregado / parcial / progreso según tareas).
+
+La reserva de stock al preparar pedido, entregas parciales y cantidades
+(`reservedQuantity`, `deliveredQuantity`, etc.) están implementadas en
+pedidos y tareas conforme a §9–§15.
+
+---
+
+### 25.8 Retención de pedidos
+
+El sistema **elimina automáticamente** pedidos en estado terminal
+(**entregado** o **cancelado**) cuya fecha de cierre supera **1 mes**.
+
+- La purga corre al iniciar el servidor y luego cada 24 horas.
+- Las tareas asociadas se eliminan con el pedido.
+
+Esta regla no estaba documentada en las secciones anteriores.
+
+---
+
+### 25.9 Sincronización de precios de productos
+
+Servicio de **pricing sync** recalcula precios y costos de productos cuando:
+
+- cambian ajustes generales o precios de insumos;
+- se guarda un producto cuyo precio cambió;
+- se actualizan componentes de combos.
+
+En pedidos **no entregados ni cancelados**, si cambia el precio vigente de
+un producto del catálogo, se registra entrada en el **historial de precios
+del pedido** (`priceHistory`) sin alterar el total acordado con el cliente,
+en línea con §17–§19.
+
+Triggers registrados: `settings`, `supply_price`, `product_update`.
+
+---
+
+### 25.10 Ajustes generales (configuración)
+
+Sección **Ajustes** con subpáginas:
+
+| Ruta | Contenido |
+|------|-----------|
+| Valores generales | Mano de obra, márgenes de error, electricidad, etc. |
+| Filamento | Precios por kg según tipo y marca |
+| Resina | Precios por litro según tipo y marca |
+| Colores | Catálogo de colores (hex, nombre) |
+| Impresos | Papeles / impresos para estampado (tipo, costo) |
+| Ganancias | Márgenes de ganancia por servicio |
+
+Márgenes predeterminados implementados (%):
+
+```text
+Impresión 3D:  40 %
+Diseño gráfico: 50 %
+Modelado 3D:   50 %
+Estampado:     35 %
+```
+
+Los márgenes se usan al calcular precio de venta a partir del costo /
+importe del área. Rango permitido al guardar: 0–999 %.
+
+Perfiles de **máquina** (impresión, lavado, curado, prensa) intervienen en
+el cálculo de overhead energético y de máquina por tipo de producto.
+
+---
+
+### 25.11 Autenticación y sincronización
+
+- Acceso protegido por **login**; rutas internas requieren sesión activa.
+- **Sincronización en tiempo real** opcional (polling): cuando está activa,
+  las pantallas recargan datos al recibir eventos del servidor (dashboard,
+  insumos, pedidos, etc.).
+
+Al registrar una **compra de insumos** desde Billetera, el backend emite
+eventos de realtime con scopes `dashboard`, `supplies` y `print-jobs`, de
+modo que el saldo disponible, el stock de insumos y las tareas bloqueadas
+por falta de material puedan actualizarse en las pantallas abiertas (ver
+§25.1.2.1 y §25.5.6).
+
+---
+
+### 25.12 Persistencia
+
+Con **MySQL** configurado (`DATABASE_URL`), el estado se persiste en base
+de datos (productos, pedidos, insumos, ventas, egresos de billetera,
+presupuestos, ajustes, etc.).
+
+Sin base de datos, el backend opera en **memoria** con datos de seed (no
+persisten entre reinicios).
+
+---
+
+### 25.13 Brecha respecto a reglas objetivo ya documentadas
+
+Las secciones **20 (Pagos)** y **21 (Ventas y balances)** describen
+deudas, pagos parciales, retiros, préstamos y libro `DEVENGADO` /
+`DISPONIBLE`. **Esa funcionalidad no está implementada** en la aplicación
+actual; lo implementado hoy es la billetera operativa (§25.1) y el reporte
+de ventas por área (§25.3.3).
+
+Otras reglas objetivo (§10 modificación/clonación de pedidos, §22 roles
+dinámicos, recotización bloqueante, etc.) pueden estar **parcialmente**
+implementadas o pendientes; este anexo no las modifica — solo registra lo
+que el código expone hoy y que no figuraba antes en el documento.
+

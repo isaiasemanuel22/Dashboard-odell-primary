@@ -4,8 +4,8 @@
       <tr>
         <th>Nombre</th>
         <th>Categoría</th>
-        <th>Tipo</th>
         <th>Material</th>
+        <th>Color</th>
         <th>Marca</th>
         <th>Stock</th>
         <th>Precio/u</th>
@@ -18,8 +18,19 @@
         <tr [class.low-stock]="isLowStock(s)">
           <td><strong>{{ s.name }}</strong></td>
           <td>{{ s.category | supplyCategoryLabel }}</td>
-          <td>{{ s.type | supplyTypeLabel }}</td>
           <td>{{ materialLabel(s) }}</td>
+          <td>
+            @if (showColor(s)) {
+              <span class="color-value">
+                @if (colorHex(s); as hex) {
+                  <span class="color-swatch" [style.background-color]="hex"></span>
+                }
+                {{ colorLabel(s) }}
+              </span>
+            } @else {
+              —
+            }
+          </td>
           <td>{{ s.brand ?? '—' }}</td>
           <td>{{ s.quantity }} {{ s.unit }}</td>
           <td>{{ s.unitPrice | currencyArs }}</td>

@@ -2,12 +2,14 @@ import {
   ColorConfig,
   FilamentType,
   INDISTINTO_COLOR_ID,
+  isProduct3D,
+  Product,
+  ProductType,
   ResinType,
   Supply,
   SupplyCategory,
-  SupplyType,
 } from '../../core/models';
-import { DbSelectOption } from '@general-components';
+import type { DbColorSelectOption } from '@dashboard-form/db-color-select/db-color-select.types';
 
 export function resolveColorLabel(
   colorId: string | undefined,
@@ -29,20 +31,28 @@ export function resolveColorHex(
   return catalog.find((color) => color.id === colorId)?.hex;
 }
 
-export function supplyRequiresColor(type: SupplyType): boolean {
+export function supplyRequiresColor(category: SupplyCategory): boolean {
   return (
-    type === SupplyType.FILAMENTO ||
-    type === SupplyType.RESINA ||
-    [
-      SupplyType.TINTA,
-      SupplyType.REMERA,
-      SupplyType.TAZA,
-      SupplyType.BUZO,
-      SupplyType.GORRA,
-      SupplyType.FILM,
-      SupplyType.VINILO,
-    ].includes(type)
+    category === SupplyCategory.FDM ||
+    category === SupplyCategory.RESINA ||
+    category === SupplyCategory.ESTAMPADO
   );
+}
+
+function suppliesCompatibleWith(
+  supply: Supply,
+  selected: Supply,
+): boolean {
+  if (supply.category !== selected.category) {
+    return false;
+  }
+  if (selected.filamentType && supply.filamentType !== selected.filamentType) {
+    return false;
+  }
+  if (selected.resinType && supply.resinType !== selected.resinType) {
+    return false;
+  }
+  return true;
 }
 
 export function buildColorOptions(
@@ -54,31 +64,25 @@ export function buildColorOptions(
     supplyId?: string;
     category?: SupplyCategory;
   },
-): DbSelectOption[] {
+): DbColorSelectOption[] {
   let compatible = supplies;
 
   if (filter.filamentType) {
     compatible = compatible.filter(
       (supply) =>
         supply.category === SupplyCategory.FDM &&
-        supply.type === SupplyType.FILAMENTO &&
         supply.filamentType === filter.filamentType,
     );
   } else if (filter.resinType) {
     compatible = compatible.filter(
       (supply) =>
         supply.category === SupplyCategory.RESINA &&
-        supply.type === SupplyType.RESINA &&
         supply.resinType === filter.resinType,
     );
   } else if (filter.supplyId) {
     const selected = supplies.find((supply) => supply.id === filter.supplyId);
     compatible = selected
-      ? supplies.filter(
-          (supply) =>
-            supply.category === selected.category &&
-            supply.type === selected.type,
-        )
+      ? supplies.filter((supply) => suppliesCompatibleWith(supply, selected))
       : [];
   } else if (filter.category) {
     compatible = compatible.filter(
@@ -86,21 +90,67 @@ export function buildColorOptions(
     );
   }
 
-  const colorIds = new Set(
-    compatible
-      .map((supply) => supply.colorId)
-      .filter((colorId): colorId is string => Boolean(colorId)),
-  );
+  const colorIds = new Set<string>();
+  for (const supply of compatible) {
+    if (supply.colorId) {
+      colorIds.add(supply.colorId);
+    }
+  }
 
-  const options: DbSelectOption[] = [
+  const options: DbColorSelectOption[] = [
     { value: INDISTINTO_COLOR_ID, label: 'Indistinto' },
   ];
 
   for (const color of catalog) {
     if (colorIds.has(color.id)) {
-      options.push({ value: color.id, label: color.name });
+      options.push({
+        value: color.id,
+        label: color.name,
+        hex: color.hex,
+      });
     }
   }
 
   return options;
+}
+
+export function productRequiresColor(product: Product): boolean {
+  if (!isProduct3D(product)) {
+    return product.type === ProductType.ESTAMPADO;
+  }
+  return true;
+}
+
+export function resolveProductColorOptions(
+  supplies: Supply[],
+  catalog: ColorConfig[],
+  product: Product,
+): DbColorSelectOption[] {
+  if (product.type === ProductType.FDM) {
+    return buildColorOptions(supplies, catalog, {
+      filamentType: product.filamentType,
+    });
+  }
+  if (product.type === ProductType.RESINA) {
+    return buildColorOptions(supplies, catalog, {
+      resinType: product.resinType,
+    });
+  }
+  if (product.type === ProductType.ESTAMPADO) {
+    return buildColorOptions(supplies, catalog, {
+      category: SupplyCategory.ESTAMPADO,
+    });
+  }
+  return [{ value: INDISTINTO_COLOR_ID, label: 'Indistinto' }];
+}
+
+export function buildColorOptionsForProduct(
+  product: Product | undefined,
+  supplies: Supply[],
+  catalog: ColorConfig[],
+): DbColorSelectOption[] {
+  if (!product) {
+    return [{ value: INDISTINTO_COLOR_ID, label: 'Indistinto' }];
+  }
+  return resolveProductColorOptions(supplies, catalog, product);
 }

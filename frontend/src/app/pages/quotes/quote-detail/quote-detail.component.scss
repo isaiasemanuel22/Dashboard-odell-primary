@@ -1,0 +1,174 @@
+@use '../../../shared/styles/variables' as *;
+
+.back-link {
+  display: inline-block;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  color: $color-text-muted;
+  text-decoration: none;
+
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+.title-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.meta-line {
+  margin: 0.25rem 0 0;
+  font-size: 0.875rem;
+  color: $color-text-muted;
+}
+
+.detail-header {
+  margin-bottom: 1.25rem;
+}
+
+.detail-layout {
+  display: grid;
+  grid-template-columns: minmax(240px, 300px) 1fr;
+  gap: 1.25rem;
+  align-items: start;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.detail-main {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.detail-list {
+  margin: 0;
+  display: grid;
+  gap: 0.85rem;
+
+  div {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  dt {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $color-text-muted;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+  }
+
+  dd {
+    margin: 0;
+  }
+}
+
+.customer-link {
+  color: $color-primary-dark;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+.no-customer {
+  color: $color-text-muted;
+  font-style: italic;
+}
+
+.panel h3 {
+  margin: 0 0 1rem;
+}
+
+.quote-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.quote-item-specs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem 0.65rem;
+  margin-top: 0.25rem;
+  font-size: 0.75rem;
+  color: $color-text-muted;
+}
+
+.quote-item__print-unit {
+  display: block;
+  font-size: 0.75rem;
+  color: $color-text-muted;
+}
+
+.quote-discount-row strong {
+  color: $color-error;
+}
+
+.product-link {
+  color: $color-primary-dark;
+  font-weight: 600;
+  text-decoration: none;
+
+  &:hover {
+    color: $color-primary;
+  }
+}
+
+.quote-generating-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgb(15 23 42 / 45%);
+  backdrop-filter: blur(2px);
+}
+
+.quote-generating-overlay__content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  min-width: 220px;
+  padding: 1.5rem 2rem;
+  border-radius: $radius-md;
+  background: $color-surface;
+  box-shadow: $shadow-card;
+  text-align: center;
+
+  p {
+    margin: 0;
+    font-weight: 600;
+    color: $color-text;
+  }
+}
+
+.quote-generating-overlay__spinner {
+  width: 2rem;
+  height: 2rem;
+  border: 3px solid $color-border;
+  border-top-color: $color-primary;
+  border-radius: 50%;
+  animation: quote-generating-spin 0.8s linear infinite;
+}
+
+@keyframes quote-generating-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

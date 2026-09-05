@@ -11,7 +11,22 @@ import {
 import { ListFilterOption } from '../../components/db-list-toolbar/db-list-toolbar.component';
 import { ORDER_STATUS_LABELS, SERVICE_TYPE_LABELS } from '../constants/labels';
 import { labelsToSelectOptions } from './select-options';
-import { productPhysicalStock } from './stock.helpers';
+import { productPhysicalStock, productStockOverview } from './stock.helpers';
+import {
+  isDesignPrintConfigured,
+  resolveLinePrintUnitPrice,
+} from './design-print.util';
+import {
+  isFdmQuoteConfigured,
+  isImpresion3DLine,
+} from './order-fdm-quote.util';
+import {
+  isDesignService,
+  isGraphicDesignService,
+  normalizeServiceType,
+} from './service-type.util';
+
+export { isDesignService, isGraphicDesignService };
 
 export const ACTIVE_ORDER_STATUSES: OrderStatus[] = [
   OrderStatus.PENDIENTE,
@@ -44,24 +59,46 @@ export function isClosedOrder(status: OrderStatus): boolean {
 }
 
 import {
-  calculateItemsSubtotal,
   calculateTotalWithDiscount,
   calculateDiscountValue,
 } from './discount.util';
 
+export function calculateLinePriceTotal(
+  line: Pick<
+    OrderLineDraft | OrderItem,
+    'serviceType' | 'quantity' | 'unitPrice' | 'designUnitPrice' | 'includesPrint'
+  > &
+    Partial<Pick<OrderLineDraft, 'printUnitPrice'>>,
+): number {
+  const quantity = Math.max(Math.trunc(Number(line.quantity) || 0), 0);
+  if (quantity <= 0) return 0;
+
+  if (isDesignService(line.serviceType)) {
+    const designPrice =
+      line.designUnitPrice != null
+        ? Number(line.designUnitPrice) || 0
+        : Number(line.unitPrice) || 0;
+
+    if (line.includesPrint) {
+      const printUnitPrice = resolveLinePrintUnitPrice(line);
+      return designPrice + quantity * printUnitPrice;
+    }
+
+    return designPrice;
+  }
+
+  const unitPrice = Number(line.unitPrice) || 0;
+  if (unitPrice < 0) return 0;
+  return quantity * unitPrice;
+}
+
 export function calculateOrderSubtotal(
   items: OrderLineDraft[] | OrderItem[],
 ): number {
-  return calculateItemsSubtotal(items);
-}
-
-export function calculateLinePriceTotal(
-  line: Pick<OrderLineDraft, 'quantity' | 'unitPrice'>,
-): number {
-  const quantity = Number(line.quantity) || 0;
-  const unitPrice = Number(line.unitPrice) || 0;
-  if (quantity <= 0 || unitPrice < 0) return 0;
-  return quantity * unitPrice;
+  return items.reduce(
+    (sum, item) => sum + calculateLinePriceTotal(item),
+    0,
+  );
 }
 
 export function isLineBillable(line: OrderLineDraft): boolean {
@@ -99,15 +136,11 @@ export function serviceTypeFromProduct(product: Product): ServiceType {
   return ServiceType.IMPRESION_3D;
 }
 
-export function isDesignService(serviceType: ServiceType): boolean {
-  return serviceType === ServiceType.DISENO;
-}
-
 export function productMatchesServiceType(
   product: Product,
   serviceType: ServiceType,
 ): boolean {
-  if (serviceType === ServiceType.DISENO) return false;
+  if (isDesignService(serviceType)) return false;
   if (serviceType === ServiceType.IMPRESION_3D) {
     return (
       product.type === ProductType.FDM || product.type === ProductType.RESINA
@@ -118,7 +151,13 @@ export function productMatchesServiceType(
 
 export function orderLineStockHint(
   line: Pick<OrderLineDraft, 'serviceType' | 'productId' | 'quantity'>,
-  product: Pick<Product, 'stock' | 'finishedStock'> | undefined,
+  product:
+    | Pick<
+        Product,
+        'id' | 'type' | 'includesPieces' | 'components' | 'stock' | 'finishedStock'
+      >
+    | undefined,
+  catalog?: Product[],
 ): string | null {
   if (isDesignService(line.serviceType) || !line.productId || !product) {
     return null;
@@ -127,7 +166,9 @@ export function orderLineStockHint(
   const requested = Math.max(Math.trunc(Number(line.quantity) || 0), 0);
   if (requested <= 0) return null;
 
-  const available = productPhysicalStock(product);
+  const available = catalog?.length
+    ? productStockOverview(product, undefined, catalog).physical
+    : productPhysicalStock(product);
   if (requested <= available) return null;
 
   if (available === 0) {
@@ -159,20 +200,40 @@ export function buildOrderItems(
     .map((line) => {
       if (isDesignService(line.serviceType)) {
         return {
-          serviceType: ServiceType.DISENO,
+          serviceType: line.serviceType,
           productName: line.customName!.trim(),
           quantity: line.quantity,
-          unitPrice: line.unitPrice,
+          unitPrice: line.includesPrint
+            ? resolveLinePrintUnitPrice(line)
+            : (line.designUnitPrice ?? line.unitPrice),
+          includesPrint: line.includesPrint || undefined,
+          printPaperType: line.includesPrint ? line.printPaperType : undefined,
+          printWidthCm: line.includesPrint ? line.printWidthCm : undefined,
+          printLengthCm: line.includesPrint ? line.printLengthCm : undefined,
+          printImpresoId: line.includesPrint ? line.printImpresoId : undefined,
+          designUnitPrice: line.designUnitPrice ?? line.unitPrice,
         };
       }
 
       const product = catalog.find((p) => p.id === line.productId);
+      const isCustomFdm =
+        isImpresion3DLine(line.serviceType) && !line.productId?.trim();
+
       return {
         serviceType: line.serviceType,
-        productId: line.productId,
-        productName: product?.name ?? 'Producto',
+        productId: line.productId?.trim() || undefined,
+        productName: isCustomFdm
+          ? line.customName!.trim()
+          : (product?.name ?? line.customName?.trim() ?? 'Producto'),
         quantity: line.quantity,
         unitPrice: line.unitPrice,
+        printTimeHours: isImpresion3DLine(line.serviceType)
+          ? line.printTimeHours
+          : undefined,
+        grams: isImpresion3DLine(line.serviceType) ? line.grams : undefined,
+        filamentType: isImpresion3DLine(line.serviceType)
+          ? line.filamentType
+          : undefined,
       };
     });
 }
@@ -182,10 +243,17 @@ export function isLineValid(line: OrderLineDraft): boolean {
   if (line.unitPrice < 0) return false;
 
   if (isDesignService(line.serviceType)) {
-    return !!line.customName?.trim();
+    if (!line.customName?.trim()) return false;
+    if (line.includesPrint && !isDesignPrintConfigured(line)) return false;
+    return true;
   }
 
-  return !!line.productId;
+  if (isImpresion3DLine(line.serviceType)) {
+    if (line.productId?.trim()) return true;
+    return !!line.customName?.trim() && isFdmQuoteConfigured(line);
+  }
+
+  return !!line.productId?.trim();
 }
 
 export function orderLinesFromSaleCart(
@@ -206,20 +274,45 @@ export function orderLinesFromSaleCart(
 }
 
 export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
-  if (isDesignService(item.serviceType)) {
+  const serviceType =
+    normalizeServiceType(item.serviceType) ?? item.serviceType;
+
+  if (isDesignService(serviceType)) {
+    const designUnitPrice = item.designUnitPrice ?? item.unitPrice;
+    const printUnitPrice = item.includesPrint
+      ? resolveLinePrintUnitPrice(item)
+      : undefined;
+
     return {
-      serviceType: ServiceType.DISENO,
+      serviceType,
       customName: item.productName,
       quantity: item.quantity,
-      unitPrice: item.unitPrice,
+      unitPrice: item.includesPrint
+        ? (printUnitPrice ?? item.unitPrice)
+        : designUnitPrice,
+      includesPrint: item.includesPrint,
+      printPaperType: item.printPaperType,
+      printWidthCm: item.printWidthCm,
+      printLengthCm: item.printLengthCm,
+      printImpresoId: item.printImpresoId,
+      designUnitPrice,
+      printUnitPrice,
+      unitCost: undefined,
     };
   }
 
   return {
     serviceType: item.serviceType,
     productId: item.productId,
+    customName:
+      isImpresion3DLine(item.serviceType) && !item.productId
+        ? item.productName
+        : undefined,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    printTimeHours: item.printTimeHours,
+    grams: item.grams,
+    filamentType: item.filamentType,
   };
 }
 

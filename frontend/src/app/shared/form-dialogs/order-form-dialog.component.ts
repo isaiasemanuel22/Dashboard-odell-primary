@@ -12,6 +12,7 @@ import {
   Customer,
   Order,
   Product,
+  Quote,
   UpdateOrderPayload,
 } from '../../core/models';
 import { CustomerCatalogService } from '../../core/services/customer-catalog.service';
@@ -19,7 +20,7 @@ import { OrdersService } from '../../core/services/orders.service';
 import { ProductCatalogService } from '../../core/services/product-catalog.service';
 import { FormDialogShellComponent } from '../../components/form-dialog-shell/form-dialog-shell.component';
 import { extractApiErrorMessage } from '../utils/api-error';
-import { OrderFormComponent } from '../../pages/orders/order-form/order-form.component';
+import { OrderFormComponent, OrderFormSavePayload } from '../../pages/orders/order-form/order-form.component';
 
 export interface OrderFormDialogData {
   order: Order | null;
@@ -29,6 +30,7 @@ export interface OrderFormDialogData {
     quantity: number;
     unitPrice: number;
   }>;
+  presetQuote?: Quote | null;
 }
 
 @Component({
@@ -36,13 +38,14 @@ export interface OrderFormDialogData {
   imports: [FormDialogShellComponent, OrderFormComponent],
   template: `
     <app-form-dialog-shell
-      [title]="order ? 'Editar pedido' : 'Nuevo pedido'"
+      [title]="dialogTitle"
       size="lg"
       [stickyHeader]="true"
       (close)="cancel()"
     >
       <app-order-form
         [order]="order"
+        [presetQuote]="presetQuote"
         [customers]="customers"
         [products]="products"
         [presetCustomerId]="presetCustomerId"
@@ -66,6 +69,7 @@ export class OrderFormDialogComponent implements OnInit {
   private readonly data = inject<OrderFormDialogData>(DIALOG_DATA);
 
   order: Order | null = null;
+  presetQuote: Quote | null = null;
   presetCustomerId = '';
   presetCartLines: NonNullable<OrderFormDialogData['presetCartLines']> = [];
   customers: Customer[] = [];
@@ -73,15 +77,21 @@ export class OrderFormDialogComponent implements OnInit {
   loading = false;
   error = '';
 
+  get dialogTitle(): string {
+    if (this.presetQuote) return 'Generar pedido';
+    return this.order ? 'Editar pedido' : 'Nuevo pedido';
+  }
+
   ngOnInit(): void {
     this.order = this.data.order;
+    this.presetQuote = this.data.presetQuote ?? null;
     this.presetCustomerId = this.data.presetCustomerId ?? '';
     this.presetCartLines = this.data.presetCartLines ?? [];
     this.resetState();
     this.loadCatalogs();
   }
 
-  save(data: CreateOrderPayload): void {
+  save(data: OrderFormSavePayload): void {
     this.loading = true;
     this.error = '';
     this.cdr.markForCheck();
@@ -91,7 +101,7 @@ export class OrderFormDialogComponent implements OnInit {
           this.order.id,
           data as UpdateOrderPayload,
         )
-      : this.ordersService.createOrder(data);
+      : this.ordersService.createOrder(data as CreateOrderPayload);
 
     request.subscribe({
       next: (saved) => {

@@ -3,14 +3,16 @@ import {
   OrderStatus,
   PaperType,
   PrintJobStatus,
+  QuoteStatus,
   MachineProfileRole,
   ProductType,
   ResinType,
   SaleSource,
   ServiceType,
   SupplyCategory,
-  SupplyType,
   TaskType,
+  TreasuryExpenseCategory,
+  TreasuryMovementDirection,
 } from './enums';
 
 export interface Category {
@@ -48,10 +50,23 @@ export interface PaperPricesPerSqm {
   dtfUv: number;
 }
 
+export interface PaperReferenceSheet {
+  widthCm: number;
+  lengthCm: number;
+  price: number;
+}
+
+export interface PaperReferenceSheets {
+  sublimacion: PaperReferenceSheet;
+  dtf: PaperReferenceSheet;
+  dtfUv: PaperReferenceSheet;
+}
+
 /** Margen de ganancia sobre el costo (%), por tipo de servicio. */
 export interface ServiceProfitMargins {
   impresion_3d: number;
-  diseno: number;
+  diseno_grafico: number;
+  modelado: number;
   estampado: number;
 }
 
@@ -94,6 +109,7 @@ export interface GeneralSettings {
   laborCostPerHour: number;
   profitMargins: ServiceProfitMargins;
   paperPricesPerSqm: PaperPricesPerSqm;
+  paperReferenceSheets: PaperReferenceSheets;
   filamentPrices: FilamentPriceConfig[];
   resinPrices: ResinPriceConfig[];
   /** Precio $/kg por tipo; usado al costear productos FDM (sin marca). */
@@ -125,7 +141,6 @@ export interface Supply {
   id: string;
   name: string;
   category: SupplyCategory;
-  type: SupplyType;
   filamentType?: FilamentType;
   resinType?: ResinType;
   brand?: string;
@@ -223,6 +238,7 @@ export interface ProductPricingFields {
 export interface ProductComponent {
   productId: string;
   quantity: number;
+  colorId?: string;
 }
 
 export interface ProductBase {
@@ -340,6 +356,15 @@ export interface OrderItem {
   productName: string;
   quantity: number;
   unitPrice: number;
+  includesPrint?: boolean;
+  printPaperType?: PaperType;
+  printWidthCm?: number;
+  printLengthCm?: number;
+  printImpresoId?: string;
+  designUnitPrice?: number;
+  printTimeHours?: number;
+  grams?: number;
+  filamentType?: FilamentType;
   deliveredQuantity?: number;
   reservedQuantity?: number;
   productionRequiredQuantity?: number;
@@ -394,6 +419,30 @@ export interface Order {
   deliveryHistory?: OrderDeliveryHistoryEntry[];
 }
 
+export type QuoteItem = Omit<
+  OrderItem,
+  | 'deliveredQuantity'
+  | 'reservedQuantity'
+  | 'productionRequiredQuantity'
+  | 'producedQuantity'
+  | 'deliveredFromProductionQuantity'
+>;
+
+export interface Quote {
+  id: string;
+  customerId: string | null;
+  customerName: string;
+  services: ServiceType[];
+  items: QuoteItem[];
+  status: QuoteStatus;
+  total: number;
+  discountPercent?: number;
+  discountAmount?: number;
+  quotedAt: string;
+  createdAt: string;
+  orderId?: string;
+}
+
 export interface OrderDeliveryLine {
   orderItemIndex: number;
   quantity: number;
@@ -418,10 +467,17 @@ export interface OrderAlert {
   itemIndex?: number;
 }
 
+export interface ProductStockOverview {
+  physical: number;
+  reserved: number;
+  available: number;
+}
+
 export interface ProductOverview {
   product: Product;
   categories: Category[];
   catalogProducts: Product[];
+  stock: ProductStockOverview;
 }
 
 export interface PrintJobsBoard {
@@ -509,6 +565,31 @@ export interface SaleEntryItem {
   quantity: number;
   unitPrice: number;
   lineTotal: number;
+  serviceType?: ServiceType;
+  printTimeHours?: number;
+  grams?: number;
+  filamentType?: FilamentType;
+}
+
+export type ProfitArea =
+  | ServiceType.IMPRESION_3D
+  | ServiceType.DISENO_GRAFICO
+  | ServiceType.MODELADO
+  | ServiceType.ESTAMPADO;
+
+export interface AreaProfitSourceBreakdown {
+  revenue: number;
+  cost: number;
+  profit: number;
+}
+
+export interface AreaProfitBalance {
+  area: ProfitArea;
+  revenue: number;
+  cost: number;
+  profit: number;
+  retail: AreaProfitSourceBreakdown;
+  orders: AreaProfitSourceBreakdown;
 }
 
 export interface SaleEntry {
@@ -533,8 +614,13 @@ export interface SalesStats {
   monthlyProfit: number;
   monthlyOrdersRevenue: number;
   monthlyRetailRevenue: number;
+  monthlyOrdersCost: number;
+  monthlyRetailCost: number;
+  monthlyOrdersProfit: number;
+  monthlyRetailProfit: number;
   monthlyOrdersCount: number;
   monthlyRetailCount: number;
+  profitByArea: AreaProfitBalance[];
 }
 
 export interface SalesOverview {
@@ -552,11 +638,29 @@ export interface Material {
   supplier: string;
 }
 
+export interface MonthlyTrendPoint {
+  month: string;
+  label: string;
+  ordersCount: number;
+  revenue: number;
+}
+
+export type DashboardNotificationType = 'info' | 'warning' | 'success';
+
+export interface DashboardNotification {
+  id: string;
+  type: DashboardNotificationType;
+  title: string;
+  message: string;
+  route?: string;
+}
+
 export interface DashboardStats {
   totalOrders: number;
   pendingOrders: number;
   inProductionOrders: number;
   monthlyRevenue: number;
+  walletBalance: number;
   activePrintJobs: number;
   queuedPrintJobs: number;
   totalCustomers: number;
@@ -564,6 +668,38 @@ export interface DashboardStats {
   ordersByType: { type: ServiceType; count: number }[];
   recentOrders: Order[];
   monthlyTrend: MonthlyTrendPoint[];
+  notifications: DashboardNotification[];
+}
+
+export interface TreasuryExpense {
+  id: string;
+  direction: TreasuryMovementDirection;
+  category: TreasuryExpenseCategory;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+  amount: number;
+  description?: string;
+  referenceId?: string;
+  occurredAt: string;
+  createdAt: string;
+}
+
+export interface TreasuryDebtorBalance {
+  name: string;
+  amount: number;
+}
+
+export interface TreasuryOverview {
+  availableBalance: number;
+  totalIncome: number;
+  totalExpenses: number;
+  totalSalesIncome: number;
+  totalManualIncome: number;
+  expenses: TreasuryExpense[];
+  recordNameSuggestions: string[];
+  recipientNameSuggestions: string[];
+  debtors: TreasuryDebtorBalance[];
 }
 
 export interface MonthlyTrendPoint {
@@ -615,3 +751,58 @@ export type CreateProductDto = {
 };
 
 export type UpdateProductDto = Partial<CreateProductDto>;
+
+export interface WorkArea {
+  id: string;
+  name: string;
+  slug: string;
+  active: boolean;
+  sortOrder: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RolePermissionEntry {
+  action: import('./enums').PermissionAction;
+  areaId: string | null;
+}
+
+export interface AppRole {
+  id: string;
+  name: string;
+  description?: string;
+  isSystem: boolean;
+  permissions: RolePermissionEntry[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface UserPermissionOverrideEntry {
+  action: import('./enums').PermissionAction;
+  areaId: string | null;
+  granted: boolean;
+}
+
+export interface AppUser {
+  id: string;
+  firebaseUid?: string;
+  email: string;
+  displayName: string;
+  active: boolean;
+  roleIds: string[];
+  permissionOverrides: UserPermissionOverrideEntry[];
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ResolvedPermissionEntry {
+  action: import('./enums').PermissionAction;
+  areaId: string | null;
+  granted: boolean;
+}
+
+export interface CurrentUserProfile extends AppUser {
+  roles: AppRole[];
+  permissions: ResolvedPermissionEntry[];
+  isAdmin: boolean;
+}

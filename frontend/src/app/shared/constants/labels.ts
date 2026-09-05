@@ -1,6 +1,7 @@
 import {
   FilamentType,
   OrderStatus,
+  QuoteStatus,
   PaperType,
   PrintJobStatus,
   ProductType,
@@ -8,13 +9,13 @@ import {
   SaleSource,
   ServiceType,
   SupplyCategory,
-  SupplyType,
   TaskKind,
 } from '../../core/models';
 
 export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
   [ServiceType.IMPRESION_3D]: 'Impresión 3D',
-  [ServiceType.DISENO]: 'Diseño',
+  [ServiceType.DISENO_GRAFICO]: 'Diseño gráfico',
+  [ServiceType.MODELADO]: 'Modelado',
   [ServiceType.ESTAMPADO]: 'Estampado',
 };
 
@@ -36,20 +37,6 @@ export const PAPER_TYPE_LABELS: Record<PaperType, string> = {
   [PaperType.SUBLIMACION]: 'Sublimación',
   [PaperType.DTF]: 'DTF',
   [PaperType.DTF_UV]: 'DTF UV',
-};
-
-export const SUPPLY_TYPE_LABELS: Record<SupplyType, string> = {
-  [SupplyType.FILAMENTO]: 'Filamento',
-  [SupplyType.RESINA]: 'Resina',
-  [SupplyType.ALCOHOL]: 'Alcohol isopropílico',
-  [SupplyType.TINTA]: 'Tinta',
-  [SupplyType.REMERA]: 'Remera',
-  [SupplyType.TAZA]: 'Taza',
-  [SupplyType.BUZO]: 'Buzo',
-  [SupplyType.GORRA]: 'Gorra',
-  [SupplyType.FILM]: 'Film DTF',
-  [SupplyType.VINILO]: 'Vinilo',
-  [SupplyType.OTRO]: 'Otro',
 };
 
 export const FILAMENT_TYPE_LABELS: Record<FilamentType, string> = {
@@ -77,6 +64,14 @@ export const ORDER_STATUS_LABELS: Record<OrderStatus, string> = {
   [OrderStatus.PARCIALMENTE_ENTREGADO]: 'Parcialmente entregado',
   [OrderStatus.ENTREGADO]: 'Entregado',
   [OrderStatus.CANCELADO]: 'Cancelado',
+};
+
+export const QUOTE_STATUS_LABELS: Record<QuoteStatus, string> = {
+  [QuoteStatus.BORRADOR]: 'Borrador',
+  [QuoteStatus.ENVIADO]: 'Enviado',
+  [QuoteStatus.ACEPTADO]: 'Aceptado',
+  [QuoteStatus.RECHAZADO]: 'Rechazado',
+  [QuoteStatus.CANCELADO]: 'Cancelado',
 };
 
 export const ORDER_STATUS_CHANGE_SOURCE_LABELS: Record<

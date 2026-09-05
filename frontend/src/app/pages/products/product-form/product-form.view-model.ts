@@ -5,14 +5,14 @@ import {
   ProductType,
   isProductType3D,
 } from '../../../core/models';
-import { ProductFormGroup } from '../../../core/services/product-form-state-manager.service';
+import { ProductFormGroup } from './services/product-form-state-manager.service';
 import {
   productComponentSelectLabel,
   sumComponentsCost,
   sumComponentsPrice,
 } from '../../../shared/utils/product.helpers';
 import { isEstampadoPrintValid } from '../../../shared/utils/estampado.helpers';
-import { DbSelectOption } from '@general-components';
+import type { DbSelectOption } from '@dashboard-form';
 
 export interface ProductFormViewContext {
   form: ProductFormGroup;
@@ -66,7 +66,11 @@ export function showFormGenericSizeField(form: ProductFormGroup): boolean {
 }
 
 export function showFormComponentsSection(form: ProductFormGroup): boolean {
-  return isFormCombo(form) || formIncludesPieces(form);
+  return (
+    isFormCombo(form) ||
+    formIncludesPieces(form) ||
+    formComponents(form).length > 0
+  );
 }
 
 export function formComponents(form: ProductFormGroup): ProductComponent[] {
