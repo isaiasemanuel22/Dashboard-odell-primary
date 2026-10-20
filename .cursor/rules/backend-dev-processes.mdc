@@ -1,0 +1,20 @@
+---
+description: Matar procesos del backend antes de probar que el API corre
+globs: backend/**/*
+alwaysApply: true
+---
+
+# Backend — limpiar procesos antes de arrancar
+
+Antes de **cualquier prueba runtime** del backend (`start`, `start:dev`, `start:prod`, curl al API, etc.):
+
+1. Ejecutar desde `backend/`:
+   ```bash
+   npm run kill:dev
+   ```
+2. Confirmar que el puerto **3000** quedó libre (o el `PORT` configurado).
+3. Recién entonces compilar o levantar el servidor.
+
+Los scripts `start`, `start:dev`, `start:debug` y `start:prod` ya invocan `kill:dev` automáticamente; aun así, si hay dudas de instancias zombie, ejecutar `kill:dev` explícitamente antes de probar.
+
+No omitir este paso aunque `npm run build` haya compilado bien.

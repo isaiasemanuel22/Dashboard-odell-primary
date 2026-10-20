@@ -1,0 +1,192 @@
+---
+description: Reglas generales para trabajar en el proyecto Odell
+alwaysApply: true
+---
+
+# Odell — Reglas generales de desarrollo
+
+## 1. Comprensión del proyecto
+
+Antes de realizar cambios relevantes, analizar primero el código existente
+y utilizar los patrones ya establecidos en el proyecto.
+
+No asumir que una arquitectura o patrón estándar es aplicable a Odell
+si el código existente utiliza otro enfoque.
+
+El código existente es la principal fuente de verdad sobre el
+funcionamiento técnico actual del sistema.
+
+---
+
+## 2. No realizar suposiciones
+
+Si una decisión depende de una regla de negocio que no puede determinarse
+a partir del código, no asumir.
+
+Indicar explícitamente qué información falta y solicitarla cuando sea
+necesaria para implementar correctamente la funcionalidad.
+
+Distinguir siempre entre:
+
+- comportamiento confirmado por el código
+- comportamiento inferido
+- comportamiento desconocido
+
+No presentar una inferencia como una regla de negocio confirmada.
+
+---
+
+## 3. Investigación antes de implementación
+
+Para funcionalidades medianas o grandes:
+
+1. Analizar el código relacionado.
+2. Identificar los módulos, servicios, componentes y modelos involucrados.
+3. Identificar dependencias y posibles efectos secundarios.
+4. Explicar el comportamiento actual.
+5. Proponer un plan de implementación.
+6. Esperar aprobación cuando el cambio sea significativo.
+7. Implementar.
+8. Ejecutar las validaciones disponibles.
+9. Revisar los cambios buscando regresiones.
+
+No comenzar modificando archivos sin comprender primero el contexto
+necesario.
+
+---
+
+## 4. Respetar la arquitectura existente
+
+Preferir reutilizar código, servicios, componentes, utilidades y patrones
+existentes antes que crear soluciones paralelas.
+
+No introducir nuevas librerías o tecnologías sin justificar su necesidad.
+
+No realizar refactors no relacionados con la tarea solicitada.
+
+Mantener los cambios lo más localizados posible.
+
+---
+
+## 5. No duplicar lógica
+
+Antes de crear una nueva función, servicio, componente o utilidad,
+buscar si ya existe una implementación equivalente.
+
+Si existe una implementación reutilizable, utilizarla o proponer su
+reutilización.
+
+---
+
+## 6. Cambios
+
+Antes de modificar archivos importantes, identificar:
+
+- qué archivos serán modificados
+- qué archivos serán creados
+- qué comportamiento existente puede verse afectado
+
+No modificar archivos no relacionados con la tarea salvo que exista una
+razón técnica clara.
+
+---
+
+## 7. Validación
+
+Una tarea no se considera terminada simplemente porque el código fue
+escrito.
+
+Cuando sea posible, validar:
+
+- TypeScript
+- lint
+- tests
+- build
+- comportamiento relacionado
+
+Si una validación falla, investigar la causa antes de aplicar cambios.
+
+No ocultar errores simplemente para conseguir que una validación pase.
+
+---
+
+## 8. Errores
+
+Cuando aparezca un error:
+
+1. Identificar la causa raíz.
+2. Explicar por qué ocurre.
+3. Proponer una solución.
+4. Implementar la solución.
+5. Ejecutar nuevamente las validaciones.
+
+Evitar soluciones basadas únicamente en parches que oculten el problema.
+
+---
+
+## 9. Testing
+
+Al implementar una funcionalidad, considerar:
+
+- happy path
+- edge cases
+- invalid input
+- error cases
+- regresiones
+
+Los tests deben validar comportamiento, no solamente aumentar cobertura.
+
+---
+
+## 10. Code review
+
+Después de realizar cambios relevantes, revisar la implementación como
+si hubiera sido escrita por otro desarrollador.
+
+Buscar:
+
+- errores lógicos
+- regresiones
+- casos límite
+- problemas de tipos
+- duplicación
+- problemas async
+- problemas de estado
+- problemas de seguridad
+- problemas de performance
+- inconsistencias con la arquitectura existente
+
+No asumir que una implementación propia es correcta.
+
+---
+
+## 11. Seguridad
+
+No exponer secretos, credenciales, tokens ni información sensible.
+
+No modificar configuraciones de producción sin indicarlo explícitamente.
+
+No agregar secretos directamente al código fuente.
+
+---
+
+## 12. Git
+
+No realizar commits, pushes, merges, resets o acciones destructivas de Git
+sin autorización explícita.
+
+No eliminar cambios realizados por el usuario.
+
+Antes de modificar código existente, preservar el trabajo actual.
+
+---
+
+## 13. Comunicación
+
+Cuando exista incertidumbre relevante, explicarla.
+
+Cuando haya varias soluciones razonables, presentar las alternativas y
+sus trade-offs.
+
+Preferir una explicación breve y precisa antes que una implementación
+basada en suposiciones.
