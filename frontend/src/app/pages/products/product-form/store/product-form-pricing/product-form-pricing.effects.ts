@@ -45,6 +45,7 @@ export class ProductFormPricingEffects {
         ProductFormPricingActions.setComponentsPrice,
         ProductFormPricingActions.setProductTypeMargin,
         ProductFormPricingActions.setSuggestedPrice,
+        ProductFormPricingActions.setCatalogPrice,
         ProductFormPricingActions.setAppliedMargin,
       ),
       withLatestFrom(this.store.select(selectProductFormPricingState)),
@@ -56,6 +57,7 @@ export class ProductFormPricingEffects {
           profitMarginPercent: margin,
           suggestedPrice: state.suggestedPrice,
           componentsPrice: state.componentsPrice,
+          catalogPrice: state.catalogPrice,
         });
 
         return ProductFormPricingActions.setPricingResult({

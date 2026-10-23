@@ -26,6 +26,7 @@ export function normalizeFdmFilaments(
     grams?: number;
     filamentType?: FilamentType;
     brand?: string;
+    brandId?: string;
   },
 ): FdmFilamentLine[] {
   if (Array.isArray(raw) && raw.length) {
@@ -42,6 +43,7 @@ export function normalizeFdmFilaments(
         filamentType: legacy.filamentType,
         grams,
         brand: legacy.brand?.trim() || undefined,
+        brandId: legacy.brandId,
       },
     ];
   }
@@ -69,11 +71,13 @@ export function resolveFdmFilaments(input: {
   grams?: number;
   filamentType?: FilamentType;
   brand?: string;
+  brandId?: string;
 }): FdmFilamentLine[] {
   return normalizeFdmFilaments(input.filaments, {
     grams: input.grams,
     filamentType: input.filamentType,
     brand: input.brand,
+    brandId: input.brandId,
   });
 }
 
@@ -96,6 +100,10 @@ function normalizeOneFdmFilamentLine(item: unknown): FdmFilamentLine | null {
     typeof record.brand === 'string' && record.brand.trim()
       ? record.brand.trim()
       : undefined;
+  const brandId =
+    typeof record.brandId === 'string' && record.brandId.trim()
+      ? record.brandId.trim()
+      : undefined;
   const label =
     typeof record.label === 'string' && record.label.trim()
       ? record.label.trim()
@@ -113,6 +121,7 @@ function normalizeOneFdmFilamentLine(item: unknown): FdmFilamentLine | null {
     filamentType,
     grams,
     brand,
+    brandId,
     label,
     colorId,
   };

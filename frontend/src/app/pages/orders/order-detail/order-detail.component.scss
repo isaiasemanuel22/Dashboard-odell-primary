@@ -160,6 +160,26 @@
   color: $color-text-muted;
 }
 
+.price-notice {
+  display: grid;
+  gap: 0.75rem;
+  padding: 0.9rem 1rem;
+  border: 1px solid #f59e0b;
+  border-radius: $radius-sm;
+  background: $color-warning-bg;
+  color: $color-warning-text;
+
+  p {
+    margin: 0;
+  }
+}
+
+.price-notice__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
 .operational-alerts {
   display: grid;
   gap: 0.65rem;

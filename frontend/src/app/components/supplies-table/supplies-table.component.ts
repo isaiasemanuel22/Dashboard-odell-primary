@@ -6,6 +6,7 @@ import {
   Output,
 } from '@angular/core';
 import { ColorConfig, Supply } from '../../core/models';
+import { RESIN_TYPE_LABELS } from '../../shared/constants/labels';
 import {
   CurrencyArsPipe,
   SupplyCategoryLabelPipe,
@@ -43,7 +44,9 @@ export class SuppliesTableComponent {
 
   materialLabel(s: Supply): string {
     if (s.filamentType) return s.filamentType.toUpperCase();
-    if (s.resinType) return s.resinType;
+    if (s.resinType) {
+      return RESIN_TYPE_LABELS[s.resinType] ?? s.resinType;
+    }
     return '—';
   }
 

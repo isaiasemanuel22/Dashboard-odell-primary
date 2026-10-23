@@ -108,4 +108,46 @@ describe('OrdersService.getOverview', () => {
     expect(order.status).toBe(OrderStatus.PARCIALMENTE_ENTREGADO);
     expect(order.deliveryHistory).toHaveLength(1);
   });
+
+  it('rechaza una fecha de entrega de hoy o anterior', () => {
+    const now = new Date();
+    const day = [
+      now.getFullYear(),
+      String(now.getMonth() + 1).padStart(2, '0'),
+      String(now.getDate()).padStart(2, '0'),
+    ].join('-');
+
+    expect(() =>
+      service.create({
+        customerId: 'cust-1',
+        items: [],
+        dueDate: `${day}T18:00:00.000Z`,
+      }),
+    ).toThrow(/posterior a hoy/);
+  });
+
+  it('mantiene el total hasta actualizar el precio del producto', () => {
+    const order = store.orders[0]!;
+    order.items = [
+      {
+        serviceType: ProductType.FDM as never,
+        productId: 'prod-1',
+        productName: 'Pieza',
+        quantity: 2,
+        unitPrice: 80,
+      },
+    ];
+    order.total = 160;
+    store.products[0]!.price = 100;
+
+    const kept = service.keepCatalogPrices(order.id);
+    expect(kept.total).toBe(160);
+    expect(kept.items[0]!.unitPrice).toBe(80);
+    expect(service.getOverview(order.id).priceNotices).toEqual([]);
+
+    store.products[0]!.price = 120;
+    const applied = service.applyCatalogPrices(order.id);
+    expect(applied.items[0]!.unitPrice).toBe(120);
+    expect(applied.total).toBe(240);
+  });
 });

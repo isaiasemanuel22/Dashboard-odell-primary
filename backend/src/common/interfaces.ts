@@ -1,4 +1,5 @@
 import {
+  BrandMaterialType,
   FilamentType,
   OrderStatus,
   PaperType,
@@ -22,9 +23,18 @@ export interface Category {
   createdAt: string;
 }
 
+export interface Brand {
+  id: string;
+  name: string;
+  materialTypes: BrandMaterialType[];
+  createdAt: string;
+}
+
 export interface FilamentPriceConfig {
   id: string;
-  brand: string;
+  brandId?: string;
+  /** Nombre hidratado desde la tabla de marcas. No es el dato que se guarda. */
+  brand?: string;
   materialType: FilamentType;
   pricePerKg: number;
 }
@@ -39,7 +49,9 @@ export const INDISTINTO_COLOR_ID = 'indistinto';
 
 export interface ResinPriceConfig {
   id: string;
-  brand: string;
+  brandId?: string;
+  /** Nombre hidratado desde la tabla de marcas. No es el dato que se guarda. */
+  brand?: string;
   resinType: ResinType;
   pricePerLiter: number;
 }
@@ -143,6 +155,8 @@ export interface Supply {
   category: SupplyCategory;
   filamentType?: FilamentType;
   resinType?: ResinType;
+  brandId?: string;
+  /** Nombre hidratado desde la tabla de marcas. No es el dato que se guarda. */
   brand?: string;
   unit: string;
   quantity: number;
@@ -261,6 +275,8 @@ export interface ProductBase {
   assemblyTimeHours: number;
   /** Unidades terminadas en stock físico. */
   stock?: number;
+  /** Disponible para nuevas operaciones. No se persiste. */
+  stockOverview?: ProductStockOverview;
 }
 
 export interface Product3D extends ProductBase {
@@ -270,6 +286,8 @@ export interface Product3D extends ProductBase {
   workTimeHours: number;
   washMinutes?: number;
   cureMinutes?: number;
+  brandId?: string;
+  /** Nombre hidratado desde la tabla de marcas. No es el dato que se guarda. */
   brand?: string;
   filamentType?: FilamentType;
   filaments?: FdmFilamentLine[];
@@ -308,6 +326,8 @@ export interface FdmFilamentLine {
   id: string;
   filamentType: FilamentType;
   grams: number;
+  brandId?: string;
+  /** Nombre hidratado desde la tabla de marcas. No es el dato que se guarda. */
   brand?: string;
   label?: string;
   colorId?: string;
@@ -365,6 +385,7 @@ export interface OrderItem {
   printTimeHours?: number;
   grams?: number;
   filamentType?: FilamentType;
+  budgetedHours?: number;
   deliveredQuantity?: number;
   reservedQuantity?: number;
   productionRequiredQuantity?: number;
@@ -398,6 +419,8 @@ export interface OrderPriceHistoryEntry {
   newUnitPrice: number;
   previousOrderTotal: number;
   newOrderTotal: number;
+  /** El usuario dejó el precio acordado. No cambia el total del pedido. */
+  kept?: boolean;
 }
 
 export interface Order {
@@ -417,6 +440,14 @@ export interface Order {
   statusHistory?: OrderStatusHistoryEntry[];
   priceHistory?: OrderPriceHistoryEntry[];
   deliveryHistory?: OrderDeliveryHistoryEntry[];
+  payments?: OrderPayment[];
+}
+
+export interface OrderPayment {
+  id: string;
+  amount: number;
+  deposit: boolean;
+  createdAt: string;
 }
 
 export type QuoteItem = Omit<
@@ -454,10 +485,19 @@ export interface OrderDeliveryHistoryEntry {
   items: OrderDeliveryLine[];
 }
 
+export interface OrderPriceNotice {
+  itemIndex: number;
+  productId: string;
+  productName: string;
+  agreedUnitPrice: number;
+  currentUnitPrice: number;
+}
+
 export interface OrderOverview {
   order: Order;
   tasks: PrintJob[];
   alerts?: OrderAlert[];
+  priceNotices?: OrderPriceNotice[];
 }
 
 export interface OrderAlert {
@@ -626,16 +666,6 @@ export interface SalesStats {
 export interface SalesOverview {
   stats: SalesStats;
   entries: SaleEntry[];
-}
-
-export interface Material {
-  id: string;
-  name: string;
-  type: ServiceType;
-  quantity: number;
-  unit: string;
-  minStock: number;
-  supplier: string;
 }
 
 export interface MonthlyTrendPoint {

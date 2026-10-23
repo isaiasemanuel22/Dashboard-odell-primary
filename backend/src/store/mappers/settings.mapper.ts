@@ -11,6 +11,10 @@ import {
   syncPaperPricesFromReferenceSheets,
 } from '../../common/paper-cost.util';
 import { normalizeProfitMargins } from '../../settings/profit-margins.util';
+import {
+  persistedFilamentPrice,
+  persistedResinPrice,
+} from '../brand-link.util';
 
 export function mapSettingsFromDb(row: {
   electricityCostPerKwh: number;
@@ -95,8 +99,10 @@ export function mapSettingsToDb(settings: GeneralSettings) {
     powerConsumptions: toInputJson(normalized.powerConsumptions),
     machineCosts: toInputJson(normalized.machineCosts),
     processProfiles: toInputJson(normalized.machineProfiles),
-    filamentPrices: toInputJson(normalized.filamentPrices),
-    resinPrices: toInputJson(normalized.resinPrices),
+    filamentPrices: toInputJson(
+      normalized.filamentPrices.map(persistedFilamentPrice),
+    ),
+    resinPrices: toInputJson(normalized.resinPrices.map(persistedResinPrice)),
     filamentTypeAverages: toInputJson(normalized.filamentTypeAverages),
     resinTypeAverages: toInputJson(normalized.resinTypeAverages),
     colors: toInputJson(normalized.colors ?? []),

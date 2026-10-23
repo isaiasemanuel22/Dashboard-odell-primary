@@ -10,6 +10,7 @@ import { isRevenueOrder, resolveOrderSoldAt } from '../sales/sales-order.util';
 import { StoreService } from '../store/store.service';
 import { TreasuryService } from '../treasury/treasury.service';
 import { computeDebtorBalances } from '../treasury/treasury-debtor.util';
+import { listOrderPriceNotices } from '../orders/order-price-notice.util';
 
 const MONTH_LABELS = [
   'Ene',
@@ -142,6 +143,21 @@ export class DashboardService {
             ? '1 pedido esperando iniciar'
             : `${pendingOrders} pedidos esperando iniciar`,
         route: '/pedidos',
+      });
+    }
+
+    for (const order of this.store.orders) {
+      const notices = listOrderPriceNotices(
+        order,
+        (productId) => this.store.getProductById(productId)?.price,
+      );
+      if (!notices.length) continue;
+      notifications.push({
+        id: `order-price-${order.id}`,
+        type: 'warning',
+        title: 'Precio del pedido',
+        message: `El producto cambió de precio. El valor del pedido ${order.id} sigue igual hasta actualizarlo en el pedido`,
+        route: `/pedidos/${order.id}`,
       });
     }
 

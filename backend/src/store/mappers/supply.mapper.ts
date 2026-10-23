@@ -8,7 +8,7 @@ export function mapSupplyFromDb(row: {
   category?: string | null;
   filamentType: string | null;
   resinType: string | null;
-  brand: string | null;
+  brandId?: string | null;
   unit: string;
   quantity: number;
   minStock: number;
@@ -24,7 +24,7 @@ export function mapSupplyFromDb(row: {
     category: normalizeSupplyCategory(row.category ?? undefined),
     filamentType: row.filamentType as Supply['filamentType'],
     resinType: row.resinType as Supply['resinType'],
-    brand: row.brand ?? undefined,
+    brandId: row.brandId ?? undefined,
     unit: row.unit,
     quantity: row.quantity,
     minStock: row.minStock,
@@ -43,7 +43,7 @@ export function mapSupplyToDb(supply: Supply) {
     category: supply.category,
     filamentType: supply.filamentType ?? null,
     resinType: supply.resinType ?? null,
-    brand: supply.brand ?? null,
+    brandId: supply.brandId ?? null,
     unit: supply.unit,
     quantity: supply.quantity,
     minStock: supply.minStock,

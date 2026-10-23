@@ -49,8 +49,11 @@ import {
   isLineBillable,
   calculateOrderTotal,
   createEmptyLine,
+  DUE_DATE_AFTER_TODAY_MESSAGE,
   defaultDueDate,
   isDesignService,
+  isDueDateAfterToday,
+  minimumDueDate,
   isGraphicDesignService,
   isLineValid,
   lineFromOrderItem,
@@ -356,6 +359,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     line.customName = isDesignService(line.serviceType) ? '' : undefined;
     line.unitCost = isDesignService(line.serviceType) ? 0 : undefined;
     line.unitPrice = 0;
+    line.budgetedHours = isDesignService(line.serviceType) ? 3 : undefined;
     line.printTimeHours = undefined;
     line.grams = undefined;
     line.filamentType = undefined;
@@ -369,6 +373,9 @@ export class OrderFormComponent implements OnChanges, OnInit {
       line.printUnitPrice = undefined;
     }
     line.designUnitPrice = undefined;
+    if (isDesignService(line.serviceType)) {
+      this.applyDesignBudget(line);
+    }
   }
 
   onProductChange(line: OrderLineDraft): void {
@@ -409,13 +416,19 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   fdmPricingHint(line: OrderLineDraft): string {
-    if (line.productId && isFdmQuoteConfigured(line)) {
-      return 'Costo recalculado según gramos, horas y filamento. Podés ajustar el precio manualmente.';
+    if (line.productId) {
+      return 'Costo tomado del catálogo de productos.';
     }
-    if (!line.productId) {
-      return 'Presupuesto calculado según configuración de costos y margen de Impresión 3D.';
-    }
-    return 'Costo tomado del catálogo de productos.';
+    return 'Presupuesto calculado según configuración de costos y margen de Impresión 3D.';
+  }
+
+  get laborRate(): number {
+    return this.generalSettings?.laborCostPerHour ?? 0;
+  }
+
+  onBudgetedHoursChange(line: OrderLineDraft, raw: number | string): void {
+    line.budgetedHours = Math.max(0, Number(raw) || 0);
+    this.applyDesignBudget(line);
   }
 
   onDesignUnitCostChange(line: OrderLineDraft, raw: number | string): void {
@@ -545,11 +558,22 @@ export class OrderFormComponent implements OnChanges, OnInit {
     });
   }
 
+  get dueDateError(): string {
+    if (this.isQuoteForm || !this.dueDate) return '';
+    return isDueDateAfterToday(this.dueDate) ? '' : DUE_DATE_AFTER_TODAY_MESSAGE;
+  }
+
+  get minDueDate(): string {
+    return minimumDueDate();
+  }
+
   canSubmit(): boolean {
     if (!this.lines.some((line) => isLineValid(line))) return false;
     if (this.isQuoteForm) return true;
     return (
+      !!this.customerId.trim() &&
       !!this.dueDate &&
+      !this.dueDateError &&
       plainTextFromHtml(this.description).length <= this.descriptionMaxLength
     );
   }
@@ -628,6 +652,14 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (!this.generalSettings) return;
 
     const product = this.productForLine(line);
+    if (product && line.productId) {
+      line.unitCost = resolveProductUnitCost(product, this.products);
+      if (!options?.preservePrice) {
+        line.unitPrice = product.price;
+      }
+      return;
+    }
+
     if (isFdmQuoteConfigured(line)) {
       syncFdmQuotePricing(
         line,
@@ -647,9 +679,25 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }
   }
 
+  private applyDesignBudget(line: OrderLineDraft): void {
+    const hours = line.budgetedHours ?? 3;
+    line.budgetedHours = hours;
+    const cost = Math.round(this.laborRate * hours);
+    line.unitCost = cost;
+    const price = priceFromCostAndMargin(cost, this.designMarginFor(line));
+    line.unitPrice = price;
+    line.designUnitPrice = price;
+    this.syncDesignPrintLine(line);
+  }
+
   private syncDesignLineCosts(): void {
     for (const line of this.lines) {
       if (!isDesignService(line.serviceType)) continue;
+      if ((line.unitPrice ?? 0) <= 0 && (line.unitCost ?? 0) <= 0) {
+        line.budgetedHours ??= 3;
+        this.applyDesignBudget(line);
+        continue;
+      }
       const margin = this.designMarginFor(line);
       if (line.includesPrint) {
         if (line.designUnitPrice == null && line.unitPrice > 0) {

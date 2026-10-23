@@ -15,14 +15,14 @@ import { GeneralSettings, Order, PrintJob, Quote, RetailSale } from '../common/i
 import { PrismaService } from '../prisma/prisma.service';
 import { resolveAllProductComponents } from '../products/product-component.util';
 import {
+  mapBrandFromDb,
+  mapBrandToDb,
   mapCategoryFromDb,
   mapCategoryToDb,
   mapCustomerFromDb,
   mapCustomerToDb,
   mapImpresoFromDb,
   mapImpresoToDb,
-  mapMaterialFromDb,
-  mapMaterialToDb,
   mapOrderFromDb,
   mapOrderItemToDb,
   mapOrderToDbCreate,
@@ -45,6 +45,7 @@ import {
   mapTreasuryExpenseFromDb,
   mapTreasuryExpenseToDb,
 } from './mappers';
+import { adoptLegacyBrandNames } from './brand-link.util';
 import { createEmptyState, createSeedState } from './store.seed';
 import { StoreService } from './store.service';
 import { StoreState } from './store.state';
@@ -240,12 +241,12 @@ export class StorePersistenceService
   private async loadState(): Promise<StoreState> {
     const [
       settingsRow,
+      brands,
       categories,
       customers,
       products,
       supplies,
       impresos,
-      materials,
       orders,
       quotes,
       printJobs,
@@ -253,12 +254,12 @@ export class StorePersistenceService
       treasuryExpenses,
     ] = await Promise.all([
       this.db.appSettings.findUnique({ where: { id: 1 } }),
+      this.db.brand.findMany(),
       this.db.category.findMany(),
       this.db.customer.findMany(),
       this.db.product.findMany(),
       this.db.supply.findMany(),
       this.db.impreso.findMany(),
-      this.db.material.findMany(),
       this.db.order.findMany({
         include: { items: { orderBy: { sortIndex: 'asc' } } },
       }),
@@ -276,8 +277,9 @@ export class StorePersistenceService
       return createSeedState();
     }
 
-    return {
+    const state = {
       generalSettings: mapSettingsFromDb(settingsRow),
+      brands: brands.map((row) => mapBrandFromDb(row)),
       categories: categories.map((row) => mapCategoryFromDb(row)),
       customers: customers.map((row) => mapCustomerFromDb(row)),
       products: resolveAllProductComponents(
@@ -285,7 +287,6 @@ export class StorePersistenceService
       ),
       supplies: supplies.map((row) => mapSupplyFromDb(row)),
       impresos: impresos.map((row) => mapImpresoFromDb(row)),
-      materials: materials.map((row) => mapMaterialFromDb(row)),
       orders: orders.map((row) => mapOrderFromDb(row)),
       quotes: quotes.map((row) => mapQuoteFromDb(row)),
       printJobs: printJobs.map((row) => mapPrintJobFromDb(row)),
@@ -293,7 +294,9 @@ export class StorePersistenceService
       treasuryExpenses: treasuryExpenses.map((row) =>
         mapTreasuryExpenseFromDb(row),
       ),
-    };
+    } as StoreState;
+    adoptLegacyBrandNames(state);
+    return state;
   }
 
   private async saveStatePartial(
@@ -305,6 +308,19 @@ export class StorePersistenceService
     await this.db.$transaction(async (tx) => {
       if (dirty.has('settings')) {
         await this.syncSettings(tx, state.generalSettings);
+      }
+      if (dirty.has('brands')) {
+        await this.syncCollection(
+          tx,
+          state.brands,
+          (ids) => tx.brand.deleteMany({ where: { id: { notIn: ids } } }),
+          (row) =>
+            tx.brand.upsert({
+              where: { id: row.id },
+              create: mapBrandToDb(row),
+              update: mapBrandToDb(row),
+            }),
+        );
       }
       if (dirty.has('categories')) {
         await this.syncCollection(
@@ -368,19 +384,6 @@ export class StorePersistenceService
               where: { id: row.id },
               create: mapImpresoToDb(row),
               update: mapImpresoToDb(row),
-            }),
-        );
-      }
-      if (dirty.has('materials')) {
-        await this.syncCollection(
-          tx,
-          state.materials,
-          (ids) => tx.material.deleteMany({ where: { id: { notIn: ids } } }),
-          (row) =>
-            tx.material.upsert({
-              where: { id: row.id },
-              create: mapMaterialToDb(row),
-              update: mapMaterialToDb(row),
             }),
         );
       }

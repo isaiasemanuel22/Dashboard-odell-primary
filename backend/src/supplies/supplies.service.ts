@@ -15,6 +15,7 @@ import {
 } from '../common/color.util';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
 import { StoreChangeService } from '../store/store-change.service';
+import { assignSupplyBrand } from '../store/brand-link.util';
 import { StoreService } from '../store/store.service';
 import { SupplyRepository } from '../store/repositories';
 import { OrderTasksService } from '../print-jobs/order-tasks.service';
@@ -190,13 +191,15 @@ export class SuppliesService {
     if (
       category === SupplyCategory.RESINA &&
       data.resinType &&
-      !data.brand?.trim()
+      !data.brand?.trim() &&
+      !data.brandId
     ) {
       throw new BadRequestException('La marca es obligatoria');
     }
     if (
       category === SupplyCategory.FDM &&
-      !data.brand?.trim()
+      !data.brand?.trim() &&
+      !data.brandId
     ) {
       throw new BadRequestException('La marca es obligatoria');
     }
@@ -219,11 +222,12 @@ export class SuppliesService {
     data: Partial<Supply> & Pick<Supply, 'name'>,
   ): Omit<Supply, 'id' | 'updatedAt'> {
     const category = normalizeSupplyCategory(data.category);
-    return {
+    const supply = {
       name: data.name.trim(),
       category,
       filamentType: data.filamentType,
       resinType: data.resinType,
+      brandId: data.brandId,
       brand: data.brand?.trim(),
       unit: data.unit ?? defaultSupplyUnit(category),
       quantity: Number(data.quantity) || 0,
@@ -233,5 +237,7 @@ export class SuppliesService {
       supplier: data.supplier?.trim() || undefined,
       colorId: data.colorId,
     };
+    assignSupplyBrand(this.store, supply as Supply);
+    return supply;
   }
 }

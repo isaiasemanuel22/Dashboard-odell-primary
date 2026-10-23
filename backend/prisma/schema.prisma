@@ -26,6 +26,15 @@ model AppSettings {
   @@map("app_settings")
 }
 
+model Brand {
+  id            String   @id @db.VarChar(64)
+  name          String   @unique @db.VarChar(128)
+  materialTypes Json     @map("material_types")
+  createdAt     DateTime @map("created_at")
+
+  @@map("brands")
+}
+
 model Category {
   id           String   @id @db.VarChar(64)
   name         String   @db.VarChar(255)
@@ -66,7 +75,7 @@ model Product {
   grams             Float?
   printTimeHours    Float?   @map("print_time_hours")
   workTimeHours     Float?   @map("work_time_hours")
-  brand             String?  @db.VarChar(128)
+  brandId           String?  @map("brand_id") @db.VarChar(64)
   filamentType      String?  @map("filament_type") @db.VarChar(32)
   resinType         String?  @map("resin_type") @db.VarChar(32)
   washMinutes       Float?   @map("wash_minutes")
@@ -94,7 +103,7 @@ model Supply {
   category          String   @default("general") @db.VarChar(32)
   filamentType      String?  @map("filament_type") @db.VarChar(32)
   resinType         String?  @map("resin_type") @db.VarChar(32)
-  brand             String?  @db.VarChar(128)
+  brandId           String?  @map("brand_id") @db.VarChar(64)
   unit              String   @db.VarChar(32)
   quantity          Float
   minStock          Float    @map("min_stock")
@@ -117,18 +126,6 @@ model Impreso {
   updatedAt DateTime @map("updated_at")
 
   @@map("impresos")
-}
-
-model Material {
-  id        String @id @db.VarChar(64)
-  name      String @db.VarChar(255)
-  type      String @db.VarChar(32)
-  quantity  Float
-  unit      String @db.VarChar(32)
-  minStock  Float  @map("min_stock")
-  supplier  String @db.VarChar(255)
-
-  @@map("materials")
 }
 
 model Order {

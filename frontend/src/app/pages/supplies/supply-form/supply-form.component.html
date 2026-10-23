@@ -55,6 +55,15 @@
       />
     }
 
+    @if (!isFilament && !isResin) {
+      <db-input
+        label="Marca (opcional)"
+        [(ngModel)]="brand"
+        name="optionalBrand"
+        placeholder="Sin marca"
+      />
+    }
+
     @if (showColorField) {
       <div class="color-field">
         @if (selectedColorHex) {
@@ -79,6 +88,8 @@
       [(ngModel)]="unit"
       name="unit"
       [required]="true"
+      [disabled]="priceFromSettings"
+      [hint]="unitHint"
       [options]="unitOptions"
     />
 

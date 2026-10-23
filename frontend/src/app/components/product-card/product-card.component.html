@@ -19,6 +19,7 @@
       <p class="categories">{{ categoryNames }}</p>
 
       <div class="meta">
+        <span>Stock terminado: {{ finishedStock }}</span>
         <span>📐 {{ product.size }}</span>
         @if (product.components.length) {
           <span>🧩 {{ product.components.length }} pieza(s)</span>

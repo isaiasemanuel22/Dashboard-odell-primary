@@ -1,4 +1,4 @@
-import { ProductType } from '../common/enums';
+import { FilamentType, ProductType } from '../common/enums';
 import { Product } from '../common/interfaces';
 import { ProductRepository } from '../store/repositories/product.repository';
 import { StoreService } from '../store/store.service';
@@ -24,6 +24,7 @@ describe('ProductsService', () => {
     grams: 50,
     printTimeHours: 2,
     workTimeHours: 1,
+    filamentType: FilamentType.PLA,
   });
 
   function createService(store: StoreService) {
@@ -64,7 +65,6 @@ describe('ProductsService', () => {
       printJobs: [],
       retailSales: [],
       supplies: [],
-      materials: [],
       impresos: [],
     });
     store.indexProduct(store.products[0]!);
@@ -74,6 +74,39 @@ describe('ProductsService', () => {
 
     expect(updated.published).toBe(false);
     expect(service.findOne('prod-1').published).toBe(false);
+  });
+
+  it('rechaza guardar un FDM con precio y sin tipo de filamento', () => {
+    const store = new StoreService();
+    const product = baseProduct();
+    delete (product as { filamentType?: FilamentType }).filamentType;
+    store.applyState({
+      generalSettings: {} as never,
+      products: [product],
+      categories: [
+        {
+          id: 'cat-1',
+          name: 'Cat',
+          productTypes: [ProductType.FDM],
+          createdAt: '2026-07-01T10:00:00.000Z',
+        },
+      ],
+      customers: [],
+      orders: [],
+      printJobs: [],
+      retailSales: [],
+      supplies: [],
+      impresos: [],
+    });
+    store.indexProduct(store.products[0]!);
+
+    const service = createService(store);
+
+    expect(() =>
+      service.update('prod-1', { price: 3500, grams: 10, filaments: [] }),
+    ).toThrow(
+      'Indicá los gramos y el tipo de material. El costo de un producto de impresión 3D sale de eso. No se puede guardar solo con el precio.',
+    );
   });
 
   it('devuelve overview de producto con categorías y catálogo', () => {
@@ -96,7 +129,6 @@ describe('ProductsService', () => {
       retailSales: [],
       supplies: [],
       impresos: [],
-      materials: [],
     });
     store.indexProduct(product);
 

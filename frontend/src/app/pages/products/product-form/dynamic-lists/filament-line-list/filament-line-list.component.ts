@@ -173,10 +173,11 @@ export class FilamentLineListComponent
       line.filamentType,
     ];
 
-    return buildFilamentTypeOptions(
+    const options = buildFilamentTypeOptions(
       this.generalSettings?.filamentPrices ?? [],
       extraTypes,
     );
+    return [{ value: '', label: 'Elegí el tipo' }, ...options];
   }
 
   private getColorOptions(line: FdmFilamentLine): DbSelectOption[] {

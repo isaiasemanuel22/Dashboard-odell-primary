@@ -1,5 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { DATABASE_RESET_CODE } from '../common/dto';
+import { ensureBrand, hydrateBrandNames } from '../store/brand-link.util';
+import { BrandMaterialType } from '../common/enums';
 import { StoreChangeService } from '../store/store-change.service';
 import { StorePersistenceService } from '../store/store-persistence.service';
 import {
@@ -38,6 +40,7 @@ export class SettingsService {
   ) {}
 
   getGeneralSettings(): GeneralSettings {
+    hydrateBrandNames(this.store);
     this.store.generalSettings.machineProfiles = ensureMachineProfiles(
       this.store.generalSettings,
     );
@@ -405,9 +408,17 @@ export class SettingsService {
   addFilamentPrice(
     data: Omit<FilamentPriceConfig, 'id'>,
   ): FilamentPriceConfig {
+    const brand = ensureBrand(
+      this.store,
+      data.brand ?? '',
+      BrandMaterialType.FILAMENT,
+    );
     const entry: FilamentPriceConfig = {
       id: this.store.nextId('fp', this.store.generalSettings.filamentPrices),
-      ...data,
+      brandId: brand.id,
+      brand: brand.name,
+      materialType: data.materialType,
+      pricePerKg: data.pricePerKg,
     };
     this.store.generalSettings.filamentPrices.push(entry);
     this.syncFilamentSupplies(entry);
@@ -425,9 +436,16 @@ export class SettingsService {
     if (index === -1) {
       throw new NotFoundException('Precio de filamento no encontrado');
     }
+    const current = this.store.generalSettings.filamentPrices[index];
+    const brand = data.brand
+      ? ensureBrand(this.store, data.brand, BrandMaterialType.FILAMENT)
+      : undefined;
     this.store.generalSettings.filamentPrices[index] = {
-      ...this.store.generalSettings.filamentPrices[index],
-      ...data,
+      ...current,
+      materialType: data.materialType ?? current.materialType,
+      pricePerKg: data.pricePerKg ?? current.pricePerKg,
+      brandId: brand?.id ?? current.brandId,
+      brand: brand?.name ?? current.brand,
     };
     const updated = this.store.generalSettings.filamentPrices[index];
     this.syncFilamentSupplies(updated);
@@ -442,9 +460,17 @@ export class SettingsService {
   }
 
   addResinPrice(data: Omit<ResinPriceConfig, 'id'>): ResinPriceConfig {
+    const brand = ensureBrand(
+      this.store,
+      data.brand ?? '',
+      BrandMaterialType.RESIN,
+    );
     const entry: ResinPriceConfig = {
       id: this.store.nextId('rp', this.store.generalSettings.resinPrices),
-      ...data,
+      brandId: brand.id,
+      brand: brand.name,
+      resinType: data.resinType,
+      pricePerLiter: data.pricePerLiter,
     };
     this.store.generalSettings.resinPrices.push(entry);
     this.syncResinSupplies(entry);
@@ -462,9 +488,16 @@ export class SettingsService {
     if (index === -1) {
       throw new NotFoundException('Precio de resina no encontrado');
     }
+    const current = this.store.generalSettings.resinPrices[index];
+    const brand = data.brand
+      ? ensureBrand(this.store, data.brand, BrandMaterialType.RESIN)
+      : undefined;
     this.store.generalSettings.resinPrices[index] = {
-      ...this.store.generalSettings.resinPrices[index],
-      ...data,
+      ...current,
+      resinType: data.resinType ?? current.resinType,
+      pricePerLiter: data.pricePerLiter ?? current.pricePerLiter,
+      brandId: brand?.id ?? current.brandId,
+      brand: brand?.name ?? current.brand,
     };
     const updated = this.store.generalSettings.resinPrices[index];
     this.syncResinSupplies(updated);
@@ -530,7 +563,9 @@ export class SettingsService {
       if (
         supply.category === SupplyCategory.FDM &&
         supply.priceFromSettings &&
-        supply.brand?.toLowerCase() === filamentPrice.brand.toLowerCase() &&
+        (supply.brandId && filamentPrice.brandId
+          ? supply.brandId === filamentPrice.brandId
+          : supply.brand?.toLowerCase() === filamentPrice.brand?.toLowerCase()) &&
         supply.filamentType === filamentPrice.materialType
       ) {
         supply.unitPrice = filamentPrice.pricePerKg;
@@ -546,7 +581,9 @@ export class SettingsService {
         supply.category === SupplyCategory.RESINA &&
         supply.resinType &&
         supply.priceFromSettings &&
-        supply.brand?.toLowerCase() === resinPrice.brand.toLowerCase() &&
+        (supply.brandId && resinPrice.brandId
+          ? supply.brandId === resinPrice.brandId
+          : supply.brand?.toLowerCase() === resinPrice.brand?.toLowerCase()) &&
         supply.resinType === resinPrice.resinType
       ) {
         supply.unitPrice = resinPrice.pricePerLiter;
@@ -567,7 +604,7 @@ export class SettingsService {
 
   private recordSettingsChange(
     persistCollections: Array<
-      'settings' | 'products' | 'supplies' | 'orders'
+      'settings' | 'products' | 'supplies' | 'orders' | 'brands'
     > = ['settings'],
   ): void {
     this.storeChange.recordChange({

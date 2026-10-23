@@ -211,21 +211,19 @@ export class OrderTasksService implements OnModuleInit {
       );
       if (pending <= 0) return;
 
-      const available = this.getAvailableStock(item.productId, order.id);
-      const coveredByStock = Math.min(pending, available);
-      const toProduce = Math.max(
-        (item.productionRequiredQuantity ?? 0) ||
-          pending - coveredByStock - (item.producedQuantity ?? 0),
+      const toProduce = item.productionRequiredQuantity ?? 0;
+      const fromStock = Math.max(
+        pending - toProduce - (item.producedQuantity ?? 0),
         0,
       );
 
-      if (coveredByStock < pending) {
+      if (toProduce > 0) {
         alerts.push({
           code: 'insufficient_stock',
           message:
-            coveredByStock === 0
-              ? `${item.productName}: sin stock disponible; requiere producción (${pending} un.).`
-              : `${item.productName}: stock parcial (${coveredByStock} de ${pending}); faltan ${toProduce} por producir.`,
+            fromStock === 0
+              ? `${item.productName}: sin stock disponible; requiere producción (${toProduce} un.).`
+              : `${item.productName}: stock parcial (${fromStock} de ${pending}); faltan ${toProduce} por producir.`,
           severity: 'warning',
           itemIndex: index,
         });
@@ -425,6 +423,11 @@ export class OrderTasksService implements OnModuleInit {
         job.taskType === taskType,
     );
     if (existing) {
+      if (existing.status === PrintJobStatus.CANCELADO) {
+        existing.status = PrintJobStatus.POR_HACER;
+        existing.active = false;
+        existing.blockedReason = undefined;
+      }
       this.updateTaskMetadata(existing, order, item, itemIndex, taskType);
       existing.quantity =
         taskType === TaskType.PRODUCTION
@@ -518,6 +521,7 @@ export class OrderTasksService implements OnModuleInit {
     order: Order,
     item: OrderItem,
     index: number,
+    options?: { reserve?: boolean },
   ): void {
     if (!item.productId) return;
 
@@ -530,17 +534,19 @@ export class OrderTasksService implements OnModuleInit {
       0,
     );
     const available = this.getAvailableStock(item.productId, order.id);
+    const produced = item.producedQuantity ?? 0;
+    const fromStock = Math.min(pending, Math.max(available, 0));
+    const reserve = options?.reserve ?? this.isPreparationStarted(order);
 
-    // Reserva la cantidad pendiente del pedido; puede superar el stock físico.
-    item.reservedQuantity = pending;
     item.productionRequiredQuantity = Math.max(
-      pending - available - (item.producedQuantity ?? 0),
+      pending - fromStock - produced,
       0,
     );
+    item.reservedQuantity = reserve ? fromStock : 0;
 
-    if (item.productionRequiredQuantity > 0) {
+    if (reserve && item.productionRequiredQuantity > 0) {
       this.ensureItemTask(order, item, index, TaskType.PRODUCTION);
-    } else {
+    } else if (!reserve || item.productionRequiredQuantity <= 0) {
       this.cancelOpenProductionTask(order.id, index);
     }
   }
@@ -571,8 +577,21 @@ export class OrderTasksService implements OnModuleInit {
 
     order.items.forEach((item, index) => {
       if (!item.productId) return;
-      this.planCatalogItemFulfillment(order, item, index);
+      this.planCatalogItemFulfillment(order, item, index, { reserve: true });
     });
+  }
+
+  private isPreparationStarted(order: Order): boolean {
+    const prepare = this.store.printJobs.find(
+      (job) =>
+        job.orderId === order.id && job.taskType === TaskType.PREPARE_ORDER,
+    );
+    if (!prepare) return false;
+    return (
+      prepare.status === PrintJobStatus.EN_PROCESO ||
+      prepare.status === PrintJobStatus.EN_REVISION ||
+      prepare.status === PrintJobStatus.TERMINADO
+    );
   }
 
   private hasProductionSupplies(job: PrintJob): boolean {

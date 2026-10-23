@@ -101,7 +101,7 @@ export class QuoteDetailComponent implements OnInit {
 
   get canGenerateOrder(): boolean {
     return this.quote
-      ? canGenerateOrderFromQuote(this.quote.status)
+      ? canGenerateOrderFromQuote(this.quote.status) && !this.quote.orderId
       : false;
   }
 
@@ -165,46 +165,28 @@ export class QuoteDetailComponent implements OnInit {
 
     const quote = this.quote;
 
-    if (quote.status === QuoteStatus.ACEPTADO) {
-      if (quote.orderId) {
-        void this.router.navigate(['/pedidos', quote.orderId]);
-        return;
-      }
-
-      this.generatingOrder = true;
-      this.cdr.markForCheck();
-
-      this.quotesService.createOrderFromQuote(quote.id).subscribe({
-        next: (order) => {
-          this.quote = { ...quote, orderId: order.id };
-          this.generatingOrder = false;
-          this.cdr.markForCheck();
-          void this.router.navigate(['/pedidos', order.id]);
-        },
-        error: (err) => {
-          this.generatingOrder = false;
-          this.cdr.markForCheck();
-          alert(extractApiErrorMessage(err, 'No se pudo generar el pedido'));
-        },
-      });
+    if (quote.orderId) {
+      void this.router.navigate(['/pedidos', quote.orderId]);
       return;
     }
 
-    this.formDialogs.openOrderFromQuote(quote).subscribe((order) => {
-      if (!order) return;
+    if (quote.status !== QuoteStatus.ACEPTADO) return;
 
-      if (isQuoteEditable(quote.status)) {
-        this.quotesService
-          .updateQuoteStatus(quote.id, QuoteStatus.ACEPTADO)
-          .subscribe({
-            next: (updated) => {
-              this.quote = updated;
-              this.cdr.markForCheck();
-            },
-          });
-      }
+    this.generatingOrder = true;
+    this.cdr.markForCheck();
 
-      void this.router.navigate(['/pedidos', order.id]);
+    this.quotesService.createOrderFromQuote(quote.id).subscribe({
+      next: (order) => {
+        this.quote = { ...quote, orderId: order.id };
+        this.generatingOrder = false;
+        this.cdr.markForCheck();
+        void this.router.navigate(['/pedidos', order.id]);
+      },
+      error: (err) => {
+        this.generatingOrder = false;
+        this.cdr.markForCheck();
+        alert(extractApiErrorMessage(err, 'No se pudo generar el pedido'));
+      },
     });
   }
 

@@ -55,5 +55,8 @@
         routerLink="/ventas/nueva"
       />
     </div>
+    @if (closeSaleBlockReason(lines); as reason) {
+      <p class="sale-cart-footer__hint">{{ reason }}</p>
+    }
   </footer>
 }

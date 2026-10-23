@@ -101,18 +101,19 @@ describe('OrderTasksService', () => {
     store.orders.push(order);
     service.syncOrderTasks(order);
 
+    expect(order.items[0].reservedQuantity).toBe(0);
     expect(order.items[0].productionRequiredQuantity).toBe(3);
     expect(
-      store.printJobs.find((task) => task.taskType === TaskType.PRODUCTION)
-        ?.quantity,
-    ).toBe(3);
+      store.printJobs.find((task) => task.taskType === TaskType.PRODUCTION),
+    ).toBeUndefined();
 
     const prepare = store.printJobs.find(
       (task) => task.taskType === TaskType.PREPARE_ORDER,
     )!;
     service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO);
+    prepare.status = PrintJobStatus.EN_PROCESO;
 
-    expect(order.items[0].reservedQuantity).toBe(5);
+    expect(order.items[0].reservedQuantity).toBe(2);
     expect(order.items[0].productionRequiredQuantity).toBe(3);
     expect(
       store.printJobs.find((task) => task.taskType === TaskType.PRODUCTION)
@@ -121,7 +122,7 @@ describe('OrderTasksService', () => {
     expect(store.products[0].stock).toBe(2);
   });
 
-  it('planifica producción al confirmar cuando no hay stock', () => {
+  it('no reserva al confirmar y crea la producción al preparar', () => {
     store.products[0].stock = 0;
     const order = {
       id: 'ord-no-stock',
@@ -147,22 +148,32 @@ describe('OrderTasksService', () => {
     service.syncOrderTasks(order);
 
     expect(order.items[0].productionRequiredQuantity).toBe(2);
-    expect(order.items[0].reservedQuantity).toBe(2);
+    expect(order.items[0].reservedQuantity).toBe(0);
     expect(
       store.printJobs.find((task) => task.taskType === TaskType.PRODUCTION),
-    ).toMatchObject({
-      quantity: 2,
-      productName: 'Hacer 2 Pieza',
-    });
+    ).toBeUndefined();
     expect(service.buildOperationalAlerts(order)).toEqual([
       expect.objectContaining({
         code: 'insufficient_stock',
         severity: 'warning',
       }),
     ]);
+
+    const prepare = store.printJobs.find(
+      (task) => task.taskType === TaskType.PREPARE_ORDER,
+    )!;
+    service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO);
+
+    expect(order.items[0].reservedQuantity).toBe(0);
+    expect(
+      store.printJobs.find((task) => task.taskType === TaskType.PRODUCTION),
+    ).toMatchObject({
+      quantity: 2,
+      productName: 'Hacer 2 Pieza',
+    });
   });
 
-  it('acumula reservas entre pedidos aunque superen el stock físico', () => {
+  it('no descuenta un pedido sin preparar del stock del siguiente', () => {
     const first = {
       id: 'ord-1',
       customerId: 'cust-1',
@@ -206,8 +217,23 @@ describe('OrderTasksService', () => {
     service.syncOrderTasks(first);
     service.syncOrderTasks(second);
 
-    expect(first.items[0].reservedQuantity).toBe(5);
-    expect(second.items[0].reservedQuantity).toBe(3);
+    expect(first.items[0].reservedQuantity).toBe(0);
+    expect(first.items[0].productionRequiredQuantity).toBe(3);
+    expect(second.items[0].reservedQuantity).toBe(0);
+    expect(second.items[0].productionRequiredQuantity).toBe(1);
+    expect(store.products[0].stock).toBe(2);
+
+    const prepare = store.printJobs.find(
+      (task) =>
+        task.orderId === first.id && task.taskType === TaskType.PREPARE_ORDER,
+    )!;
+    service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO);
+    prepare.status = PrintJobStatus.EN_PROCESO;
+    service.syncOrderTasks(second);
+
+    expect(first.items[0].reservedQuantity).toBe(2);
+    expect(second.items[0].productionRequiredQuantity).toBe(3);
+    expect(second.items[0].reservedQuantity).toBe(0);
     expect(store.products[0].stock).toBe(2);
   });
 
@@ -346,6 +372,11 @@ describe('OrderTasksService', () => {
 
     store.orders.push(order);
     service.syncOrderTasks(order);
+    const prepare = store.printJobs.find(
+      (task) => task.taskType === TaskType.PREPARE_ORDER,
+    )!;
+    service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO);
+    prepare.status = PrintJobStatus.EN_PROCESO;
 
     const production = store.printJobs.find(
       (task) => task.taskType === TaskType.PRODUCTION,
@@ -412,6 +443,11 @@ describe('OrderTasksService', () => {
 
     store.orders.push(order);
     service.syncOrderTasks(order);
+    const prepare = store.printJobs.find(
+      (task) => task.taskType === TaskType.PREPARE_ORDER,
+    )!;
+    service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO);
+    prepare.status = PrintJobStatus.EN_PROCESO;
 
     expect(
       store.printJobs.find((task) => task.taskType === TaskType.PRODUCTION)

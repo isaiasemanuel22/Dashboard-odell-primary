@@ -5,6 +5,7 @@ import {
   ImpresoWithCost,
   Product,
   ProductType,
+  ResinType,
   UpdateProductPayload,
   isProductType3D,
 } from '../../../core/models';
@@ -27,6 +28,7 @@ import {
 } from '../../../shared/utils/estampado.helpers';
 import {
   createEmptyFdmFilamentLine,
+  hasValidFdmFilamentInput,
   storedFdmFilaments,
   totalFdmFilamentGrams,
 } from '../../../shared/utils/fdm.helpers';
@@ -89,6 +91,7 @@ export class ProductFormFacade {
   attachmentUploadError = '';
 
   private catalogSubscription: Subscription | null = null;
+  private lastPricingType: ProductType | null = null;
   readonly basicFieldsSync$ = new Subject<void>();
   readonly categoryIdsSync$ = new Subject<void>();
   readonly componentsSync$ = new Subject<void>();
@@ -156,7 +159,19 @@ export class ProductFormFacade {
   }
 
   patchBasicFields(value: ProductFormBasicFieldsValue): void {
-    this.form.patchValue(value);
+    const current = this.basicFieldsValue;
+    const patch: Partial<ProductFormBasicFieldsValue> = {};
+    if (current.type !== value.type) patch.type = value.type;
+    if (current.name !== value.name) patch.name = value.name;
+    if (current.published !== value.published) patch.published = value.published;
+    if (current.includesPieces !== value.includesPieces) {
+      patch.includesPieces = value.includesPieces;
+    }
+    if (current.finishedStock !== value.finishedStock) {
+      patch.finishedStock = value.finishedStock;
+    }
+    if (Object.keys(patch).length === 0) return;
+    this.form.patchValue(patch);
   }
 
   get categoryIdsValue(): string[] {
@@ -176,7 +191,16 @@ export class ProductFormFacade {
   }
 
   patchComponentsValue(value: ProductFormComponentsValue): void {
-    this.form.patchValue(value);
+    const current = this.componentsValue;
+    const componentsChanged =
+      JSON.stringify(current.components) !== JSON.stringify(value.components);
+    const hoursChanged =
+      Number(current.assemblyTimeHours) !== Number(value.assemblyTimeHours);
+    if (!componentsChanged && !hoursChanged) return;
+    this.form.patchValue({
+      ...(componentsChanged ? { components: value.components } : {}),
+      ...(hoursChanged ? { assemblyTimeHours: value.assemblyTimeHours } : {}),
+    });
   }
 
   get includesPieces(): boolean {
@@ -237,6 +261,29 @@ export class ProductFormFacade {
 
   get isResina() {
     return isFormResina(this.form);
+  }
+
+  get printedMaterialError(): string | null {
+    if (!this.is3D || this.usesPieceAssembly) return null;
+
+    const grams = Number(this.form.controls.grams.value) || 0;
+    if (this.isFdm) {
+      const lines = this.form.controls.filamentLines.value;
+      if (grams > 0 && hasValidFdmFilamentInput(lines)) return null;
+    } else if (this.isResina) {
+      const resinType = this.form.controls.resinType.value;
+      if (
+        grams > 0 &&
+        !!resinType &&
+        Object.values(ResinType).includes(resinType)
+      ) {
+        return null;
+      }
+    } else {
+      return null;
+    }
+
+    return 'Indicá los gramos y el tipo de material. El costo de un producto de impresión 3D sale de eso. No se puede guardar solo con el precio.';
   }
 
   get canAutoCalculateCost() {
@@ -379,6 +426,10 @@ export class ProductFormFacade {
   }
 
   private handleTypeChange(): void {
+    const nextType = formType(this.form);
+    if (this.lastPricingType === nextType) return;
+    this.lastPricingType = nextType;
+
     const patch: Partial<ProductFormState> = {};
 
     if (this.isEstampado && !this.form.controls.prints.value.length) {
@@ -444,6 +495,7 @@ export class ProductFormFacade {
   }
 
   private applyState(state: ProductFormState): void {
+    this.lastPricingType = state.type;
     this.stateManager.patchFormFromState(this.form, state);
     this.legacyImagesNotice = state.legacyImagesNotice;
     this.pricing.resetFromState({

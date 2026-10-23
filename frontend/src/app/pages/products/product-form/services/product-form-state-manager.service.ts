@@ -286,7 +286,7 @@ export class ProductFormStateManagerService {
       state.grams = product.grams;
       state.printTimeHours = product.printTimeHours;
       state.workTimeHours = product.workTimeHours;
-      state.filamentType = product.filamentType ?? FilamentType.PLA;
+      state.filamentType = product.filamentType ?? ('' as FilamentType);
       state.filamentLines = structuredClone(
         normalizeFdmFilaments(product.filaments, {
           grams: product.grams,
@@ -295,9 +295,16 @@ export class ProductFormStateManagerService {
         }),
       );
       if (!state.filamentLines.length && product.type === ProductType.FDM) {
-        state.filamentLines = [createEmptyFdmFilamentLine(state.filamentType)];
+        const line = createEmptyFdmFilamentLine(
+          state.filamentType || FilamentType.PLA,
+        );
+        if (!product.filamentType) {
+          line.filamentType = '' as FilamentType;
+        }
+        line.grams = Math.max(0, Number(product.grams) || 0);
+        state.filamentLines = [line];
       }
-      state.resinType = product.resinType ?? ResinType.ESTANDAR;
+      state.resinType = product.resinType ?? ('' as ResinType);
       state.colorId = product.colorId ?? INDISTINTO_COLOR_ID;
       state.washMinutes = product.washMinutes ?? 0;
       state.cureMinutes = product.cureMinutes ?? 0;
@@ -320,7 +327,8 @@ export class ProductFormStateManagerService {
     }
 
     state.costBreakdown = null;
-    state.computedPrice = null;
+    state.computedPrice =
+      Number(product.price) > 0 ? Number(product.price) : null;
     state.appliedMarginPercent = null;
     state.categoryPicker = '';
     state.componentPicker = '';

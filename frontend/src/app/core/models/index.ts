@@ -347,6 +347,8 @@ export interface ProductBase {
   assemblyTimeHours: number;
   /** Stock físico de producto terminado (contrato API). */
   stock?: number;
+  /** Disponible descontando reservas. Lo calcula el API y no se guarda. */
+  stockOverview?: ProductStockOverview;
   /** Alias de compatibilidad en UI; preferir `stock` desde el backend. */
   finishedStock?: number;
 }
@@ -466,6 +468,7 @@ export interface OrderItemPayload {
   printTimeHours?: number;
   grams?: number;
   filamentType?: FilamentType;
+  budgetedHours?: number;
 }
 
 export interface OrderItem extends OrderItemPayload {
@@ -476,6 +479,10 @@ export interface OrderItem extends OrderItemPayload {
   produced?: number;
   delivered?: number;
   pending?: number;
+  reservedQuantity?: number;
+  productionRequiredQuantity?: number;
+  producedQuantity?: number;
+  deliveredQuantity?: number;
 }
 
 export type OrderStatusChangeSource = 'manual' | 'auto';
@@ -504,6 +511,7 @@ export interface OrderPriceHistoryEntry {
   newUnitPrice: number;
   previousOrderTotal: number;
   newOrderTotal: number;
+  kept?: boolean;
 }
 
 export interface Order {
@@ -523,6 +531,14 @@ export interface Order {
   statusHistory?: OrderStatusHistoryEntry[];
   priceHistory?: OrderPriceHistoryEntry[];
   deliveryHistory?: OrderDelivery[];
+  payments?: OrderPayment[];
+}
+
+export interface OrderPayment {
+  id: string;
+  amount: number;
+  deposit: boolean;
+  createdAt: string;
 }
 
 export type CreateOrderPayload = Omit<
@@ -592,6 +608,8 @@ export interface OrderLineDraft {
   printTimeHours?: number;
   grams?: number;
   filamentType?: FilamentType;
+  /** Horas presupuestadas de diseño o modelado. */
+  budgetedHours?: number;
 }
 
 export interface PrintJob {
@@ -623,11 +641,20 @@ export interface PrintJobUpdateResult extends PrintJob {
   orderStatus: OrderStatus;
 }
 
+export interface OrderPriceNotice {
+  itemIndex: number;
+  productId: string;
+  productName: string;
+  agreedUnitPrice: number;
+  currentUnitPrice: number;
+}
+
 export interface OrderOverview {
   order: Order;
   tasks: PrintJob[];
   alerts: OrderAlert[];
   deliveries?: OrderDelivery[];
+  priceNotices?: OrderPriceNotice[];
 }
 
 export interface ProductOverview {
@@ -671,16 +698,6 @@ export interface ReferenceData {
   customers: Customer[];
   categories: Category[];
   products: Product[];
-}
-
-export interface Material {
-  id: string;
-  name: string;
-  type: ServiceType;
-  quantity: number;
-  unit: string;
-  minStock: number;
-  supplier: string;
 }
 
 export interface MonthlyTrendPoint {

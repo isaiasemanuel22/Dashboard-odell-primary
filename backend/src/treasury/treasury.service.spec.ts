@@ -87,6 +87,57 @@ describe('TreasuryService', () => {
     );
   });
 
+  it('rechaza un total que no coincide en centavos con la suma de gastos', () => {
+    expect(() =>
+      service.recordExpense({
+        isSupplyPurchase: true,
+        amount: 100,
+        occurredAt: '2026-08-10',
+        supplyLines: [
+          {
+            supplyId: 'sup-1',
+            quantity: 0.01,
+            amountSpent: 100.4,
+            unitPrice: 10000,
+          },
+        ],
+      }),
+    ).toThrow('no coincide');
+
+    expect(store.treasuryExpenses).toHaveLength(0);
+    expect(store.supplies[0]?.quantity).toBe(1);
+  });
+
+  it('pide el formato AAAA-MM-DD cuando la fecha trae hora', () => {
+    expect(() =>
+      service.recordExpense({
+        isSupplyPurchase: false,
+        direction: TreasuryMovementDirection.EXPENSE,
+        name: 'Transporte',
+        amount: 10,
+        occurredAt: '2026-10-21T15:00:00.000Z',
+      }),
+    ).toThrow('AAAA-MM-DD');
+  });
+
+  it('llama material a la compra de filamento', () => {
+    const [expense] = service.recordExpense({
+      isSupplyPurchase: true,
+      amount: 2500,
+      occurredAt: '2026-08-10',
+      supplyLines: [
+        {
+          supplyId: 'sup-1',
+          quantity: 1,
+          amountSpent: 2500,
+          unitPrice: 2500,
+        },
+      ],
+    });
+
+    expect(expense.description).toBe('Compra de material: Filamento PLA');
+  });
+
   it('registra egresos simples con nombre, monto y fecha', () => {
     const [expense] = service.recordExpense({
       isSupplyPurchase: false,

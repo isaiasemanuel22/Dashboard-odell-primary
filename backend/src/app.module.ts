@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { AppConfigModule } from './config/config.module';
 import { HealthModule } from './health/health.module';
+import { BrandsModule } from './brands/brands.module';
 import { CategoriesModule } from './categories/categories.module';
 import { CustomersModule } from './customers/customers.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { ImpresosModule } from './impresos/impresos.module';
-import { MaterialsModule } from './materials/materials.module';
 import { OrdersModule } from './orders/orders.module';
 import { QuotesModule } from './quotes/quotes.module';
 import { PrintJobsModule } from './print-jobs/print-jobs.module';
@@ -34,6 +34,7 @@ import { UsersModule } from './users/users.module';
     ReferenceDataModule,
     DashboardModule,
     ProductsModule,
+    BrandsModule,
     CategoriesModule,
     SettingsModule,
     SuppliesModule,
@@ -43,7 +44,6 @@ import { UsersModule } from './users/users.module';
     OrdersModule,
     QuotesModule,
     PrintJobsModule,
-    MaterialsModule,
     SalesModule,
     TreasuryModule,
   ],

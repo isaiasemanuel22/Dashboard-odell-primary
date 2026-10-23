@@ -7,6 +7,7 @@ import {
   ResinType,
   SupplyCategory,
 } from '../common/enums';
+import { adoptLegacyBrandNames } from './brand-link.util';
 import { StoreState } from './store.state';
 import { Product, Order } from '../common/interfaces';
 import { createDefaultMachineProfiles } from '../settings/machine-profile.util';
@@ -56,6 +57,7 @@ export function createEmptyState(): StoreState {
       resinTypeAverages: {},
       colors: [...DEFAULT_COLOR_CATALOG],
     },
+    brands: [],
     supplies: [],
     impresos: [],
     categories: [],
@@ -65,7 +67,6 @@ export function createEmptyState(): StoreState {
     quotes: [],
     printJobs: [],
     retailSales: [],
-    materials: [],
     treasuryExpenses: [],
   };
 }
@@ -811,54 +812,6 @@ export function createSeedState(): StoreState {
     },
   ];
 
-  const materials = [
-    {
-      id: 'mat-1',
-      name: 'Filamento PLA Negro',
-      type: ServiceType.IMPRESION_3D,
-      quantity: 2.5,
-      unit: 'kg',
-      minStock: 1,
-      supplier: 'FilAr 3D',
-    },
-    {
-      id: 'mat-2',
-      name: 'Filamento ABS Blanco',
-      type: ServiceType.IMPRESION_3D,
-      quantity: 0.8,
-      unit: 'kg',
-      minStock: 1,
-      supplier: 'FilAr 3D',
-    },
-    {
-      id: 'mat-3',
-      name: 'Tinta DTF CMYK',
-      type: ServiceType.ESTAMPADO,
-      quantity: 500,
-      unit: 'ml',
-      minStock: 200,
-      supplier: 'Textil Ink',
-    },
-    {
-      id: 'mat-4',
-      name: 'Film DTF A3',
-      type: ServiceType.ESTAMPADO,
-      quantity: 45,
-      unit: 'hojas',
-      minStock: 20,
-      supplier: 'Textil Ink',
-    },
-    {
-      id: 'mat-5',
-      name: 'Vinilo textil blanco',
-      type: ServiceType.ESTAMPADO,
-      quantity: 8,
-      unit: 'm',
-      minStock: 5,
-      supplier: 'Vinilos Pro',
-    },
-  ];
-
   const ord1 = orders.find((order) => order.id === 'ord-1');
   if (ord1) {
     ord1.statusHistory = [
@@ -885,8 +838,9 @@ export function createSeedState(): StoreState {
     }
   }
 
-  return {
+  const state: StoreState = {
     generalSettings,
+    brands: [],
     supplies,
     impresos,
     categories,
@@ -901,7 +855,8 @@ export function createSeedState(): StoreState {
     quotes: [],
     printJobs,
     retailSales,
-    materials,
     treasuryExpenses: [],
   };
+  adoptLegacyBrandNames(state);
+  return state;
 }

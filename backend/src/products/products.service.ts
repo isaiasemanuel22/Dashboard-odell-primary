@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ProductType } from '../common/enums';
+import { ProductType, ResinType } from '../common/enums';
 import { resolveProductColorId } from '../common/color.util';
 import {
   CreateProductDto,
@@ -22,6 +22,7 @@ import { ProductPricingService } from './product-pricing.service';
 import { PricingSyncService } from '../pricing/pricing-sync.service';
 import { ProductRepository } from '../store/repositories/product.repository';
 import { StoreChangeService } from '../store/store-change.service';
+import { linkProductBrands } from '../store/brand-link.util';
 import { StoreService } from '../store/store.service';
 import {
   normalizeEstampadoPressCycles,
@@ -29,6 +30,7 @@ import {
   normalizeEstampadoSupplies,
 } from './estampado-product.util';
 import {
+  hasValidFdmFilamentInput,
   resolveFdmFilaments,
   storedFdmFilaments,
   totalFdmFilamentGrams,
@@ -43,6 +45,9 @@ import {
   validateProductAttachments,
 } from './product-attachment.util';
 import { buildProductStockOverview } from './product-stock.util';
+
+const PRINTED_PRODUCT_MATERIAL_REQUIRED =
+  'Indicá los gramos y el tipo de material. El costo de un producto de impresión 3D sale de eso. No se puede guardar solo con el precio.';
 import {
   sumComponentsProductionMetrics,
   withResolvedProductionMetrics,
@@ -67,10 +72,15 @@ export class ProductsService {
       (a, b) =>
         new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     );
-    if (!type) return products.map((p) => withResolvedProductionMetrics(this.store, p));
-    return products
-      .filter((p) => p.type === type)
-      .map((p) => withResolvedProductionMetrics(this.store, p));
+    const visible = type ? products.filter((p) => p.type === type) : products;
+    return visible.map((product) => this.withStockOverview(product));
+  }
+
+  private withStockOverview(product: Product): Product {
+    return {
+      ...withResolvedProductionMetrics(this.store, product),
+      stockOverview: buildProductStockOverview(this.store, product.id),
+    };
   }
 
   findOne(id: string): Product {
@@ -102,6 +112,7 @@ export class ProductsService {
     const pricing = this.pricing.resolvePricing(
       this.pricing.toPricingInput(data),
     );
+    this.rejectPrintedProductWithoutCost(data, pricing.cost);
     const now = new Date().toISOString();
     const components = normalizeProductComponents(data.components ?? []);
     const assemblyTimeHours = Number(data.assemblyTimeHours) || 0;
@@ -198,9 +209,9 @@ export class ProductsService {
       };
     }
 
-    this.products.create(
-      this.applyCompositeProductionMetrics(product, components),
-    );
+    const created = this.applyCompositeProductionMetrics(product, components);
+    linkProductBrands(this.store, created);
+    this.products.create(created);
     this.pricingSync.syncAfterProductSave(product.id, product.price);
     return this.findOne(product.id);
   }
@@ -303,10 +314,16 @@ export class ProductsService {
                   : (existing as ProductEstampado).pressCycles,
           }),
     } as CreateProductDto;
-    this.validateProductData(mergedForValidation, true, id);
+    this.validateProductData(mergedForValidation, true, id, data);
 
     const pricingInput = this.pricing.toPricingInput(mergedForValidation);
     const pricing = this.pricing.resolvePricing(pricingInput);
+    this.rejectPrintedProductWithoutCost(
+      mergedForValidation,
+      pricing.cost,
+      true,
+      data,
+    );
 
     const updated: Product = {
       ...existing,
@@ -415,9 +432,9 @@ export class ProductsService {
     if (index === -1) {
       throw new NotFoundException(`Producto ${id} no encontrado`);
     }
-    this.products.save(
-      this.applyCompositeProductionMetrics(updated, mergedComponents),
-    );
+    const saved = this.applyCompositeProductionMetrics(updated, mergedComponents);
+    linkProductBrands(this.store, saved);
+    this.products.save(saved);
     this.pricingSync.syncAfterProductSave(id, previousPrice);
     return this.findOne(id);
   }
@@ -469,6 +486,7 @@ export class ProductsService {
     data: CreateProductDto,
     isUpdate = false,
     productId: string | null = null,
+    incoming?: UpdateProductDto,
   ): void {
     if (!isUpdate || data.name !== undefined) {
       if (!data.name?.trim()) {
@@ -585,6 +603,8 @@ export class ProductsService {
     }
 
     const colors = this.store.generalSettings.colors ?? [];
+    this.assertPrintedProductMaterial(data, isUpdate, incoming);
+
     if (data.type === ProductType.FDM) {
       const filaments = resolveFdmFilaments({
         filaments: data.filaments,
@@ -630,6 +650,67 @@ export class ProductsService {
         : data.filamentType ?? fallback?.filamentType;
 
     return { filaments, grams, filamentType };
+  }
+
+  private assertPrintedProductMaterial(
+    data: CreateProductDto,
+    isUpdate: boolean,
+    incoming?: UpdateProductDto,
+  ): void {
+    if (!this.requiresPrintedMaterial(data, isUpdate, incoming)) return;
+
+    if (data.type === ProductType.FDM) {
+      const filaments = resolveFdmFilaments({
+        filaments: data.filaments,
+        grams: data.grams,
+        filamentType: data.filamentType,
+        brand: data.brand,
+      });
+      if (!hasValidFdmFilamentInput(filaments)) {
+        throw new BadRequestException(PRINTED_PRODUCT_MATERIAL_REQUIRED);
+      }
+      return;
+    }
+
+    if (!data.resinType || !Object.values(ResinType).includes(data.resinType)) {
+      throw new BadRequestException(PRINTED_PRODUCT_MATERIAL_REQUIRED);
+    }
+  }
+
+  private rejectPrintedProductWithoutCost(
+    data: CreateProductDto,
+    cost: number,
+    isUpdate = false,
+    incoming?: UpdateProductDto,
+  ): void {
+    if (!this.requiresPrintedMaterial(data, isUpdate, incoming)) return;
+    if (Number(cost) > 0) return;
+    throw new BadRequestException(PRINTED_PRODUCT_MATERIAL_REQUIRED);
+  }
+
+  private requiresPrintedMaterial(
+    data: CreateProductDto,
+    isUpdate: boolean,
+    incoming?: UpdateProductDto,
+  ): boolean {
+    if (data.type !== ProductType.FDM && data.type !== ProductType.RESINA) {
+      return false;
+    }
+    const components = data.components ?? [];
+    if (data.includesPieces === true || components.length > 0) {
+      return false;
+    }
+    const request = incoming ?? data;
+    return (
+      !isUpdate ||
+      request.price !== undefined ||
+      request.cost !== undefined ||
+      request.grams !== undefined ||
+      request.filaments !== undefined ||
+      request.filamentType !== undefined ||
+      request.resinType !== undefined ||
+      request.type !== undefined
+    );
   }
 
   private validateComponents(

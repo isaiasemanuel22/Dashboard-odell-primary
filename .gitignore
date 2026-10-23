@@ -18,10 +18,16 @@ backend/generated
 
 # IDE / editor
 .idea/
-# Cursor: reglas del proyecto en git; el resto (estado local) fuera del repo
+# Cursor: reglas y skills del proyecto en git; el resto (estado local) fuera del repo
 .cursor/*
 !.cursor/rules/
 !.cursor/rules/**
+!.cursor/skills/
+!.cursor/skills/**
+!.cursor/agents/
+!.cursor/agents/**
+# Informes locales que se pasan el agente de QA y el de correcciones
+.cursor/qa/
 .vscode/*
 !.vscode/settings.json
 !.vscode/tasks.json

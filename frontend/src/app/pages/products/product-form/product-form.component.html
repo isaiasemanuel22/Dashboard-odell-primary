@@ -11,12 +11,14 @@
       [includesPieces]="facade.includesPieces"
     />
 
-    <app-product-form-components-section
-      [productType]="productType"
-      [editingProductId]="product?.id ?? null"
-      [value]="componentsValue ?? facade.componentsValue"
-      (valueChange)="onComponentsChange($event)"
-    />
+    @if (facade.showComponentsSection) {
+      <app-product-form-components-section
+        [productType]="productType"
+        [editingProductId]="product?.id ?? null"
+        [value]="componentsValue ?? facade.componentsValue"
+        (valueChange)="onComponentsChange($event)"
+      />
+    }
 
     <app-product-form-categories-section
       [productType]="productType"
@@ -36,8 +38,8 @@
       [form]="facade.form"
     />
 
-    @if (error || facade.imageUploadError) {
-      <db-form-error>{{ error || facade.imageUploadError }}</db-form-error>
+    @if (error || clientError || facade.imageUploadError) {
+      <db-form-error>{{ error || clientError || facade.imageUploadError }}</db-form-error>
     }
 
     <db-form-footer>

@@ -8,7 +8,13 @@ import {
   DbButtonComponent,
   SuppliesTableComponent,
 } from '@general-components';
+import {
+  FILAMENT_TYPE_LABELS,
+  RESIN_TYPE_LABELS,
+  SUPPLY_CATEGORY_LABELS,
+} from '../../shared/constants/labels';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
+import { resolveColorLabel } from '../../shared/utils/color.helpers';
 import { supplyCategoryFilters } from '../../shared/utils/list-filters';
 import { SuppliesFacade } from '../../store/supplies/supplies.facade';
 
@@ -71,15 +77,45 @@ export class SuppliesComponent implements OnInit {
     });
   }
 
+  get hasListFilters(): boolean {
+    return this.search.trim().length > 0 || this.categoryFilter !== 'all';
+  }
+
+  get emptyMessage(): string {
+    if (this.supplies.length > 0 && this.hasListFilters) {
+      return 'No hay insumos que coincidan con la búsqueda o el filtro.';
+    }
+    return 'No hay insumos para mostrar.';
+  }
+
   get filteredSupplies(): Supply[] {
+    const term = this.search.trim().toLowerCase();
     return this.supplies.filter((s) => {
-      const matchesSearch =
-        !this.search ||
-        s.name.toLowerCase().includes(this.search.toLowerCase());
+      const matchesSearch = !term || this.supplySearchText(s).includes(term);
       const matchesCategory =
         this.categoryFilter === 'all' || s.category === this.categoryFilter;
       return matchesSearch && matchesCategory;
     });
+  }
+
+  private supplySearchText(supply: Supply): string {
+    const material = supply.filamentType
+      ? FILAMENT_TYPE_LABELS[supply.filamentType]
+      : supply.resinType
+        ? RESIN_TYPE_LABELS[supply.resinType]
+        : '';
+    return [
+      supply.name,
+      supply.brand,
+      SUPPLY_CATEGORY_LABELS[supply.category],
+      material,
+      supply.colorId
+        ? resolveColorLabel(supply.colorId, this.colorCatalog)
+        : '',
+    ]
+      .filter((part) => Boolean(part))
+      .join(' ')
+      .toLowerCase();
   }
 
   openCreate(): void {

@@ -1,9 +1,9 @@
 import {
+  Brand,
   Category,
   Customer,
   GeneralSettings,
   Impreso,
-  Material,
   Order,
   PrintJob,
   Product,
@@ -15,6 +15,7 @@ import {
 
 export interface StoreState {
   generalSettings: GeneralSettings;
+  brands: Brand[];
   supplies: Supply[];
   impresos: Impreso[];
   categories: Category[];
@@ -24,7 +25,6 @@ export interface StoreState {
   quotes: Quote[];
   printJobs: PrintJob[];
   retailSales: RetailSale[];
-  materials: Material[];
   treasuryExpenses: TreasuryExpense[];
 }
 

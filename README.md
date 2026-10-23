@@ -17,11 +17,11 @@ dashboard/
 - **Cola de trabajo**: estado de impresoras, plotters y prensas
 - **Productos**: catálogo de servicios
 - **Clientes**: base de clientes
-- **Materiales**: inventario de filamentos, tintas e insumos
+- **Insumos**: inventario
 
 ## Requisitos
 
-- Node.js 20+
+- Node.js 22.12+
 - npm
 - MySQL 8+ o MariaDB 10+ (para persistencia)
 
@@ -90,7 +90,6 @@ Abrir `http://localhost:4200`
 | GET | `/api/orders` | Listado de pedidos |
 | GET | `/api/customers` | Clientes |
 | GET | `/api/print-jobs` | Cola de trabajo |
-| GET | `/api/materials` | Inventario de materiales |
 
 ## Notas
 

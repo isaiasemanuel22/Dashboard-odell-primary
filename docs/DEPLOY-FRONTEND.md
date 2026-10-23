@@ -6,7 +6,7 @@ URL esperada tras el deploy: `https://dashboard-odell-2.web.app`
 
 ## Requisitos
 
-- Node.js 20+
+- Node.js 22.12+
 - Cuenta con acceso al proyecto Firebase `dashboard-odell-2`
 - Firebase CLI (se instala con el `npm install` de la raíz del repo)
 

@@ -73,10 +73,12 @@ Un producto puede estar publicado y no tener stock.
 Por lo tanto:
 
 - `publicado` indica que forma parte de la oferta directa;
-- `stock` determina si puede realizarse una venta inmediata.
+- `stock` es la existencia: la cantidad que hay. Determina si puede
+  realizarse una venta inmediata.
 
 Cada producto mantiene su propia cantidad de stock terminado. Este stock es
-distinto del inventario de materiales e insumos utilizados para producirlo.
+distinto de lo que se usa para fabricarlo. Filamento y resina son materiales.
+El insumo es lo que se agrega al armar el producto (§9.1).
 
 No debe asumirse que:
 
@@ -98,8 +100,36 @@ El costo y el precio forman parte del objeto de producto.
 
 La ganancia deriva de esos valores.
 
+Un producto de impresión 3D (filamento o resina) no se guarda solo con el
+precio.
+
+La cantidad y el tipo de material son obligatorios, y de ahí sale el costo:
+
+- Filamento: gramos y tipo de filamento (PLA, PETG u otro de Ajustes).
+- Resina: gramos y tipo de resina. El costo pasa esos gramos a litros
+  (gramos ÷ (densidad × 1000)) y usa el precio por litro del tipo.
+
+A ese material se suman energía, máquina, mano de obra y el margen de error
+de Ajustes. Si con esos datos el costo queda en 0, el guardado se rechaza.
+
+El precio de venta es ese costo con el margen de Impresión 3D. Si se carga
+un precio sugerido, ese valor reemplaza al precio calculado. La ganancia es
+el precio de venta menos el costo.
+
+El producto incompleto que nace al aceptar un presupuesto (§5) sigue
+pudiendo crearse con el nombre. Cuando después se edita y se guarda como
+producto de impresión 3D, aplican los gramos y el tipo de material.
+
 Los productos también pueden contener la información necesaria para su
 producción y composición.
+
+Al armar un producto se pueden usar otros productos e insumos. El material
+no se agrega como pieza: entra al proceso que fabrica esos productos.
+Filamento y resina son ese material.
+
+Ejemplo: un mate 3D se arma con el producto mate impreso y el insumo
+polímero mate escalonado. El mate impreso se fabrica por impresión 3D, que
+consume filamento o resina.
 
 Un producto personalizado puede estar relacionado con servicios de distintas
 áreas. Esas relaciones sirven como referencia para el vendedor, pero no
@@ -162,7 +192,12 @@ CANCELADO
 Cuando el cliente acepta el presupuesto de un producto nuevo:
 
 - el producto se crea en el catálogo como no publicado;
+- para crearlo alcanza el nombre. El resto de los datos se completa después,
+  editando el producto;
 - el producto se incorpora al pedido.
+
+Si después cambia el precio de un producto que está en un presupuesto, cambia
+el valor de ese presupuesto.
 
 Una operación puede contener varios presupuestos. El cliente puede aceptar
 unos y rechazar otros. Se crea un único pedido con los productos
@@ -192,6 +227,8 @@ Son conceptos diferentes.
 ---
 
 ## 7. Venta directa
+
+La venta es la acción de entregar productos a cambio de dinero (§9.5).
 
 La venta directa ocurre cuando un cliente llega, solicita un producto del
 catálogo que está disponible y se lo lleva en el momento.
@@ -297,21 +334,69 @@ descuenta automáticamente las unidades reservadas.
 
 ### 9.1 Materiales e insumos
 
-`Material` se utiliza únicamente para materiales de producción FDM y resina.
-`Insumo` representa la cantidad disponible tanto de esos materiales como de
-otros consumibles necesarios para estampado.
+Los dos se usan para crear productos. No son lo mismo.
 
-Para determinar la disponibilidad de FDM o resina, se suma la cantidad de
-todos los insumos compatibles con el material requerido por el producto.
+Filamento y resina son materiales. El material es la materia prima que entra
+a un proceso para fabricar otro producto.
 
-Cuando una reposición vuelve a cubrir los insumos faltantes, el sistema
-notifica la disponibilidad pero no desbloquea la tarea automáticamente.
-Únicamente el responsable actual de la tarea puede desbloquearla.
+El insumo es lo que se agrega al armar un producto. No es filamento ni
+resina.
 
-**POR DEFINIR:**
+Un producto puede armarse con otro producto más uno o más insumos. Ejemplo:
+un mate 3D se arma con el producto mate impreso y el insumo polímero mate
+escalonado. El mate impreso se fabrica por impresión 3D, que consume
+filamento o resina.
 
-- la relación exacta entre cada Material y sus registros de Insumo;
-- qué datos propios mantiene cada existencia, marca o compra.
+Para determinar la disponibilidad de FDM o resina, se suma la cantidad del
+material compatible que el producto requiere.
+
+Cuando una reposición vuelve a cubrir lo que faltaba, el sistema notifica la
+disponibilidad pero no desbloquea la tarea automáticamente. Únicamente el
+responsable actual de la tarea puede desbloquearla.
+
+### 9.2 Marca
+
+La marca es un registro propio: solo el nombre y los tipos de material que
+ofrece. Por ahora no guarda otros datos.
+
+En un material la marca es obligatoria. Las marcas se agrupan según los
+tipos de material que ofrecen, y una misma marca puede ofrecer más de un
+tipo. FilAr, PlastAr y Ecofila son de filamento. Anycubic, Creality y
+Hellbot son de resina. Hellbot también vende filamento, así que figura en
+los dos tipos.
+
+En un insumo la marca es opcional. El polímero puede llevar la marca
+NostiAr. El aluminio de los chops y, por ahora, las remeras de estampado
+pueden no tener marca.
+
+### 9.3 Existencia
+
+La existencia es el stock. El stock es la cantidad.
+
+En un producto es la cantidad de stock terminado. En un material o en un
+insumo es la cantidad que hay en el inventario.
+
+### 9.4 Compra
+
+La compra es la acción de adquirir más materiales o más insumos a cambio de
+dinero.
+
+Los precios de Ajustes son los de lista del proveedor. En la compra se puede
+informar otro valor unitario, porque el local a veces aplica un descuento
+según el medio de pago o la cantidad comprada. Ese valor queda en el material
+o en el insumo, y deja de usar el precio de Ajustes.
+
+### 9.5 Venta
+
+La venta es la acción de entregar productos a cambio de dinero.
+
+### 9.6 Billetera
+
+Se permite que el disponible quede negativo. Un pago o una compra se
+registran aunque no alcance el saldo.
+
+Para salir de ese saldo negativo se carga un ingreso con el nombre
+`capital`.
 
 Regla conceptual:
 
@@ -329,9 +414,15 @@ cantidadAProducir =
 El pedido se crea cuando un cliente identificado confirma una operación que
 no se resuelve completamente mediante una venta directa inmediata.
 
-Todo pedido requiere un cliente asociado. El pedido contiene ítems de
+Todo pedido requiere un cliente asociado. Si el cliente es frecuente o compra
+al por mayor, ese criterio lo tiene quien vende. La app no guarda un tipo de
+cliente. El pedido contiene ítems de
 productos y servicios, sus cantidades y los ítems de servicio agregados
 manualmente por el vendedor.
+
+El pedido tiene fecha de entrega. Al crearlo viene a 7 días. Quien crea el
+pedido tiene que revisarla antes de guardarlo. Puede dejar esos 7 días o
+poner otra fecha. La fecha que guarda tiene que ser posterior al día de hoy.
 
 A partir de sus ítems se determina:
 
@@ -473,7 +564,9 @@ no modifican el stock automáticamente.
 
 Si faltan materiales o insumos necesarios para fabricar un producto, el
 pedido puede confirmarse y debe mostrar una alerta. La tarea de producción
-queda `BLOQUEADA` hasta que exista disponibilidad suficiente.
+queda `BLOQUEADA` hasta que exista disponibilidad suficiente. Filamento y
+resina son materiales. El insumo es lo que se agrega al armar el producto
+(§9.1).
 
 ### 12.4 Preparación del pedido
 
@@ -679,11 +772,20 @@ costo total
 ganancia total
 ```
 
+### 16.1 Descuento
+
+El descuento se usa en la venta, en el pedido y en el presupuesto. Se guarda
+con esa operación. Puede ser un porcentaje o un monto fijo. No los dos a la
+vez. El total que se guarda ya tiene el descuento restado.
+
+Cuando un presupuesto aceptado genera un pedido, el pedido hereda ese
+descuento.
+
 No debe asumirse que el pedido necesita recalcular desde cero la estructura
 de costos del producto para obtener estos valores: la información comercial
 del producto ya contiene precio, costo y ganancia.
 
-### 16.1 Precio de servicios
+### 16.2 Precio de servicios
 
 Cada servicio configura una tarifa interna por hora. Diseño gráfico y
 modelado 3D utilizan inicialmente tres horas presupuestadas, que luego puede
@@ -708,7 +810,8 @@ presupuestado.
 ## 17. Costos dinámicos
 
 Los costos de los productos pueden cambiar como consecuencia de cambios en
-los costos de los insumos que utilizan.
+los costos de los insumos que utilizan y de los materiales que consume su
+proceso de fabricación (§9.1).
 
 Cuando cambia el costo de un insumo:
 
@@ -725,7 +828,7 @@ Cambio de valores calculados
 ```
 
 Los productos del catálogo deben verse afectados por los cambios de costo
-de los insumos que utilizan.
+de los insumos que utilizan y de los materiales que consume su proceso.
 
 En pedidos confirmados:
 
@@ -733,7 +836,11 @@ En pedidos confirmados:
 - el costo interno se actualiza con los valores actuales;
 - la ganancia interna se recalcula como precio acordado menos costo actual;
 - el cambio del precio vigente del producto se registra en el historial del
-  pedido, sin reemplazar el total acordado.
+  pedido;
+- se avisa que el producto cambió de precio y que el valor del pedido sigue
+  igual;
+- actualizar ese valor es manual. En el pedido se elige actualizarlo o
+  dejarlo como estaba. No se actualiza solo.
 
 ---
 
@@ -742,8 +849,9 @@ En pedidos confirmados:
 Odell distingue entre el valor comercial acordado y los valores internos
 dinámicos:
 
-- el precio del pedido aceptado por el cliente permanece fijo;
-- el pedido conserva el precio acordado como su total comercial;
+- el precio del pedido aceptado por el cliente no cambia solo;
+- actualizar el valor del pedido es manual. El pedido conserva el precio
+  acordado hasta que en el pedido se elija actualizarlo;
 - el costo de los productos se obtiene de sus valores actuales;
 - la ganancia interna se recalcula cuando cambia el costo;
 - el precio vigente del producto puede diferir del precio acordado y esa
@@ -761,9 +869,9 @@ mantiene un historial de las variaciones posteriores de los productos e
 insumos relacionados.
 
 Cuando el precio vigente de un producto difiere del utilizado al aceptar el
-pedido, se genera un registro histórico sin modificar el total que debe pagar
-el cliente. Los cambios de costo también actualizan el costo y la ganancia
-internos.
+pedido, se genera un registro histórico. El total que debe pagar el cliente
+sigue igual hasta que, en el pedido, se elija actualizarlo. Los cambios de
+costo también actualizan el costo y la ganancia internos.
 
 El historial debe indicar:
 
@@ -905,9 +1013,8 @@ activas.
 
 La IA no debe inventar reglas no definidas sobre:
 
-- fechas de vencimiento;
+- fechas de vencimiento que no sean la fecha de entrega del pedido (§10);
 - impuestos;
-- descuentos;
 - devoluciones no cubiertas por una decisión manual autorizada al cancelar;
 - costos financieros;
 - reglas contables no definidas expresamente en este documento;
@@ -1244,8 +1351,7 @@ a lo definido en §5 (comportamiento de producto al aceptar).
 
 ### 25.5 Insumos — implementación ampliada
 
-Pantalla **Insumos** (`/insumos`). La ruta `/materiales` redirige a
-Insumos.
+Pantalla **Insumos** (`/insumos`).
 
 #### 25.5.1 Categorías
 
@@ -1289,12 +1395,17 @@ Ajustes** (por tipo de material y marca). En ese caso:
 Un insumo está en stock bajo cuando `cantidad ≤ stock mínimo`. El Dashboard
 cuenta cuántos insumos cumplen esa condición.
 
-#### 25.5.5 Entidad Material (legacy)
+#### 25.5.5 Catálogo único
 
-Existe además una entidad **Material** en el modelo de datos (módulo
-Materials) con stock y proveedor. La UI principal de inventario operativo
-usa **Insumos**. La relación exacta Material ↔ Insumo sigue **POR DEFINIR**
-(§9.1).
+La regla de negocio está en §9.1 y §9.2: filamento y resina son materiales.
+El insumo es lo que se agrega al armar un producto y no es filamento ni
+resina. En el material la marca es obligatoria; en el insumo es opcional.
+
+El código todavía no separa las dos cosas de esa forma. No hay pantalla ni
+tabla de materiales. La pantalla operativa usa el catálogo de insumos
+(`/api/supplies`), filamento y resina incluidos. La marca es una tabla
+(`brands`): nombre y tipos de material que ofrece. Filamento y resina
+exigen una marca de ese tipo. En estampado y general la marca es opcional.
 
 #### 25.5.6 Sincronización de stock en la interfaz
 
@@ -1331,8 +1442,11 @@ Los productos del catálogo se clasifican en:
 fdm | resina | estampado | combo
 ```
 
-- **FDM / Resina:** impresión 3D; costos con filamento/resina, tiempos de
-  máquina, mano de obra y margen.
+- **FDM / Resina:** impresión 3D. El costo sale de los gramos y del tipo de
+  material, más máquina, mano de obra y margen de error (§3). La resina
+  convierte los gramos a litros. El precio de venta es ese costo con el
+  margen de Impresión 3D, salvo un precio sugerido. Sin gramos, sin tipo o
+  con costo 0 el API rechaza el alta o la edición.
 - **Estampado:** insumos de estampado, ciclos de prensa, impresiones.
 - **Combo:** producto compuesto por otros productos (piezas); el stock
   disponible puede derivar del ensamblaje de piezas.

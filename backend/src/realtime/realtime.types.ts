@@ -8,8 +8,7 @@ export type RealtimeScope =
   | 'customers'
   | 'print-jobs'
   | 'supplies'
-  | 'settings'
-  | 'materials';
+  | 'settings';
 
 export type RealtimeAction = 'create' | 'update' | 'delete';
 
@@ -22,7 +21,6 @@ export type RealtimeEntity =
   | 'print-job'
   | 'sale'
   | 'supply'
-  | 'material'
   | 'settings';
 
 export interface RealtimeEvent {

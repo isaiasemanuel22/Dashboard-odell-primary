@@ -22,6 +22,15 @@ import {
   normalizeDiscountFields,
 } from '../common/utils/discount.util';
 import { calculateOrderItemsSubtotal } from './order-pricing.util';
+import {
+  DUE_DATE_AFTER_TODAY_MESSAGE,
+  isDueDateAfterToday,
+} from './due-date.util';
+import { appendOrderPriceHistory } from './order-price-history.util';
+import {
+  listOrderPriceNotices,
+  rememberKeptLinePrice,
+} from './order-price-notice.util';
 import { filterOrders, OrderListFilters } from './order-filter.util';
 import {
   appendOrderStatusHistory,
@@ -81,7 +90,79 @@ export class OrdersService {
       order,
       tasks: this.printJobs.findByOrderId(id),
       alerts: this.orderTasks.buildOperationalAlerts(order),
+      priceNotices: listOrderPriceNotices(
+        order,
+        (productId) => this.products.findById(productId)?.price,
+      ),
     };
+  }
+
+  applyCatalogPrices(id: string): Order {
+    const order = this.findOne(id);
+    this.assertPriceDecisionAllowed(order);
+    const previousTotal = order.total;
+    const changes: Array<{
+      index: number;
+      productId: string;
+      productName: string;
+      previousUnitPrice: number;
+      newUnitPrice: number;
+    }> = [];
+
+    order.items.forEach((item, index) => {
+      if (!item.productId) return;
+      const product = this.products.findById(item.productId);
+      if (!product || product.price === item.unitPrice) return;
+      changes.push({
+        index,
+        productId: item.productId,
+        productName: item.productName,
+        previousUnitPrice: item.unitPrice,
+        newUnitPrice: product.price,
+      });
+      item.unitPrice = product.price;
+    });
+
+    if (!changes.length) return order;
+
+    order.total = this.calculateTotal(order.items, normalizeDiscountFields(order));
+    for (const line of changes) {
+      appendOrderPriceHistory(order, {
+        trigger: 'product_update',
+        itemIndex: line.index,
+        productId: line.productId,
+        productName: line.productName,
+        previousUnitPrice: line.previousUnitPrice,
+        newUnitPrice: line.newUnitPrice,
+        previousOrderTotal: previousTotal,
+        newOrderTotal: order.total,
+      });
+    }
+    return this.orders.save(order);
+  }
+
+  keepCatalogPrices(id: string): Order {
+    const order = this.findOne(id);
+    this.assertPriceDecisionAllowed(order);
+    let changed = false;
+
+    order.items.forEach((item, index) => {
+      if (!item.productId) return;
+      const product = this.products.findById(item.productId);
+      if (!product || product.price === item.unitPrice) return;
+      const kept = rememberKeptLinePrice(
+        order,
+        index,
+        item.unitPrice,
+        product.price,
+        item.productId,
+        item.productName,
+      );
+      if (kept) changed = true;
+    });
+
+    if (!changed) return order;
+    return this.orders.save(order);
   }
 
   create(data: CreateOrderDto): Order {
@@ -89,6 +170,7 @@ export class OrdersService {
     if (!data.dueDate?.trim()) {
       throw new BadRequestException('La fecha de entrega es obligatoria');
     }
+    this.assertDueDateAfterToday(data.dueDate);
 
     const items = this.normalizeOrderItems(data.items);
     const services = this.normalizeServices(items);
@@ -149,6 +231,9 @@ export class OrdersService {
 
     if (data.dueDate !== undefined && !data.dueDate.trim()) {
       throw new BadRequestException('La fecha de entrega es obligatoria');
+    }
+    if (data.dueDate !== undefined) {
+      this.assertDueDateAfterToday(data.dueDate);
     }
 
     if (data.status !== undefined && data.status !== current.status) {
@@ -237,6 +322,39 @@ export class OrdersService {
 
   remove(id: string): void {
     this.updateStatus(id, OrderStatus.CANCELADO);
+  }
+
+  addPayment(
+    id: string,
+    data: { amount: number; deposit?: boolean },
+  ): Order {
+    const order = this.findOne(id);
+    if (order.status === OrderStatus.CANCELADO) {
+      throw new BadRequestException('No se puede cobrar un pedido cancelado');
+    }
+
+    const amountCents = this.toCents(data.amount);
+    if (amountCents <= 0) {
+      throw new BadRequestException('El monto debe ser mayor a cero');
+    }
+
+    const paidCents = (order.payments ?? []).reduce(
+      (sum, payment) => sum + this.toCents(payment.amount),
+      0,
+    );
+    const balanceCents = this.toCents(order.total) - paidCents;
+    if (amountCents > balanceCents) {
+      throw new BadRequestException('El monto supera el saldo pendiente');
+    }
+
+    order.payments ??= [];
+    order.payments.push({
+      id: `${order.id}-pay-${order.payments.length + 1}`,
+      amount: amountCents / 100,
+      deposit: data.deposit === true,
+      createdAt: new Date().toISOString(),
+    });
+    return order;
   }
 
   deliver(id: string, lines: OrderDeliveryLine[]): Order {
@@ -463,6 +581,9 @@ export class OrdersService {
         designUnitPrice: isDesignService(serviceType)
           ? Number(item.designUnitPrice ?? item.unitPrice)
           : undefined,
+        budgetedHours: isDesignService(serviceType)
+          ? this.normalizeBudgetedHours(item.budgetedHours)
+          : undefined,
         deliveredQuantity: item.deliveredQuantity ?? 0,
         reservedQuantity: item.reservedQuantity ?? 0,
         productionRequiredQuantity: item.productionRequiredQuantity ?? 0,
@@ -495,13 +616,37 @@ export class OrdersService {
     return sanitized;
   }
 
+  private toCents(value: number): number {
+    return Math.round(Number(value) * 100);
+  }
+
+  private normalizeBudgetedHours(value: unknown): number | undefined {
+    const hours = Number(value);
+    if (!Number.isFinite(hours) || hours < 0) return undefined;
+    return hours;
+  }
+
+  private assertDueDateAfterToday(dueDate: string): void {
+    if (!isDueDateAfterToday(dueDate)) {
+      throw new BadRequestException(DUE_DATE_AFTER_TODAY_MESSAGE);
+    }
+  }
+
+  private assertPriceDecisionAllowed(order: Order): void {
+    if (order.status === OrderStatus.CANCELADO) {
+      throw new BadRequestException(
+        'No se puede cambiar el precio de un pedido cancelado',
+      );
+    }
+  }
+
   private resolveCustomer(customerId?: string | null): {
     customerId: string | null;
     customerName: string;
   } {
     const trimmed = customerId?.trim();
     if (!trimmed) {
-      return { customerId: null, customerName: 'Sin cliente' };
+      throw new BadRequestException('El pedido requiere un cliente asociado');
     }
 
     const customer = this.customers.findById(trimmed);
