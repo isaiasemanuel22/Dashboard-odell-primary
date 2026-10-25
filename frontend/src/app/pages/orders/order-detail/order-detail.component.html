@@ -94,6 +94,28 @@
     </section>
 
     <div class="detail-main">
+      @if (priceNotices.length) {
+        <section class="price-notice" aria-label="Cambio de precio del producto">
+          <p>El producto cambió de precio. El valor del pedido sigue igual hasta que lo actualices.</p>
+          <div class="price-notice__actions">
+            <db-button
+              [label]="priceDecisionLoading ? 'Guardando...' : 'Actualizar valor'"
+              variant="primary"
+              format="solid"
+              [disabled]="priceDecisionLoading"
+              (clicked)="decideProductPrice('apply')"
+            />
+            <db-button
+              label="Dejarlo como estaba"
+              variant="secondary"
+              format="soft"
+              [disabled]="priceDecisionLoading"
+              (clicked)="decideProductPrice('keep')"
+            />
+          </div>
+        </section>
+      }
+
       @if (alerts.length) {
         <section class="operational-alerts" aria-label="Alertas operativas">
           @for (alertItem of alerts; track alertItem.code + '-' + $index) {
@@ -137,12 +159,12 @@
                   }
                 </td>
                 <td>{{ item.quantity }}</td>
-                <td>{{ item.fromStock ?? 0 }}</td>
-                <td>{{ item.toProduce ?? 0 }}</td>
-                <td>{{ item.reserved ?? 0 }}</td>
-                <td>{{ item.produced ?? 0 }}</td>
-                <td>{{ item.delivered ?? 0 }}</td>
-                <td><strong>{{ item.pending ?? item.quantity }}</strong></td>
+                <td>{{ itemFromStock(item) }}</td>
+                <td>{{ itemToProduce(item) }}</td>
+                <td>{{ itemReserved(item) }}</td>
+                <td>{{ itemProduced(item) }}</td>
+                <td>{{ itemDelivered(item) }}</td>
+                <td><strong>{{ itemPending(item) }}</strong></td>
                 <td>
                   @if (isDesignService(item.serviceType)) {
                     {{ (item.designUnitPrice ?? item.unitPrice) | currencyArs }}
@@ -176,6 +198,63 @@
             </tr>
           </tfoot>
         </table>
+      </section>
+
+      <section class="panel">
+        <h3>Pagos</h3>
+        <dl class="detail-list">
+          <div>
+            <dt>Importe pagado</dt>
+            <dd>{{ paidAmount | currencyArs }}</dd>
+          </div>
+          <div>
+            <dt>Saldo</dt>
+            <dd>{{ balanceAmount | currencyArs }}</dd>
+          </div>
+          <div>
+            <dt>Estado de pago</dt>
+            <dd>{{ paymentStatusLabel }}</dd>
+          </div>
+        </dl>
+        @if (order.payments?.length) {
+          <ul class="order-payments">
+            @for (payment of order.payments; track payment.id) {
+              <li>
+                {{ payment.amount | currencyArs }}
+                @if (payment.deposit) {
+                  <span> · seña</span>
+                }
+                <span> · {{ payment.createdAt | dateShort }}</span>
+              </li>
+            }
+          </ul>
+        }
+        @if (balanceAmount > 0 && order.status !== 'cancelado') {
+          <div class="assign-customer">
+            <db-input
+              label="Monto del pago"
+              type="number"
+              [(ngModel)]="paymentAmount"
+              name="paymentAmount"
+              [min]="0.01"
+              [step]="0.01"
+            />
+            <label class="order-payments__deposit">
+              <input type="checkbox" [(ngModel)]="paymentDeposit" name="paymentDeposit" />
+              Seña
+            </label>
+            <db-button
+              [label]="paymentLoading ? 'Registrando...' : 'Registrar pago'"
+              variant="primary"
+              format="solid"
+              [disabled]="paymentLoading || !paymentAmount"
+              (clicked)="registerPayment()"
+            />
+          </div>
+          @if (paymentError) {
+            <p class="order-payments__error">{{ paymentError }}</p>
+          }
+        }
       </section>
 
       <section class="panel">

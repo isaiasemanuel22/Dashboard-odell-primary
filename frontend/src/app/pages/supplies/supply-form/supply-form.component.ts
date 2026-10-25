@@ -113,6 +113,13 @@ export class SupplyFormComponent implements OnInit, OnChanges {
       }));
   }
 
+  get unitHint(): string {
+    if (!this.priceFromSettings) return '';
+    return this.isFilament
+      ? 'Fija en kg: el precio de Ajustes es por kilogramo.'
+      : 'Fija en L: el precio de Ajustes es por litro.';
+  }
+
   get priceHint(): string {
     if (this.settingsLoading) return 'Cargando listas de precios...';
     if (this.isFilament && this.priceFromSettings) {
@@ -210,6 +217,10 @@ export class SupplyFormComponent implements OnInit, OnChanges {
       return;
     }
 
+    if (this.priceFromSettings) {
+      this.unit = this.isFilament ? 'kg' : 'L';
+    }
+
     const payload: Partial<Supply> = {
       name: this.name.trim(),
       category: this.category,
@@ -225,6 +236,8 @@ export class SupplyFormComponent implements OnInit, OnChanges {
       payload.brand = this.brand.trim();
     } else if (this.isResin) {
       payload.resinType = this.resinType;
+      payload.brand = this.brand.trim();
+    } else if (this.brand.trim()) {
       payload.brand = this.brand.trim();
     }
     if (this.showColorField) {

@@ -7,7 +7,7 @@
   publish = "dist/frontend/browser"
 
 [build.environment]
-  NODE_VERSION = "20"
+  NODE_VERSION = "22"
   NPM_FLAGS = "--registry=https://registry.npmjs.org"
 
 [[redirects]]

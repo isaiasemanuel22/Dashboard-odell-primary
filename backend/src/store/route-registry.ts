@@ -60,7 +60,7 @@ const PATH_RULES: PathRule[] = [
   {
     matches: (path) => path.includes('/products'),
     meta: {
-      collections: ['products'],
+      collections: ['products', 'brands'],
       scopes: ['products'],
       entity: 'product',
     },
@@ -82,9 +82,17 @@ const PATH_RULES: PathRule[] = [
     },
   },
   {
+    matches: (path) => path.includes('/brands'),
+    meta: {
+      collections: ['brands', 'settings', 'supplies', 'products'],
+      scopes: ['settings', 'supplies', 'products'],
+      entity: 'settings',
+    },
+  },
+  {
     matches: (path) => path.includes('/supplies'),
     meta: {
-      collections: ['supplies', 'printJobs', 'treasuryExpenses'],
+      collections: ['supplies', 'brands', 'printJobs', 'treasuryExpenses'],
       scopes: ['supplies', 'print-jobs', 'dashboard'],
       entity: 'supply',
     },
@@ -95,14 +103,6 @@ const PATH_RULES: PathRule[] = [
       collections: ['treasuryExpenses', 'supplies'],
       scopes: ['dashboard', 'supplies'],
       entity: 'settings',
-    },
-  },
-  {
-    matches: (path) => path.includes('/materials'),
-    meta: {
-      collections: ['materials'],
-      scopes: ['materials'],
-      entity: 'material',
     },
   },
   {
@@ -117,7 +117,7 @@ const PATH_RULES: PathRule[] = [
     matches: (path) =>
       path.includes('/settings') || path.includes('/upload'),
     meta: {
-      collections: ['settings', 'supplies', 'products'],
+      collections: ['settings', 'brands', 'supplies', 'products'],
       scopes: ['settings', 'products'],
       entity: 'settings',
     },

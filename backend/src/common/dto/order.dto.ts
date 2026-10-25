@@ -1,6 +1,7 @@
 import {
   IsBoolean,
   IsEnum,
+  IsIn,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -113,6 +114,26 @@ export class OrderItemDto {
   @IsOptional()
   @IsEnum(FilamentType)
   filamentType?: FilamentType;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  budgetedHours?: number;
+}
+
+export class OrderPriceDecisionDto {
+  @IsIn(['apply', 'keep'])
+  action!: 'apply' | 'keep';
+}
+
+export class CreateOrderPaymentDto {
+  @IsNumber()
+  @Min(0.01)
+  amount!: number;
+
+  @IsOptional()
+  @IsBoolean()
+  deposit?: boolean;
 }
 
 export class CreateOrderDto {

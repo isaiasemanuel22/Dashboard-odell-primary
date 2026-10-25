@@ -34,10 +34,7 @@ export function isQuoteEditable(status: QuoteStatus): boolean {
 }
 
 export function canGenerateOrderFromQuote(status: QuoteStatus): boolean {
-  return (
-    status !== QuoteStatus.RECHAZADO &&
-    status !== QuoteStatus.CANCELADO
-  );
+  return status === QuoteStatus.ACEPTADO;
 }
 
 export function lineFromQuoteItem(item: QuoteItem) {

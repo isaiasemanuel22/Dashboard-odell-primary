@@ -3,7 +3,6 @@ import { RealtimeModule } from '../realtime/realtime.module';
 import {
   CategoryRepository,
   CustomerRepository,
-  MaterialRepository,
   OrderRepository,
   ProductRepository,
   QuoteRepository,
@@ -29,7 +28,6 @@ import { StoreService } from './store.service';
     RetailSaleRepository,
     CategoryRepository,
     SupplyRepository,
-    MaterialRepository,
     TreasuryExpenseRepository,
   ],
   exports: [
@@ -43,7 +41,6 @@ import { StoreService } from './store.service';
     RetailSaleRepository,
     CategoryRepository,
     SupplyRepository,
-    MaterialRepository,
     TreasuryExpenseRepository,
   ],
 })

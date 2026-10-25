@@ -8,6 +8,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { Category, Product, isProduct3D } from '../../core/models';
 import { resolveCategoryNamesText } from '../../shared/utils/product.helpers';
+import { productPhysicalStock } from '../../shared/utils/stock.helpers';
 import { DateShortPipe } from '../../shared/pipes/labels.pipe';
 import { ProductBadgesComponent } from '../product-badges/product-badges.component';
 import { ProductImageCarouselComponent } from '../product-image-carousel/product-image-carousel.component';
@@ -41,6 +42,10 @@ export class ProductCardComponent {
 
   get categoryNames(): string {
     return resolveCategoryNamesText(this.product.categoryIds, this.categories);
+  }
+
+  get finishedStock(): number {
+    return productPhysicalStock(this.product);
   }
 
   get canAddToCart(): boolean {

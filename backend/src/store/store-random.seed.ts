@@ -347,6 +347,7 @@ export function createRandomSeedState(): StoreState {
 
   const state: StoreState = {
     generalSettings,
+    brands: base.brands,
     supplies,
     impresos: base.impresos.map((imp) => ({
       ...imp,
@@ -384,11 +385,6 @@ export function createRandomSeedState(): StoreState {
         createdAt: daysAgo(randInt(0, 15)),
       };
     }),
-    materials: base.materials.map((mat) => ({
-      ...mat,
-      id: nextId(mat.id, 'mat'),
-      quantity: randFloat(0.2, mat.quantity * 1.5, 1),
-    })),
     treasuryExpenses: [],
   };
 

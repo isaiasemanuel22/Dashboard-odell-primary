@@ -1,8 +1,17 @@
-import { ProductType } from '../common/enums';
+import {
+  OrderStatus,
+  ProductType,
+  QuoteStatus,
+  ServiceType,
+} from '../common/enums';
 import { Product } from '../common/interfaces';
 import { ProductPricingService } from '../products/product-pricing.service';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
-import { OrderRepository, ProductRepository } from '../store/repositories';
+import {
+  OrderRepository,
+  ProductRepository,
+  QuoteRepository,
+} from '../store/repositories';
 import { StoreChangeService } from '../store/store-change.service';
 import { StoreService } from '../store/store.service';
 import { createEmptyState } from '../store/store.seed';
@@ -46,6 +55,7 @@ describe('PricingSyncService', () => {
         store,
         new ProductRepository(store),
         new OrderRepository(store),
+        new QuoteRepository(store),
         pricing,
         storeChange,
       ),
@@ -151,5 +161,83 @@ describe('PricingSyncService', () => {
     const updated = store.getProductById('assembly-1');
     expect(updated?.price).toBe(4000);
     expect(updated?.profit).toBe(updated!.price - updated!.cost);
+  });
+
+  it('actualiza el presupuesto y deja el total del pedido hasta que se elija', () => {
+    const store = new StoreService();
+    store.applyState(createEmptyState());
+
+    const product = createProduct({
+      id: 'prod-1',
+      name: 'Mate',
+      price: 1000,
+      cost: 400,
+      profit: 600,
+    });
+    store.products.push(product);
+    store.indexProduct(product);
+
+    store.quotes.push({
+      id: 'qte-1',
+      customerId: null,
+      customerName: 'Sin cliente',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Mate',
+          quantity: 2,
+          unitPrice: 1000,
+        },
+      ],
+      status: QuoteStatus.ENVIADO,
+      total: 2000,
+      quotedAt: '2026-10-21T12:00:00.000Z',
+      createdAt: '2026-10-21T12:00:00.000Z',
+    });
+    store.indexQuote(store.quotes[0]!);
+
+    store.orders.push({
+      id: 'ord-1',
+      customerId: null,
+      customerName: 'Cliente',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Mate',
+          quantity: 2,
+          unitPrice: 1000,
+        },
+      ],
+      status: OrderStatus.PENDIENTE,
+      total: 2000,
+      createdAt: '2026-10-21T12:00:00.000Z',
+      dueDate: '2026-10-28T18:00:00.000Z',
+      priceHistory: [],
+    });
+    store.indexOrder(store.orders[0]!);
+
+    product.price = 1500;
+    store.replaceProduct(product);
+
+    const { service } = createService(store);
+    service.syncAfterProductSave('prod-1', 1000);
+
+    const quote = store.getQuoteById('qte-1');
+    const order = store.getOrderById('ord-1');
+    expect(quote?.items[0]?.unitPrice).toBe(1500);
+    expect(quote?.total).toBe(3000);
+    expect(order?.items[0]?.unitPrice).toBe(1000);
+    expect(order?.total).toBe(2000);
+    expect(order?.priceHistory).toHaveLength(1);
+    expect(order?.priceHistory?.[0]).toMatchObject({
+      previousUnitPrice: 1000,
+      newUnitPrice: 1500,
+      previousOrderTotal: 2000,
+      newOrderTotal: 2000,
+    });
   });
 });

@@ -11,6 +11,8 @@ import {
 import {
   CreateOrderDto,
   CreateOrderDeliveryDto,
+  CreateOrderPaymentDto,
+  OrderPriceDecisionDto,
   UpdateOrderDto,
   UpdateStatusDto,
 } from '../common/dto';
@@ -61,6 +63,21 @@ export class OrdersController {
   @Patch(':id/status')
   updateStatus(@Param('id') id: string, @Body() body: UpdateStatusDto) {
     return this.ordersService.updateStatus(id, body.status);
+  }
+
+  @Post(':id/price-decision')
+  decidePrice(
+    @Param('id') id: string,
+    @Body() body: OrderPriceDecisionDto,
+  ) {
+    return body.action === 'apply'
+      ? this.ordersService.applyCatalogPrices(id)
+      : this.ordersService.keepCatalogPrices(id);
+  }
+
+  @Post(':id/payments')
+  addPayment(@Param('id') id: string, @Body() body: CreateOrderPaymentDto) {
+    return this.ordersService.addPayment(id, body);
   }
 
   @Post(':id/deliveries')

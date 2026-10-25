@@ -228,7 +228,6 @@ export const routes: Routes = [
           },
         ],
       },
-      { path: 'materiales', redirectTo: 'insumos', pathMatch: 'full' },
       { path: 'impresos', redirectTo: 'ajustes/impresos', pathMatch: 'full' },
     ],
   },

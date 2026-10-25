@@ -77,6 +77,11 @@ export enum TreasuryMovementDirection {
   EXPENSE = 'expense',
 }
 
+export enum BrandMaterialType {
+  FILAMENT = 'filament',
+  RESIN = 'resin',
+}
+
 export enum FilamentType {
   PLA = 'pla',
   PETG = 'petg',

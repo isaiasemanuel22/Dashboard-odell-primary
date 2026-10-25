@@ -5,7 +5,6 @@ import { environment } from '../../../environments/environment';
 import {
   Customer,
   DashboardStats,
-  Material,
   Order,
   PrintJob,
 } from '../models';
@@ -37,12 +36,6 @@ export class ApiService {
   getPrintJobs(): Observable<PrintJob[]> {
     return this.http
       .get<PrintJob[]>(`${this.baseUrl}/print-jobs`)
-      .pipe(catchError(() => of([])));
-  }
-
-  getMaterials(): Observable<Material[]> {
-    return this.http
-      .get<Material[]>(`${this.baseUrl}/materials`)
       .pipe(catchError(() => of([])));
   }
 }

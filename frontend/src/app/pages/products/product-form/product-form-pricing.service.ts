@@ -59,6 +59,7 @@ export class ProductFormPricingService {
   costBreakdown: CostBreakdown | null = null;
   calculatingCost = false;
   computedPrice: number | null = null;
+  private keepCatalogPrice = false;
   appliedMarginPercent: number | null = null;
   profitMargins: GeneralSettings['profitMargins'] | null = null;
 
@@ -77,6 +78,10 @@ export class ProductFormPricingService {
       .subscribe((settings) => {
         if (!settings) return;
         this.profitMargins = normalizeProfitMargins(settings.profitMargins);
+        if (this.keepCatalogPrice) {
+          this.scheduleCostCalculation();
+          return;
+        }
         this.recalculatePriceFromCost();
         this.emitChange();
       });
@@ -99,6 +104,10 @@ export class ProductFormPricingService {
     this.costBreakdown = input.costBreakdown;
     this.computedPrice = input.computedPrice;
     this.appliedMarginPercent = input.appliedMarginPercent;
+    this.keepCatalogPrice = (input.computedPrice ?? 0) > 0;
+    if (this.keepCatalogPrice) {
+      this.publishCatalogPrice();
+    }
   }
 
   clearPricingState(): void {
@@ -229,6 +238,7 @@ export class ProductFormPricingService {
 
   onComponentsChange(): void {
     if (!this.context) return;
+    this.releaseCatalogPrice();
     if (usesFormPieceAssembly(this.context.form)) {
       this.applyPieceAssemblyTotals();
     }
@@ -236,6 +246,7 @@ export class ProductFormPricingService {
   }
 
   onProductionFieldChange(): void {
+    this.releaseCatalogPrice();
     this.scheduleCostCalculation();
   }
 
@@ -273,6 +284,7 @@ export class ProductFormPricingService {
       );
     }
 
+    this.releaseCatalogPrice();
     this.clearPricingState();
     this.scheduleCostCalculation();
   }
@@ -307,6 +319,10 @@ export class ProductFormPricingService {
 
     this.clearCostCalcTimer();
     if (!this.canAutoCalculate()) {
+      if (this.keepCatalogPrice) {
+        this.publishCatalogPrice();
+        return;
+      }
       if (isFormEstampado(form) && !usesFormPieceAssembly(form)) {
         this.costBreakdown = null;
         if (!this.context.product) {
@@ -326,8 +342,10 @@ export class ProductFormPricingService {
       return;
     }
 
-    this.computedPrice = null;
-    this.appliedMarginPercent = null;
+    if (!this.keepCatalogPrice) {
+      this.computedPrice = null;
+      this.appliedMarginPercent = null;
+    }
     this.costCalcTimer = setTimeout(() => this.calculateCost(), 500);
   }
 
@@ -422,16 +440,27 @@ export class ProductFormPricingService {
                     : null;
           } else {
             this.cost = resolvedCost;
-            this.computedPrice =
-              result.price > 0
-                ? result.price
-                : resolvedCost > 0
-                  ? priceFromCostAndMargin(
-                      resolvedCost,
-                      result.configuredMarginPercent ??
-                        this.configuredProfitMargin,
-                    )
-                  : 0;
+            const suggested = Number(form.controls.suggestedPrice.value);
+            const priceFollowsCost =
+              isForm3D(form) && resolvedCost > 0 && !(suggested > 0);
+            if (priceFollowsCost) {
+              this.keepCatalogPrice = false;
+            }
+            if (!this.keepCatalogPrice) {
+              this.computedPrice =
+                result.price > 0
+                  ? result.price
+                  : resolvedCost > 0
+                    ? priceFromCostAndMargin(
+                        resolvedCost,
+                        result.configuredMarginPercent ??
+                          this.configuredProfitMargin,
+                      )
+                    : 0;
+              if (priceFollowsCost && this.computedPrice != null) {
+                this.pricingStore.setCatalogPrice(this.computedPrice);
+              }
+            }
           }
 
           this.appliedMarginPercent =
@@ -449,8 +478,24 @@ export class ProductFormPricingService {
       });
   }
 
+  private releaseCatalogPrice(): void {
+    if (!this.keepCatalogPrice) return;
+    this.keepCatalogPrice = false;
+    this.pricingStore.setCatalogPrice(null);
+  }
+
+  private publishCatalogPrice(): void {
+    const price = Number(this.computedPrice) || 0;
+    if (price <= 0) return;
+    this.pricingStore.setCatalogPrice(price);
+    this.pricingStore.setCostContribution(
+      'production',
+      Math.max(0, Number(this.cost) || 0),
+    );
+  }
+
   private recalculatePriceFromCost(): void {
-    if (!this.context) return;
+    if (!this.context || this.keepCatalogPrice) return;
     const form = this.context.form;
     const settings = this.settingsFacade.peekGeneralSettings();
     if (!settings) return;

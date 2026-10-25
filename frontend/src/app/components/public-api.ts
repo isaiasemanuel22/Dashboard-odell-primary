@@ -37,5 +37,4 @@ export type { SaleCartLine } from './sale-cart-line/sale-cart-line.types';
 export * from './sale-cart-line-card/sale-cart-line-card.component';
 export * from './sale-cart-footer/sale-cart-footer.component';
 export * from './sale-entry-card/sale-entry-card.component';
-export * from './materials-table/materials-table.component';
 export * from './supplies-table/supplies-table.component';

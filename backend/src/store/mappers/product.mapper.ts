@@ -7,6 +7,7 @@ import {
 } from '../../common/interfaces';
 import { ProductType } from '../../common/enums';
 import { fromJson, toInputJson } from '../../prisma/json.util';
+import { persistedFdmLine } from '../brand-link.util';
 import {
   normalizeEstampadoPressCycles,
   normalizeEstampadoPrints,
@@ -38,7 +39,7 @@ export function mapProductFromDb(row: {
   grams: number | null;
   printTimeHours: number | null;
   workTimeHours: number | null;
-  brand: string | null;
+  brandId: string | null;
   filamentType: string | null;
   resinType: string | null;
   washMinutes: number | null;
@@ -118,12 +119,12 @@ export function mapProductFromDb(row: {
     workTimeHours: row.workTimeHours ?? 0,
     washMinutes: row.washMinutes ?? undefined,
     cureMinutes: row.cureMinutes ?? undefined,
-    brand: row.brand ?? undefined,
+    brandId: row.brandId ?? undefined,
     filamentType: row.filamentType as Product3D['filamentType'],
     filaments: normalizeFdmFilaments(fromJson(row.fdmFilaments ?? []), {
       grams: row.grams ?? undefined,
       filamentType: row.filamentType as Product3D['filamentType'],
-      brand: row.brand ?? undefined,
+      brandId: row.brandId ?? undefined,
     }),
     resinType: row.resinType as Product3D['resinType'],
     colorId: row.colorId ?? undefined,
@@ -144,6 +145,7 @@ export function mapProductToDb(product: Product) {
           grams: product3d.grams,
           filamentType: product3d.filamentType,
           brand: product3d.brand,
+          brandId: product3d.brandId,
         }).filter((line) => line.grams > 0)
       : [];
 
@@ -174,7 +176,8 @@ export function mapProductToDb(product: Product) {
       !isCombo && 'printTimeHours' in product ? product.printTimeHours : null,
     workTimeHours:
       !isCombo && 'workTimeHours' in product ? product.workTimeHours : null,
-    brand: !isCombo && 'brand' in product ? (product.brand ?? null) : null,
+    brandId:
+      !isCombo && 'brandId' in product ? (product.brandId ?? null) : null,
     filamentType:
       !isCombo && 'filamentType' in product ? (product.filamentType ?? null) : null,
     resinType:
@@ -191,7 +194,7 @@ export function mapProductToDb(product: Product) {
     estampadoPrints: toInputJson(estampado?.prints ?? []),
     estampadoPressCycles: toInputJson(estampado?.pressCycles ?? []),
     estampadoSupplies: toInputJson(estampado?.supplies ?? []),
-    fdmFilaments: toInputJson(fdmFilaments),
+    fdmFilaments: toInputJson(fdmFilaments.map(persistedFdmLine)),
     stock: Math.max(0, Math.trunc(product.stock ?? 0)),
     colorId:
       product3d?.type === ProductType.RESINA

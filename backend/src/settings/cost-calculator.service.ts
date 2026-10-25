@@ -477,8 +477,13 @@ export class CostCalculatorService {
     if (!matches.length) return null;
 
     if (brand) {
-      const exact = matches.find(
-        (p) => p.brand.toLowerCase() === brand.toLowerCase(),
+      const linked = this.store.brands?.find(
+        (entry) => entry.name.toLowerCase() === brand.toLowerCase(),
+      )?.id;
+      const exact = matches.find((price) =>
+        price.brandId && linked
+          ? price.brandId === linked
+          : price.brand?.toLowerCase() === brand.toLowerCase(),
       );
       if (exact) return exact.pricePerKg;
     }
@@ -499,8 +504,13 @@ export class CostCalculatorService {
     if (!matches.length) return null;
 
     if (brand) {
-      const exact = matches.find(
-        (p) => p.brand.toLowerCase() === brand.toLowerCase(),
+      const linked = this.store.brands?.find(
+        (entry) => entry.name.toLowerCase() === brand.toLowerCase(),
+      )?.id;
+      const exact = matches.find((price) =>
+        price.brandId && linked
+          ? price.brandId === linked
+          : price.brand?.toLowerCase() === brand.toLowerCase(),
       );
       if (exact) return exact.pricePerLiter;
     }

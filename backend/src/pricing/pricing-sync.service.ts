@@ -1,16 +1,21 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { OrderStatus, ProductType } from '../common/enums';
-import { Order, Product, Product3D } from '../common/interfaces';
+import { Product, Product3D, Quote } from '../common/interfaces';
 import {
-  calculateItemsSubtotal,
   calculateTotalWithDiscount,
   normalizeDiscountFields,
 } from '../common/utils/discount.util';
 import { appendOrderPriceHistory } from '../orders/order-price-history.util';
+import { hasRecordedPricePair } from '../orders/order-price-notice.util';
 import type { OrderPriceChangeTrigger } from '../orders/order-price-history.util';
+import { calculateOrderItemsSubtotal } from '../orders/order-pricing.util';
 import { ProductPricingService } from '../products/product-pricing.service';
 import { sumComponentsProductionMetrics } from '../products/product-production.util';
-import { OrderRepository, ProductRepository } from '../store/repositories';
+import {
+  OrderRepository,
+  ProductRepository,
+  QuoteRepository,
+} from '../store/repositories';
 import { StoreChangeService } from '../store/store-change.service';
 import { StoreService } from '../store/store.service';
 
@@ -18,12 +23,6 @@ export interface ProductPriceChange {
   oldPrice: number;
   newPrice: number;
 }
-
-const ADJUSTABLE_ORDER_STATUSES = new Set<OrderStatus>([
-  OrderStatus.PENDIENTE,
-  OrderStatus.EN_PRODUCCION,
-  OrderStatus.COMPLETADO,
-]);
 
 @Injectable()
 export class PricingSyncService {
@@ -33,14 +32,16 @@ export class PricingSyncService {
     private readonly store: StoreService,
     private readonly products: ProductRepository,
     private readonly orders: OrderRepository,
+    private readonly quotes: QuoteRepository,
     private readonly pricing: ProductPricingService,
     private readonly storeChange: StoreChangeService,
   ) {}
 
   syncAllProductsAndOrders(trigger: OrderPriceChangeTrigger): void {
     const { priceChanges, recalculated } = this.recalculateAllProducts();
+    const quotesChanged = this.syncQuotePrices(priceChanges);
     this.syncOrderPrices(priceChanges, trigger);
-    this.notifyChanges(recalculated || priceChanges.size > 0);
+    this.notifyChanges(recalculated || priceChanges.size > 0, quotesChanged);
   }
 
   syncAfterProductSave(productId: string, previousPrice: number): void {
@@ -56,8 +57,12 @@ export class PricingSyncService {
     }
 
     const compositeRecalculated = this.recalculateCompositeProducts(priceChanges);
+    const quotesChanged = this.syncQuotePrices(priceChanges);
     this.syncOrderPrices(priceChanges, 'product_update');
-    this.notifyChanges(priceChanges.size > 0 || compositeRecalculated);
+    this.notifyChanges(
+      priceChanges.size > 0 || compositeRecalculated,
+      quotesChanged,
+    );
   }
 
   private recalculateAllProducts(): {
@@ -186,6 +191,48 @@ export class PricingSyncService {
     };
   }
 
+  private syncQuotePrices(
+    priceChanges: Map<string, ProductPriceChange>,
+  ): boolean {
+    if (!priceChanges.size) return false;
+
+    let quotesUpdated = 0;
+    for (const quote of this.quotes.findAll()) {
+      if (!this.applyQuotePriceChanges(quote, priceChanges)) continue;
+      this.quotes.save(quote);
+      quotesUpdated += 1;
+    }
+
+    if (quotesUpdated > 0) {
+      this.logger.log(`Precios actualizados en ${quotesUpdated} presupuesto(s)`);
+    }
+    return quotesUpdated > 0;
+  }
+
+  private applyQuotePriceChanges(
+    quote: Quote,
+    priceChanges: Map<string, ProductPriceChange>,
+  ): boolean {
+    let changed = false;
+    for (const item of quote.items) {
+      if (!item.productId) continue;
+      const change = priceChanges.get(item.productId);
+      if (!change || change.newPrice === item.unitPrice) continue;
+      item.unitPrice = change.newPrice;
+      changed = true;
+    }
+    if (!changed) return false;
+
+    quote.total = calculateTotalWithDiscount(
+      calculateOrderItemsSubtotal(quote.items),
+      normalizeDiscountFields({
+        discountPercent: quote.discountPercent,
+        discountAmount: quote.discountAmount,
+      }),
+    );
+    return true;
+  }
+
   private syncOrderPrices(
     priceChanges: Map<string, ProductPriceChange>,
     trigger: OrderPriceChangeTrigger,
@@ -195,73 +242,62 @@ export class PricingSyncService {
     let ordersUpdated = 0;
 
     for (const order of this.orders.findAll()) {
-      if (!ADJUSTABLE_ORDER_STATUSES.has(order.status)) continue;
+      if (order.status === OrderStatus.CANCELADO) continue;
 
-      const previousTotal = order.total;
-      const lineChanges: Array<{
-        index: number;
-        item: Order['items'][number];
-        previousUnitPrice: number;
-        newUnitPrice: number;
-      }> = [];
-
+      let recorded = false;
       for (let index = 0; index < order.items.length; index++) {
         const item = order.items[index];
         if (!item.productId) continue;
 
         const change = priceChanges.get(item.productId);
         if (!change || change.newPrice === item.unitPrice) continue;
+        if (
+          hasRecordedPricePair(
+            order,
+            index,
+            item.unitPrice,
+            change.newPrice,
+          )
+        ) {
+          continue;
+        }
 
-        lineChanges.push({
-          index,
-          item,
-          previousUnitPrice: item.unitPrice,
-          newUnitPrice: change.newPrice,
-        });
-        item.unitPrice = change.newPrice;
-      }
-
-      if (!lineChanges.length) continue;
-
-      order.total = calculateTotalWithDiscount(
-        calculateItemsSubtotal(order.items),
-        normalizeDiscountFields({
-          discountPercent: order.discountPercent,
-          discountAmount: order.discountAmount,
-        }),
-      );
-
-      for (const line of lineChanges) {
         appendOrderPriceHistory(order, {
           trigger,
-          itemIndex: line.index,
-          productId: line.item.productId!,
-          productName: line.item.productName,
-          previousUnitPrice: line.previousUnitPrice,
-          newUnitPrice: line.newUnitPrice,
-          previousOrderTotal: previousTotal,
+          itemIndex: index,
+          productId: item.productId,
+          productName: item.productName,
+          previousUnitPrice: item.unitPrice,
+          newUnitPrice: change.newPrice,
+          previousOrderTotal: order.total,
           newOrderTotal: order.total,
         });
+        recorded = true;
       }
 
+      if (!recorded) continue;
       this.orders.save(order);
       ordersUpdated++;
     }
 
     if (ordersUpdated > 0) {
       this.logger.log(
-        `Precios actualizados en ${ordersUpdated} pedido(s) (${trigger})`,
+        `Diferencia de precio registrada en ${ordersUpdated} pedido(s) (${trigger})`,
       );
     }
   }
 
-  private notifyChanges(hasChanges: boolean): void {
-    if (!hasChanges) return;
+  private notifyChanges(hasChanges: boolean, quotesChanged = false): void {
+    if (!hasChanges && !quotesChanged) return;
 
     this.storeChange.recordChange({
-      collections: ['products', 'orders'],
+      collections: quotesChanged
+        ? ['products', 'orders', 'quotes']
+        : ['products', 'orders'],
       realtime: {
-        scopes: ['products', 'orders', 'dashboard', 'sales'],
+        scopes: quotesChanged
+          ? ['products', 'orders', 'quotes', 'dashboard', 'sales']
+          : ['products', 'orders', 'dashboard', 'sales'],
         action: 'update',
         entity: 'product',
       },

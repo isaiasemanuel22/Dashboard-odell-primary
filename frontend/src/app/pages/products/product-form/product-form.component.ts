@@ -64,6 +64,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   @Input() product: Product | null = null;
   @Input() loading = false;
   @Input() error = '';
+  clientError = '';
   @Output() save = new EventEmitter<CreateProductPayload | UpdateProductPayload>();
   @Output() cancel = new EventEmitter<void>();
 
@@ -172,6 +173,14 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     this.flushSectionValues();
+    const materialError = this.facade.printedMaterialError;
+    if (materialError) {
+      this.clientError = materialError;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    this.clientError = '';
     this.save.emit(this.facade.buildSubmitPayload());
   }
 

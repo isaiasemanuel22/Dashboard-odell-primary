@@ -137,6 +137,10 @@
       <db-form-error>{{ error }}</db-form-error>
     }
 
+    @if (closeSaleBlockReason) {
+      <p class="sale-form__stock-hint">{{ closeSaleBlockReason }}</p>
+    }
+
     <db-form-footer [class.sale-form__footer--sticky]="useCardLayout">
       <db-button
         label="Cancelar"

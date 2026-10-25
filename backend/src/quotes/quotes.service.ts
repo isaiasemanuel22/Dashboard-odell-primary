@@ -12,7 +12,17 @@ import {
 } from '../common/utils/discount.util';
 import { calculateOrderItemsSubtotal } from '../orders/order-pricing.util';
 import { OrdersService } from '../orders/orders.service';
-import { CustomerRepository, QuoteRepository } from '../store/repositories';
+import {
+  CustomerRepository,
+  ProductRepository,
+  QuoteRepository,
+} from '../store/repositories';
+import { StoreChangeService } from '../store/store-change.service';
+import { StoreService } from '../store/store.service';
+import {
+  isQuoteLineMissingFromCatalog,
+  unpublishedProductFromQuoteLine,
+} from './quote-product.util';
 
 @Injectable()
 export class QuotesService {
@@ -20,6 +30,9 @@ export class QuotesService {
     private readonly quotes: QuoteRepository,
     private readonly customers: CustomerRepository,
     private readonly orders: OrdersService,
+    private readonly products: ProductRepository,
+    private readonly store: StoreService,
+    private readonly storeChange: StoreChangeService,
   ) {}
 
   findAll(): Quote[] {
@@ -125,8 +138,16 @@ export class QuotesService {
       );
     }
 
+    if (status === QuoteStatus.ACEPTADO && !quote.customerId) {
+      throw new BadRequestException('El pedido requiere un cliente asociado');
+    }
+
     quote.status = status;
-    return this.quotes.save(quote);
+    this.quotes.save(quote);
+    if (status === QuoteStatus.ACEPTADO && !quote.orderId) {
+      this.createOrderFromQuote(quote.id);
+    }
+    return this.findOne(id);
   }
 
   remove(id: string): void {
@@ -152,6 +173,10 @@ export class QuotesService {
       );
     }
 
+    if (!quote.customerId) {
+      throw new BadRequestException('El pedido requiere un cliente asociado');
+    }
+
     if (quote.orderId) {
       try {
         return this.orders.findOne(quote.orderId);
@@ -160,16 +185,57 @@ export class QuotesService {
       }
     }
 
+    const items = this.attachCatalogProducts(quote.items);
     const order = this.orders.create({
       customerId: quote.customerId ?? undefined,
-      items: quote.items as OrderItem[],
+      items: items as OrderItem[],
       discountPercent: quote.discountPercent,
       discountAmount: quote.discountAmount,
       dueDate: this.defaultOrderDueDate(),
     });
 
-    this.quotes.save({ ...quote, orderId: order.id });
+    this.quotes.save({ ...quote, items, orderId: order.id });
+    this.storeChange.recordChange({
+      collections: ['quotes', 'orders', 'printJobs', 'products'],
+      realtime: {
+        scopes: ['quotes', 'orders', 'print-jobs', 'products', 'dashboard'],
+        action: 'create',
+        entity: 'order',
+        id: order.id,
+      },
+    });
     return order;
+  }
+
+  private attachCatalogProducts(items: QuoteItem[]): QuoteItem[] {
+    return items.map((item) => {
+      if (
+        !isQuoteLineMissingFromCatalog(item, (productId) =>
+          Boolean(this.products.findById(productId)),
+        )
+      ) {
+        return item;
+      }
+
+      const name = item.productName?.trim();
+      if (!name) {
+        throw new BadRequestException('El producto nuevo necesita un nombre');
+      }
+
+      const product = unpublishedProductFromQuoteLine(
+        { ...item, productName: name },
+        this.store.nextId('prod', this.store.products),
+        new Date().toISOString(),
+      );
+      if (!product) return item;
+
+      this.products.create(product);
+      return {
+        ...item,
+        productId: product.id,
+        productName: product.name,
+      };
+    });
   }
 
   private normalizeQuoteItems(items: OrderItem[]): QuoteItem[] {

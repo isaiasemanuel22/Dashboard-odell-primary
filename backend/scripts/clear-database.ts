@@ -27,7 +27,6 @@ async function main(): Promise<void> {
       prisma.customer.deleteMany(),
       prisma.supply.deleteMany(),
       prisma.impreso.deleteMany(),
-      prisma.material.deleteMany(),
       prisma.appSettings.deleteMany(),
     ]);
 

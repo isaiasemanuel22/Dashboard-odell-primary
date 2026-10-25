@@ -17,6 +17,7 @@ export const ProductFormPricingActions = createActionGroup({
     'Set Calculating': props<{ calculating: boolean }>(),
     'Set Cost Breakdown': props<{ costBreakdown: CostBreakdown | null }>(),
     'Set Suggested Price': props<{ suggestedPrice: number | null }>(),
+    'Set Catalog Price': props<{ catalogPrice: number | null }>(),
     'Set Applied Margin': props<{ appliedMarginPercent: number }>(),
     'Set Pricing Result': props<{
       totalCost: number;

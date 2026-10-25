@@ -161,6 +161,15 @@ export class SaleFormComponent implements OnChanges {
     return this.cartTotal - this.cartCost;
   }
 
+  get closeSaleBlockReason(): string | null {
+    if (!this.cart.length || this.canCloseSale || this.loading) return null;
+    const names = this.cart
+      .filter((line) => line.quantity > this.availableStock(line.productId))
+      .map((line) => line.productName);
+    if (!names.length) return null;
+    return `No se puede cerrar la venta: ${names.join(', ')} no tiene stock suficiente. Creá un pedido para producirlo.`;
+  }
+
   get canCloseSale(): boolean {
     return (
       !this.loading &&

@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTreasuryExpenseDto, TreasurySupplyLineDto } from '../common/dto';
 import {
+  SupplyCategory,
   TreasuryExpenseCategory,
   TreasuryMovementDirection,
 } from '../common/enums';
@@ -238,7 +239,7 @@ export class TreasuryService {
           quantity: line.quantity,
           unitPrice: line.unitPrice,
           amount: line.amountSpent,
-          description: `Compra de insumo: ${line.supply.name}`,
+          description: this.purchaseDescription(line.supply),
           referenceId: line.supply.id,
         },
         occurredAt,
@@ -278,11 +279,11 @@ export class TreasuryService {
       throw new BadRequestException('Agregá al menos un insumo');
     }
 
-    const totalSpent = lines.reduce(
-      (sum, line) => sum + Number(line.amountSpent),
+    const totalSpentCents = lines.reduce(
+      (sum, line) => sum + this.toCents(line.amountSpent),
       0,
     );
-    if (Math.round(totalSpent) !== Math.round(totalAmount)) {
+    if (totalSpentCents !== this.toCents(totalAmount)) {
       throw new BadRequestException(
         'El monto total no coincide con la suma de gastos por insumo',
       );
@@ -311,10 +312,25 @@ export class TreasuryService {
     });
   }
 
+  private purchaseDescription(supply: Supply): string {
+    const kind =
+      supply.category === SupplyCategory.FDM ||
+      supply.category === SupplyCategory.RESINA
+        ? 'material'
+        : 'insumo';
+    return `Compra de ${kind}: ${supply.name}`;
+  }
+
+  private toCents(value: number): number {
+    return Math.round(Number(value) * 100);
+  }
+
   private parseOccurredAt(value: string): string {
     const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
     if (!match) {
-      throw new BadRequestException('La fecha no es válida');
+      throw new BadRequestException(
+        'La fecha no es válida. Usá el formato AAAA-MM-DD',
+      );
     }
 
     const year = Number(match[1]);
@@ -327,7 +343,9 @@ export class TreasuryService {
       parsed.getMonth() !== month - 1 ||
       parsed.getDate() !== day
     ) {
-      throw new BadRequestException('La fecha no es válida');
+      throw new BadRequestException(
+        'La fecha no es válida. Usá el formato AAAA-MM-DD',
+      );
     }
 
     const today = new Date();

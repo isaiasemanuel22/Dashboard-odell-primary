@@ -40,15 +40,24 @@
         Fecha: {{ quote.quotedAt | dateShort }} · Creado: {{ quote.createdAt | dateShort }}
       </p>
     </div>
-    @if (canGenerateOrder) {
+    @if (quote.orderId || canGenerateOrder) {
       <div class="header-actions">
-        <db-button
-          [label]="generateOrderLabel"
-          variant="primary"
-          format="solid"
-          [disabled]="generatingOrder"
-          (clicked)="generateOrder()"
-        />
+        @if (quote.orderId) {
+          <db-button
+            label="Ver pedido"
+            variant="primary"
+            format="solid"
+            [routerLink]="['/pedidos', quote.orderId]"
+          />
+        } @else {
+          <db-button
+            [label]="generateOrderLabel"
+            variant="primary"
+            format="solid"
+            [disabled]="generatingOrder"
+            (clicked)="generateOrder()"
+          />
+        }
       </div>
     }
   </header>
@@ -73,6 +82,16 @@
           <dt>Servicios</dt>
           <dd><db-service-badges [types]="quote.services" /></dd>
         </div>
+        @if (quote.orderId) {
+          <div>
+            <dt>Pedido</dt>
+            <dd>
+              <a [routerLink]="['/pedidos', quote.orderId]" class="customer-link">
+                {{ quote.orderId }}
+              </a>
+            </dd>
+          </div>
+        }
       </dl>
     </section>
 

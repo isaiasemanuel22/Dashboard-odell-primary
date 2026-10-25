@@ -91,10 +91,11 @@ export class ProductsComponent implements OnInit {
   readonly publishedFilters = publishedProductFilters();
 
   ngOnInit(): void {
+    this.catalog.load();
     combineLatest([
       this.catalog.products$,
       this.catalog.loading$,
-      this.categoryCatalog.getCategories(),
+      this.catalog.categories$,
     ])
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(([products, loading, categories]) => {

@@ -15,6 +15,7 @@
   [filters]="categoryFilters"
   [activeFilter]="categoryFilter"
   [search]="search"
+  searchPlaceholder="Buscar por nombre, marca, material o color..."
   (filterChange)="categoryFilter = $event"
   (searchChange)="search = $event"
 />
@@ -23,15 +24,17 @@
   [loading]="loading"
   [empty]="!loading && filteredSupplies.length === 0"
   loadingMessage="Cargando insumos..."
-  emptyMessage="No hay insumos para mostrar."
+  [emptyMessage]="emptyMessage"
 >
-  <db-button
-    emptyActions
-    label="Crear primer insumo"
-    variant="primary"
-    format="solid"
-    (clicked)="openCreate()"
-  />
+  @if (!supplies.length) {
+    <db-button
+      emptyActions
+      label="Crear primer insumo"
+      variant="primary"
+      format="solid"
+      (clicked)="openCreate()"
+    />
+  }
 </db-state-message>
 
 @if (!loading && filteredSupplies.length) {

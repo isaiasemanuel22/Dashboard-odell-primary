@@ -11,11 +11,13 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
   Order,
+  OrderItem,
   OrderStatus,
   OrderStatusHistoryEntry,
   OrderPriceHistoryEntry,
   OrderAlert,
   OrderDelivery,
+  OrderPriceNotice,
   PrintJob,
   Customer,
 } from '../../../core/models';
@@ -102,6 +104,8 @@ export class OrderDetailComponent implements OnInit {
   order: Order | null = null;
   tasks: PrintJob[] = [];
   alerts: OrderAlert[] = [];
+  priceNotices: OrderPriceNotice[] = [];
+  priceDecisionLoading = false;
   deliveries: OrderDelivery[] = [];
   deliveryDraft: number[] = [];
   deliveryLoading = false;
@@ -110,6 +114,10 @@ export class OrderDetailComponent implements OnInit {
 
   assignCustomerId = '';
   assignLoading = false;
+  paymentAmount: number | null = null;
+  paymentDeposit = false;
+  paymentLoading = false;
+  paymentError = '';
   private customers: Customer[] = [];
 
   statusLoading = false;
@@ -119,6 +127,80 @@ export class OrderDetailComponent implements OnInit {
   readonly priorityTierClass = priorityTierClass;
   readonly sourceLabels = ORDER_STATUS_CHANGE_SOURCE_LABELS;
   readonly isDesignService = isDesignService;
+
+  itemPending(item: OrderItem): number {
+    return Math.max(item.quantity - this.itemDelivered(item), 0);
+  }
+
+  itemToProduce(item: OrderItem): number {
+    return item.productionRequiredQuantity ?? item.toProduce ?? 0;
+  }
+
+  itemReserved(item: OrderItem): number {
+    return item.reservedQuantity ?? item.reserved ?? 0;
+  }
+
+  itemProduced(item: OrderItem): number {
+    return item.producedQuantity ?? item.produced ?? 0;
+  }
+
+  itemDelivered(item: OrderItem): number {
+    return item.deliveredQuantity ?? item.delivered ?? 0;
+  }
+
+  itemFromStock(item: OrderItem): number {
+    return Math.max(
+      this.itemPending(item) - this.itemToProduce(item) - this.itemProduced(item),
+      0,
+    );
+  }
+
+  get paidAmount(): number {
+    return (this.order?.payments ?? []).reduce(
+      (sum, payment) => sum + (Number(payment.amount) || 0),
+      0,
+    );
+  }
+
+  get balanceAmount(): number {
+    if (!this.order) return 0;
+    return Math.max(0, Math.round((this.order.total - this.paidAmount) * 100) / 100);
+  }
+
+  get paymentStatusLabel(): string {
+    if (this.paidAmount <= 0) return 'No pagado';
+    if (this.balanceAmount <= 0) return 'Pagado';
+    return 'Parcialmente pagado';
+  }
+
+  registerPayment(): void {
+    if (!this.order || this.paymentLoading || !this.paymentAmount) return;
+    this.paymentLoading = true;
+    this.paymentError = '';
+    this.cdr.markForCheck();
+    this.ordersService
+      .addPayment(this.order.id, {
+        amount: Number(this.paymentAmount),
+        deposit: this.paymentDeposit,
+      })
+      .subscribe({
+        next: (order) => {
+          this.order = order;
+          this.paymentAmount = null;
+          this.paymentDeposit = false;
+          this.paymentLoading = false;
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.paymentLoading = false;
+          this.paymentError = extractApiErrorMessage(
+            err,
+            'No se pudo registrar el pago',
+          );
+          this.cdr.markForCheck();
+        },
+      });
+  }
 
   lineSubtotal(item: Order['items'][number]): number {
     return calculateLinePriceTotal(item);
@@ -224,6 +306,7 @@ export class OrderDetailComponent implements OnInit {
         this.order = overview.order;
         this.tasks = overview.tasks;
         this.alerts = overview.alerts ?? [];
+        this.priceNotices = overview.priceNotices ?? [];
         this.deliveries =
           overview.deliveries ?? overview.order.deliveryHistory ?? [];
         this.deliveryDraft = overview.order.items.map(() => 0);
@@ -357,6 +440,28 @@ export class OrderDetailComponent implements OnInit {
       next: (tasks) => {
         this.tasks = tasks;
         this.cdr.markForCheck();
+      },
+    });
+  }
+
+  decideProductPrice(action: 'apply' | 'keep'): void {
+    if (!this.order || this.priceDecisionLoading) return;
+    this.priceDecisionLoading = true;
+    this.cdr.markForCheck();
+    this.ordersService.decideOrderPrice(this.order.id, action).subscribe({
+      next: () => {
+        this.priceDecisionLoading = false;
+        this.loadOrder(this.order!.id);
+      },
+      error: (err) => {
+        this.priceDecisionLoading = false;
+        this.cdr.markForCheck();
+        alert(
+          extractApiErrorMessage(
+            err,
+            'No se pudo actualizar el precio del pedido',
+          ),
+        );
       },
     });
   }

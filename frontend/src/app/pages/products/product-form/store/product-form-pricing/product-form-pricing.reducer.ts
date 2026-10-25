@@ -11,6 +11,7 @@ export interface ProductFormPricingState {
   totalCost: number;
   componentsPrice: number;
   suggestedPrice: number | null;
+  catalogPrice: number | null;
   price: number;
   profit: number;
   calculating: boolean;
@@ -28,6 +29,7 @@ export const initialProductFormPricingState: ProductFormPricingState = {
   totalCost: 0,
   componentsPrice: 0,
   suggestedPrice: null,
+  catalogPrice: null,
   price: 0,
   profit: 0,
   calculating: false,
@@ -49,12 +51,23 @@ function withTotalCost(
 export const productFormPricingReducer = createReducer(
   initialProductFormPricingState,
   on(ProductFormPricingActions.reset, () => initialProductFormPricingState),
-  on(ProductFormPricingActions.setProductTypeMargin, (state, action) => ({
-    ...initialProductFormPricingState,
-    productType: action.productType,
-    profitMarginPercent: action.profitMarginPercent,
-    profitMarginLabel: action.profitMarginLabel,
-  })),
+  on(ProductFormPricingActions.setProductTypeMargin, (state, action) => {
+    const keepCatalog = (state.catalogPrice ?? 0) > 0;
+    return {
+      ...initialProductFormPricingState,
+      productType: action.productType,
+      profitMarginPercent: action.profitMarginPercent,
+      profitMarginLabel: action.profitMarginLabel,
+      catalogPrice: keepCatalog ? state.catalogPrice : null,
+      contributions: keepCatalog ? state.contributions : {},
+      totalCost: keepCatalog ? state.totalCost : 0,
+      componentsPrice: keepCatalog ? state.componentsPrice : 0,
+      suggestedPrice: keepCatalog ? state.suggestedPrice : null,
+      price: keepCatalog ? Number(state.catalogPrice) : 0,
+      profit: keepCatalog ? Number(state.catalogPrice) - state.totalCost : 0,
+      costBreakdown: keepCatalog ? state.costBreakdown : null,
+    };
+  }),
   on(ProductFormPricingActions.setCostContribution, (state, { source, cost }) =>
     withTotalCost(state, {
       ...state.contributions,
@@ -83,6 +96,13 @@ export const productFormPricingReducer = createReducer(
     suggestedPrice:
       suggestedPrice != null && Number(suggestedPrice) > 0
         ? Number(suggestedPrice)
+        : null,
+  })),
+  on(ProductFormPricingActions.setCatalogPrice, (state, { catalogPrice }) => ({
+    ...state,
+    catalogPrice:
+      catalogPrice != null && Number(catalogPrice) > 0
+        ? Number(catalogPrice)
         : null,
   })),
   on(ProductFormPricingActions.setAppliedMargin, (state, { appliedMarginPercent }) => ({

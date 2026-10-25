@@ -6,7 +6,8 @@
             label="Cliente"
             [(ngModel)]="customerId"
             name="customerId"
-            placeholder="Opcional — seleccionar cliente"
+            [placeholder]="isQuoteForm ? 'Opcional — seleccionar cliente' : 'Seleccionar cliente'"
+            [required]="!isQuoteForm"
             [options]="customerOptions"
           />
           <db-button
@@ -30,6 +31,8 @@
             [(ngModel)]="dueDate"
             name="dueDate"
             [required]="true"
+            [min]="minDueDate"
+            [error]="dueDateError"
           />
         }
 
@@ -215,6 +218,18 @@
                   <p class="order-line__pricing-label">Costos</p>
 
                   @if (isDesignService(line.serviceType)) {
+                    <db-input
+                      label="Horas presupuestadas"
+                      type="number"
+                      [ngModel]="line.budgetedHours ?? 3"
+                      (ngModelChange)="onBudgetedHoursChange(line, $event)"
+                      [name]="'hours-' + i"
+                      [min]="0"
+                      [step]="0.5"
+                    />
+                    <p class="order-line__pricing-hint">
+                      Tarifa interna {{ laborRate | currencyArs }}/h. El importe inicial es tarifa × horas.
+                    </p>
                     <db-input
                       label="Costo diseño"
                       type="number"

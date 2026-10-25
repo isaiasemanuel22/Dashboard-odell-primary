@@ -1,11 +1,11 @@
 export type StoreCollection =
   | 'settings'
+  | 'brands'
   | 'categories'
   | 'customers'
   | 'products'
   | 'supplies'
   | 'impresos'
-  | 'materials'
   | 'orders'
   | 'quotes'
   | 'printJobs'
@@ -14,12 +14,12 @@ export type StoreCollection =
 
 export const ALL_STORE_COLLECTIONS: StoreCollection[] = [
   'settings',
+  'brands',
   'categories',
   'customers',
   'products',
   'supplies',
   'impresos',
-  'materials',
   'orders',
   'quotes',
   'printJobs',

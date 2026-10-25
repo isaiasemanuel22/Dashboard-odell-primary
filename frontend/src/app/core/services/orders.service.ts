@@ -64,6 +64,22 @@ export class OrdersService {
     });
   }
 
+  decideOrderPrice(
+    id: string,
+    action: 'apply' | 'keep',
+  ): Observable<Order> {
+    return this.http.post<Order>(`${this.baseUrl}/orders/${id}/price-decision`, {
+      action,
+    });
+  }
+
+  addPayment(
+    id: string,
+    data: { amount: number; deposit?: boolean },
+  ): Observable<Order> {
+    return this.http.post<Order>(`${this.baseUrl}/orders/${id}/payments`, data);
+  }
+
   createDelivery(
     id: string,
     data: CreateOrderDeliveryPayload,

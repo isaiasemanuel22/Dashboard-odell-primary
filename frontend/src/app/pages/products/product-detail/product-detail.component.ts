@@ -97,7 +97,6 @@ export class ProductDetailComponent implements OnInit {
   private readonly formDialogs = inject(FormDialogService);
   private readonly mediaUpload = inject(MediaUploadService);
   private readonly settingsService = inject(SettingsService);
-
   product: Product | null = null;
   colorCatalog: ColorConfig[] = [];
   attachments: ProductAttachment[] = [];

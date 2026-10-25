@@ -74,6 +74,12 @@ export class ProductFormPricingFacade {
     );
   }
 
+  setCatalogPrice(catalogPrice: number | null): void {
+    this.store.dispatch(
+      ProductFormPricingActions.setCatalogPrice({ catalogPrice }),
+    );
+  }
+
   setAppliedMargin(appliedMarginPercent: number): void {
     this.store.dispatch(
       ProductFormPricingActions.setAppliedMargin({ appliedMarginPercent }),

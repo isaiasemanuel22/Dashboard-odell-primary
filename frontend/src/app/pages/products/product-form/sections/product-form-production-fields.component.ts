@@ -36,7 +36,7 @@ import {
   SupplyLineListComponent,
 } from '../dynamic-lists/public-api';
 import { buildColorOptions } from '../../../../shared/utils/color.helpers';
-import { resinTypeOptions } from '../../../../shared/utils/select-options';
+import { resinTypeOptions as buildResinTypeOptions } from '../../../../shared/utils/select-options';
 
 @Component({
   selector: 'app-product-form-production-fields',
@@ -70,7 +70,9 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnDestroy {
   private generalSettings: GeneralSettings | null = null;
   private resinSupplies: Supply[] = [];
 
-  readonly resinTypeOptions = resinTypeOptions();
+  get resinTypeOptions() {
+    return [{ value: '', label: 'Elegí el tipo' }, ...buildResinTypeOptions()];
+  }
 
   ngOnInit(): void {
     this.settingsFacade

@@ -154,7 +154,13 @@ export function orderLineStockHint(
   product:
     | Pick<
         Product,
-        'id' | 'type' | 'includesPieces' | 'components' | 'stock' | 'finishedStock'
+        | 'id'
+        | 'type'
+        | 'includesPieces'
+        | 'components'
+        | 'stock'
+        | 'finishedStock'
+        | 'stockOverview'
       >
     | undefined,
   catalog?: Product[],
@@ -166,13 +172,15 @@ export function orderLineStockHint(
   const requested = Math.max(Math.trunc(Number(line.quantity) || 0), 0);
   if (requested <= 0) return null;
 
-  const available = catalog?.length
-    ? productStockOverview(product, undefined, catalog).physical
-    : productPhysicalStock(product);
+  const available = product.stockOverview
+    ? product.stockOverview.available
+    : catalog?.length
+      ? productStockOverview(product, undefined, catalog).available
+      : productPhysicalStock(product);
   if (requested <= available) return null;
 
   if (available === 0) {
-    return 'Sin stock disponible: al confirmar se creará una tarea de producción.';
+    return 'Sin stock disponible: al preparar el pedido se creará una tarea de producción.';
   }
 
   return `Stock insuficiente (${available} disponible): faltan ${requested - available} unidades por producir.`;
@@ -212,6 +220,7 @@ export function buildOrderItems(
           printLengthCm: line.includesPrint ? line.printLengthCm : undefined,
           printImpresoId: line.includesPrint ? line.printImpresoId : undefined,
           designUnitPrice: line.designUnitPrice ?? line.unitPrice,
+          budgetedHours: line.budgetedHours,
         };
       }
 
@@ -362,10 +371,35 @@ export function orderStatusOptions(): { value: OrderStatus; label: string }[] {
   return labelsToSelectOptions(ORDER_STATUS_LABELS);
 }
 
+export const DUE_DATE_AFTER_TODAY_MESSAGE =
+  'La fecha de entrega tiene que ser posterior a hoy';
+
 export function defaultDueDate(): string {
   const date = new Date();
   date.setDate(date.getDate() + 7);
-  return date.toISOString().slice(0, 10);
+  return localCalendarDay(date);
+}
+
+export function minimumDueDate(reference = new Date()): string {
+  const date = new Date(reference);
+  date.setDate(date.getDate() + 1);
+  return localCalendarDay(date);
+}
+
+export function isDueDateAfterToday(
+  value: string,
+  reference = new Date(),
+): boolean {
+  const day = value.trim().slice(0, 10);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(day)) return false;
+  return day > localCalendarDay(reference);
+}
+
+function localCalendarDay(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }
 
 export function toDateInputValue(isoDate: string): string {

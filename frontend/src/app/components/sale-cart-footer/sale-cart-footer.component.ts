@@ -67,6 +67,15 @@ export class SaleCartFooterComponent implements OnInit {
     );
   }
 
+  closeSaleBlockReason(lines: SaleCartLine[]): string | null {
+    if (!lines.length || this.canCloseSale(lines)) return null;
+    const names = lines
+      .filter((line) => line.quantity > this.availableStock(line.productId))
+      .map((line) => line.productName);
+    if (!names.length) return null;
+    return `No se puede cerrar la venta: ${names.join(', ')} no tiene stock suficiente. Creá un pedido para producirlo.`;
+  }
+
   removeLine(key: string): void {
     this.saleCart.removeLine(key);
   }

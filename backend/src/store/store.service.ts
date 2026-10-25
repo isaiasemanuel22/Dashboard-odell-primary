@@ -1,10 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import {
+  Brand,
   Category,
   Customer,
   GeneralSettings,
   Impreso,
-  Material,
   Order,
   PrintJob,
   Product,
@@ -23,6 +23,7 @@ import {
 @Injectable()
 export class StoreService {
   generalSettings!: GeneralSettings;
+  brands: Brand[] = [];
   supplies: Supply[] = [];
   impresos: Impreso[] = [];
   categories: Category[] = [];
@@ -32,7 +33,6 @@ export class StoreService {
   quotes: Quote[] = [];
   printJobs: PrintJob[] = [];
   retailSales: RetailSale[] = [];
-  materials: Material[] = [];
   treasuryExpenses: TreasuryExpense[] = [];
 
   private categoryIndexLen = -1;
@@ -41,7 +41,6 @@ export class StoreService {
   private orderIndexLen = -1;
   private quoteIndexLen = -1;
   private printJobIndexLen = -1;
-  private materialIndexLen = -1;
   private supplyIndexLen = -1;
   private impresoIndexLen = -1;
   private retailSaleIndexLen = -1;
@@ -52,13 +51,13 @@ export class StoreService {
   private orderById = new Map<string, Order>();
   private quoteById = new Map<string, Quote>();
   private printJobById = new Map<string, PrintJob>();
-  private materialById = new Map<string, Material>();
   private supplyById = new Map<string, Supply>();
   private impresoById = new Map<string, Impreso>();
   private retailSaleById = new Map<string, RetailSale>();
 
   applyState(state: StoreState): void {
     this.generalSettings = state.generalSettings;
+    this.brands = state.brands ?? [];
     this.supplies = state.supplies;
     this.impresos = state.impresos;
     this.categories = state.categories;
@@ -68,7 +67,6 @@ export class StoreService {
     this.quotes = state.quotes;
     this.printJobs = state.printJobs;
     this.retailSales = state.retailSales;
-    this.materials = state.materials;
     this.treasuryExpenses = state.treasuryExpenses;
     this.invalidateIndexes();
   }
@@ -76,6 +74,7 @@ export class StoreService {
   toState(): StoreState {
     return {
       generalSettings: this.generalSettings,
+      brands: this.brands,
       supplies: this.supplies,
       impresos: this.impresos,
       categories: this.categories,
@@ -85,7 +84,6 @@ export class StoreService {
       quotes: this.quotes,
       printJobs: this.printJobs,
       retailSales: this.retailSales,
-      materials: this.materials,
       treasuryExpenses: this.treasuryExpenses,
     };
   }
@@ -227,21 +225,6 @@ export class StoreService {
     return this.printJobById.get(id);
   }
 
-  getMaterialById(id: string): Material | undefined {
-    this.ensureMaterialIndex();
-    return this.materialById.get(id);
-  }
-
-  indexMaterial(material: Material): void {
-    this.ensureMaterialIndex();
-    this.materialById.set(material.id, material);
-  }
-
-  replaceMaterial(material: Material): void {
-    replaceInCollection(this.materials, material.id, material);
-    this.indexMaterial(material);
-  }
-
   getSupplyById(id: string): Supply | undefined {
     this.ensureSupplyIndex();
     return this.supplyById.get(id);
@@ -318,7 +301,6 @@ export class StoreService {
     this.orderIndexLen = -1;
     this.quoteIndexLen = -1;
     this.printJobIndexLen = -1;
-    this.materialIndexLen = -1;
     this.supplyIndexLen = -1;
     this.impresoIndexLen = -1;
     this.retailSaleIndexLen = -1;
@@ -358,12 +340,6 @@ export class StoreService {
     if (this.printJobIndexLen === this.printJobs.length) return;
     this.printJobById = new Map(this.printJobs.map((item) => [item.id, item]));
     this.printJobIndexLen = this.printJobs.length;
-  }
-
-  private ensureMaterialIndex(): void {
-    if (this.materialIndexLen === this.materials.length) return;
-    this.materialById = new Map(this.materials.map((item) => [item.id, item]));
-    this.materialIndexLen = this.materials.length;
   }
 
   private ensureSupplyIndex(): void {

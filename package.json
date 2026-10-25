@@ -2,8 +2,8 @@
   "name": "odell-dashboard",
   "private": true,
   "engines": {
-    "node": "20.x",
-    "npm": "10.8.2"
+    "node": "22.x",
+    "npm": "10.9.9"
   },
   "scripts": {
     "setup:local": "bash scripts/setup-local-env.sh",
