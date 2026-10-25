@@ -117,7 +117,7 @@
       </div>
     </div>
 
-    @if ((overview.debtors ?? []).length) {
+    @if (overview.debtors.length) {
       <div class="wallet-table-wrap">
         <table class="wallet-table wallet-table--debtors">
           <thead>
@@ -128,7 +128,7 @@
             </tr>
           </thead>
           <tbody>
-            @for (debtor of overview.debtors ?? []; track debtor.name) {
+            @for (debtor of overview.debtors; track debtor.name) {
               <tr>
                 <td><strong>{{ debtor.name }}</strong></td>
                 <td class="wallet-table__debt">{{ debtor.amount | currencyArs }}</td>
