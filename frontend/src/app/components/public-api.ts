@@ -1,5 +1,7 @@
 export * from './dashboard-form/public-api';
 export * from './db-button';
+export * from './db-data-table';
+export * from './db-row-menu';
 export * from './form-modal';
 
 // Listados y UI compartida

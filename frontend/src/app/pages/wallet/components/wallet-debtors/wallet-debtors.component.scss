@@ -1,0 +1,47 @@
+@use '../wallet-table';
+@use '../../../../shared/styles/variables' as *;
+
+.wallet-table--debtors .wallet-table__debt {
+  color: $color-warning-accent;
+  font-weight: 700;
+}
+
+.wallet-debtors {
+  margin-top: 1.5rem;
+
+  h3 {
+    margin: 0;
+    font-size: $font-amount;
+    font-weight: 700;
+  }
+
+  > p {
+    margin: 0.2rem 0 0.75rem;
+    color: $color-text-muted;
+    font-size: $font-meta;
+  }
+}
+
+.debtor-movement {
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+  color: $color-text-muted;
+  font-size: $font-meta;
+
+  strong {
+    color: $color-text;
+    font-size: $font-body;
+    font-weight: 600;
+  }
+
+  .is-overdue {
+    color: $color-error;
+    font-weight: 600;
+  }
+}
+
+.wallet-table__actions {
+  text-align: right;
+  white-space: nowrap;
+}

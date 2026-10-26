@@ -86,7 +86,7 @@ export class DashboardMonthlyTrendsComponent
     const canvas = this.ordersCanvas?.nativeElement;
     if (!canvas) return;
 
-    const labels = this.trends.map((point) => point.label);
+    const labels = this.trends.map((point) => point.label.split(' ')[0] ?? point.label);
     const data = this.trends.map((point) => point.ordersCount);
 
     const config: ChartConfiguration<'line'> = {
@@ -126,7 +126,7 @@ export class DashboardMonthlyTrendsComponent
     const canvas = this.revenueCanvas?.nativeElement;
     if (!canvas) return;
 
-    const labels = this.trends.map((point) => point.label);
+    const labels = this.trends.map((point) => point.label.split(' ')[0] ?? point.label);
     const data = this.trends.map((point) => point.revenue);
 
     const config: ChartConfiguration<'line'> = {

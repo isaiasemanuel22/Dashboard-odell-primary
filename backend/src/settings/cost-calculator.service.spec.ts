@@ -24,6 +24,8 @@ describe('CostCalculatorService', () => {
       electricityCostPerKwh: 100,
       errorMarginPercent: 10,
       laborCostPerHour: 500,
+      modelingRatePerHour: 0,
+      graphicDesignRatePerHour: 0,
       machineProfiles: createDefaultMachineProfiles().map((profile) =>
         profile.id === 'mp-res-wash'
           ? { ...profile, washSupplyId: 'sup-alcohol' }

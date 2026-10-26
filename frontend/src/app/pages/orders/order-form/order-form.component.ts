@@ -422,8 +422,21 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return 'Presupuesto calculado según configuración de costos y margen de Impresión 3D.';
   }
 
-  get laborRate(): number {
-    return this.generalSettings?.laborCostPerHour ?? 0;
+  serviceRate(line: OrderLineDraft): number {
+    if (!this.generalSettings) return 0;
+    if (isGraphicDesignService(line.serviceType)) {
+      return this.generalSettings.graphicDesignRatePerHour ?? 0;
+    }
+    if (line.serviceType === ServiceType.MODELADO) {
+      return this.generalSettings.modelingRatePerHour ?? 0;
+    }
+    return 0;
+  }
+
+  serviceRateLabel(line: OrderLineDraft): string {
+    return isGraphicDesignService(line.serviceType)
+      ? 'Tarifa diseño gráfico'
+      : 'Tarifa modelado';
   }
 
   onBudgetedHoursChange(line: OrderLineDraft, raw: number | string): void {
@@ -682,7 +695,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   private applyDesignBudget(line: OrderLineDraft): void {
     const hours = line.budgetedHours ?? 3;
     line.budgetedHours = hours;
-    const cost = Math.round(this.laborRate * hours);
+    const cost = Math.round(this.serviceRate(line) * hours);
     line.unitCost = cost;
     const price = priceFromCostAndMargin(cost, this.designMarginFor(line));
     line.unitPrice = price;

@@ -1,0 +1,65 @@
+<app-form-modal title="Registrar devolución" size="md" (close)="closed.emit()">
+  <form class="wallet-form form" (ngSubmit)="submitRepayment()" novalidate>
+    <section class="wallet-form__section">
+      <div class="wallet-form__section-head">
+        <h4>{{ debtor.name }}</h4>
+        <p>
+          Deuda pendiente:
+          <strong>{{ debtor.amount | currencyArs }}</strong>
+        </p>
+      </div>
+
+      <db-form-grid>
+        <db-input
+          label="Fecha"
+          type="date"
+          [(ngModel)]="repaymentDate"
+          name="repaymentDate"
+          [required]="true"
+          [max]="maxExpenseDate"
+        />
+
+        <db-input
+          label="Monto a devolver"
+          type="number"
+          min="1"
+          [max]="debtor.amount"
+          step="1"
+          [(ngModel)]="repaymentAmount"
+          name="repaymentAmount"
+          placeholder="0"
+          [required]="true"
+          (ngModelChange)="onRepaymentAmountChange()"
+        />
+      </db-form-grid>
+
+      <div class="wallet-summary wallet-summary--income">
+        <span class="wallet-summary__label">Ingreso a registrar</span>
+        <strong class="wallet-summary__amount">
+          {{ repaymentAmount | currencyArs }}
+        </strong>
+      </div>
+    </section>
+
+    @if (repaymentError) {
+      <p class="wallet-form__error" role="alert">{{ repaymentError }}</p>
+    }
+
+    <footer class="wallet-form__footer form-footer">
+      <db-button
+        label="Cancelar"
+        variant="secondary"
+        format="soft"
+        [disabled]="repaymentSaving"
+        (clicked)="closed.emit()"
+      />
+      <db-button
+        [label]="repaymentSaving ? 'Guardando...' : 'Registrar devolución'"
+        variant="primary"
+        format="solid"
+        buttonType="submit"
+        [disabled]="repaymentSaving"
+      />
+    </footer>
+  </form>
+</app-form-modal>

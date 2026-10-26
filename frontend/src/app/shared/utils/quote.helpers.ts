@@ -43,7 +43,7 @@ export function lineFromQuoteItem(item: QuoteItem) {
 
 export function quoteServiceFilters(): ListFilterOption<ServiceType | 'all'>[] {
   return [
-    { value: 'all', label: 'Todos' },
+    { value: 'all', label: 'Todas' },
     ...labelsToSelectOptions(SERVICE_TYPE_LABELS),
   ];
 }

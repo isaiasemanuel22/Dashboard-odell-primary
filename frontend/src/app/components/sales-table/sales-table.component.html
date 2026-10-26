@@ -9,29 +9,33 @@
     }
   </div>
 } @else {
-  <div class="table-card sales-table">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>ID</th>
-          <th>Origen</th>
-          <th>Fecha</th>
-          <th>Detalle</th>
-          <th class="sales-table__col-total">Total</th>
-          <th class="sales-table__col-cost">Costo</th>
-          <th class="sales-table__col-profit">Ganancia</th>
-          <th class="actions">Acciones</th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (entry of entries; track entry.id) {
-          <app-sale-entry-row
-            [entry]="entry"
-            (edit)="edit.emit($event)"
-            (delete)="delete.emit($event)"
-          />
+  <db-data-table
+    label="Ventas"
+    [rows]="entries"
+    [columns]="columns"
+    [actions]="actions"
+    [clientSide]="false"
+    (action)="onAction($event)"
+  >
+    <ng-template odlCell="saleId" let-entry>
+      @if (entry.orderId) {
+        <a [routerLink]="['/pedidos', entry.orderId]" class="order-link">{{ entry.saleId }}</a>
+      } @else {
+        <strong>{{ entry.saleId }}</strong>
+      }
+    </ng-template>
+    <ng-template odlCell="source" let-entry>
+      <app-sale-source-badge [source]="entry.source" />
+    </ng-template>
+    <ng-template odlCell="detail" let-entry>
+      <ul class="sale-entry-row__items">
+        @for (item of entry.items; track $index) {
+          <app-sale-entry-item [item]="item" />
         }
-      </tbody>
-    </table>
-  </div>
+      </ul>
+      @if (entry.customerName && entry.source === orderSource) {
+        <small class="sale-entry-row__customer">Cliente: {{ entry.customerName }}</small>
+      }
+    </ng-template>
+  </db-data-table>
 }

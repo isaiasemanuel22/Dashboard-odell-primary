@@ -6,10 +6,8 @@ import {
   OnInit,
   inject,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Customer } from '../../core/models';
-import { RealtimeEvent } from '../../core/models/realtime.model';
 import { CustomerCatalogService } from '../../core/services/customer-catalog.service';
 import { CustomersService } from '../../core/services/customers.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
@@ -17,10 +15,12 @@ import { RealtimeService } from '../../core/services/realtime.service';
 import { removeById, upsertById } from '../../core/utils/replace-in-store';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import {
-  CustomerCardComponent,
-  DbListToolbarComponent,
-  DbStateMessageComponent,
+  DB_DATA_TABLE,
   DbButtonComponent,
+  OdlActionEvent,
+  OdlColumn,
+  OdlFilter,
+  OdlRowAction,
 } from '@general-components';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import {
@@ -31,13 +31,7 @@ import {
 @Component({
   selector: 'app-customers',
   standalone: true,
-  imports: [
-    FormsModule,
-    CustomerCardComponent,
-    DbStateMessageComponent,
-    DbListToolbarComponent,
-    DbButtonComponent,
-  ],
+  imports: [DbButtonComponent, ...DB_DATA_TABLE],
   templateUrl: './customers.component.html',
   styleUrl: './customers.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -55,7 +49,30 @@ export class CustomersComponent implements OnInit {
 
   customers: Customer[] = [];
   loading = true;
-  search = '';
+
+  readonly kindFilters: OdlFilter<Customer>[] = [
+    { id: 'all', label: 'Todos' },
+    { id: 'company', label: 'Empresas', predicate: (customer) => Boolean(customer.company?.trim()) },
+    { id: 'person', label: 'Particulares', predicate: (customer) => !customer.company?.trim() },
+  ];
+
+  readonly actions: OdlRowAction<Customer>[] = [
+    { id: 'editar', label: 'Editar' },
+    { id: 'eliminar', label: 'Eliminar', danger: true },
+  ];
+
+  readonly columns: OdlColumn<Customer>[] = [
+    {
+      key: 'name',
+      header: 'Cliente',
+      type: 'avatar',
+      sortable: true,
+      secondary: (customer) => customer.company?.trim() || 'Particular',
+    },
+    { key: 'email', header: 'Email' },
+    { key: 'phone', header: 'Teléfono', value: (customer) => customer.phone || null },
+    { key: 'createdAt', header: 'Cliente desde', type: 'date', sortable: true },
+  ];
 
   ngOnInit(): void {
     this.loadCustomers();
@@ -70,20 +87,13 @@ export class CustomersComponent implements OnInit {
     }
   }
 
-  get filteredCustomers(): Customer[] {
-    const term = this.search.trim().toLowerCase();
-    if (!term) return this.customers;
-    return this.customers.filter((customer) => {
-      const haystack = [
-        customer.name,
-        customer.email,
-        customer.phone,
-        customer.company ?? '',
-      ]
-        .join(' ')
-        .toLowerCase();
-      return haystack.includes(term);
-    });
+  get companyCount(): number {
+    return this.customers.filter((customer) => Boolean(customer.company?.trim())).length;
+  }
+
+  onAction(event: OdlActionEvent<Customer>): void {
+    if (event.actionId === 'editar') this.openEditCustomer(event.row);
+    if (event.actionId === 'eliminar') this.deleteCustomer(event.row);
   }
 
   loadCustomers(): void {

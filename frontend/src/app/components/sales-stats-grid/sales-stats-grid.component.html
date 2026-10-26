@@ -21,13 +21,13 @@
     <app-sale-stat-card
       label="Ingresos de pedidos"
       [value]="stats.monthlyOrdersRevenue"
-      [detail]="stats.monthlyOrdersCount + ' pedido(s)'"
+      [detail]="ordersDetail"
       variant="revenue-soft"
     />
     <app-sale-stat-card
-      label="Ingresos de ventas"
+      label="Ingresos de mostrador"
       [value]="stats.monthlyRetailRevenue"
-      [detail]="stats.monthlyRetailCount + ' venta(s)'"
+      [detail]="retailDetail"
       variant="revenue-soft"
     />
   </div>

@@ -119,6 +119,10 @@ export interface GeneralSettings {
   machineCosts: MachineCostConfig[];
   machineProfiles: MachineProfile[];
   laborCostPerHour: number;
+  /** Tarifa horaria de modelado 3D. */
+  modelingRatePerHour: number;
+  /** Tarifa horaria de diseño gráfico. */
+  graphicDesignRatePerHour: number;
   profitMargins: ServiceProfitMargins;
   paperPricesPerSqm: PaperPricesPerSqm;
   paperReferenceSheets: PaperReferenceSheets;
@@ -677,17 +681,22 @@ export interface MonthlyTrendPoint {
 
 export type DashboardNotificationType = 'info' | 'warning' | 'success';
 
+export type DashboardNotificationKind = 'order' | 'stock' | 'queue' | 'other';
+
 export interface DashboardNotification {
   id: string;
   type: DashboardNotificationType;
+  kind: DashboardNotificationKind;
   title: string;
   message: string;
   route?: string;
+  areas?: ServiceType[];
 }
 
 export interface DashboardStats {
   totalOrders: number;
   pendingOrders: number;
+  overdueOrders: number;
   inProductionOrders: number;
   monthlyRevenue: number;
   walletBalance: number;

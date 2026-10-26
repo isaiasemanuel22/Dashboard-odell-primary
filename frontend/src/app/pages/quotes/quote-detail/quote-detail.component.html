@@ -98,75 +98,64 @@
     <div class="detail-main">
       <section class="panel">
         <h3>Líneas del presupuesto</h3>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Servicio</th>
-              <th>Concepto / producto</th>
-              <th>Cant.</th>
-              <th>Precio unit.</th>
-              <th>Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of quote.items; track $index) {
-              <tr>
-                <td>{{ item.serviceType | serviceTypeLabel }}</td>
-                <td>
-                  @if (item.productId) {
-                    <a [routerLink]="['/productos', item.productId]" class="product-link">
-                      {{ item.productName }}
-                    </a>
-                  } @else {
-                    {{ item.productName }}
-                  }
-                  @if (item.filamentType || item.grams || item.printTimeHours) {
-                    <div class="quote-item-specs">
-                      @if (item.filamentType) {
-                        <span>{{ item.filamentType }}</span>
-                      }
-                      @if (item.grams) {
-                        <span>{{ item.grams }} g</span>
-                      }
-                      @if (item.printTimeHours) {
-                        <span>{{ item.printTimeHours }} h</span>
-                      }
-                    </div>
-                  }
-                </td>
-                <td>{{ item.quantity }}</td>
-                <td>
-                  @if (isDesignService(item.serviceType)) {
-                    {{ (item.designUnitPrice ?? item.unitPrice) | currencyArs }}
-                    @if (item.includesPrint) {
-                      <span class="quote-item__print-unit">
-                        + {{ printUnitPrice(item) | currencyArs }}/u
-                      </span>
-                    }
-                  } @else {
-                    {{ item.unitPrice | currencyArs }}
-                  }
-                </td>
-                <td>{{ lineSubtotal(item) | currencyArs }}</td>
-              </tr>
+        <db-data-table
+          label="Líneas del presupuesto"
+          [rows]="quote.items"
+          [columns]="lineColumns"
+          [clientSide]="false"
+        >
+          <ng-template odlCell="product" let-item>
+            @if (item.productId) {
+              <a [routerLink]="['/productos', item.productId]" class="product-link">
+                {{ item.productName }}
+              </a>
+            } @else {
+              {{ item.productName }}
             }
-          </tbody>
-          <tfoot>
+            @if (item.filamentType || item.grams || item.printTimeHours) {
+              <div class="quote-item-specs">
+                @if (item.filamentType) {
+                  <span>{{ item.filamentType }}</span>
+                }
+                @if (item.grams) {
+                  <span>{{ item.grams }} g</span>
+                }
+                @if (item.printTimeHours) {
+                  <span>{{ item.printTimeHours }} h</span>
+                }
+              </div>
+            }
+          </ng-template>
+          <ng-template odlCell="unitPrice" let-item>
+            @if (isDesignService(item.serviceType)) {
+              {{ (item.designUnitPrice ?? item.unitPrice) | currencyArs }}
+              @if (item.includesPrint) {
+                <span class="quote-item__print-unit">
+                  + {{ printUnitPrice(item) | currencyArs }}/u
+                </span>
+              }
+            } @else {
+              {{ item.unitPrice | currencyArs }}
+            }
+          </ng-template>
+        </db-data-table>
+        <table class="data-table">
+          <tbody>
             <tr>
-              <td colspan="4"><strong>Subtotal</strong></td>
+              <td><strong>Subtotal</strong></td>
               <td><strong>{{ quoteSubtotal | currencyArs }}</strong></td>
             </tr>
             @if (quoteDiscount > 0) {
               <tr class="quote-discount-row">
-                <td colspan="4"><strong>Descuento</strong></td>
+                <td><strong>Descuento</strong></td>
                 <td><strong>-{{ quoteDiscount | currencyArs }}</strong></td>
               </tr>
             }
             <tr>
-              <td colspan="4"><strong>Total</strong></td>
+              <td><strong>Total</strong></td>
               <td><strong>{{ quote.total | currencyArs }}</strong></td>
             </tr>
-          </tfoot>
+          </tbody>
         </table>
       </section>
 

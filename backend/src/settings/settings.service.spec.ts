@@ -10,6 +10,8 @@ describe('SettingsService.patchGeneralSettings', () => {
   const baseSettings = (): GeneralSettings => ({
     electricityCostPerKwh: 2500,
     laborCostPerHour: 1000,
+    modelingRatePerHour: 0,
+    graphicDesignRatePerHour: 0,
     errorMarginPercent: 30,
     profitMargins: {
       [ServiceType.IMPRESION_3D]: 350,

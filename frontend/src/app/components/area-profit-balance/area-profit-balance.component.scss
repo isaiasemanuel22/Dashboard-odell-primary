@@ -1,4 +1,5 @@
 @use '../../shared/styles/variables' as *;
+@use '../../shared/styles/screen' as screen;
 
 .area-profit-balance {
   &__header {
@@ -12,38 +13,59 @@
     p {
       margin: 0;
       color: $color-text-muted;
-      font-size: 0.875rem;
+      font-size: $font-screen-subtitle;
     }
   }
 
   &__grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-    gap: 1rem;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 1100px) {
+  .area-profit-balance__grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .area-profit-balance__grid {
+    grid-template-columns: 1fr;
   }
 }
 
 .area-card {
-  padding: 1rem 1.1rem;
-  border: 1px solid $color-border;
-  border-radius: $radius-md;
-  background: $color-surface;
+  @include screen.metric-card;
 
-  h4 {
-    margin: 0 0 0.85rem;
-    font-size: 0.95rem;
-    color: $color-text-label;
+  &__chip {
+    display: inline-flex;
+    align-items: center;
+    height: 22px;
+    margin-bottom: 0.85rem;
+    padding: 0 9px;
+    border-radius: 999px;
+    border: 1px solid;
+    font-size: 11px;
+    font-weight: 700;
+
+    &--impresion_3d { color: #1d4ed8; border-color: #a9c1f7; background: #f1f5ff; }
+    &--diseno_grafico { color: #7e22ce; border-color: #d7bdf5; background: #f8f2ff; }
+    &--modelado { color: #0f766e; border-color: #99d6ce; background: #eefaf8; }
+    &--estampado { color: #c2410c; border-color: #f7c3a1; background: #fff5ee; }
   }
 
-  dl {
+  &__totals {
     margin: 0;
     display: grid;
-    gap: 0.65rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.5rem;
   }
 
   dt {
     margin: 0;
-    font-size: 0.78rem;
+    font-size: $font-meta;
     color: $color-text-muted;
     text-transform: uppercase;
     letter-spacing: 0.04em;
@@ -51,34 +73,29 @@
 
   dd {
     margin: 0.15rem 0 0;
-    font-size: 1.05rem;
-    font-weight: 600;
+    font-size: $font-body;
+    font-weight: 700;
     color: $color-text;
   }
 
   &__profit dd {
-    color: $color-primary-dark;
+    color: $color-success;
   }
 
   &__sources {
-    margin-top: 1rem;
-    padding-top: 0.85rem;
-    border-top: 1px solid $color-border;
-    display: grid;
-    gap: 0.45rem;
+    margin-top: 0.85rem;
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    font-size: $font-meta;
+    color: $color-text-muted;
   }
 }
 
 .source-row {
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  font-size: 0.875rem;
-
-  &__label {
-    color: $color-text-muted;
-  }
+  gap: 0.35rem;
 
   &__value {
     font-weight: 600;

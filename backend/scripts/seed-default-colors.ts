@@ -46,6 +46,8 @@ async function main(): Promise<void> {
           id: 1,
           electricityCostPerKwh: 0,
           laborCostPerHour: 0,
+          modelingRatePerHour: 0,
+          graphicDesignRatePerHour: 0,
           profitMargins: toInputJson({
             impresion_3d: 40,
             diseno_grafico: 50,

@@ -29,12 +29,15 @@ import { RealtimeCatalogSyncService } from '../../../core/services/realtime-cata
 import { RealtimeService } from '../../../core/services/realtime.service';
 import {
   DbButtonComponent,
+  DbCheckboxComponent,
   DbInputComponent,
   DbSelectComponent,
   DbServiceBadgesComponent,
   DbSkeletonComponent,
   DbStateMessageComponent,
   DbStatusBadgeComponent,
+  DB_DATA_TABLE,
+  OdlColumn,
 } from '@general-components';
 import { FormDialogService } from '../../../shared/form-dialogs/public-api';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
@@ -50,6 +53,7 @@ import {
   ORDER_STATUS_CHANGE_SOURCE_LABELS,
   ORDER_STATUS_LABELS,
   TASK_KIND_LABELS,
+  SERVICE_TYPE_LABELS,
 } from '../../../shared/constants/labels';
 import {
   CurrencyArsPipe,
@@ -57,7 +61,6 @@ import {
   DateTimePipe,
   OrderStatusLabelPipe,
   PrintJobStatusLabelPipe,
-  ServiceTypeLabelPipe,
   RichTextPipe,
   PlainTextLengthPipe,
 } from '../../../shared/pipes/labels.pipe';
@@ -74,16 +77,17 @@ import { priorityTierClass } from '../../../shared/utils/priority.helpers';
     CurrencyArsPipe,
     OrderStatusLabelPipe,
     PrintJobStatusLabelPipe,
-    ServiceTypeLabelPipe,
     RichTextPipe,
     PlainTextLengthPipe,
     DbSelectComponent,
     DbButtonComponent,
     DbInputComponent,
+    DbCheckboxComponent,
     DbSkeletonComponent,
     DbStateMessageComponent,
     DbStatusBadgeComponent,
     DbServiceBadgesComponent,
+    ...DB_DATA_TABLE,
   ],
   templateUrl: './order-detail.component.html',
   styleUrl: './order-detail.component.scss',
@@ -103,6 +107,36 @@ export class OrderDetailComponent implements OnInit {
 
   order: Order | null = null;
   tasks: PrintJob[] = [];
+
+  readonly lineColumns: OdlColumn<OrderItem>[] = [
+    { key: 'service', header: 'Servicio', value: (item) => SERVICE_TYPE_LABELS[item.serviceType] },
+    { key: 'product', header: 'Concepto / producto' },
+    { key: 'quantity', header: 'Cant.', type: 'number' },
+    { key: 'stock', header: 'Stock', type: 'number', value: (item) => this.itemFromStock(item) },
+    { key: 'produce', header: 'A producir', type: 'number', value: (item) => this.itemToProduce(item) },
+    { key: 'reserved', header: 'Reservado', type: 'number', value: (item) => this.itemReserved(item) },
+    { key: 'produced', header: 'Producido', type: 'number', value: (item) => this.itemProduced(item) },
+    { key: 'delivered', header: 'Entregado', type: 'number', value: (item) => this.itemDelivered(item) },
+    { key: 'pending', header: 'Pendiente', type: 'number', value: (item) => this.itemPending(item) },
+    { key: 'unitPrice', header: 'Precio unit.' },
+    { key: 'subtotal', header: 'Subtotal', type: 'money', value: (item) => this.lineSubtotal(item) },
+  ];
+
+  readonly taskColumns: OdlColumn<PrintJob>[] = [
+    {
+      key: 'productName',
+      header: 'Tarea',
+      type: 'primary',
+      note: (task) =>
+        task.status === 'bloqueado' && task.blockedReason
+          ? { text: `Bloqueo: ${task.blockedReason}`, tone: 'danger' }
+          : null,
+    },
+    { key: 'taskKind', header: 'Tipo', value: (task) => this.taskKindLabels[task.taskKind] },
+    { key: 'status', header: 'Estado' },
+    { key: 'active', header: 'Ubicación', value: (task) => (task.active ? 'Tablero' : 'Pendiente') },
+    { key: 'dueDate', header: 'Entrega', type: 'date' },
+  ];
   alerts: OrderAlert[] = [];
   priceNotices: OrderPriceNotice[] = [];
   priceDecisionLoading = false;

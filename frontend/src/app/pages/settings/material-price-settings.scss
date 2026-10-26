@@ -1,0 +1,127 @@
+@use '../../shared/styles/variables' as *;
+@use '../../shared/styles/screen' as screen;
+
+:host {
+  display: block;
+}
+
+.material-page {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
+.message {
+  @include screen.success-note;
+}
+
+.settings-card,
+.quick-card {
+  @include screen.settings-card-shell;
+}
+
+.settings-card__head {
+  margin-bottom: 0.85rem;
+
+  h3,
+  .quick-card h4 {
+    margin: 0;
+  }
+
+  h3 {
+    font-size: $font-amount;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.2rem 0 0;
+    color: $color-text-muted;
+    font-size: $font-meta;
+    line-height: 1.45;
+  }
+}
+
+.quick-card h4 {
+  margin: 0 0 0.8rem;
+  font-size: $font-body;
+  font-weight: 700;
+}
+
+.material-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0.85rem 0;
+}
+
+.list-areas {
+  @include screen.screen-areas;
+  margin-bottom: 0;
+}
+
+.list-area-pill {
+  @include screen.screen-pill;
+}
+
+.list-search {
+  @include screen.screen-search;
+}
+
+.data-table .num {
+  text-align: right;
+}
+
+.type-pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid $color-border-soft;
+  border-radius: $radius-pill;
+  padding: 0.12rem 0.55rem;
+  background: $color-surface;
+  color: $color-text-label;
+  font-size: $font-meta;
+  font-weight: 700;
+}
+
+.menu-cell {
+  @include screen.menu-cell;
+}
+
+.quick-form {
+  display: grid;
+  grid-template-columns: 1.3fr 0.9fr 0.9fr auto;
+  gap: 0.75rem;
+  align-items: end;
+
+  @media (max-width: 860px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.quick-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+  color: $color-text-label;
+  font-size: $font-meta;
+  font-weight: 600;
+}
+
+.quick-form db-select,
+.quick-form db-autocomplete {
+  display: block;
+}
+
+.quick-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.5rem;
+}
+
+.empty-group {
+  @include screen.muted-empty;
+}

@@ -1,3 +1,5 @@
+@use '../../shared/styles/variables' as *;
+@use '../../shared/styles/screen' as screen;
 @use '../../shared/styles/mobile' as mobile;
 
 :host {
@@ -6,5 +8,30 @@
 
   @include mobile.mobile-only {
     padding-bottom: calc(7.5rem + mobile.$mobile-bottom-nav-height);
+  }
+}
+
+.page-header {
+  align-items: center;
+}
+
+.header-actions {
+  @include screen.screen-actions;
+}
+
+.sales-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+
+  h3 {
+    margin: 0 0 0.2rem;
+    font-size: 1.05rem;
+  }
+
+  p {
+    margin: 0;
+    color: $color-text-muted;
+    font-size: $font-screen-subtitle;
   }
 }

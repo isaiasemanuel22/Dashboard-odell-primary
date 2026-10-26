@@ -32,10 +32,53 @@ $color-warning-bg: #fef3c7;
 $color-warning-text: #92400e;
 $color-warning-accent: #b45309;
 
-$color-sidebar-from: #0c1a24;
-$color-sidebar-to: #061018;
-$color-sidebar-text: #e2e8f0;
-$color-sidebar-text-muted: #94a3b8;
+$color-sidebar-from: #0c1520;
+$color-sidebar-to: #0c1520;
+$color-sidebar-text: #f8fafc;
+$color-sidebar-text-muted: #9aa8b8;
+
+/** Bordes y fondos de las listas (pedidos, presupuestos). */
+$color-border-soft: #d7e3ea;
+$color-divider: #e6eef3;
+$color-divider-row: #eef3f6;
+$color-surface-inset: #f8fbfc;
+$color-danger-border: #fecaca;
+$color-danger-text: #b91c1c;
+
+$color-area-3d: #1d4ed8;
+$color-area-3d-border: #bfdbfe;
+$color-area-design: #6d28d9;
+$color-area-design-border: #ddd6fe;
+$color-area-print: #c2410c;
+$color-area-print-border: #fed7aa;
+
+$color-status-neutral-bg: #f1f5f9;
+$color-status-warning-bg: $color-warning-bg;
+$color-status-warning-text: $color-warning-text;
+$color-status-info-bg: #dbeafe;
+$color-status-info-text: #1d4ed8;
+$color-status-progress-bg: #ede9fe;
+$color-status-progress-text: #6d28d9;
+$color-status-success-bg: #dcfce7;
+$color-status-success-text: #166534;
+$color-status-alert-bg: #ffedd5;
+$color-status-alert-text: #9a3412;
+$color-status-danger-bg: #fee2e2;
+$color-status-danger-text: #991b1b;
+
+$color-category-general: #64748b;
+$color-category-general-border: #e2e8f0;
+$color-stock-ok-bg: $color-status-success-bg;
+$color-stock-ok-text: $color-status-success-text;
+
+/** Escala de las pantallas de lista. */
+$font-screen-title: 1.5rem;
+$font-screen-subtitle: 0.875rem;
+$font-control: 0.8125rem;
+$font-body: 0.875rem;
+$font-emphasis: 0.9375rem;
+$font-meta: 0.75rem;
+$font-amount: 1rem;
 
 $radius-xs: 6px;
 $radius-sm: 8px;

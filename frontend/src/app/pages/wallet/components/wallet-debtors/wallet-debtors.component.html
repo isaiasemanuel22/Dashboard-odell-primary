@@ -1,0 +1,16 @@
+<section class="wallet-debtors">
+  <h3>Deudores</h3>
+  <p>Saldo pendiente por préstamos registrados</p>
+
+  @if (debtors.length) {
+    <db-data-table
+      label="Deudores"
+      [rows]="debtors"
+      [columns]="columns"
+      [clientSide]="false"
+      (action)="onAction($event)"
+    />
+  } @else {
+    <p class="empty-group">No hay deudores con saldo pendiente.</p>
+  }
+</section>

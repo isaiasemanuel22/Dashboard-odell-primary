@@ -1,0 +1,247 @@
+<!-- Barra de filtros: chips de estado + buscador, y debajo chips de área -->
+@if (hasToolbar()) {
+  <div class="odl-toolbar">
+    @if (filters().length) {
+      <div class="odl-chips" role="group" aria-label="Filtrar por estado">
+        @for (f of filters(); track f.id) {
+          <button
+            type="button"
+            class="odl-chip"
+            [class.is-active]="f.id === activeFilter()"
+            [attr.aria-pressed]="f.id === activeFilter()"
+            (click)="setFilter(f.id)">
+            {{ f.label }}
+          </button>
+        }
+      </div>
+    } @else {
+      <span></span>
+    }
+
+    @if (searchPlaceholder() !== null) {
+      <label class="odl-search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+        <input
+          type="search"
+          [placeholder]="searchPlaceholder()"
+          [attr.aria-label]="searchPlaceholder()"
+          [value]="search()"
+          (input)="onSearch($any($event.target).value)" />
+      </label>
+    }
+  </div>
+
+  @if (areaFilters().length) {
+    <div class="odl-chips odl-chips--area" role="group" [attr.aria-label]="'Filtrar por ' + areaLabel()">
+      <span class="odl-chips__label">{{ areaLabel() }}</span>
+      @for (a of areaFilters(); track a.id) {
+        <button
+          type="button"
+          class="odl-achip"
+          [class.is-active]="a.id === activeArea()"
+          [attr.aria-pressed]="a.id === activeArea()"
+          (click)="setArea(a.id)">
+          {{ a.label }}
+        </button>
+      }
+    </div>
+  }
+}
+
+<!-- Tabla -->
+<div class="odl-box">
+  <table class="odl-table" [style.min-width]="minWidth()" [attr.aria-label]="label()" [attr.aria-busy]="loading()">
+    <thead>
+      <tr>
+        @if (expandable()) {
+          <th class="odl-w0" scope="col"><span class="odl-sr">Expandir</span></th>
+        }
+        @for (col of columns(); track col.key) {
+          <th
+            scope="col"
+            [style.width]="col.width ?? null"
+            [class]="'odl-align-' + alignOf(col)"
+            [attr.aria-sort]="ariaSort(col)">
+            @if (col.sortable) {
+              <button type="button" class="odl-sort" (click)="toggleSort(col)">
+                {{ col.header }}
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="odl-sort__icon"
+                     [class.is-asc]="sort()?.key === col.key && sort()?.dir === 'asc'"
+                     [class.is-desc]="sort()?.key === col.key && sort()?.dir === 'desc'">
+                  <path class="up" d="M8 10l4-4 4 4" /><path class="down" d="M8 14l4 4 4-4" />
+                </svg>
+              </button>
+            } @else {
+              {{ col.header }}
+            }
+          </th>
+        }
+        @if (actions().length) {
+          <th class="odl-w0" scope="col"><span class="odl-sr">Acciones</span></th>
+        }
+      </tr>
+    </thead>
+
+    <tbody>
+      @if (loading()) {
+        @for (i of [1, 2, 3]; track i) {
+          <tr class="odl-skeleton">
+            <td [attr.colspan]="colspan()"><span></span><span></span><span></span></td>
+          </tr>
+        }
+      } @else {
+        @for (row of visibleRows(); track rowKey()(row)) {
+          <tr
+            [class.is-clickable]="clickableRows()"
+            [class.is-expanded]="isExpanded(row)"
+            [attr.tabindex]="clickableRows() ? 0 : null"
+            (click)="onRowClick(row, $event)"
+            (keydown.enter)="onRowClick(row, $event)">
+
+            @if (expandable()) {
+              <td class="odl-w0">
+                <button
+                  type="button"
+                  class="odl-expand"
+                  [class.is-open]="isExpanded(row)"
+                  [attr.aria-expanded]="isExpanded(row)"
+                  aria-label="Ver detalle"
+                  (click)="toggleExpand(row, $event)">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
+                </button>
+              </td>
+            }
+
+            @for (col of columns(); track col.key) {
+              <td [class]="'odl-align-' + alignOf(col)">
+                @switch (typeOf(col)) {
+                  @case ('custom') {
+                    <ng-container
+                      [ngTemplateOutlet]="cellTemplates().get(col.key)!"
+                      [ngTemplateOutletContext]="{ $implicit: row, row: row, value: valueOf(col, row) }" />
+                  }
+                  @case ('primary') {
+                    <span class="odl-strong">{{ valueOf(col, row) }}</span>
+                  }
+                  @case ('avatar') {
+                    <div class="odl-person">
+                      <span class="odl-avatar" aria-hidden="true">{{ initials(valueOf(col, row)) }}</span>
+                      <div>
+                        <span class="odl-strong">{{ valueOf(col, row) }}</span>
+                        @if (col.secondary?.(row); as sec) { <span class="odl-secondary">{{ sec }}</span> }
+                      </div>
+                    </div>
+                  }
+                  @case ('number') {
+                    {{ number(valueOf(col, row)) }}
+                  }
+                  @case ('money') {
+                    <span class="odl-strong">{{ money(valueOf(col, row)) }}</span>
+                  }
+                  @case ('signedMoney') {
+                    <span class="odl-strong" [class.is-pos]="sign(valueOf(col, row)) > 0" [class.is-neg]="sign(valueOf(col, row)) < 0">
+                      {{ money(valueOf(col, row)) }}
+                    </span>
+                  }
+                  @case ('date') {
+                    {{ date(valueOf(col, row)) }}
+                  }
+                  @case ('tags') {
+                    <div class="odl-tags">
+                      @for (t of col.tags?.(row) ?? []; track t.label) {
+                        <span class="odl-tag" [class]="'odl-tag odl-tag--' + t.area">{{ t.label }}</span>
+                      }
+                    </div>
+                  }
+                  @case ('badge') {
+                    @if (col.badge?.(row); as b) {
+                      <span [class]="'odl-badge odl-badge--' + b.tone">{{ b.label }}</span>
+                    }
+                  }
+                  @case ('swatch') {
+                    @if (col.swatch?.(row); as hex) {
+                      <span class="odl-swatch" [style.background]="hex" aria-hidden="true"></span>
+                    }
+                    {{ valueOf(col, row) ?? '—' }}
+                  }
+                  @case ('button') {
+                    <button type="button" class="odl-btn" (click)="runButton(col, row, $event)">{{ buttonText(col, row) }}</button>
+                  }
+                  @default {
+                    {{ valueOf(col, row) ?? '—' }}
+                  }
+                }
+
+                <!-- Línea secundaria y nota (valen para cualquier tipo, salvo avatar que ya muestra la secundaria) -->
+                @if (typeOf(col) !== 'avatar' && typeOf(col) !== 'custom') {
+                  @if (col.secondary?.(row); as sec) { <span class="odl-secondary">{{ sec }}</span> }
+                }
+                @if (col.note?.(row); as n) {
+                  <span [class]="'odl-note odl-note--' + n.tone">{{ n.text }}</span>
+                }
+              </td>
+            }
+
+            @if (actions().length) {
+              <td class="odl-w0">
+                @if (visibleActions(row).length) {
+                  <button
+                    type="button"
+                    class="odl-more"
+                    aria-haspopup="menu"
+                    [attr.aria-expanded]="isMenuOpen(row)"
+                    aria-label="Acciones"
+                    (click)="toggleMenu(row, $event)">
+                    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="5" cy="12" r="1.6" /><circle cx="12" cy="12" r="1.6" /><circle cx="19" cy="12" r="1.6" /></svg>
+                  </button>
+                }
+              </td>
+            }
+          </tr>
+
+          @if (expandable() && isExpanded(row) && detailDef(); as d) {
+            <tr class="odl-detail">
+              <td [attr.colspan]="colspan()">
+                <ng-container [ngTemplateOutlet]="d.template" [ngTemplateOutletContext]="{ $implicit: row, row: row, value: null }" />
+              </td>
+            </tr>
+          }
+        } @empty {
+          <tr>
+            <td [attr.colspan]="colspan()" class="odl-empty">
+              <p>{{ search() ? 'No hay resultados para “' + search() + '”.' : emptyText() }}</p>
+              @if (emptyActionLabel() && !search()) {
+                <button type="button" class="odl-link" (click)="emptyAction.emit()">{{ emptyActionLabel() }}</button>
+              }
+            </td>
+          </tr>
+        }
+      }
+    </tbody>
+  </table>
+</div>
+
+<!-- Paginación -->
+@if (!loading() && remaining() > 0) {
+  <div class="odl-footer">
+    <span>Mostrando {{ visibleRows().length }} de {{ processed().length }}</span>
+    <button type="button" class="odl-btn" (click)="showMore()">Ver más</button>
+  </div>
+}
+
+<!-- Menú ··· (position: fixed para que no lo recorte el scroll de la tabla) -->
+@if (menu(); as m) {
+  <div class="odl-menu" role="menu" [style.top.px]="m.top" [style.left.px]="m.left" (keydown)="onMenuKeydown($event)">
+    @for (a of visibleActions(m.row); track a.id; let i = $index) {
+      @if (a.danger && i > 0) { <div class="odl-menu__sep" role="separator"></div> }
+      <button
+        type="button"
+        role="menuitem"
+        [class.is-danger]="a.danger"
+        [disabled]="a.disabled?.(m.row)"
+        (click)="runAction(a, m.row)">
+        {{ a.label }}
+      </button>
+    }
+  </div>
+}

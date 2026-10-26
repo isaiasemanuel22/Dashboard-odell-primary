@@ -1,4 +1,5 @@
-import { DecimalPipe } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import {
   ChangeDetectorRef,
   Component,
@@ -12,31 +13,24 @@ import { GeneralSettings, ServiceType } from '../../../core/models';
 import { SettingsService } from '../../../core/services/settings.service';
 import { SERVICE_TYPE_LABELS } from '../../../shared/constants/labels';
 import { normalizeProfitMargins } from '../../../shared/utils/pricing.util';
-import {
-  DbFormComponent,
-  DbFormGridComponent,
-  DbInputComponent,
-  DbStateMessageComponent,
-  DbButtonComponent,
-} from '@general-components';
+import { DbButtonComponent, DbStateMessageComponent, DB_DATA_TABLE, OdlColumn, serviceTag } from '@general-components';
 
 interface MarginField {
   service: ServiceType;
   label: string;
-  hint: string;
+  appliesTo: string;
 }
 
 @Component({
   selector: 'app-profit-settings',
   standalone: true,
   imports: [
-    DecimalPipe,
     FormsModule,
-    DbFormComponent,
-    DbFormGridComponent,
-    DbInputComponent,
+    RouterLink,
+    CurrencyArsPipe,
     DbStateMessageComponent,
     DbButtonComponent,
+    ...DB_DATA_TABLE,
   ],
   templateUrl: './profit-settings.component.html',
   styleUrl: './profit-settings.component.scss',
@@ -50,26 +44,33 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
   saving = false;
   message = '';
 
+  readonly marginColumns: OdlColumn<MarginField>[] = [
+    { key: 'area', header: 'Área', type: 'tags', tags: (field) => [serviceTag(field.service)] },
+    { key: 'appliesTo', header: 'Se aplica a', value: (field) => field.appliesTo },
+    { key: 'margen', header: 'Margen', width: '140px' },
+    { key: 'ejemplo', header: 'Ejemplo', align: 'end' },
+  ];
+
   readonly marginFields: MarginField[] = [
     {
       service: ServiceType.IMPRESION_3D,
       label: SERVICE_TYPE_LABELS[ServiceType.IMPRESION_3D],
-      hint: 'Aplica a productos FDM y resina.',
-    },
-    {
-      service: ServiceType.DISENO_GRAFICO,
-      label: SERVICE_TYPE_LABELS[ServiceType.DISENO_GRAFICO],
-      hint: 'Referencia para líneas de diseño gráfico en pedidos.',
-    },
-    {
-      service: ServiceType.MODELADO,
-      label: SERVICE_TYPE_LABELS[ServiceType.MODELADO],
-      hint: 'Referencia para líneas de modelado en pedidos.',
+      appliesTo: 'Productos FDM y resina',
     },
     {
       service: ServiceType.ESTAMPADO,
       label: SERVICE_TYPE_LABELS[ServiceType.ESTAMPADO],
-      hint: 'Aplica a productos de estampado.',
+      appliesTo: 'Productos de estampado',
+    },
+    {
+      service: ServiceType.DISENO_GRAFICO,
+      label: SERVICE_TYPE_LABELS[ServiceType.DISENO_GRAFICO],
+      appliesTo: 'Líneas de diseño gráfico en pedidos',
+    },
+    {
+      service: ServiceType.MODELADO,
+      label: SERVICE_TYPE_LABELS[ServiceType.MODELADO],
+      appliesTo: 'Líneas de modelado en pedidos',
     },
   ];
 

@@ -9,7 +9,6 @@ import {
 import { ReactiveFormsModule } from '@angular/forms';
 import {
   DbAttachmentUploadComponent,
-  DbFieldsetComponent,
   DbFileUploadComponent,
   DbFormErrorComponent,
 } from '@dashboard-form';
@@ -24,7 +23,6 @@ import { ProductFormFacade } from '../product-form.facade';
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DbFieldsetComponent,
     DbFileUploadComponent,
     DbAttachmentUploadComponent,
     DbFormErrorComponent,

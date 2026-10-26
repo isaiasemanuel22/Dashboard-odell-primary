@@ -10,6 +10,8 @@ model AppSettings {
   id                    Int   @id @default(1)
   electricityCostPerKwh Float @default(0) @map("electricity_cost_per_kwh")
   laborCostPerHour      Float @default(0) @map("labor_cost_per_hour")
+  modelingRatePerHour   Float @default(0) @map("modeling_rate_per_hour")
+  graphicDesignRatePerHour Float @default(0) @map("graphic_design_rate_per_hour")
   errorMarginPercent    Float @default(0) @map("error_margin_percent")
   profitMargins         Json  @map("profit_margins")
   paperPricesPerSqm     Json  @map("paper_prices_per_sqm")

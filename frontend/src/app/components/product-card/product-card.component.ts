@@ -6,25 +6,38 @@ import {
   Output,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Category, Product, isProduct3D } from '../../core/models';
+import {
+  Product,
+  ProductEstampado,
+  ProductType,
+  isProduct3D,
+} from '../../core/models';
+import { Category } from '../../core/models';
+import { PAPER_TYPE_LABELS } from '../../shared/constants/labels';
+import {
+  CurrencyArsPipe,
+  DateShortPipe,
+  ProductTypeLabelPipe,
+} from '../../shared/pipes/labels.pipe';
+import {
+  formatPrintDimensionsCm,
+  hasValidPrintSize,
+} from '../../shared/utils/estampado.helpers';
 import { resolveCategoryNamesText } from '../../shared/utils/product.helpers';
 import { productPhysicalStock } from '../../shared/utils/stock.helpers';
-import { DateShortPipe } from '../../shared/pipes/labels.pipe';
-import { ProductBadgesComponent } from '../product-badges/product-badges.component';
 import { ProductImageCarouselComponent } from '../product-image-carousel/product-image-carousel.component';
-import { ProductPricingComponent } from '../product-pricing/product-pricing.component';
-import { DbButtonComponent } from '../db-button/db-button.component';
+import { DbRowMenuComponent } from '../db-row-menu/db-row-menu.component';
 
 @Component({
   selector: 'app-product-card',
   standalone: true,
   imports: [
     RouterLink,
+    CurrencyArsPipe,
     DateShortPipe,
-    ProductBadgesComponent,
+    ProductTypeLabelPipe,
     ProductImageCarouselComponent,
-    ProductPricingComponent,
-    DbButtonComponent,
+    DbRowMenuComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './product-card.component.html',
@@ -38,7 +51,7 @@ export class ProductCardComponent {
   @Output() delete = new EventEmitter<Product>();
   @Output() addToCart = new EventEmitter<Product>();
 
-  isProduct3D = isProduct3D;
+  menuOpen = false;
 
   get categoryNames(): string {
     return resolveCategoryNamesText(this.product.categoryIds, this.categories);
@@ -50,5 +63,52 @@ export class ProductCardComponent {
 
   get canAddToCart(): boolean {
     return this.product.published !== false;
+  }
+
+  get specLine(): string {
+    const product = this.product;
+    if (product.components?.length) {
+      const count = product.components.length;
+      return `${count} ${count === 1 ? 'pieza' : 'piezas'}`;
+    }
+    if (isProduct3D(product)) {
+      const parts: string[] = [];
+      const size = product.size?.trim();
+      if (size) parts.push(size);
+      if (product.grams > 0) parts.push(`${this.formatQty(product.grams)} g`);
+      if (product.printTimeHours > 0) {
+        const hours = `${this.formatQty(product.printTimeHours)} h`;
+        parts.push(size ? `${hours} imp.` : `${hours} impresión`);
+      }
+      return parts.join(' · ');
+    }
+    if (product.type === ProductType.ESTAMPADO) {
+      return this.estampadoSpec(product);
+    }
+    return product.size?.trim() ?? '';
+  }
+
+  toggleMenu(): void {
+    this.menuOpen = !this.menuOpen;
+  }
+
+  private estampadoSpec(product: ProductEstampado): string {
+    const line = (product.prints ?? [])
+      .map((print) => {
+        const size = hasValidPrintSize(print.widthCm, print.lengthCm, print.heightCm)
+          ? formatPrintDimensionsCm(print.widthCm!, print.lengthCm, print.heightCm)
+          : '';
+        const label = print.label?.trim() || PAPER_TYPE_LABELS[print.paperType] || '';
+        return [label, size].filter(Boolean).join(' ');
+      })
+      .filter(Boolean)
+      .join(' · ');
+    return line || product.size?.trim() || '';
+  }
+
+  private formatQty(value: number): string {
+    return new Intl.NumberFormat('es-AR', {
+      maximumFractionDigits: 1,
+    }).format(value);
   }
 }

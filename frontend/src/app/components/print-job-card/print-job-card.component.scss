@@ -96,3 +96,123 @@
   color: #991b1b;
   font-size: 0.75rem;
 }
+
+.job-card--board {
+  padding: 0.85rem 0.9rem 0.75rem;
+  border: 1px solid $color-border;
+  border-left: none;
+  border-radius: $radius-md;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  cursor: grab;
+
+  &:active {
+    cursor: grabbing;
+  }
+
+  .job-card__top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.45rem;
+  }
+
+  .job-card__id {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: $color-text-muted;
+    text-decoration: none;
+
+    &:hover {
+      color: $color-brand-deep;
+      text-decoration: underline;
+    }
+  }
+
+  .job-card__priority-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    font-size: 0.68rem;
+    font-weight: 700;
+    color: $color-text-muted;
+
+    &.priority-high {
+      color: #dc2626;
+    }
+
+    &.priority-medium {
+      color: #d97706;
+    }
+
+    &.priority-normal {
+      color: $color-brand-deep;
+    }
+  }
+
+  .job-card__priority-icon {
+    font-size: 0.75rem;
+    line-height: 1;
+  }
+
+  .job-card__title {
+    margin: 0 0 0.55rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+    line-height: 1.35;
+    color: $color-text;
+  }
+
+  .job-card__title-link {
+    color: inherit;
+    text-decoration: none;
+
+    &:hover {
+      color: $color-primary;
+    }
+  }
+
+  .job-card__tag-row {
+    margin-bottom: 0.55rem;
+  }
+
+  .job-card__blocked {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.35rem;
+    margin: 0 0 0.65rem;
+    padding: 0.5rem 0.55rem;
+    border-radius: $radius-sm;
+    background: #ffedd5;
+    border: 1px solid #fdba74;
+    color: #9a3412;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.35;
+  }
+
+  .job-card__blocked-icon {
+    flex-shrink: 0;
+    line-height: 1.2;
+  }
+
+  .job-card__footer {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 0.15rem;
+  }
+
+  .job-card__avatar {
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: $color-brand-deep;
+    background: $color-primary-bg;
+    border: 1px solid $color-border;
+  }
+}

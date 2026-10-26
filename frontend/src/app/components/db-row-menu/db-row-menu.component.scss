@@ -1,0 +1,39 @@
+@use '../../shared/styles/variables' as *;
+@use '../../shared/styles/screen' as screen;
+
+db-row-menu {
+  display: contents;
+}
+
+.row-menu {
+  @include screen.record-menu;
+}
+
+.row-menu--compact {
+  width: 2rem;
+  height: 2rem;
+}
+
+.row-menu__panel {
+  position: absolute;
+  padding: 0.25rem;
+  border: 1px solid $color-border-soft;
+  border-radius: $radius-sm;
+  background: $color-surface;
+  box-shadow: $shadow-card;
+
+  button {
+    display: block;
+    width: 100%;
+    border: none;
+    background: transparent;
+    text-align: left;
+    padding: 0.4rem 0.55rem;
+    font-size: $font-control;
+    cursor: pointer;
+  }
+
+  .is-danger {
+    color: $color-danger-text;
+  }
+}

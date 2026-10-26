@@ -10,13 +10,7 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ProductType } from '../../../../core/models';
-import {
-  DbCheckboxComponent,
-  DbFormGridComponent,
-  DbFormGridFullComponent,
-  DbInputComponent,
-  DbSelectComponent,
-} from '@dashboard-form';
+import { DbCheckboxComponent, DbInputComponent } from '@dashboard-form';
 import type { DbSelectOption } from '@dashboard-form';
 
 export interface ProductFormBasicFieldsValue {
@@ -30,14 +24,7 @@ export interface ProductFormBasicFieldsValue {
 @Component({
   selector: 'app-product-form-basic-fields',
   standalone: true,
-  imports: [
-    FormsModule,
-    DbFormGridComponent,
-    DbSelectComponent,
-    DbInputComponent,
-    DbCheckboxComponent,
-    DbFormGridFullComponent,
-  ],
+  imports: [FormsModule, DbCheckboxComponent, DbInputComponent],
   templateUrl: './product-form-basic-fields.component.html',
   styleUrl: '../product-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -87,6 +74,16 @@ export class ProductFormBasicFieldsComponent implements OnInit {
 
   get showIncludesPiecesCheckbox(): boolean {
     return this.type !== ProductType.COMBO;
+  }
+
+  selectType(value: string): void {
+    this.type = value as ProductType;
+    this.onFieldChange();
+  }
+
+  typeLabel(value: string): string {
+    if (value === ProductType.FDM) return 'Impresión FDM';
+    return this.productTypeOptions.find((option) => option.value === value)?.label ?? value;
   }
 
   onFieldChange(): void {

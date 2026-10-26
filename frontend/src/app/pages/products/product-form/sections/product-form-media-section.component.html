@@ -1,30 +1,35 @@
-<db-fieldset legend="Imágenes">
-  <p class="components-desc">
-    Elegí las fotos y revisalas en la vista previa. Podés subirlas con el botón o guardar el producto y se subirán solas.
-  </p>
-  @if (facade.legacyImagesNotice) {
-    <p class="components-desc legacy-images-notice">{{ facade.legacyImagesNotice }}</p>
-  }
-  <div [formGroup]="facade.form">
-    <db-file-upload
-      formControlName="images"
-      [thumbAlt]="facade.name"
-      [uploadFn]="uploadProductImage"
-    />
-  </div>
-</db-fieldset>
+<section class="form-block">
+  <h4>Imágenes y archivos</h4>
+  <div class="media-grid">
+    <div class="media-card">
+      <p class="media-card__title">Fotos y reels</p>
+      <p class="media-card__hint">Arrastralas o</p>
+      @if (facade.legacyImagesNotice) {
+        <p class="media-card__hint">{{ facade.legacyImagesNotice }}</p>
+      }
+      <div [formGroup]="facade.form">
+        <db-file-upload
+          formControlName="images"
+          [thumbAlt]="facade.name"
+          [uploadFn]="uploadProductImage"
+        />
+      </div>
+      <p class="media-card__note">La primera es la portada</p>
+    </div>
 
-<db-fieldset legend="Archivos adjuntos">
-  <p class="components-desc">
-    Podés adjuntar planos, STL, PDF u otros archivos de referencia. Se suben a Firebase Storage.
-  </p>
-  <div [formGroup]="facade.form">
-    <db-attachment-upload
-      formControlName="attachments"
-      [uploadFn]="uploadProductAttachment"
-    />
+    <div class="media-card">
+      <p class="media-card__title">Archivos adjuntos</p>
+      <p class="media-card__hint">STL, 3MF, PDF o referencias</p>
+      <div [formGroup]="facade.form">
+        <db-attachment-upload
+          formControlName="attachments"
+          [uploadFn]="uploadProductAttachment"
+        />
+      </div>
+      <p class="media-card__note">Solo los ve el equipo</p>
+      @if (facade.attachmentUploadError) {
+        <db-form-error>{{ facade.attachmentUploadError }}</db-form-error>
+      }
+    </div>
   </div>
-  @if (facade.attachmentUploadError) {
-    <db-form-error>{{ facade.attachmentUploadError }}</db-form-error>
-  }
-</db-fieldset>
+</section>

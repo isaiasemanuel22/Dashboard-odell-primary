@@ -10,10 +10,18 @@ import { WorkArea } from '../../../core/models';
 import { UserAccessService } from '../../../core/services/user-access.service';
 import {
   DbButtonComponent,
+  DbCheckboxComponent,
+  DbInputComponent,
   DbStateMessageComponent,
+  DB_DATA_TABLE,
+  OdlActionEvent,
+  OdlColumn,
+  OdlRowAction,
 } from '@general-components';
 import { FormModalComponent } from '../../../components/form-modal/form-modal.component';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
+import { UserAccessHeadComponent } from './user-access-head.component';
+import { UserAccessNavComponent } from './user-access-nav.component';
 
 @Component({
   selector: 'app-work-areas-admin-page',
@@ -21,8 +29,13 @@ import { extractApiErrorMessage } from '../../../shared/utils/api-error';
   imports: [
     FormsModule,
     DbButtonComponent,
+    DbCheckboxComponent,
+    DbInputComponent,
     DbStateMessageComponent,
     FormModalComponent,
+    UserAccessHeadComponent,
+    UserAccessNavComponent,
+    ...DB_DATA_TABLE,
   ],
   templateUrl: './work-areas-admin-page.component.html',
   styleUrl: './user-access-layout.component.scss',
@@ -33,6 +46,31 @@ export class WorkAreasAdminPageComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   areas: WorkArea[] = [];
+
+  readonly areaActions: OdlRowAction<WorkArea>[] = [
+    { id: 'editar', label: 'Editar' },
+    { id: 'eliminar', label: 'Eliminar', danger: true },
+  ];
+
+  readonly areaColumns: OdlColumn<WorkArea>[] = [
+    { key: 'name', header: 'Nombre', type: 'primary' },
+    { key: 'slug', header: 'Identificador' },
+    { key: 'sortOrder', header: 'Orden', type: 'number' },
+    {
+      key: 'active',
+      header: 'Estado',
+      type: 'badge',
+      badge: (area) => ({
+        label: area.active ? 'Activa' : 'Inactiva',
+        tone: area.active ? 'ok' : 'neutral',
+      }),
+    },
+  ];
+
+  onAreaAction(event: OdlActionEvent<WorkArea>): void {
+    if (event.actionId === 'editar') this.openEdit(event.row);
+    if (event.actionId === 'eliminar') this.deleteArea(event.row);
+  }
   loading = true;
   saving = false;
   error = '';

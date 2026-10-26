@@ -27,29 +27,24 @@
       </div>
 
       <form (ngSubmit)="onSubmit()" class="login-form">
-        <label>
-          Email
-          <input
-            type="email"
-            name="email"
-            [(ngModel)]="email"
-            autocomplete="username"
-            [disabled]="loading"
-            required
-          />
-        </label>
-
-        <label>
-          Contraseña
-          <input
-            type="password"
-            name="password"
-            [(ngModel)]="password"
-            autocomplete="current-password"
-            [disabled]="loading"
-            required
-          />
-        </label>
+        <db-input
+          label="Email"
+          type="email"
+          name="email"
+          [(ngModel)]="email"
+          autocomplete="username"
+          [disabled]="loading"
+          [required]="true"
+        />
+        <db-input
+          label="Contraseña"
+          type="password"
+          name="password"
+          [(ngModel)]="password"
+          autocomplete="current-password"
+          [disabled]="loading"
+          [required]="true"
+        />
 
         @if (error) {
           <p class="login-error">{{ error }}</p>

@@ -31,7 +31,9 @@
           [routerLinkActiveOptions]="{ exact: item.route === '/dashboard', paths: 'subset', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored' }"
           (click)="closeNav()"
         >
-          <span class="icon">{{ item.icon }}</span>
+          <span class="nav-icon" aria-hidden="true">
+            <ng-container *ngTemplateOutlet="navIcon; context: { $implicit: item.icon }" />
+          </span>
           {{ item.label }}
         </a>
       }
@@ -82,10 +84,68 @@
           routerLinkActive="bottom-nav__item--active"
           [routerLinkActiveOptions]="{ exact: item.exact ?? false, paths: 'subset', queryParams: 'ignored', fragment: 'ignored', matrixParams: 'ignored' }"
         >
-          <span class="bottom-nav__icon">{{ item.icon }}</span>
+          <span class="bottom-nav__icon" aria-hidden="true">
+            <ng-container *ngTemplateOutlet="navIcon; context: { $implicit: item.icon }" />
+          </span>
           <span class="bottom-nav__label">{{ item.label }}</span>
         </a>
       }
     </nav>
   </div>
 </div>
+
+<ng-template #navIcon let-name>
+  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round">
+    @switch (name) {
+      @case ('dashboard') {
+        <rect x="3.5" y="3.5" width="7" height="7" rx="1.5" />
+        <rect x="13.5" y="3.5" width="7" height="7" rx="1.5" />
+        <rect x="3.5" y="13.5" width="7" height="7" rx="1.5" />
+        <rect x="13.5" y="13.5" width="7" height="7" rx="1.5" />
+      }
+      @case ('wallet') {
+        <rect x="3" y="7" width="18" height="12" rx="2" />
+        <path d="M3 11h18" />
+        <path d="M16 15h2" />
+      }
+      @case ('sales') {
+        <path d="M4 19V5" />
+        <path d="M4 19h16" />
+        <path d="M8 14l3.2-3.2 2.6 2.2L18 8" />
+      }
+      @case ('orders') {
+        <rect x="6" y="3.5" width="12" height="17" rx="2" />
+        <path d="M9 8h6M9 12h6M9 16h4" />
+      }
+      @case ('quotes') {
+        <path d="M7 3.5h7l4.5 4.5V20a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4.5a1 1 0 0 1 1-1z" />
+        <path d="M14 3.5V8h4.5" />
+        <path d="M9 13h6M9 16.5h4" />
+      }
+      @case ('queue') {
+        <rect x="3.5" y="4" width="4.5" height="16" rx="1.2" />
+        <rect x="10" y="4" width="4.5" height="11" rx="1.2" />
+        <rect x="16.5" y="4" width="4" height="14" rx="1.2" />
+      }
+      @case ('products') {
+        <path d="M20 13.2 12.8 20a2 2 0 0 1-2.8 0L3.5 13.5V4.5h9z" />
+        <circle cx="8" cy="8" r="1" fill="currentColor" stroke="none" />
+      }
+      @case ('supplies') {
+        <path d="M12 3.5 20.5 8 12 12.5 3.5 8 12 3.5z" />
+        <path d="M3.5 8v8L12 20.5 20.5 16V8" />
+        <path d="M12 12.5V20.5" />
+      }
+      @case ('customers') {
+        <circle cx="9" cy="8" r="2.6" />
+        <circle cx="16.5" cy="9" r="2" />
+        <path d="M4 18.5c.5-2.4 2.5-3.8 5-3.8s4.5 1.4 5 3.8" />
+        <path d="M14.5 14.8c1.2-.3 2.5-.1 3.5.8.5.5 1 1.2 1.3 2" />
+      }
+      @case ('settings') {
+        <circle cx="12" cy="12" r="3" />
+        <path d="M12 3.5v2.2M12 18.3v2.2M3.5 12h2.2M18.3 12h2.2M5.8 5.8l1.6 1.6M16.6 16.6l1.6 1.6M18.2 5.8l-1.6 1.6M7.4 16.6l-1.6 1.6" />
+      }
+    }
+  </svg>
+</ng-template>

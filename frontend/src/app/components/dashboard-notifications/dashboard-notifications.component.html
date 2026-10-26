@@ -8,45 +8,60 @@
     aria-label="Notificaciones"
     (click)="togglePanel()"
   >
-    <span class="notifications__icon" aria-hidden="true">🔔</span>
-    @if (count > 0) {
-      <span class="notifications__badge">{{ count > 9 ? '9+' : count }}</span>
+    <span class="notifications__icon" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <path d="M15 17h5l-1.4-1.4A2 2 0 0 1 18 14.2V11a6 6 0 1 0-12 0v3.2c0 .5-.2 1-.6 1.4L4 17h5" />
+        <path d="M9.5 17a2.5 2.5 0 0 0 5 0" />
+      </svg>
+    </span>
+    @if (unreadCount > 0) {
+      <span class="notifications__badge">{{ unreadCount > 9 ? '9+' : unreadCount }}</span>
     }
   </button>
 
   @if (open) {
-    <div
-      class="notifications__backdrop"
-      aria-hidden="true"
-      (click)="closePanel()"
-    ></div>
+    <div class="notifications__backdrop" aria-hidden="true" (click)="closePanel()"></div>
     <div class="notifications__panel" role="dialog" aria-label="Notificaciones">
       <header class="notifications__header">
         <h3>Notificaciones</h3>
-        @if (count > 0) {
-          <span class="notifications__count">{{ count }}</span>
+        @if (notifications.length) {
+          <button type="button" class="notifications__read" (click)="markAllRead()">
+            Marcar todas como leídas
+          </button>
         }
       </header>
 
-      @if (count === 0) {
+      <div class="notifications__filters" role="group" aria-label="Filtrar notificaciones">
+        @for (item of filters; track item.value) {
+          <button
+            type="button"
+            class="notifications__filter"
+            [class.notifications__filter--active]="filter === item.value"
+            (click)="setFilter(item.value)"
+          >
+            {{ item.label }} · {{ countFor(item.value) }}
+          </button>
+        }
+      </div>
+
+      @if (visibleNotifications.length === 0) {
         <p class="notifications__empty">No hay alertas por ahora.</p>
       } @else {
         <ul class="notifications__list">
-          @for (item of notifications; track trackNotification($index, item)) {
+          @for (item of visibleNotifications; track trackNotification($index, item)) {
             <li>
               @if (item.route) {
                 <a
-                  class="notifications__item notifications__item--{{ item.type }}"
+                  class="notifications__item"
+                  [class.notifications__item--read]="isRead(item)"
                   [routerLink]="item.route"
                   (click)="closePanel()"
                 >
-                  <strong>{{ item.title }}</strong>
-                  <span>{{ item.message }}</span>
+                  <ng-container *ngTemplateOutlet="itemBody; context: { $implicit: item }" />
                 </a>
               } @else {
-                <div class="notifications__item notifications__item--{{ item.type }}">
-                  <strong>{{ item.title }}</strong>
-                  <span>{{ item.message }}</span>
+                <div class="notifications__item" [class.notifications__item--read]="isRead(item)">
+                  <ng-container *ngTemplateOutlet="itemBody; context: { $implicit: item }" />
                 </div>
               }
             </li>
@@ -56,3 +71,46 @@
     </div>
   }
 </div>
+
+<ng-template #itemBody let-item>
+  <span class="notifications__glyph" [class]="'notifications__glyph--' + kindOf(item)" aria-hidden="true">
+    @switch (kindOf(item)) {
+      @case ('stock') {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M4 8l8-4 8 4-8 4-8-4Z" />
+          <path d="M4 8v8l8 4 8-4V8" />
+          <path d="M12 12v8" />
+        </svg>
+      }
+      @case ('queue') {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="8" />
+          <path d="M12 8v5l3 2" />
+        </svg>
+      }
+      @default {
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="8" />
+          <path d="M12 8v4" />
+          <path d="M12 16h.01" />
+        </svg>
+      }
+    }
+  </span>
+  <span class="notifications__copy">
+    <strong>{{ item.title }}</strong>
+    <span>{{ item.message }}</span>
+    @if (item.areas?.length) {
+      <span class="notifications__areas">
+        @for (area of item.areas; track area) {
+          <span class="area-chip" [class]="'area-chip--' + area">
+            {{ area | serviceTypeLabel }}
+          </span>
+        }
+      </span>
+    }
+  </span>
+  @if (!isRead(item)) {
+    <span class="notifications__dot" aria-hidden="true"></span>
+  }
+</ng-template>

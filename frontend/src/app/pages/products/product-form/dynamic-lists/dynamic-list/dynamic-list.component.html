@@ -1,8 +1,15 @@
 @if (config) {
-  <db-fieldset [legend]="config.legend">
+<db-fieldset [legend]="config.legend">
+  <div class="dynamic-list-head">
     @if (config.description) {
       <p class="components-desc">{{ config.description }}</p>
     }
+    @if (config.totalLabel && config.totalValueFn) {
+      <strong class="dynamic-list-total">
+        {{ config.totalLabel }} {{ config.totalValueFn(itemsArray.getRawValue()) }}
+      </strong>
+    }
+  </div>
 
     <div [formGroup]="formGroup">
       <div formArrayName="items">
@@ -12,17 +19,16 @@
           let i = $index
         ) {
           <div class="dynamic-list-item" [formGroupName]="i">
-            <div class="dynamic-list-item__header">
-              <strong>{{ config.itemLabel(i) }}</strong>
-              @if (canRemove()) {
-                <db-button
-                  label="Quitar"
-                  variant="delete"
-                  format="inline"
-                  (clicked)="onRemove(i)"
-                />
-              }
-            </div>
+    <div class="dynamic-list-item__header">
+      <strong>{{ config.itemLabel(i) }}</strong>
+      @if (canRemove()) {
+        <button type="button" class="dynamic-list-item__remove" aria-label="Quitar" (click)="onRemove(i)">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M4 7h16M9 7V5h6v2M8 7l1 12h6l1-12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+          </svg>
+        </button>
+      }
+    </div>
 
             <div class="dynamic-list-item__grid">
               @for (field of config.fields; track fieldTrack($index, field)) {
@@ -102,12 +108,6 @@
 
     @if (!itemsArray.length && config.emptyMessage) {
       <p class="components-empty">{{ config.emptyMessage }}</p>
-    }
-
-    @if (config.totalLabel && config.totalValueFn) {
-      <p class="components-desc dynamic-list-total">
-        {{ config.totalLabel }}: {{ config.totalValueFn(itemsArray.getRawValue()) }}
-      </p>
     }
   </db-fieldset>
 }

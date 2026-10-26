@@ -1,0 +1,27 @@
+@use '../../../shared/styles/variables' as *;
+
+.wallet-table {
+  th:last-child,
+  td:last-child {
+    white-space: nowrap;
+  }
+}
+
+.empty-group {
+  margin: 0;
+  color: $color-text-label;
+  font-size: 0.9rem;
+}
+
+.wallet-more,
+.repay-button {
+  border: 1px solid $color-border-soft;
+  background: $color-surface;
+  color: $color-text;
+  border-radius: $radius-pill;
+  padding: 0.4rem 0.85rem;
+  font-size: $font-control;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+}

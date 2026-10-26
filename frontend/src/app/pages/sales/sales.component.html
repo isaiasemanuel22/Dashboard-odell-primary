@@ -1,15 +1,23 @@
 <header class="page-header">
   <div>
     <h2>Ventas</h2>
-    <p>Ingresos y ventas del mes corriente</p>
+    <p>
+      Ingresos, costos y ganancias de {{ monthLabel }} · {{ entries.length }} ventas registradas
+    </p>
   </div>
   <div class="header-actions">
     <db-button
       label="Generar reporte"
       variant="secondary"
-      format="soft"
+      format="solid"
       [disabled]="loading || !entries.length"
       (clicked)="generateReport()"
+    />
+    <db-button
+      label="+ Venta de mostrador"
+      variant="primary"
+      format="solid"
+      routerLink="/ventas/nueva"
     />
   </div>
 </header>
@@ -34,39 +42,25 @@
     <app-sales-stats-grid [stats]="stats" />
   }
 
-  <section class="panel">
-    <div class="panel-header-row">
-      <div>
-        <h3>Listado de ventas del mes</h3>
-        <p class="panel-desc">
-          Ventas de mostrador y pedidos entregados con fecha de entrega en el mes corriente.
-        </p>
-      </div>
+  <section class="sales-list">
+    <div>
+      <h3>Listado de ventas del mes</h3>
+      <p>Ventas de mostrador y pedidos entregados con fecha de entrega en el mes</p>
     </div>
 
-    <db-list-toolbar
-      [filters]="filters"
-      [activeFilter]="salesFilter"
-      [search]="search"
-      searchPlaceholder="Buscar por ID, producto o cliente..."
-      (filterChange)="setSalesFilter($event)"
-      (searchChange)="search = $event"
+    <db-data-table
+      label="Ventas del mes"
+      [rows]="entries"
+      [columns]="columns"
+      [actions]="actions"
+      [filters]="sourceFilters"
+      [areaFilters]="areaFilters"
+      searchPlaceholder="Buscar por ID, producto o cliente"
+      [searchText]="searchText"
+      [emptyText]="emptyText"
+      emptyActionLabel="Registrar una venta de mostrador"
+      (action)="onAction($event)"
+      (emptyAction)="openCreateSale()"
     />
-
-    @if (filteredEntries.length) {
-      <app-sales-table
-        [entries]="filteredEntries"
-        (edit)="openEditSale($event)"
-        (delete)="deleteSale($event)"
-      />
-    } @else {
-      <p class="empty-group">
-        {{
-          search.trim() || salesFilter !== 'all'
-            ? 'No hay ventas que coincidan con el filtro.'
-            : 'No hay ventas registradas en el mes corriente.'
-        }}
-      </p>
-    }
   </section>
 }

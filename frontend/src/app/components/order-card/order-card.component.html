@@ -1,88 +1,185 @@
-<article class="order-card">
-  <div class="order-card__body">
-    <header class="order-card__header">
-      <a [routerLink]="['/pedidos', order.id]" class="order-card__title">
-        <span class="order-card__id">{{ order.id }}</span>
-        <h3>{{ order.customerName }}</h3>
-      </a>
-      <aside class="order-card__summary">
-        <db-status-badge
-          [statusClass]="order.status"
-          [label]="order.status | orderStatusLabel"
-        />
-        <div class="order-card__due">
-          <span>Entrega</span>
-          <strong>{{ order.dueDate | dateShort }}</strong>
-        </div>
-      </aside>
-    </header>
-
-    <section class="order-card__details">
-      <db-service-badges [types]="order.services" variant="solid" />
-
-      @if (order.items.length) {
-        <ul class="order-card__items">
-          @for (item of previewItems(order); track $index) {
-            <li class="order-card__item">
-              <span class="order-card__item-service">
-                {{ item.serviceType | serviceTypeLabel }}
-              </span>
-              @if (item.productId) {
-                <a [routerLink]="['/productos', item.productId]" class="product-link">
-                  {{ item.quantity }}× {{ item.productName }}
-                </a>
-              } @else {
-                <span>{{ item.quantity }}× {{ item.productName }}</span>
-              }
-              <small class="order-card__fulfillment">
-                {{ item.delivered ?? 0 }} entregado ·
-                {{ item.pending ?? item.quantity }} pendiente
-              </small>
-            </li>
-          }
-          @if (hiddenItemsCount(order); as extra) {
-            @if (extra > 0) {
-              <li class="order-card__item order-card__item--more">+{{ extra }} más</li>
-            }
-          }
-        </ul>
-      }
-
-      @if (order.description) {
-        <p class="order-card__description">{{ order.description | plainText:160 }}</p>
-      }
-
-      @if (order.notes) {
-        <p class="order-card__notes">{{ order.notes }}</p>
-      }
-
-      <div class="order-card__total">
-        <span>Total</span>
-        <strong>{{ order.total | currencyArs }}</strong>
-      </div>
-    </section>
-  </div>
-
-  <div class="card-actions">
-    <div class="db-button-group">
-      <db-button
-        label="Ver"
-        variant="primary-outline"
-        format="solid"
-        [routerLink]="['/pedidos', order.id]"
-      />
-      <db-button
-        label="Editar"
-        variant="secondary"
-        format="soft"
-        (clicked)="edit.emit(order)"
-      />
-      <db-button
-        label="Eliminar"
-        variant="delete"
-        format="soft"
-        (clicked)="delete.emit(order)"
-      />
+@if (layout === 'detail') {
+  <ng-container *ngTemplateOutlet="detail" />
+} @else if (layout === 'card') {
+  <article class="order-card" [class.order-card--open]="expanded">
+    <div class="order-card__line">
+      <button
+        type="button"
+        class="order-line__toggle"
+        [attr.aria-expanded]="expanded"
+        [attr.aria-label]="expanded ? 'Contraer pedido' : 'Expandir pedido'"
+        (click)="expanded = !expanded"
+      >
+        {{ expanded ? '⌄' : '›' }}
+      </button>
+      <span class="order-line__id">{{ order.id }}</span>
+      <span>
+        <strong class="order-line__customer">{{ order.customerName }}</strong>
+        <span class="order-line__meta">{{ summaryLabel }}</span>
+      </span>
+      <span class="order-line__areas">
+        @for (service of order.services; track service) {
+          <span class="area-chip" [class]="'area-chip--' + service">
+            {{ service | serviceTypeLabel }}
+          </span>
+        }
+      </span>
+      <span>
+        <span class="order-line__date" [class.order-line__date--late]="isOverdue">
+          {{ order.dueDate | dateShort }}
+        </span>
+        @if (isOverdue) {
+          <span class="order-line__late">Atrasado</span>
+        }
+      </span>
+      <span>
+        <span class="status-chip" [class]="'status-chip--' + order.status">
+          {{ order.status | orderStatusLabel }}
+        </span>
+      </span>
+      <span class="order-line__total">{{ order.total | currencyArs }}</span>
+      <span class="order-line__menu-cell">
+        <button
+          type="button"
+          class="order-line__menu"
+          aria-label="Más acciones"
+          (click)="menuOpen = !menuOpen"
+        >
+          ···
+        </button>
+        @if (menuOpen) {
+          <button type="button" class="order-line__delete" (click)="confirmDelete()">
+            Eliminar
+          </button>
+        }
+      </span>
     </div>
-  </div>
-</article>
+    @if (expanded) {
+      <div class="order-card__detail">
+        <ng-container *ngTemplateOutlet="detail" />
+      </div>
+    }
+  </article>
+} @else {
+  <tr class="order-line" [class.order-line--open]="expanded">
+    <td>
+      <button
+        type="button"
+        class="order-line__toggle"
+        [attr.aria-expanded]="expanded"
+        [attr.aria-label]="expanded ? 'Contraer pedido' : 'Expandir pedido'"
+        (click)="expanded = !expanded"
+      >
+        {{ expanded ? '⌄' : '›' }}
+      </button>
+    </td>
+    <td class="order-line__id">{{ order.id }}</td>
+    <td>
+      <strong class="order-line__customer">{{ order.customerName }}</strong>
+      <span class="order-line__meta">{{ summaryLabel }}</span>
+    </td>
+    <td>
+      <div class="order-line__areas">
+        @for (service of order.services; track service) {
+          <span class="area-chip" [class]="'area-chip--' + service">
+            {{ service | serviceTypeLabel }}
+          </span>
+        }
+      </div>
+    </td>
+    <td>
+      <span class="order-line__date" [class.order-line__date--late]="isOverdue">
+        {{ order.dueDate | dateShort }}
+      </span>
+      @if (isOverdue) {
+        <span class="order-line__late">Atrasado</span>
+      }
+    </td>
+    <td>
+      <span class="status-chip" [class]="'status-chip--' + order.status">
+        {{ order.status | orderStatusLabel }}
+      </span>
+    </td>
+    <td class="order-line__total">{{ order.total | currencyArs }}</td>
+    <td class="order-line__menu-cell">
+      <button
+        type="button"
+        class="order-line__menu"
+        aria-label="Más acciones"
+        (click)="menuOpen = !menuOpen"
+      >
+        ···
+      </button>
+      @if (menuOpen) {
+        <button type="button" class="order-line__delete" (click)="confirmDelete()">
+          Eliminar
+        </button>
+      }
+    </td>
+  </tr>
+  @if (expanded) {
+    <tr class="order-detail">
+      <td colspan="8">
+        <div class="order-detail__panel">
+          <ng-container *ngTemplateOutlet="detail" />
+        </div>
+      </td>
+    </tr>
+  }
+}
+
+<ng-template #detail>
+  <table class="order-detail__table">
+    <thead>
+      <tr>
+        <th>Producto</th>
+        <th>Área</th>
+        <th>Cant.</th>
+        <th>Terminadas</th>
+        <th>Nota</th>
+      </tr>
+    </thead>
+    <tbody>
+      @for (item of order.items; track $index; let first = $first) {
+        <tr>
+          <td>{{ item.productName }}</td>
+          <td>
+            <span class="area-chip area-chip--plain" [class]="'area-chip--' + item.serviceType">
+              {{ item.serviceType | serviceTypeLabel }}
+            </span>
+          </td>
+          <td>{{ item.quantity }}</td>
+          <td class="order-detail__progress">
+            <span>{{ finishedCount(item) }} de {{ item.quantity }}</span>
+            <span class="order-detail__bar" aria-hidden="true">
+              <span [style.width.%]="progressPercent(item)"></span>
+            </span>
+          </td>
+          @if (first) {
+            <td class="order-detail__note" [attr.rowspan]="order.items.length || 1">
+              <div class="order-detail__note-body">
+                @if (order.description) {
+                  <p>{{ order.description | plainText:220 }}</p>
+                }
+                <div class="order-detail__actions">
+                  <db-button
+                    label="Ver pedido"
+                    variant="primary"
+                    format="solid"
+                    [routerLink]="['/pedidos', order.id]"
+                  />
+                  <db-button
+                    label="Editar"
+                    variant="secondary"
+                    format="solid"
+                    (clicked)="edit.emit(order)"
+                  />
+                </div>
+              </div>
+            </td>
+          }
+        </tr>
+      }
+    </tbody>
+  </table>
+</ng-template>

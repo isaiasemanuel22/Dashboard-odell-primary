@@ -13,27 +13,16 @@ import {
 } from '../../../core/models';
 import { ImpresosService } from '../../../core/services/impresos.service';
 import { SettingsService } from '../../../core/services/settings.service';
+import { PAPER_TYPE_LABELS } from '../../../shared/constants/labels';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import { formatPrintDimensionsCm } from '../../../shared/utils/estampado.helpers';
 import { pricePerSqmFromReferenceSheet } from '../../../shared/utils/paper-cost.util';
 import { FormDialogService } from '../../../shared/form-dialogs/public-api';
-import {
-  DbButtonComponent,
-  DbFormComponent,
-  DbFormGridComponent,
-  DbInputComponent,
-  DbStateMessageComponent,
-} from '@general-components';
+import { DbButtonComponent, DbInputComponent, DbStateMessageComponent, DB_DATA_TABLE, OdlActionEvent, OdlColumn, OdlRowAction } from '@general-components';
 
 interface PaperSheetGroup {
   key: keyof GeneralSettings['paperReferenceSheets'];
   label: string;
-}
-
-interface PaperGroup {
-  type: PaperType;
-  label: string;
-  items: ImpresoWithCost[];
 }
 
 @Component({
@@ -41,12 +30,11 @@ interface PaperGroup {
   standalone: true,
   imports: [
     FormsModule,
-    DbFormComponent,
-    DbFormGridComponent,
-    DbInputComponent,
     DbButtonComponent,
-    CurrencyArsPipe,
+    DbInputComponent,
     DbStateMessageComponent,
+    CurrencyArsPipe,
+    ...DB_DATA_TABLE,
   ],
   templateUrl: './impresos-settings.component.html',
   styleUrl: './impresos-settings.component.scss',
@@ -62,8 +50,31 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
   loadingImpresos = true;
   savingPaper = false;
   message = '';
+  search = '';
+  techniqueFilter: PaperType | 'all' = 'all';
+  readonly impresoActions: OdlRowAction<ImpresoWithCost>[] = [
+    { id: 'editar', label: 'Editar' },
+    { id: 'eliminar', label: 'Eliminar', danger: true },
+  ];
 
-  private readonly groupOrder: { type: PaperType; label: string }[] = [
+  readonly impresoColumns: OdlColumn<ImpresoWithCost>[] = [
+    { key: 'name', header: 'Impreso', type: 'primary' },
+    {
+      key: 'paperType',
+      header: 'Técnica',
+      value: (item) => PAPER_TYPE_LABELS[item.paperType] ?? item.paperType,
+    },
+    { key: 'size', header: 'Tamaño', value: (item) => this.formatDimensions(item) },
+    { key: 'areaSqm', header: 'Área', value: (item) => this.formatArea(item.areaSqm) },
+    { key: 'paperCost', header: 'Costo papel', type: 'money' },
+  ];
+
+  onImpresoAction(event: OdlActionEvent<ImpresoWithCost>): void {
+    if (event.actionId === 'editar') this.openEdit(event.row);
+    if (event.actionId === 'eliminar') this.deleteImpreso(event.row);
+  }
+
+  readonly groupOrder: { type: PaperType; label: string }[] = [
     { type: PaperType.DTF, label: 'DTF' },
     { type: PaperType.DTF_UV, label: 'DTF UV' },
     { type: PaperType.SUBLIMACION, label: 'Sublimación' },
@@ -86,16 +97,6 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.settingsSub?.unsubscribe();
-  }
-
-  get paperGroups(): PaperGroup[] {
-    return this.groupOrder.map(({ type, label }) => ({
-      type,
-      label,
-      items: this.impresos
-        .filter((item) => item.paperType === type)
-        .sort((a, b) => a.name.localeCompare(b.name, 'es')),
-    }));
   }
 
   loadImpresos(): void {
@@ -160,6 +161,29 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
       this.loadImpresos();
       this.message = 'Impreso eliminado';
     });
+  }
+
+  get visibleImpresos(): ImpresoWithCost[] {
+    const query = this.search.trim().toLowerCase();
+    return this.impresos
+      .filter((item) => {
+        const matchesTechnique =
+          this.techniqueFilter === 'all' || item.paperType === this.techniqueFilter;
+        const matchesSearch = !query || item.name.toLowerCase().includes(query);
+        return matchesTechnique && matchesSearch;
+      })
+      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  }
+
+  setTechnique(filter: PaperType | 'all'): void {
+    this.techniqueFilter = filter;
+  }
+
+  formatArea(value: number): string {
+    return `${new Intl.NumberFormat('es-AR', {
+      minimumFractionDigits: 4,
+      maximumFractionDigits: 4,
+    }).format(value)} m²`;
   }
 
   pricePerSqm(key: keyof GeneralSettings['paperReferenceSheets']): number {

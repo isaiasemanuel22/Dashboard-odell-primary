@@ -1,62 +1,33 @@
-<header class="page-header">
+<header class="quotes-header">
   <div>
     <h2>Presupuestos</h2>
     <p>Cotizaciones para clientes antes de confirmar un pedido</p>
   </div>
-  <div class="header-actions">
-    <db-button
-      label="+ Nuevo presupuesto"
-      variant="primary"
-      format="solid"
-      (clicked)="openCreateQuote()"
-    />
-  </div>
+  <db-button
+    label="+ Nuevo presupuesto"
+    variant="primary"
+    format="solid"
+    (clicked)="openCreateQuote()"
+  />
 </header>
 
-<div class="quotes-filters">
-  <db-list-toolbar
-    [filters]="statusFilters"
-    [activeFilter]="statusFilter"
-    [search]="search"
-    searchPlaceholder="Buscar por cliente, concepto o ID..."
-    (filterChange)="setStatusFilter($event)"
-    (searchChange)="search = $event"
-  />
-
-  <db-list-toolbar
-    [filters]="serviceFilters"
-    [activeFilter]="serviceFilter"
-    [showSearch]="false"
-    (filterChange)="setServiceFilter($event)"
-  />
-</div>
-
-@if (loading) {
-  <db-skeleton variant="cards" [count]="5" />
-} @else {
-  <db-state-message
-    [loading]="false"
-    [empty]="filteredQuotes.length === 0"
-    [emptyMessage]="emptyMessage"
-  >
-    <db-button
-      emptyActions
-      label="Crear primer presupuesto"
-      variant="primary"
-      format="solid"
-      (clicked)="openCreateQuote()"
-    />
-  </db-state-message>
-
-  @if (filteredQuotes.length) {
-    <cdk-virtual-scroll-viewport itemSize="150" class="quotes-list">
-      @for (quote of filteredQuotes; track quote.id) {
-        <app-quote-card
-          [quote]="quote"
-          (edit)="openEditQuote($event)"
-          (delete)="deleteQuote($event)"
-        />
-      }
-    </cdk-virtual-scroll-viewport>
-  }
-}
+<db-data-table
+  label="Presupuestos"
+  [rows]="quotes"
+  [columns]="columns"
+  [actions]="actions"
+  [filters]="statusFilters"
+  [areaFilters]="serviceFilters"
+  [loading]="loading"
+  [expandable]="true"
+  searchPlaceholder="Buscar por cliente o concepto"
+  [searchText]="searchText"
+  emptyText="No hay presupuestos registrados."
+  emptyActionLabel="Crear primer presupuesto"
+  (action)="onAction($event)"
+  (emptyAction)="openCreateQuote()"
+>
+  <ng-template odlRowDetail let-quote>
+    <app-quote-card layout="detail" [quote]="quote" (edit)="openEditQuote($event)" />
+  </ng-template>
+</db-data-table>

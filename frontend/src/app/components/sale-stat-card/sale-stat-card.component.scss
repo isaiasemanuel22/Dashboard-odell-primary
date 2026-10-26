@@ -1,99 +1,46 @@
 @use '../../shared/styles/variables' as *;
+@use '../../shared/styles/screen' as screen;
 
 :host {
   display: block;
 }
 
 .sale-stat-card {
-  background: $color-surface;
-  border: 1px solid $color-border;
-  border-radius: $radius-md;
-  padding: 1.1rem 1.25rem;
+  @include screen.metric-card;
   display: flex;
   flex-direction: column;
-  gap: 0.35rem;
+  gap: 0.25rem;
 
   &__label {
-    font-size: 0.8rem;
+    font-size: $font-meta;
     color: $color-text-muted;
   }
 
   &__value {
-    font-size: 1.35rem;
+    font-size: 1.25rem;
     color: $color-text;
+    font-weight: 700;
   }
 
-  &__detail {
-    font-size: 0.75rem;
+  &__detail,
+  &__breakdown {
+    font-size: $font-meta;
     color: $color-text-subtle;
   }
 
   &__breakdown {
-    margin-top: 0.35rem;
-    padding-top: 0.55rem;
-    border-top: 1px solid $color-border;
+    margin-top: 0.2rem;
     display: grid;
-    gap: 0.3rem;
+    gap: 0.15rem;
   }
 
   &__breakdown-row {
     display: flex;
-    align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
-    font-size: 0.75rem;
-    color: $color-text-muted;
-
-    span:last-child {
-      font-weight: 600;
-      color: $color-text-label;
-    }
   }
 
-  &--accent,
-  &--revenue {
-    border-color: $color-primary;
-    background: linear-gradient(180deg, $color-surface 0%, $color-primary-bg 100%);
-
-    .sale-stat-card__value {
-      color: $color-primary-dark;
-    }
-  }
-
-  &--revenue-soft {
-    border-color: $color-border;
-    background: $color-surface-muted;
-
-    .sale-stat-card__value {
-      color: $color-primary-dark;
-    }
-  }
-
-  &--warning,
-  &--cost {
-    border-color: #fecaca;
-    background: #fef2f2;
-
-    .sale-stat-card__value {
-      color: $color-error;
-    }
-  }
-
-  &--profit {
-    border-color: #bbf7d0;
-    background: #f0fdf4;
-
-    .sale-stat-card__value {
-      color: $color-success;
-    }
-  }
-
-  &--profit-negative {
-    border-color: #fecaca;
-    background: #fef2f2;
-
-    .sale-stat-card__value {
-      color: $color-error;
-    }
+  &--profit .sale-stat-card__value {
+    color: $color-success;
   }
 }

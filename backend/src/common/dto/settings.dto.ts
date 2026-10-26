@@ -76,6 +76,16 @@ export class LegacyPatchGeneralSettingsDto {
   @IsOptional()
   @IsNumber()
   @Min(0)
+  modelingRatePerHour?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  graphicDesignRatePerHour?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
   errorMarginPercent?: number;
 
   @IsOptional()
@@ -108,6 +118,16 @@ export class UpdateCoreValuesDto {
   @IsNumber()
   @Min(0)
   laborCostPerHour?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  modelingRatePerHour?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  graphicDesignRatePerHour?: number;
 
   @IsOptional()
   @IsNumber()

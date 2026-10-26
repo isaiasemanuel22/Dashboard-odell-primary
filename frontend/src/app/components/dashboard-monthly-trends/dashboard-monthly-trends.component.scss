@@ -12,15 +12,19 @@
 }
 
 .trend-panel {
+  border: 1px solid $color-border-soft;
+  box-shadow: none;
+
   h3 {
     margin: 0;
-    font-size: 1rem;
+    font-size: $font-amount;
+    font-weight: 700;
     color: $color-text;
   }
 
   p {
-    margin: 0.25rem 0 0;
-    font-size: 0.8rem;
+    margin: 0.2rem 0 0;
+    font-size: $font-meta;
     color: $color-text-muted;
   }
 }

@@ -1,24 +1,66 @@
 <header class="page-header">
   <div>
     <h2>Insumos</h2>
-    <p>Control de filamentos, resinas, tintas, textiles y más</p>
+    <p>
+      Control de filamentos, resinas, tintas, textiles y más ·
+      {{ supplies.length }} {{ supplies.length === 1 ? 'insumo' : 'insumos' }}
+      @if (lowStockCount) {
+        · <span class="tone-danger">{{ lowStockCount }} con stock bajo</span>
+      }
+    </p>
   </div>
-  <db-button
-    label="+ Nuevo insumo"
-    variant="primary"
-    format="solid"
-    (clicked)="openCreate()"
-  />
+  <div class="header-actions">
+    <db-button
+      label="Registrar compra"
+      variant="primary-outline"
+      format="solid"
+      routerLink="/billetera"
+    />
+    <db-button
+      label="+ Nuevo insumo"
+      variant="primary"
+      format="solid"
+      (clicked)="openCreate()"
+    />
+  </div>
 </header>
 
-<db-list-toolbar
-  [filters]="categoryFilters"
-  [activeFilter]="categoryFilter"
-  [search]="search"
-  searchPlaceholder="Buscar por nombre, marca, material o color..."
-  (filterChange)="categoryFilter = $event"
-  (searchChange)="search = $event"
-/>
+<div class="list-toolbar">
+  <div class="list-pills" role="group" aria-label="Estado de stock">
+    @for (filter of stockFilters; track filter.value) {
+      <button
+        type="button"
+        class="list-pill"
+        [class.list-pill--active]="stockFilter === filter.value"
+        (click)="stockFilter = filter.value"
+      >
+        {{ filter.label }}
+      </button>
+    }
+  </div>
+  <label class="list-search">
+    <span aria-hidden="true">⌕</span>
+    <input
+      type="search"
+      placeholder="Buscar por nombre, marca o material"
+      [(ngModel)]="search"
+    />
+  </label>
+</div>
+
+<div class="list-areas">
+  <span>Categoría</span>
+  @for (filter of categoryFilters; track filter.value) {
+    <button
+      type="button"
+      class="list-area-pill"
+      [class.list-area-pill--active]="categoryFilter === filter.value"
+      (click)="categoryFilter = filter.value"
+    >
+      {{ filter.label }}
+    </button>
+  }
+</div>
 
 <db-state-message
   [loading]="loading"

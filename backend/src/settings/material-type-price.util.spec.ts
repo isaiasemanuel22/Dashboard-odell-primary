@@ -18,6 +18,8 @@ function baseSettings(
     machineCosts: [],
     machineProfiles: [],
     laborCostPerHour: 0,
+    modelingRatePerHour: 0,
+    graphicDesignRatePerHour: 0,
     profitMargins: {
       impresion_3d: 0,
       diseno_grafico: 0,

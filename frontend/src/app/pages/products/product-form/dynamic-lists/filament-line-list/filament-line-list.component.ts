@@ -73,8 +73,7 @@ export class FilamentLineListComponent
 
   readonly filamentConfig: DynamicListConfig = {
     legend: 'Filamentos',
-    description:
-      'Sumá cada filamento usado en la impresión. El costo de material es la suma de todos.',
+    description: 'Uno por cada material o color que usa la impresión',
     itemLabel: (index) => `Filamento ${index + 1}`,
     addButtonLabel: '+ Agregar filamento',
     emptyMessage: 'Sin filamentos configurados',
@@ -88,13 +87,13 @@ export class FilamentLineListComponent
       {
         type: 'input',
         name: 'label',
-        label: 'Etiqueta (opcional)',
-        placeholder: 'Ej: Base PLA',
+        label: 'Etiqueta',
+        placeholder: 'Opcional · Ej.: Base',
       },
       {
         type: 'select',
         name: 'filamentType',
-        label: 'Tipo de filamento',
+        label: 'Filamento',
         optionsFn: (item, items) => this.getFilamentTypeOptions(item, items),
         changeFn: (item) => {
           item.colorId = INDISTINTO_COLOR_ID;
@@ -104,7 +103,6 @@ export class FilamentLineListComponent
         type: 'color-select',
         name: 'colorId',
         label: 'Color',
-        fullWidth: true,
         optionsFn: (item) => this.getColorOptions(item),
       },
       {

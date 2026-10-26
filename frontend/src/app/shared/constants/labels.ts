@@ -103,11 +103,62 @@ export const SALE_SOURCE_LABELS: Record<SaleSource, string> = {
   [SaleSource.ORDER]: 'Pedido',
 };
 
-export const WORK_BOARD_COLUMNS: { status: PrintJobStatus; label: string }[] = [
-  { status: PrintJobStatus.POR_HACER, label: 'Pendiente' },
-  { status: PrintJobStatus.EN_PROCESO, label: 'En progreso' },
-  { status: PrintJobStatus.BLOQUEADO, label: 'Bloqueado' },
-  { status: PrintJobStatus.EN_REVISION, label: 'En revisión' },
-  { status: PrintJobStatus.TERMINADO, label: 'Terminado' },
-  { status: PrintJobStatus.CANCELADO, label: 'Cancelado' },
+export type BoardColumnAccent =
+  | 'muted'
+  | 'primary'
+  | 'warning'
+  | 'review'
+  | 'success'
+  | 'cancel';
+
+export interface WorkBoardColumnConfig {
+  status: PrintJobStatus;
+  label: string;
+  accent: BoardColumnAccent;
+}
+
+/** Columnas principales del tablero (mock). Cancelado solo si hay tareas. */
+export const WORK_BOARD_COLUMNS: WorkBoardColumnConfig[] = [
+  {
+    status: PrintJobStatus.POR_HACER,
+    label: 'Por hacer',
+    accent: 'muted',
+  },
+  {
+    status: PrintJobStatus.EN_PROCESO,
+    label: 'En progreso',
+    accent: 'primary',
+  },
+  {
+    status: PrintJobStatus.BLOQUEADO,
+    label: 'Bloqueado',
+    accent: 'warning',
+  },
+  {
+    status: PrintJobStatus.EN_REVISION,
+    label: 'En revisión',
+    accent: 'review',
+  },
+  {
+    status: PrintJobStatus.TERMINADO,
+    label: 'Terminado',
+    accent: 'success',
+  },
+];
+
+export const WORK_BOARD_CANCELLED_COLUMN: WorkBoardColumnConfig = {
+  status: PrintJobStatus.CANCELADO,
+  label: 'Cancelado',
+  accent: 'cancel',
+};
+
+/** Filtros rápidos por área en la cola (según mock). */
+export const WORK_BOARD_AREA_FILTERS: {
+  value: ServiceType | null;
+  label: string;
+}[] = [
+  { value: null, label: 'Todas' },
+  { value: ServiceType.IMPRESION_3D, label: 'Impresión 3D' },
+  { value: ServiceType.ESTAMPADO, label: 'Estampado' },
+  { value: ServiceType.DISENO_GRAFICO, label: 'Diseño gráfico' },
 ];

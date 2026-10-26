@@ -12,6 +12,7 @@ import { ModalSize } from '../../shared/form-dialogs/modal-size';
 })
 export class FormDialogShellComponent {
   @Input() title = '';
+  @Input() subtitle = '';
   @Input() size: ModalSize = 'md';
   @Input() stickyHeader = false;
   @Output() close = new EventEmitter<void>();
@@ -22,6 +23,7 @@ export class FormDialogShellComponent {
       'modal--sm': this.size === 'sm',
       'modal--md': this.size === 'md',
       'modal--lg': this.size === 'lg',
+      'modal--xl': this.size === 'xl',
     };
   }
 

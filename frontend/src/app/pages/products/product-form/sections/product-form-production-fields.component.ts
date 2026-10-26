@@ -22,10 +22,8 @@ import { SuppliesService } from '../../../../core/services/settings.service';
 import { ProductFormGroup } from '../services/product-form-state-manager.service';
 import { SettingsFacade } from '../../../../store/settings/settings.facade';
 import {
-  DbFormGridComponent,
-  DbFormGridFullComponent,
-  DbInputComponent,
   DbColorSelectComponent,
+  DbInputComponent,
   DbSelectComponent,
 } from '@dashboard-form';
 import type { DbColorSelectOption } from '@dashboard-form';
@@ -43,8 +41,6 @@ import { resinTypeOptions as buildResinTypeOptions } from '../../../../shared/ut
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DbFormGridComponent,
-    DbFormGridFullComponent,
     DbInputComponent,
     DbColorSelectComponent,
     DbSelectComponent,

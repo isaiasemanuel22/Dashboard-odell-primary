@@ -27,6 +27,7 @@
     "db:push:heroku": "bash scripts/heroku-db-push.sh",
     "db:clear": "npx ts-node --transpile-only scripts/clear-database.ts",
     "db:seed-colors": "npx ts-node --transpile-only scripts/seed-default-colors.ts",
+    "db:seed-demo": "npx ts-node --transpile-only scripts/seed-demo-records.ts",
     "db:studio": "prisma studio",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "jest",

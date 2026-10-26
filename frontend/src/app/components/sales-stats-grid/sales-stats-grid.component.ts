@@ -31,6 +31,16 @@ export class SalesStatsGridComponent {
     );
   }
 
+  get ordersDetail(): string {
+    const count = this.stats.monthlyOrdersCount;
+    return count === 1 ? '1 pedido entregado' : `${count} pedidos entregados`;
+  }
+
+  get retailDetail(): string {
+    const count = this.stats.monthlyRetailCount;
+    return count === 1 ? '1 venta' : `${count} ventas`;
+  }
+
   get profitBreakdown(): SaleStatBreakdownRow[] {
     return this.sourceBreakdown(
       this.stats.monthlyRetailProfit,

@@ -8,14 +8,22 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { AppRole, AppUser } from '../../../core/models';
+import { AppRole, AppUser, WorkArea } from '../../../core/models';
 import { UserAccessService } from '../../../core/services/user-access.service';
 import {
   DbButtonComponent,
+  DbCheckboxComponent,
+  DbInputComponent,
   DbStateMessageComponent,
+  DB_DATA_TABLE,
+  OdlActionEvent,
+  OdlColumn,
+  OdlRowAction,
 } from '@general-components';
 import { FormModalComponent } from '../../../components/form-modal/form-modal.component';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
+import { UserAccessHeadComponent } from './user-access-head.component';
+import { UserAccessNavComponent } from './user-access-nav.component';
 
 @Component({
   selector: 'app-users-admin-page',
@@ -23,8 +31,13 @@ import { extractApiErrorMessage } from '../../../shared/utils/api-error';
   imports: [
     FormsModule,
     DbButtonComponent,
+    DbCheckboxComponent,
+    DbInputComponent,
     DbStateMessageComponent,
     FormModalComponent,
+    UserAccessHeadComponent,
+    UserAccessNavComponent,
+    ...DB_DATA_TABLE,
   ],
   templateUrl: './users-admin-page.component.html',
   styleUrl: './user-access-layout.component.scss',
@@ -36,12 +49,45 @@ export class UsersAdminPageComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   users: AppUser[] = [];
+
+  readonly userActions: OdlRowAction<AppUser>[] = [
+    { id: 'editar', label: 'Editar' },
+    { id: 'eliminar', label: 'Eliminar', danger: true },
+  ];
+
+  readonly userColumns: OdlColumn<AppUser>[] = [
+    {
+      key: 'displayName',
+      header: 'Usuario',
+      type: 'avatar',
+      secondary: (user) => user.email,
+    },
+    { key: 'roles', header: 'Roles' },
+    { key: 'areas', header: 'Áreas' },
+    {
+      key: 'active',
+      header: 'Estado',
+      type: 'badge',
+      badge: (user) => ({
+        label: user.active ? 'Activo' : 'Inactivo',
+        tone: user.active ? 'ok' : 'neutral',
+      }),
+    },
+  ];
+
+  onUserAction(event: OdlActionEvent<AppUser>): void {
+    if (event.actionId === 'editar') this.openEdit(event.row);
+    if (event.actionId === 'eliminar') this.deleteUser(event.row);
+  }
   roles: AppRole[] = [];
+  areas: WorkArea[] = [];
   loading = true;
   saving = false;
   error = '';
   modalOpen = false;
   editing: AppUser | null = null;
+  search = '';
+  openMenuId: string | null = null;
 
   form = {
     email: '',
@@ -57,6 +103,58 @@ export class UsersAdminPageComponent implements OnInit {
 
   roleName(roleId: string): string {
     return this.roles.find((role) => role.id === roleId)?.name ?? roleId;
+  }
+
+  get activeUserLabel(): string {
+    const count = this.users.filter((user) => user.active).length;
+    const noun = count === 1 ? 'usuario activo' : 'usuarios activos';
+    return `${count} ${noun}`;
+  }
+
+  get visibleUsers(): AppUser[] {
+    const query = this.search.trim().toLowerCase();
+    if (!query) return this.users;
+    return this.users.filter(
+      (user) =>
+        user.displayName.toLowerCase().includes(query) ||
+        user.email.toLowerCase().includes(query),
+    );
+  }
+
+  initials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+
+  userAreas(user: AppUser): WorkArea[] {
+    const areaIds = new Set<string>();
+    for (const roleId of user.roleIds) {
+      const role = this.roles.find((item) => item.id === roleId);
+      for (const permission of role?.permissions ?? []) {
+        if (permission.areaId) areaIds.add(permission.areaId);
+      }
+    }
+    return this.areas
+      .filter((area) => areaIds.has(area.id))
+      .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'es'));
+  }
+
+  areaChipClass(area: WorkArea): string {
+    if (area.slug === 'impresion_3d' || area.slug === '3d') return 'area-chip area-chip--impresion_3d';
+    if (area.slug === 'diseno' || area.slug === 'diseno_grafico') {
+      return 'area-chip area-chip--diseno_grafico';
+    }
+    if (area.slug === 'modelado') return 'area-chip area-chip--modelado';
+    if (area.slug === 'estampado' || area.slug === 'sublimacion') {
+      return 'area-chip area-chip--estampado';
+    }
+    return 'area-chip';
+  }
+
+  toggleMenu(id: string): void {
+    this.openMenuId = this.openMenuId === id ? null : id;
   }
 
   openCreate(): void {
@@ -174,6 +272,13 @@ export class UsersAdminPageComponent implements OnInit {
     this.userAccess.listRoles().subscribe({
       next: (roles) => {
         this.roles = roles;
+        this.cdr.markForCheck();
+      },
+    });
+
+    this.userAccess.listWorkAreas().subscribe({
+      next: (areas) => {
+        this.areas = areas;
         this.cdr.markForCheck();
       },
     });

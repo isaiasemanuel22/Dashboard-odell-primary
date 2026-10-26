@@ -13,72 +13,59 @@
     <header class="page-header dashboard-header">
       <div class="dashboard-header__main">
         <h2>Dashboard</h2>
-        <p>Resumen de tu emprendimiento de impresión 3D y estampados</p>
+        <p>
+          Resumen de tu emprendimiento de impresión 3D y estampados
+          @if (stats.overdueOrders) {
+            · <span class="tone-danger">{{ overdueLabel(stats.overdueOrders) }}</span>
+          }
+        </p>
       </div>
-      <div class="header-actions dashboard-header__actions">
+      <div class="header-actions">
+        <db-button label="+ Cliente" variant="secondary" format="soft" (clicked)="openForm('customer')" />
+        <db-button label="+ Producto" variant="secondary" format="soft" (clicked)="openForm('product')" />
+        <db-button label="+ Presupuesto" variant="secondary" format="soft" (clicked)="openForm('quote')" />
+        <db-button label="+ Nuevo pedido" variant="primary" format="solid" (clicked)="openForm('order')" />
         <app-dashboard-notifications [notifications]="stats.notifications" />
       </div>
     </header>
-
-    <section class="quick-actions" aria-label="Acciones rápidas">
-      <h3>Acciones rápidas</h3>
-      <div class="quick-actions__row">
-        <div class="quick-actions__grid">
-          @for (action of quickActions; track action.id) {
-            <button
-              type="button"
-              class="quick-action"
-              (click)="openForm(action.id)"
-            >
-              <span class="quick-action__icon" aria-hidden="true">{{ action.icon }}</span>
-              <span class="quick-action__label">{{ action.label }}</span>
-            </button>
-          }
-        </div>
-
-        <a class="wallet-balance wallet-balance--link" routerLink="/billetera" aria-label="Ir a billetera">
-          <span class="wallet-balance__icon" aria-hidden="true">💼</span>
-          <div class="wallet-balance__content">
-            <span class="wallet-balance__label">Billetera</span>
-            <strong class="wallet-balance__amount">{{ stats.walletBalance | currencyArs }}</strong>
-            <span class="wallet-balance__hint">Dinero disponible en el emprendimiento</span>
-          </div>
-        </a>
-      </div>
-    </section>
 
     <section class="stats-grid">
       <article class="stat-card">
         <span class="label">Ingresos del mes</span>
         <strong>{{ stats.monthlyRevenue | currencyArs }}</strong>
+        <span class="hint">{{ currentMonthLabel() }}</span>
+      </article>
+      <article class="stat-card" [class.danger]="stats.walletBalance < 0">
+        <span class="label">Billetera</span>
+        <strong>{{ stats.walletBalance | currencyArs }}</strong>
+        <span class="hint">Disponible en cuenta</span>
       </article>
       <article class="stat-card">
         <span class="label">Pedidos totales</span>
         <strong>{{ stats.totalOrders }}</strong>
+        <span class="hint">Histórico</span>
       </article>
-      <article class="stat-card warning">
+      <article class="stat-card">
         <span class="label">Pendientes</span>
         <strong>{{ stats.pendingOrders }}</strong>
+        <span class="hint" [class.tone-danger]="stats.overdueOrders > 0">
+          {{ overdueHint(stats.overdueOrders) }}
+        </span>
       </article>
-      <article class="stat-card accent">
+      <article class="stat-card">
         <span class="label">En producción</span>
         <strong>{{ stats.inProductionOrders }}</strong>
-      </article>
-      <article class="stat-card">
-        <span class="label">En proceso</span>
-        <strong>{{ stats.activePrintJobs }}</strong>
-      </article>
-      <article class="stat-card">
-        <span class="label">Por hacer (tablero)</span>
-        <strong>{{ stats.queuedPrintJobs }}</strong>
+        <span class="hint">{{ stats.queuedPrintJobs }} por hacer en el tablero</span>
       </article>
       <article class="stat-card">
         <span class="label">Clientes</span>
         <strong>{{ stats.totalCustomers }}</strong>
+        <span class="hint">Activos</span>
       </article>
-      <article class="stat-card danger">
+      <article class="stat-card stat-card--stock">
         <span class="label">Stock bajo</span>
         <strong>{{ stats.lowStockMaterials }}</strong>
+        <span class="hint">Insumos a reponer</span>
       </article>
     </section>
 
@@ -86,35 +73,46 @@
       <app-dashboard-monthly-trends [trends]="stats.monthlyTrend" />
     }
 
-    <section class="panels">
-      <article class="panel">
-        <h3>Pedidos recientes</h3>
+    <section class="dashboard-bottom">
+      <article class="recent-orders">
+        <div class="recent-orders__head">
+          <h3>Pedidos recientes</h3>
+          <a routerLink="/pedidos">Ver todos los pedidos</a>
+        </div>
         @if (stats.recentOrders.length) {
-          <app-orders-table
-            [orders]="stats.recentOrders"
-            [compact]="true"
-            [embedded]="true"
-          />
+          <db-data-table
+            label="Pedidos recientes"
+            [rows]="stats.recentOrders"
+            [columns]="recentColumns"
+            [actions]="recentActions"
+            [expandable]="true"
+            [clientSide]="false"
+            (action)="onRecentAction($event)"
+          >
+            <ng-template odlRowDetail let-order>
+              <app-order-card layout="detail" [order]="order" (edit)="editRecent($event)" />
+            </ng-template>
+          </db-data-table>
         } @else {
           <db-state-message [empty]="true" emptyMessage="Sin pedidos abiertos." />
         }
       </article>
 
-      <article class="panel">
+      <article class="service-panel">
         <h3>Pedidos por servicio</h3>
         <div class="type-stats">
-          @for (item of stats.ordersByType; track item.type) {
+          @for (item of orderedServices(stats.ordersByType); track item.type) {
             <div class="type-bar">
-              <div class="type-info">
-                <span>{{ item.type | serviceTypeLabel }}</span>
-                <strong>{{ item.count }}</strong>
-              </div>
+              <span class="type-dot" [class]="'type-dot--' + item.type"></span>
+              <span class="type-name">{{ item.type | serviceTypeLabel }}</span>
               <div class="bar-track">
                 <div
                   class="bar-fill"
-                  [style.width.%]="stats.totalOrders ? (item.count / stats.totalOrders) * 100 : 0"
+                  [class]="'bar-fill--' + item.type"
+                  [style.width.%]="(item.count / serviceMax(stats.ordersByType)) * 100"
                 ></div>
               </div>
+              <strong>{{ item.count }}</strong>
             </div>
           }
         </div>

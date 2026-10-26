@@ -7,7 +7,6 @@ import {
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ScrollingModule } from '@angular/cdk/scrolling';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Order, OrderStatus, ServiceType } from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
@@ -17,7 +16,6 @@ import { RealtimeService } from '../../core/services/realtime.service';
 import { removeById, upsertById } from '../../core/utils/replace-in-store';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import {
-  DbListToolbarComponent,
   DbSkeletonComponent,
   DbStateMessageComponent,
   DbButtonComponent,
@@ -41,10 +39,8 @@ import {
   standalone: true,
   imports: [
     FormsModule,
-    ScrollingModule,
-    DbStateMessageComponent,
     DbSkeletonComponent,
-    DbListToolbarComponent,
+    DbStateMessageComponent,
     DbButtonComponent,
     OrderCardComponent,
   ],

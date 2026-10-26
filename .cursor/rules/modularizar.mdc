@@ -1,0 +1,22 @@
+---
+description: Modularizar significa un componente genérico reutilizable, como db-data-table
+alwaysApply: true
+---
+
+# Modularizar
+
+Cuando se pide modularizar, el resultado es un componente genérico que sirve en varias pantallas. Recibe datos y configuración, y deja el caso particular en un template.
+
+La tabla de Odell es el componente que ya existe, `db-data-table` (`frontend/src/app/components/db-data-table/`). Cubre Pedidos, Presupuestos, Billetera, Insumos, Clientes, Ventas y Ajustes con:
+
+- `columns`: texto, primary, avatar, number, money, signedMoney, date, tags, badge, swatch, button o custom
+- `actions`: menú de la fila
+- `filters`, `areaFilters` y búsqueda
+- `ng-template odlCell` para una celda propia (un input, un enlace)
+- `ng-template odlRowDetail` para el detalle expandible
+
+Importá `DB_DATA_TABLE` en el componente de la pantalla.
+
+No cuenta como modularizar un mixin que copia el marco, ni un envoltorio que solo proyecta el `<table>` que cada pantalla sigue escribiendo. Una tabla usa `db-data-table` con columnas. Al pasar una tabla existente, la pantalla conserva textos, payloads y reglas; la grilla, los filtros, el orden y el menú pasan al componente.
+
+Los campos de formulario siguen en `dashboard-form` (`db-input`, `db-select`, `db-button`).

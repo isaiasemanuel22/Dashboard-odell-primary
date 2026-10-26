@@ -198,15 +198,17 @@
 .db-button--soft.db-button--inverse {
   @include action-soft-base;
   width: 100%;
-  padding: 0.65rem 0.85rem;
+  padding: 0.62rem 0.85rem;
+  border-radius: 10px;
   background: transparent;
-  border-color: rgba(255, 255, 255, 0.12);
+  border-color: rgba(255, 255, 255, 0.22);
   color: $color-sidebar-text;
+  font-weight: 600;
 
   &:hover:not(:disabled) {
     background: rgba(255, 255, 255, 0.06);
-    border-color: rgba(255, 255, 255, 0.12);
-    color: $color-sidebar-text;
+    border-color: rgba(255, 255, 255, 0.35);
+    color: #fff;
   }
 }
 

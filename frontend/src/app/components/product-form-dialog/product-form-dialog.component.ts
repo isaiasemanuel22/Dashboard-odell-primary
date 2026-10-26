@@ -26,7 +26,8 @@ export interface ProductFormDialogData {
   template: `
     <app-form-dialog-shell
       [title]="product ? 'Editar producto' : 'Nuevo producto'"
-      size="lg"
+      subtitle="El precio se calcula solo a medida que cargás material y tiempos"
+      size="xl"
       [stickyHeader]="true"
       (close)="cancel()"
     >

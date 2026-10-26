@@ -15,7 +15,6 @@ import { Category, ProductType } from '../../../../core/models';
 import { CatalogFacade } from '../../../../store/catalog/catalog.facade';
 import { DbButtonComponent } from '../../../../components/db-button/db-button.component';
 import {
-  DbFieldsetComponent,
   DbSelectComponent,
 } from '@dashboard-form';
 import type { DbSelectOption } from '@dashboard-form';
@@ -26,7 +25,6 @@ import { FormDialogService } from '../../../../shared/form-dialogs/public-api';
   standalone: true,
   imports: [
     FormsModule,
-    DbFieldsetComponent,
     DbSelectComponent,
     DbButtonComponent,
   ],

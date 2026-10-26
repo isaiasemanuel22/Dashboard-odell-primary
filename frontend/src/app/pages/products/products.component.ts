@@ -24,7 +24,6 @@ import { RealtimeService } from '../../core/services/realtime.service';
 import { SaleCartService } from '../../core/services/sale-cart.service';
 import { CatalogFacade } from '../../store/catalog/catalog.facade';
 import {
-  DbListToolbarComponent,
   DbSkeletonComponent,
   DbStateMessageComponent,
   DbButtonComponent,
@@ -35,13 +34,12 @@ import {
   clearCreateQuery,
   shouldOpenCreateFromQuery,
 } from '../../shared/utils/create-from-query.util';
-import {
-  PublishedProductFilter,
-  publishedProductFilters,
-} from '../../shared/utils/list-filters';
+import { productPhysicalStock } from '../../shared/utils/stock.helpers';
+import { resolveCategoryNamesText } from '../../shared/utils/product.helpers';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
 
 type TypeFilter = ProductType | 'all';
+type CatalogView = 'published' | 'unpublished' | 'instock' | 'all';
 
 @Component({
   selector: 'app-products',
@@ -49,9 +47,8 @@ type TypeFilter = ProductType | 'all';
   imports: [
     FormsModule,
     RouterLink,
-    DbStateMessageComponent,
     DbSkeletonComponent,
-    DbListToolbarComponent,
+    DbStateMessageComponent,
     DbButtonComponent,
     ProductCardComponent,
   ],
@@ -79,7 +76,8 @@ export class ProductsComponent implements OnInit {
   search = '';
   typeFilter: TypeFilter = 'all';
   categoryFilter = 'all';
-  publishedFilter: PublishedProductFilter = 'published';
+  publishedFilter: 'published' | 'unpublished' | 'all' = 'published';
+  catalogView: CatalogView = 'published';
 
   readonly ProductType = ProductType;
   readonly typeFilters: { value: TypeFilter; label: string }[] = [
@@ -88,7 +86,12 @@ export class ProductsComponent implements OnInit {
     { value: ProductType.RESINA, label: 'Resina' },
     { value: ProductType.ESTAMPADO, label: 'Estampado' },
   ];
-  readonly publishedFilters = publishedProductFilters();
+  readonly catalogFilters: { value: CatalogView; label: string }[] = [
+    { value: 'published', label: 'Publicados' },
+    { value: 'unpublished', label: 'No publicados' },
+    { value: 'instock', label: 'Con stock' },
+    { value: 'all', label: 'Todos' },
+  ];
 
   ngOnInit(): void {
     this.catalog.load();
@@ -127,28 +130,45 @@ export class ProductsComponent implements OnInit {
   get filteredProducts(): Product[] {
     return this.products.filter((p) => {
       const matchesPublished =
-        this.publishedFilter === 'all' ||
-        (this.publishedFilter === 'published' && p.published !== false) ||
-        (this.publishedFilter === 'unpublished' && p.published === false);
+        this.catalogView === 'all' ||
+        this.catalogView === 'instock' ||
+        (this.catalogView === 'published' && p.published !== false) ||
+        (this.catalogView === 'unpublished' && p.published === false);
+      const matchesStock =
+        this.catalogView !== 'instock' || productPhysicalStock(p) > 0;
+      const query = this.search.trim().toLowerCase();
       const matchesSearch =
-        !this.search ||
-        p.name.toLowerCase().includes(this.search.toLowerCase());
+        !query ||
+        p.name.toLowerCase().includes(query) ||
+        resolveCategoryNamesText(p.categoryIds, this.categories)
+          .toLowerCase()
+          .includes(query);
       const matchesType =
         this.typeFilter === 'all' || p.type === this.typeFilter;
       const matchesCategory =
         this.categoryFilter === 'all' ||
         p.categoryIds.includes(this.categoryFilter);
       return (
-        matchesPublished && matchesSearch && matchesType && matchesCategory
+        matchesPublished && matchesStock && matchesSearch && matchesType && matchesCategory
       );
     });
   }
 
   get emptyMessage(): string {
-    if (this.publishedFilter === 'unpublished') {
+    if (
+      this.search.trim() ||
+      this.typeFilter !== 'all' ||
+      this.categoryFilter !== 'all'
+    ) {
+      return 'No hay productos que coincidan con la búsqueda.';
+    }
+    if (this.catalogView === 'unpublished') {
       return 'No hay productos no publicados para mostrar.';
     }
-    if (this.publishedFilter === 'all') {
+    if (this.catalogView === 'instock') {
+      return 'No hay productos con stock.';
+    }
+    if (this.catalogView === 'all') {
       return 'No hay productos para mostrar.';
     }
     return 'No hay productos publicados en el catálogo.';
@@ -176,10 +196,24 @@ export class ProductsComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  setPublishedFilter(filter: PublishedProductFilter): void {
-    if (this.publishedFilter === filter) return;
-    this.publishedFilter = filter;
-    this.reloadProducts();
+  get publishedCount(): number {
+    return this.products.filter((product) => product.published !== false).length;
+  }
+
+  get inStockCount(): number {
+    return this.products.filter((product) => productPhysicalStock(product) > 0).length;
+  }
+
+  setCatalogView(view: CatalogView): void {
+    if (this.catalogView === view) return;
+    this.catalogView = view;
+    const published =
+      view === 'unpublished' ? 'unpublished' : view === 'published' ? 'published' : 'all';
+    if (this.publishedFilter !== published) {
+      this.publishedFilter = published;
+      this.reloadProducts();
+    }
+    this.cdr.markForCheck();
   }
 
   openCreateProduct(): void {

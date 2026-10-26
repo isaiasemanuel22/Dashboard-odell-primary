@@ -21,6 +21,8 @@ import {
   DbSkeletonComponent,
   DbStateMessageComponent,
   DbStatusBadgeComponent,
+  DB_DATA_TABLE,
+  OdlColumn,
 } from '@general-components';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import {
@@ -34,12 +36,11 @@ import {
   canGenerateOrderFromQuote,
   isQuoteEditable,
 } from '../../../shared/utils/quote.helpers';
-import { QUOTE_STATUS_LABELS } from '../../../shared/constants/labels';
+import { QUOTE_STATUS_LABELS, SERVICE_TYPE_LABELS } from '../../../shared/constants/labels';
 import {
   CurrencyArsPipe,
   DateShortPipe,
   QuoteStatusLabelPipe,
-  ServiceTypeLabelPipe,
 } from '../../../shared/pipes/labels.pipe';
 
 @Component({
@@ -50,12 +51,12 @@ import {
     DateShortPipe,
     CurrencyArsPipe,
     QuoteStatusLabelPipe,
-    ServiceTypeLabelPipe,
     DbSkeletonComponent,
     DbStateMessageComponent,
     DbButtonComponent,
     DbStatusBadgeComponent,
     DbServiceBadgesComponent,
+    ...DB_DATA_TABLE,
   ],
   templateUrl: './quote-detail.component.html',
   styleUrl: './quote-detail.component.scss',
@@ -78,6 +79,13 @@ export class QuoteDetailComponent implements OnInit {
 
   readonly isDesignService = isDesignService;
   readonly QuoteStatus = QuoteStatus;
+  readonly lineColumns: OdlColumn<QuoteItem>[] = [
+    { key: 'service', header: 'Servicio', value: (item) => SERVICE_TYPE_LABELS[item.serviceType] },
+    { key: 'product', header: 'Concepto / producto' },
+    { key: 'quantity', header: 'Cant.', type: 'number' },
+    { key: 'unitPrice', header: 'Precio unit.' },
+    { key: 'subtotal', header: 'Subtotal', type: 'money', value: (item) => this.lineSubtotal(item) },
+  ];
 
   ngOnInit(): void {
     const id = this.route.snapshot.paramMap.get('id');

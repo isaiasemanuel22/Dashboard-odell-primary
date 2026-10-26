@@ -1,0 +1,22 @@
+<button
+  type="button"
+  class="row-menu"
+  [class.row-menu--compact]="compact"
+  aria-label="Más acciones"
+  [attr.aria-expanded]="open"
+  (click)="toggled.emit()"
+>
+  ···
+</button>
+@if (open) {
+  <div
+    class="row-menu__panel"
+    [style.top]="bottom ? null : top"
+    [style.right]="right"
+    [style.bottom]="bottom"
+    [style.min-width]="minWidth"
+    [style.z-index]="zIndex"
+  >
+    <ng-content />
+  </div>
+}

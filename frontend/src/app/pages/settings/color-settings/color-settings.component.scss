@@ -1,58 +1,126 @@
 @use '../../../shared/styles/variables' as *;
+@use '../../../shared/styles/screen' as screen;
 
 .message {
-  margin: 0 0 1rem;
-  color: $color-success;
+  @include screen.success-note(0 0 0.75rem);
 }
 
-.panel-desc {
-  margin: 0 0 1rem;
-  color: $color-text-muted;
+.settings-card {
+  @include screen.settings-card-shell;
 }
 
-.data-table {
-  width: 100%;
-  border-collapse: collapse;
-  margin-bottom: 1rem;
-
-  th,
-  td {
-    padding: 0.5rem 0.75rem;
-    text-align: left;
-    border-bottom: 1px solid $color-border;
-  }
-
-  th {
-    font-weight: 600;
-    color: $color-text-muted;
-  }
-}
-
-.color-cell {
+.settings-card__head {
   display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+
+  h3 {
+    margin: 0;
+    font-size: $font-amount;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.2rem 0 0;
+    color: $color-text-muted;
+    font-size: $font-meta;
+  }
+}
+
+.color-toolbar {
+  display: flex;
+  flex-wrap: wrap;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
+}
+
+.list-areas {
+  @include screen.screen-areas;
+  margin-bottom: 0;
+}
+
+.list-area-pill {
+  @include screen.screen-pill;
+}
+
+.list-search {
+  @include screen.screen-search;
+}
+
+.color-create {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) 9rem auto;
+  gap: 0.65rem;
+  align-items: center;
+  margin-bottom: 0.9rem;
+  padding: 0.7rem;
+  border: 1px solid $color-border-soft;
+  border-radius: $radius-md;
+}
+
+.color-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  @media (max-width: 760px) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.color-item {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.55rem 0.65rem;
+  border: 1px solid $color-border-soft;
+  border-radius: $radius-sm;
+  background: $color-surface;
+
+  strong,
+  small {
+    display: block;
+  }
+
+  strong {
+    font-size: $font-body;
+  }
+
+  small {
+    color: $color-text-muted;
+    font-size: $font-meta;
+  }
 }
 
 .color-swatch {
-  width: 1.25rem;
-  height: 1.25rem;
-  border-radius: 50%;
-  border: 1px solid $color-border;
+  width: 1.7rem;
+  height: 1.7rem;
+  border-radius: 6px;
+  border: 1px solid $color-border-soft;
   flex-shrink: 0;
+
+  &--lg {
+    width: 2.4rem;
+    height: 2.4rem;
+  }
 }
 
-.actions {
-  white-space: nowrap;
+.empty-group {
+  @include screen.muted-empty;
 }
 
-.inline-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.75rem;
-  align-items: flex-end;
-}
-
-.inline-form db-input {
-  min-width: 10rem;
+@media (max-width: 720px) {
+  .color-create {
+    grid-template-columns: auto 1fr;
+  }
 }

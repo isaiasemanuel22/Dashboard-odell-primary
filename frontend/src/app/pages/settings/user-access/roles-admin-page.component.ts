@@ -17,11 +17,20 @@ import {
 import { UserAccessService } from '../../../core/services/user-access.service';
 import {
   DbButtonComponent,
+  DbCheckboxComponent,
+  DbInputComponent,
   DbStateMessageComponent,
+  DbTextareaComponent,
+  DB_DATA_TABLE,
+  OdlActionEvent,
+  OdlColumn,
+  OdlRowAction,
 } from '@general-components';
 import { FormModalComponent } from '../../../components/form-modal/form-modal.component';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import { PERMISSION_ACTION_LABELS } from './user-access.util';
+import { UserAccessHeadComponent } from './user-access-head.component';
+import { UserAccessNavComponent } from './user-access-nav.component';
 
 @Component({
   selector: 'app-roles-admin-page',
@@ -29,8 +38,14 @@ import { PERMISSION_ACTION_LABELS } from './user-access.util';
   imports: [
     FormsModule,
     DbButtonComponent,
+    DbCheckboxComponent,
+    DbInputComponent,
     DbStateMessageComponent,
+    DbTextareaComponent,
     FormModalComponent,
+    UserAccessHeadComponent,
+    UserAccessNavComponent,
+    ...DB_DATA_TABLE,
   ],
   templateUrl: './roles-admin-page.component.html',
   styleUrl: './user-access-layout.component.scss',
@@ -45,6 +60,27 @@ export class RolesAdminPageComponent implements OnInit {
   readonly actionLabels = PERMISSION_ACTION_LABELS;
 
   roles: AppRole[] = [];
+
+  readonly roleActions: OdlRowAction<AppRole>[] = [
+    { id: 'editar', label: 'Editar' },
+    { id: 'eliminar', label: 'Eliminar', danger: true, hidden: (role) => role.isSystem },
+  ];
+
+  readonly roleColumns: OdlColumn<AppRole>[] = [
+    {
+      key: 'name',
+      header: 'Nombre',
+      type: 'primary',
+      note: (role) => (role.isSystem ? { text: 'Sistema', tone: 'muted' } : null),
+    },
+    { key: 'description', header: 'Descripción', value: (role) => role.description || null },
+    { key: 'permissions', header: 'Permisos', type: 'number', value: (role) => this.permissionCount(role) },
+  ];
+
+  onRoleAction(event: OdlActionEvent<AppRole>): void {
+    if (event.actionId === 'editar') this.openEdit(event.row);
+    if (event.actionId === 'eliminar') this.deleteRole(event.row);
+  }
   areas: WorkArea[] = [];
   loading = true;
   saving = false;

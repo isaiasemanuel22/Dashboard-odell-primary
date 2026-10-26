@@ -6,6 +6,10 @@ import {
   FilamentType,
   ResinType,
   SupplyCategory,
+  QuoteStatus,
+  TreasuryExpenseCategory,
+  TreasuryMovementDirection,
+  BrandMaterialType,
 } from '../common/enums';
 import { adoptLegacyBrandNames } from './brand-link.util';
 import { StoreState } from './store.state';
@@ -34,6 +38,8 @@ export function createEmptyState(): StoreState {
       machineCosts: [],
       machineProfiles: createDefaultMachineProfiles(),
       laborCostPerHour: 0,
+      modelingRatePerHour: 0,
+      graphicDesignRatePerHour: 0,
       profitMargins: {
         impresion_3d: 40,
         diseno_grafico: 50,
@@ -89,6 +95,8 @@ export function createSeedState(): StoreState {
         : profile,
     ),
     laborCostPerHour: 800,
+    modelingRatePerHour: 0,
+    graphicDesignRatePerHour: 0,
     profitMargins: {
       impresion_3d: 40,
       diseno_grafico: 50,
@@ -838,9 +846,168 @@ export function createSeedState(): StoreState {
     }
   }
 
+  const quotes: StoreState['quotes'] = [
+    {
+      id: 'quo-1',
+      customerId: 'cust-1',
+      customerName: 'María González',
+      services: [ServiceType.DISENO_GRAFICO],
+      items: [
+        {
+          serviceType: ServiceType.DISENO_GRAFICO,
+          productName: 'Identidad visual para feria',
+          quantity: 1,
+          unitPrice: 45000,
+          budgetedHours: 6,
+        },
+      ],
+      status: QuoteStatus.ENVIADO,
+      total: 45000,
+      quotedAt: '2026-07-12T15:00:00.000Z',
+      createdAt: '2026-07-12T15:00:00.000Z',
+    },
+    {
+      id: 'quo-2',
+      customerId: 'cust-2',
+      customerName: 'Carlos Ruiz',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Figura personalizada PLA',
+          quantity: 4,
+          unitPrice: 8500,
+        },
+      ],
+      status: QuoteStatus.BORRADOR,
+      total: 34000,
+      quotedAt: '2026-07-18T11:30:00.000Z',
+      createdAt: '2026-07-18T11:30:00.000Z',
+    },
+    {
+      id: 'quo-3',
+      customerId: 'cust-3',
+      customerName: 'Lucía Fernández',
+      services: [ServiceType.MODELADO, ServiceType.ESTAMPADO],
+      items: [
+        {
+          serviceType: ServiceType.MODELADO,
+          productName: 'Modelo 3D de stand',
+          quantity: 1,
+          unitPrice: 28000,
+          budgetedHours: 8,
+        },
+        {
+          serviceType: ServiceType.ESTAMPADO,
+          productId: 'prod-3',
+          productName: 'Remera estampada DTF',
+          quantity: 10,
+          unitPrice: 6500,
+        },
+      ],
+      status: QuoteStatus.ACEPTADO,
+      total: 93000,
+      quotedAt: '2026-07-05T09:00:00.000Z',
+      createdAt: '2026-07-05T09:00:00.000Z',
+    },
+  ];
+
+  const treasuryExpenses: StoreState['treasuryExpenses'] = [
+    {
+      id: 'mov-1',
+      direction: TreasuryMovementDirection.INCOME,
+      category: TreasuryExpenseCategory.PAYMENT,
+      name: 'Seña María González',
+      quantity: 1,
+      unitPrice: 20000,
+      amount: 20000,
+      description: 'Seña del pedido ord-7',
+      referenceId: 'ord-7',
+      occurredAt: '2026-07-10T14:00:00.000Z',
+      createdAt: '2026-07-10T14:00:00.000Z',
+    },
+    {
+      id: 'mov-2',
+      direction: TreasuryMovementDirection.EXPENSE,
+      category: TreasuryExpenseCategory.SUPPLY_PURCHASE,
+      name: 'Compra filamento PLA',
+      quantity: 2,
+      unitPrice: 8500,
+      amount: 17000,
+      description: 'Reposición de PLA blanco',
+      occurredAt: '2026-07-11T10:00:00.000Z',
+      createdAt: '2026-07-11T10:00:00.000Z',
+    },
+    {
+      id: 'mov-3',
+      direction: TreasuryMovementDirection.EXPENSE,
+      category: TreasuryExpenseCategory.SALARY,
+      name: 'Pago operador',
+      quantity: 1,
+      unitPrice: 80000,
+      amount: 80000,
+      description: 'Semana de producción',
+      occurredAt: '2026-07-15T18:00:00.000Z',
+      createdAt: '2026-07-15T18:00:00.000Z',
+    },
+    {
+      id: 'mov-4',
+      direction: TreasuryMovementDirection.EXPENSE,
+      category: TreasuryExpenseCategory.LOAN,
+      name: 'Préstamo a Julián',
+      quantity: 1,
+      unitPrice: 15000,
+      amount: 15000,
+      description: 'Adelanto de caja',
+      occurredAt: '2026-07-16T12:00:00.000Z',
+      createdAt: '2026-07-16T12:00:00.000Z',
+    },
+    {
+      id: 'mov-5',
+      direction: TreasuryMovementDirection.INCOME,
+      category: TreasuryExpenseCategory.OTHER,
+      name: 'Venta mostrador',
+      quantity: 1,
+      unitPrice: 8500,
+      amount: 8500,
+      description: 'Ingreso de sale-1',
+      referenceId: 'sale-1',
+      occurredAt: '2026-07-08T16:30:00.000Z',
+      createdAt: '2026-07-08T16:30:00.000Z',
+    },
+  ];
+
+  const brands: StoreState['brands'] = [
+    {
+      id: 'brand-filar',
+      name: 'FilAr',
+      materialTypes: [BrandMaterialType.FILAMENT],
+      createdAt: '2026-01-10T10:00:00.000Z',
+    },
+    {
+      id: 'brand-printalot',
+      name: 'Printalot',
+      materialTypes: [BrandMaterialType.FILAMENT],
+      createdAt: '2026-01-10T10:00:00.000Z',
+    },
+    {
+      id: 'brand-elegoo',
+      name: 'Elegoo',
+      materialTypes: [BrandMaterialType.FILAMENT, BrandMaterialType.RESIN],
+      createdAt: '2026-01-10T10:00:00.000Z',
+    },
+    {
+      id: 'brand-anycubic',
+      name: 'Anycubic',
+      materialTypes: [BrandMaterialType.RESIN],
+      createdAt: '2026-01-10T10:00:00.000Z',
+    },
+  ];
+
   const state: StoreState = {
     generalSettings,
-    brands: [],
+    brands,
     supplies,
     impresos,
     categories,
@@ -852,10 +1019,10 @@ export function createSeedState(): StoreState {
     })) as Product[],
     customers,
     orders,
-    quotes: [],
+    quotes,
     printJobs,
     retailSales,
-    treasuryExpenses: [],
+    treasuryExpenses,
   };
   adoptLegacyBrandNames(state);
   return state;

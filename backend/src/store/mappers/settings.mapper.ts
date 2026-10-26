@@ -19,6 +19,8 @@ import {
 export function mapSettingsFromDb(row: {
   electricityCostPerKwh: number;
   laborCostPerHour: number;
+  modelingRatePerHour: number;
+  graphicDesignRatePerHour: number;
   errorMarginPercent?: number;
   profitMargins: Prisma.JsonValue;
   paperPricesPerSqm: Prisma.JsonValue;
@@ -44,6 +46,8 @@ export function mapSettingsFromDb(row: {
     electricityCostPerKwh: row.electricityCostPerKwh,
     errorMarginPercent: row.errorMarginPercent ?? 0,
     laborCostPerHour: row.laborCostPerHour,
+    modelingRatePerHour: row.modelingRatePerHour ?? 0,
+    graphicDesignRatePerHour: row.graphicDesignRatePerHour ?? 0,
     profitMargins: fromJson<GeneralSettings['profitMargins']>(
       row.profitMargins,
     ),
@@ -91,6 +95,8 @@ export function mapSettingsToDb(settings: GeneralSettings) {
     electricityCostPerKwh: normalized.electricityCostPerKwh,
     errorMarginPercent: normalized.errorMarginPercent,
     laborCostPerHour: normalized.laborCostPerHour,
+    modelingRatePerHour: normalized.modelingRatePerHour ?? 0,
+    graphicDesignRatePerHour: normalized.graphicDesignRatePerHour ?? 0,
     profitMargins: toInputJson(normalized.profitMargins),
     paperPricesPerSqm: toInputJson(
       syncPaperPricesFromReferenceSheets(normalized.paperReferenceSheets),

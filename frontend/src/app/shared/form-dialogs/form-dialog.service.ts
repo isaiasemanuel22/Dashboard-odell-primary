@@ -74,7 +74,7 @@ export class FormDialogService {
   }
 
   openProduct(product: Product | null = null): Observable<Product | undefined> {
-    return this.open(ProductFormDialogComponent, { product }, 'lg', {
+    return this.open(ProductFormDialogComponent, { product }, 'xl', {
       ariaLabel: product ? 'Editar producto' : 'Nuevo producto',
     });
   }

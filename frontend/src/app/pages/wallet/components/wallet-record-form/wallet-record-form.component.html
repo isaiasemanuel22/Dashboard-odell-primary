@@ -1,0 +1,308 @@
+<app-form-modal
+  [title]="formTitle"
+  [size]="isSupplyPurchase ? 'lg' : 'md'"
+  (close)="closed.emit()"
+>
+  <form class="wallet-form form" (ngSubmit)="submitExpense()" novalidate>
+    <section class="wallet-form__section">
+      <db-input
+        label="Fecha"
+        type="date"
+        [(ngModel)]="expenseDate"
+        name="expenseDate"
+        [required]="true"
+        [max]="maxExpenseDate"
+      />
+
+      @if (!isPersonMovementForm) {
+        <label class="wallet-toggle">
+          <input
+            type="checkbox"
+            class="wallet-toggle__input"
+            [(ngModel)]="isSupplyPurchase"
+            name="isSupplyPurchase"
+            (ngModelChange)="onSupplyPurchaseToggle()"
+          />
+          <span class="wallet-toggle__card">
+            <span class="wallet-toggle__icon" aria-hidden="true">🧵</span>
+            <span class="wallet-toggle__copy">
+              <strong>Compra de insumos</strong>
+              <small>Registrá stock y el gasto por cada insumo</small>
+            </span>
+          </span>
+        </label>
+      }
+    </section>
+
+    @if (isPersonMovementForm) {
+      <section class="wallet-form__section">
+        <div class="wallet-form__section-head">
+          <h4>{{ mode === 'payment' ? 'Pago' : 'Préstamo' }}</h4>
+          <p>
+            {{
+              mode === 'payment'
+                ? 'Registrá un egreso por pago entregado a una persona.'
+                : 'Registrá un egreso por dinero prestado a una persona.'
+            }}
+          </p>
+        </div>
+
+        <db-form-grid>
+          <db-form-grid-full>
+            <db-autocomplete
+              label="Persona"
+              [(ngModel)]="recipientName"
+              name="walletRecipient"
+              [required]="true"
+              [options]="recipientOptions"
+              [preserveCase]="true"
+              [minFilterChars]="0"
+              placeholder="Ej: Juan, María..."
+            />
+          </db-form-grid-full>
+
+          <db-input
+            label="Monto"
+            type="number"
+            min="0"
+            step="1"
+            [(ngModel)]="amount"
+            name="personAmount"
+            placeholder="0"
+            [required]="true"
+            (ngModelChange)="onSimpleAmountChange()"
+          />
+        </db-form-grid>
+
+        <div class="wallet-summary wallet-summary--expense">
+          <span class="wallet-summary__label">
+            {{ mode === 'payment' ? 'Pago a registrar' : 'Préstamo a registrar' }}
+          </span>
+          <strong class="wallet-summary__amount">{{ amount | currencyArs }}</strong>
+        </div>
+      </section>
+    } @else if (!isSupplyPurchase) {
+      <section class="wallet-form__section">
+        <div class="wallet-form__section-head">
+          <h4>Movimiento</h4>
+          <p>Elegí si el dinero entra o sale de la billetera.</p>
+        </div>
+
+        <div class="wallet-segment" role="radiogroup" aria-label="Tipo de movimiento">
+          <button
+            type="button"
+            class="wallet-segment__btn"
+            [class.is-active]="!isIncomeMovement"
+            (click)="setMovementDirection(movementDirections.EXPENSE)"
+          >
+            Egreso
+          </button>
+          <button
+            type="button"
+            class="wallet-segment__btn wallet-segment__btn--income"
+            [class.is-active]="isIncomeMovement"
+            (click)="setMovementDirection(movementDirections.INCOME)"
+          >
+            Ingreso
+          </button>
+        </div>
+
+        <db-form-grid>
+          <db-form-grid-full>
+            <db-autocomplete
+              label="Nombre"
+              [(ngModel)]="name"
+              name="walletName"
+              [required]="true"
+              [options]="nameOptions"
+              [preserveCase]="true"
+              [minFilterChars]="0"
+              placeholder="Ej: Transporte, Sueldo, Retiro..."
+            />
+          </db-form-grid-full>
+
+          <db-input
+            label="Monto"
+            type="number"
+            min="0"
+            step="1"
+            [(ngModel)]="amount"
+            name="amount"
+            placeholder="0"
+            [required]="true"
+            (ngModelChange)="onSimpleAmountChange()"
+          />
+        </db-form-grid>
+
+        <div
+          class="wallet-summary"
+          [class.wallet-summary--income]="isIncomeMovement"
+          [class.wallet-summary--expense]="!isIncomeMovement"
+        >
+          <span class="wallet-summary__label">
+            {{ isIncomeMovement ? 'Ingreso a registrar' : 'Egreso a registrar' }}
+          </span>
+          <strong class="wallet-summary__amount">{{ amount | currencyArs }}</strong>
+        </div>
+      </section>
+    } @else {
+      <section class="wallet-form__section">
+        <div class="wallet-form__section-head">
+          <h4>Insumos comprados</h4>
+          <p>Agregá cada insumo con cantidad, gasto real y valor de lista.</p>
+        </div>
+
+        <div class="wallet-supply-picker">
+          <db-form-field label="Insumo" forId="wallet-supply">
+            <select
+              id="wallet-supply"
+              [(ngModel)]="selectedSupplyId"
+              name="selectedSupplyId"
+            >
+              <option value="">Seleccionar insumo...</option>
+              @for (supply of availableSupplies; track supply.id) {
+                <option [value]="supply.id">{{ supply.name }}</option>
+              }
+            </select>
+          </db-form-field>
+          <div class="wallet-supply-picker__actions">
+            <db-button
+              label="+ Agregar"
+              variant="secondary"
+              format="soft"
+              [disabled]="!selectedSupplyId"
+              (clicked)="addSupplyLine()"
+            />
+            <db-button
+              label="Crear insumo"
+              variant="secondary"
+              format="link"
+              (clicked)="openCreateSupply()"
+            />
+          </div>
+        </div>
+
+        @if (supplyLines.length) {
+          <div class="wallet-supply-lines">
+            @for (line of supplyLines; track line.supplyId) {
+              <article class="wallet-supply-line">
+                <header class="wallet-supply-line__header">
+                  <div>
+                    <span class="wallet-supply-line__eyebrow">Insumo</span>
+                    <strong>{{ line.supplyName }}</strong>
+                  </div>
+                  <db-button
+                    label="Quitar"
+                    variant="delete"
+                    format="link"
+                    (clicked)="removeSupplyLine(line.supplyId)"
+                  />
+                </header>
+
+                <db-form-grid>
+                  <db-input
+                    [label]="'Cantidad (' + line.unit + ')'"
+                    type="number"
+                    min="0.01"
+                    step="any"
+                    [(ngModel)]="line.quantity"
+                    [name]="'qty-' + line.supplyId"
+                    (ngModelChange)="onSupplyLineChange(line)"
+                  />
+
+                  <db-input
+                    label="Gasto en insumos"
+                    type="number"
+                    min="0"
+                    step="1"
+                    [(ngModel)]="line.amountSpent"
+                    [name]="'spent-' + line.supplyId"
+                    (ngModelChange)="onSupplyLineChange(line)"
+                  />
+                </db-form-grid>
+
+                <db-input
+                  [label]="'Valor unitario (ARS/' + line.unit + ')'"
+                  hint="Precio de lista del proveedor. Si cambió, editá este valor; la comparación se recalcula."
+                  type="number"
+                  min="0"
+                  step="1"
+                  [(ngModel)]="line.unitPrice"
+                  [name]="'unit-' + line.supplyId"
+                  (ngModelChange)="onSupplyLineChange(line)"
+                />
+
+                @if (
+                  line.quantity > 0 &&
+                  line.unitPrice > 0 &&
+                  line.amountSpent > 0
+                ) {
+                  @if (supplyLineDelta(line) < 0) {
+                    <p class="wallet-supply-line__delta wallet-supply-line__delta--saving">
+                      Ahorraste
+                      {{ -supplyLineDelta(line) | currencyArs }}
+                      respecto al precio de lista
+                      ({{ line.quantity }} × {{ line.unitPrice | currencyArs }})
+                    </p>
+                  } @else if (supplyLineDelta(line) > 0) {
+                    <p class="wallet-supply-line__delta wallet-supply-line__delta--over">
+                      Pagaste
+                      {{ supplyLineDelta(line) | currencyArs }}
+                      más que el precio de lista
+                      ({{ line.quantity }} × {{ line.unitPrice | currencyArs }})
+                    </p>
+                  } @else {
+                    <p class="wallet-supply-line__delta wallet-supply-line__delta--neutral">
+                      Pagaste el precio de lista
+                      ({{ supplyLineListTotal(line) | currencyArs }})
+                    </p>
+                  }
+                }
+              </article>
+            }
+          </div>
+        } @else {
+          <p class="wallet-supply-empty">
+            Todavía no agregaste insumos a esta compra.
+          </p>
+        }
+
+        <div class="wallet-summary wallet-summary--supply">
+          <span class="wallet-summary__label">Monto total de la compra</span>
+          <strong class="wallet-summary__amount">
+            {{ computedSupplyTotal | currencyArs }}
+          </strong>
+        </div>
+      </section>
+    }
+
+    @if (formError) {
+      <p class="wallet-form__error" role="alert">{{ formError }}</p>
+    }
+
+    <footer class="wallet-form__footer form-footer">
+      <db-button
+        label="Cancelar"
+        variant="secondary"
+        format="soft"
+        [disabled]="saving"
+        (clicked)="closed.emit()"
+      />
+      <db-button
+        [label]="
+          saving
+            ? 'Guardando...'
+            : mode === 'payment'
+              ? 'Registrar pago'
+              : mode === 'loan'
+                ? 'Registrar préstamo'
+                : 'Guardar registro'
+        "
+        variant="primary"
+        format="solid"
+        buttonType="submit"
+        [disabled]="saving"
+      />
+    </footer>
+  </form>
+</app-form-modal>

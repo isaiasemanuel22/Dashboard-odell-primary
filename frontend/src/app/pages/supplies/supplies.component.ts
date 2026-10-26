@@ -1,11 +1,11 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ColorConfig, Supply, SupplyCategory } from '../../core/models';
 import { SuppliesService, SettingsService } from '../../core/services/settings.service';
 import {
-  DbListToolbarComponent,
-  DbStateMessageComponent,
   DbButtonComponent,
+  DbStateMessageComponent,
   SuppliesTableComponent,
 } from '@general-components';
 import {
@@ -19,17 +19,19 @@ import { supplyCategoryFilters } from '../../shared/utils/list-filters';
 import { SuppliesFacade } from '../../store/supplies/supplies.facade';
 
 type CategoryFilter = SupplyCategory | 'all';
+type StockFilter = 'all' | 'ok' | 'low';
 
 @Component({
   selector: 'app-supplies',
   standalone: true,
   imports: [
-    DbListToolbarComponent,
+    FormsModule,
     DbStateMessageComponent,
     DbButtonComponent,
     SuppliesTableComponent,
   ],
   templateUrl: './supplies.component.html',
+  styleUrl: './supplies.component.scss',
 })
 export class SuppliesComponent implements OnInit {
   private readonly suppliesService = inject(SuppliesService);
@@ -43,8 +45,19 @@ export class SuppliesComponent implements OnInit {
   loading = true;
   search = '';
   categoryFilter: CategoryFilter = 'all';
+  stockFilter: StockFilter = 'all';
 
-  readonly categoryFilters = supplyCategoryFilters();
+  readonly stockFilters: { value: StockFilter; label: string }[] = [
+    { value: 'all', label: 'Todos' },
+    { value: 'ok', label: 'Stock OK' },
+    { value: 'low', label: 'Stock bajo' },
+  ];
+
+  get categoryFilters() {
+    return supplyCategoryFilters().map((filter) =>
+      filter.value === 'all' ? { ...filter, label: 'Todas' } : filter,
+    );
+  }
 
   ngOnInit(): void {
     this.loadColorCatalog();
@@ -77,8 +90,12 @@ export class SuppliesComponent implements OnInit {
     });
   }
 
+  get lowStockCount(): number {
+    return this.supplies.filter((supply) => supply.quantity <= supply.minStock).length;
+  }
+
   get hasListFilters(): boolean {
-    return this.search.trim().length > 0 || this.categoryFilter !== 'all';
+    return this.search.trim().length > 0 || this.categoryFilter !== 'all' || this.stockFilter !== 'all';
   }
 
   get emptyMessage(): string {
@@ -94,7 +111,12 @@ export class SuppliesComponent implements OnInit {
       const matchesSearch = !term || this.supplySearchText(s).includes(term);
       const matchesCategory =
         this.categoryFilter === 'all' || s.category === this.categoryFilter;
-      return matchesSearch && matchesCategory;
+      const low = s.quantity <= s.minStock;
+      const matchesStock =
+        this.stockFilter === 'all' ||
+        (this.stockFilter === 'low' && low) ||
+        (this.stockFilter === 'ok' && !low);
+      return matchesSearch && matchesCategory && matchesStock;
     });
   }
 

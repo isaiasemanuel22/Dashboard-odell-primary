@@ -10,19 +10,19 @@ import { FilamentPriceConfig, FilamentType, GeneralSettings } from '../../../cor
 import { SettingsService } from '../../../core/services/settings.service';
 import {
   buildFilamentTypeOptions,
+  filamentTypeDisplayLabel,
   normalizeFilamentType,
 } from '../../../shared/utils/filament-type.util';
-import {
-  CurrencyArsPipe,
-  FilamentTypeLabelPipe,
-} from '../../../shared/pipes/labels.pipe';
 import {
   DbAutocompleteComponent,
   DbAutocompleteOption,
   DbButtonComponent,
-  DbFormComponent,
   DbInputComponent,
   DbStateMessageComponent,
+  DB_DATA_TABLE,
+  OdlActionEvent,
+  OdlColumn,
+  OdlRowAction,
 } from '@general-components';
 
 @Component({
@@ -30,16 +30,14 @@ import {
   standalone: true,
   imports: [
     FormsModule,
-    DbFormComponent,
-    DbInputComponent,
     DbAutocompleteComponent,
     DbButtonComponent,
-    CurrencyArsPipe,
-    FilamentTypeLabelPipe,
+    DbInputComponent,
     DbStateMessageComponent,
+    ...DB_DATA_TABLE,
   ],
   templateUrl: './filament-settings.component.html',
-  styleUrl: './filament-settings.component.scss',
+  styleUrl: '../material-price-settings.scss',
 })
 export class FilamentSettingsComponent implements OnInit, OnDestroy {
   private readonly settingsService = inject(SettingsService);
@@ -52,6 +50,23 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
   editingId: string | null = null;
   editForm = { brand: '', materialType: FilamentType.PLA as string, pricePerKg: 0 };
   extraFilamentTypes: string[] = [];
+  search = '';
+  typeFilter = 'all';
+
+  readonly priceActions: OdlRowAction<FilamentPriceConfig>[] = [
+    { id: 'editar', label: 'Editar' },
+    { id: 'eliminar', label: 'Eliminar', danger: true },
+  ];
+
+  readonly priceColumns: OdlColumn<FilamentPriceConfig>[] = [
+    { key: 'brand', header: 'Marca', type: 'primary' },
+    {
+      key: 'materialType',
+      header: 'Tipo',
+      value: (item) => filamentTypeDisplayLabel(item.materialType),
+    },
+    { key: 'pricePerKg', header: 'Precio / kg', type: 'money' },
+  ];
 
   ngOnInit(): void {
     this.settingsSub = this.settingsService.watchGeneralSettings().subscribe((settings) => {
@@ -69,6 +84,39 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
       this.settings?.filamentPrices ?? [],
       this.extraFilamentTypes,
     );
+  }
+
+  get typeFilters(): { value: string; label: string }[] {
+    const types = new Map<string, string>();
+    for (const item of this.settings?.filamentPrices ?? []) {
+      const value = normalizeFilamentType(item.materialType);
+      if (!value || types.has(value)) continue;
+      types.set(value, filamentTypeDisplayLabel(value));
+    }
+    return [...types.entries()]
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+  }
+
+  get visiblePrices(): FilamentPriceConfig[] {
+    const query = this.search.trim().toLowerCase();
+    return (this.settings?.filamentPrices ?? []).filter((item) => {
+      const matchesType =
+        this.typeFilter === 'all' ||
+        normalizeFilamentType(item.materialType) === this.typeFilter;
+      const matchesSearch = !query || item.brand.toLowerCase().includes(query);
+      return matchesType && matchesSearch;
+    });
+  }
+
+  focusCreate(): void {
+    this.cancelEdit();
+    queueMicrotask(() => document.getElementById('filament-brand')?.focus());
+  }
+
+  onPriceAction(event: OdlActionEvent<FilamentPriceConfig>): void {
+    if (event.actionId === 'editar') this.startEdit(event.row);
+    if (event.actionId === 'eliminar') this.deleteFilamentPrice(event.row.id);
   }
 
   addFilamentPrice(): void {
@@ -99,6 +147,7 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
       materialType: item.materialType,
       pricePerKg: item.pricePerKg,
     };
+    queueMicrotask(() => document.getElementById('filament-brand')?.focus());
   }
 
   cancelEdit(): void {

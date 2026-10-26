@@ -6,21 +6,23 @@ import {
   OnInit,
   inject,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
-import { ScrollingModule } from '@angular/cdk/scrolling';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Quote, QuoteStatus, ServiceType } from '../../core/models';
+import { Quote, ServiceType } from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
 import { QuotesService } from '../../core/services/quotes.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { removeById, upsertById } from '../../core/utils/replace-in-store';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import {
-  DbListToolbarComponent,
-  DbSkeletonComponent,
-  DbStateMessageComponent,
+  DB_DATA_TABLE,
   DbButtonComponent,
+  OdlActionEvent,
+  OdlColumn,
+  OdlFilter,
+  OdlRowAction,
   QuoteCardComponent,
+  quoteStatusBadge,
+  serviceTag,
 } from '@general-components';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import {
@@ -28,7 +30,6 @@ import {
   shouldOpenCreateFromQuery,
 } from '../../shared/utils/create-from-query.util';
 import {
-  QuoteStatusFilter,
   matchesQuoteStatusFilter,
   quoteIncludesService,
   quoteServiceFilters,
@@ -39,13 +40,9 @@ import {
   selector: 'app-quotes',
   standalone: true,
   imports: [
-    FormsModule,
-    ScrollingModule,
-    DbStateMessageComponent,
-    DbSkeletonComponent,
-    DbListToolbarComponent,
     DbButtonComponent,
     QuoteCardComponent,
+    ...DB_DATA_TABLE,
   ],
   templateUrl: './quotes.component.html',
   styleUrl: './quotes.component.scss',
@@ -62,12 +59,46 @@ export class QuotesComponent implements OnInit {
 
   quotes: Quote[] = [];
   loading = true;
-  search = '';
-  statusFilter: QuoteStatusFilter = 'activos';
-  serviceFilter: ServiceType | 'all' = 'all';
 
-  readonly statusFilters = quoteStatusFilters();
-  readonly serviceFilters = quoteServiceFilters();
+  readonly searchText = (quote: Quote) =>
+    [quote.id, quote.customerName, ...quote.items.map((item) => item.productName)].join(' ');
+
+  readonly statusFilters: OdlFilter<Quote>[] = quoteStatusFilters().map((filter) => ({
+    id: String(filter.value),
+    label: filter.label,
+    predicate:
+      filter.value === 'all'
+        ? undefined
+        : (quote: Quote) => matchesQuoteStatusFilter(quote.status, filter.value),
+  }));
+
+  readonly serviceFilters: OdlFilter<Quote>[] = quoteServiceFilters().map((filter) => ({
+    id: String(filter.value),
+    label: filter.label,
+    predicate:
+      filter.value === 'all'
+        ? undefined
+        : (quote: Quote) => quoteIncludesService(quote, filter.value as ServiceType),
+  }));
+
+  readonly actions: OdlRowAction<Quote>[] = [
+    { id: 'eliminar', label: 'Eliminar', danger: true },
+  ];
+
+  readonly columns: OdlColumn<Quote>[] = [
+    { key: 'id', header: 'Presupuesto', type: 'primary' },
+    {
+      key: 'customerName',
+      header: 'Cliente',
+      type: 'primary',
+      value: (quote) => quote.customerName || 'Sin cliente',
+      secondary: (quote) => this.quoteSummary(quote),
+    },
+    { key: 'services', header: 'Áreas', type: 'tags', tags: (quote) => quote.services.map(serviceTag) },
+    { key: 'quotedAt', header: 'Fecha', type: 'date' },
+    { key: 'status', header: 'Estado', type: 'badge', badge: (quote) => quoteStatusBadge(quote.status) },
+    { key: 'total', header: 'Total', type: 'money' },
+  ];
 
   ngOnInit(): void {
     this.loadQuotes();
@@ -83,51 +114,16 @@ export class QuotesComponent implements OnInit {
     }
   }
 
-  get filteredQuotes(): Quote[] {
-    const term = this.search.trim().toLowerCase();
-    return this.quotes.filter((quote) => {
-      if (!matchesQuoteStatusFilter(quote.status, this.statusFilter)) {
-        return false;
-      }
-      if (
-        this.serviceFilter !== 'all' &&
-        !quoteIncludesService(quote, this.serviceFilter)
-      ) {
-        return false;
-      }
-      if (!term) return true;
-      return [
-        quote.id,
-        quote.customerName,
-        ...quote.items.map((item) => item.productName),
-      ]
-        .join(' ')
-        .toLowerCase()
-        .includes(term);
-    });
+  onAction(event: OdlActionEvent<Quote>): void {
+    if (event.actionId === 'eliminar') this.deleteQuote(event.row);
   }
 
-  get emptyMessage(): string {
-    if (this.search.trim()) {
-      return 'No hay presupuestos que coincidan con los filtros.';
-    }
-    if (this.statusFilter === 'activos') {
-      return 'No hay presupuestos activos.';
-    }
-    if (this.statusFilter !== 'all' || this.serviceFilter !== 'all') {
-      return 'No hay presupuestos que coincidan con los filtros.';
-    }
-    return 'No hay presupuestos registrados.';
-  }
-
-  setStatusFilter(filter: QuoteStatusFilter): void {
-    this.statusFilter = filter;
-    this.cdr.markForCheck();
-  }
-
-  setServiceFilter(filter: ServiceType | 'all'): void {
-    this.serviceFilter = filter;
-    this.cdr.markForCheck();
+  private quoteSummary(quote: Quote): string {
+    const concepts = quote.items.length;
+    const units = quote.items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+    const conceptWord = concepts === 1 ? 'concepto' : 'conceptos';
+    const unitWord = units === 1 ? 'unidad' : 'unidades';
+    return `${concepts} ${conceptWord} · ${units} ${unitWord}`;
   }
 
   loadQuotes(): void {

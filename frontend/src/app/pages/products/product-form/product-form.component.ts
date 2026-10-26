@@ -22,7 +22,6 @@ import {
 import {
   DbFormComponent,
   DbFormErrorComponent,
-  DbFormFooterComponent,
 } from '@dashboard-form';
 import { DbButtonComponent } from '../../../components/db-button/db-button.component';
 import { ProductFormPricingFacade } from './store/product-form-pricing/product-form-pricing.facade';
@@ -42,7 +41,6 @@ import { ProductFormPricingSectionComponent } from './sections/product-form-pric
     ReactiveFormsModule,
     DbFormComponent,
     DbFormErrorComponent,
-    DbFormFooterComponent,
     DbButtonComponent,
     ProductFormBasicFieldsComponent,
     ProductFormProductionFieldsComponent,
@@ -86,6 +84,21 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
 
   get productType(): ProductType {
     return this.basicFields?.type ?? this.facade.type;
+  }
+
+  get missingFields(): string[] {
+    const missing: string[] = [];
+    if (!this.facade.form.controls.name.value.trim()) missing.push('nombre');
+    if (this.facade.categoryIds.length < 1) missing.push('una categoría');
+    if (this.facade.is3D && this.facade.showProductionFields) {
+      if (!(Number(this.facade.form.controls.printTimeHours.value) > 0)) {
+        missing.push('horas de impresión');
+      }
+      if (!(Number(this.facade.form.controls.workTimeHours.value) > 0)) {
+        missing.push('mano de obra');
+      }
+    }
+    return missing;
   }
 
   ngOnInit(): void {

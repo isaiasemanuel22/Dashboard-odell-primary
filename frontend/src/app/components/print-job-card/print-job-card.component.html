@@ -1,43 +1,84 @@
-<article
-  [class]="'list-card job-card ' + priorityClass + (compact ? ' job-card--compact' : '')"
->
-  <div class="job-header">
-    <db-service-badge [type]="job.type" />
-    <span class="priority-pill">{{ priorityLabel }}</span>
-  </div>
-  <span class="task-kind">{{ taskKindLabels[job.taskKind] }}</span>
-  <h3>
-    <a [routerLink]="['/pedidos', job.orderId]" class="job-order-link">
-      {{ job.productName }}
-    </a>
-  </h3>
-  <p class="customer">{{ job.customerName }}</p>
-  @if (orderStatus) {
-    <p class="order-status-line">
-      Pedido:
+@if (variant === 'board') {
+  <article [class]="'job-card job-card--board ' + priorityClass">
+    <header class="job-card__top">
+      <a [routerLink]="['/pedidos', job.orderId]" class="job-card__id">
+        #{{ job.orderId }}
+      </a>
+      <span class="job-card__priority-badge" [class]="priorityClass">
+        <span class="job-card__priority-icon" aria-hidden="true">⚑</span>
+        {{ priorityLabel }}
+      </span>
+    </header>
+
+    <h3 class="job-card__title">
+      <a
+        [routerLink]="['/pedidos', job.orderId]"
+        class="job-card__title-link"
+      >
+        {{ job.productName }}
+      </a>
+    </h3>
+
+    <div class="job-card__tag-row">
+      <db-service-badge [type]="job.type" />
+    </div>
+
+    @if (job.status === 'bloqueado') {
+      <p class="job-card__blocked" role="status">
+        <span class="job-card__blocked-icon" aria-hidden="true">🕐</span>
+        {{ job.blockedReason || 'Esperando condición operativa.' }}
+      </p>
+    }
+
+    <footer class="job-card__footer">
+      <span
+        class="job-card__avatar"
+        [title]="job.customerName"
+      >{{ customerInitial }}</span>
+    </footer>
+  </article>
+} @else {
+  <article
+    [class]="'list-card job-card ' + priorityClass + (compact ? ' job-card--compact' : '')"
+  >
+    <div class="job-header">
+      <db-service-badge [type]="job.type" />
+      <span class="priority-pill">{{ priorityLabel }}</span>
+    </div>
+    <span class="task-kind">{{ taskKindLabels[job.taskKind] }}</span>
+    <h3>
+      <a [routerLink]="['/pedidos', job.orderId]" class="job-order-link">
+        {{ job.productName }}
+      </a>
+    </h3>
+    <p class="customer">{{ job.customerName }}</p>
+    @if (orderStatus) {
+      <p class="order-status-line">
+        Pedido:
+        <db-status-badge
+          [statusClass]="orderStatus"
+          [label]="orderStatus | orderStatusLabel"
+        />
+      </p>
+    }
+    <div class="job-meta">
+      <span>{{ job.machine }}</span>
+      <span>{{ job.estimatedHours }}h est.</span>
+    </div>
+    @if (job.status === 'bloqueado') {
+      <p class="blocked-message">
+        {{ job.blockedReason || 'Tarea bloqueada por una condición operativa.' }}
+      </p>
+    }
+    @if (compact) {
+      <a [routerLink]="['/pedidos', job.orderId]" class="job-order-link job-order-link--meta">
+        Ver pedido
+      </a>
+    } @else {
       <db-status-badge
-        [statusClass]="orderStatus"
-        [label]="orderStatus | orderStatusLabel"
+        [statusClass]="job.status"
+        [label]="job.status | printJobStatusLabel"
       />
-    </p>
-  }
-  <div class="job-meta">
-    <span>{{ job.machine }}</span>
-    <span>{{ job.estimatedHours }}h est.</span>
-  </div>
-  @if (job.status === 'bloqueado') {
-    <p class="blocked-message">
-      {{ job.blockedReason || 'Tarea bloqueada por una condición operativa.' }}
-    </p>
-  }
-  @if (compact) {
-    <a [routerLink]="['/pedidos', job.orderId]" class="job-order-link job-order-link--meta">
-      Ver pedido
-    </a>
-  } @else {
-    <db-status-badge
-      [statusClass]="job.status"
-      [label]="job.status | printJobStatusLabel"
-    />
-  }
-</article>
+    }
+  </article>
+}

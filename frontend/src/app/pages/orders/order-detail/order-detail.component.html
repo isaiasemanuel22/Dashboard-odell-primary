@@ -129,74 +129,51 @@
 
       <section class="panel">
         <h3>Líneas del pedido</h3>
-        <table class="data-table">
-          <thead>
-            <tr>
-              <th>Servicio</th>
-              <th>Concepto / producto</th>
-              <th>Cant.</th>
-              <th>Stock</th>
-              <th>A producir</th>
-              <th>Reservado</th>
-              <th>Producido</th>
-              <th>Entregado</th>
-              <th>Pendiente</th>
-              <th>Precio unit.</th>
-              <th>Subtotal</th>
-            </tr>
-          </thead>
-          <tbody>
-            @for (item of order.items; track $index) {
-              <tr>
-                <td>{{ item.serviceType | serviceTypeLabel }}</td>
-                <td>
-                  @if (item.productId) {
-                    <a [routerLink]="['/productos', item.productId]" class="product-link">
-                      {{ item.productName }}
-                    </a>
-                  } @else {
-                    {{ item.productName }}
-                  }
-                </td>
-                <td>{{ item.quantity }}</td>
-                <td>{{ itemFromStock(item) }}</td>
-                <td>{{ itemToProduce(item) }}</td>
-                <td>{{ itemReserved(item) }}</td>
-                <td>{{ itemProduced(item) }}</td>
-                <td>{{ itemDelivered(item) }}</td>
-                <td><strong>{{ itemPending(item) }}</strong></td>
-                <td>
-                  @if (isDesignService(item.serviceType)) {
-                    {{ (item.designUnitPrice ?? item.unitPrice) | currencyArs }}
-                    @if (item.includesPrint) {
-                      <span class="order-item__print-unit">
-                        + {{ printUnitPrice(item) | currencyArs }}/u
-                      </span>
-                    }
-                  } @else {
-                    {{ item.unitPrice | currencyArs }}
-                  }
-                </td>
-                <td>{{ lineSubtotal(item) | currencyArs }}</td>
-              </tr>
+        <db-data-table
+          label="Líneas del pedido"
+          [rows]="order.items"
+          [columns]="lineColumns"
+          [clientSide]="false"
+        >
+          <ng-template odlCell="product" let-item>
+            @if (item.productId) {
+              <a [routerLink]="['/productos', item.productId]" class="product-link">
+                {{ item.productName }}
+              </a>
+            } @else {
+              {{ item.productName }}
             }
-          </tbody>
-          <tfoot>
+          </ng-template>
+          <ng-template odlCell="unitPrice" let-item>
+            @if (isDesignService(item.serviceType)) {
+              {{ (item.designUnitPrice ?? item.unitPrice) | currencyArs }}
+              @if (item.includesPrint) {
+                <span class="order-item__print-unit">
+                  + {{ printUnitPrice(item) | currencyArs }}/u
+                </span>
+              }
+            } @else {
+              {{ item.unitPrice | currencyArs }}
+            }
+          </ng-template>
+        </db-data-table>
+        <table class="data-table">
+          <tbody>
             <tr>
-              <td colspan="10"><strong>Subtotal</strong></td>
+              <td><strong>Subtotal</strong></td>
               <td><strong>{{ orderSubtotal | currencyArs }}</strong></td>
             </tr>
             @if (orderDiscount > 0) {
               <tr class="order-discount-row">
-                <td colspan="10"><strong>Descuento</strong></td>
+                <td><strong>Descuento</strong></td>
                 <td><strong>-{{ orderDiscount | currencyArs }}</strong></td>
               </tr>
             }
             <tr>
-              <td colspan="10"><strong>Total</strong></td>
+              <td><strong>Total</strong></td>
               <td><strong>{{ order.total | currencyArs }}</strong></td>
             </tr>
-          </tfoot>
+          </tbody>
         </table>
       </section>
 
@@ -239,10 +216,11 @@
               [min]="0.01"
               [step]="0.01"
             />
-            <label class="order-payments__deposit">
-              <input type="checkbox" [(ngModel)]="paymentDeposit" name="paymentDeposit" />
-              Seña
-            </label>
+            <db-checkbox
+              label="Seña"
+              name="paymentDeposit"
+              [(ngModel)]="paymentDeposit"
+            />
             <db-button
               [label]="paymentLoading ? 'Registrando...' : 'Registrar pago'"
               variant="primary"
@@ -268,38 +246,19 @@
           />
         </div>
         @if (tasks.length) {
-          <table class="data-table">
-            <thead>
-              <tr>
-                <th>Tarea</th>
-                <th>Tipo</th>
-                <th>Estado</th>
-                <th>Ubicación</th>
-                <th>Entrega</th>
-              </tr>
-            </thead>
-            <tbody>
-              @for (task of tasks; track task.id) {
-                <tr [class]="priorityTierClass(task.priority)">
-                  <td><strong>{{ task.productName }}</strong></td>
-                  <td>{{ taskKindLabels[task.taskKind] }}</td>
-                  <td>
-                    <db-status-badge
-                      [statusClass]="task.status"
-                      [label]="task.status | printJobStatusLabel"
-                    />
-                  </td>
-                  <td>{{ task.active ? 'Tablero' : 'Pendiente' }}</td>
-                  <td>{{ task.dueDate | dateShort }}</td>
-                </tr>
-                @if (task.status === 'bloqueado' && task.blockedReason) {
-                  <tr class="task-block-reason">
-                    <td colspan="5">Bloqueo: {{ task.blockedReason }}</td>
-                  </tr>
-                }
-              }
-            </tbody>
-          </table>
+          <db-data-table
+            label="Tareas del pedido"
+            [rows]="tasks"
+            [columns]="taskColumns"
+            [clientSide]="false"
+          >
+            <ng-template odlCell="status" let-task>
+              <db-status-badge
+                [statusClass]="task.status"
+                [label]="task.status | printJobStatusLabel"
+              />
+            </ng-template>
+          </db-data-table>
         } @else if (order.status === 'entregado') {
           <p class="empty-group">Pedido entregado — las tareas ya no aparecen en la cola de trabajo.</p>
         } @else {

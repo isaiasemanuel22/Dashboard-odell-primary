@@ -1,87 +1,78 @@
-<div class="panel-header">
-  <h3>Usuarios</h3>
-  <db-button
-    label="+ Nuevo usuario"
-    variant="primary"
-    format="solid"
-    (clicked)="openCreate()"
-  />
-</div>
+<section class="settings-card">
+  <app-user-access-head
+    [detail]="'Perfiles, roles y áreas de trabajo · ' + activeUserLabel"
+  >
+    <db-button
+      label="+ Nuevo usuario"
+      variant="primary"
+      format="solid"
+      (clicked)="openCreate()"
+    />
+  </app-user-access-head>
 
-@if (error && !modalOpen) {
-  <div class="error-banner">{{ error }}</div>
-}
+  @if (error && !modalOpen) {
+    <div class="error-banner">{{ error }}</div>
+  }
 
-<db-state-message
-  [loading]="loading"
-  [empty]="!loading && users.length === 0"
-  loadingMessage="Cargando usuarios..."
-  emptyMessage="Todavía no hay usuarios registrados."
->
-  <db-button
-    emptyActions
-    label="Crear primer usuario"
-    variant="primary"
-    format="solid"
-    (clicked)="openCreate()"
-  />
-</db-state-message>
+  <db-state-message
+    [loading]="loading"
+    [empty]="!loading && users.length === 0"
+    loadingMessage="Cargando usuarios..."
+    emptyMessage="Todavía no hay usuarios registrados."
+  >
+    <db-button
+      emptyActions
+      label="Crear primer usuario"
+      variant="primary"
+      format="solid"
+      (clicked)="openCreate()"
+    />
+  </db-state-message>
 
-@if (!loading && users.length) {
-  <div class="access-table-wrap">
-    <table class="access-table">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Email</th>
-          <th>Roles</th>
-          <th>Estado</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (user of users; track user.id) {
-          <tr>
-            <td>{{ user.displayName }}</td>
-            <td>{{ user.email }}</td>
-            <td>
-              <div class="role-tags">
-                @for (roleId of user.roleIds; track roleId) {
-                  <span class="role-tag">{{ roleName(roleId) }}</span>
-                } @empty {
-                  <span class="role-tag">Sin roles</span>
-                }
-              </div>
-            </td>
-            <td>
-              <span
-                class="badge"
-                [class.badge--active]="user.active"
-                [class.badge--inactive]="!user.active"
-              >
-                {{ user.active ? 'Activo' : 'Inactivo' }}
-              </span>
-            </td>
-            <td class="access-table__actions">
-              <db-button
-                label="Editar"
-                variant="secondary"
-                format="soft"
-                (clicked)="openEdit(user)"
-              />
-              <db-button
-                label="Eliminar"
-                variant="delete"
-                format="soft"
-                (clicked)="deleteUser(user)"
-              />
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
-}
+  @if (!loading && users.length) {
+    <div class="access-toolbar">
+      <app-user-access-nav />
+      <label class="list-search">
+        <span aria-hidden="true">⌕</span>
+        <input
+          type="search"
+          placeholder="Buscar por nombre o email"
+          [(ngModel)]="search"
+          name="userSearch"
+        />
+      </label>
+    </div>
+
+    <db-data-table
+      label="Usuarios"
+      [rows]="visibleUsers"
+      [columns]="userColumns"
+      [actions]="userActions"
+      [clientSide]="false"
+      emptyText="No hay usuarios que coincidan con la búsqueda."
+      (action)="onUserAction($event)"
+    >
+      <ng-template odlCell="roles" let-user>
+        <div class="chip-row">
+          @for (roleId of user.roleIds; track roleId) {
+            <span class="role-pill">{{ roleName(roleId) }}</span>
+          } @empty {
+            <span class="role-pill">Sin roles</span>
+          }
+        </div>
+      </ng-template>
+      <ng-template odlCell="areas" let-user>
+        <div class="chip-row">
+          @for (area of userAreas(user); track area.id) {
+            <span [class]="areaChipClass(area)">{{ area.name }}</span>
+          } @empty {
+            <span class="area-chip">Sin áreas</span>
+          }
+        </div>
+      </ng-template>
+    </db-data-table>
+  }
+</section>
 
 @if (modalOpen) {
   <app-form-modal
@@ -94,34 +85,23 @@
     }
 
     <div class="form-grid">
-      <div class="form-field">
-        <label for="user-name">Nombre</label>
-        <input id="user-name" [(ngModel)]="form.displayName" />
-      </div>
-      <div class="form-field">
-        <label for="user-email">Email</label>
-        <input id="user-email" type="email" [(ngModel)]="form.email" />
-      </div>
-      <div class="form-field">
-        <label for="user-firebase">Firebase UID (opcional)</label>
-        <input id="user-firebase" [(ngModel)]="form.firebaseUid" />
-      </div>
-      <div class="checkbox-row">
-        <input id="user-active" type="checkbox" [(ngModel)]="form.active" />
-        <label for="user-active">Usuario activo</label>
-      </div>
+      <db-input label="Nombre" name="userName" [(ngModel)]="form.displayName" />
+      <db-input label="Email" type="email" name="userEmail" [(ngModel)]="form.email" />
+      <db-input
+        label="Firebase UID (opcional)"
+        name="userFirebase"
+        [(ngModel)]="form.firebaseUid"
+      />
+      <db-checkbox label="Usuario activo" name="userActive" [(ngModel)]="form.active" />
       <div class="form-field">
         <label>Roles</label>
         @for (role of roles; track role.id) {
-          <div class="checkbox-row">
-            <input
-              [id]="'role-' + role.id"
-              type="checkbox"
-              [checked]="form.roleIds.includes(role.id)"
-              (change)="toggleRole(role.id, $any($event.target).checked)"
-            />
-            <label [for]="'role-' + role.id">{{ role.name }}</label>
-          </div>
+          <db-checkbox
+            [label]="role.name"
+            [name]="'role-' + role.id"
+            [ngModel]="form.roleIds.includes(role.id)"
+            (ngModelChange)="toggleRole(role.id, $event)"
+          />
         }
       </div>
     </div>

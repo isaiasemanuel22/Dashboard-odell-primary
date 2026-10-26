@@ -1,37 +1,46 @@
-<db-form-grid>
-  <db-select
-    label="Tipo"
-    name="type"
-    [(ngModel)]="type"
-    [ngModelOptions]="{ standalone: true }"
-    [options]="productTypeOptions"
-    (ngModelChange)="onFieldChange()"
-  />
+<section class="form-block">
+  <h4>Tipo de producto</h4>
+  <div class="type-switch" role="tablist">
+    @for (option of productTypeOptions; track option.value) {
+      <button
+        type="button"
+        class="type-switch__item"
+        [class.type-switch__item--active]="type === option.value"
+        (click)="selectType(option.value)"
+      >
+        {{ typeLabel(option.value) }}
+      </button>
+    }
+  </div>
+</section>
 
-  <db-input
-    label="Nombre"
-    name="name"
-    [(ngModel)]="name"
-    [ngModelOptions]="{ standalone: true }"
-    [required]="true"
-    (ngModelChange)="onFieldChange()"
-  />
+<section class="form-block">
+  <h4>Datos del producto</h4>
+  <div class="data-row">
+    <db-input
+      label="Nombre"
+      name="name"
+      [(ngModel)]="name"
+      [ngModelOptions]="{ standalone: true }"
+      placeholder="Ej.: Árbol de equilibrio"
+      [required]="true"
+      (ngModelChange)="onFieldChange()"
+    />
+    <db-input
+      label="Stock terminado"
+      type="number"
+      name="finishedStock"
+      [min]="0"
+      [step]="1"
+      [(ngModel)]="finishedStock"
+      [ngModelOptions]="{ standalone: true }"
+      (ngModelChange)="onFieldChange()"
+    />
+  </div>
 
-  <db-input
-    label="Stock terminado"
-    type="number"
-    name="finishedStock"
-    [(ngModel)]="finishedStock"
-    [ngModelOptions]="{ standalone: true }"
-    [min]="0"
-    step="1"
-    placeholder="0"
-    (ngModelChange)="onFieldChange()"
-  />
-
-  <db-form-grid-full>
+  @if (showIncludesPiecesCheckbox) {
     <div class="product-flags">
-      @if (showIncludesPiecesCheckbox) {
+      <div class="flag">
         <db-checkbox
           label="Publicado en catálogo"
           name="published"
@@ -39,6 +48,9 @@
           [ngModelOptions]="{ standalone: true }"
           (ngModelChange)="onFieldChange()"
         />
+        <small>Desactivalo para piezas de uso interno</small>
+      </div>
+      <div class="flag">
         <db-checkbox
           label="Incluye piezas"
           name="includesPieces"
@@ -47,15 +59,8 @@
           (checkedChange)="onIncludesPiecesChange($event)"
           (ngModelChange)="onFieldChange()"
         />
-      }
+        <small>Se arma con otros productos del catálogo</small>
+      </div>
     </div>
-    @if (showIncludesPiecesCheckbox) {
-      <p class="published-hint">
-        Desactivá «Publicado en catálogo» para piezas internas. Activá «Incluye piezas» para armar el producto a partir de otros productos del catálogo (aparece la sección «Piezas incluidas»).
-      </p>
-    }
-    <p class="published-hint">
-      Stock terminado opcional (por defecto 0). Es el stock físico; reservado y disponible los calcula el backend.
-    </p>
-  </db-form-grid-full>
-</db-form-grid>
+  }
+</section>

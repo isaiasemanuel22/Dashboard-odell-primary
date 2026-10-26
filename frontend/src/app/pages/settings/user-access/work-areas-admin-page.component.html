@@ -1,14 +1,16 @@
-<div class="panel-header">
-  <h3>Áreas de trabajo</h3>
-  <db-button
-    label="+ Nueva área"
-    variant="primary"
-    format="solid"
-    (clicked)="openCreate()"
-  />
-</div>
+<section class="settings-card">
+  <app-user-access-head>
+    <db-button
+      label="+ Nueva área"
+      variant="primary"
+      format="solid"
+      (clicked)="openCreate()"
+    />
+  </app-user-access-head>
 
-@if (error && !modalOpen) {
+  <app-user-access-nav />
+
+  @if (error && !modalOpen) {
   <div class="error-banner">{{ error }}</div>
 }
 
@@ -27,53 +29,18 @@
   />
 </db-state-message>
 
-@if (!loading && areas.length) {
-  <div class="access-table-wrap">
-    <table class="access-table">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Identificador</th>
-          <th>Orden</th>
-          <th>Estado</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (area of areas; track area.id) {
-          <tr>
-            <td>{{ area.name }}</td>
-            <td>{{ area.slug }}</td>
-            <td>{{ area.sortOrder }}</td>
-            <td>
-              <span
-                class="badge"
-                [class.badge--active]="area.active"
-                [class.badge--inactive]="!area.active"
-              >
-                {{ area.active ? 'Activa' : 'Inactiva' }}
-              </span>
-            </td>
-            <td class="access-table__actions">
-              <db-button
-                label="Editar"
-                variant="secondary"
-                format="soft"
-                (clicked)="openEdit(area)"
-              />
-              <db-button
-                label="Eliminar"
-                variant="delete"
-                format="soft"
-                (clicked)="deleteArea(area)"
-              />
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+@if (!loading) {
+  <db-data-table
+    label="Áreas de trabajo"
+    [rows]="areas"
+    [columns]="areaColumns"
+    [actions]="areaActions"
+    [clientSide]="false"
+    emptyText="No hay áreas de trabajo."
+    (action)="onAreaAction($event)"
+  />
 }
+</section>
 
 @if (modalOpen) {
   <app-form-modal
@@ -86,22 +53,16 @@
     }
 
     <div class="form-grid">
-      <div class="form-field">
-        <label for="area-name">Nombre</label>
-        <input id="area-name" [(ngModel)]="form.name" />
-      </div>
-      <div class="form-field">
-        <label for="area-slug">Identificador (opcional)</label>
-        <input id="area-slug" [(ngModel)]="form.slug" />
-      </div>
-      <div class="form-field">
-        <label for="area-order">Orden</label>
-        <input id="area-order" type="number" min="0" [(ngModel)]="form.sortOrder" />
-      </div>
-      <div class="checkbox-row">
-        <input id="area-active" type="checkbox" [(ngModel)]="form.active" />
-        <label for="area-active">Área activa</label>
-      </div>
+      <db-input label="Nombre" name="areaName" [(ngModel)]="form.name" />
+      <db-input label="Identificador (opcional)" name="areaSlug" [(ngModel)]="form.slug" />
+      <db-input
+        label="Orden"
+        type="number"
+        name="areaOrder"
+        [min]="0"
+        [(ngModel)]="form.sortOrder"
+      />
+      <db-checkbox label="Área activa" name="areaActive" [(ngModel)]="form.active" />
     </div>
 
     <div class="form-actions">

@@ -13,8 +13,6 @@ import {
   QuoteStatusLabelPipe,
   ServiceTypeLabelPipe,
 } from '../../shared/pipes/labels.pipe';
-import { DbServiceBadgesComponent } from '../db-service-badges/db-service-badges.component';
-import { DbStatusBadgeComponent } from '../db-status-badge/db-status-badge.component';
 import { DbButtonComponent } from '../db-button/db-button.component';
 import { isQuoteEditable } from '../../shared/utils/quote.helpers';
 
@@ -27,8 +25,6 @@ import { isQuoteEditable } from '../../shared/utils/quote.helpers';
     DateShortPipe,
     QuoteStatusLabelPipe,
     ServiceTypeLabelPipe,
-    DbServiceBadgesComponent,
-    DbStatusBadgeComponent,
     DbButtonComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -37,20 +33,31 @@ import { isQuoteEditable } from '../../shared/utils/quote.helpers';
 })
 export class QuoteCardComponent {
   @Input({ required: true }) quote!: Quote;
+  /** detail: solo el panel expandido, para usarlo dentro de db-data-table. */
+  @Input() layout: 'row' | 'detail' = 'row';
   @Output() edit = new EventEmitter<Quote>();
   @Output() delete = new EventEmitter<Quote>();
 
-  readonly previewLimit = 3;
+  expanded = false;
+  menuOpen = false;
 
-  previewItems(quote: Quote) {
-    return quote.items.slice(0, this.previewLimit);
+  get summaryLabel(): string {
+    const concepts = this.quote.items.length;
+    const units = this.quote.items.reduce(
+      (sum, item) => sum + (Number(item.quantity) || 0),
+      0,
+    );
+    const conceptWord = concepts === 1 ? 'concepto' : 'conceptos';
+    const unitWord = units === 1 ? 'unidad' : 'unidades';
+    return `${concepts} ${conceptWord} · ${units} ${unitWord}`;
   }
 
-  hiddenItemsCount(quote: Quote): number {
-    return Math.max(0, quote.items.length - this.previewLimit);
+  get canEdit(): boolean {
+    return isQuoteEditable(this.quote.status);
   }
 
-  canEdit(quote: Quote): boolean {
-    return isQuoteEditable(quote.status);
+  confirmDelete(): void {
+    this.menuOpen = false;
+    this.delete.emit(this.quote);
   }
 }

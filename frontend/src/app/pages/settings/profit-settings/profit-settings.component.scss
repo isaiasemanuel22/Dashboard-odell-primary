@@ -1,36 +1,83 @@
 @use '../../../shared/styles/variables' as *;
+@use '../../../shared/styles/screen' as screen;
 
-.panel-desc {
-  margin: 0 0 1rem;
-  font-size: 0.875rem;
-  color: $color-text-muted;
-  line-height: 1.5;
+.message {
+  @include screen.success-note(0 0 0.75rem);
 }
 
-.margin-hints {
-  margin: 1rem 0 0;
-  padding-left: 1.25rem;
-  font-size: 0.875rem;
-  color: $color-text-label;
+.settings-card {
+  @include screen.settings-card-shell;
 
-  li + li {
-    margin-top: 0.5rem;
+  h3 {
+    margin: 0;
+    font-size: $font-amount;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.25rem 0 0.85rem;
+    color: $color-text-muted;
+    font-size: $font-meta;
+    line-height: 1.45;
   }
 }
 
-.margin-example {
-  display: block;
-  margin-top: 0.15rem;
-  font-size: 0.8rem;
-  color: $color-text-subtle;
+db-data-table {
+  margin-top: 0.9rem;
 }
 
-.save-row {
-  margin-top: 1rem;
+.area-chip {
+  @include screen.area-chip;
+
+  &.area-chip--modelado {
+    color: $color-success;
+    border-color: #a7f3d0;
+  }
 }
 
-.message {
-  margin: 0 0 1rem;
-  font-size: 0.875rem;
-  color: $color-primary;
+.margin-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+  white-space: nowrap;
+
+  input {
+    width: 4.5rem;
+    border: 1px solid $color-border-input;
+    border-radius: $radius-sm;
+    padding: 0.4rem 0.5rem;
+    font: inherit;
+    text-align: right;
+  }
+}
+
+.example-cell {
+  span,
+  strong {
+    display: block;
+  }
+
+  span {
+    color: $color-text-muted;
+    font-size: $font-meta;
+  }
+
+  strong {
+    font-size: $font-body;
+  }
+}
+
+.rate-note {
+  margin: 0.9rem 0 0;
+  padding: 0.75rem 0.85rem;
+  border: 1px solid #f5d7a1;
+  border-radius: $radius-sm;
+  background: #fff8eb;
+  color: #9a6700;
+  font-size: $font-meta;
+
+  a {
+    color: $color-brand-deep;
+    font-weight: 700;
+  }
 }

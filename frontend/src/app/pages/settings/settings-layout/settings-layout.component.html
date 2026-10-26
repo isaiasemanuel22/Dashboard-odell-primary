@@ -6,22 +6,20 @@
   <db-button
     label="Resetear"
     variant="delete"
-    format="soft"
+    format="solid"
     (clicked)="openResetModal()"
   />
 </header>
 
 <div class="settings-shell">
   <nav class="settings-nav">
-    <a routerLink="valores-generales" routerLinkActive="active">
-      Valores generales
-    </a>
+    <a routerLink="valores-generales" routerLinkActive="active">Valores generales</a>
     <a routerLink="filamento" routerLinkActive="active">Filamento</a>
-    <a routerLink="colores" routerLinkActive="active">Colores</a>
     <a routerLink="resina" routerLinkActive="active">Resina</a>
+    <a routerLink="colores" routerLinkActive="active">Colores</a>
     <a routerLink="impresos" routerLinkActive="active">Impresos</a>
     <a routerLink="ganancias" routerLinkActive="active">Ganancias</a>
-    <a routerLink="usuarios/usuarios" routerLinkActive="active">Usuarios</a>
+    <a routerLink="usuarios" routerLinkActive="active">Usuarios</a>
   </nav>
   <div class="settings-content">
     <router-outlet />

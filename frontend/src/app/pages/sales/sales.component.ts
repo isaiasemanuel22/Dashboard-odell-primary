@@ -4,35 +4,43 @@ import {
   SaleEntry,
   SaleSource,
   SalesStats,
+  ServiceType,
 } from '../../core/models';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { BreakpointService } from '../../core/services/breakpoint.service';
 import { SalesService } from '../../core/services/sales.service';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import {
-  DbListToolbarComponent,
+  DB_DATA_TABLE,
   DbStateMessageComponent,
   DbButtonComponent,
+  OdlActionEvent,
+  OdlColumn,
+  OdlFilter,
+  OdlRowAction,
   SalesStatsGridComponent,
-  SalesTableComponent,
+  serviceTag,
 } from '@general-components';
-import { SALE_SOURCE_LABELS } from '../../shared/constants/labels';
+import { SALE_SOURCE_LABELS, SERVICE_TYPE_LABELS } from '../../shared/constants/labels';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { downloadSalesReportPdf } from '../../shared/utils/sales-report.util';
 import { ProductsService } from '../../core/services/products.service';
-import { ListFilterOption } from '../../components/db-list-toolbar/db-list-toolbar.component';
 
-type SalesFilter = 'all' | SaleSource;
+const SALE_AREAS: ServiceType[] = [
+  ServiceType.IMPRESION_3D,
+  ServiceType.DISENO_GRAFICO,
+  ServiceType.MODELADO,
+  ServiceType.ESTAMPADO,
+];
 
 @Component({
   selector: 'app-sales',
   standalone: true,
   imports: [
-    DbListToolbarComponent,
     DbStateMessageComponent,
     DbButtonComponent,
     SalesStatsGridComponent,
-    SalesTableComponent,
+    ...DB_DATA_TABLE,
   ],
   templateUrl: './sales.component.html',
   styleUrl: './sales.component.scss',
@@ -50,14 +58,85 @@ export class SalesComponent implements OnInit {
   loadError = false;
   stats: SalesStats | null = null;
   entries: SaleEntry[] = [];
-  search = '';
-  salesFilter: SalesFilter = 'all';
 
-  readonly filters: ListFilterOption<SalesFilter>[] = [
-    { value: 'all', label: 'Todas' },
-    { value: SaleSource.RETAIL, label: SALE_SOURCE_LABELS[SaleSource.RETAIL] },
-    { value: SaleSource.ORDER, label: SALE_SOURCE_LABELS[SaleSource.ORDER] },
+  readonly monthLabel = new Date()
+    .toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
+    .replace(' de ', ' ');
+
+  readonly monthName = new Date().toLocaleDateString('es-AR', { month: 'long' });
+
+  readonly searchText = (entry: SaleEntry) =>
+    [
+      entry.saleId,
+      entry.customerName ?? '',
+      entry.notes ?? '',
+      entry.orderId ?? '',
+      ...entry.items.map((item) => `${item.productName} ${item.quantity}`),
+    ].join(' ');
+
+  readonly sourceFilters: OdlFilter<SaleEntry>[] = [
+    { id: 'all', label: 'Todas' },
+    {
+      id: SaleSource.RETAIL,
+      label: SALE_SOURCE_LABELS[SaleSource.RETAIL],
+      predicate: (entry) => entry.source === SaleSource.RETAIL,
+    },
+    {
+      id: SaleSource.ORDER,
+      label: SALE_SOURCE_LABELS[SaleSource.ORDER],
+      predicate: (entry) => entry.source === SaleSource.ORDER,
+    },
   ];
+
+  readonly areaFilters: OdlFilter<SaleEntry>[] = [
+    { id: 'all', label: 'Todas' },
+    ...SALE_AREAS.map((area) => ({
+      id: area,
+      label: SERVICE_TYPE_LABELS[area],
+      predicate: (entry: SaleEntry) => entry.items.some((item) => item.serviceType === area),
+    })),
+  ];
+
+  readonly actions: OdlRowAction<SaleEntry>[] = [
+    { id: 'editar', label: 'Editar', hidden: (entry) => !entry.editable },
+    { id: 'eliminar', label: 'Eliminar', danger: true, hidden: (entry) => !entry.editable },
+    { id: 'ver', label: 'Ver pedido', hidden: (entry) => entry.editable || !entry.orderId },
+  ];
+
+  readonly columns: OdlColumn<SaleEntry>[] = [
+    { key: 'saleId', header: 'Venta', type: 'primary' },
+    { key: 'customerName', header: 'Cliente', value: (entry) => entry.customerName || 'Sin cliente' },
+    {
+      key: 'source',
+      header: 'Tipo',
+      type: 'badge',
+      badge: (entry) => ({
+        label: SALE_SOURCE_LABELS[entry.source],
+        tone: entry.source === SaleSource.ORDER ? 'info' : 'neutral',
+      }),
+    },
+    {
+      key: 'areas',
+      header: 'Áreas',
+      type: 'tags',
+      tags: (entry) => {
+        const seen = new Set<ServiceType>();
+        return entry.items.flatMap((item) => {
+          if (!item.serviceType || seen.has(item.serviceType)) return [];
+          seen.add(item.serviceType);
+          return [serviceTag(item.serviceType)];
+        });
+      },
+    },
+    { key: 'soldAt', header: 'Fecha', type: 'date' },
+    { key: 'cost', header: 'Costo', type: 'money' },
+    { key: 'profit', header: 'Ganancia', type: 'signedMoney' },
+    { key: 'total', header: 'Total', type: 'money' },
+  ];
+
+  get emptyText(): string {
+    return `No hay ventas registradas en ${this.monthName}.`;
+  }
 
   ngOnInit(): void {
     this.loadData();
@@ -66,33 +145,16 @@ export class SalesComponent implements OnInit {
     );
   }
 
-  get filteredEntries(): SaleEntry[] {
-    const term = this.search.trim().toLowerCase();
-
-    return this.entries
-      .filter((entry) => {
-        if (this.salesFilter === 'all') return true;
-        return entry.source === this.salesFilter;
-      })
-      .filter((entry) => {
-        if (!term) return true;
-        return [
-          entry.saleId,
-          entry.customerName ?? '',
-          entry.notes ?? '',
-          entry.orderId ?? '',
-          ...entry.items.map(
-            (item) => `${item.productName} ${item.quantity}`,
-          ),
-        ]
-          .join(' ')
-          .toLowerCase()
-          .includes(term);
-      });
+  openCreateSale(): void {
+    void this.router.navigate(['/ventas/nueva']);
   }
 
-  setSalesFilter(filter: SalesFilter): void {
-    this.salesFilter = filter;
+  onAction(event: OdlActionEvent<SaleEntry>): void {
+    if (event.actionId === 'editar') this.openEditSale(event.row);
+    if (event.actionId === 'eliminar') this.deleteSale(event.row);
+    if (event.actionId === 'ver' && event.row.orderId) {
+      void this.router.navigate(['/pedidos', event.row.orderId]);
+    }
   }
 
   openEditSale(entry: SaleEntry): void {

@@ -1,61 +1,72 @@
 <db-form>
   <form [formGroup]="facade.form" (ngSubmit)="onSubmit()" autocomplete="off">
-    <app-product-form-basic-fields
-      [value]="basicFields ?? facade.basicFieldsValue"
-      [productTypeOptions]="facade.productTypeOptions"
-      (valueChange)="onBasicFieldsChange($event)"
-    />
-    <app-product-form-production-fields
-      [form]="facade.form"
-      [productType]="productType"
-      [includesPieces]="facade.includesPieces"
-    />
+    <div class="product-create">
+      <div class="product-create__main">
+        <app-product-form-basic-fields
+          [value]="basicFields ?? facade.basicFieldsValue"
+          [productTypeOptions]="facade.productTypeOptions"
+          (valueChange)="onBasicFieldsChange($event)"
+        />
+        <app-product-form-categories-section
+          [productType]="productType"
+          [value]="categoryIds"
+          (valueChange)="onCategoriesChange($event)"
+        />
 
-    @if (facade.showComponentsSection) {
-      <app-product-form-components-section
-        [productType]="productType"
-        [editingProductId]="product?.id ?? null"
-        [value]="componentsValue ?? facade.componentsValue"
-        (valueChange)="onComponentsChange($event)"
+        @if (facade.showComponentsSection) {
+          <app-product-form-components-section
+            [productType]="productType"
+            [editingProductId]="product?.id ?? null"
+            [value]="componentsValue ?? facade.componentsValue"
+            (valueChange)="onComponentsChange($event)"
+          />
+        }
+
+        <app-product-form-production-fields
+          [form]="facade.form"
+          [productType]="productType"
+          [includesPieces]="facade.includesPieces"
+        />
+
+        <app-product-form-media-section
+          #mediaSection
+          [facade]="facade"
+          [uploadProductImage]="facade.uploadProductImage"
+          [uploadProductAttachment]="facade.uploadProductAttachment"
+        />
+      </div>
+
+      <app-product-form-pricing-section
+        [facade]="facade"
+        [form]="facade.form"
       />
-    }
-
-    <app-product-form-categories-section
-      [productType]="productType"
-      [value]="categoryIds"
-      (valueChange)="onCategoriesChange($event)"
-    />
-
-    <app-product-form-media-section
-      #mediaSection
-      [facade]="facade"
-      [uploadProductImage]="facade.uploadProductImage"
-      [uploadProductAttachment]="facade.uploadProductAttachment"
-    />
-
-    <app-product-form-pricing-section
-      [facade]="facade"
-      [form]="facade.form"
-    />
+    </div>
 
     @if (error || clientError || facade.imageUploadError) {
       <db-form-error>{{ error || clientError || facade.imageUploadError }}</db-form-error>
     }
 
-    <db-form-footer>
-      <db-button
-        label="Cancelar"
-        variant="cancel"
-        format="soft"
-        (clicked)="cancel.emit()"
-      />
-      <db-button
-        [label]="facade.savingImages || facade.savingAttachments ? 'Subiendo archivos...' : (loading ? 'Guardando...' : (product ? 'Guardar cambios' : 'Crear producto'))"
-        variant="primary"
-        format="solid"
-        buttonType="submit"
-        [disabled]="loading || facade.savingImages || facade.savingAttachments || !facade.form.controls.name.value.trim() || facade.categoryIds.length < 1"
-      />
-    </db-form-footer>
+    <footer class="product-create__footer">
+      @if (missingFields.length) {
+        <p>Faltan: {{ missingFields.join(', ') }}</p>
+      } @else {
+        <span></span>
+      }
+      <div class="product-create__actions">
+        <db-button
+          label="Cancelar"
+          variant="cancel"
+          format="soft"
+          (clicked)="cancel.emit()"
+        />
+        <db-button
+          [label]="facade.savingImages || facade.savingAttachments ? 'Subiendo archivos...' : (loading ? 'Guardando...' : (product ? 'Guardar cambios' : 'Crear producto'))"
+          variant="primary"
+          format="solid"
+          buttonType="submit"
+          [disabled]="loading || facade.savingImages || facade.savingAttachments || !facade.form.controls.name.value.trim() || facade.categoryIds.length < 1"
+        />
+      </div>
+    </footer>
   </form>
 </db-form>

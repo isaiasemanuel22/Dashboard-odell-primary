@@ -1,59 +1,62 @@
 @if (settings) {
-  <db-form>
-    <div class="panels">
-      @if (message) {
-        <p class="message">{{ message }}</p>
-      }
+  <section class="settings-card">
+    @if (message) {
+      <p class="message">{{ message }}</p>
+    }
 
-      <section class="panel">
+    <div class="settings-card__head">
+      <div>
         <h3>Márgenes de ganancia por servicio</h3>
-        <p class="panel-desc">
-          Porcentaje de ganancia sobre el costo. El sistema calcula
-          <strong>precio = costo × (1 + margen/100)</strong> al crear o editar productos,
-          salvo que indiques un precio sugerido manual.
+        <p>
+          Porcentaje sobre el costo. Al crear o editar un producto:
+          <strong>precio = costo × (1 + margen ÷ 100)</strong>, salvo que cargues un precio manual.
         </p>
-
-        <db-form-grid [columns]="3">
-          @for (field of marginFields; track field.service) {
-            <db-input
-              [label]="field.label + ' (%)'"
-              type="number"
-              [ngModel]="marginValue(field.service)"
-              (ngModelChange)="setMargin(field.service, $event)"
-              [name]="'margin-' + field.service"
-              [min]="0"
-              [max]="999"
-              [step]="1"
-            />
-          }
-        </db-form-grid>
-
-        <ul class="margin-hints">
-          @for (field of marginFields; track field.service) {
-            <li>
-              <strong>{{ field.label }}:</strong> {{ field.hint }}
-              @if (marginValue(field.service) > 0) {
-                <span class="margin-example">
-                  Ej.: costo $1.000 → precio
-                  {{ examplePrice(1000, marginValue(field.service)) | number:'1.0-0' }}
-                </span>
-              }
-            </li>
-          }
-        </ul>
-
-        <div class="save-row">
-          <db-button
-            [label]="saving ? 'Guardando...' : 'Guardar márgenes'"
-            variant="primary"
-            format="solid"
-            [disabled]="saving"
-            (clicked)="saveMargins()"
-          />
-        </div>
-      </section>
+      </div>
     </div>
-  </db-form>
+
+    <db-button
+      [label]="saving ? 'Guardando...' : 'Guardar márgenes'"
+      variant="primary"
+      format="solid"
+      [disabled]="saving"
+      (clicked)="saveMargins()"
+    />
+
+    <db-data-table
+      label="Márgenes de ganancia"
+      [rows]="marginFields"
+      [columns]="marginColumns"
+      [clientSide]="false"
+      minWidth="560px"
+    >
+      <ng-template odlCell="margen" let-field>
+        <label class="margin-cell">
+          <input
+            type="number"
+            min="0"
+            max="999"
+            step="1"
+            [ngModel]="marginValue(field.service)"
+            (ngModelChange)="setMargin(field.service, $event)"
+            [name]="'margin-' + field.service"
+          />
+          <span>%</span>
+        </label>
+      </ng-template>
+      <ng-template odlCell="ejemplo" let-field>
+        <span>Costo {{ 1000 | currencyArs }}</span>
+        <strong>Precio {{ examplePrice(1000, marginValue(field.service)) | currencyArs }}</strong>
+      </ng-template>
+    </db-data-table>
+
+    @if (!settings.modelingRatePerHour || !settings.graphicDesignRatePerHour) {
+      <p class="rate-note">
+        Diseño gráfico y Modelado calculan sobre su tarifa por hora en Valores generales.
+        Hasta que la cargues, esas líneas salen sin costo.
+        <a routerLink="../valores-generales">Ir a Valores generales</a>
+      </p>
+    }
+  </section>
 } @else {
   <db-state-message [loading]="true" loadingMessage="Cargando márgenes..." />
 }

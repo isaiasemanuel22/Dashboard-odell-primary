@@ -1,38 +1,56 @@
-<header class="page-header">
+<header class="orders-header">
   <div>
     <h2>Pedidos</h2>
     <p>Gestión de pedidos de impresión 3D y estampados</p>
   </div>
-  <div class="header-actions">
-    <db-button
-      label="+ Nuevo pedido"
-      variant="primary"
-      format="solid"
-      (clicked)="openCreateOrder()"
-    />
-  </div>
+  <db-button
+    label="+ Nuevo pedido"
+    variant="primary"
+    format="solid"
+    (clicked)="openCreateOrder()"
+  />
 </header>
 
-<div class="orders-filters">
-  <db-list-toolbar
-    [filters]="statusFilters"
-    [activeFilter]="statusFilter"
-    [search]="search"
-    searchPlaceholder="Buscar por cliente, producto o ID..."
-    (filterChange)="setStatusFilter($event)"
-    (searchChange)="search = $event"
-  />
+<div class="orders-toolbar">
+  <div class="orders-pills" role="group" aria-label="Estado del pedido">
+    @for (filter of statusFilters; track filter.value) {
+      <button
+        type="button"
+        class="orders-pill"
+        [class.orders-pill--active]="statusFilter === filter.value"
+        (click)="setStatusFilter(filter.value)"
+      >
+        {{ filter.label }}
+      </button>
+    }
+  </div>
+  <label class="orders-search">
+    <span aria-hidden="true">⌕</span>
+    <input
+      type="search"
+      placeholder="Buscar por cliente, producto o pedido"
+      [(ngModel)]="search"
+    />
+  </label>
+</div>
 
-  <db-list-toolbar
-    [filters]="serviceFilters"
-    [activeFilter]="serviceFilter"
-    [showSearch]="false"
-    (filterChange)="setServiceFilter($event)"
-  />
+<div class="orders-areas">
+  <span>Área</span>
+  @for (filter of serviceFilters; track filter.value) {
+    <button
+      type="button"
+      class="orders-area-pill"
+      [class]="'orders-area-pill--' + filter.value"
+      [class.orders-area-pill--active]="serviceFilter === filter.value"
+      (click)="setServiceFilter(filter.value)"
+    >
+      {{ filter.label }}
+    </button>
+  }
 </div>
 
 @if (loading) {
-  <db-skeleton variant="cards" [count]="5" />
+  <db-skeleton variant="cards" [count]="3" />
 } @else {
   <db-state-message
     [loading]="false"
@@ -49,14 +67,25 @@
   </db-state-message>
 
   @if (filteredOrders.length) {
-    <cdk-virtual-scroll-viewport itemSize="160" class="orders-list">
+    <div class="orders-board">
+      <div class="orders-board__head">
+        <span></span>
+        <span>Pedido</span>
+        <span>Cliente</span>
+        <span>Áreas</span>
+        <span>Entrega</span>
+        <span>Estado</span>
+        <span class="is-end">Total</span>
+        <span></span>
+      </div>
       @for (order of filteredOrders; track order.id) {
         <app-order-card
+          layout="card"
           [order]="order"
           (edit)="openEditOrder($event)"
           (delete)="deleteOrder($event)"
         />
       }
-    </cdk-virtual-scroll-viewport>
+    </div>
   }
 }

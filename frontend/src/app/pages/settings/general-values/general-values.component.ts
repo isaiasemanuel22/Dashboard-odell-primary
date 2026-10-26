@@ -26,6 +26,10 @@ import {
   DbSelectComponent,
   DbSelectOption,
   DbStateMessageComponent,
+  DB_DATA_TABLE,
+  OdlActionEvent,
+  OdlColumn,
+  OdlRowAction,
 } from '@general-components';
 import { productTypeOptions } from '../../../shared/utils/select-options';
 
@@ -41,11 +45,36 @@ import { productTypeOptions } from '../../../shared/utils/select-options';
     DbCheckboxComponent,
     DbButtonComponent,
     DbStateMessageComponent,
+    ...DB_DATA_TABLE,
   ],
   templateUrl: './general-values.component.html',
   styleUrl: './general-values.component.scss',
 })
 export class GeneralValuesComponent implements OnInit, OnDestroy {
+  readonly profileActions: OdlRowAction<MachineProfile>[] = [
+    { id: 'editar', label: 'Editar' },
+    { id: 'eliminar', label: 'Eliminar', danger: true },
+  ];
+
+  readonly profileColumns: OdlColumn<MachineProfile>[] = [
+    {
+      key: 'name',
+      header: 'Equipo',
+      type: 'primary',
+      value: (profile) => profile.name.trim() || 'Nuevo equipo',
+      secondary: (profile) => this.supplyCaption(profile),
+    },
+    { key: 'role', header: 'Rol', value: (profile) => this.roleLabels[profile.role] },
+    { key: 'productType', header: 'Tipo de producto', value: (profile) => this.productTypeLabel(profile) },
+    { key: 'watts', header: 'Consumo', value: (profile) => `${profile.watts} W` },
+    { key: 'costPerHour', header: 'Costo máquina', type: 'money', secondary: () => '/ h' },
+  ];
+
+  onProfileAction(event: OdlActionEvent<MachineProfile>): void {
+    if (event.actionId === 'editar') this.selectProfile(event.row.id);
+    if (event.actionId === 'eliminar') this.removeMachineProfile(event.row.id);
+  }
+
   private readonly settingsService = inject(SettingsService);
   private readonly suppliesService = inject(SuppliesService);
   private readonly realtime = inject(RealtimeService);
@@ -58,6 +87,16 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
   savingProfiles = false;
   message = '';
   realtimeSyncEnabled = false;
+  profileTypeFilter: 'all' | ProductType = 'all';
+  selectedProfileId: string | null = null;
+  openMenuId: string | null = null;
+
+  readonly profileFilters: { value: 'all' | ProductType; label: string }[] = [
+    { value: 'all', label: 'Todos' },
+    { value: ProductType.FDM, label: 'FDM' },
+    { value: ProductType.RESINA, label: 'Resina' },
+    { value: ProductType.ESTAMPADO, label: 'Estampado' },
+  ];
 
   readonly roleOptions: DbSelectOption[] = [
     { value: MachineProfileRole.PRINT, label: 'Impresión' },
@@ -110,6 +149,44 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
     ];
   }
 
+  get filteredProfiles(): MachineProfile[] {
+    if (!this.settings) return [];
+    if (this.profileTypeFilter === 'all') return this.settings.machineProfiles;
+    return this.settings.machineProfiles.filter(
+      (profile) => profile.productType === this.profileTypeFilter,
+    );
+  }
+
+  get selectedProfile(): MachineProfile | null {
+    if (!this.settings || !this.selectedProfileId) return null;
+    return (
+      this.settings.machineProfiles.find((profile) => profile.id === this.selectedProfileId) ??
+      null
+    );
+  }
+
+  selectProfile(id: string): void {
+    this.openMenuId = null;
+    this.selectedProfileId = id;
+  }
+
+  closeProfileEditor(): void {
+    this.selectedProfileId = null;
+  }
+
+  toggleMenu(id: string): void {
+    this.openMenuId = this.openMenuId === id ? null : id;
+  }
+
+  supplyCaption(profile: MachineProfile): string | null {
+    if (!this.isWash(profile) || !profile.washSupplyId) return null;
+    const supply = this.supplies.find((item) => item.id === profile.washSupplyId);
+    if (!supply) return null;
+    const ml = profile.consumptionMl ? `${profile.consumptionMl} ml por baño` : '';
+    const uses = `${profile.washBathUses || 10} usos`;
+    return [supply.name, ml, uses].filter(Boolean).join(' · ');
+  }
+
   saveGeneral(): void {
     if (!this.settings) return;
     this.saving = true;
@@ -118,6 +195,8 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
       .updateCoreValues({
         electricityCostPerKwh: this.settings.electricityCostPerKwh,
         laborCostPerHour: this.settings.laborCostPerHour,
+        modelingRatePerHour: this.settings.modelingRatePerHour,
+        graphicDesignRatePerHour: this.settings.graphicDesignRatePerHour,
         errorMarginPercent: this.settings.errorMarginPercent,
       })
       .subscribe({
@@ -183,6 +262,12 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
         }
         this.savingProfiles = false;
         this.message = 'Perfiles de máquina guardados';
+        if (
+          this.selectedProfileId &&
+          !this.settings?.machineProfiles.some((profile) => profile.id === this.selectedProfileId)
+        ) {
+          this.selectedProfileId = null;
+        }
       },
       error: () => {
         this.savingProfiles = false;
@@ -203,12 +288,14 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
         costPerHour: 0,
       },
     ];
+    this.selectedProfileId = this.settings.machineProfiles.at(-1)?.id ?? null;
   }
 
   removeMachineProfile(id: string): void {
     if (!this.settings) return;
     if (!confirm('¿Eliminar este perfil de máquina?')) return;
 
+    if (this.selectedProfileId === id) this.selectedProfileId = null;
     if (this.isTemporaryProfile(id)) {
       this.settings.machineProfiles = this.settings.machineProfiles.filter(
         (profile) => profile.id !== id,
@@ -222,6 +309,7 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
         this.settings.machineProfiles = this.settings.machineProfiles.filter(
           (profile) => profile.id !== id,
         );
+        if (this.selectedProfileId === id) this.selectedProfileId = null;
         this.message = 'Perfil eliminado';
       },
       error: () => {

@@ -22,6 +22,8 @@ import { pricePerSqmFromReferenceSheet } from '../../shared/utils/paper-cost.uti
 export interface CoreValuesSettings {
   electricityCostPerKwh: number;
   laborCostPerHour: number;
+  modelingRatePerHour: number;
+  graphicDesignRatePerHour: number;
   errorMarginPercent: number;
 }
 

@@ -1,63 +1,9 @@
-<div class="table-card">
-  <table class="data-table">
-    <thead>
-      <tr>
-        <th>Nombre</th>
-        <th>Categoría</th>
-        <th>Material</th>
-        <th>Color</th>
-        <th>Marca</th>
-        <th>Stock</th>
-        <th>Precio/u</th>
-        <th>Estado</th>
-        <th></th>
-      </tr>
-    </thead>
-    <tbody>
-      @for (s of supplies; track s.id) {
-        <tr [class.low-stock]="isLowStock(s)">
-          <td><strong>{{ s.name }}</strong></td>
-          <td>{{ s.category | supplyCategoryLabel }}</td>
-          <td>{{ materialLabel(s) }}</td>
-          <td>
-            @if (showColor(s)) {
-              <span class="color-value">
-                @if (colorHex(s); as hex) {
-                  <span class="color-swatch" [style.background-color]="hex"></span>
-                }
-                {{ colorLabel(s) }}
-              </span>
-            } @else {
-              —
-            }
-          </td>
-          <td>{{ s.brand ?? '—' }}</td>
-          <td>{{ s.quantity }} {{ s.unit }}</td>
-          <td>{{ s.unitPrice | currencyArs }}</td>
-          <td>
-            <db-stock-badge
-              [low]="isLowStock(s)"
-              [showIcon]="false"
-            />
-          </td>
-          <td class="actions">
-            <div class="db-button-group">
-              <db-button
-                label="Editar"
-                variant="primary"
-                format="inline"
-                (clicked)="edit.emit(s)"
-              />
-              <db-button
-                label="Eliminar"
-                variant="delete"
-                format="inline"
-                (clicked)="delete.emit(s)"
-              />
-            </div>
-          </td>
-        </tr>
-      }
-    </tbody>
-  </table>
-</div>
+<db-data-table
+  label="Insumos"
+  [rows]="supplies"
+  [columns]="columns"
+  [actions]="actions"
+  [clientSide]="false"
+  emptyText="No hay insumos para mostrar."
+  (action)="onAction($event)"
+/>

@@ -1,0 +1,33 @@
+@use '../../../../shared/styles/variables' as *;
+@use '../../../../shared/styles/screen' as screen;
+
+.wallet-metrics {
+  @include screen.metric-grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+
+  @media (max-width: 1100px) {
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  }
+}
+
+.metric-card {
+  @include screen.metric-card;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+
+  span,
+  small {
+    font-size: $font-meta;
+    color: $color-text-muted;
+  }
+
+  strong {
+    font-size: 1.25rem;
+    color: $color-text;
+  }
+
+  &--negative strong {
+    color: $color-error;
+  }
+}

@@ -1,126 +1,108 @@
-<db-form-grid [formGroup]="form">
+<div [formGroup]="form" class="production-fields">
   @if (showProductionFields && showGenericSizeField) {
-    <db-form-grid-full>
-      <div class="estampado-size-fields">
-        <db-input
-          label="Ancho (cm)"
-          type="number"
-          formControlName="sizeWidthCm"
-          [min]="0.1"
-          [step]="0.1"
-        />
-        <db-input
-          label="Largo (cm)"
-          type="number"
-          formControlName="sizeLengthCm"
-          [min]="0.1"
-          [step]="0.1"
-        />
-        <db-input
-          label="Alto (cm)"
-          type="number"
-          formControlName="sizeHeightCm"
-          [min]="0.1"
-          [step]="0.1"
-        />
+    <section class="form-block">
+      <h4>Medidas (cm)</h4>
+      <div class="measure-row">
+        <db-input label="Ancho" type="number" formControlName="sizeWidthCm" [min]="0" [step]="0.1" />
+        <db-input label="Largo" type="number" formControlName="sizeLengthCm" [min]="0" [step]="0.1" />
+        <db-input label="Alto" type="number" formControlName="sizeHeightCm" [min]="0" [step]="0.1" />
       </div>
-    </db-form-grid-full>
+    </section>
   }
 
   @if (showProductionFields && isEstampado) {
-    <db-form-grid-full>
-      <app-print-spec-list formControlName="prints" />
-    </db-form-grid-full>
-
-    <db-form-grid-full>
-      <app-supply-line-list formControlName="supplyLines" />
-    </db-form-grid-full>
-
-    <db-form-grid-full>
-      <app-press-cycle-list formControlName="pressCycles" />
-    </db-form-grid-full>
-
-    <db-form-grid-full>
-      <db-input
-        label="Tiempo de mano de obra (h)"
-        type="number"
-        formControlName="workTimeHours"
-        [min]="0"
-        [step]="0.1"
-      />
-    </db-form-grid-full>
+    <app-print-spec-list formControlName="prints" />
+    <app-supply-line-list formControlName="supplyLines" />
+    <app-press-cycle-list formControlName="pressCycles" />
   }
 
   @if (showProductionFields && isFdm) {
-    <db-form-grid-full>
-      <app-filament-line-list
-        formControlName="filamentLines"
-        [primaryFilamentType]="filamentType"
-      />
-    </db-form-grid-full>
+    <app-filament-line-list
+      formControlName="filamentLines"
+      [primaryFilamentType]="filamentType"
+    />
   }
 
   @if (showProductionFields && isResina) {
-    <db-form-grid-full>
-      <db-select
-        label="Tipo de resina"
-        formControlName="resinType"
-        [options]="resinTypeOptions"
-      />
-    </db-form-grid-full>
-    <db-form-grid-full>
-      <db-color-select
-        label="Color"
-        formControlName="colorId"
-        [options]="resinColorOptions"
-      />
-    </db-form-grid-full>
+    <section class="form-block">
+      <h4>Resina</h4>
+      <div class="measure-row">
+        <db-select
+          label="Tipo de resina"
+          formControlName="resinType"
+          [options]="resinTypeOptions"
+        />
+        <db-color-select
+          label="Color"
+          formControlName="colorId"
+          [options]="resinColorOptions"
+        />
+        <db-input
+          label="Gramos"
+          type="number"
+          formControlName="grams"
+          [min]="0.1"
+          [step]="0.1"
+          [required]="true"
+        />
+      </div>
+    </section>
   }
 
   @if (showProductionFields && is3D) {
-    @if (isResina) {
+    <section class="form-block">
+      <h4>Tiempos</h4>
+      <div class="measure-row">
+        <db-input
+          label="Impresión (h) *"
+          type="number"
+          formControlName="printTimeHours"
+          [min]="0"
+          [step]="0.1"
+          hint="Lo que indica Bambu Studio"
+        />
+        <db-input
+          label="Mano de obra (h) *"
+          type="number"
+          formControlName="workTimeHours"
+          [min]="0"
+          [step]="0.1"
+          hint="Armado, limpieza, empaque"
+        />
+      </div>
+      @if (isResina) {
+        <div class="measure-row">
+          <db-input
+            label="Lavado (min)"
+            type="number"
+            formControlName="washMinutes"
+            [min]="0"
+            [step]="0.5"
+          />
+          <db-input
+            label="Curado (min)"
+            type="number"
+            formControlName="cureMinutes"
+            [min]="0"
+            [step]="0.5"
+          />
+        </div>
+      }
+    </section>
+  }
+
+  @if (showProductionFields && isEstampado) {
+    <section class="form-block">
+      <h4>Tiempos</h4>
       <db-input
-        label="Gramos"
-        type="number"
-        formControlName="grams"
-        [min]="0.1"
-        [step]="0.1"
-        [required]="true"
-      />
-    }
-    <db-input
-      label="Tiempo de impresión (h)"
-      type="number"
-      formControlName="printTimeHours"
-      [min]="0"
-      [step]="0.1"
-      [required]="true"
-    />
-    <db-form-grid-full>
-      <db-input
-        label="Tiempo de mano de obra (h)"
+        class="field--time"
+        label="Mano de obra (h)"
         type="number"
         formControlName="workTimeHours"
         [min]="0"
         [step]="0.1"
-        [required]="true"
+        hint="Armado, limpieza, empaque"
       />
-    </db-form-grid-full>
-    @if (isResina) {
-      <db-input
-        label="Lavado (min)"
-        type="number"
-        formControlName="washMinutes"
-        [min]="0"
-        [step]="0.5"
-      />
-      <db-input
-        label="Curado (min)"
-        type="number"
-        formControlName="cureMinutes"
-        [min]="0"
-        [step]="0.5"
-      />
-    }
+    </section>
   }
-</db-form-grid>
+</div>

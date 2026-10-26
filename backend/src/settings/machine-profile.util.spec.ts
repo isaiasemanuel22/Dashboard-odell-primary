@@ -12,6 +12,8 @@ describe('machine-profile.util', () => {
   const settings = {
     electricityCostPerKwh: 100,
     laborCostPerHour: 500,
+    modelingRatePerHour: 0,
+    graphicDesignRatePerHour: 0,
     powerConsumptions: [],
     machineCosts: [],
     profitMargins: {

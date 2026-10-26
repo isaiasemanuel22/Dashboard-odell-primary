@@ -316,6 +316,8 @@ export function createRandomSeedState(): StoreState {
     ...base.generalSettings,
     electricityCostPerKwh: randInt(70, 120),
     laborCostPerHour: randInt(600, 1200),
+    modelingRatePerHour: randInt(800, 2000),
+    graphicDesignRatePerHour: randInt(800, 2000),
     powerConsumptions: base.generalSettings.powerConsumptions.map((entry) => ({
       ...entry,
       id: nextId(entry.id, 'pw'),

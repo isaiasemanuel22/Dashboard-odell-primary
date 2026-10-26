@@ -1,14 +1,16 @@
-<div class="panel-header">
-  <h3>Roles</h3>
-  <db-button
-    label="+ Nuevo rol"
-    variant="primary"
-    format="solid"
-    (clicked)="openCreate()"
-  />
-</div>
+<section class="settings-card">
+  <app-user-access-head>
+    <db-button
+      label="+ Nuevo rol"
+      variant="primary"
+      format="solid"
+      (clicked)="openCreate()"
+    />
+  </app-user-access-head>
 
-@if (error && !modalOpen) {
+  <app-user-access-nav />
+
+  @if (error && !modalOpen) {
   <div class="error-banner">{{ error }}</div>
 }
 
@@ -27,50 +29,19 @@
   />
 </db-state-message>
 
-@if (!loading && roles.length) {
-  <div class="access-table-wrap">
-    <table class="access-table">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Descripción</th>
-          <th>Permisos</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (role of roles; track role.id) {
-          <tr>
-            <td>
-              {{ role.name }}
-              @if (role.isSystem) {
-                <span class="badge badge--system">Sistema</span>
-              }
-            </td>
-            <td>{{ role.description || '—' }}</td>
-            <td>{{ permissionCount(role) }}</td>
-            <td class="access-table__actions">
-              <db-button
-                label="Editar"
-                variant="secondary"
-                format="soft"
-                (clicked)="openEdit(role)"
-              />
-              @if (!role.isSystem) {
-                <db-button
-                  label="Eliminar"
-                  variant="delete"
-                  format="soft"
-                  (clicked)="deleteRole(role)"
-                />
-              }
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+@if (!loading) {
+  <db-data-table
+    label="Roles"
+    [rows]="roles"
+    [columns]="roleColumns"
+    [actions]="roleActions"
+    [loading]="loading"
+    [clientSide]="false"
+    emptyText="No hay roles."
+    (action)="onRoleAction($event)"
+  />
 }
+</section>
 
 @if (modalOpen) {
   <app-form-modal
@@ -84,14 +55,8 @@
     }
 
     <div class="form-grid">
-      <div class="form-field">
-        <label for="role-name">Nombre</label>
-        <input id="role-name" [(ngModel)]="form.name" />
-      </div>
-      <div class="form-field">
-        <label for="role-description">Descripción</label>
-        <textarea id="role-description" [(ngModel)]="form.description"></textarea>
-      </div>
+      <db-input label="Nombre" name="roleName" [(ngModel)]="form.name" />
+      <db-textarea label="Descripción" name="roleDescription" [(ngModel)]="form.description" />
     </div>
 
     <div class="permission-grid">
@@ -128,15 +93,12 @@
       <section class="permission-grid__section">
         <h4>Administración</h4>
         @for (action of adminActions; track action) {
-          <div class="checkbox-row">
-            <input
-              [id]="'admin-' + action"
-              type="checkbox"
-              [checked]="hasAdminPermission(action)"
-              (change)="toggleAdminPermission(action, $any($event.target).checked)"
-            />
-            <label [for]="'admin-' + action">{{ actionLabels[action] }}</label>
-          </div>
+          <db-checkbox
+            [label]="actionLabels[action]"
+            [name]="'admin-' + action"
+            [ngModel]="hasAdminPermission(action)"
+            (ngModelChange)="toggleAdminPermission(action, $event)"
+          />
         }
       </section>
     </div>

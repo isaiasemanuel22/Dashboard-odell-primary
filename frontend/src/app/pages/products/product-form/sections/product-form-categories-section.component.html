@@ -1,39 +1,38 @@
-<db-fieldset [legend]="'Categorías (mín. 1, máx. 5) — ' + categoryIds.length + '/5'">
+<section class="form-block">
+  <div class="form-block__head">
+    <h4>Categorías <em>*</em></h4>
+    <span>{{ categoryIds.length }} de 5</span>
+  </div>
+
   <div class="category-picker">
+    @if (selectedCategoriesList.length) {
+      <div class="selected-categories">
+        @for (cat of selectedCategoriesList; track cat.id) {
+          <span class="category-chip">
+            {{ cat.name }}
+            <button type="button" [attr.aria-label]="'Quitar ' + cat.name" (click)="removeCategory(cat.id)">×</button>
+          </span>
+        }
+      </div>
+    }
     <db-select
-      label="Agregar categoría"
       name="categoryPicker"
       [(ngModel)]="categoryPicker"
       [ngModelOptions]="{ standalone: true }"
-      placeholder="Seleccionar categoría..."
+      placeholder="Agregar categoría..."
       [options]="unselectedCategoryOptions"
       [disabled]="!canAddCategory"
       (ngModelChange)="onPickerChange($event)"
     />
     <db-button
-      label="+ Nueva categoría"
+      label="+ Nueva"
       variant="secondary"
       format="soft"
       (clicked)="openCategoryForm()"
     />
   </div>
 
-  @if (selectedCategoriesList.length) {
-    <div class="selected-categories">
-      @for (cat of selectedCategoriesList; track cat.id) {
-        <span class="category-chip">
-          {{ cat.name }}
-          <db-button
-            label="×"
-            variant="secondary"
-            format="chip"
-            [ariaLabel]="'Quitar ' + cat.name"
-            (clicked)="removeCategory(cat.id)"
-          />
-        </span>
-      }
-    </div>
-  } @else {
+  @if (!selectedCategoriesList.length) {
     <p class="category-empty">Seleccioná al menos una categoría.</p>
   }
 
@@ -42,4 +41,4 @@
       No hay categorías para este tipo de producto. Creá una con el botón de arriba.
     </p>
   }
-</db-fieldset>
+</section>

@@ -1,1 +1,69 @@
+@use '../../shared/styles/variables' as *;
+@use '../../shared/styles/screen' as screen;
 
+.list-toolbar {
+  @include screen.screen-toolbar;
+}
+
+.list-pills {
+  @include screen.screen-pills;
+}
+
+.list-pill {
+  @include screen.screen-pill;
+}
+
+.list-search {
+  @include screen.screen-search;
+}
+
+.customers-table {
+  td {
+    padding: 0.8rem 0.75rem;
+    vertical-align: middle;
+    font-size: $font-body;
+    border-bottom: 1px solid $color-divider;
+  }
+
+  a {
+    color: $color-brand-deep;
+    text-decoration: none;
+  }
+}
+
+.customers-table__menu,
+.customers-table__menu-cell {
+  @include screen.menu-cell;
+}
+
+.customer-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+
+  strong {
+    display: block;
+    font-size: $font-emphasis;
+  }
+}
+
+.customer-avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: $color-primary-bg;
+  color: $color-brand-deep;
+  font-size: $font-meta;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.customer-meta {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: $font-meta;
+  color: $color-text-muted;
+}

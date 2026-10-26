@@ -1,0 +1,30 @@
+<section class="wallet-metrics" aria-label="Resumen de caja">
+  <article class="metric-card" [class.metric-card--negative]="overview.availableBalance < 0">
+    <span>Disponible en cuenta</span>
+    <strong>{{ overview.availableBalance | currencyArs }}</strong>
+    <small>Ventas + ingresos − egresos</small>
+  </article>
+  <article class="metric-card">
+    <span>Ventas</span>
+    <strong>{{ overview.totalSalesIncome | currencyArs }}</strong>
+    <small>Mostrador y pedidos</small>
+  </article>
+  <article class="metric-card">
+    <span>Ingresos manuales</span>
+    <strong>{{ overview.totalManualIncome | currencyArs }}</strong>
+    <small>Devoluciones, señas, otros</small>
+  </article>
+  <article class="metric-card">
+    <span>Egresos</span>
+    <strong>{{ overview.totalExpenses | currencyArs }}</strong>
+    <small>Insumos, pagos, préstamos</small>
+  </article>
+  <article class="metric-card">
+    <span>Deudores</span>
+    <strong>{{ debtorTotal | currencyArs }}</strong>
+    <small>
+      {{ overview.debtors.length }}
+      {{ overview.debtors.length === 1 ? 'persona' : 'personas' }}
+    </small>
+  </article>
+</section>

@@ -5,12 +5,12 @@ import { AuthService } from '../../core/auth/auth.service';
 import { authErrorMessage } from '../../core/auth/auth-error.util';
 import { isFirebaseConfigured } from '../../../environments/firebase.config';
 import { environment } from '../../../environments/environment';
-import { DbButtonComponent } from '@general-components';
+import { DbButtonComponent, DbInputComponent } from '@general-components';
 
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [FormsModule, DbButtonComponent],
+  imports: [FormsModule, DbButtonComponent, DbInputComponent],
   templateUrl: './login.component.html',
   styleUrl: './login.component.scss',
 })

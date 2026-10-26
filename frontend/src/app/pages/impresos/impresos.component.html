@@ -25,35 +25,16 @@
 @if (loading) {
   <div class="loading">Cargando impresos...</div>
 } @else {
-  <div class="table-card">
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Nombre</th>
-          <th>Tipo de papel</th>
-          <th>Tamaño</th>
-          <th>Área (m²)</th>
-          <th>Costo papel</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        @for (item of filteredImpresos; track item.id) {
-          <tr>
-            <td><strong>{{ item.name }}</strong></td>
-            <td>{{ item.paperType | paperTypeLabel }}</td>
-            <td>{{ formatDimensions(item) }}</td>
-            <td>{{ item.areaSqm }}</td>
-            <td>{{ item.paperCost | currencyArs }}</td>
-            <td class="actions">
-              <button type="button" (click)="openEdit(item)">Editar</button>
-              <button type="button" class="danger" (click)="deleteImpreso(item)">Eliminar</button>
-            </td>
-          </tr>
-        }
-      </tbody>
-    </table>
-  </div>
+  <db-data-table
+    label="Impresos"
+    [rows]="filteredImpresos"
+    [columns]="columns"
+    [actions]="actions"
+    [loading]="loading"
+    [clientSide]="false"
+    emptyText="No hay impresos."
+    (action)="onAction($event)"
+  />
 }
 
 @if (showForm) {

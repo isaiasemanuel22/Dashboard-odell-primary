@@ -1,5 +1,5 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
-import { AsyncPipe } from '@angular/common';
+import { AsyncPipe, NgTemplateOutlet } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map, startWith } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -20,7 +20,7 @@ interface NavItem {
 @Component({
   selector: 'app-layout',
   standalone: true,
-  imports: [AsyncPipe, RouterOutlet, RouterLink, RouterLinkActive, DbButtonComponent],
+  imports: [AsyncPipe, NgTemplateOutlet, RouterOutlet, RouterLink, RouterLinkActive, DbButtonComponent],
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss',
 })
@@ -40,23 +40,23 @@ export class LayoutComponent implements OnInit {
   hideBottomNav = false;
 
   readonly navItems: NavItem[] = [
-    { label: 'Dashboard', route: '/dashboard', icon: '📊', exact: true },
-    { label: 'Billetera', route: '/billetera', icon: '💼' },
-    { label: 'Ventas', route: '/ventas', icon: '💰' },
-    { label: 'Pedidos', route: '/pedidos', icon: '📦' },
-    { label: 'Presupuestos', route: '/presupuestos', icon: '📝' },
-    { label: 'Cola de trabajo', route: '/cola', icon: '🖨️' },
-    { label: 'Productos', route: '/productos', icon: '🏷️' },
-    { label: 'Insumos', route: '/insumos', icon: '🧵' },
-    { label: 'Clientes', route: '/clientes', icon: '👥' },
-    { label: 'Ajustes', route: '/ajustes', icon: '⚙️' },
+    { label: 'Dashboard', route: '/dashboard', icon: 'dashboard', exact: true },
+    { label: 'Billetera', route: '/billetera', icon: 'wallet' },
+    { label: 'Ventas', route: '/ventas', icon: 'sales' },
+    { label: 'Pedidos', route: '/pedidos', icon: 'orders' },
+    { label: 'Presupuestos', route: '/presupuestos', icon: 'quotes' },
+    { label: 'Cola de trabajo', route: '/cola', icon: 'queue' },
+    { label: 'Productos', route: '/productos', icon: 'products' },
+    { label: 'Insumos', route: '/insumos', icon: 'supplies' },
+    { label: 'Clientes', route: '/clientes', icon: 'customers' },
+    { label: 'Ajustes', route: '/ajustes', icon: 'settings' },
   ];
 
   readonly bottomNavItems: NavItem[] = [
-    { label: 'Inicio', route: '/dashboard', icon: '📊', exact: true },
-    { label: 'Productos', route: '/productos', icon: '🏷️' },
-    { label: 'Presupuesto', route: '/presupuestos', icon: '📝' },
-    { label: 'Ventas', route: '/ventas', icon: '💰' },
+    { label: 'Inicio', route: '/dashboard', icon: 'dashboard', exact: true },
+    { label: 'Productos', route: '/productos', icon: 'products' },
+    { label: 'Presupuesto', route: '/presupuestos', icon: 'quotes' },
+    { label: 'Ventas', route: '/ventas', icon: 'sales' },
   ];
 
   ngOnInit(): void {

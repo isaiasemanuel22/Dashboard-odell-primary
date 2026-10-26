@@ -1,0 +1,100 @@
+@use '../wallet-table';
+@use '../../../../shared/styles/variables' as *;
+@use '../../../../shared/styles/screen' as screen;
+
+.list-toolbar {
+  @include screen.screen-toolbar;
+}
+
+.list-pills {
+  @include screen.screen-pills;
+}
+
+.list-pill {
+  @include screen.screen-pill;
+}
+
+.list-search {
+  @include screen.screen-search;
+}
+
+.wallet-table__amount-cell {
+  white-space: nowrap;
+}
+
+.wallet-table__amount {
+  font-weight: 600;
+}
+
+.wallet-table__amount--expense {
+  color: $color-danger-text;
+}
+
+.wallet-table__amount--income {
+  color: $color-success;
+}
+
+.wallet-table__savings {
+  display: block;
+  margin-top: 0.15rem;
+  color: $color-danger-text;
+  font-size: $font-meta;
+  font-weight: 600;
+}
+
+.concept-name {
+  display: block;
+  font-weight: 700;
+}
+
+.concept-meta {
+  display: block;
+  margin-top: 0.12rem;
+  color: $color-text-muted;
+  font-size: $font-meta;
+  font-weight: 500;
+}
+
+.movement-chip {
+  @include screen.status-chip;
+
+  &--ingreso,
+  &--devolucion {
+    background: $color-status-success-bg;
+    color: $color-status-success-text;
+  }
+
+  &--pago {
+    background: $color-status-neutral-bg;
+    color: $color-text-label;
+  }
+
+  &--prestamo {
+    background: $color-status-progress-bg;
+    color: $color-status-progress-text;
+  }
+
+  &--egreso {
+    background: $color-status-danger-bg;
+    color: $color-status-danger-text;
+  }
+
+  &--compra {
+    background: $color-status-warning-bg;
+    color: $color-status-warning-text;
+  }
+}
+
+.wallet-table-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.75rem;
+
+  p {
+    margin: 0;
+    color: $color-text-muted;
+    font-size: $font-meta;
+  }
+}

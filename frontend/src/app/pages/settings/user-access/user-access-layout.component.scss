@@ -1,64 +1,148 @@
 @use '../../../shared/styles/variables' as *;
+@use '../../../shared/styles/screen' as screen;
 
-.page-header {
+:host {
+  display: block;
+}
+
+.settings-card {
+  @include screen.settings-card-shell;
+}
+
+.access-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+app-user-access-nav {
+  display: block;
+  margin-bottom: 0.9rem;
+}
+
+.access-head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1.5rem;
+  margin-bottom: 0.9rem;
 
-  h2 {
+  h3 {
     margin: 0;
-    font-size: 1.75rem;
-    color: $color-text;
+    font-size: $font-amount;
+    font-weight: 700;
   }
 
   p {
-    margin: 0.25rem 0 0;
+    margin: 0.2rem 0 0;
     color: $color-text-muted;
+    font-size: $font-meta;
   }
 }
 
-.user-access-shell {
-  display: grid;
-  grid-template-columns: 200px 1fr;
-  gap: 1.5rem;
-  align-items: start;
+.access-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.85rem;
 
-  @media (max-width: 768px) {
-    grid-template-columns: 1fr;
+  app-user-access-nav {
+    margin-bottom: 0;
   }
 }
 
-.user-access-nav {
-  background: $color-surface;
-  border-radius: $radius-md;
-  padding: 0.75rem;
-  box-shadow: $shadow-card;
+.list-search {
+  @include screen.screen-search;
+}
 
-  a {
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+
+  strong,
+  small {
     display: block;
-    padding: 0.65rem 0.85rem;
-    border-radius: $radius-sm;
+  }
+
+  small {
     color: $color-text-muted;
-    text-decoration: none;
-    font-weight: 500;
-    font-size: 0.9rem;
-
-    &:hover {
-      background: $color-surface-subtle;
-      color: $color-text;
-    }
-
-    &.active {
-      background: $color-primary-bg;
-      color: $color-primary-dark;
-    }
+    font-size: $font-meta;
   }
 }
 
-.user-access-content {
-  min-width: 0;
+.user-avatar {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 50%;
+  background: #e0f2fe;
+  color: $color-brand-deep;
+  font-size: $font-meta;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+
+.role-pill {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid #ddd6fe;
+  border-radius: $radius-pill;
+  padding: 0.12rem 0.5rem;
+  color: #6d28d9;
+  background: #fff;
+  font-size: $font-meta;
+  font-weight: 700;
+}
+
+.area-chip {
+  @include screen.area-chip;
+
+  &.area-chip--modelado {
+    color: $color-success;
+    border-color: #a7f3d0;
+  }
+}
+
+.status-pill {
+  display: inline-flex;
+  align-items: center;
+  border-radius: $radius-pill;
+  padding: 0.15rem 0.55rem;
+  font-size: $font-meta;
+  font-weight: 700;
+
+  &--active {
+    background: #ecfdf5;
+    color: #047857;
+  }
+
+  &--inactive {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+}
+
+.menu-cell {
+  @include screen.menu-cell;
+}
+
+.empty-group {
+  @include screen.muted-empty;
+}
+
+.access-pill {
+  text-decoration: none;
+  @include screen.screen-pill;
 }
 
 .panel-header {
@@ -66,44 +150,27 @@
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.85rem;
 
   h3 {
     margin: 0;
-    font-size: 1.15rem;
+    font-size: $font-amount;
+    font-weight: 700;
     color: $color-text;
   }
 }
 
-.access-table-wrap {
-  overflow-x: auto;
-}
-
-.access-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.9rem;
-
-  th,
-  td {
-    padding: 0.65rem 0.75rem;
-    text-align: left;
-    border-bottom: 1px solid $color-border;
-    vertical-align: top;
-  }
-
-  th {
-    font-size: 0.75rem;
-    font-weight: 600;
-    letter-spacing: 0.02em;
-    text-transform: uppercase;
-    color: $color-text-label;
-  }
+.menu-cell {
+  @include screen.menu-cell;
 }
 
 .access-table__actions {
   text-align: right;
   white-space: nowrap;
+
+  db-button + db-button {
+    margin-left: 0.35rem;
+  }
 }
 
 .badge {

@@ -6,27 +6,32 @@ import {
   OnInit,
   inject,
 } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { FormsModule } from '@angular/forms';
 import {
   CdkDragDrop,
   DragDropModule,
   moveItemInArray,
   transferArrayItem,
 } from '@angular/cdk/drag-drop';
-import { OrderStatus, PrintJob, PrintJobStatus } from '../../core/models';
+import { OrderStatus, PrintJob, PrintJobStatus, ServiceType } from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
 import { PrintJobsService } from '../../core/services/print-jobs.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import {
-  DbServiceBadgeComponent,
   DbSkeletonComponent,
   DbStateMessageComponent,
   DbButtonComponent,
   PrintJobCardComponent,
 } from '@general-components';
-import { ORDER_STATUS_LABELS, PRINT_JOB_STATUS_LABELS, WORK_BOARD_COLUMNS } from '../../shared/constants/labels';
-import { DateShortPipe } from '../../shared/pipes/labels.pipe';
+import {
+  ORDER_STATUS_LABELS,
+  PRINT_JOB_STATUS_LABELS,
+  WORK_BOARD_AREA_FILTERS,
+  WORK_BOARD_CANCELLED_COLUMN,
+  WORK_BOARD_COLUMNS,
+  WorkBoardColumnConfig,
+} from '../../shared/constants/labels';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import {
@@ -34,14 +39,18 @@ import {
   PRIORITY_TIER_LABELS,
 } from '../../shared/utils/priority.helpers';
 
+interface CustomerChip {
+  initial: string;
+  name: string;
+  tone: number;
+}
+
 @Component({
   selector: 'app-print-jobs',
   standalone: true,
   imports: [
+    FormsModule,
     DragDropModule,
-    RouterLink,
-    DateShortPipe,
-    DbServiceBadgeComponent,
     DbSkeletonComponent,
     DbStateMessageComponent,
     DbButtonComponent,
@@ -59,8 +68,12 @@ export class PrintJobsComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  readonly columns = WORK_BOARD_COLUMNS;
+  readonly primaryColumns = WORK_BOARD_COLUMNS;
+  readonly cancelledColumn = WORK_BOARD_CANCELLED_COLUMN;
+  readonly areaFilters = WORK_BOARD_AREA_FILTERS;
   readonly backlogListId = 'backlog';
+  readonly porHacerStatus = PrintJobStatus.POR_HACER;
+  readonly doneStatus = PrintJobStatus.TERMINADO;
   readonly priorityTierClass = priorityTierClass;
   readonly priorityLabel = PRIORITY_TIER_LABELS;
   readonly orderStatusLabels = ORDER_STATUS_LABELS;
@@ -70,7 +83,14 @@ export class PrintJobsComponent implements OnInit {
   updating = false;
   statusNotice = '';
 
+  searchQuery = '';
+  areaFilter: ServiceType | null = null;
+  customerFilter: string | null = null;
+
   orderStatusByOrderId: Record<string, OrderStatus> = {};
+  customerChips: CustomerChip[] = [];
+
+  private allJobs: PrintJob[] = [];
 
   boardColumns: Record<PrintJobStatus, PrintJob[]> = this.emptyBoard();
   backlogJobs: PrintJob[] = [];
@@ -86,6 +106,71 @@ export class PrintJobsComponent implements OnInit {
     );
   }
 
+  get visibleColumns(): WorkBoardColumnConfig[] {
+    if (this.boardColumns[PrintJobStatus.CANCELADO].length) {
+      return [...this.primaryColumns, this.cancelledColumn];
+    }
+    return this.primaryColumns;
+  }
+
+  get boardColumnCount(): number {
+    return this.visibleColumns.length;
+  }
+
+  get tasksOnBoardCount(): number {
+    return this.visibleColumns.reduce(
+      (sum, col) => sum + this.boardColumns[col.status].length,
+      0,
+    );
+  }
+
+  get backlogCount(): number {
+    return this.backlogJobs.length;
+  }
+
+  get blockedCount(): number {
+    return this.boardColumns[PrintJobStatus.BLOQUEADO].length;
+  }
+
+  columnTaskCount(status: PrintJobStatus): number {
+    const onBoard = this.boardColumns[status].length;
+    if (status === PrintJobStatus.POR_HACER) {
+      return onBoard + this.backlogJobs.length;
+    }
+    return onBoard;
+  }
+
+  setAreaFilter(value: ServiceType | null): void {
+    this.areaFilter = value;
+    this.rebuildBoard();
+  }
+
+  toggleCustomerFilter(initial: string): void {
+    this.customerFilter = this.customerFilter === initial ? null : initial;
+    this.rebuildBoard();
+  }
+
+  onSearchChange(): void {
+    this.rebuildBoard();
+  }
+
+  onNewTaskClick(): void {
+    this.formDialogs
+      .openConfirm({
+        title: 'Nueva tarea',
+        message:
+          'Las tareas se generan al confirmar pedidos. ¿Querés ir a Pedidos para crear uno?',
+        confirmLabel: 'Ir a pedidos',
+        cancelLabel: 'Cerrar',
+        confirmVariant: 'primary',
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          window.location.assign('/pedidos');
+        }
+      });
+  }
+
   loadJobs(): void {
     this.loading = true;
     this.error = '';
@@ -93,8 +178,10 @@ export class PrintJobsComponent implements OnInit {
 
     this.printJobsService.getBoard().subscribe({
       next: ({ jobs, orderStatuses }) => {
+        this.allJobs = jobs;
         this.orderStatusByOrderId = orderStatuses;
-        this.partitionJobs(jobs);
+        this.customerChips = this.buildCustomerChips(jobs);
+        this.rebuildBoard();
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -127,12 +214,7 @@ export class PrintJobsComponent implements OnInit {
       targetStatus !== PrintJobStatus.TERMINADO
     ) {
       this.confirmReopenFinished(job, targetStatus, () => {
-        this.applyBoardMove(
-          event,
-          job,
-          targetStatus,
-          fromBacklog,
-        );
+        this.applyBoardMove(event, job, targetStatus, fromBacklog);
       });
       return;
     }
@@ -234,8 +316,16 @@ export class PrintJobsComponent implements OnInit {
       .updatePrintJob(job.id, { status, active })
       .subscribe({
         next: (updated) => {
-          Object.assign(job, updated);
-          this.reconcileJobPlacement(job);
+          const idx = this.allJobs.findIndex((j) => j.id === job.id);
+          if (idx >= 0) {
+            this.allJobs[idx] = {
+              ...this.allJobs[idx],
+              ...updated,
+              active,
+              status,
+            };
+          }
+          this.rebuildBoard();
           this.orderStatusByOrderId[job.orderId] = updated.orderStatus;
           this.statusNotice = `Pedido ${job.orderId} → ${ORDER_STATUS_LABELS[updated.orderStatus]}`;
           this.updating = false;
@@ -261,10 +351,42 @@ export class PrintJobsComponent implements OnInit {
     );
     this.backlogJobs = this.backlogJobs.filter((j) => j.id !== job.id);
 
-    Object.assign(job, previous);
+    const idx = this.allJobs.findIndex((j) => j.id === job.id);
+    if (idx >= 0) {
+      this.allJobs[idx] = { ...previous };
+    }
+    this.rebuildBoard();
+  }
 
-    this.placeJob(job);
+  private rebuildBoard(): void {
+    this.partitionJobs(this.filterJobs(this.allJobs));
     this.cdr.markForCheck();
+  }
+
+  private filterJobs(jobs: PrintJob[]): PrintJob[] {
+    let list = jobs;
+    const query = this.searchQuery.trim().toLowerCase();
+
+    if (query) {
+      list = list.filter(
+        (job) =>
+          job.productName.toLowerCase().includes(query) ||
+          job.orderId.toLowerCase().includes(query) ||
+          job.customerName.toLowerCase().includes(query),
+      );
+    }
+
+    if (this.areaFilter) {
+      list = list.filter((job) => job.type === this.areaFilter);
+    }
+
+    if (this.customerFilter) {
+      list = list.filter(
+        (job) => this.customerInitial(job.customerName) === this.customerFilter,
+      );
+    }
+
+    return list;
   }
 
   private partitionJobs(jobs: PrintJob[]): void {
@@ -286,7 +408,7 @@ export class PrintJobsComponent implements OnInit {
 
     this.connectedLists = [
       this.backlogListId,
-      ...this.columns.map((column) => column.status),
+      ...Object.values(PrintJobStatus),
     ];
   }
 
@@ -294,25 +416,25 @@ export class PrintJobsComponent implements OnInit {
     return job.status === PrintJobStatus.POR_HACER && !job.active;
   }
 
-  private placeJob(job: PrintJob): void {
-    if (this.isBacklogJob(job)) {
-      this.backlogJobs = this.sortByPriority([...this.backlogJobs, job]);
-      return;
+  private buildCustomerChips(jobs: PrintJob[]): CustomerChip[] {
+    const byInitial = new Map<string, string>();
+    for (const job of jobs) {
+      const initial = this.customerInitial(job.customerName);
+      if (!byInitial.has(initial)) {
+        byInitial.set(initial, job.customerName);
+      }
     }
-    this.boardColumns[job.status] = this.sortByPriority([
-      ...this.boardColumns[job.status],
-      job,
-    ]);
+    return [...byInitial.entries()].map(([initial, name], index) => ({
+      initial,
+      name,
+      tone: index % 4,
+    }));
   }
 
-  private reconcileJobPlacement(job: PrintJob): void {
-    this.backlogJobs = this.backlogJobs.filter((j) => j.id !== job.id);
-    for (const status of Object.values(PrintJobStatus)) {
-      this.boardColumns[status] = this.boardColumns[status].filter(
-        (j) => j.id !== job.id,
-      );
-    }
-    this.placeJob(job);
+  private customerInitial(name: string): string {
+    const trimmed = name?.trim();
+    if (!trimmed) return '?';
+    return trimmed.charAt(0).toUpperCase();
   }
 
   private emptyBoard(): Record<PrintJobStatus, PrintJob[]> {

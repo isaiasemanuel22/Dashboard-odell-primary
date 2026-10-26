@@ -1,68 +1,82 @@
-<article class="list-card product-card">
-  <div class="card-image">
+<article class="product-card">
+  <div class="product-card__media">
     <app-product-image-carousel
       [images]="product.images"
       [alt]="product.name"
       variant="card"
       [link]="['/productos', product.id]"
     />
-    <app-product-badges
-      [type]="product.type"
-      [published]="product.published"
-      [overlay]="true"
-    />
+    <span class="type-chip" [class]="'type-chip--' + product.type">
+      {{ product.type | productTypeLabel }}
+    </span>
+    <span
+      class="stock-pill"
+      [class.stock-pill--ok]="finishedStock > 0"
+      [class.stock-pill--empty]="finishedStock <= 0"
+    >
+      {{ finishedStock > 0 ? 'Stock ' + finishedStock : 'Sin stock' }}
+    </span>
   </div>
 
-  <a [routerLink]="['/productos', product.id]" class="card-link">
-    <div class="card-body">
-      <h3>{{ product.name }}</h3>
-      <p class="categories">{{ categoryNames }}</p>
+  <div class="product-card__body">
+    <a class="product-card__name" [routerLink]="['/productos', product.id]">
+      {{ product.name }}
+    </a>
+    @if (categoryNames) {
+      <p class="product-card__category">{{ categoryNames }}</p>
+    }
+    @if (specLine) {
+      <p class="product-card__spec">{{ specLine }}</p>
+    }
+    @if (product.published === false) {
+      <p class="product-card__draft">No publicado</p>
+    }
 
-      <div class="meta">
-        <span>Stock terminado: {{ finishedStock }}</span>
-        <span>📐 {{ product.size }}</span>
-        @if (product.components.length) {
-          <span>🧩 {{ product.components.length }} pieza(s)</span>
-        } @else if (isProduct3D(product)) {
-          <span>⚖️ {{ product.grams }}g</span>
-          <span>🖨️ {{ product.printTimeHours }}h imp.</span>
-          <span>🔧 {{ product.workTimeHours }}h trab.</span>
-        }
+    <div class="product-card__pricing">
+      <div>
+        <small>Precio</small>
+        <strong>{{ product.price | currencyArs }}</strong>
       </div>
-
-      <app-product-pricing
-        [price]="product.price"
-        [cost]="product.cost"
-        [profit]="product.profit"
-      />
-
-      <p class="updated">Actualizado: {{ product.updatedAt | dateShort }}</p>
+      <div>
+        <small>Costo</small>
+        <span>{{ product.cost | currencyArs }}</span>
+      </div>
+      <div>
+        <small>Ganancia</small>
+        <span class="profit" [class.profit--negative]="product.profit < 0">
+          {{ product.profit | currencyArs }}
+        </span>
+      </div>
     </div>
-  </a>
 
-  <div class="card-actions">
-    <div class="db-button-group">
-      @if (showAddToCart) {
-        <db-button
-          label="Agregar al carrito"
-          variant="secondary"
-          format="soft"
-          [disabled]="!canAddToCart"
-          (clicked)="addToCart.emit(product)"
-        />
-      }
-      <db-button
-        label="Editar"
-        variant="primary"
-        format="inline"
-        (clicked)="edit.emit(product)"
-      />
-      <db-button
-        label="Eliminar"
-        variant="delete"
-        format="inline"
-        (clicked)="delete.emit(product)"
-      />
-    </div>
+    <p class="product-card__updated">Actualizado: {{ product.updatedAt | dateShort }}</p>
   </div>
+
+  <footer class="product-card__actions">
+    @if (showAddToCart) {
+      <button
+        type="button"
+        class="cart-button"
+        [disabled]="!canAddToCart"
+        (click)="addToCart.emit(product)"
+      >
+        Agregar al carrito
+      </button>
+    }
+    <db-row-menu
+      [open]="menuOpen"
+      top="2.1rem"
+      right="0.7rem"
+      minWidth="7.5rem"
+      [zIndex]="3"
+      bottom="2.8rem"
+      [compact]="true"
+      (toggled)="toggleMenu()"
+    >
+      <button type="button" (click)="edit.emit(product); menuOpen = false">Editar</button>
+      <button type="button" class="is-danger" (click)="delete.emit(product); menuOpen = false">
+        Eliminar
+      </button>
+    </db-row-menu>
+  </footer>
 </article>

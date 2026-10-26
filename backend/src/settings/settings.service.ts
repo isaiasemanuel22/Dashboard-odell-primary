@@ -93,6 +93,8 @@ export class SettingsService {
   patchGeneralSettings(data: {
     electricityCostPerKwh?: number;
     laborCostPerHour?: number;
+    modelingRatePerHour?: number;
+    graphicDesignRatePerHour?: number;
     errorMarginPercent?: number;
     profitMargins?: Partial<ServiceProfitMargins>;
     paperPricesPerSqm?: Partial<PaperPricesPerSqm>;
@@ -104,11 +106,15 @@ export class SettingsService {
     if (
       data.electricityCostPerKwh !== undefined ||
       data.laborCostPerHour !== undefined ||
+      data.modelingRatePerHour !== undefined ||
+      data.graphicDesignRatePerHour !== undefined ||
       data.errorMarginPercent !== undefined
     ) {
       this.updateCoreValues({
         electricityCostPerKwh: data.electricityCostPerKwh,
         laborCostPerHour: data.laborCostPerHour,
+        modelingRatePerHour: data.modelingRatePerHour,
+        graphicDesignRatePerHour: data.graphicDesignRatePerHour,
         errorMarginPercent: data.errorMarginPercent,
       });
     }
@@ -176,16 +182,31 @@ export class SettingsService {
   updateCoreValues(data: {
     electricityCostPerKwh?: number;
     laborCostPerHour?: number;
+    modelingRatePerHour?: number;
+    graphicDesignRatePerHour?: number;
     errorMarginPercent?: number;
   }): Pick<
     GeneralSettings,
-    'electricityCostPerKwh' | 'laborCostPerHour' | 'errorMarginPercent'
+    | 'electricityCostPerKwh'
+    | 'laborCostPerHour'
+    | 'modelingRatePerHour'
+    | 'graphicDesignRatePerHour'
+    | 'errorMarginPercent'
   > {
     if (data.electricityCostPerKwh !== undefined) {
       assertNonNegativeNumber(data.electricityCostPerKwh, 'electricityCostPerKwh');
     }
     if (data.laborCostPerHour !== undefined) {
       assertNonNegativeNumber(data.laborCostPerHour, 'laborCostPerHour');
+    }
+    if (data.modelingRatePerHour !== undefined) {
+      assertNonNegativeNumber(data.modelingRatePerHour, 'modelingRatePerHour');
+    }
+    if (data.graphicDesignRatePerHour !== undefined) {
+      assertNonNegativeNumber(
+        data.graphicDesignRatePerHour,
+        'graphicDesignRatePerHour',
+      );
     }
     if (data.errorMarginPercent !== undefined) {
       const margin = Number(data.errorMarginPercent);
@@ -202,6 +223,13 @@ export class SettingsService {
     if (data.laborCostPerHour !== undefined) {
       this.store.generalSettings.laborCostPerHour = data.laborCostPerHour;
     }
+    if (data.modelingRatePerHour !== undefined) {
+      this.store.generalSettings.modelingRatePerHour = data.modelingRatePerHour;
+    }
+    if (data.graphicDesignRatePerHour !== undefined) {
+      this.store.generalSettings.graphicDesignRatePerHour =
+        data.graphicDesignRatePerHour;
+    }
     if (data.errorMarginPercent !== undefined) {
       this.store.generalSettings.errorMarginPercent = data.errorMarginPercent;
     }
@@ -210,6 +238,9 @@ export class SettingsService {
     return {
       electricityCostPerKwh: this.store.generalSettings.electricityCostPerKwh,
       laborCostPerHour: this.store.generalSettings.laborCostPerHour,
+      modelingRatePerHour: this.store.generalSettings.modelingRatePerHour,
+      graphicDesignRatePerHour:
+        this.store.generalSettings.graphicDesignRatePerHour,
       errorMarginPercent: this.store.generalSettings.errorMarginPercent,
     };
   }

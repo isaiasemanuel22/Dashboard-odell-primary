@@ -1,78 +1,157 @@
-<article class="quote-card">
-  <div class="quote-card__body">
-    <header class="quote-card__header">
-      <a [routerLink]="['/presupuestos', quote.id]" class="quote-card__title">
-        <span class="quote-card__id">{{ quote.id }}</span>
-        <h3>{{ quote.customerName }}</h3>
-      </a>
-      <aside class="quote-card__summary">
-        <db-status-badge
-          [statusClass]="quote.status"
-          [label]="quote.status | quoteStatusLabel"
-        />
-        <div class="quote-card__date">
-          <span>Fecha</span>
-          <strong>{{ quote.quotedAt | dateShort }}</strong>
-        </div>
-      </aside>
-    </header>
-
-    <section class="quote-card__details">
-      <db-service-badges [types]="quote.services" variant="solid" />
-
-      @if (quote.items.length) {
-        <ul class="quote-card__items">
-          @for (item of previewItems(quote); track $index) {
-            <li class="quote-card__item">
-              <span class="quote-card__item-service">
-                {{ item.serviceType | serviceTypeLabel }}
-              </span>
-              @if (item.productId) {
-                <a [routerLink]="['/productos', item.productId]" class="product-link">
-                  {{ item.quantity }}× {{ item.productName }}
-                </a>
-              } @else {
-                <span>{{ item.quantity }}× {{ item.productName }}</span>
-              }
-            </li>
-          }
-          @if (hiddenItemsCount(quote); as extra) {
-            @if (extra > 0) {
-              <li class="quote-card__item quote-card__item--more">+{{ extra }} más</li>
+@if (layout === 'detail') {
+  <div class="quote-detail__panel">
+    <div class="quote-detail__layout">
+      <div>
+        <table class="quote-detail__table">
+          <thead>
+            <tr>
+              <th>Concepto</th>
+              <th>Área</th>
+              <th>Cant.</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (item of quote.items; track $index) {
+              <tr>
+                <td>{{ item.productName }}</td>
+                <td>
+                  <span class="area-chip" [class]="'area-chip--' + item.serviceType">
+                    {{ item.serviceType | serviceTypeLabel }}
+                  </span>
+                </td>
+                <td>{{ item.quantity }}</td>
+              </tr>
             }
-          }
-        </ul>
-      }
-
-      <div class="quote-card__total">
-        <span>Total</span>
-        <strong>{{ quote.total | currencyArs }}</strong>
+          </tbody>
+        </table>
+        <p class="quote-detail__total">
+          Total <strong>{{ quote.total | currencyArs }}</strong>
+        </p>
       </div>
-    </section>
-  </div>
-
-  <div class="card-actions">
-    <div class="db-button-group">
-      <db-button
-        label="Ver"
-        variant="primary-outline"
-        format="solid"
-        [routerLink]="['/presupuestos', quote.id]"
-      />
-      @if (canEdit(quote)) {
+      <div class="quote-detail__actions">
         <db-button
-          label="Editar"
-          variant="secondary"
-          format="soft"
-          (clicked)="edit.emit(quote)"
+          label="Ver presupuesto"
+          variant="primary"
+          format="solid"
+          [block]="true"
+          [routerLink]="['/presupuestos', quote.id]"
         />
-      }
-      <db-button
-        label="Eliminar"
-        variant="delete"
-        format="soft"
-        (clicked)="delete.emit(quote)"
-      />
+        @if (canEdit) {
+          <db-button
+            label="Editar"
+            variant="secondary"
+            format="soft"
+            [block]="true"
+            (clicked)="edit.emit(quote)"
+          />
+        }
+      </div>
     </div>
   </div>
-</article>
+} @else {
+<tr class="quote-line" [class.quote-line--open]="expanded">
+  <td>
+    <button
+      type="button"
+      class="quote-line__toggle"
+      [attr.aria-expanded]="expanded"
+      [attr.aria-label]="expanded ? 'Contraer presupuesto' : 'Expandir presupuesto'"
+      (click)="expanded = !expanded"
+    >
+      {{ expanded ? '⌄' : '›' }}
+    </button>
+  </td>
+  <td class="quote-line__id">{{ quote.id }}</td>
+  <td>
+    <strong class="quote-line__customer">{{ quote.customerName }}</strong>
+    <span class="quote-line__meta">{{ summaryLabel }}</span>
+  </td>
+  <td>
+    <div class="quote-line__areas">
+      @for (service of quote.services; track service) {
+        <span class="area-chip" [class]="'area-chip--' + service">
+          {{ service | serviceTypeLabel }}
+        </span>
+      }
+    </div>
+  </td>
+  <td class="quote-line__date">{{ quote.quotedAt | dateShort }}</td>
+  <td>
+    <span class="status-chip" [class]="'status-chip--' + quote.status">
+      {{ quote.status | quoteStatusLabel }}
+    </span>
+  </td>
+  <td class="quote-line__total">{{ quote.total | currencyArs }}</td>
+  <td class="quote-line__menu-cell">
+    <button
+      type="button"
+      class="quote-line__menu"
+      aria-label="Más acciones"
+      (click)="menuOpen = !menuOpen"
+    >
+      ···
+    </button>
+    @if (menuOpen) {
+      <button type="button" class="quote-line__delete" (click)="confirmDelete()">
+        Eliminar
+      </button>
+    }
+  </td>
+</tr>
+
+@if (expanded) {
+  <tr class="quote-detail">
+    <td colspan="8">
+      <div class="quote-detail__panel">
+        <div class="quote-detail__layout">
+          <div>
+            <table class="quote-detail__table">
+              <thead>
+                <tr>
+                  <th>Concepto</th>
+                  <th>Área</th>
+                  <th>Cant.</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of quote.items; track $index) {
+                  <tr>
+                    <td>{{ item.productName }}</td>
+                    <td>
+                      <span class="area-chip" [class]="'area-chip--' + item.serviceType">
+                        {{ item.serviceType | serviceTypeLabel }}
+                      </span>
+                    </td>
+                    <td>{{ item.quantity }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+            <p class="quote-detail__total">
+              Total <strong>{{ quote.total | currencyArs }}</strong>
+            </p>
+          </div>
+          <div class="quote-detail__actions">
+            <db-button
+              label="Ver presupuesto"
+              variant="primary"
+              format="solid"
+              [block]="true"
+              [routerLink]="['/presupuestos', quote.id]"
+            />
+            @if (canEdit) {
+              <db-button
+                label="Editar"
+                variant="secondary"
+                format="soft"
+                [block]="true"
+                (clicked)="edit.emit(quote)"
+              />
+            }
+          </div>
+        </div>
+      </div>
+    </td>
+  </tr>
+}
+}

@@ -64,6 +64,9 @@ export class DashboardService {
       pendingOrders: this.store.orders.filter(
         (o) => o.status === OrderStatus.PENDIENTE,
       ).length,
+      overdueOrders: this.store.orders.filter((order) =>
+        this.isOrderOverdue(order),
+      ).length,
       inProductionOrders: this.store.orders.filter(
         (o) => o.status === OrderStatus.EN_PRODUCCION,
       ).length,
@@ -92,21 +95,14 @@ export class DashboardService {
     const lowStockSupplies = this.store.supplies.filter(
       (supply) => supply.quantity <= supply.minStock,
     );
-    if (lowStockSupplies.length === 1) {
-      const supply = lowStockSupplies[0]!;
+    for (const supply of lowStockSupplies) {
+      const empty = Number(supply.quantity) <= 0;
       notifications.push({
         id: `low-stock-${supply.id}`,
         type: 'warning',
-        title: 'Stock bajo',
-        message: `${supply.name}: ${supply.quantity} ${supply.unit} (mín. ${supply.minStock})`,
-        route: '/insumos',
-      });
-    } else if (lowStockSupplies.length > 1) {
-      notifications.push({
-        id: 'low-stock-summary',
-        type: 'warning',
-        title: 'Stock bajo',
-        message: `${lowStockSupplies.length} insumos por debajo del mínimo`,
+        kind: 'stock',
+        title: empty ? `${supply.name} sin stock` : `Stock bajo: ${supply.name}`,
+        message: `Quedan ${supply.quantity} ${supply.unit}`,
         route: '/insumos',
       });
     }
@@ -122,6 +118,7 @@ export class DashboardService {
       notifications.push({
         id: `blocked-${job.id}`,
         type: suppliesReady ? 'success' : 'warning',
+        kind: 'queue',
         title: suppliesReady ? 'Insumos disponibles' : 'Tarea bloqueada',
         message: suppliesReady
           ? `${job.productName}: podés desbloquear la producción`
@@ -137,12 +134,26 @@ export class DashboardService {
       notifications.push({
         id: 'pending-orders',
         type: 'info',
+        kind: 'order',
         title: 'Pedidos pendientes',
         message:
           pendingOrders === 1
             ? '1 pedido esperando iniciar'
             : `${pendingOrders} pedidos esperando iniciar`,
         route: '/pedidos',
+      });
+    }
+
+    for (const order of this.store.orders) {
+      if (!this.isOrderOverdue(order)) continue;
+      notifications.push({
+        id: `overdue-${order.id}`,
+        type: 'warning',
+        kind: 'order',
+        title: `Pedido ${order.id} atrasado`,
+        message: `Entrega ${this.formatNotificationDate(order.dueDate)} · ${this.formatNotificationMoney(order.total)}`,
+        route: `/pedidos/${order.id}`,
+        areas: order.services,
       });
     }
 
@@ -155,9 +166,11 @@ export class DashboardService {
       notifications.push({
         id: `order-price-${order.id}`,
         type: 'warning',
+        kind: 'order',
         title: 'Precio del pedido',
         message: `El producto cambió de precio. El valor del pedido ${order.id} sigue igual hasta actualizarlo en el pedido`,
         route: `/pedidos/${order.id}`,
+        areas: order.services,
       });
     }
 
@@ -165,6 +178,7 @@ export class DashboardService {
       notifications.push({
         id: `debtor-${debtor.name.toLocaleLowerCase('es')}`,
         type: 'warning',
+        kind: 'other',
         title: 'Préstamo pendiente',
         message: `${debtor.name} debe $${debtor.amount.toLocaleString('es-AR')}`,
         route: '/billetera',
@@ -232,5 +246,41 @@ export class DashboardService {
       .reduce((sum, order) => sum + order.total, 0);
 
     return retailRevenue + ordersRevenue;
+  }
+
+  private isOrderOverdue(order: {
+    status: OrderStatus;
+    dueDate: string;
+  }): boolean {
+    if (
+      order.status === OrderStatus.ENTREGADO ||
+      order.status === OrderStatus.CANCELADO
+    ) {
+      return false;
+    }
+
+    const due = new Date(order.dueDate);
+    if (Number.isNaN(due.getTime())) return false;
+
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    due.setHours(0, 0, 0, 0);
+    return due < today;
+  }
+
+  private formatNotificationDate(value: string): string {
+    return new Date(value).toLocaleDateString('es-AR', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+  }
+
+  private formatNotificationMoney(value: number): string {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(value);
   }
 }

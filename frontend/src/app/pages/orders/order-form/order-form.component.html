@@ -228,7 +228,7 @@
                       [step]="0.5"
                     />
                     <p class="order-line__pricing-hint">
-                      Tarifa interna {{ laborRate | currencyArs }}/h. El importe inicial es tarifa × horas.
+                      {{ serviceRateLabel(line) }} {{ serviceRate(line) | currencyArs }}/h. El importe inicial es tarifa × horas.
                     </p>
                     <db-input
                       label="Costo diseño"

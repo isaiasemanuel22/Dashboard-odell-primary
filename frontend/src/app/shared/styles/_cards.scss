@@ -15,22 +15,32 @@
 
 .stat-card {
   @include card-shell;
-  padding: 1.25rem;
+  padding: 0.95rem 1rem;
+  border: 1px solid $color-border-soft;
+  box-shadow: none;
 
   .label {
     display: block;
-    font-size: 0.8rem;
+    font-size: $font-meta;
     color: $color-text-muted;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0.35rem;
   }
 
   strong {
-    font-size: 1.5rem;
+    font-size: $font-amount;
     color: $color-text;
   }
 
+  .hint {
+    display: block;
+    margin-top: 0.2rem;
+    font-size: $font-meta;
+    color: $color-text-subtle;
+    font-weight: 400;
+  }
+
   &.warning strong {
-    color: #d97706;
+    color: $color-warning-accent;
   }
 
   &.accent strong {

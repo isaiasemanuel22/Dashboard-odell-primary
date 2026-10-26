@@ -1,24 +1,13 @@
-.quotes-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
-}
+@use '../../shared/styles/screen' as screen;
 
-.quotes-list {
-  display: block;
-  height: min(70vh, 900px);
-  margin-top: 1rem;
-
-  app-quote-card {
-    display: block;
-    margin-bottom: 1rem;
-  }
-}
+@include screen.prefixed-screen('quotes');
 
 @media (max-width: 768px) {
-  .quotes-list {
-    height: auto;
-    min-height: 50vh;
+  .quotes-header {
+    flex-wrap: wrap;
+  }
+
+  .quotes-search {
+    width: 100%;
   }
 }

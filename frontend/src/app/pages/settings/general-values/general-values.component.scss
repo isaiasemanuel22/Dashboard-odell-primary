@@ -1,92 +1,182 @@
-.panel-desc {
-  margin: 0 0 0.75rem;
-  font-size: 0.875rem;
-  color: #64748b;
-}
+@use '../../../shared/styles/variables' as *;
+@use '../../../shared/styles/screen' as screen;
 
-.panel-save {
-  margin-top: 1rem;
-}
-
-.field-hint {
-  margin: 0.5rem 0 0;
-  font-size: 0.75rem;
-  color: #64748b;
-}
-
-.profile-list {
+.values-page {
   display: flex;
   flex-direction: column;
+  gap: 0.9rem;
+}
+
+.message {
+  @include screen.success-note;
+}
+
+.settings-card {
+  @include screen.settings-card-shell;
+
+  h3 {
+    margin: 0;
+    font-size: $font-amount;
+    font-weight: 700;
+  }
+}
+
+.panel-desc {
+  margin: 0.25rem 0 0.85rem;
+  color: $color-text-muted;
+  font-size: $font-meta;
+  line-height: 1.45;
+}
+
+.rate-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin-top: 0.9rem;
+
+  @media (max-width: 980px) {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+.rate-warning {
+  margin: 0.3rem 0 0;
+  color: #c2410c;
+  font-size: $font-meta;
+  font-weight: 600;
+}
+
+.sync-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1rem;
+
+  .panel-desc {
+    margin-bottom: 0;
+  }
 }
 
-.profile-card {
-  border: 1px solid #e2e8f0;
-  border-radius: 0.75rem;
-  padding: 1rem 1.1rem;
-  background: #f8fafc;
-}
-
-.profile-card__header {
+.settings-card__head {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 1rem;
-  flex-wrap: wrap;
 }
 
-.profile-card__title {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 0.5rem;
+.list-areas {
+  @include screen.screen-areas;
+}
 
-  h4 {
-    margin: 0;
-    font-size: 1rem;
-    color: #0f172a;
+.list-area-pill {
+  @include screen.screen-pill;
+}
+
+.data-table {
+  small {
+    display: block;
+    margin-top: 0.15rem;
+    color: $color-text-muted;
+    font-size: $font-meta;
+  }
+
+  tr.is-selected td {
+    background: $color-surface-inset;
   }
 }
 
-.profile-card__badge {
+.role-chip,
+.type-chip {
   display: inline-flex;
   align-items: center;
-  padding: 0.15rem 0.55rem;
-  border-radius: 999px;
-  background: #dbeafe;
-  color: #1d4ed8;
-  font-size: 0.75rem;
-  font-weight: 600;
+  border-radius: $radius-pill;
+  border: 1px solid $color-border-soft;
+  padding: 0.12rem 0.5rem;
+  font-size: $font-meta;
+  font-weight: 700;
+  background: $color-surface;
+  color: $color-text-label;
 }
 
-.profile-card__badge--muted {
-  background: #e2e8f0;
-  color: #475569;
+.type-chip--fdm {
+  color: $color-area-3d;
+  border-color: $color-area-3d-border;
 }
 
-.profile-card__section {
+.type-chip--resina {
+  color: $color-area-design;
+  border-color: $color-area-design-border;
+}
+
+.type-chip--estampado {
+  color: $color-area-print;
+  border-color: $color-area-print-border;
+}
+
+.menu-cell {
+  @include screen.menu-cell(2.5rem, null);
+}
+
+.profile-editor {
   margin-top: 1rem;
-  padding-top: 1rem;
-  border-top: 1px dashed #cbd5e1;
+  padding-top: 0.9rem;
+  border-top: 1px solid $color-divider;
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+
+    h4 {
+      margin: 0;
+      font-size: $font-body;
+    }
+
+    span {
+      color: $color-text-muted;
+      font-size: $font-meta;
+    }
+  }
 }
 
-.profile-card__section-title {
-  margin: 0 0 0.75rem;
-  font-size: 0.8125rem;
+.wash-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 0.8fr;
+  gap: 0.75rem;
+  margin-top: 0.8rem;
+
+  @media (max-width: 800px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field-hint {
+  margin: 0.45rem 0 0;
+  text-align: right;
+  color: $color-text-muted;
+  font-size: $font-meta;
+}
+
+.editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+.editor-cancel {
+  border: 1px solid $color-border-soft;
+  background: $color-surface;
+  border-radius: $radius-pill;
+  padding: 0.45rem 0.9rem;
+  font-size: $font-control;
   font-weight: 600;
-  color: #334155;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
+  cursor: pointer;
 }
 
-.profile-empty {
-  margin: 0;
-  padding: 1.25rem;
-  text-align: center;
-  color: #64748b;
-  background: #f8fafc;
-  border: 1px dashed #cbd5e1;
-  border-radius: 0.75rem;
+.empty-group {
+  @include screen.muted-empty;
 }
