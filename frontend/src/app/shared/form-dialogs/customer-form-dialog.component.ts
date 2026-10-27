@@ -27,7 +27,8 @@ export interface CustomerFormDialogData {
   template: `
     <app-form-dialog-shell
       [title]="customer ? 'Editar cliente' : 'Nuevo cliente'"
-      size="sm"
+      subtitle="Los campos con * son obligatorios"
+      size="md"
       (close)="cancel()"
     >
       <app-customer-form

@@ -1,0 +1,37 @@
+---
+description: Ante un mock/foto de diseño, lanzar el agente odell-redisenio en bucle hasta igualar
+alwaysApply: true
+---
+
+# Rediseño desde foto
+
+Cuando el usuario **adjunte una imagen de diseño** (mock, captura de Figma
+o similar) y el pedido sea rediseñar, ajustar, igualar o implementar esa
+UI — aunque el mensaje venga vacío o solo diga “ajustá” / “otro
+rediseño” — **no implementar vos el rediseño completo en el chat
+principal**.
+
+## Qué hacer
+
+1. Identificar la ruta del archivo de imagen adjunto (assets del chat o
+   path que Cursor guardó).
+2. Lanzar **un** subagente `Task` con `subagent_type: odell-redisenio`
+   (si no está disponible, `generalPurpose` con la instrucción de seguir
+   `.cursor/skills/odell-redisenio/SKILL.md`).
+3. Pasar la imagen con `file_attachments` (path absoluto del mock).
+4. En el prompt del agente incluir:
+   - que debe seguir `.cursor/skills/odell-redisenio/SKILL.md`
+   - la URL local típica (`http://localhost:4200`) y la pantalla/modal
+     si se puede inferir del mock
+   - que haga el **bucle** implementar → Playwright → screenshot →
+     comparar con Read → corregir hasta **IGUAL** o 5 vueltas
+   - no commits, no matar `npm run dev`
+5. Esperar el resultado del agente y resumir al usuario en español
+   (IGUAL / CERCANO + diferencias si quedaron).
+
+## Excepciones
+
+- Si la imagen es evidencia de un bug (no un mock de rediseño), no
+  lanzar este agente: investigar/arreglar en el chat o con el flujo de QA.
+- Si el usuario pide explícitamente que lo hagas vos sin subagente,
+  respetarlo.

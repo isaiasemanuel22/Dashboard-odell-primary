@@ -12,14 +12,15 @@ import {
   DashboardNotification,
   DashboardNotificationKind,
 } from '../../core/models';
-import { ServiceTypeLabelPipe } from '../../shared/pipes/labels.pipe';
+import { DbPillGroupComponent } from '../db-pill-group/db-pill-group.component';
+import { DbServiceBadgeComponent } from '../db-service-badge/db-service-badge.component';
 
 type NotificationFilter = 'all' | 'order' | 'stock' | 'queue';
 
 @Component({
   selector: 'app-dashboard-notifications',
   standalone: true,
-  imports: [NgTemplateOutlet, RouterLink, ServiceTypeLabelPipe],
+  imports: [NgTemplateOutlet, RouterLink, DbPillGroupComponent, DbServiceBadgeComponent],
   templateUrl: './dashboard-notifications.component.html',
   styleUrl: './dashboard-notifications.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -33,12 +34,19 @@ export class DashboardNotificationsComponent {
   open = false;
   filter: NotificationFilter = 'all';
 
-  readonly filters: { value: NotificationFilter; label: string }[] = [
+  private readonly filterDefs: { value: NotificationFilter; label: string }[] = [
     { value: 'all', label: 'Todas' },
     { value: 'order', label: 'Pedidos' },
     { value: 'stock', label: 'Stock' },
     { value: 'queue', label: 'Cola' },
   ];
+
+  get filterOptions(): { value: NotificationFilter; label: string }[] {
+    return this.filterDefs.map((item) => ({
+      value: item.value,
+      label: `${item.label} · ${this.countFor(item.value)}`,
+    }));
+  }
 
   get unreadCount(): number {
     return this.notifications.filter((item) => !this.readIds.has(item.id)).length;

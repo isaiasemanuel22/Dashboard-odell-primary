@@ -1,0 +1,71 @@
+@use '../../shared/styles/variables' as *;
+
+.db-area-chip {
+  display: inline-flex;
+  align-items: center;
+  border-radius: $radius-pill;
+  padding: 0.12rem 0.55rem;
+  font-size: $font-meta;
+  font-weight: 600;
+  line-height: 1.2;
+  white-space: nowrap;
+  border: 1px solid $color-border-soft;
+  background: $color-surface;
+  color: $color-text-label;
+}
+
+.db-area-chip--soft {
+  &.db-area-chip--impresion3d {
+    color: $color-area-3d;
+    border-color: $color-area-3d-border;
+    background: $color-area-3d-bg;
+  }
+
+  &.db-area-chip--diseno {
+    color: $color-area-design;
+    border-color: $color-area-design-border;
+    background: $color-area-design-bg;
+  }
+
+  &.db-area-chip--modelado {
+    color: $color-area-modelado;
+    border-color: $color-area-modelado-border;
+    background: $color-area-modelado-bg;
+  }
+
+  &.db-area-chip--estampado {
+    color: $color-area-print;
+    border-color: $color-area-print-border;
+    background: $color-area-print-bg;
+  }
+
+  &.db-area-chip--general {
+    color: $color-text-label;
+    border-color: $color-border-soft;
+    background: $color-surface-inset;
+  }
+}
+
+.db-area-chip--outline {
+  background: $color-surface;
+
+  &.db-area-chip--impresion3d {
+    color: $color-area-3d;
+    border-color: $color-area-3d-border;
+  }
+
+  &.db-area-chip--diseno {
+    color: $color-area-design;
+    border-color: $color-area-design-border;
+  }
+
+  &.db-area-chip--modelado {
+    color: $color-area-modelado;
+    border-color: $color-area-modelado-border;
+  }
+
+  &.db-area-chip--estampado {
+    color: $color-area-print;
+    border-color: $color-area-print-border;
+  }
+}

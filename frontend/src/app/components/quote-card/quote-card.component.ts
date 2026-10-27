@@ -11,9 +11,9 @@ import {
   CurrencyArsPipe,
   DateShortPipe,
   QuoteStatusLabelPipe,
-  ServiceTypeLabelPipe,
 } from '../../shared/pipes/labels.pipe';
 import { DbButtonComponent } from '../db-button/db-button.component';
+import { DbServiceBadgeComponent } from '../db-service-badge/db-service-badge.component';
 import { isQuoteEditable } from '../../shared/utils/quote.helpers';
 
 @Component({
@@ -24,8 +24,8 @@ import { isQuoteEditable } from '../../shared/utils/quote.helpers';
     CurrencyArsPipe,
     DateShortPipe,
     QuoteStatusLabelPipe,
-    ServiceTypeLabelPipe,
     DbButtonComponent,
+    DbServiceBadgeComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './quote-card.component.html',

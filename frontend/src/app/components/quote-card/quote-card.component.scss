@@ -29,10 +29,6 @@
   @include screen.record-areas;
 }
 
-.area-chip {
-  @include screen.area-chip;
-}
-
 .status-chip {
   @include screen.status-chip;
 

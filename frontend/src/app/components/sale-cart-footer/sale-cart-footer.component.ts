@@ -13,6 +13,7 @@ import { combineLatest } from 'rxjs';
 import { Product } from '../../core/models';
 import type { SaleCartLine } from '../sale-cart-line/sale-cart-line.types';
 import { DbButtonComponent } from '../db-button/db-button.component';
+import { DbIconTrashComponent } from '../db-icon-trash/db-icon-trash.component';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 import { SaleCartService } from '../../core/services/sale-cart.service';
 import { CatalogFacade } from '../../store/catalog/catalog.facade';
@@ -26,7 +27,13 @@ import { FormDialogService } from '../../shared/form-dialogs/public-api';
 @Component({
   selector: 'app-sale-cart-footer',
   standalone: true,
-  imports: [AsyncPipe, RouterLink, DbButtonComponent, CurrencyArsPipe],
+  imports: [
+    AsyncPipe,
+    RouterLink,
+    DbButtonComponent,
+    DbIconTrashComponent,
+    CurrencyArsPipe,
+  ],
   templateUrl: './sale-cart-footer.component.html',
   styleUrl: './sale-cart-footer.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

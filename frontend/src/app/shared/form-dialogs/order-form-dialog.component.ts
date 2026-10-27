@@ -39,6 +39,7 @@ export interface OrderFormDialogData {
   template: `
     <app-form-dialog-shell
       [title]="dialogTitle"
+      [subtitle]="dialogSubtitle"
       size="lg"
       [stickyHeader]="true"
       (close)="cancel()"
@@ -80,6 +81,16 @@ export class OrderFormDialogComponent implements OnInit {
   get dialogTitle(): string {
     if (this.presetQuote) return 'Generar pedido';
     return this.order ? 'Editar pedido' : 'Nuevo pedido';
+  }
+
+  get dialogSubtitle(): string {
+    if (this.presetQuote) {
+      return 'Revisá las líneas del presupuesto antes de generar el pedido.';
+    }
+    if (this.order) {
+      return 'Podés mezclar servicios en el mismo pedido. Cada línea genera tareas en la cola de trabajo.';
+    }
+    return 'Podés mezclar servicios en el mismo pedido. Cada línea genera tareas en la cola de trabajo.';
   }
 
   ngOnInit(): void {

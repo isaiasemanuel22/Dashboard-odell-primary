@@ -108,19 +108,15 @@
           />
         </div>
 
-        <div class="list-areas">
-          <span>Tipo de producto</span>
-          @for (filter of profileFilters; track filter.value) {
-            <button
-              type="button"
-              class="list-area-pill"
-              [class.list-area-pill--active]="profileTypeFilter === filter.value"
-              (click)="profileTypeFilter = filter.value"
-            >
-              {{ filter.label }}
-            </button>
-          }
-        </div>
+        <db-pill-group
+          class="list-areas"
+          [options]="profileFilters"
+          [value]="profileTypeFilter"
+          label="Tipo de producto"
+          size="sm"
+          ariaLabel="Filtrar por tipo de producto"
+          (valueChange)="profileTypeFilter = $event"
+        />
 
         @if (filteredProfiles.length) {
           <db-data-table

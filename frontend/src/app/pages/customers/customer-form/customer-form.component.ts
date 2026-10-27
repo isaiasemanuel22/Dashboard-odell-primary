@@ -12,6 +12,7 @@ import {
   DbFormComponent,
   DbFormErrorComponent,
   DbFormFooterComponent,
+  DbFormGridComponent,
   DbInputComponent,
   DbButtonComponent,
 } from '@general-components';
@@ -22,12 +23,14 @@ import {
   imports: [
     FormsModule,
     DbFormComponent,
+    DbFormGridComponent,
     DbInputComponent,
     DbFormErrorComponent,
     DbFormFooterComponent,
     DbButtonComponent,
   ],
   templateUrl: './customer-form.component.html',
+  styleUrl: './customer-form.component.scss',
 })
 export class CustomerFormComponent implements OnChanges {
   @Input() customer: Customer | null = null;

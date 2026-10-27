@@ -104,15 +104,6 @@ app-user-access-nav {
   font-weight: 700;
 }
 
-.area-chip {
-  @include screen.area-chip;
-
-  &.area-chip--modelado {
-    color: $color-success;
-    border-color: #a7f3d0;
-  }
-}
-
 .status-pill {
   display: inline-flex;
   align-items: center;

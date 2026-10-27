@@ -8,6 +8,7 @@ import {
   SimpleChanges,
   inject,
 } from '@angular/core';
+import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   CreateOrderPayload,
@@ -26,7 +27,6 @@ import { SettingsService } from '../../../core/services/settings.service';
 import { ImpresosService } from '../../../core/services/impresos.service';
 import { ProductCostCalculationService } from '../../../core/services/product-cost-calculation.service';
 import {
-  DbFieldsetComponent,
   DbFormComponent,
   DbFormErrorComponent,
   DbFormFooterComponent,
@@ -38,6 +38,7 @@ import {
   DbRichTextEditorComponent,
   DbButtonComponent,
   DbCheckboxComponent,
+  DbIconTrashComponent,
 } from '@general-components';
 import { FormDialogService } from '../../../shared/form-dialogs/public-api';
 import {
@@ -112,19 +113,20 @@ export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
   selector: 'app-order-form',
   standalone: true,
   imports: [
+    NgClass,
     FormsModule,
     DbFormComponent,
     DbFormGridComponent,
     DbFormGridFullComponent,
     DbSelectComponent,
     DbInputComponent,
-    DbFieldsetComponent,
     DbTextareaComponent,
     DbRichTextEditorComponent,
     DbFormErrorComponent,
     DbFormFooterComponent,
     DbButtonComponent,
     DbCheckboxComponent,
+    DbIconTrashComponent,
     CurrencyArsPipe,
   ],
   templateUrl: './order-form.component.html',
@@ -201,11 +203,30 @@ export class OrderFormComponent implements OnChanges, OnInit {
     });
   }
 
+  get quotedAtInput(): string {
+    const source = this.quote?.quotedAt ?? new Date().toISOString();
+    return toDateInputValue(source);
+  }
+
+  get quoteValidityLabel(): string {
+    const base = new Date(this.quote?.quotedAt ?? Date.now());
+    const validUntil = new Date(base);
+    validUntil.setDate(validUntil.getDate() + 15);
+    const formatted = validUntil.toLocaleDateString('es-AR', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+    return `Válido hasta el ${formatted} (15 días)`;
+  }
+
   get linesHint(): string {
     if (this.isQuoteForm) {
-      return 'Armá el presupuesto con los servicios y productos a cotizar.';
+      const count = this.lines.length;
+      const noun = count === 1 ? 'línea' : 'líneas';
+      return `Servicios y productos a cotizar · ${count} ${noun}`;
     }
-    return 'Podés mezclar impresión 3D, diseño gráfico, modelado y estampado en el mismo pedido. Cada línea genera tareas individuales en la cola de trabajo.';
+    return this.orderLinesCountLabel;
   }
 
   get submitLabel(): string {
@@ -223,8 +244,29 @@ export class OrderFormComponent implements OnChanges, OnInit {
   get customerOptions() {
     return this.customers.map((c) => ({
       value: c.id,
-      label: c.company ? `${c.name} (${c.company})` : c.name,
+      label: c.company ? `${c.name} - ${c.company}` : c.name,
     }));
+  }
+
+  get dueDateBusinessDaysHint(): string {
+    if (!this.dueDate) return '';
+    const days = this.countBusinessDaysInclusive(this.dueDate);
+    if (days <= 0) return '';
+    const noun = days === 1 ? 'día hábil' : 'días hábiles';
+    return `${days} ${noun} desde hoy`;
+  }
+
+  get orderLinesCountLabel(): string {
+    const count = this.lines.length;
+    const noun = count === 1 ? 'línea' : 'líneas';
+    const taskNoun = count === 1 ? 'tarea' : 'tareas';
+    return `${count} ${noun} - se van a crear ${count} ${taskNoun} en la cola`;
+  }
+
+  get subtotalLinesLabel(): string {
+    const count = this.billableLines.length || this.lines.length;
+    const noun = count === 1 ? 'línea' : 'líneas';
+    return `Subtotal - ${count} ${noun}`;
   }
 
   get validLines(): OrderLineDraft[] {
@@ -422,6 +464,38 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return 'Presupuesto calculado según configuración de costos y margen de Impresión 3D.';
   }
 
+  unitPriceHint(line: OrderLineDraft): string {
+    if (line.productId) {
+      return 'Precio del catálogo de productos.';
+    }
+    const margin = impresion3DMargin(this.profitMargins);
+    return `Sugerido: costo + ${margin}% de margen`;
+  }
+
+  setLineService(line: OrderLineDraft, serviceType: ServiceType): void {
+    if (line.serviceType === serviceType) return;
+    line.serviceType = serviceType;
+    this.onLineServiceChange(line);
+  }
+
+  setDiscountMode(mode: DiscountMode): void {
+    this.discountMode = mode;
+    if (mode === 'none') {
+      this.discountPercent = 0;
+      this.discountAmount = 0;
+    }
+  }
+
+  onGramsChange(line: OrderLineDraft, raw: number | string): void {
+    line.grams = Math.max(0, Number(raw) || 0);
+    this.onFdmQuoteChange(line);
+  }
+
+  onPrintHoursChange(line: OrderLineDraft, raw: number | string): void {
+    line.printTimeHours = Math.max(0, Number(raw) || 0);
+    this.onFdmQuoteChange(line);
+  }
+
   serviceRate(line: OrderLineDraft): number {
     if (!this.generalSettings) return 0;
     if (isGraphicDesignService(line.serviceType)) {
@@ -437,6 +511,42 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return isGraphicDesignService(line.serviceType)
       ? 'Tarifa diseño gráfico'
       : 'Tarifa modelado';
+  }
+
+  designRateMissingHint(line: OrderLineDraft): string | null {
+    if (!isDesignService(line.serviceType)) return null;
+    if (this.serviceRate(line) > 0) return null;
+    return isGraphicDesignService(line.serviceType)
+      ? 'Tarifa de diseño sin cargar en Ajustes'
+      : 'Tarifa de modelado sin cargar en Ajustes';
+  }
+
+  lineAccentClass(serviceType: ServiceType): string {
+    return `order-line--accent-${serviceType}`;
+  }
+
+  servicePillModifier(serviceType: ServiceType): string {
+    return `service-pill--${serviceType}`;
+  }
+
+  productFieldLabel(line: OrderLineDraft): string {
+    return line.serviceType === ServiceType.ESTAMPADO ? 'Impreso' : 'Producto';
+  }
+
+  private countBusinessDaysInclusive(dueDateInput: string): number {
+    const due = new Date(`${dueDateInput}T12:00:00`);
+    if (Number.isNaN(due.getTime())) return 0;
+    const start = new Date();
+    start.setHours(12, 0, 0, 0);
+    if (due < start) return 0;
+    let count = 0;
+    const cursor = new Date(start);
+    while (cursor <= due) {
+      const day = cursor.getDay();
+      if (day !== 0 && day !== 6) count += 1;
+      cursor.setDate(cursor.getDate() + 1);
+    }
+    return count;
   }
 
   onBudgetedHoursChange(line: OrderLineDraft, raw: number | string): void {

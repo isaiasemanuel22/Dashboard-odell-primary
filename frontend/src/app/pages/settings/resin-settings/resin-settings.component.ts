@@ -13,6 +13,7 @@ import { resinTypeOptions } from '../../../shared/utils/select-options';
 import {
   DbButtonComponent,
   DbInputComponent,
+  DbPillGroupComponent,
   DbSelectComponent,
   DbStateMessageComponent,
   DB_DATA_TABLE,
@@ -28,6 +29,7 @@ import {
     FormsModule,
     DbButtonComponent,
     DbInputComponent,
+    DbPillGroupComponent,
     DbSelectComponent,
     DbStateMessageComponent,
     ...DB_DATA_TABLE,
@@ -63,6 +65,10 @@ export class ResinSettingsComponent implements OnInit, OnDestroy {
 
   get typeFilters(): { value: ResinType; label: string }[] {
     return this.resinTypeOptions;
+  }
+
+  get typeFilterOptions(): { value: ResinType | 'all'; label: string }[] {
+    return [{ value: 'all', label: 'Todos' }, ...this.typeFilters];
   }
 
   get visiblePrices(): ResinPriceConfig[] {

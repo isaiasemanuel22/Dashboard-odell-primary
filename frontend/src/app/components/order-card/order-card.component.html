@@ -19,9 +19,7 @@
       </span>
       <span class="order-line__areas">
         @for (service of order.services; track service) {
-          <span class="area-chip" [class]="'area-chip--' + service">
-            {{ service | serviceTypeLabel }}
-          </span>
+          <db-service-badge [type]="service" />
         }
       </span>
       <span>
@@ -81,9 +79,7 @@
     <td>
       <div class="order-line__areas">
         @for (service of order.services; track service) {
-          <span class="area-chip" [class]="'area-chip--' + service">
-            {{ service | serviceTypeLabel }}
-          </span>
+          <db-service-badge [type]="service" />
         }
       </div>
     </td>
@@ -144,9 +140,7 @@
         <tr>
           <td>{{ item.productName }}</td>
           <td>
-            <span class="area-chip area-chip--plain" [class]="'area-chip--' + item.serviceType">
-              {{ item.serviceType | serviceTypeLabel }}
-            </span>
+            <db-service-badge [type]="item.serviceType" />
           </td>
           <td>{{ item.quantity }}</td>
           <td class="order-detail__progress">

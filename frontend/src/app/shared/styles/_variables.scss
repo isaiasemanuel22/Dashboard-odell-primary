@@ -45,12 +45,19 @@ $color-surface-inset: #f8fbfc;
 $color-danger-border: #fecaca;
 $color-danger-text: #b91c1c;
 
+/** Colores por servicio / área (única fuente para pills, chips y acentos). */
 $color-area-3d: #1d4ed8;
 $color-area-3d-border: #bfdbfe;
+$color-area-3d-bg: #eff6ff;
 $color-area-design: #6d28d9;
 $color-area-design-border: #ddd6fe;
+$color-area-design-bg: #f5f3ff;
+$color-area-modelado: #0f766e;
+$color-area-modelado-border: #99d6ce;
+$color-area-modelado-bg: #f0fdfa;
 $color-area-print: #c2410c;
 $color-area-print-border: #fed7aa;
+$color-area-print-bg: #fff7ed;
 
 $color-status-neutral-bg: #f1f5f9;
 $color-status-warning-bg: $color-warning-bg;

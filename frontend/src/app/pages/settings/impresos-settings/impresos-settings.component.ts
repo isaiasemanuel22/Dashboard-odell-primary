@@ -18,7 +18,16 @@ import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import { formatPrintDimensionsCm } from '../../../shared/utils/estampado.helpers';
 import { pricePerSqmFromReferenceSheet } from '../../../shared/utils/paper-cost.util';
 import { FormDialogService } from '../../../shared/form-dialogs/public-api';
-import { DbButtonComponent, DbInputComponent, DbStateMessageComponent, DB_DATA_TABLE, OdlActionEvent, OdlColumn, OdlRowAction } from '@general-components';
+import {
+  DbButtonComponent,
+  DbInputComponent,
+  DbPillGroupComponent,
+  DbStateMessageComponent,
+  DB_DATA_TABLE,
+  OdlActionEvent,
+  OdlColumn,
+  OdlRowAction,
+} from '@general-components';
 
 interface PaperSheetGroup {
   key: keyof GeneralSettings['paperReferenceSheets'];
@@ -32,6 +41,7 @@ interface PaperSheetGroup {
     FormsModule,
     DbButtonComponent,
     DbInputComponent,
+    DbPillGroupComponent,
     DbStateMessageComponent,
     CurrencyArsPipe,
     ...DB_DATA_TABLE,
@@ -173,6 +183,13 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
         return matchesTechnique && matchesSearch;
       })
       .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+  }
+
+  get techniqueOptions(): { value: PaperType | 'all'; label: string }[] {
+    return [
+      { value: 'all', label: 'Todas' },
+      ...this.groupOrder.map((group) => ({ value: group.type, label: group.label })),
+    ];
   }
 
   setTechnique(filter: PaperType | 'all'): void {

@@ -65,11 +65,8 @@
 }
 
 .list-areas {
-  @include screen.screen-areas;
-}
-
-.list-area-pill {
-  @include screen.screen-pill;
+  display: block;
+  margin-bottom: 0.9rem;
 }
 
 .data-table {

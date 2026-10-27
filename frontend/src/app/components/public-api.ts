@@ -1,5 +1,6 @@
 export * from './dashboard-form/public-api';
 export * from './db-button';
+export { DbIconTrashComponent } from './db-icon-trash/db-icon-trash.component';
 export * from './db-data-table';
 export * from './db-row-menu';
 export * from './form-modal';
@@ -7,6 +8,10 @@ export * from './form-modal';
 // Listados y UI compartida
 export * from './db-state-message/db-state-message.component';
 export * from './db-skeleton/db-skeleton.component';
+export * from './db-pill-group/db-pill-group.component';
+export type { DbPillOption, DbPillSize } from './db-pill-group/db-pill-group.component';
+export * from './db-area-chip/db-area-chip.component';
+export type { DbAreaChipKey } from './db-area-chip/db-area-chip.component';
 export * from './db-service-badge/db-service-badge.component';
 export type { DbServiceBadgeVariant } from './db-service-badge/db-service-badge.component';
 export * from './db-service-badges/db-service-badges.component';

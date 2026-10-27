@@ -50,10 +50,26 @@
     font-size: 11px;
     font-weight: 700;
 
-    &--impresion_3d { color: #1d4ed8; border-color: #a9c1f7; background: #f1f5ff; }
-    &--diseno_grafico { color: #7e22ce; border-color: #d7bdf5; background: #f8f2ff; }
-    &--modelado { color: #0f766e; border-color: #99d6ce; background: #eefaf8; }
-    &--estampado { color: #c2410c; border-color: #f7c3a1; background: #fff5ee; }
+    &--impresion_3d {
+      color: $color-area-3d;
+      border-color: $color-area-3d-border;
+      background: $color-area-3d-bg;
+    }
+    &--diseno_grafico {
+      color: $color-area-design;
+      border-color: $color-area-design-border;
+      background: $color-area-design-bg;
+    }
+    &--modelado {
+      color: $color-area-modelado;
+      border-color: $color-area-modelado-border;
+      background: $color-area-modelado-bg;
+    }
+    &--estampado {
+      color: $color-area-print;
+      border-color: $color-area-print-border;
+      background: $color-area-print-bg;
+    }
   }
 
   &__totals {

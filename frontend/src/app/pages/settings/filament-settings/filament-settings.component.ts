@@ -18,6 +18,7 @@ import {
   DbAutocompleteOption,
   DbButtonComponent,
   DbInputComponent,
+  DbPillGroupComponent,
   DbStateMessageComponent,
   DB_DATA_TABLE,
   OdlActionEvent,
@@ -33,6 +34,7 @@ import {
     DbAutocompleteComponent,
     DbButtonComponent,
     DbInputComponent,
+    DbPillGroupComponent,
     DbStateMessageComponent,
     ...DB_DATA_TABLE,
   ],
@@ -96,6 +98,10 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
     return [...types.entries()]
       .map(([value, label]) => ({ value, label }))
       .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+  }
+
+  get typeFilterOptions(): { value: string; label: string }[] {
+    return [{ value: 'all', label: 'Todos' }, ...this.typeFilters];
   }
 
   get visiblePrices(): FilamentPriceConfig[] {

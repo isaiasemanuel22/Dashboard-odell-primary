@@ -31,18 +31,14 @@
         }
       </header>
 
-      <div class="notifications__filters" role="group" aria-label="Filtrar notificaciones">
-        @for (item of filters; track item.value) {
-          <button
-            type="button"
-            class="notifications__filter"
-            [class.notifications__filter--active]="filter === item.value"
-            (click)="setFilter(item.value)"
-          >
-            {{ item.label }} · {{ countFor(item.value) }}
-          </button>
-        }
-      </div>
+      <db-pill-group
+        class="notifications__filters"
+        [options]="filterOptions"
+        [value]="filter"
+        size="sm"
+        ariaLabel="Filtrar notificaciones"
+        (valueChange)="setFilter($event)"
+      />
 
       @if (visibleNotifications.length === 0) {
         <p class="notifications__empty">No hay alertas por ahora.</p>
@@ -103,9 +99,7 @@
     @if (item.areas?.length) {
       <span class="notifications__areas">
         @for (area of item.areas; track area) {
-          <span class="area-chip" [class]="'area-chip--' + area">
-            {{ area | serviceTypeLabel }}
-          </span>
+          <db-service-badge [type]="area" />
         }
       </span>
     }

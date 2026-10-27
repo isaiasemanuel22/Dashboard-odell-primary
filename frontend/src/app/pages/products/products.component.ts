@@ -27,6 +27,7 @@ import {
   DbSkeletonComponent,
   DbStateMessageComponent,
   DbButtonComponent,
+  DbPillGroupComponent,
   ProductCardComponent,
 } from '@general-components';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
@@ -50,6 +51,7 @@ type CatalogView = 'published' | 'unpublished' | 'instock' | 'all';
     DbSkeletonComponent,
     DbStateMessageComponent,
     DbButtonComponent,
+    DbPillGroupComponent,
     ProductCardComponent,
   ],
   templateUrl: './products.component.html',
@@ -178,6 +180,13 @@ export class ProductsComponent implements OnInit {
     if (this.typeFilter === 'all') return this.categories;
     const type = this.typeFilter;
     return this.categories.filter((c) => c.productTypes.includes(type));
+  }
+
+  get categoryFilterOptions(): { value: string; label: string }[] {
+    return [
+      { value: 'all', label: 'Todas' },
+      ...this.visibleCategories.map((cat) => ({ value: cat.id, label: cat.name })),
+    ];
   }
 
   isProduct3D = isProduct3D;

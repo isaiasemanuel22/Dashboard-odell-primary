@@ -2,18 +2,12 @@
 @if (hasToolbar()) {
   <div class="odl-toolbar">
     @if (filters().length) {
-      <div class="odl-chips" role="group" aria-label="Filtrar por estado">
-        @for (f of filters(); track f.id) {
-          <button
-            type="button"
-            class="odl-chip"
-            [class.is-active]="f.id === activeFilter()"
-            [attr.aria-pressed]="f.id === activeFilter()"
-            (click)="setFilter(f.id)">
-            {{ f.label }}
-          </button>
-        }
-      </div>
+      <db-pill-group
+        [options]="filterOptions()"
+        [value]="activeFilter()"
+        ariaLabel="Filtrar por estado"
+        (valueChange)="setFilter($event)"
+      />
     } @else {
       <span></span>
     }
@@ -32,19 +26,15 @@
   </div>
 
   @if (areaFilters().length) {
-    <div class="odl-chips odl-chips--area" role="group" [attr.aria-label]="'Filtrar por ' + areaLabel()">
-      <span class="odl-chips__label">{{ areaLabel() }}</span>
-      @for (a of areaFilters(); track a.id) {
-        <button
-          type="button"
-          class="odl-achip"
-          [class.is-active]="a.id === activeArea()"
-          [attr.aria-pressed]="a.id === activeArea()"
-          (click)="setArea(a.id)">
-          {{ a.label }}
-        </button>
-      }
-    </div>
+    <db-pill-group
+      class="odl-area-pills"
+      [options]="areaOptions()"
+      [value]="activeArea()"
+      [label]="areaLabel()"
+      size="sm"
+      [ariaLabel]="'Filtrar por ' + areaLabel()"
+      (valueChange)="setArea($event)"
+    />
   }
 }
 
@@ -149,7 +139,7 @@
                   @case ('tags') {
                     <div class="odl-tags">
                       @for (t of col.tags?.(row) ?? []; track t.label) {
-                        <span class="odl-tag" [class]="'odl-tag odl-tag--' + t.area">{{ t.label }}</span>
+                        <db-area-chip [area]="t.area" [label]="t.label" />
                       }
                     </div>
                   }

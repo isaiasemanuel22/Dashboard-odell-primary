@@ -115,7 +115,7 @@
   &--impresion_3d { background: $color-area-3d; }
   &--estampado { background: $color-area-print; }
   &--diseno_grafico { background: $color-area-design; }
-  &--modelado { background: $color-success; }
+  &--modelado { background: $color-area-modelado; }
 }
 
 .bar-track {
@@ -133,7 +133,7 @@
   &--impresion_3d { background: $color-area-3d; }
   &--estampado { background: $color-area-print; }
   &--diseno_grafico { background: $color-area-design; }
-  &--modelado { background: $color-success; }
+  &--modelado { background: $color-area-modelado; }
 }
 
 @include mobile.mobile-only {

@@ -26,15 +26,6 @@ db-data-table {
   margin-top: 0.9rem;
 }
 
-.area-chip {
-  @include screen.area-chip;
-
-  &.area-chip--modelado {
-    color: $color-success;
-    border-color: #a7f3d0;
-  }
-}
-
 .margin-cell {
   display: flex;
   align-items: center;

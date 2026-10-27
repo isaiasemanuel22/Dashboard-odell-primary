@@ -78,27 +78,14 @@
       </div>
 
       <div class="impresos-toolbar">
-        <div class="list-areas">
-          <span>Técnica</span>
-          <button
-            type="button"
-            class="list-area-pill"
-            [class.list-area-pill--active]="techniqueFilter === 'all'"
-            (click)="setTechnique('all')"
-          >
-            Todas
-          </button>
-          @for (group of groupOrder; track group.type) {
-            <button
-              type="button"
-              class="list-area-pill"
-              [class.list-area-pill--active]="techniqueFilter === group.type"
-              (click)="setTechnique(group.type)"
-            >
-              {{ group.label }}
-            </button>
-          }
-        </div>
+        <db-pill-group
+          [options]="techniqueOptions"
+          [value]="techniqueFilter"
+          label="Técnica"
+          size="sm"
+          ariaLabel="Filtrar por técnica"
+          (valueChange)="setTechnique($event)"
+        />
         <label class="list-search">
           <span aria-hidden="true">⌕</span>
           <input

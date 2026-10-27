@@ -22,7 +22,7 @@
             [attr.aria-label]="'Quitar ' + line.productName"
             (click)="removeLine(line.key)"
           >
-            ×
+            <db-icon-trash [size]="14" />
           </button>
         </li>
       }

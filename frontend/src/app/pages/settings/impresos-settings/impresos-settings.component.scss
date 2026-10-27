@@ -101,15 +101,6 @@
   margin-bottom: 0.8rem;
 }
 
-.list-areas {
-  @include screen.screen-areas;
-  margin-bottom: 0;
-}
-
-.list-area-pill {
-  @include screen.screen-pill;
-}
-
 .list-search {
   @include screen.screen-search;
 }

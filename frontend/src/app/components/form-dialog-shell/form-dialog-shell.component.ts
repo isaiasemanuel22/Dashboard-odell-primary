@@ -17,6 +17,17 @@ export class FormDialogShellComponent {
   @Input() stickyHeader = false;
   @Output() close = new EventEmitter<void>();
 
+  /** Resalta el * del subtítulo en rojo, como en los mocks de formularios. */
+  get subtitleWithRequiredMark(): string {
+    if (!this.subtitle) {
+      return '';
+    }
+    return this.subtitle.replace(
+      /\*/g,
+      '<span class="modal__required-mark">*</span>',
+    );
+  }
+
   modalClass(): Record<string, boolean> {
     return {
       modal: true,

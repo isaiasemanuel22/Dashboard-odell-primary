@@ -11,6 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppRole, AppUser, WorkArea } from '../../../core/models';
 import { UserAccessService } from '../../../core/services/user-access.service';
 import {
+  DbAreaChipComponent,
   DbButtonComponent,
   DbCheckboxComponent,
   DbInputComponent,
@@ -30,6 +31,7 @@ import { UserAccessNavComponent } from './user-access-nav.component';
   standalone: true,
   imports: [
     FormsModule,
+    DbAreaChipComponent,
     DbButtonComponent,
     DbCheckboxComponent,
     DbInputComponent,
@@ -139,18 +141,6 @@ export class UsersAdminPageComponent implements OnInit {
     return this.areas
       .filter((area) => areaIds.has(area.id))
       .sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name, 'es'));
-  }
-
-  areaChipClass(area: WorkArea): string {
-    if (area.slug === 'impresion_3d' || area.slug === '3d') return 'area-chip area-chip--impresion_3d';
-    if (area.slug === 'diseno' || area.slug === 'diseno_grafico') {
-      return 'area-chip area-chip--diseno_grafico';
-    }
-    if (area.slug === 'modelado') return 'area-chip area-chip--modelado';
-    if (area.slug === 'estampado' || area.slug === 'sublimacion') {
-      return 'area-chip area-chip--estampado';
-    }
-    return 'area-chip';
   }
 
   toggleMenu(id: string): void {

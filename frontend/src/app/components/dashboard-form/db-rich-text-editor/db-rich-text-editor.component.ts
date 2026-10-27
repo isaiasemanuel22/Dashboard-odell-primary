@@ -76,7 +76,8 @@ export class DbRichTextEditorComponent implements ControlValueAccessor, OnInit {
   }
 
   get charCount(): string {
-    return `${plainTextFromHtml(this.value).length}/${this.maxLength}`;
+    const length = plainTextFromHtml(this.value).length;
+    return `${length.toLocaleString('es-AR')} / ${this.maxLength.toLocaleString('es-AR')}`;
   }
 
   writeValue(value: string | null): void {

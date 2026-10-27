@@ -5,6 +5,7 @@ import { ColorConfig, Supply, SupplyCategory } from '../../core/models';
 import { SuppliesService, SettingsService } from '../../core/services/settings.service';
 import {
   DbButtonComponent,
+  DbPillGroupComponent,
   DbStateMessageComponent,
   SuppliesTableComponent,
 } from '@general-components';
@@ -28,6 +29,7 @@ type StockFilter = 'all' | 'ok' | 'low';
     FormsModule,
     DbStateMessageComponent,
     DbButtonComponent,
+    DbPillGroupComponent,
     SuppliesTableComponent,
   ],
   templateUrl: './supplies.component.html',

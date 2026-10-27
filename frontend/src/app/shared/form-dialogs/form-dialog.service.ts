@@ -32,8 +32,10 @@ export class FormDialogService {
   private readonly dialog = inject(Dialog);
 
   openCustomer(customer: Customer | null = null): Observable<Customer | undefined> {
-    return this.open(CustomerFormDialogComponent, { customer }, 'sm', {
+    return this.open(CustomerFormDialogComponent, { customer }, 'md', {
       ariaLabel: customer ? 'Editar cliente' : 'Nuevo cliente',
+      panelClass: ['form-dialog-panel--customer'],
+      maxWidth: '520px',
     });
   }
 
@@ -70,6 +72,8 @@ export class FormDialogService {
   openQuote(quote: Quote | null = null): Observable<Quote | undefined> {
     return this.open(QuoteFormDialogComponent, { quote }, 'lg', {
       ariaLabel: quote ? 'Editar presupuesto' : 'Nuevo presupuesto',
+      panelClass: ['form-dialog-panel--quote'],
+      maxWidth: '780px',
     });
   }
 
@@ -132,10 +136,17 @@ export class FormDialogService {
     component: Type<unknown>,
     data: TData,
     size: ModalSize,
-    overrides: { ariaLabel: string },
+    overrides: {
+      ariaLabel: string;
+      panelClass?: string[];
+      maxWidth?: string;
+    },
   ): Observable<TResult | undefined> {
+    const base = formDialogConfig(size);
     const ref = this.dialog.open(component, {
-      ...formDialogConfig(size),
+      ...base,
+      panelClass: [...base.panelClass, ...(overrides.panelClass ?? [])],
+      maxWidth: overrides.maxWidth ?? base.maxWidth,
       ariaLabel: overrides.ariaLabel,
       data,
     });

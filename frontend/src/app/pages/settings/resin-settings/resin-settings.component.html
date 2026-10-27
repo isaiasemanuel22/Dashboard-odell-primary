@@ -22,27 +22,14 @@
       />
 
       <div class="material-toolbar">
-        <div class="list-areas">
-          <span>Tipo</span>
-          <button
-            type="button"
-            class="list-area-pill"
-            [class.list-area-pill--active]="typeFilter === 'all'"
-            (click)="typeFilter = 'all'"
-          >
-            Todos
-          </button>
-          @for (type of typeFilters; track type.value) {
-            <button
-              type="button"
-              class="list-area-pill"
-              [class.list-area-pill--active]="typeFilter === type.value"
-              (click)="typeFilter = type.value"
-            >
-              {{ type.label }}
-            </button>
-          }
-        </div>
+        <db-pill-group
+          [options]="typeFilterOptions"
+          [value]="typeFilter"
+          label="Tipo"
+          size="sm"
+          ariaLabel="Filtrar por tipo"
+          (valueChange)="typeFilter = $event"
+        />
         <label class="list-search">
           <span aria-hidden="true">⌕</span>
           <input

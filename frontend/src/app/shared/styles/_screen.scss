@@ -252,20 +252,138 @@
   color: $color-text-label;
   white-space: nowrap;
 
-  &--impresion_3d {
+  &--impresion_3d,
+  &--impresion3d {
     color: $color-area-3d;
     border-color: $color-area-3d-border;
   }
 
   &--diseno_grafico,
-  &--modelado {
+  &--diseno {
     color: $color-area-design;
     border-color: $color-area-design-border;
+  }
+
+  &--modelado {
+    color: $color-area-modelado;
+    border-color: $color-area-modelado-border;
   }
 
   &--estampado {
     color: $color-area-print;
     border-color: $color-area-print-border;
+  }
+}
+
+/** Chip de servicio con fondo suave (tablas, dashboard, balance). */
+@mixin area-chip-filled {
+  @include area-chip;
+  background: $color-surface;
+
+  &--impresion_3d,
+  &--impresion3d {
+    color: $color-area-3d;
+    border-color: $color-area-3d-border;
+    background: $color-area-3d-bg;
+  }
+
+  &--diseno_grafico,
+  &--diseno {
+    color: $color-area-design;
+    border-color: $color-area-design-border;
+    background: $color-area-design-bg;
+  }
+
+  &--modelado {
+    color: $color-area-modelado;
+    border-color: $color-area-modelado-border;
+    background: $color-area-modelado-bg;
+  }
+
+  &--estampado {
+    color: $color-area-print;
+    border-color: $color-area-print-border;
+    background: $color-area-print-bg;
+  }
+
+  &--general {
+    color: $color-text-label;
+    border-color: $color-border-soft;
+    background: $color-surface-inset;
+  }
+}
+
+/**
+ * Colores de pill activa por servicio.
+ * Usar sobre `.service-pill--active` (las clases de área van en el mismo nodo).
+ */
+@mixin service-pill-active-colors {
+  &.service-pill--impresion_3d {
+    border-color: $color-area-3d;
+    color: $color-area-3d;
+    background: $color-area-3d-bg;
+  }
+
+  &.service-pill--diseno_grafico {
+    border-color: $color-area-design;
+    color: $color-area-design;
+    background: $color-area-design-bg;
+  }
+
+  &.service-pill--modelado {
+    border-color: $color-area-modelado;
+    color: $color-area-modelado;
+    background: $color-area-modelado-bg;
+  }
+
+  &.service-pill--estampado {
+    border-color: $color-area-print;
+    color: $color-area-print;
+    background: $color-area-print-bg;
+  }
+}
+
+@mixin service-pill-active-filled {
+  &.service-pill--impresion_3d {
+    border-color: $color-area-3d;
+    background: $color-area-3d;
+    color: #fff;
+  }
+
+  &.service-pill--diseno_grafico {
+    border-color: $color-area-design;
+    background: $color-area-design;
+    color: #fff;
+  }
+
+  &.service-pill--modelado {
+    border-color: $color-area-modelado;
+    background: $color-area-modelado;
+    color: #fff;
+  }
+
+  &.service-pill--estampado {
+    border-color: $color-area-print;
+    background: $color-area-print;
+    color: #fff;
+  }
+}
+
+@mixin service-accent-border {
+  &--accent-impresion_3d {
+    border-left-color: $color-area-3d;
+  }
+
+  &--accent-diseno_grafico {
+    border-left-color: $color-area-design;
+  }
+
+  &--accent-modelado {
+    border-left-color: $color-area-modelado;
+  }
+
+  &--accent-estampado {
+    border-left-color: $color-area-print;
   }
 }
 

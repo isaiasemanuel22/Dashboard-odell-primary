@@ -19,6 +19,8 @@ import {
   QUOTE_STATUS_LABELS,
   SERVICE_TYPE_LABELS,
 } from '../../shared/constants/labels';
+import { DbPillGroupComponent, DbPillOption } from '../db-pill-group/db-pill-group.component';
+import { DbAreaChipComponent } from '../db-area-chip/db-area-chip.component';
 
 export type OdlTone = 'pending' | 'ok' | 'danger' | 'info' | 'neutral';
 export type OdlArea = 'impresion3d' | 'diseno' | 'modelado' | 'estampado' | 'general';
@@ -179,7 +181,7 @@ const DATE = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'short', 
 @Component({
   selector: 'db-data-table',
   standalone: true,
-  imports: [NgTemplateOutlet],
+  imports: [NgTemplateOutlet, DbPillGroupComponent, DbAreaChipComponent],
   templateUrl: './db-data-table.component.html',
   styleUrl: './db-data-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -249,6 +251,13 @@ export class DbDataTableComponent<T> {
 
   readonly activeFilter = computed(() => this.filterSel() ?? this.filters()[0]?.id ?? null);
   readonly activeArea = computed(() => this.areaSel() ?? this.areaFilters()[0]?.id ?? null);
+
+  readonly filterOptions = computed<DbPillOption[]>(() =>
+    this.filters().map((f) => ({ value: f.id, label: f.label })),
+  );
+  readonly areaOptions = computed<DbPillOption[]>(() =>
+    this.areaFilters().map((a) => ({ value: a.id, label: a.label })),
+  );
 
   readonly cellTemplates = computed(() => new Map(this.cellDefs().map((d) => [d.key(), d.template])));
 

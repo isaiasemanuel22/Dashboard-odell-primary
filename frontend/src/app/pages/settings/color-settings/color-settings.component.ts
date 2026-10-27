@@ -11,6 +11,7 @@ import { SettingsService } from '../../../core/services/settings.service';
 import {
   DbButtonComponent,
   DbInputComponent,
+  DbPillGroupComponent,
   DbRowMenuComponent,
   DbStateMessageComponent,
 } from '@general-components';
@@ -31,6 +32,7 @@ type ColorFamily =
     FormsModule,
     DbButtonComponent,
     DbInputComponent,
+    DbPillGroupComponent,
     DbRowMenuComponent,
     DbStateMessageComponent,
   ],

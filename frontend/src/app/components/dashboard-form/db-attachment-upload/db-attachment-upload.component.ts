@@ -15,6 +15,7 @@ import {
 import { ProductAttachment } from '../../../core/models';
 import { createProductAttachmentId } from '../../../shared/utils/product-attachment.helpers';
 import { DbButtonComponent } from '../../db-button/db-button.component';
+import { DbIconTrashComponent } from '../../db-icon-trash/db-icon-trash.component';
 import { DbFormErrorComponent } from '../db-form-error/db-form-error.component';
 import { DbFormFieldComponent } from '../db-form-field/db-form-field.component';
 import {
@@ -33,6 +34,7 @@ let dbAttachmentUploadId = 0;
     DbFormFieldComponent,
     DbFormErrorComponent,
     DbButtonComponent,
+    DbIconTrashComponent,
   ],
   templateUrl: './db-attachment-upload.component.html',
   styleUrl: './db-attachment-upload.component.scss',

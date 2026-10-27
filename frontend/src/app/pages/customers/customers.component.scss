@@ -1,22 +1,6 @@
 @use '../../shared/styles/variables' as *;
 @use '../../shared/styles/screen' as screen;
 
-.list-toolbar {
-  @include screen.screen-toolbar;
-}
-
-.list-pills {
-  @include screen.screen-pills;
-}
-
-.list-pill {
-  @include screen.screen-pill;
-}
-
-.list-search {
-  @include screen.screen-search;
-}
-
 .customers-table {
   td {
     padding: 0.8rem 0.75rem;

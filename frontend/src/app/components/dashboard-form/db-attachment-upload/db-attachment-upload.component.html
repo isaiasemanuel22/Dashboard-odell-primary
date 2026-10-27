@@ -20,7 +20,7 @@
           (click)="removeAttachment(i)"
           aria-label="Quitar adjunto"
         >
-          ×
+          <db-icon-trash [size]="14" />
         </button>
       </div>
     }
@@ -38,7 +38,7 @@
           (click)="removeStaged(item.id)"
           aria-label="Quitar archivo pendiente"
         >
-          ×
+          <db-icon-trash [size]="14" />
         </button>
       </div>
     }

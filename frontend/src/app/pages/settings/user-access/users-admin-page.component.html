@@ -64,9 +64,9 @@
       <ng-template odlCell="areas" let-user>
         <div class="chip-row">
           @for (area of userAreas(user); track area.id) {
-            <span [class]="areaChipClass(area)">{{ area.name }}</span>
+            <db-area-chip [area]="area.slug" [label]="area.name" />
           } @empty {
-            <span class="area-chip">Sin áreas</span>
+            <db-area-chip area="general" label="Sin áreas" />
           }
         </div>
       </ng-template>

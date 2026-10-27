@@ -38,15 +38,6 @@
   margin-bottom: 0.85rem;
 }
 
-.list-areas {
-  @include screen.screen-areas;
-  margin-bottom: 0;
-}
-
-.list-area-pill {
-  @include screen.screen-pill;
-}
-
 .list-search {
   @include screen.screen-search;
 }

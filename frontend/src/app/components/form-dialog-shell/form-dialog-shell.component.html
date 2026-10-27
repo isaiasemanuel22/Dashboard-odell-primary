@@ -3,7 +3,7 @@
     <div class="modal__heading">
       <h3>{{ title }}</h3>
       @if (subtitle) {
-        <p>{{ subtitle }}</p>
+        <p [innerHTML]="subtitleWithRequiredMark"></p>
       }
     </div>
     <db-button

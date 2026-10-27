@@ -12,10 +12,10 @@ import {
   CurrencyArsPipe,
   DateShortPipe,
   OrderStatusLabelPipe,
-  ServiceTypeLabelPipe,
   PlainTextPipe,
 } from '../../shared/pipes/labels.pipe';
 import { DbButtonComponent } from '../db-button/db-button.component';
+import { DbServiceBadgeComponent } from '../db-service-badge/db-service-badge.component';
 
 @Component({
   selector: 'app-order-card',
@@ -26,9 +26,9 @@ import { DbButtonComponent } from '../db-button/db-button.component';
     CurrencyArsPipe,
     DateShortPipe,
     OrderStatusLabelPipe,
-    ServiceTypeLabelPipe,
     PlainTextPipe,
     DbButtonComponent,
+    DbServiceBadgeComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './order-card.component.html',

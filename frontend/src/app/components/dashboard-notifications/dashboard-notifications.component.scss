@@ -1,5 +1,4 @@
 @use '../../shared/styles/variables' as *;
-@use '../../shared/styles/screen' as screen;
 @use '../../shared/styles/mobile' as mobile;
 
 .notifications {
@@ -102,27 +101,8 @@
 }
 
 .notifications__filters {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
+  display: block;
   padding: 0.55rem 1rem 0.75rem;
-}
-
-.notifications__filter {
-  border: 1px solid $color-border-soft;
-  background: $color-surface;
-  color: $color-text-label;
-  border-radius: $radius-pill;
-  padding: 0.28rem 0.65rem;
-  font-size: $font-meta;
-  font-weight: 600;
-  cursor: pointer;
-
-  &--active {
-    background: $color-brand-deep;
-    border-color: $color-brand-deep;
-    color: #fff;
-  }
 }
 
 .notifications__empty {
@@ -211,10 +191,6 @@
   flex-wrap: wrap;
   gap: 0.3rem;
   margin-top: 0.25rem;
-}
-
-.area-chip {
-  @include screen.area-chip;
 }
 
 .notifications__dot {

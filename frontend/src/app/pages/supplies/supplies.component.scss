@@ -13,22 +13,11 @@
   @include screen.screen-toolbar;
 }
 
-.list-pills {
-  @include screen.screen-pills;
-}
-
-.list-pill {
-  @include screen.screen-pill;
-}
-
 .list-search {
   @include screen.screen-search;
 }
 
 .list-areas {
-  @include screen.screen-areas;
-}
-
-.list-area-pill {
-  @include screen.screen-area-pill;
+  display: block;
+  margin-bottom: 0.9rem;
 }

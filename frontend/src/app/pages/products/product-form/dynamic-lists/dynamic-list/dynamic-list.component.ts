@@ -22,6 +22,7 @@ import {
 } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { DbButtonComponent } from '../../../../../components/db-button/db-button.component';
+import { DbIconTrashComponent } from '../../../../../components/db-icon-trash/db-icon-trash.component';
 import { CurrencyArsPipe } from '../../../../../shared/pipes/labels.pipe';
 import {
   DbColorSelectComponent,
@@ -53,6 +54,7 @@ export type {
   imports: [
     ReactiveFormsModule,
     DbButtonComponent,
+    DbIconTrashComponent,
     DbColorSelectComponent,
     DbSelectComponent,
     DbInputComponent,

@@ -56,15 +56,6 @@
   margin: 0.85rem 0;
 }
 
-.list-areas {
-  @include screen.screen-areas;
-  margin-bottom: 0;
-}
-
-.list-area-pill {
-  @include screen.screen-pill;
-}
-
 .list-search {
   @include screen.screen-search;
 }

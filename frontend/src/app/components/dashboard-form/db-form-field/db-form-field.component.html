@@ -8,10 +8,10 @@
     </label>
   }
   <div class="db-form-field__control">
+    <ng-content />
     @if (hint) {
       <p class="db-form-hint">{{ hint }}</p>
     }
-    <ng-content />
     @if (error) {
       <p class="db-form-error">{{ error }}</p>
     }

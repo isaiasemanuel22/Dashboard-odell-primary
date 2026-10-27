@@ -1,61 +1,70 @@
-<db-form>
+<db-form class="customer-form">
   <form (ngSubmit)="onSubmit()">
     <db-input
       label="Nombre"
       [(ngModel)]="name"
       name="name"
-      placeholder="Ej: María González"
+      placeholder="Ej.: María González"
       [required]="true"
     />
 
-    <db-input
-      label="Email"
-      type="email"
-      [(ngModel)]="email"
-      name="email"
-      placeholder="cliente@empresa.com"
-      [required]="true"
-    />
+    <db-form-grid>
+      <db-input
+        label="Email"
+        type="email"
+        [(ngModel)]="email"
+        name="email"
+        placeholder="cliente@empresa.com"
+        [required]="true"
+      />
 
-    <db-input
-      label="Teléfono"
-      [(ngModel)]="phone"
-      name="phone"
-      placeholder="+54 11 1234-5678"
-      [required]="true"
-    />
+      <db-input
+        label="Teléfono"
+        [(ngModel)]="phone"
+        name="phone"
+        placeholder="+54 223 123-4567"
+        hint="Con código de área, para WhatsApp"
+        [required]="true"
+      />
+    </db-form-grid>
 
     <db-input
       label="Empresa"
       [(ngModel)]="company"
       name="company"
-      placeholder="Opcional"
+      placeholder="Opcional · Ej.: Café Aurora"
+      hint="Si la completás, el cliente aparece como empresa en los filtros"
     />
 
     @if (error) {
       <db-form-error>{{ error }}</db-form-error>
     }
 
-    <db-form-footer>
-      <db-button
-        label="Cancelar"
-        variant="cancel"
-        format="soft"
-        (clicked)="cancel.emit()"
-      />
-      <db-button
-        [label]="
-          loading
-            ? 'Guardando...'
-            : isEditing
-              ? 'Guardar cambios'
-              : 'Crear cliente'
-        "
-        variant="primary"
-        format="solid"
-        buttonType="submit"
-        [disabled]="loading || !name.trim() || !email.trim() || !phone.trim()"
-      />
+    <db-form-footer class="customer-form__footer">
+      <p class="customer-form__note">
+        Lo vas a poder elegir en pedidos y presupuestos
+      </p>
+      <div class="customer-form__actions">
+        <db-button
+          label="Cancelar"
+          variant="secondary"
+          format="solid"
+          (clicked)="cancel.emit()"
+        />
+        <db-button
+          [label]="
+            loading
+              ? 'Guardando...'
+              : isEditing
+                ? 'Guardar cambios'
+                : 'Crear cliente'
+          "
+          variant="primary"
+          format="solid"
+          buttonType="submit"
+          [disabled]="loading || !name.trim() || !email.trim() || !phone.trim()"
+        />
+      </div>
     </db-form-footer>
   </form>
 </db-form>

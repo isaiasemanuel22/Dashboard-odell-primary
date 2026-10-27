@@ -26,18 +26,12 @@
 </header>
 
 <div class="list-toolbar">
-  <div class="list-pills" role="group" aria-label="Estado de stock">
-    @for (filter of stockFilters; track filter.value) {
-      <button
-        type="button"
-        class="list-pill"
-        [class.list-pill--active]="stockFilter === filter.value"
-        (click)="stockFilter = filter.value"
-      >
-        {{ filter.label }}
-      </button>
-    }
-  </div>
+  <db-pill-group
+    [options]="stockFilters"
+    [value]="stockFilter"
+    ariaLabel="Estado de stock"
+    (valueChange)="stockFilter = $event"
+  />
   <label class="list-search">
     <span aria-hidden="true">⌕</span>
     <input
@@ -48,19 +42,15 @@
   </label>
 </div>
 
-<div class="list-areas">
-  <span>Categoría</span>
-  @for (filter of categoryFilters; track filter.value) {
-    <button
-      type="button"
-      class="list-area-pill"
-      [class.list-area-pill--active]="categoryFilter === filter.value"
-      (click)="categoryFilter = filter.value"
-    >
-      {{ filter.label }}
-    </button>
-  }
-</div>
+<db-pill-group
+  class="list-areas"
+  [options]="categoryFilters"
+  [value]="categoryFilter"
+  label="Categoría"
+  size="sm"
+  ariaLabel="Filtrar por categoría"
+  (valueChange)="categoryFilter = $event"
+/>
 
 <db-state-message
   [loading]="loading"

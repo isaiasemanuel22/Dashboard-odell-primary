@@ -1,0 +1,19 @@
+<div
+  class="db-pill-group"
+  [class.db-pill-group--sm]="size() === 'sm'"
+  role="group"
+  [attr.aria-label]="ariaLabel()">
+  @if (label(); as lbl) {
+    <span class="db-pill-group__label">{{ lbl }}</span>
+  }
+  @for (opt of options(); track opt.value) {
+    <button
+      type="button"
+      class="db-pill"
+      [class.is-active]="opt.value === value()"
+      [attr.aria-pressed]="opt.value === value()"
+      (click)="select(opt)">
+      {{ opt.label }}
+    </button>
+  }
+</div>

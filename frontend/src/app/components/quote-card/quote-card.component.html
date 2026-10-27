@@ -15,9 +15,7 @@
               <tr>
                 <td>{{ item.productName }}</td>
                 <td>
-                  <span class="area-chip" [class]="'area-chip--' + item.serviceType">
-                    {{ item.serviceType | serviceTypeLabel }}
-                  </span>
+                  <db-service-badge [type]="item.serviceType" />
                 </td>
                 <td>{{ item.quantity }}</td>
               </tr>
@@ -69,9 +67,7 @@
   <td>
     <div class="quote-line__areas">
       @for (service of quote.services; track service) {
-        <span class="area-chip" [class]="'area-chip--' + service">
-          {{ service | serviceTypeLabel }}
-        </span>
+        <db-service-badge [type]="service" />
       }
     </div>
   </td>
@@ -118,9 +114,7 @@
                   <tr>
                     <td>{{ item.productName }}</td>
                     <td>
-                      <span class="area-chip" [class]="'area-chip--' + item.serviceType">
-                        {{ item.serviceType | serviceTypeLabel }}
-                      </span>
+                      <db-service-badge [type]="item.serviceType" />
                     </td>
                     <td>{{ item.quantity }}</td>
                   </tr>

@@ -1,3 +1,38 @@
+@use '../../shared/styles/variables' as *;
+
 :host {
   display: block;
+}
+
+.modal__header {
+  align-items: flex-start;
+}
+
+:host ::ng-deep .modal__required-mark {
+  color: $color-error;
+}
+
+:host-context(.form-dialog-panel--customer) .modal__header {
+  padding: 1.25rem 1.5rem 1rem;
+}
+
+:host-context(.form-dialog-panel--customer) .modal__header h3 {
+  font-size: 1.25rem;
+}
+
+:host-context(.form-dialog-panel--customer) .modal__body {
+  padding: 1.5rem;
+}
+
+:host-context(.form-dialog-panel--quote) .modal__header {
+  padding: 1.25rem 1.5rem 1rem;
+}
+
+:host-context(.form-dialog-panel--quote) .modal__header h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+:host-context(.form-dialog-panel--quote) .modal__body {
+  padding: 1.25rem 1.5rem 1.35rem;
 }

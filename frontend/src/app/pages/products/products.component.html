@@ -29,18 +29,12 @@
 </header>
 
 <div class="list-toolbar">
-  <div class="list-pills" role="group" aria-label="Publicación">
-    @for (filter of catalogFilters; track filter.value) {
-      <button
-        type="button"
-        class="list-pill"
-        [class.list-pill--active]="catalogView === filter.value"
-        (click)="setCatalogView(filter.value)"
-      >
-        {{ filter.label }}
-      </button>
-    }
-  </div>
+  <db-pill-group
+    [options]="catalogFilters"
+    [value]="catalogView"
+    ariaLabel="Publicación"
+    (valueChange)="setCatalogView($event)"
+  />
   <label class="list-search">
     <span aria-hidden="true">⌕</span>
     <input
@@ -51,41 +45,25 @@
   </label>
 </div>
 
-<div class="list-areas">
-  <span>Tipo</span>
-  @for (filter of typeFilters; track filter.value) {
-    <button
-      type="button"
-      class="list-area-pill"
-      [class.list-area-pill--active]="typeFilter === filter.value"
-      (click)="setTypeFilter(filter.value)"
-    >
-      {{ filter.label }}
-    </button>
-  }
-</div>
+<db-pill-group
+  class="list-areas"
+  [options]="typeFilters"
+  [value]="typeFilter"
+  label="Tipo"
+  size="sm"
+  ariaLabel="Filtrar por tipo"
+  (valueChange)="setTypeFilter($event)"
+/>
 
-<div class="list-areas">
-  <span>Categoría</span>
-  <button
-    type="button"
-    class="list-area-pill"
-    [class.list-area-pill--active]="categoryFilter === 'all'"
-    (click)="categoryFilter = 'all'"
-  >
-    Todas
-  </button>
-  @for (cat of visibleCategories; track cat.id) {
-    <button
-      type="button"
-      class="list-area-pill"
-      [class.list-area-pill--active]="categoryFilter === cat.id"
-      (click)="categoryFilter = cat.id"
-    >
-      {{ cat.name }}
-    </button>
-  }
-</div>
+<db-pill-group
+  class="list-areas"
+  [options]="categoryFilterOptions"
+  [value]="categoryFilter"
+  label="Categoría"
+  size="sm"
+  ariaLabel="Filtrar por categoría"
+  (valueChange)="categoryFilter = $event"
+/>
 
 @if (loading) {
   <db-skeleton variant="cards" [count]="6" />

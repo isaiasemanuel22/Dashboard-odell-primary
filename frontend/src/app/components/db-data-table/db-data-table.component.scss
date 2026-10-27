@@ -49,53 +49,8 @@ button {
   align-items: center;
 }
 
-.odl-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  align-items: center;
-
-  &__label {
-    font-size: 12px;
-    color: var(--odl-muted);
-    margin-right: 4px;
-  }
-}
-
-.odl-chip {
-  height: 32px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid var(--odl-chip-border);
-  background: var(--odl-surface);
-  color: var(--odl-text);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-
-  &.is-active {
-    background: var(--odl-primary);
-    border-color: var(--odl-primary);
-    color: #fff;
-  }
-}
-
-.odl-achip {
-  height: 28px;
-  padding: 0 12px;
-  border-radius: 999px;
-  border: 1px solid var(--odl-chip-border);
-  background: var(--odl-surface);
-  color: var(--odl-text-2);
-  font-size: 12px;
-  font-weight: 700;
-  cursor: pointer;
-
-  &.is-active {
-    background: var(--odl-primary);
-    border-color: var(--odl-primary);
-    color: #fff;
-  }
+.odl-area-pills {
+  display: block;
 }
 
 .odl-search {
@@ -248,24 +203,6 @@ button {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
-}
-
-.odl-tag {
-  display: inline-flex;
-  align-items: center;
-  height: 22px;
-  padding: 0 9px;
-  border-radius: 999px;
-  border: 1px solid;
-  font-size: 11px;
-  font-weight: 700;
-  white-space: nowrap;
-
-  &--impresion3d { color: #1d4ed8; border-color: #a9c1f7; background: #f1f5ff; }
-  &--diseno      { color: #7e22ce; border-color: #d7bdf5; background: #f8f2ff; }
-  &--modelado    { color: #0f766e; border-color: #99d6ce; background: #eefaf8; }
-  &--estampado   { color: #c2410c; border-color: #f7c3a1; background: #fff5ee; }
-  &--general     { color: #475569; border-color: #cbd5e1; background: #f8fafc; }
 }
 
 .odl-badge {
