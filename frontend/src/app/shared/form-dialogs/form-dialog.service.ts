@@ -22,6 +22,15 @@ import { ImpresoFormDialogComponent } from './impreso-form-dialog.component';
 import { OrderFormDialogComponent } from './order-form-dialog.component';
 import { QuoteFormDialogComponent } from './quote-form-dialog.component';
 import type { OrderFormDialogData } from './order-form-dialog.component';
+import {
+  QuoteDocumentExportDialogComponent,
+  QuoteDocumentExportDialogData,
+} from './quote-document-export-dialog.component';
+import {
+  CalendarEventDialogComponent,
+  CalendarEventDialogData,
+} from './calendar-event-dialog.component';
+import { CalendarEntry } from '../../core/models';
 import { ProductFormDialogComponent } from '../../components/product-form-dialog/product-form-dialog.component';
 import { ResetDatabaseDialogComponent } from './reset-database-dialog.component';
 import { SaleFormDialogComponent } from './sale-form-dialog.component';
@@ -75,6 +84,31 @@ export class FormDialogService {
       panelClass: ['form-dialog-panel--quote'],
       maxWidth: '780px',
     });
+  }
+
+  openQuoteDocumentExport(quote: Quote): Observable<void | undefined> {
+    return this.open<QuoteDocumentExportDialogData, void>(
+      QuoteDocumentExportDialogComponent,
+      { quote },
+      'sm',
+      { ariaLabel: 'Generar presupuesto' },
+    );
+  }
+
+  openCalendarEvent(
+    data: CalendarEventDialogData = {},
+  ): Observable<CalendarEntry | undefined> {
+    return this.open<CalendarEventDialogData, CalendarEntry>(
+      CalendarEventDialogComponent,
+      data,
+      'md',
+      {
+        ariaLabel: data.entry
+          ? 'Editar evento de calendario'
+          : 'Nuevo evento de calendario',
+        maxWidth: '620px',
+      },
+    );
   }
 
   openProduct(product: Product | null = null): Observable<Product | undefined> {

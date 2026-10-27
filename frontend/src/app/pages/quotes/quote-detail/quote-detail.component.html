@@ -40,26 +40,30 @@
         Fecha: {{ quote.quotedAt | dateShort }} · Creado: {{ quote.createdAt | dateShort }}
       </p>
     </div>
-    @if (quote.orderId || canGenerateOrder) {
-      <div class="header-actions">
-        @if (quote.orderId) {
-          <db-button
-            label="Ver pedido"
-            variant="primary"
-            format="solid"
-            [routerLink]="['/pedidos', quote.orderId]"
-          />
-        } @else {
-          <db-button
-            [label]="generateOrderLabel"
-            variant="primary"
-            format="solid"
-            [disabled]="generatingOrder"
-            (clicked)="generateOrder()"
-          />
-        }
-      </div>
-    }
+    <div class="header-actions">
+      <db-button
+        label="Generar presupuesto"
+        variant="secondary"
+        format="soft"
+        (clicked)="generateDocument()"
+      />
+      @if (quote.orderId) {
+        <db-button
+          label="Ver pedido"
+          variant="primary"
+          format="solid"
+          [routerLink]="['/pedidos', quote.orderId]"
+        />
+      } @else if (canGenerateOrder) {
+        <db-button
+          [label]="generateOrderLabel"
+          variant="primary"
+          format="solid"
+          [disabled]="generatingOrder"
+          (clicked)="generateOrder()"
+        />
+      }
+    </div>
   </header>
 
   <div class="detail-layout">

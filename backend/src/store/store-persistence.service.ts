@@ -17,6 +17,8 @@ import { resolveAllProductComponents } from '../products/product-component.util'
 import {
   mapBrandFromDb,
   mapBrandToDb,
+  mapCalendarEntryFromDb,
+  mapCalendarEntryToDb,
   mapCategoryFromDb,
   mapCategoryToDb,
   mapCustomerFromDb,
@@ -238,6 +240,17 @@ export class StorePersistenceService
     }
   }
 
+  private async loadCalendarEntries() {
+    try {
+      return await this.db.calendarEntry.findMany();
+    } catch (error) {
+      this.logger.warn(
+        `No se pudieron cargar entradas de calendario (${this.errorMessage(error)}).`,
+      );
+      return [];
+    }
+  }
+
   private async loadState(): Promise<StoreState> {
     const [
       settingsRow,
@@ -252,6 +265,7 @@ export class StorePersistenceService
       printJobs,
       retailSales,
       treasuryExpenses,
+      calendarEntries,
     ] = await Promise.all([
       this.db.appSettings.findUnique({ where: { id: 1 } }),
       this.db.brand.findMany(),
@@ -271,6 +285,7 @@ export class StorePersistenceService
         include: { items: { orderBy: { sortIndex: 'asc' } } },
       }),
       this.loadTreasuryExpenses(),
+      this.loadCalendarEntries(),
     ]);
 
     if (!settingsRow) {
@@ -293,6 +308,9 @@ export class StorePersistenceService
       retailSales: retailSales.map((row) => mapRetailSaleFromDb(row)),
       treasuryExpenses: treasuryExpenses.map((row) =>
         mapTreasuryExpenseFromDb(row),
+      ),
+      calendarEntries: calendarEntries.map((row) =>
+        mapCalendarEntryFromDb(row),
       ),
     } as StoreState;
     adoptLegacyBrandNames(state);
@@ -428,6 +446,28 @@ export class StorePersistenceService
         } catch (error) {
           this.logger.warn(
             `No se pudieron guardar egresos de billetera (${this.errorMessage(error)}).`,
+          );
+        }
+      }
+      if (dirty.has('calendarEntries')) {
+        try {
+          await this.syncCollection(
+            tx,
+            state.calendarEntries,
+            (ids) =>
+              tx.calendarEntry.deleteMany({
+                where: { id: { notIn: ids } },
+              }),
+            (row) =>
+              tx.calendarEntry.upsert({
+                where: { id: row.id },
+                create: mapCalendarEntryToDb(row),
+                update: mapCalendarEntryToDb(row),
+              }),
+          );
+        } catch (error) {
+          this.logger.warn(
+            `No se pudieron guardar entradas de calendario (${this.errorMessage(error)}).`,
           );
         }
       }

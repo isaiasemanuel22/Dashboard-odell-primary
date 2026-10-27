@@ -30,6 +30,8 @@ let dbInputId = 0;
 })
 export class DbInputComponent implements ControlValueAccessor, OnChanges {
   @Input() label = '';
+  /** Nombre accesible cuando no hay label visible (p. ej. celdas de tabla). */
+  @Input() ariaLabel = '';
   @Input() hint = '';
   @Input() error = '';
   @Input() required = false;

@@ -1,0 +1,43 @@
+<div class="db-agenda">
+  @if (rows().length === 0) {
+    <p class="db-agenda__empty">{{ emptyText() }}</p>
+  } @else {
+    @for (row of rows(); track row.id) {
+      <div class="db-agenda__row">
+        @if (row.showCheckbox) {
+          <input
+            class="db-agenda__chk"
+            type="checkbox"
+            [checked]="row.checked"
+            [attr.aria-label]="row.checked ? 'Hecho' : 'Marcar como hecho'"
+            (change)="toggle.emit(row)"
+          />
+        } @else if (row.whenLabel) {
+          <span class="db-agenda__when">{{ row.whenLabel }}</span>
+        }
+        @if (row.barColor) {
+          <span class="db-agenda__bar" [style.background]="row.barColor"></span>
+        }
+        <div class="db-agenda__body">
+          <span
+            class="db-agenda__title"
+            [class.is-done]="row.checked"
+            >{{ row.title }}</span
+          >
+          @if (row.subtitle) {
+            <span class="db-agenda__sub">{{ row.subtitle }}</span>
+          }
+        </div>
+        @if (row.linkLabel) {
+          <button
+            type="button"
+            class="db-agenda__link"
+            (click)="open.emit(row)"
+          >
+            {{ row.linkLabel }}
+          </button>
+        }
+      </div>
+    }
+  }
+</div>

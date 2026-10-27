@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import {
   Brand,
+  CalendarEntry,
   Category,
   Customer,
   GeneralSettings,
@@ -34,6 +35,7 @@ export class StoreService {
   printJobs: PrintJob[] = [];
   retailSales: RetailSale[] = [];
   treasuryExpenses: TreasuryExpense[] = [];
+  calendarEntries: CalendarEntry[] = [];
 
   private categoryIndexLen = -1;
   private productIndexLen = -1;
@@ -68,6 +70,7 @@ export class StoreService {
     this.printJobs = state.printJobs;
     this.retailSales = state.retailSales;
     this.treasuryExpenses = state.treasuryExpenses;
+    this.calendarEntries = state.calendarEntries ?? [];
     this.invalidateIndexes();
   }
 
@@ -85,6 +88,7 @@ export class StoreService {
       printJobs: this.printJobs,
       retailSales: this.retailSales,
       treasuryExpenses: this.treasuryExpenses,
+      calendarEntries: this.calendarEntries,
     };
   }
 
@@ -292,6 +296,22 @@ export class StoreService {
 
   nextTreasuryExpenseId(): string {
     return this.nextId('treasury', this.treasuryExpenses);
+  }
+
+  nextCalendarEntryId(): string {
+    return this.nextId('cal', this.calendarEntries);
+  }
+
+  getCalendarEntryById(id: string): CalendarEntry | undefined {
+    return this.calendarEntries.find((entry) => entry.id === id);
+  }
+
+  replaceCalendarEntry(entry: CalendarEntry): void {
+    replaceInCollection(this.calendarEntries, entry.id, entry);
+  }
+
+  removeCalendarEntry(id: string): boolean {
+    return removeFromCollection(this.calendarEntries, id);
   }
 
   private invalidateIndexes(): void {

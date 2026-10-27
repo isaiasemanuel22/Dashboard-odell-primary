@@ -57,10 +57,16 @@
       <button
         type="button"
         class="cart-button"
+        [class.cart-button--order]="finishedStock <= 0"
         [disabled]="!canAddToCart"
+        [attr.title]="
+          finishedStock <= 0
+            ? 'Sin stock suficiente: desde el carrito podés crear un pedido'
+            : null
+        "
         (click)="addToCart.emit(product)"
       >
-        Agregar al carrito
+        {{ cartButtonLabel }}
       </button>
     }
     <db-row-menu

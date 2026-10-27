@@ -5,6 +5,7 @@ import {
   DashboardStats,
   MonthlyTrendPoint,
 } from '../common/interfaces';
+import { CalendarService } from '../calendar/calendar.service';
 import { SalesService } from '../sales/sales.service';
 import { isRevenueOrder, resolveOrderSoldAt } from '../sales/sales-order.util';
 import { StoreService } from '../store/store.service';
@@ -41,6 +42,7 @@ export class DashboardService {
     private readonly store: StoreService,
     private readonly salesService: SalesService,
     private readonly treasuryService: TreasuryService,
+    private readonly calendarService: CalendarService,
   ) {}
 
   getStats(): DashboardStats {
@@ -182,6 +184,20 @@ export class DashboardService {
         title: 'Préstamo pendiente',
         message: `${debtor.name} debe $${debtor.amount.toLocaleString('es-AR')}`,
         route: '/billetera',
+      });
+    }
+
+    for (const item of this.calendarService.buildNotifyCandidates()) {
+      notifications.push({
+        id: `calendar-${item.id}`,
+        type: 'info',
+        kind: 'calendar',
+        title:
+          item.type === 'reminder'
+            ? `Recordatorio: ${item.title}`
+            : `Evento: ${item.title}`,
+        message: item.subtitle || item.date,
+        route: '/calendario',
       });
     }
 

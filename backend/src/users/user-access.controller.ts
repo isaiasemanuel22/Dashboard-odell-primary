@@ -20,7 +20,6 @@ import {
 import { PermissionAction } from '../common/enums';
 import { CurrentUserProfile } from '../common/interfaces';
 import { AppConfigService } from '../config/app-config.service';
-import { FirebaseAdminService } from '../auth/firebase-admin.service';
 import { UserAccessService } from './user-access.service';
 
 @Controller('user-access')
@@ -28,7 +27,6 @@ export class UserAccessController {
   constructor(
     private readonly userAccess: UserAccessService,
     private readonly config: AppConfigService,
-    private readonly firebaseAdmin: FirebaseAdminService,
   ) {}
 
   @Get('me')
@@ -155,7 +153,8 @@ export class UserAccessController {
       return profile;
     }
 
-    if (!this.config.requireAuth && !this.firebaseAdmin.isEnabled()) {
+    // Sin perfil Firebase: en local (REQUIRE_AUTH=false) permitir gestión.
+    if (!this.config.requireAuth) {
       return null;
     }
 

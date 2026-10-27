@@ -6,4 +6,5 @@ export * from './product.dto';
 export * from './settings.dto';
 export * from './shared.dto';
 export * from './treasury.dto';
+export * from './calendar.dto';
 export * from './user-access.dto';

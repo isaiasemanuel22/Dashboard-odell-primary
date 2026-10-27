@@ -1,0 +1,120 @@
+<app-form-dialog-shell
+  [title]="dialogTitle"
+  subtitle="Se agrega al calendario y te avisa en las notificaciones"
+  size="md"
+  (close)="cancel()"
+>
+  @if (error) {
+    <p class="cal-dialog__error" role="alert">{{ error }}</p>
+  }
+
+  <div class="cal-dialog__body">
+    <db-segmented-control
+      [options]="kindOptions"
+      [value]="kind"
+      size="lg"
+      ariaLabel="Tipo"
+      (valueChange)="kind = $event"
+    />
+
+    <db-input label="Título *" [(ngModel)]="title" name="title" />
+
+    <div class="cal-dialog__row">
+      <db-input
+        label="Fecha *"
+        type="date"
+        [(ngModel)]="date"
+        name="date"
+      />
+      <db-input
+        label="Desde"
+        type="text"
+        placeholder="11:00"
+        [(ngModel)]="startTime"
+        name="startTime"
+        [disabled]="allDay"
+      />
+      <db-input
+        label="Hasta"
+        type="text"
+        placeholder="20:00"
+        [(ngModel)]="endTime"
+        name="endTime"
+        [disabled]="allDay"
+      />
+    </div>
+
+    <db-checkbox label="Todo el día" [(ngModel)]="allDay" name="allDay" />
+
+    <db-select
+      label="Repetir"
+      [options]="repeatOptions"
+      [(ngModel)]="repeat"
+      name="repeat"
+    />
+
+    @if (repeat === CalendarRepeat.WEEKLY) {
+      <div class="cal-dialog__days" role="group" aria-label="Días de la semana">
+        @for (label of weekdayLabels; track $index) {
+          <button
+            type="button"
+            class="cal-dialog__day"
+            [class.is-on]="isWeekdayOn($index + 1)"
+            [attr.aria-pressed]="isWeekdayOn($index + 1)"
+            (click)="toggleWeekday($index + 1)"
+          >
+            {{ label }}
+          </button>
+        }
+      </div>
+    }
+
+    <div class="cal-dialog__row cal-dialog__row--2">
+      <db-select
+        label="Avisarme"
+        [options]="notifyOptions"
+        [(ngModel)]="notify"
+        name="notify"
+      />
+      <db-select
+        label="Vincular a"
+        [options]="linkOptions"
+        [(ngModel)]="linkKey"
+        name="link"
+        hint="Aparece en el detalle del pedido o cliente"
+      />
+    </div>
+
+    <db-textarea
+      label="Notas"
+      [(ngModel)]="notes"
+      name="notes"
+      placeholder="Qué llevar, a quién avisar…"
+    />
+
+    <div class="cal-dialog__info">
+      Las entregas no se cargan acá: aparecen solas con la fecha de entrega de
+      cada pedido.
+    </div>
+  </div>
+
+  <div class="cal-dialog__footer">
+    <span class="cal-dialog__hint">{{ repeatHint }}</span>
+    <div class="cal-dialog__actions">
+      <db-button
+        label="Cancelar"
+        variant="secondary"
+        format="soft"
+        [disabled]="loading"
+        (clicked)="cancel()"
+      />
+      <db-button
+        [label]="loading ? 'Guardando…' : isEdit ? 'Guardar' : kind === CalendarEntryKind.REMINDER ? 'Crear recordatorio' : 'Crear evento'"
+        variant="primary"
+        format="solid"
+        [disabled]="loading"
+        (clicked)="save()"
+      />
+    </div>
+  </div>
+</app-form-dialog-shell>

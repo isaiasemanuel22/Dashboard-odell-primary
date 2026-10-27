@@ -122,6 +122,14 @@ const PATH_RULES: PathRule[] = [
       entity: 'settings',
     },
   },
+  {
+    matches: (path) => path.includes('/calendar'),
+    meta: {
+      collections: ['calendarEntries'],
+      scopes: ['dashboard', 'calendar'],
+      entity: 'calendar-entry',
+    },
+  },
 ];
 
 export function routeMutationMetaFromPath(path: string): RouteMutationMeta {

@@ -10,6 +10,15 @@ export * from './db-state-message/db-state-message.component';
 export * from './db-skeleton/db-skeleton.component';
 export * from './db-pill-group/db-pill-group.component';
 export type { DbPillOption, DbPillSize } from './db-pill-group/db-pill-group.component';
+export * from './db-segmented-control/db-segmented-control.component';
+export type { DbSegmentOption } from './db-segmented-control/db-segmented-control.component';
+export * from './db-calendar-month/db-calendar-month.component';
+export type { DbCalendarDayCell } from './db-calendar-month/db-calendar-month.types';
+export * from './db-calendar-agenda/db-calendar-agenda.component';
+export type {
+  DbCalendarAgendaRow,
+  DbCalendarAgendaVariant,
+} from './db-calendar-agenda/db-calendar-agenda.types';
 export * from './db-area-chip/db-area-chip.component';
 export type { DbAreaChipKey } from './db-area-chip/db-area-chip.component';
 export * from './db-service-badge/db-service-badge.component';

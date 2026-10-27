@@ -10,3 +10,4 @@ export * from './quote.mapper';
 export * from './print-job.mapper';
 export * from './retail-sale.mapper';
 export * from './treasury-expense.mapper';
+export * from './calendar-entry.mapper';

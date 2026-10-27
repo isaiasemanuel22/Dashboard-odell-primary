@@ -13,6 +13,9 @@
       [class.is-active]="opt.value === value()"
       [attr.aria-pressed]="opt.value === value()"
       (click)="select(opt)">
+      @if (opt.color) {
+        <span class="db-pill__dot" [style.background]="opt.color" aria-hidden="true"></span>
+      }
       {{ opt.label }}
     </button>
   }

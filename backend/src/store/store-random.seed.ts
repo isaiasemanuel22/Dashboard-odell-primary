@@ -388,6 +388,7 @@ export function createRandomSeedState(): StoreState {
       };
     }),
     treasuryExpenses: [],
+    calendarEntries: [],
   };
 
   addExtraCustomers(state, run, state.customers.length + 1);

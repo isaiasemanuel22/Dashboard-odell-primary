@@ -10,6 +10,9 @@ import {
   TreasuryExpenseCategory,
   TreasuryMovementDirection,
   BrandMaterialType,
+  CalendarEntryKind,
+  CalendarNotify,
+  CalendarRepeat,
 } from '../common/enums';
 import { adoptLegacyBrandNames } from './brand-link.util';
 import { StoreState } from './store.state';
@@ -74,6 +77,7 @@ export function createEmptyState(): StoreState {
     printJobs: [],
     retailSales: [],
     treasuryExpenses: [],
+    calendarEntries: [],
   };
 }
 
@@ -1023,6 +1027,23 @@ export function createSeedState(): StoreState {
     printJobs,
     retailSales,
     treasuryExpenses,
+    calendarEntries: [
+      {
+        id: 'cal-1',
+        kind: CalendarEntryKind.EVENT,
+        title: 'Feria Plaza España',
+        notes: 'Llevar árboles de equilibrio y llaveros.',
+        date: '2026-10-31',
+        startTime: '11:00',
+        endTime: '20:00',
+        allDay: false,
+        repeat: CalendarRepeat.WEEKLY,
+        weekdays: [6, 7],
+        notify: CalendarNotify.ONE_DAY,
+        createdAt: '2026-10-01T10:00:00.000Z',
+        updatedAt: '2026-10-01T10:00:00.000Z',
+      },
+    ],
   };
   adoptLegacyBrandNames(state);
   return state;

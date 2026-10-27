@@ -8,6 +8,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
 import { ImpresosModule } from './impresos/impresos.module';
 import { OrdersModule } from './orders/orders.module';
 import { QuotesModule } from './quotes/quotes.module';
+import { CalendarModule } from './calendar/calendar.module';
 import { PrintJobsModule } from './print-jobs/print-jobs.module';
 import { ProductsModule } from './products/products.module';
 import { SalesModule } from './sales/sales.module';
@@ -43,6 +44,7 @@ import { UsersModule } from './users/users.module';
     CustomersModule,
     OrdersModule,
     QuotesModule,
+    CalendarModule,
     PrintJobsModule,
     SalesModule,
     TreasuryModule,

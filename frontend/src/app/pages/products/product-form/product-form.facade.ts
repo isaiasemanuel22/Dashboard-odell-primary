@@ -266,11 +266,13 @@ export class ProductFormFacade {
   get printedMaterialError(): string | null {
     if (!this.is3D || this.usesPieceAssembly) return null;
 
-    const grams = Number(this.form.controls.grams.value) || 0;
+    // FDM: gramos y tipo viven en filamentLines (la tabla), no en grams top-level.
     if (this.isFdm) {
-      const lines = this.form.controls.filamentLines.value;
-      if (grams > 0 && hasValidFdmFilamentInput(lines)) return null;
+      if (hasValidFdmFilamentInput(this.form.controls.filamentLines.value)) {
+        return null;
+      }
     } else if (this.isResina) {
+      const grams = Number(this.form.controls.grams.value) || 0;
       const resinType = this.form.controls.resinType.value;
       if (
         grams > 0 &&
@@ -401,6 +403,29 @@ export class ProductFormFacade {
       .pipe(takeUntil(this.destroy$))
       .subscribe((enabled) => this.pricing.onIncludesPiecesChange(enabled));
 
+    this.form.controls.filamentLines.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((lines) => {
+        // Mantener grams/filamentType top-level alineados con la tabla (payload y otros lectores).
+        if (this.isFdm) {
+          const total = totalFdmFilamentGrams(lines);
+          const primary =
+            lines.find(
+              (line) => Number(line.grams) > 0 && line.filamentType,
+            ) ?? lines[0];
+          this.form.patchValue(
+            {
+              grams: total,
+              ...(primary?.filamentType
+                ? { filamentType: primary.filamentType }
+                : {}),
+            },
+            { emitEvent: false },
+          );
+        }
+        this.pricing.onProductionFieldChange();
+      });
+
     merge(
       this.form.controls.grams.valueChanges,
       this.form.controls.printTimeHours.valueChanges,
@@ -411,7 +436,6 @@ export class ProductFormFacade {
       this.form.controls.prints.valueChanges,
       this.form.controls.pressCycles.valueChanges,
       this.form.controls.supplyLines.valueChanges,
-      this.form.controls.filamentLines.valueChanges,
     )
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.pricing.onProductionFieldChange());

@@ -1,0 +1,36 @@
+<section class="db-cal-box" [attr.aria-label]="ariaLabel()">
+  <div class="db-cal">
+    <div class="db-cal__dow">Lun</div>
+    <div class="db-cal__dow">Mar</div>
+    <div class="db-cal__dow">Mié</div>
+    <div class="db-cal__dow">Jue</div>
+    <div class="db-cal__dow">Vie</div>
+    <div class="db-cal__dow">Sáb</div>
+    <div class="db-cal__dow">Dom</div>
+
+    @for (day of days(); track day.date) {
+      <div
+        class="db-cal__day"
+        [class.db-cal__day--out]="!day.inMonth"
+        [class.db-cal__day--today]="day.isToday"
+        [class.db-cal__day--wknd]="day.isWeekend"
+        [attr.aria-label]="day.ariaLabel"
+        (click)="dayClick.emit(day)"
+      >
+        <span class="db-cal__num">{{ day.dayNumber }}</span>
+        @for (item of day.items; track item.id) {
+          <div
+            class="{{ itemClass(item, isPastDay(day.date)) }}"
+            [title]="item.title"
+            (click)="onItemClick($event, item)"
+          >
+            {{ item.title }}
+          </div>
+        }
+        @if (day.more > 0) {
+          <span class="db-cal__more">+{{ day.more }} más</span>
+        }
+      </div>
+    }
+  </div>
+</section>

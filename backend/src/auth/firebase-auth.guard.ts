@@ -41,6 +41,11 @@ export class FirebaseAuthGuard implements CanActivate {
     const request = context.switchToHttp().getRequest<Request>();
     const token = this.extractBearerToken(request.headers.authorization);
     if (!token) {
+      // En local (REQUIRE_AUTH=false) el login testing@test.com no envía Bearer.
+      // Si Firebase está configurado igual dejamos pasar; con token sí se valida.
+      if (!this.config.requireAuth) {
+        return true;
+      }
       throw new UnauthorizedException('Token de autenticación requerido');
     }
 

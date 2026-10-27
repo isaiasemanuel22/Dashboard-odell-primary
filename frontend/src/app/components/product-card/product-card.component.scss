@@ -147,6 +147,11 @@
   font-weight: 600;
   cursor: pointer;
 
+  &--order {
+    border-color: $color-border;
+    color: $color-text-label;
+  }
+
   &:disabled {
     opacity: 0.5;
     cursor: not-allowed;

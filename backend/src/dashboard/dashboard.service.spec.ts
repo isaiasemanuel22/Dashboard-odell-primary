@@ -23,9 +23,16 @@ describe('DashboardService', () => {
       new ProductRepository(store),
       {} as never,
     );
-    service = new DashboardService(store, sales, {
-      getAvailableBalance: () => sales.getTotalIncome(),
-    } as TreasuryService);
+    service = new DashboardService(
+      store,
+      sales,
+      {
+        getAvailableBalance: () => sales.getTotalIncome(),
+      } as TreasuryService,
+      {
+        buildNotifyCandidates: () => [],
+      } as never,
+    );
   });
 
   it('calcula tendencia mensual de pedidos e ingresos', () => {

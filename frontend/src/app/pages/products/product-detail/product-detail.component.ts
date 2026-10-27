@@ -53,8 +53,6 @@ import {
   resolveProductGrams,
   resolveProductPrintTimeHours,
   resolveProductWorkTimeHours,
-  resolveProductUnitCost,
-  resolveProductUnitPrice,
 } from '../../../shared/utils/product.helpers';
 import {
   DateShortPipe,
@@ -200,26 +198,16 @@ export class ProductDetailComponent implements OnInit {
   }
 
   get displayCost(): number {
-    if (!this.product) return 0;
-    if (this.hasComponents) {
-      const partsCost = resolveProductUnitCost(this.product, this.catalogProducts);
-      const stored = this.product.cost ?? 0;
-      return Math.max(partsCost, stored);
-    }
-    return this.product.cost ?? 0;
+    return this.product?.cost ?? 0;
   }
 
   get displayPrice(): number {
-    if (!this.product) return 0;
-    if (this.hasComponents) {
-      return resolveProductUnitPrice(this.product, this.catalogProducts);
-    }
-    return this.product.price ?? 0;
+    return this.product?.price ?? 0;
   }
 
   get displayProfit(): number {
     if (!this.product) return 0;
-    return this.displayPrice - this.displayCost;
+    return this.product.profit ?? this.displayPrice - this.displayCost;
   }
 
   get isPublished(): boolean {

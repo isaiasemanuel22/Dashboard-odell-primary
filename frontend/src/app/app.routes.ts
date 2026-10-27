@@ -101,6 +101,13 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'calendario',
+        loadComponent: () =>
+          import('./pages/calendar/calendar.component').then(
+            (m) => m.CalendarComponent,
+          ),
+      },
+      {
         path: 'productos',
         children: [
           {

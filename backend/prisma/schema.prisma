@@ -303,6 +303,29 @@ model TreasuryExpense {
   @@map("treasury_expenses")
 }
 
+model CalendarEntry {
+  id          String    @id @db.VarChar(64)
+  kind        String    @db.VarChar(16)
+  title       String    @db.VarChar(255)
+  notes       String?   @db.Text
+  date        String    @db.VarChar(10)
+  startTime   String?   @map("start_time") @db.VarChar(8)
+  endTime     String?   @map("end_time") @db.VarChar(8)
+  allDay      Boolean   @default(false) @map("all_day")
+  repeat      String    @default("none") @db.VarChar(16)
+  weekdays    Json      @default("[]")
+  notify      String    @default("none") @db.VarChar(16)
+  linkType    String?   @map("link_type") @db.VarChar(16)
+  linkId      String?   @map("link_id") @db.VarChar(64)
+  completedAt DateTime? @map("completed_at")
+  createdAt   DateTime  @map("created_at")
+  updatedAt   DateTime  @map("updated_at")
+
+  @@index([date])
+  @@index([kind])
+  @@map("calendar_entries")
+}
+
 model WorkArea {
   id        String   @id @db.VarChar(64)
   name      String   @db.VarChar(128)

@@ -1,0 +1,81 @@
+@use '../../shared/styles/variables' as *;
+
+.cal-dialog__body {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.cal-dialog__error {
+  margin: 0 0 12px;
+  color: $color-danger-text;
+  font-size: 0.875rem;
+}
+
+.cal-dialog__row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 12px;
+  align-items: end;
+
+  &--2 {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+.cal-dialog__days {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cal-dialog__day {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid $color-border-soft;
+  background: $color-surface;
+  font: 700 12px inherit;
+  color: $color-text-label;
+  cursor: pointer;
+
+  &.is-on {
+    background: $color-brand-deep;
+    border-color: $color-brand-deep;
+    color: #fff;
+  }
+}
+
+.cal-dialog__info {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  background: #f1f8fc;
+  border: 1px solid #cfe6f2;
+  border-radius: 10px;
+  padding: 10px 12px;
+  font-size: 12px;
+  color: #0b5f86;
+}
+
+.cal-dialog__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  padding-top: 14px;
+  border-top: 1px solid $color-divider;
+}
+
+.cal-dialog__hint {
+  font-size: 12px;
+  color: $color-text-muted;
+}
+
+.cal-dialog__actions {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}

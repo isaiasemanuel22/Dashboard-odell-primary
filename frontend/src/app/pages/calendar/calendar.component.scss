@@ -1,0 +1,144 @@
+@use '../../shared/styles/variables' as *;
+
+.cal-head {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1.25rem;
+
+  h2 {
+    margin: 0;
+  }
+}
+
+.cal-head__sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: $color-text-muted;
+
+  ::ng-deep b {
+    color: $color-danger-text;
+    font-weight: 700;
+  }
+}
+
+.cal-error {
+  color: $color-danger-text;
+  margin: 0 0 1rem;
+}
+
+.cal-loading {
+  color: $color-text-muted;
+}
+
+.cal-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.cal-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cal-nav__icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  border: 1px solid $color-border-soft;
+  background: $color-surface;
+  color: $color-text;
+  cursor: pointer;
+  font-size: 22px;
+  line-height: 1;
+}
+
+.cal-nav__month {
+  font-size: 18px;
+  font-weight: 700;
+  min-width: 150px;
+  text-align: center;
+}
+
+.cal-filters {
+  margin-bottom: 16px;
+}
+
+.cal-layout {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.cal-main {
+  flex: 999 1 640px;
+  min-width: 0;
+}
+
+.cal-side {
+  flex: 1 1 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cal-card {
+  background: $color-surface;
+  border: 1px solid $color-border-soft;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.cal-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.cal-card__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: $color-text;
+
+  &--danger {
+    color: $color-danger-text;
+  }
+}
+
+.cal-card__meta {
+  font-size: 12px;
+  color: $color-text-muted;
+}
+
+.cal-card__link {
+  border: 0;
+  background: transparent;
+  color: $color-brand-deep;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+
+.cal-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #fee2e2;
+  color: #b91c1c;
+}

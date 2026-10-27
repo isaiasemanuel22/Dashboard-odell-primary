@@ -1,0 +1,20 @@
+<div
+  class="db-seg"
+  [class.db-seg--lg]="size() === 'lg'"
+  role="radiogroup"
+  [attr.aria-label]="ariaLabel()"
+>
+  @for (opt of options(); track opt.value) {
+    <button
+      type="button"
+      class="db-seg__btn"
+      [class.is-on]="opt.value === value()"
+      [ngClass]="opt.value === value() ? opt.activeClass ?? null : null"
+      role="radio"
+      [attr.aria-checked]="opt.value === value()"
+      (click)="select(opt)"
+    >
+      {{ opt.label }}
+    </button>
+  }
+</div>

@@ -168,6 +168,11 @@ export class QuoteDetailComponent implements OnInit {
     });
   }
 
+  generateDocument(): void {
+    if (!this.quote) return;
+    this.formDialogs.openQuoteDocumentExport(this.quote).subscribe();
+  }
+
   generateOrder(): void {
     if (!this.quote || !this.canGenerateOrder || this.generatingOrder) return;
 

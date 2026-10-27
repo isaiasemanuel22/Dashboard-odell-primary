@@ -1,5 +1,6 @@
 import {
   Brand,
+  CalendarEntry,
   Category,
   Customer,
   GeneralSettings,
@@ -26,6 +27,7 @@ export interface StoreState {
   printJobs: PrintJob[];
   retailSales: RetailSale[];
   treasuryExpenses: TreasuryExpense[];
+  calendarEntries: CalendarEntry[];
 }
 
 export type StoreCollectionKey = keyof Omit<StoreState, 'generalSettings'>;

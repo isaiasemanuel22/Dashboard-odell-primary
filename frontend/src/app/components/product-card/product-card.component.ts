@@ -65,6 +65,11 @@ export class ProductCardComponent {
     return this.product.published !== false;
   }
 
+  /** Sin stock → pedido (§8); con stock → venta de mostrador vía carrito. */
+  get cartButtonLabel(): string {
+    return this.finishedStock > 0 ? 'Agregar al carrito' : 'Agregar para pedido';
+  }
+
   get specLine(): string {
     const product = this.product;
     if (product.components?.length) {

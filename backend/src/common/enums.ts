@@ -77,6 +77,32 @@ export enum TreasuryMovementDirection {
   EXPENSE = 'expense',
 }
 
+export enum CalendarEntryKind {
+  EVENT = 'event',
+  REMINDER = 'reminder',
+}
+
+export enum CalendarRepeat {
+  NONE = 'none',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+  YEARLY = 'yearly',
+}
+
+export enum CalendarNotify {
+  NONE = 'none',
+  AT_TIME = 'at_time',
+  ONE_HOUR = '1h',
+  ONE_DAY = '1d',
+  ONE_WEEK = '1w',
+}
+
+export enum CalendarLinkType {
+  ORDER = 'order',
+  QUOTE = 'quote',
+  CUSTOMER = 'customer',
+}
+
 export enum BrandMaterialType {
   FILAMENT = 'filament',
   RESIN = 'resin',

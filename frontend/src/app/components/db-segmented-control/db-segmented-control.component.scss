@@ -1,0 +1,53 @@
+@use '../../shared/styles/variables' as *;
+
+.db-seg {
+  display: inline-flex;
+  border: 1px solid $color-border-soft;
+  border-radius: 10px;
+  overflow: hidden;
+  background: $color-surface;
+}
+
+.db-seg__btn {
+  height: 38px;
+  padding: 0 14px;
+  border: 0;
+  border-right: 1px solid $color-border-soft;
+  background: $color-surface;
+  font: 500 13px inherit;
+  color: $color-text-label;
+  cursor: pointer;
+
+  &:last-child {
+    border-right: 0;
+  }
+
+  &.is-on {
+    background: $color-brand-deep;
+    color: #fff;
+  }
+}
+
+.db-seg--lg .db-seg__btn {
+  flex: 1;
+  height: 44px;
+  font-size: 14px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.on-ev.is-on {
+  background: #e8f6ec;
+  color: #166534;
+  box-shadow: inset 0 -3px 0 #15803d;
+  font-weight: 700;
+}
+
+.on-rec.is-on {
+  background: #fef3c7;
+  color: #92400e;
+  box-shadow: inset 0 -3px 0 #d97706;
+  font-weight: 700;
+}

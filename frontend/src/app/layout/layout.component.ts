@@ -46,6 +46,7 @@ export class LayoutComponent implements OnInit {
     { label: 'Pedidos', route: '/pedidos', icon: 'orders' },
     { label: 'Presupuestos', route: '/presupuestos', icon: 'quotes' },
     { label: 'Cola de trabajo', route: '/cola', icon: 'queue' },
+    { label: 'Calendario', route: '/calendario', icon: 'calendar' },
     { label: 'Productos', route: '/productos', icon: 'products' },
     { label: 'Insumos', route: '/insumos', icon: 'supplies' },
     { label: 'Clientes', route: '/clientes', icon: 'customers' },

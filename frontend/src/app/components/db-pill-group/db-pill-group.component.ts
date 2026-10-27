@@ -8,6 +8,8 @@ import {
 export interface DbPillOption<T extends string = string> {
   value: T;
   label: string;
+  /** Color del punto de leyenda (filtros de calendario, etc.). */
+  color?: string;
 }
 
 export type DbPillSize = 'md' | 'sm';

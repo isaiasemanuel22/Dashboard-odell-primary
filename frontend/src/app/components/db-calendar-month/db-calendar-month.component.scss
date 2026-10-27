@@ -1,0 +1,126 @@
+@use '../../shared/styles/variables' as *;
+
+.db-cal-box {
+  background: $color-surface;
+  border: 1px solid $color-border-soft;
+  border-radius: 12px;
+  overflow-x: auto;
+}
+
+.db-cal {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(96px, 1fr));
+  min-width: 700px;
+}
+
+.db-cal__dow {
+  background: $color-brand-deep;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 10px;
+}
+
+.db-cal__day {
+  min-height: 118px;
+  padding: 6px 6px 8px;
+  border-top: 1px solid $color-divider;
+  border-left: 1px solid $color-divider;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  box-sizing: border-box;
+  cursor: pointer;
+
+  &:nth-child(7n + 1) {
+    border-left: 0;
+  }
+
+  &:hover {
+    background: #f7fbfd;
+  }
+
+  &--out {
+    background: #f7fafc;
+
+    .db-cal__num {
+      color: #9aaab6;
+    }
+  }
+
+  &--wknd {
+    background: #fbfcfd;
+  }
+
+  &--today {
+    box-shadow: inset 0 0 0 2px $color-brand-deep;
+
+    .db-cal__num {
+      background: $color-brand-deep;
+      color: #fff;
+    }
+  }
+}
+
+.db-cal__num {
+  font-size: 12px;
+  font-weight: 700;
+  color: $color-text-label;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  margin-bottom: 2px;
+}
+
+.db-cal-it {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  line-height: 1.2;
+  padding: 3px 6px;
+  border-radius: 6px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &--ent {
+    background: #e0f0f8;
+    color: #0b5f86;
+    border-left: 3px solid $color-brand-deep;
+  }
+
+  &--ev {
+    background: #e8f6ec;
+    color: #166534;
+    border-left: 3px solid #15803d;
+  }
+
+  &--rec {
+    background: #fef3c7;
+    color: #92400e;
+    border-left: 3px solid #d97706;
+  }
+
+  &--late {
+    background: #fee2e2;
+    color: #991b1b;
+    border-left: 3px solid #b91c1c;
+  }
+
+  &.is-past {
+    opacity: 0.55;
+    text-decoration: line-through;
+  }
+}
+
+.db-cal__more {
+  font-size: 11px;
+  font-weight: 700;
+  color: $color-brand-deep;
+  padding: 0 6px;
+}

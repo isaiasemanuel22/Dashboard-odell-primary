@@ -58,6 +58,7 @@
                             [max]="field.max"
                             [step]="field.step"
                             [required]="field.required ?? false"
+                            [ariaLabel]="field.label"
                           />
                           <button type="button" aria-label="Más" (click)="step(i, field, 1)">+</button>
                         </div>
@@ -71,6 +72,7 @@
                             [max]="field.max"
                             [step]="field.step"
                             [required]="field.required ?? false"
+                            [ariaLabel]="field.label"
                           />
                           @if (field.suffix) {
                             <span>{{ field.suffix }}</span>

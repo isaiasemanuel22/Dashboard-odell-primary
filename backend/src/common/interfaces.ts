@@ -1,5 +1,9 @@
 import {
   BrandMaterialType,
+  CalendarEntryKind,
+  CalendarLinkType,
+  CalendarNotify,
+  CalendarRepeat,
   FilamentType,
   OrderStatus,
   PaperType,
@@ -681,7 +685,12 @@ export interface MonthlyTrendPoint {
 
 export type DashboardNotificationType = 'info' | 'warning' | 'success';
 
-export type DashboardNotificationKind = 'order' | 'stock' | 'queue' | 'other';
+export type DashboardNotificationKind =
+  | 'order'
+  | 'stock'
+  | 'queue'
+  | 'calendar'
+  | 'other';
 
 export interface DashboardNotification {
   id: string;
@@ -722,6 +731,48 @@ export interface TreasuryExpense {
   referenceId?: string;
   occurredAt: string;
   createdAt: string;
+}
+
+export type CalendarFeedType = 'delivery' | 'event' | 'reminder';
+
+export interface CalendarEntry {
+  id: string;
+  kind: CalendarEntryKind;
+  title: string;
+  notes?: string;
+  /** YYYY-MM-DD */
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  allDay: boolean;
+  repeat: CalendarRepeat;
+  /** 1=Lun … 7=Dom */
+  weekdays: number[];
+  notify: CalendarNotify;
+  linkType?: CalendarLinkType;
+  linkId?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CalendarFeedItem {
+  id: string;
+  type: CalendarFeedType;
+  date: string;
+  title: string;
+  subtitle?: string;
+  startTime?: string;
+  endTime?: string;
+  allDay?: boolean;
+  completed?: boolean;
+  late?: boolean;
+  entryId?: string;
+  orderId?: string;
+  linkType?: CalendarLinkType;
+  linkId?: string;
+  total?: number;
+  customerName?: string;
 }
 
 export interface TreasuryDebtorBalance {

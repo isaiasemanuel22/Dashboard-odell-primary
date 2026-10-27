@@ -36,6 +36,79 @@ export enum QuoteStatus {
   CANCELADO = 'cancelado',
 }
 
+export enum CalendarEntryKind {
+  EVENT = 'event',
+  REMINDER = 'reminder',
+}
+
+export enum CalendarRepeat {
+  NONE = 'none',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly',
+  YEARLY = 'yearly',
+}
+
+export enum CalendarNotify {
+  NONE = 'none',
+  AT_TIME = 'at_time',
+  ONE_HOUR = '1h',
+  ONE_DAY = '1d',
+  ONE_WEEK = '1w',
+}
+
+export enum CalendarLinkType {
+  ORDER = 'order',
+  QUOTE = 'quote',
+  CUSTOMER = 'customer',
+}
+
+export type CalendarFeedType = 'delivery' | 'event' | 'reminder';
+
+export interface CalendarEntry {
+  id: string;
+  kind: CalendarEntryKind;
+  title: string;
+  notes?: string;
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  allDay: boolean;
+  repeat: CalendarRepeat;
+  weekdays: number[];
+  notify: CalendarNotify;
+  linkType?: CalendarLinkType;
+  linkId?: string;
+  completedAt?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type CreateCalendarEntryPayload = Omit<
+  CalendarEntry,
+  'id' | 'createdAt' | 'updatedAt' | 'completedAt'
+>;
+
+export type UpdateCalendarEntryPayload = Partial<CreateCalendarEntryPayload>;
+
+export interface CalendarFeedItem {
+  id: string;
+  type: CalendarFeedType;
+  date: string;
+  title: string;
+  subtitle?: string;
+  startTime?: string;
+  endTime?: string;
+  allDay?: boolean;
+  completed?: boolean;
+  late?: boolean;
+  entryId?: string;
+  orderId?: string;
+  linkType?: CalendarLinkType;
+  linkId?: string;
+  total?: number;
+  customerName?: string;
+}
+
 export enum PrintJobStatus {
   POR_HACER = 'por_hacer',
   EN_PROCESO = 'en_proceso',
@@ -713,7 +786,12 @@ export interface MonthlyTrendPoint {
 
 export type DashboardNotificationType = 'info' | 'warning' | 'success';
 
-export type DashboardNotificationKind = 'order' | 'stock' | 'queue' | 'other';
+export type DashboardNotificationKind =
+  | 'order'
+  | 'stock'
+  | 'queue'
+  | 'calendar'
+  | 'other';
 
 export interface DashboardNotification {
   id: string;

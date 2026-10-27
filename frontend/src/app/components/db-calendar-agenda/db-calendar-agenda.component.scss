@@ -1,0 +1,84 @@
+@use '../../shared/styles/variables' as *;
+
+.db-agenda {
+  display: flex;
+  flex-direction: column;
+}
+
+.db-agenda__empty {
+  margin: 0;
+  font-size: 13px;
+  color: $color-text-muted;
+}
+
+.db-agenda__row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+  padding: 10px 0;
+  border-top: 1px solid $color-divider;
+
+  &:first-child {
+    border-top: 0;
+  }
+}
+
+.db-agenda__bar {
+  width: 4px;
+  align-self: stretch;
+  border-radius: 4px;
+  flex: none;
+}
+
+.db-agenda__when {
+  font-size: 11px;
+  font-weight: 700;
+  color: $color-text-muted;
+  width: 52px;
+  flex: none;
+  padding-top: 2px;
+}
+
+.db-agenda__chk {
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+  accent-color: $color-brand-deep;
+  flex: none;
+}
+
+.db-agenda__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.db-agenda__title {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: $color-text;
+
+  &.is-done {
+    text-decoration: line-through;
+    color: $color-text-muted;
+  }
+}
+
+.db-agenda__sub {
+  display: block;
+  font-size: 12px;
+  color: $color-text-muted;
+  margin-top: 2px;
+  font-weight: 400;
+}
+
+.db-agenda__link {
+  border: 0;
+  background: transparent;
+  color: $color-brand-deep;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  flex: none;
+}

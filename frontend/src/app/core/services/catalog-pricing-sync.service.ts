@@ -15,7 +15,11 @@ import {
 export class CatalogPricingSyncService {
   private readonly pricing = inject(ProductPricingService);
 
-  /** Recalcula costo/precio/ganancia del catálogo en memoria (sin persistir en servidor). */
+  /**
+   * Recalcula costo/precio/ganancia en memoria (sin persistir).
+   * No usar para pintar el catálogo: mostrar price/cost/profit del API (§16).
+   * El sync de costos dinámicos lo hace el backend.
+   */
   recalculate(
     products: Product[],
     settings: GeneralSettings,
