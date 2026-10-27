@@ -5,29 +5,31 @@
   </div>
 
   <div class="category-picker">
-    @if (selectedCategoriesList.length) {
-      <div class="selected-categories">
-        @for (cat of selectedCategoriesList; track cat.id) {
-          <span class="category-chip">
-            {{ cat.name }}
-            <button type="button" [attr.aria-label]="'Quitar ' + cat.name" (click)="removeCategory(cat.id)">×</button>
-          </span>
-        }
-      </div>
-    }
-    <db-select
-      name="categoryPicker"
-      [(ngModel)]="categoryPicker"
-      [ngModelOptions]="{ standalone: true }"
-      placeholder="Agregar categoría..."
-      [options]="unselectedCategoryOptions"
-      [disabled]="!canAddCategory"
-      (ngModelChange)="onPickerChange($event)"
-    />
+    <div class="category-field">
+      @if (selectedCategoriesList.length) {
+        <div class="selected-categories">
+          @for (cat of selectedCategoriesList; track cat.id) {
+            <span class="category-chip">
+              {{ cat.name }}
+              <button type="button" [attr.aria-label]="'Quitar ' + cat.name" (click)="removeCategory(cat.id)">×</button>
+            </span>
+          }
+        </div>
+      }
+      <db-select
+        name="categoryPicker"
+        [(ngModel)]="categoryPicker"
+        [ngModelOptions]="{ standalone: true }"
+        placeholder="Agregar categoría..."
+        [options]="unselectedCategoryOptions"
+        [disabled]="!canAddCategory"
+        (ngModelChange)="onPickerChange($event)"
+      />
+    </div>
     <db-button
       label="+ Nueva"
       variant="secondary"
-      format="soft"
+      format="solid"
       (clicked)="openCategoryForm()"
     />
   </div>

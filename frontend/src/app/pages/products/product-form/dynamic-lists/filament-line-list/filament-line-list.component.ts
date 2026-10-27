@@ -24,12 +24,13 @@ import {
 import { SettingsFacade } from '../../../../../store/settings/settings.facade';
 import { SuppliesService } from '../../../../../core/services/settings.service';
 import { buildFilamentTypeOptions } from '../../../../../shared/utils/filament-type.util';
-import { buildColorOptions } from '../../../../../shared/utils/color.helpers';
+import { resolveFilamentPricePerKg } from '../../../../../shared/utils/material-type-price.util';
+import { FILAMENT_TYPE_LABELS } from '../../../../../shared/constants/labels';
 import {
   createEmptyFdmFilamentLine,
   totalFdmFilamentGrams,
 } from '../../../../../shared/utils/fdm.helpers';
-import type { DbSelectOption } from '@dashboard-form';
+import type { DbColorSelectOption, DbSelectOption } from '@dashboard-form';
 import {
   DynamicListComponent,
   DynamicListConfig,
@@ -74,21 +75,30 @@ export class FilamentLineListComponent
   readonly filamentConfig: DynamicListConfig = {
     legend: 'Filamentos',
     description: 'Uno por cada material o color que usa la impresión',
+    layout: 'table',
     itemLabel: (index) => `Filamento ${index + 1}`,
     addButtonLabel: '+ Agregar filamento',
     emptyMessage: 'Sin filamentos configurados',
-    totalLabel: 'Total',
-    totalValueFn: (items) => `${totalFdmFilamentGrams(items)} g`,
+    totalValueFn: (items) => {
+      const grams = totalFdmFilamentGrams(items);
+      const material = items.reduce(
+        (sum, line) => sum + this.lineCost(line),
+        0,
+      );
+      return `Total ${grams} g · Material ${this.money(material)}`;
+    },
+    rowCost: (item) => this.lineCost(item),
     minItems: 1,
     createItem: () =>
       createEmptyFdmFilamentLine(this.primaryFilamentType),
     showRemoveButton: (items) => items.length > 1,
     fields: [
       {
-        type: 'input',
-        name: 'label',
-        label: 'Etiqueta',
-        placeholder: 'Opcional · Ej.: Base',
+        type: 'color-select',
+        name: 'colorId',
+        label: 'Color',
+        appearance: 'popover',
+        optionsFn: (item) => this.getColorOptions(item),
       },
       {
         type: 'select',
@@ -100,17 +110,18 @@ export class FilamentLineListComponent
         },
       },
       {
-        type: 'color-select',
-        name: 'colorId',
-        label: 'Color',
-        optionsFn: (item) => this.getColorOptions(item),
+        type: 'input',
+        name: 'label',
+        label: 'Etiqueta',
+        placeholder: 'Ej.: Base',
       },
       {
         type: 'input',
         name: 'grams',
         label: 'Gramos',
         inputType: 'number',
-        min: 0.1,
+        suffix: 'g',
+        min: 0,
         step: 0.1,
       },
     ],
@@ -175,14 +186,79 @@ export class FilamentLineListComponent
       this.generalSettings?.filamentPrices ?? [],
       extraTypes,
     );
-    return [{ value: '', label: 'Elegí el tipo' }, ...options];
+    return [
+      { value: '', label: 'Elegí el tipo' },
+      ...options.map((option) => ({
+        ...option,
+        label: this.filamentOptionLabel(String(option.value), option.label),
+      })),
+    ];
   }
 
-  private getColorOptions(line: FdmFilamentLine): DbSelectOption[] {
-    return buildColorOptions(
-      this.fdmSupplies,
-      this.generalSettings?.colors ?? [],
-      { filamentType: line.filamentType },
+  private filamentOptionLabel(type: string, fallback: string): string {
+    if (!this.generalSettings) return fallback;
+    const prices = this.generalSettings.filamentPrices.filter(
+      (entry) => entry.materialType === type,
     );
+    const perKg = resolveFilamentPricePerKg(
+      this.generalSettings,
+      type as FilamentType,
+    );
+    const typeLabel = FILAMENT_TYPE_LABELS[type as FilamentType] ?? fallback;
+    if (perKg == null) return typeLabel;
+    const price = `${this.money(perKg)}/kg`;
+    if (prices.length === 1) {
+      return `${prices[0].brand} · ${typeLabel} · ${price}`;
+    }
+    return `${typeLabel} · ${price}`;
+  }
+
+  private lineCost(line: FdmFilamentLine): number {
+    if (!this.generalSettings || !line?.filamentType) return 0;
+    const perKg = resolveFilamentPricePerKg(
+      this.generalSettings,
+      line.filamentType,
+    );
+    if (perKg == null) return 0;
+    return ((Number(line.grams) || 0) / 1000) * perKg;
+  }
+
+  private money(value: number): string {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(value);
+  }
+
+  private getColorOptions(line: FdmFilamentLine): DbColorSelectOption[] {
+    const catalog = this.generalSettings?.colors ?? [];
+    const stockIds = new Set(
+      this.fdmSupplies
+        .filter(
+          (supply) =>
+            !line.filamentType || supply.filamentType === line.filamentType,
+        )
+        .map((supply) => supply.colorId)
+        .filter((colorId): colorId is string => !!colorId),
+    );
+    const options: DbColorSelectOption[] = [
+      {
+        value: INDISTINTO_COLOR_ID,
+        label: 'Indistinto',
+        hint: 'el que haya en stock',
+      },
+    ];
+
+    for (const color of catalog) {
+      options.push({
+        value: color.id,
+        label: color.name,
+        hex: color.hex,
+        inStock: stockIds.has(color.id),
+      });
+    }
+
+    return options;
   }
 }

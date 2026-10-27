@@ -1,10 +1,16 @@
 @if (config) {
-<db-fieldset [legend]="config.legend">
+<section class="dynamic-list">
   <div class="dynamic-list-head">
-    @if (config.description) {
-      <p class="components-desc">{{ config.description }}</p>
+    <div>
+      <h4>{{ config.legend }}</h4>
+      @if (config.description) {
+        <p class="components-desc">{{ config.description }}</p>
+      }
+    </div>
+    @if (asideLabel(); as aside) {
+      <span class="dynamic-list-aside">{{ aside }}</span>
     }
-    @if (config.totalLabel && config.totalValueFn) {
+    @if (config.layout !== 'table' && config.totalLabel && config.totalValueFn) {
       <strong class="dynamic-list-total">
         {{ config.totalLabel }} {{ config.totalValueFn(itemsArray.getRawValue()) }}
       </strong>
@@ -12,6 +18,151 @@
   </div>
 
     <div [formGroup]="formGroup">
+      @if (config.layout === 'table') {
+        <div
+          class="line-table"
+          [style.--line-table-columns]="config.tableColumns || null"
+        >
+          <div class="line-table__head">
+            @for (field of config.fields; track fieldTrack($index, field)) {
+              @if (showField(field)) {
+                <span>{{ fieldLabel(field) }}</span>
+              }
+            }
+            @for (column of config.displayColumns ?? []; track column.label) {
+              <span class="line-table__head-cost">{{ column.label }}</span>
+            }
+            @if (config.rowCost) {
+              <span class="line-table__head-cost">Costo</span>
+            }
+            <span></span>
+          </div>
+          <div formArrayName="items">
+            @for (
+              itemGroup of itemsArray.controls;
+              track trackByIndex($index, itemGroup);
+              let i = $index
+            ) {
+              <div class="line-table__row" [formGroupName]="i">
+                @for (field of config.fields; track fieldTrack($index, field)) {
+                  @if (showField(field)) {
+                  @switch (field.type) {
+                    @case ('input') {
+                      @if (field.control === 'stepper') {
+                        <div class="line-table__stepper">
+                          <button type="button" aria-label="Menos" (click)="step(i, field, -1)">−</button>
+                          <db-input
+                            [type]="field.inputType || 'text'"
+                            [formControlName]="field.name"
+                            [min]="field.min"
+                            [max]="field.max"
+                            [step]="field.step"
+                            [required]="field.required ?? false"
+                          />
+                          <button type="button" aria-label="Más" (click)="step(i, field, 1)">+</button>
+                        </div>
+                      } @else {
+                        <div class="line-table__suffix" [class.has-suffix]="field.suffix">
+                          <db-input
+                            [type]="field.inputType || 'text'"
+                            [formControlName]="field.name"
+                            [placeholder]="field.placeholder ?? ''"
+                            [min]="field.min"
+                            [max]="field.max"
+                            [step]="field.step"
+                            [required]="field.required ?? false"
+                          />
+                          @if (field.suffix) {
+                            <span>{{ field.suffix }}</span>
+                          }
+                        </div>
+                      }
+                    }
+                    @case ('select') {
+                      <db-select
+                        [formControlName]="field.name"
+                        [placeholder]="field.placeholder ?? ''"
+                        [options]="selectOptions(field, i)"
+                        [required]="field.required ?? false"
+                      />
+                    }
+                    @case ('color-select') {
+                      <db-color-select
+                        [appearance]="field.appearance ?? 'panel'"
+                        [formControlName]="field.name"
+                        [options]="colorSelectOptions(field, i)"
+                        [required]="field.required ?? false"
+                      />
+                    }
+                    @case ('dimensions') {
+                      <div class="line-table__measure">
+                        <db-input
+                          type="number"
+                          [formControlName]="field.widthName"
+                          [min]="field.min ?? 0.1"
+                          [step]="field.step ?? 0.1"
+                        />
+                        <span>×</span>
+                        <db-input
+                          type="number"
+                          [formControlName]="field.lengthName"
+                          [min]="field.min ?? 0.1"
+                          [step]="field.step ?? 0.1"
+                        />
+                      </div>
+                    }
+                  }
+                  }
+                }
+                @for (column of config.displayColumns ?? []; track column.label) {
+                  @let cell = column.render(itemGroup.getRawValue());
+                  <div
+                    class="line-table__meta"
+                    [class.is-missing]="cell.tone === 'missing'"
+                    [class.is-strong]="cell.tone === 'strong'"
+                  >
+                    @if (cell.hint) {
+                      <small>{{ cell.hint }}</small>
+                    }
+                    <span>{{ cell.text }}</span>
+                  </div>
+                }
+                @if (config.rowCost) {
+                  <strong class="line-table__cost">
+                    {{ config.rowCost(itemGroup.getRawValue()) | currencyArs }}
+                  </strong>
+                }
+                @if (canRemove()) {
+                  <button type="button" class="dynamic-list-item__remove" aria-label="Quitar" (click)="onRemove(i)">
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path d="M4 7h16M9 7V5h6v2M8 7l1 12h6l1-12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" />
+                    </svg>
+                  </button>
+                } @else {
+                  <span></span>
+                }
+              </div>
+            }
+          </div>
+          @if (config.addPlacement === 'inside') {
+            <div class="line-table__toolbar">
+              @if (config.showAddButton !== false) {
+                <db-button
+                  [label]="config.addButtonLabel"
+                  variant="secondary"
+                  format="solid"
+                  (clicked)="onAdd()"
+                />
+              }
+              @if (config.totalValueFn) {
+                <p class="line-table__foot">{{ config.totalValueFn(itemsArray.getRawValue()) }}</p>
+              }
+            </div>
+          } @else if (config.totalValueFn) {
+            <p class="line-table__foot">{{ config.totalValueFn(itemsArray.getRawValue()) }}</p>
+          }
+        </div>
+      } @else {
       <div formArrayName="items">
         @for (
           itemGroup of itemsArray.controls;
@@ -32,6 +183,7 @@
 
             <div class="dynamic-list-item__grid">
               @for (field of config.fields; track fieldTrack($index, field)) {
+                @if (showField(field)) {
                 @switch (field.type) {
                   @case ('input') {
                     <db-input
@@ -92,22 +244,39 @@
                     </div>
                   }
                 }
+                }
               }
             </div>
           </div>
         }
       </div>
+      }
     </div>
 
-    <db-button
-      [label]="config.addButtonLabel"
-      variant="secondary"
-      format="soft"
-      (clicked)="onAdd()"
-    />
+    @if (config.showAddButton !== false && config.addPlacement !== 'inside') {
+      <db-button
+        [label]="config.addButtonLabel"
+        variant="secondary"
+        format="solid"
+        (clicked)="onAdd()"
+      />
+    }
+
+    @if (config.footnote) {
+      <p class="dynamic-list-footnote">{{ config.footnote }}</p>
+    }
+
+    @if (config.footerActionLabel) {
+      <db-button
+        [label]="config.footerActionLabel"
+        variant="primary"
+        format="link"
+        (clicked)="footerAction.emit()"
+      />
+    }
 
     @if (!itemsArray.length && config.emptyMessage) {
       <p class="components-empty">{{ config.emptyMessage }}</p>
     }
-  </db-fieldset>
+</section>
 }

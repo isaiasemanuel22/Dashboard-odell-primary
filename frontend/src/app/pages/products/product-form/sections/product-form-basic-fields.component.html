@@ -1,42 +1,46 @@
-<section class="form-block">
-  <h4>Tipo de producto</h4>
-  <div class="type-switch" role="tablist">
-    @for (option of productTypeOptions; track option.value) {
-      <button
-        type="button"
-        class="type-switch__item"
-        [class.type-switch__item--active]="type === option.value"
-        (click)="selectType(option.value)"
-      >
-        {{ typeLabel(option.value) }}
-      </button>
-    }
-  </div>
-</section>
+<div class="basic-fields">
+  <section class="form-block">
+    <h4>Tipo de producto</h4>
+    <div class="type-switch" role="tablist">
+      @for (option of productTypeOptions; track option.value) {
+        <button
+          type="button"
+          class="type-switch__item"
+          [class.type-switch__item--active]="type === option.value"
+          (click)="selectType(option.value)"
+        >
+          {{ typeLabel(option.value) }}
+        </button>
+      }
+    </div>
+  </section>
 
-<section class="form-block">
-  <h4>Datos del producto</h4>
-  <div class="data-row">
-    <db-input
-      label="Nombre"
-      name="name"
-      [(ngModel)]="name"
-      [ngModelOptions]="{ standalone: true }"
-      placeholder="Ej.: Árbol de equilibrio"
-      [required]="true"
-      (ngModelChange)="onFieldChange()"
-    />
-    <db-input
-      label="Stock terminado"
-      type="number"
-      name="finishedStock"
-      [min]="0"
-      [step]="1"
-      [(ngModel)]="finishedStock"
-      [ngModelOptions]="{ standalone: true }"
-      (ngModelChange)="onFieldChange()"
-    />
-  </div>
+  <section class="form-block">
+    <h4>Datos del producto</h4>
+    <div class="data-row">
+      <db-input
+        label="Nombre"
+        name="name"
+        [(ngModel)]="name"
+        [ngModelOptions]="{ standalone: true }"
+        placeholder="Ej.: Árbol de equilibrio"
+        [required]="true"
+        (ngModelChange)="onFieldChange()"
+      />
+      <db-input
+        label="Stock terminado"
+        type="number"
+        name="finishedStock"
+        [min]="0"
+        [step]="1"
+        [(ngModel)]="finishedStock"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="onFieldChange()"
+      />
+    </div>
+  </section>
+
+  <ng-content />
 
   @if (showIncludesPiecesCheckbox) {
     <div class="product-flags">
@@ -63,4 +67,4 @@
       </div>
     </div>
   }
-</section>
+</div>

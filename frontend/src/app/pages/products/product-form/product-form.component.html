@@ -6,12 +6,13 @@
           [value]="basicFields ?? facade.basicFieldsValue"
           [productTypeOptions]="facade.productTypeOptions"
           (valueChange)="onBasicFieldsChange($event)"
-        />
-        <app-product-form-categories-section
-          [productType]="productType"
-          [value]="categoryIds"
-          (valueChange)="onCategoriesChange($event)"
-        />
+        >
+          <app-product-form-categories-section
+            [productType]="productType"
+            [value]="categoryIds"
+            (valueChange)="onCategoriesChange($event)"
+          />
+        </app-product-form-basic-fields>
 
         @if (facade.showComponentsSection) {
           <app-product-form-components-section
@@ -55,8 +56,8 @@
       <div class="product-create__actions">
         <db-button
           label="Cancelar"
-          variant="cancel"
-          format="soft"
+          variant="secondary"
+          format="solid"
           (clicked)="cancel.emit()"
         />
         <db-button

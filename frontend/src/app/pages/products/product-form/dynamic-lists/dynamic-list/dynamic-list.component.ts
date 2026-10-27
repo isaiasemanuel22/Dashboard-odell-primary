@@ -22,9 +22,9 @@ import {
 } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import { DbButtonComponent } from '../../../../../components/db-button/db-button.component';
+import { CurrencyArsPipe } from '../../../../../shared/pipes/labels.pipe';
 import {
   DbColorSelectComponent,
-  DbFieldsetComponent,
   DbInputComponent,
   DbSelectComponent,
   DbTextareaComponent,
@@ -32,6 +32,7 @@ import {
 import type { DbSelectOption } from '@dashboard-form';
 import {
   DynamicFieldConfig,
+  DynamicInputFieldConfig,
   DynamicListConfig,
   DynamicSelectFieldConfig,
   DynamicColorSelectFieldConfig,
@@ -51,12 +52,12 @@ export type {
   standalone: true,
   imports: [
     ReactiveFormsModule,
-    DbFieldsetComponent,
     DbButtonComponent,
     DbColorSelectComponent,
     DbSelectComponent,
     DbInputComponent,
     DbTextareaComponent,
+    CurrencyArsPipe,
   ],
   templateUrl: './dynamic-list.component.html',
   styleUrl: './dynamic-list.component.scss',
@@ -82,6 +83,7 @@ export class DynamicListComponent
   @Input() config!: DynamicListConfig;
 
   @Output() valueChange = new EventEmitter<any[]>();
+  @Output() footerAction = new EventEmitter<void>();
 
   /** Formulario reactivo raíz; el array editable está en `formGroup.controls.items`. */
   readonly formGroup = new FormGroup({
@@ -127,6 +129,30 @@ export class DynamicListComponent
       this.formGroup.enable({ emitEvent: false });
     }
     this.cdr.markForCheck();
+  }
+
+  fieldLabel(field: DynamicFieldConfig): string {
+    if (field.type === 'dimensions') return field.label ?? '';
+    return field.label;
+  }
+
+  showField(field: DynamicFieldConfig): boolean {
+    return !('hidden' in field && field.hidden);
+  }
+
+  asideLabel(): string {
+    return this.config.headerAside?.() ?? '';
+  }
+
+  step(index: number, field: DynamicInputFieldConfig, direction: number): void {
+    const control = this.itemsArray.at(index)?.get(field.name);
+    if (!control) return;
+    const current = Number(control.value) || 0;
+    const amount = field.step ?? 1;
+    const min = field.min ?? Number.NEGATIVE_INFINITY;
+    const max = field.max ?? Number.POSITIVE_INFINITY;
+    const next = Math.min(max, Math.max(min, current + direction * amount));
+    control.setValue(Math.round(next * 1000) / 1000);
   }
 
   canRemove(): boolean {

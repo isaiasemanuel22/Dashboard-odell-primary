@@ -5,12 +5,15 @@ export interface DynamicInputFieldConfig {
   name: string;
   label: string;
   placeholder?: string;
+  suffix?: string;
   inputType?: 'text' | 'number' | 'email' | 'date';
   min?: number;
   max?: number;
   step?: number;
   required?: boolean;
   fullWidth?: boolean;
+  hidden?: boolean;
+  control?: 'stepper';
   changeFn?: (item: any, items: any[]) => void;
 }
 
@@ -23,6 +26,7 @@ export interface DynamicSelectFieldConfig {
   fullWidth?: boolean;
   options?: DbSelectOption[];
   optionsFn?: (item: any, items: any[]) => DbSelectOption[];
+  hidden?: boolean;
   changeFn?: (item: any, items: any[]) => void;
 }
 
@@ -37,6 +41,7 @@ export interface DynamicTextareaFieldConfig {
 
 export interface DynamicDimensionsFieldConfig {
   type: 'dimensions';
+  label?: string;
   widthName: string;
   lengthName: string;
   widthLabel?: string;
@@ -53,7 +58,18 @@ export interface DynamicColorSelectFieldConfig {
   required?: boolean;
   fullWidth?: boolean;
   optionsFn?: (item: any, items: any[]) => import('@general-components').DbColorSelectOption[];
+  appearance?: 'panel' | 'popover';
+  hidden?: boolean;
   changeFn?: (item: any, items: any[]) => void;
+}
+
+export interface DynamicDisplayColumn {
+  label: string;
+  render: (item: any) => {
+    text: string;
+    hint?: string;
+    tone?: 'plain' | 'missing' | 'strong';
+  };
 }
 
 export type DynamicFieldConfig =
@@ -75,4 +91,15 @@ export interface DynamicListConfig {
   emptyMessage?: string;
   totalLabel?: string;
   totalValueFn?: (items: any[]) => string | number;
+  layout?: 'cards' | 'table';
+  /** Columnas de la tabla. Si no se indica, usa las de filamentos. */
+  tableColumns?: string;
+  showAddButton?: boolean;
+  /** `inside` deja el botón de agregar en la misma fila que el total. */
+  addPlacement?: 'below' | 'inside';
+  headerAside?: () => string;
+  footnote?: string;
+  footerActionLabel?: string;
+  displayColumns?: DynamicDisplayColumn[];
+  rowCost?: (item: any) => number;
 }

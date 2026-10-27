@@ -66,19 +66,27 @@ export class SupplyLineListComponent
   readonly supplyConfig: DynamicListConfig = {
     legend: 'Insumos',
     description:
-      'Seleccioná insumos del catálogo (Insumos → Estampado): remeras, tinta, film, etc. El costo se calcula con el precio unitario del stock.',
+      'Prenda, taza o soporte que se estampa. El costo sale del precio unitario en Insumos.',
+    layout: 'table',
+    addPlacement: 'inside',
+    tableColumns: 'minmax(14rem, 2.2fr) 7.5rem 5.75rem 4.75rem 2rem',
     itemLabel: (index) => `Insumo ${index + 1}`,
     addButtonLabel: '+ Agregar insumo',
     emptyMessage: 'Sin insumos configurados',
+    totalValueFn: (items) => {
+      const total = items.reduce((sum, line) => sum + this.lineCost(line), 0);
+      return `Insumos ${this.money(total)}`;
+    },
+    rowCost: (item) => this.lineCost(item),
+    displayColumns: [
+      {
+        label: 'Precio / u',
+        render: (item) => this.unitPriceCell(item),
+      },
+    ],
     minItems: 0,
     createItem: () => createEmptyEstampadoSupplyLine(),
     fields: [
-      {
-        type: 'input',
-        name: 'label',
-        label: 'Etiqueta (opcional)',
-        placeholder: 'Ej: Remera base',
-      },
       {
         type: 'select',
         name: 'supplyId',
@@ -90,19 +98,26 @@ export class SupplyLineListComponent
         },
       },
       {
-        type: 'color-select',
-        name: 'colorId',
-        label: 'Color',
-        fullWidth: true,
-        optionsFn: (item) => this.getColorOptions(item),
-      },
-      {
         type: 'input',
         name: 'quantity',
         label: 'Cantidad',
         inputType: 'number',
         min: 0.01,
-        step: 0.01,
+        step: 1,
+        control: 'stepper',
+      },
+      {
+        type: 'input',
+        name: 'label',
+        label: 'Etiqueta',
+        hidden: true,
+      },
+      {
+        type: 'color-select',
+        name: 'colorId',
+        label: 'Color',
+        hidden: true,
+        optionsFn: (item) => this.getColorOptions(item),
       },
     ],
   };
@@ -166,8 +181,37 @@ export class SupplyLineListComponent
       .filter((supply) => !usedSupplyIds.has(supply.id))
       .map((supply) => ({
         value: supply.id,
-        label: `${supply.name} (${supply.unit})`,
+        label: `${supply.name} · ${this.quantityLabel(supply.quantity)} ${supply.unit} en stock`,
       }));
+  }
+
+  private unitPriceCell(line: EstampadoSupplyLine) {
+    const supply = this.suppliesCatalog.find((item) => item.id === line.supplyId);
+    const price = Number(supply?.unitPrice) || 0;
+    if (!supply || price <= 0) {
+      return { text: this.money(0), hint: 'Falta precio', tone: 'missing' as const };
+    }
+    return { text: this.money(price), tone: 'plain' as const };
+  }
+
+  private lineCost(line: EstampadoSupplyLine): number {
+    const supply = this.suppliesCatalog.find((item) => item.id === line.supplyId);
+    if (!supply) return 0;
+    return (Number(supply.unitPrice) || 0) * (Number(line.quantity) || 0);
+  }
+
+  private quantityLabel(value: number): string {
+    return new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(
+      Number(value) || 0,
+    );
+  }
+
+  private money(value: number): string {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(value);
   }
 
   private getColorOptions(line: EstampadoSupplyLine): DbSelectOption[] {

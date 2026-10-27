@@ -13,16 +13,19 @@ import {
 } from '@angular/forms';
 import {
   EstampadoPrintSpec,
+  GeneralSettings,
   ImpresoWithCost,
   PaperType,
 } from '../../../../../core/models';
 import { ImpresosService } from '../../../../../core/services/impresos.service';
+import { ProductCostCalculationService } from '../../../../../core/services/product-cost-calculation.service';
 import { paperTypeOptions } from '../../../../../shared/utils/select-options';
 import {
   createEmptyEstampadoPrint,
-  formatPrintDimensionsCm,
+  resolvePrintDimensions,
   syncEstampadoPrintFromImpreso,
 } from '../../../../../shared/utils/estampado.helpers';
+import { SettingsFacade } from '../../../../../store/settings/settings.facade';
 import type { DbSelectOption } from '@dashboard-form';
 import { Subject, takeUntil } from 'rxjs';
 import {
@@ -56,19 +59,32 @@ export class PrintSpecListComponent
   initialValue: EstampadoPrintSpec[] | null = null;
 
   private readonly impresosService = inject(ImpresosService);
+  private readonly settingsFacade = inject(SettingsFacade);
+  private readonly costService = inject(ProductCostCalculationService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
   private impresos: ImpresoWithCost[] = [];
+  private generalSettings: GeneralSettings | null = null;
   private onChange: (value: EstampadoPrintSpec[]) => void = () => {};
   private onTouched: () => void = () => {};
 
   readonly printConfig: DynamicListConfig = {
     legend: 'Impresos',
-    description:
-      'Agregá cada tamaño de papel o transfer que lleva el producto.',
+    description: 'Cada papel o transfer que lleva el producto',
+    footnote:
+      'Elegí un tamaño del catálogo y la medida se completa sola; con "Medida libre" la cargás vos.',
+    layout: 'table',
+    addPlacement: 'inside',
+    tableColumns:
+      'minmax(6.5rem, 0.9fr) minmax(6.25rem, 0.7fr) minmax(9rem, 1.25fr) minmax(9rem, 1fr) 4.75rem 2rem',
     itemLabel: (index) => `Impreso ${index + 1}`,
     addButtonLabel: '+ Agregar impreso',
     emptyMessage: 'Sin impresos configurados',
+    totalValueFn: (items) => {
+      const total = items.reduce((sum, print) => sum + this.paperCost(print), 0);
+      return `Papel ${this.money(total)}`;
+    },
+    rowCost: (item) => this.paperCost(item),
     minItems: 1,
     createItem: () => createEmptyEstampadoPrint(),
     showRemoveButton: (items) => items.length > 1,
@@ -76,26 +92,26 @@ export class PrintSpecListComponent
       {
         type: 'input',
         name: 'label',
-        label: 'Etiqueta (opcional)',
-        placeholder: 'Ej: Pecho, Espalda',
+        label: 'Ubicación',
+        placeholder: 'Ej.: Pecho',
       },
       {
         type: 'select',
         name: 'paperType',
-        label: 'Tipo de papel',
+        label: 'Papel',
         options: paperTypeOptions(),
         changeFn: (item) => this.onPaperTypeChange(item),
       },
       {
         type: 'select',
         name: 'impresoId',
-        label: 'Desde catálogo (opcional)',
-        placeholder: 'Elegir tamaño del catálogo...',
+        label: 'Tamaño',
         optionsFn: (item) => this.getImpresoOptionsFor(item.paperType),
         changeFn: (item) => this.onImpresoChange(item),
       },
       {
         type: 'dimensions',
+        label: 'Medida (cm)',
         widthName: 'widthCm',
         lengthName: 'lengthCm',
         min: 0.1,
@@ -113,6 +129,14 @@ export class PrintSpecListComponent
         this.impresos = items;
         this.cdr.markForCheck();
       });
+
+    this.settingsFacade
+      .watchGeneralSettings()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((settings) => {
+        this.generalSettings = settings;
+        this.cdr.markForCheck();
+      });
   }
 
   ngOnDestroy(): void {
@@ -121,7 +145,10 @@ export class PrintSpecListComponent
   }
 
   writeValue(value: EstampadoPrintSpec[] | null): void {
-    this.initialValue = value;
+    this.initialValue = value?.map((print) => ({
+      ...print,
+      impresoId: print.impresoId || '',
+    })) ?? value;
     this.cdr.markForCheck();
   }
 
@@ -138,20 +165,47 @@ export class PrintSpecListComponent
   }
 
   onListChange(value: EstampadoPrintSpec[]): void {
-    this.onChange(value);
+    this.onChange(
+      value.map((print) => ({
+        ...print,
+        impresoId: print.impresoId?.trim() || undefined,
+      })),
+    );
     this.onTouched();
   }
 
+  private paperCost(print: EstampadoPrintSpec): number {
+    if (!this.generalSettings) return 0;
+    const dims = resolvePrintDimensions(print, (id) =>
+      this.impresos.find((item) => item.id === id),
+    );
+    if (!dims) return 0;
+    return this.costService.calculateImpresoPaperCost(
+      this.generalSettings,
+      dims.paperType,
+      dims.widthCm,
+      dims.heightCm,
+    );
+  }
+
+  private money(value: number): string {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(value);
+  }
+
   private getImpresoOptionsFor(paperType: PaperType): DbSelectOption[] {
-    return this.impresos
-      .filter((item) => item.paperType === paperType)
-      .map((item) => ({
-        value: item.id,
-        label: `${item.name} (${formatPrintDimensionsCm(
-          item.widthCm,
-          item.lengthCm && item.lengthCm > 0 ? item.lengthCm : item.heightCm,
-        )})`,
-      }));
+    return [
+      { value: '', label: 'Medida libre' },
+      ...this.impresos
+        .filter((item) => item.paperType === paperType)
+        .map((item) => ({
+          value: item.id,
+          label: item.name,
+        })),
+    ];
   }
 
   private onPaperTypeChange(print: EstampadoPrintSpec): void {
@@ -161,7 +215,7 @@ export class PrintSpecListComponent
         (option) => option.value === print.impresoId,
       )
     ) {
-      print.impresoId = undefined;
+      print.impresoId = '';
     }
   }
 
@@ -178,7 +232,7 @@ export class PrintSpecListComponent
 
     const impreso = this.impresos.find((item) => item.id === print.impresoId);
     if (!impreso) {
-      print.impresoId = undefined;
+      print.impresoId = '';
       return;
     }
 
@@ -193,7 +247,7 @@ export class PrintSpecListComponent
       printLength === impresoLength;
 
     if (!matches) {
-      print.impresoId = undefined;
+      print.impresoId = '';
     }
   }
 }

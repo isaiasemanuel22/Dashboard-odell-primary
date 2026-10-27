@@ -18,11 +18,12 @@
       <button
         type="button"
         class="db-color-select__preview"
+        [class.db-color-select__preview--compact]="appearance === 'popover'"
         [disabled]="disabled"
         [attr.aria-expanded]="panelOpen"
         aria-haspopup="dialog"
         [attr.aria-label]="label ? 'Elegir ' + label : 'Elegir color'"
-        (click)="openPanel()"
+        (click)="openPanel($event.currentTarget)"
       >
         <span
           class="db-color-select__swatch db-color-select__swatch--preview"
@@ -31,18 +32,82 @@
         ></span>
         <div class="db-color-select__preview-text">
           <span class="db-color-select__preview-label">{{ selected.label }}</span>
-          @if (selected.hex) {
-            <span class="db-color-select__preview-hex">{{ selected.hex }}</span>
-          } @else {
-            <span class="db-color-select__preview-hint">Click para elegir color</span>
+          @if (appearance !== 'popover') {
+            @if (selected.hex) {
+              <span class="db-color-select__preview-hex">{{ selected.hex }}</span>
+            } @else {
+              <span class="db-color-select__preview-hint">Click para elegir color</span>
+            }
           }
         </div>
         <span class="db-color-select__chevron" aria-hidden="true">▾</span>
       </button>
     }
   </div>
+</ng-template>
 
-  @if (panelOpen) {
+<ng-template #popover>
+  <div class="db-color-select__popover" role="dialog" [attr.aria-label]="label ? 'Elegir ' + label : 'Elegir color'">
+      <label class="db-color-select__search">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+        <input
+          type="search"
+          placeholder="Buscar color"
+          aria-label="Buscar color"
+          [value]="query"
+          (input)="query = $any($event.target).value"
+        />
+      </label>
+
+      @if (indistintoOption; as indistinto) {
+        <button type="button" class="db-color-select__indistinto" [class.is-active]="isSelected(indistinto.value)" (click)="pick(indistinto.value)">
+          <span class="db-color-select__swatch db-color-select__swatch--indistinto"></span>
+          <span>{{ indistinto.label }}</span>
+          @if (indistinto.hint) {
+            <small>{{ indistinto.hint }}</small>
+          }
+        </button>
+      }
+
+      @if (stockOptions.length) {
+        <p class="db-color-select__group">Con stock</p>
+        <div class="db-color-select__swatches">
+          @for (opt of stockOptions; track opt.value) {
+            <button type="button" class="db-color-select__dot" [class.is-active]="isSelected(opt.value)" [attr.aria-label]="opt.label" (click)="pick(opt.value)">
+              <span [style.background-color]="opt.hex"></span>
+            </button>
+          }
+        </div>
+      }
+
+      @if (catalogOptions.length) {
+        <p class="db-color-select__group">Catálogo</p>
+        <div class="db-color-select__swatches db-color-select__swatches--grid">
+          @for (opt of catalogOptions; track opt.value) {
+            <button type="button" class="db-color-select__dot" [class.is-active]="isSelected(opt.value)" [attr.aria-label]="opt.label" (click)="pick(opt.value)">
+              <span [style.background-color]="opt.hex"></span>
+            </button>
+          }
+        </div>
+      }
+
+      @if (selectedOption(); as selected) {
+        <div class="db-color-select__picked">
+          <span
+            class="db-color-select__swatch"
+            [class.db-color-select__swatch--indistinto]="!selected.hex"
+            [style.background-color]="selected.hex || null"
+          ></span>
+          <strong>{{ selected.label }}</strong>
+          @if (selected.hex) {
+            <span>{{ selected.hex }}</span>
+          }
+        </div>
+      }
+    </div>
+</ng-template>
+
+@if (panelOpen && appearance !== 'popover') {
     <div
       class="db-color-select__backdrop"
       role="presentation"
@@ -96,4 +161,4 @@
       </div>
     </div>
   }
-</ng-template>
+

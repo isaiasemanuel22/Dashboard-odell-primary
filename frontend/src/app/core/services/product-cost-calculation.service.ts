@@ -31,11 +31,10 @@ import {
   getMachineProfilesForProductType,
 } from '../../shared/utils/machine-profile.util';
 import {
+  RESIN_DENSITY_G_PER_ML,
   resolveFilamentPricePerKg,
   resolveResinPricePerLiter,
 } from '../../shared/utils/material-type-price.util';
-
-const RESIN_DENSITY_G_PER_ML = 1.1;
 
 export interface ProductCostCalculationContext {
   settings: GeneralSettings;

@@ -13,7 +13,10 @@
   @if (showProductionFields && isEstampado) {
     <app-print-spec-list formControlName="prints" />
     <app-supply-line-list formControlName="supplyLines" />
-    <app-press-cycle-list formControlName="pressCycles" />
+    <app-press-cycle-list
+      formControlName="pressCycles"
+      [productForm]="form"
+    />
   }
 
   @if (showProductionFields && isFdm) {
@@ -24,35 +27,13 @@
   }
 
   @if (showProductionFields && isResina) {
-    <section class="form-block">
-      <h4>Resina</h4>
-      <div class="measure-row">
-        <db-select
-          label="Tipo de resina"
-          formControlName="resinType"
-          [options]="resinTypeOptions"
-        />
-        <db-color-select
-          label="Color"
-          formControlName="colorId"
-          [options]="resinColorOptions"
-        />
-        <db-input
-          label="Gramos"
-          type="number"
-          formControlName="grams"
-          [min]="0.1"
-          [step]="0.1"
-          [required]="true"
-        />
-      </div>
-    </section>
+    <app-resin-line-list [form]="form" />
   }
 
   @if (showProductionFields && is3D) {
     <section class="form-block">
       <h4>Tiempos</h4>
-      <div class="measure-row">
+      <div class="times-row">
         <db-input
           label="Impresión (h) *"
           type="number"
@@ -71,7 +52,7 @@
         />
       </div>
       @if (isResina) {
-        <div class="measure-row">
+        <div class="times-row">
           <db-input
             label="Lavado (min)"
             type="number"
