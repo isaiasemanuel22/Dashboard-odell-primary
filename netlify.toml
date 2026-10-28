@@ -1,5 +1,5 @@
 # Base = frontend (monorepo). En Netlify UI: Base directory = frontend (o vacío si usás solo este toml).
-# Variable en Netlify: API_URL=https://odell-dashboard-api-dfb6810b38bf.herokuapp.com/api
+# Variable en Netlify: API_URL=https://odell-dashboard-api-bf200c02a0c9.herokuapp.com/api
 
 [build]
   base = "frontend"
