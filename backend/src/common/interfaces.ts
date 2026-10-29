@@ -34,12 +34,23 @@ export interface Brand {
   createdAt: string;
 }
 
+export interface FilamentTypeConfig {
+  id: string;
+  name: string;
+}
+
 export interface FilamentPriceConfig {
   id: string;
   brandId?: string;
   /** Nombre hidratado desde la tabla de marcas. No es el dato que se guarda. */
   brand?: string;
-  materialType: FilamentType;
+  /** Id del catálogo `filamentTypes`. */
+  filamentTypeId?: string;
+  /**
+   * Código/slug usado en productos e insumos (p. ej. pla).
+   * Se deriva del tipo del catálogo al guardar el precio.
+   */
+  materialType: FilamentType | string;
   pricePerKg: number;
 }
 
@@ -137,6 +148,8 @@ export interface GeneralSettings {
   /** Precio $/L por tipo; usado al costear productos resina (sin marca). */
   resinTypeAverages: Partial<Record<ResinType, number>>;
   colors: ColorConfig[];
+  /** Catálogo editable de tipos de filamento (Ajustes). */
+  filamentTypes: FilamentTypeConfig[];
 }
 
 export interface Impreso {

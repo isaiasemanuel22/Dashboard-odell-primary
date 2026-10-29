@@ -12,6 +12,7 @@ import { mergeProfitMargins, normalizeProfitMargins } from './profit-margins.uti
 import {
   ColorConfig,
   FilamentPriceConfig,
+  FilamentTypeConfig,
   GeneralSettings,
   MachineCostConfig,
   MachineProfile,
@@ -30,6 +31,14 @@ import { SupplyCategory } from '../common/enums';
 import { validateColorConfig } from '../common/color.util';
 import { StoreService } from '../store/store.service';
 import { RealtimeScope } from '../realtime/realtime.types';
+import {
+  ensureFilamentTypeCatalog,
+  findFilamentTypeByName,
+  hydrateFilamentPricesWithTypeIds,
+  normalizeFilamentTypeName,
+  resolveFilamentTypeForPrice,
+} from './filament-type-catalog.util';
+import { filamentTypeCodeFromName } from '../store/default-filament-types.seed';
 
 @Injectable()
 export class SettingsService {
@@ -56,6 +65,9 @@ export class SettingsService {
       syncPaperPricesFromReferenceSheets(
         this.store.generalSettings.paperReferenceSheets,
       );
+    hydrateFilamentPricesWithTypeIds(this.store.generalSettings, {
+      seedIfEmpty: false,
+    });
     return structuredClone(this.store.generalSettings);
   }
 
@@ -437,18 +449,26 @@ export class SettingsService {
   }
 
   addFilamentPrice(
-    data: Omit<FilamentPriceConfig, 'id'>,
+    data: Omit<FilamentPriceConfig, 'id'> & {
+      filamentTypeId?: string;
+      materialType?: string;
+    },
   ): FilamentPriceConfig {
     const brand = ensureBrand(
       this.store,
       data.brand ?? '',
       BrandMaterialType.FILAMENT,
     );
+    const typed = resolveFilamentTypeForPrice(this.store.generalSettings, {
+      filamentTypeId: data.filamentTypeId,
+      materialType: data.materialType,
+    });
     const entry: FilamentPriceConfig = {
       id: this.store.nextId('fp', this.store.generalSettings.filamentPrices),
       brandId: brand.id,
       brand: brand.name,
-      materialType: data.materialType,
+      filamentTypeId: typed.filamentTypeId,
+      materialType: typed.materialType,
       pricePerKg: data.pricePerKg,
     };
     this.store.generalSettings.filamentPrices.push(entry);
@@ -459,7 +479,10 @@ export class SettingsService {
 
   updateFilamentPrice(
     id: string,
-    data: Partial<Omit<FilamentPriceConfig, 'id'>>,
+    data: Partial<Omit<FilamentPriceConfig, 'id'>> & {
+      filamentTypeId?: string;
+      materialType?: string;
+    },
   ): FilamentPriceConfig {
     const index = this.store.generalSettings.filamentPrices.findIndex(
       (p) => p.id === id,
@@ -471,9 +494,20 @@ export class SettingsService {
     const brand = data.brand
       ? ensureBrand(this.store, data.brand, BrandMaterialType.FILAMENT)
       : undefined;
+    const typed =
+      data.filamentTypeId !== undefined || data.materialType !== undefined
+        ? resolveFilamentTypeForPrice(this.store.generalSettings, {
+            filamentTypeId: data.filamentTypeId,
+            materialType: data.materialType,
+          })
+        : {
+            filamentTypeId: current.filamentTypeId ?? '',
+            materialType: String(current.materialType),
+          };
     this.store.generalSettings.filamentPrices[index] = {
       ...current,
-      materialType: data.materialType ?? current.materialType,
+      filamentTypeId: typed.filamentTypeId || current.filamentTypeId,
+      materialType: typed.materialType || current.materialType,
       pricePerKg: data.pricePerKg ?? current.pricePerKg,
       brandId: brand?.id ?? current.brandId,
       brand: brand?.name ?? current.brand,
@@ -540,6 +574,67 @@ export class SettingsService {
     this.store.generalSettings.resinPrices =
       this.store.generalSettings.resinPrices.filter((p) => p.id !== id);
     this.recordSettingsChange(['settings', 'products']);
+  }
+
+  addFilamentType(data: Omit<FilamentTypeConfig, 'id'>): FilamentTypeConfig {
+    const name = normalizeFilamentTypeName(data.name ?? '');
+    if (!name) {
+      throw new BadRequestException('El nombre del tipo es obligatorio');
+    }
+    const catalog = ensureFilamentTypeCatalog(this.store.generalSettings);
+    const existing = findFilamentTypeByName(catalog, name);
+    if (existing) {
+      return existing;
+    }
+    const entry: FilamentTypeConfig = {
+      id: this.store.nextId('ft', catalog),
+      name,
+    };
+    catalog.push(entry);
+    this.recordSettingsChange(['settings']);
+    return entry;
+  }
+
+  updateFilamentType(
+    id: string,
+    data: Partial<Omit<FilamentTypeConfig, 'id'>>,
+  ): FilamentTypeConfig {
+    const catalog = ensureFilamentTypeCatalog(this.store.generalSettings);
+    const index = catalog.findIndex((entry) => entry.id === id);
+    if (index === -1) {
+      throw new NotFoundException('Tipo de filamento no encontrado');
+    }
+    const name = normalizeFilamentTypeName(data.name ?? catalog[index].name);
+    if (!name) {
+      throw new BadRequestException('El nombre del tipo es obligatorio');
+    }
+    const duplicate = findFilamentTypeByName(catalog, name);
+    if (duplicate && duplicate.id !== id) {
+      throw new BadRequestException('Ya existe un tipo con ese nombre');
+    }
+    catalog[index] = { ...catalog[index], name };
+    for (const price of this.store.generalSettings.filamentPrices) {
+      if (price.filamentTypeId === id) {
+        price.materialType = filamentTypeCodeFromName(name);
+      }
+    }
+    this.recordSettingsChange(['settings', 'supplies', 'products']);
+    return catalog[index];
+  }
+
+  removeFilamentType(id: string): void {
+    const inUse = this.store.generalSettings.filamentPrices.some(
+      (price) => price.filamentTypeId === id,
+    );
+    if (inUse) {
+      throw new BadRequestException(
+        'No se puede eliminar: el tipo está asignado a uno o más precios de filamento',
+      );
+    }
+    this.store.generalSettings.filamentTypes = (
+      this.store.generalSettings.filamentTypes ?? []
+    ).filter((entry) => entry.id !== id);
+    this.recordSettingsChange(['settings']);
   }
 
   addColor(data: Omit<ColorConfig, 'id'>): ColorConfig {

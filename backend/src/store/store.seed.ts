@@ -20,6 +20,7 @@ import { Product, Order } from '../common/interfaces';
 import { createDefaultMachineProfiles } from '../settings/machine-profile.util';
 import { ensureOrderStatusHistory } from '../orders/order-status-history.util';
 import { DEFAULT_COLOR_CATALOG } from './default-colors.seed';
+import { DEFAULT_FILAMENT_TYPE_CATALOG } from './default-filament-types.seed';
 import {
   normalizePaperReferenceSheets,
   syncPaperPricesFromReferenceSheets,
@@ -65,6 +66,7 @@ export function createEmptyState(): StoreState {
       filamentTypeAverages: {},
       resinTypeAverages: {},
       colors: [...DEFAULT_COLOR_CATALOG],
+      filamentTypes: [...DEFAULT_FILAMENT_TYPE_CATALOG],
     },
     brands: [],
     supplies: [],
@@ -115,30 +117,35 @@ export function createSeedState(): StoreState {
       {
         id: 'fp-1',
         brand: 'FilAr',
+        filamentTypeId: 'ft_pla',
         materialType: FilamentType.PLA,
         pricePerKg: 18000,
       },
       {
         id: 'fp-2',
         brand: 'FilAr',
+        filamentTypeId: 'ft_abs',
         materialType: FilamentType.ABS,
         pricePerKg: 22000,
       },
       {
         id: 'fp-3',
         brand: 'FilAr',
+        filamentTypeId: 'ft_petg',
         materialType: FilamentType.PETG,
         pricePerKg: 24000,
       },
       {
         id: 'fp-4',
         brand: 'Printalot',
+        filamentTypeId: 'ft_pla',
         materialType: FilamentType.PLA,
         pricePerKg: 16500,
       },
       {
         id: 'fp-5',
         brand: 'Printalot',
+        filamentTypeId: 'ft_tpu',
         materialType: FilamentType.TPU,
         pricePerKg: 28000,
       },
@@ -167,6 +174,7 @@ export function createSeedState(): StoreState {
     filamentTypeAverages: {},
     resinTypeAverages: {},
     colors: [...DEFAULT_COLOR_CATALOG],
+    filamentTypes: [...DEFAULT_FILAMENT_TYPE_CATALOG],
   };
 
   const supplies = [

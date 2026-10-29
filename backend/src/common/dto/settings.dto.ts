@@ -222,12 +222,25 @@ export class FilamentPriceDto {
   @IsNotEmpty()
   brand!: string;
 
+  @IsOptional()
   @IsString()
-  materialType!: string;
+  @IsNotEmpty()
+  filamentTypeId?: string;
+
+  /** Compat / fallback si aún no se envía filamentTypeId. */
+  @IsOptional()
+  @IsString()
+  materialType?: string;
 
   @IsNumber()
   @Min(0)
   pricePerKg!: number;
+}
+
+export class FilamentTypeConfigDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
 }
 
 export class ResinPriceDto {

@@ -36,6 +36,8 @@ function baseSettings(
     resinPrices: [],
     filamentTypeAverages: {},
     resinTypeAverages: {},
+    filamentTypes: [],
+    colors: [],
     ...overrides,
   };
 }

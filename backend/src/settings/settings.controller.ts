@@ -2,6 +2,7 @@ import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestj
 import {
   ColorConfigDto,
   FilamentPriceDto,
+  FilamentTypeConfigDto,
   MachineCostEntryDto,
   MachineProfileDto,
   PowerConsumptionEntryDto,
@@ -109,6 +110,25 @@ export class SettingsController {
   @Delete('general/resin-prices/:id')
   removeResinPrice(@Param('id') id: string) {
     this.settingsService.removeResinPrice(id);
+    return { deleted: true };
+  }
+
+  @Post('general/filament-types')
+  addFilamentType(@Body() data: FilamentTypeConfigDto) {
+    return this.settingsService.addFilamentType(data);
+  }
+
+  @Patch('general/filament-types/:id')
+  updateFilamentType(
+    @Param('id') id: string,
+    @Body() data: Partial<FilamentTypeConfigDto>,
+  ) {
+    return this.settingsService.updateFilamentType(id, data);
+  }
+
+  @Delete('general/filament-types/:id')
+  removeFilamentType(@Param('id') id: string) {
+    this.settingsService.removeFilamentType(id);
     return { deleted: true };
   }
 

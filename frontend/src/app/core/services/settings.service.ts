@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import {
   ColorConfig,
   FilamentPriceConfig,
+  FilamentTypeConfig,
   GeneralSettings,
   MachineCostConfig,
   MachineProfile,
@@ -185,6 +186,34 @@ export class SettingsService {
       .pipe(tap(() => this.removeResinPrice(id)));
   }
 
+  addFilamentType(
+    data: Omit<FilamentTypeConfig, 'id'>,
+  ): Observable<FilamentTypeConfig> {
+    return this.http
+      .post<FilamentTypeConfig>(`${this.baseUrl}/general/filament-types`, data)
+      .pipe(tap((entry) => this.upsertFilamentType(entry)));
+  }
+
+  updateFilamentType(
+    id: string,
+    data: Partial<Omit<FilamentTypeConfig, 'id'>>,
+  ): Observable<FilamentTypeConfig> {
+    return this.http
+      .patch<FilamentTypeConfig>(
+        `${this.baseUrl}/general/filament-types/${id}`,
+        data,
+      )
+      .pipe(tap((entry) => this.upsertFilamentType(entry)));
+  }
+
+  deleteFilamentType(id: string): Observable<{ deleted: boolean }> {
+    return this.http
+      .delete<{ deleted: boolean }>(
+        `${this.baseUrl}/general/filament-types/${id}`,
+      )
+      .pipe(tap(() => this.removeFilamentTypeLocal(id)));
+  }
+
   addColor(data: Omit<ColorConfig, 'id'>): Observable<ColorConfig> {
     return this.http
       .post<ColorConfig>(`${this.baseUrl}/general/colors`, data)
@@ -355,6 +384,38 @@ export class SettingsService {
     this.settingsFacade.setGeneral({
       ...current,
       resinPrices: current.resinPrices.filter((price) => price.id !== id),
+    });
+  }
+
+  private upsertFilamentType(entry: FilamentTypeConfig): void {
+    const current = this.settingsFacade.peekGeneralSettings();
+    if (!current) {
+      this.settingsFacade.load(true);
+      return;
+    }
+
+    const filamentTypes = current.filamentTypes ?? [];
+    const exists = filamentTypes.some((type) => type.id === entry.id);
+    this.settingsFacade.setGeneral({
+      ...current,
+      filamentTypes: exists
+        ? filamentTypes.map((type) => (type.id === entry.id ? entry : type))
+        : [...filamentTypes, entry],
+    });
+  }
+
+  private removeFilamentTypeLocal(id: string): void {
+    const current = this.settingsFacade.peekGeneralSettings();
+    if (!current) {
+      this.settingsFacade.load(true);
+      return;
+    }
+
+    this.settingsFacade.setGeneral({
+      ...current,
+      filamentTypes: (current.filamentTypes ?? []).filter(
+        (type) => type.id !== id,
+      ),
     });
   }
 

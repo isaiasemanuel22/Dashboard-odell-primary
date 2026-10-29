@@ -24,6 +24,7 @@ model AppSettings {
   filamentTypeAverages  Json  @default("{}") @map("filament_type_averages")
   resinTypeAverages     Json  @default("{}") @map("resin_type_averages")
   colors                Json  @default("[]")
+  filamentTypes         Json  @default("[]") @map("filament_types")
 
   @@map("app_settings")
 }

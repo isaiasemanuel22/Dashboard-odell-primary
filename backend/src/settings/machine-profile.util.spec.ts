@@ -30,6 +30,8 @@ describe('machine-profile.util', () => {
     }),
     filamentPrices: [],
     resinPrices: [],
+    filamentTypes: [],
+    colors: [],
     machineProfiles: createDefaultMachineProfiles().map((profile) =>
       profile.id === 'mp-res-wash'
         ? { ...profile, washSupplyId: 'sup-alcohol', washBathUses: 10 }

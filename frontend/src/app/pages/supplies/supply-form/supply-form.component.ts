@@ -23,6 +23,7 @@ import {
   ColorConfig,
   FilamentPriceConfig,
   FilamentType,
+  FilamentTypeConfig,
   ResinPriceConfig,
   ResinType,
   Supply,
@@ -70,6 +71,7 @@ export class SupplyFormComponent implements OnInit, OnChanges {
 
   filamentPrices: FilamentPriceConfig[] = [];
   resinPrices: ResinPriceConfig[] = [];
+  filamentTypes: FilamentTypeConfig[] = [];
   colorCatalog: ColorConfig[] = [];
   settingsLoading = true;
 
@@ -90,8 +92,10 @@ export class SupplyFormComponent implements OnInit, OnChanges {
 
   get filamentTypeOptions(): DbSelectOption[] {
     return buildFilamentTypeOptions(
+      this.filamentTypes,
       this.filamentPrices,
       this.filamentType ? [this.filamentType] : [],
+      'code',
     );
   }
 
@@ -252,6 +256,7 @@ export class SupplyFormComponent implements OnInit, OnChanges {
       next: (settings) => {
         this.filamentPrices = settings.filamentPrices ?? [];
         this.resinPrices = settings.resinPrices ?? [];
+        this.filamentTypes = settings.filamentTypes ?? [];
         this.colorCatalog = settings.colors ?? [];
         this.settingsLoading = false;
         this.applyConfiguredPrice();

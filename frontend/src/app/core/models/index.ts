@@ -179,9 +179,15 @@ export enum MachineProfileRole {
   PRESS = 'press',
 }
 
+export interface FilamentTypeConfig {
+  id: string;
+  name: string;
+}
+
 export interface FilamentPriceConfig {
   id: string;
   brand: string;
+  filamentTypeId?: string;
   materialType: string;
   pricePerKg: number;
 }
@@ -275,6 +281,7 @@ export interface GeneralSettings {
   resinTypeAverages: Partial<Record<ResinType, number>>;
   machineProfiles: MachineProfile[];
   colors: ColorConfig[];
+  filamentTypes: FilamentTypeConfig[];
 }
 
 export interface Impreso {

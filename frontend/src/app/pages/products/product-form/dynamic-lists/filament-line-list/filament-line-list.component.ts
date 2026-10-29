@@ -183,8 +183,10 @@ export class FilamentLineListComponent
     ];
 
     const options = buildFilamentTypeOptions(
+      this.generalSettings?.filamentTypes ?? [],
       this.generalSettings?.filamentPrices ?? [],
       extraTypes,
+      'code',
     );
     return [
       { value: '', label: 'Elegí el tipo' },

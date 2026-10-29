@@ -211,6 +211,7 @@ export function persistedFilamentPrice(
   return {
     id: price.id,
     brandId: price.brandId,
+    filamentTypeId: price.filamentTypeId,
     materialType: price.materialType,
     pricePerKg: price.pricePerKg,
   };

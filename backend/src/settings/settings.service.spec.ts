@@ -37,6 +37,7 @@ describe('SettingsService.patchGeneralSettings', () => {
     filamentTypeAverages: {},
     resinTypeAverages: {},
     colors: [],
+    filamentTypes: [],
   });
 
   function createService(initial: GeneralSettings): SettingsService {
@@ -88,5 +89,26 @@ describe('SettingsService.patchGeneralSettings', () => {
 
     service.removeColor(created.id);
     expect(service.getGeneralSettings().colors).toHaveLength(0);
+  });
+
+  it('crea tipo de filamento y lo usa al guardar precio', () => {
+    const service = createService(baseSettings());
+
+    const typed = service.addFilamentType({ name: 'Woodfill' });
+    expect(typed.id).toBeTruthy();
+    expect(service.getGeneralSettings().filamentTypes).toHaveLength(1);
+
+    const price = service.addFilamentPrice({
+      brand: 'TestBrand',
+      filamentTypeId: typed.id,
+      pricePerKg: 12000,
+    } as never);
+    expect(price.filamentTypeId).toBe(typed.id);
+    expect(price.materialType).toBe('woodfill');
+
+    expect(() => service.removeFilamentType(typed.id)).toThrow();
+    service.removeFilamentPrice(price.id);
+    service.removeFilamentType(typed.id);
+    expect(service.getGeneralSettings().filamentTypes).toHaveLength(0);
   });
 });

@@ -5,13 +5,17 @@ import {
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { FilamentPriceConfig, FilamentType, GeneralSettings } from '../../../core/models';
+import { Observable, Subscription, of, switchMap } from 'rxjs';
+import {
+  FilamentPriceConfig,
+  FilamentTypeConfig,
+  GeneralSettings,
+} from '../../../core/models';
 import { SettingsService } from '../../../core/services/settings.service';
 import {
   buildFilamentTypeOptions,
   filamentTypeDisplayLabel,
-  normalizeFilamentType,
+  resolveFilamentTypeIdFromInput,
 } from '../../../shared/utils/filament-type.util';
 import {
   DbAutocompleteComponent,
@@ -48,9 +52,9 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
   settings: GeneralSettings | null = null;
   message = '';
 
-  newFilament = { brand: '', materialType: FilamentType.PLA as string, pricePerKg: 0 };
+  newFilament = { brand: '', materialType: '', pricePerKg: 0 };
   editingId: string | null = null;
-  editForm = { brand: '', materialType: FilamentType.PLA as string, pricePerKg: 0 };
+  editForm = { brand: '', materialType: '', pricePerKg: 0 };
   extraFilamentTypes: string[] = [];
   search = '';
   typeFilter = 'all';
@@ -65,7 +69,11 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
     {
       key: 'materialType',
       header: 'Tipo',
-      value: (item) => filamentTypeDisplayLabel(item.materialType),
+      value: (item) =>
+        filamentTypeDisplayLabel(
+          item.filamentTypeId || item.materialType,
+          this.settings?.filamentTypes ?? [],
+        ),
     },
     { key: 'pricePerKg', header: 'Precio / kg', type: 'money' },
   ];
@@ -73,6 +81,10 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.settingsSub = this.settingsService.watchGeneralSettings().subscribe((settings) => {
       this.settings = settings ? structuredClone(settings) : null;
+      if (this.settings && !this.newFilament.materialType) {
+        const first = this.settings.filamentTypes?.[0];
+        if (first) this.newFilament.materialType = first.id;
+      }
     });
     this.settingsService.getGeneralSettings(false).subscribe();
   }
@@ -83,17 +95,20 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
 
   get filamentTypeOptions(): DbAutocompleteOption[] {
     return buildFilamentTypeOptions(
+      this.settings?.filamentTypes ?? [],
       this.settings?.filamentPrices ?? [],
       this.extraFilamentTypes,
+      'id',
     );
   }
 
   get typeFilters(): { value: string; label: string }[] {
     const types = new Map<string, string>();
+    const catalog = this.settings?.filamentTypes ?? [];
     for (const item of this.settings?.filamentPrices ?? []) {
-      const value = normalizeFilamentType(item.materialType);
+      const value = item.filamentTypeId || item.materialType;
       if (!value || types.has(value)) continue;
-      types.set(value, filamentTypeDisplayLabel(value));
+      types.set(value, filamentTypeDisplayLabel(value, catalog));
     }
     return [...types.entries()]
       .map(([value, label]) => ({ value, label }))
@@ -107,9 +122,9 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
   get visiblePrices(): FilamentPriceConfig[] {
     const query = this.search.trim().toLowerCase();
     return (this.settings?.filamentPrices ?? []).filter((item) => {
+      const typeKey = item.filamentTypeId || item.materialType;
       const matchesType =
-        this.typeFilter === 'all' ||
-        normalizeFilamentType(item.materialType) === this.typeFilter;
+        this.typeFilter === 'all' || typeKey === this.typeFilter;
       const matchesSearch = !query || item.brand.toLowerCase().includes(query);
       return matchesType && matchesSearch;
     });
@@ -126,18 +141,27 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
   }
 
   addFilamentPrice(): void {
-    if (!this.newFilament.brand.trim() || !this.newFilament.materialType.trim()) return;
+    if (!this.newFilament.brand.trim() || !this.newFilament.materialType.trim()) {
+      return;
+    }
 
-    this.settingsService
-      .addFilamentPrice({
-        ...this.newFilament,
-        materialType: normalizeFilamentType(this.newFilament.materialType),
-      })
+    this.resolveFilamentTypeId(this.newFilament.materialType)
+      .pipe(
+        switchMap((filamentTypeId) =>
+          this.settingsService.addFilamentPrice({
+            brand: this.newFilament.brand,
+            filamentTypeId,
+            materialType: filamentTypeId,
+            pricePerKg: this.newFilament.pricePerKg,
+          }),
+        ),
+      )
       .subscribe({
         next: () => {
+          const first = this.settings?.filamentTypes?.[0];
           this.newFilament = {
             brand: '',
-            materialType: FilamentType.PLA,
+            materialType: first?.id ?? '',
             pricePerKg: 0,
           };
           this.message =
@@ -150,7 +174,7 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
     this.editingId = item.id;
     this.editForm = {
       brand: item.brand,
-      materialType: item.materialType,
+      materialType: item.filamentTypeId || item.materialType,
       pricePerKg: item.pricePerKg,
     };
     queueMicrotask(() => document.getElementById('filament-brand')?.focus());
@@ -165,11 +189,17 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.settingsService
-      .updateFilamentPrice(this.editingId, {
-        ...this.editForm,
-        materialType: normalizeFilamentType(this.editForm.materialType),
-      })
+    this.resolveFilamentTypeId(this.editForm.materialType)
+      .pipe(
+        switchMap((filamentTypeId) =>
+          this.settingsService.updateFilamentPrice(this.editingId!, {
+            brand: this.editForm.brand,
+            filamentTypeId,
+            materialType: filamentTypeId,
+            pricePerKg: this.editForm.pricePerKg,
+          }),
+        ),
+      )
       .subscribe({
         next: () => {
           this.message =
@@ -187,8 +217,19 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
   }
 
   onFilamentTypeCreated(type: string): void {
-    const normalized = normalizeFilamentType(type);
+    const normalized = type.trim();
     if (!normalized || this.extraFilamentTypes.includes(normalized)) return;
     this.extraFilamentTypes = [...this.extraFilamentTypes, normalized];
+  }
+
+  private resolveFilamentTypeId(raw: string): Observable<string> {
+    const catalog = this.settings?.filamentTypes ?? [];
+    const existingId = resolveFilamentTypeIdFromInput(raw, catalog);
+    if (existingId) {
+      return of(existingId);
+    }
+    return this.settingsService.addFilamentType({ name: raw.trim() }).pipe(
+      switchMap((created: FilamentTypeConfig) => of(created.id)),
+    );
   }
 }
