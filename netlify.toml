@@ -9,6 +9,7 @@
 [build.environment]
   NODE_VERSION = "22"
   NPM_FLAGS = "--registry=https://registry.npmjs.org"
+  API_URL = "https://odell-dashboard-api-bf200c02a0c9.herokuapp.com/api"
 
 [[redirects]]
   from = "/*"

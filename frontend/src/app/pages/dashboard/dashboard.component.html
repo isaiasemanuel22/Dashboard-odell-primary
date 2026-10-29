@@ -4,8 +4,12 @@
     emptyMessage="No se pudo cargar el dashboard."
   >
     <p emptyActions class="hint">
-      Verificá que el backend esté corriendo:
-      <code>cd backend && npm run start:dev</code>
+      @if (isProd) {
+        No se pudo conectar con el servidor. Probá de nuevo en unos minutos.
+      } @else {
+        Verificá que el backend esté corriendo:
+        <code>cd backend && npm run start:dev</code>
+      }
     </p>
   </db-state-message>
 } @else {

@@ -41,18 +41,33 @@ const defaultFirebase = {
   appId: '1:890028004561:web:de45b15d33cb851f0261f0',
 };
 
-const apiUrl = (
-  isProd
-    ? (process.env.API_URL ?? fileEnv.API_URL ?? '')
-    : (fileEnv.API_URL ?? process.env.API_URL ?? '/api')
-).trim();
+/** API de producción (Heroku). Evita que Netlify bakee `/api` o un host viejo. */
+const PROD_API_DEFAULT =
+  'https://odell-dashboard-api-bf200c02a0c9.herokuapp.com/api';
 
-if (isProd && !apiUrl) {
-  console.error(
-    '[prepare-env] API_URL es obligatoria para build de producción (env o frontend/.env)',
-  );
-  process.exit(1);
+function resolveApiUrl() {
+  const raw = (
+    isProd
+      ? (process.env.API_URL ?? fileEnv.API_URL ?? '')
+      : (fileEnv.API_URL ?? process.env.API_URL ?? '/api')
+  ).trim();
+
+  if (!isProd) return raw || '/api';
+
+  // Relativo, localhost o app Heroku deprecada → forzar API actual
+  if (
+    !raw ||
+    raw === '/api' ||
+    raw.startsWith('/') ||
+    /localhost|127\.0\.0\.1/.test(raw) ||
+    raw.includes('odell-dashboard-api-dfb6810b38bf')
+  ) {
+    return PROD_API_DEFAULT;
+  }
+  return raw;
 }
+
+const apiUrl = resolveApiUrl();
 
 const firebase = {
   apiKey: fileEnv.FIREBASE_API_KEY ?? defaultFirebase.apiKey,

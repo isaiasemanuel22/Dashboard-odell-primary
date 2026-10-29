@@ -19,6 +19,7 @@ import {
 } from '../../shared/pipes/labels.pipe';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
+import { environment } from '../../../environments/environment';
 import {
   DB_DATA_TABLE,
   DbButtonComponent,
@@ -65,6 +66,7 @@ export class DashboardComponent implements OnInit {
   private readonly refresh$ = new Subject<void>();
 
   loadError = false;
+  readonly isProd = environment.production;
 
   readonly serviceOrder: ServiceType[] = [
     ServiceType.IMPRESION_3D,
