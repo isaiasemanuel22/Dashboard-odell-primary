@@ -90,6 +90,9 @@ Si entraron cambios en `backend/prisma/schema.prisma`:
 npm run db:push:heroku
 ```
 
+Eso corre `prisma db push` **sin** `--accept-data-loss` por defecto.  
+**Nunca** uses `ACCEPT_DATA_LOSS=1` en un deploy rutinario: puede vaciar tablas. Solo si el usuario lo pide explícitamente.
+
 ## Paso 4 — Verificar
 
 ```bash
@@ -104,6 +107,7 @@ Esperar `200`. Opcional: `heroku releases -a odell-dashboard-api -n 3`.
 - No incluir secrets en el commit.
 - No deployar Netlify a mano salvo pedido (el push a Git suele alcanzar).
 - No `heroku config:set` ni reset de DB salvo pedido explícito.
+- No `ACCEPT_DATA_LOSS=1` / `--accept-data-loss` salvo pedido explícito.
 - No matar `npm run dev` local.
 
 ## Respuesta al usuario

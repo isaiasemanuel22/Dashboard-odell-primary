@@ -71,6 +71,12 @@ export class StorePersistenceService
   private healthy = true;
   private lastError: string | null = null;
   private lastSuccessAt: string | null = null;
+  /**
+   * Solo true tras cargar datos reales o seed intencional.
+   * Evita que un arranque con store vacío (DB “vacía” mal detectada o tras
+   * un db push destructivo) reescriba MySQL con colecciones vacías.
+   */
+  private allowBootstrapPersist = false;
   private readonly dirtyCollections = new Set<StoreCollection>();
 
   constructor(
@@ -105,19 +111,25 @@ export class StorePersistenceService
           this.logger.log('Base de datos vacía: cargando datos iniciales…');
           this.store.applySeed();
           await this.persistNow(ALL_STORE_COLLECTIONS);
+          this.allowBootstrapPersist = true;
           this.logger.log('Datos iniciales guardados en MySQL');
         } else {
           this.store.applyState(createEmptyState());
-          this.logger.log('Base de datos vacía. Arrancando sin datos de demo.');
+          this.allowBootstrapPersist = false;
+          this.logger.log(
+            'Base de datos vacía. Arrancando sin datos de demo (no se reescribe MySQL al boot).',
+          );
         }
         return;
       }
 
       const state = await this.loadState();
       this.store.applyState(state);
+      this.allowBootstrapPersist = true;
       this.logger.log('Datos cargados desde MySQL');
     } catch (error) {
       this.dbEnabled = false;
+      this.allowBootstrapPersist = false;
       this.markUnhealthy(this.errorMessage(error));
 
       if (this.config.requireDatabase) {
@@ -132,7 +144,7 @@ export class StorePersistenceService
   }
 
   async onApplicationBootstrap(): Promise<void> {
-    if (!this.dbEnabled) return;
+    if (!this.dbEnabled || !this.allowBootstrapPersist) return;
     await this.persistNow(ALL_STORE_COLLECTIONS);
   }
 
@@ -225,8 +237,18 @@ export class StorePersistenceService
   }
 
   private async isEmptyDatabase(): Promise<boolean> {
-    const count = await this.db.category.count();
-    return count === 0;
+    const settings = await this.db.appSettings.findUnique({ where: { id: 1 } });
+    if (settings) return false;
+
+    const [categories, products, customers, supplies] = await Promise.all([
+      this.db.category.count(),
+      this.db.product.count(),
+      this.db.customer.count(),
+      this.db.supply.count(),
+    ]);
+    return (
+      categories === 0 && products === 0 && customers === 0 && supplies === 0
+    );
   }
 
   private async loadTreasuryExpenses() {
