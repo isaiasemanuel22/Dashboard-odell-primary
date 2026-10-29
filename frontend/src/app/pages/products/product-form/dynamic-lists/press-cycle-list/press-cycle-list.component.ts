@@ -15,6 +15,7 @@ import {
 import { Subject, takeUntil } from 'rxjs';
 import {
   EstampadoPressCycle,
+  EstampadoPrintSpec,
   GeneralSettings,
   MachineProfileRole,
   ProductType,
@@ -58,7 +59,10 @@ import {
 export class PressCycleListComponent
   implements OnInit, OnDestroy, ControlValueAccessor
 {
-  @Input({ required: true }) productForm!: ProductFormGroup;
+  /** Opcional: en presupuesto personalizado no hay form de producto. */
+  @Input() productForm?: ProductFormGroup;
+  /** Fuente de ubicaciones cuando no hay productForm (p. ej. presupuesto). */
+  @Input() prints: EstampadoPrintSpec[] = [];
 
   initialValue: EstampadoPressCycle[] | null = null;
 
@@ -162,10 +166,14 @@ export class PressCycleListComponent
   }
 
   copyLocations(): void {
-    const prints = this.productForm.controls.prints.value ?? [];
+    const prints = this.productForm
+      ? (this.productForm.controls.prints.value ?? [])
+      : this.prints;
     if (!prints.length) return;
 
-    const cycles = [...(this.productForm.controls.pressCycles.value ?? [])];
+    const cycles = this.productForm
+      ? [...(this.productForm.controls.pressCycles.value ?? [])]
+      : [...(this.initialValue ?? [])];
     const next = prints.map((print, index) => {
       const existing = cycles[index];
       const label = print.label?.trim() || undefined;

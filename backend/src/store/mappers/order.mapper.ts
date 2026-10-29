@@ -26,6 +26,9 @@ export function mapOrderItemFromDb(item: {
   printTimeHours?: number | null;
   grams?: number | null;
   filamentType?: string | null;
+  estampadoPrints?: Prisma.JsonValue;
+  estampadoPressCycles?: Prisma.JsonValue;
+  estampadoSupplies?: Prisma.JsonValue;
   deliveredQuantity?: number;
   reservedQuantity?: number;
   productionRequiredQuantity?: number;
@@ -49,6 +52,15 @@ export function mapOrderItemFromDb(item: {
     printTimeHours: item.printTimeHours ?? undefined,
     grams: item.grams ?? undefined,
     filamentType: (item.filamentType as OrderItem['filamentType']) ?? undefined,
+    estampadoPrints: fromJson<OrderItem['estampadoPrints']>(
+      item.estampadoPrints ?? [],
+    ),
+    estampadoPressCycles: fromJson<OrderItem['estampadoPressCycles']>(
+      item.estampadoPressCycles ?? [],
+    ),
+    estampadoSupplies: fromJson<OrderItem['estampadoSupplies']>(
+      item.estampadoSupplies ?? [],
+    ),
     deliveredQuantity: item.deliveredQuantity ?? 0,
     reservedQuantity: item.reservedQuantity ?? 0,
     productionRequiredQuantity: item.productionRequiredQuantity ?? 0,
@@ -162,6 +174,9 @@ export function mapOrderItemToDb(orderId: string, index: number, item: OrderItem
     printTimeHours: item.printTimeHours ?? null,
     grams: item.grams ?? null,
     filamentType: item.filamentType ?? null,
+    estampadoPrints: toInputJson(item.estampadoPrints ?? []),
+    estampadoPressCycles: toInputJson(item.estampadoPressCycles ?? []),
+    estampadoSupplies: toInputJson(item.estampadoSupplies ?? []),
     deliveredQuantity: item.deliveredQuantity ?? 0,
     reservedQuantity: item.reservedQuantity ?? 0,
     productionRequiredQuantity: item.productionRequiredQuantity ?? 0,

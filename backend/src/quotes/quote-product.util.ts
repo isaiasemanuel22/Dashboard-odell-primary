@@ -1,6 +1,11 @@
 import { ProductType, ServiceType } from '../common/enums';
 import { Product, QuoteItem } from '../common/interfaces';
 import { isDesignService } from '../common/service-type.util';
+import {
+  normalizeEstampadoPressCycles,
+  normalizeEstampadoPrints,
+  normalizeEstampadoSupplies,
+} from '../products/estampado-product.util';
 
 export function isQuoteLineMissingFromCatalog(
   item: Pick<QuoteItem, 'serviceType' | 'productId'>,
@@ -47,9 +52,9 @@ export function unpublishedProductFromQuoteLine(
       ...base,
       type: ProductType.ESTAMPADO,
       workTimeHours: 0,
-      prints: [],
-      pressCycles: [],
-      supplies: [],
+      prints: normalizeEstampadoPrints(item.estampadoPrints),
+      pressCycles: normalizeEstampadoPressCycles(item.estampadoPressCycles),
+      supplies: normalizeEstampadoSupplies(item.estampadoSupplies),
     };
   }
 

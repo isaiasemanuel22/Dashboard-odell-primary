@@ -552,6 +552,9 @@ export interface OrderItemPayload {
   printTimeHours?: number;
   grams?: number;
   filamentType?: FilamentType;
+  estampadoPrints?: EstampadoPrintSpec[];
+  estampadoPressCycles?: EstampadoPressCycle[];
+  estampadoSupplies?: EstampadoSupplyLine[];
   budgetedHours?: number;
 }
 
@@ -692,6 +695,10 @@ export interface OrderLineDraft {
   printTimeHours?: number;
   grams?: number;
   filamentType?: FilamentType;
+  /** Solo estampado personalizado (sin catálogo). */
+  estampadoPrints?: EstampadoPrintSpec[];
+  estampadoPressCycles?: EstampadoPressCycle[];
+  estampadoSupplies?: EstampadoSupplyLine[];
   /** Horas presupuestadas de diseño o modelado. */
   budgetedHours?: number;
 }

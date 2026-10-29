@@ -94,11 +94,13 @@ export function syncEstampadoPrintFromImpreso(
   if (!impreso) {
     return print;
   }
+  // La UI de medida usa width × length; el catálogo a veces guarda el 2.º lado en heightCm.
+  const secondCm = resolvePrintAreaSecondCm(impreso.lengthCm, impreso.heightCm);
   return {
     ...print,
     paperType: impreso.paperType,
     widthCm: impreso.widthCm,
-    lengthCm: impreso.lengthCm,
+    lengthCm: secondCm > 0 ? secondCm : undefined,
     heightCm: impreso.heightCm,
   };
 }

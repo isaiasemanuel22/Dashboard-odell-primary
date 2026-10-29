@@ -41,6 +41,15 @@ import {
   isCustomFdmOrderLine,
   isFdmQuoteConfigured,
 } from './order-fdm-quote.util';
+import {
+  isCustomEstampadoOrderLine,
+  isEstampadoQuoteConfigured,
+} from './order-estampado-quote.util';
+import {
+  normalizeEstampadoPressCycles,
+  normalizeEstampadoPrints,
+  normalizeEstampadoSupplies,
+} from '../products/estampado-product.util';
 import { OrderTasksService } from '../print-jobs/order-tasks.service';
 import { PrintJobsService } from '../print-jobs/print-jobs.service';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
@@ -495,7 +504,8 @@ export class OrdersService {
       if (
         !isDesignService(serviceType) &&
         !productId &&
-        !isCustomFdmOrderLine({ serviceType, productId })
+        !isCustomFdmOrderLine({ serviceType, productId }) &&
+        !isCustomEstampadoOrderLine({ serviceType, productId })
       ) {
         throw new BadRequestException(
           `Línea ${index + 1}: producto inválido`,
@@ -506,6 +516,14 @@ export class OrdersService {
         if (!isFdmQuoteConfigured(item)) {
           throw new BadRequestException(
             `Línea ${index + 1}: completá tipo de filamento y gramos u horas de impresión`,
+          );
+        }
+      }
+
+      if (isCustomEstampadoOrderLine({ serviceType, productId })) {
+        if (!isEstampadoQuoteConfigured(item)) {
+          throw new BadRequestException(
+            `Línea ${index + 1}: completá insumos, impresos/medidas o bajadas de plancha`,
           );
         }
       }
@@ -551,6 +569,19 @@ export class OrdersService {
             }
           : {};
 
+      const estampadoFields =
+        serviceType === ServiceType.ESTAMPADO
+          ? {
+              estampadoPrints: normalizeEstampadoPrints(item.estampadoPrints),
+              estampadoPressCycles: normalizeEstampadoPressCycles(
+                item.estampadoPressCycles,
+              ),
+              estampadoSupplies: normalizeEstampadoSupplies(
+                item.estampadoSupplies,
+              ),
+            }
+          : {};
+
       return {
         serviceType,
         productId,
@@ -558,6 +589,7 @@ export class OrdersService {
         quantity,
         unitPrice: resolvedUnitPrice,
         ...fdmFields,
+        ...estampadoFields,
         includesPrint:
           serviceType === ServiceType.DISENO_GRAFICO
             ? (item.includesPrint ?? undefined)

@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsBoolean,
   IsEnum,
   IsIn,
@@ -13,6 +14,11 @@ import {
 import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
 import { OrderStatus, FilamentType, PaperType, PrintJobStatus, ServiceType } from '../enums';
+import {
+  EstampadoPressCycle,
+  EstampadoPrintSpec,
+  EstampadoSupplyLine,
+} from '../interfaces';
 
 export class UpdateStatusDto {
   @IsEnum(OrderStatus)
@@ -114,6 +120,18 @@ export class OrderItemDto {
   @IsOptional()
   @IsEnum(FilamentType)
   filamentType?: FilamentType;
+
+  @IsOptional()
+  @IsArray()
+  estampadoPrints?: EstampadoPrintSpec[];
+
+  @IsOptional()
+  @IsArray()
+  estampadoPressCycles?: EstampadoPressCycle[];
+
+  @IsOptional()
+  @IsArray()
+  estampadoSupplies?: EstampadoSupplyLine[];
 
   @IsOptional()
   @IsNumber()

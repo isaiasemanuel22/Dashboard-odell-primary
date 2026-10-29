@@ -187,6 +187,17 @@
                 </div>
               }
 
+              @if (isEstampadoLine(line.serviceType) && !line.productId) {
+                <div class="order-line__fdm-concept">
+                  <db-input
+                    label="Concepto"
+                    [(ngModel)]="line.customName"
+                    [name]="'estampado-concept-' + i"
+                    placeholder="Ej.: Remera personalizada"
+                  />
+                </div>
+              }
+
               @if (shouldShowFdmQuoteFields(line, productForLine(line))) {
                 <div class="order-line__fdm">
                   <db-select
@@ -215,6 +226,28 @@
                     [min]="0"
                     [step]="0.1"
                   />
+                </div>
+              }
+
+              @if (shouldShowEstampadoQuoteFields(line, productForLine(line)) && !line.productId) {
+                <div class="order-line__estampado">
+                  <app-supply-line-list
+                    [(ngModel)]="line.estampadoSupplies"
+                    [name]="'estampado-supplies-' + i"
+                    (ngModelChange)="onEstampadoQuoteChange(line)"
+                  />
+                  <app-print-spec-list
+                    [(ngModel)]="line.estampadoPrints"
+                    [name]="'estampado-prints-' + i"
+                    (ngModelChange)="onEstampadoQuoteChange(line)"
+                  />
+                  <app-press-cycle-list
+                    [(ngModel)]="line.estampadoPressCycles"
+                    [name]="'estampado-press-' + i"
+                    [prints]="line.estampadoPrints ?? []"
+                    (ngModelChange)="onEstampadoQuoteChange(line)"
+                  />
+                  <p class="order-line__money-hint">{{ estampadoPricingHint(line) }}</p>
                 </div>
               }
 
@@ -272,7 +305,7 @@
                   <db-input
                     label="Horas presupuestadas"
                     type="number"
-                    [ngModel]="line.budgetedHours ?? 3"
+                    [ngModel]="line.budgetedHours ?? 0"
                     (ngModelChange)="onBudgetedHoursChange(line, $event)"
                     [name]="'hours-' + i"
                     [min]="0"
@@ -305,7 +338,13 @@
                       {{ lineUnitCost(line) | currencyArs }}
                     </div>
                     <p class="order-line__money-hint">
-                      Calculado con material, luz y máquina
+                      @if (isEstampadoLine(line.serviceType)) {
+                        {{ estampadoPricingHint(line) }}
+                      } @else if (isImpresion3DLine(line.serviceType)) {
+                        {{ fdmPricingHint(line) }}
+                      } @else {
+                        Calculado con material, luz y máquina
+                      }
                     </p>
                   </div>
                   <div class="order-line__money-field">
@@ -520,6 +559,17 @@
                 </div>
               }
 
+              @if (isEstampadoLine(line.serviceType) && !line.productId) {
+                <div class="order-line__fdm-concept">
+                  <db-input
+                    label="Concepto"
+                    [(ngModel)]="line.customName"
+                    [name]="'estampado-concept-' + i"
+                    placeholder="Ej.: Remera personalizada"
+                  />
+                </div>
+              }
+
               @if (shouldShowFdmQuoteFields(line, productForLine(line))) {
                 <div class="order-line__fdm">
                   <db-select
@@ -548,6 +598,28 @@
                     [step]="0.1"
                     (ngModelChange)="onFdmQuoteChange(line)"
                   />
+                </div>
+              }
+
+              @if (shouldShowEstampadoQuoteFields(line, productForLine(line)) && !line.productId) {
+                <div class="order-line__estampado">
+                  <app-supply-line-list
+                    [(ngModel)]="line.estampadoSupplies"
+                    [name]="'estampado-supplies-' + i"
+                    (ngModelChange)="onEstampadoQuoteChange(line)"
+                  />
+                  <app-print-spec-list
+                    [(ngModel)]="line.estampadoPrints"
+                    [name]="'estampado-prints-' + i"
+                    (ngModelChange)="onEstampadoQuoteChange(line)"
+                  />
+                  <app-press-cycle-list
+                    [(ngModel)]="line.estampadoPressCycles"
+                    [name]="'estampado-press-' + i"
+                    [prints]="line.estampadoPrints ?? []"
+                    (ngModelChange)="onEstampadoQuoteChange(line)"
+                  />
+                  <p class="order-line__money-hint">{{ estampadoPricingHint(line) }}</p>
                 </div>
               }
 
@@ -608,7 +680,7 @@
                   <db-input
                     label="Horas de diseño"
                     type="number"
-                    [ngModel]="line.budgetedHours ?? 3"
+                    [ngModel]="line.budgetedHours ?? 0"
                     (ngModelChange)="onBudgetedHoursChange(line, $event)"
                     [name]="'hours-' + i"
                     [min]="0"
@@ -644,7 +716,13 @@
                       {{ lineUnitCost(line) | currencyArs }}
                     </div>
                     <p class="order-line__money-hint">
-                      Calculado con material, luz y máquina
+                      @if (isEstampadoLine(line.serviceType)) {
+                        {{ estampadoPricingHint(line) }}
+                      } @else if (isImpresion3DLine(line.serviceType)) {
+                        {{ fdmPricingHint(line) }}
+                      } @else {
+                        Calculado con material, luz y máquina
+                      }
                     </p>
                   </div>
                   <div class="order-line__money-field">

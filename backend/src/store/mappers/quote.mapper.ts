@@ -19,6 +19,9 @@ export function mapQuoteItemFromDb(item: {
   printTimeHours?: number | null;
   grams?: number | null;
   filamentType?: string | null;
+  estampadoPrints?: Prisma.JsonValue;
+  estampadoPressCycles?: Prisma.JsonValue;
+  estampadoSupplies?: Prisma.JsonValue;
 }): QuoteItem {
   return {
     serviceType:
@@ -37,6 +40,15 @@ export function mapQuoteItemFromDb(item: {
     printTimeHours: item.printTimeHours ?? undefined,
     grams: item.grams ?? undefined,
     filamentType: (item.filamentType as QuoteItem['filamentType']) ?? undefined,
+    estampadoPrints: fromJson<QuoteItem['estampadoPrints']>(
+      item.estampadoPrints ?? [],
+    ),
+    estampadoPressCycles: fromJson<QuoteItem['estampadoPressCycles']>(
+      item.estampadoPressCycles ?? [],
+    ),
+    estampadoSupplies: fromJson<QuoteItem['estampadoSupplies']>(
+      item.estampadoSupplies ?? [],
+    ),
   };
 }
 
@@ -138,5 +150,8 @@ export function mapQuoteItemToDb(
     printTimeHours: item.printTimeHours ?? null,
     grams: item.grams ?? null,
     filamentType: item.filamentType ?? null,
+    estampadoPrints: toInputJson(item.estampadoPrints ?? []),
+    estampadoPressCycles: toInputJson(item.estampadoPressCycles ?? []),
+    estampadoSupplies: toInputJson(item.estampadoSupplies ?? []),
   };
 }

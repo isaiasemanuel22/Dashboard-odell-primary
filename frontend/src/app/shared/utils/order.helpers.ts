@@ -21,6 +21,10 @@ import {
   isImpresion3DLine,
 } from './order-fdm-quote.util';
 import {
+  isEstampadoLine,
+  isEstampadoQuoteConfigured,
+} from './order-estampado-quote.util';
+import {
   isDesignService,
   isGraphicDesignService,
   normalizeServiceType,
@@ -227,13 +231,16 @@ export function buildOrderItems(
       const product = catalog.find((p) => p.id === line.productId);
       const isCustomFdm =
         isImpresion3DLine(line.serviceType) && !line.productId?.trim();
+      const isCustomEstampado =
+        isEstampadoLine(line.serviceType) && !line.productId?.trim();
 
       return {
         serviceType: line.serviceType,
         productId: line.productId?.trim() || undefined,
-        productName: isCustomFdm
-          ? line.customName!.trim()
-          : (product?.name ?? line.customName?.trim() ?? 'Producto'),
+        productName:
+          isCustomFdm || isCustomEstampado
+            ? line.customName!.trim()
+            : (product?.name ?? line.customName?.trim() ?? 'Producto'),
         quantity: line.quantity,
         unitPrice: line.unitPrice,
         printTimeHours: isImpresion3DLine(line.serviceType)
@@ -242,6 +249,15 @@ export function buildOrderItems(
         grams: isImpresion3DLine(line.serviceType) ? line.grams : undefined,
         filamentType: isImpresion3DLine(line.serviceType)
           ? line.filamentType
+          : undefined,
+        estampadoPrints: isEstampadoLine(line.serviceType)
+          ? line.estampadoPrints
+          : undefined,
+        estampadoPressCycles: isEstampadoLine(line.serviceType)
+          ? line.estampadoPressCycles
+          : undefined,
+        estampadoSupplies: isEstampadoLine(line.serviceType)
+          ? line.estampadoSupplies
           : undefined,
       };
     });
@@ -260,6 +276,11 @@ export function isLineValid(line: OrderLineDraft): boolean {
   if (isImpresion3DLine(line.serviceType)) {
     if (line.productId?.trim()) return true;
     return !!line.customName?.trim() && isFdmQuoteConfigured(line);
+  }
+
+  if (isEstampadoLine(line.serviceType)) {
+    if (line.productId?.trim()) return true;
+    return !!line.customName?.trim() && isEstampadoQuoteConfigured(line);
   }
 
   return !!line.productId?.trim();
@@ -314,7 +335,8 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
     serviceType: item.serviceType,
     productId: item.productId,
     customName:
-      isImpresion3DLine(item.serviceType) && !item.productId
+      (isImpresion3DLine(item.serviceType) || isEstampadoLine(item.serviceType)) &&
+      !item.productId
         ? item.productName
         : undefined,
     quantity: item.quantity,
@@ -322,6 +344,9 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
     printTimeHours: item.printTimeHours,
     grams: item.grams,
     filamentType: item.filamentType,
+    estampadoPrints: item.estampadoPrints,
+    estampadoPressCycles: item.estampadoPressCycles,
+    estampadoSupplies: item.estampadoSupplies,
   };
 }
 

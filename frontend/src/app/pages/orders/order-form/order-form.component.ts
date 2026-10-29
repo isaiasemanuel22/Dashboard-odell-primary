@@ -103,6 +103,19 @@ import {
   shouldShowFdmQuoteFields,
   syncFdmQuotePricing,
 } from '../../../shared/utils/order-fdm-quote.util';
+import {
+  applyProductSpecsToEstampadoLine,
+  estampadoMargin,
+  isEstampadoLine,
+  isEstampadoQuoteConfigured,
+  shouldShowEstampadoQuoteFields,
+  syncEstampadoQuotePricing,
+} from '../../../shared/utils/order-estampado-quote.util';
+import {
+  PrintSpecListComponent,
+  PressCycleListComponent,
+  SupplyLineListComponent,
+} from '../../products/product-form/dynamic-lists/public-api';
 import { lineFromQuoteItem } from '../../../shared/utils/quote.helpers';
 
 export type OrderFormVariant = 'order' | 'quote';
@@ -128,6 +141,9 @@ export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
     DbCheckboxComponent,
     DbIconTrashComponent,
     CurrencyArsPipe,
+    PrintSpecListComponent,
+    PressCycleListComponent,
+    SupplyLineListComponent,
   ],
   templateUrl: './order-form.component.html',
   styleUrl: './order-form.component.scss',
@@ -189,6 +205,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
   readonly isGraphicDesignService = isGraphicDesignService;
   readonly isImpresion3DLine = isImpresion3DLine;
   readonly shouldShowFdmQuoteFields = shouldShowFdmQuoteFields;
+  readonly isEstampadoLine = isEstampadoLine;
+  readonly shouldShowEstampadoQuoteFields = shouldShowEstampadoQuoteFields;
 
   get isQuoteForm(): boolean {
     return this.variant === 'quote';
@@ -373,10 +391,10 @@ export class OrderFormComponent implements OnChanges, OnInit {
         label: productComponentSelectLabel(p),
       }));
 
-    if (isImpresion3DLine(line.serviceType)) {
+    if (isImpresion3DLine(line.serviceType) || isEstampadoLine(line.serviceType)) {
       options.unshift({
         value: '',
-        label: 'Presupuesto manual (sin catálogo)',
+        label: 'Presupuesto personalizado (sin catálogo)',
       });
     }
 
@@ -401,10 +419,13 @@ export class OrderFormComponent implements OnChanges, OnInit {
     line.customName = isDesignService(line.serviceType) ? '' : undefined;
     line.unitCost = isDesignService(line.serviceType) ? 0 : undefined;
     line.unitPrice = 0;
-    line.budgetedHours = isDesignService(line.serviceType) ? 3 : undefined;
+    line.budgetedHours = isDesignService(line.serviceType) ? 0 : undefined;
     line.printTimeHours = undefined;
     line.grams = undefined;
     line.filamentType = undefined;
+    line.estampadoPrints = isEstampadoLine(line.serviceType) ? [] : undefined;
+    line.estampadoPressCycles = isEstampadoLine(line.serviceType) ? [] : undefined;
+    line.estampadoSupplies = isEstampadoLine(line.serviceType) ? [] : undefined;
     if (!isGraphicDesignService(line.serviceType)) {
       line.includesPrint = false;
       line.printPaperType = undefined;
@@ -428,12 +449,26 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (!product) {
       line.unitPrice = 0;
       line.unitCost = undefined;
+      if (isEstampadoLine(line.serviceType)) {
+        line.estampadoPrints ??= [];
+        line.estampadoPressCycles ??= [];
+        line.estampadoSupplies ??= [];
+        this.syncEstampadoLine(line, { preservePrice: false });
+      }
+      if (isImpresion3DLine(line.serviceType)) {
+        this.syncFdmLine(line, { preservePrice: false });
+      }
       return;
     }
 
     applyProductSpecsToFdmLine(line, product);
+    applyProductSpecsToEstampadoLine(line, product);
     if (isImpresion3DLine(line.serviceType)) {
       this.syncFdmLine(line, { preservePrice: false });
+      return;
+    }
+    if (isEstampadoLine(line.serviceType)) {
+      this.syncEstampadoLine(line, { preservePrice: false });
       return;
     }
 
@@ -442,6 +477,10 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   onFdmQuoteChange(line: OrderLineDraft): void {
     this.syncFdmLine(line);
+  }
+
+  onEstampadoQuoteChange(line: OrderLineDraft): void {
+    this.syncEstampadoLine(line);
   }
 
   productForLine(line: OrderLineDraft): Product | undefined {
@@ -464,9 +503,20 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return 'Presupuesto calculado según configuración de costos y margen de Impresión 3D.';
   }
 
+  estampadoPricingHint(line: OrderLineDraft): string {
+    if (line.productId) {
+      return 'Costo tomado del catálogo de productos.';
+    }
+    return 'Presupuesto calculado con insumos, impresos y bajadas + margen de Estampado.';
+  }
+
   unitPriceHint(line: OrderLineDraft): string {
     if (line.productId) {
       return 'Precio del catálogo de productos.';
+    }
+    if (isEstampadoLine(line.serviceType)) {
+      const margin = estampadoMargin(this.profitMargins);
+      return `Sugerido: costo + ${margin}% de margen`;
     }
     const margin = impresion3DMargin(this.profitMargins);
     return `Sugerido: costo + ${margin}% de margen`;
@@ -757,6 +807,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     this.syncDesignLineCosts();
     this.syncAllDesignPrintLines();
     this.syncAllFdmLines({ preservePrice: this.isEditing });
+    this.syncAllEstampadoLines({ preservePrice: this.isEditing });
   }
 
   private syncAllFdmLines(options?: { preservePrice?: boolean }): void {
@@ -764,6 +815,15 @@ export class OrderFormComponent implements OnChanges, OnInit {
     for (const line of this.lines) {
       if (isImpresion3DLine(line.serviceType)) {
         this.syncFdmLine(line, options);
+      }
+    }
+  }
+
+  private syncAllEstampadoLines(options?: { preservePrice?: boolean }): void {
+    if (!this.generalSettings) return;
+    for (const line of this.lines) {
+      if (isEstampadoLine(line.serviceType)) {
+        this.syncEstampadoLine(line, options);
       }
     }
   }
@@ -802,8 +862,40 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }
   }
 
+  private syncEstampadoLine(
+    line: OrderLineDraft,
+    options?: { preservePrice?: boolean },
+  ): void {
+    if (!this.generalSettings) return;
+
+    const product = this.productForLine(line);
+    if (product && line.productId) {
+      line.unitCost = resolveProductUnitCost(product, this.products);
+      if (!options?.preservePrice) {
+        line.unitPrice = product.price;
+      }
+      return;
+    }
+
+    if (isEstampadoQuoteConfigured(line)) {
+      syncEstampadoQuotePricing(
+        line,
+        this.generalSettings,
+        this.costCalculator,
+        estampadoMargin(this.profitMargins),
+        options,
+      );
+      return;
+    }
+
+    if (!options?.preservePrice) {
+      line.unitCost = 0;
+      line.unitPrice = 0;
+    }
+  }
+
   private applyDesignBudget(line: OrderLineDraft): void {
-    const hours = line.budgetedHours ?? 3;
+    const hours = Math.max(0, Number(line.budgetedHours) || 0);
     line.budgetedHours = hours;
     const cost = Math.round(this.serviceRate(line) * hours);
     line.unitCost = cost;
@@ -817,8 +909,14 @@ export class OrderFormComponent implements OnChanges, OnInit {
     for (const line of this.lines) {
       if (!isDesignService(line.serviceType)) continue;
       if ((line.unitPrice ?? 0) <= 0 && (line.unitCost ?? 0) <= 0) {
-        line.budgetedHours ??= 3;
-        this.applyDesignBudget(line);
+        line.budgetedHours ??= 0;
+        if ((line.budgetedHours ?? 0) > 0) {
+          this.applyDesignBudget(line);
+        } else {
+          line.unitCost = 0;
+          line.unitPrice = 0;
+          line.designUnitPrice = 0;
+        }
         continue;
       }
       const margin = this.designMarginFor(line);

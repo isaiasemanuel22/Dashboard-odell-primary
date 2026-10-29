@@ -173,6 +173,9 @@ model OrderItem {
   printTimeHours Float? @map("print_time_hours")
   grams         Float?
   filamentType  String? @map("filament_type") @db.VarChar(32)
+  estampadoPrints      Json @default("[]") @map("estampado_prints")
+  estampadoPressCycles Json @default("[]") @map("estampado_press_cycles")
+  estampadoSupplies    Json @default("[]") @map("estampado_supplies")
   deliveredQuantity Int @default(0) @map("delivered_quantity")
   reservedQuantity Int @default(0) @map("reserved_quantity")
   productionRequiredQuantity Int @default(0) @map("production_required_quantity")
@@ -224,6 +227,9 @@ model QuoteItem {
   printTimeHours  Float?  @map("print_time_hours")
   grams           Float?
   filamentType    String? @map("filament_type") @db.VarChar(32)
+  estampadoPrints      Json @default("[]") @map("estampado_prints")
+  estampadoPressCycles Json @default("[]") @map("estampado_press_cycles")
+  estampadoSupplies    Json @default("[]") @map("estampado_supplies")
 
   quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 

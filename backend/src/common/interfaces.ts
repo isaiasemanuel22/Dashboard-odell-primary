@@ -406,6 +406,10 @@ export interface OrderItem {
   printTimeHours?: number;
   grams?: number;
   filamentType?: FilamentType;
+  /** Presupuesto/pedido estampado personalizado (sin producto de catálogo). */
+  estampadoPrints?: EstampadoPrintSpec[];
+  estampadoPressCycles?: EstampadoPressCycle[];
+  estampadoSupplies?: EstampadoSupplyLine[];
   budgetedHours?: number;
   deliveredQuantity?: number;
   reservedQuantity?: number;
