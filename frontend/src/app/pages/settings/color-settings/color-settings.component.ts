@@ -82,15 +82,18 @@ export class ColorSettingsComponent implements OnInit, OnDestroy {
 
   get visibleColors(): ColorConfig[] {
     const query = this.search.trim().toLowerCase();
-    return (this.settings?.colors ?? []).filter((color) => {
-      const matchesFamily =
-        this.family === 'all' || this.colorFamily(color.hex) === this.family;
-      const matchesSearch =
-        !query ||
-        color.name.toLowerCase().includes(query) ||
-        color.hex.toLowerCase().includes(query);
-      return matchesFamily && matchesSearch;
-    });
+    return (this.settings?.colors ?? [])
+      .filter((color) => {
+        const matchesFamily =
+          this.family === 'all' || this.colorFamily(color.hex) === this.family;
+        const matchesSearch =
+          !query ||
+          color.name.toLowerCase().includes(query) ||
+          color.hex.toLowerCase().includes(query);
+        return matchesFamily && matchesSearch;
+      })
+      .slice()
+      .sort((a, b) => this.comparePaletteOrder(a, b));
   }
 
   focusCreate(): void {
@@ -149,16 +152,60 @@ export class ColorSettingsComponent implements OnInit, OnDestroy {
     });
   }
 
+  private comparePaletteOrder(a: ColorConfig, b: ColorConfig): number {
+    const familyOrder: Exclude<ColorFamily, 'all'>[] = [
+      'neutros',
+      'rojos',
+      'naranjas',
+      'marrones',
+      'verdes',
+      'azules',
+    ];
+    const familyA = this.colorFamily(a.hex);
+    const familyB = this.colorFamily(b.hex);
+    const familyDiff =
+      familyOrder.indexOf(familyA) - familyOrder.indexOf(familyB);
+    if (familyDiff !== 0) return familyDiff;
+
+    const hslA = this.hslFromHex(a.hex);
+    const hslB = this.hslFromHex(b.hex);
+    if (!hslA && !hslB) return a.name.localeCompare(b.name, 'es');
+    if (!hslA) return 1;
+    if (!hslB) return -1;
+
+    if (familyA === 'neutros') {
+      const lightDiff = hslA.l - hslB.l;
+      if (Math.abs(lightDiff) > 0.001) return lightDiff;
+      return a.name.localeCompare(b.name, 'es');
+    }
+
+    const hueDiff = hslA.h - hslB.h;
+    if (Math.abs(hueDiff) > 0.01) return hueDiff;
+    const satDiff = hslB.s - hslA.s;
+    if (Math.abs(satDiff) > 0.001) return satDiff;
+    const lightDiff = hslB.l - hslA.l;
+    if (Math.abs(lightDiff) > 0.001) return lightDiff;
+    return a.name.localeCompare(b.name, 'es');
+  }
+
   private colorFamily(hex: string): Exclude<ColorFamily, 'all'> {
-    const parsed = this.parseHex(hex);
-    if (!parsed) return 'neutros';
-    const { h, s, l } = this.toHsl(parsed.r, parsed.g, parsed.b);
+    const hsl = this.hslFromHex(hex);
+    if (!hsl) return 'neutros';
+    const { h, s, l } = hsl;
     if (s < 0.12 || l > 0.94 || l < 0.08) return 'neutros';
     if (h >= 15 && h < 50 && l < 0.55 && s < 0.75) return 'marrones';
     if (h < 20 || h >= 330) return 'rojos';
     if (h < 70) return 'naranjas';
     if (h < 170) return 'verdes';
     return 'azules';
+  }
+
+  private hslFromHex(
+    value: string,
+  ): { h: number; s: number; l: number } | null {
+    const parsed = this.parseHex(value);
+    if (!parsed) return null;
+    return this.toHsl(parsed.r, parsed.g, parsed.b);
   }
 
   private parseHex(value: string): { r: number; g: number; b: number } | null {
