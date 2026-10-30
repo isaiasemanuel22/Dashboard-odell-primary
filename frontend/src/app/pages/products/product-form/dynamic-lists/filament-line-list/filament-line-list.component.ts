@@ -30,6 +30,11 @@ import {
   createEmptyFdmFilamentLine,
   totalFdmFilamentGrams,
 } from '../../../../../shared/utils/fdm.helpers';
+import {
+  normalizeColorId,
+  resolveColorHex,
+  resolveColorLabel,
+} from '../../../../../shared/utils/color.helpers';
 import type { DbColorSelectOption, DbSelectOption } from '@dashboard-form';
 import {
   DynamicListComponent,
@@ -46,6 +51,7 @@ import {
       [config]="filamentConfig"
       [embedded]="embedded"
       [locked]="locked"
+      [optionsEpoch]="optionsEpoch"
       (valueChange)="onListChange($event)"
     />
   `,
@@ -66,6 +72,8 @@ export class FilamentLineListComponent
   @Input() locked = false;
 
   initialValue: FdmFilamentLine[] | null = null;
+  /** Fuerza a DynamicList (OnPush) a re-leer optionsFn de color. */
+  optionsEpoch = 0;
 
   private readonly settingsFacade = inject(SettingsFacade);
   private readonly suppliesService = inject(SuppliesService);
@@ -146,6 +154,7 @@ export class FilamentLineListComponent
       .pipe(takeUntil(this.destroy$))
       .subscribe((settings) => {
         this.generalSettings = settings;
+        this.optionsEpoch++;
         this.cdr.markForCheck();
       });
 
@@ -154,6 +163,7 @@ export class FilamentLineListComponent
       .pipe(takeUntil(this.destroy$))
       .subscribe((items) => {
         this.fdmSupplies = items;
+        this.optionsEpoch++;
         this.cdr.markForCheck();
       });
   }
@@ -247,13 +257,13 @@ export class FilamentLineListComponent
     }).format(value);
   }
 
-  private getColorOptions(line: FdmFilamentLine): DbColorSelectOption[] {
+  private getColorOptions(line: FdmFilamentLine | null | undefined): DbColorSelectOption[] {
     const catalog = this.generalSettings?.colors ?? [];
+    const filamentType = line?.filamentType;
     const stockIds = new Set(
       this.fdmSupplies
         .filter(
-          (supply) =>
-            !line.filamentType || supply.filamentType === line.filamentType,
+          (supply) => !filamentType || supply.filamentType === filamentType,
         )
         .map((supply) => supply.colorId)
         .filter((colorId): colorId is string => !!colorId),
@@ -272,6 +282,19 @@ export class FilamentLineListComponent
         label: color.name,
         hex: color.hex,
         inStock: stockIds.has(color.id),
+      });
+    }
+
+    // Color guardado / del producto que aún no está en el catálogo cargado.
+    const currentId = normalizeColorId(line?.colorId);
+    if (
+      currentId !== INDISTINTO_COLOR_ID &&
+      !options.some((option) => option.value === currentId)
+    ) {
+      options.push({
+        value: currentId,
+        label: resolveColorLabel(currentId, catalog),
+        hex: resolveColorHex(currentId, catalog),
       });
     }
 

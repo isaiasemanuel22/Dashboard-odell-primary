@@ -81,8 +81,20 @@ export class DbColorSelectComponent
     }
   }
 
-  selectedOption(): DbColorSelectOption | undefined {
-    return this.options.find((option) => option.value === this.value);
+  selectedOption(): DbColorSelectOption {
+    const value = this.value?.trim() || INDISTINTO_COLOR_ID;
+    const found = this.options.find((option) => option.value === value);
+    if (found) return found;
+    // Sin match en options (catálogo aún no cargó, color huérfano, etc.):
+    // igual hay que pintar el selector; si no, la columna Color queda vacía.
+    if (value === INDISTINTO_COLOR_ID) {
+      return {
+        value: INDISTINTO_COLOR_ID,
+        label: 'Indistinto',
+        hint: 'el que haya en stock',
+      };
+    }
+    return { value, label: value };
   }
 
   isSelected(value: string): boolean {

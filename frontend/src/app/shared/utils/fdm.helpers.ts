@@ -22,6 +22,7 @@ export function normalizeFdmFilaments(
     grams?: number;
     filamentType?: FilamentType;
     brand?: string;
+    colorId?: string;
   },
 ): FdmFilamentLine[] {
   if (raw?.length) {
@@ -43,7 +44,7 @@ export function normalizeFdmFilaments(
         filamentType: legacy.filamentType,
         grams,
         brand: legacy.brand?.trim() || undefined,
-        colorId: INDISTINTO_COLOR_ID,
+        colorId: normalizeColorId(legacy.colorId),
       },
     ];
   }

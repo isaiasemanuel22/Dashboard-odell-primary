@@ -91,6 +91,11 @@ export class DynamicListComponent
   @Input() embedded = false;
   /** Solo lectura (p. ej. línea con producto de catálogo). */
   @Input() locked = false;
+  /**
+   * Señal externa para re-evaluar optionsFn (colores/stock) sin resetear filas.
+   * FilamentLineList lo incrementa al cargar Ajustes/insumos (OnPush).
+   */
+  @Input() optionsEpoch = 0;
 
   @Output() valueChange = new EventEmitter<any[]>();
   @Output() footerAction = new EventEmitter<void>();
@@ -116,6 +121,9 @@ export class DynamicListComponent
     }
     if (changes['locked'] && !changes['locked'].firstChange) {
       this.applyLockedState();
+    }
+    if (changes['optionsEpoch'] && !changes['optionsEpoch'].firstChange) {
+      this.cdr.markForCheck();
     }
   }
 

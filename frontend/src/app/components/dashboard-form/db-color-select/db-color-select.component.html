@@ -14,35 +14,34 @@
 
 <ng-template #picker>
   <div class="db-color-select" [id]="groupId">
-    @if (selectedOption(); as selected) {
-      <button
-        type="button"
-        class="db-color-select__preview"
-        [class.db-color-select__preview--compact]="appearance === 'popover'"
-        [disabled]="disabled"
-        [attr.aria-expanded]="panelOpen"
-        aria-haspopup="dialog"
-        [attr.aria-label]="label ? 'Elegir ' + label : 'Elegir color'"
-        (click)="openPanel($event.currentTarget)"
-      >
-        <span
-          class="db-color-select__swatch db-color-select__swatch--preview"
-          [class.db-color-select__swatch--indistinto]="!selected.hex"
-          [style.background-color]="selected.hex || null"
-        ></span>
-        <div class="db-color-select__preview-text">
-          <span class="db-color-select__preview-label">{{ selected.label }}</span>
-          @if (appearance !== 'popover') {
-            @if (selected.hex) {
-              <span class="db-color-select__preview-hex">{{ selected.hex }}</span>
-            } @else {
-              <span class="db-color-select__preview-hint">Click para elegir color</span>
-            }
+    @let selected = selectedOption();
+    <button
+      type="button"
+      class="db-color-select__preview"
+      [class.db-color-select__preview--compact]="appearance === 'popover'"
+      [disabled]="disabled"
+      [attr.aria-expanded]="panelOpen"
+      aria-haspopup="dialog"
+      [attr.aria-label]="label ? 'Elegir ' + label : 'Elegir color'"
+      (click)="openPanel($event.currentTarget)"
+    >
+      <span
+        class="db-color-select__swatch db-color-select__swatch--preview"
+        [class.db-color-select__swatch--indistinto]="!selected.hex"
+        [style.background-color]="selected.hex || null"
+      ></span>
+      <div class="db-color-select__preview-text">
+        <span class="db-color-select__preview-label">{{ selected.label }}</span>
+        @if (appearance !== 'popover') {
+          @if (selected.hex) {
+            <span class="db-color-select__preview-hex">{{ selected.hex }}</span>
+          } @else {
+            <span class="db-color-select__preview-hint">Click para elegir color</span>
           }
-        </div>
-        <span class="db-color-select__chevron" aria-hidden="true">▾</span>
-      </button>
-    }
+        }
+      </div>
+      <span class="db-color-select__chevron" aria-hidden="true">▾</span>
+    </button>
   </div>
 </ng-template>
 
@@ -91,19 +90,18 @@
         </div>
       }
 
-      @if (selectedOption(); as selected) {
-        <div class="db-color-select__picked">
-          <span
-            class="db-color-select__swatch"
-            [class.db-color-select__swatch--indistinto]="!selected.hex"
-            [style.background-color]="selected.hex || null"
-          ></span>
-          <strong>{{ selected.label }}</strong>
-          @if (selected.hex) {
-            <span>{{ selected.hex }}</span>
-          }
-        </div>
-      }
+      @let picked = selectedOption();
+      <div class="db-color-select__picked">
+        <span
+          class="db-color-select__swatch"
+          [class.db-color-select__swatch--indistinto]="!picked.hex"
+          [style.background-color]="picked.hex || null"
+        ></span>
+        <strong>{{ picked.label }}</strong>
+        @if (picked.hex) {
+          <span>{{ picked.hex }}</span>
+        }
+      </div>
     </div>
 </ng-template>
 

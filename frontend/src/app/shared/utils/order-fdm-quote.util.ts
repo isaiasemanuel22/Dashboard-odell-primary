@@ -86,6 +86,7 @@ export function applyProductSpecsToFdmLine(
         grams: product.grams,
         filamentType: product.filamentType,
         brand: product.brand,
+        colorId: product.colorId,
       });
       if (!line.filaments.length) {
         line.filaments = undefined;
