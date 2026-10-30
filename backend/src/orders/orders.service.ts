@@ -50,6 +50,10 @@ import {
   normalizeEstampadoPrints,
   normalizeEstampadoSupplies,
 } from '../products/estampado-product.util';
+import {
+  normalizeFdmFilaments,
+  totalFdmFilamentGrams,
+} from '../products/fdm-product.util';
 import { OrderTasksService } from '../print-jobs/order-tasks.service';
 import { PrintJobsService } from '../print-jobs/print-jobs.service';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
@@ -561,14 +565,37 @@ export class OrdersService {
 
       const fdmFields =
         serviceType === ServiceType.IMPRESION_3D
-          ? {
-              printTimeHours:
-                item.printTimeHours != null
-                  ? Number(item.printTimeHours)
-                  : undefined,
-              grams: item.grams != null ? Number(item.grams) : undefined,
-              filamentType: item.filamentType as FilamentType | undefined,
-            }
+          ? (() => {
+              const filaments = normalizeFdmFilaments(item.filaments, {
+                grams: item.grams != null ? Number(item.grams) : undefined,
+                filamentType: item.filamentType as FilamentType | undefined,
+              }).filter((line) => line.grams > 0);
+              const grams =
+                filaments.length > 0
+                  ? totalFdmFilamentGrams(filaments)
+                  : item.grams != null
+                    ? Number(item.grams)
+                    : undefined;
+              const filamentType =
+                filaments.find((line) => line.filamentType)?.filamentType ??
+                (item.filamentType as FilamentType | undefined);
+              const laborNote = item.laborNote?.trim() || undefined;
+              const workTimeHours =
+                item.workTimeHours != null
+                  ? Math.max(0, Number(item.workTimeHours) || 0)
+                  : undefined;
+              return {
+                printTimeHours:
+                  item.printTimeHours != null
+                    ? Number(item.printTimeHours)
+                    : undefined,
+                grams,
+                filamentType,
+                filaments: filaments.length ? filaments : undefined,
+                workTimeHours,
+                laborNote,
+              };
+            })()
           : {};
 
       const estampadoFields =
@@ -584,14 +611,42 @@ export class OrdersService {
             }
           : {};
 
+      const designFields = isDesignService(serviceType)
+        ? {
+            designUnitPrice: Number(item.designUnitPrice ?? item.unitPrice),
+            budgetedHours: this.normalizeBudgetedHours(item.budgetedHours),
+            chargeMode:
+              item.chargeMode === 'hours' || item.chargeMode === 'fixed'
+                ? item.chargeMode
+                : undefined,
+            workKind: item.workKind?.trim() || undefined,
+            deliverables: Array.isArray(item.deliverables)
+              ? item.deliverables
+                  .map((entry) => String(entry).trim())
+                  .filter(Boolean)
+              : undefined,
+            includesRevisions: item.includesRevisions || undefined,
+            needsClientProduct: item.needsClientProduct || undefined,
+            linkPrint: item.linkPrint || undefined,
+          }
+        : {};
+
+      const unitCost =
+        item.unitCost != null && Number.isFinite(Number(item.unitCost))
+          ? Math.max(0, Number(item.unitCost))
+          : undefined;
+
       return {
         serviceType,
         productId,
         productName: resolvedProductName,
         quantity,
         unitPrice: resolvedUnitPrice,
+        unitPriceManual: item.unitPriceManual === true ? true : undefined,
+        unitCost,
         ...fdmFields,
         ...estampadoFields,
+        ...designFields,
         includesPrint:
           serviceType === ServiceType.DISENO_GRAFICO
             ? (item.includesPrint ?? undefined)
@@ -612,12 +667,6 @@ export class OrdersService {
           serviceType === ServiceType.DISENO_GRAFICO
             ? item.printImpresoId?.trim() || undefined
             : undefined,
-        designUnitPrice: isDesignService(serviceType)
-          ? Number(item.designUnitPrice ?? item.unitPrice)
-          : undefined,
-        budgetedHours: isDesignService(serviceType)
-          ? this.normalizeBudgetedHours(item.budgetedHours)
-          : undefined,
         deliveredQuantity: item.deliveredQuantity ?? 0,
         reservedQuantity: item.reservedQuantity ?? 0,
         productionRequiredQuantity: item.productionRequiredQuantity ?? 0,

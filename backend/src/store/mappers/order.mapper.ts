@@ -1,9 +1,11 @@
 import { Prisma } from '@prisma/client';
 import { OrderStatus } from '../../common/enums';
-import { Order, OrderItem } from '../../common/interfaces';
+import { FdmFilamentLine, Order, OrderItem } from '../../common/interfaces';
 import { ensureOrderStatusHistory } from '../../orders/order-status-history.util';
 import { fromJson, toInputJson } from '../../prisma/json.util';
 import { normalizeServiceType } from '../../common/service-type.util';
+import { normalizeFdmFilaments } from '../../products/fdm-product.util';
+import { persistedFdmLine } from '../brand-link.util';
 
 function normalizeOrderStatus(status: string): OrderStatus {
   if (status === 'en_produccion') return OrderStatus.EN_PROGRESO;
@@ -17,6 +19,8 @@ export function mapOrderItemFromDb(item: {
   productName: string;
   quantity: number;
   unitPrice: number;
+  unitPriceManual?: boolean;
+  unitCost?: number | null;
   includesPrint?: boolean;
   printPaperType?: string | null;
   printWidthCm?: number | null;
@@ -26,6 +30,16 @@ export function mapOrderItemFromDb(item: {
   printTimeHours?: number | null;
   grams?: number | null;
   filamentType?: string | null;
+  workTimeHours?: number | null;
+  laborNote?: string | null;
+  fdmFilaments?: Prisma.JsonValue;
+  budgetedHours?: number | null;
+  chargeMode?: string | null;
+  workKind?: string | null;
+  deliverables?: Prisma.JsonValue;
+  includesRevisions?: boolean;
+  needsClientProduct?: boolean;
+  linkPrint?: boolean;
   estampadoPrints?: Prisma.JsonValue;
   estampadoPressCycles?: Prisma.JsonValue;
   estampadoSupplies?: Prisma.JsonValue;
@@ -35,6 +49,19 @@ export function mapOrderItemFromDb(item: {
   producedQuantity?: number;
   deliveredFromProductionQuantity?: number;
 }): OrderItem {
+  const filaments = normalizeFdmFilaments(
+    fromJson<FdmFilamentLine[]>(item.fdmFilaments ?? []),
+    {
+      grams: item.grams ?? undefined,
+      filamentType: item.filamentType as OrderItem['filamentType'],
+    },
+  );
+  const deliverables = fromJson<string[]>(item.deliverables ?? []);
+  const chargeMode =
+    item.chargeMode === 'hours' || item.chargeMode === 'fixed'
+      ? item.chargeMode
+      : undefined;
+
   return {
     serviceType:
       normalizeServiceType(item.serviceType) ??
@@ -43,6 +70,11 @@ export function mapOrderItemFromDb(item: {
     productName: item.productName,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    unitPriceManual: item.unitPriceManual || undefined,
+    unitCost:
+      item.unitCost != null && Number.isFinite(Number(item.unitCost))
+        ? Number(item.unitCost)
+        : undefined,
     includesPrint: item.includesPrint ?? undefined,
     printPaperType: (item.printPaperType as OrderItem['printPaperType']) ?? undefined,
     printWidthCm: item.printWidthCm ?? undefined,
@@ -52,6 +84,16 @@ export function mapOrderItemFromDb(item: {
     printTimeHours: item.printTimeHours ?? undefined,
     grams: item.grams ?? undefined,
     filamentType: (item.filamentType as OrderItem['filamentType']) ?? undefined,
+    filaments: filaments.length ? filaments : undefined,
+    workTimeHours: item.workTimeHours ?? undefined,
+    laborNote: item.laborNote?.trim() || undefined,
+    budgetedHours: item.budgetedHours ?? undefined,
+    chargeMode,
+    workKind: item.workKind?.trim() || undefined,
+    deliverables: deliverables.length ? deliverables : undefined,
+    includesRevisions: item.includesRevisions || undefined,
+    needsClientProduct: item.needsClientProduct || undefined,
+    linkPrint: item.linkPrint || undefined,
     estampadoPrints: fromJson<OrderItem['estampadoPrints']>(
       item.estampadoPrints ?? [],
     ),
@@ -156,6 +198,11 @@ export function mapOrderToDbUpdate(order: Order): Prisma.OrderUncheckedUpdateInp
 }
 
 export function mapOrderItemToDb(orderId: string, index: number, item: OrderItem) {
+  const filaments = normalizeFdmFilaments(item.filaments, {
+    grams: item.grams,
+    filamentType: item.filamentType,
+  }).filter((line) => line.grams > 0);
+
   return {
     id: `${orderId}-item-${index}`,
     orderId,
@@ -165,6 +212,11 @@ export function mapOrderItemToDb(orderId: string, index: number, item: OrderItem
     productName: item.productName,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    unitPriceManual: item.unitPriceManual === true,
+    unitCost:
+      item.unitCost != null && Number.isFinite(Number(item.unitCost))
+        ? Number(item.unitCost)
+        : null,
     includesPrint: item.includesPrint ?? false,
     printPaperType: item.printPaperType ?? null,
     printWidthCm: item.printWidthCm ?? null,
@@ -174,6 +226,16 @@ export function mapOrderItemToDb(orderId: string, index: number, item: OrderItem
     printTimeHours: item.printTimeHours ?? null,
     grams: item.grams ?? null,
     filamentType: item.filamentType ?? null,
+    workTimeHours: item.workTimeHours ?? null,
+    laborNote: item.laborNote?.trim() || null,
+    fdmFilaments: toInputJson(filaments.map(persistedFdmLine)),
+    budgetedHours: item.budgetedHours ?? null,
+    chargeMode: item.chargeMode ?? null,
+    workKind: item.workKind?.trim() || null,
+    deliverables: toInputJson(item.deliverables ?? []),
+    includesRevisions: item.includesRevisions ?? false,
+    needsClientProduct: item.needsClientProduct ?? false,
+    linkPrint: item.linkPrint ?? false,
     estampadoPrints: toInputJson(item.estampadoPrints ?? []),
     estampadoPressCycles: toInputJson(item.estampadoPressCycles ?? []),
     estampadoSupplies: toInputJson(item.estampadoSupplies ?? []),

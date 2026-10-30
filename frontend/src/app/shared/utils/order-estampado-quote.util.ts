@@ -113,6 +113,8 @@ export function syncEstampadoQuotePricing(
   marginPercent: number,
   options?: {
     preservePrice?: boolean;
+    /** No pisar unitCost snapshot (reabrir presupuesto/pedido). */
+    preserveCost?: boolean;
     supplies?: Supply[];
     impresos?: ImpresoWithCost[];
   },
@@ -142,11 +144,19 @@ export function syncEstampadoQuotePricing(
     },
   );
 
-  // Siempre recalcular unitCost (preservePrice / precio manual conservan el precio de venta).
-  line.unitCost = breakdown.totalCost;
+  const keepCost =
+    options?.preserveCost &&
+    line.unitCost != null &&
+    Number.isFinite(Number(line.unitCost));
+  if (!keepCost) {
+    line.unitCost = breakdown.totalCost;
+  }
   const preserve = options?.preservePrice || !!line.unitPriceManual;
   if (!preserve) {
-    line.unitPrice = priceFromCostAndMargin(breakdown.totalCost, marginPercent);
+    const costForPrice = keepCost
+      ? Number(line.unitCost)
+      : breakdown.totalCost;
+    line.unitPrice = priceFromCostAndMargin(costForPrice, marginPercent);
   }
 }
 

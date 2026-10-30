@@ -31,6 +31,8 @@ import {
   calculateOrderSubtotal,
   isDesignService,
 } from '../../../shared/utils/order.helpers';
+import { formatFdmFilamentsSummary } from '../../../shared/utils/fdm.helpers';
+import { isImpresion3DLine } from '../../../shared/utils/order-fdm-quote.util';
 import { resolveLinePrintUnitPrice } from '../../../shared/utils/design-print.util';
 import {
   canGenerateOrderFromQuote,
@@ -84,6 +86,16 @@ export class QuoteDetailComponent implements OnInit {
   readonly isDesignService = isDesignService;
   readonly QuoteStatus = QuoteStatus;
   readonly depositPercent = Math.round(DEPOSIT_FACTOR * 100);
+
+  fdmItemSpecs(item: QuoteItem): string {
+    if (!isImpresion3DLine(item.serviceType)) return '';
+    return formatFdmFilamentsSummary(item);
+  }
+
+  itemPrintHours(item: QuoteItem): number | null {
+    const hours = Number(item.printTimeHours);
+    return Number.isFinite(hours) && hours > 0 ? hours : null;
+  }
   readonly lineColumns: OdlColumn<QuoteItem>[] = [
     { key: 'service', header: 'Servicio', value: (item) => SERVICE_TYPE_LABELS[item.serviceType] },
     { key: 'product', header: 'Concepto / producto' },

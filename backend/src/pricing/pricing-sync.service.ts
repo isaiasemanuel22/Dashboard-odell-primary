@@ -222,6 +222,7 @@ export class PricingSyncService {
     let changed = false;
     for (const item of quote.items) {
       if (!item.productId) continue;
+      if (item.unitPriceManual) continue;
       const change = priceChanges.get(item.productId);
       if (!change || change.newPrice === item.unitPrice) continue;
       item.unitPrice = change.newPrice;

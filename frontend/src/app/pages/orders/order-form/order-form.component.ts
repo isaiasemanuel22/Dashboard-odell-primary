@@ -38,7 +38,10 @@ import {
 } from '../../../core/models';
 import { SettingsService, SuppliesService } from '../../../core/services/settings.service';
 import { ImpresosService } from '../../../core/services/impresos.service';
-import { ProductCostCalculationService } from '../../../core/services/product-cost-calculation.service';
+import {
+  ProductCostCalculationService,
+  ResinCostParts,
+} from '../../../core/services/product-cost-calculation.service';
 import {
   DbFormComponent,
   DbFormErrorComponent,
@@ -63,6 +66,7 @@ import {
   isLineBillable,
   calculateOrderTotal,
   createEmptyLine,
+  ensureLineUiId,
   DUE_DATE_AFTER_TODAY_MESSAGE,
   defaultDueDate,
   isDesignService,
@@ -97,6 +101,7 @@ import {
 import {
   FILAMENT_TYPE_LABELS,
   PAPER_TYPE_LABELS,
+  RESIN_TYPE_LABELS,
   SERVICE_TYPE_LABELS,
 } from '../../../shared/constants/labels';
 import { DEPOSIT_FACTOR } from '../../../shared/utils/quote-document.util';
@@ -119,9 +124,11 @@ import { DbFileUploadFn } from '../../../components/dashboard-form/db-file-uploa
 import { firstValueFrom } from 'rxjs';
 import {
   DiscountMode,
+  DISCOUNT_PERCENT_MAX,
+  clampDiscountAmount,
+  clampDiscountPercent,
   discountModeFromValues,
   discountPayloadFromMode,
-  discountValidationMessage,
 } from '../../../shared/utils/discount.util';
 import { DbSelectOption } from '../../../components/dashboard-form/db-select/db-select.types';
 import {
@@ -355,11 +362,21 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return calculateOrderSubtotal(this.billableLines);
   }
 
+  get discountPercentMax(): number {
+    return DISCOUNT_PERCENT_MAX;
+  }
+
+  /** Tope de descuento en $: subtotal − 1 (0 si no hay subtotal). */
+  get discountAmountMax(): number {
+    return Math.max(0, Math.round(this.subtotal) - 1);
+  }
+
   get discountApplied(): number {
     const discount = discountPayloadFromMode(
       this.discountMode,
       this.discountPercent,
       this.discountAmount,
+      this.subtotal,
     );
     return calculateOrderDiscount(
       this.billableLines,
@@ -373,6 +390,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.discountMode,
       this.discountPercent,
       this.discountAmount,
+      this.subtotal,
     );
     return calculateOrderTotal(
       this.billableLines,
@@ -534,22 +552,116 @@ export class OrderFormComponent implements OnChanges, OnInit {
     );
   }
 
+  /** Producto de resina en la línea (catálogo). */
+  isResinProductLine(line: OrderLineDraft): boolean {
+    return this.productForLine(line)?.type === ProductType.RESINA;
+  }
+
   fdmBreakdown(line: OrderLineDraft): CostBreakdown | null {
-    if (!this.generalSettings || !isFdmQuoteConfigured(line)) return null;
+    if (!this.generalSettings) return null;
+    const product = this.productForLine(line);
+    const isResin = product?.type === ProductType.RESINA;
+    const resinReady =
+      isResin &&
+      ((Number(line.grams) || 0) > 0 || (Number(line.printTimeHours) || 0) > 0);
+    if (!isFdmQuoteConfigured(line) && !resinReady) return null;
+
+    // N1: FDM sin marca → promedio del tipo (igual que el selector).
+    const filamentsForQuote = isResin
+      ? undefined
+      : (line.filaments ?? []).map((row) => ({ ...row, brand: undefined }));
+
     return this.costCalculator.calculateCost(
       {
-        type: ProductType.FDM,
+        type: isResin ? ProductType.RESINA : ProductType.FDM,
         grams: Number(line.grams) || 0,
         printTimeHours: Number(line.printTimeHours) || 0,
         workTimeHours: Number(line.workTimeHours) || 0,
-        filamentType: line.filamentType as FilamentType,
-        filaments: line.filaments,
+        filamentType: isResin
+          ? undefined
+          : (line.filamentType as FilamentType),
+        filaments: filamentsForQuote?.length ? filamentsForQuote : undefined,
+        brand:
+          isResin && product && 'brand' in product
+            ? product.brand
+            : undefined,
+        resinType:
+          isResin && product && 'resinType' in product
+            ? product.resinType
+            : undefined,
+        washMinutes:
+          isResin && product && 'washMinutes' in product
+            ? product.washMinutes
+            : undefined,
+        cureMinutes:
+          isResin && product && 'cureMinutes' in product
+            ? product.cureMinutes
+            : undefined,
       },
-      { settings: this.generalSettings },
+      { settings: this.generalSettings, supplies: this.suppliesForCost() },
     );
   }
 
+  /** Desglose visual: resina / alcohol / lavado / curado / impresión. */
+  resinCostParts(line: OrderLineDraft): ResinCostParts | null {
+    if (!this.generalSettings || !this.isResinProductLine(line)) return null;
+    const product = this.productForLine(line);
+    if (!product) return null;
+
+    return this.costCalculator.buildResinCostParts(
+      {
+        type: ProductType.RESINA,
+        grams: Number(line.grams) || 0,
+        printTimeHours: Number(line.printTimeHours) || 0,
+        workTimeHours: Number(line.workTimeHours) || 0,
+        brand: 'brand' in product ? product.brand : undefined,
+        resinType: 'resinType' in product ? product.resinType : undefined,
+        washMinutes:
+          'washMinutes' in product ? product.washMinutes : undefined,
+        cureMinutes:
+          'cureMinutes' in product ? product.cureMinutes : undefined,
+      },
+      { settings: this.generalSettings, supplies: this.suppliesForCost() },
+    );
+  }
+
+  resinAlcoholSummary(line: OrderLineDraft): string {
+    const parts = this.resinCostParts(line);
+    if (!parts) return 'Lavado · alcohol';
+    const bits: string[] = [];
+    if (parts.washSupplyName) bits.push(parts.washSupplyName);
+    if (parts.washConsumptionMl > 0) {
+      bits.push(
+        `${this.formatNumber(parts.washConsumptionMl)} ml / ${parts.washBathUses} usos`,
+      );
+    }
+    return bits.length ? bits.join(' · ') : 'Supply de lavado';
+  }
+
+  resinWashSummary(line: OrderLineDraft): string {
+    const parts = this.resinCostParts(line);
+    const minutes = parts?.washMinutes ?? 0;
+    const profile = this.machineProfile(
+      ProductType.RESINA,
+      MachineProfileRole.WASH,
+    );
+    return `${profile?.name ?? 'Lavadora'} · ${this.formatNumber(minutes)} min`;
+  }
+
+  resinCureSummary(line: OrderLineDraft): string {
+    const parts = this.resinCostParts(line);
+    const minutes = parts?.cureMinutes ?? 0;
+    const profile = this.machineProfile(
+      ProductType.RESINA,
+      MachineProfileRole.CURE,
+    );
+    return `${profile?.name ?? 'Curadora'} · ${this.formatNumber(minutes)} min`;
+  }
+
   fdmFilamentSummary(line: OrderLineDraft): string {
+    if (this.isResinProductLine(line)) {
+      return this.resinMaterialSummary(line);
+    }
     const rows = line.filaments ?? [];
     const active = rows.filter((row) => Number(row.grams) > 0);
     const counted = active.length ? active : rows;
@@ -567,6 +679,22 @@ export class OrderFormComponent implements OnChanges, OnInit {
         : 'Sin material';
     const noun = count === 1 ? 'filamento' : 'filamentos';
     return `${count} ${noun} · ${this.formatNumber(grams)} g · ${typeLabel}`;
+  }
+
+  resinMaterialSummary(line: OrderLineDraft): string {
+    const product = this.productForLine(line);
+    const grams = Number(line.grams) || 0;
+    const resinType =
+      product && 'resinType' in product && product.resinType
+        ? RESIN_TYPE_LABELS[product.resinType]
+        : 'Resina';
+    const brand =
+      product && 'brand' in product && product.brand?.trim()
+        ? product.brand.trim()
+        : null;
+    const parts = [`${this.formatNumber(grams)} g`, resinType];
+    if (brand) parts.push(brand);
+    return parts.join(' · ');
   }
 
   quoteFilaments(line: OrderLineDraft): FdmFilamentLine[] {
@@ -700,16 +828,27 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   fdmPrintSummary(line: OrderLineDraft): string {
     const hours = Number(line.printTimeHours) || 0;
-    const breakdown = this.fdmBreakdown(line);
-    const profile = this.machineProfile(ProductType.FDM, MachineProfileRole.PRINT);
+    const isResin = this.isResinProductLine(line);
+    const productType = isResin ? ProductType.RESINA : ProductType.FDM;
+    const profile = this.machineProfile(productType, MachineProfileRole.PRINT);
     const parts = [
-      profile?.name ?? 'Impresora',
+      profile?.name ?? (isResin ? 'Impresora resina' : 'Impresora'),
       `${this.formatNumber(hours)} h`,
     ];
-    if (breakdown) {
-      parts.push(
-        `luz ${this.money(breakdown.energyCost)} + máquina ${this.money(breakdown.machineCost)}`,
-      );
+    if (isResin) {
+      const resin = this.resinCostParts(line);
+      if (resin) {
+        parts.push(
+          `luz ${this.money(resin.printEnergyCost)} + máquina ${this.money(resin.printMachineCost)}`,
+        );
+      }
+    } else {
+      const breakdown = this.fdmBreakdown(line);
+      if (breakdown) {
+        parts.push(
+          `luz ${this.money(breakdown.energyCost)} + máquina ${this.money(breakdown.machineCost)}`,
+        );
+      }
     }
     return parts.join(' · ');
   }
@@ -843,22 +982,145 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return this.formatNumber(Number(line.grams) || 0);
   }
 
-  suggestedUnitPriceHint(line: OrderLineDraft): string {
-    if (line.unitPriceManual) {
-      return 'Precio editado a mano (no se recalcula al cambiar gramos u otros campos).';
-    }
-    if (!this.profitMargins) return '';
+  /** Precio sugerido por costo + margen (anotación; no es el input). */
+  calculatedUnitPrice(line: OrderLineDraft): number {
+    if (!this.profitMargins) return 0;
     const cost = this.lineUnitCost(line);
-    const price = Number(line.unitPrice) || 0;
-    if (cost > 0 && price > 0) {
-      const percent = Math.round(((price - cost) / cost) * 100);
-      return `Margen · ${percent}% sobre el costo del formulario`;
+    if (!(cost > 0)) return 0;
+    if (isDesignService(line.serviceType)) {
+      return priceFromCostAndMargin(cost, this.designMarginFor(line));
     }
     const margin = isEstampadoLine(line.serviceType)
       ? estampadoMargin(this.profitMargins)
       : impresion3DMargin(this.profitMargins);
-    const suggested = priceFromCostAndMargin(cost, margin);
-    return `Sugerido ${this.money(suggested)} (costo + ${margin}%)`;
+    return priceFromCostAndMargin(cost, margin);
+  }
+
+  /** Precio editado a mano (no se pisa al recalcular costo). */
+  isUnitPriceManual(line: OrderLineDraft): boolean {
+    return !!line.unitPriceManual;
+  }
+
+  suggestedUnitPriceHint(line: OrderLineDraft): string {
+    return this.unitPriceAnnotation(line);
+  }
+
+  unitPriceAnnotation(line: OrderLineDraft): string {
+    const calculated = this.calculatedUnitPrice(line);
+    const calculatedLabel =
+      calculated > 0
+        ? `Calculado ${this.money(calculated)}`
+        : this.profitMargins
+          ? 'Sin precio calculado aún'
+          : 'Cargando Ajustes…';
+
+    const cost = this.lineUnitCost(line);
+    const price = isDesignService(line.serviceType)
+      ? this.designUnitPriceForLine(line)
+      : Number(line.unitPrice) || 0;
+    const marginPercent =
+      cost > 0 && price > 0
+        ? Math.round(((price - cost) / cost) * 100)
+        : null;
+
+    // N5: margen negativo siempre visible (también con precio manual).
+    if (marginPercent != null && marginPercent < 0) {
+      return line.unitPriceManual
+        ? `${calculatedLabel} · precio manual · margen ${marginPercent}%`
+        : `${calculatedLabel} · margen ${marginPercent}%`;
+    }
+
+    if (line.unitPriceManual) {
+      return `${calculatedLabel} · precio manual`;
+    }
+
+    if (!this.profitMargins) return calculatedLabel;
+
+    if (marginPercent != null) {
+      return `${calculatedLabel} · margen ${marginPercent}%`;
+    }
+
+    if (isEstampadoLine(line.serviceType) || isImpresion3DLine(line.serviceType)) {
+      const margin = isEstampadoLine(line.serviceType)
+        ? estampadoMargin(this.profitMargins)
+        : impresion3DMargin(this.profitMargins);
+      return calculated > 0
+        ? `${calculatedLabel} (costo + ${margin}%)`
+        : calculatedLabel;
+    }
+
+    return calculatedLabel;
+  }
+
+  /** N2: vuelve al precio sugerido (calculado o lista) y deja de preservar el manual. */
+  resetUnitPriceToSuggested(line: OrderLineDraft): void {
+    line.unitPriceManual = undefined;
+
+    if (isDesignService(line.serviceType)) {
+      const suggested = this.calculatedUnitPrice(line);
+      line.designUnitPrice = suggested;
+      line.unitPrice = suggested;
+      line.unitCost = this.designServiceCost(line);
+      this.syncDesignPrintLine(line);
+      return;
+    }
+
+    if (isImpresion3DLine(line.serviceType)) {
+      this.syncFdmLine(line, { preservePrice: false });
+      const product = this.productForLine(line);
+      if (product) this.applyCatalogListPrice(line, product);
+      return;
+    }
+
+    if (isEstampadoLine(line.serviceType)) {
+      this.syncEstampadoLine(line, { preservePrice: false });
+      const product = this.productForLine(line);
+      if (product) this.applyCatalogListPrice(line, product);
+    }
+  }
+
+  /** Precio bajo costo: aviso en rojo (también con precio manual). */
+  isUnitPriceBelowCost(line: OrderLineDraft): boolean {
+    const cost = this.lineUnitCost(line);
+    if (!(cost > 0)) return false;
+    const price = isDesignService(line.serviceType)
+      ? this.designUnitPriceForLine(line)
+      : Number(line.unitPrice) || 0;
+    return price > 0 && price < cost;
+  }
+
+  onLinkPrintChange(
+    line: OrderLineDraft,
+    checked: boolean,
+    index: number,
+  ): void {
+    line.linkPrint = checked;
+    const modelUiId = ensureLineUiId(line);
+
+    if (!checked) {
+      this.lines = this.lines.filter(
+        (row) => row.linkedModelUiId !== modelUiId,
+      );
+      return;
+    }
+
+    if (this.lines.some((row) => row.linkedModelUiId === modelUiId)) {
+      return;
+    }
+
+    const printLine = createEmptyLine(ServiceType.IMPRESION_3D);
+    printLine.linkedModelUiId = modelUiId;
+    const concept = line.customName?.trim();
+    printLine.customName = concept
+      ? `Impresión · ${concept}`
+      : 'Impresión de la pieza';
+    printLine.quantity = line.quantity || 1;
+
+    this.lines = [
+      ...this.lines.slice(0, index + 1),
+      printLine,
+      ...this.lines.slice(index + 1),
+    ];
   }
 
   designCostHint(line: OrderLineDraft): string {
@@ -870,14 +1132,13 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   designPriceHint(line: OrderLineDraft): string {
-    if (!this.profitMargins) return '';
     if (this.serviceRate(line) <= 0) {
       const rateLabel = isGraphicDesignService(line.serviceType)
         ? 'Tarifa de diseño'
         : 'Tarifa de modelado';
       return `${rateLabel} en $ 0: el sugerido no se calcula`;
     }
-    return `Margen ${this.serviceLabel(line.serviceType)} (${this.designMarginFor(line)}%)`;
+    return this.unitPriceAnnotation(line);
   }
 
   private machineProfile(
@@ -888,6 +1149,14 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return getMachineProfilesForProductType(this.generalSettings, productType).find(
       (profile) => profile.role === role,
     );
+  }
+
+  /**
+   * Insumos para costeo. Si el array del form aún está vacío, no pasar []
+   * (taparía el store en ProductCostCalculationService y el alcohol sale $0).
+   */
+  private suppliesForCost(): Supply[] | undefined {
+    return this.supplies.length ? this.supplies : undefined;
   }
 
   private suppliesWithoutPrice(): string[] {
@@ -934,16 +1203,25 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }
     this.settingsService.getGeneralSettings().subscribe((settings) => {
       this.applyGeneralSettings(settings);
-      this.syncDesignLineCosts();
+      this.syncDesignLineCosts({ preserveCost: this.isEditing });
       this.syncAllDesignPrintLines();
-      this.syncAllFdmLines({ preservePrice: this.isEditing });
-      this.syncAllEstampadoLines({ preservePrice: this.isEditing });
+      this.syncAllFdmLines({
+        preservePrice: this.isEditing,
+        preserveCost: this.isEditing,
+      });
+      this.syncAllEstampadoLines({
+        preservePrice: this.isEditing,
+        preserveCost: this.isEditing,
+      });
     });
     this.impresosService.getImpresos().subscribe((items) => {
       this.impresos = items;
       // B3: re-hidratar y costear cuando llegan impresos (dims/papel).
       this.hydrateEstampadoQuoteLines(this.lines);
-      this.syncAllEstampadoLines({ preservePrice: this.isEditing });
+      this.syncAllEstampadoLines({
+        preservePrice: this.isEditing,
+        preserveCost: this.isEditing,
+      });
     });
     if (this.isQuoteForm) {
       this.suppliesService
@@ -952,7 +1230,10 @@ export class OrderFormComponent implements OnChanges, OnInit {
         .subscribe((items) => {
           this.supplies = items;
           // B3: re-costear con precios de insumos (antes unitCost podía quedar en 0).
-          this.syncAllEstampadoLines({ preservePrice: this.isEditing });
+          this.syncAllEstampadoLines({
+            preservePrice: this.isEditing,
+            preserveCost: this.isEditing,
+          });
         });
     }
   }
@@ -1010,6 +1291,9 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   onLineServiceChange(line: OrderLineDraft): void {
+    if (line.uiId && line.linkPrint) {
+      this.lines = this.lines.filter((row) => row.linkedModelUiId !== line.uiId);
+    }
     line.productId = isDesignService(line.serviceType) ? undefined : '';
     line.customName = isDesignService(line.serviceType) ? '' : undefined;
     line.conceptManual = undefined;
@@ -1092,7 +1376,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       return;
     }
 
-    applyProductSpecsToFdmLine(line, product);
+    applyProductSpecsToFdmLine(line, product, this.products);
     applyProductSpecsToEstampadoLine(line, product);
     if (isImpresion3DLine(line.serviceType)) {
       // Costear primero; el precio de lista del catálogo pisa el sugerido.
@@ -1120,10 +1404,15 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }
   }
 
-  /** B1: precio tocado a mano; no se pisa al recalcular costo. */
+  /** B1/N2: precio tocado a mano no se pisa al recalcular; sigue editable. */
   onUnitPriceChange(line: OrderLineDraft, raw: number | string): void {
-    line.unitPrice = Number(raw) || 0;
-    line.unitPriceManual = true;
+    const price = Number(raw) || 0;
+    line.unitPrice = price;
+    if (price !== 0) {
+      line.unitPriceManual = true;
+    } else {
+      line.unitPriceManual = undefined;
+    }
     if (isDesignService(line.serviceType)) {
       line.designUnitPrice = line.unitPrice;
     }
@@ -1179,19 +1468,11 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   unitPriceHint(line: OrderLineDraft): string {
-    if (line.unitPriceManual) {
-      return 'Precio editado a mano (no se recalcula al cambiar gramos u otros campos).';
+    const annotation = this.unitPriceAnnotation(line);
+    if (line.productId && !line.unitPriceManual) {
+      return `${annotation} · precio de lista del catálogo`;
     }
-    if (line.productId) {
-      return 'Precio del catálogo de productos.';
-    }
-    if (!this.profitMargins) return '';
-    if (isEstampadoLine(line.serviceType)) {
-      const margin = estampadoMargin(this.profitMargins);
-      return `Sugerido: costo + ${margin}% de margen`;
-    }
-    const margin = impresion3DMargin(this.profitMargins);
-    return `Sugerido: costo + ${margin}% de margen`;
+    return annotation;
   }
 
   setLineService(line: OrderLineDraft, serviceType: ServiceType): void {
@@ -1341,6 +1622,28 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (mode === 'none') {
       this.discountPercent = 0;
       this.discountAmount = 0;
+      return;
+    }
+    this.clampDiscountFields();
+  }
+
+  onDiscountPercentChange(raw: number | string): void {
+    this.discountPercent = clampDiscountPercent(Number(raw));
+  }
+
+  onDiscountAmountChange(raw: number | string): void {
+    this.discountAmount = clampDiscountAmount(Number(raw), this.subtotal);
+  }
+
+  /** Ajusta %/$ al rango válido (tipeo, pegado o cambio de subtotal). */
+  private clampDiscountFields(): void {
+    if (this.discountMode === 'percent') {
+      this.discountPercent = clampDiscountPercent(this.discountPercent);
+    } else if (this.discountMode === 'amount') {
+      this.discountAmount = clampDiscountAmount(
+        this.discountAmount,
+        this.subtotal,
+      );
     }
   }
 
@@ -1428,7 +1731,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
   onDesignUnitPriceChange(line: OrderLineDraft, raw: number | string): void {
     const price = Number(raw) || 0;
     line.designUnitPrice = price;
-    line.unitPriceManual = true;
+    line.unitPrice = price;
+    if (price !== 0) {
+      line.unitPriceManual = true;
+    } else {
+      line.unitPriceManual = undefined;
+    }
     // Costo = horas × tarifa (o 0). Nunca derivar el costo desde el precio.
     line.unitCost = this.designServiceCost(line);
     this.syncDesignPrintLine(line);
@@ -1504,16 +1812,27 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.lines = [createEmptyLine(ServiceType.IMPRESION_3D)];
       return;
     }
-    this.lines = this.lines.filter((_, i) => i !== index);
+    const removed = this.lines[index];
+    const linkedId = removed?.uiId;
+    this.lines = this.lines.filter((line, i) => {
+      if (i === index) return false;
+      if (linkedId && line.linkedModelUiId === linkedId) return false;
+      return true;
+    });
+    if (!this.lines.length) {
+      this.lines = [createEmptyLine(ServiceType.IMPRESION_3D)];
+    }
   }
 
   onSubmit(asDraft = false): void {
-    if (!this.canSubmit()) return;
+    this.clampDiscountFields();
+    if (!this.canSubmit(asDraft)) return;
     const validLines = this.lines.filter((line) => isLineValid(line));
     const discount = discountPayloadFromMode(
       this.discountMode,
       this.discountPercent,
       this.discountAmount,
+      this.subtotal,
     );
     const items = buildOrderItems(validLines, this.products);
     const shared = {
@@ -1582,31 +1901,33 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return orderLineValidationMessage(line);
   }
 
-  get discountError(): string {
-    return discountValidationMessage(
-      this.discountMode,
-      this.discountPercent,
-      this.discountAmount,
-    );
-  }
-
-  canSubmit(): boolean {
+  /** Borrador: sin cliente OK. Crear/Enviado: exige cliente. */
+  canSubmit(asDraft = false): boolean {
+    this.clampDiscountFields();
     const relevant = this.lines.filter((line) => !isLineBlank(line));
     if (!relevant.length || !relevant.every((line) => isLineValid(line))) {
       return false;
     }
-    if (this.discountError) return false;
+    // El descuento se clampea al tipear/pegar; no bloquea guardar.
     if (
       plainTextFromHtml(this.description).length > this.descriptionMaxLength
     ) {
       return false;
     }
-    if (this.isQuoteForm) return true;
+    if (this.isQuoteForm) {
+      if (asDraft) return true;
+      return !!this.customerId.trim();
+    }
     return (
       !!this.customerId.trim() &&
       !!this.dueDate &&
       !this.dueDateError
     );
+  }
+
+  get quoteNeedsCustomerHint(): string {
+    if (!this.isQuoteForm || this.customerId.trim()) return '';
+    return 'Elegí un cliente para crear el presupuesto (Enviado). El borrador puede guardarse sin cliente.';
   }
 
   private resetForm(): void {
@@ -1670,13 +1991,49 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.discountPercent = 0;
       this.discountAmount = 0;
     }
-    this.syncDesignLineCosts();
+    this.relinkPrintLinesFromModelado();
+    this.syncDesignLineCosts({ preserveCost: this.isEditing });
     this.syncAllDesignPrintLines();
-    this.syncAllFdmLines({ preservePrice: this.isEditing });
-    this.syncAllEstampadoLines({ preservePrice: this.isEditing });
+    this.syncAllFdmLines({
+      preservePrice: this.isEditing,
+      preserveCost: this.isEditing,
+    });
+    this.syncAllEstampadoLines({
+      preservePrice: this.isEditing,
+      preserveCost: this.isEditing,
+    });
+    this.clampDiscountFields();
   }
 
-  private syncAllFdmLines(options?: { preservePrice?: boolean }): void {
+  /**
+   * N4: al reabrir, reatacha la línea 3D siguiente a un modelado con linkPrint.
+   */
+  private relinkPrintLinesFromModelado(): void {
+    for (let i = 0; i < this.lines.length; i++) {
+      const line = this.lines[i];
+      ensureLineUiId(line);
+      if (
+        !line.linkPrint ||
+        !isDesignService(line.serviceType) ||
+        isGraphicDesignService(line.serviceType)
+      ) {
+        continue;
+      }
+      if (this.lines.some((row) => row.linkedModelUiId === line.uiId)) {
+        continue;
+      }
+      const next = this.lines[i + 1];
+      if (next && isImpresion3DLine(next.serviceType)) {
+        ensureLineUiId(next);
+        next.linkedModelUiId = line.uiId;
+      }
+    }
+  }
+
+  private syncAllFdmLines(options?: {
+    preservePrice?: boolean;
+    preserveCost?: boolean;
+  }): void {
     if (!this.generalSettings) return;
     for (const line of this.lines) {
       if (isImpresion3DLine(line.serviceType)) {
@@ -1685,7 +2042,10 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }
   }
 
-  private syncAllEstampadoLines(options?: { preservePrice?: boolean }): void {
+  private syncAllEstampadoLines(options?: {
+    preservePrice?: boolean;
+    preserveCost?: boolean;
+  }): void {
     if (!this.generalSettings) return;
     for (const line of this.lines) {
       if (isEstampadoLine(line.serviceType)) {
@@ -1707,11 +2067,14 @@ export class OrderFormComponent implements OnChanges, OnInit {
   private hydrateFdmColorSelectors(lines: OrderLineDraft[]): void {
     for (const line of lines) {
       if (!isImpresion3DLine(line.serviceType)) continue;
+      const product = this.products.find((p) => p.id === line.productId);
       if (!line.filaments?.length && line.productId?.trim()) {
-        applyProductSpecsToFdmLine(
-          line,
-          this.products.find((p) => p.id === line.productId),
-        );
+        applyProductSpecsToFdmLine(line, product, this.products);
+      }
+      // Resina no usa filamentos; no inventar PLA.
+      if (product?.type === ProductType.RESINA) {
+        line.filaments = undefined;
+        continue;
       }
       if (line.filaments?.length) {
         line.filaments = normalizeFdmFilaments(line.filaments);
@@ -1738,7 +2101,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   private syncFdmLine(
     line: OrderLineDraft,
-    options?: { preservePrice?: boolean },
+    options?: { preservePrice?: boolean; preserveCost?: boolean },
   ): void {
     if (!this.generalSettings || !this.profitMargins) return;
 
@@ -1748,7 +2111,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       ((Number(line.grams) || 0) > 0 || (Number(line.printTimeHours) || 0) > 0);
     const configured = isFdmQuoteConfigured(line) || resinConfigured;
 
-    // Siempre costear; el precio se preserva si es manual o preservePrice.
+    // Costear; precio/costo se preservan si son manual/snapshot o al reabrir.
     if (configured) {
       syncFdmQuotePricing(
         line,
@@ -1758,8 +2121,13 @@ export class OrderFormComponent implements OnChanges, OnInit {
         {
           ...options,
           preservePrice: options?.preservePrice || !!line.unitPriceManual,
+          preserveCost: options?.preserveCost,
           productType: product?.type,
-          brand: product && 'brand' in product ? product.brand : undefined,
+          // N1: marca solo para resina; FDM cotiza por promedio del tipo.
+          brand:
+            product?.type === ProductType.RESINA && product && 'brand' in product
+              ? product.brand
+              : undefined,
           resinType:
             product && 'resinType' in product ? product.resinType : undefined,
           washMinutes:
@@ -1775,13 +2143,20 @@ export class OrderFormComponent implements OnChanges, OnInit {
       return;
     }
 
-    if (!options?.preservePrice) {
-      // Catálogo sin specs configurables en el form: usar costo/precio del producto.
+    const keepCost =
+      options?.preserveCost &&
+      line.unitCost != null &&
+      Number.isFinite(Number(line.unitCost));
+    const keepPrice = options?.preservePrice || !!line.unitPriceManual;
+    if (!keepCost) {
+      // Catálogo sin specs configurables en el form: usar costo del producto.
       if (product && Number(product.cost) > 0) {
         line.unitCost = product.cost;
-      } else {
+      } else if (!keepPrice) {
         line.unitCost = 0;
       }
+    }
+    if (!keepPrice) {
       if (product && Number(product.price) > 0) {
         line.unitPrice = product.price;
       } else {
@@ -1792,7 +2167,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   private syncEstampadoLine(
     line: OrderLineDraft,
-    options?: { preservePrice?: boolean },
+    options?: { preservePrice?: boolean; preserveCost?: boolean },
   ): void {
     if (!this.generalSettings || !this.profitMargins) return;
 
@@ -1805,6 +2180,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
         {
           ...options,
           preservePrice: options?.preservePrice || !!line.unitPriceManual,
+          preserveCost: options?.preserveCost,
           // Misma fuente que el desglose de la UI (evita unitCost 0 por store vacío).
           supplies: this.supplies,
           impresos: this.impresos,
@@ -1813,13 +2189,21 @@ export class OrderFormComponent implements OnChanges, OnInit {
       return;
     }
 
-    if (!options?.preservePrice) {
+    const keepCost =
+      options?.preserveCost &&
+      line.unitCost != null &&
+      Number.isFinite(Number(line.unitCost));
+    const keepPrice = options?.preservePrice || !!line.unitPriceManual;
+    if (!keepCost) {
       const product = this.productForLine(line);
       if (product && Number(product.cost) > 0) {
         line.unitCost = product.cost;
-      } else {
+      } else if (!keepPrice) {
         line.unitCost = 0;
       }
+    }
+    if (!keepPrice) {
+      const product = this.productForLine(line);
       if (product && Number(product.price) > 0) {
         line.unitPrice = product.price;
       } else {
@@ -1852,7 +2236,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     this.syncDesignPrintLine(line);
   }
 
-  private syncDesignLineCosts(): void {
+  private syncDesignLineCosts(options?: { preserveCost?: boolean }): void {
     for (const line of this.lines) {
       if (!isDesignService(line.serviceType)) continue;
       line.budgetedHours ??= 0;
@@ -1869,7 +2253,14 @@ export class OrderFormComponent implements OnChanges, OnInit {
         continue;
       }
 
-      line.unitCost = this.designServiceCost(line);
+      // Al reabrir: conservar snapshot de unitCost si ya vino de la API.
+      const keepCost =
+        options?.preserveCost &&
+        line.unitCost != null &&
+        Number.isFinite(Number(line.unitCost));
+      if (!keepCost) {
+        line.unitCost = this.designServiceCost(line);
+      }
 
       if (line.includesPrint) {
         if (line.designUnitPrice == null && line.unitPrice > 0) {
@@ -1881,7 +2272,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
         continue;
       }
 
-      if (line.unitPrice > 0) {
+      if (line.unitPrice > 0 || line.unitPriceManual) {
         line.designUnitPrice = line.unitPrice;
       } else if ((line.unitCost ?? 0) > 0 && this.profitMargins) {
         line.unitPrice = priceFromCostAndMargin(

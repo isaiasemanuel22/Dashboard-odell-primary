@@ -48,6 +48,10 @@ export class FdmFilamentLineDto {
 
   @IsOptional()
   @IsString()
+  brandId?: string;
+
+  @IsOptional()
+  @IsString()
   brand?: string;
 
   @IsOptional()

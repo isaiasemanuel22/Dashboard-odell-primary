@@ -39,7 +39,10 @@ export function hasRichTextContent(html: string | null | undefined): boolean {
 export function sanitizeRichTextHtml(html: string | null | undefined): string {
   if (!html?.trim()) return '';
 
-  let output = html.trim();
+  let output = html
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\u00a0/g, ' ')
+    .trim();
   output = output.replace(/<\s*(script|style|iframe)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '');
   output = output.replace(/<\s*(script|style|iframe)[^>]*\/?>/gi, '');
 

@@ -164,6 +164,10 @@ model OrderItem {
   productName String @map("product_name") @db.VarChar(255)
   quantity    Int
   unitPrice   Float  @map("unit_price")
+  /** Precio unitario editado a mano; se respeta al reabrir / recalcular. */
+  unitPriceManual Boolean @default(false) @map("unit_price_manual")
+  /** Costo unitario al cotizar (snapshot; no se pisa por cambios de Ajustes). */
+  unitCost    Float? @map("unit_cost")
   includesPrint Boolean @default(false) @map("includes_print")
   printPaperType String? @map("print_paper_type") @db.VarChar(32)
   printWidthCm Float? @map("print_width_cm")
@@ -173,6 +177,16 @@ model OrderItem {
   printTimeHours Float? @map("print_time_hours")
   grams         Float?
   filamentType  String? @map("filament_type") @db.VarChar(32)
+  workTimeHours Float?  @map("work_time_hours")
+  laborNote     String? @map("labor_note") @db.Text
+  fdmFilaments  Json    @default("[]") @map("fdm_filaments")
+  budgetedHours Float?  @map("budgeted_hours")
+  chargeMode    String? @map("charge_mode") @db.VarChar(16)
+  workKind      String? @map("work_kind") @db.VarChar(64)
+  deliverables  Json    @default("[]")
+  includesRevisions  Boolean @default(false) @map("includes_revisions")
+  needsClientProduct Boolean @default(false) @map("needs_client_product")
+  linkPrint          Boolean @default(false) @map("link_print")
   estampadoPrints      Json @default("[]") @map("estampado_prints")
   estampadoPressCycles Json @default("[]") @map("estampado_press_cycles")
   estampadoSupplies    Json @default("[]") @map("estampado_supplies")
@@ -219,6 +233,10 @@ model QuoteItem {
   productName     String  @map("product_name") @db.VarChar(255)
   quantity        Int
   unitPrice       Float   @map("unit_price")
+  /** Precio unitario editado a mano; se respeta al reabrir / recalcular. */
+  unitPriceManual Boolean @default(false) @map("unit_price_manual")
+  /** Costo unitario al cotizar (snapshot; no se pisa por cambios de Ajustes). */
+  unitCost        Float?  @map("unit_cost")
   includesPrint   Boolean @default(false) @map("includes_print")
   printPaperType  String? @map("print_paper_type") @db.VarChar(32)
   printWidthCm    Float?  @map("print_width_cm")
@@ -228,6 +246,16 @@ model QuoteItem {
   printTimeHours  Float?  @map("print_time_hours")
   grams           Float?
   filamentType    String? @map("filament_type") @db.VarChar(32)
+  workTimeHours   Float?  @map("work_time_hours")
+  laborNote       String? @map("labor_note") @db.Text
+  fdmFilaments    Json    @default("[]") @map("fdm_filaments")
+  budgetedHours   Float?  @map("budgeted_hours")
+  chargeMode      String? @map("charge_mode") @db.VarChar(16)
+  workKind        String? @map("work_kind") @db.VarChar(64)
+  deliverables    Json    @default("[]")
+  includesRevisions  Boolean @default(false) @map("includes_revisions")
+  needsClientProduct Boolean @default(false) @map("needs_client_product")
+  linkPrint          Boolean @default(false) @map("link_print")
   estampadoPrints      Json @default("[]") @map("estampado_prints")
   estampadoPressCycles Json @default("[]") @map("estampado_press_cycles")
   estampadoSupplies    Json @default("[]") @map("estampado_supplies")

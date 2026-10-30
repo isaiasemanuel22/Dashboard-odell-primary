@@ -65,6 +65,8 @@ export class QuotesService {
     const discount = normalizeDiscountFields(data);
     const now = new Date();
     const quotedAt = this.todayQuotedAt(now);
+    const status = this.resolveFormStatus(data.status);
+    this.assertCustomerForSent(status, customerId);
 
     const quote: Quote = {
       id: this.quotes.nextId(),
@@ -74,7 +76,7 @@ export class QuotesService {
       customerName,
       services,
       items,
-      status: this.resolveFormStatus(data.status),
+      status,
       total: this.calculateTotal(items, discount),
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
@@ -117,6 +119,12 @@ export class QuotesService {
           : current.discountAmount,
     });
 
+    const status =
+      data.status !== undefined
+        ? this.resolveFormStatus(data.status)
+        : current.status;
+    this.assertCustomerForSent(status, customerId);
+
     const updated: Quote = {
       ...current,
       customerId,
@@ -130,10 +138,7 @@ export class QuotesService {
         data.description !== undefined
           ? this.normalizeDescription(data.description)
           : current.description,
-      status:
-        data.status !== undefined
-          ? this.resolveFormStatus(data.status)
-          : current.status,
+      status,
     };
 
     return this.quotes.save(updated);
@@ -158,6 +163,7 @@ export class QuotesService {
     if (status === QuoteStatus.ACEPTADO && !quote.customerId) {
       throw new BadRequestException('El pedido requiere un cliente asociado');
     }
+    this.assertCustomerForSent(status, quote.customerId);
 
     quote.status = status;
     this.quotes.save(quote);
@@ -276,6 +282,18 @@ export class QuotesService {
   private resolveFormStatus(status?: QuoteStatus): QuoteStatus {
     if (status === QuoteStatus.ENVIADO) return QuoteStatus.ENVIADO;
     return QuoteStatus.BORRADOR;
+  }
+
+  /** Enviado exige cliente; borrador puede ir «Sin cliente». */
+  private assertCustomerForSent(
+    status: QuoteStatus,
+    customerId: string | null | undefined,
+  ): void {
+    if (status !== QuoteStatus.ENVIADO) return;
+    if (customerId?.trim()) return;
+    throw new BadRequestException(
+      'Para dejar el presupuesto Enviado necesitás un cliente',
+    );
   }
 
   private deriveServices(items: QuoteItem[]): ServiceType[] {

@@ -15,6 +15,7 @@ import { DbFormFieldComponent } from '../db-form-field/db-form-field.component';
 import { DbFileUploadFn } from '../db-file-upload/db-file-upload.types';
 import {
   plainTextFromHtml,
+  richTextEquivalent,
   sanitizeRichTextHtml,
 } from '../../../shared/utils/rich-text.util';
 import { resolveMediaUrl } from '../../../shared/utils/media-url.util';
@@ -101,7 +102,12 @@ export class DbRichTextEditorComponent implements ControlValueAccessor, OnInit {
   }
 
   writeValue(value: string | null): void {
-    this.value = sanitizeRichTextHtml(value);
+    const incoming = value ?? '';
+    // No sanitizar acá: normalizar &nbsp; reescribe el DOM de Quill y mueve el cursor.
+    if (richTextEquivalent(this.value, incoming)) {
+      return;
+    }
+    this.value = incoming;
   }
 
   registerOnChange(fn: (value: string) => void): void {
@@ -117,12 +123,19 @@ export class DbRichTextEditorComponent implements ControlValueAccessor, OnInit {
   }
 
   onModelChange(html: string | null | undefined): void {
-    const sanitized = sanitizeRichTextHtml(html);
-    this.value = sanitized;
-    this.onChange(sanitized);
+    // Pasar el HTML de Quill tal cual mientras se edita. Sanitizar/nbsp → espacio
+    // en cada keystroke hace que ngModel reescriba el editor y el cursor vuelva a 0.
+    const next = html ?? '';
+    this.value = next;
+    this.onChange(next);
   }
 
   onBlur(): void {
+    const sanitized = sanitizeRichTextHtml(this.value);
+    if (sanitized !== this.value) {
+      this.value = sanitized;
+      this.onChange(sanitized);
+    }
     this.onTouched();
   }
 

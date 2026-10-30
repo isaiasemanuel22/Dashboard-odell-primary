@@ -130,16 +130,13 @@
             } @else {
               {{ item.productName }}
             }
-            @if (item.filamentType || item.grams || item.printTimeHours) {
+            @if (fdmItemSpecs(item) || itemPrintHours(item)) {
               <div class="quote-item-specs">
-                @if (item.filamentType) {
-                  <span>{{ item.filamentType }}</span>
+                @if (fdmItemSpecs(item); as specs) {
+                  <span>{{ specs }}</span>
                 }
-                @if (item.grams) {
-                  <span>{{ item.grams }} g</span>
-                }
-                @if (item.printTimeHours) {
-                  <span>{{ item.printTimeHours }} h</span>
+                @if (itemPrintHours(item); as hours) {
+                  <span>{{ hours }} h</span>
                 }
               </div>
             }

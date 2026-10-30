@@ -401,6 +401,10 @@ export interface OrderItem {
   productName: string;
   quantity: number;
   unitPrice: number;
+  /** Precio unitario editado a mano (persistido). */
+  unitPriceManual?: boolean;
+  /** Costo unitario al cotizar (snapshot persistido). */
+  unitCost?: number;
   includesPrint?: boolean;
   printPaperType?: PaperType;
   printWidthCm?: number;
@@ -410,11 +414,24 @@ export interface OrderItem {
   printTimeHours?: number;
   grams?: number;
   filamentType?: FilamentType;
+  /** Impresión 3D: filamentos/colores del desglose. */
+  filaments?: FdmFilamentLine[];
+  /** Impresión 3D: horas de mano de obra del desglose. */
+  workTimeHours?: number;
+  /** Impresión 3D: nota de mano de obra. */
+  laborNote?: string;
   /** Presupuesto/pedido estampado personalizado (sin producto de catálogo). */
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
   budgetedHours?: number;
+  /** Diseño/modelado: cobro por horas o precio fijo. */
+  chargeMode?: 'hours' | 'fixed';
+  workKind?: string;
+  deliverables?: string[];
+  includesRevisions?: boolean;
+  needsClientProduct?: boolean;
+  linkPrint?: boolean;
   deliveredQuantity?: number;
   reservedQuantity?: number;
   productionRequiredQuantity?: number;

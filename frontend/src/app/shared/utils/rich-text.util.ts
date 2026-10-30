@@ -40,17 +40,48 @@ export function excerptPlainText(
   return `${text.slice(0, maxLength).trim()}…`;
 }
 
+/** Compara HTML de Quill ignorando solo diferencias nbsp ↔ espacio (no mueve el cursor). */
+export function richTextEquivalent(
+  a: string | null | undefined,
+  b: string | null | undefined,
+): boolean {
+  const norm = (html: string | null | undefined): string =>
+    (html ?? '')
+      .replace(/&nbsp;/gi, ' ')
+      .replace(/\u00a0/g, ' ')
+      .trim();
+  return norm(a) === norm(b);
+}
+
 export function sanitizeRichTextHtml(html: string | null | undefined): string {
   if (!html?.trim()) return '';
 
+  // Quill inserta &nbsp; / U+00A0; al guardar quedan espacios normales.
+  const normalized = html
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/\u00a0/g, ' ')
+    .trim();
+
   if (typeof document === 'undefined') {
-    return html.trim();
+    return normalized;
   }
 
   const template = document.createElement('template');
-  template.innerHTML = html.trim();
+  template.innerHTML = normalized;
   sanitizeNode(template.content);
+  normalizeNbspInTree(template.content);
   return template.innerHTML.trim();
+}
+
+function normalizeNbspInTree(node: ParentNode): void {
+  const walker = document.createTreeWalker(node, NodeFilter.SHOW_TEXT);
+  let current = walker.nextNode();
+  while (current) {
+    if (current.nodeValue?.includes('\u00a0')) {
+      current.nodeValue = current.nodeValue.replace(/\u00a0/g, ' ');
+    }
+    current = walker.nextNode();
+  }
 }
 
 function sanitizeNode(node: ParentNode): void {

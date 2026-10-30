@@ -34,7 +34,11 @@ import {
   isGraphicDesignService,
   normalizeServiceType,
 } from './service-type.util';
-import { normalizeFdmFilaments } from './fdm.helpers';
+import {
+  normalizeFdmFilaments,
+  storedFdmFilaments,
+  totalFdmFilamentGrams,
+} from './fdm.helpers';
 
 export { isDesignService, isGraphicDesignService };
 
@@ -219,6 +223,9 @@ export function buildOrderItems(
     .filter((line) => isLineValid(line))
     .map((line) => {
       if (isDesignService(line.serviceType)) {
+        const deliverables = (line.deliverables ?? [])
+          .map((entry) => entry.trim())
+          .filter(Boolean);
         return {
           serviceType: line.serviceType,
           productName: line.customName!.trim(),
@@ -226,6 +233,11 @@ export function buildOrderItems(
           unitPrice: line.includesPrint
             ? resolveLinePrintUnitPrice(line)
             : (line.designUnitPrice ?? line.unitPrice),
+          unitPriceManual: line.unitPriceManual || undefined,
+          unitCost:
+            line.unitCost != null && Number.isFinite(Number(line.unitCost))
+              ? Number(line.unitCost)
+              : undefined,
           includesPrint: line.includesPrint || undefined,
           printPaperType: line.includesPrint ? line.printPaperType : undefined,
           printWidthCm: line.includesPrint ? line.printWidthCm : undefined,
@@ -233,6 +245,12 @@ export function buildOrderItems(
           printImpresoId: line.includesPrint ? line.printImpresoId : undefined,
           designUnitPrice: line.designUnitPrice ?? line.unitPrice,
           budgetedHours: line.budgetedHours,
+          chargeMode: line.chargeMode,
+          workKind: line.workKind?.trim() || undefined,
+          deliverables: deliverables.length ? deliverables : undefined,
+          includesRevisions: line.includesRevisions || undefined,
+          needsClientProduct: line.needsClientProduct || undefined,
+          linkPrint: line.linkPrint || undefined,
         };
       }
 
@@ -241,6 +259,22 @@ export function buildOrderItems(
         isImpresion3DLine(line.serviceType) && !line.productId?.trim();
       const isCustomEstampado =
         isEstampadoLine(line.serviceType) && !line.productId?.trim();
+
+      const filaments = isImpresion3DLine(line.serviceType)
+        ? storedFdmFilaments(line.filaments ?? [])
+        : [];
+      const grams = isImpresion3DLine(line.serviceType)
+        ? filaments.length
+          ? totalFdmFilamentGrams(filaments)
+          : line.grams
+        : undefined;
+      const filamentType = isImpresion3DLine(line.serviceType)
+        ? filaments.find((row) => row.filamentType)?.filamentType ??
+          line.filamentType
+        : undefined;
+      const laborNote = isImpresion3DLine(line.serviceType)
+        ? line.laborNote?.trim() || undefined
+        : undefined;
 
       return {
         serviceType: line.serviceType,
@@ -251,13 +285,21 @@ export function buildOrderItems(
             : (product?.name ?? line.customName?.trim() ?? 'Producto'),
         quantity: line.quantity,
         unitPrice: line.unitPrice,
+        unitPriceManual: line.unitPriceManual || undefined,
+        unitCost:
+          line.unitCost != null && Number.isFinite(Number(line.unitCost))
+            ? Number(line.unitCost)
+            : undefined,
         printTimeHours: isImpresion3DLine(line.serviceType)
           ? line.printTimeHours
           : undefined,
-        grams: isImpresion3DLine(line.serviceType) ? line.grams : undefined,
-        filamentType: isImpresion3DLine(line.serviceType)
-          ? line.filamentType
+        grams,
+        filamentType,
+        filaments: filaments.length ? filaments : undefined,
+        workTimeHours: isImpresion3DLine(line.serviceType)
+          ? line.workTimeHours
           : undefined,
+        laborNote,
         estampadoPrints: isEstampadoLine(line.serviceType)
           ? line.estampadoPrints
           : undefined,
@@ -448,6 +490,9 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
     const printUnitPrice = item.includesPrint
       ? resolveLinePrintUnitPrice(item)
       : undefined;
+    const deliverables = (item.deliverables ?? [])
+      .map((entry) => entry.trim())
+      .filter(Boolean);
 
     return {
       serviceType,
@@ -456,6 +501,7 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
       unitPrice: item.includesPrint
         ? (printUnitPrice ?? item.unitPrice)
         : designUnitPrice,
+      unitPriceManual: item.unitPriceManual || undefined,
       includesPrint: item.includesPrint,
       printPaperType: item.printPaperType,
       printWidthCm: item.printWidthCm,
@@ -463,19 +509,25 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
       printImpresoId: item.printImpresoId,
       designUnitPrice,
       printUnitPrice,
-      unitCost: undefined,
+      budgetedHours: item.budgetedHours,
+      chargeMode: item.chargeMode,
+      workKind: item.workKind,
+      deliverables: deliverables.length ? deliverables : undefined,
+      includesRevisions: item.includesRevisions || undefined,
+      needsClientProduct: item.needsClientProduct || undefined,
+      linkPrint: item.linkPrint || undefined,
+      unitCost:
+        item.unitCost != null && Number.isFinite(Number(item.unitCost))
+          ? Number(item.unitCost)
+          : undefined,
     };
   }
 
   const filaments = isImpresion3DLine(item.serviceType)
-    ? normalizeFdmFilaments(
-        (item as OrderItem & { filaments?: OrderLineDraft['filaments'] })
-          .filaments,
-        {
-          grams: item.grams,
-          filamentType: item.filamentType,
-        },
-      )
+    ? normalizeFdmFilaments(item.filaments, {
+        grams: item.grams,
+        filamentType: item.filamentType,
+      })
     : undefined;
 
   const estampadoPrints = isEstampadoLine(item.serviceType)
@@ -498,12 +550,22 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
         : undefined,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
-    // El costo se recalcula al abrir el form (sync FDM/estampado); no viene en el ítem.
-    unitCost: undefined,
+    unitPriceManual: item.unitPriceManual || undefined,
+    // Snapshot persistido; si falta, el sync al abrir lo completa.
+    unitCost:
+      item.unitCost != null && Number.isFinite(Number(item.unitCost))
+        ? Number(item.unitCost)
+        : undefined,
     printTimeHours: item.printTimeHours,
     grams: item.grams,
     filamentType: item.filamentType,
     filaments: filaments?.length ? filaments : undefined,
+    workTimeHours: isImpresion3DLine(item.serviceType)
+      ? item.workTimeHours
+      : undefined,
+    laborNote: isImpresion3DLine(item.serviceType)
+      ? item.laborNote
+      : undefined,
     estampadoPrints: estampadoPrints?.length ? estampadoPrints : undefined,
     estampadoPressCycles: estampadoPressCycles?.length
       ? estampadoPressCycles
@@ -515,12 +577,24 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
 export function createEmptyLine(serviceType: ServiceType): OrderLineDraft {
   return {
     serviceType,
+    uiId: createLineUiId(),
     productId: isDesignService(serviceType) ? undefined : '',
     customName: isDesignService(serviceType) ? '' : undefined,
     quantity: 1,
-    unitCost: isDesignService(serviceType) ? 0 : undefined,
+    unitCost: undefined,
     unitPrice: 0,
   };
+}
+
+export function ensureLineUiId(line: OrderLineDraft): string {
+  if (!line.uiId) {
+    line.uiId = createLineUiId();
+  }
+  return line.uiId;
+}
+
+function createLineUiId(): string {
+  return `line-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
 export type OrderStatusFilter = OrderStatus | 'all' | 'abiertos';

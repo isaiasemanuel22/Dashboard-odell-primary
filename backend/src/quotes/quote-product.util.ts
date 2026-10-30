@@ -6,6 +6,10 @@ import {
   normalizeEstampadoPrints,
   normalizeEstampadoSupplies,
 } from '../products/estampado-product.util';
+import {
+  normalizeFdmFilaments,
+  totalFdmFilamentGrams,
+} from '../products/fdm-product.util';
 
 export function isQuoteLineMissingFromCatalog(
   item: Pick<QuoteItem, 'serviceType' | 'productId'>,
@@ -51,19 +55,30 @@ export function unpublishedProductFromQuoteLine(
     return {
       ...base,
       type: ProductType.ESTAMPADO,
-      workTimeHours: 0,
+      workTimeHours: Number(item.workTimeHours) || 0,
       prints: normalizeEstampadoPrints(item.estampadoPrints),
       pressCycles: normalizeEstampadoPressCycles(item.estampadoPressCycles),
       supplies: normalizeEstampadoSupplies(item.estampadoSupplies),
     };
   }
 
+  const filaments = normalizeFdmFilaments(item.filaments, {
+    grams: item.grams,
+    filamentType: item.filamentType,
+  }).filter((line) => line.grams > 0);
+
   return {
     ...base,
     type: ProductType.FDM,
-    grams: 0,
-    printTimeHours: 0,
-    workTimeHours: 0,
+    grams: filaments.length
+      ? totalFdmFilamentGrams(filaments)
+      : Number(item.grams) || 0,
+    printTimeHours: Number(item.printTimeHours) || 0,
+    workTimeHours: Number(item.workTimeHours) || 0,
+    filamentType:
+      filaments.find((line) => line.filamentType)?.filamentType ??
+      item.filamentType,
+    filaments: filaments.length ? filaments : undefined,
   };
 }
 

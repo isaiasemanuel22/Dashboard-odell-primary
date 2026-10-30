@@ -213,6 +213,31 @@ dependencias quedan bloqueadas hasta que el cliente acepte el nuevo precio.
 Si el cliente rechaza la recotización, se cancelan el ítem afectado y sus
 tareas; los demás ítems del pedido continúan.
 
+### 5.1 Cotización en el formulario de presupuesto
+
+Reglas confirmadas para crear o editar un presupuesto (y la misma lógica de
+línea cuando el pedido cotiza impresión 3D):
+
+- **Filamento (FDM).** El costo de material se cotiza con el **promedio del
+  tipo** configurado en Ajustes (o el promedio de precios de ese tipo). No se
+  usa el precio por marca del producto ni de la línea de filamento.
+- **Resina.** Se cotiza con su propia composición de costo (resina, impresora
+  de resina, lavado/curado/alcohol según Ajustes). No se costea como FDM. En
+  el formulario, lavado, curado y alcohol se muestran como renglones aparte
+  del material de resina y de la impresión.
+- **Producto compuesto con piezas.** La mano de obra del presupuesto es solo
+  el tiempo de **armado** del producto. No se suman las horas de mano de obra
+  de las piezas. El precio de lista del catálogo se mantiene; las piezas ya
+  están reflejadas en ese precio.
+- **Precio unitario manual.** Si el usuario cambia el precio sugerido, esa
+  línea queda marcada como precio manual. Al reabrir el presupuesto (o el
+  pedido) ese estado se respeta: no se pisa el precio al recalcular por un
+  cambio de gramos u otro campo, hasta que el usuario elija volver al
+  sugerido.
+- **Fecha del presupuesto.** Es informativa: se muestra como texto (fecha de
+  emisión y validez a +15 días). No es un campo editable.
+- **Descripción.** Límite de 1.000 caracteres.
+
 ---
 
 ## 6. Comercialización
@@ -778,6 +803,14 @@ El descuento se usa en la venta, en el pedido y en el presupuesto. Se guarda
 con esa operación. Puede ser un porcentaje o un monto fijo. No los dos a la
 vez. El total que se guarda ya tiene el descuento restado.
 
+Límites al cargar el descuento:
+
+- porcentaje: entre **0 y 99** (no se admite 100 %, porque deja el total en $0);
+- monto fijo: entre **0 y un peso menos que el subtotal**.
+
+Si el valor ingresado o pegado queda fuera de rango, se ajusta al número
+válido más cercano. No se permite guardar un descuento inválido.
+
 Cuando un presupuesto aceptado genera un pedido, el pedido hereda ese
 descuento.
 
@@ -1307,11 +1340,11 @@ Solo incluye operaciones del mes calendario en curso.
 Ventas de mostrador, pedidos y presupuestos admiten **un solo tipo** de
 descuento por operación:
 
-- porcentaje (0–100 %), **o**
-- monto fijo en pesos.
+- porcentaje (0–99 %), **o**
+- monto fijo en pesos, menor al subtotal.
 
 No se permiten ambos simultáneamente. El total se calcula sobre el subtotal
-de ítems.
+de ítems. El formulario clampea al rango válido (§16.1).
 
 #### 25.3.6 Venta de mostrador y stock
 
@@ -1341,7 +1374,14 @@ Reglas codificadas:
 - El pedido generado hereda ítems, descuento y cliente del presupuesto.
 - La fecha de entrega pactada del pedido generado se fija a **7 días** desde
   la conversión.
-- El presupuesto puede crearse sin cliente (nombre «Sin cliente»).
+- El presupuesto puede crearse sin cliente (nombre «Sin cliente»); **Crear /
+  Enviar** exige cliente (el borrador no).
+- Cotización de líneas FDM/resina, precio manual, armado y fecha: ver §5.1.
+- Cada línea puede persistir `unitPriceManual` y un snapshot de `unitCost`
+  (costo al cotizar). Al reabrir se respetan para margen y precio manual; el
+  costo solo se recalcula si el usuario cambia inputs de cotización (gramos,
+  etc.), y en ese caso el precio manual se mantiene.
+- Descripción del presupuesto: máximo 1.000 caracteres.
 
 La conversión presupuesto → pedido **copia los ítems**; la creación
 automática de productos de catálogo no publicados al aceptar queda sujeta

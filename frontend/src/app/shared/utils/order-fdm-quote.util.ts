@@ -14,6 +14,11 @@ import {
   getMarginForService,
   priceFromCostAndMargin,
 } from './pricing.util';
+import {
+  productUsesPieceAssembly,
+  resolveProductGrams,
+  resolveProductPrintTimeHours,
+} from './product.helpers';
 
 export function isFdmQuoteConfigured(
   line: Pick<
@@ -50,10 +55,29 @@ export function shouldShowFdmQuoteFields(
   );
 }
 
+/**
+ * N6: mano de obra al cotizar un producto de catálogo.
+ * Con piezas: solo el armado (la MO de cada parte ya está en su costo/precio).
+ * Sin piezas: trabajo + armado.
+ */
+export function resolveQuoteLaborHoursFromProduct(
+  product: Product,
+  _catalog: Product[] = [],
+): number {
+  if (productUsesPieceAssembly(product)) {
+    return Math.max(0, Number(product.assemblyTimeHours) || 0);
+  }
+  const work =
+    'workTimeHours' in product ? Number(product.workTimeHours) || 0 : 0;
+  const assembly = Number(product.assemblyTimeHours) || 0;
+  return Math.max(0, work) + Math.max(0, assembly);
+}
+
 /** Completa campos vacíos / specs de la línea con los del producto de catálogo. */
 export function applyProductSpecsToFdmLine(
   line: OrderLineDraft,
   product: Product | undefined,
+  catalog: Product[] = [],
 ): void {
   if (!product || !isImpresion3DLine(line.serviceType)) return;
 
@@ -62,13 +86,16 @@ export function applyProductSpecsToFdmLine(
     if (!line.conceptManual) {
       line.customName = product.name;
     }
-    if (product.printTimeHours != null) {
-      line.printTimeHours = product.printTimeHours;
+    if (productUsesPieceAssembly(product)) {
+      line.printTimeHours = resolveProductPrintTimeHours(product, catalog);
+      line.grams = resolveProductGrams(product, catalog);
+    } else {
+      if (product.printTimeHours != null) {
+        line.printTimeHours = product.printTimeHours;
+      }
+      if (product.grams != null) line.grams = product.grams;
     }
-    if (product.workTimeHours != null) {
-      line.workTimeHours = product.workTimeHours;
-    }
-    if (product.grams != null) line.grams = product.grams;
+    line.workTimeHours = resolveQuoteLaborHoursFromProduct(product, catalog);
 
     if (product.type === ProductType.RESINA) {
       // Resina no usa filamentos; alcanza grams + tiempos del producto.
@@ -77,15 +104,15 @@ export function applyProductSpecsToFdmLine(
     }
 
     if (product.filaments?.length) {
+      // N1: en presupuesto no se cotiza por marca; solo tipo + promedio.
       line.filaments = normalizeFdmFilaments(
         product.filaments.map((row) => ({
           ...row,
-          brand: row.brand?.trim() || product.brand,
+          brand: undefined,
         })),
         {
           grams: product.grams,
           filamentType: product.filamentType,
-          brand: product.brand,
         },
       );
       line.grams = totalFdmFilamentGrams(line.filaments);
@@ -95,9 +122,8 @@ export function applyProductSpecsToFdmLine(
     } else {
       if (product.filamentType) line.filamentType = product.filamentType;
       line.filaments = normalizeFdmFilaments(undefined, {
-        grams: product.grams,
+        grams: line.grams ?? product.grams,
         filamentType: product.filamentType,
-        brand: product.brand,
         colorId: product.colorId,
       });
       if (!line.filaments.length) {
@@ -108,6 +134,9 @@ export function applyProductSpecsToFdmLine(
     if (!line.conceptManual) {
       line.customName = product.name;
     }
+    line.grams = resolveProductGrams(product, catalog);
+    line.printTimeHours = resolveProductPrintTimeHours(product, catalog);
+    line.workTimeHours = resolveQuoteLaborHoursFromProduct(product, catalog);
   }
 }
 
@@ -118,6 +147,8 @@ export function syncFdmQuotePricing(
   marginPercent: number,
   options?: {
     preservePrice?: boolean;
+    /** No pisar unitCost snapshot (reabrir presupuesto/pedido). */
+    preserveCost?: boolean;
     productType?: ProductType;
     brand?: string;
     resinType?: ResinType;
@@ -137,15 +168,22 @@ export function syncFdmQuotePricing(
 
   const type = isResin ? ProductType.RESINA : ProductType.FDM;
 
+  // N1: FDM cotiza por promedio del tipo; no pasar marca de producto/filamento.
+  const filamentsForQuote = isResin
+    ? undefined
+    : (line.filaments ?? []).map((row) => ({ ...row, brand: undefined }));
+
   const breakdown = costCalculator.calculateCost(
     {
       type,
       grams: Number(line.grams) || 0,
       printTimeHours: Number(line.printTimeHours) || 0,
       workTimeHours: Number(line.workTimeHours) || 0,
-      filamentType: line.filamentType as FilamentType,
-      filaments: line.filaments,
-      brand: options?.brand,
+      filamentType: isResin
+        ? undefined
+        : (line.filamentType as FilamentType),
+      filaments: filamentsForQuote?.length ? filamentsForQuote : undefined,
+      brand: isResin ? options?.brand : undefined,
       resinType: options?.resinType,
       washMinutes: options?.washMinutes,
       cureMinutes: options?.cureMinutes,
@@ -153,10 +191,19 @@ export function syncFdmQuotePricing(
     { settings },
   );
 
-  line.unitCost = breakdown.totalCost;
+  const keepCost =
+    options?.preserveCost &&
+    line.unitCost != null &&
+    Number.isFinite(Number(line.unitCost));
+  if (!keepCost) {
+    line.unitCost = breakdown.totalCost;
+  }
   const preserve = options?.preservePrice || !!line.unitPriceManual;
   if (!preserve) {
-    line.unitPrice = priceFromCostAndMargin(breakdown.totalCost, marginPercent);
+    const costForPrice = keepCost
+      ? Number(line.unitCost)
+      : breakdown.totalCost;
+    line.unitPrice = priceFromCostAndMargin(costForPrice, marginPercent);
   }
 }
 

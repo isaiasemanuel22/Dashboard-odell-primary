@@ -265,23 +265,95 @@
                     </p>
                   </header>
 
-                  <details class="cost-composition__block" open>
-                    <summary class="cost-composition__summary">
-                      <span class="cost-composition__chevron" aria-hidden="true"></span>
-                      <span class="cost-composition__summary-title">Filamentos</span>
-                      <span class="cost-composition__summary-meta">{{ fdmFilamentSummary(line) }}</span>
-                      <strong class="cost-composition__summary-cost">{{ (fdm?.materialCost ?? 0) | currencyArs }}</strong>
-                    </summary>
-                    <div class="cost-composition__body">
-                      <app-filament-line-list
-                        [embedded]="true"
-                        [locked]="isCatalogLocked(line)"
-                        [ngModel]="quoteFilaments(line)"
-                        (ngModelChange)="onFilamentsChange(line, $event)"
-                        [name]="'filaments-' + i"
-                      />
-                    </div>
-                  </details>
+                  @if (isResinProductLine(line)) {
+                    @let resin = resinCostParts(line);
+                    <details class="cost-composition__block" open>
+                      <summary class="cost-composition__summary">
+                        <span class="cost-composition__chevron" aria-hidden="true"></span>
+                        <span class="cost-composition__summary-title">Resina</span>
+                        <span class="cost-composition__summary-meta">{{ resinMaterialSummary(line) }}</span>
+                        <strong class="cost-composition__summary-cost">{{ (resin?.resinCost ?? 0) | currencyArs }}</strong>
+                      </summary>
+                      <div class="cost-composition__body cost-composition__body--fields">
+                        <div class="cost-table__suffix cost-composition__field">
+                          <db-input
+                            label="Gramos"
+                            type="number"
+                            [ngModel]="line.grams ?? 0"
+                            (ngModelChange)="onGramsChange(line, $event)"
+                            [name]="'resin-grams-' + i"
+                            [min]="0"
+                            [step]="1"
+                            [disabled]="isCatalogLocked(line)"
+                          />
+                          <span>g</span>
+                        </div>
+                        <p class="cost-composition__field-hint">
+                          Tipo y marca del catálogo · solo material de resina
+                        </p>
+                      </div>
+                    </details>
+
+                    <details class="cost-composition__block">
+                      <summary class="cost-composition__summary">
+                        <span class="cost-composition__chevron" aria-hidden="true"></span>
+                        <span class="cost-composition__summary-title">Alcohol</span>
+                        <span class="cost-composition__summary-meta">{{ resinAlcoholSummary(line) }}</span>
+                        <strong class="cost-composition__summary-cost">{{ (resin?.washSupplyCost ?? 0) | currencyArs }}</strong>
+                      </summary>
+                      <div class="cost-composition__body">
+                        <p class="cost-composition__field-hint">
+                          Costo del supply de lavado (amortizado por usos del baño). Viene de Ajustes · no editable acá.
+                        </p>
+                      </div>
+                    </details>
+
+                    <details class="cost-composition__block">
+                      <summary class="cost-composition__summary">
+                        <span class="cost-composition__chevron" aria-hidden="true"></span>
+                        <span class="cost-composition__summary-title">Lavado</span>
+                        <span class="cost-composition__summary-meta">{{ resinWashSummary(line) }}</span>
+                        <strong class="cost-composition__summary-cost">{{ (resin?.washMachineCost ?? 0) | currencyArs }}</strong>
+                      </summary>
+                      <div class="cost-composition__body">
+                        <p class="cost-composition__field-hint">
+                          Luz y máquina del perfil de lavado · minutos del producto en catálogo.
+                        </p>
+                      </div>
+                    </details>
+
+                    <details class="cost-composition__block">
+                      <summary class="cost-composition__summary">
+                        <span class="cost-composition__chevron" aria-hidden="true"></span>
+                        <span class="cost-composition__summary-title">Curado</span>
+                        <span class="cost-composition__summary-meta">{{ resinCureSummary(line) }}</span>
+                        <strong class="cost-composition__summary-cost">{{ (resin?.cureMachineCost ?? 0) | currencyArs }}</strong>
+                      </summary>
+                      <div class="cost-composition__body">
+                        <p class="cost-composition__field-hint">
+                          Luz y máquina del perfil de curado · minutos del producto en catálogo.
+                        </p>
+                      </div>
+                    </details>
+                  } @else {
+                    <details class="cost-composition__block" open>
+                      <summary class="cost-composition__summary">
+                        <span class="cost-composition__chevron" aria-hidden="true"></span>
+                        <span class="cost-composition__summary-title">Filamentos</span>
+                        <span class="cost-composition__summary-meta">{{ fdmFilamentSummary(line) }}</span>
+                        <strong class="cost-composition__summary-cost">{{ (fdm?.materialCost ?? 0) | currencyArs }}</strong>
+                      </summary>
+                      <div class="cost-composition__body">
+                        <app-filament-line-list
+                          [embedded]="true"
+                          [locked]="isCatalogLocked(line)"
+                          [ngModel]="quoteFilaments(line)"
+                          (ngModelChange)="onFilamentsChange(line, $event)"
+                          [name]="'filaments-' + i"
+                        />
+                      </div>
+                    </details>
+                  }
 
                   <details class="cost-composition__block">
                     <summary class="cost-composition__summary">
@@ -289,7 +361,11 @@
                       <span class="cost-composition__summary-title">Impresión</span>
                       <span class="cost-composition__summary-meta">{{ fdmPrintSummary(line) }}</span>
                       <strong class="cost-composition__summary-cost">
-                        {{ ((fdm?.energyCost ?? 0) + (fdm?.machineCost ?? 0)) | currencyArs }}
+                        @if (isResinProductLine(line)) {
+                          {{ (resinCostParts(line)?.printCost ?? 0) | currencyArs }}
+                        } @else {
+                          {{ ((fdm?.energyCost ?? 0) + (fdm?.machineCost ?? 0)) | currencyArs }}
+                        }
                       </strong>
                     </summary>
                     <div class="cost-composition__body cost-composition__body--fields">
@@ -595,7 +671,7 @@
                       <db-checkbox
                         label="Incluir la impresión de la pieza"
                         [ngModel]="!!line.linkPrint"
-                        (ngModelChange)="line.linkPrint = $event"
+                        (ngModelChange)="onLinkPrintChange(line, $event, i)"
                         [name]="'link-print-' + i"
                       />
                       <p class="quote-check__hint">Agrega una línea de Impresión 3D vinculada a este modelo.</p>
@@ -639,10 +715,21 @@
                     } @else {
                       <p
                         class="order-line__money-hint"
-                        [class.order-line__money-hint--warn]="serviceRate(line) <= 0"
+                        [class.order-line__money-hint--warn]="
+                          serviceRate(line) <= 0 || isUnitPriceBelowCost(line)
+                        "
                       >
                         {{ designPriceHint(line) }}
                       </p>
+                    }
+                    @if (isUnitPriceManual(line)) {
+                      <button
+                        type="button"
+                        class="order-line__price-reset"
+                        (click)="resetUnitPriceToSuggested(line)"
+                      >
+                        Volver al sugerido
+                      </button>
                     }
                   </div>
                 } @else {
@@ -683,7 +770,21 @@
                     @if (lineUnitPriceError(line); as priceError) {
                       <p class="order-line__money-hint order-line__money-hint--warn">{{ priceError }}</p>
                     } @else {
-                      <p class="order-line__money-hint">{{ suggestedUnitPriceHint(line) }}</p>
+                      <p
+                        class="order-line__money-hint"
+                        [class.order-line__money-hint--warn]="isUnitPriceBelowCost(line)"
+                      >
+                        {{ suggestedUnitPriceHint(line) }}
+                      </p>
+                    }
+                    @if (isUnitPriceManual(line)) {
+                      <button
+                        type="button"
+                        class="order-line__price-reset"
+                        (click)="resetUnitPriceToSuggested(line)"
+                      >
+                        Volver al sugerido
+                      </button>
                     }
                   </div>
                 }
@@ -772,21 +873,22 @@
             @if (discountMode === 'percent') {
               <db-input
                 type="number"
-                [(ngModel)]="discountPercent"
+                [ngModel]="discountPercent"
+                (ngModelChange)="onDiscountPercentChange($event)"
                 name="discountPercent"
                 [min]="0"
-                [max]="100"
+                [max]="discountPercentMax"
                 [step]="1"
-                [error]="discountError"
               />
             } @else if (discountMode === 'amount') {
               <db-input
                 type="number"
-                [(ngModel)]="discountAmount"
+                [ngModel]="discountAmount"
+                (ngModelChange)="onDiscountAmountChange($event)"
                 name="discountAmount"
                 [min]="0"
+                [max]="discountAmountMax"
                 [step]="1"
-                [error]="discountError"
               />
             } @else {
               <db-input
@@ -1097,16 +1199,31 @@
                       <p class="order-line__rate-warn">{{ rateHint }}</p>
                     }
                   </div>
-                  <db-input
-                    label="Precio unitario"
-                    type="number"
-                    [ngModel]="designUnitPriceForLine(line)"
-                    (ngModelChange)="onDesignUnitPriceChange(line, $event)"
-                    [name]="'price-' + i"
-                    [min]="0"
-                    [step]="1"
-                    [error]="lineUnitPriceError(line)"
-                  />
+                  <div class="order-line__money-field">
+                    <db-input
+                      label="Precio unitario"
+                      type="number"
+                      [ngModel]="designUnitPriceForLine(line)"
+                      (ngModelChange)="onDesignUnitPriceChange(line, $event)"
+                      [name]="'price-' + i"
+                      [min]="0"
+                      [step]="1"
+                      [hint]="lineUnitPriceError(line) ? '' : designPriceHint(line)"
+                      [error]="
+                        lineUnitPriceError(line) ||
+                        (isUnitPriceBelowCost(line) ? designPriceHint(line) : '')
+                      "
+                    />
+                    @if (isUnitPriceManual(line)) {
+                      <button
+                        type="button"
+                        class="order-line__price-reset"
+                        (click)="resetUnitPriceToSuggested(line)"
+                      >
+                        Volver al sugerido
+                      </button>
+                    }
+                  </div>
                 } @else {
                   <div class="order-line__money-field">
                     <span class="order-line__money-label">Costo unitario</span>
@@ -1143,7 +1260,21 @@
                     @if (lineUnitPriceError(line); as priceError) {
                       <p class="order-line__money-hint order-line__money-hint--warn">{{ priceError }}</p>
                     } @else {
-                      <p class="order-line__money-hint">{{ unitPriceHint(line) }}</p>
+                      <p
+                        class="order-line__money-hint"
+                        [class.order-line__money-hint--warn]="isUnitPriceBelowCost(line)"
+                      >
+                        {{ unitPriceHint(line) }}
+                      </p>
+                    }
+                    @if (isUnitPriceManual(line)) {
+                      <button
+                        type="button"
+                        class="order-line__price-reset"
+                        (click)="resetUnitPriceToSuggested(line)"
+                      >
+                        Volver al sugerido
+                      </button>
                     }
                   </div>
                 }
@@ -1204,21 +1335,22 @@
               @if (discountMode === 'percent') {
                 <db-input
                   type="number"
-                  [(ngModel)]="discountPercent"
+                  [ngModel]="discountPercent"
+                  (ngModelChange)="onDiscountPercentChange($event)"
                   name="discountPercent"
                   [min]="0"
-                  [max]="100"
+                  [max]="discountPercentMax"
                   [step]="1"
-                  [error]="discountError"
                 />
               } @else if (discountMode === 'amount') {
                 <db-input
                   type="number"
-                  [(ngModel)]="discountAmount"
+                  [ngModel]="discountAmount"
+                  (ngModelChange)="onDiscountAmountChange($event)"
                   name="discountAmount"
                   [min]="0"
+                  [max]="discountAmountMax"
                   [step]="1"
-                  [error]="discountError"
                 />
               } @else {
                 <db-input
@@ -1274,7 +1406,7 @@
     @if (isQuoteForm) {
       <db-form-footer class="quote-form__footer">
         <p class="quote-form__note">
-          Borrador queda en Borrador; Crear/Guardar lo deja Enviado
+          Borrador puede ir sin cliente; Crear lo deja Enviado y exige cliente
         </p>
         <div class="quote-form__actions">
           <db-button
@@ -1287,7 +1419,7 @@
             label="Guardar borrador"
             variant="secondary"
             format="solid"
-            [disabled]="loading || !canSubmit()"
+            [disabled]="loading || !canSubmit(true)"
             (clicked)="onSubmit(true)"
           />
           <db-button
@@ -1295,9 +1427,12 @@
             variant="primary"
             format="solid"
             buttonType="submit"
-            [disabled]="loading || !canSubmit()"
+            [disabled]="loading || !canSubmit(false)"
           />
         </div>
+        @if (quoteNeedsCustomerHint) {
+          <p class="quote-form__warning">{{ quoteNeedsCustomerHint }}</p>
+        }
       </db-form-footer>
     } @else {
       <db-form-footer class="order-form__footer">

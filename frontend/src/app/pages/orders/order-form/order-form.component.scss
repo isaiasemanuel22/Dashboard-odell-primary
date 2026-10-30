@@ -51,8 +51,6 @@
 }
 
 .quote-form .quote-date-field__value {
-  min-height: 2.35rem;
-  padding: 0.4rem 0.75rem;
   font-size: 0.875rem;
 }
 
@@ -983,14 +981,13 @@
   }
 
   &__value {
-    display: flex;
-    align-items: center;
-    min-height: 2.5rem;
-    padding: 0.5rem 0.75rem;
-    border: 1px solid $color-border;
-    border-radius: $radius-sm;
-    background: $color-surface;
+    margin: 0;
+    padding: 0;
+    border: none;
+    background: transparent;
     font-size: 0.9375rem;
+    font-weight: 500;
+    line-height: 1.35;
     color: $color-text;
   }
 
@@ -1348,6 +1345,17 @@
         border: 0;
         box-shadow: none;
         background: transparent;
+
+        &:disabled {
+          cursor: not-allowed;
+          color: $color-text-muted;
+        }
+      }
+
+      &.order-line__money-value--locked {
+        cursor: not-allowed;
+        background: $color-surface-muted;
+        opacity: 0.92;
       }
     }
   }
@@ -1410,6 +1418,25 @@
 
   &__money-hint--warn {
     color: #c2410c;
+  }
+
+  &__price-reset {
+    appearance: none;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    margin: 0.15rem 0 0;
+    color: $color-primary;
+    font-size: 0.75rem;
+    font-weight: 600;
+    font-family: inherit;
+    line-height: 1.35;
+    cursor: pointer;
+    text-align: left;
+
+    &:hover {
+      text-decoration: underline;
+    }
   }
 }
 

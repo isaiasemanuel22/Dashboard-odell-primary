@@ -263,6 +263,36 @@ export function calculateMachineOverhead(
   };
 }
 
+/** Overhead (luz + máquina) de un solo rol — p. ej. PRINT / WASH / CURE en resina. */
+export function calculateMachineOverheadForRole(
+  settings: GeneralSettings,
+  productType: ProductType,
+  context: MachineTimeContext,
+  role: MachineProfileRole,
+): { energyCost: number; machineCost: number; total: number } {
+  const profiles = getMachineProfilesForProductType(settings, productType).filter(
+    (profile) => profile.role === role,
+  );
+  const costPerKwh = settings.electricityCostPerKwh;
+
+  let energyCost = 0;
+  let machineCost = 0;
+
+  for (const profile of profiles) {
+    const hours = resolveMachineHours(profile, context);
+    energyCost += (profile.watts / 1000) * hours * costPerKwh;
+    machineCost += profile.costPerHour * hours;
+  }
+
+  const energy = Math.round(energyCost);
+  const machine = Math.round(machineCost);
+  return {
+    energyCost: energy,
+    machineCost: machine,
+    total: energy + machine,
+  };
+}
+
 export function calcWashSupplyCost(
   settings: GeneralSettings,
   supplies: Supply[],

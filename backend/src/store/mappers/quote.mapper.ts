@@ -1,8 +1,10 @@
 import { Prisma } from '@prisma/client';
-import { Quote, QuoteItem } from '../../common/interfaces';
+import { FdmFilamentLine, Quote, QuoteItem } from '../../common/interfaces';
 import { QuoteStatus } from '../../common/enums';
 import { fromJson, toInputJson } from '../../prisma/json.util';
 import { normalizeServiceType } from '../../common/service-type.util';
+import { normalizeFdmFilaments } from '../../products/fdm-product.util';
+import { persistedFdmLine } from '../brand-link.util';
 
 export function mapQuoteItemFromDb(item: {
   serviceType: string;
@@ -10,6 +12,8 @@ export function mapQuoteItemFromDb(item: {
   productName: string;
   quantity: number;
   unitPrice: number;
+  unitPriceManual?: boolean;
+  unitCost?: number | null;
   includesPrint?: boolean;
   printPaperType?: string | null;
   printWidthCm?: number | null;
@@ -19,10 +23,33 @@ export function mapQuoteItemFromDb(item: {
   printTimeHours?: number | null;
   grams?: number | null;
   filamentType?: string | null;
+  workTimeHours?: number | null;
+  laborNote?: string | null;
+  fdmFilaments?: Prisma.JsonValue;
+  budgetedHours?: number | null;
+  chargeMode?: string | null;
+  workKind?: string | null;
+  deliverables?: Prisma.JsonValue;
+  includesRevisions?: boolean;
+  needsClientProduct?: boolean;
+  linkPrint?: boolean;
   estampadoPrints?: Prisma.JsonValue;
   estampadoPressCycles?: Prisma.JsonValue;
   estampadoSupplies?: Prisma.JsonValue;
 }): QuoteItem {
+  const filaments = normalizeFdmFilaments(
+    fromJson<FdmFilamentLine[]>(item.fdmFilaments ?? []),
+    {
+      grams: item.grams ?? undefined,
+      filamentType: item.filamentType as QuoteItem['filamentType'],
+    },
+  );
+  const deliverables = fromJson<string[]>(item.deliverables ?? []);
+  const chargeMode =
+    item.chargeMode === 'hours' || item.chargeMode === 'fixed'
+      ? item.chargeMode
+      : undefined;
+
   return {
     serviceType:
       normalizeServiceType(item.serviceType) ??
@@ -31,6 +58,11 @@ export function mapQuoteItemFromDb(item: {
     productName: item.productName,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    unitPriceManual: item.unitPriceManual || undefined,
+    unitCost:
+      item.unitCost != null && Number.isFinite(Number(item.unitCost))
+        ? Number(item.unitCost)
+        : undefined,
     includesPrint: item.includesPrint ?? undefined,
     printPaperType: (item.printPaperType as QuoteItem['printPaperType']) ?? undefined,
     printWidthCm: item.printWidthCm ?? undefined,
@@ -40,6 +72,16 @@ export function mapQuoteItemFromDb(item: {
     printTimeHours: item.printTimeHours ?? undefined,
     grams: item.grams ?? undefined,
     filamentType: (item.filamentType as QuoteItem['filamentType']) ?? undefined,
+    filaments: filaments.length ? filaments : undefined,
+    workTimeHours: item.workTimeHours ?? undefined,
+    laborNote: item.laborNote?.trim() || undefined,
+    budgetedHours: item.budgetedHours ?? undefined,
+    chargeMode,
+    workKind: item.workKind?.trim() || undefined,
+    deliverables: deliverables.length ? deliverables : undefined,
+    includesRevisions: item.includesRevisions || undefined,
+    needsClientProduct: item.needsClientProduct || undefined,
+    linkPrint: item.linkPrint || undefined,
     estampadoPrints: fromJson<QuoteItem['estampadoPrints']>(
       item.estampadoPrints ?? [],
     ),
@@ -135,6 +177,11 @@ export function mapQuoteItemToDb(
   index: number,
   item: QuoteItem,
 ) {
+  const filaments = normalizeFdmFilaments(item.filaments, {
+    grams: item.grams,
+    filamentType: item.filamentType,
+  }).filter((line) => line.grams > 0);
+
   return {
     id: `${quoteId}-item-${index}`,
     quoteId,
@@ -144,6 +191,11 @@ export function mapQuoteItemToDb(
     productName: item.productName,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    unitPriceManual: item.unitPriceManual === true,
+    unitCost:
+      item.unitCost != null && Number.isFinite(Number(item.unitCost))
+        ? Number(item.unitCost)
+        : null,
     includesPrint: item.includesPrint ?? false,
     printPaperType: item.printPaperType ?? null,
     printWidthCm: item.printWidthCm ?? null,
@@ -153,6 +205,16 @@ export function mapQuoteItemToDb(
     printTimeHours: item.printTimeHours ?? null,
     grams: item.grams ?? null,
     filamentType: item.filamentType ?? null,
+    workTimeHours: item.workTimeHours ?? null,
+    laborNote: item.laborNote?.trim() || null,
+    fdmFilaments: toInputJson(filaments.map(persistedFdmLine)),
+    budgetedHours: item.budgetedHours ?? null,
+    chargeMode: item.chargeMode ?? null,
+    workKind: item.workKind?.trim() || null,
+    deliverables: toInputJson(item.deliverables ?? []),
+    includesRevisions: item.includesRevisions ?? false,
+    needsClientProduct: item.needsClientProduct ?? false,
+    linkPrint: item.linkPrint ?? false,
     estampadoPrints: toInputJson(item.estampadoPrints ?? []),
     estampadoPressCycles: toInputJson(item.estampadoPressCycles ?? []),
     estampadoSupplies: toInputJson(item.estampadoSupplies ?? []),

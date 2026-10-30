@@ -19,6 +19,7 @@ import {
   EstampadoPrintSpec,
   EstampadoSupplyLine,
 } from '../interfaces';
+import { FdmFilamentLineDto } from './product.dto';
 import { ORDER_RICH_TEXT_HTML_MAX_LENGTH } from '../../orders/rich-text.util';
 
 export class UpdateStatusDto {
@@ -83,6 +84,15 @@ export class OrderItemDto {
 
   @IsOptional()
   @IsBoolean()
+  unitPriceManual?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  unitCost?: number;
+
+  @IsOptional()
+  @IsBoolean()
   includesPrint?: boolean;
 
   @IsOptional()
@@ -124,6 +134,22 @@ export class OrderItemDto {
 
   @IsOptional()
   @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => FdmFilamentLineDto)
+  filaments?: FdmFilamentLineDto[];
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  workTimeHours?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(500)
+  laborNote?: string;
+
+  @IsOptional()
+  @IsArray()
   estampadoPrints?: EstampadoPrintSpec[];
 
   @IsOptional()
@@ -138,6 +164,32 @@ export class OrderItemDto {
   @IsNumber()
   @Min(0)
   budgetedHours?: number;
+
+  @IsOptional()
+  @IsIn(['hours', 'fixed'])
+  chargeMode?: 'hours' | 'fixed';
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  workKind?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  deliverables?: string[];
+
+  @IsOptional()
+  @IsBoolean()
+  includesRevisions?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  needsClientProduct?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  linkPrint?: boolean;
 }
 
 export class OrderPriceDecisionDto {

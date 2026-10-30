@@ -1,4 +1,5 @@
 import { FdmFilamentLine, FilamentType, INDISTINTO_COLOR_ID } from '../../core/models';
+import { FILAMENT_TYPE_LABELS } from '../constants/labels';
 import { normalizeColorId } from './color.helpers';
 
 export function createFdmFilamentLineId(): string {
@@ -80,4 +81,28 @@ export function resolveFdmFilaments(input: {
     filamentType: input.filamentType,
     brand: input.brand,
   });
+}
+
+/** Resumen para detalle: "PLA 30 g + PETG 20 g". */
+export function formatFdmFilamentsSummary(input: {
+  filaments?: FdmFilamentLine[];
+  grams?: number;
+  filamentType?: FilamentType | string | null;
+}): string {
+  const rows = normalizeFdmFilaments(input.filaments, {
+    grams: input.grams,
+    filamentType: input.filamentType as FilamentType | undefined,
+  }).filter((row) => (Number(row.grams) || 0) > 0 && row.filamentType);
+
+  if (!rows.length) return '';
+
+  return rows
+    .map((row) => {
+      const type =
+        FILAMENT_TYPE_LABELS[row.filamentType] ??
+        String(row.filamentType).toUpperCase();
+      const grams = Math.round(Number(row.grams) || 0);
+      return `${type} ${grams} g`;
+    })
+    .join(' + ');
 }

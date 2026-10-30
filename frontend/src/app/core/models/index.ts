@@ -547,6 +547,10 @@ export interface OrderItemPayload {
   productName: string;
   quantity: number;
   unitPrice: number;
+  /** Precio unitario editado a mano (persistido). */
+  unitPriceManual?: boolean;
+  /** Costo unitario al cotizar (snapshot persistido). */
+  unitCost?: number;
   includesPrint?: boolean;
   printPaperType?: PaperType;
   printWidthCm?: number;
@@ -556,10 +560,19 @@ export interface OrderItemPayload {
   printTimeHours?: number;
   grams?: number;
   filamentType?: FilamentType;
+  filaments?: FdmFilamentLine[];
+  workTimeHours?: number;
+  laborNote?: string;
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
   budgetedHours?: number;
+  chargeMode?: 'hours' | 'fixed';
+  workKind?: string;
+  deliverables?: string[];
+  includesRevisions?: boolean;
+  needsClientProduct?: boolean;
+  linkPrint?: boolean;
 }
 
 export interface OrderItem extends OrderItemPayload {
@@ -687,18 +700,28 @@ export interface OrderLineDraft {
   serviceType: ServiceType;
   productId?: string;
   customName?: string;
+  /** UI: id local de la línea (vínculos en el form). No se persiste. */
+  uiId?: string;
+  /**
+   * UI: la línea de impresión 3D creada por «Incluir la impresión».
+   * No se persiste.
+   */
+  linkedModelUiId?: string;
   /**
    * UI: el usuario editó Concepto a mano. No se pisa al cambiar producto.
    * No se persiste.
    */
   conceptManual?: boolean;
   quantity: number;
-  /** Solo líneas de diseño: costo unitario estimado (UI). */
+  /**
+   * Costo unitario al cotizar (snapshot). Se persiste; al reabrir se usa para
+   * margen / «bajo costo» hasta que el usuario cambie inputs de cotización.
+   */
   unitCost?: number;
   unitPrice: number;
   /**
-   * UI: el usuario editó el precio unitario a mano.
-   * No se pisa al recalcular costo (gramos, etiqueta, etc.). No se persiste.
+   * El usuario editó el precio unitario a mano.
+   * No se pisa al recalcular costo (gramos, etc.). Se persiste.
    */
   unitPriceManual?: boolean;
   includesPrint?: boolean;
@@ -714,30 +737,25 @@ export interface OrderLineDraft {
   printTimeHours?: number;
   grams?: number;
   filamentType?: FilamentType;
-  /**
-   * Filamentos de la UI. El payload sigue guardando grams + filamentType
-   * (el primero con tipo y la suma de gramos).
-   */
+  /** Filamentos/colores del desglose 3D (se persisten en el ítem). */
   filaments?: FdmFilamentLine[];
-  /**
-   * Horas de mano de obra solo para el costeo en pantalla.
-   * El API de presupuestos no persiste este campo.
-   */
+  /** Horas de mano de obra del desglose 3D (se persisten). */
   workTimeHours?: number;
-  /** Nota local de mano de obra. No se persiste. */
+  /** Nota de mano de obra (se persiste). */
   laborNote?: string;
-  /** Cómo se cobra diseño o modelado. No se persiste. */
+  /** Cómo se cobra diseño o modelado (se persiste). */
   chargeMode?: 'hours' | 'fixed';
-  /** Tipo de trabajo de diseño. No se persiste. */
+  /** Tipo de trabajo de diseño (se persiste). */
   workKind?: string;
-  /** Entregables de diseño o modelado. No se persisten. */
+  /** Entregables de diseño o modelado (se persisten). */
   deliverables?: string[];
-  /** Rondas de cambios de diseño. No se persiste. */
+  /** Rondas de cambios de diseño (se persiste). */
   includesRevisions?: boolean;
-  /** El modelado espera el producto del cliente. No se persiste. */
+  /** El modelado espera el producto del cliente (se persiste). */
   needsClientProduct?: boolean;
   /**
-   * Casilla visual de modelado. No crea una línea de impresión ni se persiste.
+   * Modelado: incluir impresión de la pieza.
+   * Al marcar, el form agrega una línea de Impresión 3D vinculada.
    */
   linkPrint?: boolean;
   /** Solo estampado personalizado (sin catálogo). */

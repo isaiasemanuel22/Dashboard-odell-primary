@@ -6,6 +6,7 @@ import {
   FilamentType,
   GeneralSettings,
   ImpresoWithCost,
+  MachineProfileRole,
   PaperType,
   ProductType,
   ResinType,
@@ -28,7 +29,9 @@ import {
 import {
   calcWashSupplyCost,
   calculateMachineOverhead,
+  calculateMachineOverheadForRole,
   getMachineProfilesForProductType,
+  resolveWashBathUses,
 } from '../../shared/utils/machine-profile.util';
 import {
   RESIN_DENSITY_G_PER_ML,
@@ -40,6 +43,23 @@ export interface ProductCostCalculationContext {
   settings: GeneralSettings;
   supplies?: Supply[];
   impresos?: ImpresoWithCost[];
+}
+
+/** Desglose visual de costo de resina (order-form); no cambia el total. */
+export interface ResinCostParts {
+  resinCost: number;
+  washSupplyCost: number;
+  washMachineCost: number;
+  cureMachineCost: number;
+  printCost: number;
+  printEnergyCost: number;
+  printMachineCost: number;
+  washMinutes: number;
+  cureMinutes: number;
+  printHours: number;
+  washSupplyName: string | null;
+  washConsumptionMl: number;
+  washBathUses: number;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -54,8 +74,13 @@ export class ProductCostCalculationService {
     context: ProductCostCalculationContext,
   ): CostBreakdown {
     const settings = context.settings;
-    const supplies = context.supplies ?? this.suppliesSignal();
-    const impresos = context.impresos ?? this.impresosSignal();
+    // [] vacío no debe tapar el store (order-form a veces aún no cargó supplies).
+    const supplies = context.supplies?.length
+      ? context.supplies
+      : this.suppliesSignal();
+    const impresos = context.impresos?.length
+      ? context.impresos
+      : this.impresosSignal();
 
     getMachineProfilesForProductType(settings, dto.type);
 
@@ -116,6 +141,81 @@ export class ProductCostCalculationService {
     const pricePerSqm =
       settings.paperPricesPerSqm[paperReferenceKey(paperType)];
     return calculatePaperCostFromPricePerSqm(pricePerSqm, widthCm, heightCm);
+  }
+
+  /**
+   * Partes del costo de una línea RESINA para la composición visual.
+   * materialCost del breakdown = resinCost + washSupplyCost;
+   * energy+machine = print + lavado + curado.
+   */
+  buildResinCostParts(
+    dto: CalculateCostPayload,
+    context: ProductCostCalculationContext,
+  ): ResinCostParts {
+    const settings = context.settings;
+    const supplies = context.supplies?.length
+      ? context.supplies
+      : this.suppliesSignal();
+    const grams = Number(dto.grams) || 0;
+    const printHours = Number(dto.printTimeHours) || 0;
+    const washMinutes = Number(dto.washMinutes) || 0;
+    const cureMinutes = Number(dto.cureMinutes) || 0;
+    const timeCtx = {
+      printTimeHours: printHours,
+      washMinutes,
+      cureMinutes,
+      pressMinutes: 0,
+    };
+
+    const resinCost = Math.round(
+      this.calcResinCost(dto.brand, dto.resinType, grams, settings),
+    );
+    const washSupplyCost = Math.round(
+      calcWashSupplyCost(settings, supplies, ProductType.RESINA),
+    );
+
+    const print = calculateMachineOverheadForRole(
+      settings,
+      ProductType.RESINA,
+      timeCtx,
+      MachineProfileRole.PRINT,
+    );
+    const wash = calculateMachineOverheadForRole(
+      settings,
+      ProductType.RESINA,
+      timeCtx,
+      MachineProfileRole.WASH,
+    );
+    const cure = calculateMachineOverheadForRole(
+      settings,
+      ProductType.RESINA,
+      timeCtx,
+      MachineProfileRole.CURE,
+    );
+
+    const washProfile = getMachineProfilesForProductType(
+      settings,
+      ProductType.RESINA,
+    ).find((profile) => profile.role === MachineProfileRole.WASH);
+    const washSupply = washProfile?.washSupplyId
+      ? supplies.find((item) => item.id === washProfile.washSupplyId)
+      : undefined;
+
+    return {
+      resinCost,
+      washSupplyCost,
+      washMachineCost: wash.total,
+      cureMachineCost: cure.total,
+      printCost: print.total,
+      printEnergyCost: print.energyCost,
+      printMachineCost: print.machineCost,
+      washMinutes,
+      cureMinutes,
+      printHours,
+      washSupplyName: washSupply?.name?.trim() || null,
+      washConsumptionMl: Math.max(Number(washProfile?.consumptionMl) || 0, 0),
+      washBathUses: resolveWashBathUses(washProfile?.washBathUses),
+    };
   }
 
   private calculateMaterialCost(

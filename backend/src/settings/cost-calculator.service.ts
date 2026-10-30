@@ -445,6 +445,7 @@ export class CostCalculatorService {
   resolveOrderItemUnitCost(item: {
     productId?: string;
     unitPrice: number;
+    unitCost?: number;
     serviceType?: ServiceType;
     grams?: number;
     printTimeHours?: number;
@@ -455,6 +456,10 @@ export class CostCalculatorService {
     printWidthCm?: number;
     printLengthCm?: number;
   }): number {
+    // Snapshot persistido al cotizar: no recalcular con Ajustes actuales.
+    if (item.unitCost != null && Number.isFinite(Number(item.unitCost))) {
+      return Math.max(0, Number(item.unitCost));
+    }
     if (
       item.serviceType === ServiceType.IMPRESION_3D &&
       isFdmQuoteConfigured(item)

@@ -65,7 +65,13 @@ describe('B9 order line validations', () => {
       'negativo',
     );
     expect(discountValidationMessage('percent', -3, 0)).toContain('negativo');
-    expect(discountValidationMessage('amount', 0, 100)).toBe('');
+    expect(discountValidationMessage('amount', 0, 100, 500)).toBe('');
+    expect(discountValidationMessage('percent', 150, 0, 10_000)).toContain(
+      '99%',
+    );
+    expect(discountValidationMessage('amount', 0, 10_000, 8_000)).toContain(
+      'subtotal',
+    );
   });
 
   it('lineValidationMessage prefers quantity errors', () => {
