@@ -102,6 +102,17 @@
         </div>
       </db-form-grid>
 
+      <db-form-grid-full class="quote-description-field">
+        <db-rich-text-editor
+          label="Descripción"
+          [(ngModel)]="description"
+          name="quoteDescription"
+          placeholder="Describí el trabajo: qué necesita el cliente, referencias, alcances..."
+          [maxLength]="descriptionMaxLength"
+          [uploadFn]="uploadDescriptionImage"
+        />
+      </db-form-grid-full>
+
       <section class="quote-lines-section">
         <header class="quote-lines-section__head quote-lines-section__head--row">
           <h4 class="quote-lines-section__title">Líneas de trabajo</h4>

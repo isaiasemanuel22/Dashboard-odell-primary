@@ -1254,7 +1254,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
     };
 
     if (this.isQuoteForm) {
-      this.save.emit(shared satisfies CreateQuotePayload);
+      this.save.emit({
+        ...shared,
+        description: hasRichTextContent(this.description)
+          ? sanitizeRichTextHtml(this.description)
+          : '',
+      } satisfies CreateQuotePayload);
       return;
     }
 
@@ -1288,18 +1293,24 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   canSubmit(): boolean {
     if (!this.lines.some((line) => isLineValid(line))) return false;
+    if (
+      plainTextFromHtml(this.description).length > this.descriptionMaxLength
+    ) {
+      return false;
+    }
     if (this.isQuoteForm) return true;
     return (
       !!this.customerId.trim() &&
       !!this.dueDate &&
-      !this.dueDateError &&
-      plainTextFromHtml(this.description).length <= this.descriptionMaxLength
+      !this.dueDateError
     );
   }
 
   private resetForm(): void {
     if (this.isQuoteForm && this.quote) {
       this.customerId = this.quote.customerId ?? '';
+      this.description = this.quote.description ?? '';
+      this.notes = '';
       this.lines = this.quote.items.map((item) => lineFromQuoteItem(item));
       this.discountMode = discountModeFromValues(
         this.quote.discountPercent,
@@ -1310,7 +1321,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     } else if (this.presetQuote) {
       this.customerId = this.presetQuote.customerId ?? '';
       this.dueDate = defaultDueDate();
-      this.description = '';
+      this.description = this.presetQuote.description ?? '';
       this.notes = '';
       this.lines = this.presetQuote.items.map((item) => lineFromQuoteItem(item));
       this.discountMode = discountModeFromValues(

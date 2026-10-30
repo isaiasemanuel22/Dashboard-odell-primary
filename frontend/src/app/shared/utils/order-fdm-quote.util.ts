@@ -8,7 +8,7 @@ import {
   isProduct3D,
 } from '../../core/models';
 import { ProductCostCalculationService } from '../../core/services/product-cost-calculation.service';
-import { totalFdmFilamentGrams } from './fdm.helpers';
+import { normalizeFdmFilaments, totalFdmFilamentGrams } from './fdm.helpers';
 import {
   getMarginForService,
   priceFromCostAndMargin,
@@ -64,18 +64,32 @@ export function applyProductSpecsToFdmLine(
       line.workTimeHours = product.workTimeHours;
     }
     if (product.filaments?.length) {
-      line.filaments = structuredClone(product.filaments);
-      line.grams = product.filaments.reduce(
-        (sum, row) => sum + (Number(row.grams) || 0),
-        0,
+      line.filaments = normalizeFdmFilaments(
+        product.filaments.map((row) => ({
+          ...row,
+          brand: row.brand?.trim() || product.brand,
+        })),
+        {
+          grams: product.grams,
+          filamentType: product.filamentType,
+          brand: product.brand,
+        },
       );
+      line.grams = totalFdmFilamentGrams(line.filaments);
       line.filamentType =
-        product.filaments.find((row) => row.filamentType)?.filamentType ??
+        line.filaments.find((row) => row.filamentType)?.filamentType ??
         product.filamentType;
     } else {
       if (product.grams != null) line.grams = product.grams;
       if (product.filamentType) line.filamentType = product.filamentType;
-      line.filaments = undefined;
+      line.filaments = normalizeFdmFilaments(undefined, {
+        grams: product.grams,
+        filamentType: product.filamentType,
+        brand: product.brand,
+      });
+      if (!line.filaments.length) {
+        line.filaments = undefined;
+      }
     }
   }
 }

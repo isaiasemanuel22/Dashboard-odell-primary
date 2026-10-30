@@ -6,6 +6,7 @@ import {
   INDISTINTO_COLOR_ID,
   PaperType,
 } from '../../core/models';
+import { normalizeColorId } from './color.helpers';
 
 export function createEstampadoPrintId(): string {
   return `ep-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -224,6 +225,7 @@ export function normalizeEstampadoSupplies(
       supplyId: line.supplyId?.trim() ?? '',
       quantity: Math.max(Number(line.quantity) || 0, 0),
       label: line.label?.trim() || undefined,
+      colorId: normalizeColorId(line.colorId),
     }))
     .filter((line) => line.supplyId && line.quantity > 0);
 }

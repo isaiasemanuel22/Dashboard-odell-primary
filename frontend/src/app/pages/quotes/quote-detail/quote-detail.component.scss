@@ -93,6 +93,25 @@
   margin: 0 0 1rem;
 }
 
+.description-panel__header {
+  margin-bottom: 0.75rem;
+
+  h3 {
+    margin: 0;
+  }
+}
+
+.quote-description {
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: $color-text;
+
+  &--empty {
+    color: $color-text-muted;
+    font-style: italic;
+  }
+}
+
 .quote-actions {
   display: flex;
   flex-wrap: wrap;

@@ -1,4 +1,5 @@
 import { FdmFilamentLine, FilamentType, INDISTINTO_COLOR_ID } from '../../core/models';
+import { normalizeColorId } from './color.helpers';
 
 export function createFdmFilamentLineId(): string {
   return `ff-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
@@ -30,7 +31,7 @@ export function normalizeFdmFilaments(
       grams: Math.max(0, Number(line.grams) || 0),
       brand: line.brand?.trim() || undefined,
       label: line.label?.trim() || undefined,
-      colorId: line.colorId?.trim() || INDISTINTO_COLOR_ID,
+      colorId: normalizeColorId(line.colorId),
     }));
   }
 
@@ -42,6 +43,7 @@ export function normalizeFdmFilaments(
         filamentType: legacy.filamentType,
         grams,
         brand: legacy.brand?.trim() || undefined,
+        colorId: INDISTINTO_COLOR_ID,
       },
     ];
   }
@@ -61,7 +63,9 @@ export function hasValidFdmFilamentInput(filaments: FdmFilamentLine[]): boolean 
 }
 
 export function storedFdmFilaments(filaments: FdmFilamentLine[]): FdmFilamentLine[] {
-  return filaments.filter((line) => Number(line.grams) > 0);
+  return normalizeFdmFilaments(
+    filaments.filter((line) => Number(line.grams) > 0),
+  );
 }
 
 export function resolveFdmFilaments(input: {

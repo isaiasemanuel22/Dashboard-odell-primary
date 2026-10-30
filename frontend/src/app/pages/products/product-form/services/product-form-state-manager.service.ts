@@ -17,6 +17,7 @@ import {
   createEmptyEstampadoPressCycle,
   parseSizeFieldsFromString,
 } from '../../../../shared/utils/estampado.helpers';
+import { normalizeColorId } from '../../../../shared/utils/color.helpers';
 import { normalizeProductComponents } from '../../../../shared/utils/product.helpers';
 import {
   normalizeProductAttachments,
@@ -313,7 +314,7 @@ export class ProductFormStateManagerService {
         state.filamentLines = [line];
       }
       state.resinType = product.resinType ?? ('' as ResinType);
-      state.colorId = product.colorId ?? INDISTINTO_COLOR_ID;
+      state.colorId = normalizeColorId(product.colorId);
       state.washMinutes = product.washMinutes ?? 0;
       state.cureMinutes = product.cureMinutes ?? 0;
     } else {
@@ -334,7 +335,10 @@ export class ProductFormStateManagerService {
       );
       state.supplyLines = structuredClone(
         estampado.supplies?.length ? estampado.supplies : [],
-      );
+      ).map((line) => ({
+        ...line,
+        colorId: normalizeColorId(line.colorId),
+      }));
     }
 
     state.costBreakdown = null;

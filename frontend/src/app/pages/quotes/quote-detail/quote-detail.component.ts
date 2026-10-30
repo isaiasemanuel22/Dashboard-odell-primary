@@ -41,6 +41,7 @@ import {
   CurrencyArsPipe,
   DateShortPipe,
   QuoteStatusLabelPipe,
+  RichTextPipe,
 } from '../../../shared/pipes/labels.pipe';
 
 @Component({
@@ -51,6 +52,7 @@ import {
     DateShortPipe,
     CurrencyArsPipe,
     QuoteStatusLabelPipe,
+    RichTextPipe,
     DbSkeletonComponent,
     DbStateMessageComponent,
     DbButtonComponent,

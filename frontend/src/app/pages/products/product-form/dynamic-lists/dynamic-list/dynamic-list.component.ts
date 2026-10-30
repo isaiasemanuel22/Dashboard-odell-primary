@@ -32,6 +32,7 @@ import {
 } from '@dashboard-form';
 import type { DbSelectOption } from '@dashboard-form';
 import { INDISTINTO_COLOR_ID } from '../../../../../core/models';
+import { normalizeColorId } from '../../../../../shared/utils/color.helpers';
 import {
   DynamicFieldConfig,
   DynamicInputFieldConfig,
@@ -182,8 +183,7 @@ export class DynamicListComponent
   }
 
   private isIndistintoColor(value: unknown): boolean {
-    if (value == null || value === '') return true;
-    return String(value) === INDISTINTO_COLOR_ID;
+    return normalizeColorId(value) === INDISTINTO_COLOR_ID;
   }
 
   fieldLabel(field: DynamicFieldConfig): string {
@@ -331,14 +331,18 @@ export class DynamicListComponent
         );
       } else {
         const raw = item[field.name];
-        const fallback =
+        let fallback: unknown = raw ?? null;
+        if (field.type === 'color-select') {
+          fallback = normalizeColorId(raw);
+        } else if (
           field.type === 'input' &&
           field.inputType === 'number' &&
           field.min != null &&
           field.min >= 1 &&
           (raw === null || raw === undefined || raw === '')
-            ? field.min
-            : (raw ?? null);
+        ) {
+          fallback = field.min;
+        }
         controls[field.name] = new FormControl(fallback);
       }
     }

@@ -19,6 +19,7 @@ import {
   NG_VALUE_ACCESSOR,
 } from '@angular/forms';
 import { take } from 'rxjs';
+import { INDISTINTO_COLOR_ID } from '../../../core/models';
 import { DbFormFieldComponent } from '../db-form-field/db-form-field.component';
 import { DbColorSelectOption } from './db-color-select.types';
 
@@ -186,7 +187,12 @@ export class DbColorSelectComponent
   }
 
   writeValue(value: unknown): void {
-    this.value = typeof value === 'string' ? value : '';
+    if (typeof value === 'string' && value.trim()) {
+      this.value = value.trim();
+      return;
+    }
+    // Vacío / null → Indistinto (presupuesto, pedido y producto).
+    this.value = INDISTINTO_COLOR_ID;
   }
 
   registerOnChange(fn: (value: string) => void): void {

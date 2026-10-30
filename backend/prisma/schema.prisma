@@ -197,6 +197,7 @@ model Quote {
   total           Float
   discountPercent Float    @default(0) @map("discount_percent")
   discountAmount  Float    @default(0) @map("discount_amount")
+  description     String?  @db.Text
   quotedAt        DateTime @map("quoted_at")
   createdAt       DateTime @map("created_at")
   orderId         String?  @map("order_id") @db.VarChar(64)

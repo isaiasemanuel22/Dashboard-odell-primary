@@ -23,6 +23,12 @@ import {
   isQuoteLineMissingFromCatalog,
   unpublishedProductFromQuoteLine,
 } from './quote-product.util';
+import {
+  ORDER_RICH_TEXT_MAX_LENGTH,
+  hasRichTextContent,
+  plainTextFromHtml,
+  sanitizeRichTextHtml,
+} from '../orders/rich-text.util';
 
 @Injectable()
 export class QuotesService {
@@ -70,6 +76,7 @@ export class QuotesService {
       total: this.calculateTotal(items, discount),
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
+      description: this.normalizeDescription(data.description),
     };
 
     return this.quotes.create(quote);
@@ -117,6 +124,10 @@ export class QuotesService {
       total: this.calculateTotal(items, discount),
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
+      description:
+        data.description !== undefined
+          ? this.normalizeDescription(data.description)
+          : current.description,
     };
 
     return this.quotes.save(updated);
@@ -191,6 +202,7 @@ export class QuotesService {
       items: items as OrderItem[],
       discountPercent: quote.discountPercent,
       discountAmount: quote.discountAmount,
+      description: quote.description,
       dueDate: this.defaultOrderDueDate(),
     });
 
@@ -296,6 +308,20 @@ export class QuotesService {
         0,
       ),
     ).toISOString();
+  }
+
+  private normalizeDescription(description?: string): string | undefined {
+    const sanitized = sanitizeRichTextHtml(description);
+    if (!hasRichTextContent(sanitized)) return undefined;
+
+    const plainLength = plainTextFromHtml(sanitized).length;
+    if (plainLength > ORDER_RICH_TEXT_MAX_LENGTH) {
+      throw new BadRequestException(
+        `La descripción no puede superar los ${ORDER_RICH_TEXT_MAX_LENGTH} caracteres`,
+      );
+    }
+
+    return sanitized;
   }
 
   private defaultOrderDueDate(reference = new Date()): string {

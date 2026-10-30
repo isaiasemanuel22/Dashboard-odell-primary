@@ -100,6 +100,19 @@
     </section>
 
     <div class="detail-main">
+      <section class="panel description-panel">
+        <div class="description-panel__header">
+          <h3>Descripción</h3>
+        </div>
+        <div class="quote-description rich-content">
+          @if (quote.description) {
+            <div [innerHTML]="quote.description | richText"></div>
+          } @else {
+            <span class="quote-description--empty">Sin descripción</span>
+          }
+        </div>
+      </section>
+
       <section class="panel">
         <h3>Líneas del presupuesto</h3>
         <db-data-table

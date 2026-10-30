@@ -11,6 +11,13 @@ import {
 } from '../../core/models';
 import type { DbColorSelectOption } from '@dashboard-form/db-color-select/db-color-select.types';
 
+/** Vacío / null / blank → Indistinto (presupuesto, pedido y producto). */
+export function normalizeColorId(value: unknown): string {
+  if (typeof value !== 'string') return INDISTINTO_COLOR_ID;
+  const trimmed = value.trim();
+  return trimmed ? trimmed : INDISTINTO_COLOR_ID;
+}
+
 export function resolveColorLabel(
   colorId: string | undefined,
   catalog: ColorConfig[],

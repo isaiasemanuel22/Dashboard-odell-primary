@@ -665,6 +665,7 @@ export interface Quote {
   total: number;
   discountPercent?: number;
   discountAmount?: number;
+  description?: string;
   quotedAt: string;
   createdAt: string;
   orderId?: string;
@@ -675,6 +676,7 @@ export type CreateQuotePayload = {
   items: OrderItemPayload[];
   discountPercent?: number;
   discountAmount?: number;
+  description?: string;
 };
 
 export type UpdateQuotePayload = Partial<CreateQuotePayload>;

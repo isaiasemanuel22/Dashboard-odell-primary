@@ -498,6 +498,7 @@ export interface Quote {
   total: number;
   discountPercent?: number;
   discountAmount?: number;
+  description?: string;
   quotedAt: string;
   createdAt: string;
   orderId?: string;

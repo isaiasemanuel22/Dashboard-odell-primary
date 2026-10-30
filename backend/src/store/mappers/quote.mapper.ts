@@ -61,6 +61,7 @@ export function mapQuoteFromDb(row: {
   total: number;
   discountPercent?: number;
   discountAmount?: number;
+  description?: string | null;
   quotedAt: Date;
   createdAt: Date;
   orderId?: string | null;
@@ -91,6 +92,7 @@ export function mapQuoteFromDb(row: {
     total: row.total,
     discountPercent: row.discountPercent ?? 0,
     discountAmount: row.discountAmount ?? 0,
+    description: row.description ?? undefined,
     quotedAt: row.quotedAt.toISOString(),
     createdAt: row.createdAt.toISOString(),
     orderId: row.orderId ?? undefined,
@@ -106,6 +108,7 @@ function mapQuoteScalarsToDb(quote: Quote) {
     total: quote.total,
     discountPercent: quote.discountPercent ?? 0,
     discountAmount: quote.discountAmount ?? 0,
+    description: quote.description ?? null,
     quotedAt: new Date(quote.quotedAt),
     createdAt: new Date(quote.createdAt),
     orderId: quote.orderId ?? null,

@@ -2,6 +2,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
@@ -29,6 +30,11 @@ export class CreateQuoteDto {
   @IsNumber()
   @Min(0)
   discountAmount?: number;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20000)
+  description?: string;
 }
 
 export class UpdateQuoteDto extends PartialType(CreateQuoteDto) {}
