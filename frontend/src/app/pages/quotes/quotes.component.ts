@@ -59,6 +59,8 @@ export class QuotesComponent implements OnInit {
 
   quotes: Quote[] = [];
   loading = true;
+  /** Evita reabrir el modal si el botón recibe clicks/teclas repetidas. */
+  private quoteDialogBusy = false;
 
   readonly searchText = (quote: Quote) =>
     [quote.id, quote.customerName, ...quote.items.map((item) => item.productName)].join(' ');
@@ -143,14 +145,34 @@ export class QuotesComponent implements OnInit {
   }
 
   openCreateQuote(): void {
-    this.formDialogs.openQuote().subscribe((saved) => {
-      if (saved) this.onQuoteSaved(saved);
+    if (this.quoteDialogBusy) return;
+    this.quoteDialogBusy = true;
+    this.formDialogs.openQuote().subscribe({
+      next: (saved) => {
+        if (saved) this.onQuoteSaved(saved);
+      },
+      complete: () => {
+        this.quoteDialogBusy = false;
+      },
+      error: () => {
+        this.quoteDialogBusy = false;
+      },
     });
   }
 
   openEditQuote(quote: Quote): void {
-    this.formDialogs.openQuote(quote).subscribe((saved) => {
-      if (saved) this.onQuoteSaved(saved);
+    if (this.quoteDialogBusy) return;
+    this.quoteDialogBusy = true;
+    this.formDialogs.openQuote(quote).subscribe({
+      next: (saved) => {
+        if (saved) this.onQuoteSaved(saved);
+      },
+      complete: () => {
+        this.quoteDialogBusy = false;
+      },
+      error: () => {
+        this.quoteDialogBusy = false;
+      },
     });
   }
 

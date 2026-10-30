@@ -1,6 +1,6 @@
 import { Injectable, Type, inject } from '@angular/core';
 import { Dialog } from '@angular/cdk/dialog';
-import { Observable, from, switchMap } from 'rxjs';
+import { Observable, finalize, from, of, switchMap } from 'rxjs';
 import {
   Category,
   Customer,
@@ -38,6 +38,8 @@ import { SupplyFormDialogComponent } from './supply-form-dialog.component';
 @Injectable({ providedIn: 'root' })
 export class FormDialogService {
   private readonly dialog = inject(Dialog);
+  /** Evita apilar varios modales de presupuesto por clicks/teclas repetidas. */
+  private quoteDialogLocked = false;
 
   openCustomer(customer: Customer | null = null): Observable<Customer | undefined> {
     return this.open(CustomerFormDialogComponent, { customer }, 'md', {
@@ -78,11 +80,17 @@ export class FormDialogService {
   }
 
   openQuote(quote: Quote | null = null): Observable<Quote | undefined> {
+    if (this.quoteDialogLocked) {
+      return of(undefined);
+    }
+    this.quoteDialogLocked = true;
     return this.open(QuoteFormDialogComponent, { quote }, 'xl', {
       ariaLabel: quote ? 'Editar presupuesto' : 'Nuevo presupuesto',
       panelClass: ['form-dialog-panel--quote'],
       maxWidth: '1120px',
-    });
+    }).pipe(finalize(() => {
+      this.quoteDialogLocked = false;
+    }));
   }
 
   openQuoteDocumentExport(quote: Quote): Observable<void | undefined> {
