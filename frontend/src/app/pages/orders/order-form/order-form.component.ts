@@ -1093,20 +1093,26 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (isImpresion3DLine(line.serviceType)) {
       // Costear primero; el precio de lista del catálogo pisa el sugerido.
       this.syncFdmLine(line, { preservePrice: false });
-      if (Number(product.price) > 0) {
-        line.unitPrice = product.price;
-      }
+      this.applyCatalogListPrice(line, product);
       return;
     }
     if (isEstampadoLine(line.serviceType)) {
       this.syncEstampadoLine(line, { preservePrice: false });
-      if (Number(product.price) > 0) {
-        line.unitPrice = product.price;
-      }
+      this.applyCatalogListPrice(line, product);
       return;
     }
 
-    line.unitPrice = product.price;
+    this.applyCatalogListPrice(line, product);
+  }
+
+  /** B5: precio (y costo si falta) del producto de catálogo. */
+  private applyCatalogListPrice(line: OrderLineDraft, product: Product): void {
+    if (Number(product.price) > 0) {
+      line.unitPrice = product.price;
+    }
+    if (!(Number(line.unitCost) > 0) && Number(product.cost) > 0) {
+      line.unitCost = product.cost;
+    }
   }
 
   onFdmQuoteChange(line: OrderLineDraft): void {
@@ -1718,21 +1724,50 @@ export class OrderFormComponent implements OnChanges, OnInit {
   ): void {
     if (!this.generalSettings || !this.profitMargins) return;
 
+    const product = this.productForLine(line);
+    const resinConfigured =
+      product?.type === ProductType.RESINA &&
+      ((Number(line.grams) || 0) > 0 || (Number(line.printTimeHours) || 0) > 0);
+    const configured = isFdmQuoteConfigured(line) || resinConfigured;
+
     // Siempre costear (y sugerir precio) desde el formulario.
-    if (isFdmQuoteConfigured(line)) {
+    if (configured) {
       syncFdmQuotePricing(
         line,
         this.generalSettings,
         this.costCalculator,
         impresion3DMargin(this.profitMargins),
-        options,
+        {
+          ...options,
+          productType: product?.type,
+          brand: product && 'brand' in product ? product.brand : undefined,
+          resinType:
+            product && 'resinType' in product ? product.resinType : undefined,
+          washMinutes:
+            product && 'washMinutes' in product
+              ? product.washMinutes
+              : undefined,
+          cureMinutes:
+            product && 'cureMinutes' in product
+              ? product.cureMinutes
+              : undefined,
+        },
       );
       return;
     }
 
     if (!options?.preservePrice) {
-      line.unitCost = 0;
-      line.unitPrice = 0;
+      // Catálogo sin specs configurables en el form: usar costo/precio del producto.
+      if (product && Number(product.cost) > 0) {
+        line.unitCost = product.cost;
+      } else {
+        line.unitCost = 0;
+      }
+      if (product && Number(product.price) > 0) {
+        line.unitPrice = product.price;
+      } else {
+        line.unitPrice = 0;
+      }
     }
   }
 
@@ -1759,8 +1794,17 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }
 
     if (!options?.preservePrice) {
-      line.unitCost = 0;
-      line.unitPrice = 0;
+      const product = this.productForLine(line);
+      if (product && Number(product.cost) > 0) {
+        line.unitCost = product.cost;
+      } else {
+        line.unitCost = 0;
+      }
+      if (product && Number(product.price) > 0) {
+        line.unitPrice = product.price;
+      } else {
+        line.unitPrice = 0;
+      }
     }
   }
 

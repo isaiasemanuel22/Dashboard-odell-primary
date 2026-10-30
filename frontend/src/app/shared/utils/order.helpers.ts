@@ -153,7 +153,9 @@ export function productMatchesServiceType(
   if (isDesignService(serviceType)) return false;
   if (serviceType === ServiceType.IMPRESION_3D) {
     return (
-      product.type === ProductType.FDM || product.type === ProductType.RESINA
+      product.type === ProductType.FDM ||
+      product.type === ProductType.RESINA ||
+      product.type === ProductType.COMBO
     );
   }
   return product.type === ProductType.ESTAMPADO;
