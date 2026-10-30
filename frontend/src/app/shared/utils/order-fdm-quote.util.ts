@@ -154,7 +154,8 @@ export function syncFdmQuotePricing(
   );
 
   line.unitCost = breakdown.totalCost;
-  if (!options?.preservePrice) {
+  const preserve = options?.preservePrice || !!line.unitPriceManual;
+  if (!preserve) {
     line.unitPrice = priceFromCostAndMargin(breakdown.totalCost, marginPercent);
   }
 }

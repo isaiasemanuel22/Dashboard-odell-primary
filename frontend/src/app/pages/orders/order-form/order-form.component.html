@@ -671,7 +671,8 @@
                       <input
                         class="order-line__money-control"
                         type="number"
-                        [(ngModel)]="line.unitPrice"
+                        [ngModel]="line.unitPrice"
+                        (ngModelChange)="onUnitPriceChange(line, $event)"
                         [name]="'price-' + i"
                         [min]="0"
                         [step]="1"
@@ -1130,7 +1131,8 @@
                       <input
                         class="order-line__money-control"
                         type="number"
-                        [(ngModel)]="line.unitPrice"
+                        [ngModel]="line.unitPrice"
+                        (ngModelChange)="onUnitPriceChange(line, $event)"
                         [name]="'price-' + i"
                         [min]="0"
                         [step]="1"

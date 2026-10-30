@@ -696,6 +696,11 @@ export interface OrderLineDraft {
   /** Solo líneas de diseño: costo unitario estimado (UI). */
   unitCost?: number;
   unitPrice: number;
+  /**
+   * UI: el usuario editó el precio unitario a mano.
+   * No se pisa al recalcular costo (gramos, etiqueta, etc.). No se persiste.
+   */
+  unitPriceManual?: boolean;
   includesPrint?: boolean;
   printPaperType?: PaperType;
   printWidthCm?: number;

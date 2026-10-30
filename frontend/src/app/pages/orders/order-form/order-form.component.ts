@@ -844,6 +844,9 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   suggestedUnitPriceHint(line: OrderLineDraft): string {
+    if (line.unitPriceManual) {
+      return 'Precio editado a mano (no se recalcula al cambiar gramos u otros campos).';
+    }
     if (!this.profitMargins) return '';
     const cost = this.lineUnitCost(line);
     const price = Number(line.unitPrice) || 0;
@@ -1010,6 +1013,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     line.productId = isDesignService(line.serviceType) ? undefined : '';
     line.customName = isDesignService(line.serviceType) ? '' : undefined;
     line.conceptManual = undefined;
+    line.unitPriceManual = undefined;
     line.unitCost = isDesignService(line.serviceType) ? 0 : undefined;
     line.unitPrice = 0;
     line.budgetedHours = isDesignService(line.serviceType) ? 0 : undefined;
@@ -1109,18 +1113,28 @@ export class OrderFormComponent implements OnChanges, OnInit {
   private applyCatalogListPrice(line: OrderLineDraft, product: Product): void {
     if (Number(product.price) > 0) {
       line.unitPrice = product.price;
+      line.unitPriceManual = undefined;
     }
     if (!(Number(line.unitCost) > 0) && Number(product.cost) > 0) {
       line.unitCost = product.cost;
     }
   }
 
+  /** B1: precio tocado a mano; no se pisa al recalcular costo. */
+  onUnitPriceChange(line: OrderLineDraft, raw: number | string): void {
+    line.unitPrice = Number(raw) || 0;
+    line.unitPriceManual = true;
+    if (isDesignService(line.serviceType)) {
+      line.designUnitPrice = line.unitPrice;
+    }
+  }
+
   onFdmQuoteChange(line: OrderLineDraft): void {
-    this.syncFdmLine(line);
+    this.syncFdmLine(line, { preservePrice: !!line.unitPriceManual });
   }
 
   onEstampadoQuoteChange(line: OrderLineDraft): void {
-    this.syncEstampadoLine(line);
+    this.syncEstampadoLine(line, { preservePrice: !!line.unitPriceManual });
   }
 
   productForLine(line: OrderLineDraft): Product | undefined {
@@ -1165,6 +1179,9 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   unitPriceHint(line: OrderLineDraft): string {
+    if (line.unitPriceManual) {
+      return 'Precio editado a mano (no se recalcula al cambiar gramos u otros campos).';
+    }
     if (line.productId) {
       return 'Precio del catálogo de productos.';
     }
@@ -1411,6 +1428,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   onDesignUnitPriceChange(line: OrderLineDraft, raw: number | string): void {
     const price = Number(raw) || 0;
     line.designUnitPrice = price;
+    line.unitPriceManual = true;
     // Costo = horas × tarifa (o 0). Nunca derivar el costo desde el precio.
     line.unitCost = this.designServiceCost(line);
     this.syncDesignPrintLine(line);
@@ -1730,7 +1748,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       ((Number(line.grams) || 0) > 0 || (Number(line.printTimeHours) || 0) > 0);
     const configured = isFdmQuoteConfigured(line) || resinConfigured;
 
-    // Siempre costear (y sugerir precio) desde el formulario.
+    // Siempre costear; el precio se preserva si es manual o preservePrice.
     if (configured) {
       syncFdmQuotePricing(
         line,
@@ -1739,6 +1757,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
         impresion3DMargin(this.profitMargins),
         {
           ...options,
+          preservePrice: options?.preservePrice || !!line.unitPriceManual,
           productType: product?.type,
           brand: product && 'brand' in product ? product.brand : undefined,
           resinType:
@@ -1785,6 +1804,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
         estampadoMargin(this.profitMargins),
         {
           ...options,
+          preservePrice: options?.preservePrice || !!line.unitPriceManual,
           // Misma fuente que el desglose de la UI (evita unitCost 0 por store vacío).
           supplies: this.supplies,
           impresos: this.impresos,

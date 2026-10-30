@@ -142,9 +142,10 @@ export function syncEstampadoQuotePricing(
     },
   );
 
-  // Siempre recalcular unitCost (preservePrice solo conserva el precio de venta).
+  // Siempre recalcular unitCost (preservePrice / precio manual conservan el precio de venta).
   line.unitCost = breakdown.totalCost;
-  if (!options?.preservePrice) {
+  const preserve = options?.preservePrice || !!line.unitPriceManual;
+  if (!preserve) {
     line.unitPrice = priceFromCostAndMargin(breakdown.totalCost, marginPercent);
   }
 }
