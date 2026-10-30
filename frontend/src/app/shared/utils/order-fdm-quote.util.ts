@@ -31,11 +31,12 @@ export function shouldShowFdmQuoteFields(
   product: Product | undefined,
 ): boolean {
   if (!isImpresion3DLine(line.serviceType)) return false;
-  if (!line.productId) return true;
+  if (!line.productId?.trim()) return true;
   if (!product) return true;
   return product.type === ProductType.FDM || product.type === ProductType.COMBO;
 }
 
+/** Completa campos vacíos / specs de la línea con los del producto de catálogo. */
 export function applyProductSpecsToFdmLine(
   line: OrderLineDraft,
   product: Product | undefined,
@@ -44,15 +45,28 @@ export function applyProductSpecsToFdmLine(
 
   if (product.type === ProductType.FDM || product.type === ProductType.RESINA) {
     if (!isProduct3D(product)) return;
-    if (product.grams != null) line.grams = product.grams;
+    if (!line.customName?.trim()) {
+      line.customName = product.name;
+    }
     if (product.printTimeHours != null) {
       line.printTimeHours = product.printTimeHours;
     }
-    if (product.filamentType) line.filamentType = product.filamentType;
-    if (product.filaments?.length === 1) {
-      const filament = product.filaments[0]!;
-      if (filament.grams != null) line.grams = filament.grams;
-      if (filament.filamentType) line.filamentType = filament.filamentType;
+    if (product.workTimeHours != null) {
+      line.workTimeHours = product.workTimeHours;
+    }
+    if (product.filaments?.length) {
+      line.filaments = structuredClone(product.filaments);
+      line.grams = product.filaments.reduce(
+        (sum, row) => sum + (Number(row.grams) || 0),
+        0,
+      );
+      line.filamentType =
+        product.filaments.find((row) => row.filamentType)?.filamentType ??
+        product.filamentType;
+    } else {
+      if (product.grams != null) line.grams = product.grams;
+      if (product.filamentType) line.filamentType = product.filamentType;
+      line.filaments = undefined;
     }
   }
 }

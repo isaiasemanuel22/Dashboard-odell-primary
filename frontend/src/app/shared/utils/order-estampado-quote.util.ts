@@ -57,12 +57,16 @@ export function shouldShowEstampadoQuoteFields(
   return product.type === ProductType.ESTAMPADO;
 }
 
+/** Completa la línea con impresos, insumos y bajadas del producto de catálogo. */
 export function applyProductSpecsToEstampadoLine(
   line: OrderLineDraft,
   product: Product | undefined,
 ): void {
   if (!product || product.type !== ProductType.ESTAMPADO) return;
   const estampado = product as Extract<Product, { type: ProductType.ESTAMPADO }>;
+  if (!line.customName?.trim()) {
+    line.customName = product.name;
+  }
   line.estampadoPrints = structuredClone(estampado.prints ?? []);
   line.estampadoPressCycles = structuredClone(estampado.pressCycles ?? []);
   line.estampadoSupplies = structuredClone(estampado.supplies ?? []);

@@ -201,14 +201,12 @@
                     [options]="productOptionsForLine(line)"
                     (ngModelChange)="onProductChange(line)"
                   />
-                  @if (!line.productId) {
-                    <db-input
-                      label="Concepto"
-                      [(ngModel)]="line.customName"
-                      [name]="'fdm-concept-' + i"
-                      placeholder="Ej.: Soporte para celular"
-                    />
-                  }
+                  <db-input
+                    label="Concepto"
+                    [(ngModel)]="line.customName"
+                    [name]="'fdm-concept-' + i"
+                    placeholder="Ej.: Soporte para celular"
+                  />
                 } @else {
                   <db-select
                     label="Producto"
