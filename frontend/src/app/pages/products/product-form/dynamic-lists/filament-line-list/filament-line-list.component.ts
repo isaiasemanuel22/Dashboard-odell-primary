@@ -45,6 +45,7 @@ import {
       [initialValue]="initialValue"
       [config]="filamentConfig"
       [embedded]="embedded"
+      [locked]="locked"
       (valueChange)="onListChange($event)"
     />
   `,
@@ -62,6 +63,7 @@ export class FilamentLineListComponent
 {
   @Input() primaryFilamentType: FilamentType = FilamentType.PLA;
   @Input() embedded = false;
+  @Input() locked = false;
 
   initialValue: FdmFilamentLine[] | null = null;
 
@@ -175,6 +177,7 @@ export class FilamentLineListComponent
   }
 
   setDisabledState(isDisabled: boolean): void {
+    this.locked = isDisabled;
     this.cdr.markForCheck();
   }
 

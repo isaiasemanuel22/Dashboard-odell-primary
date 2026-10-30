@@ -39,6 +39,7 @@ import {
       [initialValue]="initialValue"
       [config]="supplyConfig"
       [embedded]="embedded"
+      [locked]="locked"
       (valueChange)="onListChange($event)"
     />
   `,
@@ -55,6 +56,7 @@ export class SupplyLineListComponent
   implements OnInit, OnDestroy, ControlValueAccessor
 {
   @Input() embedded = false;
+  @Input() locked = false;
   initialValue: EstampadoSupplyLine[] | null = null;
 
   private readonly suppliesService = inject(SuppliesService);
@@ -161,7 +163,8 @@ export class SupplyLineListComponent
     this.onTouched = fn;
   }
 
-  setDisabledState(_isDisabled: boolean): void {
+  setDisabledState(isDisabled: boolean): void {
+    this.locked = isDisabled;
     this.cdr.markForCheck();
   }
 

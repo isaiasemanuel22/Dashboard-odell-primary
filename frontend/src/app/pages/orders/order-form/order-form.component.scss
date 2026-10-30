@@ -330,6 +330,14 @@
   flex-direction: column;
   gap: 0.55rem;
 
+  &--locked {
+    opacity: 0.92;
+
+    .cost-composition__hint {
+      color: #9a3412;
+    }
+  }
+
   &__head {
     display: flex;
     flex-wrap: wrap;

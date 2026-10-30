@@ -238,10 +238,19 @@
 
               @if (shouldShowFdmQuoteFields(line, productForLine(line))) {
                 @let fdm = fdmBreakdown(line);
-                <div class="cost-composition">
+                <div
+                  class="cost-composition"
+                  [class.cost-composition--locked]="isCatalogLocked(line)"
+                >
                   <header class="cost-composition__head">
                     <h5 class="cost-composition__title">Composición del costo · por unidad</h5>
-                    <p class="cost-composition__hint">Abrí cada bloque para editarlo</p>
+                    <p class="cost-composition__hint">
+                      @if (isCatalogLocked(line)) {
+                        Datos del catálogo · solo lectura. Si el color viene Indistinto, podés elegirlo.
+                      } @else {
+                        Abrí cada bloque para editarlo
+                      }
+                    </p>
                   </header>
 
                   <details class="cost-composition__block" open>
@@ -254,6 +263,7 @@
                     <div class="cost-composition__body">
                       <app-filament-line-list
                         [embedded]="true"
+                        [locked]="isCatalogLocked(line)"
                         [ngModel]="quoteFilaments(line)"
                         (ngModelChange)="onFilamentsChange(line, $event)"
                         [name]="'filaments-' + i"
@@ -280,6 +290,7 @@
                           [name]="'print-hours-' + i"
                           [min]="0"
                           [step]="0.1"
+                          [disabled]="isCatalogLocked(line)"
                         />
                         <span>h</span>
                       </div>
@@ -304,6 +315,7 @@
                             [name]="'labor-hours-' + i"
                             [min]="0"
                             [step]="0.25"
+                            [disabled]="isCatalogLocked(line)"
                           />
                           <span>h</span>
                         </div>
@@ -312,6 +324,7 @@
                           [(ngModel)]="line.laborNote"
                           [name]="'labor-note-' + i"
                           placeholder="Ej.: incluir soportes y empaque"
+                          [disabled]="isCatalogLocked(line)"
                           (ngModelChange)="onFdmQuoteChange(line)"
                         />
                       </div>
@@ -334,10 +347,19 @@
               @if (shouldShowEstampadoQuoteFields(line, productForLine(line))) {
                 @let est = estampadoCosts(line);
                 @let suppliesInfo = estampadoSuppliesSummary(line);
-                <div class="order-line__estampado cost-composition">
+                <div
+                  class="order-line__estampado cost-composition"
+                  [class.cost-composition--locked]="isCatalogLocked(line)"
+                >
                   <header class="cost-composition__head">
                     <h5 class="cost-composition__title">Composición del costo · por unidad</h5>
-                    <p class="cost-composition__hint">Abrí cada bloque para editarlo</p>
+                    <p class="cost-composition__hint">
+                      @if (isCatalogLocked(line)) {
+                        Datos del catálogo · solo lectura. Si el color viene Indistinto, podés elegirlo.
+                      } @else {
+                        Abrí cada bloque para editarlo
+                      }
+                    </p>
                   </header>
 
                   <details class="cost-composition__block" open>
@@ -350,6 +372,7 @@
                     <div class="cost-composition__body">
                       <app-print-spec-list
                         [embedded]="true"
+                        [locked]="isCatalogLocked(line)"
                         [(ngModel)]="line.estampadoPrints"
                         [name]="'estampado-prints-' + i"
                         (ngModelChange)="onEstampadoQuoteChange(line)"
@@ -372,6 +395,7 @@
                     <div class="cost-composition__body">
                       <app-supply-line-list
                         [embedded]="true"
+                        [locked]="isCatalogLocked(line)"
                         [(ngModel)]="line.estampadoSupplies"
                         [name]="'estampado-supplies-' + i"
                         (ngModelChange)="onEstampadoQuoteChange(line)"
@@ -411,6 +435,7 @@
                       </div>
                       <app-press-cycle-list
                         [embedded]="true"
+                        [locked]="isCatalogLocked(line)"
                         [(ngModel)]="line.estampadoPressCycles"
                         [name]="'estampado-press-' + i"
                         [prints]="line.estampadoPrints ?? []"
@@ -605,13 +630,11 @@
                     </div>
                     <p class="order-line__money-hint">
                       @if (isEstampadoLine(line.serviceType)) {
-                        Impresos + insumos + plancha
-                      }                       @else if (isImpresion3DLine(line.serviceType) && !line.productId) {
-                        Material + impresión + mano de obra + error
-                      } @else if (line.productId) {
-                        Costo tomado del catálogo de productos.
+                        Calculado: impresos + insumos + plancha
+                      } @else if (isImpresion3DLine(line.serviceType)) {
+                        Calculado: material + impresión + mano de obra + error
                       } @else {
-                        Material + impresión + margen de error
+                        Calculado desde el formulario
                       }
                     </p>
                   </div>

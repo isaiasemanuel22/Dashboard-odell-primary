@@ -47,6 +47,7 @@ import {
       [initialValue]="initialValue"
       [config]="printConfig"
       [embedded]="embedded"
+      [locked]="locked"
       (valueChange)="onListChange($event)"
     />
   `,
@@ -63,6 +64,7 @@ export class PrintSpecListComponent
   implements OnInit, OnDestroy, ControlValueAccessor
 {
   @Input() embedded = false;
+  @Input() locked = false;
   initialValue: EstampadoPrintSpec[] | null = null;
 
   private readonly impresosService = inject(ImpresosService);
@@ -174,7 +176,8 @@ export class PrintSpecListComponent
     this.onTouched = fn;
   }
 
-  setDisabledState(_isDisabled: boolean): void {
+  setDisabledState(isDisabled: boolean): void {
+    this.locked = isDisabled;
     this.cdr.markForCheck();
   }
 

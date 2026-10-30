@@ -14,7 +14,6 @@ import {
   normalizeProfitMargins,
 } from './pricing.util';
 import { isDesignService } from './service-type.util';
-import { isFdmQuoteConfigured, isImpresion3DLine } from './order-fdm-quote.util';
 
 export function normalizeProductComponents(
   raw: ProductComponent[] | unknown,
@@ -277,20 +276,9 @@ export function calculateOrderLinesCost(
   const margins = normalizeProfitMargins(profitMargins);
 
   return lines.reduce((sum, line) => {
-    if (
-      line.serviceType &&
-      isImpresion3DLine(line.serviceType) &&
-      isFdmQuoteConfigured(line) &&
-      line.unitCost != null &&
-      line.unitCost >= 0
-    ) {
-      return sum + line.unitCost * line.quantity;
-    }
+    const qty = Math.max(0, Number(line.quantity) || 0);
 
-    if (line.productId) {
-      return sum + getComponentLineCost(catalog, line.productId, line.quantity);
-    }
-
+    // Diseño: el costo del trabajo no se multiplica por cantidad; el impreso sí.
     if (line.serviceType && isDesignService(line.serviceType)) {
       const designCost =
         line.unitCost != null && line.unitCost >= 0
@@ -300,7 +288,16 @@ export function calculateOrderLinesCost(
               getMarginForService(line.serviceType, margins),
             );
       const printCost = line.includesPrint ? line.printUnitCost ?? 0 : 0;
-      return sum + designCost + printCost * line.quantity;
+      return sum + designCost + printCost * qty;
+    }
+
+    // FDM / Estampado / etc.: usar el costo unitario del formulario (no el del catálogo).
+    if (line.unitCost != null && line.unitCost >= 0) {
+      return sum + line.unitCost * qty;
+    }
+
+    if (line.productId) {
+      return sum + getComponentLineCost(catalog, line.productId, line.quantity);
     }
 
     return sum;

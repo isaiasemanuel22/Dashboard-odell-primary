@@ -8,17 +8,26 @@ import {
   isProduct3D,
 } from '../../core/models';
 import { ProductCostCalculationService } from '../../core/services/product-cost-calculation.service';
+import { totalFdmFilamentGrams } from './fdm.helpers';
 import {
   getMarginForService,
   priceFromCostAndMargin,
 } from './pricing.util';
 
 export function isFdmQuoteConfigured(
-  line: Pick<OrderLineDraft, 'grams' | 'printTimeHours' | 'filamentType'>,
+  line: Pick<
+    OrderLineDraft,
+    'grams' | 'printTimeHours' | 'filamentType' | 'filaments'
+  >,
 ): boolean {
+  const printTimeHours = Number(line.printTimeHours) || 0;
+  if (line.filaments?.length) {
+    const grams = totalFdmFilamentGrams(line.filaments);
+    const hasType = line.filaments.some((row) => !!row.filamentType);
+    return hasType && (grams > 0 || printTimeHours > 0);
+  }
   if (!line.filamentType) return false;
   const grams = Number(line.grams) || 0;
-  const printTimeHours = Number(line.printTimeHours) || 0;
   return grams > 0 || printTimeHours > 0;
 }
 

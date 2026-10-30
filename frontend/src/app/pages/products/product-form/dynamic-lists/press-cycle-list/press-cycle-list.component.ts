@@ -44,6 +44,7 @@ import {
       [initialValue]="initialValue"
       [config]="cycleConfig"
       [embedded]="embedded"
+      [locked]="locked"
       (valueChange)="onListChange($event)"
       (footerAction)="copyLocations()"
     />
@@ -61,6 +62,7 @@ export class PressCycleListComponent
   implements OnInit, OnDestroy, ControlValueAccessor
 {
   @Input() embedded = false;
+  @Input() locked = false;
   /** Opcional: en presupuesto personalizado no hay form de producto. */
   @Input() productForm?: ProductFormGroup;
   /** Fuente de ubicaciones cuando no hay productForm (p. ej. presupuesto). */
@@ -159,7 +161,8 @@ export class PressCycleListComponent
     this.onTouched = fn;
   }
 
-  setDisabledState(_isDisabled: boolean): void {
+  setDisabledState(isDisabled: boolean): void {
+    this.locked = isDisabled;
     this.cdr.markForCheck();
   }
 

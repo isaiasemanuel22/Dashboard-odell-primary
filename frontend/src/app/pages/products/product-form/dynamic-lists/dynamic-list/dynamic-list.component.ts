@@ -31,6 +31,7 @@ import {
   DbTextareaComponent,
 } from '@dashboard-form';
 import type { DbSelectOption } from '@dashboard-form';
+import { INDISTINTO_COLOR_ID } from '../../../../../core/models';
 import {
   DynamicFieldConfig,
   DynamicInputFieldConfig,
@@ -79,12 +80,16 @@ export class DynamicListComponent
   private fieldChangeDestroy$ = new Subject<void>();
   private onChange: (value: any[]) => void = () => {};
   private onTouched: () => void = () => {};
+  /** Filas cuyo color venía Indistinto del catálogo: se puede elegir y no se vuelve a bloquear. */
+  private readonly editableColorRowIds = new Set<string>();
 
   /** Valor inicial al crear/editar; solo actualizar al resetear el formulario padre. */
   @Input() initialValue: any[] | null = null;
   @Input() config!: DynamicListConfig;
   /** Dentro de un bloque que ya tiene título: sin encabezado y con nota y acción en la barra. */
   @Input() embedded = false;
+  /** Solo lectura (p. ej. línea con producto de catálogo). */
+  @Input() locked = false;
 
   @Output() valueChange = new EventEmitter<any[]>();
   @Output() footerAction = new EventEmitter<void>();
@@ -100,11 +105,16 @@ export class DynamicListComponent
 
   ngOnInit(): void {
     this.resetFromInitial();
+    this.applyLockedState();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['initialValue'] || changes['config']) {
       this.resetFromInitial();
+      this.applyLockedState();
+    }
+    if (changes['locked'] && !changes['locked'].firstChange) {
+      this.applyLockedState();
     }
   }
 
@@ -116,6 +126,7 @@ export class DynamicListComponent
   writeValue(value: any[] | null): void {
     this.initialValue = value;
     this.resetFromInitial();
+    this.applyLockedState();
   }
 
   registerOnChange(fn: (value: any[]) => void): void {
@@ -127,12 +138,52 @@ export class DynamicListComponent
   }
 
   setDisabledState(isDisabled: boolean): void {
-    if (isDisabled) {
-      this.formGroup.disable({ emitEvent: false });
-    } else {
-      this.formGroup.enable({ emitEvent: false });
+    this.locked = isDisabled;
+    this.applyLockedState();
+  }
+
+  private applyLockedState(): void {
+    if (!this.locked) {
+      this.editableColorRowIds.clear();
+      for (const group of this.itemsArray.controls) {
+        group.enable({ emitEvent: false });
+      }
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const presentIds = new Set<string>();
+    for (const group of this.itemsArray.controls) {
+      const rowId = String(group.get('id')?.value ?? '');
+      presentIds.add(rowId);
+      const colorCtrl = group.get('colorId');
+      // Solo se marca editable si el catálogo traía Indistinto; al elegir un color
+      // el id ya está en el set y no se vuelve a bloquear.
+      if (colorCtrl && this.isIndistintoColor(colorCtrl.value)) {
+        this.editableColorRowIds.add(rowId);
+      }
+
+      for (const [name, control] of Object.entries(group.controls)) {
+        const keepColorEditable =
+          name === 'colorId' && this.editableColorRowIds.has(rowId);
+        if (keepColorEditable) {
+          control.enable({ emitEvent: false });
+        } else {
+          control.disable({ emitEvent: false });
+        }
+      }
+    }
+    for (const id of [...this.editableColorRowIds]) {
+      if (!presentIds.has(id)) {
+        this.editableColorRowIds.delete(id);
+      }
     }
     this.cdr.markForCheck();
+  }
+
+  private isIndistintoColor(value: unknown): boolean {
+    if (value == null || value === '') return true;
+    return String(value) === INDISTINTO_COLOR_ID;
   }
 
   fieldLabel(field: DynamicFieldConfig): string {
@@ -160,6 +211,7 @@ export class DynamicListComponent
   }
 
   canRemove(): boolean {
+    if (this.locked) return false;
     const count = this.itemsArray.length;
     if (!this.config?.showRemoveButton) {
       return count > (this.config?.minItems ?? 0);
@@ -326,6 +378,9 @@ export class DynamicListComponent
 
     this.emitValue();
     this.onTouched();
+    if (this.locked && field.type === 'color-select') {
+      this.applyLockedState();
+    }
   }
 
   private emitValue(): void {

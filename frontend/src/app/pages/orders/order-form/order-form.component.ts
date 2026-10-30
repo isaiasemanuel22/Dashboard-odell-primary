@@ -797,25 +797,16 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   suggestedUnitPriceHint(line: OrderLineDraft): string {
-    if (isImpresion3DLine(line.serviceType)) {
-      const cost = this.lineUnitCost(line);
-      const price = Number(line.unitPrice) || 0;
-      if (cost > 0 && price > 0) {
-        const percent = Math.round(((price - cost) / cost) * 100);
-        return `Margen sugerido · ${percent}%`;
-      }
-    }
-    if (
-      line.productId &&
-      !isEstampadoLine(line.serviceType) &&
-      !isImpresion3DLine(line.serviceType)
-    ) {
-      return 'Precio del catálogo de productos.';
+    const cost = this.lineUnitCost(line);
+    const price = Number(line.unitPrice) || 0;
+    if (cost > 0 && price > 0) {
+      const percent = Math.round(((price - cost) / cost) * 100);
+      return `Margen · ${percent}% sobre el costo del formulario`;
     }
     const margin = isEstampadoLine(line.serviceType)
       ? estampadoMargin(this.profitMargins)
       : impresion3DMargin(this.profitMargins);
-    const suggested = priceFromCostAndMargin(this.lineUnitCost(line), margin);
+    const suggested = priceFromCostAndMargin(cost, margin);
     return `Sugerido ${this.money(suggested)} (costo + ${margin}%)`;
   }
 
@@ -1050,15 +1041,15 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   fdmPricingHint(line: OrderLineDraft): string {
-    if (line.productId) {
-      return 'Costo tomado del catálogo de productos.';
+    if (this.isCatalogLocked(line)) {
+      return 'Costo calculado con los datos del producto (solo lectura).';
     }
     return 'Presupuesto calculado según configuración de costos y margen de Impresión 3D.';
   }
 
   estampadoPricingHint(line: OrderLineDraft): string {
-    if (line.productId) {
-      return 'Costo tomado del catálogo de productos.';
+    if (this.isCatalogLocked(line)) {
+      return 'Costo calculado con los datos del producto (solo lectura).';
     }
     return 'Presupuesto calculado con insumos, impresos y bajadas + margen de Estampado.';
   }
@@ -1381,21 +1372,18 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }
   }
 
+  /** Con producto de catálogo la composición se rellena y queda bloqueada. */
+  isCatalogLocked(line: OrderLineDraft): boolean {
+    return !!line.productId?.trim();
+  }
+
   private syncFdmLine(
     line: OrderLineDraft,
     options?: { preservePrice?: boolean },
   ): void {
     if (!this.generalSettings) return;
 
-    const product = this.productForLine(line);
-    if (product && line.productId) {
-      line.unitCost = resolveProductUnitCost(product, this.products);
-      if (!options?.preservePrice) {
-        line.unitPrice = product.price;
-      }
-      return;
-    }
-
+    // Siempre costear (y sugerir precio) desde el formulario.
     if (isFdmQuoteConfigured(line)) {
       syncFdmQuotePricing(
         line,
@@ -1407,11 +1395,9 @@ export class OrderFormComponent implements OnChanges, OnInit {
       return;
     }
 
-    if (product) {
-      line.unitCost = resolveProductUnitCost(product, this.products);
-      if (!options?.preservePrice) {
-        line.unitPrice = product.price;
-      }
+    if (!options?.preservePrice) {
+      line.unitCost = 0;
+      line.unitPrice = 0;
     }
   }
 
@@ -1420,15 +1406,6 @@ export class OrderFormComponent implements OnChanges, OnInit {
     options?: { preservePrice?: boolean },
   ): void {
     if (!this.generalSettings) return;
-
-    const product = this.productForLine(line);
-    if (product && line.productId) {
-      line.unitCost = resolveProductUnitCost(product, this.products);
-      if (!options?.preservePrice) {
-        line.unitPrice = product.price;
-      }
-      return;
-    }
 
     if (isEstampadoQuoteConfigured(line)) {
       syncEstampadoQuotePricing(

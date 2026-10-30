@@ -154,10 +154,10 @@
               </div>
             }
           </div>
-          @if (config.addPlacement === 'inside') {
+              @if (config.addPlacement === 'inside') {
             <div class="line-table__toolbar">
               <div class="line-table__toolbar-actions">
-                @if (config.showAddButton !== false) {
+                @if (!locked && config.showAddButton !== false) {
                   <db-button
                     [label]="config.addButtonLabel"
                     variant="secondary"
@@ -165,7 +165,7 @@
                     (clicked)="onAdd()"
                   />
                 }
-                @if (embedded && config.footerActionLabel) {
+                @if (!locked && embedded && config.footerActionLabel) {
                   <db-button
                     [label]="config.footerActionLabel"
                     variant="primary"
