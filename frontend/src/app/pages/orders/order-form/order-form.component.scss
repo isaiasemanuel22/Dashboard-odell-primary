@@ -1407,6 +1407,10 @@
     line-height: 1.35;
     color: $color-text-muted;
   }
+
+  &__money-hint--warn {
+    color: #c2410c;
+  }
 }
 
 .service-pills {

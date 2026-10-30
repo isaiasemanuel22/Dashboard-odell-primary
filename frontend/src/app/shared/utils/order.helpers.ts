@@ -25,6 +25,11 @@ import {
   isEstampadoQuoteConfigured,
 } from './order-estampado-quote.util';
 import {
+  normalizeEstampadoPressCycles,
+  normalizeEstampadoPrints,
+  normalizeEstampadoSupplies,
+} from './estampado.helpers';
+import {
   isDesignService,
   isGraphicDesignService,
   normalizeServiceType,
@@ -264,15 +269,143 @@ export function buildOrderItems(
     });
 }
 
+/** Cantidad de línea: entero ≥ 1. */
+export function isValidLineQuantity(quantity: unknown): boolean {
+  const qty = Number(quantity);
+  return Number.isInteger(qty) && qty >= 1;
+}
+
+export function lineQuantityError(quantity: unknown): string {
+  if (quantity === '' || quantity == null) {
+    return 'La cantidad debe ser un entero mayor o igual a 1';
+  }
+  const qty = Number(quantity);
+  if (!Number.isFinite(qty)) {
+    return 'La cantidad debe ser un entero mayor o igual a 1';
+  }
+  if (!Number.isInteger(qty)) {
+    return 'La cantidad debe ser un número entero (sin decimales)';
+  }
+  if (qty < 1) {
+    return 'La cantidad debe ser un entero mayor o igual a 1';
+  }
+  return '';
+}
+
+function lineEffectiveUnitPrice(line: OrderLineDraft): number {
+  if (isDesignService(line.serviceType)) {
+    return Number(line.designUnitPrice ?? line.unitPrice) || 0;
+  }
+  return Number(line.unitPrice) || 0;
+}
+
+export function lineUnitPriceError(line: OrderLineDraft): string {
+  const price = lineEffectiveUnitPrice(line);
+  if (price < 0) {
+    return 'El precio unitario no puede ser negativo';
+  }
+  if (!(price > 0) && calculateLinePriceTotal(line) <= 0) {
+    return 'Indicá un precio unitario mayor a 0';
+  }
+  return '';
+}
+
+export function lineConceptError(line: OrderLineDraft): string {
+  if (line.productId?.trim()) return '';
+  if (isDesignService(line.serviceType)) {
+    return line.customName?.trim() ? '' : 'Indicá un concepto';
+  }
+  if (isImpresion3DLine(line.serviceType) || isEstampadoLine(line.serviceType)) {
+    if (line.customName?.trim()) return '';
+    if (isImpresion3DLine(line.serviceType) && isFdmQuoteConfigured(line)) {
+      return 'Indicá un concepto';
+    }
+    if (isEstampadoLine(line.serviceType) && isEstampadoQuoteConfigured(line)) {
+      return 'Indicá un concepto';
+    }
+  }
+  return '';
+}
+
+/** Primer mensaje de validación de la línea (cantidad, precio, concepto). */
+export function lineValidationMessage(line: OrderLineDraft): string {
+  return (
+    lineQuantityError(line.quantity) ||
+    lineUnitPriceError(line) ||
+    lineConceptError(line) ||
+    ''
+  );
+}
+
+/**
+ * Línea vacía por defecto (se puede ignorar al guardar si hay otras válidas).
+ * Cualquier cantidad inválida o precio distinto de 0 la marca como relevante.
+ */
+export function isLineBlank(line: OrderLineDraft): boolean {
+  if (!isValidLineQuantity(line.quantity) || Number(line.quantity) !== 1) {
+    return false;
+  }
+  if (lineEffectiveUnitPrice(line) !== 0) return false;
+  if ((Number(line.unitCost) || 0) !== 0) return false;
+  if (line.productId?.trim()) return false;
+  if (line.customName?.trim()) return false;
+  if ((Number(line.budgetedHours) || 0) > 0) return false;
+  if ((Number(line.printTimeHours) || 0) > 0) return false;
+  if ((Number(line.grams) || 0) > 0) return false;
+  if ((Number(line.workTimeHours) || 0) > 0) return false;
+  if (line.laborNote?.trim()) return false;
+  if (line.workKind?.trim()) return false;
+  if (line.deliverables?.length) return false;
+  if (line.includesPrint) return false;
+  if (line.includesRevisions) return false;
+  if (line.needsClientProduct) return false;
+  if (line.linkPrint) return false;
+  if (line.filaments?.some((f) => (Number(f.grams) || 0) > 0 || !!f.filamentType)) {
+    return false;
+  }
+  if (
+    line.estampadoPrints?.some(
+      (p) =>
+        (Number(p.widthCm) || 0) > 0 ||
+        (Number(p.lengthCm) || 0) > 0 ||
+        (Number(p.heightCm) || 0) > 0 ||
+        (Number(p.quantity) || 0) > 1 ||
+        !!p.impresoId,
+    )
+  ) {
+    return false;
+  }
+  if (
+    line.estampadoPressCycles?.some(
+      (c) =>
+        (Number(c.pressMinutes) || 0) > 0 || (Number(c.bajadas) || 0) > 0,
+    )
+  ) {
+    return false;
+  }
+  if (
+    line.estampadoSupplies?.some(
+      (s) => !!s.supplyId || (Number(s.quantity) || 0) > 0,
+    )
+  ) {
+    return false;
+  }
+  return true;
+}
+
 export function isLineValid(line: OrderLineDraft): boolean {
-  if (!line.quantity || line.quantity <= 0) return false;
-  if (line.unitPrice < 0) return false;
+  if (!isValidLineQuantity(line.quantity)) return false;
+
+  const price = lineEffectiveUnitPrice(line);
+  if (price < 0) return false;
 
   if (isDesignService(line.serviceType)) {
     if (!line.customName?.trim()) return false;
     if (line.includesPrint && !isDesignPrintConfigured(line)) return false;
-    return true;
+    return calculateLinePriceTotal(line) > 0;
   }
+
+  if (!(price > 0)) return false;
 
   if (isImpresion3DLine(line.serviceType)) {
     if (line.productId?.trim()) return true;
@@ -343,6 +476,16 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
       )
     : undefined;
 
+  const estampadoPrints = isEstampadoLine(item.serviceType)
+    ? normalizeEstampadoPrints(item.estampadoPrints)
+    : undefined;
+  const estampadoPressCycles = isEstampadoLine(item.serviceType)
+    ? normalizeEstampadoPressCycles(item.estampadoPressCycles)
+    : undefined;
+  const estampadoSupplies = isEstampadoLine(item.serviceType)
+    ? normalizeEstampadoSupplies(item.estampadoSupplies)
+    : undefined;
+
   return {
     serviceType: item.serviceType,
     productId: item.productId,
@@ -353,13 +496,17 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
         : undefined,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    // El costo se recalcula al abrir el form (sync FDM/estampado); no viene en el ítem.
+    unitCost: undefined,
     printTimeHours: item.printTimeHours,
     grams: item.grams,
     filamentType: item.filamentType,
     filaments: filaments?.length ? filaments : undefined,
-    estampadoPrints: item.estampadoPrints,
-    estampadoPressCycles: item.estampadoPressCycles,
-    estampadoSupplies: item.estampadoSupplies,
+    estampadoPrints: estampadoPrints?.length ? estampadoPrints : undefined,
+    estampadoPressCycles: estampadoPressCycles?.length
+      ? estampadoPressCycles
+      : undefined,
+    estampadoSupplies: estampadoSupplies?.length ? estampadoSupplies : undefined,
   };
 }
 

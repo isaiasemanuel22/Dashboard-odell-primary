@@ -8,11 +8,6 @@ import {
   ServiceProfitMargins,
   ServiceType,
 } from '../../core/models';
-import {
-  costFromPriceAndMargin,
-  getMarginForService,
-  normalizeProfitMargins,
-} from './pricing.util';
 import { isDesignService } from './service-type.util';
 
 export function normalizeProductComponents(
@@ -271,22 +266,14 @@ export function calculateOrderLinesCost(
     filamentType?: FilamentType;
   }>,
   catalog: Product[],
-  profitMargins: ServiceProfitMargins,
+  _profitMargins: ServiceProfitMargins,
 ): number {
-  const margins = normalizeProfitMargins(profitMargins);
-
   return lines.reduce((sum, line) => {
     const qty = Math.max(0, Number(line.quantity) || 0);
 
-    // Diseño: el costo del trabajo no se multiplica por cantidad; el impreso sí.
+    // Diseño: costo = horas × tarifa del form (unitCost). No inventar desde precio.
     if (line.serviceType && isDesignService(line.serviceType)) {
-      const designCost =
-        line.unitCost != null && line.unitCost >= 0
-          ? line.unitCost
-          : costFromPriceAndMargin(
-              line.designUnitPrice ?? line.unitPrice ?? 0,
-              getMarginForService(line.serviceType, margins),
-            );
+      const designCost = line.unitCost != null && line.unitCost >= 0 ? line.unitCost : 0;
       const printCost = line.includesPrint ? line.printUnitCost ?? 0 : 0;
       return sum + designCost + printCost * qty;
     }

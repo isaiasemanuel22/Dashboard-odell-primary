@@ -74,3 +74,18 @@ export function discountPayloadFromMode(
 
   return { discountPercent: 0, discountAmount: 0 };
 }
+
+/** Mensaje si el descuento cargado en UI es negativo (no se aplica en silencio). */
+export function discountValidationMessage(
+  mode: DiscountMode,
+  discountPercent: number,
+  discountAmount: number,
+): string {
+  if (mode === 'percent' && Number(discountPercent) < 0) {
+    return 'El descuento no puede ser negativo';
+  }
+  if (mode === 'amount' && Number(discountAmount) < 0) {
+    return 'El descuento no puede ser negativo';
+  }
+  return '';
+}

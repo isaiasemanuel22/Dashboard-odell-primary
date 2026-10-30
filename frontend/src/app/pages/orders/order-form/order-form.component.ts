@@ -69,8 +69,13 @@ import {
   isDueDateAfterToday,
   minimumDueDate,
   isGraphicDesignService,
+  isLineBlank,
   isLineValid,
+  lineConceptError as orderLineConceptError,
   lineFromOrderItem,
+  lineQuantityError as orderLineQuantityError,
+  lineUnitPriceError as orderLineUnitPriceError,
+  lineValidationMessage as orderLineValidationMessage,
   orderLinesFromSaleCart,
   orderLineStockHint,
   ORDER_DESCRIPTION_MAX_LENGTH,
@@ -86,7 +91,6 @@ import {
 } from '../../../shared/utils/product.helpers';
 import {
   normalizeProfitMargins,
-  costFromPriceAndMargin,
   priceFromCostAndMargin,
   getMarginForService,
 } from '../../../shared/utils/pricing.util';
@@ -117,6 +121,7 @@ import {
   DiscountMode,
   discountModeFromValues,
   discountPayloadFromMode,
+  discountValidationMessage,
 } from '../../../shared/utils/discount.util';
 import { DbSelectOption } from '../../../components/dashboard-form/db-select/db-select.types';
 import {
@@ -135,6 +140,7 @@ import {
 import {
   applyProductSpecsToEstampadoLine,
   estampadoMargin,
+  hydrateEstampadoQuoteSpecs,
   isEstampadoLine,
   isEstampadoQuoteConfigured,
   shouldShowEstampadoQuoteFields,
@@ -410,15 +416,20 @@ export class OrderFormComponent implements OnChanges, OnInit {
     label: string;
     total: number;
   }> {
-    return this.billableLines.map((line, index) => {
-      const qty = Math.max(1, Number(line.quantity) || 1);
-      return {
-        key: `${index}-${line.serviceType}-${line.productId || 'custom'}`,
-        serviceType: line.serviceType,
-        label: `${this.lineTitle(line, index)} · ${qty} u`,
-        total: this.linePriceTotal(line),
-      };
-    });
+    // Incluye líneas con precio 0/negativo para no “desaparecerlas” del resumen.
+    return this.lines
+      .map((line, index) => ({ line, index }))
+      .filter(({ line }) => !isLineBlank(line))
+      .map(({ line, index }) => {
+        const qty = Number(line.quantity);
+        const qtyLabel = Number.isFinite(qty) ? qty : line.quantity;
+        return {
+          key: `${index}-${line.serviceType}-${line.productId || 'custom'}`,
+          serviceType: line.serviceType,
+          label: `${this.lineTitle(line, index)} · ${qtyLabel} u`,
+          total: this.linePriceTotal(line),
+        };
+      });
   }
 
   get quoteAreaShares(): Array<{ serviceType: ServiceType; label: string; percent: number }> {
@@ -635,7 +646,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   private applyChargeMode(line: OrderLineDraft, mode: 'hours' | 'fixed'): void {
     line.chargeMode = mode;
-    if (mode === 'hours') this.applyDesignBudget(line);
+    if (mode === 'hours') {
+      this.applyDesignBudget(line);
+    } else {
+      // Precio fijo: sin horas de costo → costo 0 (no inventar desde el precio).
+      line.unitCost = 0;
+    }
   }
 
   workKindOptions(line: OrderLineDraft): DbSelectOption[] {
@@ -922,6 +938,9 @@ export class OrderFormComponent implements OnChanges, OnInit {
     });
     this.impresosService.getImpresos().subscribe((items) => {
       this.impresos = items;
+      // B3: re-hidratar y costear cuando llegan impresos (dims/papel).
+      this.hydrateEstampadoQuoteLines(this.lines);
+      this.syncAllEstampadoLines({ preservePrice: this.isEditing });
     });
     if (this.isQuoteForm) {
       this.suppliesService
@@ -929,6 +948,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
         .pipe(takeUntilDestroyed(this.destroyRef))
         .subscribe((items) => {
           this.supplies = items;
+          // B3: re-costear con precios de insumos (antes unitCost podía quedar en 0).
+          this.syncAllEstampadoLines({ preservePrice: this.isEditing });
         });
     }
   }
@@ -1070,11 +1091,18 @@ export class OrderFormComponent implements OnChanges, OnInit {
     applyProductSpecsToFdmLine(line, product);
     applyProductSpecsToEstampadoLine(line, product);
     if (isImpresion3DLine(line.serviceType)) {
+      // Costear primero; el precio de lista del catálogo pisa el sugerido.
       this.syncFdmLine(line, { preservePrice: false });
+      if (Number(product.price) > 0) {
+        line.unitPrice = product.price;
+      }
       return;
     }
     if (isEstampadoLine(line.serviceType)) {
       this.syncEstampadoLine(line, { preservePrice: false });
+      if (Number(product.price) > 0) {
+        line.unitPrice = product.price;
+      }
       return;
     }
 
@@ -1096,6 +1124,20 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   lineUnitCost(line: OrderLineDraft): number {
+    // B3: si el desglose de estampado suma > 0 pero unitCost quedó en 0
+    // (sync temprano sin insumos/impresos), mostrar la suma del desglose.
+    if (
+      isEstampadoLine(line.serviceType) &&
+      isEstampadoQuoteConfigured(line)
+    ) {
+      if (line.unitCost != null && line.unitCost > 0) {
+        return line.unitCost;
+      }
+      const est = this.estampadoCosts(line);
+      const fromBreakdown =
+        est.prints + est.supplies + est.press + est.errorMargin;
+      if (fromBreakdown > 0) return fromBreakdown;
+    }
     if (line.unitCost != null && line.unitCost >= 0) {
       return line.unitCost;
     }
@@ -1363,12 +1405,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
   onDesignUnitPriceChange(line: OrderLineDraft, raw: number | string): void {
     const price = Number(raw) || 0;
     line.designUnitPrice = price;
-    if (!this.profitMargins) {
-      line.unitCost = price;
-      this.syncDesignPrintLine(line);
-      return;
-    }
-    line.unitCost = costFromPriceAndMargin(price, this.designMarginFor(line));
+    // Costo = horas × tarifa (o 0). Nunca derivar el costo desde el precio.
+    line.unitCost = this.designServiceCost(line);
     this.syncDesignPrintLine(line);
   }
 
@@ -1446,6 +1484,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   onSubmit(asDraft = false): void {
+    if (!this.canSubmit()) return;
     const validLines = this.lines.filter((line) => isLineValid(line));
     const discount = discountPayloadFromMode(
       this.discountMode,
@@ -1499,8 +1538,40 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return minimumDueDate();
   }
 
+  lineQuantityError(line: OrderLineDraft): string {
+    if (isLineBlank(line)) return '';
+    return orderLineQuantityError(line.quantity);
+  }
+
+  lineUnitPriceError(line: OrderLineDraft): string {
+    if (isLineBlank(line)) return '';
+    return orderLineUnitPriceError(line);
+  }
+
+  lineConceptError(line: OrderLineDraft): string {
+    if (isLineBlank(line)) return '';
+    return orderLineConceptError(line);
+  }
+
+  lineValidationMessage(line: OrderLineDraft): string {
+    if (isLineBlank(line)) return '';
+    return orderLineValidationMessage(line);
+  }
+
+  get discountError(): string {
+    return discountValidationMessage(
+      this.discountMode,
+      this.discountPercent,
+      this.discountAmount,
+    );
+  }
+
   canSubmit(): boolean {
-    if (!this.lines.some((line) => isLineValid(line))) return false;
+    const relevant = this.lines.filter((line) => !isLineBlank(line));
+    if (!relevant.length || !relevant.every((line) => isLineValid(line))) {
+      return false;
+    }
+    if (this.discountError) return false;
     if (
       plainTextFromHtml(this.description).length > this.descriptionMaxLength
     ) {
@@ -1521,6 +1592,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.notes = '';
       this.lines = this.quote.items.map((item) => lineFromQuoteItem(item));
       this.hydrateFdmColorSelectors(this.lines);
+      this.hydrateEstampadoQuoteLines(this.lines);
       this.discountMode = discountModeFromValues(
         this.quote.discountPercent,
         this.quote.discountAmount,
@@ -1534,6 +1606,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.notes = '';
       this.lines = this.presetQuote.items.map((item) => lineFromQuoteItem(item));
       this.hydrateFdmColorSelectors(this.lines);
+      this.hydrateEstampadoQuoteLines(this.lines);
       this.discountMode = discountModeFromValues(
         this.presetQuote.discountPercent,
         this.presetQuote.discountAmount,
@@ -1547,6 +1620,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.notes = this.order.notes ?? '';
       this.lines = this.order.items.map((item) => lineFromOrderItem(item));
       this.hydrateFdmColorSelectors(this.lines);
+      this.hydrateEstampadoQuoteLines(this.lines);
       this.discountMode = discountModeFromValues(
         this.order.discountPercent,
         this.order.discountAmount,
@@ -1623,6 +1697,21 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }
   }
 
+  /**
+   * B3: normalizar desglose de estampado al abrir; si falta (catálogo),
+   * tomar prints/press/supplies del producto antes de costear.
+   */
+  private hydrateEstampadoQuoteLines(lines: OrderLineDraft[]): void {
+    for (const line of lines) {
+      if (!isEstampadoLine(line.serviceType)) continue;
+      hydrateEstampadoQuoteSpecs(
+        line,
+        this.products.find((p) => p.id === line.productId),
+        this.impresos,
+      );
+    }
+  }
+
   private syncFdmLine(
     line: OrderLineDraft,
     options?: { preservePrice?: boolean },
@@ -1659,7 +1748,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
         this.generalSettings,
         this.costCalculator,
         estampadoMargin(this.profitMargins),
-        options,
+        {
+          ...options,
+          // Misma fuente que el desglose de la UI (evita unitCost 0 por store vacío).
+          supplies: this.supplies,
+          impresos: this.impresos,
+        },
       );
       return;
     }
@@ -1675,11 +1769,18 @@ export class OrderFormComponent implements OnChanges, OnInit {
     this.profitMargins = normalizeProfitMargins(settings.profitMargins);
   }
 
+  /** Costo de diseño/modelado: horas × tarifa. Precio fijo → 0. */
+  private designServiceCost(line: OrderLineDraft): number {
+    if (this.chargeModeFor(line) === 'fixed') return 0;
+    const hours = Math.max(0, Number(line.budgetedHours) || 0);
+    return Math.round(this.serviceRate(line) * hours);
+  }
+
   private applyDesignBudget(line: OrderLineDraft): void {
     if (!this.profitMargins) return;
     const hours = Math.max(0, Number(line.budgetedHours) || 0);
     line.budgetedHours = hours;
-    const cost = Math.round(this.serviceRate(line) * hours);
+    const cost = this.designServiceCost(line);
     line.unitCost = cost;
     const price = priceFromCostAndMargin(cost, this.designMarginFor(line));
     line.unitPrice = price;
@@ -1688,21 +1789,24 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   private syncDesignLineCosts(): void {
-    if (!this.profitMargins) return;
     for (const line of this.lines) {
       if (!isDesignService(line.serviceType)) continue;
-      if ((line.unitPrice ?? 0) <= 0 && (line.unitCost ?? 0) <= 0) {
-        line.budgetedHours ??= 0;
-        if ((line.budgetedHours ?? 0) > 0) {
-          this.applyDesignBudget(line);
-        } else {
-          line.unitCost = 0;
-          line.unitPrice = 0;
-          line.designUnitPrice = 0;
-        }
+      line.budgetedHours ??= 0;
+
+      // Vacío + horas: sugerir desde tarifa. Nunca inventar costo = precio ÷ margen.
+      if (
+        (line.unitPrice ?? 0) <= 0 &&
+        (line.unitCost ?? 0) <= 0 &&
+        this.chargeModeFor(line) === 'hours' &&
+        (line.budgetedHours ?? 0) > 0 &&
+        this.profitMargins
+      ) {
+        this.applyDesignBudget(line);
         continue;
       }
-      const margin = this.designMarginFor(line);
+
+      line.unitCost = this.designServiceCost(line);
+
       if (line.includesPrint) {
         if (line.designUnitPrice == null && line.unitPrice > 0) {
           line.designUnitPrice = Math.max(
@@ -1710,20 +1814,20 @@ export class OrderFormComponent implements OnChanges, OnInit {
             0,
           );
         }
-        line.unitCost = costFromPriceAndMargin(
-          line.designUnitPrice ?? 0,
-          margin,
-        );
         continue;
       }
+
       if (line.unitPrice > 0) {
-        line.unitCost = costFromPriceAndMargin(line.unitPrice, margin);
         line.designUnitPrice = line.unitPrice;
-      } else if ((line.unitCost ?? 0) > 0) {
-        line.unitPrice = priceFromCostAndMargin(line.unitCost!, margin);
+      } else if ((line.unitCost ?? 0) > 0 && this.profitMargins) {
+        line.unitPrice = priceFromCostAndMargin(
+          line.unitCost!,
+          this.designMarginFor(line),
+        );
         line.designUnitPrice = line.unitPrice;
       } else {
-        line.unitCost = 0;
+        line.unitPrice = 0;
+        line.designUnitPrice = 0;
       }
     }
   }

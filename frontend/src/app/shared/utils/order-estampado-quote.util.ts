@@ -3,10 +3,12 @@ import {
   EstampadoPrintSpec,
   EstampadoSupplyLine,
   GeneralSettings,
+  ImpresoWithCost,
   OrderLineDraft,
   Product,
   ProductType,
   ServiceType,
+  Supply,
 } from '../../core/models';
 import { ProductCostCalculationService } from '../../core/services/product-cost-calculation.service';
 import {
@@ -14,6 +16,7 @@ import {
   normalizeEstampadoPressCycles,
   normalizeEstampadoPrints,
   normalizeEstampadoSupplies,
+  syncEstampadoPrintFromImpreso,
 } from './estampado.helpers';
 import {
   getMarginForService,
@@ -34,8 +37,11 @@ export function isEstampadoQuoteConfigured(
   const supplies = normalizeEstampadoSupplies(line.estampadoSupplies);
   const cycles = normalizeEstampadoPressCycles(line.estampadoPressCycles);
 
+  // Impreso por id (sin medidas aún) también cuenta: el costeo resuelve dims.
   const hasPrints = prints.some(
-    (print) => !!print.paperType && isEstampadoPrintValid(print),
+    (print) =>
+      (!!print.paperType && isEstampadoPrintValid(print)) ||
+      !!print.impresoId?.trim(),
   );
   const hasSupplies = supplies.some(
     (entry) => entry.supplyId && Number(entry.quantity) > 0,
@@ -72,12 +78,44 @@ export function applyProductSpecsToEstampadoLine(
   line.estampadoSupplies = structuredClone(estampado.supplies ?? []);
 }
 
+/**
+ * Normaliza el desglose guardado; si falta (línea de catálogo), lo toma del producto.
+ * Enriquece impresos desde el catálogo de impresos cuando solo hay `impresoId`.
+ */
+export function hydrateEstampadoQuoteSpecs(
+  line: OrderLineDraft,
+  product: Product | undefined,
+  impresos: ImpresoWithCost[] = [],
+): void {
+  if (!isEstampadoLine(line.serviceType)) return;
+
+  let prints = normalizeEstampadoPrints(line.estampadoPrints);
+  if (impresos.length && prints.length) {
+    prints = prints.map((print) =>
+      syncEstampadoPrintFromImpreso(print, impresos),
+    );
+  }
+  line.estampadoPrints = prints;
+  line.estampadoPressCycles = normalizeEstampadoPressCycles(
+    line.estampadoPressCycles,
+  );
+  line.estampadoSupplies = normalizeEstampadoSupplies(line.estampadoSupplies);
+
+  if (!isEstampadoQuoteConfigured(line) && line.productId?.trim()) {
+    applyProductSpecsToEstampadoLine(line, product);
+  }
+}
+
 export function syncEstampadoQuotePricing(
   line: OrderLineDraft,
   settings: GeneralSettings,
   costCalculator: ProductCostCalculationService,
   marginPercent: number,
-  options?: { preservePrice?: boolean },
+  options?: {
+    preservePrice?: boolean;
+    supplies?: Supply[];
+    impresos?: ImpresoWithCost[];
+  },
 ): void {
   if (!isEstampadoLine(line.serviceType) || !isEstampadoQuoteConfigured(line)) {
     return;
@@ -97,9 +135,14 @@ export function syncEstampadoQuotePricing(
         line.estampadoSupplies,
       ) as EstampadoSupplyLine[],
     },
-    { settings },
+    {
+      settings,
+      supplies: options?.supplies,
+      impresos: options?.impresos,
+    },
   );
 
+  // Siempre recalcular unitCost (preservePrice solo conserva el precio de venta).
   line.unitCost = breakdown.totalCost;
   if (!options?.preservePrice) {
     line.unitPrice = priceFromCostAndMargin(breakdown.totalCost, marginPercent);
