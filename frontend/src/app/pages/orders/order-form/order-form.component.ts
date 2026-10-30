@@ -988,6 +988,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   onLineServiceChange(line: OrderLineDraft): void {
     line.productId = isDesignService(line.serviceType) ? undefined : '';
     line.customName = isDesignService(line.serviceType) ? '' : undefined;
+    line.conceptManual = undefined;
     line.unitCost = isDesignService(line.serviceType) ? 0 : undefined;
     line.unitPrice = 0;
     line.budgetedHours = isDesignService(line.serviceType) ? 0 : undefined;
@@ -1023,26 +1024,25 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }
   }
 
+  /** B7: actualizar Concepto y marcarlo como editado a mano. */
+  onConceptChange(line: OrderLineDraft, value: string): void {
+    line.customName = value;
+    line.conceptManual = true;
+  }
+
   /**
-   * B7: al cambiar producto, actualizar Concepto si está vacío o sigue
-   * siendo el nombre del producto anterior (no editado a mano).
+   * B7: al cambiar producto, actualizar Concepto al nombre nuevo
+   * salvo que el usuario lo haya editado a mano (`conceptManual`).
    */
   onProductChange(line: OrderLineDraft, productId: string): void {
-    const previousProduct = line.productId
-      ? this.products.find((p) => p.id === line.productId)
-      : undefined;
     line.productId = productId ?? '';
 
     const product = line.productId
       ? this.products.find((p) => p.id === line.productId)
       : undefined;
 
-    if (product) {
-      const concept = line.customName?.trim() ?? '';
-      const prevName = previousProduct?.name?.trim() ?? '';
-      if (!concept || concept === prevName) {
-        line.customName = product.name;
-      }
+    if (product && !line.conceptManual) {
+      line.customName = product.name;
     }
 
     if (!product) {
@@ -1627,7 +1627,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     line: OrderLineDraft,
     options?: { preservePrice?: boolean },
   ): void {
-    if (!this.generalSettings) return;
+    if (!this.generalSettings || !this.profitMargins) return;
 
     // Siempre costear (y sugerir precio) desde el formulario.
     if (isFdmQuoteConfigured(line)) {
@@ -1651,7 +1651,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     line: OrderLineDraft,
     options?: { preservePrice?: boolean },
   ): void {
-    if (!this.generalSettings) return;
+    if (!this.generalSettings || !this.profitMargins) return;
 
     if (isEstampadoQuoteConfigured(line)) {
       syncEstampadoQuotePricing(

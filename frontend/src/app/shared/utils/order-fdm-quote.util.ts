@@ -54,7 +54,7 @@ export function applyProductSpecsToFdmLine(
 
   if (product.type === ProductType.FDM || product.type === ProductType.RESINA) {
     if (!isProduct3D(product)) return;
-    if (!line.customName?.trim()) {
+    if (!line.conceptManual) {
       line.customName = product.name;
     }
     if (product.printTimeHours != null) {

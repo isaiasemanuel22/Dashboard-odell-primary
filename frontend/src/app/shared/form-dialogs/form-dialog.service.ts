@@ -84,13 +84,20 @@ export class FormDialogService {
       return of(undefined);
     }
     this.quoteDialogLocked = true;
-    return this.open(QuoteFormDialogComponent, { quote }, 'xl', {
-      ariaLabel: quote ? 'Editar presupuesto' : 'Nuevo presupuesto',
-      panelClass: ['form-dialog-panel--quote'],
-      maxWidth: '1120px',
-    }).pipe(finalize(() => {
-      this.quoteDialogLocked = false;
-    }));
+    return this.open<{ quote: Quote | null }, Quote>(
+      QuoteFormDialogComponent,
+      { quote },
+      'xl',
+      {
+        ariaLabel: quote ? 'Editar presupuesto' : 'Nuevo presupuesto',
+        panelClass: ['form-dialog-panel--quote'],
+        maxWidth: '1120px',
+      },
+    ).pipe(
+      finalize(() => {
+        this.quoteDialogLocked = false;
+      }),
+    );
   }
 
   openQuoteDocumentExport(quote: Quote): Observable<void | undefined> {

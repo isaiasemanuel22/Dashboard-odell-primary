@@ -64,7 +64,7 @@ export function applyProductSpecsToEstampadoLine(
 ): void {
   if (!product || product.type !== ProductType.ESTAMPADO) return;
   const estampado = product as Extract<Product, { type: ProductType.ESTAMPADO }>;
-  if (!line.customName?.trim()) {
+  if (!line.conceptManual) {
     line.customName = product.name;
   }
   line.estampadoPrints = structuredClone(estampado.prints ?? []);

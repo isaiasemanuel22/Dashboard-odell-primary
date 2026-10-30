@@ -687,6 +687,11 @@ export interface OrderLineDraft {
   serviceType: ServiceType;
   productId?: string;
   customName?: string;
+  /**
+   * UI: el usuario editó Concepto a mano. No se pisa al cambiar producto.
+   * No se persiste.
+   */
+  conceptManual?: boolean;
   quantity: number;
   /** Solo líneas de diseño: costo unitario estimado (UI). */
   unitCost?: number;
