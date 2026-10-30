@@ -10,6 +10,7 @@ import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
 import { IsEnum } from 'class-validator';
 import { QuoteStatus } from '../enums';
+import { ORDER_RICH_TEXT_HTML_MAX_LENGTH } from '../../orders/rich-text.util';
 import { OrderItemDto } from './order.dto';
 
 export class CreateQuoteDto {
@@ -33,8 +34,13 @@ export class CreateQuoteDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(20000)
+  @MaxLength(ORDER_RICH_TEXT_HTML_MAX_LENGTH)
   description?: string;
+
+  /** Solo borrador | enviado al crear/guardar desde el formulario. */
+  @IsOptional()
+  @IsEnum(QuoteStatus)
+  status?: QuoteStatus;
 }
 
 export class UpdateQuoteDto extends PartialType(CreateQuoteDto) {}

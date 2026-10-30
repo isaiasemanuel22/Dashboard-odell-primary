@@ -677,6 +677,8 @@ export type CreateQuotePayload = {
   discountPercent?: number;
   discountAmount?: number;
   description?: string;
+  /** Solo borrador | enviado desde el formulario (Crear vs Guardar borrador). */
+  status?: QuoteStatus;
 };
 
 export type UpdateQuotePayload = Partial<CreateQuotePayload>;

@@ -1232,7 +1232,7 @@
     @if (isQuoteForm) {
       <db-form-footer class="quote-form__footer">
         <p class="quote-form__note">
-          Se guarda como Borrador hasta que lo envíes
+          Borrador queda en Borrador; Crear/Guardar lo deja Enviado
         </p>
         <div class="quote-form__actions">
           <db-button
@@ -1246,7 +1246,7 @@
             variant="secondary"
             format="solid"
             [disabled]="loading || !canSubmit()"
-            (clicked)="onSubmit()"
+            (clicked)="onSubmit(true)"
           />
           <db-button
             [label]="submitLabel"

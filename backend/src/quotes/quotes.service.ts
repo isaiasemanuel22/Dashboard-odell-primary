@@ -74,7 +74,7 @@ export class QuotesService {
       customerName,
       services,
       items,
-      status: QuoteStatus.BORRADOR,
+      status: this.resolveFormStatus(data.status),
       total: this.calculateTotal(items, discount),
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
@@ -130,6 +130,10 @@ export class QuotesService {
         data.description !== undefined
           ? this.normalizeDescription(data.description)
           : current.description,
+      status:
+        data.status !== undefined
+          ? this.resolveFormStatus(data.status)
+          : current.status,
     };
 
     return this.quotes.save(updated);
@@ -266,6 +270,12 @@ export class QuotesService {
         'Este presupuesto ya no se puede modificar',
       );
     }
+  }
+
+  /** Desde el formulario solo se aceptan borrador o enviado. */
+  private resolveFormStatus(status?: QuoteStatus): QuoteStatus {
+    if (status === QuoteStatus.ENVIADO) return QuoteStatus.ENVIADO;
+    return QuoteStatus.BORRADOR;
   }
 
   private deriveServices(items: QuoteItem[]): ServiceType[] {

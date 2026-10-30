@@ -32,6 +32,7 @@ import {
   PaperType,
   Product,
   Quote,
+  QuoteStatus,
   ServiceType,
 } from '../../../core/models';
 import { SettingsService, SuppliesService } from '../../../core/services/settings.service';
@@ -995,6 +996,13 @@ export class OrderFormComponent implements OnChanges, OnInit {
         this.syncEstampadoLine(line, { preservePrice: false });
       }
       if (isImpresion3DLine(line.serviceType)) {
+        // Catálogo → manual: conservar filamentos y normalizar color
+        // para que el selector no quede en blanco.
+        if (line.filaments?.length) {
+          line.filaments = normalizeFdmFilaments(line.filaments);
+        } else {
+          this.quoteFilaments(line);
+        }
         this.syncFdmLine(line, { preservePrice: false });
       }
       return;
@@ -1231,7 +1239,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     this.lines = this.lines.filter((_, i) => i !== index);
   }
 
-  onSubmit(): void {
+  onSubmit(asDraft = false): void {
     const validLines = this.lines.filter((line) => isLineValid(line));
     const discount = discountPayloadFromMode(
       this.discountMode,
@@ -1252,6 +1260,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
         description: hasRichTextContent(this.description)
           ? sanitizeRichTextHtml(this.description)
           : '',
+        status: asDraft ? QuoteStatus.BORRADOR : QuoteStatus.ENVIADO,
       } satisfies CreateQuotePayload);
       return;
     }
@@ -1305,6 +1314,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.description = this.quote.description ?? '';
       this.notes = '';
       this.lines = this.quote.items.map((item) => lineFromQuoteItem(item));
+      this.hydrateFdmColorSelectors(this.lines);
       this.discountMode = discountModeFromValues(
         this.quote.discountPercent,
         this.quote.discountAmount,
@@ -1317,6 +1327,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.description = this.presetQuote.description ?? '';
       this.notes = '';
       this.lines = this.presetQuote.items.map((item) => lineFromQuoteItem(item));
+      this.hydrateFdmColorSelectors(this.lines);
       this.discountMode = discountModeFromValues(
         this.presetQuote.discountPercent,
         this.presetQuote.discountAmount,
@@ -1329,6 +1340,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.description = this.order.description ?? '';
       this.notes = this.order.notes ?? '';
       this.lines = this.order.items.map((item) => lineFromOrderItem(item));
+      this.hydrateFdmColorSelectors(this.lines);
       this.discountMode = discountModeFromValues(
         this.order.discountPercent,
         this.order.discountAmount,
@@ -1381,6 +1393,28 @@ export class OrderFormComponent implements OnChanges, OnInit {
   /** Con producto de catálogo la composición se rellena y queda bloqueada. */
   isCatalogLocked(line: OrderLineDraft): boolean {
     return !!line.productId?.trim();
+  }
+
+  /**
+   * B11: al editar, asegurar filas de filamento con color normalizado
+   * (Indistinto o el del producto) para que el selector se renderice.
+   * No reemplaza el desglose completo (B2); solo hidrata color/filamentos faltantes.
+   */
+  private hydrateFdmColorSelectors(lines: OrderLineDraft[]): void {
+    for (const line of lines) {
+      if (!isImpresion3DLine(line.serviceType)) continue;
+      if (!line.filaments?.length && line.productId?.trim()) {
+        applyProductSpecsToFdmLine(
+          line,
+          this.products.find((p) => p.id === line.productId),
+        );
+      }
+      if (line.filaments?.length) {
+        line.filaments = normalizeFdmFilaments(line.filaments);
+      } else {
+        this.quoteFilaments(line);
+      }
+    }
   }
 
   private syncFdmLine(
