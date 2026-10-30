@@ -37,8 +37,33 @@ export function isFdmQuoteConfigured(
   return grams > 0 || printTimeHours > 0;
 }
 
+/** Resina manual (o con tipo en la línea) lista para costear. */
+export function isResinQuoteConfigured(
+  line: Pick<
+    OrderLineDraft,
+    'grams' | 'printTimeHours' | 'resinType' | 'printProcess'
+  >,
+): boolean {
+  if (line.printProcess === 'fdm') return false;
+  if (line.printProcess !== 'resina' && !line.resinType) return false;
+  if (!line.resinType) return false;
+  const grams = Number(line.grams) || 0;
+  const printTimeHours = Number(line.printTimeHours) || 0;
+  return grams > 0 || printTimeHours > 0;
+}
+
 export function isImpresion3DLine(serviceType: ServiceType): boolean {
   return serviceType === ServiceType.IMPRESION_3D;
+}
+
+/** Catálogo RESINA o presupuesto manual en modo resina. */
+export function isResinQuoteLine(
+  line: OrderLineDraft,
+  product: Product | undefined,
+): boolean {
+  if (product?.type === ProductType.RESINA) return true;
+  if (line.productId?.trim()) return false;
+  return line.printProcess === 'resina' || !!line.resinType;
 }
 
 export function shouldShowFdmQuoteFields(
@@ -158,11 +183,19 @@ export function syncFdmQuotePricing(
 ): void {
   if (!isImpresion3DLine(line.serviceType)) return;
 
-  const isResin = options?.productType === ProductType.RESINA;
+  const isResin =
+    options?.productType === ProductType.RESINA ||
+    (!options?.productType &&
+      (line.printProcess === 'resina' || !!options?.resinType || !!line.resinType));
+  const resinType = options?.resinType ?? line.resinType;
   const resinReady =
     isResin &&
+    !!resinType &&
     ((Number(line.grams) || 0) > 0 || (Number(line.printTimeHours) || 0) > 0);
-  if (!isFdmQuoteConfigured(line) && !resinReady) {
+  if (!isResin && !isFdmQuoteConfigured(line)) {
+    return;
+  }
+  if (isResin && !resinReady) {
     return;
   }
 
@@ -184,7 +217,7 @@ export function syncFdmQuotePricing(
         : (line.filamentType as FilamentType),
       filaments: filamentsForQuote?.length ? filamentsForQuote : undefined,
       brand: isResin ? options?.brand : undefined,
-      resinType: options?.resinType,
+      resinType: isResin ? resinType : undefined,
       washMinutes: options?.washMinutes,
       cureMinutes: options?.cureMinutes,
     },

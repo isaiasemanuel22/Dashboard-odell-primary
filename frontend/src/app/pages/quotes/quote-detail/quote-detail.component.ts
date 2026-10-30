@@ -96,6 +96,12 @@ export class QuoteDetailComponent implements OnInit {
     const hours = Number(item.printTimeHours);
     return Number.isFinite(hours) && hours > 0 ? hours : null;
   }
+
+  formatPrintHours(hours: number): string {
+    return new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(
+      hours,
+    );
+  }
   readonly lineColumns: OdlColumn<QuoteItem>[] = [
     { key: 'service', header: 'Servicio', value: (item) => SERVICE_TYPE_LABELS[item.serviceType] },
     { key: 'product', header: 'Concepto / producto' },

@@ -222,7 +222,12 @@ línea cuando el pedido cotiza impresión 3D):
   tipo** configurado en Ajustes (o el promedio de precios de ese tipo). No se
   usa el precio por marca del producto ni de la línea de filamento.
 - **Resina.** Se cotiza con su propia composición de costo (resina, impresora
-  de resina, lavado/curado/alcohol según Ajustes). No se costea como FDM. En
+  de resina, lavado/curado/alcohol según Ajustes). No se costea como FDM. El
+  alcohol sale del insumo vinculado al perfil de lavado: si ese insumo no
+  está en Insumos o no tiene precio, el bloque Alcohol queda en $0 y el
+  formulario avisa para cargarlo en Insumos. En presupuesto **manual**
+  (sin catálogo) se elige Filamento o Resina; en resina se pide tipo,
+  gramos y horas (lavado/curado en 0 si no vienen del producto). En
   el formulario, lavado, curado y alcohol se muestran como renglones aparte
   del material de resina y de la impresión.
 - **Producto compuesto con piezas.** La mano de obra del presupuesto es solo
@@ -237,6 +242,9 @@ línea cuando el pedido cotiza impresión 3D):
 - **Fecha del presupuesto.** Es informativa: se muestra como texto (fecha de
   emisión y validez a +15 días). No es un campo editable.
 - **Descripción.** Límite de 1.000 caracteres.
+- **Concepto.** En líneas de impresión 3D y estampado, el campo Concepto
+  muestra el nombre del producto de catálogo (o el texto manual). Al reabrir
+  un presupuesto debe verse ese valor, no quedar vacío.
 
 ---
 
@@ -809,7 +817,8 @@ Límites al cargar el descuento:
 - monto fijo: entre **0 y un peso menos que el subtotal**.
 
 Si el valor ingresado o pegado queda fuera de rango, se ajusta al número
-válido más cercano. No se permite guardar un descuento inválido.
+válido más cercano y el formulario muestra un aviso breve del ajuste. No se
+permite guardar un descuento inválido.
 
 Cuando un presupuesto aceptado genera un pedido, el pedido hereda ese
 descuento.
@@ -1377,6 +1386,8 @@ Reglas codificadas:
 - El presupuesto puede crearse sin cliente (nombre «Sin cliente»); **Crear /
   Enviar** exige cliente (el borrador no).
 - Cotización de líneas FDM/resina, precio manual, armado y fecha: ver §5.1.
+- Presupuesto manual 3D: selector Filamento / Resina (`printProcess` +
+  `resinType` persistidos).
 - Cada línea puede persistir `unitPriceManual` y un snapshot de `unitCost`
   (costo al cotizar). Al reabrir se respetan para margen y precio manual; el
   costo solo se recalcula si el usuario cambia inputs de cotización (gramos,

@@ -19,6 +19,8 @@ import {
 import {
   isFdmQuoteConfigured,
   isImpresion3DLine,
+  isResinQuoteConfigured,
+  isResinQuoteLine,
 } from './order-fdm-quote.util';
 import {
   isEstampadoLine,
@@ -260,18 +262,22 @@ export function buildOrderItems(
       const isCustomEstampado =
         isEstampadoLine(line.serviceType) && !line.productId?.trim();
 
-      const filaments = isImpresion3DLine(line.serviceType)
-        ? storedFdmFilaments(line.filaments ?? [])
-        : [];
+      const isResinManual =
+        isCustomFdm && isResinQuoteLine(line, product);
+      const filaments =
+        isImpresion3DLine(line.serviceType) && !isResinManual
+          ? storedFdmFilaments(line.filaments ?? [])
+          : [];
       const grams = isImpresion3DLine(line.serviceType)
         ? filaments.length
           ? totalFdmFilamentGrams(filaments)
           : line.grams
         : undefined;
-      const filamentType = isImpresion3DLine(line.serviceType)
-        ? filaments.find((row) => row.filamentType)?.filamentType ??
-          line.filamentType
-        : undefined;
+      const filamentType =
+        isImpresion3DLine(line.serviceType) && !isResinManual
+          ? filaments.find((row) => row.filamentType)?.filamentType ??
+            line.filamentType
+          : undefined;
       const laborNote = isImpresion3DLine(line.serviceType)
         ? line.laborNote?.trim() || undefined
         : undefined;
@@ -295,6 +301,14 @@ export function buildOrderItems(
           : undefined,
         grams,
         filamentType,
+        printProcess: isImpresion3DLine(line.serviceType)
+          ? isResinManual
+            ? 'resina'
+            : line.printProcess === 'fdm' || filaments.length || filamentType
+              ? 'fdm'
+              : line.printProcess
+          : undefined,
+        resinType: isResinManual ? line.resinType : undefined,
         filaments: filaments.length ? filaments : undefined,
         workTimeHours: isImpresion3DLine(line.serviceType)
           ? line.workTimeHours
@@ -453,7 +467,11 @@ export function isLineValid(line: OrderLineDraft): boolean {
 
   if (isImpresion3DLine(line.serviceType)) {
     if (line.productId?.trim()) return true;
-    return !!line.customName?.trim() && isFdmQuoteConfigured(line);
+    if (!line.customName?.trim()) return false;
+    if (isResinQuoteLine(line, undefined)) {
+      return isResinQuoteConfigured(line);
+    }
+    return isFdmQuoteConfigured(line);
   }
 
   if (isEstampadoLine(line.serviceType)) {
@@ -523,12 +541,24 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
     };
   }
 
-  const filaments = isImpresion3DLine(item.serviceType)
-    ? normalizeFdmFilaments(item.filaments, {
-        grams: item.grams,
-        filamentType: item.filamentType,
-      })
-    : undefined;
+  const printProcess =
+    item.printProcess === 'fdm' || item.printProcess === 'resina'
+      ? item.printProcess
+      : item.resinType
+        ? 'resina'
+        : undefined;
+  const isResinManual =
+    isImpresion3DLine(item.serviceType) &&
+    !item.productId &&
+    (printProcess === 'resina' || !!item.resinType);
+
+  const filaments =
+    isImpresion3DLine(item.serviceType) && !isResinManual
+      ? normalizeFdmFilaments(item.filaments, {
+          grams: item.grams,
+          filamentType: item.filamentType,
+        })
+      : undefined;
 
   const estampadoPrints = isEstampadoLine(item.serviceType)
     ? normalizeEstampadoPrints(item.estampadoPrints)
@@ -543,9 +573,10 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
   return {
     serviceType: item.serviceType,
     productId: item.productId,
+    // Q2: con producto de catálogo también hay que mostrar el Concepto
+    // (antes solo se hidrataba en presupuesto manual).
     customName:
-      (isImpresion3DLine(item.serviceType) || isEstampadoLine(item.serviceType)) &&
-      !item.productId
+      isImpresion3DLine(item.serviceType) || isEstampadoLine(item.serviceType)
         ? item.productName
         : undefined,
     quantity: item.quantity,
@@ -558,7 +589,11 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
         : undefined,
     printTimeHours: item.printTimeHours,
     grams: item.grams,
-    filamentType: item.filamentType,
+    filamentType: isResinManual ? undefined : item.filamentType,
+    printProcess: isImpresion3DLine(item.serviceType)
+      ? printProcess ?? (item.productId ? undefined : 'fdm')
+      : undefined,
+    resinType: isResinManual ? item.resinType : undefined,
     filaments: filaments?.length ? filaments : undefined,
     workTimeHours: isImpresion3DLine(item.serviceType)
       ? item.workTimeHours
@@ -583,6 +618,7 @@ export function createEmptyLine(serviceType: ServiceType): OrderLineDraft {
     quantity: 1,
     unitCost: undefined,
     unitPrice: 0,
+    printProcess: isImpresion3DLine(serviceType) ? 'fdm' : undefined,
   };
 }
 

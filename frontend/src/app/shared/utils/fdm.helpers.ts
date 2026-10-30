@@ -94,7 +94,11 @@ export function formatFdmFilamentsSummary(input: {
     filamentType: input.filamentType as FilamentType | undefined,
   }).filter((row) => (Number(row.grams) || 0) > 0 && row.filamentType);
 
-  if (!rows.length) return '';
+  if (!rows.length) {
+    // Resina (u otra 3D sin tipo de filamento): mostrar gramos.
+    const grams = Math.round(Number(input.grams) || 0);
+    return grams > 0 ? `Resina ${grams} g` : '';
+  }
 
   return rows
     .map((row) => {

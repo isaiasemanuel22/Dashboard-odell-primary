@@ -8,6 +8,10 @@ description: >-
 
 # Correcciones de Odell
 
+Si el usuario pide **uno por uno** o **preguntar antes** de cada arreglo,
+seguir `.cursor/skills/odell-correcciones-uno-por-uno/SKILL.md` (desglose →
+OK → fix). No usar el flujo automático de abajo.
+
 No reparar en este chat. Lanzar el subagente `odell-correcciones` y dejar que él hable con `odell-qa`.
 
 1. Lanzar el subagente `odell-correcciones` con el tipo `odell-correcciones`.

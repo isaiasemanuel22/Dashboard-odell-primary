@@ -23,6 +23,7 @@ import {
   MachineProfile,
   MachineProfileRole,
   ProductType,
+  ResinType,
   Supply,
   SupplyCategory,
   GeneralSettings,
@@ -127,20 +128,28 @@ import {
   DISCOUNT_PERCENT_MAX,
   clampDiscountAmount,
   clampDiscountPercent,
+  discountAmountClampMessage,
   discountModeFromValues,
   discountPayloadFromMode,
+  discountPercentClampMessage,
 } from '../../../shared/utils/discount.util';
 import { DbSelectOption } from '../../../components/dashboard-form/db-select/db-select.types';
 import {
   applyImpresoToDesignLine,
   syncDesignPrintPricing,
 } from '../../../shared/utils/design-print.util';
-import { filamentTypeOptions, paperTypeOptions } from '../../../shared/utils/select-options';
+import {
+  filamentTypeOptions,
+  paperTypeOptions,
+  resinTypeOptions,
+} from '../../../shared/utils/select-options';
 import {
   applyProductSpecsToFdmLine,
   impresion3DMargin,
   isFdmQuoteConfigured,
   isImpresion3DLine,
+  isResinQuoteConfigured,
+  isResinQuoteLine,
   shouldShowFdmQuoteFields,
   syncFdmQuotePricing,
 } from '../../../shared/utils/order-fdm-quote.util';
@@ -218,6 +227,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   readonly PaperType = PaperType;
   readonly paperTypeOptions = paperTypeOptions();
   readonly filamentTypeOptions = filamentTypeOptions();
+  readonly resinTypeOptions = resinTypeOptions();
 
   readonly uploadDescriptionImage: DbFileUploadFn = (file) =>
     firstValueFrom(this.mediaUpload.uploadProductImage(file));
@@ -249,6 +259,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
   discountMode: DiscountMode = 'none';
   discountPercent = 0;
   discountAmount = 0;
+  /** Q3: aviso cuando el clamp ajustó el valor ingresado. */
+  discountClampHint = '';
   /** null hasta que carguen Ajustes reales; no usar defaults inventados en hints. */
   profitMargins: ServiceProfitMargins | null = null;
   generalSettings: GeneralSettings | null = null;
@@ -552,19 +564,25 @@ export class OrderFormComponent implements OnChanges, OnInit {
     );
   }
 
-  /** Producto de resina en la línea (catálogo). */
+  /** Catálogo RESINA o presupuesto manual en modo resina. */
   isResinProductLine(line: OrderLineDraft): boolean {
-    return this.productForLine(line)?.type === ProductType.RESINA;
+    return isResinQuoteLine(line, this.productForLine(line));
   }
 
   fdmBreakdown(line: OrderLineDraft): CostBreakdown | null {
     if (!this.generalSettings) return null;
     const product = this.productForLine(line);
-    const isResin = product?.type === ProductType.RESINA;
+    const isResin = this.isResinProductLine(line);
+    const resinType =
+      product && 'resinType' in product && product.resinType
+        ? product.resinType
+        : line.resinType;
     const resinReady =
       isResin &&
+      !!resinType &&
       ((Number(line.grams) || 0) > 0 || (Number(line.printTimeHours) || 0) > 0);
-    if (!isFdmQuoteConfigured(line) && !resinReady) return null;
+    if (!isResin && !isFdmQuoteConfigured(line)) return null;
+    if (isResin && !resinReady) return null;
 
     // N1: FDM sin marca → promedio del tipo (igual que el selector).
     const filamentsForQuote = isResin
@@ -585,10 +603,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
           isResin && product && 'brand' in product
             ? product.brand
             : undefined,
-        resinType:
-          isResin && product && 'resinType' in product
-            ? product.resinType
-            : undefined,
+        resinType: isResin ? resinType : undefined,
         washMinutes:
           isResin && product && 'washMinutes' in product
             ? product.washMinutes
@@ -606,7 +621,11 @@ export class OrderFormComponent implements OnChanges, OnInit {
   resinCostParts(line: OrderLineDraft): ResinCostParts | null {
     if (!this.generalSettings || !this.isResinProductLine(line)) return null;
     const product = this.productForLine(line);
-    if (!product) return null;
+    const resinType =
+      product && 'resinType' in product && product.resinType
+        ? product.resinType
+        : line.resinType;
+    if (!resinType) return null;
 
     return this.costCalculator.buildResinCostParts(
       {
@@ -614,15 +633,43 @@ export class OrderFormComponent implements OnChanges, OnInit {
         grams: Number(line.grams) || 0,
         printTimeHours: Number(line.printTimeHours) || 0,
         workTimeHours: Number(line.workTimeHours) || 0,
-        brand: 'brand' in product ? product.brand : undefined,
-        resinType: 'resinType' in product ? product.resinType : undefined,
+        brand:
+          product && 'brand' in product ? product.brand : undefined,
+        resinType,
         washMinutes:
-          'washMinutes' in product ? product.washMinutes : undefined,
+          product && 'washMinutes' in product
+            ? product.washMinutes
+            : undefined,
         cureMinutes:
-          'cureMinutes' in product ? product.cureMinutes : undefined,
+          product && 'cureMinutes' in product
+            ? product.cureMinutes
+            : undefined,
       },
       { settings: this.generalSettings, supplies: this.suppliesForCost() },
     );
+  }
+
+  /** R3: FDM ↔ Resina en presupuesto manual (sin catálogo). */
+  setPrintProcess(line: OrderLineDraft, process: 'fdm' | 'resina'): void {
+    if (line.productId?.trim()) return;
+    if (line.printProcess === process) return;
+    line.printProcess = process;
+    if (process === 'resina') {
+      line.filaments = undefined;
+      line.filamentType = undefined;
+      if (!line.resinType) {
+        line.resinType = this.resinTypeOptions[0]?.value;
+      }
+    } else {
+      line.resinType = undefined;
+    }
+    this.onFdmQuoteChange(line);
+  }
+
+  onResinTypeChange(line: OrderLineDraft, value: string): void {
+    line.resinType = value as ResinType;
+    line.printProcess = 'resina';
+    this.onFdmQuoteChange(line);
   }
 
   resinAlcoholSummary(line: OrderLineDraft): string {
@@ -635,7 +682,37 @@ export class OrderFormComponent implements OnChanges, OnInit {
         `${this.formatNumber(parts.washConsumptionMl)} ml / ${parts.washBathUses} usos`,
       );
     }
-    return bits.length ? bits.join(' · ') : 'Supply de lavado';
+    return bits.length ? bits.join(' · ') : 'Insumo de lavado';
+  }
+
+  /**
+   * Q1: si el alcohol no tiene precio es porque falta el insumo o su precio.
+   * Mensaje + enlace a Insumos (otra pantalla).
+   */
+  resinAlcoholIssue(line: OrderLineDraft): string | null {
+    const parts = this.resinCostParts(line);
+    if (!parts || parts.washSupplyCost > 0) return null;
+    switch (parts.washSupplyStatus) {
+      case 'missing-supply':
+        return 'El alcohol de lavado no está en Insumos. Cargalo ahí para cotizarlo.';
+      case 'missing-price':
+        return 'El alcohol de lavado no tiene precio. Completalo en Insumos.';
+      case 'no-profile':
+        return 'Falta vincular el insumo de lavado en Ajustes → máquinas de resina.';
+      case 'no-consumption':
+        return 'Falta el consumo de alcohol (ml por baño) en Ajustes → máquinas de resina.';
+      default:
+        return null;
+    }
+  }
+
+  resinAlcoholNeedsInsumos(line: OrderLineDraft): boolean {
+    const parts = this.resinCostParts(line);
+    if (!parts || parts.washSupplyCost > 0) return false;
+    return (
+      parts.washSupplyStatus === 'missing-supply' ||
+      parts.washSupplyStatus === 'missing-price'
+    );
   }
 
   resinWashSummary(line: OrderLineDraft): string {
@@ -684,10 +761,13 @@ export class OrderFormComponent implements OnChanges, OnInit {
   resinMaterialSummary(line: OrderLineDraft): string {
     const product = this.productForLine(line);
     const grams = Number(line.grams) || 0;
-    const resinType =
+    const typeKey =
       product && 'resinType' in product && product.resinType
-        ? RESIN_TYPE_LABELS[product.resinType]
-        : 'Resina';
+        ? product.resinType
+        : line.resinType;
+    const resinType = typeKey
+      ? (RESIN_TYPE_LABELS[typeKey] ?? String(typeKey))
+      : 'Resina';
     const brand =
       product && 'brand' in product && product.brand?.trim()
         ? product.brand.trim()
@@ -1354,9 +1434,22 @@ export class OrderFormComponent implements OnChanges, OnInit {
       line.customName = product.name;
     }
 
+    if (product?.type === ProductType.RESINA) {
+      line.printProcess = 'resina';
+      line.resinType = product.resinType;
+      line.filaments = undefined;
+      line.filamentType = undefined;
+    } else if (product && isImpresion3DLine(line.serviceType)) {
+      line.printProcess = 'fdm';
+      line.resinType = undefined;
+    }
+
     if (!product) {
       line.unitPrice = 0;
       line.unitCost = undefined;
+      if (isImpresion3DLine(line.serviceType) && !line.printProcess) {
+        line.printProcess = 'fdm';
+      }
       if (isEstampadoLine(line.serviceType)) {
         line.estampadoPrints ??= [];
         line.estampadoPressCycles ??= [];
@@ -1619,6 +1712,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   setDiscountMode(mode: DiscountMode): void {
     this.discountMode = mode;
+    this.discountClampHint = '';
     if (mode === 'none') {
       this.discountPercent = 0;
       this.discountAmount = 0;
@@ -1628,22 +1722,36 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   onDiscountPercentChange(raw: number | string): void {
-    this.discountPercent = clampDiscountPercent(Number(raw));
+    const n = Number(raw);
+    this.discountClampHint = discountPercentClampMessage(n);
+    this.discountPercent = clampDiscountPercent(n);
   }
 
   onDiscountAmountChange(raw: number | string): void {
-    this.discountAmount = clampDiscountAmount(Number(raw), this.subtotal);
+    const n = Number(raw);
+    this.discountClampHint = discountAmountClampMessage(n, this.subtotal);
+    this.discountAmount = clampDiscountAmount(n, this.subtotal);
   }
 
   /** Ajusta %/$ al rango válido (tipeo, pegado o cambio de subtotal). */
   private clampDiscountFields(): void {
     if (this.discountMode === 'percent') {
-      this.discountPercent = clampDiscountPercent(this.discountPercent);
+      const before = this.discountPercent;
+      this.discountPercent = clampDiscountPercent(before);
+      if (this.discountPercent !== before) {
+        this.discountClampHint = discountPercentClampMessage(before);
+      }
     } else if (this.discountMode === 'amount') {
-      this.discountAmount = clampDiscountAmount(
-        this.discountAmount,
-        this.subtotal,
-      );
+      const before = this.discountAmount;
+      this.discountAmount = clampDiscountAmount(before, this.subtotal);
+      if (this.discountAmount !== before) {
+        this.discountClampHint = discountAmountClampMessage(
+          before,
+          this.subtotal,
+        );
+      }
+    } else {
+      this.discountClampHint = '';
     }
   }
 
@@ -2071,10 +2179,16 @@ export class OrderFormComponent implements OnChanges, OnInit {
       if (!line.filaments?.length && line.productId?.trim()) {
         applyProductSpecsToFdmLine(line, product, this.products);
       }
-      // Resina no usa filamentos; no inventar PLA.
-      if (product?.type === ProductType.RESINA) {
+      // Resina (catálogo o manual) no usa filamentos; no inventar PLA.
+      if (isResinQuoteLine(line, product)) {
         line.filaments = undefined;
+        if (!line.productId?.trim() && !line.printProcess) {
+          line.printProcess = 'resina';
+        }
         continue;
+      }
+      if (!line.productId?.trim() && !line.printProcess) {
+        line.printProcess = 'fdm';
       }
       if (line.filaments?.length) {
         line.filaments = normalizeFdmFilaments(line.filaments);
@@ -2106,10 +2220,18 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (!this.generalSettings || !this.profitMargins) return;
 
     const product = this.productForLine(line);
-    const resinConfigured =
-      product?.type === ProductType.RESINA &&
-      ((Number(line.grams) || 0) > 0 || (Number(line.printTimeHours) || 0) > 0);
-    const configured = isFdmQuoteConfigured(line) || resinConfigured;
+    const isResin = this.isResinProductLine(line);
+    const resinType =
+      product && 'resinType' in product && product.resinType
+        ? product.resinType
+        : line.resinType;
+    const resinConfigured = isResin && isResinQuoteConfigured({
+      ...line,
+      resinType,
+      printProcess: isResin ? 'resina' : line.printProcess,
+    });
+    const configured =
+      (!isResin && isFdmQuoteConfigured(line)) || resinConfigured;
 
     // Costear; precio/costo se preservan si son manual/snapshot o al reabrir.
     if (configured) {
@@ -2122,20 +2244,24 @@ export class OrderFormComponent implements OnChanges, OnInit {
           ...options,
           preservePrice: options?.preservePrice || !!line.unitPriceManual,
           preserveCost: options?.preserveCost,
-          productType: product?.type,
-          // N1: marca solo para resina; FDM cotiza por promedio del tipo.
+          productType: isResin
+            ? ProductType.RESINA
+            : product?.type === ProductType.FDM ||
+                product?.type === ProductType.COMBO
+              ? product.type
+              : ProductType.FDM,
+          // N1: marca solo para resina de catálogo; FDM/manual por promedio.
           brand:
-            product?.type === ProductType.RESINA && product && 'brand' in product
+            isResin && product && 'brand' in product
               ? product.brand
               : undefined,
-          resinType:
-            product && 'resinType' in product ? product.resinType : undefined,
+          resinType: isResin ? resinType : undefined,
           washMinutes:
-            product && 'washMinutes' in product
+            isResin && product && 'washMinutes' in product
               ? product.washMinutes
               : undefined,
           cureMinutes:
-            product && 'cureMinutes' in product
+            isResin && product && 'cureMinutes' in product
               ? product.cureMinutes
               : undefined,
         },

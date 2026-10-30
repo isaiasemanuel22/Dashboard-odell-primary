@@ -43,6 +43,36 @@ export function clampDiscountAmount(value: number, subtotal: number): number {
   return Math.min(Math.max(n, 0), max);
 }
 
+/** Aviso corto si el valor de % se ajustó al rango (Q3). */
+export function discountPercentClampMessage(raw: number): string {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return 'El descuento se ajustó a un valor válido';
+  if (n < 0) return 'El descuento no puede ser negativo; se ajustó a 0 %';
+  if (n > DISCOUNT_PERCENT_MAX) {
+    return `El descuento máximo es ${DISCOUNT_PERCENT_MAX} %; se ajustó`;
+  }
+  return '';
+}
+
+/** Aviso corto si el monto $ se ajustó al rango (Q3). */
+export function discountAmountClampMessage(
+  raw: number,
+  subtotal: number,
+): string {
+  const n = Number(raw);
+  if (!Number.isFinite(n)) return 'El descuento se ajustó a un valor válido';
+  if (n < 0) return 'El descuento no puede ser negativo; se ajustó a $0';
+  const sub = Number(subtotal);
+  if (!Number.isFinite(sub) || sub <= 0) {
+    return n > 0 ? 'Sin subtotal no hay descuento; se ajustó a $0' : '';
+  }
+  const max = Math.max(0, Math.round(sub) - 1);
+  if (n > max) {
+    return 'El descuento no puede cubrir todo el subtotal; se ajustó';
+  }
+  return '';
+}
+
 export function calculateDiscountValue(
   subtotal: number,
   discountPercent = 0,

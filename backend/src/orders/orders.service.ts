@@ -40,7 +40,11 @@ import { isDesignPrintConfigured } from './design-print.util';
 import {
   isCustomFdmOrderLine,
   isFdmQuoteConfigured,
+  isManualResinOrderLine,
+  isResinQuoteConfigured,
+  normalizePrintProcess,
 } from './order-fdm-quote.util';
+import { ResinType } from '../common/enums';
 import {
   isCustomEstampadoOrderLine,
   isEstampadoQuoteConfigured,
@@ -519,7 +523,13 @@ export class OrdersService {
       }
 
       if (isCustomFdmOrderLine({ serviceType, productId })) {
-        if (!isFdmQuoteConfigured(item)) {
+        if (isManualResinOrderLine(item)) {
+          if (!isResinQuoteConfigured(item)) {
+            throw new BadRequestException(
+              `Línea ${index + 1}: completá tipo de resina y gramos u horas de impresión`,
+            );
+          }
+        } else if (!isFdmQuoteConfigured(item)) {
           throw new BadRequestException(
             `Línea ${index + 1}: completá tipo de filamento y gramos u horas de impresión`,
           );
@@ -566,24 +576,35 @@ export class OrdersService {
       const fdmFields =
         serviceType === ServiceType.IMPRESION_3D
           ? (() => {
-              const filaments = normalizeFdmFilaments(item.filaments, {
-                grams: item.grams != null ? Number(item.grams) : undefined,
-                filamentType: item.filamentType as FilamentType | undefined,
-              }).filter((line) => line.grams > 0);
+              const printProcess =
+                normalizePrintProcess(item.printProcess) ??
+                (item.resinType ? 'resina' : undefined);
+              const isResin =
+                printProcess === 'resina' || !!item.resinType;
+              const filaments = isResin
+                ? []
+                : normalizeFdmFilaments(item.filaments, {
+                    grams: item.grams != null ? Number(item.grams) : undefined,
+                    filamentType: item.filamentType as FilamentType | undefined,
+                  }).filter((line) => line.grams > 0);
               const grams =
                 filaments.length > 0
                   ? totalFdmFilamentGrams(filaments)
                   : item.grams != null
                     ? Number(item.grams)
                     : undefined;
-              const filamentType =
-                filaments.find((line) => line.filamentType)?.filamentType ??
-                (item.filamentType as FilamentType | undefined);
+              const filamentType = isResin
+                ? undefined
+                : filaments.find((line) => line.filamentType)?.filamentType ??
+                  (item.filamentType as FilamentType | undefined);
               const laborNote = item.laborNote?.trim() || undefined;
               const workTimeHours =
                 item.workTimeHours != null
                   ? Math.max(0, Number(item.workTimeHours) || 0)
                   : undefined;
+              const resinType = isResin
+                ? (item.resinType as ResinType | undefined)
+                : undefined;
               return {
                 printTimeHours:
                   item.printTimeHours != null
@@ -591,6 +612,14 @@ export class OrdersService {
                     : undefined,
                 grams,
                 filamentType,
+                printProcess: isResin
+                  ? ('resina' as const)
+                  : printProcess === 'fdm'
+                    ? ('fdm' as const)
+                    : filaments.length || filamentType
+                      ? ('fdm' as const)
+                      : undefined,
+                resinType,
                 filaments: filaments.length ? filaments : undefined,
                 workTimeHours,
                 laborNote,

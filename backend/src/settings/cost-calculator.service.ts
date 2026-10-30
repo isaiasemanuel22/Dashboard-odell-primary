@@ -22,7 +22,9 @@ import { calculatePaperCostFromPricePerSqm } from '../common/paper-cost.util';
 import { isDesignService } from '../common/service-type.util';
 import {
   buildFdmCostInput,
+  buildResinCostInput,
   isFdmQuoteConfigured,
+  isResinQuoteConfigured,
 } from '../orders/order-fdm-quote.util';
 import {
   calculateMachineOverhead,
@@ -442,6 +444,13 @@ export class CostCalculatorService {
     return this.calculateCost(buildFdmCostInput(item)).totalCost;
   }
 
+  resolveResinQuoteUnitCost(
+    item: Parameters<typeof buildResinCostInput>[0],
+  ): number {
+    if (!isResinQuoteConfigured(item)) return 0;
+    return this.calculateCost(buildResinCostInput(item)).totalCost;
+  }
+
   resolveOrderItemUnitCost(item: {
     productId?: string;
     unitPrice: number;
@@ -450,6 +459,9 @@ export class CostCalculatorService {
     grams?: number;
     printTimeHours?: number;
     filamentType?: FilamentType;
+    printProcess?: 'fdm' | 'resina';
+    resinType?: ResinType;
+    workTimeHours?: number;
     budgetedHours?: number;
     includesPrint?: boolean;
     printPaperType?: PaperType;
@@ -459,6 +471,12 @@ export class CostCalculatorService {
     // Snapshot persistido al cotizar: no recalcular con Ajustes actuales.
     if (item.unitCost != null && Number.isFinite(Number(item.unitCost))) {
       return Math.max(0, Number(item.unitCost));
+    }
+    if (
+      item.serviceType === ServiceType.IMPRESION_3D &&
+      isResinQuoteConfigured(item)
+    ) {
+      return this.resolveResinQuoteUnitCost(item);
     }
     if (
       item.serviceType === ServiceType.IMPRESION_3D &&

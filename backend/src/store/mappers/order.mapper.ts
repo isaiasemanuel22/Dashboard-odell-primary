@@ -30,6 +30,8 @@ export function mapOrderItemFromDb(item: {
   printTimeHours?: number | null;
   grams?: number | null;
   filamentType?: string | null;
+  printProcess?: string | null;
+  resinType?: string | null;
   workTimeHours?: number | null;
   laborNote?: string | null;
   fdmFilaments?: Prisma.JsonValue;
@@ -84,6 +86,11 @@ export function mapOrderItemFromDb(item: {
     printTimeHours: item.printTimeHours ?? undefined,
     grams: item.grams ?? undefined,
     filamentType: (item.filamentType as OrderItem['filamentType']) ?? undefined,
+    printProcess:
+      item.printProcess === 'fdm' || item.printProcess === 'resina'
+        ? item.printProcess
+        : undefined,
+    resinType: (item.resinType as OrderItem['resinType']) ?? undefined,
     filaments: filaments.length ? filaments : undefined,
     workTimeHours: item.workTimeHours ?? undefined,
     laborNote: item.laborNote?.trim() || undefined,
@@ -226,6 +233,8 @@ export function mapOrderItemToDb(orderId: string, index: number, item: OrderItem
     printTimeHours: item.printTimeHours ?? null,
     grams: item.grams ?? null,
     filamentType: item.filamentType ?? null,
+    printProcess: item.printProcess ?? null,
+    resinType: item.resinType ?? null,
     workTimeHours: item.workTimeHours ?? null,
     laborNote: item.laborNote?.trim() || null,
     fdmFilaments: toInputJson(filaments.map(persistedFdmLine)),

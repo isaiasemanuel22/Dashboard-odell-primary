@@ -177,6 +177,9 @@ model OrderItem {
   printTimeHours Float? @map("print_time_hours")
   grams         Float?
   filamentType  String? @map("filament_type") @db.VarChar(32)
+  /** Presupuesto/pedido manual 3D: fdm | resina. */
+  printProcess  String? @map("print_process") @db.VarChar(16)
+  resinType     String? @map("resin_type") @db.VarChar(32)
   workTimeHours Float?  @map("work_time_hours")
   laborNote     String? @map("labor_note") @db.Text
   fdmFilaments  Json    @default("[]") @map("fdm_filaments")
@@ -246,6 +249,9 @@ model QuoteItem {
   printTimeHours  Float?  @map("print_time_hours")
   grams           Float?
   filamentType    String? @map("filament_type") @db.VarChar(32)
+  /** Presupuesto/pedido manual 3D: fdm | resina. */
+  printProcess    String? @map("print_process") @db.VarChar(16)
+  resinType       String? @map("resin_type") @db.VarChar(32)
   workTimeHours   Float?  @map("work_time_hours")
   laborNote       String? @map("labor_note") @db.Text
   fdmFilaments    Json    @default("[]") @map("fdm_filaments")

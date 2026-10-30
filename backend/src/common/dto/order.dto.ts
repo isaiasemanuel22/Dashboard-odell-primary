@@ -13,7 +13,14 @@ import {
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
-import { OrderStatus, FilamentType, PaperType, PrintJobStatus, ServiceType } from '../enums';
+import {
+  OrderStatus,
+  FilamentType,
+  PaperType,
+  PrintJobStatus,
+  ResinType,
+  ServiceType,
+} from '../enums';
 import {
   EstampadoPressCycle,
   EstampadoPrintSpec,
@@ -131,6 +138,14 @@ export class OrderItemDto {
   @IsOptional()
   @IsEnum(FilamentType)
   filamentType?: FilamentType;
+
+  @IsOptional()
+  @IsIn(['fdm', 'resina'])
+  printProcess?: 'fdm' | 'resina';
+
+  @IsOptional()
+  @IsEnum(ResinType)
+  resinType?: ResinType;
 
   @IsOptional()
   @IsArray()

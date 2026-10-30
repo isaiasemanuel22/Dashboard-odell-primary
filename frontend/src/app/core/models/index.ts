@@ -560,6 +560,8 @@ export interface OrderItemPayload {
   printTimeHours?: number;
   grams?: number;
   filamentType?: FilamentType;
+  printProcess?: 'fdm' | 'resina';
+  resinType?: ResinType;
   filaments?: FdmFilamentLine[];
   workTimeHours?: number;
   laborNote?: string;
@@ -733,10 +735,14 @@ export interface OrderLineDraft {
   /** Solo diseño+impresión: costo/precio unitario de la impresión (UI). */
   printUnitCost?: number;
   printUnitPrice?: number;
-  /** Solo impresión 3D: presupuesto manual FDM. */
+  /** Solo impresión 3D: presupuesto manual FDM/resina. */
   printTimeHours?: number;
   grams?: number;
   filamentType?: FilamentType;
+  /** Manual 3D: fdm | resina. Se persiste. */
+  printProcess?: 'fdm' | 'resina';
+  /** Manual 3D (resina): tipo de resina. Se persiste. */
+  resinType?: ResinType;
   /** Filamentos/colores del desglose 3D (se persisten en el ítem). */
   filaments?: FdmFilamentLine[];
   /** Horas de mano de obra del desglose 3D (se persisten). */

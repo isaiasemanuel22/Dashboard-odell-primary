@@ -414,6 +414,10 @@ export interface OrderItem {
   printTimeHours?: number;
   grams?: number;
   filamentType?: FilamentType;
+  /** Impresión 3D manual: fdm | resina. */
+  printProcess?: 'fdm' | 'resina';
+  /** Impresión 3D manual (o catálogo copiado): tipo de resina. */
+  resinType?: ResinType;
   /** Impresión 3D: filamentos/colores del desglose. */
   filaments?: FdmFilamentLine[];
   /** Impresión 3D: horas de mano de obra del desglose. */

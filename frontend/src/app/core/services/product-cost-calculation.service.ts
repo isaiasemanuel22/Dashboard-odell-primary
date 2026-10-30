@@ -45,6 +45,14 @@ export interface ProductCostCalculationContext {
   impresos?: ImpresoWithCost[];
 }
 
+/** Por qué el bloque Alcohol puede quedar en $0 (Q1). */
+export type ResinWashSupplyStatus =
+  | 'ok'
+  | 'no-profile'
+  | 'no-consumption'
+  | 'missing-supply'
+  | 'missing-price';
+
 /** Desglose visual de costo de resina (order-form); no cambia el total. */
 export interface ResinCostParts {
   resinCost: number;
@@ -60,6 +68,7 @@ export interface ResinCostParts {
   washSupplyName: string | null;
   washConsumptionMl: number;
   washBathUses: number;
+  washSupplyStatus: ResinWashSupplyStatus;
 }
 
 @Injectable({ providedIn: 'root' })
@@ -201,6 +210,17 @@ export class ProductCostCalculationService {
       ? supplies.find((item) => item.id === washProfile.washSupplyId)
       : undefined;
 
+    let washSupplyStatus: ResinWashSupplyStatus = 'ok';
+    if (!washProfile?.washSupplyId) {
+      washSupplyStatus = 'no-profile';
+    } else if (!(Math.max(Number(washProfile.consumptionMl) || 0, 0) > 0)) {
+      washSupplyStatus = 'no-consumption';
+    } else if (!washSupply) {
+      washSupplyStatus = 'missing-supply';
+    } else if (!(Number(washSupply.unitPrice) > 0)) {
+      washSupplyStatus = 'missing-price';
+    }
+
     return {
       resinCost,
       washSupplyCost,
@@ -215,6 +235,7 @@ export class ProductCostCalculationService {
       washSupplyName: washSupply?.name?.trim() || null,
       washConsumptionMl: Math.max(Number(washProfile?.consumptionMl) || 0, 0),
       washBathUses: resolveWashBathUses(washProfile?.washBathUses),
+      washSupplyStatus,
     };
   }
 

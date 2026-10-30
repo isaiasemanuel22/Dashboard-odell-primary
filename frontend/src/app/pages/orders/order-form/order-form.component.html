@@ -265,6 +265,27 @@
                     </p>
                   </header>
 
+                  @if (!line.productId) {
+                    <div class="discount-segments cost-composition__process" role="group" aria-label="Proceso de impresión">
+                      <button
+                        type="button"
+                        class="discount-segment"
+                        [class.discount-segment--active]="!isResinProductLine(line)"
+                        (click)="setPrintProcess(line, 'fdm')"
+                      >
+                        Filamento
+                      </button>
+                      <button
+                        type="button"
+                        class="discount-segment"
+                        [class.discount-segment--active]="isResinProductLine(line)"
+                        (click)="setPrintProcess(line, 'resina')"
+                      >
+                        Resina
+                      </button>
+                    </div>
+                  }
+
                   @if (isResinProductLine(line)) {
                     @let resin = resinCostParts(line);
                     <details class="cost-composition__block" open>
@@ -275,6 +296,16 @@
                         <strong class="cost-composition__summary-cost">{{ (resin?.resinCost ?? 0) | currencyArs }}</strong>
                       </summary>
                       <div class="cost-composition__body cost-composition__body--fields">
+                        @if (!line.productId) {
+                          <db-select
+                            label="Tipo de resina"
+                            [ngModel]="line.resinType"
+                            [name]="'resin-type-' + i"
+                            placeholder="Seleccionar tipo"
+                            [options]="resinTypeOptions"
+                            (ngModelChange)="onResinTypeChange(line, $event)"
+                          />
+                        }
                         <div class="cost-table__suffix cost-composition__field">
                           <db-input
                             label="Gramos"
@@ -289,7 +320,11 @@
                           <span>g</span>
                         </div>
                         <p class="cost-composition__field-hint">
-                          Tipo y marca del catálogo · solo material de resina
+                          @if (line.productId) {
+                            Tipo y marca del catálogo · solo material de resina
+                          } @else {
+                            Promedio del tipo en Ajustes · alcohol/lavado/curado abajo
+                          }
                         </p>
                       </div>
                     </details>
@@ -298,13 +333,32 @@
                       <summary class="cost-composition__summary">
                         <span class="cost-composition__chevron" aria-hidden="true"></span>
                         <span class="cost-composition__summary-title">Alcohol</span>
-                        <span class="cost-composition__summary-meta">{{ resinAlcoholSummary(line) }}</span>
+                        <span class="cost-composition__summary-meta">
+                          {{ resinAlcoholSummary(line) }}
+                          @if (resinAlcoholIssue(line)) {
+                            · <span class="cost-composition__missing">falta precio</span>
+                          }
+                        </span>
                         <strong class="cost-composition__summary-cost">{{ (resin?.washSupplyCost ?? 0) | currencyArs }}</strong>
                       </summary>
                       <div class="cost-composition__body">
-                        <p class="cost-composition__field-hint">
-                          Costo del supply de lavado (amortizado por usos del baño). Viene de Ajustes · no editable acá.
-                        </p>
+                        @if (resinAlcoholIssue(line); as alcoholIssue) {
+                          <p class="cost-composition__field-hint cost-composition__field-hint--warn" role="status">
+                            {{ alcoholIssue }}
+                            @if (resinAlcoholNeedsInsumos(line)) {
+                              <a
+                                class="cost-composition__insumos-link"
+                                routerLink="/insumos"
+                                target="_blank"
+                                rel="noopener"
+                              >Abrir Insumos</a>
+                            }
+                          </p>
+                        } @else {
+                          <p class="cost-composition__field-hint">
+                            Costo del insumo de lavado (amortizado por usos del baño). Viene de Ajustes · no editable acá.
+                          </p>
+                        }
                       </div>
                     </details>
 
@@ -900,6 +954,9 @@
               />
             }
           </div>
+          @if (discountClampHint) {
+            <p class="quote-discount__hint" role="status">{{ discountClampHint }}</p>
+          }
         </div>
 
         <div class="quote-resumen__card quote-resumen__total-card">
@@ -1362,6 +1419,9 @@
                 />
               }
             </div>
+            @if (discountClampHint) {
+              <p class="quote-discount__hint" role="status">{{ discountClampHint }}</p>
+            }
           </div>
 
           <div class="order-summary order-summary--quote">
