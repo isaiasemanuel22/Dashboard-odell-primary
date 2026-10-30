@@ -33,6 +33,7 @@ import {
   Product,
   Quote,
   QuoteStatus,
+  ServiceProfitMargins,
   ServiceType,
 } from '../../../core/models';
 import { SettingsService, SuppliesService } from '../../../core/services/settings.service';
@@ -84,7 +85,6 @@ import {
   resolveProductUnitCost,
 } from '../../../shared/utils/product.helpers';
 import {
-  DEFAULT_PROFIT_MARGINS,
   normalizeProfitMargins,
   costFromPriceAndMargin,
   priceFromCostAndMargin,
@@ -236,7 +236,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
   discountMode: DiscountMode = 'none';
   discountPercent = 0;
   discountAmount = 0;
-  profitMargins = DEFAULT_PROFIT_MARGINS;
+  /** null hasta que carguen Ajustes reales; no usar defaults inventados en hints. */
+  profitMargins: ServiceProfitMargins | null = null;
   generalSettings: GeneralSettings | null = null;
   impresos: ImpresoWithCost[] = [];
   supplies: Supply[] = [];
@@ -382,7 +383,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return this.billableLines.length > 0;
   }
 
+  get settingsReady(): boolean {
+    return this.generalSettings != null && this.profitMargins != null;
+  }
+
   get totalCost(): number {
+    if (!this.profitMargins) return 0;
     return calculateOrderLinesCost(
       this.billableLines,
       this.products,
@@ -599,6 +605,35 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   setChargeMode(line: OrderLineDraft, mode: 'hours' | 'fixed'): void {
+    if (this.chargeModeFor(line) === mode) return;
+
+    const losesFixedPrice =
+      mode === 'hours' &&
+      this.chargeModeFor(line) === 'fixed' &&
+      ((Number(line.unitPrice) || 0) > 0 ||
+        (Number(line.designUnitPrice) || 0) > 0);
+
+    if (!losesFixedPrice) {
+      this.applyChargeMode(line, mode);
+      return;
+    }
+
+    this.formDialogs
+      .openConfirm({
+        title: 'Cambiar modo de cobro',
+        message:
+          'Al pasar a «Por horas» el precio se recalcula desde las horas presupuestadas. Se va a borrar el precio fijo cargado. ¿Continuar?',
+        confirmLabel: 'Cambiar a por horas',
+        cancelLabel: 'Cancelar',
+        confirmVariant: 'primary',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.applyChargeMode(line, mode);
+      });
+  }
+
+  private applyChargeMode(line: OrderLineDraft, mode: 'hours' | 'fixed'): void {
     line.chargeMode = mode;
     if (mode === 'hours') this.applyDesignBudget(line);
   }
@@ -793,6 +828,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   suggestedUnitPriceHint(line: OrderLineDraft): string {
+    if (!this.profitMargins) return '';
     const cost = this.lineUnitCost(line);
     const price = Number(line.unitPrice) || 0;
     if (cost > 0 && price > 0) {
@@ -815,6 +851,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   designPriceHint(line: OrderLineDraft): string {
+    if (!this.profitMargins) return '';
     if (this.serviceRate(line) <= 0) {
       const rateLabel = isGraphicDesignService(line.serviceType)
         ? 'Tarifa de diseño'
@@ -867,16 +904,21 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   designMarginFor(line: OrderLineDraft): number {
+    if (!this.profitMargins) return 0;
     return getMarginForService(line.serviceType, this.profitMargins);
   }
 
   ngOnInit(): void {
+    const cached = this.settingsService.peekGeneralSettings();
+    if (cached) {
+      this.applyGeneralSettings(cached);
+    }
     this.settingsService.getGeneralSettings().subscribe((settings) => {
-      this.generalSettings = settings;
-      this.profitMargins = normalizeProfitMargins(settings.profitMargins);
+      this.applyGeneralSettings(settings);
       this.syncDesignLineCosts();
       this.syncAllDesignPrintLines();
       this.syncAllFdmLines({ preservePrice: this.isEditing });
+      this.syncAllEstampadoLines({ preservePrice: this.isEditing });
     });
     this.impresosService.getImpresos().subscribe((items) => {
       this.impresos = items;
@@ -1061,6 +1103,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (line.productId) {
       return 'Precio del catálogo de productos.';
     }
+    if (!this.profitMargins) return '';
     if (isEstampadoLine(line.serviceType)) {
       const margin = estampadoMargin(this.profitMargins);
       return `Sugerido: costo + ${margin}% de margen`;
@@ -1071,8 +1114,144 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   setLineService(line: OrderLineDraft, serviceType: ServiceType): void {
     if (line.serviceType === serviceType) return;
+
+    if (!this.lineHasResettableData(line)) {
+      this.applyLineService(line, serviceType);
+      return;
+    }
+
+    this.formDialogs
+      .openConfirm({
+        title: 'Cambiar servicio',
+        message: this.serviceChangeConfirmMessage(line, serviceType),
+        confirmLabel: 'Cambiar servicio',
+        cancelLabel: 'Cancelar',
+        confirmVariant: 'primary',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.applyLineService(line, serviceType);
+      });
+  }
+
+  private applyLineService(line: OrderLineDraft, serviceType: ServiceType): void {
     line.serviceType = serviceType;
     this.onLineServiceChange(line);
+  }
+
+  /** True si al resetear la línea se perdería algo que el usuario cargó. */
+  private lineHasResettableData(line: OrderLineDraft): boolean {
+    if (line.productId?.trim()) return true;
+    if (line.customName?.trim()) return true;
+    if ((Number(line.unitPrice) || 0) > 0) return true;
+    if ((Number(line.unitCost) || 0) > 0) return true;
+    if ((Number(line.designUnitPrice) || 0) > 0) return true;
+    if ((Number(line.budgetedHours) || 0) > 0) return true;
+    if ((Number(line.printTimeHours) || 0) > 0) return true;
+    if ((Number(line.grams) || 0) > 0) return true;
+    if ((Number(line.workTimeHours) || 0) > 0) return true;
+    if (line.laborNote?.trim()) return true;
+    if (line.workKind?.trim()) return true;
+    if (line.deliverables?.length) return true;
+    if (line.includesPrint) return true;
+    if (line.includesRevisions) return true;
+    if (line.needsClientProduct) return true;
+    if (line.linkPrint) return true;
+    if (line.filaments?.some((f) => (Number(f.grams) || 0) > 0)) return true;
+    if (
+      line.estampadoPrints?.some(
+        (p) =>
+          (Number(p.widthCm) || 0) > 0 ||
+          (Number(p.lengthCm) || 0) > 0 ||
+          (Number(p.heightCm) || 0) > 0 ||
+          (Number(p.quantity) || 0) > 1 ||
+          !!p.impresoId,
+      )
+    ) {
+      return true;
+    }
+    if (
+      line.estampadoPressCycles?.some(
+        (c) =>
+          (Number(c.pressMinutes) || 0) > 0 || (Number(c.bajadas) || 0) > 0,
+      )
+    ) {
+      return true;
+    }
+    if (
+      line.estampadoSupplies?.some(
+        (s) => !!s.supplyId || (Number(s.quantity) || 0) > 0,
+      )
+    ) {
+      return true;
+    }
+    return false;
+  }
+
+  private serviceChangeConfirmMessage(
+    line: OrderLineDraft,
+    next: ServiceType,
+  ): string {
+    const lost: string[] = [];
+    if (line.productId?.trim() || line.customName?.trim()) {
+      lost.push('concepto o producto');
+    }
+    if (
+      (Number(line.grams) || 0) > 0 ||
+      line.filaments?.some((f) => (Number(f.grams) || 0) > 0)
+    ) {
+      lost.push('gramos y materiales');
+    }
+    if ((Number(line.printTimeHours) || 0) > 0) {
+      lost.push('horas de impresión');
+    }
+    if ((Number(line.workTimeHours) || 0) > 0 || line.laborNote?.trim()) {
+      lost.push('mano de obra');
+    }
+    if ((Number(line.budgetedHours) || 0) > 0) {
+      lost.push('horas presupuestadas');
+    }
+    const hasEstampadoData =
+      line.estampadoPrints?.some(
+        (p) =>
+          (Number(p.widthCm) || 0) > 0 ||
+          (Number(p.lengthCm) || 0) > 0 ||
+          (Number(p.heightCm) || 0) > 0 ||
+          (Number(p.quantity) || 0) > 1 ||
+          !!p.impresoId,
+      ) ||
+      line.estampadoPressCycles?.some(
+        (c) =>
+          (Number(c.pressMinutes) || 0) > 0 || (Number(c.bajadas) || 0) > 0,
+      ) ||
+      line.estampadoSupplies?.some(
+        (s) => !!s.supplyId || (Number(s.quantity) || 0) > 0,
+      );
+    if (hasEstampadoData) {
+      lost.push('medidas e insumos de estampado');
+    }
+    if (
+      line.workKind?.trim() ||
+      line.deliverables?.length ||
+      line.includesPrint ||
+      line.includesRevisions ||
+      line.needsClientProduct
+    ) {
+      lost.push('detalle de diseño o modelado');
+    }
+    if (
+      (Number(line.unitPrice) || 0) > 0 ||
+      (Number(line.designUnitPrice) || 0) > 0
+    ) {
+      lost.push('precio');
+    }
+
+    const detail =
+      lost.length > 0
+        ? ` Se van a borrar: ${lost.join(', ')}.`
+        : ' Se van a borrar los datos cargados en esta línea.';
+
+    return `Al cambiar a «${SERVICE_TYPE_LABELS[next]}» la línea se reinicia.${detail} ¿Continuar?`;
   }
 
   setDiscountMode(mode: DiscountMode): void {
@@ -1154,6 +1333,11 @@ export class OrderFormComponent implements OnChanges, OnInit {
   onDesignUnitCostChange(line: OrderLineDraft, raw: number | string): void {
     const cost = Number(raw) || 0;
     line.unitCost = cost;
+    if (!this.profitMargins) {
+      line.designUnitPrice = cost;
+      this.syncDesignPrintLine(line);
+      return;
+    }
     const designPrice = priceFromCostAndMargin(cost, this.designMarginFor(line));
     line.designUnitPrice = designPrice;
     this.syncDesignPrintLine(line);
@@ -1162,6 +1346,11 @@ export class OrderFormComponent implements OnChanges, OnInit {
   onDesignUnitPriceChange(line: OrderLineDraft, raw: number | string): void {
     const price = Number(raw) || 0;
     line.designUnitPrice = price;
+    if (!this.profitMargins) {
+      line.unitCost = price;
+      this.syncDesignPrintLine(line);
+      return;
+    }
     line.unitCost = costFromPriceAndMargin(price, this.designMarginFor(line));
     this.syncDesignPrintLine(line);
   }
@@ -1464,7 +1653,13 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }
   }
 
+  private applyGeneralSettings(settings: GeneralSettings): void {
+    this.generalSettings = settings;
+    this.profitMargins = normalizeProfitMargins(settings.profitMargins);
+  }
+
   private applyDesignBudget(line: OrderLineDraft): void {
+    if (!this.profitMargins) return;
     const hours = Math.max(0, Number(line.budgetedHours) || 0);
     line.budgetedHours = hours;
     const cost = Math.round(this.serviceRate(line) * hours);
@@ -1476,6 +1671,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   private syncDesignLineCosts(): void {
+    if (!this.profitMargins) return;
     for (const line of this.lines) {
       if (!isDesignService(line.serviceType)) continue;
       if ((line.unitPrice ?? 0) <= 0 && (line.unitCost ?? 0) <= 0) {

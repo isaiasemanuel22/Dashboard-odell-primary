@@ -342,7 +342,11 @@
                       <span class="cost-composition__chevron cost-composition__chevron--none" aria-hidden="true"></span>
                       <span class="cost-composition__summary-title">Margen de error</span>
                       <span class="cost-composition__summary-meta">
-                        {{ errorMarginPercent }}% sobre material, luz y máquina
+                        @if (settingsReady) {
+                          {{ errorMarginPercent }}% sobre material, luz y máquina
+                        } @else {
+                          Cargando Ajustes…
+                        }
                       </span>
                       <strong class="cost-composition__summary-cost">{{ (fdm?.errorMarginCost ?? 0) | currencyArs }}</strong>
                     </div>
@@ -456,7 +460,11 @@
                         <span class="cost-composition__chevron cost-composition__chevron--none" aria-hidden="true"></span>
                         <span class="cost-composition__summary-title">Margen de error</span>
                         <span class="cost-composition__summary-meta">
-                          {{ errorMarginPercent }}% sobre impresos, insumos y plancha
+                          @if (settingsReady) {
+                            {{ errorMarginPercent }}% sobre impresos, insumos y plancha
+                          } @else {
+                            Cargando Ajustes…
+                          }
                         </span>
                         <strong class="cost-composition__summary-cost">{{ est.errorMargin | currencyArs }}</strong>
                       </div>
