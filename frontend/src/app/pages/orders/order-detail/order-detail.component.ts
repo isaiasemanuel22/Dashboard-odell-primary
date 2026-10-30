@@ -20,6 +20,7 @@ import {
   OrderPriceNotice,
   PrintJob,
   Customer,
+  TaskKind,
 } from '../../../core/models';
 import { RealtimeEvent } from '../../../core/models/realtime.model';
 import { OrdersService } from '../../../core/services/orders.service';
@@ -143,6 +144,7 @@ export class OrderDetailComponent implements OnInit {
   deliveries: OrderDelivery[] = [];
   deliveryDraft: number[] = [];
   deliveryLoading = false;
+  deliveryError = '';
   loading = true;
   notFound = false;
 
@@ -183,10 +185,39 @@ export class OrderDetailComponent implements OnInit {
   }
 
   itemFromStock(item: OrderItem): number {
+    if (!item.productId) return 0;
     return Math.max(
       this.itemPending(item) - this.itemToProduce(item) - this.itemProduced(item),
       0,
     );
+  }
+
+  itemDeliverableMax(item: OrderItem, itemIndex: number): number {
+    const pending = this.itemPending(item);
+    if (pending <= 0) return 0;
+    if (item.productId) {
+      return Math.min(
+        pending,
+        this.itemReserved(item) +
+          Math.max(this.itemProduced(item) - (item.deliveredFromProductionQuantity ?? 0), 0),
+      );
+    }
+    const serviceDone = this.tasks.some(
+      (task) =>
+        task.orderItemIndex === itemIndex &&
+        task.taskKind === TaskKind.SERVICE &&
+        task.status === 'terminado',
+    );
+    const productionDone = this.tasks.some(
+      (task) =>
+        task.orderItemIndex === itemIndex &&
+        task.taskKind === TaskKind.PRODUCTION &&
+        task.status === 'terminado',
+    );
+    if (item.includesPrint) {
+      return productionDone ? pending : 0;
+    }
+    return serviceDone ? pending : 0;
   }
 
   get paidAmount(): number {
@@ -358,29 +389,54 @@ export class OrderDetailComponent implements OnInit {
   cancelOrder(): void {
     if (!this.order || this.statusLoading) return;
     if (this.order.status === OrderStatus.CANCELADO) return;
-    if (!confirm(`¿Cancelar el pedido ${this.order.id}?`)) return;
 
-    const previousStatus = this.order.status;
-    this.statusLoading = true;
-    this.cdr.markForCheck();
+    const orderId = this.order.id;
+    const isDelivered = this.order.status === OrderStatus.ENTREGADO;
+    const hasPayments = (this.order.payments ?? []).some(
+      (payment) => Number(payment.amount) > 0,
+    );
+    const message = isDelivered
+      ? `El pedido ${orderId} ya está entregado. Al cancelarlo deja de figurar en Ventas y en el Disponible. ¿Confirmás la cancelación?`
+      : hasPayments
+        ? `El pedido ${orderId} tiene pagos o seña registrados. La cancelación no devuelve el dinero sola: hay que resolverlo aparte. ¿Cancelar igual?`
+        : `¿Cancelar el pedido ${orderId}?`;
 
-    this.ordersService
-      .updateOrderStatus(this.order.id, OrderStatus.CANCELADO)
-      .subscribe({
-        next: (updated) => {
-          this.statusLoading = false;
-          this.order = updated;
-          this.loadOrder(updated.id);
-          this.cdr.markForCheck();
-        },
-        error: (err) => {
-          this.statusLoading = false;
-          this.order = { ...this.order!, status: previousStatus };
-          this.cdr.markForCheck();
-          alert(
-            extractApiErrorMessage(err, 'No se pudo cancelar el pedido'),
-          );
-        },
+    this.formDialogs
+      .openConfirm({
+        title: 'Cancelar pedido',
+        message,
+        confirmLabel: 'Cancelar pedido',
+        cancelLabel: 'Volver',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed || !this.order || this.order.id !== orderId) return;
+
+        const previousStatus = this.order.status;
+        this.statusLoading = true;
+        this.cdr.markForCheck();
+
+        this.ordersService
+          .updateOrderStatus(orderId, OrderStatus.CANCELADO)
+          .subscribe({
+            next: (updated) => {
+              this.statusLoading = false;
+              this.order = updated;
+              this.tasks = [];
+              this.loadOrder(updated.id);
+              this.cdr.markForCheck();
+            },
+            error: (err) => {
+              this.statusLoading = false;
+              if (this.order?.id === orderId) {
+                this.order = { ...this.order, status: previousStatus };
+              }
+              this.cdr.markForCheck();
+              alert(
+                extractApiErrorMessage(err, 'No se pudo cancelar el pedido'),
+              );
+            },
+          });
       });
   }
 
@@ -502,25 +558,51 @@ export class OrderDetailComponent implements OnInit {
 
   registerDelivery(): void {
     if (!this.order || this.deliveryLoading) return;
+    this.deliveryError = '';
     const items = this.deliveryDraft
       .map((quantity, orderItemIndex) => ({
         orderItemIndex,
         quantity: Math.trunc(Number(quantity) || 0),
       }))
       .filter((item) => item.quantity > 0);
-    if (!items.length) return;
+    if (!items.length) {
+      this.deliveryError = 'Indicá al menos una cantidad a entregar';
+      this.cdr.markForCheck();
+      return;
+    }
+
+    const overMax = items.find((line) => {
+      const item = this.order!.items[line.orderItemIndex];
+      if (!item) return true;
+      return line.quantity > this.itemDeliverableMax(item, line.orderItemIndex);
+    });
+    if (overMax) {
+      const item = this.order.items[overMax.orderItemIndex]!;
+      const max = this.itemDeliverableMax(item, overMax.orderItemIndex);
+      this.deliveryError =
+        max <= 0
+          ? `No se puede entregar "${item.productName}": no hay unidades listas (faltan producir o terminar la tarea)`
+          : `"${item.productName}" admite como máximo ${max} unidad(es)`;
+      this.cdr.markForCheck();
+      return;
+    }
 
     this.deliveryLoading = true;
+    this.cdr.markForCheck();
     this.ordersService.createDelivery(this.order.id, { items }).subscribe({
       next: () => {
         this.deliveryLoading = false;
+        this.deliveryError = '';
         this.loadOrder(this.order!.id);
         this.cdr.markForCheck();
       },
       error: (err) => {
         this.deliveryLoading = false;
+        this.deliveryError = extractApiErrorMessage(
+          err,
+          'No se pudo registrar la entrega',
+        );
         this.cdr.markForCheck();
-        alert(extractApiErrorMessage(err, 'No se pudo registrar la entrega'));
       },
     });
   }

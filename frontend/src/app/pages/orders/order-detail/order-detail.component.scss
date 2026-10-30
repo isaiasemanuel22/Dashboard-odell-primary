@@ -349,6 +349,12 @@
   color: $color-error;
 }
 
+.order-payments__error {
+  margin: 0.5rem 0 0;
+  color: $color-error;
+  font-size: 0.875rem;
+}
+
 .status-history-panel h3 {
   margin: 0 0 1rem;
 }

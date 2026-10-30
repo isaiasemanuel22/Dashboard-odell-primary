@@ -326,7 +326,7 @@ export class OrdersService {
       }
     }
     this.orderTasks.syncOrderTasks(order);
-    return order;
+    return this.orders.save(order);
   }
 
   remove(id: string): void {
@@ -402,10 +402,12 @@ export class OrdersService {
               (item.deliveredFromProductionQuantity ?? 0),
             0,
           )
-        : pending;
+        : this.serviceDeliverableQuantity(order, item, line.orderItemIndex);
       if (line.quantity > pending || line.quantity > available) {
         throw new BadRequestException(
-          `No hay cantidad disponible para entregar "${item.productName}"`,
+          available <= 0 && !item.productId
+            ? `No se puede entregar "${item.productName}": la tarea todavía no está terminada`
+            : `No hay cantidad disponible para entregar "${item.productName}"`,
         );
       }
     }
@@ -670,6 +672,44 @@ export class OrdersService {
         'No se puede cambiar el precio de un pedido cancelado',
       );
     }
+  }
+
+  /** Servicios: solo se entrega si la tarea correspondiente está terminada (§15). */
+  private serviceDeliverableQuantity(
+    order: Order,
+    item: OrderItem,
+    itemIndex: number,
+  ): number {
+    const pending = Math.max(
+      item.quantity - (item.deliveredQuantity ?? 0),
+      0,
+    );
+    if (pending <= 0) return 0;
+
+    const tasks = this.printJobs.findByOrderId(order.id);
+    if (isDesignPrintConfigured(item)) {
+      const productionDone = tasks.some(
+        (task) =>
+          task.orderItemIndex === itemIndex &&
+          task.taskType === TaskType.PRODUCTION &&
+          task.status === PrintJobStatus.TERMINADO,
+      );
+      if (!productionDone) return 0;
+      const producedLeft = Math.max(
+        (item.producedQuantity ?? 0) -
+          (item.deliveredFromProductionQuantity ?? 0),
+        0,
+      );
+      return Math.min(pending, producedLeft || pending);
+    }
+
+    const serviceDone = tasks.some(
+      (task) =>
+        task.orderItemIndex === itemIndex &&
+        task.taskType === TaskType.SERVICE &&
+        task.status === PrintJobStatus.TERMINADO,
+    );
+    return serviceDone ? pending : 0;
   }
 
   private resolveCustomer(customerId?: string | null): {

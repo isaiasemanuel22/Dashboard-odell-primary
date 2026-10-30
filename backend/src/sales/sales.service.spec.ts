@@ -139,6 +139,67 @@ describe('SalesService order revenue', () => {
     expect(orderEntries[0]?.soldAt).toBe(deliveredAt);
   });
 
+  it('en caja solo suma mostrador y pagos de pedidos, no el total al entregar', () => {
+    const now = new Date().toISOString();
+    store.retailSales.push({
+      id: 'sale-cash',
+      items: [],
+      total: 17000,
+      soldAt: now,
+      createdAt: now,
+    });
+    store.orders.push(
+      {
+        id: 'ord-unpaid-delivered',
+        customerId: 'cust-1',
+        customerName: 'Ana',
+        services: [ServiceType.IMPRESION_3D],
+        items: [
+          {
+            serviceType: ServiceType.IMPRESION_3D,
+            productName: 'Pieza',
+            quantity: 1,
+            unitPrice: 29500,
+          },
+        ],
+        status: OrderStatus.ENTREGADO,
+        total: 29500,
+        payments: [],
+        createdAt: now,
+        dueDate: now,
+      },
+      {
+        id: 'ord-with-deposit',
+        customerId: 'cust-1',
+        customerName: 'Bruno',
+        services: [ServiceType.IMPRESION_3D],
+        items: [
+          {
+            serviceType: ServiceType.IMPRESION_3D,
+            productName: 'Pieza',
+            quantity: 1,
+            unitPrice: 100000,
+          },
+        ],
+        status: OrderStatus.PENDIENTE,
+        total: 100000,
+        payments: [
+          {
+            id: 'pay-1',
+            amount: 67600,
+            deposit: true,
+            createdAt: now,
+          },
+        ],
+        createdAt: now,
+        dueDate: now,
+      },
+    );
+
+    expect(service.getCollectedIncome()).toBe(17000 + 67600);
+    expect(service.getTotalIncome()).toBe(17000 + 29500);
+  });
+
   it('valida y descuenta stock en ventas retail', () => {
     store.products.push({
       id: 'prod-stock',

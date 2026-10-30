@@ -420,6 +420,8 @@ export interface ProductBase {
   price: number;
   cost: number;
   profit: number;
+  /** Precio manual del catálogo; si está seteado, no se pisa al recalcular. */
+  suggestedPrice?: number | null;
   categoryIds: string[];
   type: ProductType;
   size: string;
@@ -572,6 +574,7 @@ export interface OrderItem extends OrderItemPayload {
   productionRequiredQuantity?: number;
   producedQuantity?: number;
   deliveredQuantity?: number;
+  deliveredFromProductionQuantity?: number;
 }
 
 export type OrderStatusChangeSource = 'manual' | 'auto';

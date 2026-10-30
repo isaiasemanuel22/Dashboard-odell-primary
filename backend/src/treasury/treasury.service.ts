@@ -30,7 +30,8 @@ export class TreasuryService {
   ) {}
 
   getOverview(): TreasuryOverview {
-    const totalSalesIncome = this.sales.getTotalIncome();
+    // Caja operativa: lo cobrado (mostrador + pagos/señas), no el total al entregar.
+    const totalSalesIncome = this.sales.getCollectedIncome();
     const records = this.listRecords();
     const totalManualIncome = records
       .filter((record) => record.direction === TreasuryMovementDirection.INCOME)

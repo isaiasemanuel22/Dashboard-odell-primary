@@ -285,6 +285,8 @@ export interface ProductBase {
   price: number;
   cost: number;
   profit: number;
+  /** Precio manual del catálogo; si está seteado, no se pisa al recalcular. */
+  suggestedPrice?: number | null;
   categoryIds: string[];
   type: ProductType;
   size: string;

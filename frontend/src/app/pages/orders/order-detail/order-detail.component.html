@@ -278,17 +278,20 @@
         @if (order.status !== 'cancelado' && order.status !== 'entregado') {
           <div class="delivery-form">
             @for (item of order.items; track $index; let itemIndex = $index) {
-              @if ((item.pending ?? item.quantity) > 0) {
+              @if (itemPending(item) > 0) {
                 <db-input
-                  [label]="item.productName + ' (máx. ' + (item.pending ?? item.quantity) + ')'"
+                  [label]="item.productName + ' (máx. ' + itemDeliverableMax(item, itemIndex) + ')'"
                   type="number"
                   [(ngModel)]="deliveryDraft[itemIndex]"
                   [name]="'delivery-' + itemIndex"
                   [min]="0"
-                  [max]="item.pending ?? item.quantity"
+                  [max]="itemDeliverableMax(item, itemIndex)"
                   step="1"
                 />
               }
+            }
+            @if (deliveryError) {
+              <p class="order-payments__error" role="alert">{{ deliveryError }}</p>
             }
             <db-button
               [label]="deliveryLoading ? 'Registrando...' : 'Registrar entrega'"

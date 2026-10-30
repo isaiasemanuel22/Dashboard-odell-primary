@@ -428,7 +428,11 @@ function localCalendarDay(date: Date): string {
 }
 
 export function toDateInputValue(isoDate: string): string {
-  return isoDate.slice(0, 10);
+  const parsed = new Date(isoDate);
+  if (Number.isNaN(parsed.getTime())) {
+    return isoDate.slice(0, 10);
+  }
+  return localCalendarDay(parsed);
 }
 
 export function toOrderDueDate(dateValue: string): string {

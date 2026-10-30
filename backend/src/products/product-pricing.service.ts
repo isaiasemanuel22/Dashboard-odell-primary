@@ -43,6 +43,7 @@ export class ProductPricingService {
         type: ProductType.COMBO,
         components,
         assemblyTimeHours: product.assemblyTimeHours ?? 0,
+        suggestedPrice: product.suggestedPrice,
         price: product.price,
         cost: product.cost,
       };
@@ -54,6 +55,7 @@ export class ProductPricingService {
         type: ProductType.ESTAMPADO,
         components,
         assemblyTimeHours: product.assemblyTimeHours ?? 0,
+        suggestedPrice: product.suggestedPrice,
         price: product.price,
         cost: product.cost,
         workTimeHours: estampado.workTimeHours,
@@ -78,6 +80,7 @@ export class ProductPricingService {
       type: product3d.type,
       components,
       assemblyTimeHours: product.assemblyTimeHours ?? 0,
+      suggestedPrice: product.suggestedPrice,
       price: product.price,
       cost: product.cost,
       grams: product3d.grams,

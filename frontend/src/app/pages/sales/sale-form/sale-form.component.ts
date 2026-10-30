@@ -1,6 +1,7 @@
 import {
   Component,
   EventEmitter,
+  Injector,
   Input,
   OnChanges,
   Output,
@@ -10,6 +11,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import {
   CreateRetailSalePayload,
+  Order,
   Product,
   ProductStockOverview,
   RetailSale,
@@ -32,7 +34,6 @@ import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { SaleCartService } from '../../../core/services/sale-cart.service';
 import { Router } from '@angular/router';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
-import { FormDialogService } from '../../../shared/form-dialogs/public-api';
 import { DbSelectOption } from '../../../components/dashboard-form/db-select/db-select.types';
 import {
   DiscountMode,
@@ -71,7 +72,7 @@ let cartLineKey = 0;
 export class SaleFormComponent implements OnChanges {
   private readonly breakpoint = inject(BreakpointService);
   private readonly saleCart = inject(SaleCartService);
-  private readonly formDialogs = inject(FormDialogService);
+  private readonly injector = inject(Injector);
   private readonly router = inject(Router);
 
   @Input() sale: RetailSale | null = null;
@@ -288,19 +289,25 @@ export class SaleFormComponent implements OnChanges {
   createOrder(): void {
     if (!this.cart.length || this.isEditing) return;
 
-    this.formDialogs
-      .openOrder(null, {
-        presetCartLines: this.cart.map((line) => ({
-          productId: line.productId,
-          quantity: line.quantity,
-          unitPrice: line.unitPrice,
-        })),
-      })
-      .subscribe((order) => {
-        if (!order) return;
-        this.saleCart.clear();
-        void this.router.navigate(['/pedidos', order.id]);
-      });
+    const presetCartLines = this.cart.map((line) => ({
+      productId: line.productId,
+      quantity: line.quantity,
+      unitPrice: line.unitPrice,
+    }));
+
+    // Import dinámico: evita ciclo SaleForm → FormDialogService → SaleFormDialog → SaleForm (ɵcmp).
+    void import('../../../shared/form-dialogs/form-dialog.service').then(
+      ({ FormDialogService }) => {
+        this.injector
+          .get(FormDialogService)
+          .openOrder(null, { presetCartLines })
+          .subscribe((order: Order | undefined) => {
+            if (!order) return;
+            this.saleCart.clear();
+            void this.router.navigate(['/pedidos', order.id]);
+          });
+      },
+    );
   }
 
   cancelCart(): void {

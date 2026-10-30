@@ -389,13 +389,29 @@ export class CostCalculatorService {
     return Math.round(price / (1 + markup / 100));
   }
 
+  /**
+   * Costo de un servicio de diseño/modelado según tarifa × horas (§16.2).
+   * No se deduce del precio al cliente: con tarifa $0 el costo es $0.
+   */
   resolveDesignUnitCost(
     unitPrice: number,
     serviceType: ServiceType = ServiceType.DISENO_GRAFICO,
+    budgetedHours = 0,
   ): number {
-    const margins = normalizeProfitMargins(
-      this.store.generalSettings.profitMargins,
-    );
+    const settings = this.store.generalSettings;
+    const rate =
+      serviceType === ServiceType.MODELADO
+        ? Number(settings.modelingRatePerHour) || 0
+        : Number(settings.graphicDesignRatePerHour) || 0;
+    const hours = Number(budgetedHours) || 0;
+    if (rate > 0 && hours > 0) {
+      return Math.round(rate * hours);
+    }
+    // Compat: sin tarifa ni horas, no inventar costo desde el precio.
+    if (rate <= 0) {
+      return 0;
+    }
+    const margins = normalizeProfitMargins(settings.profitMargins);
     const margin =
       serviceType === ServiceType.MODELADO
         ? margins.modelado
@@ -433,6 +449,11 @@ export class CostCalculatorService {
     grams?: number;
     printTimeHours?: number;
     filamentType?: FilamentType;
+    budgetedHours?: number;
+    includesPrint?: boolean;
+    printPaperType?: PaperType;
+    printWidthCm?: number;
+    printLengthCm?: number;
   }): number {
     if (
       item.serviceType === ServiceType.IMPRESION_3D &&
@@ -443,10 +464,25 @@ export class CostCalculatorService {
     if (item.productId) {
       return this.resolveCatalogUnitCost(item.productId);
     }
-    return this.resolveDesignUnitCost(
+    const serviceType = item.serviceType ?? ServiceType.DISENO_GRAFICO;
+    let cost = this.resolveDesignUnitCost(
       item.unitPrice,
-      item.serviceType ?? ServiceType.DISENO_GRAFICO,
+      serviceType,
+      item.budgetedHours,
     );
+    if (
+      item.includesPrint &&
+      item.printPaperType &&
+      Number(item.printWidthCm) > 0 &&
+      Number(item.printLengthCm) > 0
+    ) {
+      cost += this.calculateImpresoPaperCost(
+        item.printPaperType,
+        Number(item.printWidthCm),
+        Number(item.printLengthCm),
+      ).paperCost;
+    }
+    return Math.round(cost);
   }
 
   resolveOrderUnitPrice(

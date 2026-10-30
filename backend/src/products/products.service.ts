@@ -120,6 +120,7 @@ export class ProductsService {
       data.type === ProductType.COMBO ||
       data.includesPieces === true ||
       components.length > 0;
+    const suggestedPrice = this.normalizeSuggestedPrice(data.suggestedPrice);
     const base = {
       id: this.store.nextId('prod', this.store.products),
       name: data.name.trim(),
@@ -129,6 +130,7 @@ export class ProductsService {
       price: pricing.price,
       cost: pricing.cost,
       profit: pricing.profit,
+      suggestedPrice,
       categoryIds: data.categoryIds ?? [],
       size: (data.size ?? '').trim() || (data.type === ProductType.COMBO ? 'Combo' : ''),
       published: data.published !== false,
@@ -235,6 +237,11 @@ export class ProductsService {
         ? Number(data.assemblyTimeHours) || 0
         : existing.assemblyTimeHours ?? 0;
 
+    const mergedSuggestedPrice =
+      data.suggestedPrice !== undefined
+        ? this.normalizeSuggestedPrice(data.suggestedPrice)
+        : this.normalizeSuggestedPrice(existing.suggestedPrice);
+
     const mergedForValidation = {
       name: data.name ?? existing.name,
       type: mergedType,
@@ -250,7 +257,7 @@ export class ProductsService {
       categoryIds: data.categoryIds ?? existing.categoryIds,
       components: mergedComponents,
       assemblyTimeHours: mergedAssembly,
-      suggestedPrice: data.suggestedPrice,
+      suggestedPrice: mergedSuggestedPrice,
       ...(mergedType !== ProductType.ESTAMPADO
         ? {
             grams:
@@ -333,6 +340,7 @@ export class ProductsService {
       price: pricing.price,
       cost: pricing.cost,
       profit: pricing.profit,
+      suggestedPrice: mergedSuggestedPrice,
       updatedAt: new Date().toISOString(),
       categoryIds: data.categoryIds ?? existing.categoryIds,
       images: normalizeProductImages(data.images ?? existing.images),
@@ -806,5 +814,14 @@ export class ProductsService {
       printTimeHours: metrics.printTimeHours,
       workTimeHours: metrics.workTimeHours,
     };
+  }
+
+  private normalizeSuggestedPrice(
+    value: number | null | undefined,
+  ): number | null {
+    if (value == null) return null;
+    const amount = Number(value);
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+    return amount;
   }
 }

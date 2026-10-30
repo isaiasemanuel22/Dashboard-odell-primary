@@ -122,6 +122,48 @@ describe('PricingSyncService', () => {
     expect(updated?.price).not.toBe(22190);
   });
 
+  it('no pisa el precio manual de un ensamblado al cambiar una pieza', () => {
+    const store = new StoreService();
+    store.applyState(createEmptyState());
+
+    const piece = createProduct({
+      id: 'piece-a',
+      name: 'Base',
+      price: 1000,
+      cost: 500,
+      profit: 500,
+    });
+    const assembly = createProduct({
+      id: 'assembly-1',
+      name: 'Arbol manual',
+      includesPieces: true,
+      price: 14500,
+      suggestedPrice: 14500,
+      cost: 600,
+      profit: 13900,
+      components: [{ productId: 'piece-a', quantity: 2 }],
+      grams: 0,
+      printTimeHours: 0,
+      workTimeHours: 0,
+    });
+
+    store.products.push(piece, assembly);
+    for (const product of store.products) {
+      store.indexProduct(product);
+    }
+
+    piece.price = 2000;
+    piece.profit = 1500;
+    store.replaceProduct(piece);
+
+    const { service } = createService(store);
+    service.syncAfterProductSave('piece-a', 1000);
+
+    const updated = store.getProductById('assembly-1');
+    expect(updated?.price).toBe(14500);
+    expect(updated?.suggestedPrice).toBe(14500);
+  });
+
   it('propaga cambios de pieza a ensamblados FDM al guardar un componente', () => {
     const store = new StoreService();
     store.applyState(createEmptyState());

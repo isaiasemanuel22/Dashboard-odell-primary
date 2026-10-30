@@ -57,8 +57,31 @@ export class SalesService {
     };
   }
 
+  /** Ingreso reconocido como venta (mostrador + pedidos entregados). */
   getTotalIncome(): number {
     return this.buildEntries().reduce((sum, entry) => sum + entry.total, 0);
+  }
+
+  /**
+   * Dinero efectivamente cobrado para la Billetera:
+   * ventas de mostrador + pagos/señas de pedidos (no el total al entregar).
+   */
+  getCollectedIncome(): number {
+    const retailIncome = this.retailSales
+      .findAll()
+      .reduce((sum, sale) => sum + sale.total, 0);
+    const orderPayments = this.orders
+      .findAll()
+      .reduce(
+        (sum, order) =>
+          sum +
+          (order.payments ?? []).reduce(
+            (paid, payment) => paid + (Number(payment.amount) || 0),
+            0,
+          ),
+        0,
+      );
+    return retailIncome + orderPayments;
   }
 
   findRetailSale(id: string): RetailSale {

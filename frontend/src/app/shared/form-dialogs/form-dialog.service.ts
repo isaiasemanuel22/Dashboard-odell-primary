@@ -1,6 +1,6 @@
 import { Injectable, Type, inject } from '@angular/core';
 import { Dialog } from '@angular/cdk/dialog';
-import { Observable } from 'rxjs';
+import { Observable, from, switchMap } from 'rxjs';
 import {
   Category,
   Customer,
@@ -33,7 +33,6 @@ import {
 import { CalendarEntry } from '../../core/models';
 import { ProductFormDialogComponent } from '../../components/product-form-dialog/product-form-dialog.component';
 import { ResetDatabaseDialogComponent } from './reset-database-dialog.component';
-import { SaleFormDialogComponent } from './sale-form-dialog.component';
 import { SupplyFormDialogComponent } from './supply-form-dialog.component';
 
 @Injectable({ providedIn: 'root' })
@@ -118,9 +117,15 @@ export class FormDialogService {
   }
 
   openSale(sale: RetailSale | null = null): Observable<RetailSale | undefined> {
-    return this.open(SaleFormDialogComponent, { sale }, 'lg', {
-      ariaLabel: sale ? 'Editar venta' : 'Nueva venta en mostrador',
-    });
+    // Import dinámico para evitar ciclo FormDialogService → SaleFormDialog → SaleForm → FormDialogService.
+    return from(import('./sale-form-dialog.component')).pipe(
+      switchMap(
+        ({ SaleFormDialogComponent }): Observable<RetailSale | undefined> =>
+          this.open(SaleFormDialogComponent, { sale }, 'lg', {
+            ariaLabel: sale ? 'Editar venta' : 'Nueva venta en mostrador',
+          }),
+      ),
+    );
   }
 
   openCategory(
