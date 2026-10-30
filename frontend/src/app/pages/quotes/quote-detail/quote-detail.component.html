@@ -38,6 +38,7 @@
       </div>
       <p class="meta-line">
         Fecha: {{ quote.quotedAt | dateShort }} · Creado: {{ quote.createdAt | dateShort }}
+        · {{ quoteValidityLabel }}
       </p>
     </div>
     <div class="header-actions">
@@ -156,21 +157,41 @@
             }
           </ng-template>
         </db-data-table>
-        <table class="data-table">
+        <table class="quote-detail-totals" aria-label="Totales del presupuesto">
           <tbody>
             <tr>
-              <td><strong>Subtotal</strong></td>
-              <td><strong>{{ quoteSubtotal | currencyArs }}</strong></td>
+              <td colspan="4" class="quote-detail-totals__label">
+                <strong>Subtotal</strong>
+              </td>
+              <td class="quote-detail-totals__amount">
+                <strong>{{ quoteSubtotal | currencyArs }}</strong>
+              </td>
             </tr>
             @if (quoteDiscount > 0) {
               <tr class="quote-discount-row">
-                <td><strong>Descuento</strong></td>
-                <td><strong>-{{ quoteDiscount | currencyArs }}</strong></td>
+                <td colspan="4" class="quote-detail-totals__label">
+                  <strong>{{ discountLabel }}</strong>
+                </td>
+                <td class="quote-detail-totals__amount">
+                  <strong>-{{ quoteDiscount | currencyArs }}</strong>
+                </td>
               </tr>
             }
             <tr>
-              <td><strong>Total</strong></td>
-              <td><strong>{{ quote.total | currencyArs }}</strong></td>
+              <td colspan="4" class="quote-detail-totals__label">
+                <strong>Total</strong>
+              </td>
+              <td class="quote-detail-totals__amount">
+                <strong>{{ quote.total | currencyArs }}</strong>
+              </td>
+            </tr>
+            <tr>
+              <td colspan="4" class="quote-detail-totals__label">
+                Seña {{ depositPercent }}%
+              </td>
+              <td class="quote-detail-totals__amount">
+                {{ depositAmount | currencyArs }}
+              </td>
             </tr>
           </tbody>
         </table>

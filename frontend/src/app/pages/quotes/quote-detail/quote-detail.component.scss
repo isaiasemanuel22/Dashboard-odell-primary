@@ -133,6 +133,30 @@
   color: $color-text-muted;
 }
 
+.quote-detail-totals {
+  width: 100%;
+  margin-top: 0.35rem;
+  border-collapse: collapse;
+  table-layout: fixed;
+  font-size: 0.875rem;
+
+  td {
+    padding: 0.55rem 0.875rem;
+    border-top: 1px solid $color-border;
+    vertical-align: middle;
+  }
+
+  &__label {
+    text-align: right;
+  }
+
+  &__amount {
+    text-align: right;
+    width: 8.5rem;
+    white-space: nowrap;
+  }
+}
+
 .quote-discount-row strong {
   color: $color-error;
 }

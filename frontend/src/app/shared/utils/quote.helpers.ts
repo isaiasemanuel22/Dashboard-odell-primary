@@ -51,3 +51,25 @@ export function quoteServiceFilters(): ListFilterOption<ServiceType | 'all'>[] {
 export function quoteIncludesService(quote: Quote, service: ServiceType): boolean {
   return quote.services.includes(service);
 }
+
+/** Validez del presupuesto: quotedAt + 15 días (misma regla que el formulario). */
+export function formatQuoteValidityLabel(quotedAt?: string | Date | null): string {
+  const base = new Date(quotedAt ?? Date.now());
+  const validUntil = new Date(base);
+  validUntil.setDate(validUntil.getDate() + 15);
+  const months = [
+    'ene',
+    'feb',
+    'mar',
+    'abr',
+    'may',
+    'jun',
+    'jul',
+    'ago',
+    'sep',
+    'oct',
+    'nov',
+    'dic',
+  ];
+  return `Válido hasta el ${validUntil.getDate()} de ${months[validUntil.getMonth()]} de ${validUntil.getFullYear()}`;
+}

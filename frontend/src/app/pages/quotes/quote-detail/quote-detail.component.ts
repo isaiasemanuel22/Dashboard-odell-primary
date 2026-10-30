@@ -34,8 +34,10 @@ import {
 import { resolveLinePrintUnitPrice } from '../../../shared/utils/design-print.util';
 import {
   canGenerateOrderFromQuote,
+  formatQuoteValidityLabel,
   isQuoteEditable,
 } from '../../../shared/utils/quote.helpers';
+import { DEPOSIT_FACTOR } from '../../../shared/utils/quote-document.util';
 import { QUOTE_STATUS_LABELS, SERVICE_TYPE_LABELS } from '../../../shared/constants/labels';
 import {
   CurrencyArsPipe,
@@ -81,6 +83,7 @@ export class QuoteDetailComponent implements OnInit {
 
   readonly isDesignService = isDesignService;
   readonly QuoteStatus = QuoteStatus;
+  readonly depositPercent = Math.round(DEPOSIT_FACTOR * 100);
   readonly lineColumns: OdlColumn<QuoteItem>[] = [
     { key: 'service', header: 'Servicio', value: (item) => SERVICE_TYPE_LABELS[item.serviceType] },
     { key: 'product', header: 'Concepto / producto' },
@@ -133,6 +136,26 @@ export class QuoteDetailComponent implements OnInit {
       this.quote.discountPercent,
       this.quote.discountAmount,
     );
+  }
+
+  get discountLabel(): string {
+    const percent = this.quote?.discountPercent ?? 0;
+    if (percent > 0) {
+      const formatted = percent.toLocaleString('es-AR', {
+        maximumFractionDigits: 2,
+      });
+      return `Descuento ${formatted}%`;
+    }
+    return 'Descuento';
+  }
+
+  get depositAmount(): number {
+    if (!this.quote) return 0;
+    return Math.round(this.quote.total * DEPOSIT_FACTOR);
+  }
+
+  get quoteValidityLabel(): string {
+    return formatQuoteValidityLabel(this.quote?.quotedAt);
   }
 
   statusActions(): Array<{ status: QuoteStatus; label: string }> {
