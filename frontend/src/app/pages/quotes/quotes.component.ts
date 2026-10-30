@@ -131,7 +131,7 @@ export class QuotesComponent implements OnInit {
     this.cdr.markForCheck();
     this.quotesService.getQuotes().subscribe({
       next: (quotes) => {
-        this.quotes = quotes;
+        this.quotes = this.sortByQuotedAtDesc(quotes);
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -155,8 +155,18 @@ export class QuotesComponent implements OnInit {
   }
 
   onQuoteSaved(saved: Quote): void {
-    this.quotes = upsertById(this.quotes, saved);
+    this.quotes = this.sortByQuotedAtDesc(upsertById(this.quotes, saved));
     this.cdr.markForCheck();
+  }
+
+  /** Emisión más reciente arriba; desempate por createdAt. */
+  private sortByQuotedAtDesc(quotes: Quote[]): Quote[] {
+    return [...quotes].sort((a, b) => {
+      const byQuoted =
+        new Date(b.quotedAt).getTime() - new Date(a.quotedAt).getTime();
+      if (byQuoted !== 0) return byQuoted;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   }
 
   deleteQuote(quote: Quote): void {

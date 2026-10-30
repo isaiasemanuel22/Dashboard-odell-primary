@@ -50,9 +50,10 @@
   font-size: 0.75rem;
 }
 
-.quote-form .quote-date-field ::ng-deep .db-input[readonly] {
-  background: #fff;
-  color: $color-text;
+.quote-form .quote-date-field__value {
+  min-height: 2.35rem;
+  padding: 0.4rem 0.75rem;
+  font-size: 0.875rem;
 }
 
 .quote-form .quote-date-field__validity {

@@ -91,13 +91,8 @@
         </div>
 
         <div class="quote-date-field">
-          <db-input
-            label="Fecha del presupuesto"
-            type="date"
-            [ngModel]="quotedAtInput"
-            name="quotedAt"
-            [readonly]="true"
-          />
+          <span class="quote-date-field__label">Fecha del presupuesto</span>
+          <p class="quote-date-field__value">{{ quotedAtLabel }}</p>
           <p class="quote-date-field__validity">{{ quoteValidityLabel }}</p>
         </div>
       </db-form-grid>

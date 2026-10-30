@@ -42,10 +42,12 @@ export class QuotesService {
   ) {}
 
   findAll(): Quote[] {
-    return [...this.quotes.findAll()].sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-    );
+    return [...this.quotes.findAll()].sort((a, b) => {
+      const byQuoted =
+        new Date(b.quotedAt).getTime() - new Date(a.quotedAt).getTime();
+      if (byQuoted !== 0) return byQuoted;
+      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+    });
   }
 
   findOne(id: string): Quote {

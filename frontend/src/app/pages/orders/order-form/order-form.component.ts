@@ -269,13 +269,6 @@ export class OrderFormComponent implements OnChanges, OnInit {
     });
   }
 
-  get quotedAtInput(): string {
-    if (this.quote?.quotedAt) {
-      return toDateInputValue(this.quote.quotedAt);
-    }
-    return toDateInputValue(new Date().toISOString());
-  }
-
   get quoteValidityLabel(): string {
     const base = new Date(this.quote?.quotedAt ?? Date.now());
     const validUntil = new Date(base);
