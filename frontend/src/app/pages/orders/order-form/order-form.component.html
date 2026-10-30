@@ -202,10 +202,10 @@
                 } @else if (isImpresion3DLine(line.serviceType)) {
                   <db-select
                     label="Producto"
-                    [(ngModel)]="line.productId"
+                    [ngModel]="line.productId"
                     [name]="'product-' + i"
                     [options]="productOptionsForLine(line)"
-                    (ngModelChange)="onProductChange(line)"
+                    (ngModelChange)="onProductChange(line, $event)"
                   />
                   <db-input
                     label="Concepto"
@@ -216,11 +216,11 @@
                 } @else {
                   <db-select
                     label="Producto"
-                    [(ngModel)]="line.productId"
+                    [ngModel]="line.productId"
                     [name]="'product-' + i"
                     placeholder="Seleccionar producto"
                     [options]="productOptionsForLine(line)"
-                    (ngModelChange)="onProductChange(line)"
+                    (ngModelChange)="onProductChange(line, $event)"
                   />
                   @if (isEstampadoLine(line.serviceType)) {
                     <db-input
@@ -893,20 +893,20 @@
                 } @else if (isImpresion3DLine(line.serviceType)) {
                   <db-select
                     [label]="productFieldLabel(line)"
-                    [(ngModel)]="line.productId"
+                    [ngModel]="line.productId"
                     [name]="'product-' + i"
                     placeholder="Opcional — presupuesto manual"
                     [options]="productOptionsForLine(line)"
-                    (ngModelChange)="onProductChange(line)"
+                    (ngModelChange)="onProductChange(line, $event)"
                   />
                 } @else {
                   <db-select
                     [label]="productFieldLabel(line)"
-                    [(ngModel)]="line.productId"
+                    [ngModel]="line.productId"
                     [name]="'product-' + i"
                     placeholder="Seleccionar producto"
                     [options]="productOptionsForLine(line)"
-                    (ngModelChange)="onProductChange(line)"
+                    (ngModelChange)="onProductChange(line, $event)"
                   />
                 }
 

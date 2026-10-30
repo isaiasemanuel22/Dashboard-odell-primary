@@ -1023,10 +1023,27 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }
   }
 
-  onProductChange(line: OrderLineDraft): void {
+  /**
+   * B7: al cambiar producto, actualizar Concepto si está vacío o sigue
+   * siendo el nombre del producto anterior (no editado a mano).
+   */
+  onProductChange(line: OrderLineDraft, productId: string): void {
+    const previousProduct = line.productId
+      ? this.products.find((p) => p.id === line.productId)
+      : undefined;
+    line.productId = productId ?? '';
+
     const product = line.productId
       ? this.products.find((p) => p.id === line.productId)
       : undefined;
+
+    if (product) {
+      const concept = line.customName?.trim() ?? '';
+      const prevName = previousProduct?.name?.trim() ?? '';
+      if (!concept || concept === prevName) {
+        line.customName = product.name;
+      }
+    }
 
     if (!product) {
       line.unitPrice = 0;
