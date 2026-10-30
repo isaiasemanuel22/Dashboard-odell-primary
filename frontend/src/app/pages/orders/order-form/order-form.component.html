@@ -1,39 +1,6 @@
 <db-form class="work-form" [class.quote-form]="isQuoteForm" [class.order-form]="!isQuoteForm">
   <form (ngSubmit)="onSubmit()">
-    @if (isQuoteForm) {
-      <db-form-grid class="quote-form__top">
-        <div class="quote-customer-field">
-          <div class="quote-customer-field__head">
-            <span class="quote-customer-field__label">Cliente</span>
-            <db-button
-              label="+ Cliente nuevo"
-              variant="primary"
-              format="link"
-              extraClass="quote-customer-field__new"
-              (clicked)="openNewCustomer()"
-            />
-          </div>
-          <db-select
-            [(ngModel)]="customerId"
-            name="customerId"
-            placeholder="Opcional - buscar cliente"
-            [required]="false"
-            [options]="customerOptions"
-          />
-        </div>
-
-        <div class="quote-date-field">
-          <db-input
-            label="Fecha del presupuesto"
-            type="date"
-            [ngModel]="quotedAtInput"
-            name="quotedAt"
-            [readonly]="true"
-          />
-          <p class="quote-date-field__validity">{{ quoteValidityLabel }}</p>
-        </div>
-      </db-form-grid>
-    } @else {
+    @if (!isQuoteForm) {
       <db-form-grid class="quote-form__top">
         <div class="quote-customer-field">
           <div class="quote-customer-field__head">
@@ -100,14 +67,75 @@
     }
 
     @if (isQuoteForm) {
+      <div class="quote-layout">
+      <div class="quote-layout__main">
+      <db-form-grid class="quote-form__top">
+        <div class="quote-customer-field">
+          <div class="quote-customer-field__head">
+            <span class="quote-customer-field__label">Cliente</span>
+            <db-button
+              label="+ Cliente nuevo"
+              variant="primary"
+              format="link"
+              extraClass="quote-customer-field__new"
+              (clicked)="openNewCustomer()"
+            />
+          </div>
+          <db-select
+            [(ngModel)]="customerId"
+            name="customerId"
+            placeholder="Seleccionar cliente"
+            [required]="false"
+            [options]="customerOptions"
+          />
+        </div>
+
+        <div class="quote-date-field">
+          <db-input
+            label="Fecha del presupuesto"
+            type="date"
+            [ngModel]="quotedAtInput"
+            name="quotedAt"
+            [readonly]="true"
+          />
+          <p class="quote-date-field__validity">{{ quoteValidityLabel }}</p>
+        </div>
+      </db-form-grid>
+
       <section class="quote-lines-section">
-        <header class="quote-lines-section__head">
+        <header class="quote-lines-section__head quote-lines-section__head--row">
           <h4 class="quote-lines-section__title">Líneas de trabajo</h4>
           <p class="quote-lines-section__hint">{{ linesHint }}</p>
         </header>
 
         <div class="order-lines">
           @for (line of lines; track $index; let i = $index) {
+            @if (isLineCollapsed(line)) {
+              <div
+                class="order-line order-line--quote order-line--collapsed"
+                [ngClass]="lineAccentClass(line.serviceType)"
+              >
+                <button
+                  type="button"
+                  class="order-line__toggle"
+                  aria-label="Expandir línea"
+                  [attr.aria-expanded]="false"
+                  (click)="toggleLineCollapsed(line)"
+                >
+                  <span class="order-line__chevron order-line__chevron--down" aria-hidden="true"></span>
+                </button>
+                <span class="service-badge" [ngClass]="'service-badge--' + line.serviceType">
+                  {{ serviceLabel(line.serviceType) }}
+                </span>
+                <div class="order-line__collapsed-text">
+                  <strong>{{ lineTitle(line, i) }}</strong>
+                  <small>{{ lineCollapsedDetail(line) }}</small>
+                </div>
+                <strong class="order-line__collapsed-total">
+                  {{ linePriceTotal(line) | currencyArs }}
+                </strong>
+              </div>
+            } @else {
             <div
               class="order-line order-line--quote"
               [ngClass]="lineAccentClass(line.serviceType)"
@@ -129,18 +157,36 @@
                     }
                   </div>
                 </div>
-                <button
-                  type="button"
-                  class="remove-line remove-line--trash"
-                  aria-label="Quitar línea"
-                  (click)="removeLine(i)"
-                >
-                  <db-icon-trash />
-                </button>
+                <div class="order-line__tools">
+                  <button
+                    type="button"
+                    class="order-line__toggle"
+                    aria-label="Contraer línea"
+                    [attr.aria-expanded]="true"
+                    (click)="toggleLineCollapsed(line)"
+                  >
+                    <span class="order-line__chevron" aria-hidden="true"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="remove-line remove-line--trash"
+                    aria-label="Quitar línea"
+                    (click)="removeLine(i)"
+                  >
+                    <db-icon-trash />
+                  </button>
+                </div>
               </div>
 
-              <div class="order-line__product-row">
+              <div class="order-line__product-row order-line__product-row--quote">
                 @if (isDesignService(line.serviceType)) {
+                  <db-select
+                    label="Producto"
+                    [ngModel]="''"
+                    [name]="'design-product-' + i"
+                    [options]="[{ value: '', label: 'Presupuesto manual (sin catálogo)' }]"
+                    [disabled]="true"
+                  />
                   <db-input
                     label="Concepto"
                     [(ngModel)]="line.customName"
@@ -155,6 +201,14 @@
                     [options]="productOptionsForLine(line)"
                     (ngModelChange)="onProductChange(line)"
                   />
+                  @if (!line.productId) {
+                    <db-input
+                      label="Concepto"
+                      [(ngModel)]="line.customName"
+                      [name]="'fdm-concept-' + i"
+                      placeholder="Ej.: Soporte para celular"
+                    />
+                  }
                 } @else {
                   <db-select
                     label="Producto"
@@ -164,6 +218,14 @@
                     [options]="productOptionsForLine(line)"
                     (ngModelChange)="onProductChange(line)"
                   />
+                  @if (isEstampadoLine(line.serviceType)) {
+                    <db-input
+                      label="Concepto"
+                      [(ngModel)]="line.customName"
+                      [name]="'estampado-concept-' + i"
+                      placeholder="Ej.: Remera con logo en pecho y manga"
+                    />
+                  }
                 }
 
                 <db-input
@@ -176,174 +238,382 @@
                 />
               </div>
 
-              @if (isImpresion3DLine(line.serviceType) && !line.productId) {
-                <div class="order-line__fdm-concept">
-                  <db-input
-                    label="Concepto"
-                    [(ngModel)]="line.customName"
-                    [name]="'fdm-concept-' + i"
-                    placeholder="Ej.: Soporte para celular"
-                  />
-                </div>
-              }
-
-              @if (isEstampadoLine(line.serviceType) && !line.productId) {
-                <div class="order-line__fdm-concept">
-                  <db-input
-                    label="Concepto"
-                    [(ngModel)]="line.customName"
-                    [name]="'estampado-concept-' + i"
-                    placeholder="Ej.: Remera personalizada"
-                  />
-                </div>
-              }
-
               @if (shouldShowFdmQuoteFields(line, productForLine(line))) {
-                <div class="order-line__fdm">
-                  <db-select
-                    label="Filamento"
-                    [(ngModel)]="line.filamentType"
-                    [name]="'filament-' + i"
-                    placeholder="Seleccionar material"
-                    [options]="filamentTypeOptions"
-                    (ngModelChange)="onFdmQuoteChange(line)"
-                  />
-                  <db-input
-                    label="Gramos"
-                    type="number"
-                    [ngModel]="line.grams ?? 0"
-                    (ngModelChange)="onGramsChange(line, $event)"
-                    [name]="'grams-' + i"
-                    [min]="0"
-                    [step]="1"
-                  />
-                  <db-input
-                    label="Horas de impresión"
-                    type="number"
-                    [ngModel]="line.printTimeHours ?? 0"
-                    (ngModelChange)="onPrintHoursChange(line, $event)"
-                    [name]="'print-hours-' + i"
-                    [min]="0"
-                    [step]="0.1"
-                  />
+                @let fdm = fdmBreakdown(line);
+                <div class="cost-composition">
+                  <header class="cost-composition__head">
+                    <h5 class="cost-composition__title">Composición del costo · por unidad</h5>
+                    <p class="cost-composition__hint">Abrí cada bloque para editarlo</p>
+                  </header>
+
+                  <details class="cost-composition__block" open>
+                    <summary class="cost-composition__summary">
+                      <span class="cost-composition__chevron" aria-hidden="true"></span>
+                      <span class="cost-composition__summary-title">Filamentos</span>
+                      <span class="cost-composition__summary-meta">{{ fdmFilamentSummary(line) }}</span>
+                      <strong class="cost-composition__summary-cost">{{ (fdm?.materialCost ?? 0) | currencyArs }}</strong>
+                    </summary>
+                    <div class="cost-composition__body">
+                      <app-filament-line-list
+                        [embedded]="true"
+                        [ngModel]="quoteFilaments(line)"
+                        (ngModelChange)="onFilamentsChange(line, $event)"
+                        [name]="'filaments-' + i"
+                      />
+                    </div>
+                  </details>
+
+                  <details class="cost-composition__block">
+                    <summary class="cost-composition__summary">
+                      <span class="cost-composition__chevron" aria-hidden="true"></span>
+                      <span class="cost-composition__summary-title">Impresión</span>
+                      <span class="cost-composition__summary-meta">{{ fdmPrintSummary(line) }}</span>
+                      <strong class="cost-composition__summary-cost">
+                        {{ ((fdm?.energyCost ?? 0) + (fdm?.machineCost ?? 0)) | currencyArs }}
+                      </strong>
+                    </summary>
+                    <div class="cost-composition__body cost-composition__body--fields">
+                      <div class="cost-table__suffix cost-composition__field">
+                        <db-input
+                          label="Horas de impresión"
+                          type="number"
+                          [ngModel]="line.printTimeHours ?? 0"
+                          (ngModelChange)="onPrintHoursChange(line, $event)"
+                          [name]="'print-hours-' + i"
+                          [min]="0"
+                          [step]="0.1"
+                        />
+                        <span>h</span>
+                      </div>
+                    </div>
+                  </details>
+
+                  <details class="cost-composition__block">
+                    <summary class="cost-composition__summary">
+                      <span class="cost-composition__chevron" aria-hidden="true"></span>
+                      <span class="cost-composition__summary-title">Mano de obra</span>
+                      <span class="cost-composition__summary-meta">{{ laborSummary(line) }}</span>
+                      <strong class="cost-composition__summary-cost">{{ laborCost(line) | currencyArs }}</strong>
+                    </summary>
+                    <div class="cost-composition__body cost-composition__body--fields">
+                      <div class="design-detail">
+                        <div class="cost-table__suffix cost-composition__field">
+                          <db-input
+                            label="Horas"
+                            type="number"
+                            [ngModel]="line.workTimeHours ?? 0"
+                            (ngModelChange)="onWorkHoursChange(line, $event)"
+                            [name]="'labor-hours-' + i"
+                            [min]="0"
+                            [step]="0.25"
+                          />
+                          <span>h</span>
+                        </div>
+                        <db-input
+                          label="Nota"
+                          [(ngModel)]="line.laborNote"
+                          [name]="'labor-note-' + i"
+                          placeholder="Ej.: incluir soportes y empaque"
+                          (ngModelChange)="onFdmQuoteChange(line)"
+                        />
+                      </div>
+                    </div>
+                  </details>
+
+                  <div class="cost-composition__block cost-composition__block--static">
+                    <div class="cost-composition__summary">
+                      <span class="cost-composition__chevron cost-composition__chevron--none" aria-hidden="true"></span>
+                      <span class="cost-composition__summary-title">Margen de error</span>
+                      <span class="cost-composition__summary-meta">
+                        {{ errorMarginPercent }}% sobre material, luz y máquina
+                      </span>
+                      <strong class="cost-composition__summary-cost">{{ (fdm?.errorMarginCost ?? 0) | currencyArs }}</strong>
+                    </div>
+                  </div>
                 </div>
               }
 
-              @if (shouldShowEstampadoQuoteFields(line, productForLine(line)) && !line.productId) {
-                <div class="order-line__estampado">
-                  <app-supply-line-list
-                    [(ngModel)]="line.estampadoSupplies"
-                    [name]="'estampado-supplies-' + i"
-                    (ngModelChange)="onEstampadoQuoteChange(line)"
-                  />
-                  <app-print-spec-list
-                    [(ngModel)]="line.estampadoPrints"
-                    [name]="'estampado-prints-' + i"
-                    (ngModelChange)="onEstampadoQuoteChange(line)"
-                  />
-                  <app-press-cycle-list
-                    [(ngModel)]="line.estampadoPressCycles"
-                    [name]="'estampado-press-' + i"
-                    [prints]="line.estampadoPrints ?? []"
-                    (ngModelChange)="onEstampadoQuoteChange(line)"
-                  />
-                  <p class="order-line__money-hint">{{ estampadoPricingHint(line) }}</p>
-                </div>
-              }
+              @if (shouldShowEstampadoQuoteFields(line, productForLine(line))) {
+                @let est = estampadoCosts(line);
+                @let suppliesInfo = estampadoSuppliesSummary(line);
+                <div class="order-line__estampado cost-composition">
+                  <header class="cost-composition__head">
+                    <h5 class="cost-composition__title">Composición del costo · por unidad</h5>
+                    <p class="cost-composition__hint">Abrí cada bloque para editarlo</p>
+                  </header>
 
-              @if (isGraphicDesignService(line.serviceType)) {
-                <div class="order-line__print">
-                  <db-checkbox
-                    label="Incluye impresión"
-                    [ngModel]="!!line.includesPrint"
-                    (ngModelChange)="onIncludesPrintChange(line, $event)"
-                    [name]="'includes-print-' + i"
-                  />
+                  <details class="cost-composition__block" open>
+                    <summary class="cost-composition__summary">
+                      <span class="cost-composition__chevron" aria-hidden="true"></span>
+                      <span class="cost-composition__summary-title">Impresos</span>
+                      <span class="cost-composition__summary-meta">{{ estampadoPrintsSummary(line) }}</span>
+                      <strong class="cost-composition__summary-cost">{{ est.prints | currencyArs }}</strong>
+                    </summary>
+                    <div class="cost-composition__body">
+                      <app-print-spec-list
+                        [embedded]="true"
+                        [(ngModel)]="line.estampadoPrints"
+                        [name]="'estampado-prints-' + i"
+                        (ngModelChange)="onEstampadoQuoteChange(line)"
+                      />
+                    </div>
+                  </details>
 
-                  @if (line.includesPrint) {
-                    <div class="order-line__print-fields">
-                      <db-select
-                        label="Tipo de impresión"
-                        [(ngModel)]="line.printPaperType"
-                        [name]="'print-type-' + i"
-                        [options]="paperTypeOptions"
-                        (ngModelChange)="onPrintPaperTypeChange(line)"
+                  <details class="cost-composition__block">
+                    <summary class="cost-composition__summary">
+                      <span class="cost-composition__chevron" aria-hidden="true"></span>
+                      <span class="cost-composition__summary-title">Insumos</span>
+                      <span class="cost-composition__summary-meta">
+                        {{ suppliesInfo.text }}
+                        @if (suppliesInfo.missingPrice) {
+                          · <span class="cost-composition__missing">falta precio</span>
+                        }
+                      </span>
+                      <strong class="cost-composition__summary-cost">{{ est.supplies | currencyArs }}</strong>
+                    </summary>
+                    <div class="cost-composition__body">
+                      <app-supply-line-list
+                        [embedded]="true"
+                        [(ngModel)]="line.estampadoSupplies"
+                        [name]="'estampado-supplies-' + i"
+                        (ngModelChange)="onEstampadoQuoteChange(line)"
                       />
-                      <db-select
-                        label="Tamaño del catálogo"
-                        [(ngModel)]="line.printImpresoId"
-                        [name]="'print-impreso-' + i"
-                        placeholder="Opcional — elegir tamaño..."
-                        [options]="impresoOptionsForLine(line)"
-                        (ngModelChange)="onPrintImpresoChange(line)"
+                    </div>
+                  </details>
+
+                  <details class="cost-composition__block" open>
+                    <summary class="cost-composition__summary">
+                      <span class="cost-composition__chevron" aria-hidden="true"></span>
+                      <span class="cost-composition__summary-title">Plancha</span>
+                      <span class="cost-composition__summary-meta">{{ estampadoPressSummary(line) }}</span>
+                      <strong class="cost-composition__summary-cost">{{ est.press | currencyArs }}</strong>
+                    </summary>
+                    <div class="cost-composition__body">
+                      <div class="press-profile">
+                        <div class="press-profile__field">
+                          <db-select
+                            label="Plancha"
+                            [ngModel]="pressProfile?.id ?? ''"
+                            [name]="'press-profile-' + i"
+                            [options]="pressProfileOptions"
+                            [disabled]="true"
+                          />
+                          <p class="press-profile__hint">
+                            Sale de Ajustes › Valores generales › Perfiles de máquina (rol Plancha).
+                            <a class="press-profile__link" routerLink="/ajustes/valores-generales">Agregar plancha</a>
+                          </p>
+                        </div>
+                        @if (pressProfile; as press) {
+                          <div class="press-profile__chips">
+                            <span class="press-profile__chip">{{ press.watts }} W</span>
+                            <span class="press-profile__chip">Máquina {{ press.costPerHour | currencyArs }}/h</span>
+                            <span class="press-profile__chip">Luz {{ electricityCostPerKwh | currencyArs }}/kWh</span>
+                          </div>
+                        }
+                      </div>
+                      <app-press-cycle-list
+                        [embedded]="true"
+                        [(ngModel)]="line.estampadoPressCycles"
+                        [name]="'estampado-press-' + i"
+                        [prints]="line.estampadoPrints ?? []"
+                        (ngModelChange)="onEstampadoQuoteChange(line)"
                       />
-                      <db-input
-                        label="Ancho (cm)"
-                        type="number"
-                        [(ngModel)]="line.printWidthCm"
-                        [name]="'print-width-' + i"
-                        [min]="0.1"
-                        [step]="0.1"
-                        (ngModelChange)="onPrintDimensionsChange(line)"
-                      />
-                      <db-input
-                        label="Alto (cm)"
-                        type="number"
-                        [(ngModel)]="line.printLengthCm"
-                        [name]="'print-height-' + i"
-                        [min]="0.1"
-                        [step]="0.1"
-                        (ngModelChange)="onPrintDimensionsChange(line)"
-                      />
+                    </div>
+                  </details>
+
+                  @if (est.errorMargin > 0) {
+                    <div class="cost-composition__block cost-composition__block--static">
+                      <div class="cost-composition__summary">
+                        <span class="cost-composition__chevron cost-composition__chevron--none" aria-hidden="true"></span>
+                        <span class="cost-composition__summary-title">Margen de error</span>
+                        <span class="cost-composition__summary-meta">
+                          {{ errorMarginPercent }}% sobre impresos, insumos y plancha
+                        </span>
+                        <strong class="cost-composition__summary-cost">{{ est.errorMargin | currencyArs }}</strong>
+                      </div>
                     </div>
                   }
                 </div>
               }
 
-              <div class="order-line__pricing order-line__pricing--quote">
+              @if (isDesignService(line.serviceType)) {
+                <div class="cost-composition">
+                  <header class="cost-composition__head">
+                    <h5 class="cost-composition__title">Detalle del trabajo</h5>
+                    <p class="cost-composition__hint">Abrí cada bloque para editarlo</p>
+                  </header>
+
+                  <details class="cost-composition__block">
+                    <summary class="cost-composition__summary">
+                      <span class="cost-composition__chevron" aria-hidden="true"></span>
+                      <span class="cost-composition__summary-title">
+                        {{ isGraphicDesignService(line.serviceType) ? 'Diseño' : 'Modelado' }}
+                      </span>
+                      <span class="cost-composition__summary-meta">{{ designWorkSummary(line) }}</span>
+                      <strong class="cost-composition__summary-cost">{{ (line.unitCost ?? 0) | currencyArs }}</strong>
+                    </summary>
+                  </details>
+
+                  <div class="quote-charge">
+                    <span class="quote-charge__label">Cómo se cobra</span>
+                    <div class="quote-charge__segments" role="group" aria-label="Cómo se cobra">
+                      <button
+                        type="button"
+                        class="quote-charge__segment"
+                        [class.quote-charge__segment--active]="chargeModeFor(line) === 'hours'"
+                        (click)="setChargeMode(line, 'hours')"
+                      >
+                        Por horas
+                      </button>
+                      <button
+                        type="button"
+                        class="quote-charge__segment"
+                        [class.quote-charge__segment--active]="chargeModeFor(line) === 'fixed'"
+                        (click)="setChargeMode(line, 'fixed')"
+                      >
+                        Precio fijo
+                      </button>
+                    </div>
+                  </div>
+
+                  @if (chargeModeFor(line) === 'hours') {
+                    <div class="design-detail">
+                      <div class="cost-table__suffix">
+                        <db-input
+                          label="Horas estimadas"
+                          type="number"
+                          [ngModel]="line.budgetedHours ?? 0"
+                          (ngModelChange)="onBudgetedHoursChange(line, $event)"
+                          [name]="'hours-' + i"
+                          [min]="0"
+                          [step]="0.5"
+                        />
+                        <span>h</span>
+                      </div>
+                      <div class="design-detail__rate">
+                        <span class="order-line__money-label">Tarifa</span>
+                        <div class="order-line__money-value order-line__money-value--muted">
+                          {{ serviceRate(line) | currencyArs }}/h
+                        </div>
+                        <p class="order-line__money-hint">Cargala en Ajustes · Valores generales</p>
+                      </div>
+                    </div>
+                  }
+
+                  @if (isGraphicDesignService(line.serviceType)) {
+                    <db-select
+                      class="quote-work-kind"
+                      label="Tipo de trabajo"
+                      [ngModel]="line.workKind ?? ''"
+                      (ngModelChange)="onWorkKindChange(line, $event)"
+                      [name]="'work-kind-' + i"
+                      [options]="workKindOptions(line)"
+                    />
+                  }
+
+                  <div class="quote-deliverables">
+                    <span class="quote-deliverables__label">Entregables</span>
+                    <div class="quote-deliverables__chips">
+                      @for (item of deliverableOptions(line); track item) {
+                        <button
+                          type="button"
+                          class="quote-chip"
+                          [class.quote-chip--design]="isGraphicDesignService(line.serviceType)"
+                          [class.quote-chip--active]="hasDeliverable(line, item)"
+                          (click)="toggleDeliverable(line, item)"
+                        >
+                          {{ item }}
+                        </button>
+                      }
+                    </div>
+                  </div>
+
+                  @if (isGraphicDesignService(line.serviceType)) {
+                    <div class="quote-check">
+                      <db-checkbox
+                        label="Incluye 2 rondas de cambios"
+                        [ngModel]="!!line.includesRevisions"
+                        (ngModelChange)="line.includesRevisions = $event"
+                        [name]="'revisions-' + i"
+                      />
+                      <p class="quote-check__hint">Se muestra en el presupuesto que recibe el cliente.</p>
+                    </div>
+                  } @else {
+                    <div class="quote-check">
+                      <db-checkbox
+                        label="Necesito el producto del cliente para medir"
+                        [ngModel]="!!line.needsClientProduct"
+                        (ngModelChange)="line.needsClientProduct = $event"
+                        [name]="'needs-product-' + i"
+                      />
+                      <p class="quote-check__hint">El plazo empieza a correr cuando llega al taller.</p>
+                    </div>
+                    <div class="quote-check">
+                      <db-checkbox
+                        label="Incluir la impresión de la pieza"
+                        [ngModel]="!!line.linkPrint"
+                        (ngModelChange)="line.linkPrint = $event"
+                        [name]="'link-print-' + i"
+                      />
+                      <p class="quote-check__hint">Agrega una línea de Impresión 3D vinculada a este modelo.</p>
+                    </div>
+                  }
+                </div>
+              }
+
+              <div class="order-line__pricing order-line__pricing--quote order-line__pricing--panel">
                 @if (isDesignService(line.serviceType)) {
-                  <db-input
-                    label="Horas presupuestadas"
-                    type="number"
-                    [ngModel]="line.budgetedHours ?? 0"
-                    (ngModelChange)="onBudgetedHoursChange(line, $event)"
-                    [name]="'hours-' + i"
-                    [min]="0"
-                    [step]="0.5"
-                  />
-                  <db-input
-                    label="Costo unitario"
-                    type="number"
-                    [ngModel]="line.unitCost ?? 0"
-                    (ngModelChange)="onDesignUnitCostChange(line, $event)"
-                    [name]="'cost-' + i"
-                    [min]="0"
-                    [step]="1"
-                    [hint]="serviceRateLabel(line) + ': ' + (serviceRate(line) | currencyArs) + '/h'"
-                  />
-                  <db-input
-                    label="Precio unitario"
-                    type="number"
-                    [ngModel]="designUnitPriceForLine(line)"
-                    (ngModelChange)="onDesignUnitPriceChange(line, $event)"
-                    [name]="'price-' + i"
-                    [min]="0"
-                    [step]="1"
-                    [hint]="'Margen ' + serviceLabel(line.serviceType) + ' (' + designMarginFor(line) + '%)'"
-                  />
+                  <div class="order-line__money-field">
+                    <span class="order-line__money-label">Costo unitario</span>
+                    <div
+                      class="order-line__money-value order-line__money-value--muted order-line__money-value--with-prefix"
+                    >
+                      {{ plainAmount(line.unitCost ?? 0) }}
+                    </div>
+                    <p class="order-line__money-hint">
+                      {{ isGraphicDesignService(line.serviceType) ? 'Sin costo de material' : designCostHint(line) }}
+                    </p>
+                  </div>
+                  <div class="order-line__money-field">
+                    <span class="order-line__money-label">Precio unitario</span>
+                    <div
+                      class="order-line__money-value order-line__money-value--editable order-line__money-value--with-prefix"
+                    >
+                      <input
+                        class="order-line__money-control"
+                        type="number"
+                        [ngModel]="designUnitPriceForLine(line)"
+                        (ngModelChange)="onDesignUnitPriceChange(line, $event)"
+                        [name]="'price-' + i"
+                        [min]="0"
+                        [step]="1"
+                        aria-label="Precio unitario"
+                      />
+                    </div>
+                    <p
+                      class="order-line__money-hint"
+                      [class.order-line__money-hint--warn]="serviceRate(line) <= 0"
+                    >
+                      {{ designPriceHint(line) }}
+                    </p>
+                  </div>
                 } @else {
                   <div class="order-line__money-field">
                     <span class="order-line__money-label">Costo unitario</span>
-                    <div class="order-line__money-value order-line__money-value--muted">
-                      {{ lineUnitCost(line) | currencyArs }}
+                    <div
+                      class="order-line__money-value order-line__money-value--muted order-line__money-value--with-prefix"
+                    >
+                      {{ plainAmount(lineUnitCost(line)) }}
                     </div>
                     <p class="order-line__money-hint">
                       @if (isEstampadoLine(line.serviceType)) {
-                        {{ estampadoPricingHint(line) }}
-                      } @else if (isImpresion3DLine(line.serviceType)) {
-                        {{ fdmPricingHint(line) }}
+                        Impresos + insumos + plancha
+                      }                       @else if (isImpresion3DLine(line.serviceType) && !line.productId) {
+                        Material + impresión + mano de obra + error
+                      } @else if (line.productId) {
+                        Costo tomado del catálogo de productos.
                       } @else {
-                        Calculado con material, luz y máquina
+                        Material + impresión + margen de error
                       }
                     </p>
                   </div>
@@ -362,12 +632,14 @@
                         aria-label="Precio unitario"
                       />
                     </div>
-                    <p class="order-line__money-hint">{{ unitPriceHint(line) }}</p>
+                    <p class="order-line__money-hint">{{ suggestedUnitPriceHint(line) }}</p>
                   </div>
                 }
 
                 <div class="order-line__subtotal">
-                  <span class="order-line__subtotal-label">Subtotal de línea</span>
+                  <span class="order-line__subtotal-label">
+                    Subtotal · {{ line.quantity }} u
+                  </span>
                   <strong class="order-line__subtotal-value">
                     {{ linePriceTotal(line) | currencyArs }}
                   </strong>
@@ -378,6 +650,7 @@
                 <p class="order-line__stock-hint">{{ stockHint }}</p>
               }
             </div>
+            }
           }
         </div>
 
@@ -389,87 +662,151 @@
           (clicked)="addLine()"
         />
 
-        <div class="quote-totals-row">
-          <div class="quote-discount">
-            <span class="quote-discount__label">Descuento</span>
-            <div class="quote-discount__controls">
-              <div class="discount-segments" role="group" aria-label="Tipo de descuento">
-                <button
-                  type="button"
-                  class="discount-segment"
-                  [class.discount-segment--active]="discountMode === 'none'"
-                  (click)="setDiscountMode('none')"
-                >
-                  Sin descuento
-                </button>
-                <button
-                  type="button"
-                  class="discount-segment"
-                  [class.discount-segment--active]="discountMode === 'percent'"
-                  (click)="setDiscountMode('percent')"
-                >
-                  %
-                </button>
-                <button
-                  type="button"
-                  class="discount-segment"
-                  [class.discount-segment--active]="discountMode === 'amount'"
-                  (click)="setDiscountMode('amount')"
-                >
-                  $
-                </button>
-              </div>
-              @if (discountMode === 'percent') {
-                <db-input
-                  type="number"
-                  [(ngModel)]="discountPercent"
-                  name="discountPercent"
-                  [min]="0"
-                  [max]="100"
-                  [step]="1"
-                />
-              } @else if (discountMode === 'amount') {
-                <db-input
-                  type="number"
-                  [(ngModel)]="discountAmount"
-                  name="discountAmount"
-                  [min]="0"
-                  [step]="1"
-                />
-              } @else {
-                <db-input
-                  type="number"
-                  [ngModel]="0"
-                  name="discountNone"
-                  [disabled]="true"
-                  [readonly]="true"
-                />
+      </section>
+      </div>
+
+      <aside class="quote-resumen" aria-label="Resumen">
+        <div class="quote-resumen__inner">
+        <h4 class="quote-resumen__title">Resumen</h4>
+
+        <div class="quote-resumen__card">
+          <ul class="quote-resumen__lines">
+            @for (item of quoteResumenItems; track item.key) {
+              <li class="quote-resumen__line">
+                <span class="quote-resumen__dot" [ngClass]="'quote-resumen__dot--' + item.serviceType"></span>
+                <span class="quote-resumen__line-label">{{ item.label }}</span>
+                <strong>{{ item.total | currencyArs }}</strong>
+              </li>
+            } @empty {
+              <li class="quote-resumen__empty">Sin líneas con precio</li>
+            }
+          </ul>
+
+          <p class="quote-resumen__subtotal">
+            <span>{{ quoteSubtotalLabel }}</span>
+            <strong>{{ subtotal | currencyArs }}</strong>
+          </p>
+        </div>
+
+        <div class="quote-discount quote-discount--resumen">
+          <span class="quote-discount__label">Descuento</span>
+          <div class="quote-discount__controls">
+            <div class="discount-segments" role="group" aria-label="Tipo de descuento">
+              <button
+                type="button"
+                class="discount-segment"
+                [class.discount-segment--active]="discountMode === 'none'"
+                (click)="setDiscountMode('none')"
+              >
+                Sin
+              </button>
+              <button
+                type="button"
+                class="discount-segment"
+                [class.discount-segment--active]="discountMode === 'percent'"
+                (click)="setDiscountMode('percent')"
+              >
+                %
+              </button>
+              <button
+                type="button"
+                class="discount-segment"
+                [class.discount-segment--active]="discountMode === 'amount'"
+                (click)="setDiscountMode('amount')"
+              >
+                $
+              </button>
+            </div>
+            @if (discountMode === 'percent') {
+              <db-input
+                type="number"
+                [(ngModel)]="discountPercent"
+                name="discountPercent"
+                [min]="0"
+                [max]="100"
+                [step]="1"
+              />
+            } @else if (discountMode === 'amount') {
+              <db-input
+                type="number"
+                [(ngModel)]="discountAmount"
+                name="discountAmount"
+                [min]="0"
+                [step]="1"
+              />
+            } @else {
+              <db-input
+                type="number"
+                [ngModel]="0"
+                name="discountNone"
+                [disabled]="true"
+                [readonly]="true"
+              />
+            }
+          </div>
+        </div>
+
+        <div class="quote-resumen__card quote-resumen__total-card">
+          <p class="quote-resumen__total">
+            <span>Total</span>
+            <strong>{{ total | currencyArs }}</strong>
+          </p>
+          @if (discountApplied > 0) {
+            <p class="quote-resumen__meta">
+              <span>Descuento</span>
+              <strong>-{{ discountApplied | currencyArs }}</strong>
+            </p>
+          }
+          <p class="quote-resumen__meta">
+            <span>Costo estimado</span>
+            <strong>{{ totalCost | currencyArs }}</strong>
+          </p>
+          <p
+            class="quote-resumen__meta quote-resumen__meta--profit"
+            [class.quote-resumen__meta--loss]="profit < 0"
+          >
+            <span>Ganancia estimada</span>
+            <strong>{{ profit | currencyArs }}</strong>
+          </p>
+          <p class="quote-resumen__meta">
+            <span>Seña {{ depositPercent }}%</span>
+            <strong>{{ depositAmount | currencyArs }}</strong>
+          </p>
+        </div>
+
+        @if (quoteAreaShares.length > 2) {
+          <div class="quote-resumen__card quote-resumen__areas">
+            <span class="quote-resumen__areas-title">Por área</span>
+            <div class="quote-resumen__bar" role="img" aria-label="Distribución por área">
+              @for (area of quoteAreaShares; track area.serviceType) {
+                <span
+                  class="quote-resumen__bar-part"
+                  [ngClass]="'quote-resumen__dot--' + area.serviceType"
+                  [style.width.%]="area.percent"
+                ></span>
+              }
+            </div>
+            <p class="quote-resumen__areas-legend">
+              @for (area of quoteAreaShares; track area.serviceType; let last = $last) {
+                {{ area.label }} {{ area.percent }}%@if (!last) { · }
+              }
+            </p>
+          </div>
+        }
+
+        @if (quoteResumenWarnings.length) {
+          <div class="quote-resumen__warning" role="note">
+            <span class="quote-resumen__warning-icon" aria-hidden="true">!</span>
+            <div>
+              @for (warning of quoteResumenWarnings; track warning) {
+                <p>{{ warning }}</p>
               }
             </div>
           </div>
-
-          <div class="order-summary order-summary--quote">
-            <p class="order-summary__row">
-              <span>Subtotal</span>
-              <strong>{{ subtotal | currencyArs }}</strong>
-            </p>
-            <p class="order-summary__row order-summary__row--discount">
-              <span>Descuento</span>
-              <strong>
-                @if (discountApplied > 0) {
-                  -{{ discountApplied | currencyArs }}
-                } @else {
-                  —
-                }
-              </strong>
-            </p>
-            <p class="order-summary__row order-summary__row--total">
-              <span>Total</span>
-              <strong>{{ total | currencyArs }}</strong>
-            </p>
-          </div>
+        }
         </div>
-      </section>
+      </aside>
+      </div>
     } @else {
       <section class="quote-lines-section">
         <header class="quote-lines-section__head">
@@ -867,11 +1204,9 @@
 
     @if (isQuoteForm) {
       <db-form-footer class="quote-form__footer">
-        @if (!canSubmit()) {
-          <p class="quote-form__warning">
-            Cargá un precio en al menos una línea para crear el presupuesto
-          </p>
-        }
+        <p class="quote-form__note">
+          Se guarda como Borrador hasta que lo envíes
+        </p>
         <div class="quote-form__actions">
           <db-button
             label="Cancelar"

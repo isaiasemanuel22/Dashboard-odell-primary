@@ -44,6 +44,7 @@ import {
     <app-dynamic-list
       [initialValue]="initialValue"
       [config]="filamentConfig"
+      [embedded]="embedded"
       (valueChange)="onListChange($event)"
     />
   `,
@@ -60,6 +61,7 @@ export class FilamentLineListComponent
   implements OnInit, OnDestroy, ControlValueAccessor
 {
   @Input() primaryFilamentType: FilamentType = FilamentType.PLA;
+  @Input() embedded = false;
 
   initialValue: FdmFilamentLine[] | null = null;
 
@@ -72,7 +74,7 @@ export class FilamentLineListComponent
   private onChange: (value: FdmFilamentLine[]) => void = () => {};
   private onTouched: () => void = () => {};
 
-  readonly filamentConfig: DynamicListConfig = {
+  filamentConfig: DynamicListConfig = {
     legend: 'Filamentos',
     description: 'Uno por cada material o color que usa la impresión',
     layout: 'table',
@@ -81,11 +83,15 @@ export class FilamentLineListComponent
     emptyMessage: 'Sin filamentos configurados',
     totalValueFn: (items) => {
       const grams = totalFdmFilamentGrams(items);
+      const gramsLabel = new Intl.NumberFormat('es-AR', {
+        maximumFractionDigits: 2,
+      }).format(grams);
+      if (this.embedded) return `Total ${gramsLabel} g`;
       const material = items.reduce(
         (sum, line) => sum + this.lineCost(line),
         0,
       );
-      return `Total ${grams} g · Material ${this.money(material)}`;
+      return `Total ${gramsLabel} g · Material ${this.money(material)}`;
     },
     rowCost: (item) => this.lineCost(item),
     minItems: 1,
@@ -128,6 +134,11 @@ export class FilamentLineListComponent
   };
 
   ngOnInit(): void {
+    if (this.embedded) {
+      this.filamentConfig.addPlacement = 'inside';
+      this.filamentConfig.tableColumns =
+        'minmax(0, 0.85fr) minmax(0, 1.4fr) minmax(0, 0.75fr) 5.25rem minmax(4.5rem, 5.25rem) 1.6rem';
+    }
     this.settingsFacade
       .watchGeneralSettings()
       .pipe(takeUntil(this.destroy$))

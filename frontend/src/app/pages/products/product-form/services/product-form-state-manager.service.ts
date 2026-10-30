@@ -313,7 +313,10 @@ export class ProductFormStateManagerService {
       state.workTimeHours = estampado.workTimeHours ?? 0;
       state.prints = structuredClone(
         estampado.prints?.length
-          ? estampado.prints
+          ? estampado.prints.map((print) => ({
+              ...print,
+              quantity: Math.max(1, Math.round(Number(print.quantity) || 1)),
+            }))
           : [createEmptyEstampadoPrint()],
       );
       state.pressCycles = structuredClone(

@@ -86,6 +86,7 @@ export function normalizeEstampadoPrints(
           : undefined,
       heightCm:
         print.heightCm != null && print.heightCm > 0 ? print.heightCm : undefined,
+      quantity: Math.max(1, Math.round(Number(print.quantity) || 1)),
       label: print.label?.trim() || undefined,
     }));
   }
@@ -103,6 +104,7 @@ export function normalizeEstampadoPrints(
         widthCm: legacy.widthCm,
         lengthCm: legacy.lengthCm,
         heightCm: legacy.heightCm,
+        quantity: 1,
       },
     ];
   }

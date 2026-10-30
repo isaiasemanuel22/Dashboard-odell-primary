@@ -20,7 +20,7 @@ const PAGE_W = 794;
 const PAGE_H = 1123;
 const FIRST_PAGE_CAPACITY = 6;
 const WHOLESALE_FACTOR = 0.8;
-const DEPOSIT_FACTOR = 0.5;
+export const DEPOSIT_FACTOR = 0.5;
 const LOGO_SRC = '/odell-logo-presupuesto.png';
 
 export type QuoteDocumentFormat = 'pdf' | 'png';

@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  Input,
   OnDestroy,
   OnInit,
   forwardRef,
@@ -22,9 +23,13 @@ import { ProductCostCalculationService } from '../../../../../core/services/prod
 import { paperTypeOptions } from '../../../../../shared/utils/select-options';
 import {
   createEmptyEstampadoPrint,
+  formatPrintDimensionsCm,
+  printQuantity,
   resolvePrintDimensions,
+  summarizeEstampadoPrintQuantities,
   syncEstampadoPrintFromImpreso,
 } from '../../../../../shared/utils/estampado.helpers';
+import { PAPER_TYPE_LABELS } from '../../../../../shared/constants/labels';
 import { SettingsFacade } from '../../../../../store/settings/settings.facade';
 import type { DbSelectOption } from '@dashboard-form';
 import { Subject, takeUntil } from 'rxjs';
@@ -41,6 +46,7 @@ import {
     <app-dynamic-list
       [initialValue]="initialValue"
       [config]="printConfig"
+      [embedded]="embedded"
       (valueChange)="onListChange($event)"
     />
   `,
@@ -56,6 +62,7 @@ import {
 export class PrintSpecListComponent
   implements OnInit, OnDestroy, ControlValueAccessor
 {
+  @Input() embedded = false;
   initialValue: EstampadoPrintSpec[] | null = null;
 
   private readonly impresosService = inject(ImpresosService);
@@ -72,18 +79,15 @@ export class PrintSpecListComponent
     legend: 'Impresos',
     description: 'Cada papel o transfer que lleva el producto',
     footnote:
-      'Elegí un tamaño del catálogo y la medida se completa sola; con "Medida libre" la cargás vos.',
+      'Del catálogo se completa la medida; con "Medida libre" la cargás vos.',
     layout: 'table',
     addPlacement: 'inside',
     tableColumns:
-      'minmax(6.5rem, 0.9fr) minmax(6.25rem, 0.7fr) minmax(9rem, 1.25fr) minmax(9rem, 1fr) 4.75rem 2rem',
+      'minmax(0, 1.05fr) minmax(0, 0.72fr) minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(2.4rem, 3rem) minmax(4.75rem, 5.5rem) 1.6rem',
     itemLabel: (index) => `Impreso ${index + 1}`,
     addButtonLabel: '+ Agregar impreso',
     emptyMessage: 'Sin impresos configurados',
-    totalValueFn: (items) => {
-      const total = items.reduce((sum, print) => sum + this.paperCost(print), 0);
-      return `Papel ${this.money(total)}`;
-    },
+    totalValueFn: (items) => this.printsSummary(items),
     rowCost: (item) => this.paperCost(item),
     minItems: 1,
     createItem: () => createEmptyEstampadoPrint(),
@@ -111,12 +115,21 @@ export class PrintSpecListComponent
       },
       {
         type: 'dimensions',
-        label: 'Medida (cm)',
+        label: 'Medida',
         widthName: 'widthCm',
         lengthName: 'lengthCm',
         min: 0.1,
         step: 0.1,
+        readonlyText: (item) => this.catalogMeasure(item),
         changeFn: (item) => this.onDimensionsChange(item),
+      },
+      {
+        type: 'input',
+        name: 'quantity',
+        label: 'Cant.',
+        inputType: 'number',
+        min: 1,
+        step: 1,
       },
     ],
   };
@@ -148,6 +161,7 @@ export class PrintSpecListComponent
     this.initialValue = value?.map((print) => ({
       ...print,
       impresoId: print.impresoId || '',
+      quantity: printQuantity(print),
     })) ?? value;
     this.cdr.markForCheck();
   }
@@ -169,6 +183,7 @@ export class PrintSpecListComponent
       value.map((print) => ({
         ...print,
         impresoId: print.impresoId?.trim() || undefined,
+        quantity: printQuantity(print),
       })),
     );
     this.onTouched();
@@ -180,12 +195,44 @@ export class PrintSpecListComponent
       this.impresos.find((item) => item.id === id),
     );
     if (!dims) return 0;
-    return this.costService.calculateImpresoPaperCost(
-      this.generalSettings,
-      dims.paperType,
-      dims.widthCm,
-      dims.heightCm,
+    return (
+      this.costService.calculateImpresoPaperCost(
+        this.generalSettings,
+        dims.paperType,
+        dims.widthCm,
+        dims.heightCm,
+      ) * printQuantity(print)
     );
+  }
+
+  private catalogMeasure(print: EstampadoPrintSpec): string | null {
+    if (!print.impresoId) return null;
+    const dims = resolvePrintDimensions(print, (id) =>
+      this.impresos.find((item) => item.id === id),
+    );
+    if (!dims) return null;
+    return formatPrintDimensionsCm(dims.widthCm, undefined, dims.heightCm).replace(
+      /\./g,
+      ',',
+    );
+  }
+
+  private printsSummary(items: EstampadoPrintSpec[]): string {
+    const groups = summarizeEstampadoPrintQuantities(items, (id) =>
+      this.impresos.find((item) => item.id === id),
+    );
+    const grouped = groups
+      .map((group) => {
+        const typeLabel = PAPER_TYPE_LABELS[group.paperType] ?? group.paperType;
+        const size = formatPrintDimensionsCm(group.widthCm, undefined, group.heightCm);
+        return `${typeLabel} ${size} ×${group.quantity}`;
+      })
+      .join(' · ');
+    const total = items.reduce((sum, print) => sum + this.paperCost(print), 0);
+    if (!grouped) {
+      return `Papel ${this.money(total)}`;
+    }
+    return `${grouped} · Papel ${this.money(total)}`;
   }
 
   private money(value: number): string {

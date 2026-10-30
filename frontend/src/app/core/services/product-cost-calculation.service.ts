@@ -181,6 +181,7 @@ export class ProductCostCalculationService {
         if (!dims) {
           return sum;
         }
+        const quantity = Math.max(1, Math.round(Number(print.quantity) || 1));
         return (
           sum +
           this.calculateImpresoPaperCost(
@@ -188,7 +189,8 @@ export class ProductCostCalculationService {
             dims.paperType,
             dims.widthCm,
             dims.heightCm,
-          )
+          ) *
+            quantity
         );
       }, 0);
     }

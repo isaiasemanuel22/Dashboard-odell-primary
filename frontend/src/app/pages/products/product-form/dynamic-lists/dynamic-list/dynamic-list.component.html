@@ -1,5 +1,6 @@
 @if (config) {
-<section class="dynamic-list">
+<section class="dynamic-list" [class.dynamic-list--embedded]="embedded">
+  @if (!embedded) {
   <div class="dynamic-list-head">
     <div>
       <h4>{{ config.legend }}</h4>
@@ -16,6 +17,7 @@
       </strong>
     }
   </div>
+  }
 
     <div [formGroup]="formGroup">
       @if (config.layout === 'table') {
@@ -97,6 +99,9 @@
                       />
                     }
                     @case ('dimensions') {
+                      @if (field.readonlyText?.(itemGroup.getRawValue()); as measure) {
+                        <span class="line-table__measure-readonly">{{ measure }}</span>
+                      } @else {
                       <div class="line-table__measure">
                         <db-input
                           type="number"
@@ -112,6 +117,7 @@
                           [step]="field.step ?? 0.1"
                         />
                       </div>
+                      }
                     }
                   }
                   }
@@ -136,7 +142,11 @@
                 }
                 @if (canRemove()) {
                   <button type="button" class="dynamic-list-item__remove" aria-label="Quitar" (click)="onRemove(i)">
-                    <db-icon-trash [size]="16" />
+                    @if (embedded) {
+                      <span aria-hidden="true">×</span>
+                    } @else {
+                      <db-icon-trash [size]="16" />
+                    }
                   </button>
                 } @else {
                   <span></span>
@@ -146,15 +156,27 @@
           </div>
           @if (config.addPlacement === 'inside') {
             <div class="line-table__toolbar">
-              @if (config.showAddButton !== false) {
-                <db-button
-                  [label]="config.addButtonLabel"
-                  variant="secondary"
-                  format="solid"
-                  (clicked)="onAdd()"
-                />
-              }
-              @if (config.totalValueFn) {
+              <div class="line-table__toolbar-actions">
+                @if (config.showAddButton !== false) {
+                  <db-button
+                    [label]="config.addButtonLabel"
+                    variant="secondary"
+                    format="solid"
+                    (clicked)="onAdd()"
+                  />
+                }
+                @if (embedded && config.footerActionLabel) {
+                  <db-button
+                    [label]="config.footerActionLabel"
+                    variant="primary"
+                    format="link"
+                    (clicked)="footerAction.emit()"
+                  />
+                }
+              </div>
+              @if (embedded && config.footnote) {
+                <p class="line-table__note">{{ config.footnote }}</p>
+              } @else if (config.totalValueFn) {
                 <p class="line-table__foot">{{ config.totalValueFn(itemsArray.getRawValue()) }}</p>
               }
             </div>
@@ -260,11 +282,11 @@
       />
     }
 
-    @if (config.footnote) {
+    @if (config.footnote && !embedded) {
       <p class="dynamic-list-footnote">{{ config.footnote }}</p>
     }
 
-    @if (config.footerActionLabel) {
+    @if (config.footerActionLabel && !embedded) {
       <db-button
         [label]="config.footerActionLabel"
         variant="primary"

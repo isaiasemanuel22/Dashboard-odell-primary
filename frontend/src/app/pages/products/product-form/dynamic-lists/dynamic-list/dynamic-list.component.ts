@@ -83,6 +83,8 @@ export class DynamicListComponent
   /** Valor inicial al crear/editar; solo actualizar al resetear el formulario padre. */
   @Input() initialValue: any[] | null = null;
   @Input() config!: DynamicListConfig;
+  /** Dentro de un bloque que ya tiene título: sin encabezado y con nota y acción en la barra. */
+  @Input() embedded = false;
 
   @Output() valueChange = new EventEmitter<any[]>();
   @Output() footerAction = new EventEmitter<void>();
@@ -276,7 +278,16 @@ export class DynamicListComponent
           item[field.lengthName] ?? null,
         );
       } else {
-        controls[field.name] = new FormControl(item[field.name] ?? null);
+        const raw = item[field.name];
+        const fallback =
+          field.type === 'input' &&
+          field.inputType === 'number' &&
+          field.min != null &&
+          field.min >= 1 &&
+          (raw === null || raw === undefined || raw === '')
+            ? field.min
+            : (raw ?? null);
+        controls[field.name] = new FormControl(fallback);
       }
     }
 

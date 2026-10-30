@@ -48,6 +48,8 @@ export interface DynamicDimensionsFieldConfig {
   lengthLabel?: string;
   min?: number;
   step?: number;
+  /** En tabla: si devuelve texto, la medida se muestra de solo lectura. */
+  readonlyText?: (item: any) => string | null;
   changeFn?: (item: any, items: any[]) => void;
 }
 

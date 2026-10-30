@@ -652,13 +652,15 @@ export class CostCalculatorService {
         if (!dims) {
           return sum;
         }
+        const quantity = Math.max(1, Math.round(Number(print.quantity) || 1));
         return (
           sum +
           this.calculateImpresoPaperCost(
             dims.paperType,
             dims.widthCm,
             dims.heightCm,
-          ).paperCost
+          ).paperCost *
+            quantity
         );
       }, 0);
     } else {

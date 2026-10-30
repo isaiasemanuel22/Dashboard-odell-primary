@@ -323,6 +323,8 @@ export interface EstampadoPrintSpec {
   widthCm?: number;
   lengthCm?: number;
   heightCm?: number;
+  /** Cantidad de impresos de esta medida/tipo (default 1). */
+  quantity?: number;
   label?: string;
 }
 

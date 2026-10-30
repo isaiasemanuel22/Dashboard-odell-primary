@@ -79,10 +79,10 @@ export class FormDialogService {
   }
 
   openQuote(quote: Quote | null = null): Observable<Quote | undefined> {
-    return this.open(QuoteFormDialogComponent, { quote }, 'lg', {
+    return this.open(QuoteFormDialogComponent, { quote }, 'xl', {
       ariaLabel: quote ? 'Editar presupuesto' : 'Nuevo presupuesto',
       panelClass: ['form-dialog-panel--quote'],
-      maxWidth: '780px',
+      maxWidth: '1120px',
     });
   }
 

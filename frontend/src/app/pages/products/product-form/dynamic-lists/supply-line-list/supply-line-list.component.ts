@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  Input,
   OnDestroy,
   OnInit,
   forwardRef,
@@ -37,6 +38,7 @@ import {
     <app-dynamic-list
       [initialValue]="initialValue"
       [config]="supplyConfig"
+      [embedded]="embedded"
       (valueChange)="onListChange($event)"
     />
   `,
@@ -52,6 +54,7 @@ import {
 export class SupplyLineListComponent
   implements OnInit, OnDestroy, ControlValueAccessor
 {
+  @Input() embedded = false;
   initialValue: EstampadoSupplyLine[] | null = null;
 
   private readonly suppliesService = inject(SuppliesService);

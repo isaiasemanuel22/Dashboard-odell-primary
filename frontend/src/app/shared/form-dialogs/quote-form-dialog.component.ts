@@ -34,9 +34,9 @@ export interface QuoteFormDialogData {
       [subtitle]="
         quote
           ? 'Editá la cotización antes de confirmar el pedido.'
-          : 'Cotización para un cliente antes de confirmar el pedido.'
+          : 'Cotización para un cliente antes de confirmar el pedido'
       "
-      size="lg"
+      size="xl"
       [stickyHeader]="true"
       (close)="cancel()"
     >

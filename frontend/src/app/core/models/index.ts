@@ -464,6 +464,8 @@ export interface EstampadoPrintSpec {
   widthCm?: number;
   lengthCm?: number;
   heightCm?: number;
+  /** Cantidad de impresos de esta medida/tipo (default 1). */
+  quantity?: number;
   label?: string;
 }
 
@@ -695,6 +697,32 @@ export interface OrderLineDraft {
   printTimeHours?: number;
   grams?: number;
   filamentType?: FilamentType;
+  /**
+   * Filamentos de la UI. El payload sigue guardando grams + filamentType
+   * (el primero con tipo y la suma de gramos).
+   */
+  filaments?: FdmFilamentLine[];
+  /**
+   * Horas de mano de obra solo para el costeo en pantalla.
+   * El API de presupuestos no persiste este campo.
+   */
+  workTimeHours?: number;
+  /** Nota local de mano de obra. No se persiste. */
+  laborNote?: string;
+  /** Cómo se cobra diseño o modelado. No se persiste. */
+  chargeMode?: 'hours' | 'fixed';
+  /** Tipo de trabajo de diseño. No se persiste. */
+  workKind?: string;
+  /** Entregables de diseño o modelado. No se persisten. */
+  deliverables?: string[];
+  /** Rondas de cambios de diseño. No se persiste. */
+  includesRevisions?: boolean;
+  /** El modelado espera el producto del cliente. No se persiste. */
+  needsClientProduct?: boolean;
+  /**
+   * Casilla visual de modelado. No crea una línea de impresión ni se persiste.
+   */
+  linkPrint?: boolean;
   /** Solo estampado personalizado (sin catálogo). */
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];

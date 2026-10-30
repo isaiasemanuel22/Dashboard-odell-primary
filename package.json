@@ -23,5 +23,8 @@
   },
   "devDependencies": {
     "concurrently": "^9.2.4"
+  },
+  "dependencies": {
+    "tesseract.js": "^5.1.1"
   }
 }

@@ -73,8 +73,9 @@ export function syncFdmQuotePricing(
       type: ProductType.FDM,
       grams: Number(line.grams) || 0,
       printTimeHours: Number(line.printTimeHours) || 0,
-      workTimeHours: 0,
+      workTimeHours: Number(line.workTimeHours) || 0,
       filamentType: line.filamentType as FilamentType,
+      filaments: line.filaments,
     },
     { settings },
   );

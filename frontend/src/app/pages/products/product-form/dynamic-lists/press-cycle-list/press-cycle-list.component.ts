@@ -43,6 +43,7 @@ import {
     <app-dynamic-list
       [initialValue]="initialValue"
       [config]="cycleConfig"
+      [embedded]="embedded"
       (valueChange)="onListChange($event)"
       (footerAction)="copyLocations()"
     />
@@ -59,6 +60,7 @@ import {
 export class PressCycleListComponent
   implements OnInit, OnDestroy, ControlValueAccessor
 {
+  @Input() embedded = false;
   /** Opcional: en presupuesto personalizado no hay form de producto. */
   @Input() productForm?: ProductFormGroup;
   /** Fuente de ubicaciones cuando no hay productForm (p. ej. presupuesto). */
@@ -86,7 +88,8 @@ export class PressCycleListComponent
     emptyMessage: 'Sin bajadas configuradas',
     totalValueFn: (items) => {
       const minutes = totalEstampadoPressMinutes(items);
-      return `Total ${this.minutesLabel(minutes)} · Plancha ${this.money(this.pressCost(minutes))}`;
+      const overhead = this.pressOverhead(minutes);
+      return `Total ${this.minutesLabel(minutes)} · luz ${this.money(overhead.energyCost)} + máquina ${this.money(overhead.machineCost)}`;
     },
     displayColumns: [
       {
@@ -204,14 +207,13 @@ export class PressCycleListComponent
     return `${profile.name} · ${profile.watts} W`;
   }
 
-  private pressCost(minutes: number): number {
-    if (!this.generalSettings) return 0;
-    const overhead = calculateMachineOverhead(
+  private pressOverhead(minutes: number): { energyCost: number; machineCost: number } {
+    if (!this.generalSettings) return { energyCost: 0, machineCost: 0 };
+    return calculateMachineOverhead(
       this.generalSettings,
       ProductType.ESTAMPADO,
       { printTimeHours: 0, pressMinutes: minutes },
     );
-    return overhead.energyCost + overhead.machineCost;
   }
 
   private minutesLabel(value: number): string {

@@ -32,6 +32,7 @@ export function createEmptyEstampadoPrint(): EstampadoPrintSpec {
   return {
     id: createEstampadoPrintId(),
     paperType: PaperType.DTF,
+    quantity: 1,
   };
 }
 
@@ -185,6 +186,7 @@ export function normalizeEstampadoPrints(
           : undefined,
       heightCm:
         print.heightCm != null && print.heightCm > 0 ? print.heightCm : undefined,
+      quantity: Math.max(1, Math.round(Number(print.quantity) || 1)),
       label: print.label?.trim() || undefined,
     }));
   }
@@ -202,6 +204,7 @@ export function normalizeEstampadoPrints(
         widthCm: legacy.widthCm,
         lengthCm: legacy.lengthCm,
         heightCm: legacy.heightCm,
+        quantity: 1,
       },
     ];
   }
@@ -249,6 +252,46 @@ export function normalizeEstampadoPressCycles(
   }
 
   return [];
+}
+
+export function printQuantity(print: Pick<EstampadoPrintSpec, 'quantity'>): number {
+  return Math.max(1, Math.round(Number(print.quantity) || 1));
+}
+
+/** Agrupa impresos por tipo de papel + medida y suma cantidades. */
+export function summarizeEstampadoPrintQuantities(
+  prints: EstampadoPrintSpec[] | undefined,
+  getImpresoById?: (id: string) => ImpresoWithCost | undefined,
+): Array<{
+  paperType: PaperType;
+  widthCm: number;
+  heightCm: number;
+  quantity: number;
+}> {
+  const groups = new Map<
+    string,
+    { paperType: PaperType; widthCm: number; heightCm: number; quantity: number }
+  >();
+
+  for (const print of normalizeEstampadoPrints(prints)) {
+    const dims = resolvePrintDimensions(print, getImpresoById ?? (() => undefined));
+    if (!dims) continue;
+    const key = `${dims.paperType}|${dims.widthCm}|${dims.heightCm}`;
+    const existing = groups.get(key);
+    const qty = printQuantity(print);
+    if (existing) {
+      existing.quantity += qty;
+    } else {
+      groups.set(key, {
+        paperType: dims.paperType,
+        widthCm: dims.widthCm,
+        heightCm: dims.heightCm,
+        quantity: qty,
+      });
+    }
+  }
+
+  return [...groups.values()];
 }
 
 export function resolvePrintDimensions(

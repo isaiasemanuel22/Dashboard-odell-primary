@@ -41,10 +41,11 @@
 }
 
 .cdk-overlay-pane.form-dialog-panel.form-dialog-panel--quote {
-  max-width: 780px !important;
+  max-width: 1240px !important;
 
-  .modal--lg {
-    max-width: 780px;
+  .modal--lg,
+  .modal--xl {
+    max-width: 1240px;
   }
 }
 

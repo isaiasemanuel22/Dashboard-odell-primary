@@ -6,14 +6,25 @@ import {
   OnInit,
   Output,
   SimpleChanges,
+  DestroyRef,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import {
   CreateOrderPayload,
+  CostBreakdown,
   CreateQuotePayload,
   Customer,
+  FdmFilamentLine,
+  FilamentType,
+  MachineProfile,
+  MachineProfileRole,
+  ProductType,
+  Supply,
+  SupplyCategory,
   GeneralSettings,
   ImpresoWithCost,
   Order,
@@ -23,7 +34,7 @@ import {
   Quote,
   ServiceType,
 } from '../../../core/models';
-import { SettingsService } from '../../../core/services/settings.service';
+import { SettingsService, SuppliesService } from '../../../core/services/settings.service';
 import { ImpresosService } from '../../../core/services/impresos.service';
 import { ProductCostCalculationService } from '../../../core/services/product-cost-calculation.service';
 import {
@@ -78,7 +89,24 @@ import {
   priceFromCostAndMargin,
   getMarginForService,
 } from '../../../shared/utils/pricing.util';
-import { SERVICE_TYPE_LABELS } from '../../../shared/constants/labels';
+import {
+  FILAMENT_TYPE_LABELS,
+  PAPER_TYPE_LABELS,
+  SERVICE_TYPE_LABELS,
+} from '../../../shared/constants/labels';
+import { DEPOSIT_FACTOR } from '../../../shared/utils/quote-document.util';
+import {
+  normalizeEstampadoPressCycles,
+  normalizeEstampadoPrints,
+  normalizeEstampadoSupplies,
+  printQuantity,
+  resolvePrintDimensions,
+  totalEstampadoPressMinutes,
+} from '../../../shared/utils/estampado.helpers';
+import {
+  calculateMachineOverhead,
+  getMachineProfilesForProductType,
+} from '../../../shared/utils/machine-profile.util';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import { plainTextFromHtml, hasRichTextContent, sanitizeRichTextHtml } from '../../../shared/utils/rich-text.util';
 import { MediaUploadService } from '../../../core/services/media-upload.service';
@@ -112,13 +140,26 @@ import {
   syncEstampadoQuotePricing,
 } from '../../../shared/utils/order-estampado-quote.util';
 import {
+  FilamentLineListComponent,
   PrintSpecListComponent,
   PressCycleListComponent,
   SupplyLineListComponent,
 } from '../../products/product-form/dynamic-lists/public-api';
+import {
+  createEmptyFdmFilamentLine,
+  normalizeFdmFilaments,
+  totalFdmFilamentGrams,
+} from '../../../shared/utils/fdm.helpers';
 import { lineFromQuoteItem } from '../../../shared/utils/quote.helpers';
 
 export type OrderFormVariant = 'order' | 'quote';
+
+const AREA_SHORT_LABELS: Record<ServiceType, string> = {
+  [ServiceType.IMPRESION_3D]: '3D',
+  [ServiceType.DISENO_GRAFICO]: 'Diseño',
+  [ServiceType.MODELADO]: 'Modelado',
+  [ServiceType.ESTAMPADO]: 'Estampado',
+};
 
 export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
 
@@ -128,6 +169,7 @@ export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
   imports: [
     NgClass,
     FormsModule,
+    RouterLink,
     DbFormComponent,
     DbFormGridComponent,
     DbFormGridFullComponent,
@@ -141,6 +183,7 @@ export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
     DbCheckboxComponent,
     DbIconTrashComponent,
     CurrencyArsPipe,
+    FilamentLineListComponent,
     PrintSpecListComponent,
     PressCycleListComponent,
     SupplyLineListComponent,
@@ -154,6 +197,9 @@ export class OrderFormComponent implements OnChanges, OnInit {
   private readonly settingsService = inject(SettingsService);
   private readonly impresosService = inject(ImpresosService);
   private readonly costCalculator = inject(ProductCostCalculationService);
+  private readonly suppliesService = inject(SuppliesService);
+  private readonly destroyRef = inject(DestroyRef);
+  private readonly collapsedLines = new WeakSet<OrderLineDraft>();
 
   readonly PaperType = PaperType;
   readonly paperTypeOptions = paperTypeOptions();
@@ -192,6 +238,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
   profitMargins = DEFAULT_PROFIT_MARGINS;
   generalSettings: GeneralSettings | null = null;
   impresos: ImpresoWithCost[] = [];
+  supplies: Supply[] = [];
+  readonly depositPercent = Math.round(DEPOSIT_FACTOR * 100);
 
   readonly serviceTypeOptions = serviceTypeOptions();
   readonly discountModeOptions: DbSelectOption[] = [
@@ -230,19 +278,15 @@ export class OrderFormComponent implements OnChanges, OnInit {
     const base = new Date(this.quote?.quotedAt ?? Date.now());
     const validUntil = new Date(base);
     validUntil.setDate(validUntil.getDate() + 15);
-    const formatted = validUntil.toLocaleDateString('es-AR', {
-      day: 'numeric',
-      month: 'short',
-      year: 'numeric',
-    });
-    return `Válido hasta el ${formatted} (15 días)`;
+    const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
+    return `Válido hasta el ${validUntil.getDate()} de ${months[validUntil.getMonth()]} de ${validUntil.getFullYear()}`;
   }
 
   get linesHint(): string {
     if (this.isQuoteForm) {
       const count = this.lines.length;
       const noun = count === 1 ? 'línea' : 'líneas';
-      return `Servicios y productos a cotizar · ${count} ${noun}`;
+      return `${count} ${noun} · una por servicio`;
     }
     return this.orderLinesCountLabel;
   }
@@ -262,7 +306,10 @@ export class OrderFormComponent implements OnChanges, OnInit {
   get customerOptions() {
     return this.customers.map((c) => ({
       value: c.id,
-      label: c.company ? `${c.name} - ${c.company}` : c.name,
+      label:
+        c.company && c.company.trim() !== c.name.trim()
+          ? `${c.name} - ${c.company}`
+          : c.name,
     }));
   }
 
@@ -285,6 +332,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
     const count = this.billableLines.length || this.lines.length;
     const noun = count === 1 ? 'línea' : 'líneas';
     return `Subtotal - ${count} ${noun}`;
+  }
+
+  get quoteSubtotalLabel(): string {
+    const count = this.billableLines.length;
+    if (count <= 1) return 'Subtotal';
+    return `Subtotal · ${count} líneas`;
   }
 
   get validLines(): OrderLineDraft[] {
@@ -345,6 +398,487 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return this.total - this.totalCost;
   }
 
+  get depositAmount(): number {
+    return Math.round(this.total * DEPOSIT_FACTOR);
+  }
+
+  get quoteResumenItems(): Array<{
+    key: string;
+    serviceType: ServiceType;
+    label: string;
+    total: number;
+  }> {
+    return this.billableLines.map((line, index) => {
+      const qty = Math.max(1, Number(line.quantity) || 1);
+      return {
+        key: `${index}-${line.serviceType}-${line.productId || 'custom'}`,
+        serviceType: line.serviceType,
+        label: `${this.lineTitle(line, index)} · ${qty} u`,
+        total: this.linePriceTotal(line),
+      };
+    });
+  }
+
+  get quoteAreaShares(): Array<{ serviceType: ServiceType; label: string; percent: number }> {
+    const subtotal = this.subtotal;
+    if (subtotal <= 0) return [];
+    const totals = new Map<ServiceType, number>();
+    for (const line of this.billableLines) {
+      totals.set(
+        line.serviceType,
+        (totals.get(line.serviceType) ?? 0) + this.linePriceTotal(line),
+      );
+    }
+    return [...totals.entries()]
+      .filter(([, value]) => value > 0)
+      .sort((a, b) => b[1] - a[1])
+      .map(([serviceType, value]) => ({
+        serviceType,
+        label: AREA_SHORT_LABELS[serviceType],
+        percent: Math.round((value / subtotal) * 100),
+      }));
+  }
+
+  get quoteResumenWarnings(): string[] {
+    const warnings: string[] = [];
+    const missingRates = [
+      ...new Set(
+        this.lines
+          .filter((line) => this.designRateMissingHint(line))
+          .map((line) => this.serviceLabel(line.serviceType)),
+      ),
+    ];
+    if (missingRates.length > 1) {
+      warnings.push(
+        'Diseño y modelado salen en costo porque sus tarifas por hora están en $ 0. La seña y el área siguen contando.',
+      );
+    } else if (missingRates.length === 1) {
+      const label = missingRates[0] === SERVICE_TYPE_LABELS[ServiceType.DISENO_GRAFICO]
+        ? 'Diseño'
+        : missingRates[0] === SERVICE_TYPE_LABELS[ServiceType.MODELADO]
+          ? 'Modelado'
+          : missingRates[0];
+      warnings.push(
+        `${label} sale en costo porque la tarifa por hora está en $ 0. La seña y el área siguen contando.`,
+      );
+    }
+    for (const name of this.suppliesWithoutPrice()) {
+      warnings.push(`${name} no tiene precio en Insumos: el costo no lo incluye.`);
+    }
+    return warnings;
+  }
+
+  isLineCollapsed(line: OrderLineDraft): boolean {
+    return this.collapsedLines.has(line);
+  }
+
+  toggleLineCollapsed(line: OrderLineDraft): void {
+    if (this.collapsedLines.has(line)) {
+      this.collapsedLines.delete(line);
+    } else {
+      this.collapsedLines.add(line);
+    }
+  }
+
+  lineTitle(line: OrderLineDraft, index: number): string {
+    return (
+      line.customName?.trim() ||
+      this.productForLine(line)?.name ||
+      `Línea ${index + 1}`
+    );
+  }
+
+  lineCollapsedDetail(line: OrderLineDraft): string {
+    const qty = Math.max(1, Number(line.quantity) || 1);
+    const parts = [`${qty} × ${this.money(this.unitPriceForLine(line))}`];
+    if (isImpresion3DLine(line.serviceType)) {
+      const breakdown = this.fdmBreakdown(line);
+      if (breakdown) {
+        parts.push(`Filamento ${this.money(breakdown.materialCost)}`);
+        parts.push(
+          `Impresión ${this.money(breakdown.energyCost + breakdown.machineCost)}`,
+        );
+      }
+    } else if (isEstampadoLine(line.serviceType)) {
+      const costs = this.estampadoCosts(line);
+      parts.push(`Impresos ${this.money(costs.prints)}`);
+      parts.push(`Insumos ${this.money(costs.supplies)}`);
+      parts.push(`Plancha ${this.money(costs.press)}`);
+    }
+    return parts.join(' · ');
+  }
+
+  unitPriceForLine(line: OrderLineDraft): number {
+    return isDesignService(line.serviceType)
+      ? this.designUnitPriceForLine(line)
+      : Number(line.unitPrice) || 0;
+  }
+
+  get errorMarginPercent(): number {
+    return Math.min(
+      Math.max(Number(this.generalSettings?.errorMarginPercent) || 0, 0),
+      100,
+    );
+  }
+
+  fdmBreakdown(line: OrderLineDraft): CostBreakdown | null {
+    if (!this.generalSettings || !isFdmQuoteConfigured(line)) return null;
+    return this.costCalculator.calculateCost(
+      {
+        type: ProductType.FDM,
+        grams: Number(line.grams) || 0,
+        printTimeHours: Number(line.printTimeHours) || 0,
+        workTimeHours: Number(line.workTimeHours) || 0,
+        filamentType: line.filamentType as FilamentType,
+        filaments: line.filaments,
+      },
+      { settings: this.generalSettings },
+    );
+  }
+
+  fdmFilamentSummary(line: OrderLineDraft): string {
+    const rows = line.filaments ?? [];
+    const active = rows.filter((row) => Number(row.grams) > 0);
+    const counted = active.length ? active : rows;
+    const count = counted.length || 1;
+    const grams = rows.length
+      ? totalFdmFilamentGrams(rows)
+      : Number(line.grams) || 0;
+    const types = [
+      ...new Set(counted.map((row) => row.filamentType).filter(Boolean)),
+    ];
+    const typeLabel = types.length
+      ? types.map((type) => FILAMENT_TYPE_LABELS[type]).join(' · ')
+      : line.filamentType
+        ? FILAMENT_TYPE_LABELS[line.filamentType]
+        : 'Sin material';
+    const noun = count === 1 ? 'filamento' : 'filamentos';
+    return `${count} ${noun} · ${this.formatNumber(grams)} g · ${typeLabel}`;
+  }
+
+  quoteFilaments(line: OrderLineDraft): FdmFilamentLine[] {
+    if (!line.filaments?.length) {
+      const restored = normalizeFdmFilaments(undefined, {
+        grams: line.grams,
+        filamentType: line.filamentType,
+      });
+      line.filaments = restored.length
+        ? restored
+        : [createEmptyFdmFilamentLine(line.filamentType ?? FilamentType.PLA)];
+    }
+    return line.filaments;
+  }
+
+  onFilamentsChange(line: OrderLineDraft, filaments: FdmFilamentLine[]): void {
+    line.filaments = filaments;
+    line.grams = totalFdmFilamentGrams(filaments);
+    line.filamentType = filaments.find((item) => item.filamentType)?.filamentType;
+    this.onFdmQuoteChange(line);
+  }
+
+  onWorkHoursChange(line: OrderLineDraft, raw: number | string): void {
+    line.workTimeHours = Math.max(0, Number(raw) || 0);
+    this.onFdmQuoteChange(line);
+  }
+
+  laborSummary(line: OrderLineDraft): string {
+    const hours = Number(line.workTimeHours) || 0;
+    const rate = Number(this.generalSettings?.laborCostPerHour) || 0;
+    const base = `${this.formatNumber(hours)} h × ${this.money(rate)}/h`;
+    const note = line.laborNote?.trim();
+    return note ? `${base} · ${note}` : base;
+  }
+
+  laborCost(line: OrderLineDraft): number {
+    const breakdown = this.fdmBreakdown(line);
+    if (breakdown) return breakdown.laborCost;
+    const hours = Number(line.workTimeHours) || 0;
+    const rate = Number(this.generalSettings?.laborCostPerHour) || 0;
+    return Math.round(hours * rate);
+  }
+
+  chargeModeFor(line: OrderLineDraft): 'hours' | 'fixed' {
+    if (line.chargeMode) return line.chargeMode;
+    return isGraphicDesignService(line.serviceType) ? 'fixed' : 'hours';
+  }
+
+  setChargeMode(line: OrderLineDraft, mode: 'hours' | 'fixed'): void {
+    line.chargeMode = mode;
+    if (mode === 'hours') this.applyDesignBudget(line);
+  }
+
+  workKindOptions(line: OrderLineDraft): DbSelectOption[] {
+    const kinds = isGraphicDesignService(line.serviceType)
+      ? ['Rediseño de logo', 'Diseño de logo', 'Adaptación de archivo', 'Otro']
+      : ['Pieza de repuesto', 'Modelado de producto', 'Ajuste de modelo', 'Otro'];
+    return [
+      { value: '', label: 'Elegí el tipo' },
+      ...kinds.map((kind) => ({ value: kind, label: kind })),
+    ];
+  }
+
+  onWorkKindChange(line: OrderLineDraft, value: string): void {
+    line.workKind = value;
+  }
+
+  deliverableOptions(line: OrderLineDraft): string[] {
+    return isGraphicDesignService(line.serviceType)
+      ? ['PNG', 'SVG', 'PDF', 'AI']
+      : ['STL', '3MF', 'OBJ', 'STEP'];
+  }
+
+  hasDeliverable(line: OrderLineDraft, item: string): boolean {
+    return (line.deliverables ?? []).includes(item);
+  }
+
+  toggleDeliverable(line: OrderLineDraft, item: string): void {
+    const current = line.deliverables ?? [];
+    line.deliverables = current.includes(item)
+      ? current.filter((entry) => entry !== item)
+      : [...current, item];
+  }
+
+  designWorkSummary(line: OrderLineDraft): string {
+    const parts: string[] = [];
+    if (this.chargeModeFor(line) === 'fixed') {
+      parts.push('Precio fijo');
+    } else {
+      parts.push(`${this.formatNumber(Number(line.budgetedHours) || 0)} h`);
+    }
+    if (line.workKind?.trim()) parts.push(line.workKind.trim());
+    if (line.deliverables?.length) parts.push(line.deliverables.join(' + '));
+    if (line.needsClientProduct) parts.push('requiere el producto');
+    return parts.join(' · ');
+  }
+
+  fdmPrintSummary(line: OrderLineDraft): string {
+    const hours = Number(line.printTimeHours) || 0;
+    const breakdown = this.fdmBreakdown(line);
+    const profile = this.machineProfile(ProductType.FDM, MachineProfileRole.PRINT);
+    const parts = [
+      profile?.name ?? 'Impresora',
+      `${this.formatNumber(hours)} h`,
+    ];
+    if (breakdown) {
+      parts.push(
+        `luz ${this.money(breakdown.energyCost)} + máquina ${this.money(breakdown.machineCost)}`,
+      );
+    }
+    return parts.join(' · ');
+  }
+
+  estampadoCosts(line: OrderLineDraft): {
+    prints: number;
+    supplies: number;
+    press: number;
+    errorMargin: number;
+    pressMinutes: number;
+    energy: number;
+    machine: number;
+  } {
+    const settings = this.generalSettings;
+    const pressMinutes = totalEstampadoPressMinutes(line.estampadoPressCycles);
+    if (!settings) {
+      return { prints: 0, supplies: 0, press: 0, errorMargin: 0, pressMinutes, energy: 0, machine: 0 };
+    }
+    const prints = normalizeEstampadoPrints(line.estampadoPrints).reduce(
+      (sum, print) => {
+        const dims = resolvePrintDimensions(print, (id) =>
+          this.impresos.find((item) => item.id === id),
+        );
+        if (!dims) return sum;
+        return (
+          sum +
+          this.costCalculator.calculateImpresoPaperCost(
+            settings,
+            dims.paperType,
+            dims.widthCm,
+            dims.heightCm,
+          ) *
+            printQuantity(print)
+        );
+      },
+      0,
+    );
+    const supplies = normalizeEstampadoSupplies(line.estampadoSupplies).reduce(
+      (sum, entry) => {
+        const supply = this.supplies.find((item) => item.id === entry.supplyId);
+        return supply
+          ? sum + (Number(supply.unitPrice) || 0) * (Number(entry.quantity) || 0)
+          : sum;
+      },
+      0,
+    );
+    const overhead = calculateMachineOverhead(settings, ProductType.ESTAMPADO, {
+      printTimeHours: 0,
+      pressMinutes,
+    });
+    const percent = this.errorMarginPercent;
+    const errorMargin = percent
+      ? Math.round(
+          (prints + supplies + overhead.energyCost + overhead.machineCost) *
+            (percent / 100),
+        )
+      : 0;
+    return {
+      prints: Math.round(prints),
+      supplies: Math.round(supplies),
+      press: overhead.energyCost + overhead.machineCost,
+      errorMargin,
+      pressMinutes,
+      energy: overhead.energyCost,
+      machine: overhead.machineCost,
+    };
+  }
+
+  estampadoPrintsSummary(line: OrderLineDraft): string {
+    const prints = normalizeEstampadoPrints(line.estampadoPrints).filter(
+      (print) =>
+        !!resolvePrintDimensions(print, (id) =>
+          this.impresos.find((item) => item.id === id),
+        ),
+    );
+    if (!prints.length) return 'Sin impresos';
+    const count = prints.reduce((sum, print) => sum + printQuantity(print), 0);
+    const papers = [
+      ...new Set(
+        prints
+          .map((print) => print.paperType)
+          .filter(Boolean)
+          .map((type) => PAPER_TYPE_LABELS[type] ?? type),
+      ),
+    ];
+    const noun = count === 1 ? 'impreso' : 'impresos';
+    return [`${count} ${noun}`, ...papers].join(' · ');
+  }
+
+  estampadoSuppliesSummary(line: OrderLineDraft): { text: string; missingPrice: boolean } {
+    const entries = normalizeEstampadoSupplies(line.estampadoSupplies);
+    if (!entries.length) return { text: 'Sin insumos', missingPrice: false };
+    let missingPrice = false;
+    const text = entries
+      .map((entry) => {
+        const supply = this.supplies.find((item) => item.id === entry.supplyId);
+        if (!supply || !(Number(supply.unitPrice) > 0)) missingPrice = true;
+        return `${supply?.name ?? 'Insumo'} × ${this.formatNumber(entry.quantity)}`;
+      })
+      .join(' · ');
+    return { text, missingPrice };
+  }
+
+  estampadoPressSummary(line: OrderLineDraft): string {
+    const cycles = normalizeEstampadoPressCycles(line.estampadoPressCycles);
+    const bajadas = cycles.reduce((sum, cycle) => sum + (Number(cycle.bajadas) || 1), 0);
+    const minutes = totalEstampadoPressMinutes(line.estampadoPressCycles);
+    const profile = this.pressProfile;
+    const parts = profile ? [profile.name] : [];
+    parts.push(`${bajadas} ${bajadas === 1 ? 'bajada' : 'bajadas'}`);
+    parts.push(`${this.formatNumber(minutes)} min`);
+    return parts.join(' · ');
+  }
+
+  get pressProfile(): MachineProfile | undefined {
+    return this.machineProfile(ProductType.ESTAMPADO, MachineProfileRole.PRESS);
+  }
+
+  get pressProfileOptions(): DbSelectOption[] {
+    const profile = this.pressProfile;
+    return profile
+      ? [{ value: profile.id, label: `${profile.name} · ${profile.watts} W` }]
+      : [{ value: '', label: 'Sin plancha en Ajustes' }];
+  }
+
+  get electricityCostPerKwh(): number {
+    return Number(this.generalSettings?.electricityCostPerKwh) || 0;
+  }
+
+  formatGrams(line: OrderLineDraft): string {
+    return this.formatNumber(Number(line.grams) || 0);
+  }
+
+  suggestedUnitPriceHint(line: OrderLineDraft): string {
+    if (isImpresion3DLine(line.serviceType)) {
+      const cost = this.lineUnitCost(line);
+      const price = Number(line.unitPrice) || 0;
+      if (cost > 0 && price > 0) {
+        const percent = Math.round(((price - cost) / cost) * 100);
+        return `Margen sugerido · ${percent}%`;
+      }
+    }
+    if (
+      line.productId &&
+      !isEstampadoLine(line.serviceType) &&
+      !isImpresion3DLine(line.serviceType)
+    ) {
+      return 'Precio del catálogo de productos.';
+    }
+    const margin = isEstampadoLine(line.serviceType)
+      ? estampadoMargin(this.profitMargins)
+      : impresion3DMargin(this.profitMargins);
+    const suggested = priceFromCostAndMargin(this.lineUnitCost(line), margin);
+    return `Sugerido ${this.money(suggested)} (costo + ${margin}%)`;
+  }
+
+  designCostHint(line: OrderLineDraft): string {
+    const hours = Number(line.budgetedHours) || 0;
+    const rateLabel = isGraphicDesignService(line.serviceType)
+      ? 'tarifa de diseño'
+      : 'tarifa de modelado';
+    return `${this.formatNumber(hours)} h × ${rateLabel}`;
+  }
+
+  designPriceHint(line: OrderLineDraft): string {
+    if (this.serviceRate(line) <= 0) {
+      const rateLabel = isGraphicDesignService(line.serviceType)
+        ? 'Tarifa de diseño'
+        : 'Tarifa de modelado';
+      return `${rateLabel} en $ 0: el sugerido no se calcula`;
+    }
+    return `Margen ${this.serviceLabel(line.serviceType)} (${this.designMarginFor(line)}%)`;
+  }
+
+  private machineProfile(
+    productType: ProductType,
+    role: MachineProfileRole,
+  ): MachineProfile | undefined {
+    if (!this.generalSettings) return undefined;
+    return getMachineProfilesForProductType(this.generalSettings, productType).find(
+      (profile) => profile.role === role,
+    );
+  }
+
+  private suppliesWithoutPrice(): string[] {
+    const names = new Set<string>();
+    for (const line of this.lines) {
+      if (!isEstampadoLine(line.serviceType)) continue;
+      for (const entry of normalizeEstampadoSupplies(line.estampadoSupplies)) {
+        const supply = this.supplies.find((item) => item.id === entry.supplyId);
+        if (supply && !(Number(supply.unitPrice) > 0)) names.add(supply.name);
+      }
+    }
+    return [...names];
+  }
+
+  plainAmount(value: number): string {
+    return new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(
+      Number(value) || 0,
+    );
+  }
+
+  private money(value: number): string {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(Number(value) || 0);
+  }
+
+  private formatNumber(value: number): string {
+    return new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(
+      Number(value) || 0,
+    );
+  }
+
   designMarginFor(line: OrderLineDraft): number {
     return getMarginForService(line.serviceType, this.profitMargins);
   }
@@ -360,6 +894,14 @@ export class OrderFormComponent implements OnChanges, OnInit {
     this.impresosService.getImpresos().subscribe((items) => {
       this.impresos = items;
     });
+    if (this.isQuoteForm) {
+      this.suppliesService
+        .watchSupplies(SupplyCategory.ESTAMPADO)
+        .pipe(takeUntilDestroyed(this.destroyRef))
+        .subscribe((items) => {
+          this.supplies = items;
+        });
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -394,7 +936,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (isImpresion3DLine(line.serviceType) || isEstampadoLine(line.serviceType)) {
       options.unshift({
         value: '',
-        label: 'Presupuesto personalizado (sin catálogo)',
+        label: 'Presupuesto manual (sin catálogo)',
       });
     }
 
@@ -436,8 +978,19 @@ export class OrderFormComponent implements OnChanges, OnInit {
       line.printUnitPrice = undefined;
     }
     line.designUnitPrice = undefined;
+    line.filaments = undefined;
+    line.workTimeHours = undefined;
+    line.laborNote = undefined;
+    line.workKind = undefined;
+    line.deliverables = undefined;
+    line.includesRevisions = undefined;
+    line.needsClientProduct = undefined;
+    line.linkPrint = undefined;
     if (isDesignService(line.serviceType)) {
+      line.chargeMode = isGraphicDesignService(line.serviceType) ? 'fixed' : 'hours';
       this.applyDesignBudget(line);
+    } else {
+      line.chargeMode = undefined;
     }
   }
 
