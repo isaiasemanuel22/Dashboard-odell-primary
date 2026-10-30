@@ -29,6 +29,7 @@ import {
   isGraphicDesignService,
   normalizeServiceType,
 } from './service-type.util';
+import { normalizeFdmFilaments } from './fdm.helpers';
 
 export { isDesignService, isGraphicDesignService };
 
@@ -43,7 +44,7 @@ export const FINISHED_ORDER_STATUSES: OrderStatus[] = [
   OrderStatus.ENTREGADO,
 ];
 
-export const ORDER_DESCRIPTION_MAX_LENGTH = 20_000;
+export const ORDER_DESCRIPTION_MAX_LENGTH = 1_000;
 
 export function isActiveOrder(status: OrderStatus): boolean {
   return ACTIVE_ORDER_STATUSES.includes(status);
@@ -331,6 +332,17 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
     };
   }
 
+  const filaments = isImpresion3DLine(item.serviceType)
+    ? normalizeFdmFilaments(
+        (item as OrderItem & { filaments?: OrderLineDraft['filaments'] })
+          .filaments,
+        {
+          grams: item.grams,
+          filamentType: item.filamentType,
+        },
+      )
+    : undefined;
+
   return {
     serviceType: item.serviceType,
     productId: item.productId,
@@ -344,6 +356,7 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
     printTimeHours: item.printTimeHours,
     grams: item.grams,
     filamentType: item.filamentType,
+    filaments: filaments?.length ? filaments : undefined,
     estampadoPrints: item.estampadoPrints,
     estampadoPressCycles: item.estampadoPressCycles,
     estampadoSupplies: item.estampadoSupplies,

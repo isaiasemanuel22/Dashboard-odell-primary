@@ -1,7 +1,7 @@
 <db-form-field
   [label]="label"
-  [hint]="hint || charCount"
-  [error]="error || uploadError"
+  [hint]="fieldHint"
+  [error]="fieldError"
   [required]="false"
   [forId]="editorId"
 >
@@ -17,11 +17,17 @@
       [modules]="modules"
       [placeholder]="placeholder"
       [readOnly]="disabled"
-      [maxLength]="maxLength"
       [styles]="editorStyles"
       [ngModel]="value"
       (ngModelChange)="onModelChange($event)"
       (onBlur)="onBlur()"
     />
+    <p
+      class="rich-text__count"
+      [class.rich-text__count--over]="isOverLimit"
+      aria-live="polite"
+    >
+      {{ charCount }}
+    </p>
   </div>
 </db-form-field>

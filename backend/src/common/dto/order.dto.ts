@@ -19,6 +19,7 @@ import {
   EstampadoPrintSpec,
   EstampadoSupplyLine,
 } from '../interfaces';
+import { ORDER_RICH_TEXT_HTML_MAX_LENGTH } from '../../orders/rich-text.util';
 
 export class UpdateStatusDto {
   @IsEnum(OrderStatus)
@@ -177,7 +178,7 @@ export class CreateOrderDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(20000)
+  @MaxLength(ORDER_RICH_TEXT_HTML_MAX_LENGTH)
   description?: string;
 
   @IsOptional()

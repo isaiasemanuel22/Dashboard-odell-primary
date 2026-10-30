@@ -42,7 +42,7 @@ export class DbRichTextEditorComponent implements ControlValueAccessor, OnInit {
   @Input() hint = '';
   @Input() error = '';
   @Input() placeholder = '';
-  @Input() maxLength = 20_000;
+  @Input() maxLength = 1_000;
   @Input() disabled = false;
   @Input() uploadFn?: DbFileUploadFn;
 
@@ -75,9 +75,29 @@ export class DbRichTextEditorComponent implements ControlValueAccessor, OnInit {
     };
   }
 
+  get plainLength(): number {
+    return plainTextFromHtml(this.value).length;
+  }
+
+  get isOverLimit(): boolean {
+    return this.plainLength > this.maxLength;
+  }
+
   get charCount(): string {
-    const length = plainTextFromHtml(this.value).length;
-    return `${length.toLocaleString('es-AR')} / ${this.maxLength.toLocaleString('es-AR')}`;
+    return `${this.plainLength.toLocaleString('es-AR')} / ${this.maxLength.toLocaleString('es-AR')}`;
+  }
+
+  get fieldHint(): string {
+    return this.hint;
+  }
+
+  get fieldError(): string {
+    if (this.error) return this.error;
+    if (this.uploadError) return this.uploadError;
+    if (this.isOverLimit) {
+      return `La descripción no puede superar los ${this.maxLength.toLocaleString('es-AR')} caracteres.`;
+    }
+    return '';
   }
 
   writeValue(value: string | null): void {

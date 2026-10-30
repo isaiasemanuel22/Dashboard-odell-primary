@@ -25,6 +25,19 @@
   border-bottom: 1px solid $color-border;
 }
 
+.rich-text__count {
+  margin: 0.35rem 0 0;
+  font-size: 0.75rem;
+  font-weight: 400;
+  color: $color-primary;
+  text-align: right;
+
+  &--over {
+    color: $color-error;
+    font-weight: 600;
+  }
+}
+
 :host ::ng-deep {
   quill-editor {
     display: block;

@@ -13,7 +13,10 @@ const ALLOWED_TAGS = new Set([
   'img',
 ]);
 
-export const ORDER_RICH_TEXT_MAX_LENGTH = 20_000;
+/** Límite de negocio: caracteres de texto plano (sin tags). */
+export const ORDER_RICH_TEXT_MAX_LENGTH = 1_000;
+/** Tope del HTML crudo en DTO (tags + texto); el límite real se valida en texto plano. */
+export const ORDER_RICH_TEXT_HTML_MAX_LENGTH = 5_000;
 
 export function plainTextFromHtml(html: string | null | undefined): string {
   if (!html?.trim()) return '';
