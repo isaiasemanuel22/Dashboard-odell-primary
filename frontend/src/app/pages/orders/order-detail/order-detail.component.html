@@ -177,63 +177,10 @@
         </table>
       </section>
 
-      <section class="panel">
-        <h3>Pagos</h3>
-        <dl class="detail-list">
-          <div>
-            <dt>Importe pagado</dt>
-            <dd>{{ paidAmount | currencyArs }}</dd>
-          </div>
-          <div>
-            <dt>Saldo</dt>
-            <dd>{{ balanceAmount | currencyArs }}</dd>
-          </div>
-          <div>
-            <dt>Estado de pago</dt>
-            <dd>{{ paymentStatusLabel }}</dd>
-          </div>
-        </dl>
-        @if (order.payments?.length) {
-          <ul class="order-payments">
-            @for (payment of order.payments; track payment.id) {
-              <li>
-                {{ payment.amount | currencyArs }}
-                @if (payment.deposit) {
-                  <span> · seña</span>
-                }
-                <span> · {{ payment.createdAt | dateShort }}</span>
-              </li>
-            }
-          </ul>
-        }
-        @if (balanceAmount > 0 && order.status !== 'cancelado') {
-          <div class="assign-customer">
-            <db-input
-              label="Monto del pago"
-              type="number"
-              [(ngModel)]="paymentAmount"
-              name="paymentAmount"
-              [min]="0.01"
-              [step]="0.01"
-            />
-            <db-checkbox
-              label="Seña"
-              name="paymentDeposit"
-              [(ngModel)]="paymentDeposit"
-            />
-            <db-button
-              [label]="paymentLoading ? 'Registrando...' : 'Registrar pago'"
-              variant="primary"
-              format="solid"
-              [disabled]="paymentLoading || !paymentAmount"
-              (clicked)="registerPayment()"
-            />
-          </div>
-          @if (paymentError) {
-            <p class="order-payments__error">{{ paymentError }}</p>
-          }
-        }
-      </section>
+      <app-order-detail-payments
+        [order]="order"
+        (orderChange)="onPaymentRegistered($event)"
+      />
 
       <section class="panel">
         <div class="panel-header-row">
@@ -273,118 +220,17 @@
         </p>
       </section>
 
-      <section class="panel">
-        <h3>Entregas</h3>
-        @if (order.status !== 'cancelado' && order.status !== 'entregado') {
-          <div class="delivery-form">
-            @for (item of order.items; track $index; let itemIndex = $index) {
-              @if (itemPending(item) > 0) {
-                <db-input
-                  [label]="item.productName + ' (máx. ' + itemDeliverableMax(item, itemIndex) + ')'"
-                  type="number"
-                  [(ngModel)]="deliveryDraft[itemIndex]"
-                  [name]="'delivery-' + itemIndex"
-                  [min]="0"
-                  [max]="itemDeliverableMax(item, itemIndex)"
-                  step="1"
-                />
-              }
-            }
-            @if (deliveryError) {
-              <p class="order-payments__error" role="alert">{{ deliveryError }}</p>
-            }
-            <db-button
-              [label]="deliveryLoading ? 'Registrando...' : 'Registrar entrega'"
-              variant="primary"
-              format="solid"
-              [disabled]="!canRegisterDelivery"
-              (clicked)="registerDelivery()"
-            />
-          </div>
-        }
-        @if (deliveries.length) {
-          <ul class="delivery-list">
-            @for (delivery of deliveries; track delivery.id) {
-              <li>
-                <strong>{{ delivery.deliveredAt | dateTime }}</strong>
-                <span>{{ delivery.items.length }} línea(s)</span>
-                @if (delivery.notes) { <span>{{ delivery.notes }}</span> }
-              </li>
-            }
-          </ul>
-        } @else {
-          <p class="empty-group">Todavía no se registraron entregas.</p>
-        }
-      </section>
+      <app-order-detail-deliveries
+        [order]="order"
+        [tasks]="tasks"
+        [deliveries]="deliveries"
+        (delivered)="loadOrder(order.id)"
+      />
 
-      <section class="panel status-history-panel">
-        <h3>Historial de estado</h3>
-        @if (statusHistory.length) {
-          <ol class="status-history">
-            @for (entry of statusHistory; track entry.id) {
-              <li class="status-history__item">
-                <div class="status-history__marker" aria-hidden="true"></div>
-                <div class="status-history__content">
-                  <div class="status-history__row">
-                    <time [dateTime]="entry.changedAt">
-                      {{ entry.changedAt | dateTime }}
-                    </time>
-                    <span class="status-history__source">
-                      {{ sourceLabels[entry.source] }}
-                    </span>
-                  </div>
-                  <p class="status-history__transition">
-                    {{ historyTransition(entry) }}
-                  </p>
-                  <db-status-badge
-                    [statusClass]="entry.toStatus"
-                    [label]="entry.toStatus | orderStatusLabel"
-                  />
-                </div>
-              </li>
-            }
-          </ol>
-        } @else {
-          <p class="empty-group">Sin cambios de estado registrados.</p>
-        }
-      </section>
-
-      <section class="panel status-history-panel">
-        <h3>Historial de precios</h3>
-        @if (priceHistory.length) {
-          <ol class="status-history">
-            @for (entry of priceHistory; track entry.id) {
-              <li class="status-history__item">
-                <div class="status-history__marker" aria-hidden="true"></div>
-                <div class="status-history__content">
-                  <div class="status-history__row">
-                    <time [dateTime]="entry.changedAt">
-                      {{ entry.changedAt | dateTime }}
-                    </time>
-                    <span class="status-history__source">
-                      {{ priceTriggerLabels[entry.trigger] }}
-                    </span>
-                  </div>
-                  <p class="status-history__transition">
-                    {{ entry.productName }}:
-                    {{ entry.previousUnitPrice | currencyArs }}
-                    →
-                    {{ entry.newUnitPrice | currencyArs }}
-                  </p>
-                  <p class="status-history__transition">
-                    Total pedido:
-                    {{ entry.previousOrderTotal | currencyArs }}
-                    →
-                    {{ entry.newOrderTotal | currencyArs }}
-                  </p>
-                </div>
-              </li>
-            }
-          </ol>
-        } @else {
-          <p class="empty-group">Sin cambios de precio registrados.</p>
-        }
-      </section>
+      <app-order-detail-history
+        [statusHistory]="statusHistory"
+        [priceHistory]="priceHistory"
+      />
 
       <section class="panel description-panel">
         <div class="description-panel__header">

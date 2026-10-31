@@ -7,6 +7,7 @@ import {
   OnInit,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import {
@@ -20,7 +21,6 @@ import {
   OrderPriceNotice,
   PrintJob,
   Customer,
-  TaskKind,
 } from '../../../core/models';
 import { RealtimeEvent } from '../../../core/models/realtime.model';
 import { OrdersService } from '../../../core/services/orders.service';
@@ -30,8 +30,6 @@ import { RealtimeCatalogSyncService } from '../../../core/services/realtime-cata
 import { RealtimeService } from '../../../core/services/realtime.service';
 import {
   DbButtonComponent,
-  DbCheckboxComponent,
-  DbInputComponent,
   DbSelectComponent,
   DbServiceBadgesComponent,
   DbSkeletonComponent,
@@ -51,21 +49,21 @@ import {
 } from '../../../shared/utils/order.helpers';
 import { resolveLinePrintUnitPrice } from '../../../shared/utils/design-print.util';
 import {
-  ORDER_STATUS_CHANGE_SOURCE_LABELS,
-  ORDER_STATUS_LABELS,
   TASK_KIND_LABELS,
   SERVICE_TYPE_LABELS,
 } from '../../../shared/constants/labels';
 import {
   CurrencyArsPipe,
   DateShortPipe,
-  DateTimePipe,
   OrderStatusLabelPipe,
   PrintJobStatusLabelPipe,
   RichTextPipe,
   PlainTextLengthPipe,
 } from '../../../shared/pipes/labels.pipe';
 import { priorityTierClass } from '../../../shared/utils/priority.helpers';
+import { OrderDetailHistoryComponent } from './order-detail-history/order-detail-history.component';
+import { OrderDetailPaymentsComponent } from './order-detail-payments/order-detail-payments.component';
+import { OrderDetailDeliveriesComponent } from './order-detail-deliveries/order-detail-deliveries.component';
 
 @Component({
   selector: 'app-order-detail',
@@ -74,7 +72,6 @@ import { priorityTierClass } from '../../../shared/utils/priority.helpers';
     FormsModule,
     RouterLink,
     DateShortPipe,
-    DateTimePipe,
     CurrencyArsPipe,
     OrderStatusLabelPipe,
     PrintJobStatusLabelPipe,
@@ -82,13 +79,14 @@ import { priorityTierClass } from '../../../shared/utils/priority.helpers';
     PlainTextLengthPipe,
     DbSelectComponent,
     DbButtonComponent,
-    DbInputComponent,
-    DbCheckboxComponent,
     DbSkeletonComponent,
     DbStateMessageComponent,
     DbStatusBadgeComponent,
     DbServiceBadgesComponent,
     ...DB_DATA_TABLE,
+    OrderDetailHistoryComponent,
+    OrderDetailPaymentsComponent,
+    OrderDetailDeliveriesComponent,
   ],
   templateUrl: './order-detail.component.html',
   styleUrl: './order-detail.component.scss',
@@ -142,18 +140,11 @@ export class OrderDetailComponent implements OnInit {
   priceNotices: OrderPriceNotice[] = [];
   priceDecisionLoading = false;
   deliveries: OrderDelivery[] = [];
-  deliveryDraft: number[] = [];
-  deliveryLoading = false;
-  deliveryError = '';
   loading = true;
   notFound = false;
 
   assignCustomerId = '';
   assignLoading = false;
-  paymentAmount: number | null = null;
-  paymentDeposit = false;
-  paymentLoading = false;
-  paymentError = '';
   private customers: Customer[] = [];
 
   statusLoading = false;
@@ -161,7 +152,7 @@ export class OrderDetailComponent implements OnInit {
 
   readonly descriptionMaxLength = ORDER_DESCRIPTION_MAX_LENGTH;
   readonly priorityTierClass = priorityTierClass;
-  readonly sourceLabels = ORDER_STATUS_CHANGE_SOURCE_LABELS;
+  readonly taskKindLabels = TASK_KIND_LABELS;
   readonly isDesignService = isDesignService;
 
   itemPending(item: OrderItem): number {
@@ -192,81 +183,6 @@ export class OrderDetailComponent implements OnInit {
     );
   }
 
-  itemDeliverableMax(item: OrderItem, itemIndex: number): number {
-    const pending = this.itemPending(item);
-    if (pending <= 0) return 0;
-    if (item.productId) {
-      return Math.min(
-        pending,
-        this.itemReserved(item) +
-          Math.max(this.itemProduced(item) - (item.deliveredFromProductionQuantity ?? 0), 0),
-      );
-    }
-    const serviceDone = this.tasks.some(
-      (task) =>
-        task.orderItemIndex === itemIndex &&
-        task.taskKind === TaskKind.SERVICE &&
-        task.status === 'terminado',
-    );
-    const productionDone = this.tasks.some(
-      (task) =>
-        task.orderItemIndex === itemIndex &&
-        task.taskKind === TaskKind.PRODUCTION &&
-        task.status === 'terminado',
-    );
-    if (item.includesPrint) {
-      return productionDone ? pending : 0;
-    }
-    return serviceDone ? pending : 0;
-  }
-
-  get paidAmount(): number {
-    return (this.order?.payments ?? []).reduce(
-      (sum, payment) => sum + (Number(payment.amount) || 0),
-      0,
-    );
-  }
-
-  get balanceAmount(): number {
-    if (!this.order) return 0;
-    return Math.max(0, Math.round((this.order.total - this.paidAmount) * 100) / 100);
-  }
-
-  get paymentStatusLabel(): string {
-    if (this.paidAmount <= 0) return 'No pagado';
-    if (this.balanceAmount <= 0) return 'Pagado';
-    return 'Parcialmente pagado';
-  }
-
-  registerPayment(): void {
-    if (!this.order || this.paymentLoading || !this.paymentAmount) return;
-    this.paymentLoading = true;
-    this.paymentError = '';
-    this.cdr.markForCheck();
-    this.ordersService
-      .addPayment(this.order.id, {
-        amount: Number(this.paymentAmount),
-        deposit: this.paymentDeposit,
-      })
-      .subscribe({
-        next: (order) => {
-          this.order = order;
-          this.paymentAmount = null;
-          this.paymentDeposit = false;
-          this.paymentLoading = false;
-          this.cdr.markForCheck();
-        },
-        error: (err) => {
-          this.paymentLoading = false;
-          this.paymentError = extractApiErrorMessage(
-            err,
-            'No se pudo registrar el pago',
-          );
-          this.cdr.markForCheck();
-        },
-      });
-  }
-
   lineSubtotal(item: Order['items'][number]): number {
     return calculateLinePriceTotal(item);
   }
@@ -274,12 +190,6 @@ export class OrderDetailComponent implements OnInit {
   printUnitPrice(item: Order['items'][number]): number {
     return resolveLinePrintUnitPrice(item);
   }
-  readonly taskKindLabels = TASK_KIND_LABELS;
-  readonly priceTriggerLabels: Record<OrderPriceHistoryEntry['trigger'], string> = {
-    settings: 'Ajustes del sistema',
-    supply_price: 'Precio de insumo',
-    product_update: 'Actualización de producto',
-  };
 
   get orderSubtotal(): number {
     if (!this.order) return 0;
@@ -311,20 +221,6 @@ export class OrderDetailComponent implements OnInit {
     );
   }
 
-  get canRegisterDelivery(): boolean {
-    return (
-      !this.deliveryLoading &&
-      this.deliveryDraft.some((quantity) => Number(quantity) > 0)
-    );
-  }
-
-  historyTransition(entry: OrderStatusHistoryEntry): string {
-    if (entry.fromStatus === null) {
-      return `Creación → ${ORDER_STATUS_LABELS[entry.toStatus]}`;
-    }
-    return `${ORDER_STATUS_LABELS[entry.fromStatus]} → ${ORDER_STATUS_LABELS[entry.toStatus]}`;
-  }
-
   get customerOptions() {
     return this.customers.map((customer) => ({
       value: customer.id,
@@ -335,21 +231,26 @@ export class OrderDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.customerCatalog.getCustomers().subscribe((customers) => {
-      this.customers = customers;
-      this.cdr.markForCheck();
-    });
-
-    this.route.paramMap.subscribe((params) => {
-      const id = params.get('id');
-      if (!id) {
-        this.notFound = true;
-        this.loading = false;
+    this.customerCatalog
+      .getCustomers()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((customers) => {
+        this.customers = customers;
         this.cdr.markForCheck();
-        return;
-      }
-      this.loadOrder(id);
-    });
+      });
+
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const id = params.get('id');
+        if (!id) {
+          this.notFound = true;
+          this.loading = false;
+          this.cdr.markForCheck();
+          return;
+        }
+        this.loadOrder(id);
+      });
 
     this.realtime.bindSmartReload(
       this.destroyRef,
@@ -366,19 +267,23 @@ export class OrderDetailComponent implements OnInit {
     this.notFound = false;
     this.cdr.markForCheck();
 
-    this.ordersService.getOrderOverview(id).subscribe({
+    this.ordersService
+      .getOrderOverview(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: (overview) => {
+        if (this.route.snapshot.paramMap.get('id') !== id) return;
         this.order = overview.order;
         this.tasks = overview.tasks;
         this.alerts = overview.alerts ?? [];
         this.priceNotices = overview.priceNotices ?? [];
         this.deliveries =
           overview.deliveries ?? overview.order.deliveryHistory ?? [];
-        this.deliveryDraft = overview.order.items.map(() => 0);
         this.loading = false;
         this.cdr.markForCheck();
       },
       error: (err) => {
+        if (this.route.snapshot.paramMap.get('id') !== id) return;
         this.loading = false;
         this.notFound = err.status === 404;
         this.cdr.markForCheck();
@@ -556,55 +461,9 @@ export class OrderDetailComponent implements OnInit {
     });
   }
 
-  registerDelivery(): void {
-    if (!this.order || this.deliveryLoading) return;
-    this.deliveryError = '';
-    const items = this.deliveryDraft
-      .map((quantity, orderItemIndex) => ({
-        orderItemIndex,
-        quantity: Math.trunc(Number(quantity) || 0),
-      }))
-      .filter((item) => item.quantity > 0);
-    if (!items.length) {
-      this.deliveryError = 'Indicá al menos una cantidad a entregar';
-      this.cdr.markForCheck();
-      return;
-    }
-
-    const overMax = items.find((line) => {
-      const item = this.order!.items[line.orderItemIndex];
-      if (!item) return true;
-      return line.quantity > this.itemDeliverableMax(item, line.orderItemIndex);
-    });
-    if (overMax) {
-      const item = this.order.items[overMax.orderItemIndex]!;
-      const max = this.itemDeliverableMax(item, overMax.orderItemIndex);
-      this.deliveryError =
-        max <= 0
-          ? `No se puede entregar "${item.productName}": no hay unidades listas (faltan producir o terminar la tarea)`
-          : `"${item.productName}" admite como máximo ${max} unidad(es)`;
-      this.cdr.markForCheck();
-      return;
-    }
-
-    this.deliveryLoading = true;
+  onPaymentRegistered(order: Order): void {
+    this.order = order;
     this.cdr.markForCheck();
-    this.ordersService.createDelivery(this.order.id, { items }).subscribe({
-      next: () => {
-        this.deliveryLoading = false;
-        this.deliveryError = '';
-        this.loadOrder(this.order!.id);
-        this.cdr.markForCheck();
-      },
-      error: (err) => {
-        this.deliveryLoading = false;
-        this.deliveryError = extractApiErrorMessage(
-          err,
-          'No se pudo registrar la entrega',
-        );
-        this.cdr.markForCheck();
-      },
-    });
   }
 
   onDescriptionClick(event: MouseEvent): void {

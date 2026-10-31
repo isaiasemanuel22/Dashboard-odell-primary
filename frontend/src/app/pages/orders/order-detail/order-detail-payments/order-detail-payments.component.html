@@ -1,0 +1,57 @@
+<section class="panel">
+  <h3>Pagos</h3>
+  <dl class="detail-list">
+    <div>
+      <dt>Importe pagado</dt>
+      <dd>{{ paidAmount | currencyArs }}</dd>
+    </div>
+    <div>
+      <dt>Saldo</dt>
+      <dd>{{ balanceAmount | currencyArs }}</dd>
+    </div>
+    <div>
+      <dt>Estado de pago</dt>
+      <dd>{{ paymentStatusLabel }}</dd>
+    </div>
+  </dl>
+  @if (order.payments?.length) {
+    <ul class="order-payments">
+      @for (payment of order.payments; track payment.id) {
+        <li>
+          {{ payment.amount | currencyArs }}
+          @if (payment.deposit) {
+            <span> · seña</span>
+          }
+          <span> · {{ payment.createdAt | dateShort }}</span>
+        </li>
+      }
+    </ul>
+  }
+  @if (balanceAmount > 0 && order.status !== 'cancelado') {
+    <div class="assign-customer">
+      <db-input
+        label="Monto del pago"
+        type="number"
+        [(ngModel)]="paymentAmount"
+        name="paymentAmount"
+        [min]="0.01"
+        [step]="0.01"
+      />
+      <db-checkbox
+        label="Seña"
+        name="paymentDeposit"
+        [(ngModel)]="paymentDeposit"
+      />
+      <db-button
+        [label]="paymentLoading ? 'Registrando...' : 'Registrar pago'"
+        variant="primary"
+        format="solid"
+        [disabled]="paymentLoading || !paymentAmount"
+        (clicked)="registerPayment()"
+      />
+    </div>
+    @if (paymentError) {
+      <p class="order-payments__error">{{ paymentError }}</p>
+    }
+  }
+</section>

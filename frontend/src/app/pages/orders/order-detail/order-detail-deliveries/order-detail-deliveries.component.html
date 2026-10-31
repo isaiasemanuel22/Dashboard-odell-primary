@@ -1,0 +1,43 @@
+<section class="panel">
+  <h3>Entregas</h3>
+  @if (order.status !== 'cancelado' && order.status !== 'entregado') {
+    <div class="delivery-form">
+      @for (item of order.items; track $index; let itemIndex = $index) {
+        @if (itemPending(item) > 0) {
+          <db-input
+            [label]="item.productName + ' (máx. ' + itemDeliverableMax(item, itemIndex) + ')'"
+            type="number"
+            [(ngModel)]="deliveryDraft[itemIndex]"
+            [name]="'delivery-' + itemIndex"
+            [min]="0"
+            [max]="itemDeliverableMax(item, itemIndex)"
+            step="1"
+          />
+        }
+      }
+      @if (deliveryError) {
+        <p class="order-payments__error" role="alert">{{ deliveryError }}</p>
+      }
+      <db-button
+        [label]="deliveryLoading ? 'Registrando...' : 'Registrar entrega'"
+        variant="primary"
+        format="solid"
+        [disabled]="!canRegisterDelivery"
+        (clicked)="registerDelivery()"
+      />
+    </div>
+  }
+  @if (deliveries.length) {
+    <ul class="delivery-list">
+      @for (delivery of deliveries; track delivery.id) {
+        <li>
+          <strong>{{ delivery.deliveredAt | dateTime }}</strong>
+          <span>{{ delivery.items.length }} línea(s)</span>
+          @if (delivery.notes) { <span>{{ delivery.notes }}</span> }
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="empty-group">Todavía no se registraron entregas.</p>
+  }
+</section>

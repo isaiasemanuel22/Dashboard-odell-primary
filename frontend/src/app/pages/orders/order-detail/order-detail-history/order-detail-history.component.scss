@@ -1,0 +1,92 @@
+@use '../../../../shared/styles/variables' as *;
+
+:host {
+  display: contents;
+}
+
+.panel h3,
+.status-history-panel h3 {
+  margin: 0 0 1rem;
+  font-size: 1rem;
+  color: $color-text;
+}
+
+.status-history {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+
+.status-history__item {
+  display: grid;
+  grid-template-columns: 12px 1fr;
+  gap: 0.85rem;
+  position: relative;
+  padding-bottom: 1rem;
+
+  &:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    left: 5px;
+    top: 0.85rem;
+    bottom: 0;
+    width: 2px;
+    background: $color-border;
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+  }
+}
+
+.status-history__marker {
+  width: 12px;
+  height: 12px;
+  margin-top: 0.2rem;
+  border-radius: 50%;
+  background: $color-primary;
+  box-shadow: 0 0 0 3px $color-primary-bg;
+}
+
+.status-history__content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.status-history__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  width: 100%;
+
+  time {
+    font-size: 0.8125rem;
+    color: $color-text-muted;
+  }
+}
+
+.status-history__source {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: $color-text-subtle;
+  padding: 0.12rem 0.45rem;
+  border-radius: $radius-pill;
+  background: $color-surface-subtle;
+  border: 1px solid $color-border;
+}
+
+.status-history__transition {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: $color-text;
+}
