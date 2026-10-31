@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import {
   CreateRetailSaleDto,
@@ -18,8 +19,8 @@ export class SalesController {
   constructor(private readonly salesService: SalesService) {}
 
   @Get()
-  getOverview() {
-    return this.salesService.getOverview();
+  getOverview(@Query('month') month?: string) {
+    return this.salesService.getOverview(month);
   }
 
   @Get('retail/:id')

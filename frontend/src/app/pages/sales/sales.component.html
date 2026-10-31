@@ -6,6 +6,8 @@
     </p>
   </div>
   <div class="header-actions">
+    <db-button label="Mes anterior" variant="secondary" format="soft" (clicked)="shiftMonth(-1)" />
+    <db-button label="Mes siguiente" variant="secondary" format="soft" (clicked)="shiftMonth(1)" />
     <db-button
       label="Generar reporte"
       variant="secondary"
@@ -21,6 +23,10 @@
     />
   </div>
 </header>
+
+@if (reportMessage) {
+  <p class="sales-report-notice">{{ reportMessage }}</p>
+}
 
 @if (loadError) {
   <db-state-message

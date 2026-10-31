@@ -196,6 +196,9 @@
               <span>Ganancia estimada</span>
               <strong>{{ profit | currencyArs }}</strong>
             </p>
+            @if (profit < 0) {
+              <p class="order-summary__warning">La ganancia queda negativa.</p>
+            }
           </div>
         </div>
       </section>

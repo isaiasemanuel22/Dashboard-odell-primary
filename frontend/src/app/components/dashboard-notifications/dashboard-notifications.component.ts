@@ -15,7 +15,7 @@ import {
 import { DbPillGroupComponent } from '../db-pill-group/db-pill-group.component';
 import { DbServiceBadgeComponent } from '../db-service-badge/db-service-badge.component';
 
-type NotificationFilter = 'all' | 'order' | 'stock' | 'queue' | 'calendar';
+type NotificationFilter = 'all' | 'order' | 'stock' | 'queue' | 'calendar' | 'other';
 
 @Component({
   selector: 'app-dashboard-notifications',
@@ -40,6 +40,7 @@ export class DashboardNotificationsComponent {
     { value: 'stock', label: 'Stock' },
     { value: 'queue', label: 'Cola' },
     { value: 'calendar', label: 'Agenda' },
+    { value: 'other', label: 'Billetera' },
   ];
 
   get filterOptions(): { value: NotificationFilter; label: string }[] {

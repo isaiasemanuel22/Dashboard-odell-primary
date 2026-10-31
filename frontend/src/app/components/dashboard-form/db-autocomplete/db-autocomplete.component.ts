@@ -206,12 +206,15 @@ export class DbAutocompleteComponent implements ControlValueAccessor, OnChanges 
   }
 
   onInputBlur(): void {
-    setTimeout(() => {
-      if (!this.isOpen) return;
-      this.commitQuery();
-      this.closeDropdown();
+    // El clic en una opción hace preventDefault en mousedown y no dispara blur.
+    // Confirmar acá, sin demora, para que Guardar vea el nombre en el primer clic.
+    if (!this.isOpen) {
       this.onTouched();
-    }, 120);
+      return;
+    }
+    this.commitQuery();
+    this.closeDropdown();
+    this.onTouched();
   }
 
   @HostListener('document:click', ['$event'])

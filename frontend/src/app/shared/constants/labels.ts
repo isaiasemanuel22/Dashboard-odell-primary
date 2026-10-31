@@ -161,4 +161,5 @@ export const WORK_BOARD_AREA_FILTERS: {
   { value: ServiceType.IMPRESION_3D, label: 'Impresión 3D' },
   { value: ServiceType.ESTAMPADO, label: 'Estampado' },
   { value: ServiceType.DISENO_GRAFICO, label: 'Diseño gráfico' },
+  { value: ServiceType.MODELADO, label: 'Modelado' },
 ];

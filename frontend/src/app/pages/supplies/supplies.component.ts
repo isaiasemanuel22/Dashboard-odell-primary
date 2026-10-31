@@ -1,6 +1,7 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { ColorConfig, ResinType, Supply, SupplyCategory } from '../../core/models';
 import { SuppliesService, SettingsService } from '../../core/services/settings.service';
 import {
@@ -15,6 +16,7 @@ import {
   SUPPLY_CATEGORY_LABELS,
 } from '../../shared/constants/labels';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
+import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { resolveColorLabel } from '../../shared/utils/color.helpers';
 import { supplyCategoryFilters } from '../../shared/utils/list-filters';
 import { SuppliesFacade } from '../../store/supplies/supplies.facade';
@@ -41,6 +43,8 @@ export class SuppliesComponent implements OnInit {
   private readonly settingsService = inject(SettingsService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly formDialogs = inject(FormDialogService);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   supplies: Supply[] = [];
   colorCatalog: ColorConfig[] = [];
@@ -62,6 +66,9 @@ export class SuppliesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get('stock') === 'low') {
+      this.stockFilter = 'low';
+    }
     this.loadColorCatalog();
 
     this.suppliesFacade.loading$
@@ -142,6 +149,10 @@ export class SuppliesComponent implements OnInit {
       .toLowerCase();
   }
 
+  openPurchase(): void {
+    void this.router.navigate(['/billetera'], { queryParams: { compra: '1' } });
+  }
+
   openCreate(): void {
     const defaultCategory =
       this.categoryFilter === 'all' ? undefined : this.categoryFilter;
@@ -153,7 +164,27 @@ export class SuppliesComponent implements OnInit {
   }
 
   deleteSupply(supply: Supply): void {
-    if (!confirm(`¿Eliminar "${supply.name}"?`)) return;
-    this.suppliesService.deleteSupply(supply.id).subscribe();
+    this.formDialogs
+      .openConfirm({
+        title: 'Eliminar insumo',
+        message: `¿Eliminar "${supply.name}"?`,
+        confirmLabel: 'Eliminar',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.suppliesService.deleteSupply(supply.id).subscribe({
+          error: (err) => {
+            this.formDialogs
+              .openConfirm({
+                title: 'No se pudo eliminar',
+                message: extractApiErrorMessage(err, 'No se pudo eliminar el insumo'),
+                confirmLabel: 'Entendido',
+                alertOnly: true,
+              })
+              .subscribe();
+          },
+        });
+      });
   }
 }

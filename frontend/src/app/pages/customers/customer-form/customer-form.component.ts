@@ -48,6 +48,8 @@ export class CustomerFormComponent implements OnChanges {
   email = '';
   phone = '';
   company = '';
+  emailError = '';
+  phoneError = '';
 
   get isEditing(): boolean {
     return this.customer !== null;
@@ -60,10 +62,18 @@ export class CustomerFormComponent implements OnChanges {
   }
 
   onSubmit(): void {
+    const email = this.email.trim();
+    const phone = this.phone.trim();
+    this.emailError = isValidCustomerEmail(email) ? '' : 'El email no es válido';
+    this.phoneError = isValidCustomerPhone(phone)
+      ? ''
+      : 'El teléfono tiene que tener números, sin letras';
+    if (this.emailError || this.phoneError) return;
+
     this.save.emit({
       name: this.name.trim(),
-      email: this.email.trim(),
-      phone: this.phone.trim(),
+      email,
+      phone,
       company: this.company.trim() || undefined,
     });
   }
@@ -80,5 +90,16 @@ export class CustomerFormComponent implements OnChanges {
       this.phone = '';
       this.company = '';
     }
+    this.emailError = '';
+    this.phoneError = '';
   }
+}
+
+export function isValidCustomerEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+export function isValidCustomerPhone(phone: string): boolean {
+  if (/[a-zA-Z]/.test(phone)) return false;
+  return phone.replace(/\D/g, '').length >= 6;
 }

@@ -20,7 +20,11 @@
     </h3>
 
     <div class="job-card__tag-row">
-      <db-service-badge [type]="job.type" />
+      @if (isPrepareOrder) {
+        <span class="job-card__area">Ventas</span>
+      } @else {
+        <db-service-badge [type]="job.type" />
+      }
     </div>
 
     @if (job.status === 'bloqueado') {
@@ -42,7 +46,11 @@
     [class]="'list-card job-card ' + priorityClass + (compact ? ' job-card--compact' : '')"
   >
     <div class="job-header">
-      <db-service-badge [type]="job.type" />
+      @if (isPrepareOrder) {
+        <span class="job-card__area">Ventas</span>
+      } @else {
+        <db-service-badge [type]="job.type" />
+      }
       <span class="priority-pill">{{ priorityLabel }}</span>
     </div>
     <span class="task-kind">{{ taskKindLabels[job.taskKind] }}</span>

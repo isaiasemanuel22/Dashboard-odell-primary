@@ -12,7 +12,7 @@ import {
   moveItemInArray,
   transferArrayItem,
 } from '@angular/cdk/drag-drop';
-import { OrderStatus, PrintJob, PrintJobStatus, ServiceType } from '../../core/models';
+import { OrderStatus, PrintJob, PrintJobStatus, ServiceType, TaskKind } from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
 import { PrintJobsService } from '../../core/services/print-jobs.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
@@ -313,25 +313,22 @@ export class PrintJobsComponent implements OnInit {
       .updatePrintJob(job.id, { status, active })
       .subscribe({
         next: (updated) => {
-          const idx = this.allJobs.findIndex((j) => j.id === job.id);
-          if (idx >= 0) {
-            this.allJobs[idx] = {
-              ...this.allJobs[idx],
-              ...updated,
-              active,
-              status,
-            };
-          }
-          this.rebuildBoard();
           this.orderStatusByOrderId[job.orderId] = updated.orderStatus;
           this.statusNotice = `Pedido ${job.orderId} → ${ORDER_STATUS_LABELS[updated.orderStatus]}`;
           this.updating = false;
-          this.cdr.markForCheck();
+          this.loadJobs();
         },
         error: (err) => {
           this.updating = false;
           this.cdr.markForCheck();
-          alert(extractApiErrorMessage(err, 'No se pudo mover la tarea'));
+          this.formDialogs
+            .openConfirm({
+              title: 'No se pudo mover la tarea',
+              message: extractApiErrorMessage(err, 'No se pudo mover la tarea'),
+              confirmLabel: 'Entendido',
+              alertOnly: true,
+            })
+            .subscribe();
           this.revertMove(job, previous, fromBacklog, active);
         },
       });
@@ -374,7 +371,10 @@ export class PrintJobsComponent implements OnInit {
     }
 
     if (this.areaFilter) {
-      list = list.filter((job) => job.type === this.areaFilter);
+      list = list.filter(
+        (job) =>
+          job.taskKind !== TaskKind.PREPARE_ORDER && job.type === this.areaFilter,
+      );
     }
 
     if (this.customerFilter) {

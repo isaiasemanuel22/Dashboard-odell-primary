@@ -45,8 +45,8 @@ export class SalesService {
     private readonly costCalculator: CostCalculatorService,
   ) {}
 
-  getOverview(): SalesOverview {
-    const monthRange = getMonthRange();
+  getOverview(month?: string): SalesOverview {
+    const monthRange = getMonthRange(referenceFromMonth(month));
     const entries = this.buildEntries().filter((entry) =>
       isDateInMonthRange(new Date(entry.soldAt), monthRange),
     );
@@ -372,4 +372,11 @@ export class SalesService {
       this.products.save(product);
     }
   }
+}
+
+function referenceFromMonth(month?: string): Date {
+  if (!month || !/^\d{4}-\d{2}$/.test(month)) return new Date();
+  const [year, mon] = month.split('-').map(Number);
+  if (!year || mon < 1 || mon > 12) return new Date();
+  return new Date(year, mon - 1, 1);
 }

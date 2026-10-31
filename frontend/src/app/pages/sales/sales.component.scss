@@ -17,6 +17,13 @@
 
 .header-actions {
   @include screen.screen-actions;
+  flex-wrap: wrap;
+}
+
+.sales-report-notice {
+  margin: 0 0 1rem;
+  color: #0b5f86;
+  font-size: 0.9rem;
 }
 
 .sales-list {

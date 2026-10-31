@@ -83,11 +83,11 @@
       type="button"
       class="quote-line__menu"
       aria-label="Más acciones"
-      (click)="menuOpen = !menuOpen"
+      (click)="toggleMenu($event)"
     >
       ···
     </button>
-    @if (menuOpen) {
+    @if (menuOpen && canDelete) {
       <button type="button" class="quote-line__delete" (click)="confirmDelete()">
         Eliminar
       </button>

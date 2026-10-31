@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { OrderStatus, PrintJob } from '../../core/models';
+import { OrderStatus, PrintJob, TaskKind } from '../../core/models';
 import {
   OrderStatusLabelPipe,
   PrintJobStatusLabelPipe,
@@ -43,6 +43,10 @@ export class PrintJobCardComponent {
 
   get priorityLabel(): string {
     return PRIORITY_TIER_LABELS[this.priorityClass] ?? 'Normal';
+  }
+
+  get isPrepareOrder(): boolean {
+    return this.job.taskKind === TaskKind.PREPARE_ORDER;
   }
 
   get customerInitial(): string {

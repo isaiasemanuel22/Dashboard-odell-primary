@@ -106,11 +106,11 @@ export class DashboardMonthlyTrendsComponent
             pointHoverRadius: 6,
             borderWidth: 2.5,
             fill: true,
-            tension: 0.35,
+            tension: 0,
           },
         ],
       },
-      options: this.baseLineOptions('Pedidos'),
+      options: this.baseLineOptions('Pedidos', false, true),
     };
 
     if (this.ordersChart) {
@@ -146,7 +146,7 @@ export class DashboardMonthlyTrendsComponent
             pointHoverRadius: 6,
             borderWidth: 2.5,
             fill: true,
-            tension: 0.35,
+            tension: 0,
           },
         ],
       },
@@ -165,6 +165,7 @@ export class DashboardMonthlyTrendsComponent
   private baseLineOptions(
     yAxisLabel: string,
     currency = false,
+    integer = false,
   ): ChartConfiguration<'line'>['options'] {
     return {
       responsive: true,
@@ -216,6 +217,7 @@ export class DashboardMonthlyTrendsComponent
           ticks: {
             color: '#64748b',
             font: { size: 11 },
+            ...(integer ? { stepSize: 1 } : {}),
             callback: (value) => {
               const numeric = Number(value);
               return currency ? formatCurrency(numeric) : numeric;

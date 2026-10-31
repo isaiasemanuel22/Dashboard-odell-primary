@@ -174,12 +174,40 @@ export class QuoteDetailComponent implements OnInit {
       error: (err) => {
         this.generatingOrder = false;
         this.cdr.markForCheck();
-        alert(extractApiErrorMessage(err, 'No se pudo generar el pedido'));
+        this.formDialogs
+          .openConfirm({
+            title: 'No se pudo generar el pedido',
+            message: extractApiErrorMessage(err, 'No se pudo generar el pedido'),
+            confirmLabel: 'Entendido',
+            alertOnly: true,
+          })
+          .subscribe();
       },
     });
   }
 
   updateStatus(status: QuoteStatus): void {
+    if (!this.quote || this.statusLoading) return;
+    if (status === QuoteStatus.ACEPTADO) {
+      const createsProduct = this.quote.items.some((item) => !item.productId);
+      const message = createsProduct
+        ? 'Aceptar crea el pedido y, si la línea no tiene producto de catálogo, un producto sin publicar. ¿Seguir?'
+        : 'Aceptar crea el pedido a partir de este presupuesto. ¿Seguir?';
+      this.formDialogs
+        .openConfirm({
+          title: 'Aceptar presupuesto',
+          message,
+          confirmLabel: 'Aceptar',
+        })
+        .subscribe((confirmed) => {
+          if (confirmed) this.applyStatus(status);
+        });
+      return;
+    }
+    this.applyStatus(status);
+  }
+
+  private applyStatus(status: QuoteStatus): void {
     if (!this.quote || this.statusLoading) return;
     this.statusLoading = true;
     this.cdr.markForCheck();
@@ -193,21 +221,43 @@ export class QuoteDetailComponent implements OnInit {
       error: (err) => {
         this.statusLoading = false;
         this.cdr.markForCheck();
-        alert(extractApiErrorMessage(err, 'No se pudo actualizar el estado'));
+        this.formDialogs
+          .openConfirm({
+            title: 'No se pudo actualizar',
+            message: extractApiErrorMessage(err, 'No se pudo actualizar el estado'),
+            confirmLabel: 'Entendido',
+            alertOnly: true,
+          })
+          .subscribe();
       },
     });
   }
 
   deleteQuote(): void {
-    if (!this.quote) return;
-    if (!confirm(`¿Eliminar el presupuesto ${this.quote.id}?`)) return;
-
-    this.quotesService.deleteQuote(this.quote.id).subscribe({
-      next: () => void this.router.navigate(['/presupuestos']),
-      error: (err) => {
-        alert(extractApiErrorMessage(err, 'No se pudo eliminar el presupuesto'));
-      },
-    });
+    if (!this.quote || this.quote.status === QuoteStatus.ACEPTADO) return;
+    this.formDialogs
+      .openConfirm({
+        title: 'Eliminar presupuesto',
+        message: `¿Eliminar el presupuesto ${this.quote.id}?`,
+        confirmLabel: 'Eliminar',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed || !this.quote) return;
+        this.quotesService.deleteQuote(this.quote.id).subscribe({
+          next: () => void this.router.navigate(['/presupuestos']),
+          error: (err) => {
+            this.formDialogs
+              .openConfirm({
+                title: 'No se pudo eliminar',
+                message: extractApiErrorMessage(err, 'No se pudo eliminar el presupuesto'),
+                confirmLabel: 'Entendido',
+                alertOnly: true,
+              })
+              .subscribe();
+          },
+        });
+      });
   }
 
   private loadQuote(id: string): void {

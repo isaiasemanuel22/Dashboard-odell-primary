@@ -252,12 +252,14 @@
     </div>
 
     <footer class="panel detail-actions">
-      <db-button
-        label="Editar pedido"
-        variant="primary"
-        format="solid"
-        (clicked)="openEdit()"
-      />
+      @if (canEditOrder) {
+        <db-button
+          label="Editar pedido"
+          variant="primary"
+          format="solid"
+          (clicked)="openEdit()"
+        />
+      }
       @if (order.status !== 'cancelado') {
         <db-button
           [label]="statusLoading ? 'Cancelando...' : 'Cancelar pedido'"
@@ -267,12 +269,6 @@
           (clicked)="cancelOrder()"
         />
       }
-      <db-button
-        label="Eliminar"
-        variant="delete"
-        format="solid"
-        (clicked)="deleteOrder()"
-      />
     </footer>
   </div>
 

@@ -16,6 +16,7 @@
         name="email"
         placeholder="cliente@empresa.com"
         [required]="true"
+        [error]="emailError"
       />
 
       <db-input
@@ -25,6 +26,7 @@
         placeholder="+54 223 123-4567"
         hint="Con código de área, para WhatsApp"
         [required]="true"
+        [error]="phoneError"
       />
     </db-form-grid>
 

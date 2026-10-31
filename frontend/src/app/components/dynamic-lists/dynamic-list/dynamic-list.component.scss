@@ -196,6 +196,12 @@
   min-width: 0;
 }
 
+.line-table ::ng-deep .db-color-select__preview-label {
+  overflow: visible;
+  text-overflow: unset;
+  white-space: normal;
+}
+
 .line-table ::ng-deep .db-input,
 .line-table ::ng-deep select.db-select {
   width: 100%;

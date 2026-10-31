@@ -6,13 +6,18 @@ export interface TreasuryDebtorBalance {
   amount: number;
 }
 
+/** El alta nueva guarda solo la persona; el seed viejo guardó «Préstamo a …». */
+export function loanPersonName(name: string): string {
+  return name.trim().replace(/^préstamo a\s+/i, '').trim();
+}
+
 export function computeDebtorBalances(
   records: TreasuryExpense[],
 ): TreasuryDebtorBalance[] {
   const balances = new Map<string, { displayName: string; amount: number }>();
 
   for (const record of records) {
-    const name = record.name.trim();
+    const name = loanPersonName(record.name);
     if (!name) continue;
 
     const delta =
@@ -44,7 +49,7 @@ export function getDebtorOutstanding(
   records: TreasuryExpense[],
   name: string,
 ): number {
-  const key = name.trim().toLocaleLowerCase('es');
+  const key = loanPersonName(name).toLocaleLowerCase('es');
   if (!key) return 0;
 
   return (

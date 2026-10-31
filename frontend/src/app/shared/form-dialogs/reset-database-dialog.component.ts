@@ -107,14 +107,6 @@ export class ResetDatabaseDialogComponent {
   confirmReset(): void {
     if (this.loading()) return;
 
-    if (
-      !confirm(
-        '¿Vaciar la base de datos? Se borrarán todos los registros y no quedará ningún dato.',
-      )
-    ) {
-      return;
-    }
-
     this.loading.set(true);
     this.error.set('');
     this.cdr.markForCheck();
@@ -123,7 +115,6 @@ export class ResetDatabaseDialogComponent {
       next: () => {
         this.loading.set(false);
         this.dialogRef.close(true);
-        alert('Base de datos vaciada.');
         window.location.reload();
       },
       error: (err) => {

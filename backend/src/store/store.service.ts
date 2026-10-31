@@ -287,7 +287,7 @@ export class StoreService {
   }
 
   nextQuoteId(): string {
-    return this.nextId('qte', this.quotes);
+    return this.nextId('quo', this.quotes);
   }
 
   nextRetailSaleId(): string {

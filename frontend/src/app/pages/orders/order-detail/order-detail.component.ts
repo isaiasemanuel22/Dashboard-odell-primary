@@ -45,6 +45,7 @@ import {
   calculateOrderSubtotal,
   calculateOrderDiscount,
   calculateLinePriceTotal,
+  cancelOrderConfirmMessage,
   isDesignService,
 } from '../../../shared/utils/order.helpers';
 import { resolveLinePrintUnitPrice } from '../../../shared/utils/design-print.util';
@@ -177,9 +178,17 @@ export class OrderDetailComponent implements OnInit {
 
   itemFromStock(item: OrderItem): number {
     if (!item.productId) return 0;
+    if (this.order?.status === OrderStatus.CANCELADO) return 0;
     return Math.max(
       this.itemPending(item) - this.itemToProduce(item) - this.itemProduced(item),
       0,
+    );
+  }
+
+  get canEditOrder(): boolean {
+    return (
+      this.order?.status === OrderStatus.PENDIENTE ||
+      this.order?.status === OrderStatus.EN_PROGRESO
     );
   }
 
@@ -214,8 +223,29 @@ export class OrderDetailComponent implements OnInit {
   }
 
   get priceHistory(): OrderPriceHistoryEntry[] {
-    if (!this.order?.priceHistory?.length) return [];
-    return [...this.order.priceHistory].sort(
+    const stored = [...(this.order?.priceHistory ?? [])];
+    for (const notice of this.priceNotices) {
+      const already = stored.some(
+        (entry) =>
+          entry.itemIndex === notice.itemIndex &&
+          entry.previousUnitPrice === notice.agreedUnitPrice &&
+          entry.newUnitPrice === notice.currentUnitPrice,
+      );
+      if (already) continue;
+      stored.push({
+        id: `notice-${this.order?.id ?? 'order'}-${notice.itemIndex}`,
+        changedAt: new Date().toISOString(),
+        trigger: 'product_update',
+        itemIndex: notice.itemIndex,
+        productId: notice.productId,
+        productName: notice.productName,
+        previousUnitPrice: notice.agreedUnitPrice,
+        newUnitPrice: notice.currentUnitPrice,
+        previousOrderTotal: this.order?.total ?? 0,
+        newOrderTotal: this.order?.total ?? 0,
+      });
+    }
+    return stored.sort(
       (a, b) =>
         new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime(),
     );
@@ -296,20 +326,10 @@ export class OrderDetailComponent implements OnInit {
     if (this.order.status === OrderStatus.CANCELADO) return;
 
     const orderId = this.order.id;
-    const isDelivered = this.order.status === OrderStatus.ENTREGADO;
-    const hasPayments = (this.order.payments ?? []).some(
-      (payment) => Number(payment.amount) > 0,
-    );
-    const message = isDelivered
-      ? `El pedido ${orderId} ya está entregado. Al cancelarlo deja de figurar en Ventas y en el Disponible. ¿Confirmás la cancelación?`
-      : hasPayments
-        ? `El pedido ${orderId} tiene pagos o seña registrados. La cancelación no devuelve el dinero sola: hay que resolverlo aparte. ¿Cancelar igual?`
-        : `¿Cancelar el pedido ${orderId}?`;
-
     this.formDialogs
       .openConfirm({
         title: 'Cancelar pedido',
-        message,
+        message: cancelOrderConfirmMessage(this.order),
         confirmLabel: 'Cancelar pedido',
         cancelLabel: 'Volver',
         confirmVariant: 'delete',
@@ -337,9 +357,17 @@ export class OrderDetailComponent implements OnInit {
                 this.order = { ...this.order, status: previousStatus };
               }
               this.cdr.markForCheck();
-              alert(
-                extractApiErrorMessage(err, 'No se pudo cancelar el pedido'),
-              );
+              this.formDialogs
+                .openConfirm({
+                  title: 'No se pudo cancelar',
+                  message: extractApiErrorMessage(
+                    err,
+                    'No se pudo cancelar el pedido',
+                  ),
+                  confirmLabel: 'Entendido',
+                  alertOnly: true,
+                })
+                .subscribe();
             },
           });
       });
@@ -403,15 +431,7 @@ export class OrderDetailComponent implements OnInit {
   }
 
   deleteOrder(): void {
-    if (!this.order) return;
-    if (!confirm(`¿Eliminar el pedido ${this.order.id}?`)) return;
-
-    this.ordersService.deleteOrder(this.order.id).subscribe({
-      next: () => this.router.navigate(['/pedidos']),
-      error: (err) => {
-        alert(extractApiErrorMessage(err, 'No se pudo eliminar el pedido'));
-      },
-    });
+    this.cancelOrder();
   }
 
   private handleRealtime(event: RealtimeEvent): void {

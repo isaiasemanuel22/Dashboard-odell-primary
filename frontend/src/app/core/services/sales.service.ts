@@ -15,8 +15,9 @@ export class SalesService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getOverview(): Observable<SalesOverview> {
-    return this.http.get<SalesOverview>(this.baseUrl);
+  getOverview(month?: string): Observable<SalesOverview> {
+    const params = month ? { month } : undefined;
+    return this.http.get<SalesOverview>(this.baseUrl, { params });
   }
 
   getRetailSale(id: string): Observable<RetailSale> {

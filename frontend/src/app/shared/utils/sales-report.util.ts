@@ -183,13 +183,13 @@ export function downloadSalesReportPdf(
   stats: SalesStats,
   entries: SaleEntry[],
   products: Product[],
+  monthLabel = currentMonthLabel(),
 ): void {
   const resolveProduct = (productId: string) =>
     products.find((product) => product.id === productId) ?? null;
   const sections = buildSalesReportAreaSections(entries, resolveProduct);
 
   const doc = new jsPDF({ unit: 'mm', format: 'a4' });
-  const monthLabel = currentMonthLabel();
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(16);

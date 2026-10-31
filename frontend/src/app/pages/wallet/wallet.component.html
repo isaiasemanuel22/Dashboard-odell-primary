@@ -64,6 +64,7 @@
 @if (showForm) {
   <app-wallet-record-form
     [mode]="formMode"
+    [startAsPurchase]="purchasePreset"
     [supplies]="supplies"
     [nameSuggestions]="overview?.recordNameSuggestions ?? []"
     [recipientSuggestions]="overview?.recipientNameSuggestions ?? []"

@@ -72,6 +72,7 @@ export class ProductsComponent implements OnInit {
   categories: Category[] = [];
   loading = true;
   cartItemCount = 0;
+  cartNotice = '';
   search = '';
   typeFilter: TypeFilter = 'all';
   categoryFilter = 'all';
@@ -237,27 +238,42 @@ export class ProductsComponent implements OnInit {
         });
       },
       error: (err) => {
-        alert(extractApiErrorMessage(err, 'No se pudo cargar el producto'));
+        this.showNotice(extractApiErrorMessage(err, 'No se pudo cargar el producto'));
       },
     });
   }
 
   deleteProduct(product: Product): void {
-    if (!confirm(`¿Eliminar "${product.name}"?`)) return;
-
-    this.productsService.deleteProduct(product.id).subscribe({
-      next: () => this.reloadProducts(),
-      error: (err) => {
-        alert(extractApiErrorMessage(err, 'No se pudo eliminar el producto'));
-      },
-    });
+    this.formDialogs
+      .openConfirm({
+        title: 'Eliminar producto',
+        message: `¿Eliminar "${product.name}"?`,
+        confirmLabel: 'Eliminar',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.productsService.deleteProduct(product.id).subscribe({
+          next: () => this.reloadProducts(),
+          error: (err) => {
+            this.showNotice(extractApiErrorMessage(err, 'No se pudo eliminar el producto'));
+          },
+        });
+      });
   }
 
   addProductToCart(product: Product): void {
     const result = this.saleCart.addProduct(product, 1);
-    if (!result.ok) {
-      alert(result.error ?? 'No se pudo agregar al carrito');
-    }
+    this.showNotice(
+      result.ok
+        ? `${product.name} quedó en el carrito de ventas.`
+        : (result.error ?? 'No se pudo agregar al carrito'),
+    );
+  }
+
+  private showNotice(message: string): void {
+    this.cartNotice = message;
+    this.cdr.markForCheck();
   }
 
   openCategoryForm(): void {

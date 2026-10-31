@@ -24,6 +24,9 @@
             [title]="item.title"
             (click)="onItemClick($event, item)"
           >
+            @if (item.startTime) {
+              {{ item.startTime }}{{ item.endTime ? '–' + item.endTime : '' }}
+            }
             {{ item.title }}
           </div>
         }

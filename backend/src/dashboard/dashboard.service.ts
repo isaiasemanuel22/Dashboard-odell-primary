@@ -105,7 +105,7 @@ export class DashboardService {
         kind: 'stock',
         title: empty ? `${supply.name} sin stock` : `Stock bajo: ${supply.name}`,
         message: `Quedan ${supply.quantity} ${supply.unit}`,
-        route: '/insumos',
+        route: '/insumos?stock=low',
       });
     }
 

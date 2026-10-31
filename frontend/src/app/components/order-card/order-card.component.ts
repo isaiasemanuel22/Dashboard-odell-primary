@@ -1,10 +1,14 @@
 import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
+  ElementRef,
   EventEmitter,
+  HostListener,
   Input,
   Output,
+  inject,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Order } from '../../core/models';
@@ -35,6 +39,9 @@ import { DbServiceBadgeComponent } from '../db-service-badge/db-service-badge.co
   styleUrl: './order-card.component.scss',
 })
 export class OrderCardComponent {
+  private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly cdr = inject(ChangeDetectorRef);
+
   @Input({ required: true }) order!: Order;
   /** card: ficha suelta. table: fila. detail: solo el panel expandido. */
   @Input() layout: 'table' | 'card' | 'detail' = 'table';
@@ -80,8 +87,21 @@ export class OrderCardComponent {
     return due < today;
   }
 
+  toggleMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.menuOpen = !this.menuOpen;
+  }
+
   confirmDelete(): void {
     this.menuOpen = false;
     this.delete.emit(this.order);
+  }
+
+  @HostListener('document:click', ['$event'])
+  closeMenuFromOutside(event: MouseEvent): void {
+    if (!this.menuOpen) return;
+    if (this.host.nativeElement.contains(event.target as Node)) return;
+    this.menuOpen = false;
+    this.cdr.markForCheck();
   }
 }

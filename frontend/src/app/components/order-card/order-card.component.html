@@ -12,7 +12,7 @@
       >
         {{ expanded ? '⌄' : '›' }}
       </button>
-      <span class="order-line__id">{{ order.id }}</span>
+      <a class="order-line__id" [routerLink]="['/pedidos', order.id]">{{ order.id }}</a>
       <span>
         <strong class="order-line__customer">{{ order.customerName }}</strong>
         <span class="order-line__meta">{{ summaryLabel }}</span>
@@ -41,13 +41,14 @@
           type="button"
           class="order-line__menu"
           aria-label="Más acciones"
-          (click)="menuOpen = !menuOpen"
+          (click)="toggleMenu($event)"
         >
           ···
         </button>
         @if (menuOpen) {
+          <a class="order-line__delete" [routerLink]="['/pedidos', order.id]">Ver pedido</a>
           <button type="button" class="order-line__delete" (click)="confirmDelete()">
-            Eliminar
+            Cancelar
           </button>
         }
       </span>
@@ -71,7 +72,7 @@
         {{ expanded ? '⌄' : '›' }}
       </button>
     </td>
-    <td class="order-line__id">{{ order.id }}</td>
+    <td class="order-line__id"><a [routerLink]="['/pedidos', order.id]">{{ order.id }}</a></td>
     <td>
       <strong class="order-line__customer">{{ order.customerName }}</strong>
       <span class="order-line__meta">{{ summaryLabel }}</span>
@@ -102,13 +103,14 @@
         type="button"
         class="order-line__menu"
         aria-label="Más acciones"
-        (click)="menuOpen = !menuOpen"
+        (click)="toggleMenu($event)"
       >
         ···
       </button>
       @if (menuOpen) {
+        <a class="order-line__delete" [routerLink]="['/pedidos', order.id]">Ver pedido</a>
         <button type="button" class="order-line__delete" (click)="confirmDelete()">
-          Eliminar
+          Cancelar
         </button>
       }
     </td>

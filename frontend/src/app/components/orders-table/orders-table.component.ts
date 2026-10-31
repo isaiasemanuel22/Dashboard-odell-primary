@@ -7,7 +7,7 @@ import {
   inject,
 } from '@angular/core';
 import { Router, RouterLink } from '@angular/router';
-import { Order } from '../../core/models';
+import { Order, OrderItem } from '../../core/models';
 import { ServiceTypeLabelPipe } from '../../shared/pipes/labels.pipe';
 import { plainTextFromHtml } from '../../shared/utils/rich-text.util';
 import { DbServiceBadgesComponent } from '../db-service-badges/db-service-badges.component';
@@ -38,6 +38,15 @@ export class OrdersTableComponent {
   @Input() showActions = false;
   @Output() edit = new EventEmitter<Order>();
   @Output() delete = new EventEmitter<Order>();
+
+  deliveredOf(item: OrderItem): number {
+    return item.deliveredQuantity ?? item.delivered ?? 0;
+  }
+
+  pendingOf(item: OrderItem): number {
+    if (item.pending != null) return item.pending;
+    return Math.max(item.quantity - this.deliveredOf(item), 0);
+  }
 
   get columns(): OdlColumn<Order>[] {
     const columns: OdlColumn<Order>[] = [];

@@ -56,14 +56,20 @@ export class SalesComponent implements OnInit {
 
   loading = true;
   loadError = false;
+  reportMessage = '';
   stats: SalesStats | null = null;
   entries: SaleEntry[] = [];
+  private viewMonth = new Date();
 
-  readonly monthLabel = new Date()
-    .toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
-    .replace(' de ', ' ');
+  get monthLabel(): string {
+    return this.viewMonth
+      .toLocaleDateString('es-AR', { month: 'long', year: 'numeric' })
+      .replace(' de ', ' ');
+  }
 
-  readonly monthName = new Date().toLocaleDateString('es-AR', { month: 'long' });
+  get monthName(): string {
+    return this.viewMonth.toLocaleDateString('es-AR', { month: 'long' });
+  }
 
   readonly searchText = (entry: SaleEntry) =>
     [
@@ -172,7 +178,7 @@ export class SalesComponent implements OnInit {
         });
       },
       error: (err) => {
-        alert(extractApiErrorMessage(err, 'No se pudo cargar la venta'));
+        this.reportMessage = extractApiErrorMessage(err, 'No se pudo cargar la venta');
       },
     });
   }
@@ -183,21 +189,29 @@ export class SalesComponent implements OnInit {
 
   deleteSale(entry: SaleEntry): void {
     if (!entry.retailSaleId) return;
-    if (!confirm(`¿Eliminar la venta ${entry.saleId}?`)) return;
-
-    this.salesService.deleteRetailSale(entry.retailSaleId).subscribe({
-      next: () => this.loadData(),
-      error: (err) => {
-        alert(extractApiErrorMessage(err, 'No se pudo eliminar la venta'));
-      },
-    });
+    this.formDialogs
+      .openConfirm({
+        title: 'Eliminar venta',
+        message: `¿Eliminar la venta ${entry.saleId}?`,
+        confirmLabel: 'Eliminar',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed || !entry.retailSaleId) return;
+        this.salesService.deleteRetailSale(entry.retailSaleId).subscribe({
+          next: () => this.loadData(),
+          error: (err) => {
+            this.reportMessage = extractApiErrorMessage(err, 'No se pudo eliminar la venta');
+          },
+        });
+      });
   }
 
   loadData(): void {
     this.loading = true;
     this.loadError = false;
 
-    this.salesService.getOverview().subscribe({
+    this.salesService.getOverview(this.monthParam()).subscribe({
       next: ({ stats, entries }) => {
         this.stats = stats;
         this.entries = entries;
@@ -211,15 +225,34 @@ export class SalesComponent implements OnInit {
   }
 
   generateReport(): void {
-    if (!this.stats || !this.entries.length) return;
+    if (!this.stats || !this.entries.length) {
+      this.reportMessage = 'No hay ventas en el mes para armar el reporte.';
+      return;
+    }
 
     this.productsService.getProducts(undefined, { all: true }).subscribe({
       next: (products) => {
-        downloadSalesReportPdf(this.stats!, this.entries, products);
+        downloadSalesReportPdf(this.stats!, this.entries, products, this.monthLabel);
+        this.reportMessage = `Listo: se descargó el reporte de ${this.monthLabel}.`;
       },
       error: (err) => {
-        alert(extractApiErrorMessage(err, 'No se pudo generar el reporte'));
+        this.reportMessage = extractApiErrorMessage(err, 'No se pudo generar el reporte');
       },
     });
+  }
+
+  shiftMonth(delta: number): void {
+    this.viewMonth = new Date(
+      this.viewMonth.getFullYear(),
+      this.viewMonth.getMonth() + delta,
+      1,
+    );
+    this.reportMessage = '';
+    this.loadData();
+  }
+
+  private monthParam(): string {
+    const month = String(this.viewMonth.getMonth() + 1).padStart(2, '0');
+    return `${this.viewMonth.getFullYear()}-${month}`;
   }
 }

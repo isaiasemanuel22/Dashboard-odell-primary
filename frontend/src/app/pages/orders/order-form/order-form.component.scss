@@ -239,6 +239,13 @@
   flex-direction: column;
   gap: 0.45rem;
 
+  &__warning {
+    margin: 0;
+    color: #9a3412;
+    font-size: 0.8rem;
+    font-weight: 600;
+  }
+
   &--quote {
     margin-top: 0;
     background: #f3f8fc;

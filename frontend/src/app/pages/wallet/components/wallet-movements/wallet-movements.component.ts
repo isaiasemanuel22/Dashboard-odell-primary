@@ -77,7 +77,7 @@ export class WalletMovementsComponent {
       return 'Compra de insumos';
     }
     if (expense.category === TreasuryExpenseCategory.PAYMENT) {
-      return 'Pago';
+      return expense.direction === TreasuryMovementDirection.INCOME ? 'Cobro' : 'Pago';
     }
     if (expense.category === TreasuryExpenseCategory.LOAN) {
       return 'Préstamo';

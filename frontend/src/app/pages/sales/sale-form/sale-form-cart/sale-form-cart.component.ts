@@ -1,11 +1,12 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { SaleCartLine, SaleCartLineCardComponent, SaleCartLineComponent } from '@general-components';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 
 @Component({
   selector: 'app-sale-form-cart',
   standalone: true,
-  imports: [SaleCartLineComponent, SaleCartLineCardComponent, CurrencyArsPipe],
+  imports: [RouterLink, SaleCartLineComponent, SaleCartLineCardComponent, CurrencyArsPipe],
   templateUrl: './sale-form-cart.component.html',
   styleUrl: './sale-form-cart.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -59,7 +59,7 @@
   >
     <db-button
       emptyActions
-      label="Crear primer pedido"
+      [label]="orders.length ? 'Nuevo pedido' : 'Crear primer pedido'"
       variant="primary"
       format="solid"
       (clicked)="openCreateOrder()"

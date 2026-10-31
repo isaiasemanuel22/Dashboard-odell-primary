@@ -17,6 +17,10 @@
   (newProduct)="openCreateProduct()"
 />
 
+@if (cartNotice) {
+  <p class="products-cart-notice">{{ cartNotice }}</p>
+}
+
 @if (loading) {
   <db-skeleton variant="cards" [count]="6" />
 } @else {

@@ -31,6 +31,9 @@ export interface CustomerFormDialogData {
       size="md"
       (close)="cancel()"
     >
+      @if (savedNotice) {
+        <p class="customer-saved" role="status">{{ savedNotice }}</p>
+      }
       <app-customer-form
         [customer]="customer"
         [loading]="loading"
@@ -41,6 +44,13 @@ export interface CustomerFormDialogData {
     </app-form-dialog-shell>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: `
+    .customer-saved {
+      margin: 0 0 0.75rem;
+      color: #166534;
+      font-weight: 600;
+    }
+  `,
 })
 export class CustomerFormDialogComponent implements OnInit {
   private readonly customersService = inject(CustomersService);
@@ -52,6 +62,7 @@ export class CustomerFormDialogComponent implements OnInit {
   customer: Customer | null = null;
   loading = false;
   error = '';
+  savedNotice = '';
 
   ngOnInit(): void {
     this.customer = this.data.customer;
@@ -74,6 +85,12 @@ export class CustomerFormDialogComponent implements OnInit {
       next: (saved) => {
         this.loading = false;
         this.customerCatalog.upsert(saved);
+        if (!this.customer) {
+          this.savedNotice = `Cliente ${saved.name} creado`;
+          this.cdr.markForCheck();
+          setTimeout(() => this.dialogRef.close(saved), 700);
+          return;
+        }
         this.dialogRef.close(saved);
       },
       error: (err) => {

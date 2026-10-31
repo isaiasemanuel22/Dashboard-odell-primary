@@ -1,12 +1,15 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   DestroyRef,
+  ElementRef,
   EventEmitter,
   Input,
   OnInit,
   Output,
+  ViewChild,
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -32,7 +35,7 @@ import {
   styleUrl: './order-quote-labor.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrderQuoteLaborComponent implements OnInit {
+export class OrderQuoteLaborComponent implements OnInit, AfterViewInit {
   private readonly settingsFacade = inject(SettingsFacade);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
@@ -41,6 +44,7 @@ export class OrderQuoteLaborComponent implements OnInit {
   @Input() product: Product | null = null;
   @Input({ required: true }) lineIndex!: number;
   @Output() changed = new EventEmitter<void>();
+  @ViewChild('laborBlock') laborBlock?: ElementRef<HTMLDetailsElement>;
 
   private generalSettings: GeneralSettings | null = null;
 
@@ -51,6 +55,12 @@ export class OrderQuoteLaborComponent implements OnInit {
         this.generalSettings = settings;
         this.cdr.markForCheck();
       });
+  }
+
+  ngAfterViewInit(): void {
+    if ((Number(this.line.workTimeHours) || 0) === 0) {
+      this.laborBlock?.nativeElement.setAttribute('open', '');
+    }
   }
 
   get catalogLocked(): boolean {

@@ -28,8 +28,8 @@
           {{ item.quantity }}× {{ item.productName }}
         }
         <small>
-          {{ item.delivered ?? 0 }} entregado ·
-          {{ item.pending ?? item.quantity }} pendiente
+          {{ deliveredOf(item) }} entregado ·
+          {{ pendingOf(item) }} pendiente
         </small>
       </div>
     }

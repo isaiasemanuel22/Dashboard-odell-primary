@@ -195,22 +195,47 @@ export class ProductDetailComponent implements OnInit {
         });
       },
       error: (err) => {
-        alert(extractApiErrorMessage(err, 'No se pudo cargar el producto'));
+        this.formDialogs
+          .openConfirm({
+            title: 'No se pudo cargar',
+            message: extractApiErrorMessage(err, 'No se pudo cargar el producto'),
+            confirmLabel: 'Entendido',
+            alertOnly: true,
+          })
+          .subscribe();
       },
     });
   }
 
   deleteProduct(): void {
     if (!this.product) return;
-    if (!confirm(`¿Eliminar "${this.product.name}"?`)) return;
-
-    const id = this.product.id;
-    this.productsService.deleteProduct(id).subscribe({
-      next: () => {
-        this.catalogService.loadProducts({ all: true, refresh: true });
-        this.router.navigate(['/productos']);
-      },
-    });
+    const product = this.product;
+    this.formDialogs
+      .openConfirm({
+        title: 'Eliminar producto',
+        message: `¿Eliminar "${product.name}"?`,
+        confirmLabel: 'Eliminar',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.productsService.deleteProduct(product.id).subscribe({
+          next: () => {
+            this.catalogService.loadProducts({ all: true, refresh: true });
+            void this.router.navigate(['/productos']);
+          },
+          error: (err) => {
+            this.formDialogs
+              .openConfirm({
+                title: 'No se pudo eliminar',
+                message: extractApiErrorMessage(err, 'No se pudo eliminar el producto'),
+                confirmLabel: 'Entendido',
+                alertOnly: true,
+              })
+              .subscribe();
+          },
+        });
+      });
   }
 
   togglePublished(): void {
@@ -218,12 +243,20 @@ export class ProductDetailComponent implements OnInit {
 
     const nextPublished = !this.isPublished;
     const action = nextPublished ? 'publicar' : 'despublicar';
-    if (!confirm(`¿${action.charAt(0).toUpperCase()}${action.slice(1)} "${this.product.name}" en el catálogo?`)) {
-      return;
-    }
-
     const previous = this.product;
-    this.product = { ...this.product, published: nextPublished };
+    this.formDialogs
+      .openConfirm({
+        title: nextPublished ? 'Publicar producto' : 'Despublicar producto',
+        message: `¿${action.charAt(0).toUpperCase()}${action.slice(1)} "${previous.name}" en el catálogo?`,
+        confirmLabel: nextPublished ? 'Publicar' : 'Despublicar',
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) this.applyPublished(previous, nextPublished);
+      });
+  }
+
+  private applyPublished(previous: Product, nextPublished: boolean): void {
+    this.product = { ...previous, published: nextPublished };
     this.publishLoading = true;
     this.cdr.markForCheck();
 
@@ -240,12 +273,14 @@ export class ProductDetailComponent implements OnInit {
           this.publishLoading = false;
           this.product = previous;
           this.cdr.markForCheck();
-          alert(
-            extractApiErrorMessage(
-              err,
-              `No se pudo ${action} el producto`,
-            ),
-          );
+          this.formDialogs
+            .openConfirm({
+              title: 'No se pudo actualizar',
+              message: extractApiErrorMessage(err, 'No se pudo actualizar el producto'),
+              confirmLabel: 'Entendido',
+              alertOnly: true,
+            })
+            .subscribe();
         },
       });
   }

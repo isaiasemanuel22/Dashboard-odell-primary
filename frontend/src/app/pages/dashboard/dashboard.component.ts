@@ -19,6 +19,7 @@ import {
 } from '../../shared/pipes/labels.pipe';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
+import { cancelOrderConfirmMessage } from '../../shared/utils/order.helpers';
 import { environment } from '../../../environments/environment';
 import {
   DB_DATA_TABLE,
@@ -193,12 +194,29 @@ export class DashboardComponent implements OnInit {
   }
 
   deleteRecent(order: Order): void {
-    if (!confirm(`¿Eliminar el pedido ${order.id}?`)) return;
-    this.ordersService.deleteOrder(order.id).subscribe({
-      next: () => this.refresh$.next(),
-      error: (err) => {
-        alert(extractApiErrorMessage(err, 'No se pudo eliminar el pedido'));
-      },
-    });
+    this.formDialogs
+      .openConfirm({
+        title: 'Cancelar pedido',
+        message: cancelOrderConfirmMessage(order),
+        confirmLabel: 'Cancelar pedido',
+        cancelLabel: 'Volver',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.ordersService.deleteOrder(order.id).subscribe({
+          next: () => this.refresh$.next(),
+          error: (err) => {
+            this.formDialogs
+              .openConfirm({
+                title: 'No se pudo cancelar',
+                message: extractApiErrorMessage(err, 'No se pudo cancelar el pedido'),
+                confirmLabel: 'Entendido',
+                alertOnly: true,
+              })
+              .subscribe();
+          },
+        });
+      });
   }
 }

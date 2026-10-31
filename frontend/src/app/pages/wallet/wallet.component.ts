@@ -7,6 +7,7 @@ import {
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Supply, TreasuryDebtorBalance, TreasuryOverview } from '../../core/models';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { SuppliesService } from '../../core/services/settings.service';
@@ -43,6 +44,8 @@ export class WalletComponent implements OnInit {
   private readonly realtime = inject(RealtimeService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly route = inject(ActivatedRoute);
+  private readonly router = inject(Router);
 
   overview: TreasuryOverview | null = null;
   supplies: Supply[] = [];
@@ -50,6 +53,7 @@ export class WalletComponent implements OnInit {
   loadError = false;
   showForm = false;
   formMode: WalletFormMode = 'general';
+  purchasePreset = false;
   repaymentDebtor: TreasuryDebtorBalance | null = null;
 
   ngOnInit(): void {
@@ -62,6 +66,19 @@ export class WalletComponent implements OnInit {
         skip: () => this.showForm || this.repaymentDebtor != null,
       },
     );
+
+    this.route.queryParamMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        if (params.get('compra') !== '1') return;
+        this.purchasePreset = true;
+        this.openForm();
+        void this.router.navigate([], {
+          queryParams: { compra: null },
+          queryParamsHandling: 'merge',
+          replaceUrl: true,
+        });
+      });
 
     this.suppliesService
       .watchSupplies()
@@ -111,6 +128,7 @@ export class WalletComponent implements OnInit {
 
   closeForm(): void {
     this.showForm = false;
+    this.purchasePreset = false;
     this.cdr.markForCheck();
   }
 

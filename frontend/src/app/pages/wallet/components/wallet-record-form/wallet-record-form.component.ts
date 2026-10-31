@@ -4,6 +4,7 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnInit,
   Output,
   inject,
 } from '@angular/core';
@@ -53,13 +54,14 @@ export type WalletFormMode = 'general' | 'payment' | 'loan';
   styleUrl: '../wallet-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WalletRecordFormComponent {
+export class WalletRecordFormComponent implements OnInit {
   private readonly treasuryService = inject(TreasuryService);
   private readonly suppliesService = inject(SuppliesService);
   private readonly formDialogs = inject(FormDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   @Input() mode: WalletFormMode = 'general';
+  @Input() startAsPurchase = false;
   @Input() supplies: Supply[] = [];
   @Input() nameSuggestions: string[] = [];
   @Input() recipientSuggestions: string[] = [];
@@ -79,6 +81,10 @@ export class WalletRecordFormComponent {
   expenseDate = WalletRecordFormComponent.todayInputValue();
   selectedSupplyId = '';
   supplyLines: WalletSupplyLine[] = [];
+
+  ngOnInit(): void {
+    if (this.startAsPurchase) this.isSupplyPurchase = true;
+  }
 
   get formTitle(): string {
     switch (this.mode) {

@@ -294,9 +294,9 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   get dueDateBusinessDaysHint(): string {
     if (!this.dueDate) return '';
-    const days = this.countBusinessDaysInclusive(this.dueDate);
+    const days = this.countCalendarDaysFromToday(this.dueDate);
     if (days <= 0) return '';
-    const noun = days === 1 ? 'día hábil' : 'días hábiles';
+    const noun = days === 1 ? 'día' : 'días';
     return `${days} ${noun} desde hoy`;
   }
 
@@ -842,20 +842,14 @@ export class OrderFormComponent implements OnChanges, OnInit {
       : 'Tarifa de modelado sin cargar en Ajustes';
   }
 
-  private countBusinessDaysInclusive(dueDateInput: string): number {
+  /** §10: la entrega sugerida son 7 días de calendario, no días hábiles. */
+  private countCalendarDaysFromToday(dueDateInput: string): number {
     const due = new Date(`${dueDateInput}T12:00:00`);
     if (Number.isNaN(due.getTime())) return 0;
     const start = new Date();
     start.setHours(12, 0, 0, 0);
     if (due < start) return 0;
-    let count = 0;
-    const cursor = new Date(start);
-    while (cursor <= due) {
-      const day = cursor.getDay();
-      if (day !== 0 && day !== 6) count += 1;
-      cursor.setDate(cursor.getDate() + 1);
-    }
-    return count;
+    return Math.round((due.getTime() - start.getTime()) / 86_400_000);
   }
 
   designUnitPriceForLine(line: OrderLineDraft): number {

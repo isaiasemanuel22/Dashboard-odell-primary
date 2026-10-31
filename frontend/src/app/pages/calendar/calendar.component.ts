@@ -150,12 +150,19 @@ export class CalendarComponent implements OnInit {
   }
 
   goToday(): void {
-    this.cursorMonth = startOfMonth(todayYmd());
+    const today = todayYmd();
+    this.cursorMonth = this.view === 'week' ? today : startOfMonth(today);
     this.reload();
   }
 
   setView(view: CalendarView): void {
     this.view = view;
+    if (view === 'week') {
+      const today = todayYmd();
+      if (startOfMonth(this.cursorMonth) === startOfMonth(today)) {
+        this.cursorMonth = today;
+      }
+    }
     this.rebuildViews();
     this.cdr.markForCheck();
   }
@@ -214,8 +221,13 @@ export class CalendarComponent implements OnInit {
     this.error = '';
     this.cdr.markForCheck();
 
-    const from = addDaysYmd(startOfMonth(this.cursorMonth), -14);
-    const to = addDaysYmd(endOfMonth(this.cursorMonth), 21);
+    const today = todayYmd();
+    const viewFrom = addDaysYmd(startOfMonth(this.cursorMonth), -14);
+    const viewTo = addDaysYmd(endOfMonth(this.cursorMonth), 21);
+    const horizonFrom = addDaysYmd(today, -400);
+    const horizonTo = addDaysYmd(today, 14);
+    const from = viewFrom < horizonFrom ? viewFrom : horizonFrom;
+    const to = viewTo > horizonTo ? viewTo : horizonTo;
 
     this.calendarService.getFeed(from, to).subscribe({
       next: (items) => {
@@ -238,9 +250,9 @@ export class CalendarComponent implements OnInit {
     const today = todayYmd();
 
     this.monthCells = buildMonthCells(this.cursorMonth, byDate, today);
-    const week = weekRangeContaining(
-      this.view === 'week' ? this.cursorMonth : today,
-    );
+    const weekAnchor =
+      this.view === 'week' ? this.cursorMonth : today;
+    const week = weekRangeContaining(weekAnchor);
     this.weekCells = this.buildWeekCells(week.from, byDate, today);
 
     const monthFrom = startOfMonth(this.cursorMonth);
@@ -250,8 +262,12 @@ export class CalendarComponent implements OnInit {
       .map((item) => this.toAgendaRow(item, true));
 
     this.todayRows = filtered
-      .filter((item) => item.date === today && item.type === 'reminder')
-      .map((item) => this.toAgendaRow(item, false, true));
+      .filter(
+        (item) =>
+          item.date === today &&
+          (item.type === 'reminder' || item.type === 'event'),
+      )
+      .map((item) => this.toAgendaRow(item, false, item.type === 'reminder'));
 
     const overdue = this.allItems.filter(
       (item) => item.type === 'delivery' && item.late,

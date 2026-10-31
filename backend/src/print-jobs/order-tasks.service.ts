@@ -161,6 +161,24 @@ export class OrderTasksService implements OnModuleInit {
     ) {
       this.reserveStockAndCreateProduction(job.orderId);
     }
+
+    if (
+      job.taskType === TaskType.PREPARE_ORDER &&
+      next === PrintJobStatus.TERMINADO &&
+      this.prepareStillHasOpenWork(job.orderId, job.id)
+    ) {
+      throw new BadRequestException(
+        'Preparar pedido sigue activo hasta que el resto de las tareas esté terminado',
+      );
+    }
+
+    if (
+      job.status === PrintJobStatus.BLOQUEADO &&
+      next !== PrintJobStatus.BLOQUEADO &&
+      job.taskType !== TaskType.PRODUCTION
+    ) {
+      job.blockedReason = undefined;
+    }
   }
 
   afterStatusChange(job: PrintJob): void {
@@ -215,7 +233,10 @@ export class OrderTasksService implements OnModuleInit {
       );
       if (pending <= 0) return;
 
-      const toProduce = item.productionRequiredQuantity ?? 0;
+      const toProduce = Math.max(
+        (item.productionRequiredQuantity ?? 0) - (item.producedQuantity ?? 0),
+        0,
+      );
       const fromStock = Math.max(
         pending - toProduce - (item.producedQuantity ?? 0),
         0,
@@ -432,11 +453,11 @@ export class OrderTasksService implements OnModuleInit {
         existing.active = false;
         existing.blockedReason = undefined;
       }
-      this.updateTaskMetadata(existing, order, item, itemIndex, taskType);
       existing.quantity =
         taskType === TaskType.PRODUCTION
           ? item.productionRequiredQuantity
           : item.quantity;
+      this.updateTaskMetadata(existing, order, item, itemIndex, taskType);
       if (taskType === TaskType.PRODUCTION) {
         existing.productName = this.productionTaskName(item);
         if (item.productId && !this.hasProductionSupplies(existing)) {
@@ -583,6 +604,15 @@ export class OrderTasksService implements OnModuleInit {
       if (!item.productId) return;
       this.planCatalogItemFulfillment(order, item, index, { reserve: true });
     });
+  }
+
+  private prepareStillHasOpenWork(orderId: string, prepareJobId: string): boolean {
+    return this.getTasksForOrder(orderId).some(
+      (task) =>
+        task.id !== prepareJobId &&
+        task.status !== PrintJobStatus.TERMINADO &&
+        task.status !== PrintJobStatus.CANCELADO,
+    );
   }
 
   private isPreparationStarted(order: Order): boolean {

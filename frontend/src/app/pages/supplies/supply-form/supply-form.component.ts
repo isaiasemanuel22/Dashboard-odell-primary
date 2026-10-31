@@ -227,6 +227,16 @@ export class SupplyFormComponent implements OnInit, OnChanges {
   onSubmit(): void {
     this.configError = '';
 
+    const missing: string[] = [];
+    if (!this.name.trim()) missing.push('nombre');
+    if ((this.isFilament || this.isResin) && !this.brand.trim()) missing.push('marca');
+    if (this.showColorField && !this.colorId) missing.push('color');
+    if (Number(this.quantity) < 0) missing.push('una cantidad de 0 o más');
+    if (missing.length) {
+      this.configError = `Faltan: ${missing.join(', ')}.`;
+      return;
+    }
+
     if ((this.isFilament || this.isResin) && !this.priceFromSettings) {
       this.configError = this.isFilament
         ? 'Seleccioná una marca de la lista de Ajustes → Filamentos.'

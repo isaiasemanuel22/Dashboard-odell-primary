@@ -9,6 +9,8 @@ export interface ConfirmDialogData {
   confirmLabel?: string;
   cancelLabel?: string;
   confirmVariant?: 'primary' | 'secondary' | 'delete';
+  /** Un solo botón, para avisos que antes salían por alert(). */
+  alertOnly?: boolean;
 }
 
 @Component({
@@ -18,12 +20,14 @@ export interface ConfirmDialogData {
     <app-form-dialog-shell [title]="data.title" size="sm" (close)="cancel()">
       <p class="confirm-message">{{ data.message }}</p>
       <div class="confirm-actions">
-        <db-button
-          [label]="data.cancelLabel ?? 'Cancelar'"
-          variant="secondary"
-          format="soft"
-          (clicked)="cancel()"
-        />
+        @if (!data.alertOnly) {
+          <db-button
+            [label]="data.cancelLabel ?? 'Cancelar'"
+            variant="secondary"
+            format="soft"
+            (clicked)="cancel()"
+          />
+        }
         <db-button
           [label]="data.confirmLabel ?? 'Confirmar'"
           [variant]="data.confirmVariant ?? 'primary'"

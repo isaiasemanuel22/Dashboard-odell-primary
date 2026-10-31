@@ -134,12 +134,14 @@
             />
           }
         }
-        <db-button
-          label="Eliminar"
-          variant="delete"
-          format="soft"
-          (clicked)="deleteQuote()"
-        />
+        @if (quote.status !== 'aceptado') {
+          <db-button
+            label="Eliminar"
+            variant="delete"
+            format="soft"
+            (clicked)="deleteQuote()"
+          />
+        }
       </section>
     </div>
   </div>

@@ -129,15 +129,29 @@ export class CustomerDetailComponent implements OnInit {
 
   deleteCustomer(): void {
     if (!this.customer) return;
-    if (!confirm(`¿Eliminar a "${this.customer.name}"?`)) return;
-
-    this.customersService.deleteCustomer(this.customer.id).subscribe({
-      next: () => this.router.navigate(['/clientes']),
-      error: (err) => {
-        alert(
-          extractApiErrorMessage(err, 'No se pudo eliminar el cliente'),
-        );
-      },
-    });
+    const customer = this.customer;
+    this.formDialogs
+      .openConfirm({
+        title: 'Eliminar cliente',
+        message: `¿Eliminar a "${customer.name}"?`,
+        confirmLabel: 'Eliminar',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.customersService.deleteCustomer(customer.id).subscribe({
+          next: () => this.router.navigate(['/clientes']),
+          error: (err) => {
+            this.formDialogs
+              .openConfirm({
+                title: 'No se pudo eliminar',
+                message: extractApiErrorMessage(err, 'No se pudo eliminar el cliente'),
+                confirmLabel: 'Entendido',
+                alertOnly: true,
+              })
+              .subscribe();
+          },
+        });
+      });
   }
 }

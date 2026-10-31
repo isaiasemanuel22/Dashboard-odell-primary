@@ -58,6 +58,14 @@ db-data-table {
   }
 }
 
+.profit-example {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  align-items: flex-end;
+  white-space: nowrap;
+}
+
 .rate-note {
   margin: 0.9rem 0 0;
   padding: 0.75rem 0.85rem;

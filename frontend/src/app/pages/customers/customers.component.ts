@@ -57,6 +57,7 @@ export class CustomersComponent implements OnInit {
   ];
 
   readonly actions: OdlRowAction<Customer>[] = [
+    { id: 'ver', label: 'Ver ficha' },
     { id: 'editar', label: 'Editar' },
     { id: 'eliminar', label: 'Eliminar', danger: true },
   ];
@@ -92,8 +93,13 @@ export class CustomersComponent implements OnInit {
   }
 
   onAction(event: OdlActionEvent<Customer>): void {
+    if (event.actionId === 'ver') this.openCustomer(event.row);
     if (event.actionId === 'editar') this.openEditCustomer(event.row);
     if (event.actionId === 'eliminar') this.deleteCustomer(event.row);
+  }
+
+  openCustomer(customer: Customer): void {
+    void this.router.navigate(['/clientes', customer.id]);
   }
 
   loadCustomers(): void {
@@ -130,21 +136,34 @@ export class CustomersComponent implements OnInit {
   }
 
   deleteCustomer(customer: Customer): void {
-    if (!confirm(`¿Eliminar a "${customer.name}"?`)) return;
-
-    const previous = this.customers;
-    this.customers = removeById(this.customers, customer.id);
-    this.cdr.markForCheck();
-
-    this.customersService.deleteCustomer(customer.id).subscribe({
-      next: () => this.customerCatalog.remove(customer.id),
-      error: (err) => {
-        this.customers = previous;
+    this.formDialogs
+      .openConfirm({
+        title: 'Eliminar cliente',
+        message: `¿Eliminar a "${customer.name}"?`,
+        confirmLabel: 'Eliminar',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        const previous = this.customers;
+        this.customers = removeById(this.customers, customer.id);
         this.cdr.markForCheck();
-        alert(
-          extractApiErrorMessage(err, 'No se pudo eliminar el cliente'),
-        );
-      },
-    });
+
+        this.customersService.deleteCustomer(customer.id).subscribe({
+          next: () => this.customerCatalog.remove(customer.id),
+          error: (err) => {
+            this.customers = previous;
+            this.cdr.markForCheck();
+            this.formDialogs
+              .openConfirm({
+                title: 'No se pudo eliminar',
+                message: extractApiErrorMessage(err, 'No se pudo eliminar el cliente'),
+                confirmLabel: 'Entendido',
+                alertOnly: true,
+              })
+              .subscribe();
+          },
+        });
+      });
   }
 }

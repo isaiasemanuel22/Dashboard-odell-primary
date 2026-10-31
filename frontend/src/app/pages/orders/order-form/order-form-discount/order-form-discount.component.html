@@ -32,8 +32,6 @@
       [ngModel]="percent"
       (ngModelChange)="percentChange.emit($event)"
       name="discountPercent"
-      [min]="0"
-      [max]="percentMax"
       [step]="1"
     />
   } @else if (mode === 'amount') {
@@ -42,8 +40,6 @@
       [ngModel]="amount"
       (ngModelChange)="amountChange.emit($event)"
       name="discountAmount"
-      [min]="0"
-      [max]="amountMax"
       [step]="1"
     />
   } @else {

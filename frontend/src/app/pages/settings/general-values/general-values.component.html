@@ -12,13 +12,6 @@
           tienen tarifa propia para sus líneas de presupuesto. El margen de error se aplica
           sobre material, energía y desgaste de máquina.
         </p>
-        <db-button
-          [label]="saving ? 'Guardando...' : 'Guardar cambios'"
-          variant="primary"
-          format="solid"
-          [disabled]="saving"
-          (clicked)="saveGeneral()"
-        />
         <div class="rate-grid">
           <db-input
             label="Costo de luz ($/kWh)"
@@ -74,6 +67,13 @@
             }
           </div>
         </div>
+        <db-button
+          [label]="saving ? 'Guardando...' : 'Guardar cambios'"
+          variant="primary"
+          format="solid"
+          [disabled]="saving"
+          (clicked)="saveGeneral()"
+        />
       </section>
 
       <section class="settings-card sync-card">

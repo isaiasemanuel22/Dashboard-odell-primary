@@ -36,7 +36,7 @@ export class DbInputComponent implements ControlValueAccessor, OnChanges {
   @Input() hint = '';
   @Input() error = '';
   @Input() required = false;
-  @Input() type: 'text' | 'number' | 'search' | 'password' | 'email' | 'date' = 'text';
+  @Input() type: 'text' | 'number' | 'search' | 'password' | 'email' | 'date' | 'time' = 'text';
   @Input() placeholder = '';
   @Input() name = '';
   @Input() min?: number | string;

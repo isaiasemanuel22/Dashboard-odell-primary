@@ -24,6 +24,8 @@
   searchPlaceholder="Buscar por nombre, email o teléfono"
   emptyText="No hay clientes registrados."
   emptyActionLabel="Crear primer cliente"
+  [clickableRows]="true"
+  (rowClick)="openCustomer($event)"
   (action)="onAction($event)"
   (emptyAction)="openCreateCustomer()"
 >

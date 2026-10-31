@@ -84,7 +84,12 @@ export class QuotesComponent implements OnInit {
   }));
 
   readonly actions: OdlRowAction<Quote>[] = [
-    { id: 'eliminar', label: 'Eliminar', danger: true },
+    {
+      id: 'eliminar',
+      label: 'Eliminar',
+      danger: true,
+      hidden: (quote) => quote.status === 'aceptado',
+    },
   ];
 
   readonly columns: OdlColumn<Quote>[] = [
@@ -192,19 +197,35 @@ export class QuotesComponent implements OnInit {
   }
 
   deleteQuote(quote: Quote): void {
-    if (!confirm(`¿Eliminar el presupuesto ${quote.id}?`)) return;
-
-    const previous = this.quotes;
-    this.quotes = removeById(this.quotes, quote.id);
-    this.cdr.markForCheck();
-
-    this.quotesService.deleteQuote(quote.id).subscribe({
-      error: (err) => {
-        this.quotes = previous;
+    if (quote.status === 'aceptado') return;
+    this.formDialogs
+      .openConfirm({
+        title: 'Eliminar presupuesto',
+        message: `¿Eliminar el presupuesto ${quote.id}?`,
+        confirmLabel: 'Eliminar',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        const previous = this.quotes;
+        this.quotes = removeById(this.quotes, quote.id);
         this.cdr.markForCheck();
-        alert(extractApiErrorMessage(err, 'No se pudo eliminar el presupuesto'));
-      },
-    });
+
+        this.quotesService.deleteQuote(quote.id).subscribe({
+          error: (err) => {
+            this.quotes = previous;
+            this.cdr.markForCheck();
+            this.formDialogs
+              .openConfirm({
+                title: 'No se pudo eliminar',
+                message: extractApiErrorMessage(err, 'No se pudo eliminar el presupuesto'),
+                confirmLabel: 'Entendido',
+                alertOnly: true,
+              })
+              .subscribe();
+          },
+        });
+      });
   }
 
   private handleRealtime(event: RealtimeEvent): void {

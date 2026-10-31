@@ -1,3 +1,9 @@
+.products-cart-notice {
+  margin: 0 0 0.85rem;
+  color: #0b5f86;
+  font-size: 0.9rem;
+}
+
 .products-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

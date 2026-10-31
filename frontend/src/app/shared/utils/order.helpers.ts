@@ -683,6 +683,27 @@ export function orderStatusOptions(): { value: OrderStatus; label: string }[] {
 export const DUE_DATE_AFTER_TODAY_MESSAGE =
   'La fecha de entrega tiene que ser posterior a hoy';
 
+/** El botón dice cancelar: no borra el pedido (§13.6) y avisa si hay plata (§20). */
+export function cancelOrderConfirmMessage(order: {
+  id: string;
+  status: OrderStatus;
+  payments?: Array<{ amount: number }>;
+}): string {
+  const delivered =
+    order.status === OrderStatus.ENTREGADO ||
+    order.status === OrderStatus.PARCIALMENTE_ENTREGADO;
+  const hasPayments = (order.payments ?? []).some(
+    (payment) => Number(payment.amount) > 0,
+  );
+  if (delivered) {
+    return `El pedido ${order.id} ya está entregado. Cancelarlo lo saca de Ventas. El dinero cobrado no se devuelve solo: hay que resolverlo en Billetera. ¿Cancelar igual?`;
+  }
+  if (hasPayments) {
+    return `El pedido ${order.id} tiene pagos o seña. La cancelación no devuelve el dinero sola: hay que resolverlo en Billetera. ¿Cancelar igual?`;
+  }
+  return `¿Cancelar el pedido ${order.id}? No se borra: queda como cancelado.`;
+}
+
 export function defaultDueDate(): string {
   const date = new Date();
   date.setDate(date.getDate() + 7);

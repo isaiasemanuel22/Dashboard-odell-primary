@@ -216,3 +216,14 @@
     border: 1px solid $color-border;
   }
 }
+
+.job-card__area {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  background: #e0f2fe;
+  color: #0b5f86;
+  font-size: 0.72rem;
+  font-weight: 700;
+}

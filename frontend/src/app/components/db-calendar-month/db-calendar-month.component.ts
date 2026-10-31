@@ -28,7 +28,7 @@ export class DbCalendarMonthComponent {
     else if (item.type === 'delivery') parts.push('db-cal-it--ent');
     else if (item.type === 'event') parts.push('db-cal-it--ev');
     else parts.push('db-cal-it--rec');
-    if (isPast && item.type !== 'event') parts.push('is-past');
+    if (isPast && item.type !== 'event' && !item.late) parts.push('is-past');
     if (item.completed) parts.push('is-past');
     return parts.join(' ');
   }

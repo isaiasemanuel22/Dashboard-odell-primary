@@ -1,9 +1,13 @@
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
+  ElementRef,
   EventEmitter,
+  HostListener,
   Input,
   Output,
+  inject,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Quote } from '../../core/models';
@@ -32,6 +36,9 @@ import { isQuoteEditable } from '../../shared/utils/quote.helpers';
   styleUrl: './quote-card.component.scss',
 })
 export class QuoteCardComponent {
+  private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly cdr = inject(ChangeDetectorRef);
+
   @Input({ required: true }) quote!: Quote;
   /** detail: solo el panel expandido, para usarlo dentro de db-data-table. */
   @Input() layout: 'row' | 'detail' = 'row';
@@ -56,8 +63,25 @@ export class QuoteCardComponent {
     return isQuoteEditable(this.quote.status);
   }
 
+  get canDelete(): boolean {
+    return this.quote.status !== 'aceptado';
+  }
+
+  toggleMenu(event: MouseEvent): void {
+    event.stopPropagation();
+    this.menuOpen = !this.menuOpen;
+  }
+
   confirmDelete(): void {
     this.menuOpen = false;
     this.delete.emit(this.quote);
+  }
+
+  @HostListener('document:click', ['$event'])
+  closeMenuFromOutside(event: MouseEvent): void {
+    if (!this.menuOpen) return;
+    if (this.host.nativeElement.contains(event.target as Node)) return;
+    this.menuOpen = false;
+    this.cdr.markForCheck();
   }
 }

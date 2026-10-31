@@ -44,8 +44,10 @@
         </label>
       </ng-template>
       <ng-template odlCell="ejemplo" let-field>
-        <span>Costo {{ 1000 | currencyArs }}</span>
-        <strong>Precio {{ examplePrice(1000, marginValue(field.service)) | currencyArs }}</strong>
+        <span class="profit-example">
+          <span>Costo {{ 1000 | currencyArs }}</span>
+          <strong>Precio {{ examplePrice(1000, marginValue(field.service)) | currencyArs }}</strong>
+        </span>
       </ng-template>
     </db-data-table>
 

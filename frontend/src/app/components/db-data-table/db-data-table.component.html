@@ -126,7 +126,7 @@
                     {{ number(valueOf(col, row)) }}
                   }
                   @case ('money') {
-                    <span class="odl-strong">{{ money(valueOf(col, row)) }}</span>
+                    <span class="odl-strong odl-money">{{ money(valueOf(col, row)) }}</span>
                   }
                   @case ('signedMoney') {
                     <span class="odl-strong" [class.is-pos]="sign(valueOf(col, row)) > 0" [class.is-neg]="sign(valueOf(col, row)) < 0">

@@ -30,6 +30,7 @@ import {
 import {
   OrderServiceFilter,
   OrderStatusFilter,
+  cancelOrderConfirmMessage,
   orderServiceFilters,
   orderStatusFilters,
 } from '../../shared/utils/order.helpers';
@@ -83,18 +84,23 @@ export class OrdersComponent implements OnInit {
 
   get filteredOrders(): Order[] {
     const term = this.search.trim().toLowerCase();
-    if (!term) return this.orders;
-    return this.orders.filter((order) =>
-      [
-        order.id,
-        order.customerName,
-        plainTextFromHtml(order.description),
-        order.notes ?? '',
-        ...order.items.map((item) => item.productName),
-      ]
-        .join(' ')
-        .toLowerCase()
-        .includes(term),
+    const list = !term
+      ? [...this.orders]
+      : this.orders.filter((order) =>
+          [
+            order.id,
+            order.customerName,
+            plainTextFromHtml(order.description),
+            order.notes ?? '',
+            ...order.items.map((item) => item.productName),
+          ]
+            .join(' ')
+            .toLowerCase()
+            .includes(term),
+        );
+    return list.sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
     );
   }
 
@@ -155,19 +161,35 @@ export class OrdersComponent implements OnInit {
   }
 
   deleteOrder(order: Order): void {
-    if (!confirm(`¿Eliminar el pedido ${order.id}?`)) return;
-
-    const previous = this.orders;
-    this.orders = removeById(this.orders, order.id);
-    this.cdr.markForCheck();
-
-    this.ordersService.deleteOrder(order.id).subscribe({
-      error: (err) => {
-        this.orders = previous;
+    this.formDialogs
+      .openConfirm({
+        title: 'Cancelar pedido',
+        message: cancelOrderConfirmMessage(order),
+        confirmLabel: 'Cancelar pedido',
+        cancelLabel: 'Volver',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        const previous = this.orders;
+        this.orders = removeById(this.orders, order.id);
         this.cdr.markForCheck();
-        alert(extractApiErrorMessage(err, 'No se pudo eliminar el pedido'));
-      },
-    });
+
+        this.ordersService.deleteOrder(order.id).subscribe({
+          error: (err) => {
+            this.orders = previous;
+            this.cdr.markForCheck();
+            this.formDialogs
+              .openConfirm({
+                title: 'No se pudo cancelar',
+                message: extractApiErrorMessage(err, 'No se pudo cancelar el pedido'),
+                confirmLabel: 'Entendido',
+                alertOnly: true,
+              })
+              .subscribe();
+          },
+        });
+      });
   }
 
   private handleRealtime(event: RealtimeEvent): void {

@@ -215,6 +215,12 @@ export class CalendarEventDialogComponent implements OnInit {
       return;
     }
 
+    if (!this.allDay && this.startTime && this.endTime && this.endTime <= this.startTime) {
+      this.error = 'La hora de fin tiene que ser posterior a la de inicio.';
+      this.cdr.markForCheck();
+      return;
+    }
+
     const payload = this.buildPayload();
     this.loading = true;
     this.error = '';
