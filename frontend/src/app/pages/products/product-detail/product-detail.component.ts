@@ -147,7 +147,10 @@ export class ProductDetailComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    this.settingsService.getGeneralSettings().subscribe({
+    this.settingsService
+      .getGeneralSettings()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: (settings) => {
         this.colorCatalog = settings.colors ?? [];
         this.cdr.markForCheck();

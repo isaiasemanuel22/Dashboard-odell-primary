@@ -1,8 +1,10 @@
 import {
   Component,
+  DestroyRef,
   OnInit,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import { Customer, Order } from '../../../core/models';
@@ -44,6 +46,7 @@ export class CustomerDetailComponent implements OnInit {
   private readonly customersService = inject(CustomersService);
   private readonly ordersService = inject(OrdersService);
   private readonly formDialogs = inject(FormDialogService);
+  private readonly destroyRef = inject(DestroyRef);
 
   customer: Customer | null = null;
   orders: Order[] = [];
@@ -51,15 +54,17 @@ export class CustomerDetailComponent implements OnInit {
   notFound = false;
 
   ngOnInit(): void {
-    this.route.paramMap.subscribe((params) => {
-      const id = params.get('id');
-      if (!id) {
-        this.notFound = true;
-        this.loading = false;
-        return;
-      }
-      this.loadCustomer(id);
-    });
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const id = params.get('id');
+        if (!id) {
+          this.notFound = true;
+          this.loading = false;
+          return;
+        }
+        this.loadCustomer(id);
+      });
   }
 
   get activeOrders(): Order[] {
@@ -81,13 +86,17 @@ export class CustomerDetailComponent implements OnInit {
     forkJoin({
       customer: this.customersService.getCustomer(id),
       orders: this.ordersService.getOrders({ customerId: id }),
-    }).subscribe({
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: ({ customer, orders }) => {
+        if (this.route.snapshot.paramMap.get('id') !== id) return;
         this.customer = customer;
         this.orders = orders;
         this.loading = false;
       },
       error: (err) => {
+        if (this.route.snapshot.paramMap.get('id') !== id) return;
         this.loading = false;
         this.notFound = err.status === 404;
       },
