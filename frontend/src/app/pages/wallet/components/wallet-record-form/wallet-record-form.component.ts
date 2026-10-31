@@ -19,7 +19,6 @@ import { TreasuryService } from '../../../../core/services/treasury.service';
 import {
   DbAutocompleteComponent,
   DbButtonComponent,
-  DbFormFieldComponent,
   DbFormGridComponent,
   DbFormGridFullComponent,
   DbInputComponent,
@@ -28,19 +27,13 @@ import {
 import type { DbAutocompleteOption } from '@dashboard-form/db-autocomplete/db-autocomplete.types';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import { extractApiErrorMessage } from '../../../../shared/utils/api-error';
-import { computeSupplyPurchaseDelta } from '../../../../shared/utils/supply-unit.util';
 import { FormDialogService } from '../../../../shared/form-dialogs/form-dialog.service';
+import {
+  WalletRecordSuppliesComponent,
+  WalletSupplyLine,
+} from './wallet-record-supplies/wallet-record-supplies.component';
 
 export type WalletFormMode = 'general' | 'payment' | 'loan';
-
-interface WalletSupplyLine {
-  supplyId: string;
-  supplyName: string;
-  unit: string;
-  quantity: number;
-  amountSpent: number;
-  unitPrice: number;
-}
 
 @Component({
   selector: 'app-wallet-record-form',
@@ -50,11 +43,11 @@ interface WalletSupplyLine {
     CurrencyArsPipe,
     DbButtonComponent,
     DbInputComponent,
-    DbFormFieldComponent,
     DbFormGridComponent,
     DbFormGridFullComponent,
     DbAutocompleteComponent,
     FormModalComponent,
+    WalletRecordSuppliesComponent,
   ],
   templateUrl: './wallet-record-form.component.html',
   styleUrl: '../wallet-form.scss',
@@ -178,14 +171,6 @@ export class WalletRecordFormComponent {
   onSimpleAmountChange(): void {
     this.amount = Math.max(0, Math.round(Number(this.amount) || 0));
     this.cdr.markForCheck();
-  }
-
-  supplyLineDelta(line: WalletSupplyLine): number {
-    return computeSupplyPurchaseDelta(line.amountSpent, line.quantity, line.unitPrice);
-  }
-
-  supplyLineListTotal(line: WalletSupplyLine): number {
-    return Math.round(line.quantity * line.unitPrice);
   }
 
   submitExpense(): void {
