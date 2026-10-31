@@ -180,7 +180,7 @@ export class PressCycleListComponent
     const cycles = this.productForm
       ? [...(this.productForm.controls.pressCycles.value ?? [])]
       : [...(this.initialValue ?? [])];
-    const next = prints.map((print, index) => {
+    const next: EstampadoPressCycle[] = prints.map((print, index) => {
       const existing = cycles[index];
       const label = print.label?.trim() || undefined;
       if (existing) return { ...existing, label };

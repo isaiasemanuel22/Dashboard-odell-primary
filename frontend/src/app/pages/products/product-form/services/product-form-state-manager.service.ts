@@ -6,6 +6,13 @@ import {
   FilamentType,
   ResinType,
   ProductEstampado,
+  ProductAttachment,
+  ProductComponent,
+  EstampadoPrintSpec,
+  EstampadoPressCycle,
+  EstampadoSupplyLine,
+  FdmFilamentLine,
+  CostBreakdown,
   INDISTINTO_COLOR_ID,
 } from '../../../../core/models';
 import {
@@ -39,25 +46,25 @@ export interface ProductFormState {
   suggestedPrice: number | null;
   categoryIds: string[];
   images: string[];
-  attachments: any[];
+  attachments: ProductAttachment[];
   grams: number;
   printTimeHours: number;
   workTimeHours: number;
   washMinutes: number;
   cureMinutes: number;
-  prints: any[];
-  pressCycles: any[];
-  supplyLines: any[];
-  filamentLines: any[];
+  prints: EstampadoPrintSpec[];
+  pressCycles: EstampadoPressCycle[];
+  supplyLines: EstampadoSupplyLine[];
+  filamentLines: FdmFilamentLine[];
   filamentType: FilamentType;
   resinType: ResinType | string;
   colorId: string;
-  components: any[];
+  components: ProductComponent[];
   assemblyTimeHours: number;
   published: boolean;
   includesPieces: boolean;
   finishedStock: number;
-  costBreakdown: any;
+  costBreakdown: CostBreakdown | null;
   computedPrice: number | null;
   appliedMarginPercent: number | null;
   legacyImagesNotice: string;
