@@ -21,10 +21,8 @@ import {
   DbButtonComponent,
   DbCheckboxComponent,
   DbFormComponent,
-  DbFormGridComponent,
   DbInputComponent,
   DbPillGroupComponent,
-  DbSelectComponent,
   DbSelectOption,
   DbStateMessageComponent,
   DB_DATA_TABLE,
@@ -33,6 +31,7 @@ import {
   OdlRowAction,
 } from '@general-components';
 import { productTypeOptions } from '../../../shared/utils/select-options';
+import { GeneralValuesProfileEditorComponent } from './general-values-profile-editor/general-values-profile-editor.component';
 
 @Component({
   selector: 'app-general-values',
@@ -40,14 +39,13 @@ import { productTypeOptions } from '../../../shared/utils/select-options';
   imports: [
     FormsModule,
     DbFormComponent,
-    DbFormGridComponent,
     DbInputComponent,
-    DbSelectComponent,
     DbCheckboxComponent,
     DbButtonComponent,
     DbPillGroupComponent,
     DbStateMessageComponent,
     ...DB_DATA_TABLE,
+    GeneralValuesProfileEditorComponent,
   ],
   templateUrl: './general-values.component.html',
   styleUrl: './general-values.component.scss',
@@ -322,23 +320,6 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
 
   isWash(profile: MachineProfile): boolean {
     return profile.role === MachineProfileRole.WASH;
-  }
-
-  onRoleChange(profile: MachineProfile): void {
-    if (
-      profile.role === MachineProfileRole.WASH &&
-      (profile.washBathUses === undefined || profile.washBathUses === null)
-    ) {
-      profile.washBathUses = 10;
-    }
-  }
-
-  productTypeValue(profile: MachineProfile): string {
-    return profile.productType ?? '';
-  }
-
-  setProductType(profile: MachineProfile, value: string): void {
-    profile.productType = value ? (value as ProductType) : undefined;
   }
 
   productTypeLabel(profile: MachineProfile): string | null {

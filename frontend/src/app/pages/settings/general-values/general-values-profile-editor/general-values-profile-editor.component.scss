@@ -1,0 +1,62 @@
+@use '../../../../shared/styles/variables' as *;
+
+.profile-editor {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid $color-divider;
+
+  header {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 0.8rem;
+
+    h4 {
+      margin: 0;
+      font-size: $font-body;
+    }
+
+    span {
+      color: $color-text-muted;
+      font-size: $font-meta;
+    }
+  }
+}
+
+.wash-grid {
+  display: grid;
+  grid-template-columns: 1.4fr 0.8fr 0.8fr;
+  gap: 0.75rem;
+  margin-top: 0.8rem;
+
+  @media (max-width: 800px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.field-hint {
+  margin: 0.45rem 0 0;
+  text-align: right;
+  color: $color-text-muted;
+  font-size: $font-meta;
+}
+
+.editor-actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 0.6rem;
+  margin-top: 0.9rem;
+}
+
+.editor-cancel {
+  border: 1px solid $color-border-soft;
+  background: $color-surface;
+  border-radius: $radius-pill;
+  padding: 0.45rem 0.9rem;
+  font-size: $font-control;
+  font-weight: 600;
+  cursor: pointer;
+}
+

@@ -133,88 +133,15 @@
         }
 
         @if (selectedProfile; as profile) {
-          <article class="profile-editor">
-            <header>
-              <h4>Editar equipo · {{ profile.name.trim() || 'Nuevo equipo' }}</h4>
-              <span>Se abre desde ··· Editar</span>
-            </header>
-            <db-form-grid>
-              <db-input
-                label="Equipo"
-                [(ngModel)]="profile.name"
-                [name]="'mpName' + profile.id"
-                placeholder="Nombre del equipo"
-              />
-              <db-select
-                label="Rol"
-                [(ngModel)]="profile.role"
-                [name]="'mpRole' + profile.id"
-                [options]="roleOptions"
-                (ngModelChange)="onRoleChange(profile)"
-              />
-              <db-select
-                label="Tipo de producto"
-                [ngModel]="productTypeValue(profile)"
-                (ngModelChange)="setProductType(profile, $event)"
-                [name]="'mpType' + profile.id"
-                [options]="productTypeSelectOptions"
-              />
-              <db-input
-                label="Consumo (W)"
-                type="number"
-                [(ngModel)]="profile.watts"
-                [name]="'mpWatts' + profile.id"
-                [min]="0"
-              />
-              <db-input
-                label="Costo máquina ($/h)"
-                type="number"
-                [(ngModel)]="profile.costPerHour"
-                [name]="'mpCost' + profile.id"
-                [min]="0"
-              />
-            </db-form-grid>
-
-            @if (isWash(profile)) {
-              <div class="wash-grid">
-                <db-select
-                  label="Insumo de lavado"
-                  [(ngModel)]="profile.washSupplyId"
-                  [name]="'mpSupply' + profile.id"
-                  [options]="supplyOptions"
-                />
-                <db-input
-                  label="ml por baño"
-                  type="number"
-                  [(ngModel)]="profile.consumptionMl"
-                  [name]="'mpConsumption' + profile.id"
-                  [min]="0"
-                  [step]="1"
-                />
-                <db-input
-                  label="Usos por baño"
-                  type="number"
-                  [(ngModel)]="profile.washBathUses"
-                  [name]="'mpBathUses' + profile.id"
-                  [min]="0"
-                  [step]="1"
-                  placeholder="10"
-                />
-              </div>
-              <p class="field-hint">Si queda en 0 o vacío, se usan 10</p>
-            }
-
-            <div class="editor-actions">
-              <button type="button" class="editor-cancel" (click)="closeProfileEditor()">Cancelar</button>
-              <db-button
-                [label]="savingProfiles ? 'Guardando...' : 'Guardar equipo'"
-                variant="primary"
-                format="solid"
-                [disabled]="savingProfiles"
-                (clicked)="saveMachineProfiles()"
-              />
-            </div>
-          </article>
+          <app-general-values-profile-editor
+            [profile]="profile"
+            [roleOptions]="roleOptions"
+            [productTypeOptions]="productTypeSelectOptions"
+            [supplyOptions]="supplyOptions"
+            [saving]="savingProfiles"
+            (cancelEdit)="closeProfileEditor()"
+            (save)="saveMachineProfiles()"
+          />
         }
       </section>
     </div>
