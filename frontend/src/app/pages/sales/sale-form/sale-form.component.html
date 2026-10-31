@@ -1,96 +1,17 @@
 <db-form [class.sale-form--mobile]="useCardLayout">
 
     <db-fieldset legend="Carrito">
-      @if (cart.length) {
-        @if (useCardLayout) {
-          <div class="cart-cards">
-            @for (line of cart; track line.key) {
-              <app-sale-cart-line-card
-                [line]="line"
-                (quantityChange)="updateLineQuantity(line, $event)"
-                (remove)="removeFromCart(line.key)"
-              />
-            }
-          </div>
-          <div class="cart-summary">
-            <div class="cart-summary__row">
-              <span>Subtotal</span>
-              <strong>{{ cartSubtotal | currencyArs }}</strong>
-            </div>
-            @if (cartDiscount > 0) {
-              <div class="cart-summary__row cart-summary__row--discount">
-                <span>Descuento</span>
-                <strong>-{{ cartDiscount | currencyArs }}</strong>
-              </div>
-            }
-            <div class="cart-summary__row cart-summary__row--total">
-              <span>Total de la venta</span>
-              <strong>{{ cartTotal | currencyArs }}</strong>
-            </div>
-            @if (hasDiscount) {
-              <div
-                class="cart-summary__row cart-summary__row--profit"
-                [class.cart-summary__row--loss]="cartProfit < 0"
-              >
-                <span>Ganancia</span>
-                <strong>{{ cartProfit | currencyArs }}</strong>
-              </div>
-            }
-          </div>
-        } @else {
-          <div class="cart-table-wrap">
-            <table class="cart-table">
-              <thead>
-                <tr>
-                  <th>Producto</th>
-                  <th>Cant.</th>
-                  <th>P. unit.</th>
-                  <th>Subtotal</th>
-                  <th></th>
-                </tr>
-              </thead>
-              <tbody>
-                @for (line of cart; track line.key) {
-                  <app-sale-cart-line
-                    [line]="line"
-                    (quantityChange)="updateLineQuantity(line, $event)"
-                    (remove)="removeFromCart(line.key)"
-                  />
-                }
-              </tbody>
-              <tfoot>
-                <tr>
-                  <td colspan="3">Subtotal</td>
-                  <td colspan="2">{{ cartSubtotal | currencyArs }}</td>
-                </tr>
-                @if (cartDiscount > 0) {
-                  <tr class="cart-table__discount">
-                    <td colspan="3">Descuento</td>
-                    <td colspan="2">-{{ cartDiscount | currencyArs }}</td>
-                  </tr>
-                }
-                <tr class="cart-table__total">
-                  <td colspan="3"><strong>Total de la venta</strong></td>
-                  <td colspan="2"><strong>{{ cartTotal | currencyArs }}</strong></td>
-                </tr>
-                @if (hasDiscount) {
-                  <tr
-                    class="cart-table__profit"
-                    [class.cart-table__profit--loss]="cartProfit < 0"
-                  >
-                    <td colspan="3"><strong>Ganancia</strong></td>
-                    <td colspan="2"><strong>{{ cartProfit | currencyArs }}</strong></td>
-                  </tr>
-                }
-              </tfoot>
-            </table>
-          </div>
-        }
-      } @else {
-        <p class="empty-cart">
-          Todavía no hay productos en el carrito. Agregá los que se retiran en el local.
-        </p>
-      }
+      <app-sale-form-cart
+        [cart]="cart"
+        [useCardLayout]="useCardLayout"
+        [subtotal]="cartSubtotal"
+        [discount]="cartDiscount"
+        [total]="cartTotal"
+        [profit]="cartProfit"
+        [hasDiscount]="hasDiscount"
+        (quantityChange)="updateLineQuantity($event.line, $event.quantity)"
+        (remove)="removeFromCart($event)"
+      />
     </db-fieldset>
 
     <db-fieldset legend="Descuento">

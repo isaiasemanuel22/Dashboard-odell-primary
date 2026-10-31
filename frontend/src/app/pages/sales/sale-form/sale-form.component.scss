@@ -6,12 +6,6 @@
   margin-top: 0.5rem;
 }
 
-.empty-cart {
-  margin: 0;
-  font-size: 0.875rem;
-  color: $color-text-muted;
-}
-
 .stock-notice {
   margin-bottom: 0.85rem;
   padding: 0.75rem;
@@ -24,102 +18,6 @@
   a {
     color: inherit;
     font-weight: 700;
-  }
-}
-
-.cart-table-wrap {
-  overflow-x: auto;
-}
-
-.cart-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.875rem;
-
-  th,
-  td {
-    padding: 0.65rem 0.5rem;
-    border-bottom: 1px solid $color-border;
-    text-align: left;
-    vertical-align: middle;
-  }
-
-  th {
-    color: $color-text-label;
-    font-weight: 600;
-    font-size: 0.8rem;
-  }
-
-  tfoot td {
-    border-bottom: none;
-    padding-top: 0.85rem;
-  }
-
-  &__discount td {
-    color: $color-error;
-  }
-
-  &__total td {
-    border-top: 1px solid $color-border;
-
-    strong {
-      color: $color-primary-dark;
-    }
-  }
-
-  &__profit {
-    td {
-      color: $color-success;
-
-      strong {
-        color: $color-success;
-      }
-    }
-
-    &--loss td,
-    &--loss td strong {
-      color: $color-error;
-    }
-  }
-}
-
-.cart-cards {
-  display: flex;
-  flex-direction: column;
-  gap: 0.65rem;
-}
-
-.cart-summary {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-top: 0.85rem;
-  padding: 0.85rem;
-  border-radius: $radius-sm;
-  background: $color-surface-subtle;
-
-  &__row {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    font-size: 0.875rem;
-
-    &--discount strong {
-      color: $color-error;
-    }
-
-    &--total strong {
-      color: $color-primary-dark;
-      font-size: 1rem;
-    }
-
-    &--profit strong {
-      color: $color-success;
-    }
-
-    &--loss strong {
-      color: $color-error;
-    }
   }
 }
 

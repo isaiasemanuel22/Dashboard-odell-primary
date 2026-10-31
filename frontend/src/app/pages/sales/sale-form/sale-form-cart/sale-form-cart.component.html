@@ -1,0 +1,90 @@
+@if (cart.length) {
+  @if (useCardLayout) {
+    <div class="cart-cards">
+      @for (line of cart; track line.key) {
+        <app-sale-cart-line-card
+          [line]="line"
+          (quantityChange)="quantityChange.emit({ line, quantity: $event })"
+          (remove)="remove.emit(line.key)"
+        />
+      }
+    </div>
+    <div class="cart-summary">
+      <div class="cart-summary__row">
+        <span>Subtotal</span>
+        <strong>{{ subtotal | currencyArs }}</strong>
+      </div>
+      @if (discount > 0) {
+        <div class="cart-summary__row cart-summary__row--discount">
+          <span>Descuento</span>
+          <strong>-{{ discount | currencyArs }}</strong>
+        </div>
+      }
+      <div class="cart-summary__row cart-summary__row--total">
+        <span>Total de la venta</span>
+        <strong>{{ total | currencyArs }}</strong>
+      </div>
+      @if (hasDiscount) {
+        <div
+          class="cart-summary__row cart-summary__row--profit"
+          [class.cart-summary__row--loss]="profit < 0"
+        >
+          <span>Ganancia</span>
+          <strong>{{ profit | currencyArs }}</strong>
+        </div>
+      }
+    </div>
+  } @else {
+    <div class="cart-table-wrap">
+      <table class="cart-table">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Cant.</th>
+            <th>P. unit.</th>
+            <th>Subtotal</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (line of cart; track line.key) {
+            <app-sale-cart-line
+              [line]="line"
+              (quantityChange)="quantityChange.emit({ line, quantity: $event })"
+              (remove)="remove.emit(line.key)"
+            />
+          }
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3">Subtotal</td>
+            <td colspan="2">{{ subtotal | currencyArs }}</td>
+          </tr>
+          @if (discount > 0) {
+            <tr class="cart-table__discount">
+              <td colspan="3">Descuento</td>
+              <td colspan="2">-{{ discount | currencyArs }}</td>
+            </tr>
+          }
+          <tr class="cart-table__total">
+            <td colspan="3"><strong>Total de la venta</strong></td>
+            <td colspan="2"><strong>{{ total | currencyArs }}</strong></td>
+          </tr>
+          @if (hasDiscount) {
+            <tr
+              class="cart-table__profit"
+              [class.cart-table__profit--loss]="profit < 0"
+            >
+              <td colspan="3"><strong>Ganancia</strong></td>
+              <td colspan="2"><strong>{{ profit | currencyArs }}</strong></td>
+            </tr>
+          }
+        </tfoot>
+      </table>
+    </div>
+  }
+} @else {
+  <p class="empty-cart">
+    Todavía no hay productos en el carrito. Agregá los que se retiran en el local.
+  </p>
+}

@@ -26,14 +26,12 @@ import {
   DbSelectComponent,
   DbTextareaComponent,
   DbButtonComponent,
-  SaleCartLine,
-  SaleCartLineComponent,
-  SaleCartLineCardComponent,
 } from '@general-components';
+import { SaleFormCartComponent } from './sale-form-cart/sale-form-cart.component';
+import { SaleCartLine } from '@general-components';
 import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { SaleCartService } from '../../../core/services/sale-cart.service';
 import { Router } from '@angular/router';
-import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import { DbSelectOption } from '../../../components/dashboard-form/db-select/db-select.types';
 import {
   DiscountMode,
@@ -62,9 +60,7 @@ let cartLineKey = 0;
     DbTextareaComponent,
     DbFormFooterComponent,
     DbButtonComponent,
-    SaleCartLineComponent,
-    SaleCartLineCardComponent,
-    CurrencyArsPipe,
+    SaleFormCartComponent,
   ],
   templateUrl: './sale-form.component.html',
   styleUrl: './sale-form.component.scss',
