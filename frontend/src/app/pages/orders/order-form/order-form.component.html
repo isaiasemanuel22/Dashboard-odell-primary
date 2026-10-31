@@ -1,45 +1,18 @@
 <db-form class="work-form" [class.quote-form]="isQuoteForm" [class.order-form]="!isQuoteForm">
   <form (ngSubmit)="onSubmit()">
     @if (!isQuoteForm) {
-      <db-form-grid class="quote-form__top">
-        <div class="quote-customer-field">
-          <div class="quote-customer-field__head">
-            <span class="quote-customer-field__label">
-              Cliente
-              <span class="quote-customer-field__required" aria-hidden="true">*</span>
-            </span>
-            <db-button
-              label="+ Cliente nuevo"
-              variant="primary"
-              format="link"
-              extraClass="quote-customer-field__new"
-              (clicked)="openNewCustomer()"
-            />
-          </div>
-          <db-select
-            [(ngModel)]="customerId"
-            name="customerId"
-            placeholder="Seleccionar cliente"
-            [required]="true"
-            [options]="customerOptions"
-          />
-        </div>
-
-        <div class="quote-date-field">
-          <db-input
-            label="Fecha de entrega"
-            type="date"
-            [(ngModel)]="dueDate"
-            name="dueDate"
-            [required]="true"
-            [min]="minDueDate"
-            [error]="dueDateError"
-          />
-          @if (dueDateBusinessDaysHint) {
-            <p class="quote-date-field__validity">{{ dueDateBusinessDaysHint }}</p>
-          }
-        </div>
-      </db-form-grid>
+      <app-order-form-party
+        variant="order"
+        [customerId]="customerId"
+        (customerIdChange)="customerId = $event"
+        [customerOptions]="customerOptions"
+        (newCustomer)="openNewCustomer()"
+        [dueDate]="dueDate"
+        (dueDateChange)="dueDate = $event"
+        [minDueDate]="minDueDate"
+        [dueDateError]="dueDateError"
+        [dueDateHint]="dueDateBusinessDaysHint"
+      />
     }
 
     @if (!isQuoteForm) {
@@ -69,33 +42,15 @@
     @if (isQuoteForm) {
       <div class="quote-layout">
       <div class="quote-layout__main">
-      <db-form-grid class="quote-form__top">
-        <div class="quote-customer-field">
-          <div class="quote-customer-field__head">
-            <span class="quote-customer-field__label">Cliente</span>
-            <db-button
-              label="+ Cliente nuevo"
-              variant="primary"
-              format="link"
-              extraClass="quote-customer-field__new"
-              (clicked)="openNewCustomer()"
-            />
-          </div>
-          <db-select
-            [(ngModel)]="customerId"
-            name="customerId"
-            placeholder="Seleccionar cliente"
-            [required]="false"
-            [options]="customerOptions"
-          />
-        </div>
-
-        <div class="quote-date-field">
-          <span class="quote-date-field__label">Fecha del presupuesto</span>
-          <p class="quote-date-field__value">{{ quotedAtLabel }}</p>
-          <p class="quote-date-field__validity">{{ quoteValidityLabel }}</p>
-        </div>
-      </db-form-grid>
+      <app-order-form-party
+        variant="quote"
+        [customerId]="customerId"
+        (customerIdChange)="customerId = $event"
+        [customerOptions]="customerOptions"
+        (newCustomer)="openNewCustomer()"
+        [quotedAtLabel]="quotedAtLabel"
+        [quoteValidityLabel]="quoteValidityLabel"
+      />
 
       <db-form-grid-full class="quote-description-field">
         <db-rich-text-editor
@@ -142,153 +97,28 @@
       </section>
       </div>
 
-      <aside class="quote-resumen" aria-label="Resumen">
-        <div class="quote-resumen__inner">
-        <h4 class="quote-resumen__title">Resumen</h4>
-
-        <div class="quote-resumen__card">
-          <ul class="quote-resumen__lines">
-            @for (item of quoteResumenItems; track item.key) {
-              <li class="quote-resumen__line">
-                <span class="quote-resumen__dot" [ngClass]="'quote-resumen__dot--' + item.serviceType"></span>
-                <span class="quote-resumen__line-label">{{ item.label }}</span>
-                <strong>{{ item.total | currencyArs }}</strong>
-              </li>
-            } @empty {
-              <li class="quote-resumen__empty">Sin líneas con precio</li>
-            }
-          </ul>
-
-          <p class="quote-resumen__subtotal">
-            <span>{{ quoteSubtotalLabel }}</span>
-            <strong>{{ subtotal | currencyArs }}</strong>
-          </p>
-        </div>
-
-        <div class="quote-discount quote-discount--resumen">
-          <span class="quote-discount__label">Descuento</span>
-          <div class="quote-discount__controls">
-            <div class="discount-segments" role="group" aria-label="Tipo de descuento">
-              <button
-                type="button"
-                class="discount-segment"
-                [class.discount-segment--active]="discountMode === 'none'"
-                (click)="setDiscountMode('none')"
-              >
-                Sin
-              </button>
-              <button
-                type="button"
-                class="discount-segment"
-                [class.discount-segment--active]="discountMode === 'percent'"
-                (click)="setDiscountMode('percent')"
-              >
-                %
-              </button>
-              <button
-                type="button"
-                class="discount-segment"
-                [class.discount-segment--active]="discountMode === 'amount'"
-                (click)="setDiscountMode('amount')"
-              >
-                $
-              </button>
-            </div>
-            @if (discountMode === 'percent') {
-              <db-input
-                type="number"
-                [ngModel]="discountPercent"
-                (ngModelChange)="onDiscountPercentChange($event)"
-                name="discountPercent"
-                [min]="0"
-                [max]="discountPercentMax"
-                [step]="1"
-              />
-            } @else if (discountMode === 'amount') {
-              <db-input
-                type="number"
-                [ngModel]="discountAmount"
-                (ngModelChange)="onDiscountAmountChange($event)"
-                name="discountAmount"
-                [min]="0"
-                [max]="discountAmountMax"
-                [step]="1"
-              />
-            } @else {
-              <db-input
-                type="number"
-                [ngModel]="0"
-                name="discountNone"
-                [disabled]="true"
-                [readonly]="true"
-              />
-            }
-          </div>
-          @if (discountClampHint) {
-            <p class="quote-discount__hint" role="status">{{ discountClampHint }}</p>
-          }
-        </div>
-
-        <div class="quote-resumen__card quote-resumen__total-card">
-          <p class="quote-resumen__total">
-            <span>Total</span>
-            <strong>{{ total | currencyArs }}</strong>
-          </p>
-          @if (discountApplied > 0) {
-            <p class="quote-resumen__meta">
-              <span>Descuento</span>
-              <strong>-{{ discountApplied | currencyArs }}</strong>
-            </p>
-          }
-          <p class="quote-resumen__meta">
-            <span>Costo estimado</span>
-            <strong>{{ totalCost | currencyArs }}</strong>
-          </p>
-          <p
-            class="quote-resumen__meta quote-resumen__meta--profit"
-            [class.quote-resumen__meta--loss]="profit < 0"
-          >
-            <span>Ganancia estimada</span>
-            <strong>{{ profit | currencyArs }}</strong>
-          </p>
-          <p class="quote-resumen__meta">
-            <span>Seña {{ depositPercent }}%</span>
-            <strong>{{ depositAmount | currencyArs }}</strong>
-          </p>
-        </div>
-
-        @if (quoteAreaShares.length > 2) {
-          <div class="quote-resumen__card quote-resumen__areas">
-            <span class="quote-resumen__areas-title">Por área</span>
-            <div class="quote-resumen__bar" role="img" aria-label="Distribución por área">
-              @for (area of quoteAreaShares; track area.serviceType) {
-                <span
-                  class="quote-resumen__bar-part"
-                  [ngClass]="'quote-resumen__dot--' + area.serviceType"
-                  [style.width.%]="area.percent"
-                ></span>
-              }
-            </div>
-            <p class="quote-resumen__areas-legend">
-              @for (area of quoteAreaShares; track area.serviceType; let last = $last) {
-                {{ area.label }} {{ area.percent }}%@if (!last) { · }
-              }
-            </p>
-          </div>
-        }
-
-        @if (quoteResumenWarnings.length) {
-          <div class="quote-resumen__warning" role="note">
-            <span class="quote-resumen__warning-icon" aria-hidden="true">!</span>
-            <div>
-              @for (warning of quoteResumenWarnings; track warning) {
-                <p>{{ warning }}</p>
-              }
-            </div>
-          </div>
-        }
-        </div>
-      </aside>
+      <app-order-form-quote-summary
+        [items]="quoteResumenItems"
+        [subtotalLabel]="quoteSubtotalLabel"
+        [subtotal]="subtotal"
+        [discountMode]="discountMode"
+        [discountPercent]="discountPercent"
+        [discountAmount]="discountAmount"
+        [discountPercentMax]="discountPercentMax"
+        [discountAmountMax]="discountAmountMax"
+        [discountHint]="discountClampHint"
+        [discountApplied]="discountApplied"
+        [total]="total"
+        [totalCost]="totalCost"
+        [profit]="profit"
+        [depositPercent]="depositPercent"
+        [depositAmount]="depositAmount"
+        [areaShares]="quoteAreaShares"
+        [warnings]="quoteResumenWarnings"
+        (modeChange)="setDiscountMode($event)"
+        (percentChange)="onDiscountPercentChange($event)"
+        (amountChange)="onDiscountAmountChange($event)"
+      />
       </div>
     } @else {
       <section class="quote-lines-section">
@@ -323,69 +153,18 @@
         />
 
         <div class="quote-totals-row">
-          <div class="quote-discount">
-            <span class="quote-discount__label">Descuento</span>
-            <div class="quote-discount__controls">
-              <div class="discount-segments" role="group" aria-label="Tipo de descuento">
-                <button
-                  type="button"
-                  class="discount-segment"
-                  [class.discount-segment--active]="discountMode === 'none'"
-                  (click)="setDiscountMode('none')"
-                >
-                  Sin descuento
-                </button>
-                <button
-                  type="button"
-                  class="discount-segment"
-                  [class.discount-segment--active]="discountMode === 'percent'"
-                  (click)="setDiscountMode('percent')"
-                >
-                  %
-                </button>
-                <button
-                  type="button"
-                  class="discount-segment"
-                  [class.discount-segment--active]="discountMode === 'amount'"
-                  (click)="setDiscountMode('amount')"
-                >
-                  $
-                </button>
-              </div>
-              @if (discountMode === 'percent') {
-                <db-input
-                  type="number"
-                  [ngModel]="discountPercent"
-                  (ngModelChange)="onDiscountPercentChange($event)"
-                  name="discountPercent"
-                  [min]="0"
-                  [max]="discountPercentMax"
-                  [step]="1"
-                />
-              } @else if (discountMode === 'amount') {
-                <db-input
-                  type="number"
-                  [ngModel]="discountAmount"
-                  (ngModelChange)="onDiscountAmountChange($event)"
-                  name="discountAmount"
-                  [min]="0"
-                  [max]="discountAmountMax"
-                  [step]="1"
-                />
-              } @else {
-                <db-input
-                  type="number"
-                  [ngModel]="0"
-                  name="discountNone"
-                  [disabled]="true"
-                  [readonly]="true"
-                />
-              }
-            </div>
-            @if (discountClampHint) {
-              <p class="quote-discount__hint" role="status">{{ discountClampHint }}</p>
-            }
-          </div>
+          <app-order-form-discount
+            noneLabel="Sin descuento"
+            [mode]="discountMode"
+            [percent]="discountPercent"
+            [amount]="discountAmount"
+            [percentMax]="discountPercentMax"
+            [amountMax]="discountAmountMax"
+            [hint]="discountClampHint"
+            (modeChange)="setDiscountMode($event)"
+            (percentChange)="onDiscountPercentChange($event)"
+            (amountChange)="onDiscountAmountChange($event)"
+          />
 
           <div class="order-summary order-summary--quote">
             <p class="order-summary__row">

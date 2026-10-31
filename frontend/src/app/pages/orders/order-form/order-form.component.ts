@@ -11,7 +11,6 @@ import {
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { NgClass } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import {
   CreateOrderPayload,
@@ -41,10 +40,7 @@ import {
   DbFormComponent,
   DbFormErrorComponent,
   DbFormFooterComponent,
-  DbFormGridComponent,
   DbFormGridFullComponent,
-  DbInputComponent,
-  DbSelectComponent,
   DbTextareaComponent,
   DbRichTextEditorComponent,
   DbButtonComponent,
@@ -147,15 +143,16 @@ import {
   resolveOrderQuoteWashMinutes,
 } from '../../../components/order-quote-composition.util';
 import { OrderFormLineComponent } from './linea/order-form-line.component';
+import { OrderFormDiscountComponent } from './order-form-discount/order-form-discount.component';
+import { OrderFormPartyComponent } from './order-form-party/order-form-party.component';
+import { OrderFormQuoteSummaryComponent } from './order-form-quote-summary/order-form-quote-summary.component';
+import {
+  buildQuoteAreaShares,
+  buildQuoteResumenItems,
+  buildQuoteResumenWarnings,
+} from './order-form-quote-summary/order-form-quote-summary.util';
 
 export type OrderFormVariant = 'order' | 'quote';
-
-const AREA_SHORT_LABELS: Record<ServiceType, string> = {
-  [ServiceType.IMPRESION_3D]: '3D',
-  [ServiceType.DISENO_GRAFICO]: 'Diseño',
-  [ServiceType.MODELADO]: 'Modelado',
-  [ServiceType.ESTAMPADO]: 'Estampado',
-};
 
 export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
 
@@ -163,13 +160,9 @@ export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
   selector: 'app-order-form',
   standalone: true,
   imports: [
-    NgClass,
     FormsModule,
     DbFormComponent,
-    DbFormGridComponent,
     DbFormGridFullComponent,
-    DbSelectComponent,
-    DbInputComponent,
     DbTextareaComponent,
     DbRichTextEditorComponent,
     DbFormErrorComponent,
@@ -177,6 +170,9 @@ export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
     DbButtonComponent,
     CurrencyArsPipe,
     OrderFormLineComponent,
+    OrderFormDiscountComponent,
+    OrderFormPartyComponent,
+    OrderFormQuoteSummaryComponent,
   ],
   templateUrl: './order-form.component.html',
   styleUrl: './order-form.component.scss',
@@ -401,75 +397,31 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return Math.round(this.total * DEPOSIT_FACTOR);
   }
 
-  get quoteResumenItems(): Array<{
-    key: string;
-    serviceType: ServiceType;
-    label: string;
-    total: number;
-  }> {
-    // Incluye líneas con precio 0/negativo para no “desaparecerlas” del resumen.
-    return this.lines
-      .map((line, index) => ({ line, index }))
-      .filter(({ line }) => !isLineBlank(line))
-      .map(({ line, index }) => {
-        const qty = Number(line.quantity);
-        const qtyLabel = Number.isFinite(qty) ? qty : line.quantity;
-        return {
-          key: `${index}-${line.serviceType}-${line.productId || 'custom'}`,
-          serviceType: line.serviceType,
-          label: `${this.lineTitle(line, index)} · ${qtyLabel} u`,
-          total: this.linePriceTotal(line),
-        };
-      });
+  get quoteResumenItems() {
+    return buildQuoteResumenItems(
+      this.lines,
+      (line, index) => this.lineTitle(line, index),
+      (line) => this.linePriceTotal(line),
+    );
   }
 
-  get quoteAreaShares(): Array<{ serviceType: ServiceType; label: string; percent: number }> {
-    const subtotal = this.subtotal;
-    if (subtotal <= 0) return [];
-    const totals = new Map<ServiceType, number>();
-    for (const line of this.billableLines) {
-      totals.set(
-        line.serviceType,
-        (totals.get(line.serviceType) ?? 0) + this.linePriceTotal(line),
-      );
-    }
-    return [...totals.entries()]
-      .filter(([, value]) => value > 0)
-      .sort((a, b) => b[1] - a[1])
-      .map(([serviceType, value]) => ({
-        serviceType,
-        label: AREA_SHORT_LABELS[serviceType],
-        percent: Math.round((value / subtotal) * 100),
-      }));
+  get quoteAreaShares() {
+    return buildQuoteAreaShares(
+      this.billableLines,
+      this.subtotal,
+      (line) => this.linePriceTotal(line),
+    );
   }
 
   get quoteResumenWarnings(): string[] {
-    const warnings: string[] = [];
-    const missingRates = [
+    const missingRateLabels = [
       ...new Set(
         this.lines
           .filter((line) => this.designRateMissingHint(line))
           .map((line) => this.serviceLabel(line.serviceType)),
       ),
     ];
-    if (missingRates.length > 1) {
-      warnings.push(
-        'Diseño y modelado salen en costo porque sus tarifas por hora están en $ 0. La seña y el área siguen contando.',
-      );
-    } else if (missingRates.length === 1) {
-      const label = missingRates[0] === SERVICE_TYPE_LABELS[ServiceType.DISENO_GRAFICO]
-        ? 'Diseño'
-        : missingRates[0] === SERVICE_TYPE_LABELS[ServiceType.MODELADO]
-          ? 'Modelado'
-          : missingRates[0];
-      warnings.push(
-        `${label} sale en costo porque la tarifa por hora está en $ 0. La seña y el área siguen contando.`,
-      );
-    }
-    for (const name of this.suppliesWithoutPrice()) {
-      warnings.push(`${name} no tiene precio en Insumos: el costo no lo incluye.`);
-    }
-    return warnings;
+    return buildQuoteResumenWarnings(missingRateLabels, this.suppliesWithoutPrice());
   }
 
   lineTitle(line: OrderLineDraft, index: number): string {

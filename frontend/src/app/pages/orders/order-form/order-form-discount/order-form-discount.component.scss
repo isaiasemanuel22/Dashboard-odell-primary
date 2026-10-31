@@ -1,0 +1,82 @@
+@use '../../../../shared/styles/variables' as *;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.quote-discount__hint {
+  margin: 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: $color-text-muted;
+}
+
+.quote-discount__label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: $color-text-label;
+}
+
+.quote-discount__controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 88px;
+  gap: 0.65rem;
+  align-items: center;
+}
+
+.discount-segments {
+  display: inline-flex;
+  border: 1px solid #c9d9e4;
+  border-radius: 0.5rem;
+  overflow: hidden;
+  background: #fff;
+}
+
+.discount-segment {
+  appearance: none;
+  border: none;
+  background: transparent;
+  color: $color-text-label;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  line-height: 1.2;
+  border-right: 1px solid #c9d9e4;
+
+  &:last-child {
+    border-right: none;
+  }
+
+  &--active {
+    background: $color-brand-deep;
+    color: #fff;
+    font-weight: 600;
+  }
+}
+
+:host(.quote-discount--resumen) {
+  gap: 0.35rem;
+
+  .quote-discount__label {
+    font-size: 0.75rem;
+  }
+
+  .quote-discount__controls {
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 0.45rem;
+  }
+
+  .discount-segment {
+    padding: 0.5rem 0.7rem;
+    font-size: 0.75rem;
+  }
+
+  ::ng-deep .db-input {
+    min-height: 2.1rem;
+    background: #eef3f7;
+  }
+}

@@ -1,0 +1,97 @@
+<aside class="quote-resumen" aria-label="Resumen">
+  <div class="quote-resumen__inner">
+    <h4 class="quote-resumen__title">Resumen</h4>
+
+    <div class="quote-resumen__card">
+      <ul class="quote-resumen__lines">
+        @for (item of items; track item.key) {
+          <li class="quote-resumen__line">
+            <span class="quote-resumen__dot" [ngClass]="'quote-resumen__dot--' + item.serviceType"></span>
+            <span class="quote-resumen__line-label">{{ item.label }}</span>
+            <strong>{{ item.total | currencyArs }}</strong>
+          </li>
+        } @empty {
+          <li class="quote-resumen__empty">Sin líneas con precio</li>
+        }
+      </ul>
+
+      <p class="quote-resumen__subtotal">
+        <span>{{ subtotalLabel }}</span>
+        <strong>{{ subtotal | currencyArs }}</strong>
+      </p>
+    </div>
+
+    <app-order-form-discount
+      variant="resumen"
+      noneLabel="Sin"
+      [mode]="discountMode"
+      [percent]="discountPercent"
+      [amount]="discountAmount"
+      [percentMax]="discountPercentMax"
+      [amountMax]="discountAmountMax"
+      [hint]="discountHint"
+      (modeChange)="modeChange.emit($event)"
+      (percentChange)="percentChange.emit($event)"
+      (amountChange)="amountChange.emit($event)"
+    />
+
+    <div class="quote-resumen__card quote-resumen__total-card">
+      <p class="quote-resumen__total">
+        <span>Total</span>
+        <strong>{{ total | currencyArs }}</strong>
+      </p>
+      @if (discountApplied > 0) {
+        <p class="quote-resumen__meta">
+          <span>Descuento</span>
+          <strong>-{{ discountApplied | currencyArs }}</strong>
+        </p>
+      }
+      <p class="quote-resumen__meta">
+        <span>Costo estimado</span>
+        <strong>{{ totalCost | currencyArs }}</strong>
+      </p>
+      <p
+        class="quote-resumen__meta quote-resumen__meta--profit"
+        [class.quote-resumen__meta--loss]="profit < 0"
+      >
+        <span>Ganancia estimada</span>
+        <strong>{{ profit | currencyArs }}</strong>
+      </p>
+      <p class="quote-resumen__meta">
+        <span>Seña {{ depositPercent }}%</span>
+        <strong>{{ depositAmount | currencyArs }}</strong>
+      </p>
+    </div>
+
+    @if (areaShares.length > 2) {
+      <div class="quote-resumen__card quote-resumen__areas">
+        <span class="quote-resumen__areas-title">Por área</span>
+        <div class="quote-resumen__bar" role="img" aria-label="Distribución por área">
+          @for (area of areaShares; track area.serviceType) {
+            <span
+              class="quote-resumen__bar-part"
+              [ngClass]="'quote-resumen__dot--' + area.serviceType"
+              [style.width.%]="area.percent"
+            ></span>
+          }
+        </div>
+        <p class="quote-resumen__areas-legend">
+          @for (area of areaShares; track area.serviceType; let last = $last) {
+            {{ area.label }} {{ area.percent }}%@if (!last) { · }
+          }
+        </p>
+      </div>
+    }
+
+    @if (warnings.length) {
+      <div class="quote-resumen__warning" role="note">
+        <span class="quote-resumen__warning-icon" aria-hidden="true">!</span>
+        <div>
+          @for (warning of warnings; track warning) {
+            <p>{{ warning }}</p>
+          }
+        </div>
+      </div>
+    }
+  </div>
+</aside>

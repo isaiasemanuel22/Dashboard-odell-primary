@@ -1,0 +1,51 @@
+<db-form-grid class="quote-form__top">
+  <div class="quote-customer-field">
+    <div class="quote-customer-field__head">
+      <span class="quote-customer-field__label">
+        Cliente
+        @if (variant === 'order') {
+          <span class="quote-customer-field__required" aria-hidden="true">*</span>
+        }
+      </span>
+      <db-button
+        label="+ Cliente nuevo"
+        variant="primary"
+        format="link"
+        extraClass="quote-customer-field__new"
+        (clicked)="newCustomer.emit()"
+      />
+    </div>
+    <db-select
+      [ngModel]="customerId"
+      (ngModelChange)="customerIdChange.emit($event)"
+      name="customerId"
+      placeholder="Seleccionar cliente"
+      [required]="variant === 'order'"
+      [options]="customerOptions"
+    />
+  </div>
+
+  @if (variant === 'order') {
+    <div class="quote-date-field">
+      <db-input
+        label="Fecha de entrega"
+        type="date"
+        [ngModel]="dueDate"
+        (ngModelChange)="dueDateChange.emit($event)"
+        name="dueDate"
+        [required]="true"
+        [min]="minDueDate"
+        [error]="dueDateError"
+      />
+      @if (dueDateHint) {
+        <p class="quote-date-field__validity">{{ dueDateHint }}</p>
+      }
+    </div>
+  } @else {
+    <div class="quote-date-field">
+      <span class="quote-date-field__label">Fecha del presupuesto</span>
+      <p class="quote-date-field__value">{{ quotedAtLabel }}</p>
+      <p class="quote-date-field__validity">{{ quoteValidityLabel }}</p>
+    </div>
+  }
+</db-form-grid>

@@ -1,0 +1,61 @@
+<span class="quote-discount__label">Descuento</span>
+<div class="quote-discount__controls">
+  <div class="discount-segments" role="group" aria-label="Tipo de descuento">
+    <button
+      type="button"
+      class="discount-segment"
+      [class.discount-segment--active]="mode === 'none'"
+      (click)="modeChange.emit('none')"
+    >
+      {{ noneLabel }}
+    </button>
+    <button
+      type="button"
+      class="discount-segment"
+      [class.discount-segment--active]="mode === 'percent'"
+      (click)="modeChange.emit('percent')"
+    >
+      %
+    </button>
+    <button
+      type="button"
+      class="discount-segment"
+      [class.discount-segment--active]="mode === 'amount'"
+      (click)="modeChange.emit('amount')"
+    >
+      $
+    </button>
+  </div>
+  @if (mode === 'percent') {
+    <db-input
+      type="number"
+      [ngModel]="percent"
+      (ngModelChange)="percentChange.emit($event)"
+      name="discountPercent"
+      [min]="0"
+      [max]="percentMax"
+      [step]="1"
+    />
+  } @else if (mode === 'amount') {
+    <db-input
+      type="number"
+      [ngModel]="amount"
+      (ngModelChange)="amountChange.emit($event)"
+      name="discountAmount"
+      [min]="0"
+      [max]="amountMax"
+      [step]="1"
+    />
+  } @else {
+    <db-input
+      type="number"
+      [ngModel]="0"
+      name="discountNone"
+      [disabled]="true"
+      [readonly]="true"
+    />
+  }
+</div>
+@if (hint) {
+  <p class="quote-discount__hint" role="status">{{ hint }}</p>
+}
