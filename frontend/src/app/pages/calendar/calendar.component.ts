@@ -40,6 +40,7 @@ import {
   weekRangeContaining,
 } from '../../shared/utils/calendar-grid.util';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
+import { CalendarSideComponent } from './calendar-side/calendar-side.component';
 
 type CalendarView = 'month' | 'week' | 'list';
 type CalendarFilter = 'todos' | CalendarFeedType;
@@ -60,6 +61,7 @@ const TYPE_COLORS: Record<CalendarFeedType | 'todos', string> = {
     DbCalendarAgendaComponent,
     DbPillGroupComponent,
     DbSegmentedControlComponent,
+    CalendarSideComponent,
   ],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',

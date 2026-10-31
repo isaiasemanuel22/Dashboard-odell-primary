@@ -98,47 +98,15 @@
       }
     </div>
 
-    <aside class="cal-side">
-      <section class="cal-card">
-        <div class="cal-card__head">
-          <h3 class="cal-card__title">Hoy</h3>
-          <span class="cal-card__meta">{{ todayLabel }}</span>
-        </div>
-        <db-calendar-agenda
-          [rows]="todayRows"
-          emptyText="Sin recordatorios para hoy."
-          (toggle)="onAgendaToggle($event)"
-        />
-      </section>
-
-      <section class="cal-card">
-        <div class="cal-card__head">
-          <h3 class="cal-card__title cal-card__title--danger">Atrasados</h3>
-          @if (overdueCount > 0) {
-            <span class="cal-badge">{{ overdueCount }}</span>
-          }
-        </div>
-        <db-calendar-agenda
-          [rows]="overdueRows"
-          emptyText="No hay entregas atrasadas."
-          (open)="onAgendaOpen($event)"
-        />
-      </section>
-
-      <section class="cal-card">
-        <div class="cal-card__head">
-          <h3 class="cal-card__title">Próximos 7 días</h3>
-          <button type="button" class="cal-card__link" (click)="setView('list')">
-            Ver lista
-          </button>
-        </div>
-        <db-calendar-agenda
-          [rows]="upcomingRows"
-          emptyText="Nada en los próximos 7 días."
-          (toggle)="onAgendaToggle($event)"
-          (open)="onAgendaOpen($event)"
-        />
-      </section>
-    </aside>
+    <app-calendar-side
+      [todayLabel]="todayLabel"
+      [todayRows]="todayRows"
+      [overdueCount]="overdueCount"
+      [overdueRows]="overdueRows"
+      [upcomingRows]="upcomingRows"
+      (toggleRow)="onAgendaToggle($event)"
+      (openRow)="onAgendaOpen($event)"
+      (showList)="setView('list')"
+    />
   </div>
 }

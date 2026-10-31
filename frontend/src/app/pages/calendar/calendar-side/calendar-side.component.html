@@ -1,0 +1,40 @@
+<section class="cal-card">
+  <div class="cal-card__head">
+    <h3 class="cal-card__title">Hoy</h3>
+    <span class="cal-card__meta">{{ todayLabel }}</span>
+  </div>
+  <db-calendar-agenda
+    [rows]="todayRows"
+    emptyText="Sin recordatorios para hoy."
+    (toggle)="toggleRow.emit($event)"
+  />
+</section>
+
+<section class="cal-card">
+  <div class="cal-card__head">
+    <h3 class="cal-card__title cal-card__title--danger">Atrasados</h3>
+    @if (overdueCount > 0) {
+      <span class="cal-badge">{{ overdueCount }}</span>
+    }
+  </div>
+  <db-calendar-agenda
+    [rows]="overdueRows"
+    emptyText="No hay entregas atrasadas."
+    (open)="openRow.emit($event)"
+  />
+</section>
+
+<section class="cal-card">
+  <div class="cal-card__head">
+    <h3 class="cal-card__title">Próximos 7 días</h3>
+    <button type="button" class="cal-card__link" (click)="showList.emit()">
+      Ver lista
+    </button>
+  </div>
+  <db-calendar-agenda
+    [rows]="upcomingRows"
+    emptyText="Nada en los próximos 7 días."
+    (toggle)="toggleRow.emit($event)"
+    (open)="openRow.emit($event)"
+  />
+</section>

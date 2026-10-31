@@ -1,0 +1,61 @@
+@use '../../../shared/styles/variables' as *;
+
+:host {
+  flex: 1 1 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.cal-card {
+  background: $color-surface;
+  border: 1px solid $color-border-soft;
+  border-radius: 12px;
+  padding: 20px;
+}
+
+.cal-card__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  margin-bottom: 6px;
+  gap: 8px;
+}
+
+.cal-card__title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: $color-text;
+
+  &--danger {
+    color: $color-danger-text;
+  }
+}
+
+.cal-card__meta {
+  font-size: 12px;
+  color: $color-text-muted;
+}
+
+.cal-card__link {
+  border: 0;
+  background: transparent;
+  color: $color-brand-deep;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+}
+
+.cal-badge {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  background: #fee2e2;
+  color: #b91c1c;
+}
