@@ -94,9 +94,9 @@
                       <db-color-select
                         [appearance]="field.appearance ?? 'panel'"
                         [formControlName]="field.name"
-                        [filamentType]="$any(colorFilter(field, i).filamentType)"
+                        [filamentType]="colorFilter(field, i).filamentType"
                         [resinType]="colorFilter(field, i).resinType"
-                        [supplyCategory]="$any(colorFilter(field, i).supplyCategory)"
+                        [supplyCategory]="colorFilter(field, i).supplyCategory"
                         [supplyId]="colorFilter(field, i).supplyId"
                         [required]="field.required ?? false"
                       />
@@ -237,9 +237,9 @@
                       [label]="field.label"
                       [formControlName]="field.name"
                       [appearance]="field.appearance ?? 'panel'"
-                      [filamentType]="$any(colorFilter(field, i).filamentType)"
+                      [filamentType]="colorFilter(field, i).filamentType"
                       [resinType]="colorFilter(field, i).resinType"
-                      [supplyCategory]="$any(colorFilter(field, i).supplyCategory)"
+                      [supplyCategory]="colorFilter(field, i).supplyCategory"
                       [supplyId]="colorFilter(field, i).supplyId"
                       [required]="field.required ?? false"
                     />

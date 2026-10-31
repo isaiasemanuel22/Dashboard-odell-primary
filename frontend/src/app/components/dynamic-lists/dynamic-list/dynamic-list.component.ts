@@ -31,7 +31,7 @@ import {
   DbTextareaComponent,
 } from '@dashboard-form';
 import type { DbSelectOption } from '@dashboard-form';
-import { INDISTINTO_COLOR_ID } from '../../../core/models';
+import { FilamentType, INDISTINTO_COLOR_ID, SupplyCategory } from '../../../core/models';
 import { normalizeColorId } from '../../../shared/utils/color.helpers';
 import {
   DynamicFieldConfig,
@@ -242,17 +242,17 @@ export class DynamicListComponent<T extends object>
     field: DynamicColorSelectFieldConfig<T>,
     index: number,
   ): {
-    filamentType: string | null;
+    filamentType: FilamentType | null;
     resinType: string | null;
-    supplyCategory: string | null;
+    supplyCategory: SupplyCategory | null;
     supplyId: string | null;
   } {
     const group = this.itemsArray.at(index);
     const item = group ? this.rawItem(group) : ({} as T);
     return {
-      filamentType: field.filamentTypeFrom?.(item) ?? null,
+      filamentType: (field.filamentTypeFrom?.(item) ?? null) as FilamentType | null,
       resinType: field.resinTypeFrom?.(item) ?? null,
-      supplyCategory: field.supplyCategoryFrom?.(item) ?? null,
+      supplyCategory: (field.supplyCategoryFrom?.(item) ?? null) as SupplyCategory | null,
       supplyId: field.supplyIdFrom?.(item) ?? null,
     };
   }
