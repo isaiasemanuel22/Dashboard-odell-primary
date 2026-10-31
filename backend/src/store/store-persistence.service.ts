@@ -26,22 +26,13 @@ import {
   mapImpresoFromDb,
   mapImpresoToDb,
   mapOrderFromDb,
-  mapOrderItemToDb,
-  mapOrderToDbCreate,
-  mapOrderToDbUpdate,
   mapPrintJobFromDb,
   mapPrintJobToDb,
   mapProductFromDb,
   mapProductToDb,
   mapQuoteFromDb,
-  mapQuoteItemToDb,
-  mapQuoteToDbCreate,
-  mapQuoteToDbUpdate,
   mapRetailSaleFromDb,
-  mapRetailSaleItemToDb,
-  mapRetailSaleToDb,
   mapSettingsFromDb,
-  mapSettingsToDb,
   mapSupplyFromDb,
   mapSupplyToDb,
   mapTreasuryExpenseFromDb,
@@ -51,6 +42,13 @@ import { adoptLegacyBrandNames } from './brand-link.util';
 import { createEmptyState, createSeedState } from './store.seed';
 import { StoreService } from './store.service';
 import { StoreState } from './store.state';
+import {
+  syncCollection as syncCollectionRows,
+  syncOrders as syncOrderRows,
+  syncQuotes as syncQuoteRows,
+  syncRetailSales as syncRetailSaleRows,
+  syncSettings as syncSettingsRow,
+} from './store-document.sync';
 
 export interface PersistenceStatus {
   dbEnabled: boolean;
@@ -500,98 +498,28 @@ export class StorePersistenceService
     tx: Prisma.TransactionClient,
     settings: GeneralSettings,
   ): Promise<void> {
-    const data = mapSettingsToDb(settings);
-    await tx.appSettings.upsert({
-      where: { id: 1 },
-      create: { id: 1, ...data },
-      update: data,
-    });
+    await syncSettingsRow(tx, settings);
   }
 
   private async syncOrders(
     tx: Prisma.TransactionClient,
     orders: Order[],
   ): Promise<void> {
-    const orderIds = orders.map((order) => order.id);
-    await tx.orderItem.deleteMany({
-      where: { orderId: { notIn: orderIds.length ? orderIds : ['__none__'] } },
-    });
-    await tx.order.deleteMany({
-      where: { id: { notIn: orderIds.length ? orderIds : ['__none__'] } },
-    });
-
-    for (const order of orders) {
-      await tx.order.upsert({
-        where: { id: order.id },
-        create: mapOrderToDbCreate(order),
-        update: mapOrderToDbUpdate(order),
-      });
-
-      await tx.orderItem.deleteMany({ where: { orderId: order.id } });
-      for (const [index, item] of order.items.entries()) {
-        await tx.orderItem.create({
-          data: mapOrderItemToDb(order.id, index, item),
-        });
-      }
-    }
+    await syncOrderRows(tx, orders);
   }
 
   private async syncQuotes(
     tx: Prisma.TransactionClient,
     quotes: Quote[],
   ): Promise<void> {
-    const quoteIds = quotes.map((quote) => quote.id);
-    await tx.quoteItem.deleteMany({
-      where: { quoteId: { notIn: quoteIds.length ? quoteIds : ['__none__'] } },
-    });
-    await tx.quote.deleteMany({
-      where: { id: { notIn: quoteIds.length ? quoteIds : ['__none__'] } },
-    });
-
-    for (const quote of quotes) {
-      await tx.quote.upsert({
-        where: { id: quote.id },
-        create: mapQuoteToDbCreate(quote),
-        update: mapQuoteToDbUpdate(quote),
-      });
-
-      await tx.quoteItem.deleteMany({ where: { quoteId: quote.id } });
-      for (const [index, item] of quote.items.entries()) {
-        await tx.quoteItem.create({
-          data: mapQuoteItemToDb(quote.id, index, item),
-        });
-      }
-    }
+    await syncQuoteRows(tx, quotes);
   }
 
   private async syncRetailSales(
     tx: Prisma.TransactionClient,
     sales: RetailSale[],
   ): Promise<void> {
-    const saleIds = sales.map((sale) => sale.id);
-    await tx.retailSaleItem.deleteMany({
-      where: {
-        retailSaleId: { notIn: saleIds.length ? saleIds : ['__none__'] },
-      },
-    });
-    await tx.retailSale.deleteMany({
-      where: { id: { notIn: saleIds.length ? saleIds : ['__none__'] } },
-    });
-
-    for (const sale of sales) {
-      await tx.retailSale.upsert({
-        where: { id: sale.id },
-        create: mapRetailSaleToDb(sale),
-        update: mapRetailSaleToDb(sale),
-      });
-
-      await tx.retailSaleItem.deleteMany({ where: { retailSaleId: sale.id } });
-      for (const [index, item] of sale.items.entries()) {
-        await tx.retailSaleItem.create({
-          data: mapRetailSaleItemToDb(sale.id, index, item),
-        });
-      }
-    }
+    await syncRetailSaleRows(tx, sales);
   }
 
   private async syncCollection<T extends { id: string }>(
@@ -600,13 +528,9 @@ export class StorePersistenceService
     deleteOrphans: (ids: string[]) => Promise<unknown>,
     upsert: (row: T) => Promise<unknown>,
   ): Promise<void> {
-    const ids = rows.map((row) => row.id);
-    await deleteOrphans(ids.length ? ids : ['__none__']);
-
-    for (const row of rows) {
-      await upsert(row);
-    }
+    await syncCollectionRows(tx, rows, deleteOrphans, upsert);
   }
+
 
   private errorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);
