@@ -9,7 +9,6 @@ import {
   Output,
   inject,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import {
   Category,
@@ -31,10 +30,7 @@ import { computeAssemblableUnits } from '../../../../shared/utils/stock.helpers'
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import { ProductComponentsTableComponent } from '../../../../components/product-components-table/product-components-table.component';
 import { ProductPiecePickerComponent } from '../../../../components/product-piece-picker/product-piece-picker.component';
-import {
-  DbCheckboxComponent,
-  DbInputComponent,
-} from '@dashboard-form';
+import { ProductFormAssemblyComponent } from './product-form-assembly/product-form-assembly.component';
 
 export interface ProductFormComponentsValue {
   components: ProductComponent[];
@@ -45,12 +41,10 @@ export interface ProductFormComponentsValue {
   selector: 'app-product-form-components-section',
   standalone: true,
   imports: [
-    FormsModule,
-    DbInputComponent,
-    DbCheckboxComponent,
     CurrencyArsPipe,
     ProductComponentsTableComponent,
     ProductPiecePickerComponent,
+    ProductFormAssemblyComponent,
   ],
   templateUrl: './product-form-components-section.component.html',
   styleUrl: '../product-form.component.scss',
