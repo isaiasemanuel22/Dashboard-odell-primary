@@ -77,7 +77,7 @@ export class PressCycleListComponent
   private onChange: (value: EstampadoPressCycle[]) => void = () => {};
   private onTouched: () => void = () => {};
 
-  readonly cycleConfig: DynamicListConfig = {
+  readonly cycleConfig: DynamicListConfig<EstampadoPressCycle> = {
     legend: 'Bajadas de plancha',
     description: 'Cada bajada es un ciclo de plancha con su duración',
     headerAside: () => this.pressAside(),

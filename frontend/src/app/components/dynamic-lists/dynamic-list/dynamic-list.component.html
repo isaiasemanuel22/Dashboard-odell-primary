@@ -13,7 +13,7 @@
     }
     @if (config.layout !== 'table' && config.totalLabel && config.totalValueFn) {
       <strong class="dynamic-list-total">
-        {{ config.totalLabel }} {{ config.totalValueFn(itemsArray.getRawValue()) }}
+        {{ config.totalLabel }} {{ config.totalValueFn(rawItems()) }}
       </strong>
     }
   </div>
@@ -102,7 +102,7 @@
                       />
                     }
                     @case ('dimensions') {
-                      @if (field.readonlyText?.(itemGroup.getRawValue()); as measure) {
+                      @if (field.readonlyText?.(rawItem(itemGroup)); as measure) {
                         <span class="line-table__measure-readonly">{{ measure }}</span>
                       } @else {
                       <div class="line-table__measure">
@@ -126,7 +126,7 @@
                   }
                 }
                 @for (column of config.displayColumns ?? []; track column.label) {
-                  @let cell = column.render(itemGroup.getRawValue());
+                  @let cell = column.render(rawItem(itemGroup));
                   <div
                     class="line-table__meta"
                     [class.is-missing]="cell.tone === 'missing'"
@@ -140,7 +140,7 @@
                 }
                 @if (config.rowCost) {
                   <strong class="line-table__cost">
-                    {{ config.rowCost(itemGroup.getRawValue()) | currencyArs }}
+                    {{ config.rowCost(rawItem(itemGroup)) | currencyArs }}
                   </strong>
                 }
                 @if (canRemove()) {
@@ -180,11 +180,11 @@
               @if (embedded && config.footnote) {
                 <p class="line-table__note">{{ config.footnote }}</p>
               } @else if (config.totalValueFn) {
-                <p class="line-table__foot">{{ config.totalValueFn(itemsArray.getRawValue()) }}</p>
+                <p class="line-table__foot">{{ config.totalValueFn(rawItems()) }}</p>
               }
             </div>
           } @else if (config.totalValueFn) {
-            <p class="line-table__foot">{{ config.totalValueFn(itemsArray.getRawValue()) }}</p>
+            <p class="line-table__foot">{{ config.totalValueFn(rawItems()) }}</p>
           }
         </div>
       } @else {

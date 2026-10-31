@@ -60,7 +60,7 @@ export class ResinLineListComponent implements OnInit, OnDestroy {
   private generalSettings: GeneralSettings | null = null;
   private writing = false;
 
-  readonly resinConfig: DynamicListConfig = {
+  readonly resinConfig: DynamicListConfig<ResinTableLine> = {
     legend: 'Resina',
     description: 'Material y color de la impresión',
     layout: 'table',

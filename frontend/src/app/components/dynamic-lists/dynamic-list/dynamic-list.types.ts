@@ -1,6 +1,6 @@
 import type { DbSelectOption } from '@dashboard-form/db-select/db-select.types';
 
-export interface DynamicInputFieldConfig {
+export interface DynamicInputFieldConfig<T> {
   type: 'input';
   name: string;
   label: string;
@@ -14,10 +14,10 @@ export interface DynamicInputFieldConfig {
   fullWidth?: boolean;
   hidden?: boolean;
   control?: 'stepper';
-  changeFn?: (item: any, items: any[]) => void;
+  changeFn?: (item: T, items: T[]) => void;
 }
 
-export interface DynamicSelectFieldConfig {
+export interface DynamicSelectFieldConfig<T> {
   type: 'select';
   name: string;
   label: string;
@@ -25,21 +25,21 @@ export interface DynamicSelectFieldConfig {
   required?: boolean;
   fullWidth?: boolean;
   options?: DbSelectOption[];
-  optionsFn?: (item: any, items: any[]) => DbSelectOption[];
+  optionsFn?: (item: T, items: T[]) => DbSelectOption[];
   hidden?: boolean;
-  changeFn?: (item: any, items: any[]) => void;
+  changeFn?: (item: T, items: T[]) => void;
 }
 
-export interface DynamicTextareaFieldConfig {
+export interface DynamicTextareaFieldConfig<T> {
   type: 'textarea';
   name: string;
   label: string;
   placeholder?: string;
   fullWidth?: boolean;
-  changeFn?: (item: any, items: any[]) => void;
+  changeFn?: (item: T, items: T[]) => void;
 }
 
-export interface DynamicDimensionsFieldConfig {
+export interface DynamicDimensionsFieldConfig<T> {
   type: 'dimensions';
   label?: string;
   widthName: string;
@@ -49,11 +49,11 @@ export interface DynamicDimensionsFieldConfig {
   min?: number;
   step?: number;
   /** En tabla: si devuelve texto, la medida se muestra de solo lectura. */
-  readonlyText?: (item: any) => string | null;
-  changeFn?: (item: any, items: any[]) => void;
+  readonlyText?: (item: T) => string | null;
+  changeFn?: (item: T, items: T[]) => void;
 }
 
-export interface DynamicColorSelectFieldConfig {
+export interface DynamicColorSelectFieldConfig<T> {
   type: 'color-select';
   name: string;
   label: string;
@@ -61,42 +61,42 @@ export interface DynamicColorSelectFieldConfig {
   fullWidth?: boolean;
   appearance?: 'panel' | 'popover';
   /** Filtros de stock para `db-color-select` (no se pasan opciones). */
-  filamentTypeFrom?: (item: any) => string | null | undefined;
-  resinTypeFrom?: (item: any) => string | null | undefined;
-  supplyCategoryFrom?: (item: any) => string | null | undefined;
-  supplyIdFrom?: (item: any) => string | null | undefined;
+  filamentTypeFrom?: (item: T) => string | null | undefined;
+  resinTypeFrom?: (item: T) => string | null | undefined;
+  supplyCategoryFrom?: (item: T) => string | null | undefined;
+  supplyIdFrom?: (item: T) => string | null | undefined;
   hidden?: boolean;
-  changeFn?: (item: any, items: any[]) => void;
+  changeFn?: (item: T, items: T[]) => void;
 }
 
-export interface DynamicDisplayColumn {
+export interface DynamicDisplayColumn<T> {
   label: string;
-  render: (item: any) => {
+  render: (item: T) => {
     text: string;
     hint?: string;
     tone?: 'plain' | 'missing' | 'strong';
   };
 }
 
-export type DynamicFieldConfig =
-  | DynamicInputFieldConfig
-  | DynamicSelectFieldConfig
-  | DynamicColorSelectFieldConfig
-  | DynamicTextareaFieldConfig
-  | DynamicDimensionsFieldConfig;
+export type DynamicFieldConfig<T> =
+  | DynamicInputFieldConfig<T>
+  | DynamicSelectFieldConfig<T>
+  | DynamicColorSelectFieldConfig<T>
+  | DynamicTextareaFieldConfig<T>
+  | DynamicDimensionsFieldConfig<T>;
 
-export interface DynamicListConfig {
+export interface DynamicListConfig<T> {
   legend: string;
   description: string;
   itemLabel: (index: number) => string;
-  fields: DynamicFieldConfig[];
-  createItem: () => any;
+  fields: DynamicFieldConfig<T>[];
+  createItem: () => T;
   minItems?: number;
-  showRemoveButton?: (items: any[]) => boolean;
+  showRemoveButton?: (items: T[]) => boolean;
   addButtonLabel: string;
   emptyMessage?: string;
   totalLabel?: string;
-  totalValueFn?: (items: any[]) => string | number;
+  totalValueFn?: (items: T[]) => string | number;
   layout?: 'cards' | 'table';
   /** Columnas CSS grid de la tabla (`--line-table-columns`). */
   tableColumns?: string;
@@ -106,6 +106,6 @@ export interface DynamicListConfig {
   headerAside?: () => string;
   footnote?: string;
   footerActionLabel?: string;
-  displayColumns?: DynamicDisplayColumn[];
-  rowCost?: (item: any) => number;
+  displayColumns?: DynamicDisplayColumn<T>[];
+  rowCost?: (item: T) => number;
 }

@@ -19,7 +19,7 @@ export class PrintSpecListLogic {
 
   constructor(private readonly costService: ProductCostCalculationService) {}
 
-  readonly config: DynamicListConfig = {
+  readonly config: DynamicListConfig<EstampadoPrintSpec> = {
     legend: 'Impresos',
     description: 'Cada papel o transfer que lleva el producto',
     footnote: 'Del catálogo se completa la medida; con "Medida libre" la cargás vos.',

@@ -74,7 +74,7 @@ export class FilamentLineListComponent
   private onChange: (value: FdmFilamentLine[]) => void = () => {};
   private onTouched: () => void = () => {};
 
-  filamentConfig: DynamicListConfig = {
+  filamentConfig: DynamicListConfig<FdmFilamentLine> = {
     legend: 'Filamentos',
     description: 'Uno por cada material o color que usa la impresión',
     layout: 'table',

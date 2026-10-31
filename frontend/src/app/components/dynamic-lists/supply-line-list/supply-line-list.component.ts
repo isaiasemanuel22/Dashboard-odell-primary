@@ -63,7 +63,7 @@ export class SupplyLineListComponent
   private onChange: (value: EstampadoSupplyLine[]) => void = () => {};
   private onTouched: () => void = () => {};
 
-  readonly supplyConfig: DynamicListConfig = {
+  readonly supplyConfig: DynamicListConfig<EstampadoSupplyLine> = {
     legend: 'Insumos',
     description:
       'Prenda, taza o soporte que se estampa. El costo sale del precio unitario en Insumos.',

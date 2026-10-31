@@ -74,19 +74,19 @@ export type {
     },
   ],
 })
-export class DynamicListComponent
+export class DynamicListComponent<T extends object>
   implements OnInit, OnChanges, OnDestroy, ControlValueAccessor
 {
   private readonly cdr = inject(ChangeDetectorRef);
   private fieldChangeDestroy$ = new Subject<void>();
-  private onChange: (value: any[]) => void = () => {};
+  private onChange: (value: T[]) => void = () => {};
   private onTouched: () => void = () => {};
   /** Filas cuyo color venía Indistinto del catálogo: se puede elegir y no se vuelve a bloquear. */
   private readonly editableColorRowIds = new Set<string>();
 
   /** Valor inicial al crear/editar; solo actualizar al resetear el formulario padre. */
-  @Input() initialValue: any[] | null = null;
-  @Input() config!: DynamicListConfig;
+  @Input() initialValue: T[] | null = null;
+  @Input() config!: DynamicListConfig<T>;
   /** Dentro de un bloque que ya tiene título: sin encabezado y con nota y acción en la barra. */
   @Input() embedded = false;
   /** Solo lectura (p. ej. línea con producto de catálogo). */
@@ -97,7 +97,7 @@ export class DynamicListComponent
    */
   @Input() optionsEpoch = 0;
 
-  @Output() valueChange = new EventEmitter<any[]>();
+  @Output() valueChange = new EventEmitter<T[]>();
   @Output() footerAction = new EventEmitter<void>();
 
   /** Formulario reactivo raíz; el array editable está en `formGroup.controls.items`. */
@@ -132,13 +132,13 @@ export class DynamicListComponent
     this.fieldChangeDestroy$.complete();
   }
 
-  writeValue(value: any[] | null): void {
+  writeValue(value: T[] | null): void {
     this.initialValue = value;
     this.resetFromInitial();
     this.applyLockedState();
   }
 
-  registerOnChange(fn: (value: any[]) => void): void {
+  registerOnChange(fn: (value: T[]) => void): void {
     this.onChange = fn;
   }
 
@@ -194,12 +194,12 @@ export class DynamicListComponent
     return normalizeColorId(value) === INDISTINTO_COLOR_ID;
   }
 
-  fieldLabel(field: DynamicFieldConfig): string {
+  fieldLabel(field: DynamicFieldConfig<T>): string {
     if (field.type === 'dimensions') return field.label ?? '';
     return field.label;
   }
 
-  showField(field: DynamicFieldConfig): boolean {
+  showField(field: DynamicFieldConfig<T>): boolean {
     return !('hidden' in field && field.hidden);
   }
 
@@ -207,7 +207,7 @@ export class DynamicListComponent
     return this.config.headerAside?.() ?? '';
   }
 
-  step(index: number, field: DynamicInputFieldConfig, direction: number): void {
+  step(index: number, field: DynamicInputFieldConfig<T>, direction: number): void {
     const control = this.itemsArray.at(index)?.get(field.name);
     if (!control) return;
     const current = Number(control.value) || 0;
@@ -224,21 +224,22 @@ export class DynamicListComponent
     if (!this.config?.showRemoveButton) {
       return count > (this.config?.minItems ?? 0);
     }
-    return this.config.showRemoveButton(this.itemsArray.getRawValue());
+    return this.config.showRemoveButton(this.rawItems());
   }
 
   selectOptions(
-    field: DynamicSelectFieldConfig,
+    field: DynamicSelectFieldConfig<T>,
     index: number,
   ): DbSelectOption[] {
-    const item = this.itemsArray.at(index)?.getRawValue();
+    const group = this.itemsArray.at(index);
+    const item = group ? this.rawItem(group) : ({} as T);
     return field.optionsFn
-      ? field.optionsFn(item, this.itemsArray.getRawValue())
+      ? field.optionsFn(item, this.rawItems())
       : (field.options ?? []);
   }
 
   colorFilter(
-    field: DynamicColorSelectFieldConfig,
+    field: DynamicColorSelectFieldConfig<T>,
     index: number,
   ): {
     filamentType: string | null;
@@ -246,7 +247,8 @@ export class DynamicListComponent
     supplyCategory: string | null;
     supplyId: string | null;
   } {
-    const item = this.itemsArray.at(index)?.getRawValue();
+    const group = this.itemsArray.at(index);
+    const item = group ? this.rawItem(group) : ({} as T);
     return {
       filamentType: field.filamentTypeFrom?.(item) ?? null,
       resinType: field.resinTypeFrom?.(item) ?? null,
@@ -287,7 +289,7 @@ export class DynamicListComponent
     return typeof id === 'string' && id ? id : `idx-${index}`;
   }
 
-  fieldTrack(index: number, field: DynamicFieldConfig): string {
+  fieldTrack(index: number, field: DynamicFieldConfig<T>): string {
     if (field.type === 'dimensions') {
       return `dimensions-${field.widthName}-${field.lengthName}-${index}`;
     }
@@ -306,7 +308,7 @@ export class DynamicListComponent
     this.rebuildForm(items);
   }
 
-  private resolveInitialItems(): any[] {
+  private resolveInitialItems(): T[] {
     if (!this.config?.createItem) {
       return this.initialValue?.length ? structuredClone(this.initialValue) : [];
     }
@@ -321,7 +323,7 @@ export class DynamicListComponent
     return [];
   }
 
-  private rebuildForm(items: any[]): void {
+  private rebuildForm(items: T[]): void {
     this.fieldChangeDestroy$.next();
     this.itemsArray.clear({ emitEvent: false });
 
@@ -334,19 +336,28 @@ export class DynamicListComponent
     this.cdr.markForCheck();
   }
 
-  private buildItemGroup(item: Record<string, unknown>): FormGroup {
+  rawItems(): T[] {
+    return this.itemsArray.getRawValue() as T[];
+  }
+
+  rawItem(group: FormGroup): T {
+    return group.getRawValue() as T;
+  }
+
+  private buildItemGroup(item: T): FormGroup {
+    const row = item as Record<string, unknown>;
     const controls: Record<string, FormControl<unknown>> = {
-      id: new FormControl(item['id'] ?? '', { nonNullable: true }),
+      id: new FormControl(row['id'] ?? '', { nonNullable: true }),
     };
 
     for (const field of this.config.fields) {
       if (field.type === 'dimensions') {
-        controls[field.widthName] = new FormControl(item[field.widthName] ?? null);
+        controls[field.widthName] = new FormControl(row[field.widthName] ?? null);
         controls[field.lengthName] = new FormControl(
-          item[field.lengthName] ?? null,
+          row[field.lengthName] ?? null,
         );
       } else {
-        const raw = item[field.name];
+        const raw = row[field.name];
         let fallback: unknown = raw ?? null;
         if (field.type === 'color-select') {
           fallback = normalizeColorId(raw);
@@ -377,22 +388,22 @@ export class DynamicListComponent
     }
   }
 
-  private controlNamesForField(field: DynamicFieldConfig): string[] {
+  private controlNamesForField(field: DynamicFieldConfig<T>): string[] {
     if (field.type === 'dimensions') {
       return [field.widthName, field.lengthName];
     }
     return [field.name];
   }
 
-  private onFieldChange(index: number, field: DynamicFieldConfig): void {
+  private onFieldChange(index: number, field: DynamicFieldConfig<T>): void {
     const group = this.itemsArray.at(index);
     if (!group) {
       return;
     }
 
     if ('changeFn' in field && field.changeFn) {
-      const item = { ...group.getRawValue() };
-      field.changeFn(item, this.itemsArray.getRawValue());
+      const item = { ...group.getRawValue() } as T;
+      field.changeFn(item, this.rawItems());
       group.patchValue(item, { emitEvent: false });
     }
 
@@ -404,7 +415,7 @@ export class DynamicListComponent
   }
 
   private emitValue(): void {
-    const value = structuredClone(this.itemsArray.getRawValue());
+    const value = structuredClone(this.rawItems());
     this.valueChange.emit(value);
     this.onChange(value);
     this.cdr.markForCheck();
