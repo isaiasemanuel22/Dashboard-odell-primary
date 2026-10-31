@@ -1,0 +1,78 @@
+<section class="panel production-panel">
+  <h3>Producción 3D</h3>
+
+  <div class="production-stats">
+    <div class="production-stat">
+      <span class="production-stat__label">Peso</span>
+      <strong class="production-stat__value">{{ grams }} g</strong>
+    </div>
+    <div class="production-stat">
+      <span class="production-stat__label">Impresión</span>
+      <strong class="production-stat__value">{{ printHours }} h</strong>
+    </div>
+    <div class="production-stat">
+      <span class="production-stat__label">Mano de obra</span>
+      <strong class="production-stat__value">{{ workHours }} h</strong>
+    </div>
+    @if (product.washMinutes) {
+      <div class="production-stat">
+        <span class="production-stat__label">Lavado</span>
+        <strong class="production-stat__value">{{ product.washMinutes }} min</strong>
+      </div>
+    }
+    @if (product.cureMinutes) {
+      <div class="production-stat">
+        <span class="production-stat__label">Curado</span>
+        <strong class="production-stat__value">{{ product.cureMinutes }} min</strong>
+      </div>
+    }
+  </div>
+
+  @if (!hasComponents && product.brand) {
+    <p class="production-brand">Marca: <strong>{{ product.brand }}</strong></p>
+  }
+
+  @if (!hasComponents && product.resinType) {
+    <div class="production-color-card">
+      <div
+        class="production-color-card__swatch"
+        [class.production-color-card__swatch--indistinto]="!colorHex(product.colorId)"
+        [style.background-color]="colorHex(product.colorId) || null"
+      ></div>
+      <div class="production-color-card__body">
+        <span class="production-color-card__eyebrow">Color de resina</span>
+        <strong class="production-color-card__title">{{ colorLabel(product.colorId) }}</strong>
+        <span class="production-color-card__meta">{{ product.resinType | resinTypeLabel }}</span>
+        @if (colorHex(product.colorId); as hex) {
+          <span class="production-color-card__hex">{{ hex }}</span>
+        }
+      </div>
+    </div>
+  }
+
+  @if (!hasComponents && product.filaments?.length) {
+    <div class="filament-cards">
+      @for (line of product.filaments; track line.id) {
+        <article class="filament-card">
+          <div
+            class="filament-card__swatch"
+            [class.filament-card__swatch--indistinto]="!colorHex(line.colorId)"
+            [style.background-color]="colorHex(line.colorId) || null"
+          ></div>
+          <div class="filament-card__body">
+            @if (line.label) {
+              <span class="filament-card__label">{{ line.label }}</span>
+            }
+            <strong class="filament-card__type">{{ line.filamentType | filamentTypeLabel }}</strong>
+            <span class="filament-card__grams">{{ line.grams }} g</span>
+            <span class="filament-card__color">{{ colorLabel(line.colorId) }}</span>
+          </div>
+        </article>
+      }
+    </div>
+  } @else if (!hasComponents && product.filamentType) {
+    <p class="production-brand">
+      Filamento: <strong>{{ product.filamentType | filamentTypeLabel }}</strong>
+    </p>
+  }
+</section>

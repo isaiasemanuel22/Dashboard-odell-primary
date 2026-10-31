@@ -15,6 +15,7 @@ import {
   Category,
   ColorConfig,
   Product,
+  Product3D,
   ProductAttachment,
   ProductStockOverview,
   isProduct3D,
@@ -28,10 +29,7 @@ import { RealtimeCatalogSyncService } from '../../../core/services/realtime-cata
 import { RealtimeService } from '../../../core/services/realtime.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { productStockOverview } from '../../../shared/utils/stock.helpers';
-import {
-  resolveColorHex,
-  resolveColorLabel,
-} from '../../../shared/utils/color.helpers';
+import { ProductDetailProductionComponent } from './product-detail-production/product-detail-production.component';
 import {
   DbAttachmentUploadComponent,
   DbAttachmentUploadFn,
@@ -50,15 +48,8 @@ import {
   isProductPublished,
   normalizeProductComponents,
   resolveCategoryNames,
-  resolveProductGrams,
-  resolveProductPrintTimeHours,
-  resolveProductWorkTimeHours,
 } from '../../../shared/utils/product.helpers';
-import {
-  DateShortPipe,
-  FilamentTypeLabelPipe,
-  ResinTypeLabelPipe,
-} from '../../../shared/pipes/labels.pipe';
+import { DateShortPipe } from '../../../shared/pipes/labels.pipe';
 
 @Component({
   selector: 'app-product-detail',
@@ -67,8 +58,6 @@ import {
     FormsModule,
     RouterLink,
     DateShortPipe,
-    FilamentTypeLabelPipe,
-    ResinTypeLabelPipe,
     DbButtonComponent,
     DbAttachmentUploadComponent,
     DbSkeletonComponent,
@@ -77,6 +66,7 @@ import {
     ProductImageCarouselComponent,
     ProductPricingComponent,
     ProductComponentsTableComponent,
+    ProductDetailProductionComponent,
   ],
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.scss',
@@ -111,39 +101,12 @@ export class ProductDetailComponent implements OnInit {
   readonly uploadProductAttachment: DbAttachmentUploadFn = (file) =>
     firstValueFrom(this.mediaUpload.uploadProductAttachment(file));
 
-  isProduct3D = isProduct3D;
-
-  colorLabel(colorId?: string): string {
-    return resolveColorLabel(colorId, this.colorCatalog);
-  }
-
-  colorHex(colorId?: string): string | undefined {
-    return resolveColorHex(colorId, this.colorCatalog);
+  get product3d(): Product3D | null {
+    return this.product && isProduct3D(this.product) ? this.product : null;
   }
 
   get stockOverview(): ProductStockOverview {
     return productStockOverview(this.product ?? { stock: 0 }, this.stock);
-  }
-
-  get displayGrams(): number {
-    if (!this.product || !isProduct3D(this.product)) {
-      return 0;
-    }
-    return resolveProductGrams(this.product, this.catalogProducts);
-  }
-
-  get displayPrintTimeHours(): number {
-    if (!this.product || !isProduct3D(this.product)) {
-      return 0;
-    }
-    return resolveProductPrintTimeHours(this.product, this.catalogProducts);
-  }
-
-  get displayWorkTimeHours(): number {
-    if (!this.product || !isProduct3D(this.product)) {
-      return 0;
-    }
-    return resolveProductWorkTimeHours(this.product, this.catalogProducts);
   }
 
   ngOnInit(): void {
