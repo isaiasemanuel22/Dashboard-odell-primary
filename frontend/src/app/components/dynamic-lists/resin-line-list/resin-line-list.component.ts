@@ -5,8 +5,7 @@ import {
   Input,
   OnDestroy,
   OnInit,
-  inject,
-} from '@angular/core';
+  inject, DestroyRef } from '@angular/core';
 import { merge, Subject, takeUntil } from 'rxjs';
 import {
   GeneralSettings,
@@ -55,6 +54,7 @@ export class ResinLineListComponent implements OnInit, OnDestroy {
   initialValue: ResinTableLine[] | null = null;
 
   private readonly settingsFacade = inject(SettingsFacade);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
   private generalSettings: GeneralSettings | null = null;
@@ -112,8 +112,7 @@ export class ResinLineListComponent implements OnInit, OnDestroy {
     this.initialValue = [this.readLine()];
 
     this.settingsFacade
-      .watchGeneralSettings()
-      .pipe(takeUntil(this.destroy$))
+      .watchUntilDestroyed(this.destroyRef)
       .subscribe((settings) => {
         this.generalSettings = settings;
         this.cdr.markForCheck();

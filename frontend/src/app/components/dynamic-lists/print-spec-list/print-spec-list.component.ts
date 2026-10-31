@@ -6,8 +6,7 @@ import {
   OnDestroy,
   OnInit,
   forwardRef,
-  inject,
-} from '@angular/core';
+  inject, DestroyRef } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { EstampadoPrintSpec } from '../../../core/models';
 import { ImpresosService } from '../../../core/services/impresos.service';
@@ -48,6 +47,7 @@ export class PrintSpecListComponent
   initialValue: EstampadoPrintSpec[] | null = null;
 
   private readonly impresosService = inject(ImpresosService);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly settingsFacade = inject(SettingsFacade);
   private readonly costService = inject(ProductCostCalculationService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -67,8 +67,7 @@ export class PrintSpecListComponent
       });
 
     this.settingsFacade
-      .watchGeneralSettings()
-      .pipe(takeUntil(this.destroy$))
+      .watchUntilDestroyed(this.destroyRef)
       .subscribe((settings) => {
         this.logic.generalSettings = settings;
         this.cdr.markForCheck();

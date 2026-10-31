@@ -5,8 +5,7 @@ import {
   Input,
   OnDestroy,
   OnInit,
-  inject,
-} from '@angular/core';
+  inject, DestroyRef } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { AsyncPipe } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
@@ -34,6 +33,7 @@ import { DbInputComponent } from '@dashboard-form';
 })
 export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   private readonly pricingStore = inject(ProductFormPricingFacade);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly settingsFacade = inject(SettingsFacade);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
@@ -55,8 +55,7 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
       this.cdr.markForCheck();
     });
     this.settingsFacade
-      .watchGeneralSettings()
-      .pipe(takeUntil(this.destroy$))
+      .watchUntilDestroyed(this.destroyRef)
       .subscribe((settings) => {
         this.settings = settings;
         this.cdr.markForCheck();

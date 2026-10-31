@@ -6,8 +6,7 @@ import {
   OnDestroy,
   OnInit,
   forwardRef,
-  inject,
-} from '@angular/core';
+  inject, DestroyRef } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -71,6 +70,7 @@ export class PressCycleListComponent
   initialValue: EstampadoPressCycle[] | null = null;
 
   private readonly settingsFacade = inject(SettingsFacade);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
   private generalSettings: GeneralSettings | null = null;
@@ -135,8 +135,7 @@ export class PressCycleListComponent
 
   ngOnInit(): void {
     this.settingsFacade
-      .watchGeneralSettings()
-      .pipe(takeUntil(this.destroy$))
+      .watchUntilDestroyed(this.destroyRef)
       .subscribe((settings) => {
         this.generalSettings = settings;
         this.cdr.markForCheck();

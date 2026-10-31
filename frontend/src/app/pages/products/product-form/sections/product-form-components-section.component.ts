@@ -7,8 +7,7 @@ import {
   OnDestroy,
   OnInit,
   Output,
-  inject,
-} from '@angular/core';
+  inject, DestroyRef } from '@angular/core';
 import { Subject, takeUntil } from 'rxjs';
 import {
   Category,
@@ -52,6 +51,7 @@ export interface ProductFormComponentsValue {
 })
 export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy {
   private readonly catalogFacade = inject(CatalogFacade);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly settingsFacade = inject(SettingsFacade);
   private readonly pricingStore = inject(ProductFormPricingFacade);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -124,8 +124,7 @@ export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy 
       });
 
     this.settingsFacade
-      .watchGeneralSettings()
-      .pipe(takeUntil(this.destroy$))
+      .watchUntilDestroyed(this.destroyRef)
       .subscribe((settings: GeneralSettings | null) => {
         this.colorCatalog = settings?.colors ?? [];
         this.laborCostPerHour = Number(settings?.laborCostPerHour) || 0;

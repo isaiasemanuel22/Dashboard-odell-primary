@@ -9,7 +9,6 @@ import {
   Output,
   inject,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import {
@@ -64,8 +63,7 @@ export class OrderQuoteEstampadoPressComponent implements OnInit {
 
   ngOnInit(): void {
     this.settingsFacade
-      .watchGeneralSettings()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .watchUntilDestroyed(this.destroyRef)
       .subscribe((settings) => {
         this.generalSettings = settings;
         this.cdr.markForCheck();

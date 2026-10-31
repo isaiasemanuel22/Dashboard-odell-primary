@@ -1,6 +1,7 @@
-import { inject, Injectable } from '@angular/core';
+import { DestroyRef, inject, Injectable } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { combineLatest, filter, map, Observable, of, switchMap, take, throwError } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { GeneralSettings } from '../../core/models';
 import { SettingsActions } from './settings.actions';
 import {
@@ -55,6 +56,11 @@ export class SettingsFacade {
 
   watchGeneralSettings(): Observable<GeneralSettings | null> {
     return this.generalSettings$;
+  }
+
+  /** Watch largo de ajustes. Se cancela al destruir la pantalla que lo pide. */
+  watchUntilDestroyed(destroyRef: DestroyRef): Observable<GeneralSettings | null> {
+    return this.watchGeneralSettings().pipe(takeUntilDestroyed(destroyRef));
   }
 
   peekGeneralSettings(): GeneralSettings | null {

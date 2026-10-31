@@ -81,8 +81,7 @@ export class OrderQuoteEstampadoCompositionComponent implements OnInit {
 
   ngOnInit(): void {
     this.settingsFacade
-      .watchGeneralSettings()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .watchUntilDestroyed(this.destroyRef)
       .subscribe((settings) => {
         this.generalSettings = settings;
         this.cdr.markForCheck();

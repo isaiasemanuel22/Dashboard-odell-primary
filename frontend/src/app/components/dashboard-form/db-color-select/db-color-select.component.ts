@@ -99,8 +99,7 @@ export class DbColorSelectComponent
 
   ngOnInit(): void {
     this.settingsFacade
-      .watchGeneralSettings()
-      .pipe(takeUntilDestroyed(this.destroyRef))
+      .watchUntilDestroyed(this.destroyRef)
       .subscribe((settings) => {
         this.catalog = settings?.colors ?? [];
         this.rebuildCatalogOptions();

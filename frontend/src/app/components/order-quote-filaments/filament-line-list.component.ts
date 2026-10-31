@@ -6,8 +6,7 @@ import {
   OnDestroy,
   OnInit,
   forwardRef,
-  inject,
-} from '@angular/core';
+  inject, DestroyRef } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
@@ -68,6 +67,7 @@ export class FilamentLineListComponent
   optionsEpoch = 0;
 
   private readonly settingsFacade = inject(SettingsFacade);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
   private generalSettings: GeneralSettings | null = null;
@@ -140,8 +140,7 @@ export class FilamentLineListComponent
         'minmax(0, 0.85fr) minmax(0, 1.4fr) minmax(0, 0.75fr) 5.25rem minmax(4.5rem, 5.25rem) 1.6rem';
     }
     this.settingsFacade
-      .watchGeneralSettings()
-      .pipe(takeUntil(this.destroy$))
+      .watchUntilDestroyed(this.destroyRef)
       .subscribe((settings) => {
         this.generalSettings = settings;
         this.optionsEpoch++;
