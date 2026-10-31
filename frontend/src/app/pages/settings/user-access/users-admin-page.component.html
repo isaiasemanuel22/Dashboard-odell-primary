@@ -84,43 +84,14 @@
       <div class="error-banner">{{ error }}</div>
     }
 
-    <div class="form-grid">
-      <db-input label="Nombre" name="userName" [(ngModel)]="form.displayName" />
-      <db-input label="Email" type="email" name="userEmail" [(ngModel)]="form.email" />
-      <db-input
-        label="Firebase UID (opcional)"
-        name="userFirebase"
-        [(ngModel)]="form.firebaseUid"
-      />
-      <db-checkbox label="Usuario activo" name="userActive" [(ngModel)]="form.active" />
-      <div class="form-field">
-        <label>Roles</label>
-        @for (role of roles; track role.id) {
-          <db-checkbox
-            [label]="role.name"
-            [name]="'role-' + role.id"
-            [ngModel]="form.roleIds.includes(role.id)"
-            (ngModelChange)="toggleRole(role.id, $event)"
-          />
-        }
-      </div>
-    </div>
-
-    <div class="form-actions">
-      <db-button
-        label="Cancelar"
-        variant="secondary"
-        format="soft"
-        [disabled]="saving"
-        (clicked)="closeModal()"
-      />
-      <db-button
-        [label]="saving ? 'Guardando…' : 'Guardar'"
-        variant="primary"
-        format="solid"
-        [disabled]="saving"
-        (clicked)="save()"
-      />
-    </div>
+    <app-users-admin-form
+      [error]="error"
+      [form]="form"
+      [roles]="roles"
+      [saving]="saving"
+      (roleToggle)="toggleRole($event.roleId, $event.checked)"
+      (cancelEdit)="closeModal()"
+      (save)="save()"
+    />
   </app-form-modal>
 }

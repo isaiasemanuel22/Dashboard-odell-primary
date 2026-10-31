@@ -25,6 +25,7 @@ import { FormModalComponent } from '../../../components/form-modal/form-modal.co
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import { UserAccessHeadComponent } from './user-access-head.component';
 import { UserAccessNavComponent } from './user-access-nav.component';
+import { UsersAdminFormComponent } from './users-admin-form/users-admin-form.component';
 
 @Component({
   selector: 'app-users-admin-page',
@@ -33,12 +34,11 @@ import { UserAccessNavComponent } from './user-access-nav.component';
     FormsModule,
     DbAreaChipComponent,
     DbButtonComponent,
-    DbCheckboxComponent,
-    DbInputComponent,
     DbStateMessageComponent,
     FormModalComponent,
     UserAccessHeadComponent,
     UserAccessNavComponent,
+    UsersAdminFormComponent,
     ...DB_DATA_TABLE,
   ],
   templateUrl: './users-admin-page.component.html',
