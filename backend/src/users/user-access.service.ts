@@ -40,6 +40,13 @@ import {
   resolvePermissions,
   userIsAdmin,
 } from './user-access.util';
+import {
+  assertUniqueFirebaseUid as assertFirebaseUidIsUnique,
+  assertUniqueUserEmail as assertEmailIsUnique,
+  mapRolePermissions as mapRolePermissionEntries,
+  mapUserOverrides as mapUserOverrideEntries,
+  validatePermissionReferences as validatePermissionAreaRefs,
+} from './user-access.checks';
 
 @Injectable()
 export class UserAccessService {
@@ -555,54 +562,21 @@ export class UserAccessService {
   private async validatePermissionReferences(
     permissions: Array<RolePermissionEntry | UserPermissionOverrideEntry>,
   ): Promise<void> {
-    const areaIds = [
-      ...new Set(
-        permissions
-          .map((permission) => permission.areaId)
-          .filter((areaId): areaId is string => !!areaId),
-      ),
-    ];
-
-    if (areaIds.length === 0) return;
-
-    const count = await this.db().workArea.count({
-      where: { id: { in: areaIds } },
-    });
-    if (count !== areaIds.length) {
-      throw new BadRequestException('Una o más áreas no existen');
-    }
+    await validatePermissionAreaRefs(this.db(), permissions);
   }
 
   private async assertUniqueUserEmail(
     email: string,
     excludeId?: string,
   ): Promise<void> {
-    const existing = await this.db().appUser.findFirst({
-      where: {
-        email,
-        ...(excludeId ? { NOT: { id: excludeId } } : {}),
-      },
-    });
-    if (existing) {
-      throw new ConflictException('Ya existe un usuario con ese email');
-    }
+    await assertEmailIsUnique(this.db(), email, excludeId);
   }
 
   private async assertUniqueFirebaseUid(
     firebaseUid: string,
     excludeId?: string,
   ): Promise<void> {
-    const existing = await this.db().appUser.findFirst({
-      where: {
-        firebaseUid,
-        ...(excludeId ? { NOT: { id: excludeId } } : {}),
-      },
-    });
-    if (existing) {
-      throw new ConflictException(
-        'Ya existe un usuario vinculado a esa cuenta de Firebase',
-      );
-    }
+    await assertFirebaseUidIsUnique(this.db(), firebaseUid, excludeId);
   }
 
   private async assertAreaCanDeactivate(areaId: string): Promise<void> {
@@ -613,20 +587,13 @@ export class UserAccessService {
   private mapRolePermissions(
     permissions: RolePermissionDto[],
   ): RolePermissionEntry[] {
-    return permissions.map((permission) => ({
-      action: permission.action,
-      areaId: permission.areaId ?? null,
-    }));
+    return mapRolePermissionEntries(permissions);
   }
 
   private mapUserOverrides(
     overrides: UserPermissionOverrideDto[],
   ): UserPermissionOverrideEntry[] {
-    return overrides.map((override) => ({
-      action: override.action,
-      areaId: override.areaId ?? null,
-      granted: override.granted,
-    }));
+    return mapUserOverrideEntries(overrides);
   }
 
   private async nextId(
