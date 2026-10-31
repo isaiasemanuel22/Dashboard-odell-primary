@@ -1,0 +1,18 @@
+@use '../../../shared/styles/screen' as screen;
+
+.header-actions {
+  @include screen.screen-actions;
+}
+
+.list-toolbar {
+  @include screen.screen-toolbar;
+}
+
+.list-search {
+  @include screen.screen-search;
+}
+
+.list-areas {
+  display: block;
+  margin-bottom: 0.9rem;
+}

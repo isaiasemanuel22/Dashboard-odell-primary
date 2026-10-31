@@ -1,0 +1,67 @@
+<header class="page-header">
+  <div>
+    <h2>Productos</h2>
+    <p>
+      Catálogo de impresión 3D (FDM / Resina) y estampados · {{ publishedCount }} publicados
+      · {{ inStockCount }} con stock
+    </p>
+  </div>
+  <div class="header-actions">
+    <db-button
+      [label]="'Carrito (' + cartItemCount + ')'"
+      variant="secondary"
+      format="soft"
+      routerLink="/ventas/nueva"
+    />
+    <db-button
+      label="+ Categoría"
+      variant="secondary"
+      format="soft"
+      (clicked)="newCategory.emit()"
+    />
+    <db-button
+      label="+ Nuevo producto"
+      variant="primary"
+      format="solid"
+      (clicked)="newProduct.emit()"
+    />
+  </div>
+</header>
+
+<div class="list-toolbar">
+  <db-pill-group
+    [options]="catalogFilters"
+    [value]="catalogView"
+    ariaLabel="Publicación"
+    (valueChange)="catalogViewChange.emit($event)"
+  />
+  <label class="list-search">
+    <span aria-hidden="true">⌕</span>
+    <input
+      type="search"
+      placeholder="Buscar producto o categoría"
+      [ngModel]="search"
+      (ngModelChange)="searchChange.emit($event)"
+    />
+  </label>
+</div>
+
+<db-pill-group
+  class="list-areas"
+  [options]="typeFilters"
+  [value]="typeFilter"
+  label="Tipo"
+  size="sm"
+  ariaLabel="Filtrar por tipo"
+  (valueChange)="typeFilterChange.emit($event)"
+/>
+
+<db-pill-group
+  class="list-areas"
+  [options]="categoryFilterOptions"
+  [value]="categoryFilter"
+  label="Categoría"
+  size="sm"
+  ariaLabel="Filtrar por categoría"
+  (valueChange)="categoryFilterChange.emit($event)"
+/>

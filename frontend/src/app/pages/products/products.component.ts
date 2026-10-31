@@ -7,8 +7,7 @@ import {
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
 import {
   Category,
@@ -27,7 +26,6 @@ import {
   DbSkeletonComponent,
   DbStateMessageComponent,
   DbButtonComponent,
-  DbPillGroupComponent,
   ProductCardComponent,
 } from '@general-components';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
@@ -38,6 +36,7 @@ import {
 import { productPhysicalStock } from '../../shared/utils/stock.helpers';
 import { resolveCategoryNamesText } from '../../shared/utils/product.helpers';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
+import { ProductsToolbarComponent } from './products-toolbar/products-toolbar.component';
 
 type TypeFilter = ProductType | 'all';
 type CatalogView = 'published' | 'unpublished' | 'instock' | 'all';
@@ -46,13 +45,11 @@ type CatalogView = 'published' | 'unpublished' | 'instock' | 'all';
   selector: 'app-products',
   standalone: true,
   imports: [
-    FormsModule,
-    RouterLink,
     DbSkeletonComponent,
     DbStateMessageComponent,
     DbButtonComponent,
-    DbPillGroupComponent,
     ProductCardComponent,
+    ProductsToolbarComponent,
   ],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss',
@@ -199,8 +196,8 @@ export class ProductsComponent implements OnInit {
     this.catalog.loadAllProducts(true);
   }
 
-  setTypeFilter(filter: TypeFilter): void {
-    this.typeFilter = filter;
+  setTypeFilter(filter: TypeFilter | string): void {
+    this.typeFilter = filter as TypeFilter;
     this.categoryFilter = 'all';
     this.cdr.markForCheck();
   }
@@ -213,11 +210,12 @@ export class ProductsComponent implements OnInit {
     return this.products.filter((product) => productPhysicalStock(product) > 0).length;
   }
 
-  setCatalogView(view: CatalogView): void {
-    if (this.catalogView === view) return;
-    this.catalogView = view;
+  setCatalogView(view: CatalogView | string): void {
+    const next = view as CatalogView;
+    if (this.catalogView === next) return;
+    this.catalogView = next;
     const published =
-      view === 'unpublished' ? 'unpublished' : view === 'published' ? 'published' : 'all';
+      next === 'unpublished' ? 'unpublished' : next === 'published' ? 'published' : 'all';
     if (this.publishedFilter !== published) {
       this.publishedFilter = published;
       this.reloadProducts();

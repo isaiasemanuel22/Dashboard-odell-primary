@@ -1,68 +1,20 @@
-<header class="page-header">
-  <div>
-    <h2>Productos</h2>
-    <p>
-      Catálogo de impresión 3D (FDM / Resina) y estampados · {{ publishedCount }} publicados
-      · {{ inStockCount }} con stock
-    </p>
-  </div>
-  <div class="header-actions">
-    <db-button
-      [label]="'Carrito (' + cartItemCount + ')'"
-      variant="secondary"
-      format="soft"
-      routerLink="/ventas/nueva"
-    />
-    <db-button
-      label="+ Categoría"
-      variant="secondary"
-      format="soft"
-      (clicked)="openCategoryForm()"
-    />
-    <db-button
-      label="+ Nuevo producto"
-      variant="primary"
-      format="solid"
-      (clicked)="openCreateProduct()"
-    />
-  </div>
-</header>
-
-<div class="list-toolbar">
-  <db-pill-group
-    [options]="catalogFilters"
-    [value]="catalogView"
-    ariaLabel="Publicación"
-    (valueChange)="setCatalogView($event)"
-  />
-  <label class="list-search">
-    <span aria-hidden="true">⌕</span>
-    <input
-      type="search"
-      placeholder="Buscar producto o categoría"
-      [(ngModel)]="search"
-    />
-  </label>
-</div>
-
-<db-pill-group
-  class="list-areas"
-  [options]="typeFilters"
-  [value]="typeFilter"
-  label="Tipo"
-  size="sm"
-  ariaLabel="Filtrar por tipo"
-  (valueChange)="setTypeFilter($event)"
-/>
-
-<db-pill-group
-  class="list-areas"
-  [options]="categoryFilterOptions"
-  [value]="categoryFilter"
-  label="Categoría"
-  size="sm"
-  ariaLabel="Filtrar por categoría"
-  (valueChange)="categoryFilter = $event"
+<app-products-toolbar
+  [publishedCount]="publishedCount"
+  [inStockCount]="inStockCount"
+  [cartItemCount]="cartItemCount"
+  [catalogFilters]="catalogFilters"
+  [catalogView]="catalogView"
+  (catalogViewChange)="setCatalogView($event)"
+  [search]="search"
+  (searchChange)="search = $event"
+  [typeFilters]="typeFilters"
+  [typeFilter]="typeFilter"
+  (typeFilterChange)="setTypeFilter($event)"
+  [categoryFilterOptions]="categoryFilterOptions"
+  [categoryFilter]="categoryFilter"
+  (categoryFilterChange)="categoryFilter = $event"
+  (newCategory)="openCategoryForm()"
+  (newProduct)="openCreateProduct()"
 />
 
 @if (loading) {
