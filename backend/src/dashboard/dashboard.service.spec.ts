@@ -120,6 +120,72 @@ describe('DashboardService', () => {
     expect(stats.walletBalance).toBe(5000);
   });
 
+  it('suma como deuda el saldo impago de los pedidos entregados', () => {
+    const base = {
+      customerId: 'cust-1',
+      customerName: 'Cliente',
+      services: [],
+      items: [],
+      createdAt: '2026-07-01T12:00:00.000Z',
+      dueDate: '2026-07-10T18:00:00.000Z',
+    };
+
+    store.orders.push(
+      {
+        ...base,
+        id: 'ord-unpaid',
+        status: OrderStatus.ENTREGADO,
+        total: 120000,
+      },
+      {
+        ...base,
+        id: 'ord-partial',
+        status: OrderStatus.ENTREGADO,
+        total: 65000,
+        payments: [
+          {
+            id: 'pay-1',
+            amount: 20000,
+            deposit: true,
+            createdAt: '2026-07-02T12:00:00.000Z',
+          },
+        ],
+      },
+      {
+        ...base,
+        id: 'ord-open',
+        status: OrderStatus.PENDIENTE,
+        total: 80000,
+      },
+    );
+
+    expect(service.getStats().clientDebt).toBe(165000);
+    const receivables = service.getStats().receivables;
+    expect(receivables).toEqual([
+      {
+        customerId: 'cust-1',
+        customerName: 'Cliente',
+        amount: 165000,
+        orders: [
+          {
+            id: 'ord-unpaid',
+            amount: 120000,
+            total: 120000,
+            deliveredAt: '2026-07-10T18:00:00.000Z',
+            summary: '',
+          },
+          {
+            id: 'ord-partial',
+            amount: 45000,
+            total: 65000,
+            deliveredAt: '2026-07-10T18:00:00.000Z',
+            summary: '',
+          },
+        ],
+      },
+    ]);
+  });
+
   it('arma notificaciones operativas para el dashboard', () => {
     store.supplies.push({
       id: 'sup-1',

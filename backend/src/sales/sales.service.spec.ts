@@ -87,6 +87,49 @@ describe('SalesService order revenue', () => {
     expect(stats.monthlyOrdersCount).toBe(1);
   });
 
+  it('pasa la mano de obra de la línea al costo de la venta', () => {
+    const resolveOrderItemUnitCost = jest.fn().mockReturnValue(1804);
+    const checked = new SalesService(
+      new RetailSaleRepository(store),
+      new OrderRepository(store),
+      new ProductRepository(store),
+      {
+        resolveCatalogUnitCost: () => 0,
+        resolveCatalogUnitPrice: () => 100,
+        resolveDesignUnitCost: () => 0,
+        resolveOrderItemUnitCost,
+      } as unknown as CostCalculatorService,
+    );
+    const dueDate = new Date().toISOString();
+
+    store.orders.push({
+      id: 'ord-labor',
+      customerId: 'cust-1',
+      customerName: 'Carla',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productName: 'Figura',
+          quantity: 3,
+          unitPrice: 8500,
+          grams: 45,
+          workTimeHours: 0.5,
+        },
+      ],
+      status: OrderStatus.ENTREGADO,
+      total: 25500,
+      createdAt: dueDate,
+      dueDate,
+    });
+
+    checked.getOverview();
+
+    expect(resolveOrderItemUnitCost).toHaveBeenCalledWith(
+      expect.objectContaining({ workTimeHours: 0.5, grams: 45 }),
+    );
+  });
+
   it('usa la fecha de entrega real para ubicar la venta en el mes', () => {
     const now = new Date();
     const dueDate = new Date(

@@ -1,9 +1,16 @@
 <section class="wallet-form__section">
   <div class="wallet-form__section-head">
     <h4>Insumos comprados</h4>
-    <p>Agregá cada insumo con cantidad, gasto real y valor de lista.</p>
+    <p>
+      @if (lockLines) {
+        Ajustá cantidad, gasto y valor de lista. El stock sigue a este movimiento.
+      } @else {
+        Agregá cada insumo con cantidad, gasto real y valor de lista.
+      }
+    </p>
   </div>
 
+  @if (!lockLines) {
   <div class="wallet-supply-picker">
     <db-form-field label="Insumo" forId="wallet-supply">
       <select
@@ -34,6 +41,7 @@
       />
     </div>
   </div>
+  }
 
   @if (lines.length) {
     <div class="wallet-supply-lines">
@@ -44,12 +52,14 @@
               <span class="wallet-supply-line__eyebrow">Insumo</span>
               <strong>{{ line.supplyName }}</strong>
             </div>
-            <db-button
-              label="Quitar"
-              variant="delete"
-              format="link"
-              (clicked)="remove.emit(line.supplyId)"
-            />
+            @if (!lockLines) {
+              <db-button
+                label="Quitar"
+                variant="delete"
+                format="link"
+                (clicked)="remove.emit(line.supplyId)"
+              />
+            }
           </header>
 
           <db-form-grid>

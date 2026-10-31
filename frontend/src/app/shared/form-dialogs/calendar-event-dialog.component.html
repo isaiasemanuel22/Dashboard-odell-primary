@@ -91,6 +91,15 @@
   <div class="cal-dialog__footer">
     <span class="cal-dialog__hint">{{ repeatHint }}</span>
     <div class="cal-dialog__actions">
+      @if (isEdit) {
+        <db-button
+          label="Eliminar"
+          variant="delete"
+          format="soft"
+          [disabled]="loading"
+          (clicked)="remove()"
+        />
+      }
       <db-button
         label="Cancelar"
         variant="secondary"

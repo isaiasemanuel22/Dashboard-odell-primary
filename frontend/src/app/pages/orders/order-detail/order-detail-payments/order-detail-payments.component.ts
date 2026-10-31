@@ -69,6 +69,16 @@ export class OrderDetailPaymentsComponent {
     return 'Parcialmente pagado';
   }
 
+  preparePayment(amount: number): void {
+    this.paymentAmount = amount;
+    this.paymentError = '';
+    this.cdr.markForCheck();
+    document.getElementById('order-payments')?.scrollIntoView({
+      behavior: 'smooth',
+      block: 'center',
+    });
+  }
+
   registerPayment(): void {
     if (this.paymentLoading || !this.paymentAmount) return;
     this.paymentLoading = true;

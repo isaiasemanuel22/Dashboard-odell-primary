@@ -32,6 +32,17 @@ Chart.register(
   Filler,
 );
 
+function formatAxisCurrency(value: number): string {
+  const abs = Math.abs(value);
+  const sign = value < 0 ? '-' : '';
+  if (abs >= 1000) {
+    const thousands = abs / 1000;
+    const text = Number.isInteger(thousands) ? String(thousands) : thousands.toFixed(1);
+    return `${sign}$${text}k`;
+  }
+  return `${sign}$${abs}`;
+}
+
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
@@ -98,11 +109,11 @@ export class DashboardMonthlyTrendsComponent
             label: 'Pedidos recibidos',
             data,
             borderColor: '#2563eb',
-            backgroundColor: 'rgba(37, 99, 235, 0.12)',
+            backgroundColor: 'rgba(37, 99, 235, 0.16)',
             pointBackgroundColor: '#2563eb',
             pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointRadius: 4,
+            pointBorderWidth: 1.5,
+            pointRadius: 3.5,
             pointHoverRadius: 6,
             borderWidth: 2.5,
             fill: true,
@@ -110,7 +121,7 @@ export class DashboardMonthlyTrendsComponent
           },
         ],
       },
-      options: this.baseLineOptions('Pedidos', false, true),
+      options: this.baseLineOptions(false, true),
     };
 
     if (this.ordersChart) {
@@ -138,11 +149,11 @@ export class DashboardMonthlyTrendsComponent
             label: 'Ingresos totales',
             data,
             borderColor: '#059669',
-            backgroundColor: 'rgba(5, 150, 105, 0.12)',
+            backgroundColor: 'rgba(5, 150, 105, 0.16)',
             pointBackgroundColor: '#059669',
             pointBorderColor: '#fff',
-            pointBorderWidth: 2,
-            pointRadius: 4,
+            pointBorderWidth: 1.5,
+            pointRadius: 3.5,
             pointHoverRadius: 6,
             borderWidth: 2.5,
             fill: true,
@@ -150,7 +161,7 @@ export class DashboardMonthlyTrendsComponent
           },
         ],
       },
-      options: this.baseLineOptions('Ingresos', true),
+      options: this.baseLineOptions(true),
     };
 
     if (this.revenueChart) {
@@ -163,7 +174,6 @@ export class DashboardMonthlyTrendsComponent
   }
 
   private baseLineOptions(
-    yAxisLabel: string,
     currency = false,
     integer = false,
   ): ChartConfiguration<'line'>['options'] {
@@ -205,22 +215,18 @@ export class DashboardMonthlyTrendsComponent
         },
         y: {
           beginAtZero: true,
-          title: {
-            display: true,
-            text: yAxisLabel,
-            color: '#64748b',
-            font: { size: 11, weight: 600 },
-          },
           grid: {
-            color: 'rgba(204, 229, 240, 0.8)',
+            color: 'rgba(226, 232, 240, 0.9)',
           },
+          border: { display: false },
           ticks: {
-            color: '#64748b',
+            color: '#94a3b8',
             font: { size: 11 },
-            ...(integer ? { stepSize: 1 } : {}),
+            maxTicksLimit: 4,
+            ...(integer ? { precision: 0 } : {}),
             callback: (value) => {
               const numeric = Number(value);
-              return currency ? formatCurrency(numeric) : numeric;
+              return currency ? formatAxisCurrency(numeric) : numeric;
             },
           },
         },

@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+} from '@angular/core';
 import {
   Supply,
   TreasuryExpense,
@@ -9,9 +15,11 @@ import { FILAMENT_TYPE_LABELS, RESIN_TYPE_LABELS } from '../../../../shared/cons
 import { computeSupplyPurchaseDelta } from '../../../../shared/utils/supply-unit.util';
 import {
   DB_DATA_TABLE,
+  OdlActionEvent,
   OdlBadge,
   OdlColumn,
   OdlFilter,
+  OdlRowAction,
 } from '../../../../components/db-data-table';
 
 @Component({
@@ -25,6 +33,12 @@ import {
 export class WalletMovementsComponent {
   @Input() expenses: TreasuryExpense[] = [];
   @Input() supplies: Supply[] = [];
+  @Output() action = new EventEmitter<OdlActionEvent<TreasuryExpense>>();
+
+  readonly actions: OdlRowAction<TreasuryExpense>[] = [
+    { id: 'editar', label: 'Editar' },
+    { id: 'eliminar', label: 'Eliminar', danger: true },
+  ];
 
   readonly searchText = (expense: TreasuryExpense) =>
     [expense.name, this.recordTypeLabel(expense), this.conceptMeta(expense) ?? ''].join(' ');

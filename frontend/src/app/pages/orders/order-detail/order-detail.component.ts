@@ -5,6 +5,7 @@ import {
   DestroyRef,
   HostListener,
   OnInit,
+  ViewChild,
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -104,6 +105,9 @@ export class OrderDetailComponent implements OnInit {
   private readonly customerCatalog = inject(CustomerCatalogService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  @ViewChild(OrderDetailPaymentsComponent)
+  private payments?: OrderDetailPaymentsComponent;
 
   order: Order | null = null;
   tasks: PrintJob[] = [];
@@ -290,6 +294,43 @@ export class OrderDetailComponent implements OnInit {
         skip: () => this.statusLoading,
       },
     );
+  }
+
+  onDeliveryRegistered(): void {
+    const order = this.order;
+    if (!order) return;
+    const balance = Math.max(
+      0,
+      Math.round(
+        (order.total -
+          (order.payments ?? []).reduce(
+            (sum, payment) => sum + (Number(payment.amount) || 0),
+            0,
+          )) *
+          100,
+      ) / 100,
+    );
+    this.loadOrder(order.id);
+    if (balance <= 0) return;
+
+    const amount = new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(balance);
+
+    this.formDialogs
+      .openConfirm({
+        title: '¿El cliente pagó?',
+        message: `La entrega quedó registrada y todavía hay ${amount} sin cobrar.`,
+        confirmLabel: 'Registrar pago',
+        cancelLabel: 'Ahora no',
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.payments?.preparePayment(balance);
+      });
   }
 
   loadOrder(id: string): void {

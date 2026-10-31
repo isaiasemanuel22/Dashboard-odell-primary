@@ -224,7 +224,7 @@
         [order]="order"
         [tasks]="tasks"
         [deliveries]="deliveries"
-        (delivered)="loadOrder(order.id)"
+        (delivered)="onDeliveryRegistered()"
       />
 
       <app-order-detail-history

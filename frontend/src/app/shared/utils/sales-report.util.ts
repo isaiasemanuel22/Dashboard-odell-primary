@@ -121,7 +121,7 @@ export function buildSalesReportAreaSections(
 function appendAreaBalanceSection(doc: jsPDF, stats: SalesStats, startY: number): number {
   autoTable(doc, {
     startY,
-    head: [['Área', 'Ingresos', 'Costos', 'Ganancia', 'Ventas', 'Pedidos']],
+    head: [['Área', 'Vendido', 'Costos', 'Ganancia', 'Ventas', 'Pedidos']],
     body: (stats.profitByArea ?? []).map((balance) => [
       SERVICE_TYPE_LABELS[balance.area],
       formatCurrency(balance.revenue),
@@ -207,15 +207,15 @@ export function downloadSalesReportPdf(
     startY: 40,
     head: [['Concepto', 'Monto']],
     body: [
-      ['Ingresos del mes', formatCurrency(stats.monthlyRevenue)],
+      ['Vendido del mes', formatCurrency(stats.monthlyRevenue)],
       ['Costos del mes', formatCurrency(stats.monthlyCost)],
       ['Ganancias del mes', formatCurrency(stats.monthlyProfit)],
       [
-        `Ingresos de pedidos (${stats.monthlyOrdersCount} pedido(s))`,
+        `Vendido en pedidos (${stats.monthlyOrdersCount} pedido(s))`,
         formatCurrency(stats.monthlyOrdersRevenue),
       ],
       [
-        `Ingresos de ventas (${stats.monthlyRetailCount} venta(s))`,
+        `Vendido en mostrador (${stats.monthlyRetailCount} venta(s))`,
         formatCurrency(stats.monthlyRetailRevenue),
       ],
       ['Ganancias de pedidos', formatCurrency(stats.monthlyOrdersProfit)],

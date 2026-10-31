@@ -53,6 +53,7 @@
   <app-wallet-movements
     [expenses]="overview.expenses"
     [supplies]="supplies"
+    (action)="onMovementAction($event)"
   />
   <app-wallet-debtors
     [debtors]="overview.debtors"
@@ -64,6 +65,7 @@
 @if (showForm) {
   <app-wallet-record-form
     [mode]="formMode"
+    [expense]="editingExpense"
     [startAsPurchase]="purchasePreset"
     [supplies]="supplies"
     [nameSuggestions]="overview?.recordNameSuggestions ?? []"

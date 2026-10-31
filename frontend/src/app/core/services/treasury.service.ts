@@ -6,6 +6,7 @@ import {
   CreateTreasuryExpensePayload,
   TreasuryExpense,
   TreasuryOverview,
+  UpdateTreasuryExpensePayload,
 } from '../models';
 
 @Injectable({ providedIn: 'root' })
@@ -22,5 +23,21 @@ export class TreasuryService {
     data: CreateTreasuryExpensePayload,
   ): Observable<TreasuryExpense[]> {
     return this.http.post<TreasuryExpense[]>(`${this.baseUrl}/expenses`, data);
+  }
+
+  updateExpense(
+    id: string,
+    data: UpdateTreasuryExpensePayload,
+  ): Observable<TreasuryExpense> {
+    return this.http.patch<TreasuryExpense>(
+      `${this.baseUrl}/expenses/${id}`,
+      data,
+    );
+  }
+
+  deleteExpense(id: string): Observable<{ deleted: boolean }> {
+    return this.http.delete<{ deleted: boolean }>(
+      `${this.baseUrl}/expenses/${id}`,
+    );
   }
 }

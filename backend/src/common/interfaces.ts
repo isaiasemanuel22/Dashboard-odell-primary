@@ -677,6 +677,11 @@ export interface SaleEntryItem {
   printTimeHours?: number;
   grams?: number;
   filamentType?: FilamentType;
+  workTimeHours?: number;
+  printProcess?: 'fdm' | 'resina';
+  resinType?: ResinType | string;
+  washMinutes?: number;
+  cureMinutes?: number;
 }
 
 export type ProfitArea =
@@ -762,6 +767,23 @@ export interface DashboardNotification {
   areas?: ServiceType[];
 }
 
+export interface ClientReceivableOrder {
+  id: string;
+  amount: number;
+  total: number;
+  deliveredAt: string;
+  summary: string;
+}
+
+export interface ClientReceivable {
+  customerId: string;
+  customerName: string;
+  phone?: string;
+  company?: string;
+  amount: number;
+  orders: ClientReceivableOrder[];
+}
+
 export interface DashboardStats {
   totalOrders: number;
   pendingOrders: number;
@@ -769,6 +791,8 @@ export interface DashboardStats {
   inProductionOrders: number;
   monthlyRevenue: number;
   walletBalance: number;
+  clientDebt: number;
+  receivables: ClientReceivable[];
   activePrintJobs: number;
   queuedPrintJobs: number;
   totalCustomers: number;

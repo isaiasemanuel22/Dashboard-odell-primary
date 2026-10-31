@@ -76,3 +76,33 @@ export class CreateTreasuryExpenseDto {
   @Type(() => TreasurySupplyLineDto)
   supplyLines?: TreasurySupplyLineDto[];
 }
+
+export class UpdateTreasuryExpenseDto {
+  @IsOptional()
+  @IsString()
+  @MinLength(1)
+  name?: string;
+
+  @IsOptional()
+  @IsEnum(TreasuryMovementDirection)
+  direction?: TreasuryMovementDirection;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  amount?: number;
+
+  @IsOptional()
+  @IsDateString()
+  occurredAt?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0.01)
+  quantity?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  unitPrice?: number;
+}

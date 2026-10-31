@@ -169,7 +169,7 @@ describe('CostCalculatorService', () => {
     expect(result.materialCost).toBe(20000);
   });
 
-  it('usa precio por marca cuando se indica marca en el cálculo', () => {
+  it('cotiza el filamento con el promedio del tipo aunque haya marca', () => {
     store.generalSettings.filamentTypeAverages = { pla: 20000 } as never;
 
     const result = service.calculateCost({
@@ -181,7 +181,7 @@ describe('CostCalculatorService', () => {
       filamentType: 'pla' as never,
     });
 
-    expect(result.materialCost).toBe(10000);
+    expect(result.materialCost).toBe(20000);
   });
 
   it('calcula costo de papel por área', () => {

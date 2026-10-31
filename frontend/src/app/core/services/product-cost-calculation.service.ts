@@ -252,21 +252,11 @@ export class ProductCostCalculationService {
         return filaments.reduce(
           (sum, line) =>
             sum +
-            this.calcFilamentCost(
-              line.brand,
-              line.filamentType,
-              line.grams,
-              settings,
-            ),
+            this.calcFilamentCost(line.filamentType, line.grams, settings),
           0,
         );
       }
-      return this.calcFilamentCost(
-        dto.brand,
-        dto.filamentType,
-        grams,
-        settings,
-      );
+      return this.calcFilamentCost(dto.filamentType, grams, settings);
     }
 
     if (dto.type === ProductType.RESINA) {
@@ -329,27 +319,14 @@ export class ProductCostCalculationService {
     return paperCost + supplyCost;
   }
 
-  private getDefaultFilamentPrice(
-    settings: GeneralSettings,
-    brand: string | undefined,
+  private calcFilamentCost(
     materialType: FilamentType | undefined,
-  ): number | null {
-    if (!materialType) return null;
-
-    const matches = settings.filamentPrices.filter(
-      (entry) => entry.materialType === materialType,
-    );
-    if (!matches.length) return null;
-
-    if (brand) {
-      const exact = matches.find(
-        (entry) => entry.brand.toLowerCase() === brand.toLowerCase(),
-      );
-      if (exact) return exact.pricePerKg;
-    }
-
-    const total = matches.reduce((sum, entry) => sum + entry.pricePerKg, 0);
-    return total / matches.length;
+    grams: number,
+    settings: GeneralSettings,
+  ): number {
+    const pricePerKg = resolveFilamentPricePerKg(settings, materialType);
+    if (pricePerKg === null) return 0;
+    return (grams / 1000) * pricePerKg;
   }
 
   private getDefaultResinPrice(
@@ -373,19 +350,6 @@ export class ProductCostCalculationService {
 
     const total = matches.reduce((sum, entry) => sum + entry.pricePerLiter, 0);
     return total / matches.length;
-  }
-
-  private calcFilamentCost(
-    brand: string | undefined,
-    materialType: FilamentType | undefined,
-    grams: number,
-    settings: GeneralSettings,
-  ): number {
-    const pricePerKg = brand
-      ? this.getDefaultFilamentPrice(settings, brand, materialType)
-      : resolveFilamentPricePerKg(settings, materialType);
-    if (pricePerKg === null) return 0;
-    return (grams / 1000) * pricePerKg;
   }
 
   private calcResinCost(

@@ -12,10 +12,6 @@ export function calculateMaterialCost(
   settings: GeneralSettings,
   supplies: Supply[],
   calcEstampadoMaterialCost: (dto: CalculateCostDto) => number,
-  brandedFilamentPricePerKg: (
-    brand: string,
-    materialType: FilamentType | undefined,
-  ) => number | null,
   brandedResinPricePerLiter: (
     brand: string,
     resinType: ResinType | string | undefined,
@@ -29,23 +25,11 @@ export function calculateMaterialCost(
       return filaments.reduce(
         (sum, line) =>
           sum +
-          calcFilamentCost(
-            line.brand,
-            line.filamentType,
-            line.grams,
-            settings,
-            brandedFilamentPricePerKg,
-          ),
+          calcFilamentCost(line.filamentType, line.grams, settings),
         0,
       );
     }
-    return calcFilamentCost(
-      dto.brand,
-      dto.filamentType,
-      grams,
-      settings,
-      brandedFilamentPricePerKg,
-    );
+    return calcFilamentCost(dto.filamentType, grams, settings);
   }
   if (dto.type === ProductType.RESINA) {
     return (
@@ -65,18 +49,11 @@ export function calculateMaterialCost(
 }
 
 export function calcFilamentCost(
-  brand: string | undefined,
   materialType: FilamentType | undefined,
   grams: number,
   settings: GeneralSettings,
-  brandedPricePerKg: (
-    brand: string,
-    materialType: FilamentType | undefined,
-  ) => number | null,
 ): number {
-  const pricePerKg = brand
-    ? brandedPricePerKg(brand, materialType)
-    : resolveFilamentPricePerKg(settings, materialType);
+  const pricePerKg = resolveFilamentPricePerKg(settings, materialType);
   if (pricePerKg === null) return 0;
   return (grams / 1000) * pricePerKg;
 }

@@ -899,6 +899,23 @@ export interface DashboardNotification {
   areas?: ServiceType[];
 }
 
+export interface ClientReceivableOrder {
+  id: string;
+  amount: number;
+  total: number;
+  deliveredAt: string;
+  summary: string;
+}
+
+export interface ClientReceivable {
+  customerId: string;
+  customerName: string;
+  phone?: string;
+  company?: string;
+  amount: number;
+  orders: ClientReceivableOrder[];
+}
+
 export interface DashboardStats {
   totalOrders: number;
   pendingOrders: number;
@@ -906,6 +923,8 @@ export interface DashboardStats {
   inProductionOrders: number;
   monthlyRevenue: number;
   walletBalance: number;
+  clientDebt: number;
+  receivables: ClientReceivable[];
   activePrintJobs: number;
   queuedPrintJobs: number;
   totalCustomers: number;
@@ -962,6 +981,15 @@ export interface CreateTreasurySupplyLinePayload {
   quantity: number;
   amountSpent: number;
   unitPrice: number;
+}
+
+export interface UpdateTreasuryExpensePayload {
+  name?: string;
+  direction?: TreasuryMovementDirection;
+  amount?: number;
+  occurredAt?: string;
+  quantity?: number;
+  unitPrice?: number;
 }
 
 export interface RetailSaleItem {

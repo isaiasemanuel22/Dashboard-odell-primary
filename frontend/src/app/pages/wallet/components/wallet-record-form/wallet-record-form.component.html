@@ -14,7 +14,7 @@
         [max]="maxExpenseDate"
       />
 
-      @if (!isPersonMovementForm) {
+      @if (!isPersonMovementForm && !isEdit) {
         <label class="wallet-toggle">
           <input
             type="checkbox"
@@ -37,14 +37,8 @@
     @if (isPersonMovementForm) {
       <section class="wallet-form__section">
         <div class="wallet-form__section-head">
-          <h4>{{ mode === 'payment' ? 'Pago' : 'Préstamo' }}</h4>
-          <p>
-            {{
-              mode === 'payment'
-                ? 'Registrá un egreso por pago entregado a una persona.'
-                : 'Registrá un egreso por dinero prestado a una persona.'
-            }}
-          </p>
+          <h4>{{ personHeading }}</h4>
+          <p>{{ personHelp }}</p>
         </div>
 
         <db-form-grid>
@@ -75,9 +69,7 @@
         </db-form-grid>
 
         <div class="wallet-summary wallet-summary--expense">
-          <span class="wallet-summary__label">
-            {{ mode === 'payment' ? 'Pago a registrar' : 'Préstamo a registrar' }}
-          </span>
+          <span class="wallet-summary__label">{{ personSummaryLabel }}</span>
           <strong class="wallet-summary__amount">{{ amount | currencyArs }}</strong>
         </div>
       </section>
@@ -88,24 +80,26 @@
           <p>Elegí si el dinero entra o sale de la billetera.</p>
         </div>
 
-        <div class="wallet-segment" role="radiogroup" aria-label="Tipo de movimiento">
-          <button
-            type="button"
-            class="wallet-segment__btn"
-            [class.is-active]="!isIncomeMovement"
-            (click)="setMovementDirection(movementDirections.EXPENSE)"
-          >
-            Egreso
-          </button>
-          <button
-            type="button"
-            class="wallet-segment__btn wallet-segment__btn--income"
-            [class.is-active]="isIncomeMovement"
-            (click)="setMovementDirection(movementDirections.INCOME)"
-          >
-            Ingreso
-          </button>
-        </div>
+        @if (!isUnlinkedSupplyPurchase) {
+          <div class="wallet-segment" role="radiogroup" aria-label="Tipo de movimiento">
+            <button
+              type="button"
+              class="wallet-segment__btn"
+              [class.is-active]="!isIncomeMovement"
+              (click)="setMovementDirection(movementDirections.EXPENSE)"
+            >
+              Egreso
+            </button>
+            <button
+              type="button"
+              class="wallet-segment__btn wallet-segment__btn--income"
+              [class.is-active]="isIncomeMovement"
+              (click)="setMovementDirection(movementDirections.INCOME)"
+            >
+              Ingreso
+            </button>
+          </div>
+        }
 
         <db-form-grid>
           <db-form-grid-full>
@@ -152,6 +146,7 @@
         (selectedSupplyIdChange)="selectedSupplyId = $event"
         [lines]="supplyLines"
         [total]="computedSupplyTotal"
+        [lockLines]="isEdit"
         (add)="addSupplyLine()"
         (createSupply)="openCreateSupply()"
         (remove)="removeSupplyLine($event)"
@@ -175,11 +170,13 @@
         [label]="
           saving
             ? 'Guardando...'
-            : mode === 'payment'
-              ? 'Registrar pago'
-              : mode === 'loan'
-                ? 'Registrar préstamo'
-                : 'Guardar registro'
+            : isEdit
+              ? 'Guardar cambios'
+              : mode === 'payment'
+                ? 'Registrar pago'
+                : mode === 'loan'
+                  ? 'Registrar préstamo'
+                  : 'Guardar registro'
         "
         variant="primary"
         format="solid"

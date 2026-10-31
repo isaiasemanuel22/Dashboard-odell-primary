@@ -2,12 +2,12 @@
   <article class="metric-card" [class.metric-card--negative]="overview.availableBalance < 0">
     <span>Disponible en cuenta</span>
     <strong>{{ overview.availableBalance | currencyArs }}</strong>
-    <small>Ventas + ingresos − egresos</small>
+    <small>Cobrado + ingresos manuales − egresos</small>
   </article>
   <article class="metric-card">
-    <span>Ventas</span>
+    <span>Cobrado</span>
     <strong>{{ overview.totalSalesIncome | currencyArs }}</strong>
-    <small>Mostrador y pedidos</small>
+    <small>Pagos de pedidos y mostrador</small>
   </article>
   <article class="metric-card">
     <span>Ingresos manuales</span>

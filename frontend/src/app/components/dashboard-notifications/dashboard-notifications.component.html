@@ -64,12 +64,23 @@
           }
         </ul>
       }
+
+      <footer class="notifications__footer">
+        <button type="button" class="notifications__all" (click)="showAll()">
+          Ver todas las notificaciones
+        </button>
+      </footer>
     </div>
   }
 </div>
 
 <ng-template #itemBody let-item>
-  <span class="notifications__glyph" [class]="'notifications__glyph--' + kindOf(item)" aria-hidden="true">
+  <span
+    class="notifications__glyph"
+    [class]="'notifications__glyph--' + kindOf(item)"
+    [class.notifications__glyph--empty]="isEmptyStock(item)"
+    aria-hidden="true"
+  >
     @switch (kindOf(item)) {
       @case ('stock') {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">

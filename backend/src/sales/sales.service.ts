@@ -182,6 +182,11 @@ export class SalesService {
       printTimeHours: item.printTimeHours,
       grams: item.grams,
       filamentType: item.filamentType,
+      workTimeHours: item.workTimeHours,
+      printProcess: item.printProcess,
+      resinType: item.resinType,
+      washMinutes: item.washMinutes,
+      cureMinutes: item.cureMinutes,
     }));
     const economics = this.computeEntryEconomics(items, order.total);
 

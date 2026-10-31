@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { OrderStatus, PrintJobStatus, ServiceType } from '../common/enums';
 import {
+  ClientReceivable,
   DashboardNotification,
   DashboardStats,
   MonthlyTrendPoint,
@@ -61,6 +62,8 @@ export class DashboardService {
       )
       .slice(0, 5);
 
+    const receivables = this.listReceivables();
+
     return {
       totalOrders: this.store.orders.length,
       pendingOrders: this.store.orders.filter(
@@ -74,6 +77,8 @@ export class DashboardService {
       ).length,
       monthlyRevenue,
       walletBalance: this.treasuryService.getAvailableBalance(),
+      clientDebt: receivables.clientDebt,
+      receivables: receivables.rows,
       activePrintJobs: this.store.printJobs.filter(
         (j) => j.active && j.status === PrintJobStatus.EN_PROCESO,
       ).length,
@@ -243,6 +248,87 @@ export class DashboardService {
       const createdAt = new Date(order.createdAt);
       return createdAt >= monthStart && createdAt <= monthEnd;
     }).length;
+  }
+
+  /** Saldo impago de pedidos ya entregados. No entra en la caja. */
+  private listReceivables(): { clientDebt: number; rows: ClientReceivable[] } {
+    const grouped = new Map<
+      string,
+      {
+        customerId: string;
+        customerName: string;
+        phone?: string;
+        company?: string;
+        cents: number;
+        orders: ClientReceivable['orders'];
+      }
+    >();
+    let totalCents = 0;
+
+    for (const order of this.store.orders) {
+      if (order.status !== OrderStatus.ENTREGADO) continue;
+      const cents = this.unpaidCents(order);
+      if (cents <= 0) continue;
+      totalCents += cents;
+      const key = order.customerId || order.customerName;
+      const customer = order.customerId
+        ? this.store.getCustomerById(order.customerId)
+        : undefined;
+      const row = grouped.get(key) ?? {
+        customerId: order.customerId ?? '',
+        customerName: order.customerName,
+        phone: customer?.phone || undefined,
+        company: customer?.company || undefined,
+        cents: 0,
+        orders: [] as ClientReceivable['orders'],
+      };
+      row.cents += cents;
+      row.orders.push({
+        id: order.id,
+        amount: cents / 100,
+        total: Number(order.total) || 0,
+        deliveredAt: resolveOrderSoldAt(order),
+        summary: this.receivableSummary(order),
+      });
+      grouped.set(key, row);
+    }
+
+    const rows = [...grouped.values()]
+      .map((row) => ({
+        customerId: row.customerId,
+        customerName: row.customerName,
+        ...(row.phone ? { phone: row.phone } : {}),
+        ...(row.company ? { company: row.company } : {}),
+        amount: row.cents / 100,
+        orders: row.orders,
+      }))
+      .sort(
+        (a, b) =>
+          b.amount - a.amount ||
+          a.customerName.localeCompare(b.customerName, 'es'),
+      );
+
+    return { clientDebt: totalCents / 100, rows };
+  }
+
+  private receivableSummary(order: {
+    items?: { productName?: string }[];
+    description?: string;
+  }): string {
+    const names = (order.items ?? [])
+      .map((item) => item.productName?.trim())
+      .filter((name): name is string => !!name);
+    if (names.length) return names.join(' · ');
+    return (order.description ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+  }
+
+  private unpaidCents(order: { total: number; payments?: { amount: number }[] }): number {
+    const total = Math.round((Number(order.total) || 0) * 100);
+    const paid = (order.payments ?? []).reduce(
+      (sum, payment) => sum + Math.round((Number(payment.amount) || 0) * 100),
+      0,
+    );
+    return Math.max(0, total - paid);
   }
 
   private computeMonthRevenue(monthStart: Date, monthEnd: Date): number {

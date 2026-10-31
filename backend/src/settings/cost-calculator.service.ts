@@ -458,7 +458,7 @@ export class CostCalculatorService {
     printTimeHours?: number;
     filamentType?: FilamentType;
     printProcess?: 'fdm' | 'resina';
-    resinType?: ResinType;
+    resinType?: ResinType | string;
     workTimeHours?: number;
     budgetedHours?: number;
     includesPrint?: boolean;
@@ -666,7 +666,6 @@ export class CostCalculatorService {
       settings,
       this.store.supplies,
       (value) => this.calcEstampadoMaterialCost(value),
-      (brand, materialType) => this.getDefaultFilamentPrice(brand, materialType),
       (brand, resinType) => this.getDefaultResinPrice(brand, resinType),
     );
   }

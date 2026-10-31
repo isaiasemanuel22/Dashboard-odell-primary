@@ -1,7 +1,7 @@
 <section class="sales-stats-grid">
   <div class="sales-stats-grid__cards">
     <app-sale-stat-card
-      label="Ingresos del mes"
+      label="Vendido del mes"
       [value]="stats.monthlyRevenue"
       [breakdown]="revenueBreakdown"
       variant="revenue"
@@ -19,13 +19,13 @@
       variant="profit"
     />
     <app-sale-stat-card
-      label="Ingresos de pedidos"
+      label="Vendido en pedidos"
       [value]="stats.monthlyOrdersRevenue"
       [detail]="ordersDetail"
       variant="revenue-soft"
     />
     <app-sale-stat-card
-      label="Ingresos de mostrador"
+      label="Vendido en mostrador"
       [value]="stats.monthlyRetailRevenue"
       [detail]="retailDetail"
       variant="revenue-soft"

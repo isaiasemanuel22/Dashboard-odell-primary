@@ -75,7 +75,9 @@ export class ProductsService {
         new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
     );
     const visible = type ? products.filter((p) => p.type === type) : products;
-    return visible.map((product) => this.withStockOverview(product));
+    return visible.map((product) =>
+      this.withCurrentCost(this.withStockOverview(product)),
+    );
   }
 
   private withStockOverview(product: Product): Product {
@@ -85,18 +87,37 @@ export class ProductsService {
     };
   }
 
+  /** Costo de catálogo con la calculadora vigente. El precio de venta no se toca. */
+  private withCurrentCost(product: Product): Product {
+    try {
+      const result = this.pricing.resolvePricing(
+        this.pricing.productToPricingInput(product),
+      );
+      if (!Number.isFinite(result.cost) || result.cost < 0) return product;
+      return {
+        ...product,
+        cost: result.cost,
+        profit: product.price - result.cost,
+      };
+    } catch {
+      return product;
+    }
+  }
+
   findOne(id: string): Product {
     const product = this.store.getProductById(id);
     if (!product) {
       throw new NotFoundException(`Producto ${id} no encontrado`);
     }
-    return withResolvedProductionMetrics(this.store, {
-      ...product,
-      components: normalizeProductComponents(
-        product.components,
-        this.store.products,
-      ),
-    });
+    return this.withCurrentCost(
+      withResolvedProductionMetrics(this.store, {
+        ...product,
+        components: normalizeProductComponents(
+          product.components,
+          this.store.products,
+        ),
+      }),
+    );
   }
 
   getOverview(id: string): ProductOverview {

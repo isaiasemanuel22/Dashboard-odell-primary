@@ -39,8 +39,6 @@ export class DashboardNotificationsComponent {
     { value: 'order', label: 'Pedidos' },
     { value: 'stock', label: 'Stock' },
     { value: 'queue', label: 'Cola' },
-    { value: 'calendar', label: 'Agenda' },
-    { value: 'other', label: 'Billetera' },
   ];
 
   get filterOptions(): { value: NotificationFilter; label: string }[] {
@@ -78,6 +76,14 @@ export class DashboardNotificationsComponent {
 
   setFilter(filter: NotificationFilter): void {
     this.filter = filter;
+  }
+
+  showAll(): void {
+    this.filter = 'all';
+  }
+
+  isEmptyStock(item: DashboardNotification): boolean {
+    return item.kind === 'stock' && /sin stock/i.test(item.title);
   }
 
   markAllRead(): void {

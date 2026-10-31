@@ -35,43 +35,123 @@
 
     <section class="stats-grid">
       <article class="stat-card">
-        <span class="label">Ingresos del mes</span>
+        <span class="label">Vendido del mes</span>
         <strong>{{ stats.monthlyRevenue | currencyArs }}</strong>
-        <span class="hint">{{ currentMonthLabel() }}</span>
+        <span class="hint">{{ soldHint(stats.monthlyRevenue) }}</span>
+      </article>
+      <article class="stat-card" [class.danger]="stats.clientDebt > 0">
+        <div class="stat-card__top">
+          <span class="label">Por cobrar</span>
+          @if (stats.clientDebt > 0) {
+            <a class="stat-card__link" href="#por-cobrar">Ver ›</a>
+          }
+        </div>
+        <strong>{{ stats.clientDebt | currencyArs }}</strong>
+        <span class="hint">{{ deliveredUnpaidHint(stats.receivables) }}</span>
       </article>
       <article class="stat-card" [class.danger]="stats.walletBalance < 0">
         <span class="label">Billetera</span>
         <strong>{{ stats.walletBalance | currencyArs }}</strong>
-        <span class="hint">Disponible en cuenta</span>
+        @if (stats.walletBalance < 0) {
+          <span class="hint hint--ok">Si cobrás todo: {{ ifCollected(stats) | currencyArs }}</span>
+        } @else {
+          <span class="hint">Disponible en cuenta</span>
+        }
       </article>
       <article class="stat-card">
-        <span class="label">Pedidos totales</span>
-        <strong>{{ stats.totalOrders }}</strong>
-        <span class="hint">Histórico</span>
-      </article>
-      <article class="stat-card">
-        <span class="label">Pendientes</span>
+        <span class="label">Pedidos pendientes</span>
         <strong>{{ stats.pendingOrders }}</strong>
-        <span class="hint" [class.tone-danger]="stats.overdueOrders > 0">
-          {{ overdueHint(stats.overdueOrders) }}
+        <span class="hint">
+          <span [class.tone-danger]="stats.overdueOrders > 0">{{ overdueHint(stats.overdueOrders) }}</span>
+          de {{ stats.totalOrders }} en total
         </span>
       </article>
+    </section>
+
+    <section class="stats-grid stats-grid--secondary">
       <article class="stat-card">
         <span class="label">En producción</span>
         <strong>{{ stats.inProductionOrders }}</strong>
         <span class="hint">{{ stats.queuedPrintJobs }} por hacer en el tablero</span>
       </article>
       <article class="stat-card">
-        <span class="label">Clientes</span>
-        <strong>{{ stats.totalCustomers }}</strong>
-        <span class="hint">Activos</span>
-      </article>
-      <article class="stat-card stat-card--stock">
         <span class="label">Stock bajo</span>
         <strong>{{ stats.lowStockMaterials }}</strong>
-        <span class="hint">Insumos a reponer</span>
+        <span class="hint">{{ lowStockHint(stats.lowStockMaterials) }}</span>
+      </article>
+      <article class="stat-card">
+        <span class="label">Clientes</span>
+        <strong>{{ stats.totalCustomers }}</strong>
+        <span class="hint">activas</span>
+      </article>
+      <article class="stat-card">
+        <span class="label">Pedidos totales</span>
+        <strong>{{ stats.totalOrders }}</strong>
+        <span class="hint">histórico</span>
       </article>
     </section>
+
+    @if (receivableLines(stats.receivables); as lines) {
+      @if (lines.length) {
+        <section class="receivables" id="por-cobrar" aria-label="Por cobrar">
+          <header class="receivables__head">
+            <div>
+              <h3>Por cobrar</h3>
+              <p>
+                Pedidos entregados con saldo pendiente
+                @if (oldDebtCount(lines); as oldCount) {
+                  · <span class="tone-danger">{{ oldDebtLabel(oldCount) }}</span>
+                }
+              </p>
+            </div>
+            <div class="receivables__total">
+              <span>Total a cobrar</span>
+              <strong>{{ stats.clientDebt | currencyArs }}</strong>
+            </div>
+          </header>
+
+          <div class="aging">
+            <div class="aging__head">
+              <span>Antigüedad de la deuda</span>
+              <a routerLink="/billetera">Ver en Billetera</a>
+            </div>
+            <div class="aging__track" aria-hidden="true">
+              <span class="aging__fill aging__fill--recent" [style.flex-grow]="bucketAmount(lines, false)"></span>
+              <span class="aging__fill aging__fill--old" [style.flex-grow]="bucketAmount(lines, true)"></span>
+            </div>
+            <div class="aging__legend">
+              <span><i class="aging__dot aging__dot--recent"></i> Hasta 15 días · {{ bucketAmount(lines, false) | currencyArs }}</span>
+              <span><i class="aging__dot aging__dot--old"></i> Más de 15 días · {{ bucketAmount(lines, true) | currencyArs }}</span>
+            </div>
+          </div>
+
+          <db-data-table
+            label="Por cobrar"
+            [rows]="lines"
+            [columns]="receivableColumns"
+            [actions]="receivableActions"
+            [clientSide]="false"
+            minWidth="860px"
+            (action)="onReceivableAction($event)"
+          >
+            <ng-template odlCell="id" let-row>
+              <a class="order-link" [routerLink]="['/pedidos', row.id]">{{ row.id }}</a>
+              @if (row.summary) {
+                <span class="order-summary">{{ row.summary }}</span>
+              }
+            </ng-template>
+            <ng-template odlCell="balance" let-row>
+              <span class="saldo">{{ row.balance | currencyArs }}</span>
+              <span class="order-summary">de {{ row.total | currencyArs }}</span>
+            </ng-template>
+          </db-data-table>
+
+          <p class="receivables__note">
+            En → vas a tener "Enviar recordatorio por WhatsApp" con el monto y el alias ya cargados.
+          </p>
+        </section>
+      }
+    }
 
     @if (stats.monthlyTrend.length) {
       <app-dashboard-monthly-trends [trends]="stats.monthlyTrend" />
@@ -91,8 +171,12 @@
             [actions]="recentActions"
             [expandable]="true"
             [clientSide]="false"
+            minWidth="0"
             (action)="onRecentAction($event)"
           >
+            <ng-template odlCell="id" let-order>
+              <a class="order-link" [routerLink]="['/pedidos', order.id]">{{ order.id }}</a>
+            </ng-template>
             <ng-template odlRowDetail let-order>
               <app-order-card layout="detail" [order]="order" (edit)="editRecent($event)" />
             </ng-template>

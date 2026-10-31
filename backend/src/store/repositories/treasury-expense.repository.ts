@@ -10,6 +10,10 @@ export class TreasuryExpenseRepository {
     return this.store.treasuryExpenses;
   }
 
+  findById(id: string): TreasuryExpense | undefined {
+    return this.store.treasuryExpenses.find((expense) => expense.id === id);
+  }
+
   nextId(): string {
     return this.store.nextTreasuryExpenseId();
   }
@@ -17,5 +21,26 @@ export class TreasuryExpenseRepository {
   create(expense: TreasuryExpense): TreasuryExpense {
     this.store.treasuryExpenses.push(expense);
     return expense;
+  }
+
+  save(expense: TreasuryExpense): TreasuryExpense {
+    const index = this.store.treasuryExpenses.findIndex(
+      (item) => item.id === expense.id,
+    );
+    if (index === -1) {
+      this.store.treasuryExpenses.push(expense);
+    } else {
+      this.store.treasuryExpenses[index] = expense;
+    }
+    return expense;
+  }
+
+  remove(id: string): boolean {
+    const index = this.store.treasuryExpenses.findIndex(
+      (item) => item.id === id,
+    );
+    if (index === -1) return false;
+    this.store.treasuryExpenses.splice(index, 1);
+    return true;
   }
 }

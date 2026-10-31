@@ -9,11 +9,13 @@ import {
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { Observable, finalize } from 'rxjs';
 import {
   Supply,
+  TreasuryExpense,
   TreasuryExpenseCategory,
   TreasuryMovementDirection,
+  UpdateTreasuryExpensePayload,
 } from '../../../../core/models';
 import { SuppliesService } from '../../../../core/services/settings.service';
 import { TreasuryService } from '../../../../core/services/treasury.service';
@@ -61,6 +63,7 @@ export class WalletRecordFormComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   @Input() mode: WalletFormMode = 'general';
+  @Input() expense: TreasuryExpense | null = null;
   @Input() startAsPurchase = false;
   @Input() supplies: Supply[] = [];
   @Input() nameSuggestions: string[] = [];
@@ -83,10 +86,38 @@ export class WalletRecordFormComponent implements OnInit {
   supplyLines: WalletSupplyLine[] = [];
 
   ngOnInit(): void {
+    if (this.expense) {
+      this.prefill(this.expense);
+      return;
+    }
     if (this.startAsPurchase) this.isSupplyPurchase = true;
   }
 
+  get isEdit(): boolean {
+    return !!this.expense;
+  }
+
+  get isRepayment(): boolean {
+    return this.expense?.category === TreasuryExpenseCategory.LOAN_REPAYMENT;
+  }
+
+  /** Compra vieja sin insumo vinculado: se corrige el dinero, no el stock. */
+  get isUnlinkedSupplyPurchase(): boolean {
+    return (
+      this.expense?.category === TreasuryExpenseCategory.SUPPLY_PURCHASE &&
+      !this.expense.referenceId
+    );
+  }
+
   get formTitle(): string {
+    if (this.isEdit) {
+      if (this.isSupplyPurchase) return 'Editar compra';
+      if (this.isUnlinkedSupplyPurchase) return 'Editar compra';
+      if (this.mode === 'payment') return 'Editar pago';
+      if (this.mode === 'loan') return 'Editar préstamo';
+      if (this.isRepayment) return 'Editar devolución';
+      return 'Editar registro';
+    }
     switch (this.mode) {
       case 'payment':
         return 'Pagar';
@@ -97,8 +128,27 @@ export class WalletRecordFormComponent implements OnInit {
     }
   }
 
+  get personHeading(): string {
+    if (this.isRepayment) return 'Devolución';
+    return this.mode === 'payment' ? 'Pago' : 'Préstamo';
+  }
+
+  get personHelp(): string {
+    if (this.isRepayment) {
+      return 'Corregí la persona o el monto que vuelve a la billetera.';
+    }
+    return this.mode === 'payment'
+      ? 'Registrá un egreso por pago entregado a una persona.'
+      : 'Registrá un egreso por dinero prestado a una persona.';
+  }
+
+  get personSummaryLabel(): string {
+    if (this.isRepayment) return 'Devolución a registrar';
+    return this.mode === 'payment' ? 'Pago a registrar' : 'Préstamo a registrar';
+  }
+
   get isPersonMovementForm(): boolean {
-    return this.mode === 'payment' || this.mode === 'loan';
+    return this.mode === 'payment' || this.mode === 'loan' || this.isRepayment;
   }
 
   get isIncomeMovement(): boolean {
@@ -204,7 +254,9 @@ export class WalletRecordFormComponent implements OnInit {
     }
 
     if (this.isPersonMovementForm && !this.recipientName.trim()) {
-      this.formError = 'Ingresá la persona destinataria.';
+      this.formError = this.isRepayment
+        ? 'Ingresá la persona que devuelve.'
+        : 'Ingresá la persona destinataria.';
       this.cdr.markForCheck();
       return;
     }
@@ -219,33 +271,39 @@ export class WalletRecordFormComponent implements OnInit {
     this.formError = '';
     this.cdr.markForCheck();
 
-    this.treasuryService
-      .createExpense({
-        isSupplyPurchase: this.isSupplyPurchase,
-        direction: this.isSupplyPurchase || this.isPersonMovementForm
-          ? undefined
-          : this.movementDirection,
-        category: this.isPersonMovementForm
-          ? this.mode === 'payment'
-            ? TreasuryExpenseCategory.PAYMENT
-            : TreasuryExpenseCategory.LOAN
-          : undefined,
-        name: this.isSupplyPurchase
-          ? undefined
-          : this.isPersonMovementForm
-            ? this.recipientName.trim()
-            : this.name.trim(),
-        amount: payloadAmount,
-        occurredAt,
-        supplyLines: this.isSupplyPurchase
-          ? this.supplyLines.map((line) => ({
-              supplyId: line.supplyId,
-              quantity: line.quantity,
-              amountSpent: line.amountSpent,
-              unitPrice: line.unitPrice,
-            }))
-          : undefined,
-      })
+    const request: Observable<unknown> = this.expense
+      ? this.treasuryService.updateExpense(
+          this.expense.id,
+          this.buildUpdatePayload(payloadAmount, occurredAt),
+        )
+      : this.treasuryService.createExpense({
+          isSupplyPurchase: this.isSupplyPurchase,
+          direction: this.isSupplyPurchase || this.isPersonMovementForm
+            ? undefined
+            : this.movementDirection,
+          category: this.isPersonMovementForm
+            ? this.mode === 'payment'
+              ? TreasuryExpenseCategory.PAYMENT
+              : TreasuryExpenseCategory.LOAN
+            : undefined,
+          name: this.isSupplyPurchase
+            ? undefined
+            : this.isPersonMovementForm
+              ? this.recipientName.trim()
+              : this.name.trim(),
+          amount: payloadAmount,
+          occurredAt,
+          supplyLines: this.isSupplyPurchase
+            ? this.supplyLines.map((line) => ({
+                supplyId: line.supplyId,
+                quantity: line.quantity,
+                amountSpent: line.amountSpent,
+                unitPrice: line.unitPrice,
+              }))
+            : undefined,
+        });
+
+    request
       .pipe(
         finalize(() => {
           this.saving = false;
@@ -262,6 +320,82 @@ export class WalletRecordFormComponent implements OnInit {
           this.cdr.markForCheck();
         },
       });
+  }
+
+  private buildUpdatePayload(
+    amount: number,
+    occurredAt: string,
+  ): UpdateTreasuryExpensePayload {
+    if (this.isSupplyPurchase) {
+      const line = this.supplyLines[0];
+      return {
+        amount,
+        occurredAt,
+        quantity: line?.quantity,
+        unitPrice: line?.unitPrice,
+      };
+    }
+
+    if (this.isPersonMovementForm || this.isUnlinkedSupplyPurchase) {
+      return {
+        name: this.isPersonMovementForm
+          ? this.recipientName.trim()
+          : this.name.trim(),
+        amount,
+        occurredAt,
+      };
+    }
+
+    return {
+      name: this.name.trim(),
+      amount,
+      occurredAt,
+      direction: this.movementDirection,
+    };
+  }
+
+  private prefill(expense: TreasuryExpense): void {
+    this.expenseDate = this.toDateInput(expense.occurredAt);
+    this.amount = expense.amount;
+    this.movementDirection = expense.direction;
+
+    if (
+      expense.category === TreasuryExpenseCategory.SUPPLY_PURCHASE &&
+      expense.referenceId
+    ) {
+      this.isSupplyPurchase = true;
+      const supply = this.supplies.find((item) => item.id === expense.referenceId);
+      this.supplyLines = [
+        {
+          supplyId: expense.referenceId,
+          supplyName: supply?.name ?? expense.name,
+          unit: supply?.unit ?? 'u',
+          quantity: expense.quantity,
+          amountSpent: expense.amount,
+          unitPrice: expense.unitPrice,
+        },
+      ];
+      return;
+    }
+
+    if (
+      expense.category === TreasuryExpenseCategory.PAYMENT ||
+      expense.category === TreasuryExpenseCategory.LOAN ||
+      expense.category === TreasuryExpenseCategory.LOAN_REPAYMENT
+    ) {
+      this.recipientName = expense.name;
+      return;
+    }
+
+    this.name = expense.name;
+  }
+
+  private toDateInput(iso: string): string {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return iso.slice(0, 10);
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${date.getFullYear()}-${month}-${day}`;
   }
 
   private addSupplyLineFromSupply(supply: Supply): void {

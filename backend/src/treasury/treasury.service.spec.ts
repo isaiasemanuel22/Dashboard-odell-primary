@@ -421,6 +421,125 @@ describe('TreasuryService', () => {
     ]);
   });
 
+  it('edita un movimiento simple y actualiza el saldo', () => {
+    const [expense] = service.recordExpense({
+      isSupplyPurchase: false,
+      direction: TreasuryMovementDirection.EXPENSE,
+      name: 'QA-transporte',
+      amount: 3000,
+      occurredAt: '2026-08-10',
+    });
+
+    const updated = service.updateExpense(expense.id, {
+      name: 'QA-transporte corregido',
+      amount: 1000,
+      direction: TreasuryMovementDirection.INCOME,
+      occurredAt: '2026-08-09',
+    });
+
+    expect(updated).toMatchObject({
+      id: expense.id,
+      name: 'QA-transporte corregido',
+      amount: 1000,
+      direction: TreasuryMovementDirection.INCOME,
+      category: TreasuryExpenseCategory.OTHER,
+    });
+    expect(service.getAvailableBalance()).toBe(11000);
+    expect(store.treasuryExpenses).toHaveLength(1);
+  });
+
+  it('borra un movimiento simple y revierte el saldo', () => {
+    const [expense] = service.recordExpense({
+      isSupplyPurchase: false,
+      direction: TreasuryMovementDirection.EXPENSE,
+      name: 'QA-caja',
+      amount: 4000,
+      occurredAt: '2026-08-10',
+    });
+
+    service.removeExpense(expense.id);
+
+    expect(store.treasuryExpenses).toHaveLength(0);
+    expect(service.getAvailableBalance()).toBe(10000);
+  });
+
+  it('edita una compra de insumos y deja el stock en la cantidad nueva', () => {
+    const [expense] = service.recordExpense({
+      isSupplyPurchase: true,
+      amount: 4800,
+      occurredAt: '2026-08-10',
+      supplyLines: [
+        {
+          supplyId: 'sup-1',
+          quantity: 2,
+          amountSpent: 4800,
+          unitPrice: 2500,
+        },
+      ],
+    });
+
+    const updated = service.updateExpense(expense.id, {
+      quantity: 5,
+      amount: 9000,
+      unitPrice: 2400,
+    });
+
+    expect(updated).toMatchObject({
+      id: expense.id,
+      quantity: 5,
+      amount: 9000,
+      unitPrice: 2400,
+      referenceId: 'sup-1',
+    });
+    expect(store.supplies[0]?.quantity).toBe(6);
+    expect(store.supplies[0]?.unitPrice).toBe(2400);
+    expect(service.getAvailableBalance()).toBe(1000);
+  });
+
+  it('borra una compra de insumos y revierte el stock', () => {
+    const [expense] = service.recordExpense({
+      isSupplyPurchase: true,
+      amount: 4800,
+      occurredAt: '2026-08-10',
+      supplyLines: [
+        {
+          supplyId: 'sup-1',
+          quantity: 2,
+          amountSpent: 4800,
+          unitPrice: 2400,
+        },
+      ],
+    });
+
+    service.removeExpense(expense.id);
+
+    expect(store.treasuryExpenses).toHaveLength(0);
+    expect(store.supplies[0]?.quantity).toBe(1);
+    expect(store.supplies[0]?.unitPrice).toBe(2400);
+    expect(service.getAvailableBalance()).toBe(10000);
+  });
+
+  it('no borra la compra si el stock quedaría negativo', () => {
+    const [expense] = service.recordExpense({
+      isSupplyPurchase: true,
+      amount: 4800,
+      occurredAt: '2026-08-10',
+      supplyLines: [
+        {
+          supplyId: 'sup-1',
+          quantity: 2,
+          amountSpent: 4800,
+          unitPrice: 2500,
+        },
+      ],
+    });
+    store.supplies[0]!.quantity = 1;
+
+    expect(() => service.removeExpense(expense.id)).toThrow('stock');
+    expect(store.treasuryExpenses).toHaveLength(1);
+    expect(store.supplies[0]?.quantity).toBe(1);
+  });
+
   it('rechaza fechas futuras', () => {
     const tomorrow = new Date();
     tomorrow.setDate(tomorrow.getDate() + 1);

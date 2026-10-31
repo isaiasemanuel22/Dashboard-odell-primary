@@ -33,6 +33,7 @@ import {
   DbSegmentOption,
 } from '@general-components';
 import { FormDialogShellComponent } from '../../components/form-dialog-shell/form-dialog-shell.component';
+import { FormDialogService } from './form-dialog.service';
 import { CalendarEventWeekdaysComponent } from './calendar-event-weekdays/calendar-event-weekdays.component';
 import { extractApiErrorMessage } from '../utils/api-error';
 import { forkJoin, of } from 'rxjs';
@@ -65,6 +66,7 @@ const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 })
 export class CalendarEventDialogComponent implements OnInit {
   private readonly calendarService = inject(CalendarService);
+  private readonly formDialogs = inject(FormDialogService);
   private readonly ordersService = inject(OrdersService);
   private readonly quotesService = inject(QuotesService);
   private readonly customersService = inject(CustomersService);
@@ -206,6 +208,38 @@ export class CalendarEventDialogComponent implements OnInit {
 
   cancel(): void {
     this.dialogRef.close(undefined);
+  }
+
+  remove(): void {
+    const entry = this.data.entry;
+    if (!entry || this.loading) return;
+
+    const kindLabel =
+      this.kind === CalendarEntryKind.REMINDER ? 'recordatorio' : 'evento';
+    this.formDialogs
+      .openConfirm({
+        title: `Eliminar ${kindLabel}`,
+        message: `¿Eliminar el ${kindLabel} "${this.title.trim() || entry.title}"?`,
+        confirmLabel: 'Eliminar',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.loading = true;
+        this.error = '';
+        this.cdr.markForCheck();
+        this.calendarService.deleteEntry(entry.id).subscribe({
+          next: () => {
+            this.loading = false;
+            this.dialogRef.close(entry);
+          },
+          error: (err) => {
+            this.loading = false;
+            this.error = extractApiErrorMessage(err, 'No se pudo eliminar');
+            this.cdr.markForCheck();
+          },
+        });
+      });
   }
 
   save(): void {

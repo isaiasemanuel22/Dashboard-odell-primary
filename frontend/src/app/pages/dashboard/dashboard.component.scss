@@ -3,7 +3,7 @@
 @use '../../shared/styles/mobile' as mobile;
 
 .dashboard-header {
-  align-items: flex-start;
+  align-items: center;
 
   @include mobile.mobile-only {
     flex-direction: row;
@@ -26,6 +26,31 @@
 
 .header-actions {
   @include screen.screen-actions;
+  gap: 0.45rem;
+
+  ::ng-deep .db-button {
+    min-height: 2.25rem;
+    padding: 0 0.95rem;
+    border: 1px solid $color-border-soft;
+    border-radius: $radius-pill;
+    background: #fff;
+    color: $color-text-label;
+    font-size: $font-control;
+    font-weight: 600;
+    box-shadow: none;
+  }
+
+  ::ng-deep .db-button--solid.db-button--primary {
+    border-color: $color-brand;
+    background: $color-brand;
+    color: #fff;
+
+    &:hover:not(:disabled) {
+      border-color: $color-brand-deep;
+      background: $color-brand-deep;
+      opacity: 1;
+    }
+  }
 }
 
 .tone-danger {
@@ -34,13 +59,212 @@
 
 .stats-grid {
   display: grid;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
+
+  strong {
+    display: block;
+    margin-top: 0.15rem;
+    font-size: 1.65rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.15;
+  }
 }
 
-.stat-card--stock {
-  max-width: 220px;
+.stats-grid--secondary {
+  margin-bottom: 1rem;
+
+  .stat-card {
+    padding: 0.8rem 1rem 0.85rem;
+  }
+
+  strong {
+    font-size: 1.45rem;
+  }
+}
+
+.stat-card__top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.5rem;
+
+  .label {
+    margin-bottom: 0;
+  }
+}
+
+.stat-card__link {
+  color: $color-error;
+  font-size: $font-meta;
+  font-weight: 700;
+  line-height: 1.2;
+  text-decoration: none;
+  white-space: nowrap;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.hint--ok {
+  color: $color-success !important;
+  font-weight: 600;
+}
+
+.receivables {
+  background: $color-surface;
+  border: 1px solid $color-border-soft;
+  border-radius: $radius-md;
+  padding: 1rem 1.05rem 0.9rem;
+  margin-bottom: 1rem;
+
+  ::ng-deep .odl-box {
+    border-radius: 10px;
+  }
+
+  ::ng-deep .odl-secondary,
+  .order-summary {
+    display: block;
+    margin-top: 2px;
+    font-size: 12px;
+    font-weight: 400;
+    color: $color-text-muted;
+  }
+}
+
+.receivables__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 0.85rem;
+
+  h3 {
+    margin: 0;
+    font-size: $font-amount;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.2rem 0 0;
+    color: $color-text-muted;
+    font-size: $font-meta;
+  }
+}
+
+.receivables__total {
+  text-align: right;
+  flex: none;
+
+  span {
+    display: block;
+    color: $color-text-muted;
+    font-size: $font-meta;
+  }
+
+  strong {
+    display: block;
+    margin-top: 0.1rem;
+    color: $color-error;
+    font-size: 1.45rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    line-height: 1.1;
+  }
+}
+
+.aging {
+  margin-bottom: 0.9rem;
+}
+
+.aging__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.45rem;
+  color: $color-text-muted;
+  font-size: $font-meta;
+  font-weight: 500;
+
+  a {
+    color: $color-brand-deep;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.aging__track {
+  display: flex;
+  height: 12px;
+  overflow: hidden;
+  border-radius: $radius-pill;
+  background: $color-surface-subtle;
+}
+
+.aging__fill {
+  min-width: 0;
+  flex-basis: 0;
+  height: 100%;
+
+  &--recent { background: #f59e0b; }
+  &--old { background: #dc2626; }
+}
+
+.aging__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem 1.25rem;
+  margin-top: 0.55rem;
+  color: $color-text-label;
+  font-size: $font-meta;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+  }
+}
+
+.aging__dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: $radius-pill;
+  font-style: normal;
+
+  &--recent { background: #f59e0b; }
+  &--old { background: #dc2626; }
+}
+
+.receivables__note {
+  margin: 0.75rem 0 0;
+  color: $color-text-muted;
+  font-size: $font-meta;
+}
+
+.order-link {
+  color: $color-brand-deep;
+  font-weight: 700;
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+.saldo {
+  display: block;
+  color: $color-error;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 .dashboard-bottom {
@@ -139,10 +363,20 @@
 @include mobile.mobile-only {
   .stats-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+
+    strong {
+      font-size: 1.35rem;
+    }
   }
 
-  .stat-card--stock {
-    max-width: none;
+  .receivables__head,
+  .aging__head {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .receivables__total {
+    text-align: left;
   }
 
   .dashboard-bottom {

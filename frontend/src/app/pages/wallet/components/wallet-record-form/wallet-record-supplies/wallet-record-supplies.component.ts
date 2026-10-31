@@ -40,6 +40,8 @@ export class WalletRecordSuppliesComponent {
   @Input() selectedSupplyId = '';
   @Input() lines: WalletSupplyLine[] = [];
   @Input() total = 0;
+  /** En una compra ya guardada no se agregan ni se quitan líneas. */
+  @Input() lockLines = false;
 
   @Output() selectedSupplyIdChange = new EventEmitter<string>();
   @Output() add = new EventEmitter<void>();
