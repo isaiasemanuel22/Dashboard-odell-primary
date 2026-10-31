@@ -28,13 +28,9 @@ import {
 } from '../orders/order-fdm-quote.util';
 import {
   calculateMachineOverhead,
-  calcWashSupplyCost,
   getMachineProfilesForProductType,
 } from './machine-profile.util';
-import {
-  resolveFilamentPricePerKg,
-  resolveResinPricePerLiter,
-} from './material-type-price.util';
+import { normalizeProfitMargins } from './profit-margins.util';
 import {
   normalizeEstampadoPressCycles,
   normalizeEstampadoPrints,
@@ -47,7 +43,11 @@ import {
   resolveFdmFilaments,
 } from '../products/fdm-product.util';
 import { normalizeProductComponents } from '../products/product-component.util';
-import { normalizeProfitMargins } from './profit-margins.util';
+import {
+  calculateErrorMarginCost as errorMarginCost,
+  calculateMaterialCost as materialCost,
+  paperPricePerSqm,
+} from './cost-material.calc';
 
 @Injectable()
 export class CostCalculatorService {
@@ -661,35 +661,14 @@ export class CostCalculatorService {
     dto: CalculateCostDto,
     settings: GeneralSettings,
   ): number {
-    const grams = Number(dto.grams) || 0;
-
-    if (dto.type === ProductType.FDM) {
-      const filaments = resolveFdmFilaments(dto);
-      if (filaments.length) {
-        return filaments.reduce(
-          (sum, line) =>
-            sum +
-            this.calcFilamentCost(
-              line.brand,
-              line.filamentType,
-              line.grams,
-              settings,
-            ),
-          0,
-        );
-      }
-      return this.calcFilamentCost(dto.brand, dto.filamentType, grams, settings);
-    }
-    if (dto.type === ProductType.RESINA) {
-      return (
-        this.calcResinCost(dto.brand, dto.resinType, grams, settings) +
-        calcWashSupplyCost(settings, this.store.supplies, dto.type)
-      );
-    }
-    if (dto.type === ProductType.ESTAMPADO) {
-      return this.calcEstampadoMaterialCost(dto);
-    }
-    return 0;
+    return materialCost(
+      dto,
+      settings,
+      this.store.supplies,
+      (value) => this.calcEstampadoMaterialCost(value),
+      (brand, materialType) => this.getDefaultFilamentPrice(brand, materialType),
+      (brand, resinType) => this.getDefaultResinPrice(brand, resinType),
+    );
   }
 
   private calcEstampadoMaterialCost(dto: CalculateCostDto): number {
@@ -747,45 +726,10 @@ export class CostCalculatorService {
   }
 
   private getPaperPricePerSqm(paperType: PaperType): number {
-    const prices = this.store.generalSettings.paperPricesPerSqm;
-    switch (paperType) {
-      case PaperType.SUBLIMACION:
-        return prices.sublimacion;
-      case PaperType.DTF:
-        return prices.dtf;
-      case PaperType.DTF_UV:
-        return prices.dtfUv;
-      default:
-        return 0;
-    }
-  }
-
-  private calcFilamentCost(
-    brand: string | undefined,
-    materialType: FilamentType | undefined,
-    grams: number,
-    settings: GeneralSettings,
-  ): number {
-    const pricePerKg = brand
-      ? this.getDefaultFilamentPrice(brand, materialType)
-      : resolveFilamentPricePerKg(settings, materialType);
-    if (pricePerKg === null) return 0;
-    return (grams / 1000) * pricePerKg;
-  }
-
-  private calcResinCost(
-    brand: string | undefined,
-    resinType: ResinType | string | undefined,
-    grams: number,
-    settings: GeneralSettings,
-  ): number {
-    const pricePerLiter = brand
-      ? this.getDefaultResinPrice(brand, resinType)
-      : resolveResinPricePerLiter(settings, resinType);
-    if (pricePerLiter === null) return 0;
-    // Campo grams del DTO = ml de resina.
-    const liters = grams / 1000;
-    return liters * pricePerLiter;
+    return paperPricePerSqm(
+      paperType,
+      this.store.generalSettings.paperPricesPerSqm,
+    );
   }
 
   private calculateErrorMarginCost(
@@ -794,14 +738,6 @@ export class CostCalculatorService {
     machineCost: number,
     settings: GeneralSettings,
   ): number {
-    const percent = Math.min(
-      Math.max(Number(settings.errorMarginPercent) || 0, 0),
-      100,
-    );
-    if (percent === 0) {
-      return 0;
-    }
-    const base = materialCost + energyCost + machineCost;
-    return Math.round(base * (percent / 100));
+    return errorMarginCost(materialCost, energyCost, machineCost, settings);
   }
 }
