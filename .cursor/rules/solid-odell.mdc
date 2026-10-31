@@ -1,0 +1,35 @@
+---
+description: Principios SOLID aplicados a Odell (componentes, compositions, pantallas)
+alwaysApply: true
+---
+
+# SOLID en Odell
+
+Aplicar estos principios al diseñar o refactorizar componentes Angular.
+
+## S — Responsabilidad única
+
+- Un bloque `order-quote-*` = un desglose (filamentos, labor, etc.).
+- Una composition (`order-quote-*-composition`) = el conjunto de un servicio.
+- `order-form-line` = orquesta la línea (elige qué composition mostrar).
+- El form padre = el array de líneas y el flujo de pantalla.
+- No dejar un wrapper vacío cuya lógica viva en el hijo: si solo hay una capa útil, la lógica va ahí.
+- Los genéricos (`order-quote-*`, `db-*`) viven en `app/components/`. Las carpetas de caso de uso (`linea/`, pantallas) solo orquestan e importan; no mover genéricos allí.
+
+## O — Abierto/cerrado
+
+Extender con bloques, compositions o columnas de `db-data-table` / campos de `dashboard-form`. Evitar reescribir pantallas enteras para un caso nuevo.
+
+## L — Sustitución
+
+Compositions del mismo rol comparten el contrato: `line`, `product`, `lineIndex`, `changed` (y outputs extra solo si el servicio los necesita, p. ej. `linkPrintChange`).
+
+## I — Segregación de interfaces
+
+Inputs/outputs mínimos. Quien solo orquesta no expone API de un desglose interno.
+
+## D — Inversión de dependencias
+
+Depender de facades, servicios y `db-*` / genéricos reutilizables, no de detalles de una pantalla concreta.
+
+Ver también la regla `modularizar` para componentes genéricos tipo `db-data-table`.

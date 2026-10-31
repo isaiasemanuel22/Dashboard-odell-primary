@@ -16,7 +16,7 @@
     "db:push:heroku": "npm run db:push:heroku --prefix backend",
     "heroku:setup": "bash scripts/heroku-setup.sh",
     "heroku-postbuild": "npm ci --prefix backend --include=dev && npm run build --prefix backend && npm prune --prefix backend --omit=dev",
-    "start": "node backend/dist/src/main.js",
+    "start": "node backend/dist/main.js",
     "frontend:build": "npm run build:prod --prefix frontend",
     "frontend:deploy": "npm run frontend:build && npx netlify-cli deploy --prod --dir=frontend/dist/frontend/browser",
     "frontend:deploy:preview": "npm run frontend:build && npx netlify-cli deploy --dir=frontend/dist/frontend/browser"

@@ -1,0 +1,19 @@
+@if (visible) {
+  <details class="cost-composition__block" open>
+    <summary class="cost-composition__summary">
+      <span class="cost-composition__chevron" aria-hidden="true"></span>
+      <span class="cost-composition__summary-title">Filamentos</span>
+      <span class="cost-composition__summary-meta">{{ filamentSummary }}</span>
+      <strong class="cost-composition__summary-cost">{{ materialCost | currencyArs }}</strong>
+    </summary>
+    <div class="cost-composition__body">
+      <app-filament-line-list
+        [embedded]="true"
+        [locked]="catalogLocked"
+        [ngModel]="quoteFilaments"
+        (ngModelChange)="onFilamentsChange($event)"
+        [name]="'filaments-' + lineIndex"
+      />
+    </div>
+  </details>
+}

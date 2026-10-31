@@ -20,6 +20,7 @@ import {
   PaperReferenceSheets,
   PowerConsumptionConfig,
   ResinPriceConfig,
+  ResinTypeConfig,
   ServiceProfitMargins,
 } from '../common/interfaces';
 import {
@@ -38,7 +39,15 @@ import {
   normalizeFilamentTypeName,
   resolveFilamentTypeForPrice,
 } from './filament-type-catalog.util';
+import {
+  ensureResinTypeCatalog,
+  findResinTypeByName,
+  hydrateResinPricesWithTypeIds,
+  normalizeResinTypeName,
+  resolveResinTypeForPrice,
+} from './resin-type-catalog.util';
 import { filamentTypeCodeFromName } from '../store/default-filament-types.seed';
+import { resinTypeCodeFromName } from '../store/default-resin-types.seed';
 
 @Injectable()
 export class SettingsService {
@@ -68,17 +77,22 @@ export class SettingsService {
     hydrateFilamentPricesWithTypeIds(this.store.generalSettings, {
       seedIfEmpty: false,
     });
+    hydrateResinPricesWithTypeIds(this.store.generalSettings, {
+      seedIfEmpty: false,
+    });
     return structuredClone(this.store.generalSettings);
   }
 
   updateGeneralSettings(data: Partial<GeneralSettings>): GeneralSettings {
     if (data.filamentTypeAverages) {
       for (const [key, value] of Object.entries(data.filamentTypeAverages)) {
+        if (value == null) continue;
         assertNonNegativeNumber(value, `filamentTypeAverages.${key}`);
       }
     }
     if (data.resinTypeAverages) {
       for (const [key, value] of Object.entries(data.resinTypeAverages)) {
+        if (value == null) continue;
         assertNonNegativeNumber(value, `resinTypeAverages.${key}`);
       }
     }
@@ -524,17 +538,27 @@ export class SettingsService {
     this.recordSettingsChange(['settings', 'products']);
   }
 
-  addResinPrice(data: Omit<ResinPriceConfig, 'id'>): ResinPriceConfig {
+  addResinPrice(
+    data: Omit<ResinPriceConfig, 'id'> & {
+      resinTypeId?: string;
+      resinType?: string;
+    },
+  ): ResinPriceConfig {
     const brand = ensureBrand(
       this.store,
       data.brand ?? '',
       BrandMaterialType.RESIN,
     );
+    const typed = resolveResinTypeForPrice(this.store.generalSettings, {
+      resinTypeId: data.resinTypeId,
+      resinType: data.resinType,
+    });
     const entry: ResinPriceConfig = {
       id: this.store.nextId('rp', this.store.generalSettings.resinPrices),
       brandId: brand.id,
       brand: brand.name,
-      resinType: data.resinType,
+      resinTypeId: typed.resinTypeId,
+      resinType: typed.resinType,
       pricePerLiter: data.pricePerLiter,
     };
     this.store.generalSettings.resinPrices.push(entry);
@@ -545,7 +569,10 @@ export class SettingsService {
 
   updateResinPrice(
     id: string,
-    data: Partial<Omit<ResinPriceConfig, 'id'>>,
+    data: Partial<Omit<ResinPriceConfig, 'id'>> & {
+      resinTypeId?: string;
+      resinType?: string;
+    },
   ): ResinPriceConfig {
     const index = this.store.generalSettings.resinPrices.findIndex(
       (p) => p.id === id,
@@ -557,9 +584,20 @@ export class SettingsService {
     const brand = data.brand
       ? ensureBrand(this.store, data.brand, BrandMaterialType.RESIN)
       : undefined;
+    const typed =
+      data.resinTypeId !== undefined || data.resinType !== undefined
+        ? resolveResinTypeForPrice(this.store.generalSettings, {
+            resinTypeId: data.resinTypeId,
+            resinType: data.resinType,
+          })
+        : {
+            resinTypeId: current.resinTypeId ?? '',
+            resinType: String(current.resinType),
+          };
     this.store.generalSettings.resinPrices[index] = {
       ...current,
-      resinType: data.resinType ?? current.resinType,
+      resinTypeId: typed.resinTypeId || current.resinTypeId,
+      resinType: typed.resinType || current.resinType,
       pricePerLiter: data.pricePerLiter ?? current.pricePerLiter,
       brandId: brand?.id ?? current.brandId,
       brand: brand?.name ?? current.brand,
@@ -574,6 +612,67 @@ export class SettingsService {
     this.store.generalSettings.resinPrices =
       this.store.generalSettings.resinPrices.filter((p) => p.id !== id);
     this.recordSettingsChange(['settings', 'products']);
+  }
+
+  addResinType(data: Omit<ResinTypeConfig, 'id'>): ResinTypeConfig {
+    const name = normalizeResinTypeName(data.name ?? '');
+    if (!name) {
+      throw new BadRequestException('El nombre del tipo es obligatorio');
+    }
+    const catalog = ensureResinTypeCatalog(this.store.generalSettings);
+    const existing = findResinTypeByName(catalog, name);
+    if (existing) {
+      return existing;
+    }
+    const entry: ResinTypeConfig = {
+      id: this.store.nextId('rt', catalog),
+      name,
+    };
+    catalog.push(entry);
+    this.recordSettingsChange(['settings']);
+    return entry;
+  }
+
+  updateResinType(
+    id: string,
+    data: Partial<Omit<ResinTypeConfig, 'id'>>,
+  ): ResinTypeConfig {
+    const catalog = ensureResinTypeCatalog(this.store.generalSettings);
+    const index = catalog.findIndex((entry) => entry.id === id);
+    if (index === -1) {
+      throw new NotFoundException('Tipo de resina no encontrado');
+    }
+    const name = normalizeResinTypeName(data.name ?? catalog[index].name);
+    if (!name) {
+      throw new BadRequestException('El nombre del tipo es obligatorio');
+    }
+    const duplicate = findResinTypeByName(catalog, name);
+    if (duplicate && duplicate.id !== id) {
+      throw new BadRequestException('Ya existe un tipo con ese nombre');
+    }
+    catalog[index] = { ...catalog[index], name };
+    for (const price of this.store.generalSettings.resinPrices) {
+      if (price.resinTypeId === id) {
+        price.resinType = resinTypeCodeFromName(name);
+      }
+    }
+    this.recordSettingsChange(['settings', 'supplies', 'products']);
+    return catalog[index];
+  }
+
+  removeResinType(id: string): void {
+    const inUse = this.store.generalSettings.resinPrices.some(
+      (price) => price.resinTypeId === id,
+    );
+    if (inUse) {
+      throw new BadRequestException(
+        'No se puede eliminar: el tipo está asignado a uno o más precios de resina',
+      );
+    }
+    this.store.generalSettings.resinTypes = (
+      this.store.generalSettings.resinTypes ?? []
+    ).filter((entry) => entry.id !== id);
+    this.recordSettingsChange(['settings']);
   }
 
   addFilamentType(data: Omit<FilamentTypeConfig, 'id'>): FilamentTypeConfig {

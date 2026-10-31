@@ -4,6 +4,16 @@ export { DbIconTrashComponent } from './db-icon-trash/db-icon-trash.component';
 export * from './db-data-table';
 export * from './db-row-menu';
 export * from './form-modal';
+export * from './dynamic-lists/dynamic-list/dynamic-list.component';
+export type {
+  DynamicDimensionsFieldConfig,
+  DynamicFieldConfig,
+  DynamicInputFieldConfig,
+  DynamicListConfig,
+  DynamicSelectFieldConfig,
+  DynamicTextareaFieldConfig,
+} from './dynamic-lists/dynamic-list/dynamic-list.types';
+export * from './dynamic-lists/public-api';
 
 // Listados y UI compartida
 export * from './db-state-message/db-state-message.component';
@@ -54,3 +64,27 @@ export * from './sale-cart-line-card/sale-cart-line-card.component';
 export * from './sale-cart-footer/sale-cart-footer.component';
 export * from './sale-entry-card/sale-entry-card.component';
 export * from './supplies-table/supplies-table.component';
+
+// Composición de costo en presupuesto (order-form)
+export * from '../pages/orders/order-form/linea/order-quote-3d-composition/order-quote-3d-composition.component';
+export * from '../pages/orders/order-form/linea/order-quote-estampado-composition/order-quote-estampado-composition.component';
+export * from '../pages/orders/order-form/linea/order-quote-design-composition/order-quote-design-composition.component';
+export * from './order-quote-resin-material/order-quote-resin-material.component';
+export * from './order-quote-resin-alcohol/order-quote-resin-alcohol.component';
+export * from './order-quote-resin-wash/order-quote-resin-wash.component';
+export * from './order-quote-resin-cure/order-quote-resin-cure.component';
+export * from './order-quote-filaments/order-quote-filaments.component';
+export * from './order-quote-filaments/filament-line-list.component';
+export * from './order-quote-print/order-quote-print.component';
+export * from './order-quote-labor/order-quote-labor.component';
+export * from './order-quote-error-margin/order-quote-error-margin.component';
+export * from './order-quote-estampado-prints/order-quote-estampado-prints.component';
+export * from './order-quote-estampado-supplies/order-quote-estampado-supplies.component';
+export * from './order-quote-estampado-press/order-quote-estampado-press.component';
+export {
+  formatOrderQuoteMoney,
+  formatOrderQuoteNumber,
+  isOrderQuoteCatalogLocked,
+  resolveOrderQuoteCureMinutes,
+  resolveOrderQuoteWashMinutes,
+} from './order-quote-composition.util';

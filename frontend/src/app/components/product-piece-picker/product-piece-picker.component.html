@@ -1,0 +1,81 @@
+<div class="piece-picker">
+  <div class="piece-picker__search">
+    <span class="piece-picker__icon" aria-hidden="true">
+      <svg viewBox="0 0 20 20" fill="none">
+        <circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.6" />
+        <path d="M12.5 12.5 16 16" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+      </svg>
+    </span>
+    <input
+      #inputRef
+      type="search"
+      class="piece-picker__input"
+      name="piecePickerSearch"
+      placeholder="Buscar pieza para agregar..."
+      [disabled]="disabled"
+      [ngModel]="query"
+      (ngModelChange)="onQueryChange($event)"
+      (focus)="onFocus()"
+      (keydown)="onKeydown($event)"
+      autocomplete="off"
+      role="combobox"
+      [attr.aria-expanded]="isOpen"
+      aria-autocomplete="list"
+    />
+  </div>
+
+  @if (isOpen) {
+    <div class="piece-picker__dropdown" role="listbox">
+      @if (loading && !filtered.length) {
+        <p class="piece-picker__empty">Cargando productos disponibles...</p>
+      } @else if (!filtered.length) {
+        <p class="piece-picker__empty">
+          @if (query.trim()) {
+            No hay piezas que coincidan.
+          } @else {
+            No quedan productos disponibles para agregar.
+          }
+        </p>
+      } @else {
+        @for (product of filtered; track product.id; let index = $index) {
+          <button
+            type="button"
+            class="piece-picker__option"
+            [class.is-active]="highlightedIndex === index"
+            role="option"
+            (mousedown)="onOptionMouseDown($event)"
+            (click)="select(product)"
+          >
+            <span class="piece-picker__thumb">
+              @if (thumb(product); as src) {
+                <img [src]="src" [alt]="" />
+              }
+            </span>
+            <span class="piece-picker__copy">
+              <strong>{{ product.name }}</strong>
+              <small>{{ meta(product) }}</small>
+            </span>
+            @if (badge(product); as status) {
+              <span
+                class="piece-picker__badge"
+                [class.piece-picker__badge--published]="status.kind === 'published'"
+                [class.piece-picker__badge--internal]="status.kind === 'internal'"
+              >
+                {{ status.label }}
+              </span>
+            }
+          </button>
+        }
+      }
+
+      <div class="piece-picker__footer">
+        <db-button
+          label="+ Crear pieza nueva"
+          variant="secondary"
+          format="soft"
+          (clicked)="createPiece()"
+        />
+      </div>
+    </div>
+  }
+</div>

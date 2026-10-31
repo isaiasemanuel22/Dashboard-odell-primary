@@ -39,6 +39,11 @@ export interface FilamentTypeConfig {
   name: string;
 }
 
+export interface ResinTypeConfig {
+  id: string;
+  name: string;
+}
+
 export interface FilamentPriceConfig {
   id: string;
   brandId?: string;
@@ -67,7 +72,13 @@ export interface ResinPriceConfig {
   brandId?: string;
   /** Nombre hidratado desde la tabla de marcas. No es el dato que se guarda. */
   brand?: string;
-  resinType: ResinType;
+  /** Id del catálogo `resinTypes`. */
+  resinTypeId?: string;
+  /**
+   * Código/slug usado en productos e insumos (p. ej. estandar).
+   * Se deriva del tipo del catálogo al guardar el precio.
+   */
+  resinType: ResinType | string;
   pricePerLiter: number;
 }
 
@@ -146,10 +157,12 @@ export interface GeneralSettings {
   /** Precio $/kg por tipo; usado al costear productos FDM (sin marca). */
   filamentTypeAverages: Partial<Record<FilamentType, number>>;
   /** Precio $/L por tipo; usado al costear productos resina (sin marca). */
-  resinTypeAverages: Partial<Record<ResinType, number>>;
+  resinTypeAverages: Partial<Record<string, number>>;
   colors: ColorConfig[];
   /** Catálogo editable de tipos de filamento (Ajustes). */
   filamentTypes: FilamentTypeConfig[];
+  /** Catálogo editable de tipos de resina (Ajustes). */
+  resinTypes: ResinTypeConfig[];
 }
 
 export interface Impreso {
@@ -175,7 +188,7 @@ export interface Supply {
   name: string;
   category: SupplyCategory;
   filamentType?: FilamentType;
-  resinType?: ResinType;
+  resinType?: ResinType | string;
   brandId?: string;
   /** Nombre hidratado desde la tabla de marcas. No es el dato que se guarda. */
   brand?: string;
@@ -210,7 +223,7 @@ export interface CalculateCostDto {
   brand?: string;
   filamentType?: FilamentType;
   filaments?: FdmFilamentLine[];
-  resinType?: ResinType;
+  resinType?: ResinType | string;
   paperType?: PaperType;
   widthCm?: number;
   heightCm?: number;
@@ -241,7 +254,7 @@ export interface ProductPricingInput {
   brand?: string;
   filamentType?: FilamentType;
   filaments?: FdmFilamentLine[];
-  resinType?: ResinType;
+  resinType?: ResinType | string;
   paperType?: PaperType;
   widthCm?: number;
   heightCm?: number;
@@ -314,7 +327,7 @@ export interface Product3D extends ProductBase {
   brand?: string;
   filamentType?: FilamentType;
   filaments?: FdmFilamentLine[];
-  resinType?: ResinType;
+  resinType?: ResinType | string;
   colorId?: string;
 }
 
@@ -417,7 +430,11 @@ export interface OrderItem {
   /** Impresión 3D manual: fdm | resina. */
   printProcess?: 'fdm' | 'resina';
   /** Impresión 3D manual (o catálogo copiado): tipo de resina. */
-  resinType?: ResinType;
+  resinType?: ResinType | string;
+  /** Impresión 3D (resina): minutos de lavado cotizados. */
+  washMinutes?: number;
+  /** Impresión 3D (resina): minutos de curado cotizados. */
+  cureMinutes?: number;
   /** Impresión 3D: filamentos/colores del desglose. */
   filaments?: FdmFilamentLine[];
   /** Impresión 3D: horas de mano de obra del desglose. */
@@ -860,7 +877,7 @@ export type CreateProductDto = {
   brand?: string;
   filamentType?: FilamentType;
   filaments?: FdmFilamentLine[];
-  resinType?: ResinType;
+  resinType?: ResinType | string;
   colorId?: string;
   washMinutes?: number;
   cureMinutes?: number;

@@ -129,7 +129,8 @@ export class WalletMovementsComponent {
     const material = supply.filamentType
       ? FILAMENT_TYPE_LABELS[supply.filamentType] ?? supply.filamentType.toUpperCase()
       : supply.resinType
-        ? RESIN_TYPE_LABELS[supply.resinType] ?? supply.resinType
+        ? RESIN_TYPE_LABELS[supply.resinType as keyof typeof RESIN_TYPE_LABELS] ??
+          supply.resinType
         : '';
     const line = [supply.brand, material].filter(Boolean).join(' · ');
     return line || null;

@@ -25,6 +25,7 @@ model AppSettings {
   resinTypeAverages     Json  @default("{}") @map("resin_type_averages")
   colors                Json  @default("[]")
   filamentTypes         Json  @default("[]") @map("filament_types")
+  resinTypes            Json  @default("[]") @map("resin_types")
 
   @@map("app_settings")
 }
@@ -180,6 +181,8 @@ model OrderItem {
   /** Presupuesto/pedido manual 3D: fdm | resina. */
   printProcess  String? @map("print_process") @db.VarChar(16)
   resinType     String? @map("resin_type") @db.VarChar(32)
+  washMinutes   Float?  @map("wash_minutes")
+  cureMinutes   Float?  @map("cure_minutes")
   workTimeHours Float?  @map("work_time_hours")
   laborNote     String? @map("labor_note") @db.Text
   fdmFilaments  Json    @default("[]") @map("fdm_filaments")
@@ -252,6 +255,8 @@ model QuoteItem {
   /** Presupuesto/pedido manual 3D: fdm | resina. */
   printProcess    String? @map("print_process") @db.VarChar(16)
   resinType       String? @map("resin_type") @db.VarChar(32)
+  washMinutes     Float?  @map("wash_minutes")
+  cureMinutes     Float?  @map("cure_minutes")
   workTimeHours   Float?  @map("work_time_hours")
   laborNote       String? @map("labor_note") @db.Text
   fdmFilaments    Json    @default("[]") @map("fdm_filaments")

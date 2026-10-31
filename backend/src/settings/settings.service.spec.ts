@@ -38,6 +38,7 @@ describe('SettingsService.patchGeneralSettings', () => {
     resinTypeAverages: {},
     colors: [],
     filamentTypes: [],
+    resinTypes: [],
   });
 
   function createService(initial: GeneralSettings): SettingsService {

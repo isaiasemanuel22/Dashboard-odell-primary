@@ -24,6 +24,7 @@ import {
   DbFormErrorComponent,
 } from '@dashboard-form';
 import { DbButtonComponent } from '../../../components/db-button/db-button.component';
+import { computeAssemblableUnits } from '../../../shared/utils/stock.helpers';
 import { ProductFormPricingFacade } from './store/product-form-pricing/product-form-pricing.facade';
 import { ProductFormFacade } from './product-form.facade';
 import { ProductFormPricingService } from './product-form-pricing.service';
@@ -99,6 +100,20 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       }
     }
     return missing;
+  }
+
+  get suggestedFinishedStock(): number {
+    return computeAssemblableUnits(
+      {
+        id: this.product?.id ?? '__draft-product__',
+        type: this.productType,
+        includesPieces: true,
+        components: this.facade.components,
+        stock: 0,
+        finishedStock: 0,
+      },
+      this.facade.catalogProducts,
+    );
   }
 
   ngOnInit(): void {

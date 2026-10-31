@@ -1,0 +1,124 @@
+<div class="cost-composition">
+  <header class="cost-composition__head">
+    <h5 class="cost-composition__title">Detalle del trabajo</h5>
+    <p class="cost-composition__hint">Abrí cada bloque para editarlo</p>
+  </header>
+
+  <details class="cost-composition__block" open>
+    <summary class="cost-composition__summary">
+      <span class="cost-composition__chevron" aria-hidden="true"></span>
+      <span class="cost-composition__summary-title">
+        {{ isGraphic ? 'Diseño' : 'Modelado' }}
+      </span>
+      <span class="cost-composition__summary-meta">{{ workSummary }}</span>
+      <strong class="cost-composition__summary-cost">{{ (line.unitCost ?? 0) | currencyArs }}</strong>
+    </summary>
+  
+    <div class="cost-composition__body cost-composition__body--fields">
+      <div class="quote-charge">
+        <span class="quote-charge__label">Cómo se cobra</span>
+        <div class="quote-charge__segments" role="group" aria-label="Cómo se cobra">
+          <button
+            type="button"
+            class="quote-charge__segment"
+            [class.quote-charge__segment--active]="chargeMode === 'hours'"
+            (click)="setChargeMode('hours')"
+          >
+            Por horas
+          </button>
+          <button
+            type="button"
+            class="quote-charge__segment"
+            [class.quote-charge__segment--active]="chargeMode === 'fixed'"
+            (click)="setChargeMode('fixed')"
+          >
+            Precio fijo
+          </button>
+        </div>
+      </div>
+  
+      @if (chargeMode === 'hours') {
+        <div class="design-detail">
+          <div class="cost-table__suffix design-detail__hours">
+            <db-input
+              label="Horas estimadas"
+              type="number"
+              [ngModel]="line.budgetedHours ?? 0"
+              (ngModelChange)="onBudgetedHoursChange($event)"
+              [name]="'hours-' + lineIndex"
+              [min]="0"
+              [step]="0.5"
+            />
+            <span>h</span>
+          </div>
+          <div class="design-detail__rate">
+            <span class="design-detail__rate-label">Tarifa</span>
+            <div class="design-detail__rate-value">
+              {{ serviceRate | currencyArs }}/h
+            </div>
+            <p class="design-detail__rate-hint">Cargala en Ajustes · Valores generales</p>
+          </div>
+        </div>
+      }
+  
+      @if (isGraphic) {
+        <db-select
+          class="quote-work-kind"
+          label="Tipo de trabajo"
+          [ngModel]="line.workKind ?? ''"
+          (ngModelChange)="onWorkKindChange($event)"
+          [name]="'work-kind-' + lineIndex"
+          [options]="workKindOptions"
+        />
+      }
+  
+      <div class="quote-deliverables">
+        <span class="quote-deliverables__label">Entregables</span>
+        <div class="quote-deliverables__chips">
+          @for (item of deliverableOptions; track item) {
+            <button
+              type="button"
+              class="quote-chip"
+              [class.quote-chip--design]="isGraphic"
+              [class.quote-chip--active]="hasDeliverable(item)"
+              (click)="toggleDeliverable(item)"
+            >
+              {{ item }}
+            </button>
+          }
+        </div>
+      </div>
+  
+      @if (isGraphic) {
+        <div class="quote-check">
+          <db-checkbox
+            label="Incluye 2 rondas de cambios"
+            [ngModel]="!!line.includesRevisions"
+            (ngModelChange)="onIncludesRevisionsChange($event)"
+            [name]="'revisions-' + lineIndex"
+          />
+          <p class="quote-check__hint">Se muestra en el presupuesto que recibe el cliente.</p>
+        </div>
+      } @else {
+        <div class="quote-check">
+          <db-checkbox
+            label="Necesito el producto del cliente para medir"
+            [ngModel]="!!line.needsClientProduct"
+            (ngModelChange)="onNeedsClientProductChange($event)"
+            [name]="'needs-product-' + lineIndex"
+          />
+          <p class="quote-check__hint">El plazo empieza a correr cuando llega al taller.</p>
+        </div>
+        <div class="quote-check">
+          <db-checkbox
+            label="Incluir la impresión de la pieza"
+            [ngModel]="!!line.linkPrint"
+            (ngModelChange)="onLinkPrintToggle($event)"
+            [name]="'link-print-' + lineIndex"
+          />
+          <p class="quote-check__hint">Agrega una línea de Impresión 3D vinculada a este modelo.</p>
+        </div>
+      }
+    </div>
+  </details>
+</div>

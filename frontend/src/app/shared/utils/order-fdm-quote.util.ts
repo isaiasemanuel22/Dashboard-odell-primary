@@ -62,7 +62,10 @@ export function isResinQuoteLine(
   product: Product | undefined,
 ): boolean {
   if (product?.type === ProductType.RESINA) return true;
+  if (product?.type === ProductType.FDM) return false;
   if (line.productId?.trim()) return false;
+  // printProcess gana sobre un resinType residual del form/producto.
+  if (line.printProcess === 'fdm') return false;
   return line.printProcess === 'resina' || !!line.resinType;
 }
 
@@ -125,6 +128,9 @@ export function applyProductSpecsToFdmLine(
     if (product.type === ProductType.RESINA) {
       // Resina no usa filamentos; alcanza grams + tiempos del producto.
       line.filaments = undefined;
+      line.resinType = product.resinType;
+      line.washMinutes = Number(product.washMinutes) || 0;
+      line.cureMinutes = Number(product.cureMinutes) || 0;
       return;
     }
 
@@ -176,7 +182,7 @@ export function syncFdmQuotePricing(
     preserveCost?: boolean;
     productType?: ProductType;
     brand?: string;
-    resinType?: ResinType;
+    resinType?: ResinType | string;
     washMinutes?: number;
     cureMinutes?: number;
   },

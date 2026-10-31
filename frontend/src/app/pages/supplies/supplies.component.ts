@@ -1,7 +1,7 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ColorConfig, Supply, SupplyCategory } from '../../core/models';
+import { ColorConfig, ResinType, Supply, SupplyCategory } from '../../core/models';
 import { SuppliesService, SettingsService } from '../../core/services/settings.service';
 import {
   DbButtonComponent,
@@ -126,7 +126,7 @@ export class SuppliesComponent implements OnInit {
     const material = supply.filamentType
       ? FILAMENT_TYPE_LABELS[supply.filamentType]
       : supply.resinType
-        ? RESIN_TYPE_LABELS[supply.resinType]
+        ? RESIN_TYPE_LABELS[supply.resinType as ResinType] ?? supply.resinType
         : '';
     return [
       supply.name,

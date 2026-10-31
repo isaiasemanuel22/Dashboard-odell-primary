@@ -34,7 +34,6 @@ import {
   resolveWashBathUses,
 } from '../../shared/utils/machine-profile.util';
 import {
-  RESIN_DENSITY_G_PER_ML,
   resolveFilamentPricePerKg,
   resolveResinPricePerLiter,
 } from '../../shared/utils/material-type-price.util';
@@ -356,7 +355,7 @@ export class ProductCostCalculationService {
   private getDefaultResinPrice(
     settings: GeneralSettings,
     brand: string | undefined,
-    resinType: ResinType | undefined,
+    resinType: ResinType | string | undefined,
   ): number | null {
     if (!resinType) return null;
 
@@ -391,7 +390,7 @@ export class ProductCostCalculationService {
 
   private calcResinCost(
     brand: string | undefined,
-    resinType: ResinType | undefined,
+    resinType: ResinType | string | undefined,
     grams: number,
     settings: GeneralSettings,
   ): number {
@@ -399,7 +398,8 @@ export class ProductCostCalculationService {
       ? this.getDefaultResinPrice(settings, brand, resinType)
       : resolveResinPricePerLiter(settings, resinType);
     if (pricePerLiter === null) return 0;
-    const liters = grams / (RESIN_DENSITY_G_PER_ML * 1000);
+    // Campo `grams` del DTO = ml de resina.
+    const liters = grams / 1000;
     return liters * pricePerLiter;
   }
 

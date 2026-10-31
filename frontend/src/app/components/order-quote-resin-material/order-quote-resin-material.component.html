@@ -1,0 +1,42 @@
+@if (visible) {
+  <details class="cost-composition__block" open>
+    <summary class="cost-composition__summary">
+      <span class="cost-composition__chevron" aria-hidden="true"></span>
+      <span class="cost-composition__summary-title">Resina</span>
+      <span class="cost-composition__summary-meta">{{ materialSummary }}</span>
+      <strong class="cost-composition__summary-cost">{{ resinCost | currencyArs }}</strong>
+    </summary>
+    <div class="cost-composition__body cost-composition__body--fields">
+      @if (!line.productId) {
+        <db-select
+          label="Tipo de resina"
+          [ngModel]="line.resinType"
+          [name]="'resin-type-' + lineIndex"
+          placeholder="Seleccionar tipo"
+          [options]="resinTypeOptions"
+          (ngModelChange)="onResinTypeChange($event)"
+        />
+      }
+      <div class="cost-table__suffix cost-composition__field">
+        <db-input
+          label="Mililitros"
+          type="number"
+          [ngModel]="line.grams ?? 0"
+          (ngModelChange)="onGramsChange($event)"
+          [name]="'resin-ml-' + lineIndex"
+          [min]="0"
+          [step]="1"
+          [disabled]="catalogLocked"
+        />
+        <span>ml</span>
+      </div>
+      <p class="cost-composition__field-hint">
+        @if (line.productId) {
+          Tipo y marca del catálogo · solo material de resina
+        } @else {
+          Promedio del tipo en Ajustes · alcohol/lavado/curado abajo
+        }
+      </p>
+    </div>
+  </details>
+}

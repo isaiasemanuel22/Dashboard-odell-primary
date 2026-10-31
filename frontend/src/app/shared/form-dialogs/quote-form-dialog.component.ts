@@ -2,11 +2,14 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   OnInit,
+  ViewChild,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { forkJoin } from 'rxjs';
+import { filter, forkJoin } from 'rxjs';
 import {
   CreateQuotePayload,
   Customer,
@@ -19,7 +22,11 @@ import { ProductCatalogService } from '../../core/services/product-catalog.servi
 import { QuotesService } from '../../core/services/quotes.service';
 import { FormDialogShellComponent } from '../../components/form-dialog-shell/form-dialog-shell.component';
 import { extractApiErrorMessage } from '../utils/api-error';
-import { OrderFormComponent, OrderFormSavePayload } from '../../pages/orders/order-form/order-form.component';
+import {
+  OrderFormComponent,
+  OrderFormSavePayload,
+} from '../../pages/orders/order-form/order-form.component';
+import { FormDialogService } from './form-dialog.service';
 
 export interface QuoteFormDialogData {
   quote?: Quote | null;
@@ -59,22 +66,41 @@ export class QuoteFormDialogComponent implements OnInit {
   private readonly quotesService = inject(QuotesService);
   private readonly customerCatalog = inject(CustomerCatalogService);
   private readonly productCatalog = inject(ProductCatalogService);
+  private readonly formDialogs = inject(FormDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly dialogRef = inject(DialogRef<Quote>);
   private readonly data = inject<QuoteFormDialogData>(DIALOG_DATA, {
     optional: true,
   });
+
+  @ViewChild(OrderFormComponent) private form?: OrderFormComponent;
 
   quote: Quote | null = null;
   customers: Customer[] = [];
   products: Product[] = [];
   loading = false;
   error = '';
+  private closing = false;
+  private confirmingDiscard = false;
 
   ngOnInit(): void {
     this.quote = this.data?.quote ?? null;
     this.resetState();
     this.loadCatalogs();
+    this.dialogRef.disableClose = true;
+    this.dialogRef.backdropClick
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.cancel());
+    this.dialogRef.keydownEvents
+      .pipe(
+        filter((event) => event.key === 'Escape'),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((event) => {
+        event.preventDefault();
+        this.cancel();
+      });
   }
 
   save(data: OrderFormSavePayload): void {
@@ -92,18 +118,47 @@ export class QuoteFormDialogComponent implements OnInit {
     request.subscribe({
       next: (saved) => {
         this.loading = false;
+        this.closing = true;
         this.dialogRef.close(saved);
       },
       error: (err) => {
         this.loading = false;
-        this.error = extractApiErrorMessage(err, 'Error al guardar el presupuesto');
+        this.error = extractApiErrorMessage(
+          err,
+          'Error al guardar el presupuesto',
+        );
         this.cdr.markForCheck();
       },
     });
   }
 
   cancel(): void {
-    this.dialogRef.close();
+    if (this.closing || this.confirmingDiscard) return;
+
+    const discard = (): void => {
+      this.closing = true;
+      this.dialogRef.close();
+    };
+
+    if (!this.form?.hasUnsavedChanges()) {
+      discard();
+      return;
+    }
+
+    this.confirmingDiscard = true;
+    this.formDialogs
+      .openConfirm({
+        title: 'Descartar cambios',
+        message:
+          'Hay cambios sin guardar. ¿Descartar el presupuesto y cerrar?',
+        confirmLabel: 'Descartar',
+        cancelLabel: 'Seguir editando',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        this.confirmingDiscard = false;
+        if (confirmed) discard();
+      });
   }
 
   onCustomerCreated(customer: Customer): void {

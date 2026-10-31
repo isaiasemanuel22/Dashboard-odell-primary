@@ -13,7 +13,6 @@ import {
   FilamentType,
   PaperType,
   ProductType,
-  ResinType,
   ServiceType,
   SupplyCategory,
 } from '../enums';
@@ -248,12 +247,25 @@ export class ResinPriceDto {
   @IsNotEmpty()
   brand!: string;
 
+  @IsOptional()
   @IsString()
-  resinType!: string;
+  @IsNotEmpty()
+  resinTypeId?: string;
+
+  /** Compat / fallback si aún no se envía resinTypeId. */
+  @IsOptional()
+  @IsString()
+  resinType?: string;
 
   @IsNumber()
   @Min(0)
   pricePerLiter!: number;
+}
+
+export class ResinTypeConfigDto {
+  @IsString()
+  @IsNotEmpty()
+  name!: string;
 }
 
 export class ColorConfigDto {
@@ -299,8 +311,8 @@ export class CalculateCostDto {
   filamentType?: FilamentType;
 
   @IsOptional()
-  @IsEnum(ResinType)
-  resinType?: ResinType;
+  @IsString()
+  resinType?: string;
 
   @IsOptional()
   @IsNumber()

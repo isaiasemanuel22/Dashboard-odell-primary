@@ -17,7 +17,7 @@ export function averageFilamentPriceByType(
 
 export function averageResinPriceByType(
   settings: GeneralSettings,
-  resinType: ResinType,
+  resinType: ResinType | string,
 ): number | null {
   const matches = settings.resinPrices.filter(
     (entry) => entry.resinType === resinType,
@@ -45,7 +45,7 @@ export function resolveFilamentPricePerKg(
 
 export function resolveResinPricePerLiter(
   settings: GeneralSettings,
-  resinType: ResinType | undefined,
+  resinType: ResinType | string | undefined,
 ): number | null {
   if (!resinType) {
     return null;

@@ -1,0 +1,49 @@
+@if (visible) {
+  <details
+    class="cost-composition__block"
+    [class.cost-composition__block--blocked]="unlinked"
+  >
+    <summary class="cost-composition__summary">
+      <span class="cost-composition__chevron" aria-hidden="true"></span>
+      <span class="cost-composition__summary-title">Alcohol</span>
+      <span class="cost-composition__summary-meta">
+        @if (unlinked) {
+          <span class="cost-composition__missing">vincular insumo</span>
+        } @else {
+          {{ alcoholSummary }}
+          @if (alcoholIssue) {
+            · <span class="cost-composition__missing">falta precio</span>
+          }
+        }
+      </span>
+      <strong class="cost-composition__summary-cost">{{ washSupplyCost | currencyArs }}</strong>
+    </summary>
+    <div class="cost-composition__body">
+      @if (alcoholIssue; as issue) {
+        <p class="cost-composition__field-hint cost-composition__field-hint--warn" role="status">
+          {{ issue }}
+          @if (needsAjustes) {
+            <a
+              class="cost-composition__insumos-link"
+              routerLink="/ajustes/valores-generales"
+              target="_blank"
+              rel="noopener"
+            >Abrir Ajustes</a>
+          }
+          @if (needsInsumos) {
+            <a
+              class="cost-composition__insumos-link"
+              routerLink="/insumos"
+              target="_blank"
+              rel="noopener"
+            >Abrir Insumos</a>
+          }
+        </p>
+      } @else {
+        <p class="cost-composition__field-hint">
+          Costo del insumo vinculado a la máquina de lavado (Ajustes). No editable acá.
+        </p>
+      }
+    </div>
+  </details>
+}

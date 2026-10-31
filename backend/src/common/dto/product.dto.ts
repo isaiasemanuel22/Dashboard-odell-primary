@@ -11,7 +11,7 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
-import { FilamentType, PaperType, ProductType, ResinType } from '../enums';
+import { FilamentType, PaperType, ProductType } from '../enums';
 import {
   EstampadoPressCycle,
   EstampadoPrintSpec,
@@ -168,8 +168,8 @@ export class CreateProductDto {
   filaments?: FdmFilamentLineDto[];
 
   @IsOptional()
-  @IsEnum(ResinType)
-  resinType?: ResinType;
+  @IsString()
+  resinType?: string;
 
   @IsOptional()
   @IsString()

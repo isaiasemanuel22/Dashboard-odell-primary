@@ -67,7 +67,7 @@ export function buildColorOptions(
   catalog: ColorConfig[],
   filter: {
     filamentType?: FilamentType;
-    resinType?: ResinType;
+    resinType?: ResinType | string;
     supplyId?: string;
     category?: SupplyCategory;
   },
@@ -97,25 +97,29 @@ export function buildColorOptions(
     );
   }
 
-  const colorIds = new Set<string>();
+  const stockIds = new Set<string>();
   for (const supply of compatible) {
     if (supply.colorId) {
-      colorIds.add(supply.colorId);
+      stockIds.add(supply.colorId);
     }
   }
 
   const options: DbColorSelectOption[] = [
-    { value: INDISTINTO_COLOR_ID, label: 'Indistinto' },
+    {
+      value: INDISTINTO_COLOR_ID,
+      label: 'Indistinto',
+      hint: 'el que haya en stock',
+    },
   ];
 
+  // Catálogo completo: el popover marca «Con stock» con inStock.
   for (const color of catalog) {
-    if (colorIds.has(color.id)) {
-      options.push({
-        value: color.id,
-        label: color.name,
-        hex: color.hex,
-      });
-    }
+    options.push({
+      value: color.id,
+      label: color.name,
+      hex: color.hex,
+      inStock: stockIds.has(color.id),
+    });
   }
 
   return options;

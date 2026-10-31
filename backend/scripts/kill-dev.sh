@@ -8,6 +8,7 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 PORT="${PORT:-3000}"
 
 # Servidor Nest compilado
+pkill -f "${ROOT}/dist/main" 2>/dev/null || true
 pkill -f "${ROOT}/dist/src/main" 2>/dev/null || true
 pkill -f "${ROOT}/dist/main" 2>/dev/null || true
 

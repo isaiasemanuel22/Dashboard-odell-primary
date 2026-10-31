@@ -309,6 +309,12 @@ export function buildOrderItems(
               : line.printProcess
           : undefined,
         resinType: isResinManual ? line.resinType : undefined,
+        washMinutes: isResinQuoteLine(line, product)
+          ? Number(line.washMinutes) || 0
+          : undefined,
+        cureMinutes: isResinQuoteLine(line, product)
+          ? Number(line.cureMinutes) || 0
+          : undefined,
         filaments: filaments.length ? filaments : undefined,
         workTimeHours: isImpresion3DLine(line.serviceType)
           ? line.workTimeHours
@@ -594,6 +600,12 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
       ? printProcess ?? (item.productId ? undefined : 'fdm')
       : undefined,
     resinType: isResinManual ? item.resinType : undefined,
+    washMinutes: isImpresion3DLine(item.serviceType)
+      ? item.washMinutes
+      : undefined,
+    cureMinutes: isImpresion3DLine(item.serviceType)
+      ? item.cureMinutes
+      : undefined,
     filaments: filaments?.length ? filaments : undefined,
     workTimeHours: isImpresion3DLine(item.serviceType)
       ? item.workTimeHours

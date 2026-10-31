@@ -16,6 +16,7 @@ import {
   persistedResinPrice,
 } from '../brand-link.util';
 import { hydrateFilamentPricesWithTypeIds } from '../../settings/filament-type-catalog.util';
+import { hydrateResinPricesWithTypeIds } from '../../settings/resin-type-catalog.util';
 
 export function mapSettingsFromDb(row: {
   electricityCostPerKwh: number;
@@ -35,6 +36,7 @@ export function mapSettingsFromDb(row: {
   resinTypeAverages?: Prisma.JsonValue;
   colors?: Prisma.JsonValue;
   filamentTypes?: Prisma.JsonValue;
+  resinTypes?: Prisma.JsonValue;
 }): GeneralSettings {
   const rawProfiles = fromJson<unknown[]>(row.processProfiles ?? []);
   const paperPricesPerSqm = fromJson<GeneralSettings['paperPricesPerSqm']>(
@@ -77,9 +79,11 @@ export function mapSettingsFromDb(row: {
     filamentTypes: fromJson<GeneralSettings['filamentTypes']>(
       row.filamentTypes ?? [],
     ),
+    resinTypes: fromJson<GeneralSettings['resinTypes']>(row.resinTypes ?? []),
   };
 
   hydrateFilamentPricesWithTypeIds(base, { seedIfEmpty: true });
+  hydrateResinPricesWithTypeIds(base, { seedIfEmpty: true });
   base.profitMargins = normalizeProfitMargins(base.profitMargins);
   if (hasSavedSheets) {
     base.paperPricesPerSqm = syncPaperPricesFromReferenceSheets(
@@ -119,5 +123,6 @@ export function mapSettingsToDb(settings: GeneralSettings) {
     resinTypeAverages: toInputJson(normalized.resinTypeAverages),
     colors: toInputJson(normalized.colors ?? []),
     filamentTypes: toInputJson(normalized.filamentTypes ?? []),
+    resinTypes: toInputJson(normalized.resinTypes ?? []),
   };
 }

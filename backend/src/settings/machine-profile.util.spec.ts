@@ -31,6 +31,7 @@ describe('machine-profile.util', () => {
     filamentPrices: [],
     resinPrices: [],
     filamentTypes: [],
+    resinTypes: [],
     colors: [],
     machineProfiles: createDefaultMachineProfiles().map((profile) =>
       profile.id === 'mp-res-wash'

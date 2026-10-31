@@ -74,8 +74,8 @@ export class FilamentTypeLabelPipe implements PipeTransform {
 
 @Pipe({ name: 'resinTypeLabel', standalone: true })
 export class ResinTypeLabelPipe implements PipeTransform {
-  transform(value: ResinType): string {
-    return RESIN_TYPE_LABELS[value] ?? value;
+  transform(value: ResinType | string): string {
+    return RESIN_TYPE_LABELS[value as ResinType] ?? value;
   }
 }
 

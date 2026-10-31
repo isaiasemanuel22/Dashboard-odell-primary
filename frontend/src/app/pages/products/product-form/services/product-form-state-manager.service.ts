@@ -50,7 +50,7 @@ export interface ProductFormState {
   supplyLines: any[];
   filamentLines: any[];
   filamentType: FilamentType;
-  resinType: ResinType;
+  resinType: ResinType | string;
   colorId: string;
   components: any[];
   assemblyTimeHours: number;
@@ -80,7 +80,7 @@ export type ProductFormGroup = FormGroup<{
   workTimeHours: FormControl<number>;
   washMinutes: FormControl<number>;
   cureMinutes: FormControl<number>;
-  resinType: FormControl<ResinType>;
+  resinType: FormControl<ResinType | string>;
   colorId: FormControl<string>;
   filamentType: FormControl<FilamentType>;
   assemblyTimeHours: FormControl<number>;

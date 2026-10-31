@@ -1,0 +1,23 @@
+<details class="cost-composition__block">
+  <summary class="cost-composition__summary">
+    <span class="cost-composition__chevron" aria-hidden="true"></span>
+    <span class="cost-composition__summary-title">Impresión</span>
+    <span class="cost-composition__summary-meta">{{ printSummary }}</span>
+    <strong class="cost-composition__summary-cost">{{ printCost | currencyArs }}</strong>
+  </summary>
+  <div class="cost-composition__body cost-composition__body--fields">
+    <div class="cost-table__suffix cost-composition__field">
+      <db-input
+        label="Horas de impresión"
+        type="number"
+        [ngModel]="line.printTimeHours ?? 0"
+        (ngModelChange)="onPrintHoursChange($event)"
+        [name]="'print-hours-' + lineIndex"
+        [min]="0"
+        [step]="0.1"
+        [disabled]="catalogLocked"
+      />
+      <span>h</span>
+    </div>
+  </div>
+</details>

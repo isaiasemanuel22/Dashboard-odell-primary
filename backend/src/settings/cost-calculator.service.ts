@@ -49,8 +49,6 @@ import {
 import { normalizeProductComponents } from '../products/product-component.util';
 import { normalizeProfitMargins } from './profit-margins.util';
 
-const RESIN_DENSITY_G_PER_ML = 1.1;
-
 @Injectable()
 export class CostCalculatorService {
   constructor(private readonly store: StoreService) {}
@@ -553,7 +551,7 @@ export class CostCalculatorService {
 
   getDefaultResinPrice(
     brand: string | undefined,
-    resinType: ResinType | undefined,
+    resinType: ResinType | string | undefined,
   ): number | null {
     if (!resinType) return null;
 
@@ -582,7 +580,7 @@ export class CostCalculatorService {
     category: SupplyCategory,
     brand?: string,
     filamentType?: FilamentType,
-    resinType?: ResinType,
+    resinType?: ResinType | string,
   ): { unitPrice: number; unit: string; fromSettings: boolean } | null {
     if (category === SupplyCategory.FDM) {
       const price = this.getDefaultFilamentPrice(brand, filamentType);
@@ -777,7 +775,7 @@ export class CostCalculatorService {
 
   private calcResinCost(
     brand: string | undefined,
-    resinType: ResinType | undefined,
+    resinType: ResinType | string | undefined,
     grams: number,
     settings: GeneralSettings,
   ): number {
@@ -785,7 +783,8 @@ export class CostCalculatorService {
       ? this.getDefaultResinPrice(brand, resinType)
       : resolveResinPricePerLiter(settings, resinType);
     if (pricePerLiter === null) return 0;
-    const liters = grams / (RESIN_DENSITY_G_PER_ML * 1000);
+    // Campo grams del DTO = ml de resina.
+    const liters = grams / 1000;
     return liters * pricePerLiter;
   }
 

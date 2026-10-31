@@ -22,6 +22,242 @@
   }
 }
 
-.components-table db-color-select {
-  min-width: 12rem;
+.pieces-table {
+  border: 1px solid #e3ecf2;
+  border-radius: 0.6rem;
+  overflow: hidden;
+  background: #fff;
+  min-width: 0;
+  max-width: 100%;
+
+  &--embedded {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+  }
+}
+
+.pieces-table__head,
+.pieces-table__row {
+  display: grid;
+  grid-template-columns:
+    minmax(0, 1.55fr)
+    7.25rem
+    minmax(10.75rem, 1.15fr)
+    5.25rem
+    5.5rem
+    2rem;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.55rem 0.75rem;
+  min-width: 0;
+  max-width: 100%;
+
+  > * {
+    min-width: 0;
+  }
+}
+
+.pieces-table__head {
+  background: #eff6ff;
+  color: #243848;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-bottom: 1px solid #e3ecf2;
+}
+
+.pieces-table__head-money {
+  text-align: right;
+}
+
+.pieces-table__row {
+  border-top: 1px solid #eef3f7;
+}
+
+.pieces-table__row + .pieces-table__row {
+  border-top: 1px solid #eef3f7;
+}
+
+.pieces-table__head + .pieces-table__row {
+  border-top: 0;
+}
+
+.pieces-table__piece {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-width: 0;
+}
+
+.pieces-table__thumb {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      #d9eaf3,
+      #d9eaf3 4px,
+      #eef6fa 4px,
+      #eef6fa 8px
+    );
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.pieces-table__copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.05rem;
+
+  strong {
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: #1e293b;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  small {
+    color: $color-text-muted;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.pieces-table__stepper {
+  display: grid;
+  grid-template-columns: 1.7rem minmax(0, 1fr) 1.7rem;
+  align-items: center;
+  border: 1px solid #d7e3ea;
+  border-radius: 10px;
+  background: #fff;
+  overflow: hidden;
+
+  button {
+    border: 0;
+    background: transparent;
+    color: #5b7083;
+    height: 2.25rem;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  input {
+    width: 100%;
+    min-width: 0;
+    border: 0;
+    background: transparent;
+    text-align: center;
+    font: inherit;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    color: $color-text;
+    appearance: textfield;
+
+    &::-webkit-outer-spin-button,
+    &::-webkit-inner-spin-button {
+      appearance: none;
+      margin: 0;
+    }
+  }
+}
+
+.pieces-table__color {
+  min-width: 0;
+}
+
+.pieces-table__money {
+  text-align: right;
+  font-size: 0.8125rem;
+  color: $color-text-label;
+  white-space: nowrap;
+
+  &--strong {
+    font-weight: 700;
+    color: #1e293b;
+  }
+}
+
+.pieces-table__remove {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.pieces-table__x {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #dc2626;
+  font-size: 1.15rem;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    background: #fef2f2;
+  }
+}
+
+.pieces-table__color db-color-select {
+  display: block;
+  min-width: 0;
+  width: 100%;
+}
+
+@media (max-width: 720px) {
+  .pieces-table__head {
+    display: none;
+  }
+
+  .pieces-table__row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'piece remove'
+      'qty money'
+      'color sub';
+  }
+
+  .pieces-table__piece {
+    grid-area: piece;
+  }
+
+  .pieces-table__qty {
+    grid-area: qty;
+  }
+
+  .pieces-table__color {
+    grid-area: color;
+  }
+
+  .pieces-table__money:not(.pieces-table__money--strong) {
+    grid-area: money;
+  }
+
+  .pieces-table__money--strong {
+    grid-area: sub;
+  }
+
+  .pieces-table__remove {
+    grid-area: remove;
+  }
 }

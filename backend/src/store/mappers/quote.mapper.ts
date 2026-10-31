@@ -25,6 +25,8 @@ export function mapQuoteItemFromDb(item: {
   filamentType?: string | null;
   printProcess?: string | null;
   resinType?: string | null;
+  washMinutes?: number | null;
+  cureMinutes?: number | null;
   workTimeHours?: number | null;
   laborNote?: string | null;
   fdmFilaments?: Prisma.JsonValue;
@@ -79,6 +81,8 @@ export function mapQuoteItemFromDb(item: {
         ? item.printProcess
         : undefined,
     resinType: (item.resinType as QuoteItem['resinType']) ?? undefined,
+    washMinutes: item.washMinutes ?? undefined,
+    cureMinutes: item.cureMinutes ?? undefined,
     filaments: filaments.length ? filaments : undefined,
     workTimeHours: item.workTimeHours ?? undefined,
     laborNote: item.laborNote?.trim() || undefined,
@@ -214,6 +218,8 @@ export function mapQuoteItemToDb(
     filamentType: item.filamentType ?? null,
     printProcess: item.printProcess ?? null,
     resinType: item.resinType ?? null,
+    washMinutes: item.washMinutes ?? null,
+    cureMinutes: item.cureMinutes ?? null,
     workTimeHours: item.workTimeHours ?? null,
     laborNote: item.laborNote?.trim() || null,
     fdmFilaments: toInputJson(filaments.map(persistedFdmLine)),

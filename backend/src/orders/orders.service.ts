@@ -526,7 +526,7 @@ export class OrdersService {
         if (isManualResinOrderLine(item)) {
           if (!isResinQuoteConfigured(item)) {
             throw new BadRequestException(
-              `Línea ${index + 1}: completá tipo de resina y gramos u horas de impresión`,
+              `Línea ${index + 1}: completá tipo de resina y ml u horas de impresión`,
             );
           }
         } else if (!isFdmQuoteConfigured(item)) {
@@ -620,6 +620,12 @@ export class OrdersService {
                       ? ('fdm' as const)
                       : undefined,
                 resinType,
+                washMinutes: isResin
+                  ? Math.max(0, Number(item.washMinutes) || 0)
+                  : undefined,
+                cureMinutes: isResin
+                  ? Math.max(0, Number(item.cureMinutes) || 0)
+                  : undefined,
                 filaments: filaments.length ? filaments : undefined,
                 workTimeHours,
                 laborNote,

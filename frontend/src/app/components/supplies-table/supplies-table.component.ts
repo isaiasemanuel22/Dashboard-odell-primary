@@ -111,7 +111,8 @@ export class SuppliesTableComponent {
     const material = supply.filamentType
       ? FILAMENT_TYPE_LABELS[supply.filamentType] ?? supply.filamentType.toUpperCase()
       : supply.resinType
-        ? RESIN_TYPE_LABELS[supply.resinType] ?? supply.resinType
+        ? RESIN_TYPE_LABELS[supply.resinType as keyof typeof RESIN_TYPE_LABELS] ??
+          supply.resinType
         : '';
     return [supply.brand, material].filter(Boolean).join(' · ');
   }

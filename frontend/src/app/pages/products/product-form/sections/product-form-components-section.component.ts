@@ -12,31 +12,29 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import {
+  Category,
   ColorConfig,
   GeneralSettings,
   INDISTINTO_COLOR_ID,
   Product,
   ProductComponent,
   ProductType,
-  Supply,
 } from '../../../../core/models';
 import { CatalogFacade } from '../../../../store/catalog/catalog.facade';
 import { SettingsFacade } from '../../../../store/settings/settings.facade';
-import { SuppliesService } from '../../../../core/services/settings.service';
 import { ProductFormPricingFacade } from '../store/product-form-pricing/product-form-pricing.facade';
 import {
   sumComponentsCost,
   sumComponentsPrice,
 } from '../../../../shared/utils/product.helpers';
+import { computeAssemblableUnits } from '../../../../shared/utils/stock.helpers';
+import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import { ProductComponentsTableComponent } from '../../../../components/product-components-table/product-components-table.component';
-import { DbButtonComponent } from '../../../../components/db-button/db-button.component';
+import { ProductPiecePickerComponent } from '../../../../components/product-piece-picker/product-piece-picker.component';
 import {
-  DbFieldsetComponent,
+  DbCheckboxComponent,
   DbInputComponent,
-  DbSelectComponent,
 } from '@dashboard-form';
-import type { DbSelectOption } from '@dashboard-form';
-import { productComponentSelectLabel } from '../../../../shared/utils/product.helpers';
 
 export interface ProductFormComponentsValue {
   components: ProductComponent[];
@@ -48,11 +46,11 @@ export interface ProductFormComponentsValue {
   standalone: true,
   imports: [
     FormsModule,
-    DbFieldsetComponent,
-    DbSelectComponent,
     DbInputComponent,
-    DbButtonComponent,
+    DbCheckboxComponent,
+    CurrencyArsPipe,
     ProductComponentsTableComponent,
+    ProductPiecePickerComponent,
   ],
   templateUrl: './product-form-components-section.component.html',
   styleUrl: '../product-form.component.scss',
@@ -61,7 +59,6 @@ export interface ProductFormComponentsValue {
 export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy {
   private readonly catalogFacade = inject(CatalogFacade);
   private readonly settingsFacade = inject(SettingsFacade);
-  private readonly suppliesService = inject(SuppliesService);
   private readonly pricingStore = inject(ProductFormPricingFacade);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
@@ -71,13 +68,14 @@ export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy 
   @Output() readonly valueChange = new EventEmitter<ProductFormComponentsValue>();
 
   catalogProducts: Product[] = [];
+  categories: Category[] = [];
   components: ProductComponent[] = [];
   colorCatalog: ColorConfig[] = [];
-  supplies: Supply[] = [];
   assemblyTimeHours = 0;
-  componentPicker = '';
-  componentQty = 1;
   catalogLoading = true;
+  /** UI del mock: refleja el comportamiento actual (siempre se descuentan piezas). */
+  deductPiecesOnSale = true;
+  laborCostPerHour = 0;
 
   private ready = false;
   private lastEmitted: ProductFormComponentsValue | null = null;
@@ -102,6 +100,7 @@ export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy 
 
   ngOnInit(): void {
     this.catalogFacade.loadAllProducts(true);
+    this.catalogFacade.load(false);
     this.catalogFacade.allProductsLoading$
       .pipe(takeUntil(this.destroy$))
       .subscribe((loading) => {
@@ -120,6 +119,13 @@ export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy 
       .pipe(takeUntil(this.destroy$))
       .subscribe((products) => {
         this.catalogProducts = products;
+        this.syncPricingContributions();
+        this.cdr.markForCheck();
+      });
+    this.catalogFacade.categories$
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((categories) => {
+        this.categories = categories;
         this.cdr.markForCheck();
       });
 
@@ -128,14 +134,7 @@ export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy 
       .pipe(takeUntil(this.destroy$))
       .subscribe((settings: GeneralSettings | null) => {
         this.colorCatalog = settings?.colors ?? [];
-        this.cdr.markForCheck();
-      });
-
-    this.suppliesService
-      .watchSupplies()
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((items) => {
-        this.supplies = items;
+        this.laborCostPerHour = Number(settings?.laborCostPerHour) || 0;
         this.cdr.markForCheck();
       });
 
@@ -156,58 +155,88 @@ export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy 
     return this.productType === ProductType.ESTAMPADO;
   }
 
-  get availableComponentOptions(): DbSelectOption[] {
-    const used = new Set(this.components.map((component) => component.productId));
-    return this.catalogProducts
-      .filter(
-        (product) =>
-          product.id !== this.editingProductId && !used.has(product.id),
-      )
-      .map((product) => ({
-        value: product.id,
-        label: productComponentSelectLabel(product),
-      }));
+  get excludeIds(): string[] {
+    const ids = this.components.map((component) => component.productId);
+    if (this.editingProductId) ids.push(this.editingProductId);
+    return ids;
   }
 
-  get canAddComponent(): boolean {
-    return this.availableComponentOptions.length > 0 && this.componentQty >= 1;
+  get distinctCount(): number {
+    return this.components.length;
   }
 
-  get pickerHint(): string {
-    if (this.catalogLoading && !this.catalogProducts.length) {
-      return 'Cargando productos disponibles...';
-    }
-    if (!this.availableComponentOptions.length) {
-      if (this.editingProductId && this.catalogProducts.length <= 1) {
-        return 'Necesitás al menos otro producto en el catálogo para usarlo como pieza.';
-      }
-      return 'No quedan productos disponibles para agregar.';
-    }
-    return '';
+  get totalUnits(): number {
+    return this.components.reduce(
+      (sum, item) => sum + Math.max(1, Math.trunc(Number(item.quantity) || 1)),
+      0,
+    );
   }
 
-  addComponent(): void {
-    if (!this.componentPicker || this.componentQty < 1) {
+  get partsCost(): number {
+    return sumComponentsCost(this.catalogProducts, this.components);
+  }
+
+  get assemblableUnits(): number {
+    return computeAssemblableUnits(
+      {
+        id: this.editingProductId ?? '__draft-product__',
+        type: this.productType,
+        includesPieces: true,
+        components: this.components,
+        stock: 0,
+        finishedStock: 0,
+      },
+      this.catalogProducts,
+    );
+  }
+
+  get assemblyHint(): string {
+    const rate = new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(this.laborCostPerHour || 0);
+    return `Encastrar, revisar y empacar - ${rate}/h`;
+  }
+
+  addPiece(productId: string): void {
+    if (!productId) return;
+    if (this.components.some((component) => component.productId === productId)) {
       return;
     }
 
     this.components = [
       ...this.components,
       {
-        productId: this.componentPicker,
-        quantity: Number(this.componentQty),
+        productId,
+        quantity: 1,
         colorId: INDISTINTO_COLOR_ID,
       },
     ];
-    this.componentPicker = '';
-    this.componentQty = 1;
     this.emitIfLoaded();
+  }
+
+  onPieceCreated(product: Product): void {
+    if (!this.catalogProducts.some((item) => item.id === product.id)) {
+      this.catalogProducts = [...this.catalogProducts, product];
+    }
+    this.cdr.markForCheck();
   }
 
   updateComponentColor(productId: string, colorId: string): void {
     this.components = this.components.map((component) =>
       component.productId === productId
         ? { ...component, colorId }
+        : component,
+    );
+    this.emitIfLoaded();
+  }
+
+  updateComponentQuantity(productId: string, quantity: number): void {
+    const next = Math.max(1, Math.floor(Number(quantity) || 1));
+    this.components = this.components.map((component) =>
+      component.productId === productId
+        ? { ...component, quantity: next }
         : component,
     );
     this.emitIfLoaded();

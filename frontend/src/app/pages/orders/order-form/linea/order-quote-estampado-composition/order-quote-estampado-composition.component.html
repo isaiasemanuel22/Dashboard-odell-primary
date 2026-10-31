@@ -1,0 +1,53 @@
+<div
+  class="order-line__estampado cost-composition"
+  [class.cost-composition--locked]="catalogLocked"
+>
+  <header class="cost-composition__head">
+    <h5 class="cost-composition__title">Composición del costo · por unidad</h5>
+    <p class="cost-composition__hint">
+      @if (catalogLocked) {
+        Datos del catálogo · solo lectura. Si el color viene Indistinto, podés elegirlo.
+      } @else {
+        Abrí cada bloque para editarlo
+      }
+    </p>
+  </header>
+
+  <app-order-quote-estampado-prints
+    [line]="line"
+    [product]="product"
+    [lineIndex]="lineIndex"
+    [printsCost]="costs.prints"
+    (changed)="onChildChanged()"
+  />
+  <app-order-quote-estampado-supplies
+    [line]="line"
+    [product]="product"
+    [lineIndex]="lineIndex"
+    [suppliesCost]="costs.supplies"
+    (changed)="onChildChanged()"
+  />
+  <app-order-quote-estampado-press
+    [line]="line"
+    [product]="product"
+    [lineIndex]="lineIndex"
+    [pressCost]="costs.press"
+    (changed)="onChildChanged()"
+  />
+  <app-order-quote-labor
+    [line]="line"
+    [product]="product"
+    [lineIndex]="lineIndex"
+    (changed)="onChildChanged()"
+  />
+
+  @if (costs.errorMargin > 0) {
+    <app-order-quote-error-margin
+      [line]="line"
+      [product]="product"
+      [lineIndex]="lineIndex"
+      [cost]="costs.errorMargin"
+      [meta]="errorMarginMeta"
+    />
+  }
+</div>

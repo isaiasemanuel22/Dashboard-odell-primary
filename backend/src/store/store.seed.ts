@@ -21,6 +21,7 @@ import { createDefaultMachineProfiles } from '../settings/machine-profile.util';
 import { ensureOrderStatusHistory } from '../orders/order-status-history.util';
 import { DEFAULT_COLOR_CATALOG } from './default-colors.seed';
 import { DEFAULT_FILAMENT_TYPE_CATALOG } from './default-filament-types.seed';
+import { DEFAULT_RESIN_TYPE_CATALOG } from './default-resin-types.seed';
 import {
   normalizePaperReferenceSheets,
   syncPaperPricesFromReferenceSheets,
@@ -67,6 +68,7 @@ export function createEmptyState(): StoreState {
       resinTypeAverages: {},
       colors: [...DEFAULT_COLOR_CATALOG],
       filamentTypes: [...DEFAULT_FILAMENT_TYPE_CATALOG],
+      resinTypes: [...DEFAULT_RESIN_TYPE_CATALOG],
     },
     brands: [],
     supplies: [],
@@ -154,18 +156,21 @@ export function createSeedState(): StoreState {
       {
         id: 'rp-1',
         brand: 'Elegoo',
+        resinTypeId: 'rt_translucida',
         resinType: ResinType.TRANSLUCIDA,
         pricePerLiter: 35000,
       },
       {
         id: 'rp-2',
         brand: 'Elegoo',
+        resinTypeId: 'rt_dura',
         resinType: ResinType.DURA,
         pricePerLiter: 32000,
       },
       {
         id: 'rp-3',
         brand: 'Anycubic',
+        resinTypeId: 'rt_estandar',
         resinType: ResinType.ESTANDAR,
         pricePerLiter: 30000,
       },
@@ -175,6 +180,7 @@ export function createSeedState(): StoreState {
     resinTypeAverages: {},
     colors: [...DEFAULT_COLOR_CATALOG],
     filamentTypes: [...DEFAULT_FILAMENT_TYPE_CATALOG],
+    resinTypes: [...DEFAULT_RESIN_TYPE_CATALOG],
   };
 
   const supplies = [

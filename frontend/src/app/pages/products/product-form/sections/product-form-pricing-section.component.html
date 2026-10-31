@@ -6,28 +6,39 @@
     }
 
     <dl class="price-lines">
-      <div>
-        <dt>Material @if (gramsLabel) { <span>· {{ gramsLabel }}</span> }</dt>
-        <dd>{{ (vm.costBreakdown?.materialCost ?? 0) | currencyArs }}</dd>
-      </div>
-      <div>
-        <dt>Luz @if (lightLabel) { <span>· {{ lightLabel }}</span> }</dt>
-        <dd>{{ (vm.costBreakdown?.energyCost ?? 0) | currencyArs }}</dd>
-      </div>
-      <div>
-        <dt>Máquina @if (machineLabel) { <span>· {{ machineLabel }}</span> }</dt>
-        <dd>{{ (vm.costBreakdown?.machineCost ?? 0) | currencyArs }}</dd>
-      </div>
-      <div>
-        <dt>Margen de error @if (errorMarginLabel) { <span>· {{ errorMarginLabel }}</span> }</dt>
-        <dd>{{ (vm.costBreakdown?.errorMarginCost ?? 0) | currencyArs }}</dd>
-      </div>
-      <div>
-        <dt>Mano de obra @if (laborLabel) { <span>· {{ laborLabel }}</span> }</dt>
-        <dd>{{ (vm.costBreakdown?.laborCost ?? 0) | currencyArs }}</dd>
-      </div>
+      @if (facade.usesPieceAssembly) {
+        <div>
+          <dt>Piezas@if (piecesUnitsLabel) { <span> - {{ piecesUnitsLabel }}</span> }</dt>
+          <dd>{{ (vm.costBreakdown?.materialCost ?? 0) | currencyArs }}</dd>
+        </div>
+        <div>
+          <dt>Armado@if (assemblyHoursLabel) { <span> - {{ assemblyHoursLabel }}</span> }</dt>
+          <dd>{{ (vm.costBreakdown?.laborCost ?? 0) | currencyArs }}</dd>
+        </div>
+      } @else {
+        <div>
+          <dt>Material @if (gramsLabel) { <span>· {{ gramsLabel }}</span> }</dt>
+          <dd>{{ (vm.costBreakdown?.materialCost ?? 0) | currencyArs }}</dd>
+        </div>
+        <div>
+          <dt>Luz @if (lightLabel) { <span>· {{ lightLabel }}</span> }</dt>
+          <dd>{{ (vm.costBreakdown?.energyCost ?? 0) | currencyArs }}</dd>
+        </div>
+        <div>
+          <dt>Máquina @if (machineLabel) { <span>· {{ machineLabel }}</span> }</dt>
+          <dd>{{ (vm.costBreakdown?.machineCost ?? 0) | currencyArs }}</dd>
+        </div>
+        <div>
+          <dt>Margen de error @if (errorMarginLabel) { <span>· {{ errorMarginLabel }}</span> }</dt>
+          <dd>{{ (vm.costBreakdown?.errorMarginCost ?? 0) | currencyArs }}</dd>
+        </div>
+        <div>
+          <dt>Mano de obra @if (laborLabel) { <span>· {{ laborLabel }}</span> }</dt>
+          <dd>{{ (vm.costBreakdown?.laborCost ?? 0) | currencyArs }}</dd>
+        </div>
+      }
       <div class="price-lines__total">
-        <dt>Costo</dt>
+        <dt>Costo total</dt>
         <dd>{{ vm.totalCost | currencyArs }}</dd>
       </div>
     </dl>
@@ -57,6 +68,20 @@
       />
     </div>
     <p class="price-note">Si lo cargás, la ganancia se recalcula con este precio.</p>
+
+    @if (facade.usesPieceAssembly && facade.components.length && vm.componentsPrice > 0) {
+      <div class="price-savings">
+        <div>
+          <span>Piezas vendidas por separado</span>
+          <strong>{{ vm.componentsPrice | currencyArs }}</strong>
+        </div>
+        <div>
+          <span>El conjunto le ahorra al cliente</span>
+          <strong class="price-savings__gain">{{ setSavings(vm.componentsPrice, vm.price) | currencyArs }}</strong>
+        </div>
+      </div>
+      <p class="price-note">El margen de error ya está incluido en el costo de cada pieza.</p>
+    }
   }
 
   @if (facade.isEstampado && facade.showProductionFields && !facade.canAutoCalculateCost) {

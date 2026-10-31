@@ -73,7 +73,12 @@ export function buildFdmCostInput(
 export function buildResinCostInput(
   item: Pick<
     OrderItem,
-    'grams' | 'printTimeHours' | 'workTimeHours' | 'resinType'
+    | 'grams'
+    | 'printTimeHours'
+    | 'workTimeHours'
+    | 'resinType'
+    | 'washMinutes'
+    | 'cureMinutes'
   >,
 ) {
   return {
@@ -82,5 +87,7 @@ export function buildResinCostInput(
     printTimeHours: Number(item.printTimeHours) || 0,
     workTimeHours: Number(item.workTimeHours) || 0,
     resinType: item.resinType as ResinType,
+    washMinutes: Number(item.washMinutes) || 0,
+    cureMinutes: Number(item.cureMinutes) || 0,
   };
 }

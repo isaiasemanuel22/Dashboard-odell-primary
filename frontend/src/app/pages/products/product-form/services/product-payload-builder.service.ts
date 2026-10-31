@@ -40,7 +40,7 @@ export interface ProductPayloadInput {
   filaments: FdmFilamentLine[];
   filamentType: FilamentType;
   filamentLines: FdmFilamentLine[];
-  resinType: ResinType;
+  resinType: ResinType | string;
   colorId: string;
   washMinutes: number;
   cureMinutes: number;
@@ -181,7 +181,7 @@ export class ProductPayloadBuilderService {
     filamentLines: FdmFilamentLine[],
     filamentType: FilamentType,
     isResina: boolean,
-    resinType: ResinType,
+    resinType: ResinType | string,
     colorId: string,
     washMinutes: number,
     cureMinutes: number,

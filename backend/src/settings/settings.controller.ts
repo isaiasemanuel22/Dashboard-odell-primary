@@ -8,6 +8,7 @@ import {
   PowerConsumptionEntryDto,
   ResetDatabaseDto,
   ResinPriceDto,
+  ResinTypeConfigDto,
   SupplyDefaultPriceDto,
   UpdateCoreValuesDto,
   LegacyPatchGeneralSettingsDto,
@@ -129,6 +130,25 @@ export class SettingsController {
   @Delete('general/filament-types/:id')
   removeFilamentType(@Param('id') id: string) {
     this.settingsService.removeFilamentType(id);
+    return { deleted: true };
+  }
+
+  @Post('general/resin-types')
+  addResinType(@Body() data: ResinTypeConfigDto) {
+    return this.settingsService.addResinType(data);
+  }
+
+  @Patch('general/resin-types/:id')
+  updateResinType(
+    @Param('id') id: string,
+    @Body() data: Partial<ResinTypeConfigDto>,
+  ) {
+    return this.settingsService.updateResinType(id, data);
+  }
+
+  @Delete('general/resin-types/:id')
+  removeResinType(@Param('id') id: string) {
+    this.settingsService.removeResinType(id);
     return { deleted: true };
   }
 

@@ -223,6 +223,7 @@ export function persistedResinPrice(
   return {
     id: price.id,
     brandId: price.brandId,
+    resinTypeId: price.resinTypeId,
     resinType: price.resinType,
     pricePerLiter: price.pricePerLiter,
   };

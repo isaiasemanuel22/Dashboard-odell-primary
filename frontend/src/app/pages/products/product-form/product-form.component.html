@@ -50,6 +50,10 @@
     <footer class="product-create__footer">
       @if (missingFields.length) {
         <p>Faltan: {{ missingFields.join(', ') }}</p>
+      } @else if (facade.usesPieceAssembly && facade.components.length) {
+        <p class="footer-stock-hint">
+          Stock terminado sugerido: {{ suggestedFinishedStock }} (lo que alcanzan las piezas)
+        </p>
       } @else {
         <span></span>
       }

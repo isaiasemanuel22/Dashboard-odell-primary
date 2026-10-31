@@ -1,0 +1,10 @@
+@if (cost > 0 || alwaysShow) {
+  <div class="cost-composition__block cost-composition__block--static">
+    <div class="cost-composition__summary">
+      <span class="cost-composition__chevron cost-composition__chevron--none" aria-hidden="true"></span>
+      <span class="cost-composition__summary-title">Margen de error</span>
+      <span class="cost-composition__summary-meta">{{ meta || hint }}</span>
+      <strong class="cost-composition__summary-cost">{{ cost | currencyArs }}</strong>
+    </div>
+  </div>
+}

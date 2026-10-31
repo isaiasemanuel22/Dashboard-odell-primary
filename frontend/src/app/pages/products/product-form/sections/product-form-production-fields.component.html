@@ -10,80 +10,31 @@
     </section>
   }
 
-  @if (showProductionFields && isEstampado) {
-    <app-print-spec-list formControlName="prints" />
-    <app-supply-line-list formControlName="supplyLines" />
-    <app-press-cycle-list
-      formControlName="pressCycles"
-      [productForm]="form"
-    />
-  }
-
-  @if (showProductionFields && isFdm) {
-    <app-filament-line-list
-      formControlName="filamentLines"
-      [primaryFilamentType]="filamentType"
-    />
-  }
-
-  @if (showProductionFields && isResina) {
-    <app-resin-line-list [form]="form" />
-  }
-
   @if (showProductionFields && is3D) {
-    <section class="form-block">
-      <h4>Tiempos</h4>
-      <div class="times-row">
-        <db-input
-          label="Impresión (h) *"
-          type="number"
-          formControlName="printTimeHours"
-          [min]="0"
-          [step]="0.1"
-          hint="Lo que indica Bambu Studio"
+    @if (isResina) {
+      <section class="form-block resin-color">
+        <h4>Color de resina</h4>
+        <db-color-select
+          appearance="popover"
+          formControlName="colorId"
+          [resinType]="form.controls.resinType.value"
         />
-        <db-input
-          label="Mano de obra (h) *"
-          type="number"
-          formControlName="workTimeHours"
-          [min]="0"
-          [step]="0.1"
-          hint="Armado, limpieza, empaque"
-        />
-      </div>
-      @if (isResina) {
-        <div class="times-row">
-          <db-input
-            label="Lavado (min)"
-            type="number"
-            formControlName="washMinutes"
-            [min]="0"
-            [step]="0.5"
-          />
-          <db-input
-            label="Curado (min)"
-            type="number"
-            formControlName="cureMinutes"
-            [min]="0"
-            [step]="0.5"
-          />
-        </div>
-      }
-    </section>
+      </section>
+    }
+    <app-order-quote-3d-composition
+      [line]="line"
+      [lineIndex]="0"
+      [showProcessToggle]="false"
+      [printProcess]="printProcess"
+      (changed)="onQuoteChanged()"
+    />
   }
 
   @if (showProductionFields && isEstampado) {
-    <section class="form-block">
-      <h4>Tiempos</h4>
-      <db-input
-        class="field--time"
-        label="Mano de obra (h)"
-        type="number"
-        formControlName="workTimeHours"
-        [min]="0"
-        [step]="0.1"
-        hint="Armado, limpieza, empaque"
-      />
-    </section>
+    <app-order-quote-estampado-composition
+      [line]="line"
+      [lineIndex]="0"
+      (changed)="onQuoteChanged()"
+    />
   }
 </div>

@@ -105,9 +105,11 @@ precio.
 
 La cantidad y el tipo de material son obligatorios, y de ahí sale el costo:
 
-- Filamento: gramos y tipo de filamento (PLA, PETG u otro de Ajustes).
-- Resina: gramos y tipo de resina. El costo pasa esos gramos a litros
-  (gramos ÷ (densidad × 1000)) y usa el precio por litro del tipo.
+- Filamento: gramos y tipo de filamento (PLA, PETG u otro del catálogo de
+  Ajustes).
+- Resina: mililitros (ml) y tipo de resina (del mismo estilo de catálogo
+  editable en Ajustes, no una lista fija). El costo pasa esos ml a litros
+  (ml ÷ 1000) y usa el precio por litro del tipo.
 
 A ese material se suman energía, máquina, mano de obra y el margen de error
 de Ajustes. Si con esos datos el costo queda en 0, el guardado se rechaza.
@@ -118,7 +120,8 @@ el precio de venta menos el costo.
 
 El producto incompleto que nace al aceptar un presupuesto (§5) sigue
 pudiendo crearse con el nombre. Cuando después se edita y se guarda como
-producto de impresión 3D, aplican los gramos y el tipo de material.
+producto de impresión 3D, aplican la cantidad (gramos en FDM, ml en resina)
+y el tipo de material.
 
 Los productos también pueden contener la información necesaria para su
 producción y composición.
@@ -223,13 +226,18 @@ línea cuando el pedido cotiza impresión 3D):
   usa el precio por marca del producto ni de la línea de filamento.
 - **Resina.** Se cotiza con su propia composición de costo (resina, impresora
   de resina, lavado/curado/alcohol según Ajustes). No se costea como FDM. El
-  alcohol sale del insumo vinculado al perfil de lavado: si ese insumo no
-  está en Insumos o no tiene precio, el bloque Alcohol queda en $0 y el
-  formulario avisa para cargarlo en Insumos. En presupuesto **manual**
-  (sin catálogo) se elige Filamento o Resina; en resina se pide tipo,
-  gramos y horas (lavado/curado en 0 si no vienen del producto). En
-  el formulario, lavado, curado y alcohol se muestran como renglones aparte
-  del material de resina y de la impresión.
+  alcohol sale del **insumo vinculado a la máquina de lavado** en Ajustes →
+  valores generales. Si no hay ninguno vinculado, el bloque Alcohol queda
+  bloqueado en $0 con el texto «vincular insumo» y enlace a Ajustes. Si el
+  vínculo existe pero el insumo no está en Insumos o no tiene precio, queda
+  en $0 y avisa para corregirlo en Insumos. En presupuesto **manual**
+  (sin catálogo) se elige Filamento o Resina; en resina se pide tipo
+  (del catálogo de Ajustes, con precio $/L o “falta precio”), mililitros,
+  horas de impresión y **minutos de lavado/curado** (editables; arrancan
+  en 0). Con producto de catálogo, esos minutos se copian del producto
+  (bloqueados como el resto de la composición). En el formulario, lavado,
+  curado y alcohol se muestran como renglones aparte del material de
+  resina y de la impresión.
 - **Producto compuesto con piezas.** La mano de obra del presupuesto es solo
   el tiempo de **armado** del producto. No se suman las horas de mano de obra
   de las piezas. El precio de lista del catálogo se mantiene; las piezas ya
@@ -1493,11 +1501,12 @@ Los productos del catálogo se clasifican en:
 fdm | resina | estampado | combo
 ```
 
-- **FDM / Resina:** impresión 3D. El costo sale de los gramos y del tipo de
-  material, más máquina, mano de obra y margen de error (§3). La resina
-  convierte los gramos a litros. El precio de venta es ese costo con el
-  margen de Impresión 3D, salvo un precio sugerido. Sin gramos, sin tipo o
-  con costo 0 el API rechaza el alta o la edición.
+- **FDM / Resina:** impresión 3D. El costo sale de la cantidad y del tipo de
+  material, más máquina, mano de obra y margen de error (§3). FDM usa
+  gramos; la resina usa mililitros y convierte a litros (ml ÷ 1000). El
+  precio de venta es ese costo con el margen de Impresión 3D, salvo un
+  precio sugerido. Sin cantidad, sin tipo o con costo 0 el API rechaza el
+  alta o la edición.
 - **Estampado:** insumos de estampado, ciclos de prensa, impresiones.
 - **Combo:** producto compuesto por otros productos (piezas); el stock
   disponible puede derivar del ensamblaje de piezas.
@@ -1584,8 +1593,8 @@ Sección **Ajustes** con subpáginas:
 | Ruta | Contenido |
 |------|-----------|
 | Valores generales | Mano de obra, márgenes de error, electricidad, etc. |
-| Filamento | Precios por kg según tipo y marca |
-| Resina | Precios por litro según tipo y marca |
+| Filamento | Catálogo de tipos + precios por kg según tipo y marca |
+| Resina | Catálogo de tipos + precios por litro según tipo y marca |
 | Colores | Catálogo de colores (hex, nombre) |
 | Impresos | Papeles / impresos para estampado (tipo, costo) |
 | Ganancias | Márgenes de ganancia por servicio |

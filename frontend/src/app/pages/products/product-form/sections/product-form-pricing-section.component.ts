@@ -69,7 +69,7 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
       return `${totalFdmFilamentGrams(this.form.controls.filamentLines.value)} g`;
     }
     if (type === ProductType.RESINA) {
-      return `${Number(this.form.controls.grams.value) || 0} g`;
+      return `${Number(this.form.controls.grams.value) || 0} ml`;
     }
     return null;
   }
@@ -92,6 +92,24 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   get laborLabel(): string | null {
     if (!this.settings) return null;
     return `${this.money(this.settings.laborCostPerHour)}/h`;
+  }
+
+  get piecesUnitsLabel(): string | null {
+    const units = this.facade.components.reduce(
+      (sum, item) => sum + Math.max(1, Math.trunc(Number(item.quantity) || 1)),
+      0,
+    );
+    return units > 0 ? `${units} u` : null;
+  }
+
+  get assemblyHoursLabel(): string | null {
+    const hours = Number(this.form.controls.assemblyTimeHours.value) || 0;
+    if (hours <= 0) return null;
+    return `${String(hours).replace('.', ',')} h`;
+  }
+
+  setSavings(componentsPrice: number, salePrice: number): number {
+    return Math.max(0, Math.round((Number(componentsPrice) || 0) - (Number(salePrice) || 0)));
   }
 
   private printProfile() {

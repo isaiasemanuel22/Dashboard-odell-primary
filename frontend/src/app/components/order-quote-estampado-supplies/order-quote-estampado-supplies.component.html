@@ -1,0 +1,22 @@
+<details class="cost-composition__block">
+  <summary class="cost-composition__summary">
+    <span class="cost-composition__chevron" aria-hidden="true"></span>
+    <span class="cost-composition__summary-title">Insumos</span>
+    <span class="cost-composition__summary-meta">
+      {{ suppliesInfo.text }}
+      @if (suppliesInfo.missingPrice) {
+        · <span class="cost-composition__missing">falta precio</span>
+      }
+    </span>
+    <strong class="cost-composition__summary-cost">{{ suppliesCost | currencyArs }}</strong>
+  </summary>
+  <div class="cost-composition__body">
+    <app-supply-line-list
+      [embedded]="true"
+      [locked]="catalogLocked"
+      [(ngModel)]="line.estampadoSupplies"
+      [name]="'estampado-supplies-' + lineIndex"
+      (ngModelChange)="onChange()"
+    />
+  </div>
+</details>

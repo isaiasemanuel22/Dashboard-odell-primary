@@ -95,9 +95,9 @@ export function formatFdmFilamentsSummary(input: {
   }).filter((row) => (Number(row.grams) || 0) > 0 && row.filamentType);
 
   if (!rows.length) {
-    // Resina (u otra 3D sin tipo de filamento): mostrar gramos.
-    const grams = Math.round(Number(input.grams) || 0);
-    return grams > 0 ? `Resina ${grams} g` : '';
+    // Resina: el campo grams guarda ml.
+    const ml = Math.round(Number(input.grams) || 0);
+    return ml > 0 ? `Resina ${ml} ml` : '';
   }
 
   return rows

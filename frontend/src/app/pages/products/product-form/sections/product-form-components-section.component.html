@@ -1,57 +1,47 @@
-<db-fieldset legend="Piezas incluidas">
-  <p class="components-desc">
-    Armá productos compuestos agregando otros productos (publicados o internos). Ej: base, tablero, piezas de juego.
-  </p>
-  <div class="component-picker">
-    <db-select
-      label="Agregar pieza"
-      name="piecePicker"
-      [(ngModel)]="componentPicker"
-      [ngModelOptions]="{ standalone: true }"
-      placeholder="Seleccionar producto..."
-      [options]="availableComponentOptions"
-      [disabled]="catalogLoading && !availableComponentOptions.length"
-      [hint]="pickerHint"
-    />
-    <db-input
-      label="Cantidad"
-      name="componentQty"
-      type="number"
-      [(ngModel)]="componentQty"
-      [ngModelOptions]="{ standalone: true }"
-      [min]="1"
-      [step]="1"
-    />
-    <db-button
-      label="+ Agregar pieza"
-      variant="secondary"
-      format="soft"
-      [disabled]="!canAddComponent || !componentPicker || componentQty < 1"
-      (clicked)="addComponent()"
-    />
-  </div>
+<section class="pieces-block">
+  <header class="pieces-block__head">
+    <div class="pieces-block__titles">
+      <h4>Piezas incluidas</h4>
+      <p class="pieces-block__desc">
+        Productos del catálogo (publicados o internos) que forman este producto
+      </p>
+    </div>
+    @if (components.length) {
+      <span class="pieces-block__badge">Alcanza para armar {{ assemblableUnits }}</span>
+    }
+  </header>
+
+  <app-product-piece-picker
+    [products]="catalogProducts"
+    [categories]="categories"
+    [excludeIds]="excludeIds"
+    [loading]="catalogLoading"
+    (pieceSelected)="addPiece($event)"
+    (pieceCreated)="onPieceCreated($event)"
+  />
 
   @if (components.length) {
-    <app-product-components-table
-      mode="edit"
-      [components]="components"
-      [catalog]="catalogProducts"
-      [colorCatalog]="colorCatalog"
-      [supplies]="supplies"
-      (remove)="removeComponent($event)"
-      (colorChange)="updateComponentColor($event.productId, $event.colorId)"
-    />
+    <div class="pieces-quote cost-composition__block">
+      <app-product-components-table
+        mode="edit"
+        [embedded]="true"
+        [components]="components"
+        [catalog]="catalogProducts"
+        [colorCatalog]="colorCatalog"
+        (remove)="removeComponent($event)"
+        (colorChange)="updateComponentColor($event.productId, $event.colorId)"
+        (quantityChange)="updateComponentQuantity($event.productId, $event.quantity)"
+      />
+    </div>
 
-    <db-input
-      label="Tiempo de armado (h)"
-      name="assemblyTimeHours"
-      type="number"
-      [(ngModel)]="assemblyTimeHours"
-      [ngModelOptions]="{ standalone: true }"
-      [min]="0"
-      [step]="0.1"
-      (ngModelChange)="onFieldChange()"
-    />
+    <div class="pieces-block__summary">
+      <span>{{ distinctCount }} piezas distintas · {{ totalUnits }} unidades</span>
+      <span>Costo de piezas <strong>{{ partsCost | currencyArs }}</strong></span>
+    </div>
+
+    <p class="pieces-block__hint">
+      El color de cada pieza se elige acá; "Indistinto" usa el que haya en stock. El stock que alcanza se calcula con la pieza que se termina primero.
+    </p>
   } @else {
     <p class="components-empty">
       @if (isEstampado) {
@@ -61,4 +51,31 @@
       }
     </p>
   }
-</db-fieldset>
+</section>
+
+<section class="form-block armado-block">
+  <h4>Armado</h4>
+  <div class="armado-block__row">
+    <db-input
+      label="Tiempo de armado (h)"
+      name="assemblyTimeHours"
+      type="number"
+      [(ngModel)]="assemblyTimeHours"
+      [ngModelOptions]="{ standalone: true }"
+      [min]="0"
+      [step]="0.05"
+      [required]="true"
+      [hint]="assemblyHint"
+      (ngModelChange)="onFieldChange()"
+    />
+    <div class="flag">
+      <db-checkbox
+        label="Descontar piezas del stock al vender"
+        name="deductPiecesOnSale"
+        [(ngModel)]="deductPiecesOnSale"
+        [ngModelOptions]="{ standalone: true }"
+      />
+      <small>Cuando se vende, se restan las piezas en lugar del producto armado.</small>
+    </div>
+  </div>
+</section>

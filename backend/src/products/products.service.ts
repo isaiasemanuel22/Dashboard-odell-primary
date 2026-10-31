@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ProductType, ResinType } from '../common/enums';
+import { ProductType } from '../common/enums';
 import { resolveProductColorId } from '../common/color.util';
 import {
   CreateProductDto,
@@ -680,7 +680,7 @@ export class ProductsService {
       return;
     }
 
-    if (!data.resinType || !Object.values(ResinType).includes(data.resinType)) {
+    if (!data.resinType?.trim()) {
       throw new BadRequestException(PRINTED_PRODUCT_MATERIAL_REQUIRED);
     }
   }

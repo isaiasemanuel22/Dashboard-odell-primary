@@ -2,11 +2,14 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   OnInit,
+  ViewChild,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { forkJoin } from 'rxjs';
+import { filter, forkJoin } from 'rxjs';
 import {
   CreateOrderPayload,
   Customer,
@@ -20,7 +23,11 @@ import { OrdersService } from '../../core/services/orders.service';
 import { ProductCatalogService } from '../../core/services/product-catalog.service';
 import { FormDialogShellComponent } from '../../components/form-dialog-shell/form-dialog-shell.component';
 import { extractApiErrorMessage } from '../utils/api-error';
-import { OrderFormComponent, OrderFormSavePayload } from '../../pages/orders/order-form/order-form.component';
+import {
+  OrderFormComponent,
+  OrderFormSavePayload,
+} from '../../pages/orders/order-form/order-form.component';
+import { FormDialogService } from './form-dialog.service';
 
 export interface OrderFormDialogData {
   order: Order | null;
@@ -65,9 +72,13 @@ export class OrderFormDialogComponent implements OnInit {
   private readonly ordersService = inject(OrdersService);
   private readonly customerCatalog = inject(CustomerCatalogService);
   private readonly productCatalog = inject(ProductCatalogService);
+  private readonly formDialogs = inject(FormDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly dialogRef = inject(DialogRef<Order>);
   private readonly data = inject<OrderFormDialogData>(DIALOG_DATA);
+
+  @ViewChild(OrderFormComponent) private form?: OrderFormComponent;
 
   order: Order | null = null;
   presetQuote: Quote | null = null;
@@ -77,6 +88,8 @@ export class OrderFormDialogComponent implements OnInit {
   products: Product[] = [];
   loading = false;
   error = '';
+  private closing = false;
+  private confirmingDiscard = false;
 
   get dialogTitle(): string {
     if (this.presetQuote) return 'Generar pedido';
@@ -100,6 +113,19 @@ export class OrderFormDialogComponent implements OnInit {
     this.presetCartLines = this.data.presetCartLines ?? [];
     this.resetState();
     this.loadCatalogs();
+    this.dialogRef.disableClose = true;
+    this.dialogRef.backdropClick
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.cancel());
+    this.dialogRef.keydownEvents
+      .pipe(
+        filter((event) => event.key === 'Escape'),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((event) => {
+        event.preventDefault();
+        this.cancel();
+      });
   }
 
   save(data: OrderFormSavePayload): void {
@@ -117,6 +143,7 @@ export class OrderFormDialogComponent implements OnInit {
     request.subscribe({
       next: (saved) => {
         this.loading = false;
+        this.closing = true;
         this.dialogRef.close(saved);
       },
       error: (err) => {
@@ -128,7 +155,31 @@ export class OrderFormDialogComponent implements OnInit {
   }
 
   cancel(): void {
-    this.dialogRef.close();
+    if (this.closing || this.confirmingDiscard) return;
+
+    const discard = (): void => {
+      this.closing = true;
+      this.dialogRef.close();
+    };
+
+    if (!this.form?.hasUnsavedChanges()) {
+      discard();
+      return;
+    }
+
+    this.confirmingDiscard = true;
+    this.formDialogs
+      .openConfirm({
+        title: 'Descartar cambios',
+        message: 'Hay cambios sin guardar. ¿Descartar el pedido y cerrar?',
+        confirmLabel: 'Descartar',
+        cancelLabel: 'Seguir editando',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        this.confirmingDiscard = false;
+        if (confirmed) discard();
+      });
   }
 
   onCustomerCreated(customer: Customer): void {

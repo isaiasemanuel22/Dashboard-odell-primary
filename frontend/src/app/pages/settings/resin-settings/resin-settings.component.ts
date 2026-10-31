@@ -5,16 +5,24 @@ import {
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Subscription } from 'rxjs';
-import { GeneralSettings, ResinPriceConfig, ResinType } from '../../../core/models';
-import { SettingsService } from '../../../core/services/settings.service';
-import { RESIN_TYPE_LABELS } from '../../../shared/constants/labels';
-import { resinTypeOptions } from '../../../shared/utils/select-options';
+import { Observable, Subscription, of, switchMap } from 'rxjs';
 import {
+  GeneralSettings,
+  ResinPriceConfig,
+  ResinTypeConfig,
+} from '../../../core/models';
+import { SettingsService } from '../../../core/services/settings.service';
+import {
+  buildResinTypeOptions,
+  resinTypeDisplayLabel,
+  resolveResinTypeIdFromInput,
+} from '../../../shared/utils/resin-type.util';
+import {
+  DbAutocompleteComponent,
+  DbAutocompleteOption,
   DbButtonComponent,
   DbInputComponent,
   DbPillGroupComponent,
-  DbSelectComponent,
   DbStateMessageComponent,
   DB_DATA_TABLE,
   OdlActionEvent,
@@ -27,10 +35,10 @@ import {
   standalone: true,
   imports: [
     FormsModule,
+    DbAutocompleteComponent,
     DbButtonComponent,
     DbInputComponent,
     DbPillGroupComponent,
-    DbSelectComponent,
     DbStateMessageComponent,
     ...DB_DATA_TABLE,
   ],
@@ -44,11 +52,12 @@ export class ResinSettingsComponent implements OnInit, OnDestroy {
   settings: GeneralSettings | null = null;
   message = '';
 
-  newResin = { brand: '', resinType: ResinType.ESTANDAR, pricePerLiter: 0 };
+  newResin = { brand: '', resinType: '', pricePerLiter: 0 };
   editingId: string | null = null;
-  editForm = { brand: '', resinType: ResinType.ESTANDAR, pricePerLiter: 0 };
+  editForm = { brand: '', resinType: '', pricePerLiter: 0 };
+  extraResinTypes: string[] = [];
   search = '';
-  typeFilter: ResinType | 'all' = 'all';
+  typeFilter = 'all';
 
   readonly priceActions: OdlRowAction<ResinPriceConfig>[] = [
     { id: 'editar', label: 'Editar' },
@@ -57,24 +66,65 @@ export class ResinSettingsComponent implements OnInit, OnDestroy {
 
   readonly priceColumns: OdlColumn<ResinPriceConfig>[] = [
     { key: 'brand', header: 'Marca', type: 'primary' },
-    { key: 'resinType', header: 'Tipo', value: (item) => RESIN_TYPE_LABELS[item.resinType] },
+    {
+      key: 'resinType',
+      header: 'Tipo',
+      value: (item) =>
+        resinTypeDisplayLabel(
+          item.resinTypeId || String(item.resinType),
+          this.settings?.resinTypes ?? [],
+        ),
+    },
     { key: 'pricePerLiter', header: 'Precio / L', type: 'money' },
   ];
 
-  readonly resinTypeOptions = resinTypeOptions();
-
-  get typeFilters(): { value: ResinType; label: string }[] {
-    return this.resinTypeOptions;
+  ngOnInit(): void {
+    this.settingsSub = this.settingsService.watchGeneralSettings().subscribe((settings) => {
+      this.settings = settings ? structuredClone(settings) : null;
+      if (this.settings && !this.newResin.resinType) {
+        const first = this.settings.resinTypes?.[0];
+        if (first) this.newResin.resinType = first.id;
+      }
+    });
+    this.settingsService.getGeneralSettings(false).subscribe();
   }
 
-  get typeFilterOptions(): { value: ResinType | 'all'; label: string }[] {
+  ngOnDestroy(): void {
+    this.settingsSub?.unsubscribe();
+  }
+
+  get resinTypeOptions(): DbAutocompleteOption[] {
+    return buildResinTypeOptions(
+      this.settings?.resinTypes ?? [],
+      this.settings?.resinPrices ?? [],
+      this.extraResinTypes,
+      'id',
+    );
+  }
+
+  get typeFilters(): { value: string; label: string }[] {
+    const types = new Map<string, string>();
+    const catalog = this.settings?.resinTypes ?? [];
+    for (const item of this.settings?.resinPrices ?? []) {
+      const value = item.resinTypeId || String(item.resinType);
+      if (!value || types.has(value)) continue;
+      types.set(value, resinTypeDisplayLabel(value, catalog));
+    }
+    return [...types.entries()]
+      .map(([value, label]) => ({ value, label }))
+      .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+  }
+
+  get typeFilterOptions(): { value: string; label: string }[] {
     return [{ value: 'all', label: 'Todos' }, ...this.typeFilters];
   }
 
   get visiblePrices(): ResinPriceConfig[] {
     const query = this.search.trim().toLowerCase();
     return (this.settings?.resinPrices ?? []).filter((item) => {
-      const matchesType = this.typeFilter === 'all' || item.resinType === this.typeFilter;
+      const typeKey = item.resinTypeId || String(item.resinType);
+      const matchesType =
+        this.typeFilter === 'all' || typeKey === this.typeFilter;
       const matchesSearch = !query || item.brand.toLowerCase().includes(query);
       return matchesType && matchesSearch;
     });
@@ -90,37 +140,41 @@ export class ResinSettingsComponent implements OnInit, OnDestroy {
     if (event.actionId === 'eliminar') this.deleteResinPrice(event.row.id);
   }
 
-  ngOnInit(): void {
-    this.settingsSub = this.settingsService.watchGeneralSettings().subscribe((settings) => {
-      this.settings = settings ? structuredClone(settings) : null;
-    });
-    this.settingsService.getGeneralSettings(false).subscribe();
-  }
-
-  ngOnDestroy(): void {
-    this.settingsSub?.unsubscribe();
-  }
-
   addResinPrice(): void {
-    if (!this.newResin.brand.trim()) return;
-    this.settingsService.addResinPrice(this.newResin).subscribe({
-      next: () => {
-        this.newResin = {
-          brand: '',
-          resinType: ResinType.ESTANDAR,
-          pricePerLiter: 0,
-        };
-        this.message =
-          'Precio de resina agregado. Los insumos vinculados se actualizaron.';
-      },
-    });
+    if (!this.newResin.brand.trim() || !this.newResin.resinType.trim()) {
+      return;
+    }
+
+    this.resolveResinTypeId(this.newResin.resinType)
+      .pipe(
+        switchMap((resinTypeId) =>
+          this.settingsService.addResinPrice({
+            brand: this.newResin.brand,
+            resinTypeId,
+            resinType: resinTypeId,
+            pricePerLiter: this.newResin.pricePerLiter,
+          }),
+        ),
+      )
+      .subscribe({
+        next: () => {
+          const first = this.settings?.resinTypes?.[0];
+          this.newResin = {
+            brand: '',
+            resinType: first?.id ?? '',
+            pricePerLiter: 0,
+          };
+          this.message =
+            'Precio de resina agregado. Los insumos vinculados se actualizaron.';
+        },
+      });
   }
 
   startEdit(item: ResinPriceConfig): void {
     this.editingId = item.id;
     this.editForm = {
       brand: item.brand,
-      resinType: item.resinType,
+      resinType: item.resinTypeId || String(item.resinType),
       pricePerLiter: item.pricePerLiter,
     };
     queueMicrotask(() => document.getElementById('resin-brand')?.focus());
@@ -131,14 +185,28 @@ export class ResinSettingsComponent implements OnInit, OnDestroy {
   }
 
   saveEdit(): void {
-    if (!this.editingId || !this.editForm.brand.trim()) return;
-    this.settingsService.updateResinPrice(this.editingId, this.editForm).subscribe({
-      next: () => {
-        this.message =
-          'Precio de resina actualizado. Los insumos vinculados se actualizaron.';
-        this.editingId = null;
-      },
-    });
+    if (!this.editingId || !this.editForm.brand.trim() || !this.editForm.resinType.trim()) {
+      return;
+    }
+
+    this.resolveResinTypeId(this.editForm.resinType)
+      .pipe(
+        switchMap((resinTypeId) =>
+          this.settingsService.updateResinPrice(this.editingId!, {
+            brand: this.editForm.brand,
+            resinTypeId,
+            resinType: resinTypeId,
+            pricePerLiter: this.editForm.pricePerLiter,
+          }),
+        ),
+      )
+      .subscribe({
+        next: () => {
+          this.message =
+            'Precio de resina actualizado. Los insumos vinculados se actualizaron.';
+          this.editingId = null;
+        },
+      });
   }
 
   deleteResinPrice(id: string): void {
@@ -146,5 +214,22 @@ export class ResinSettingsComponent implements OnInit, OnDestroy {
     this.settingsService.deleteResinPrice(id).subscribe(() => {
       this.message = 'Precio eliminado';
     });
+  }
+
+  onResinTypeCreated(type: string): void {
+    const normalized = type.trim();
+    if (!normalized || this.extraResinTypes.includes(normalized)) return;
+    this.extraResinTypes = [...this.extraResinTypes, normalized];
+  }
+
+  private resolveResinTypeId(raw: string): Observable<string> {
+    const catalog = this.settings?.resinTypes ?? [];
+    const existingId = resolveResinTypeIdFromInput(raw, catalog);
+    if (existingId) {
+      return of(existingId);
+    }
+    return this.settingsService.addResinType({ name: raw.trim() }).pipe(
+      switchMap((created: ResinTypeConfig) => of(created.id)),
+    );
   }
 }

@@ -1,0 +1,27 @@
+@if (visible) {
+  <details class="cost-composition__block">
+    <summary class="cost-composition__summary">
+      <span class="cost-composition__chevron" aria-hidden="true"></span>
+      <span class="cost-composition__summary-title">Curado</span>
+      <span class="cost-composition__summary-meta">{{ cureSummary }}</span>
+      <strong class="cost-composition__summary-cost">{{ cureMachineCost | currencyArs }}</strong>
+    </summary>
+    <div class="cost-composition__body cost-composition__body--fields">
+      <div class="cost-table__suffix cost-composition__field">
+        <db-input
+          label="Minutos"
+          type="number"
+          [ngModel]="cureMinutes"
+          (ngModelChange)="onCureMinutesChange($event)"
+          [name]="'cure-minutes-' + lineIndex"
+          [min]="0"
+          [step]="1"
+          [disabled]="catalogLocked"
+        />
+      </div>
+      <p class="cost-composition__field-hint">
+        Luz y máquina del perfil de curado según Ajustes.
+      </p>
+    </div>
+  </details>
+}

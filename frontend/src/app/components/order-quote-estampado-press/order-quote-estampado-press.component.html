@@ -1,0 +1,40 @@
+<details class="cost-composition__block" open>
+  <summary class="cost-composition__summary">
+    <span class="cost-composition__chevron" aria-hidden="true"></span>
+    <span class="cost-composition__summary-title">Plancha</span>
+    <span class="cost-composition__summary-meta">{{ pressSummary }}</span>
+    <strong class="cost-composition__summary-cost">{{ pressCost | currencyArs }}</strong>
+  </summary>
+  <div class="cost-composition__body">
+    <div class="press-profile">
+      <div class="press-profile__field">
+        <db-select
+          label="Plancha"
+          [ngModel]="pressProfile?.id ?? ''"
+          [name]="'press-profile-' + lineIndex"
+          [options]="pressProfileOptions"
+          [disabled]="true"
+        />
+        <p class="press-profile__hint">
+          Sale de Ajustes › Valores generales › Perfiles de máquina (rol Plancha).
+          <a class="press-profile__link" routerLink="/ajustes/valores-generales">Agregar plancha</a>
+        </p>
+      </div>
+      @if (pressProfile; as press) {
+        <div class="press-profile__chips">
+          <span class="press-profile__chip">{{ press.watts }} W</span>
+          <span class="press-profile__chip">Máquina {{ press.costPerHour | currencyArs }}/h</span>
+          <span class="press-profile__chip">Luz {{ electricityCostPerKwh | currencyArs }}/kWh</span>
+        </div>
+      }
+    </div>
+    <app-press-cycle-list
+      [embedded]="true"
+      [locked]="catalogLocked"
+      [(ngModel)]="line.estampadoPressCycles"
+      [name]="'estampado-press-' + lineIndex"
+      [prints]="line.estampadoPrints ?? []"
+      (ngModelChange)="onChange()"
+    />
+  </div>
+</details>

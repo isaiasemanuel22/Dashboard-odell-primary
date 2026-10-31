@@ -126,7 +126,7 @@ export function syncEstampadoQuotePricing(
   const breakdown = costCalculator.calculateCost(
     {
       type: ProductType.ESTAMPADO,
-      workTimeHours: 0,
+      workTimeHours: Number(line.workTimeHours) || 0,
       estampadoPrints: normalizeEstampadoPrints(
         line.estampadoPrints,
       ) as EstampadoPrintSpec[],

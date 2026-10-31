@@ -18,7 +18,7 @@
     "prestart:dev": "prisma generate",
     "start:dev": "npm run kill:dev && nest start --watch",
     "start:debug": "npm run kill:dev && nest start --debug --watch",
-    "start:prod": "npm run kill:dev && node dist/src/main.js",
+    "start:prod": "npm run kill:dev && node dist/main.js",
     "postinstall": "prisma generate",
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",

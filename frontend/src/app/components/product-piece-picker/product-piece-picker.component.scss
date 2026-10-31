@@ -1,0 +1,176 @@
+@use '../../shared/styles/variables' as *;
+
+:host {
+  display: block;
+}
+
+.piece-picker {
+  position: relative;
+}
+
+.piece-picker__search {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  min-height: 2.65rem;
+  padding: 0 0.8rem;
+  border: 1px solid $color-border-input;
+  border-radius: 10px;
+  background: #fff;
+
+  &:focus-within {
+    border-color: $color-brand;
+    box-shadow: 0 0 0 3px $color-primary-focus;
+  }
+}
+
+.piece-picker__icon {
+  display: grid;
+  place-items: center;
+  width: 1.1rem;
+  height: 1.1rem;
+  color: #7b8fa0;
+  flex-shrink: 0;
+
+  svg {
+    width: 1.1rem;
+    height: 1.1rem;
+  }
+}
+
+.piece-picker__input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: none;
+  background: transparent;
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: $color-text;
+
+  &::placeholder {
+    color: $color-text-subtle;
+    font-weight: 500;
+  }
+}
+
+.piece-picker__dropdown {
+  position: absolute;
+  top: calc(100% + 0.35rem);
+  left: 0;
+  right: 0;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  max-height: 18rem;
+  overflow: hidden;
+  border: 1px solid $color-border-soft;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 12px 28px rgba(15, 23, 42, 0.12);
+}
+
+.piece-picker__option {
+  display: grid;
+  grid-template-columns: 2.35rem minmax(0, 1fr) auto;
+  gap: 0.65rem;
+  align-items: center;
+  width: 100%;
+  margin: 0;
+  padding: 0.55rem 0.75rem;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+
+  &.is-active,
+  &:hover {
+    background: #f3f8fb;
+  }
+}
+
+.piece-picker__thumb {
+  display: grid;
+  place-items: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  overflow: hidden;
+  border-radius: 8px;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      #d9eaf3,
+      #d9eaf3 4px,
+      #eef6fa 4px,
+      #eef6fa 8px
+    );
+
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+}
+
+.piece-picker__copy {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.1rem;
+
+  strong {
+    font-size: 0.875rem;
+    font-weight: 700;
+    color: $color-text;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  small {
+    color: $color-text-muted;
+    font-size: 0.75rem;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
+
+.piece-picker__badge {
+  flex-shrink: 0;
+  padding: 0.18rem 0.55rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  line-height: 1.2;
+
+  &--published {
+    background: $color-status-success-bg;
+    color: $color-status-success-text;
+  }
+
+  &--internal {
+    background: #eef2f6;
+    color: #475569;
+  }
+}
+
+.piece-picker__empty {
+  margin: 0;
+  padding: 0.85rem 0.9rem;
+  color: $color-text-muted;
+  font-size: 0.8125rem;
+}
+
+.piece-picker__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  margin-top: auto;
+  padding: 0.55rem 0.75rem;
+  border-top: 1px solid $color-divider;
+  background: #fbfcfd;
+}

@@ -1,0 +1,22 @@
+---
+description: Cómo crear un componente Angular cuando el usuario lo pide
+alwaysApply: true
+---
+
+# Crear un componente Angular
+
+Cuando el usuario diga **crear un componente** (o equivalente: “hacé el componente X”, “nuevo componente”):
+
+1. Preferir la CLI desde `frontend/`:
+   ```bash
+   npx ng generate component ruta/nombre --standalone --skip-tests
+   ```
+   Ajustar `ruta/nombre` al lugar pedido (p. ej. `components/order-quote-foo` o `pages/.../linea/estampado`). Usar flags alineados al repo (standalone, sin tests si el proyecto no los genera).
+
+2. Si la CLI no aplica (ruta rara, rename, o el usuario pide estructura a mano): crear la **carpeta** del componente y adentro al menos:
+   - `*.component.ts`
+   - `*.component.html`
+   - `*.component.scss`
+   Con `standalone: true`, `templateUrl` / `styleUrl` y selector `app-…` al estilo del proyecto.
+
+3. No dejar solo un `.ts` suelto, no meter el componente nuevo dentro de un archivo ajeno “para después”, ni inventar el HTML inline salvo que el patrón local del archivo ya sea así de forma excepcional.

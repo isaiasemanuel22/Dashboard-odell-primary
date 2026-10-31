@@ -12,6 +12,7 @@ import {
   PaperPricesPerSqm,
   PowerConsumptionConfig,
   ResinPriceConfig,
+  ResinTypeConfig,
   ServiceProfitMargins,
   Supply,
   SupplyCategory,
@@ -184,6 +185,29 @@ export class SettingsService {
     return this.http
       .delete<{ deleted: boolean }>(`${this.baseUrl}/general/resin-prices/${id}`)
       .pipe(tap(() => this.removeResinPrice(id)));
+  }
+
+  addResinType(
+    data: Omit<ResinTypeConfig, 'id'>,
+  ): Observable<ResinTypeConfig> {
+    return this.http
+      .post<ResinTypeConfig>(`${this.baseUrl}/general/resin-types`, data)
+      .pipe(tap((entry) => this.upsertResinType(entry)));
+  }
+
+  updateResinType(
+    id: string,
+    data: Partial<Omit<ResinTypeConfig, 'id'>>,
+  ): Observable<ResinTypeConfig> {
+    return this.http
+      .patch<ResinTypeConfig>(`${this.baseUrl}/general/resin-types/${id}`, data)
+      .pipe(tap((entry) => this.upsertResinType(entry)));
+  }
+
+  deleteResinType(id: string): Observable<{ deleted: boolean }> {
+    return this.http
+      .delete<{ deleted: boolean }>(`${this.baseUrl}/general/resin-types/${id}`)
+      .pipe(tap(() => this.removeResinTypeLocal(id)));
   }
 
   addFilamentType(
@@ -416,6 +440,36 @@ export class SettingsService {
       filamentTypes: (current.filamentTypes ?? []).filter(
         (type) => type.id !== id,
       ),
+    });
+  }
+
+  private upsertResinType(entry: ResinTypeConfig): void {
+    const current = this.settingsFacade.peekGeneralSettings();
+    if (!current) {
+      this.settingsFacade.load(true);
+      return;
+    }
+
+    const resinTypes = current.resinTypes ?? [];
+    const exists = resinTypes.some((type) => type.id === entry.id);
+    this.settingsFacade.setGeneral({
+      ...current,
+      resinTypes: exists
+        ? resinTypes.map((type) => (type.id === entry.id ? entry : type))
+        : [...resinTypes, entry],
+    });
+  }
+
+  private removeResinTypeLocal(id: string): void {
+    const current = this.settingsFacade.peekGeneralSettings();
+    if (!current) {
+      this.settingsFacade.load(true);
+      return;
+    }
+
+    this.settingsFacade.setGeneral({
+      ...current,
+      resinTypes: (current.resinTypes ?? []).filter((type) => type.id !== id),
     });
   }
 

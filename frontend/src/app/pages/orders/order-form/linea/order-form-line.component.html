@@ -1,0 +1,443 @@
+@if (variant === 'quote' && collapsed) {
+  <div
+    class="order-line order-line--quote order-line--collapsed"
+    [ngClass]="accentClass"
+  >
+    <button
+      type="button"
+      class="order-line__toggle"
+      aria-label="Expandir línea"
+      [attr.aria-expanded]="false"
+      (click)="toggleCollapsed()"
+    >
+      <span class="order-line__chevron order-line__chevron--down" aria-hidden="true"></span>
+    </button>
+    <span class="service-badge" [ngClass]="'service-badge--' + line.serviceType">
+      {{ serviceLabel }}
+    </span>
+    <div class="order-line__collapsed-text">
+      <strong>{{ lineTitle }}</strong>
+      <small>{{ lineCollapsedDetail }}</small>
+    </div>
+    <strong class="order-line__collapsed-total">
+      {{ lineTotal | currencyArs }}
+    </strong>
+  </div>
+} @else {
+  <div
+    class="order-line order-line--quote"
+    [ngClass]="accentClass"
+  >
+    <div class="order-line__service-row">
+      <div class="order-line__service">
+        <span class="order-line__line-label">Línea {{ lineIndex + 1 }}</span>
+        <div class="service-pills" role="group" aria-label="Servicio">
+          @for (opt of serviceTypeOptions; track opt.value) {
+            <button
+              type="button"
+              class="service-pill"
+              [ngClass]="servicePillModifier(opt.value)"
+              [class.service-pill--active]="line.serviceType === opt.value"
+              (click)="setLineService(opt.value)"
+            >
+              {{ opt.label }}
+            </button>
+          }
+        </div>
+      </div>
+      @if (variant === 'quote') {
+        <div class="order-line__tools">
+          <button
+            type="button"
+            class="order-line__toggle"
+            aria-label="Contraer línea"
+            [attr.aria-expanded]="true"
+            (click)="toggleCollapsed()"
+          >
+            <span class="order-line__chevron" aria-hidden="true"></span>
+          </button>
+          <button
+            type="button"
+            class="remove-line remove-line--trash"
+            aria-label="Quitar línea"
+            (click)="remove.emit()"
+          >
+            <db-icon-trash />
+          </button>
+        </div>
+      } @else {
+        <button
+          type="button"
+          class="remove-line remove-line--trash"
+          aria-label="Quitar línea"
+          (click)="remove.emit()"
+        >
+          <db-icon-trash />
+        </button>
+      }
+    </div>
+
+    @if (variant === 'quote') {
+      <div class="order-line__product-row order-line__product-row--quote">
+        @if (isDesign()) {
+          <db-select
+            label="Producto"
+            [ngModel]="''"
+            [name]="'design-product-' + lineIndex"
+            [options]="[{ value: '', label: 'Presupuesto manual (sin catálogo)' }]"
+            [disabled]="true"
+          />
+          <db-input
+            label="Concepto"
+            [ngModel]="line.customName"
+            [name]="'design-' + lineIndex"
+            [placeholder]="line.serviceType === ServiceType.MODELADO ? 'Ej.: Modelado de pieza' : 'Ej.: Diseño de logo'"
+            (ngModelChange)="onConceptChange($event)"
+            [error]="conceptError"
+          />
+        } @else if (isImpresion3D()) {
+          <db-select
+            label="Producto"
+            [ngModel]="line.productId"
+            [name]="'product-' + lineIndex"
+            [options]="productOptions"
+            (ngModelChange)="onProductChange($event)"
+          />
+          <db-input
+            label="Concepto"
+            [ngModel]="line.customName"
+            [name]="'fdm-concept-' + lineIndex"
+            placeholder="Ej.: Soporte para celular"
+            (ngModelChange)="onConceptChange($event)"
+            [error]="conceptError"
+          />
+        } @else {
+          <db-select
+            label="Producto"
+            [ngModel]="line.productId"
+            [name]="'product-' + lineIndex"
+            placeholder="Seleccionar producto"
+            [options]="productOptions"
+            (ngModelChange)="onProductChange($event)"
+          />
+          @if (isEstampado()) {
+            <db-input
+              label="Concepto"
+              [ngModel]="line.customName"
+              [name]="'estampado-concept-' + lineIndex"
+              placeholder="Ej.: Remera con logo en pecho y manga"
+              (ngModelChange)="onConceptChange($event)"
+              [error]="conceptError"
+            />
+          }
+        }
+
+        <db-input
+          label="Cantidad"
+          type="number"
+          [(ngModel)]="line.quantity"
+          [name]="'qty-' + lineIndex"
+          [min]="1"
+          [step]="1"
+          (ngModelChange)="onQuantityChange()"
+          [error]="quantityError"
+        />
+      </div>
+    } @else {
+      <div class="order-line__product-row">
+        @if (isDesign()) {
+          <db-input
+            label="Concepto"
+            [ngModel]="line.customName"
+            [name]="'design-' + lineIndex"
+            [placeholder]="line.serviceType === ServiceType.MODELADO ? 'Ej.: Modelado de pieza' : 'Ej.: Diseño de logo'"
+            (ngModelChange)="onConceptChange($event)"
+            [error]="conceptError"
+          />
+        } @else if (isImpresion3D()) {
+          <db-select
+            [label]="productFieldLabel"
+            [ngModel]="line.productId"
+            [name]="'product-' + lineIndex"
+            placeholder="Opcional — presupuesto manual"
+            [options]="productOptions"
+            (ngModelChange)="onProductChange($event)"
+          />
+        } @else {
+          <db-select
+            [label]="productFieldLabel"
+            [ngModel]="line.productId"
+            [name]="'product-' + lineIndex"
+            placeholder="Seleccionar producto"
+            [options]="productOptions"
+            (ngModelChange)="onProductChange($event)"
+          />
+        }
+
+        <db-input
+          label="Cantidad"
+          type="number"
+          [(ngModel)]="line.quantity"
+          [name]="'qty-' + lineIndex"
+          [min]="1"
+          [step]="1"
+          (ngModelChange)="onQuantityChange()"
+          [error]="quantityError"
+        />
+      </div>
+
+      @if (isImpresion3D() && !line.productId) {
+        <div class="order-line__fdm-concept">
+          <db-input
+            label="Concepto"
+            [ngModel]="line.customName"
+            [name]="'fdm-concept-' + lineIndex"
+            placeholder="Ej.: Soporte para celular"
+            (ngModelChange)="onConceptChange($event)"
+            [error]="conceptError"
+          />
+        </div>
+      }
+
+      @if (isEstampado() && !line.productId) {
+        <div class="order-line__fdm-concept">
+          <db-input
+            label="Concepto"
+            [ngModel]="line.customName"
+            [name]="'estampado-concept-' + lineIndex"
+            placeholder="Ej.: Remera personalizada"
+            (ngModelChange)="onConceptChange($event)"
+            [error]="conceptError"
+          />
+        </div>
+      }
+    }
+
+    @if (showFdm()) {
+      @if (!line.productId) {
+        <div
+          class="discount-segments order-line__process"
+          role="group"
+          aria-label="Proceso de impresión"
+        >
+          <button
+            type="button"
+            class="discount-segment"
+            [class.discount-segment--active]="!isResinProcess()"
+            (click)="setPrintProcess('fdm')"
+          >
+            Filamento
+          </button>
+          <button
+            type="button"
+            class="discount-segment"
+            [class.discount-segment--active]="isResinProcess()"
+            (click)="setPrintProcess('resina')"
+          >
+            Resina
+          </button>
+        </div>
+      }
+      <app-order-quote-3d-composition
+        [line]="line"
+        [product]="product"
+        [lineIndex]="lineIndex"
+        [showProcessToggle]="false"
+        [printProcess]="line.printProcess"
+        (changed)="onFdmQuoteChange()"
+      />
+    }
+
+    @if (showEstampado()) {
+      <app-order-quote-estampado-composition
+        [line]="line"
+        [product]="product"
+        [lineIndex]="lineIndex"
+        (changed)="onEstampadoQuoteChange()"
+      />
+    }
+
+    @if (isDesign()) {
+      <app-order-quote-design-composition
+        [line]="line"
+        [product]="product"
+        [lineIndex]="lineIndex"
+        (changed)="onDesignCompositionChanged()"
+        (linkPrintChange)="onLinkPrintFromComposition($event)"
+      />
+    }
+
+    @if (variant === 'order' && isGraphic()) {
+      <div class="order-line__print">
+        <db-checkbox
+          label="Incluye impresión"
+          [ngModel]="!!line.includesPrint"
+          (ngModelChange)="onIncludesPrintChange($event)"
+          [name]="'includes-print-' + lineIndex"
+        />
+
+        @if (line.includesPrint) {
+          <div class="order-line__print-fields">
+            <db-select
+              label="Tipo de impresión"
+              [(ngModel)]="line.printPaperType"
+              [name]="'print-type-' + lineIndex"
+              [options]="paperTypeOptions"
+              (ngModelChange)="onPrintPaperTypeChange()"
+            />
+            <db-select
+              label="Tamaño del catálogo"
+              [(ngModel)]="line.printImpresoId"
+              [name]="'print-impreso-' + lineIndex"
+              placeholder="Opcional — elegir tamaño..."
+              [options]="impresoOptions"
+              (ngModelChange)="onPrintImpresoChange()"
+            />
+            <db-input
+              label="Ancho (cm)"
+              type="number"
+              [(ngModel)]="line.printWidthCm"
+              [name]="'print-width-' + lineIndex"
+              [min]="0.1"
+              [step]="0.1"
+              (ngModelChange)="onPrintDimensionsChange()"
+            />
+            <db-input
+              label="Alto (cm)"
+              type="number"
+              [(ngModel)]="line.printLengthCm"
+              [name]="'print-height-' + lineIndex"
+              [min]="0.1"
+              [step]="0.1"
+              (ngModelChange)="onPrintDimensionsChange()"
+            />
+          </div>
+        }
+      </div>
+    }
+
+    <div
+      class="order-line__pricing order-line__pricing--quote order-line__pricing--panel"
+      [class.order-line__pricing--design]="variant === 'order' && isDesign()"
+    >
+      @if (isDesign()) {
+        <div class="order-line__money-field">
+          <span class="order-line__money-label">Costo unitario</span>
+          <div
+            class="order-line__money-value order-line__money-value--muted"
+            [class.order-line__money-value--with-prefix]="usePlainCostPrefix"
+          >
+            {{ unitCostFormatted }}
+          </div>
+          <p class="order-line__money-hint">
+            {{ unitCostHint }}
+          </p>
+        </div>
+        <div class="order-line__money-field">
+          <span class="order-line__money-label">Precio unitario</span>
+          <div
+            class="order-line__money-value order-line__money-value--editable order-line__money-value--with-prefix"
+          >
+            <input
+              class="order-line__money-control"
+              type="number"
+              [ngModel]="designUnitPrice"
+              (ngModelChange)="onDesignUnitPriceChange($event)"
+              [name]="'price-' + lineIndex"
+              [min]="0"
+              [step]="1"
+              aria-label="Precio unitario"
+              [attr.aria-invalid]="unitPriceError ? true : null"
+            />
+          </div>
+          @if (unitPriceError) {
+            <p class="order-line__money-hint order-line__money-hint--warn">{{ unitPriceError }}</p>
+          } @else {
+            <p
+              class="order-line__money-hint"
+              [class.order-line__money-hint--warn]="priceHintWarn"
+            >
+              {{ priceHint }}
+            </p>
+          }
+          @if (isUnitPriceManual) {
+            <button
+              type="button"
+              class="order-line__price-reset"
+              (click)="resetUnitPriceToSuggested()"
+            >
+              Volver al sugerido
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="order-line__money-field">
+          <span class="order-line__money-label">Costo unitario</span>
+          <div
+            class="order-line__money-value order-line__money-value--muted"
+            [class.order-line__money-value--with-prefix]="usePlainCostPrefix"
+          >
+            {{ unitCostFormatted }}
+          </div>
+          <p class="order-line__money-hint">
+            {{ unitCostHint }}
+          </p>
+        </div>
+        <div class="order-line__money-field">
+          <span class="order-line__money-label">Precio unitario</span>
+          <div
+            class="order-line__money-value order-line__money-value--editable order-line__money-value--with-prefix"
+          >
+            <input
+              class="order-line__money-control"
+              type="number"
+              [ngModel]="line.unitPrice"
+              (ngModelChange)="onUnitPriceChange($event)"
+              [name]="'price-' + lineIndex"
+              [min]="0"
+              [step]="1"
+              aria-label="Precio unitario"
+              [attr.aria-invalid]="unitPriceError ? true : null"
+            />
+          </div>
+          @if (unitPriceError) {
+            <p class="order-line__money-hint order-line__money-hint--warn">{{ unitPriceError }}</p>
+          } @else {
+            <p
+              class="order-line__money-hint"
+              [class.order-line__money-hint--warn]="priceHintWarn"
+            >
+              {{ priceHint }}
+            </p>
+          }
+          @if (isUnitPriceManual) {
+            <button
+              type="button"
+              class="order-line__price-reset"
+              (click)="resetUnitPriceToSuggested()"
+            >
+              Volver al sugerido
+            </button>
+          }
+        </div>
+      }
+
+      <div class="order-line__subtotal">
+        <span class="order-line__subtotal-label">
+          @if (variant === 'quote') {
+            Subtotal · {{ line.quantity }} u
+          } @else {
+            Subtotal de línea
+          }
+        </span>
+        <strong class="order-line__subtotal-value">
+          {{ lineTotal | currencyArs }}
+        </strong>
+      </div>
+    </div>
+
+    @if (stockHint) {
+      <p class="order-line__stock-hint">{{ stockHint }}</p>
+    }
+  </div>
+}

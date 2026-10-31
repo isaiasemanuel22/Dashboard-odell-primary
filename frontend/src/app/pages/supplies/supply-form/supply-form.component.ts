@@ -26,15 +26,14 @@ import {
   FilamentTypeConfig,
   ResinPriceConfig,
   ResinType,
+  ResinTypeConfig,
   Supply,
   SupplyCategory,
 } from '../../../core/models';
 import { SettingsService } from '../../../core/services/settings.service';
-import {
-  resinTypeOptions,
-  supplyCategoryOptions,
-} from '../../../shared/utils/select-options';
+import { supplyCategoryOptions } from '../../../shared/utils/select-options';
 import { buildFilamentTypeOptions } from '../../../shared/utils/filament-type.util';
+import { buildResinTypeOptions } from '../../../shared/utils/resin-type.util';
 import {
   defaultSupplyUnit,
   supplyUnitOptions,
@@ -67,18 +66,18 @@ export class SupplyFormComponent implements OnInit, OnChanges {
   @Output() cancel = new EventEmitter<void>();
 
   readonly supplyCategoryOptions = supplyCategoryOptions();
-  readonly resinTypeOptions = resinTypeOptions();
 
   filamentPrices: FilamentPriceConfig[] = [];
   resinPrices: ResinPriceConfig[] = [];
   filamentTypes: FilamentTypeConfig[] = [];
+  resinTypes: ResinTypeConfig[] = [];
   colorCatalog: ColorConfig[] = [];
   settingsLoading = true;
 
   name = '';
   category = SupplyCategory.FDM;
   filamentType = FilamentType.PLA;
-  resinType = ResinType.ESTANDAR;
+  resinType: ResinType | string = ResinType.ESTANDAR;
   brand = '';
   colorId = '';
   unit = 'kg';
@@ -95,6 +94,15 @@ export class SupplyFormComponent implements OnInit, OnChanges {
       this.filamentTypes,
       this.filamentPrices,
       this.filamentType ? [this.filamentType] : [],
+      'code',
+    );
+  }
+
+  get resinTypeOptions(): DbSelectOption[] {
+    return buildResinTypeOptions(
+      this.resinTypes,
+      this.resinPrices,
+      this.resinType ? [this.resinType] : [],
       'code',
     );
   }
@@ -257,6 +265,7 @@ export class SupplyFormComponent implements OnInit, OnChanges {
         this.filamentPrices = settings.filamentPrices ?? [];
         this.resinPrices = settings.resinPrices ?? [];
         this.filamentTypes = settings.filamentTypes ?? [];
+        this.resinTypes = settings.resinTypes ?? [];
         this.colorCatalog = settings.colors ?? [];
         this.settingsLoading = false;
         this.applyConfiguredPrice();

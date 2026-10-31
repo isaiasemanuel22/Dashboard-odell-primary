@@ -18,7 +18,6 @@ import {
   FilamentType,
   PaperType,
   PrintJobStatus,
-  ResinType,
   ServiceType,
 } from '../enums';
 import {
@@ -144,8 +143,18 @@ export class OrderItemDto {
   printProcess?: 'fdm' | 'resina';
 
   @IsOptional()
-  @IsEnum(ResinType)
-  resinType?: ResinType;
+  @IsString()
+  resinType?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  washMinutes?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  cureMinutes?: number;
 
   @IsOptional()
   @IsArray()

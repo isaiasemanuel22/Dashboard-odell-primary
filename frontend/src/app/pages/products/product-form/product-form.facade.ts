@@ -5,7 +5,6 @@ import {
   ImpresoWithCost,
   Product,
   ProductType,
-  ResinType,
   UpdateProductPayload,
   isProductType3D,
 } from '../../../core/models';
@@ -32,10 +31,7 @@ import {
   storedFdmFilaments,
   totalFdmFilamentGrams,
 } from '../../../shared/utils/fdm.helpers';
-import {
-  productTypeOptions,
-  resinTypeOptions,
-} from '../../../shared/utils/select-options';
+import { productTypeOptions } from '../../../shared/utils/select-options';
 import type {
   DbAttachmentUploadFn,
   DbFileUploadFn,
@@ -75,7 +71,6 @@ export class ProductFormFacade {
   private readonly destroy$ = new Subject<void>();
 
   readonly productTypeOptions = productTypeOptions();
-  readonly resinTypeOptions = resinTypeOptions();
   readonly form: ProductFormGroup = this.stateManager.buildFormGroup(
     this.stateManager.createInitialState(),
   );
@@ -273,12 +268,8 @@ export class ProductFormFacade {
       }
     } else if (this.isResina) {
       const grams = Number(this.form.controls.grams.value) || 0;
-      const resinType = this.form.controls.resinType.value;
-      if (
-        grams > 0 &&
-        !!resinType &&
-        Object.values(ResinType).includes(resinType)
-      ) {
+      const resinType = String(this.form.controls.resinType.value ?? '').trim();
+      if (grams > 0 && resinType) {
         return null;
       }
     } else {

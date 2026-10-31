@@ -1,0 +1,17 @@
+<details class="cost-composition__block" open>
+  <summary class="cost-composition__summary">
+    <span class="cost-composition__chevron" aria-hidden="true"></span>
+    <span class="cost-composition__summary-title">Impresos</span>
+    <span class="cost-composition__summary-meta">{{ printsSummary }}</span>
+    <strong class="cost-composition__summary-cost">{{ printsCost | currencyArs }}</strong>
+  </summary>
+  <div class="cost-composition__body">
+    <app-print-spec-list
+      [embedded]="true"
+      [locked]="catalogLocked"
+      [(ngModel)]="line.estampadoPrints"
+      [name]="'estampado-prints-' + lineIndex"
+      (ngModelChange)="onChange()"
+    />
+  </div>
+</details>

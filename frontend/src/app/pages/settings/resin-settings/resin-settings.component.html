@@ -67,12 +67,16 @@
             name="editResinBrand"
             placeholder="Ej.: Elegoo"
           />
-          <db-select
-            label="Tipo"
-            [(ngModel)]="editForm.resinType"
-            name="editResinType"
-            [options]="resinTypeOptions"
-          />
+          <div class="quick-field">
+            <span>Tipo</span>
+            <db-autocomplete
+              [(ngModel)]="editForm.resinType"
+              name="editResinType"
+              placeholder="Tipo"
+              [options]="resinTypeOptions"
+              (optionCreated)="onResinTypeCreated($event)"
+            />
+          </div>
           <db-input
             label="Precio / L ($)"
             type="number"
@@ -94,12 +98,16 @@
             name="newResinBrand"
             placeholder="Ej.: Elegoo"
           />
-          <db-select
-            label="Tipo"
-            [(ngModel)]="newResin.resinType"
-            name="newResinType"
-            [options]="resinTypeOptions"
-          />
+          <div class="quick-field">
+            <span>Tipo</span>
+            <db-autocomplete
+              [(ngModel)]="newResin.resinType"
+              name="newResinType"
+              placeholder="Tipo"
+              [options]="resinTypeOptions"
+              (optionCreated)="onResinTypeCreated($event)"
+            />
+          </div>
           <db-input
             label="Precio / L ($)"
             type="number"

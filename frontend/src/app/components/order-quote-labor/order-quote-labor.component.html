@@ -1,0 +1,33 @@
+<details class="cost-composition__block">
+  <summary class="cost-composition__summary">
+    <span class="cost-composition__chevron" aria-hidden="true"></span>
+    <span class="cost-composition__summary-title">Mano de obra</span>
+    <span class="cost-composition__summary-meta">{{ laborSummary }}</span>
+    <strong class="cost-composition__summary-cost">{{ laborCost | currencyArs }}</strong>
+  </summary>
+  <div class="cost-composition__body cost-composition__body--fields">
+    <div class="design-detail">
+      <div class="cost-table__suffix cost-composition__field">
+        <db-input
+          label="Horas"
+          type="number"
+          [ngModel]="line.workTimeHours ?? 0"
+          (ngModelChange)="onWorkHoursChange($event)"
+          [name]="'labor-hours-' + lineIndex"
+          [min]="0"
+          [step]="0.25"
+          [disabled]="catalogLocked"
+        />
+        <span>h</span>
+      </div>
+      <db-input
+        label="Nota"
+        [(ngModel)]="line.laborNote"
+        [name]="'labor-note-' + lineIndex"
+        placeholder="Ej.: incluir soportes y empaque"
+        [disabled]="catalogLocked"
+        (ngModelChange)="onLaborNoteChange()"
+      />
+    </div>
+  </div>
+</details>

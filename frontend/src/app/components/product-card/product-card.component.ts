@@ -80,7 +80,10 @@ export class ProductCardComponent {
       const parts: string[] = [];
       const size = product.size?.trim();
       if (size) parts.push(size);
-      if (product.grams > 0) parts.push(`${this.formatQty(product.grams)} g`);
+      if (product.grams > 0) {
+        const unit = product.type === ProductType.RESINA ? 'ml' : 'g';
+        parts.push(`${this.formatQty(product.grams)} ${unit}`);
+      }
       if (product.printTimeHours > 0) {
         const hours = `${this.formatQty(product.printTimeHours)} h`;
         parts.push(size ? `${hours} imp.` : `${hours} impresión`);
