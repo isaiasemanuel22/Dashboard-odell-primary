@@ -6,7 +6,6 @@ import {
   OnInit,
   inject,
 } from '@angular/core';
-import { FormsModule } from '@angular/forms';
 import {
   CdkDragDrop,
   DragDropModule,
@@ -35,26 +34,24 @@ import {
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import {
+  PrintJobCustomerChip,
+  PrintJobsToolbarComponent,
+} from './print-jobs-toolbar/print-jobs-toolbar.component';
+import {
   priorityTierClass,
   PRIORITY_TIER_LABELS,
 } from '../../shared/utils/priority.helpers';
-
-interface CustomerChip {
-  initial: string;
-  name: string;
-  tone: number;
-}
 
 @Component({
   selector: 'app-print-jobs',
   standalone: true,
   imports: [
-    FormsModule,
     DragDropModule,
     DbSkeletonComponent,
     DbStateMessageComponent,
     DbButtonComponent,
     PrintJobCardComponent,
+    PrintJobsToolbarComponent,
   ],
   templateUrl: './print-jobs.component.html',
   styleUrl: './print-jobs.component.scss',
@@ -88,7 +85,7 @@ export class PrintJobsComponent implements OnInit {
   customerFilter: string | null = null;
 
   orderStatusByOrderId: Record<string, OrderStatus> = {};
-  customerChips: CustomerChip[] = [];
+  customerChips: PrintJobCustomerChip[] = [];
 
   private allJobs: PrintJob[] = [];
 
@@ -416,7 +413,7 @@ export class PrintJobsComponent implements OnInit {
     return job.status === PrintJobStatus.POR_HACER && !job.active;
   }
 
-  private buildCustomerChips(jobs: PrintJob[]): CustomerChip[] {
+  private buildCustomerChips(jobs: PrintJob[]): PrintJobCustomerChip[] {
     const byInitial = new Map<string, string>();
     for (const job of jobs) {
       const initial = this.customerInitial(job.customerName);

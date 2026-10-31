@@ -11,81 +11,21 @@
     />
   </db-state-message>
 } @else {
-  <header class="cola-header">
-    <div class="cola-header__intro">
-      <h2>Cola de trabajo</h2>
-      <p class="cola-header__stats">
-        <span>{{ tasksOnBoardCount }} tareas en el tablero</span>
-        <span class="cola-header__dot" aria-hidden="true">·</span>
-        <span>{{ backlogCount }} por agregar</span>
-        @if (blockedCount) {
-          <span class="cola-header__dot" aria-hidden="true">·</span>
-          <span class="cola-header__blocked">{{ blockedCount }} bloqueadas</span>
-        }
-      </p>
-    </div>
-
-    <div class="cola-header__actions">
-      <label class="cola-search">
-        <span class="cola-search__icon" aria-hidden="true">🔍</span>
-        <input
-          type="search"
-          class="cola-search__input"
-          placeholder="Buscar por pedido o tarea"
-          [(ngModel)]="searchQuery"
-          (ngModelChange)="onSearchChange()"
-        />
-      </label>
-      <db-button
-        label="+ Nueva tarea"
-        variant="primary"
-        format="inline"
-        (clicked)="onNewTaskClick()"
-      />
-    </div>
-  </header>
-
-  <div class="cola-filters">
-    <div class="cola-filters__areas">
-      <span class="cola-filters__label">Área</span>
-      <div class="cola-filters__pills" role="group" aria-label="Filtrar por área">
-        @for (filter of areaFilters; track filter.label) {
-          <button
-            type="button"
-            class="cola-pill"
-            [class.cola-pill--active]="areaFilter === filter.value"
-            (click)="setAreaFilter(filter.value)"
-          >
-            {{ filter.label }}
-          </button>
-        }
-      </div>
-    </div>
-
-    @if (customerChips.length) {
-      <div class="cola-filters__clients">
-        <span class="cola-filters__label">Clientes</span>
-        <div class="cola-filters__avatars" role="group" aria-label="Filtrar por cliente">
-          @for (chip of customerChips; track chip.initial) {
-            <button
-              type="button"
-              class="cola-client-chip"
-              [class]="'cola-client-chip--tone-' + chip.tone"
-              [class.cola-client-chip--active]="customerFilter === chip.initial"
-              [title]="chip.name"
-              (click)="toggleCustomerFilter(chip.initial)"
-            >
-              {{ chip.initial }}
-            </button>
-          }
-        </div>
-      </div>
-    }
-  </div>
-
-  @if (statusNotice) {
-    <p class="status-notice">{{ statusNotice }}</p>
-  }
+  <app-print-jobs-toolbar
+    [tasksOnBoardCount]="tasksOnBoardCount"
+    [backlogCount]="backlogCount"
+    [blockedCount]="blockedCount"
+    [searchQuery]="searchQuery"
+    (searchQueryChange)="searchQuery = $event; onSearchChange()"
+    (newTask)="onNewTaskClick()"
+    [areaFilters]="areaFilters"
+    [areaFilter]="areaFilter"
+    (areaFilterChange)="setAreaFilter($event)"
+    [customerChips]="customerChips"
+    [customerFilter]="customerFilter"
+    (customerFilterToggle)="toggleCustomerFilter($event)"
+    [statusNotice]="statusNotice"
+  />
 
   <section
     class="work-board"
