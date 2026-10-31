@@ -1,0 +1,69 @@
+@if (isFilament) {
+  <db-select
+    label="Tipo de filamento"
+    [ngModel]="filamentType"
+    (ngModelChange)="filamentTypeChange.emit($event)"
+    name="filamentType"
+    [options]="filamentTypeOptions"
+  />
+
+  <db-select
+    label="Marca (desde Ajustes)"
+    [ngModel]="brand"
+    (ngModelChange)="brandChange.emit($event)"
+    name="brand"
+    [required]="true"
+    placeholder="Seleccionar marca..."
+    [options]="filamentBrandOptions"
+  />
+}
+
+@if (isResin) {
+  <db-select
+    label="Tipo de resina"
+    [ngModel]="resinType"
+    (ngModelChange)="resinTypeChange.emit($event)"
+    name="resinType"
+    [options]="resinTypeOptions"
+  />
+
+  <db-select
+    label="Marca (desde Ajustes)"
+    [ngModel]="brand"
+    (ngModelChange)="brandChange.emit($event)"
+    name="brand"
+    [required]="true"
+    placeholder="Seleccionar marca..."
+    [options]="resinBrandOptions"
+  />
+}
+
+@if (!isFilament && !isResin) {
+  <db-input
+    label="Marca (opcional)"
+    [ngModel]="brand"
+    (ngModelChange)="brandChange.emit($event)"
+    name="optionalBrand"
+    placeholder="Sin marca"
+  />
+}
+
+@if (showColorField) {
+  <div class="color-field">
+    @if (selectedColorHex) {
+      <span
+        class="color-swatch"
+        [style.background-color]="selectedColorHex"
+      ></span>
+    }
+    <db-select
+      label="Color"
+      [ngModel]="colorId"
+      (ngModelChange)="colorIdChange.emit($event)"
+      name="colorId"
+      [required]="true"
+      placeholder="Seleccionar color..."
+      [options]="colorOptions"
+    />
+  </div>
+}

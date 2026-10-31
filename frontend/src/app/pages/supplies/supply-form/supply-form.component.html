@@ -15,73 +15,25 @@
       [required]="true"
     />
 
-    @if (isFilament) {
-      <db-select
-        label="Tipo de filamento"
-        [(ngModel)]="filamentType"
-        name="filamentType"
-        [options]="filamentTypeOptions"
-        (ngModelChange)="onFilamentTypeChange()"
-      />
-
-      <db-select
-        label="Marca (desde Ajustes)"
-        [(ngModel)]="brand"
-        name="brand"
-        [required]="true"
-        placeholder="Seleccionar marca..."
-        [options]="filamentBrandOptions"
-        (ngModelChange)="onBrandChange()"
-      />
-    }
-
-    @if (isResin) {
-      <db-select
-        label="Tipo de resina"
-        [(ngModel)]="resinType"
-        name="resinType"
-        [options]="resinTypeOptions"
-        (ngModelChange)="onResinTypeChange()"
-      />
-
-      <db-select
-        label="Marca (desde Ajustes)"
-        [(ngModel)]="brand"
-        name="brand"
-        [required]="true"
-        placeholder="Seleccionar marca..."
-        [options]="resinBrandOptions"
-        (ngModelChange)="onBrandChange()"
-      />
-    }
-
-    @if (!isFilament && !isResin) {
-      <db-input
-        label="Marca (opcional)"
-        [(ngModel)]="brand"
-        name="optionalBrand"
-        placeholder="Sin marca"
-      />
-    }
-
-    @if (showColorField) {
-      <div class="color-field">
-        @if (selectedColorHex) {
-          <span
-            class="color-swatch"
-            [style.background-color]="selectedColorHex"
-          ></span>
-        }
-        <db-select
-          label="Color"
-          [(ngModel)]="colorId"
-          name="colorId"
-          [required]="true"
-          placeholder="Seleccionar color..."
-          [options]="colorOptions"
-        />
-      </div>
-    }
+    <app-supply-form-material
+      [isFilament]="isFilament"
+      [isResin]="isResin"
+      [showColorField]="showColorField"
+      [filamentType]="filamentType"
+      (filamentTypeChange)="filamentType = $event; onFilamentTypeChange()"
+      [resinType]="resinType"
+      (resinTypeChange)="resinType = $event; onResinTypeChange()"
+      [brand]="brand"
+      (brandChange)="onMaterialBrandChange($event)"
+      [colorId]="colorId"
+      (colorIdChange)="colorId = $event"
+      [selectedColorHex]="selectedColorHex"
+      [filamentTypeOptions]="filamentTypeOptions"
+      [resinTypeOptions]="resinTypeOptions"
+      [filamentBrandOptions]="filamentBrandOptions"
+      [resinBrandOptions]="resinBrandOptions"
+      [colorOptions]="colorOptions"
+    />
 
     <db-select
       label="Unidad de medida"

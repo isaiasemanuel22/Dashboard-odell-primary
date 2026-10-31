@@ -38,6 +38,7 @@ import {
   defaultSupplyUnit,
   supplyUnitOptions,
 } from '../../../shared/utils/supply-unit.util';
+import { SupplyFormMaterialComponent } from './supply-form-material/supply-form-material.component';
 
 @Component({
   selector: 'app-supply-form',
@@ -51,6 +52,7 @@ import {
     DbFormErrorComponent,
     DbFormFooterComponent,
     DbButtonComponent,
+    SupplyFormMaterialComponent,
   ],
   templateUrl: './supply-form.component.html',
   styleUrl: './supply-form.component.scss',
@@ -213,6 +215,13 @@ export class SupplyFormComponent implements OnInit, OnChanges {
 
   onBrandChange(): void {
     this.applyConfiguredPrice();
+  }
+
+  onMaterialBrandChange(value: string): void {
+    this.brand = value;
+    if (this.isFilament || this.isResin) {
+      this.onBrandChange();
+    }
   }
 
   onSubmit(): void {
