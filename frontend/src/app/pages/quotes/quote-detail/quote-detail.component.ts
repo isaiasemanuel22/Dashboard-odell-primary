@@ -6,10 +6,10 @@ import {
   OnInit,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   Quote,
-  QuoteItem,
   QuoteStatus,
 } from '../../../core/models';
 import { QuotesService } from '../../../core/services/quotes.service';
@@ -21,32 +21,20 @@ import {
   DbSkeletonComponent,
   DbStateMessageComponent,
   DbStatusBadgeComponent,
-  DB_DATA_TABLE,
-  OdlColumn,
 } from '@general-components';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
-import {
-  calculateLinePriceTotal,
-  calculateOrderDiscount,
-  calculateOrderSubtotal,
-  isDesignService,
-} from '../../../shared/utils/order.helpers';
-import { formatFdmFilamentsSummary } from '../../../shared/utils/fdm.helpers';
-import { isImpresion3DLine } from '../../../shared/utils/order-fdm-quote.util';
-import { resolveLinePrintUnitPrice } from '../../../shared/utils/design-print.util';
 import {
   canGenerateOrderFromQuote,
   formatQuoteValidityLabel,
   isQuoteEditable,
 } from '../../../shared/utils/quote.helpers';
-import { DEPOSIT_FACTOR } from '../../../shared/utils/quote-document.util';
-import { QUOTE_STATUS_LABELS, SERVICE_TYPE_LABELS } from '../../../shared/constants/labels';
+import { QUOTE_STATUS_LABELS } from '../../../shared/constants/labels';
 import {
-  CurrencyArsPipe,
   DateShortPipe,
   QuoteStatusLabelPipe,
   RichTextPipe,
 } from '../../../shared/pipes/labels.pipe';
+import { QuoteDetailLinesComponent } from './quote-detail-lines/quote-detail-lines.component';
 
 @Component({
   selector: 'app-quote-detail',
@@ -54,7 +42,6 @@ import {
   imports: [
     RouterLink,
     DateShortPipe,
-    CurrencyArsPipe,
     QuoteStatusLabelPipe,
     RichTextPipe,
     DbSkeletonComponent,
@@ -62,7 +49,7 @@ import {
     DbButtonComponent,
     DbStatusBadgeComponent,
     DbServiceBadgesComponent,
-    ...DB_DATA_TABLE,
+    QuoteDetailLinesComponent,
   ],
   templateUrl: './quote-detail.component.html',
   styleUrl: './quote-detail.component.scss',
@@ -83,46 +70,29 @@ export class QuoteDetailComponent implements OnInit {
   statusLoading = false;
   generatingOrder = false;
 
-  readonly isDesignService = isDesignService;
   readonly QuoteStatus = QuoteStatus;
-  readonly depositPercent = Math.round(DEPOSIT_FACTOR * 100);
-
-  fdmItemSpecs(item: QuoteItem): string {
-    if (!isImpresion3DLine(item.serviceType)) return '';
-    return formatFdmFilamentsSummary(item);
-  }
-
-  itemPrintHours(item: QuoteItem): number | null {
-    const hours = Number(item.printTimeHours);
-    return Number.isFinite(hours) && hours > 0 ? hours : null;
-  }
-
-  formatPrintHours(hours: number): string {
-    return new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(
-      hours,
-    );
-  }
-  readonly lineColumns: OdlColumn<QuoteItem>[] = [
-    { key: 'service', header: 'Servicio', value: (item) => SERVICE_TYPE_LABELS[item.serviceType] },
-    { key: 'product', header: 'Concepto / producto' },
-    { key: 'quantity', header: 'Cant.', type: 'number' },
-    { key: 'unitPrice', header: 'Precio unit.' },
-    { key: 'subtotal', header: 'Subtotal', type: 'money', value: (item) => this.lineSubtotal(item) },
-  ];
 
   ngOnInit(): void {
-    const id = this.route.snapshot.paramMap.get('id');
-    if (!id) {
-      this.notFound = true;
-      this.loading = false;
-      return;
-    }
+    this.route.paramMap
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((params) => {
+        const id = params.get('id');
+        if (!id) {
+          this.notFound = true;
+          this.loading = false;
+          this.cdr.markForCheck();
+          return;
+        }
+        this.loadQuote(id);
+      });
 
-    this.loadQuote(id);
     this.realtime.bindSmartReload(
       this.destroyRef,
       ['dashboard'],
-      () => this.loadQuote(id),
+      () => {
+        const id = this.route.snapshot.paramMap.get('id');
+        if (id) this.loadQuote(id);
+      },
     );
   }
 
@@ -141,35 +111,6 @@ export class QuoteDetailComponent implements OnInit {
       return 'Ver pedido';
     }
     return 'Generar pedido';
-  }
-
-  get quoteSubtotal(): number {
-    return this.quote ? calculateOrderSubtotal(this.quote.items) : 0;
-  }
-
-  get quoteDiscount(): number {
-    if (!this.quote) return 0;
-    return calculateOrderDiscount(
-      this.quote.items,
-      this.quote.discountPercent,
-      this.quote.discountAmount,
-    );
-  }
-
-  get discountLabel(): string {
-    const percent = this.quote?.discountPercent ?? 0;
-    if (percent > 0) {
-      const formatted = percent.toLocaleString('es-AR', {
-        maximumFractionDigits: 2,
-      });
-      return `Descuento ${formatted}%`;
-    }
-    return 'Descuento';
-  }
-
-  get depositAmount(): number {
-    if (!this.quote) return 0;
-    return Math.round(this.quote.total * DEPOSIT_FACTOR);
   }
 
   get quoteValidityLabel(): string {
@@ -191,14 +132,6 @@ export class QuoteDetailComponent implements OnInit {
         status,
         label: QUOTE_STATUS_LABELS[status],
       }));
-  }
-
-  lineSubtotal(item: QuoteItem): number {
-    return calculateLinePriceTotal(item);
-  }
-
-  printUnitPrice(item: QuoteItem): number {
-    return resolveLinePrintUnitPrice(item);
   }
 
   openEdit(): void {
@@ -280,14 +213,19 @@ export class QuoteDetailComponent implements OnInit {
   private loadQuote(id: string): void {
     this.loading = true;
     this.cdr.markForCheck();
-    this.quotesService.getQuote(id).subscribe({
+    this.quotesService
+      .getQuote(id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
       next: (quote) => {
+        if (this.route.snapshot.paramMap.get('id') !== id) return;
         this.quote = quote;
         this.loading = false;
         this.notFound = false;
         this.cdr.markForCheck();
       },
       error: () => {
+        if (this.route.snapshot.paramMap.get('id') !== id) return;
         this.quote = null;
         this.loading = false;
         this.notFound = true;
