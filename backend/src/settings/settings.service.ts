@@ -8,6 +8,17 @@ import {
   assertNonNegativeNumber,
 } from '../common/validators/domain.validators';
 import { ensureMachineProfiles, normalizeMachineProfiles } from './machine-profile.util';
+import {
+  addMachineCost as addMachineCostEntry,
+  addMachineProfile as addMachineProfileEntry,
+  addPowerConsumption as addPowerConsumptionEntry,
+  removeMachineCost as removeMachineCostEntry,
+  removeMachineProfile as removeMachineProfileEntry,
+  removePowerConsumption as removePowerConsumptionEntry,
+  updateMachineCost as updateMachineCostEntry,
+  updateMachineProfile as updateMachineProfileEntry,
+  updatePowerConsumption as updatePowerConsumptionEntry,
+} from './machine-equipment.settings';
 import { mergeProfitMargins, normalizeProfitMargins } from './profit-margins.util';
 import {
   ColorConfig,
@@ -326,141 +337,52 @@ export class SettingsService {
   addMachineProfile(
     data: Omit<MachineProfile, 'id'>,
   ): MachineProfile {
-    const profiles = ensureMachineProfiles(this.store.generalSettings);
-    const normalized = normalizeMachineProfiles([
-      {
-        id: 'tmp',
-        ...data,
-      },
-    ]);
-    if (normalized.length === 0) {
-      throw new BadRequestException('El perfil de máquina debe tener nombre');
-    }
-
-    const entry: MachineProfile = {
-      ...normalized[0],
-      id: this.store.nextId('mp', profiles),
-    };
-    this.store.generalSettings.machineProfiles = [...profiles, entry];
-    this.recordSettingsChange(['settings', 'products']);
-    return structuredClone(entry);
+    return addMachineProfileEntry(this.store.generalSettings, data, (prefix, list) => this.store.nextId(prefix, list), () => this.recordSettingsChange(['settings', 'products']));
   }
 
   updateMachineProfile(
     id: string,
     data: Partial<Omit<MachineProfile, 'id'>>,
   ): MachineProfile {
-    const profiles = ensureMachineProfiles(this.store.generalSettings);
-    const index = profiles.findIndex((profile) => profile.id === id);
-    if (index === -1) {
-      throw new NotFoundException('Perfil de máquina no encontrado');
-    }
-
-    const merged = normalizeMachineProfiles([
-      {
-        ...profiles[index],
-        ...data,
-        id,
-      },
-    ]);
-    if (merged.length === 0) {
-      throw new BadRequestException('El perfil de máquina debe tener nombre');
-    }
-
-    profiles[index] = merged[0];
-    this.store.generalSettings.machineProfiles = profiles;
-    this.recordSettingsChange(['settings', 'products']);
-    return structuredClone(profiles[index]);
+    return updateMachineProfileEntry(this.store.generalSettings, id, data, () => this.recordSettingsChange(['settings', 'products']));
   }
 
   removeMachineProfile(id: string): void {
-    const profiles = ensureMachineProfiles(this.store.generalSettings);
-    const exists = profiles.some((profile) => profile.id === id);
-    if (!exists) {
-      throw new NotFoundException('Perfil de máquina no encontrado');
-    }
-
-    this.store.generalSettings.machineProfiles = profiles.filter(
-      (profile) => profile.id !== id,
-    );
-    this.recordSettingsChange(['settings', 'products']);
+    removeMachineProfileEntry(this.store.generalSettings, id, () => this.recordSettingsChange(['settings', 'products']));
   }
 
   addPowerConsumption(
     data: Omit<PowerConsumptionConfig, 'id'>,
   ): PowerConsumptionConfig {
-    const entry: PowerConsumptionConfig = {
-      id: this.store.nextId('pw', this.store.generalSettings.powerConsumptions),
-      ...data,
-    };
-    this.store.generalSettings.powerConsumptions.push(entry);
-    this.recordSettingsChange(['settings', 'products']);
-    return entry;
+    return addPowerConsumptionEntry(this.store.generalSettings, data, (prefix, list) => this.store.nextId(prefix, list), () => this.recordSettingsChange(['settings', 'products']));
   }
 
   updatePowerConsumption(
     id: string,
     data: Partial<Omit<PowerConsumptionConfig, 'id'>>,
   ): PowerConsumptionConfig {
-    if (data.watts !== undefined) {
-      assertNonNegativeNumber(data.watts, 'watts');
-    }
-    const index = this.store.generalSettings.powerConsumptions.findIndex(
-      (p) => p.id === id,
-    );
-    if (index === -1) {
-      throw new NotFoundException('Consumo eléctrico no encontrado');
-    }
-    this.store.generalSettings.powerConsumptions[index] = {
-      ...this.store.generalSettings.powerConsumptions[index],
-      ...data,
-    };
-    this.recordSettingsChange(['settings', 'products']);
-    return this.store.generalSettings.powerConsumptions[index];
+    return updatePowerConsumptionEntry(this.store.generalSettings, id, data, () => this.recordSettingsChange(['settings', 'products']));
   }
 
   removePowerConsumption(id: string): void {
-    this.store.generalSettings.powerConsumptions =
-      this.store.generalSettings.powerConsumptions.filter((p) => p.id !== id);
-    this.recordSettingsChange(['settings', 'products']);
+    removePowerConsumptionEntry(this.store.generalSettings, id, () => this.recordSettingsChange(['settings', 'products']));
   }
 
   addMachineCost(data: Omit<MachineCostConfig, 'id'>): MachineCostConfig {
-    const entry: MachineCostConfig = {
-      id: this.store.nextId('mc', this.store.generalSettings.machineCosts),
-      ...data,
-    };
-    this.store.generalSettings.machineCosts.push(entry);
-    this.recordSettingsChange(['settings', 'products']);
-    return entry;
+    return addMachineCostEntry(this.store.generalSettings, data, (prefix, list) => this.store.nextId(prefix, list), () => this.recordSettingsChange(['settings', 'products']));
   }
 
   updateMachineCost(
     id: string,
     data: Partial<Omit<MachineCostConfig, 'id'>>,
   ): MachineCostConfig {
-    if (data.costPerHour !== undefined) {
-      assertNonNegativeNumber(data.costPerHour, 'costPerHour');
-    }
-    const index = this.store.generalSettings.machineCosts.findIndex(
-      (m) => m.id === id,
-    );
-    if (index === -1) {
-      throw new NotFoundException('Costo de máquina no encontrado');
-    }
-    this.store.generalSettings.machineCosts[index] = {
-      ...this.store.generalSettings.machineCosts[index],
-      ...data,
-    };
-    this.recordSettingsChange(['settings', 'products']);
-    return this.store.generalSettings.machineCosts[index];
+    return updateMachineCostEntry(this.store.generalSettings, id, data, () => this.recordSettingsChange(['settings', 'products']));
   }
 
   removeMachineCost(id: string): void {
-    this.store.generalSettings.machineCosts =
-      this.store.generalSettings.machineCosts.filter((m) => m.id !== id);
-    this.recordSettingsChange(['settings', 'products']);
+    removeMachineCostEntry(this.store.generalSettings, id, () => this.recordSettingsChange(['settings', 'products']));
   }
+
 
   addFilamentPrice(
     data: Omit<FilamentPriceConfig, 'id'> & {
