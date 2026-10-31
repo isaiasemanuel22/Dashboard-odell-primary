@@ -316,125 +316,23 @@
       </div>
     }
 
-    <div
-      class="order-line__pricing order-line__pricing--quote order-line__pricing--panel"
-      [class.order-line__pricing--design]="variant === 'order' && isDesign()"
-    >
-      @if (isDesign()) {
-        <div class="order-line__money-field">
-          <span class="order-line__money-label">Costo unitario</span>
-          <div
-            class="order-line__money-value order-line__money-value--muted"
-            [class.order-line__money-value--with-prefix]="usePlainCostPrefix"
-          >
-            {{ unitCostFormatted }}
-          </div>
-          <p class="order-line__money-hint">
-            {{ unitCostHint }}
-          </p>
-        </div>
-        <div class="order-line__money-field">
-          <span class="order-line__money-label">Precio unitario</span>
-          <div
-            class="order-line__money-value order-line__money-value--editable order-line__money-value--with-prefix"
-          >
-            <input
-              class="order-line__money-control"
-              type="number"
-              [ngModel]="designUnitPrice"
-              (ngModelChange)="onDesignUnitPriceChange($event)"
-              [name]="'price-' + lineIndex"
-              [min]="0"
-              [step]="1"
-              aria-label="Precio unitario"
-              [attr.aria-invalid]="unitPriceError ? true : null"
-            />
-          </div>
-          @if (unitPriceError) {
-            <p class="order-line__money-hint order-line__money-hint--warn">{{ unitPriceError }}</p>
-          } @else {
-            <p
-              class="order-line__money-hint"
-              [class.order-line__money-hint--warn]="priceHintWarn"
-            >
-              {{ priceHint }}
-            </p>
-          }
-          @if (isUnitPriceManual) {
-            <button
-              type="button"
-              class="order-line__price-reset"
-              (click)="resetUnitPriceToSuggested()"
-            >
-              Volver al sugerido
-            </button>
-          }
-        </div>
-      } @else {
-        <div class="order-line__money-field">
-          <span class="order-line__money-label">Costo unitario</span>
-          <div
-            class="order-line__money-value order-line__money-value--muted"
-            [class.order-line__money-value--with-prefix]="usePlainCostPrefix"
-          >
-            {{ unitCostFormatted }}
-          </div>
-          <p class="order-line__money-hint">
-            {{ unitCostHint }}
-          </p>
-        </div>
-        <div class="order-line__money-field">
-          <span class="order-line__money-label">Precio unitario</span>
-          <div
-            class="order-line__money-value order-line__money-value--editable order-line__money-value--with-prefix"
-          >
-            <input
-              class="order-line__money-control"
-              type="number"
-              [ngModel]="line.unitPrice"
-              (ngModelChange)="onUnitPriceChange($event)"
-              [name]="'price-' + lineIndex"
-              [min]="0"
-              [step]="1"
-              aria-label="Precio unitario"
-              [attr.aria-invalid]="unitPriceError ? true : null"
-            />
-          </div>
-          @if (unitPriceError) {
-            <p class="order-line__money-hint order-line__money-hint--warn">{{ unitPriceError }}</p>
-          } @else {
-            <p
-              class="order-line__money-hint"
-              [class.order-line__money-hint--warn]="priceHintWarn"
-            >
-              {{ priceHint }}
-            </p>
-          }
-          @if (isUnitPriceManual) {
-            <button
-              type="button"
-              class="order-line__price-reset"
-              (click)="resetUnitPriceToSuggested()"
-            >
-              Volver al sugerido
-            </button>
-          }
-        </div>
-      }
-
-      <div class="order-line__subtotal">
-        <span class="order-line__subtotal-label">
-          @if (variant === 'quote') {
-            Subtotal · {{ line.quantity }} u
-          } @else {
-            Subtotal de línea
-          }
-        </span>
-        <strong class="order-line__subtotal-value">
-          {{ lineTotal | currencyArs }}
-        </strong>
-      </div>
-    </div>
+    <app-order-line-pricing
+      [designLayout]="variant === 'order' && isDesign()"
+      [quoteVariant]="variant === 'quote'"
+      [quantity]="line.quantity"
+      [lineIndex]="lineIndex"
+      [usePlainCostPrefix]="usePlainCostPrefix"
+      [unitCostFormatted]="unitCostFormatted"
+      [unitCostHint]="unitCostHint"
+      [unitPrice]="editableUnitPrice"
+      (unitPriceChange)="onEditableUnitPriceChange($event)"
+      [unitPriceError]="unitPriceError"
+      [priceHint]="priceHint"
+      [priceHintWarn]="priceHintWarn"
+      [manualPrice]="isUnitPriceManual"
+      (resetPrice)="resetUnitPriceToSuggested()"
+      [lineTotal]="lineTotal"
+    />
 
     @if (stockHint) {
       <p class="order-line__stock-hint">{{ stockHint }}</p>

@@ -1,0 +1,62 @@
+<div class="order-line__money-field">
+  <span class="order-line__money-label">Costo unitario</span>
+  <div
+    class="order-line__money-value order-line__money-value--muted"
+    [class.order-line__money-value--with-prefix]="usePlainCostPrefix"
+  >
+    {{ unitCostFormatted }}
+  </div>
+  <p class="order-line__money-hint">
+    {{ unitCostHint }}
+  </p>
+</div>
+<div class="order-line__money-field">
+  <span class="order-line__money-label">Precio unitario</span>
+  <div
+    class="order-line__money-value order-line__money-value--editable order-line__money-value--with-prefix"
+  >
+    <input
+      class="order-line__money-control"
+      type="number"
+      [ngModel]="unitPrice"
+      (ngModelChange)="unitPriceChange.emit($event)"
+      [name]="'price-' + lineIndex"
+      [min]="0"
+      [step]="1"
+      aria-label="Precio unitario"
+      [attr.aria-invalid]="unitPriceError ? true : null"
+    />
+  </div>
+  @if (unitPriceError) {
+    <p class="order-line__money-hint order-line__money-hint--warn">{{ unitPriceError }}</p>
+  } @else {
+    <p
+      class="order-line__money-hint"
+      [class.order-line__money-hint--warn]="priceHintWarn"
+    >
+      {{ priceHint }}
+    </p>
+  }
+  @if (manualPrice) {
+    <button
+      type="button"
+      class="order-line__price-reset"
+      (click)="resetPrice.emit()"
+    >
+      Volver al sugerido
+    </button>
+  }
+</div>
+
+<div class="order-line__subtotal">
+  <span class="order-line__subtotal-label">
+    @if (quoteVariant) {
+      Subtotal · {{ quantity }} u
+    } @else {
+      Subtotal de línea
+    }
+  </span>
+  <strong class="order-line__subtotal-value">
+    {{ lineTotal | currencyArs }}
+  </strong>
+</div>

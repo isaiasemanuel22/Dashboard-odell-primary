@@ -26,6 +26,7 @@ import { DbSelectOption } from '../../../../components/dashboard-form/db-select/
 import { OrderQuote3dCompositionComponent } from './order-quote-3d-composition/order-quote-3d-composition.component';
 import { OrderQuoteDesignCompositionComponent } from './order-quote-design-composition/order-quote-design-composition.component';
 import { OrderQuoteEstampadoCompositionComponent } from './order-quote-estampado-composition/order-quote-estampado-composition.component';
+import { OrderLinePricingComponent } from './order-line-pricing/order-line-pricing.component';
 import {
   CostBreakdown,
   FdmFilamentLine,
@@ -119,6 +120,7 @@ export type OrderFormLineVariant = 'quote' | 'order';
     OrderQuote3dCompositionComponent,
     OrderQuoteEstampadoCompositionComponent,
     OrderQuoteDesignCompositionComponent,
+    OrderLinePricingComponent,
   ],
   templateUrl: './order-form-line.component.html',
   styleUrl: './order-form-line.component.scss',
@@ -622,6 +624,20 @@ export class OrderFormLineComponent implements OnInit {
     this.line.unitCost = this.designServiceCost();
     this.syncDesignPrintLine();
     this.emitChanged();
+  }
+
+  get editableUnitPrice(): number {
+    return this.isDesign()
+      ? this.designUnitPrice
+      : Number(this.line.unitPrice) || 0;
+  }
+
+  onEditableUnitPriceChange(raw: number | string): void {
+    if (this.isDesign()) {
+      this.onDesignUnitPriceChange(raw);
+      return;
+    }
+    this.onUnitPriceChange(raw);
   }
 
   resetUnitPriceToSuggested(): void {
