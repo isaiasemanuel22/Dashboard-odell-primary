@@ -1,0 +1,13 @@
+<div class="cal-dialog__days" role="group" aria-label="Días de la semana">
+  @for (label of labels; track $index) {
+    <button
+      type="button"
+      class="cal-dialog__day"
+      [class.is-on]="isOn($index + 1)"
+      [attr.aria-pressed]="isOn($index + 1)"
+      (click)="toggleDay.emit($index + 1)"
+    >
+      {{ label }}
+    </button>
+  }
+</div>

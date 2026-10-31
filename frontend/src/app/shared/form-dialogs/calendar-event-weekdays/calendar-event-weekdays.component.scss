@@ -1,0 +1,24 @@
+@use '../../../shared/styles/variables' as *;
+
+.cal-dialog__days {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.cal-dialog__day {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1px solid $color-border-soft;
+  background: $color-surface;
+  font: 700 12px inherit;
+  color: $color-text-label;
+  cursor: pointer;
+
+  &.is-on {
+    background: $color-brand-deep;
+    border-color: $color-brand-deep;
+    color: #fff;
+  }
+}

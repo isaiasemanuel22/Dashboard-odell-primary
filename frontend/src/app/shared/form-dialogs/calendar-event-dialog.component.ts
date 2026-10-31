@@ -33,6 +33,7 @@ import {
   DbSegmentOption,
 } from '@general-components';
 import { FormDialogShellComponent } from '../../components/form-dialog-shell/form-dialog-shell.component';
+import { CalendarEventWeekdaysComponent } from './calendar-event-weekdays/calendar-event-weekdays.component';
 import { extractApiErrorMessage } from '../utils/api-error';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -56,6 +57,7 @@ const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
     DbTextareaComponent,
     DbCheckboxComponent,
     DbSegmentedControlComponent,
+    CalendarEventWeekdaysComponent,
   ],
   templateUrl: './calendar-event-dialog.component.html',
   styleUrl: './calendar-event-dialog.component.scss',
@@ -200,10 +202,6 @@ export class CalendarEventDialogComponent implements OnInit {
     } else {
       this.weekdays = [...this.weekdays, day].sort((a, b) => a - b);
     }
-  }
-
-  isWeekdayOn(day: number): boolean {
-    return this.weekdays.includes(day);
   }
 
   cancel(): void {
