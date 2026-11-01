@@ -1,0 +1,64 @@
+@use '../../../../shared/styles/variables' as *;
+
+.ranking {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.ranking__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+
+  h3 {
+    margin: 0;
+    font-size: $font-amount;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.2rem 0 0;
+    color: $color-text-muted;
+    font-size: $font-meta;
+  }
+}
+
+.ranking__new {
+  display: inline-flex;
+  align-items: center;
+  height: 1.25rem;
+  padding: 0 0.5rem;
+  border-radius: $radius-pill;
+  background: $color-brand-pale;
+  color: $color-brand-deep;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+
+.ranking__empty {
+  margin: 0;
+  padding: 1rem;
+  background: $color-surface;
+  border: 1px solid $color-border-soft;
+  border-radius: $radius-md;
+  color: $color-text-muted;
+  font-size: $font-meta;
+}
+
+.ranking__note {
+  margin: 0;
+  color: $color-text-muted;
+  font-size: $font-meta;
+}
+
+@media (max-width: 768px) {
+  .ranking__head {
+    flex-direction: column;
+  }
+}

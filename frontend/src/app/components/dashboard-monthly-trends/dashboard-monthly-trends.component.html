@@ -3,7 +3,11 @@
     <header class="trend-panel__header">
       <div>
         <h3>Pedidos recibidos</h3>
-        <p>Pedidos ingresados mes a mes</p>
+        <p>
+          Últimos {{ trends.length }} meses ·
+          <strong>{{ totalOrders }} pedidos</strong>
+          · sin cancelados
+        </p>
       </div>
     </header>
     <div class="chart-container">
@@ -15,11 +19,21 @@
     <header class="trend-panel__header">
       <div>
         <h3>Ingresos totales</h3>
-        <p>Ventas de mostrador y pedidos completados o entregados</p>
+        <p>Vendido (pedidos entregados + mostrador) y cobrado, mes a mes</p>
+      </div>
+      <div class="trend-panel__legend" aria-hidden="true">
+        <span><i class="trend-dot trend-dot--sold"></i>Vendido</span>
+        <span><i class="trend-dot trend-dot--collected"></i>Cobrado</span>
       </div>
     </header>
     <div class="chart-container">
-      <canvas #revenueCanvas aria-label="Gráfico de ingresos totales por mes"></canvas>
+      <canvas
+        #revenueCanvas
+        aria-label="Gráfico de vendido y cobrado por mes"
+      ></canvas>
     </div>
+    <p class="trend-panel__note">
+      La distancia entre las dos líneas es lo que quedó por cobrar cada mes.
+    </p>
   </article>
 </section>

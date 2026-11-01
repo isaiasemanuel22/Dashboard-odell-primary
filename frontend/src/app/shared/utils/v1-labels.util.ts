@@ -67,10 +67,12 @@ export function customerSourceLabel(
 export function salesChannelLabel(
   value: SalesChannel | string | null | undefined,
 ): string {
-  if (value && value in SALES_CHANNEL_LABELS) {
+  if (!value) return '';
+  if (value === 'sin_canal') return 'Sin canal';
+  if (value in SALES_CHANNEL_LABELS) {
     return SALES_CHANNEL_LABELS[value as SalesChannel];
   }
-  return value ? String(value) : '';
+  return String(value);
 }
 
 export function paymentMethodLabel(

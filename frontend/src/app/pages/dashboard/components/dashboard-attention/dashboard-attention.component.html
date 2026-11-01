@@ -1,0 +1,36 @@
+@if (items().length) {
+  <section class="attention" aria-label="Para hoy">
+    <header class="attention__head">
+      <h3>Necesita tu atención hoy</h3>
+      <span class="attention__count">{{ thingsLabel(items().length) }}</span>
+    </header>
+
+    <ul class="attention__list">
+      @for (item of items(); track item.id) {
+        <li>
+          <a
+            class="attention__row"
+            [routerLink]="item.route"
+            [fragment]="item.fragment"
+          >
+            <span class="attention__main">
+              <span
+                class="attention__dot"
+                [class.attention__dot--danger]="item.tone === 'danger'"
+                [class.attention__dot--warn]="item.tone === 'warn'"
+                aria-hidden="true"
+              ></span>
+              <span>
+                <strong>{{ item.title }}</strong>
+                @if (item.detail) {
+                  <span class="attention__detail"> · {{ item.detail }}</span>
+                }
+              </span>
+            </span>
+            <span class="attention__action">{{ item.actionLabel }}</span>
+          </a>
+        </li>
+      }
+    </ul>
+  </section>
+}

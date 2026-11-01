@@ -26,19 +26,61 @@
     margin: 0.2rem 0 0;
     font-size: $font-meta;
     color: $color-text-muted;
+
+    strong {
+      color: $color-text;
+      font-weight: 700;
+    }
   }
 }
 
 .trend-panel__header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
   margin-bottom: 1rem;
+}
+
+.trend-panel__legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  color: $color-text-label;
+  font-size: $font-meta;
+  font-weight: 500;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+}
+
+.trend-dot {
+  display: inline-block;
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: $radius-pill;
+  font-style: normal;
+
+  &--sold {
+    background: $color-success;
+  }
+
+  &--collected {
+    background: $color-brand-deep;
+  }
+}
+
+.trend-panel__note {
+  margin: 0.55rem 0 0;
+  color: $color-text-muted;
+  font-size: $font-meta;
 }
 
 .chart-container {
   position: relative;
   height: 220px;
   width: 100%;
-
-  @media (max-width: 768px) {
-    height: 220px;
-  }
 }

@@ -1,0 +1,33 @@
+<section class="ranking" aria-label="Ranking de rentabilidad">
+  <header class="ranking__head">
+    <div>
+      <h3>Ranking de rentabilidad <span class="ranking__new">Nuevo</span></h3>
+      <p>Qué productos te dejan más plata este período</p>
+    </div>
+    <db-pill-group
+      [options]="rankOptions"
+      [value]="rankBy()"
+      ariaLabel="Ordenar ranking"
+      (valueChange)="onRankBy($event)"
+    />
+  </header>
+
+  @if (rankedRows(); as rows) {
+    @if (rows.length) {
+      <db-data-table
+        label="Ranking de rentabilidad"
+        [rows]="rows"
+        [columns]="columns"
+        [clientSide]="false"
+        minWidth="760px"
+      />
+    } @else {
+      <p class="ranking__empty">Sin ventas con productos en este período.</p>
+    }
+  }
+
+  <p class="ranking__note">
+    Un solo cálculo de costo para toda la app: el mismo número que ves en
+    Productos, Pedidos y Ventas.
+  </p>
+</section>

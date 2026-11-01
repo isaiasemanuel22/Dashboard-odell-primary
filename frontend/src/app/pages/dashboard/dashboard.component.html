@@ -14,82 +14,110 @@
   </db-state-message>
 } @else {
   @if (stats$ | async; as stats) {
+    @let profit = stats.profitability;
+
     <header class="page-header dashboard-header">
       <div class="dashboard-header__main">
         <h2>Dashboard</h2>
-        <p>
-          Resumen de tu emprendimiento de impresión 3D y estampados
-          @if (stats.overdueOrders) {
-            · <span class="tone-danger">{{ overdueLabel(stats.overdueOrders) }}</span>
-          }
-        </p>
+        <p>{{ headerSubtitle() }}</p>
       </div>
       <div class="header-actions">
-        <db-button label="+ Cliente" variant="secondary" format="soft" (clicked)="openForm('customer')" />
-        <db-button label="+ Producto" variant="secondary" format="soft" (clicked)="openForm('product')" />
-        <db-button label="+ Presupuesto" variant="secondary" format="soft" (clicked)="openForm('quote')" />
-        <db-button label="+ Nuevo pedido" variant="primary" format="solid" (clicked)="openForm('order')" />
+        <db-segmented-control
+          [options]="periodOptions"
+          [value]="period"
+          ariaLabel="Período"
+          (valueChange)="setPeriod($event)"
+        />
+        <db-button
+          label="+ Nuevo pedido"
+          variant="primary"
+          format="solid"
+          (clicked)="openForm('order')"
+        />
         <app-dashboard-notifications [notifications]="stats.notifications" />
       </div>
     </header>
 
-    <section class="stats-grid">
+    <section class="stats-grid" aria-label="Indicadores">
       <article class="stat-card">
-        <span class="label">Vendido del mes</span>
-        <strong>{{ stats.monthlyRevenue | currencyArs }}</strong>
-        <span class="hint">{{ soldHint(stats.monthlyRevenue) }}</span>
+        <span class="label">Vendido</span>
+        <strong>{{ profit.sold | currencyArs }}</strong>
+        <span class="hint">Pedidos entregados + mostrador</span>
       </article>
-      <article class="stat-card" [class.danger]="stats.clientDebt > 0">
-        <div class="stat-card__top">
-          <span class="label">Por cobrar</span>
-          @if (stats.clientDebt > 0) {
-            <a class="stat-card__link" href="#por-cobrar">Ver ›</a>
-          }
-        </div>
-        <strong>{{ stats.clientDebt | currencyArs }}</strong>
-        <span class="hint">{{ deliveredUnpaidHint(stats.receivables) }}</span>
-      </article>
-      <article class="stat-card" [class.danger]="stats.walletBalance < 0">
-        <span class="label">Billetera</span>
-        <strong>{{ stats.walletBalance | currencyArs }}</strong>
-        @if (stats.walletBalance < 0) {
-          <span class="hint hint--ok">Si cobrás todo: {{ ifCollected(stats) | currencyArs }}</span>
-        } @else {
-          <span class="hint">Disponible en cuenta</span>
-        }
+      <article class="stat-card accent">
+        <span class="label">Cobrado</span>
+        <strong class="tone-success">{{ profit.collected | currencyArs }}</strong>
+        <span class="hint">Entró a tus cuentas {{ periodHintWord() }}</span>
       </article>
       <article class="stat-card">
-        <span class="label">Pedidos pendientes</span>
-        <strong>{{ stats.pendingOrders }}</strong>
-        <span class="hint">
-          <span [class.tone-danger]="stats.overdueOrders > 0">{{ overdueHint(stats.overdueOrders) }}</span>
-          de {{ stats.totalOrders }} en total
-        </span>
+        <span class="label">Ganancia neta</span>
+        <strong>{{ profit.netProfit | currencyArs }}</strong>
+        <span class="hint">{{ netProfitHint(profit.fees) }}</span>
       </article>
+      <a
+        class="stat-card danger stat-card--link"
+        routerLink="/dashboard"
+        fragment="por-cobrar"
+      >
+        <span class="label">Por cobrar</span>
+        <strong>{{ profit.receivable | currencyArs }}</strong>
+        <span class="hint">{{ receivableHint(profit.receivableOrders) }}</span>
+      </a>
     </section>
 
-    <section class="stats-grid stats-grid--secondary">
-      <article class="stat-card">
+    <section class="stats-grid stats-grid--secondary" aria-label="Estado de la operación">
+      <a class="stat-card stat-card--link" routerLink="/pedidos">
+        <span class="label">Pedidos pendientes</span>
+        <strong [class.tone-warn]="stats.overdueOrders > 0">{{
+          stats.pendingOrders
+        }}</strong>
+        <span class="hint">
+          <span [class.tone-danger]="stats.overdueOrders > 0">{{
+            overdueHint(stats.overdueOrders)
+          }}</span>
+          · esperan iniciar
+        </span>
+      </a>
+      <a class="stat-card stat-card--link" routerLink="/cola">
         <span class="label">En producción</span>
         <strong>{{ stats.inProductionOrders }}</strong>
-        <span class="hint">{{ stats.queuedPrintJobs }} por hacer en el tablero</span>
-      </article>
-      <article class="stat-card">
+        <span class="hint">{{ productionHint(stats) }}</span>
+      </a>
+      <a
+        class="stat-card stat-card--link"
+        [class.danger]="stats.lowStockMaterials > 0"
+        routerLink="/insumos"
+      >
         <span class="label">Stock bajo</span>
         <strong>{{ stats.lowStockMaterials }}</strong>
         <span class="hint">{{ lowStockHint(stats.lowStockMaterials) }}</span>
-      </article>
-      <article class="stat-card">
-        <span class="label">Clientes</span>
-        <strong>{{ stats.totalCustomers }}</strong>
-        <span class="hint">activas</span>
-      </article>
-      <article class="stat-card">
-        <span class="label">Pedidos totales</span>
-        <strong>{{ stats.totalOrders }}</strong>
-        <span class="hint">histórico</span>
-      </article>
+      </a>
+      <a class="stat-card stat-card--link" routerLink="/pedidos">
+        <span class="label">Pedidos en curso</span>
+        <strong>{{ inProgressCount(stats) }}</strong>
+        <span class="hint">{{ inProgressHint(stats) }}</span>
+      </a>
     </section>
+
+    <app-dashboard-attention [items]="attentionItems(stats)" />
+
+    @if (stats.monthlyTrend.length) {
+      <app-dashboard-monthly-trends [trends]="stats.monthlyTrend" />
+    }
+
+    <section class="dashboard-split">
+      <app-dashboard-channels [channels]="profit.byChannel" />
+      <app-dashboard-margin-alerts
+        [alerts]="profit.marginAlerts"
+        (raisePrice)="raiseProductPrice($event)"
+      />
+    </section>
+
+    <app-dashboard-ranking
+      [ranking]="profit.ranking"
+      [rankBy]="rankBy"
+      (rankByChange)="setRankBy($event)"
+    />
 
     @if (receivableLines(stats.receivables); as lines) {
       @if (lines.length) {
@@ -106,7 +134,7 @@
             </div>
             <div class="receivables__total">
               <span>Total a cobrar</span>
-              <strong>{{ stats.clientDebt | currencyArs }}</strong>
+              <strong>{{ profit.receivable | currencyArs }}</strong>
             </div>
           </header>
 
@@ -116,12 +144,24 @@
               <a routerLink="/billetera">Ver en Billetera</a>
             </div>
             <div class="aging__track" aria-hidden="true">
-              <span class="aging__fill aging__fill--recent" [style.flex-grow]="bucketAmount(lines, false)"></span>
-              <span class="aging__fill aging__fill--old" [style.flex-grow]="bucketAmount(lines, true)"></span>
+              <span
+                class="aging__fill aging__fill--recent"
+                [style.flex-grow]="bucketAmount(lines, false)"
+              ></span>
+              <span
+                class="aging__fill aging__fill--old"
+                [style.flex-grow]="bucketAmount(lines, true)"
+              ></span>
             </div>
             <div class="aging__legend">
-              <span><i class="aging__dot aging__dot--recent"></i> Hasta 15 días · {{ bucketAmount(lines, false) | currencyArs }}</span>
-              <span><i class="aging__dot aging__dot--old"></i> Más de 15 días · {{ bucketAmount(lines, true) | currencyArs }}</span>
+              <span>
+                <i class="aging__dot aging__dot--recent"></i>
+                Hasta 15 días · {{ bucketAmount(lines, false) | currencyArs }}
+              </span>
+              <span>
+                <i class="aging__dot aging__dot--old"></i>
+                Más de 15 días · {{ bucketAmount(lines, true) | currencyArs }}
+              </span>
             </div>
           </div>
 
@@ -135,7 +175,9 @@
             (action)="onReceivableAction($event)"
           >
             <ng-template odlCell="id" let-row>
-              <a class="order-link" [routerLink]="['/pedidos', row.id]">{{ row.id }}</a>
+              <a class="order-link" [routerLink]="['/pedidos', row.id]">{{
+                row.id
+              }}</a>
               @if (row.summary) {
                 <span class="order-summary">{{ row.summary }}</span>
               }
@@ -147,14 +189,11 @@
           </db-data-table>
 
           <p class="receivables__note">
-            En → vas a tener "Enviar recordatorio por WhatsApp" con el monto y el alias ya cargados.
+            En → vas a tener "Enviar recordatorio por WhatsApp" con el monto y el
+            alias ya cargados.
           </p>
         </section>
       }
-    }
-
-    @if (stats.monthlyTrend.length) {
-      <app-dashboard-monthly-trends [trends]="stats.monthlyTrend" />
     }
 
     <section class="dashboard-bottom">
@@ -175,10 +214,16 @@
             (action)="onRecentAction($event)"
           >
             <ng-template odlCell="id" let-order>
-              <a class="order-link" [routerLink]="['/pedidos', order.id]">{{ order.id }}</a>
+              <a class="order-link" [routerLink]="['/pedidos', order.id]">{{
+                order.id
+              }}</a>
             </ng-template>
             <ng-template odlRowDetail let-order>
-              <app-order-card layout="detail" [order]="order" (edit)="editRecent($event)" />
+              <app-order-card
+                layout="detail"
+                [order]="order"
+                (edit)="editRecent($event)"
+              />
             </ng-template>
           </db-data-table>
         } @else {
@@ -197,7 +242,9 @@
                 <div
                   class="bar-fill"
                   [class]="'bar-fill--' + item.type"
-                  [style.width.%]="(item.count / serviceMax(stats.ordersByType)) * 100"
+                  [style.width.%]="
+                    (item.count / serviceMax(stats.ordersByType)) * 100
+                  "
                 ></div>
               </div>
               <strong>{{ item.count }}</strong>

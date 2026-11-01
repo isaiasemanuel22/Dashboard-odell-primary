@@ -1,0 +1,103 @@
+@use '../../../../shared/styles/variables' as *;
+
+.channels {
+  background: $color-surface;
+  border: 1px solid $color-border-soft;
+  border-radius: $radius-md;
+  padding: 1rem 1.05rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+  height: 100%;
+}
+
+.channels__head {
+  h3 {
+    margin: 0;
+    font-size: $font-amount;
+    font-weight: 700;
+  }
+
+  p {
+    margin: 0.2rem 0 0;
+    color: $color-text-muted;
+    font-size: $font-meta;
+  }
+}
+
+.channels__new {
+  display: inline-flex;
+  align-items: center;
+  height: 1.25rem;
+  padding: 0 0.5rem;
+  border-radius: $radius-pill;
+  background: $color-brand-pale;
+  color: $color-brand-deep;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+
+.channels__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.channels__row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin-bottom: 0.35rem;
+  font-size: $font-meta;
+  color: $color-text-label;
+
+  span:first-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    min-width: 0;
+  }
+
+  strong {
+    color: $color-text;
+    font-weight: 700;
+  }
+}
+
+.channels__meta {
+  color: $color-text-muted;
+  font-weight: 400;
+}
+
+.channels__dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: $radius-pill;
+  font-style: normal;
+  flex: none;
+}
+
+.channels__track {
+  height: 8px;
+  background: $color-surface-subtle;
+  border-radius: $radius-pill;
+  overflow: hidden;
+}
+
+.channels__fill {
+  height: 100%;
+  border-radius: $radius-pill;
+  min-width: 2px;
+}
+
+.channels__empty {
+  margin: 0;
+  color: $color-text-muted;
+  font-size: $font-meta;
+}

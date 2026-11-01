@@ -8,10 +8,19 @@ import {
 } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { Subject, catchError, of, startWith, switchMap } from 'rxjs';
-import { ClientReceivable, DashboardStats, Order, ServiceType } from '../../core/models';
+import { BehaviorSubject, catchError, of, switchMap } from 'rxjs';
+import {
+  ClientReceivable,
+  DashboardMarginAlert,
+  DashboardPeriod,
+  DashboardRankBy,
+  DashboardStats,
+  Order,
+  ServiceType,
+} from '../../core/models';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { OrdersService } from '../../core/services/orders.service';
+import { ProductsService } from '../../core/services/products.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import {
   CurrencyArsPipe,
@@ -24,6 +33,8 @@ import { environment } from '../../../environments/environment';
 import {
   DB_DATA_TABLE,
   DbButtonComponent,
+  DbSegmentedControlComponent,
+  DbSegmentOption,
   DbStateMessageComponent,
   DashboardMonthlyTrendsComponent,
   DashboardNotificationsComponent,
@@ -35,6 +46,13 @@ import {
   orderStatusBadge,
   serviceTag,
 } from '@general-components';
+import {
+  DashboardAttentionComponent,
+  DashboardAttentionItem,
+} from './components/dashboard-attention/dashboard-attention.component';
+import { DashboardChannelsComponent } from './components/dashboard-channels/dashboard-channels.component';
+import { DashboardMarginAlertsComponent } from './components/dashboard-margin-alerts/dashboard-margin-alerts.component';
+import { DashboardRankingComponent } from './components/dashboard-ranking/dashboard-ranking.component';
 
 type QuickActionId = 'order' | 'quote' | 'product' | 'customer';
 
@@ -60,9 +78,14 @@ const DEBT_RECENT_DAYS = 15;
     CurrencyArsPipe,
     ServiceTypeLabelPipe,
     DbButtonComponent,
+    DbSegmentedControlComponent,
     DbStateMessageComponent,
     DashboardMonthlyTrendsComponent,
     DashboardNotificationsComponent,
+    DashboardAttentionComponent,
+    DashboardChannelsComponent,
+    DashboardMarginAlertsComponent,
+    DashboardRankingComponent,
     OrderCardComponent,
     ...DB_DATA_TABLE,
   ],
@@ -73,15 +96,25 @@ const DEBT_RECENT_DAYS = 15;
 export class DashboardComponent implements OnInit {
   private readonly dashboard = inject(DashboardService);
   private readonly ordersService = inject(OrdersService);
+  private readonly productsService = inject(ProductsService);
   private readonly realtime = inject(RealtimeService);
   private readonly formDialogs = inject(FormDialogService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly refresh$ = new Subject<void>();
+  private readonly refresh$ = new BehaviorSubject<void>(undefined);
 
   loadError = false;
   readonly isProd = environment.production;
+
+  period: DashboardPeriod = 'month';
+  rankBy: DashboardRankBy = 'profit';
+
+  readonly periodOptions: DbSegmentOption<DashboardPeriod>[] = [
+    { value: 'month', label: 'Mes' },
+    { value: 'quarter', label: 'Trimestre' },
+    { value: 'year', label: 'Año' },
+  ];
 
   readonly serviceOrder: ServiceType[] = [
     ServiceType.IMPRESION_3D,
@@ -91,9 +124,8 @@ export class DashboardComponent implements OnInit {
   ];
 
   stats$ = this.refresh$.pipe(
-    startWith(void 0),
     switchMap(() =>
-      this.dashboard.getStats().pipe(
+      this.dashboard.getStats({ period: this.period, rankBy: this.rankBy }).pipe(
         catchError(() => {
           this.loadError = true;
           this.cdr.markForCheck();
@@ -109,6 +141,20 @@ export class DashboardComponent implements OnInit {
       ['dashboard', 'orders', 'sales', 'print-jobs', 'customers', 'products'],
       () => this.refresh$.next(),
     );
+  }
+
+  setPeriod(period: DashboardPeriod): void {
+    if (this.period === period) return;
+    this.period = period;
+    this.loadError = false;
+    this.refresh$.next();
+  }
+
+  setRankBy(rankBy: DashboardRankBy): void {
+    if (this.rankBy === rankBy) return;
+    this.rankBy = rankBy;
+    this.loadError = false;
+    this.refresh$.next();
   }
 
   openForm(action: QuickActionId): void {
@@ -136,6 +182,22 @@ export class DashboardComponent implements OnInit {
     }
   }
 
+  headerSubtitle(): string {
+    return `${this.periodHeading()} · el estado general del emprendimiento de un vistazo`;
+  }
+
+  private periodHeading(): string {
+    if (this.period === 'quarter') {
+      const now = new Date();
+      const quarter = Math.floor(now.getMonth() / 3) + 1;
+      return `T${quarter} ${now.getFullYear()}`;
+    }
+    if (this.period === 'year') {
+      return String(new Date().getFullYear());
+    }
+    return this.currentMonthLabel();
+  }
+
   currentMonthLabel(): string {
     const label = new Date().toLocaleDateString('es-AR', {
       month: 'long',
@@ -145,28 +207,160 @@ export class DashboardComponent implements OnInit {
     return cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
   }
 
-  overdueLabel(count: number): string {
-    return count === 1 ? '1 pedido atrasado' : `${count} pedidos atrasados`;
+  periodHintWord(): string {
+    if (this.period === 'quarter') return 'este trimestre';
+    if (this.period === 'year') return 'este año';
+    return 'este mes';
+  }
+
+  netProfitHint(fees: number): string {
+    return `Después de costos y comisiones (${this.formatMoney(fees)})`;
+  }
+
+  receivableHint(count: number): string {
+    if (count === 1) return '1 pedido entregado con saldo';
+    return `${count} pedidos entregados con saldo`;
   }
 
   overdueHint(count: number): string {
     return count === 1 ? '1 atrasado' : `${count} atrasados`;
   }
 
-  soldHint(amount: number): string {
-    const month = this.currentMonthLabel();
-    return amount > 0 ? month : `${month} · sin ventas cerradas`;
+  pendingHint(overdue: number): string {
+    const overdueText =
+      overdue > 0
+        ? this.overdueHint(overdue)
+        : 'sin atrasados';
+    return `${overdueText} · esperan iniciar`;
+  }
+
+  productionHint(stats: DashboardStats): string {
+    const printing =
+      stats.activePrintJobs === 1
+        ? '1 imprimiendo'
+        : `${stats.activePrintJobs} imprimiendo`;
+    const queued =
+      stats.queuedPrintJobs === 1
+        ? '1 en cola'
+        : `${stats.queuedPrintJobs} en cola`;
+    return `${printing} · ${queued}`;
   }
 
   lowStockHint(count: number): string {
     return count === 1 ? 'Insumo a reponer' : 'Insumos a reponer';
   }
 
-  deliveredUnpaidHint(rows: ClientReceivable[]): string {
-    const count = rows.reduce((sum, row) => sum + row.orders.length, 0);
-    if (count === 0) return 'Sin saldo impago';
-    if (count === 1) return '1 pedido entregado sin pagar';
-    return `${count} pedidos entregados sin pagar`;
+  inProgressCount(stats: DashboardStats): number {
+    return stats.pendingOrders + stats.inProductionOrders;
+  }
+
+  inProgressHint(stats: DashboardStats): string {
+    return `Pendientes + en producción · ${stats.totalOrders} en total`;
+  }
+
+  attentionItems(stats: DashboardStats): DashboardAttentionItem[] {
+    const items: DashboardAttentionItem[] = [];
+
+    if (stats.overdueOrders > 0) {
+      const overdueNotes = stats.notifications.filter(
+        (note) => note.kind === 'order' && /atrasado/i.test(note.title),
+      );
+      const detail = overdueNotes
+        .slice(0, 2)
+        .map((note) => {
+          const match = note.title.match(/Pedido\s+(\S+)/i);
+          const id = match?.[1] ?? note.title;
+          return id;
+        })
+        .join(' y ');
+      items.push({
+        id: 'overdue',
+        tone: 'danger',
+        title:
+          stats.overdueOrders === 1
+            ? '1 pedido atrasado'
+            : `${stats.overdueOrders} pedidos atrasados`,
+        detail,
+        actionLabel: 'Ver pedidos',
+        route: '/pedidos',
+      });
+    }
+
+    const profit = stats.profitability;
+    if (profit.receivable > 0) {
+      const lines = this.receivableLines(stats.receivables);
+      const oldest = lines[0];
+      const detail = oldest
+        ? `${oldest.id} lleva ${oldest.days} ${oldest.days === 1 ? 'día' : 'días'} entregado sin pagar`
+        : '';
+      items.push({
+        id: 'receivable',
+        tone: 'danger',
+        title: `${this.formatMoney(profit.receivable)} por cobrar`,
+        detail,
+        actionLabel: 'Ver por cobrar',
+        route: '/dashboard',
+        fragment: 'por-cobrar',
+      });
+    }
+
+    if (stats.lowStockMaterials > 0) {
+      const stockNotes = stats.notifications.filter(
+        (note) => note.kind === 'stock',
+      );
+      const names = stockNotes
+        .slice(0, 2)
+        .map((note) =>
+          note.title.replace(/^Stock bajo:\s*/i, '').replace(/\s+sin stock$/i, ''),
+        )
+        .filter(Boolean);
+      const first = stockNotes[0];
+      items.push({
+        id: 'stock',
+        tone: 'warn',
+        title:
+          names.length > 0
+            ? `Pedí ${names.join(' · ')}`
+            : stats.lowStockMaterials === 1
+              ? '1 insumo con stock bajo'
+              : `${stats.lowStockMaterials} insumos con stock bajo`,
+        detail: first?.message ?? this.lowStockHint(stats.lowStockMaterials),
+        actionLabel: 'Ver insumos',
+        route: first?.route?.split('?')[0] || '/insumos',
+      });
+    }
+
+    if (profit.marginAlerts.length > 0) {
+      const count = profit.marginAlerts.length;
+      const target = profit.marginAlerts[0]?.targetPercent ?? 40;
+      items.push({
+        id: 'margin',
+        tone: 'warn',
+        title:
+          count === 1
+            ? `1 producto bajo el ${target}% de margen`
+            : `${count} productos bajo el ${target}% de margen`,
+        detail: 'revisá costos y precios',
+        actionLabel: 'Actualizar precios',
+        route: '/productos',
+        fragment: 'masiva',
+      });
+    }
+
+    return items;
+  }
+
+  raiseProductPrice(alert: DashboardMarginAlert): void {
+    this.productsService.getProduct(alert.productId).subscribe({
+      next: (product) => {
+        this.formDialogs.openProduct(product).subscribe((saved) => {
+          if (saved) this.refresh$.next();
+        });
+      },
+      error: () => {
+        void this.router.navigate(['/productos']);
+      },
+    });
   }
 
   ifCollected(stats: DashboardStats): number {
@@ -212,7 +406,10 @@ export class DashboardComponent implements OnInit {
     const today = new Date();
     then.setHours(0, 0, 0, 0);
     today.setHours(0, 0, 0, 0);
-    return Math.max(0, Math.round((today.getTime() - then.getTime()) / 86_400_000));
+    return Math.max(
+      0,
+      Math.round((today.getTime() - then.getTime()) / 86_400_000),
+    );
   }
 
   daysLabel(days: number): string {
@@ -229,6 +426,14 @@ export class DashboardComponent implements OnInit {
 
   serviceMax(items: { count: number }[]): number {
     return Math.max(1, ...items.map((item) => item.count));
+  }
+
+  private formatMoney(value: number): string {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(value);
   }
 
   readonly receivableActions: OdlRowAction<ReceivableLine>[] = [
@@ -281,14 +486,27 @@ export class DashboardComponent implements OnInit {
       value: (order) => order.customerName || 'Sin cliente',
       secondary: (order) => this.orderSummary(order),
     },
-    { key: 'services', header: 'Áreas', type: 'tags', tags: (order) => order.services.map(serviceTag) },
+    {
+      key: 'services',
+      header: 'Áreas',
+      type: 'tags',
+      tags: (order) => order.services.map(serviceTag),
+    },
     {
       key: 'dueDate',
       header: 'Entrega',
       type: 'date',
-      note: (order) => (isOrderOverdue(order.dueDate, order.status) ? { text: 'Atrasado', tone: 'danger' } : null),
+      note: (order) =>
+        isOrderOverdue(order.dueDate, order.status)
+          ? { text: 'Atrasado', tone: 'danger' }
+          : null,
     },
-    { key: 'status', header: 'Estado', type: 'badge', badge: (order) => orderStatusBadge(order.status) },
+    {
+      key: 'status',
+      header: 'Estado',
+      type: 'badge',
+      badge: (order) => orderStatusBadge(order.status),
+    },
     { key: 'total', header: 'Total', type: 'money' },
   ];
 
@@ -298,7 +516,10 @@ export class DashboardComponent implements OnInit {
 
   private orderSummary(order: Order): string {
     const products = order.items.length;
-    const units = order.items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
+    const units = order.items.reduce(
+      (sum, item) => sum + (Number(item.quantity) || 0),
+      0,
+    );
     const productWord = products === 1 ? 'producto' : 'productos';
     const unitWord = units === 1 ? 'unidad' : 'unidades';
     return `${products} ${productWord} · ${units} ${unitWord}`;
@@ -327,7 +548,10 @@ export class DashboardComponent implements OnInit {
             this.formDialogs
               .openConfirm({
                 title: 'No se pudo cancelar',
-                message: extractApiErrorMessage(err, 'No se pudo cancelar el pedido'),
+                message: extractApiErrorMessage(
+                  err,
+                  'No se pudo cancelar el pedido',
+                ),
                 confirmLabel: 'Entendido',
                 alertOnly: true,
               })

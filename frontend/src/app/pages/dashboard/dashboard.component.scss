@@ -27,6 +27,7 @@
 .header-actions {
   @include screen.screen-actions;
   gap: 0.45rem;
+  align-items: center;
 
   ::ng-deep .db-button {
     min-height: 2.25rem;
@@ -57,6 +58,14 @@
   @include screen.tone-danger;
 }
 
+.tone-success {
+  color: $color-success !important;
+}
+
+.tone-warn {
+  color: $color-warning-accent !important;
+}
+
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -85,33 +94,22 @@
   }
 }
 
-.stat-card__top {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-
-  .label {
-    margin-bottom: 0;
-  }
-}
-
-.stat-card__link {
-  color: $color-error;
-  font-size: $font-meta;
-  font-weight: 700;
-  line-height: 1.2;
+.stat-card--link {
+  color: inherit;
   text-decoration: none;
-  white-space: nowrap;
+  transition: border-color 0.15s ease;
 
   &:hover {
-    text-decoration: underline;
+    border-color: $color-brand-light;
   }
 }
 
-.hint--ok {
-  color: $color-success !important;
-  font-weight: 600;
+.dashboard-split {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+  align-items: stretch;
 }
 
 .receivables {
@@ -215,8 +213,13 @@
   flex-basis: 0;
   height: 100%;
 
-  &--recent { background: #f59e0b; }
-  &--old { background: #dc2626; }
+  &--recent {
+    background: #f59e0b;
+  }
+
+  &--old {
+    background: #dc2626;
+  }
 }
 
 .aging__legend {
@@ -240,8 +243,13 @@
   border-radius: $radius-pill;
   font-style: normal;
 
-  &--recent { background: #f59e0b; }
-  &--old { background: #dc2626; }
+  &--recent {
+    background: #f59e0b;
+  }
+
+  &--old {
+    background: #dc2626;
+  }
 }
 
 .receivables__note {
@@ -336,10 +344,21 @@
   border-radius: $radius-pill;
   background: $color-text-subtle;
 
-  &--impresion_3d { background: $color-area-3d; }
-  &--estampado { background: $color-area-print; }
-  &--diseno_grafico { background: $color-area-design; }
-  &--modelado { background: $color-area-modelado; }
+  &--impresion_3d {
+    background: $color-area-3d;
+  }
+
+  &--estampado {
+    background: $color-area-print;
+  }
+
+  &--diseno_grafico {
+    background: $color-area-design;
+  }
+
+  &--modelado {
+    background: $color-area-modelado;
+  }
 }
 
 .bar-track {
@@ -354,10 +373,21 @@
   border-radius: $radius-pill;
   background: $color-brand;
 
-  &--impresion_3d { background: $color-area-3d; }
-  &--estampado { background: $color-area-print; }
-  &--diseno_grafico { background: $color-area-design; }
-  &--modelado { background: $color-area-modelado; }
+  &--impresion_3d {
+    background: $color-area-3d;
+  }
+
+  &--estampado {
+    background: $color-area-print;
+  }
+
+  &--diseno_grafico {
+    background: $color-area-design;
+  }
+
+  &--modelado {
+    background: $color-area-modelado;
+  }
 }
 
 @include mobile.mobile-only {
@@ -367,6 +397,10 @@
     strong {
       font-size: 1.35rem;
     }
+  }
+
+  .dashboard-split {
+    grid-template-columns: 1fr;
   }
 
   .receivables__head,
@@ -380,6 +414,12 @@
   }
 
   .dashboard-bottom {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 1024px) {
+  .dashboard-split {
     grid-template-columns: 1fr;
   }
 }

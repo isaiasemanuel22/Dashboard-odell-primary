@@ -1,0 +1,40 @@
+<section class="channels" aria-label="Ventas por canal">
+  <header class="channels__head">
+    <div>
+      <h3>Ventas por canal <span class="channels__new">Nuevo</span></h3>
+      <p>Cuánto vendiste y cuánto margen te deja cada canal</p>
+    </div>
+  </header>
+
+  @if (channels().length) {
+    <ul class="channels__list">
+      @for (row of channels(); track row.channel) {
+        <li class="channels__item">
+          <div class="channels__row">
+            <span>
+              <i
+                class="channels__dot"
+                [style.background]="channelColor(row.channel)"
+                aria-hidden="true"
+              ></i>
+              {{ channelLabel(row.channel) }}
+            </span>
+            <span>
+              <strong>{{ row.sold | currencyArs }}</strong>
+              <span class="channels__meta"> · {{ markupLabel(row) }}</span>
+            </span>
+          </div>
+          <div class="channels__track" aria-hidden="true">
+            <div
+              class="channels__fill"
+              [style.width.%]="barWidth(row.sold)"
+              [style.background]="channelColor(row.channel)"
+            ></div>
+          </div>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="channels__empty">Sin ventas en este período.</p>
+  }
+</section>

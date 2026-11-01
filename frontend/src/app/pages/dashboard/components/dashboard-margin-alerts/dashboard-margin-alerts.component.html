@@ -1,0 +1,80 @@
+<section class="margin-alerts" aria-label="Alertas de margen">
+  <header class="margin-alerts__head">
+    <div>
+      <h3>Alertas de margen <span class="margin-alerts__new">Nuevo</span></h3>
+      <p>
+        Productos por debajo de tu margen objetivo ({{ targetPercent() }}%)
+      </p>
+    </div>
+    @if (alerts().length) {
+      <span class="margin-alerts__pill">{{ productsLabel(alerts().length) }}</span>
+    }
+  </header>
+
+  @if (alerts().length) {
+    <ul class="margin-alerts__list" aria-label="Productos con margen bajo">
+      @for (alert of alerts(); track alert.productId) {
+        <li class="margin-alerts__item">
+          <div class="margin-alerts__top">
+            <div class="margin-alerts__info">
+              <strong>{{ alert.name }}</strong>
+              <span>
+                Costo {{ alert.cost | currencyArs }} · Precio
+                {{ alert.price | currencyArs }}
+              </span>
+            </div>
+            <span class="margin-alerts__pct">{{ alert.markupPercent }}%</span>
+          </div>
+
+          <div
+            class="margin-alerts__bar"
+            role="img"
+            [attr.aria-label]="
+              'Margen ' +
+              alert.markupPercent +
+              '% contra objetivo ' +
+              targetPercent() +
+              '%'
+            "
+          >
+            <div
+              class="margin-alerts__fill"
+              [style.width.%]="barWidth(alert.markupPercent)"
+            ></div>
+            <span
+              class="margin-alerts__mark"
+              [style.left.%]="targetMark()"
+              aria-hidden="true"
+            ></span>
+          </div>
+
+          <div class="margin-alerts__actions">
+            <span>
+              Para llegar al {{ targetPercent() }}%:
+              <strong>{{ alert.priceForTarget | currencyArs }}</strong>
+            </span>
+            <db-button
+              [label]="raiseLabel(alert.priceForTarget)"
+              variant="secondary"
+              format="soft"
+              (clicked)="onRaise(alert)"
+            />
+          </div>
+        </li>
+      }
+    </ul>
+
+    <p class="margin-alerts__legend">
+      <span class="margin-alerts__legend-mark" aria-hidden="true"></span>
+      Línea = margen objetivo {{ targetPercent() }}%
+    </p>
+
+    <a class="margin-alerts__bulk" routerLink="/productos" fragment="masiva">
+      Actualizar precios en bloque →
+    </a>
+  } @else {
+    <p class="margin-alerts__empty">
+      Ningún producto está por debajo del margen objetivo.
+    </p>
+  }
+</section>

@@ -32,12 +32,18 @@ Chart.register(
   Filler,
 );
 
+const COLOR_SOLD = '#15803d';
+const COLOR_COLLECTED = '#0e7aab';
+const COLOR_ORDERS = '#0e7aab';
+
 function formatAxisCurrency(value: number): string {
   const abs = Math.abs(value);
   const sign = value < 0 ? '-' : '';
   if (abs >= 1000) {
     const thousands = abs / 1000;
-    const text = Number.isInteger(thousands) ? String(thousands) : thousands.toFixed(1);
+    const text = Number.isInteger(thousands)
+      ? String(thousands)
+      : thousands.toFixed(1);
     return `${sign}$${text}k`;
   }
   return `${sign}$${abs}`;
@@ -72,6 +78,10 @@ export class DashboardMonthlyTrendsComponent
   private revenueChart?: Chart<'line'>;
   private viewReady = false;
 
+  get totalOrders(): number {
+    return this.trends.reduce((sum, point) => sum + point.ordersCount, 0);
+  }
+
   ngAfterViewInit(): void {
     this.viewReady = true;
     this.renderCharts();
@@ -97,7 +107,9 @@ export class DashboardMonthlyTrendsComponent
     const canvas = this.ordersCanvas?.nativeElement;
     if (!canvas) return;
 
-    const labels = this.trends.map((point) => point.label.split(' ')[0] ?? point.label);
+    const labels = this.trends.map(
+      (point) => point.label.split(' ')[0] ?? point.label,
+    );
     const data = this.trends.map((point) => point.ordersCount);
 
     const config: ChartConfiguration<'line'> = {
@@ -108,9 +120,9 @@ export class DashboardMonthlyTrendsComponent
           {
             label: 'Pedidos recibidos',
             data,
-            borderColor: '#2563eb',
-            backgroundColor: 'rgba(37, 99, 235, 0.16)',
-            pointBackgroundColor: '#2563eb',
+            borderColor: COLOR_ORDERS,
+            backgroundColor: 'rgba(14, 122, 171, 0.14)',
+            pointBackgroundColor: COLOR_ORDERS,
             pointBorderColor: '#fff',
             pointBorderWidth: 1.5,
             pointRadius: 3.5,
@@ -137,8 +149,11 @@ export class DashboardMonthlyTrendsComponent
     const canvas = this.revenueCanvas?.nativeElement;
     if (!canvas) return;
 
-    const labels = this.trends.map((point) => point.label.split(' ')[0] ?? point.label);
-    const data = this.trends.map((point) => point.revenue);
+    const labels = this.trends.map(
+      (point) => point.label.split(' ')[0] ?? point.label,
+    );
+    const sold = this.trends.map((point) => point.revenue);
+    const collected = this.trends.map((point) => point.collected ?? 0);
 
     const config: ChartConfiguration<'line'> = {
       type: 'line',
@@ -146,17 +161,32 @@ export class DashboardMonthlyTrendsComponent
         labels,
         datasets: [
           {
-            label: 'Ingresos totales',
-            data,
-            borderColor: '#059669',
-            backgroundColor: 'rgba(5, 150, 105, 0.16)',
-            pointBackgroundColor: '#059669',
+            label: 'Vendido',
+            data: sold,
+            borderColor: COLOR_SOLD,
+            backgroundColor: 'rgba(21, 128, 61, 0.10)',
+            pointBackgroundColor: COLOR_SOLD,
             pointBorderColor: '#fff',
             pointBorderWidth: 1.5,
             pointRadius: 3.5,
             pointHoverRadius: 6,
             borderWidth: 2.5,
             fill: true,
+            tension: 0,
+          },
+          {
+            label: 'Cobrado',
+            data: collected,
+            borderColor: COLOR_COLLECTED,
+            backgroundColor: 'transparent',
+            pointBackgroundColor: COLOR_COLLECTED,
+            pointBorderColor: '#fff',
+            pointBorderWidth: 1.5,
+            pointRadius: 3.5,
+            pointHoverRadius: 6,
+            borderWidth: 2.5,
+            borderDash: [6, 4],
+            fill: false,
             tension: 0,
           },
         ],
@@ -197,7 +227,9 @@ export class DashboardMonthlyTrendsComponent
           callbacks: {
             label: (context) => {
               const value = context.parsed.y ?? 0;
-              const formatted = currency ? formatCurrency(value) : `${value} pedidos`;
+              const formatted = currency
+                ? formatCurrency(value)
+                : `${value} pedidos`;
               return ` ${context.dataset.label}: ${formatted}`;
             },
           },
