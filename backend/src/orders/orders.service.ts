@@ -36,6 +36,7 @@ import {
 import { appendOrderPriceHistory } from './order-price-history.util';
 import {
   listOrderPriceNotices,
+  orderLineListPrice,
   rememberKeptLinePrice,
 } from './order-price-notice.util';
 import { filterOrders, OrderListFilters } from './order-filter.util';
@@ -166,12 +167,12 @@ export class OrdersService {
     order.items.forEach((item, index) => {
       if (!item.productId) return;
       const product = this.products.findById(item.productId);
-      const listPrice = item.listUnitPrice ?? item.unitPrice;
+      const listPrice = orderLineListPrice(item);
       if (!product || product.price === listPrice) return;
       const kept = rememberKeptLinePrice(
         order,
         index,
-        item.unitPrice,
+        listPrice,
         product.price,
         item.productId,
         item.productName,

@@ -11,7 +11,10 @@ import {
   normalizeDiscountFields,
 } from '../common/utils/discount.util';
 import { appendOrderPriceHistory } from '../orders/order-price-history.util';
-import { hasRecordedPricePair } from '../orders/order-price-notice.util';
+import {
+  hasRecordedPricePair,
+  orderLineListPrice,
+} from '../orders/order-price-notice.util';
 import type { OrderPriceChangeTrigger } from '../orders/order-price-history.util';
 import { calculateOrderItemsSubtotal } from '../orders/order-pricing.util';
 import { applyWholesalePricing } from '../orders/wholesale-pricing.util';
@@ -303,10 +306,11 @@ export class PricingSyncService {
         if (!item.productId) continue;
 
         const change = priceChanges.get(item.productId);
-        if (!change || change.newPrice === item.unitPrice) continue;
-        if (
-          hasRecordedPricePair(order, index, item.unitPrice, change.newPrice)
-        ) {
+        // El catálogo es de lista: comparar contra la lista de la línea, no
+        // contra lo que se cobra (en mayoristas son distintos).
+        const listPrice = orderLineListPrice(item);
+        if (!change || change.newPrice === listPrice) continue;
+        if (hasRecordedPricePair(order, index, listPrice, change.newPrice)) {
           continue;
         }
 
@@ -315,7 +319,7 @@ export class PricingSyncService {
           itemIndex: index,
           productId: item.productId,
           productName: item.productName,
-          previousUnitPrice: item.unitPrice,
+          previousUnitPrice: listPrice,
           newUnitPrice: change.newPrice,
           previousOrderTotal: order.total,
           newOrderTotal: order.total,

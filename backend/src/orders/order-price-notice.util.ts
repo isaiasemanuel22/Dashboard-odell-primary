@@ -8,6 +8,18 @@ import { appendOrderPriceHistory } from './order-price-history.util';
 
 export type { OrderPriceNotice };
 
+/**
+ * Precio de lista acordado de la línea. En pedidos mayoristas `unitPrice` es lo
+ * que se cobra y el de lista queda en `listUnitPrice`; el catálogo siempre es de
+ * lista, así que las comparaciones contra el catálogo usan este valor (§10).
+ */
+export function orderLineListPrice(item: {
+  unitPrice: number;
+  listUnitPrice?: number;
+}): number {
+  return item.listUnitPrice ?? item.unitPrice;
+}
+
 export function listOrderPriceNotices(
   order: Order,
   currentPrice: (productId: string) => number | undefined,
@@ -18,13 +30,14 @@ export function listOrderPriceNotices(
   order.items.forEach((item, itemIndex) => {
     if (!item.productId) return;
     const current = currentPrice(item.productId);
-    if (current === undefined || current === item.unitPrice) return;
-    if (isLinePriceKept(order, itemIndex, item.unitPrice, current)) return;
+    const agreed = orderLineListPrice(item);
+    if (current === undefined || current === agreed) return;
+    if (isLinePriceKept(order, itemIndex, agreed, current)) return;
     notices.push({
       itemIndex,
       productId: item.productId,
       productName: item.productName,
-      agreedUnitPrice: item.unitPrice,
+      agreedUnitPrice: agreed,
       currentUnitPrice: current,
     });
   });

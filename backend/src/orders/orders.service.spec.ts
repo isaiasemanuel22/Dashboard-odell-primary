@@ -438,4 +438,31 @@ describe('OrdersService precio mayorista (§10)', () => {
     expect(order.wholesaleApplied).toBe(true);
     expect(order.items[0].unitPrice).toBe(800);
   });
+
+  it('un pedido mayorista no avisa cambio de precio si el catálogo no cambió', () => {
+    const order = service.create({
+      customerId: 'cust-rev-sin-min',
+      dueDate: futureDueDate(),
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity: 1,
+          unitPrice: 1000,
+        },
+      ],
+    });
+
+    expect(service.getOverview(order.id).priceNotices).toEqual([]);
+
+    // Si el catálogo sube, el aviso compara lista contra lista.
+    store.products[0].price = 1200;
+    expect(service.getOverview(order.id).priceNotices).toEqual([
+      expect.objectContaining({
+        agreedUnitPrice: 1000,
+        currentUnitPrice: 1200,
+      }),
+    ]);
+  });
 });
