@@ -1,4 +1,8 @@
 import {
+  OrderStatus,
+  PaymentMethod,
+  ServiceType,
+  TreasuryAccount,
   TreasuryExpenseCategory,
   TreasuryMovementDirection,
 } from '../common/enums';
@@ -32,6 +36,8 @@ describe('TreasuryService', () => {
       id: 'sale-1',
       items: [],
       total: 10000,
+      method: PaymentMethod.EFECTIVO,
+      account: TreasuryAccount.CAJA,
       soldAt: '2026-08-01T12:00:00.000Z',
       createdAt: '2026-08-01T12:00:00.000Z',
     });
@@ -84,6 +90,8 @@ describe('TreasuryService', () => {
       new SupplyRepository(store),
       suppliesService as unknown as SuppliesService,
       storeChange as unknown as StoreChangeService,
+      new OrderRepository(store),
+      new RetailSaleRepository(store),
     );
   });
 
@@ -558,5 +566,178 @@ describe('TreasuryService', () => {
         occurredAt,
       }),
     ).toThrow('La fecha no puede ser posterior a hoy');
+  });
+
+  it('resta comisiones de pagos al saldo por cuenta', () => {
+    store.orders.push({
+      id: 'ord-pay',
+      customerId: null,
+      customerName: 'Ana',
+      services: [ServiceType.IMPRESION_3D],
+      items: [],
+      status: OrderStatus.PENDIENTE,
+      total: 10000,
+      payments: [
+        {
+          id: 'ord-pay-1',
+          amount: 5000,
+          deposit: true,
+          createdAt: '2026-08-05T12:00:00.000Z',
+          method: PaymentMethod.MERCADO_PAGO,
+          account: TreasuryAccount.MERCADO_PAGO,
+          fee: 200,
+        },
+      ],
+      createdAt: '2026-08-01T12:00:00.000Z',
+      dueDate: '2026-08-20T12:00:00.000Z',
+    });
+
+    const overview = service.getOverview();
+    expect(overview.accounts).toEqual([
+      { account: TreasuryAccount.CAJA, balance: 10000, fees: 0 },
+      { account: TreasuryAccount.MERCADO_PAGO, balance: 4800, fees: 200 },
+      { account: TreasuryAccount.BANCO, balance: 0, fees: 0 },
+    ]);
+    expect(overview.availableBalance).toBe(14800);
+    expect(overview.totalSalesIncome).toBe(14800);
+    expect(
+      overview.movements.some(
+        (movement) => movement.concept === 'Seña ord-pay · Ana',
+      ),
+    ).toBe(true);
+  });
+
+  it('asigna caja a registros viejos sin cuenta', () => {
+    store.treasuryExpenses.push({
+      id: 'legacy-1',
+      direction: TreasuryMovementDirection.EXPENSE,
+      category: TreasuryExpenseCategory.OTHER,
+      name: 'Gas',
+      quantity: 1,
+      unitPrice: 1000,
+      amount: 1000,
+      occurredAt: '2026-08-05T12:00:00.000Z',
+      createdAt: '2026-08-05T12:00:00.000Z',
+    });
+    store.orders.push({
+      id: 'ord-legacy',
+      customerId: null,
+      customerName: 'Bruno',
+      services: [ServiceType.IMPRESION_3D],
+      items: [],
+      status: OrderStatus.PENDIENTE,
+      total: 3000,
+      payments: [
+        {
+          id: 'pay-legacy',
+          amount: 3000,
+          deposit: false,
+          createdAt: '2026-08-06T12:00:00.000Z',
+        },
+      ],
+      createdAt: '2026-08-01T12:00:00.000Z',
+      dueDate: '2026-08-20T12:00:00.000Z',
+    });
+
+    const overview = service.getOverview();
+    const caja = overview.accounts.find(
+      (entry) => entry.account === TreasuryAccount.CAJA,
+    );
+    expect(caja?.balance).toBe(10000 - 1000 + 3000);
+    expect(
+      overview.movements.find((movement) => movement.id === 'pay-legacy')
+        ?.account,
+    ).toBe(TreasuryAccount.CAJA);
+  });
+
+  it('transfiere entre cuentas sin cambiar el disponible total', () => {
+    const before = service.getAvailableBalance();
+    const [outbound, inbound] = service.transferBetweenAccounts({
+      from: TreasuryAccount.CAJA,
+      to: TreasuryAccount.BANCO,
+      amount: 2500,
+      occurredAt: '2026-08-10',
+    });
+
+    expect(outbound).toMatchObject({
+      category: TreasuryExpenseCategory.TRANSFER,
+      direction: TreasuryMovementDirection.EXPENSE,
+      account: TreasuryAccount.CAJA,
+      amount: 2500,
+      referenceId: outbound.referenceId,
+    });
+    expect(inbound).toMatchObject({
+      category: TreasuryExpenseCategory.TRANSFER,
+      direction: TreasuryMovementDirection.INCOME,
+      account: TreasuryAccount.BANCO,
+      amount: 2500,
+      referenceId: outbound.referenceId,
+    });
+    expect(service.getAvailableBalance()).toBe(before);
+
+    const overview = service.getOverview();
+    expect(
+      overview.accounts.find((entry) => entry.account === TreasuryAccount.CAJA)
+        ?.balance,
+    ).toBe(7500);
+    expect(
+      overview.accounts.find((entry) => entry.account === TreasuryAccount.BANCO)
+        ?.balance,
+    ).toBe(2500);
+  });
+
+  it('anular una punta de la transferencia anula las dos', () => {
+    const before = service.getAvailableBalance();
+    const [outbound, inbound] = service.transferBetweenAccounts({
+      from: TreasuryAccount.CAJA,
+      to: TreasuryAccount.BANCO,
+      amount: 2500,
+      occurredAt: '2026-08-10',
+    });
+
+    service.voidExpense(outbound.id, 'Cargada por error');
+
+    const records = service.listRecords();
+    expect(records.find((r) => r.id === inbound.id)?.voidedAt).toBeTruthy();
+    expect(service.getAvailableBalance()).toBe(before);
+    expect(
+      service
+        .getOverview()
+        .accounts.find((entry) => entry.account === TreasuryAccount.BANCO)
+        ?.balance,
+    ).toBe(0);
+  });
+
+  it('anula un registro: sale de totales, revierte stock y no se re-anula', () => {
+    const [purchase] = service.recordExpense({
+      isSupplyPurchase: true,
+      amount: 4800,
+      occurredAt: '2026-08-10',
+      supplyLines: [
+        {
+          supplyId: 'sup-1',
+          quantity: 2,
+          amountSpent: 4800,
+          unitPrice: 2400,
+        },
+      ],
+    });
+    expect(store.supplies[0]?.quantity).toBe(3);
+    expect(service.getAvailableBalance()).toBe(5200);
+
+    const voided = service.voidExpense(purchase.id, 'Error de carga');
+    expect(voided.voidedAt).toBeTruthy();
+    expect(voided.voidReason).toBe('Error de carga');
+    expect(store.supplies[0]?.quantity).toBe(1);
+    expect(service.getAvailableBalance()).toBe(10000);
+    expect(service.getOverview().expenses).toHaveLength(1);
+    expect(service.getOverview().totalExpenses).toBe(0);
+
+    expect(() => service.voidExpense(purchase.id, 'Otra vez')).toThrow(
+      /ya está anulado/,
+    );
+    expect(() => service.updateExpense(purchase.id, { amount: 1000 })).toThrow(
+      /ya está anulado/,
+    );
   });
 });

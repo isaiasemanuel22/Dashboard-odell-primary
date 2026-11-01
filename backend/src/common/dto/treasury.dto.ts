@@ -8,12 +8,17 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
   MinLength,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
-import { TreasuryExpenseCategory, TreasuryMovementDirection } from '../enums';
+import {
+  TreasuryAccount,
+  TreasuryExpenseCategory,
+  TreasuryMovementDirection,
+} from '../enums';
 
 function isPersonMovement(data: CreateTreasuryExpenseDto): boolean {
   return (
@@ -69,6 +74,10 @@ export class CreateTreasuryExpenseDto {
   @IsDateString()
   occurredAt!: string;
 
+  @IsOptional()
+  @IsEnum(TreasuryAccount)
+  account?: TreasuryAccount;
+
   @ValidateIf((data: CreateTreasuryExpenseDto) => data.isSupplyPurchase)
   @IsArray()
   @ArrayMinSize(1)
@@ -105,4 +114,30 @@ export class UpdateTreasuryExpenseDto {
   @IsNumber()
   @Min(0)
   unitPrice?: number;
+
+  @IsOptional()
+  @IsEnum(TreasuryAccount)
+  account?: TreasuryAccount;
+}
+
+export class VoidTreasuryExpenseDto {
+  @IsString()
+  @MinLength(1)
+  @MaxLength(255)
+  reason!: string;
+}
+
+export class CreateTreasuryTransferDto {
+  @IsEnum(TreasuryAccount)
+  from!: TreasuryAccount;
+
+  @IsEnum(TreasuryAccount)
+  to!: TreasuryAccount;
+
+  @IsNumber()
+  @Min(0.01)
+  amount!: number;
+
+  @IsDateString()
+  occurredAt!: string;
 }

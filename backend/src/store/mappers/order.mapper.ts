@@ -1,11 +1,23 @@
 import { Prisma } from '@prisma/client';
 import { OrderStatus, PriceType, SalesChannel } from '../../common/enums';
-import { FdmFilamentLine, Order, OrderItem } from '../../common/interfaces';
+import {
+  FdmFilamentLine,
+  Order,
+  OrderItem,
+  OrderPayment,
+} from '../../common/interfaces';
 import { ensureOrderStatusHistory } from '../../orders/order-status-history.util';
 import { fromJson, toInputJson } from '../../prisma/json.util';
 import { normalizeServiceType } from '../../common/service-type.util';
 import { normalizeFdmFilaments } from '../../products/fdm-product.util';
 import { persistedFdmLine } from '../brand-link.util';
+
+function normalizePayments(
+  value: Prisma.JsonValue | null | undefined,
+): OrderPayment[] {
+  const parsed = fromJson<OrderPayment[] | null>(value ?? []);
+  return Array.isArray(parsed) ? parsed : [];
+}
 
 function normalizeOrderStatus(status: string): OrderStatus {
   if (status === 'en_produccion') return OrderStatus.EN_PROGRESO;
@@ -160,6 +172,7 @@ export function mapOrderFromDb(row: {
   statusHistory: Prisma.JsonValue;
   priceHistory?: Prisma.JsonValue;
   deliveryHistory?: Prisma.JsonValue;
+  payments?: Prisma.JsonValue | null;
   items: Array<{
     serviceType: string;
     productId: string | null;
@@ -197,6 +210,7 @@ export function mapOrderFromDb(row: {
     priceHistory: fromJson<Order['priceHistory']>(row.priceHistory ?? []) ?? [],
     deliveryHistory:
       fromJson<Order['deliveryHistory']>(row.deliveryHistory ?? []) ?? [],
+    payments: normalizePayments(row.payments),
   };
   ensureOrderStatusHistory(order);
   return order;
@@ -221,6 +235,7 @@ function mapOrderScalarsToDb(order: Order) {
     statusHistory: toInputJson(order.statusHistory ?? []),
     priceHistory: toInputJson(order.priceHistory ?? []),
     deliveryHistory: toInputJson(order.deliveryHistory ?? []),
+    payments: toInputJson(order.payments ?? []),
   };
 }
 

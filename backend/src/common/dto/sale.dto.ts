@@ -1,4 +1,5 @@
 import {
+  IsEnum,
   IsNumber,
   IsOptional,
   IsString,
@@ -7,6 +8,7 @@ import {
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
+import { PaymentMethod, TreasuryAccount } from '../enums';
 
 export class CreateRetailSaleItemDto {
   @IsOptional()
@@ -48,6 +50,14 @@ export class CreateRetailSaleDto {
   @IsNumber()
   @Min(0)
   discountAmount?: number;
+
+  @IsOptional()
+  @IsEnum(PaymentMethod)
+  method?: PaymentMethod;
+
+  @IsOptional()
+  @IsEnum(TreasuryAccount)
+  account?: TreasuryAccount;
 }
 
 export class UpdateRetailSaleDto extends PartialType(CreateRetailSaleDto) {}

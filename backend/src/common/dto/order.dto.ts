@@ -17,10 +17,12 @@ import {
   OrderStatus,
   FilamentType,
   PaperType,
+  PaymentMethod,
   PriceType,
   PrintJobStatus,
   SalesChannel,
   ServiceType,
+  TreasuryAccount,
 } from '../enums';
 import {
   EstampadoPressCycle,
@@ -236,6 +238,19 @@ export class CreateOrderPaymentDto {
   @IsOptional()
   @IsBoolean()
   deposit?: boolean;
+
+  @IsOptional()
+  @IsEnum(PaymentMethod)
+  method?: PaymentMethod;
+
+  @IsOptional()
+  @IsEnum(TreasuryAccount)
+  account?: TreasuryAccount;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  fee?: number;
 }
 
 export class CreateOrderDto {

@@ -92,6 +92,18 @@ export enum CustomerSource {
   OTRO = 'otro',
 }
 
+export enum PaymentMethod {
+  EFECTIVO = 'efectivo',
+  TRANSFERENCIA = 'transferencia',
+  MERCADO_PAGO = 'mercado_pago',
+}
+
+export enum TreasuryAccount {
+  CAJA = 'caja',
+  MERCADO_PAGO = 'mercado_pago',
+  BANCO = 'banco',
+}
+
 export enum TreasuryExpenseCategory {
   SUPPLY_PURCHASE = 'supply_purchase',
   WITHDRAWAL = 'withdrawal',
@@ -100,6 +112,7 @@ export enum TreasuryExpenseCategory {
   PAYMENT = 'payment',
   LOAN = 'loan',
   LOAN_REPAYMENT = 'loan_repayment',
+  TRANSFER = 'transfer',
   OTHER = 'other',
 }
 

@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { SaleSource } from '../common/enums';
+import { PaymentMethod, SaleSource } from '../common/enums';
 import {
   CreateRetailSaleDto,
   CreateRetailSaleItemDto,
@@ -33,7 +33,8 @@ import {
   calculateTotalWithDiscount,
   normalizeDiscountFields,
 } from '../common/utils/discount.util';
-import { paidCents } from '../common/utils/money.util';
+import { collectedPaymentsCents, toCents } from '../common/utils/money.util';
+import { defaultAccountForMethod } from '../treasury/treasury-account.util';
 import { isRevenueOrder, resolveOrderSoldAt } from './sales-order.util';
 import { computeAreaProfitBalances } from './profit-area.util';
 
@@ -65,16 +66,17 @@ export class SalesService {
 
   /**
    * Dinero efectivamente cobrado para la Billetera:
-   * ventas de mostrador + pagos/señas de pedidos (no el total al entregar).
+   * ventas de mostrador + pagos/señas de pedidos netos de comisión
+   * (no el total al entregar).
    */
   getCollectedIncome(): number {
-    const retailIncome = this.retailSales
+    const retailCents = this.retailSales
       .findAll()
-      .reduce((sum, sale) => sum + sale.total, 0);
+      .reduce((sum, sale) => sum + toCents(sale.total), 0);
     const orderPaymentsCents = this.orders
       .findAll()
-      .reduce((sum, order) => sum + paidCents(order), 0);
-    return retailIncome + orderPaymentsCents / 100;
+      .reduce((sum, order) => sum + collectedPaymentsCents(order), 0);
+    return (retailCents + orderPaymentsCents) / 100;
   }
 
   findRetailSale(id: string): RetailSale {
@@ -116,6 +118,8 @@ export class SalesService {
         data.discountAmount !== undefined
           ? data.discountAmount
           : current.discountAmount,
+      method: data.method ?? current.method,
+      account: data.account ?? current.account,
     };
 
     const updated = this.buildRetailSale(merged, id, current.createdAt);
@@ -286,6 +290,8 @@ export class SalesService {
     const subtotal = calculateItemsSubtotal(items);
     const total = calculateTotalWithDiscount(subtotal, discount);
     const now = new Date().toISOString();
+    const method = data.method ?? PaymentMethod.EFECTIVO;
+    const account = data.account ?? defaultAccountForMethod(method);
 
     return {
       id: id ?? this.retailSales.nextId(),
@@ -294,6 +300,8 @@ export class SalesService {
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
       notes: data.notes?.trim() || undefined,
+      method,
+      account,
       soldAt: data.soldAt ?? now,
       createdAt: createdAt ?? now,
     };

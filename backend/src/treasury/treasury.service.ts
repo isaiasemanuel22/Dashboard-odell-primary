@@ -5,23 +5,33 @@ import {
 } from '@nestjs/common';
 import {
   CreateTreasuryExpenseDto,
+  CreateTreasuryTransferDto,
   TreasurySupplyLineDto,
   UpdateTreasuryExpenseDto,
 } from '../common/dto';
 import {
+  PaymentMethod,
   SupplyCategory,
+  TreasuryAccount,
   TreasuryExpenseCategory,
   TreasuryMovementDirection,
 } from '../common/enums';
 import {
+  Order,
+  OrderPayment,
+  RetailSale,
   Supply,
+  TreasuryAccountBalance,
   TreasuryExpense,
+  TreasuryMovement,
   TreasuryOverview,
 } from '../common/interfaces';
 import { SalesService } from '../sales/sales.service';
 import { SuppliesService } from '../supplies/supplies.service';
 import { StoreChangeService } from '../store/store-change.service';
 import {
+  OrderRepository,
+  RetailSaleRepository,
   SupplyRepository,
   TreasuryExpenseRepository,
 } from '../store/repositories';
@@ -29,7 +39,15 @@ import {
   computeDebtorBalances,
   getDebtorOutstanding,
 } from './treasury-debtor.util';
-import { toCents } from '../common/utils/money.util';
+import {
+  paymentFeeCents,
+  paymentNetCents,
+  toCents,
+} from '../common/utils/money.util';
+import {
+  TREASURY_ACCOUNTS_ORDER,
+  defaultAccountForMethod,
+} from './treasury-account.util';
 
 interface ValidatedSupplyPurchaseLine {
   supply: Supply;
@@ -46,31 +64,40 @@ export class TreasuryService {
     private readonly supplies: SupplyRepository,
     private readonly suppliesService: SuppliesService,
     private readonly storeChange: StoreChangeService,
+    private readonly orders: OrderRepository,
+    private readonly retailSales: RetailSaleRepository,
   ) {}
 
   getOverview(): TreasuryOverview {
-    // Caja operativa: lo cobrado (mostrador + pagos/señas), no el total al entregar.
-    const totalSalesIncome = this.sales.getCollectedIncome();
     const records = this.listRecords();
-    const totalManualIncome = records
+    const activeRecords = records.filter((record) => !record.voidedAt);
+    const totalSalesIncome = this.sales.getCollectedIncome();
+    const totalManualIncome = activeRecords
       .filter((record) => record.direction === TreasuryMovementDirection.INCOME)
       .reduce((sum, record) => sum + record.amount, 0);
-    const totalExpenses = records
+    const totalExpenses = activeRecords
       .filter(
         (record) => record.direction === TreasuryMovementDirection.EXPENSE,
       )
       .reduce((sum, record) => sum + record.amount, 0);
+    const accounts = this.buildAccountBalances(activeRecords);
+    const availableBalance = accounts.reduce(
+      (sum, entry) => sum + entry.balance,
+      0,
+    );
 
     return {
-      availableBalance: totalSalesIncome + totalManualIncome - totalExpenses,
+      availableBalance,
       totalIncome: totalSalesIncome + totalManualIncome,
       totalExpenses,
       totalSalesIncome,
       totalManualIncome,
+      accounts,
+      movements: this.buildMovements(records),
       expenses: records,
       recordNameSuggestions: this.listRecordNameSuggestions(),
       recipientNameSuggestions: this.listRecipientNameSuggestions(),
-      debtors: computeDebtorBalances(records),
+      debtors: computeDebtorBalances(activeRecords),
     };
   }
 
@@ -112,67 +139,332 @@ export class TreasuryService {
 
   recordExpense(data: CreateTreasuryExpenseDto): TreasuryExpense[] {
     const occurredAt = this.parseOccurredAt(data.occurredAt);
+    const account = data.account ?? TreasuryAccount.CAJA;
 
     if (data.isSupplyPurchase) {
-      return this.recordSupplyPurchaseExpense(data, occurredAt);
+      return this.recordSupplyPurchaseExpense(data, occurredAt, account);
     }
 
     if (
       data.category === TreasuryExpenseCategory.PAYMENT ||
       data.category === TreasuryExpenseCategory.LOAN
     ) {
-      return [this.recordPersonMovement(data, occurredAt)];
+      return [this.recordPersonMovement(data, occurredAt, account)];
     }
 
     if (data.category === TreasuryExpenseCategory.LOAN_REPAYMENT) {
-      return [this.recordLoanRepayment(data, occurredAt)];
+      return [this.recordLoanRepayment(data, occurredAt, account)];
     }
 
-    return [this.recordSimpleMovement(data, occurredAt)];
+    return [this.recordSimpleMovement(data, occurredAt, account)];
   }
 
   updateExpense(id: string, data: UpdateTreasuryExpenseDto): TreasuryExpense {
     const current = this.requireRecord(id);
+    this.assertNotVoided(current);
+    if (current.category === TreasuryExpenseCategory.TRANSFER) {
+      throw new BadRequestException(
+        'Las transferencias no se editan; anulalas si hace falta',
+      );
+    }
+
     const occurredAt = data.occurredAt
       ? this.parseOccurredAt(data.occurredAt)
       : current.occurredAt;
+    const account = data.account ?? current.account ?? TreasuryAccount.CAJA;
 
     if (current.category === TreasuryExpenseCategory.SUPPLY_PURCHASE) {
-      return this.updateSupplyPurchase(current, data, occurredAt);
+      return this.updateSupplyPurchase(current, data, occurredAt, account);
     }
 
     if (
       current.category === TreasuryExpenseCategory.PAYMENT ||
       current.category === TreasuryExpenseCategory.LOAN
     ) {
-      return this.updatePersonMovement(current, data, occurredAt);
+      return this.updatePersonMovement(current, data, occurredAt, account);
     }
 
     if (current.category === TreasuryExpenseCategory.LOAN_REPAYMENT) {
-      return this.updateLoanRepayment(current, data, occurredAt);
+      return this.updateLoanRepayment(current, data, occurredAt, account);
     }
 
-    return this.updateSimpleMovement(current, data, occurredAt);
+    return this.updateSimpleMovement(current, data, occurredAt, account);
+  }
+
+  voidExpense(id: string, reason: string): TreasuryExpense {
+    const current = this.requireRecord(id);
+    this.assertNotVoided(current);
+
+    const trimmed = reason.trim();
+    if (!trimmed) {
+      throw new BadRequestException('El motivo de anulación es obligatorio');
+    }
+    if (trimmed.length > 255) {
+      throw new BadRequestException(
+        'El motivo de anulación no puede superar 255 caracteres',
+      );
+    }
+
+    const voidedAt = new Date().toISOString();
+    // Una transferencia se anula entera: anular una sola punta descuadra el total.
+    if (
+      current.category === TreasuryExpenseCategory.TRANSFER &&
+      current.referenceId
+    ) {
+      for (const pair of this.expenses.findAll()) {
+        if (
+          pair.id !== current.id &&
+          pair.category === TreasuryExpenseCategory.TRANSFER &&
+          pair.referenceId === current.referenceId &&
+          !pair.voidedAt
+        ) {
+          this.expenses.save({ ...pair, voidedAt, voidReason: trimmed });
+        }
+      }
+    }
+
+    const suppliesChanged = this.revertSupplyPurchaseIfNeeded(current);
+    return this.replaceRecord(
+      { ...current, voidedAt, voidReason: trimmed },
+      suppliesChanged,
+    );
+  }
+
+  transferBetweenAccounts(data: CreateTreasuryTransferDto): TreasuryExpense[] {
+    if (data.from === data.to) {
+      throw new BadRequestException(
+        'La cuenta de origen y destino tienen que ser distintas',
+      );
+    }
+
+    const amount = this.parsePositiveAmount(data.amount);
+    const occurredAt = this.parseOccurredAt(data.occurredAt);
+    const referenceId = `xfer-${this.expenses.nextId()}`;
+    const label = `${this.accountLabel(data.from)} → ${this.accountLabel(data.to)}`;
+
+    const outbound = this.createRecord(
+      {
+        direction: TreasuryMovementDirection.EXPENSE,
+        category: TreasuryExpenseCategory.TRANSFER,
+        name: 'Transferencia',
+        quantity: 1,
+        unitPrice: amount,
+        amount,
+        description: label,
+        referenceId,
+        account: data.from,
+      },
+      occurredAt,
+      { persist: false },
+    );
+
+    const inbound = this.createRecord(
+      {
+        direction: TreasuryMovementDirection.INCOME,
+        category: TreasuryExpenseCategory.TRANSFER,
+        name: 'Transferencia',
+        quantity: 1,
+        unitPrice: amount,
+        amount,
+        description: label,
+        referenceId,
+        account: data.to,
+      },
+      occurredAt,
+      { persist: false },
+    );
+
+    this.storeChange.recordChange({
+      collections: ['treasuryExpenses'],
+      realtime: {
+        scopes: ['dashboard'],
+        action: 'update',
+        entity: 'settings',
+      },
+    });
+
+    return [outbound, inbound];
   }
 
   removeExpense(id: string): void {
     const current = this.requireRecord(id);
-    const supplyId = this.linkedSupplyId(current);
-    if (supplyId) {
-      this.syncSupplyStock(supplyId, -Number(current.quantity));
-    }
+    const suppliesChanged = this.revertSupplyPurchaseIfNeeded(current);
 
     if (!this.expenses.remove(id)) {
       throw new NotFoundException('Registro no encontrado');
     }
 
-    this.persistRecords(!!supplyId, 'delete');
+    this.persistRecords(suppliesChanged, 'delete');
+  }
+
+  private buildAccountBalances(
+    activeRecords: TreasuryExpense[],
+  ): TreasuryAccountBalance[] {
+    const balances = new Map<
+      TreasuryAccount,
+      { balance: number; fees: number }
+    >();
+    for (const account of TREASURY_ACCOUNTS_ORDER) {
+      balances.set(account, { balance: 0, fees: 0 });
+    }
+
+    const add = (
+      account: TreasuryAccount,
+      balanceCents: number,
+      feesCents = 0,
+    ) => {
+      const entry = balances.get(account)!;
+      entry.balance += balanceCents;
+      entry.fees += feesCents;
+    };
+
+    for (const order of this.orders.findAll()) {
+      for (const payment of order.payments ?? []) {
+        const account = this.resolvePaymentAccount(payment);
+        add(account, paymentNetCents(payment), paymentFeeCents(payment));
+      }
+    }
+
+    for (const sale of this.retailSales.findAll()) {
+      add(this.resolveSaleAccount(sale), toCents(sale.total));
+    }
+
+    for (const record of activeRecords) {
+      const account = this.resolveRecordAccount(record);
+      const signed =
+        record.direction === TreasuryMovementDirection.INCOME
+          ? toCents(record.amount)
+          : -toCents(record.amount);
+      add(account, signed);
+    }
+
+    return TREASURY_ACCOUNTS_ORDER.map((account) => {
+      const entry = balances.get(account)!;
+      return {
+        account,
+        balance: entry.balance / 100,
+        fees: entry.fees / 100,
+      };
+    });
+  }
+
+  private buildMovements(records: TreasuryExpense[]): TreasuryMovement[] {
+    const movements: TreasuryMovement[] = [];
+
+    for (const order of this.orders.findAll()) {
+      for (const payment of order.payments ?? []) {
+        movements.push(this.paymentMovement(order, payment));
+      }
+    }
+
+    for (const sale of this.retailSales.findAll()) {
+      movements.push(this.retailMovement(sale));
+    }
+
+    for (const record of records) {
+      movements.push(this.recordMovement(record));
+    }
+
+    return movements.sort(
+      (a, b) =>
+        new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime(),
+    );
+  }
+
+  private paymentMovement(
+    order: Order,
+    payment: OrderPayment,
+  ): TreasuryMovement {
+    const amount = Number(payment.amount) || 0;
+    const fee = Number(payment.fee) || 0;
+    const kind = payment.deposit ? 'Seña' : 'Pago';
+    return {
+      id: payment.id,
+      source: 'order_payment',
+      occurredAt: payment.createdAt,
+      concept: `${kind} ${order.id} · ${order.customerName}`,
+      account: this.resolvePaymentAccount(payment),
+      method: payment.method ?? PaymentMethod.EFECTIVO,
+      amount,
+      fee,
+      net: amount - fee,
+      voided: false,
+      orderId: order.id,
+    };
+  }
+
+  private retailMovement(sale: RetailSale): TreasuryMovement {
+    const amount = Number(sale.total) || 0;
+    return {
+      id: sale.id,
+      source: 'retail_sale',
+      occurredAt: sale.soldAt,
+      concept: 'Venta de mostrador',
+      account: this.resolveSaleAccount(sale),
+      method: sale.method ?? PaymentMethod.EFECTIVO,
+      amount,
+      fee: 0,
+      net: amount,
+      voided: false,
+    };
+  }
+
+  private recordMovement(record: TreasuryExpense): TreasuryMovement {
+    const signed =
+      record.direction === TreasuryMovementDirection.INCOME
+        ? Number(record.amount) || 0
+        : -(Number(record.amount) || 0);
+    return {
+      id: record.id,
+      source: 'record',
+      occurredAt: record.occurredAt,
+      concept: record.name,
+      detail: record.description,
+      account: this.resolveRecordAccount(record),
+      amount: signed,
+      fee: 0,
+      net: signed,
+      voided: !!record.voidedAt,
+      voidReason: record.voidReason,
+      recordId: record.id,
+    };
+  }
+
+  private resolvePaymentAccount(payment: OrderPayment): TreasuryAccount {
+    return (
+      payment.account ??
+      defaultAccountForMethod(payment.method ?? PaymentMethod.EFECTIVO)
+    );
+  }
+
+  private resolveSaleAccount(sale: RetailSale): TreasuryAccount {
+    return (
+      sale.account ??
+      defaultAccountForMethod(sale.method ?? PaymentMethod.EFECTIVO)
+    );
+  }
+
+  private resolveRecordAccount(record: TreasuryExpense): TreasuryAccount {
+    return record.account ?? TreasuryAccount.CAJA;
+  }
+
+  private accountLabel(account: TreasuryAccount): string {
+    switch (account) {
+      case TreasuryAccount.MERCADO_PAGO:
+        return 'Mercado Pago';
+      case TreasuryAccount.BANCO:
+        return 'Banco';
+      case TreasuryAccount.CAJA:
+      default:
+        return 'Caja';
+    }
   }
 
   private updateSimpleMovement(
     current: TreasuryExpense,
     data: UpdateTreasuryExpenseDto,
     occurredAt: string,
+    account: TreasuryAccount,
   ): TreasuryExpense {
     const name = (data.name ?? current.name).trim();
     if (!name) {
@@ -195,6 +487,7 @@ export class TreasuryService {
         quantity: 1,
         unitPrice: amount,
         amount,
+        account,
         occurredAt,
       },
       false,
@@ -205,6 +498,7 @@ export class TreasuryService {
     current: TreasuryExpense,
     data: UpdateTreasuryExpenseDto,
     occurredAt: string,
+    account: TreasuryAccount,
   ): TreasuryExpense {
     const name = (data.name ?? current.name).trim();
     if (!name) {
@@ -225,6 +519,7 @@ export class TreasuryService {
         unitPrice: amount,
         amount,
         description,
+        account,
         occurredAt,
       },
       false,
@@ -235,6 +530,7 @@ export class TreasuryService {
     current: TreasuryExpense,
     data: UpdateTreasuryExpenseDto,
     occurredAt: string,
+    account: TreasuryAccount,
   ): TreasuryExpense {
     const name = (data.name ?? current.name).trim();
     if (!name) {
@@ -243,7 +539,9 @@ export class TreasuryService {
 
     const amount = this.parsePositiveAmount(data.amount ?? current.amount);
     const outstanding = getDebtorOutstanding(
-      this.listRecords().filter((record) => record.id !== current.id),
+      this.listRecords().filter(
+        (record) => record.id !== current.id && !record.voidedAt,
+      ),
       name,
     );
     if (outstanding <= 0) {
@@ -263,6 +561,7 @@ export class TreasuryService {
         unitPrice: amount,
         amount,
         description: `Devolución de ${name}`,
+        account,
         occurredAt,
       },
       false,
@@ -273,6 +572,7 @@ export class TreasuryService {
     current: TreasuryExpense,
     data: UpdateTreasuryExpenseDto,
     occurredAt: string,
+    account: TreasuryAccount,
   ): TreasuryExpense {
     const amount = this.parsePositiveAmount(data.amount ?? current.amount);
     const quantity = Number(data.quantity ?? current.quantity);
@@ -314,6 +614,7 @@ export class TreasuryService {
         quantity,
         unitPrice,
         amount,
+        account,
         description: supply
           ? this.purchaseDescription(supply)
           : current.description,
@@ -326,6 +627,7 @@ export class TreasuryService {
   private recordLoanRepayment(
     data: CreateTreasuryExpenseDto,
     occurredAt: string,
+    account: TreasuryAccount,
   ): TreasuryExpense {
     const name = data.name?.trim() ?? '';
     if (!name) {
@@ -337,7 +639,10 @@ export class TreasuryService {
       throw new BadRequestException('El monto debe ser mayor a cero');
     }
 
-    const outstanding = getDebtorOutstanding(this.listRecords(), name);
+    const outstanding = getDebtorOutstanding(
+      this.listRecords().filter((record) => !record.voidedAt),
+      name,
+    );
     if (outstanding <= 0) {
       throw new BadRequestException('Esta persona no tiene deuda pendiente');
     }
@@ -356,6 +661,7 @@ export class TreasuryService {
         unitPrice: amount,
         amount,
         description: `Devolución de ${name}`,
+        account,
       },
       occurredAt,
     );
@@ -364,6 +670,7 @@ export class TreasuryService {
   private recordPersonMovement(
     data: CreateTreasuryExpenseDto,
     occurredAt: string,
+    account: TreasuryAccount,
   ): TreasuryExpense {
     const name = data.name?.trim() ?? '';
     if (!name) {
@@ -397,6 +704,7 @@ export class TreasuryService {
         unitPrice: amount,
         amount,
         description,
+        account,
       },
       occurredAt,
     );
@@ -405,6 +713,7 @@ export class TreasuryService {
   private recordSimpleMovement(
     data: CreateTreasuryExpenseDto,
     occurredAt: string,
+    account: TreasuryAccount,
   ): TreasuryExpense {
     const name = data.name?.trim() ?? '';
     if (!name) {
@@ -429,6 +738,7 @@ export class TreasuryService {
         quantity: 1,
         unitPrice: amount,
         amount,
+        account,
       },
       occurredAt,
     );
@@ -437,6 +747,7 @@ export class TreasuryService {
   private recordSupplyPurchaseExpense(
     data: CreateTreasuryExpenseDto,
     occurredAt: string,
+    account: TreasuryAccount,
   ): TreasuryExpense[] {
     const validatedLines = this.validateSupplyPurchaseLines(
       data.supplyLines ?? [],
@@ -454,6 +765,7 @@ export class TreasuryService {
           amount: line.amountSpent,
           description: this.purchaseDescription(line.supply),
           referenceId: line.supply.id,
+          account,
         },
         occurredAt,
         { persist: false },
@@ -576,6 +888,12 @@ export class TreasuryService {
     return record;
   }
 
+  private assertNotVoided(record: TreasuryExpense): void {
+    if (record.voidedAt) {
+      throw new BadRequestException('Este registro ya está anulado');
+    }
+  }
+
   private linkedSupplyId(record: TreasuryExpense): string | null {
     if (record.category !== TreasuryExpenseCategory.SUPPLY_PURCHASE) {
       return null;
@@ -584,6 +902,14 @@ export class TreasuryService {
       return null;
     }
     return record.referenceId;
+  }
+
+  /** Revierte stock de una compra de insumos; true si tocó supplies. */
+  private revertSupplyPurchaseIfNeeded(record: TreasuryExpense): boolean {
+    const supplyId = this.linkedSupplyId(record);
+    if (!supplyId) return false;
+    this.syncSupplyStock(supplyId, -Number(record.quantity));
+    return true;
   }
 
   private parsePositiveAmount(value: number): number {
@@ -670,6 +996,7 @@ export class TreasuryService {
     const expense = this.expenses.create({
       id: this.expenses.nextId(),
       ...data,
+      account: data.account ?? TreasuryAccount.CAJA,
       occurredAt,
       createdAt: now,
     });

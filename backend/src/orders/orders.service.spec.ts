@@ -1,10 +1,12 @@
 import {
   CustomerType,
   OrderStatus,
+  PaymentMethod,
   PriceType,
   ProductType,
   SalesChannel,
   ServiceType,
+  TreasuryAccount,
 } from '../common/enums';
 import { OrderTasksService } from '../print-jobs/order-tasks.service';
 import { PrintJobsService } from '../print-jobs/print-jobs.service';
@@ -180,6 +182,38 @@ describe('OrdersService.getOverview', () => {
     );
     service.addPayment(order.id, { amount: 60 });
     expect(order.payments).toHaveLength(2);
+  });
+
+  it('registra medio, cuenta y comisión; rechaza comisión inválida', () => {
+    const order = store.orders[0];
+    order.total = 100;
+    order.payments = [];
+
+    const withFee = service.addPayment(order.id, {
+      amount: 50,
+      method: PaymentMethod.MERCADO_PAGO,
+      fee: 5,
+    });
+    expect(withFee.payments![0]).toMatchObject({
+      amount: 50,
+      method: PaymentMethod.MERCADO_PAGO,
+      account: TreasuryAccount.MERCADO_PAGO,
+      fee: 5,
+    });
+
+    expect(() =>
+      service.addPayment(order.id, {
+        amount: 20,
+        fee: 20,
+      }),
+    ).toThrow(/comisión tiene que ser menor que el monto/);
+
+    const cash = service.addPayment(order.id, { amount: 20 });
+    expect(cash.payments![1]).toMatchObject({
+      method: PaymentMethod.EFECTIVO,
+      account: TreasuryAccount.CAJA,
+      fee: 0,
+    });
   });
 
   it('no permite cobrar un pedido cancelado', () => {

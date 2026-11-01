@@ -1,4 +1,10 @@
-import { outstandingCents, paidCents, toCents } from './money.util';
+import {
+  collectedPaymentsCents,
+  outstandingCents,
+  paidCents,
+  paymentNetCents,
+  toCents,
+} from './money.util';
 
 describe('money.util', () => {
   it('redondea a centavos sin errores de punto flotante', () => {
@@ -16,6 +22,15 @@ describe('money.util', () => {
     expect(paidCents({ payments: [{ amount: 10.1 }, { amount: 5.2 }] })).toBe(
       1530,
     );
+  });
+
+  it('calcula el neto cobrado restando comisión', () => {
+    expect(paymentNetCents({ amount: 100, fee: 3.5 })).toBe(9650);
+    expect(
+      collectedPaymentsCents({
+        payments: [{ amount: 100, fee: 3.5 }, { amount: 50 }],
+      }),
+    ).toBe(14650);
   });
 
   it('calcula el saldo impago sin bajar de cero', () => {

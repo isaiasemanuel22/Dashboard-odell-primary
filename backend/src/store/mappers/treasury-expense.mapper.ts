@@ -1,8 +1,16 @@
 import {
+  TreasuryAccount,
   TreasuryExpenseCategory,
   TreasuryMovementDirection,
 } from '../../common/enums';
 import { TreasuryExpense } from '../../common/interfaces';
+
+function normalizeAccount(value?: string | null): TreasuryAccount | undefined {
+  if (!value) return undefined;
+  return Object.values(TreasuryAccount).includes(value as TreasuryAccount)
+    ? (value as TreasuryAccount)
+    : undefined;
+}
 
 export function mapTreasuryExpenseFromDb(row: {
   id: string;
@@ -14,6 +22,9 @@ export function mapTreasuryExpenseFromDb(row: {
   amount: number;
   description: string | null;
   referenceId: string | null;
+  account?: string | null;
+  voidedAt?: Date | null;
+  voidReason?: string | null;
   occurredAt: Date;
   createdAt: Date;
 }): TreasuryExpense {
@@ -31,6 +42,9 @@ export function mapTreasuryExpenseFromDb(row: {
     amount: row.amount,
     description: row.description ?? undefined,
     referenceId: row.referenceId ?? undefined,
+    account: normalizeAccount(row.account) ?? TreasuryAccount.CAJA,
+    voidedAt: row.voidedAt ? row.voidedAt.toISOString() : undefined,
+    voidReason: row.voidReason ?? undefined,
     occurredAt: row.occurredAt.toISOString(),
     createdAt: row.createdAt.toISOString(),
   };
@@ -47,6 +61,9 @@ export function mapTreasuryExpenseToDb(expense: TreasuryExpense) {
     amount: expense.amount,
     description: expense.description ?? null,
     referenceId: expense.referenceId ?? null,
+    account: expense.account ?? TreasuryAccount.CAJA,
+    voidedAt: expense.voidedAt ? new Date(expense.voidedAt) : null,
+    voidReason: expense.voidReason ?? null,
     occurredAt: new Date(expense.occurredAt),
     createdAt: new Date(expense.createdAt),
   };

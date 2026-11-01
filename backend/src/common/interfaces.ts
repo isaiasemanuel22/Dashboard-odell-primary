@@ -15,11 +15,13 @@ import {
   MachineProfileRole,
   ProductType,
   ResinType,
+  PaymentMethod,
   SaleSource,
   SalesChannel,
   ServiceType,
   SupplyCategory,
   TaskType,
+  TreasuryAccount,
   TreasuryExpenseCategory,
   TreasuryMovementDirection,
 } from './enums';
@@ -545,6 +547,12 @@ export interface OrderPayment {
   amount: number;
   deposit: boolean;
   createdAt: string;
+  /** Medio de pago; datos viejos se leen como efectivo. */
+  method?: PaymentMethod;
+  /** Cuenta donde entra el dinero; default según el medio. */
+  account?: TreasuryAccount;
+  /** Comisión del medio en pesos. */
+  fee?: number;
 }
 
 export type QuoteItem = Omit<
@@ -682,6 +690,8 @@ export interface RetailSale {
   discountPercent?: number;
   discountAmount?: number;
   notes?: string;
+  method?: PaymentMethod;
+  account?: TreasuryAccount;
   soldAt: string;
   createdAt: string;
 }
@@ -699,6 +709,8 @@ export type CreateRetailSaleDto = {
   soldAt?: string;
   discountPercent?: number;
   discountAmount?: number;
+  method?: PaymentMethod;
+  account?: TreasuryAccount;
 };
 
 export type UpdateRetailSaleDto = Partial<CreateRetailSaleDto>;
@@ -845,8 +857,38 @@ export interface TreasuryExpense {
   amount: number;
   description?: string;
   referenceId?: string;
+  /** Cuenta afectada; datos viejos → caja. */
+  account?: TreasuryAccount;
+  voidedAt?: string;
+  voidReason?: string;
   occurredAt: string;
   createdAt: string;
+}
+
+export type TreasuryMovementSource = 'order_payment' | 'retail_sale' | 'record';
+
+export interface TreasuryMovement {
+  id: string;
+  source: TreasuryMovementSource;
+  occurredAt: string;
+  concept: string;
+  detail?: string;
+  account?: TreasuryAccount;
+  method?: PaymentMethod;
+  /** Importe con signo (ingreso +, egreso −). */
+  amount: number;
+  fee: number;
+  net: number;
+  voided: boolean;
+  voidReason?: string;
+  orderId?: string;
+  recordId?: string;
+}
+
+export interface TreasuryAccountBalance {
+  account: TreasuryAccount;
+  balance: number;
+  fees: number;
 }
 
 export type CalendarFeedType = 'delivery' | 'event' | 'reminder';
@@ -902,6 +944,8 @@ export interface TreasuryOverview {
   totalExpenses: number;
   totalSalesIncome: number;
   totalManualIncome: number;
+  accounts: TreasuryAccountBalance[];
+  movements: TreasuryMovement[];
   expenses: TreasuryExpense[];
   recordNameSuggestions: string[];
   recipientNameSuggestions: string[];

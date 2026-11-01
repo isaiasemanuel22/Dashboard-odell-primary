@@ -156,6 +156,7 @@ model Order {
   statusHistory Json    @default("[]") @map("status_history")
   priceHistory  Json    @default("[]") @map("price_history")
   deliveryHistory Json  @default("[]") @map("delivery_history")
+  payments      Json    @default("[]")
 
   customer Customer?   @relation(fields: [customerId], references: [id], onDelete: Restrict)
   items    OrderItem[]
@@ -325,6 +326,8 @@ model RetailSale {
   discountPercent Float            @default(0) @map("discount_percent")
   discountAmount  Float            @default(0) @map("discount_amount")
   notes           String?          @db.Text
+  method          String           @default("efectivo") @db.VarChar(32)
+  account         String           @default("caja") @db.VarChar(32)
   soldAt    DateTime         @map("sold_at")
   createdAt DateTime         @map("created_at")
   items     RetailSaleItem[]
@@ -358,6 +361,9 @@ model TreasuryExpense {
   amount      Float
   description String?  @db.VarChar(255)
   referenceId String?  @map("reference_id") @db.VarChar(64)
+  account     String   @default("caja") @db.VarChar(32)
+  voidedAt    DateTime? @map("voided_at")
+  voidReason  String?  @map("void_reason") @db.VarChar(255)
   occurredAt  DateTime @map("occurred_at")
   createdAt   DateTime @map("created_at")
 

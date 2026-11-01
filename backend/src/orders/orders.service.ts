@@ -6,11 +6,13 @@ import {
 import {
   CustomerType,
   OrderStatus,
+  PaymentMethod,
   PriceType,
   PrintJobStatus,
   SalesChannel,
   ServiceType,
   TaskType,
+  TreasuryAccount,
 } from '../common/enums';
 import {
   Customer,
@@ -25,6 +27,7 @@ import {
   normalizeDiscountFields,
 } from '../common/utils/discount.util';
 import { outstandingCents, toCents } from '../common/utils/money.util';
+import { defaultAccountForMethod } from '../treasury/treasury-account.util';
 import { calculateOrderItemsSubtotal } from './order-pricing.util';
 import {
   DUE_DATE_AFTER_TODAY_MESSAGE,
@@ -394,7 +397,16 @@ export class OrdersService {
     this.updateStatus(id, OrderStatus.CANCELADO);
   }
 
-  addPayment(id: string, data: { amount: number; deposit?: boolean }): Order {
+  addPayment(
+    id: string,
+    data: {
+      amount: number;
+      deposit?: boolean;
+      method?: PaymentMethod;
+      account?: TreasuryAccount;
+      fee?: number;
+    },
+  ): Order {
     const order = this.findOne(id);
     if (order.status === OrderStatus.CANCELADO) {
       throw new BadRequestException('No se puede cobrar un pedido cancelado');
@@ -408,12 +420,28 @@ export class OrdersService {
       throw new BadRequestException('El monto supera el saldo pendiente');
     }
 
+    const feeCents = toCents(data.fee ?? 0);
+    if (feeCents < 0) {
+      throw new BadRequestException('La comisión no puede ser negativa');
+    }
+    if (feeCents >= amountCents) {
+      throw new BadRequestException(
+        'La comisión tiene que ser menor que el monto',
+      );
+    }
+
+    const method = data.method ?? PaymentMethod.EFECTIVO;
+    const account = data.account ?? defaultAccountForMethod(method);
+
     order.payments ??= [];
     order.payments.push({
       id: `${order.id}-pay-${order.payments.length + 1}`,
       amount: amountCents / 100,
       deposit: data.deposit === true,
       createdAt: new Date().toISOString(),
+      method,
+      account,
+      fee: feeCents / 100,
     });
     return this.orders.save(order);
   }
