@@ -8,13 +8,16 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
 import {
   Supply,
   TreasuryDebtorBalance,
   TreasuryExpense,
   TreasuryExpenseCategory,
+  TreasuryMovement,
   TreasuryOverview,
 } from '../../core/models';
+import { DashboardService } from '../../core/services/dashboard.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { SuppliesService } from '../../core/services/settings.service';
 import { TreasuryService } from '../../core/services/treasury.service';
@@ -30,6 +33,8 @@ import {
   WalletRecordFormComponent,
 } from './components/wallet-record-form/wallet-record-form.component';
 import { WalletRepaymentFormComponent } from './components/wallet-repayment-form/wallet-repayment-form.component';
+import { WalletTransferFormComponent } from './components/wallet-transfer-form/wallet-transfer-form.component';
+import { WalletVoidFormComponent } from './components/wallet-void-form/wallet-void-form.component';
 
 @Component({
   selector: 'app-wallet',
@@ -42,6 +47,8 @@ import { WalletRepaymentFormComponent } from './components/wallet-repayment-form
     WalletDebtorsComponent,
     WalletRecordFormComponent,
     WalletRepaymentFormComponent,
+    WalletTransferFormComponent,
+    WalletVoidFormComponent,
   ],
   templateUrl: './wallet.component.html',
   styleUrl: './wallet.component.scss',
@@ -49,6 +56,7 @@ import { WalletRepaymentFormComponent } from './components/wallet-repayment-form
 })
 export class WalletComponent implements OnInit {
   private readonly treasuryService = inject(TreasuryService);
+  private readonly dashboardService = inject(DashboardService);
   private readonly suppliesService = inject(SuppliesService);
   private readonly formDialogs = inject(FormDialogService);
   private readonly realtime = inject(RealtimeService);
@@ -58,14 +66,19 @@ export class WalletComponent implements OnInit {
   private readonly router = inject(Router);
 
   overview: TreasuryOverview | null = null;
+  clientDebt = 0;
   supplies: Supply[] = [];
   loading = true;
   loadError = false;
   showForm = false;
+  showTransferForm = false;
   formMode: WalletFormMode = 'general';
   editingExpense: TreasuryExpense | null = null;
+  voidingExpense: TreasuryExpense | null = null;
   purchasePreset = false;
   repaymentDebtor: TreasuryDebtorBalance | null = null;
+
+  readonly periodLabel = WalletComponent.currentPeriodLabel();
 
   ngOnInit(): void {
     this.loadOverview();
@@ -74,7 +87,11 @@ export class WalletComponent implements OnInit {
       'dashboard',
       () => this.refreshOverview(),
       {
-        skip: () => this.showForm || this.repaymentDebtor != null,
+        skip: () =>
+          this.showForm ||
+          this.showTransferForm ||
+          this.repaymentDebtor != null ||
+          this.voidingExpense != null,
       },
     );
 
@@ -105,9 +122,13 @@ export class WalletComponent implements OnInit {
     this.loadError = false;
     this.cdr.markForCheck();
 
-    this.treasuryService.getOverview().subscribe({
-      next: (overview) => {
+    forkJoin({
+      overview: this.treasuryService.getOverview(),
+      stats: this.dashboardService.getStats(),
+    }).subscribe({
+      next: ({ overview, stats }) => {
         this.overview = overview;
+        this.clientDebt = stats.clientDebt;
         this.loading = false;
         this.cdr.markForCheck();
       },
@@ -140,9 +161,35 @@ export class WalletComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
-  onMovementAction(event: OdlActionEvent<TreasuryExpense>): void {
-    if (event.actionId === 'editar') this.openEdit(event.row);
-    if (event.actionId === 'eliminar') this.confirmDelete(event.row);
+  openTransferForm(): void {
+    this.showTransferForm = true;
+    this.cdr.markForCheck();
+  }
+
+  closeTransferForm(): void {
+    this.showTransferForm = false;
+    this.cdr.markForCheck();
+  }
+
+  onTransferSaved(): void {
+    this.showTransferForm = false;
+    this.refreshOverview();
+  }
+
+  onMovementAction(event: OdlActionEvent<TreasuryMovement>): void {
+    if (event.actionId === 'ver-pedido' && event.row.orderId) {
+      void this.router.navigate(['/pedidos', event.row.orderId]);
+      return;
+    }
+    if (event.actionId === 'ver-venta') {
+      void this.router.navigate(['/ventas', event.row.id, 'editar']);
+      return;
+    }
+
+    const expense = this.expenseForMovement(event.row);
+    if (!expense) return;
+    if (event.actionId === 'editar') this.openEdit(expense);
+    if (event.actionId === 'anular') this.openVoid(expense);
   }
 
   closeForm(): void {
@@ -172,45 +219,45 @@ export class WalletComponent implements OnInit {
     this.refreshOverview();
   }
 
+  closeVoidForm(): void {
+    this.voidingExpense = null;
+    this.cdr.markForCheck();
+  }
+
+  onVoidSaved(): void {
+    const wasPurchase =
+      this.voidingExpense?.category === TreasuryExpenseCategory.SUPPLY_PURCHASE;
+    this.voidingExpense = null;
+    if (wasPurchase) {
+      this.suppliesService.refreshSupplies().subscribe();
+    }
+    this.refreshOverview();
+  }
+
   private openEdit(expense: TreasuryExpense): void {
     this.purchasePreset = false;
     this.repaymentDebtor = null;
+    this.voidingExpense = null;
     this.editingExpense = expense;
     this.formMode = this.modeFor(expense);
     this.showForm = true;
     this.cdr.markForCheck();
   }
 
-  private confirmDelete(expense: TreasuryExpense): void {
-    this.formDialogs
-      .openConfirm({
-        title: 'Eliminar registro',
-        message: `¿Eliminar "${expense.name}"?`,
-        confirmLabel: 'Eliminar',
-        confirmVariant: 'delete',
-      })
-      .subscribe((confirmed) => {
-        if (!confirmed) return;
-        this.treasuryService.deleteExpense(expense.id).subscribe({
-          next: () => {
-            this.suppliesService.refreshSupplies().subscribe();
-            this.refreshOverview();
-          },
-          error: (err) => {
-            this.formDialogs
-              .openConfirm({
-                title: 'No se pudo eliminar',
-                message: extractApiErrorMessage(
-                  err,
-                  'No se pudo eliminar el registro',
-                ),
-                confirmLabel: 'Entendido',
-                alertOnly: true,
-              })
-              .subscribe();
-          },
-        });
-      });
+  private openVoid(expense: TreasuryExpense): void {
+    this.showForm = false;
+    this.showTransferForm = false;
+    this.repaymentDebtor = null;
+    this.editingExpense = null;
+    this.voidingExpense = expense;
+    this.cdr.markForCheck();
+  }
+
+  private expenseForMovement(
+    movement: TreasuryMovement,
+  ): TreasuryExpense | undefined {
+    const id = movement.recordId ?? movement.id;
+    return this.overview?.expenses.find((expense) => expense.id === id);
   }
 
   private modeFor(expense: TreasuryExpense): WalletFormMode {
@@ -219,11 +266,36 @@ export class WalletComponent implements OnInit {
     return 'general';
   }
 
+  private static currentPeriodLabel(): string {
+    const raw = new Date().toLocaleDateString('es-AR', {
+      month: 'long',
+      year: 'numeric',
+    });
+    return raw.replace(' de ', ' ');
+  }
+
   private refreshOverview(): void {
-    this.treasuryService.getOverview().subscribe({
-      next: (overview) => {
+    forkJoin({
+      overview: this.treasuryService.getOverview(),
+      stats: this.dashboardService.getStats(),
+    }).subscribe({
+      next: ({ overview, stats }) => {
         this.overview = overview;
+        this.clientDebt = stats.clientDebt;
         this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.formDialogs
+          .openConfirm({
+            title: 'No se pudo actualizar',
+            message: extractApiErrorMessage(
+              err,
+              'No se pudo refrescar la billetera',
+            ),
+            confirmLabel: 'Entendido',
+            alertOnly: true,
+          })
+          .subscribe();
       },
     });
   }

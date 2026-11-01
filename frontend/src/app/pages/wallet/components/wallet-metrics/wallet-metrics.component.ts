@@ -1,19 +1,50 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
-import { TreasuryOverview } from '../../../../core/models';
+import { RouterLink } from '@angular/router';
+import {
+  TreasuryAccount,
+  TreasuryAccountBalance,
+  TreasuryOverview,
+} from '../../../../core/models';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
+import { TREASURY_ACCOUNTS_ORDER } from '../../../../shared/utils/treasury-account.util';
+import { treasuryAccountLabel } from '../../../../shared/utils/v1-labels.util';
+
+/** Textos de apoyo del artboard (no vienen de la API). */
+const ACCOUNT_HELP: Partial<Record<TreasuryAccount, string>> = {
+  [TreasuryAccount.CAJA]: 'Ferias y mostrador',
+  [TreasuryAccount.BANCO]: 'Transferencias',
+};
 
 @Component({
   selector: 'app-wallet-metrics',
   standalone: true,
-  imports: [CurrencyArsPipe],
+  imports: [CurrencyArsPipe, RouterLink],
   templateUrl: './wallet-metrics.component.html',
   styleUrl: './wallet-metrics.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WalletMetricsComponent {
   @Input({ required: true }) overview!: TreasuryOverview;
+  @Input() clientDebt = 0;
 
-  get debtorTotal(): number {
-    return this.overview.debtors.reduce((sum, debtor) => sum + debtor.amount, 0);
+  readonly accountOrder = TREASURY_ACCOUNTS_ORDER;
+
+  accountBalance(account: TreasuryAccount): TreasuryAccountBalance | undefined {
+    return this.overview.accounts.find((entry) => entry.account === account);
+  }
+
+  accountLabel(account: TreasuryAccount): string {
+    return treasuryAccountLabel(account);
+  }
+
+  accountHelp(account: TreasuryAccount): string | null {
+    return ACCOUNT_HELP[account] ?? null;
+  }
+
+  showFees(
+    account: TreasuryAccount,
+    entry: TreasuryAccountBalance | undefined,
+  ): boolean {
+    return account === TreasuryAccount.MERCADO_PAGO && (entry?.fees ?? 0) > 0;
   }
 }

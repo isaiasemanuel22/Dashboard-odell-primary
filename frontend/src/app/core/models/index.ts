@@ -1165,6 +1165,7 @@ export interface TreasuryMovement {
   fee: number;
   net: number;
   voided: boolean;
+  voidedAt?: string;
   voidReason?: string;
   orderId?: string;
   recordId?: string;

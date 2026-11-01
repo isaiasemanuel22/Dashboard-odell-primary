@@ -1,12 +1,65 @@
 <db-data-table
-  label="Registros de la billetera"
-  [rows]="sortedExpenses"
+  label="Movimientos de la billetera"
+  [rows]="sortedMovements"
   [columns]="columns"
   [actions]="actions"
-  [filters]="movementFilters"
-  searchPlaceholder="Buscar por nombre o movimiento"
+  [filters]="accountFilters"
+  searchPlaceholder="Buscar movimiento"
   [searchText]="searchText"
   [pageSize]="12"
-  emptyText="Todavía no hay registros."
+  [minWidth]="'900px'"
+  emptyText="Todavía no hay movimientos."
   (action)="action.emit($event)"
-/>
+>
+  <ng-template odlCell="concept" let-movement>
+    <span
+      class="concept-name"
+      [class.concept-name--voided]="movement.voided"
+    >
+      {{ movement.concept }}
+    </span>
+    @if (conceptSecondary(movement); as secondary) {
+      <span class="concept-meta">{{ secondary }}</span>
+    }
+  </ng-template>
+
+  <ng-template odlCell="amount" let-movement>
+    <span
+      class="wallet-table__amount"
+      [class.wallet-table__amount--income]="!movement.voided && movement.amount > 0"
+      [class.wallet-table__amount--expense]="!movement.voided && movement.amount < 0"
+      [class.wallet-table__amount--voided]="movement.voided"
+    >
+      {{ movement.amount | currencyArs }}
+    </span>
+  </ng-template>
+
+  <ng-template odlCell="fee" let-movement>
+    @if (movement.fee > 0) {
+      <span class="wallet-table__amount wallet-table__amount--expense">
+        −{{ movement.fee | currencyArs }}
+      </span>
+    } @else {
+      <span class="wallet-table__dash">—</span>
+    }
+  </ng-template>
+
+  <ng-template odlCell="net" let-movement>
+    @if (movement.voided) {
+      <span class="wallet-void-pill">Anulado</span>
+    } @else {
+      <span
+        class="wallet-table__amount"
+        [class.wallet-table__amount--income]="movement.net > 0"
+        [class.wallet-table__amount--expense]="movement.net < 0"
+      >
+        {{ movement.net | currencyArs }}
+      </span>
+    }
+  </ng-template>
+</db-data-table>
+
+<p class="wallet-movements-note" role="note">
+  Cada registro se puede editar o anular desde ···. Anular no borra: deja el
+  registro tachado con el motivo, para no perder el historial.
+</p>

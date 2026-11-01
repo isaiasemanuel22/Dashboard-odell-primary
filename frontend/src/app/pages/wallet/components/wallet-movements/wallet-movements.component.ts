@@ -6,169 +6,173 @@ import {
   Output,
 } from '@angular/core';
 import {
-  Supply,
+  TreasuryAccount,
   TreasuryExpense,
-  TreasuryExpenseCategory,
-  TreasuryMovementDirection,
+  TreasuryMovement,
 } from '../../../../core/models';
-import { FILAMENT_TYPE_LABELS, RESIN_TYPE_LABELS } from '../../../../shared/constants/labels';
-import { computeSupplyPurchaseDelta } from '../../../../shared/utils/supply-unit.util';
 import {
   DB_DATA_TABLE,
   OdlActionEvent,
-  OdlBadge,
   OdlColumn,
   OdlFilter,
   OdlRowAction,
 } from '../../../../components/db-data-table';
+import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
+import {
+  paymentMethodLabel,
+  treasuryAccountLabel,
+  TREASURY_ACCOUNT_LABELS,
+} from '../../../../shared/utils/v1-labels.util';
+import { TREASURY_ACCOUNTS_ORDER } from '../../../../shared/utils/treasury-account.util';
 
 @Component({
   selector: 'app-wallet-movements',
   standalone: true,
-  imports: [...DB_DATA_TABLE],
+  imports: [...DB_DATA_TABLE, CurrencyArsPipe],
   templateUrl: './wallet-movements.component.html',
   styleUrl: './wallet-movements.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class WalletMovementsComponent {
+  @Input() movements: TreasuryMovement[] = [];
   @Input() expenses: TreasuryExpense[] = [];
-  @Input() supplies: Supply[] = [];
-  @Output() action = new EventEmitter<OdlActionEvent<TreasuryExpense>>();
+  @Output() action = new EventEmitter<OdlActionEvent<TreasuryMovement>>();
 
-  readonly actions: OdlRowAction<TreasuryExpense>[] = [
-    { id: 'editar', label: 'Editar' },
-    { id: 'eliminar', label: 'Eliminar', danger: true },
-  ];
-
-  readonly searchText = (expense: TreasuryExpense) =>
-    [expense.name, this.recordTypeLabel(expense), this.conceptMeta(expense) ?? ''].join(' ');
-
-  readonly movementFilters: OdlFilter<TreasuryExpense>[] = [
-    { id: 'all', label: 'Todos' },
-    { id: 'income', label: 'Ingresos', predicate: (expense) => expense.direction === TreasuryMovementDirection.INCOME },
-    { id: 'expense', label: 'Egresos', predicate: (expense) => expense.direction === TreasuryMovementDirection.EXPENSE },
-    { id: 'supply', label: 'Compra de insumos', predicate: (expense) => expense.category === TreasuryExpenseCategory.SUPPLY_PURCHASE },
-    { id: 'loan', label: 'Préstamos', predicate: (expense) => expense.category === TreasuryExpenseCategory.LOAN },
-    { id: 'repayment', label: 'Devoluciones', predicate: (expense) => expense.category === TreasuryExpenseCategory.LOAN_REPAYMENT },
-  ];
-
-  readonly columns: OdlColumn<TreasuryExpense>[] = [
-    { key: 'occurredAt', header: 'Fecha', type: 'date', sortable: true },
-    { key: 'name', header: 'Concepto', type: 'primary', secondary: (expense) => this.conceptMeta(expense) },
-    { key: 'tipo', header: 'Movimiento', type: 'badge', badge: (expense) => this.movementBadge(expense) },
-    { key: 'quantity', header: 'Cantidad', type: 'number' },
-    { key: 'unitPrice', header: 'Valor unit.', type: 'money' },
+  readonly actions: OdlRowAction<TreasuryMovement>[] = [
     {
-      key: 'amount',
-      header: 'Monto',
-      type: 'signedMoney',
-      value: (expense) => this.recordDisplayAmount(expense),
-      note: (expense) => {
-        const savings = this.supplyPurchaseSavings(expense);
-        return savings ? { text: `Ahorro $ ${savings.toLocaleString('es-AR')}`, tone: 'success' } : null;
-      },
+      id: 'editar',
+      label: 'Editar',
+      hidden: (row) => !this.canManageRecord(row),
+    },
+    {
+      id: 'anular',
+      label: 'Anular',
+      danger: true,
+      hidden: (row) => !this.canManageRecord(row),
+    },
+    {
+      id: 'ver-pedido',
+      label: 'Ver pedido',
+      hidden: (row) => row.source !== 'order_payment' || !row.orderId,
+    },
+    {
+      id: 'ver-venta',
+      label: 'Ver venta',
+      hidden: (row) => row.source !== 'retail_sale',
     },
   ];
 
-  get sortedExpenses(): TreasuryExpense[] {
-    return [...this.expenses].sort((a, b) => {
-      const byDate = new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime();
+  readonly searchText = (movement: TreasuryMovement) =>
+    [
+      movement.concept,
+      movement.detail ?? '',
+      this.accountLabel(movement.account),
+      this.methodLabel(movement),
+      movement.voidReason ?? '',
+    ].join(' ');
+
+  readonly accountFilters: OdlFilter<TreasuryMovement>[] = [
+    { id: 'all', label: 'Todas las cuentas' },
+    ...TREASURY_ACCOUNTS_ORDER.map((account) => ({
+      id: account,
+      label: TREASURY_ACCOUNT_LABELS[account],
+      predicate: (movement: TreasuryMovement) =>
+        (movement.account ?? TreasuryAccount.CAJA) === account,
+    })),
+  ];
+
+  readonly columns: OdlColumn<TreasuryMovement>[] = [
+    { key: 'occurredAt', header: 'Fecha', type: 'date', sortable: true },
+    {
+      key: 'concept',
+      header: 'Concepto',
+      type: 'custom',
+      value: (movement) => movement.concept,
+      sortable: true,
+    },
+    {
+      key: 'account',
+      header: 'Cuenta',
+      value: (movement) => this.accountLabel(movement.account),
+    },
+    {
+      key: 'method',
+      header: 'Medio',
+      value: (movement) => this.methodLabel(movement),
+    },
+    {
+      key: 'amount',
+      header: 'Monto',
+      type: 'custom',
+      value: (movement) => movement.amount,
+      align: 'end',
+      sortable: true,
+    },
+    {
+      key: 'fee',
+      header: 'Comisión',
+      type: 'custom',
+      value: (movement) => movement.fee,
+      align: 'end',
+    },
+    {
+      key: 'net',
+      header: 'Neto',
+      type: 'custom',
+      value: (movement) => movement.net,
+      align: 'end',
+      sortable: true,
+    },
+  ];
+
+  get sortedMovements(): TreasuryMovement[] {
+    return [...this.movements].sort((a, b) => {
+      const byDate =
+        new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime();
       if (byDate !== 0) return byDate;
-      return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      return a.concept.localeCompare(b.concept, 'es');
     });
   }
 
-  expenseDateLabel(expense: TreasuryExpense): string {
-    return new Date(expense.occurredAt).toLocaleDateString('es-AR', {
+  conceptSecondary(movement: TreasuryMovement): string | null {
+    if (movement.voided) {
+      return this.voidMeta(movement);
+    }
+    return movement.detail?.trim() || null;
+  }
+
+  accountLabel(account: TreasuryAccount | string | null | undefined): string {
+    return treasuryAccountLabel(account) || 'Caja efectivo';
+  }
+
+  methodLabel(movement: TreasuryMovement): string {
+    return paymentMethodLabel(movement.method) || '—';
+  }
+
+  private canManageRecord(movement: TreasuryMovement): boolean {
+    return movement.source === 'record' && !movement.voided;
+  }
+
+  private voidMeta(movement: TreasuryMovement): string {
+    const expense = this.expenseFor(movement);
+    const voidedAt = movement.voidedAt ?? expense?.voidedAt;
+    const reason = movement.voidReason ?? expense?.voidReason;
+    const datePart = voidedAt
+      ? `Anulado el ${this.formatDayMonth(voidedAt)}`
+      : 'Anulado';
+    if (reason) return `${datePart} · motivo: ${reason}`;
+    return datePart;
+  }
+
+  private expenseFor(movement: TreasuryMovement): TreasuryExpense | undefined {
+    if (!movement.recordId) return undefined;
+    return this.expenses.find((expense) => expense.id === movement.recordId);
+  }
+
+  private formatDayMonth(iso: string): string {
+    return new Date(iso).toLocaleDateString('es-AR', {
       day: '2-digit',
-      month: 'short',
-      year: 'numeric',
+      month: '2-digit',
     });
-  }
-
-  recordTypeLabel(expense: TreasuryExpense): string {
-    if (expense.category === TreasuryExpenseCategory.SUPPLY_PURCHASE) {
-      return 'Compra de insumos';
-    }
-    if (expense.category === TreasuryExpenseCategory.PAYMENT) {
-      return expense.direction === TreasuryMovementDirection.INCOME ? 'Cobro' : 'Pago';
-    }
-    if (expense.category === TreasuryExpenseCategory.LOAN) {
-      return 'Préstamo';
-    }
-    if (expense.category === TreasuryExpenseCategory.LOAN_REPAYMENT) {
-      return 'Devolución';
-    }
-    return expense.direction === TreasuryMovementDirection.INCOME
-      ? 'Ingreso'
-      : 'Egreso';
-  }
-
-  isIncomeRecord(expense: TreasuryExpense): boolean {
-    return expense.direction === TreasuryMovementDirection.INCOME;
-  }
-
-  isExpenseRecord(expense: TreasuryExpense): boolean {
-    return expense.direction === TreasuryMovementDirection.EXPENSE;
-  }
-
-  recordDisplayAmount(expense: TreasuryExpense): number {
-    return this.isExpenseRecord(expense) ? -expense.amount : expense.amount;
-  }
-
-  movementChipClass(expense: TreasuryExpense): string {
-    if (expense.category === TreasuryExpenseCategory.SUPPLY_PURCHASE) {
-      return 'movement-chip movement-chip--compra';
-    }
-    if (expense.category === TreasuryExpenseCategory.PAYMENT) {
-      return 'movement-chip movement-chip--pago';
-    }
-    if (expense.category === TreasuryExpenseCategory.LOAN) {
-      return 'movement-chip movement-chip--prestamo';
-    }
-    if (expense.category === TreasuryExpenseCategory.LOAN_REPAYMENT) {
-      return 'movement-chip movement-chip--devolucion';
-    }
-    return this.isIncomeRecord(expense)
-      ? 'movement-chip movement-chip--ingreso'
-      : 'movement-chip movement-chip--egreso';
-  }
-
-  conceptMeta(expense: TreasuryExpense): string | null {
-    if (expense.category !== TreasuryExpenseCategory.SUPPLY_PURCHASE) {
-      return null;
-    }
-    const supply = this.supplies.find((item) => item.name === expense.name);
-    if (!supply) return null;
-    const material = supply.filamentType
-      ? FILAMENT_TYPE_LABELS[supply.filamentType] ?? supply.filamentType.toUpperCase()
-      : supply.resinType
-        ? RESIN_TYPE_LABELS[supply.resinType as keyof typeof RESIN_TYPE_LABELS] ??
-          supply.resinType
-        : '';
-    const line = [supply.brand, material].filter(Boolean).join(' · ');
-    return line || null;
-  }
-
-  supplyPurchaseSavings(expense: TreasuryExpense): number | null {
-    if (expense.category !== TreasuryExpenseCategory.SUPPLY_PURCHASE) {
-      return null;
-    }
-
-    const savings = -computeSupplyPurchaseDelta(
-      expense.amount,
-      expense.quantity,
-      expense.unitPrice,
-    );
-    return savings > 0 ? savings : null;
-  }
-
-  private movementBadge(expense: TreasuryExpense): OdlBadge {
-    const label = this.recordTypeLabel(expense);
-    if (expense.category === TreasuryExpenseCategory.SUPPLY_PURCHASE) return { label, tone: 'pending' };
-    if (expense.category === TreasuryExpenseCategory.PAYMENT) return { label, tone: 'neutral' };
-    if (expense.category === TreasuryExpenseCategory.LOAN) return { label, tone: 'info' };
-    if (expense.category === TreasuryExpenseCategory.LOAN_REPAYMENT) return { label, tone: 'ok' };
-    return { label, tone: this.isIncomeRecord(expense) ? 'ok' : 'danger' };
   }
 }

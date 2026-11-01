@@ -1,0 +1,75 @@
+<app-form-modal title="Transferir entre cuentas" size="md" (close)="closed.emit()">
+  <form class="wallet-form form" (ngSubmit)="submitTransfer()" novalidate>
+    <section class="wallet-form__section">
+      <div class="wallet-form__section-head">
+        <h4>Movimiento interno</h4>
+        <p>Pasá saldo de una cuenta a otra. No cambia el disponible total.</p>
+      </div>
+
+      <db-form-grid>
+        <db-select
+          label="Desde"
+          [(ngModel)]="fromAccount"
+          name="transferFrom"
+          [options]="accountOptions"
+          [required]="true"
+        />
+
+        <db-select
+          label="Hacia"
+          [(ngModel)]="toAccount"
+          name="transferTo"
+          [options]="accountOptions"
+          [required]="true"
+        />
+
+        <db-input
+          label="Monto"
+          type="number"
+          min="0"
+          step="1"
+          [(ngModel)]="amount"
+          name="transferAmount"
+          placeholder="0"
+          [required]="true"
+          (ngModelChange)="onAmountChange()"
+        />
+
+        <db-input
+          label="Fecha"
+          type="date"
+          [(ngModel)]="transferDate"
+          name="transferDate"
+          [required]="true"
+          [max]="maxTransferDate"
+        />
+      </db-form-grid>
+
+      <div class="wallet-summary">
+        <span class="wallet-summary__label">Monto a transferir</span>
+        <strong class="wallet-summary__amount">{{ amount | currencyArs }}</strong>
+      </div>
+    </section>
+
+    @if (formError) {
+      <p class="wallet-form__error" role="alert">{{ formError }}</p>
+    }
+
+    <footer class="wallet-form__footer form-footer">
+      <db-button
+        label="Cancelar"
+        variant="secondary"
+        format="soft"
+        [disabled]="saving"
+        (clicked)="closed.emit()"
+      />
+      <db-button
+        [label]="saving ? 'Guardando...' : 'Transferir'"
+        variant="primary"
+        format="solid"
+        buttonType="submit"
+        [disabled]="saving"
+      />
+    </footer>
+  </form>
+</app-form-modal>

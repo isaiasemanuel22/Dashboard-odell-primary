@@ -384,6 +384,7 @@ export class TreasuryService {
       source: 'order_payment',
       occurredAt: payment.createdAt,
       concept: `${kind} ${order.id} · ${order.customerName}`,
+      detail: payment.deposit ? 'Vinculada al pedido' : 'Pago del pedido',
       account: this.resolvePaymentAccount(payment),
       method: payment.method ?? PaymentMethod.EFECTIVO,
       amount,
@@ -401,6 +402,7 @@ export class TreasuryService {
       source: 'retail_sale',
       occurredAt: sale.soldAt,
       concept: 'Venta de mostrador',
+      detail: `${sale.items.length} ${sale.items.length === 1 ? 'producto' : 'productos'}`,
       account: this.resolveSaleAccount(sale),
       method: sale.method ?? PaymentMethod.EFECTIVO,
       amount,
@@ -426,6 +428,7 @@ export class TreasuryService {
       fee: 0,
       net: signed,
       voided: !!record.voidedAt,
+      voidedAt: record.voidedAt,
       voidReason: record.voidReason,
       recordId: record.id,
     };

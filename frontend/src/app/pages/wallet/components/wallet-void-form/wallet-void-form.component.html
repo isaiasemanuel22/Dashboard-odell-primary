@@ -1,0 +1,47 @@
+<app-form-modal title="Anular registro" size="md" (close)="closed.emit()">
+  <form class="wallet-form form" (ngSubmit)="submitVoid()" novalidate>
+    <section class="wallet-form__section">
+      <div class="wallet-form__section-head">
+        <h4>{{ expense.name }}</h4>
+        <p>
+          Monto:
+          <strong>{{ expense.amount | currencyArs }}</strong>
+          · Anular no borra el historial: deja el movimiento tachado con el motivo.
+        </p>
+      </div>
+
+      <db-form-grid>
+        <db-form-grid-full>
+          <db-input
+            label="Motivo"
+            [(ngModel)]="reason"
+            name="voidReason"
+            [required]="true"
+            placeholder="Ej: cargado dos veces"
+          />
+        </db-form-grid-full>
+      </db-form-grid>
+    </section>
+
+    @if (formError) {
+      <p class="wallet-form__error" role="alert">{{ formError }}</p>
+    }
+
+    <footer class="wallet-form__footer form-footer">
+      <db-button
+        label="Cancelar"
+        variant="secondary"
+        format="soft"
+        [disabled]="saving"
+        (clicked)="closed.emit()"
+      />
+      <db-button
+        [label]="saving ? 'Anulando...' : 'Anular'"
+        variant="primary"
+        format="solid"
+        buttonType="submit"
+        [disabled]="saving"
+      />
+    </footer>
+  </form>
+</app-form-modal>

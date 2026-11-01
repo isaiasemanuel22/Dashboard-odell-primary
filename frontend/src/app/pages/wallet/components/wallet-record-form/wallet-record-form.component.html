@@ -5,14 +5,24 @@
 >
   <form class="wallet-form form" (ngSubmit)="submitExpense()" novalidate>
     <section class="wallet-form__section">
-      <db-input
-        label="Fecha"
-        type="date"
-        [(ngModel)]="expenseDate"
-        name="expenseDate"
-        [required]="true"
-        [max]="maxExpenseDate"
-      />
+      <db-form-grid>
+        <db-input
+          label="Fecha"
+          type="date"
+          [(ngModel)]="expenseDate"
+          name="expenseDate"
+          [required]="true"
+          [max]="maxExpenseDate"
+        />
+
+        <db-select
+          label="Cuenta"
+          [(ngModel)]="account"
+          name="account"
+          [options]="accountOptions"
+          [required]="true"
+        />
+      </db-form-grid>
 
       @if (!isPersonMovementForm && !isEdit) {
         <label class="wallet-toggle">

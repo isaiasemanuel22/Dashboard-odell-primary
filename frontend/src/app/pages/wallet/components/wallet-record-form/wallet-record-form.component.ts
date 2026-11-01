@@ -12,6 +12,7 @@ import { FormsModule } from '@angular/forms';
 import { Observable, finalize } from 'rxjs';
 import {
   Supply,
+  TreasuryAccount,
   TreasuryExpense,
   TreasuryExpenseCategory,
   TreasuryMovementDirection,
@@ -25,12 +26,16 @@ import {
   DbFormGridComponent,
   DbFormGridFullComponent,
   DbInputComponent,
+  DbSelectComponent,
   FormModalComponent,
 } from '@general-components';
 import type { DbAutocompleteOption } from '@dashboard-form/db-autocomplete/db-autocomplete.types';
+import type { DbSelectOption } from '@dashboard-form/db-select/db-select.types';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import { extractApiErrorMessage } from '../../../../shared/utils/api-error';
 import { FormDialogService } from '../../../../shared/form-dialogs/form-dialog.service';
+import { labelsToSelectOptions } from '../../../../shared/utils/select-options';
+import { TREASURY_ACCOUNT_LABELS } from '../../../../shared/utils/v1-labels.util';
 import {
   WalletRecordSuppliesComponent,
   WalletSupplyLine,
@@ -46,6 +51,7 @@ export type WalletFormMode = 'general' | 'payment' | 'loan';
     CurrencyArsPipe,
     DbButtonComponent,
     DbInputComponent,
+    DbSelectComponent,
     DbFormGridComponent,
     DbFormGridFullComponent,
     DbAutocompleteComponent,
@@ -73,6 +79,8 @@ export class WalletRecordFormComponent implements OnInit {
 
   readonly movementDirections = TreasuryMovementDirection;
   readonly maxExpenseDate = WalletRecordFormComponent.todayInputValue();
+  readonly accountOptions: DbSelectOption[] =
+    labelsToSelectOptions(TREASURY_ACCOUNT_LABELS);
 
   saving = false;
   formError = '';
@@ -81,6 +89,7 @@ export class WalletRecordFormComponent implements OnInit {
   name = '';
   recipientName = '';
   amount = 0;
+  account: TreasuryAccount = TreasuryAccount.CAJA;
   expenseDate = WalletRecordFormComponent.todayInputValue();
   selectedSupplyId = '';
   supplyLines: WalletSupplyLine[] = [];
@@ -293,6 +302,7 @@ export class WalletRecordFormComponent implements OnInit {
               : this.name.trim(),
           amount: payloadAmount,
           occurredAt,
+          account: this.account,
           supplyLines: this.isSupplyPurchase
             ? this.supplyLines.map((line) => ({
                 supplyId: line.supplyId,
@@ -333,6 +343,7 @@ export class WalletRecordFormComponent implements OnInit {
         occurredAt,
         quantity: line?.quantity,
         unitPrice: line?.unitPrice,
+        account: this.account,
       };
     }
 
@@ -343,6 +354,7 @@ export class WalletRecordFormComponent implements OnInit {
           : this.name.trim(),
         amount,
         occurredAt,
+        account: this.account,
       };
     }
 
@@ -351,6 +363,7 @@ export class WalletRecordFormComponent implements OnInit {
       amount,
       occurredAt,
       direction: this.movementDirection,
+      account: this.account,
     };
   }
 
@@ -358,6 +371,7 @@ export class WalletRecordFormComponent implements OnInit {
     this.expenseDate = this.toDateInput(expense.occurredAt);
     this.amount = expense.amount;
     this.movementDirection = expense.direction;
+    this.account = expense.account ?? TreasuryAccount.CAJA;
 
     if (
       expense.category === TreasuryExpenseCategory.SUPPLY_PURCHASE &&

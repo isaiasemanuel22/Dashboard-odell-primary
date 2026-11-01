@@ -10,16 +10,24 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
-import { TreasuryDebtorBalance, TreasuryExpenseCategory } from '../../../../core/models';
+import {
+  TreasuryAccount,
+  TreasuryDebtorBalance,
+  TreasuryExpenseCategory,
+} from '../../../../core/models';
 import { TreasuryService } from '../../../../core/services/treasury.service';
 import {
   DbButtonComponent,
   DbFormGridComponent,
   DbInputComponent,
+  DbSelectComponent,
   FormModalComponent,
 } from '@general-components';
+import type { DbSelectOption } from '@dashboard-form/db-select/db-select.types';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import { extractApiErrorMessage } from '../../../../shared/utils/api-error';
+import { labelsToSelectOptions } from '../../../../shared/utils/select-options';
+import { TREASURY_ACCOUNT_LABELS } from '../../../../shared/utils/v1-labels.util';
 
 @Component({
   selector: 'app-wallet-repayment-form',
@@ -29,6 +37,7 @@ import { extractApiErrorMessage } from '../../../../shared/utils/api-error';
     CurrencyArsPipe,
     DbButtonComponent,
     DbInputComponent,
+    DbSelectComponent,
     DbFormGridComponent,
     FormModalComponent,
   ],
@@ -45,10 +54,14 @@ export class WalletRepaymentFormComponent implements OnInit {
   @Output() saved = new EventEmitter<void>();
 
   readonly maxExpenseDate = WalletRepaymentFormComponent.todayInputValue();
+  readonly accountOptions: DbSelectOption[] =
+    labelsToSelectOptions(TREASURY_ACCOUNT_LABELS);
+
   repaymentSaving = false;
   repaymentError = '';
   repaymentAmount = 0;
   repaymentDate = WalletRepaymentFormComponent.todayInputValue();
+  account: TreasuryAccount = TreasuryAccount.CAJA;
 
   ngOnInit(): void {
     this.repaymentAmount = this.debtor.amount;
@@ -92,6 +105,7 @@ export class WalletRepaymentFormComponent implements OnInit {
         name: this.debtor.name,
         amount,
         occurredAt,
+        account: this.account,
       })
       .pipe(
         finalize(() => {

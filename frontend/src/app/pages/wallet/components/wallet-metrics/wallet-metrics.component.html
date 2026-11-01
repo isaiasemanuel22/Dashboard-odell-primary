@@ -1,30 +1,36 @@
 <section class="wallet-metrics" aria-label="Resumen de caja">
-  <article class="metric-card" [class.metric-card--negative]="overview.availableBalance < 0">
-    <span>Disponible en cuenta</span>
+  <article
+    class="metric-card metric-card--total"
+    [class.metric-card--negative]="overview.availableBalance < 0"
+  >
+    <span>Disponible total</span>
     <strong>{{ overview.availableBalance | currencyArs }}</strong>
-    <small>Cobrado + ingresos manuales − egresos</small>
+    <small>Cobrado − egresos</small>
   </article>
-  <article class="metric-card">
-    <span>Cobrado</span>
-    <strong>{{ overview.totalSalesIncome | currencyArs }}</strong>
-    <small>Pagos de pedidos y mostrador</small>
-  </article>
-  <article class="metric-card">
-    <span>Ingresos manuales</span>
-    <strong>{{ overview.totalManualIncome | currencyArs }}</strong>
-    <small>Devoluciones, señas, otros</small>
-  </article>
-  <article class="metric-card">
-    <span>Egresos</span>
-    <strong>{{ overview.totalExpenses | currencyArs }}</strong>
-    <small>Insumos, pagos, préstamos</small>
-  </article>
-  <article class="metric-card">
-    <span>Deudores</span>
-    <strong>{{ debtorTotal | currencyArs }}</strong>
-    <small>
-      {{ overview.debtors.length }}
-      {{ overview.debtors.length === 1 ? 'persona' : 'personas' }}
-    </small>
-  </article>
+
+  @for (account of accountOrder; track account) {
+    @let entry = accountBalance(account);
+    @let help = accountHelp(account);
+    <article class="metric-card">
+      <span>{{ accountLabel(account) }}</span>
+      <strong>{{ (entry?.balance ?? 0) | currencyArs }}</strong>
+      @if (showFees(account, entry)) {
+        <small>Comisiones del mes: −{{ entry!.fees | currencyArs }}</small>
+      } @else if (help) {
+        <small>{{ help }}</small>
+      }
+    </article>
+  }
+
+  <a
+    class="metric-card metric-card--receivable"
+    routerLink="/dashboard"
+    fragment="por-cobrar"
+  >
+    <span>Por cobrar</span>
+    <strong [class.metric-card__value--danger]="clientDebt > 0">
+      {{ clientDebt | currencyArs }}
+    </strong>
+    <small>No suma al disponible</small>
+  </a>
 </section>

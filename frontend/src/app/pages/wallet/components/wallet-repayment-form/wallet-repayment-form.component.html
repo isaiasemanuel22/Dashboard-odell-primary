@@ -19,6 +19,14 @@
           [max]="maxExpenseDate"
         />
 
+        <db-select
+          label="Cuenta"
+          [(ngModel)]="account"
+          name="account"
+          [options]="accountOptions"
+          [required]="true"
+        />
+
         <db-input
           label="Monto a devolver"
           type="number"

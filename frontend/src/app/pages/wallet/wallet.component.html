@@ -2,13 +2,20 @@
   <div>
     <h2>Billetera</h2>
     <p>
-      Dinero disponible y movimientos del emprendimiento · {{ overview?.expenses?.length || 0 }} registros
+      Lo cobrado, separado por cuenta · {{ periodLabel }}
       @if (overview && overview.availableBalance < 0) {
         · <span class="tone-danger">saldo negativo</span>
       }
     </p>
   </div>
   <div class="header-actions">
+    <db-button
+      label="Transferir entre cuentas"
+      variant="secondary"
+      format="soft"
+      [disabled]="loading || !overview"
+      (clicked)="openTransferForm()"
+    />
     <db-button
       label="Pagar"
       variant="secondary"
@@ -49,10 +56,10 @@
 } @else if (loading) {
   <db-state-message [loading]="true" loadingMessage="Cargando billetera..." />
 } @else if (overview) {
-  <app-wallet-metrics [overview]="overview" />
+  <app-wallet-metrics [overview]="overview" [clientDebt]="clientDebt" />
   <app-wallet-movements
+    [movements]="overview.movements"
     [expenses]="overview.expenses"
-    [supplies]="supplies"
     (action)="onMovementAction($event)"
   />
   <app-wallet-debtors
@@ -75,10 +82,25 @@
   />
 }
 
+@if (showTransferForm) {
+  <app-wallet-transfer-form
+    (closed)="closeTransferForm()"
+    (saved)="onTransferSaved()"
+  />
+}
+
 @if (repaymentDebtor) {
   <app-wallet-repayment-form
     [debtor]="repaymentDebtor"
     (closed)="closeRepaymentForm()"
     (saved)="onRepaymentSaved()"
+  />
+}
+
+@if (voidingExpense) {
+  <app-wallet-void-form
+    [expense]="voidingExpense"
+    (closed)="closeVoidForm()"
+    (saved)="onVoidSaved()"
   />
 }

@@ -27,7 +27,38 @@
     color: $color-text;
   }
 
-  &--negative strong {
-    color: $color-error;
+  &--total {
+    background: $color-sidebar-from;
+    border-color: $color-sidebar-from;
+    color: $color-sidebar-text;
+
+    span,
+    small {
+      color: $color-sidebar-text-muted;
+    }
+
+    strong {
+      color: $color-sidebar-text;
+    }
   }
+
+  &--total.metric-card--negative strong {
+    color: #fecaca;
+  }
+
+  &--receivable {
+    text-decoration: none;
+    color: inherit;
+    border-color: $color-danger-border;
+    background: #fff8f8;
+    cursor: pointer;
+
+    &:hover {
+      border-color: $color-danger-text;
+    }
+  }
+}
+
+.metric-card__value--danger {
+  color: $color-error;
 }
