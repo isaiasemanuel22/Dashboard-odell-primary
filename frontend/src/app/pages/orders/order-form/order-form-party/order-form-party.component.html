@@ -1,4 +1,7 @@
-<db-form-grid class="quote-form__top" [class.quote-form__top--order-v1]="variant === 'order'">
+<db-form-grid
+  class="quote-form__top"
+  [class.quote-form__top--order-v1]="true"
+>
   <div class="quote-customer-field">
     <div class="quote-customer-field__head">
       <span class="quote-customer-field__label">
@@ -30,18 +33,18 @@
     }
   </div>
 
-  @if (variant === 'order') {
-    <div class="quote-channel-field">
-      <db-select
-        label="Canal de venta"
-        [ngModel]="salesChannel ?? ''"
-        (ngModelChange)="salesChannelChange.emit($event ? $event : null)"
-        name="salesChannel"
-        placeholder="Opcional"
-        [options]="salesChannelOptions"
-      />
-    </div>
+  <div class="quote-channel-field">
+    <db-select
+      label="Canal de venta"
+      [ngModel]="salesChannel ?? ''"
+      (ngModelChange)="salesChannelChange.emit($event ? $event : null)"
+      name="salesChannel"
+      placeholder="Opcional"
+      [options]="salesChannelOptions"
+    />
+  </div>
 
+  @if (variant === 'order') {
     <div class="quote-date-field">
       <db-input
         label="Fecha de entrega"
@@ -57,18 +60,6 @@
         <p class="quote-date-field__validity">{{ dueDateHint }}</p>
       }
     </div>
-
-    @if (priceTypeOptions.length) {
-      <div class="quote-price-type">
-        <span class="quote-price-type__label" id="price-type-label">Tipo de precio</span>
-        <db-segmented-control
-          [options]="priceTypeOptions"
-          [value]="priceType"
-          ariaLabel="Tipo de precio"
-          (valueChange)="priceTypeChange.emit($event)"
-        />
-      </div>
-    }
   } @else {
     <div class="quote-date-field">
       <span class="quote-date-field__label">Fecha del presupuesto</span>
@@ -76,9 +67,21 @@
       <p class="quote-date-field__validity">{{ quoteValidityLabel }}</p>
     </div>
   }
+
+  @if (priceTypeOptions.length) {
+    <div class="quote-price-type">
+      <span class="quote-price-type__label" id="price-type-label">Tipo de precio</span>
+      <db-segmented-control
+        [options]="priceTypeOptions"
+        [value]="priceType"
+        ariaLabel="Tipo de precio"
+        (valueChange)="priceTypeChange.emit($event)"
+      />
+    </div>
+  }
 </db-form-grid>
 
-@if (variant === 'order' && wholesaleMinimumNotice) {
+@if (wholesaleMinimumNotice) {
   <div
     class="wholesale-min-note"
     [class.wholesale-min-note--ok]="wholesaleMinimumNotice.kind === 'ok'"

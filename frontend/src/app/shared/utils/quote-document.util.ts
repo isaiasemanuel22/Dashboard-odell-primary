@@ -6,6 +6,7 @@ import {
   Product,
   Quote,
   QuoteItem,
+  WholesaleDiscountSettings,
 } from '../../core/models';
 import { SERVICE_TYPE_LABELS } from '../constants/labels';
 import {
@@ -14,12 +15,18 @@ import {
   calculateOrderSubtotal,
 } from './order.helpers';
 import { resolveMediaUrl } from './media-url.util';
+import {
+  wholesaleAppliesToService,
+} from './order-wholesale-preview.util';
+import {
+  normalizeWholesaleDiscount,
+  wholesalePriceFromList,
+} from './wholesale-example.util';
 
 const ACCENT = '#0089BF';
 const PAGE_W = 794;
 const PAGE_H = 1123;
 const FIRST_PAGE_CAPACITY = 6;
-const WHOLESALE_FACTOR = 0.8;
 export const DEPOSIT_FACTOR = 0.5;
 const LOGO_SRC = '/odell-logo-presupuesto.png';
 
@@ -48,6 +55,8 @@ export interface QuoteDocumentInput {
   lines: QuoteDocumentLine[];
   listSubtotal: number;
   wholesaleSubtotal: number;
+  /** % de descuento mayorista de Ajustes (para el rótulo del documento). */
+  wholesalePercent: number;
   productCount: number;
 }
 
@@ -78,10 +87,29 @@ function quoteNumberLabel(id: string): string {
   return digits || id;
 }
 
-function lineListUnitPrice(item: QuoteItem | OrderItemPayload): number {
+/** Precio de lista del ítem: listUnitPrice si existe; si no, el unitario guardado. */
+function documentListUnitPrice(item: QuoteItem | OrderItemPayload): number {
+  // `null` llega de la API para líneas sin mayorista: Number(null) daría 0.
+  if (item.listUnitPrice != null) {
+    const fromList = Number(item.listUnitPrice);
+    if (Number.isFinite(fromList) && fromList >= 0) {
+      return fromList;
+    }
+  }
   const total = calculateLinePriceTotal(item);
   const qty = Math.max(Math.trunc(Number(item.quantity) || 0), 1);
   return total / qty;
+}
+
+function documentWholesaleUnitPrice(
+  listPrice: number,
+  serviceType: QuoteItem['serviceType'],
+  settings: WholesaleDiscountSettings,
+): number {
+  if (!wholesaleAppliesToService(serviceType, settings)) {
+    return listPrice;
+  }
+  return wholesalePriceFromList(listPrice, settings.percent);
 }
 
 function measuresForItem(
@@ -102,44 +130,60 @@ export function buildQuoteDocumentInput(
   quote: Quote,
   customer: Customer | null | undefined,
   productsById: Map<string, Product>,
+  wholesaleDiscount?: WholesaleDiscountSettings | null,
 ): QuoteDocumentInput {
+  const settings = normalizeWholesaleDiscount(wholesaleDiscount ?? null);
+
   const lines: QuoteDocumentLine[] = quote.items.map((item) => {
     const product = item.productId
       ? productsById.get(item.productId)
       : undefined;
-    const listPrice = lineListUnitPrice(item);
+    const listPrice = documentListUnitPrice(item);
+    // Si la línea ya quedó cotizada a mayorista, se muestra ese precio (§16.2).
+    const wholesalePrice =
+      item.listUnitPrice != null
+        ? Number(item.unitPrice) || 0
+        : documentWholesaleUnitPrice(listPrice, item.serviceType, settings);
+    const quantity = Math.max(Math.trunc(Number(item.quantity) || 0), 0);
     return {
       productName: item.productName || 'Sin nombre',
       subtitle: SERVICE_TYPE_LABELS[item.serviceType] ?? '',
       measures: measuresForItem(item, product),
-      quantity: Math.max(Math.trunc(Number(item.quantity) || 0), 0),
+      quantity,
       listPrice,
-      wholesalePrice: listPrice * WHOLESALE_FACTOR,
-      subtotal: calculateLinePriceTotal(item),
+      wholesalePrice,
+      subtotal: Math.round(wholesalePrice * quantity),
       imageUrl: resolveMediaUrl(product?.images?.[0] ?? null),
     };
   });
 
-  const rawSubtotal = calculateOrderSubtotal(quote.items);
+  const listGross = lines.reduce(
+    (sum, line) => sum + Math.round(line.listPrice * line.quantity),
+    0,
+  );
+  const wholesaleGross = lines.reduce((sum, line) => sum + line.subtotal, 0);
+  const chargedGross = calculateOrderSubtotal(quote.items);
   const discount = calculateOrderDiscount(
     quote.items,
     quote.discountPercent,
     quote.discountAmount,
   );
-  const listSubtotal = Math.max(rawSubtotal - discount, 0);
+  const netFactor =
+    chargedGross > 0 ? Math.max(chargedGross - discount, 0) / chargedGross : 1;
 
   return {
     numberLabel: quoteNumberLabel(quote.id),
     dateLabel: formatDate(quote.quotedAt || quote.createdAt),
     customerName: customer?.name || quote.customerName || '',
-    customerTaxId: '',
+    customerTaxId: customer?.taxId || '',
     customerPhone: customer?.phone || '',
     customerEmail: customer?.email || '',
     customerAddress: '',
     deliveryHint: 'Retiro en taller · feria · envío',
     lines,
-    listSubtotal,
-    wholesaleSubtotal: listSubtotal * WHOLESALE_FACTOR,
+    listSubtotal: Math.round(listGross * netFactor),
+    wholesaleSubtotal: Math.round(wholesaleGross * netFactor),
+    wholesalePercent: settings.percent,
     productCount: lines.reduce((sum, line) => sum + line.quantity, 0),
   };
 }
@@ -273,7 +317,7 @@ function totalsBlock(doc: QuoteDocumentInput): string {
     </div>
   </div>
   <div style="display:flex;flex-direction:column">
-    <div style="font-family:Outfit,sans-serif;font-weight:600;font-size:13px;letter-spacing:2px;color:#0A6E9C;text-transform:uppercase;padding-bottom:6px">Precio mayorista (20% menos)</div>
+    <div style="font-family:Outfit,sans-serif;font-weight:600;font-size:13px;letter-spacing:2px;color:#0A6E9C;text-transform:uppercase;padding-bottom:6px">Precio mayorista (${doc.wholesalePercent}% menos)</div>
     <div style="display:flex;justify-content:space-between;font-size:14px;padding:8px 0;border-bottom:1px solid #C9DCE6"><div>Subtotal (${countLabel})</div><div>${formatMoney(doc.wholesaleSubtotal)}</div></div>
     <div style="display:flex;justify-content:space-between;font-size:14px;padding:8px 0;border-bottom:1px solid #C9DCE6"><div>Seña (50%)</div><div>${formatMoney(depositWholesale)}</div></div>
     <div style="display:flex;justify-content:space-between;font-size:14px;padding:8px 0;border-bottom:1px solid #C9DCE6"><div>Saldo antes del despacho</div><div>${formatMoney(balanceWholesale)}</div></div>

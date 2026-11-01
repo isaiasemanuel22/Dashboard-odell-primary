@@ -649,7 +649,6 @@ export class OrderFormLineComponent implements OnInit {
   /** Vista previa mayorista en la línea (misma fórmula que el backend). */
   get showWholesaleColumns(): boolean {
     return (
-      this.variant === 'order' &&
       this.wholesaleApplied &&
       wholesaleAppliesToService(this.line.serviceType, this.wholesaleDiscount)
     );
@@ -657,7 +656,6 @@ export class OrderFormLineComponent implements OnInit {
 
   get showClosedPriceNote(): boolean {
     return (
-      this.variant === 'order' &&
       this.wholesaleApplied &&
       isDesignService(this.line.serviceType) &&
       !wholesaleAppliesToService(this.line.serviceType, this.wholesaleDiscount)

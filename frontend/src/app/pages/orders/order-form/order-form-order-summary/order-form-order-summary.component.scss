@@ -135,4 +135,11 @@
     font-weight: 500;
     color: $color-text-muted;
   }
+
+  &__deposit-hint {
+    margin: 0;
+    font-size: 0.75rem;
+    line-height: 1.35;
+    color: $color-text-muted;
+  }
 }

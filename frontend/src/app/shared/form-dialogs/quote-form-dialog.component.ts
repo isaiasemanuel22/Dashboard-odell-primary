@@ -38,11 +38,7 @@ export interface QuoteFormDialogData {
   template: `
     <app-form-dialog-shell
       [title]="quote ? 'Editar presupuesto' : 'Nuevo presupuesto'"
-      [subtitle]="
-        quote
-          ? 'Editá la cotización antes de confirmar el pedido.'
-          : 'Cotización para un cliente antes de confirmar el pedido'
-      "
+      [subtitle]="dialogSubtitle"
       size="xl"
       [stickyHeader]="true"
       (close)="cancel()"
@@ -83,6 +79,13 @@ export class QuoteFormDialogComponent implements OnInit {
   error = '';
   private closing = false;
   private confirmingDiscard = false;
+
+  get dialogSubtitle(): string {
+    if (this.quote) {
+      return 'Editá la cotización antes de confirmar el pedido.';
+    }
+    return 'Cotización para un cliente antes de confirmar el pedido';
+  }
 
   ngOnInit(): void {
     this.quote = this.data?.quote ?? null;

@@ -100,10 +100,11 @@
           [total]="total"
           [totalCost]="totalCost"
           [paymentFee]="paymentFeePreview"
+          [showPaymentFee]="showDepositBlock"
           [profit]="profit"
           [profitPercentOnCost]="profitPercentOnCost"
           [listProfit]="listProfit"
-          [showDeposit]="showDepositBlock"
+          [depositMode]="showDepositBlock ? 'editable' : 'none'"
           [depositAmount]="depositAmountValue"
           [depositSuggested]="depositAmount"
           [depositPercent]="depositPercent"
@@ -130,11 +131,19 @@
       <app-order-form-party
         variant="quote"
         [customerId]="customerId"
-        (customerIdChange)="customerId = $event"
+        (customerIdChange)="onCustomerIdChange($event)"
         [customerOptions]="customerOptions"
         (newCustomer)="openNewCustomer()"
         [quotedAtLabel]="quotedAtLabel"
         [quoteValidityLabel]="quoteValidityLabel"
+        [resellerPillLabel]="resellerPillLabel"
+        [salesChannel]="salesChannel"
+        [salesChannelOptions]="salesChannelOptions"
+        (salesChannelChange)="onSalesChannelChange($event)"
+        [priceType]="priceType"
+        [priceTypeOptions]="priceTypeOptions"
+        (priceTypeChange)="onPriceTypeChange($event)"
+        [wholesaleMinimumNotice]="wholesaleMinimumNotice"
       />
 
       <db-form-grid-full class="quote-description-field">
@@ -150,13 +159,14 @@
 
       <section class="quote-lines-section">
         <header class="quote-lines-section__head quote-lines-section__head--row">
-          <h4 class="quote-lines-section__title">Líneas de trabajo</h4>
-          <p class="quote-lines-section__hint">{{ linesHint }}</p>
+          <h4 class="quote-lines-section__title">Productos</h4>
+          <p class="quote-lines-section__hint">
+            El descuento se resta del precio total del producto, no de la ganancia
+          </p>
         </header>
 
         <div class="order-lines">
           @for (line of lines; track $index; let i = $index) {
-
               <app-order-form-line
                 [line]="line"
                 [lineIndex]="i"
@@ -164,6 +174,9 @@
                 [products]="products"
                 [serviceTypeOptions]="serviceTypeOptions"
                 [paperTypeOptions]="paperTypeOptions"
+                [priceType]="priceType"
+                [wholesaleApplied]="wholesaleAppliedPreview"
+                [wholesaleDiscount]="wholesaleDiscount"
                 (remove)="removeLine(i)"
                 (linkPrintChange)="onLinkPrintChange(line, $event, i)"
                 (changed)="onLineChanged()"
@@ -172,7 +185,7 @@
         </div>
 
         <db-button
-          label="+ Agregar línea"
+          label="+ Agregar producto"
           variant="secondary"
           format="solid"
           extraClass="add-line"
@@ -182,10 +195,13 @@
       </section>
       </div>
 
-      <app-order-form-quote-summary
-        [items]="quoteResumenItems"
-        [subtotalLabel]="quoteSubtotalLabel"
-        [subtotal]="subtotal"
+      <app-order-form-order-summary
+        [listSubtotal]="listSubtotal"
+        [wholesalePercent]="wholesaleDiscount.percent"
+        [wholesaleDiscountAmount]="wholesaleDiscountAmount"
+        [wholesaleProductsBase]="wholesaleProductsBase"
+        [wholesaleApplied]="wholesaleAppliedPreview"
+        [resellerSavings]="resellerSavings"
         [discountMode]="discountMode"
         [discountPercent]="discountPercent"
         [discountAmount]="discountAmount"
@@ -195,11 +211,15 @@
         [discountApplied]="discountApplied"
         [total]="total"
         [totalCost]="totalCost"
+        [paymentFee]="0"
+        [showPaymentFee]="false"
         [profit]="profit"
+        [profitPercentOnCost]="profitPercentOnCost"
+        [listProfit]="listProfit"
+        depositMode="info"
+        [depositSuggested]="depositAmount"
         [depositPercent]="depositPercent"
-        [depositAmount]="depositAmount"
-        [areaShares]="quoteAreaShares"
-        [warnings]="quoteResumenWarnings"
+        [balanceAfterDeposit]="balanceAfterDeposit"
         (modeChange)="setDiscountMode($event)"
         (percentChange)="onDiscountPercentChange($event)"
         (amountChange)="onDiscountAmountChange($event)"
@@ -214,7 +234,7 @@
     @if (isQuoteForm) {
       <db-form-footer class="quote-form__footer">
         <p class="quote-form__note">
-          Borrador puede ir sin cliente; Crear lo deja Enviado y exige cliente
+          Se guarda como Borrador · al aceptarlo se convierte en pedido
         </p>
         <div class="quote-form__actions" data-discard-safe>
           <db-button

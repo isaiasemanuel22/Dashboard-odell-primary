@@ -18,24 +18,26 @@
         </p>
       }
 
-      <app-order-form-discount
-        variant="resumen"
-        noneLabel="Sin"
-        [mode]="discountMode"
-        [percent]="discountPercent"
-        [amount]="discountAmount"
-        [percentMax]="discountPercentMax"
-        [amountMax]="discountAmountMax"
-        [hint]="discountHint"
-        (modeChange)="modeChange.emit($event)"
-        (percentChange)="percentChange.emit($event)"
-        (amountChange)="amountChange.emit($event)"
-      />
-      @if (discountApplied > 0) {
-        <p class="order-resumen__row">
-          <span>Descuento manual</span>
-          <span class="order-resumen__neg">−{{ discountApplied | currencyArs }}</span>
-        </p>
+      @if (showDiscount) {
+        <app-order-form-discount
+          variant="resumen"
+          noneLabel="Sin"
+          [mode]="discountMode"
+          [percent]="discountPercent"
+          [amount]="discountAmount"
+          [percentMax]="discountPercentMax"
+          [amountMax]="discountAmountMax"
+          [hint]="discountHint"
+          (modeChange)="modeChange.emit($event)"
+          (percentChange)="percentChange.emit($event)"
+          (amountChange)="amountChange.emit($event)"
+        />
+        @if (discountApplied > 0) {
+          <p class="order-resumen__row">
+            <span>Descuento manual</span>
+            <span class="order-resumen__neg">−{{ discountApplied | currencyArs }}</span>
+          </p>
+        }
       }
 
       <p class="order-resumen__row order-resumen__row--total">
@@ -56,10 +58,12 @@
         <span>Costo estimado</span>
         <span>{{ totalCost | currencyArs }}</span>
       </p>
-      <p class="order-resumen__row">
-        <span>Comisión del medio de pago</span>
-        <span>{{ paymentFee | currencyArs }}</span>
-      </p>
+      @if (showPaymentFee) {
+        <p class="order-resumen__row">
+          <span>Comisión del medio de pago</span>
+          <span>{{ paymentFee | currencyArs }}</span>
+        </p>
+      }
       <p
         class="order-resumen__row"
         [class.order-resumen__row--loss]="profit < 0"
@@ -81,7 +85,7 @@
       </p>
     </div>
 
-    @if (showDeposit) {
+    @if (depositMode === 'editable') {
       <div class="order-resumen__card order-resumen__deposit">
         <h4 class="order-resumen__deposit-title">
           Seña
@@ -129,6 +133,23 @@
         <p class="order-resumen__row order-resumen__row--balance">
           <span>Saldo al entregar</span>
           <strong>{{ balanceAfterDeposit | currencyArs }}</strong>
+        </p>
+      </div>
+    }
+
+    @if (depositMode === 'info') {
+      <div class="order-resumen__card order-resumen__deposit">
+        <h4 class="order-resumen__deposit-title">Seña</h4>
+        <p class="order-resumen__row">
+          <span>Seña {{ depositPercent }}%</span>
+          <strong>{{ depositSuggested | currencyArs }}</strong>
+        </p>
+        <p class="order-resumen__row">
+          <span>Saldo antes del despacho</span>
+          <span>{{ balanceAfterDeposit | currencyArs }}</span>
+        </p>
+        <p class="order-resumen__deposit-hint">
+          El medio de pago se elige al convertirlo en pedido.
         </p>
       </div>
     }

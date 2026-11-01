@@ -8,9 +8,15 @@ import {
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
-import { Customer, Product, Quote } from '../../core/models';
+import {
+  Customer,
+  Product,
+  Quote,
+  WholesaleDiscountSettings,
+} from '../../core/models';
 import { CustomersService } from '../../core/services/customers.service';
 import { ProductsService } from '../../core/services/products.service';
+import { SettingsService } from '../../core/services/settings.service';
 import { DbButtonComponent } from '@general-components';
 import { FormDialogShellComponent } from '../../components/form-dialog-shell/form-dialog-shell.component';
 import {
@@ -18,6 +24,7 @@ import {
   buildQuoteDocumentInput,
   exportQuoteDocument,
 } from '../utils/quote-document.util';
+import { normalizeWholesaleDiscount } from '../utils/wholesale-example.util';
 
 export interface QuoteDocumentExportDialogData {
   quote: Quote;
@@ -100,6 +107,7 @@ export class QuoteDocumentExportDialogComponent implements OnInit {
   private readonly dialogRef = inject(DialogRef<void>);
   private readonly customersService = inject(CustomersService);
   private readonly productsService = inject(ProductsService);
+  private readonly settingsService = inject(SettingsService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   ready = false;
@@ -108,6 +116,8 @@ export class QuoteDocumentExportDialogComponent implements OnInit {
 
   private customer: Customer | null = null;
   private productsById = new Map<string, Product>();
+  private wholesaleDiscount: WholesaleDiscountSettings =
+    normalizeWholesaleDiscount(null);
 
   ngOnInit(): void {
     const quote = this.data.quote;
@@ -134,13 +144,24 @@ export class QuoteDocumentExportDialogComponent implements OnInit {
           )
         : of([] as Array<Product | null>);
 
-    forkJoin({ customer: customer$, products: products$ }).subscribe({
-      next: ({ customer, products }) => {
+    const settings$ = this.settingsService.getGeneralSettings().pipe(
+      catchError(() => of(null)),
+    );
+
+    forkJoin({
+      customer: customer$,
+      products: products$,
+      settings: settings$,
+    }).subscribe({
+      next: ({ customer, products, settings }) => {
         this.customer = customer;
         this.productsById = new Map(
           products
             .filter((product): product is Product => !!product)
             .map((product) => [product.id, product]),
+        );
+        this.wholesaleDiscount = normalizeWholesaleDiscount(
+          settings?.wholesaleDiscount ?? null,
         );
         this.ready = true;
         this.cdr.markForCheck();
@@ -169,6 +190,7 @@ export class QuoteDocumentExportDialogComponent implements OnInit {
         this.data.quote,
         this.customer,
         this.productsById,
+        this.wholesaleDiscount,
       );
       await exportQuoteDocument(doc, format);
       this.dialogRef.close();

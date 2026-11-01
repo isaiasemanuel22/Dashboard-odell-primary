@@ -56,11 +56,8 @@ import { FormDialogService } from '../../../shared/form-dialogs/public-api';
 import {
   buildOrderItems,
   calculateLinePriceTotal,
-  calculateOrderDiscount,
-  calculateOrderSubtotal,
   deriveOrderServices,
   isLineBillable,
-  calculateOrderTotal,
   createEmptyLine,
   ensureLineUiId,
   DUE_DATE_AFTER_TODAY_MESSAGE,
@@ -173,15 +170,8 @@ import {
   resolveOrderQuoteWashMinutes,
 } from '../../../components/order-quote-composition.util';
 import { OrderFormLineComponent } from './linea/order-form-line.component';
-import { OrderFormDiscountComponent } from './order-form-discount/order-form-discount.component';
 import { OrderFormPartyComponent } from './order-form-party/order-form-party.component';
-import { OrderFormQuoteSummaryComponent } from './order-form-quote-summary/order-form-quote-summary.component';
 import { OrderFormOrderSummaryComponent } from './order-form-order-summary/order-form-order-summary.component';
-import {
-  buildQuoteAreaShares,
-  buildQuoteResumenItems,
-  buildQuoteResumenWarnings,
-} from './order-form-quote-summary/order-form-quote-summary.util';
 import type { WholesaleMinimumNotice } from './order-form-party/order-form-party.component';
 
 export type OrderFormVariant = 'order' | 'quote';
@@ -202,7 +192,6 @@ export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
     DbButtonComponent,
     OrderFormLineComponent,
     OrderFormPartyComponent,
-    OrderFormQuoteSummaryComponent,
     OrderFormOrderSummaryComponent,
   ],
   templateUrl: './order-form.component.html',
@@ -399,12 +388,6 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return `Subtotal - ${count} ${noun}`;
   }
 
-  get quoteSubtotalLabel(): string {
-    const count = this.billableLines.length;
-    if (count <= 1) return 'Subtotal';
-    return `Subtotal · ${count} líneas`;
-  }
-
   get validLines(): OrderLineDraft[] {
     return this.lines.filter((line) => isLineValid(line));
   }
@@ -415,9 +398,6 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   /** Subtotal a precio de lista (líneas del form editan lista). */
   get listSubtotal(): number {
-    if (this.isQuoteForm) {
-      return calculateOrderSubtotal(this.billableLines);
-    }
     return this.billableLines.reduce(
       (sum, line) => sum + lineListSubtotal(line),
       0,
@@ -425,14 +405,10 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   get subtotal(): number {
-    if (this.isQuoteForm) {
-      return calculateOrderSubtotal(this.billableLines);
-    }
     return this.chargedSubtotal;
   }
 
   get wholesaleAppliedPreview(): boolean {
-    if (this.isQuoteForm) return false;
     return wouldApplyWholesale({
       priceType: this.priceType,
       listSubtotal: this.listSubtotal,
@@ -470,9 +446,6 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   /** Subtotal cobrado (lista − mayorista) antes del descuento manual. */
   get chargedSubtotal(): number {
-    if (this.isQuoteForm) {
-      return calculateOrderSubtotal(this.billableLines);
-    }
     return this.billableLines.reduce(
       (sum, line) =>
         sum +
@@ -495,19 +468,6 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   get discountApplied(): number {
-    if (this.isQuoteForm) {
-      const discount = discountPayloadFromMode(
-        this.discountMode,
-        this.discountPercent,
-        this.discountAmount,
-        this.subtotal,
-      );
-      return calculateOrderDiscount(
-        this.billableLines,
-        discount.discountPercent,
-        discount.discountAmount,
-      );
-    }
     const discount = discountPayloadFromMode(
       this.discountMode,
       this.discountPercent,
@@ -522,19 +482,6 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   get total(): number {
-    if (this.isQuoteForm) {
-      const discount = discountPayloadFromMode(
-        this.discountMode,
-        this.discountPercent,
-        this.discountAmount,
-        this.subtotal,
-      );
-      return calculateOrderTotal(
-        this.billableLines,
-        discount.discountPercent,
-        discount.discountAmount,
-      );
-    }
     const discount = discountPayloadFromMode(
       this.discountMode,
       this.discountPercent,
@@ -606,7 +553,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   get wholesaleMinimumNotice(): WholesaleMinimumNotice {
-    if (this.isQuoteForm || this.priceType !== PriceType.MAYORISTA) {
+    if (this.priceType !== PriceType.MAYORISTA) {
       return null;
     }
     const minimum = this.selectedCustomer?.wholesaleMinimum;
@@ -628,33 +575,6 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   get showDepositBlock(): boolean {
     return !this.isQuoteForm && !this.isEditing;
-  }
-
-  get quoteResumenItems() {
-    return buildQuoteResumenItems(
-      this.lines,
-      (line, index) => this.lineTitle(line, index),
-      (line) => this.linePriceTotal(line),
-    );
-  }
-
-  get quoteAreaShares() {
-    return buildQuoteAreaShares(
-      this.billableLines,
-      this.subtotal,
-      (line) => this.linePriceTotal(line),
-    );
-  }
-
-  get quoteResumenWarnings(): string[] {
-    const missingRateLabels = [
-      ...new Set(
-        this.lines
-          .filter((line) => this.designRateMissingHint(line))
-          .map((line) => this.serviceLabel(line.serviceType)),
-      ),
-    ];
-    return buildQuoteResumenWarnings(missingRateLabels, this.suppliesWithoutPrice());
   }
 
   lineTitle(line: OrderLineDraft, index: number): string {
@@ -1209,6 +1129,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
           ? sanitizeRichTextHtml(this.description)
           : '',
         status: asDraft ? QuoteStatus.BORRADOR : QuoteStatus.ENVIADO,
+        priceType: this.priceType,
+        salesChannel: this.salesChannel,
       } satisfies CreateQuotePayload);
       return;
     }
@@ -1324,6 +1246,9 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.priceType = this.quote.priceType ?? PriceType.LISTA;
       this.salesChannel = this.quote.salesChannel ?? null;
       this.priceTypeManual = !!this.quote.priceType;
+      if (!this.priceTypeManual && this.isResellerCustomer) {
+        this.priceType = PriceType.MAYORISTA;
+      }
     } else if (this.presetQuote) {
       this.customerId = this.presetQuote.customerId ?? '';
       this.dueDate = defaultDueDate();

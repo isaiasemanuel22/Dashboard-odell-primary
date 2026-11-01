@@ -18,6 +18,8 @@ import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import { DiscountMode } from '../../../../shared/utils/discount.util';
 import { OrderFormDiscountComponent } from '../order-form-discount/order-form-discount.component';
 
+export type OrderFormDepositMode = 'editable' | 'info' | 'none';
+
 @Component({
   selector: 'app-order-form-order-summary',
   standalone: true,
@@ -49,15 +51,23 @@ export class OrderFormOrderSummaryComponent {
   @Input() discountAmountMax = 0;
   @Input() discountHint = '';
   @Input() discountApplied = 0;
+  /** Pedidos muestran descuento manual; presupuestos también. */
+  @Input() showDiscount = true;
 
   @Input() total = 0;
   @Input() totalCost = 0;
   @Input() paymentFee = 0;
+  /** Comisión del medio: solo en alta de pedido con seña editable. */
+  @Input() showPaymentFee = true;
   @Input() profit = 0;
   @Input() profitPercentOnCost = 0;
   @Input() listProfit = 0;
 
-  @Input() showDeposit = false;
+  /**
+   * Seña: editable (pedido nuevo), solo lectura informativa (presupuesto)
+   * o oculta (editar pedido).
+   */
+  @Input() depositMode: OrderFormDepositMode = 'none';
   @Input() depositAmount: number | null = null;
   @Input() depositSuggested = 0;
   @Input() depositPercent = 50;
