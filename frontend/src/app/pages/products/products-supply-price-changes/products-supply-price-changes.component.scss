@@ -1,0 +1,46 @@
+@use '../../../shared/styles/variables' as *;
+@use '../../../shared/styles/screen' as screen;
+
+.supply-changes {
+  @include screen.settings-card-shell;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+}
+
+.supply-changes__head {
+  h3 {
+    margin: 0;
+    font-size: $font-amount;
+    font-weight: 700;
+    color: $color-text;
+  }
+}
+
+.supply-changes__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 1.25rem;
+  margin-left: 0.35rem;
+  padding: 0 0.5rem;
+  border-radius: $radius-pill;
+  background: $color-primary-bg;
+  color: $color-brand-deep;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+
+.supply-changes__variation {
+  font-weight: 700;
+
+  &--up {
+    color: $color-error;
+  }
+
+  &--down {
+    color: $color-success;
+  }
+}

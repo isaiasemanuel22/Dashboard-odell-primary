@@ -1335,7 +1335,8 @@ export type BulkPriceScope = 'all' | 'category' | 'filament_type';
 export interface BulkPricePayload {
   scope: BulkPriceScope;
   categoryId?: string;
-  filamentType?: FilamentType;
+  /** Id del catálogo `filamentTypes` de ajustes (no el enum legado). */
+  filamentType?: string;
   percent: number;
   roundTo: 0 | 100 | 500;
 }

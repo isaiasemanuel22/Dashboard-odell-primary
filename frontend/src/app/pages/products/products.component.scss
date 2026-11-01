@@ -1,6 +1,41 @@
+@use '../../shared/styles/variables' as *;
+
+.products-alert {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  margin: 0 0 0.9rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid #f5d9a8;
+  border-radius: $radius-md;
+  background: #fff8eb;
+  color: #7a4a06;
+  font-size: $font-body;
+  line-height: 1.45;
+
+  svg {
+    flex: none;
+    margin-top: 0.1rem;
+  }
+
+  a {
+    color: $color-brand-deep;
+    font-weight: 700;
+  }
+}
+
+.products-alert__body {
+  flex: 1;
+  min-width: 0;
+
+  p {
+    margin: 0;
+  }
+}
+
 .products-cart-notice {
   margin: 0 0 0.85rem;
-  color: #0b5f86;
+  color: $color-brand-deep;
   font-size: 0.9rem;
 }
 

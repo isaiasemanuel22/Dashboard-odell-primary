@@ -1,0 +1,37 @@
+<section
+  class="supply-changes"
+  aria-labelledby="supply-changes-title"
+>
+  <div class="supply-changes__head">
+    <h3 id="supply-changes-title">
+      Insumos que subieron
+      <span class="supply-changes__badge">Nuevo</span>
+    </h3>
+  </div>
+
+  <db-data-table
+    label="Insumos que subieron"
+    [rows]="rows"
+    [columns]="columns"
+    [loading]="loading"
+    [clientSide]="false"
+    minWidth="640px"
+    emptyText="Todavía no hay cambios de precio registrados en los últimos 90 días"
+  >
+    <ng-template odlCell="priceBefore" let-row>
+      {{ formatUnitPrice(row.priceBefore, row.unit) }}
+    </ng-template>
+    <ng-template odlCell="priceNow" let-row>
+      {{ formatUnitPrice(row.priceNow, row.unit) }}
+    </ng-template>
+    <ng-template odlCell="variationPercent" let-row>
+      <span
+        class="supply-changes__variation"
+        [class.supply-changes__variation--up]="variationTone(row.variationPercent) === 'up'"
+        [class.supply-changes__variation--down]="variationTone(row.variationPercent) === 'down'"
+      >
+        {{ formatVariation(row.variationPercent) }}
+      </span>
+    </ng-template>
+  </db-data-table>
+</section>

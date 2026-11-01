@@ -2,8 +2,8 @@
   <div>
     <h2>Productos</h2>
     <p>
-      Catálogo de impresión 3D (FDM / Resina) y estampados · {{ publishedCount }} publicados
-      · {{ inStockCount }} con stock
+      Catálogo de impresión 3D y estampados · {{ publishedCount }} publicados · margen objetivo
+      {{ targetMarginPercent }}%
     </p>
   </div>
   <div class="header-actions">
@@ -12,6 +12,12 @@
       variant="secondary"
       format="soft"
       routerLink="/ventas/nueva"
+    />
+    <db-button
+      label="Actualizar precios"
+      variant="secondary"
+      format="soft"
+      (clicked)="updatePrices.emit()"
     />
     <db-button
       label="+ Categoría"
@@ -30,16 +36,17 @@
 
 <div class="list-toolbar">
   <db-pill-group
-    [options]="catalogFilters"
-    [value]="catalogView"
-    ariaLabel="Publicación"
-    (valueChange)="catalogViewChange.emit($event)"
+    [options]="listFilters"
+    [value]="listFilter"
+    ariaLabel="Filtrar productos"
+    (valueChange)="listFilterChange.emit($event)"
   />
   <label class="list-search">
     <span aria-hidden="true">⌕</span>
     <input
       type="search"
       placeholder="Buscar producto o categoría"
+      aria-label="Buscar productos"
       [ngModel]="search"
       (ngModelChange)="searchChange.emit($event)"
     />

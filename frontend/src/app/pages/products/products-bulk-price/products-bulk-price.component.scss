@@ -1,0 +1,102 @@
+@use '../../../shared/styles/variables' as *;
+@use '../../../shared/styles/screen' as screen;
+
+.bulk-price {
+  @include screen.settings-card-shell;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  margin-top: 1.25rem;
+}
+
+.bulk-price__head {
+  h3 {
+    margin: 0;
+    font-size: $font-amount;
+    font-weight: 700;
+    color: $color-text;
+  }
+
+  p {
+    margin: 0.25rem 0 0;
+    color: $color-text-muted;
+    font-size: $font-meta;
+    line-height: 1.45;
+  }
+}
+
+.bulk-price__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 1.25rem;
+  margin-left: 0.35rem;
+  padding: 0 0.5rem;
+  border-radius: $radius-pill;
+  background: $color-primary-bg;
+  color: $color-brand-deep;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+
+.bulk-price__note {
+  margin: 0;
+  padding: 0.7rem 0.85rem;
+  border: 1px solid $color-border-soft;
+  border-radius: $radius-sm;
+  background: $color-surface-muted;
+  color: $color-text-label;
+  font-size: $font-meta;
+  line-height: 1.4;
+}
+
+.bulk-price__fields {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 0.75rem 1rem;
+  align-items: start;
+}
+
+.bulk-price__error {
+  margin: 0;
+  color: $color-error;
+  font-size: $font-meta;
+  font-weight: 600;
+}
+
+.bulk-price__margin {
+  font-weight: 700;
+
+  &--ok {
+    color: $color-success;
+  }
+
+  &--bad {
+    color: $color-error;
+  }
+}
+
+.bulk-price__footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.bulk-price__summary {
+  margin: 0;
+  color: $color-text-muted;
+  font-size: $font-meta;
+  line-height: 1.4;
+  flex: 1;
+  min-width: 12rem;
+}
+
+.bulk-price__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}

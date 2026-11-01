@@ -1,0 +1,132 @@
+<section id="masiva" class="bulk-price" aria-labelledby="bulk-price-title">
+  <div class="bulk-price__head">
+    <div>
+      <h3 id="bulk-price-title">
+        Actualizar precios en bloque
+        <span class="bulk-price__badge">Nuevo</span>
+      </h3>
+      <p>
+        Para ajustar por inflación o por aumento de un insumo, sin tocar producto por
+        producto.
+      </p>
+    </div>
+  </div>
+
+  <p class="bulk-price__note" role="note">
+    Solo cambian los productos con precio fijo; el resto ya sigue al costo.
+  </p>
+
+  <div class="bulk-price__fields">
+    <db-select
+      label="Aplicar a"
+      name="bulkScope"
+      [options]="scopeOptions"
+      [(ngModel)]="scope"
+      (ngModelChange)="onScopeChange($event)"
+    />
+
+    @if (scope === 'category') {
+      <db-select
+        label="Categoría"
+        name="bulkCategory"
+        placeholder="Elegí una categoría"
+        [options]="categoryOptions"
+        [(ngModel)]="categoryId"
+        (ngModelChange)="onFieldChange()"
+      />
+    }
+
+    @if (scope === 'filament_type') {
+      <db-select
+        label="Tipo de filamento"
+        name="bulkFilament"
+        placeholder="Elegí un tipo"
+        [options]="filamentOptions"
+        [(ngModel)]="filamentType"
+        (ngModelChange)="onFieldChange()"
+      />
+    }
+
+    <db-input
+      label="Aumento %"
+      name="bulkPercent"
+      type="number"
+      [min]="-50"
+      [max]="200"
+      [step]="1"
+      [(ngModel)]="percent"
+      (ngModelChange)="onFieldChange()"
+      [error]="percentError"
+      hint="Entre −50 y 200, distinto de 0"
+    />
+
+    <db-select
+      label="Redondear a"
+      name="bulkRound"
+      [options]="roundOptions"
+      [(ngModel)]="roundTo"
+      (ngModelChange)="onFieldChange()"
+    />
+  </div>
+
+  @if (error) {
+    <p class="bulk-price__error" role="alert">{{ error }}</p>
+  }
+
+  <db-data-table
+    label="Vista previa de precios"
+    [rows]="preview?.items ?? []"
+    [columns]="columns"
+    [loading]="previewLoading"
+    [clientSide]="false"
+    minWidth="640px"
+    emptyText="Ningún producto con precio fijo entra en este filtro"
+  >
+    <ng-template odlCell="newMarkupPercent" let-row>
+      @if (row.newMarkupPercent == null) {
+        <span>—</span>
+      } @else {
+        <span
+          class="bulk-price__margin"
+          [class.bulk-price__margin--ok]="row.newMarkupPercent >= 0"
+          [class.bulk-price__margin--bad]="row.newMarkupPercent < 0"
+        >
+          {{ formatMargin(row.newMarkupPercent) }}
+        </span>
+      }
+    </ng-template>
+  </db-data-table>
+
+  <div class="bulk-price__footer">
+    <p class="bulk-price__summary">
+      @if (previewCount > 0) {
+        {{ previewCount }}
+        {{ previewCount === 1 ? 'producto cambia' : 'productos cambian' }}
+        · los pedidos y presupuestos ya enviados mantienen su precio
+      } @else if (!previewLoading) {
+        Ningún producto con precio fijo entra en este filtro
+      }
+    </p>
+    <div class="bulk-price__actions">
+      <db-button
+        label="Cancelar"
+        variant="secondary"
+        format="soft"
+        (clicked)="cancel()"
+      />
+      <db-button
+        [label]="
+          applying
+            ? 'Aplicando…'
+            : 'Aplicar a ' +
+              previewCount +
+              (previewCount === 1 ? ' producto' : ' productos')
+        "
+        variant="primary"
+        format="solid"
+        [disabled]="!canApply"
+        (clicked)="apply()"
+      />
+    </div>
+  </div>
+</section>

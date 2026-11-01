@@ -92,6 +92,31 @@
   font-weight: 600;
 }
 
+.product-card__flags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  margin-top: 0.35rem;
+}
+
+.fixed-price-lock {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.12rem 0.5rem;
+  border-radius: $radius-pill;
+  background: $color-primary-bg;
+  color: $color-brand-deep;
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.product-card__pieces {
+  color: $color-text-muted;
+  font-size: $font-meta;
+}
+
 .product-card__pricing {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -114,13 +139,57 @@
     font-weight: 700;
     color: $color-text;
   }
+}
 
-  .profit {
+.product-card__na {
+  color: $color-text-subtle;
+}
+
+.product-card__margin {
+  margin-top: 0.65rem;
+}
+
+.product-card__margin-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.25rem;
+  font-size: $font-meta;
+}
+
+.product-card__margin-label {
+  color: $color-text-subtle;
+  font-weight: 600;
+}
+
+.product-card__margin-value {
+  font-weight: 700;
+  color: $color-text;
+
+  &--ok {
     color: $color-success;
   }
 
-  .profit--negative {
+  &--low {
     color: $color-error;
+  }
+}
+
+.product-card__margin-track {
+  height: 0.35rem;
+  border-radius: $radius-pill;
+  background: $color-divider;
+  overflow: hidden;
+}
+
+.product-card__margin-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: $color-success;
+
+  &--low {
+    background: $color-error;
   }
 }
 

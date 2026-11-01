@@ -10,6 +10,8 @@ import {
   Product,
   ProductEstampado,
   ProductType,
+  ServiceProfitMargins,
+  WholesaleDiscountSettings,
   isProduct3D,
 } from '../../core/models';
 import { Category } from '../../core/models';
@@ -23,8 +25,22 @@ import {
   formatPrintDimensionsCm,
   hasValidPrintSize,
 } from '../../shared/utils/estampado.helpers';
-import { resolveCategoryNamesText } from '../../shared/utils/product.helpers';
+import {
+  productUsesPieceAssembly,
+  resolveCategoryNamesText,
+  resolveProductUnitPrice,
+} from '../../shared/utils/product.helpers';
+import {
+  hasFixedCatalogPrice,
+  markupPercentOnCostRounded,
+} from '../../shared/utils/product-margin.util';
+import { getMarginForProductType } from '../../shared/utils/pricing.util';
+import { resolveProfitArea } from '../../shared/utils/profit-area.util';
 import { productPhysicalStock } from '../../shared/utils/stock.helpers';
+import {
+  normalizeWholesaleDiscount,
+  wholesalePriceFromList,
+} from '../../shared/utils/wholesale-example.util';
 import { ProductImageCarouselComponent } from '../product-image-carousel/product-image-carousel.component';
 import { DbRowMenuComponent } from '../db-row-menu/db-row-menu.component';
 
@@ -47,6 +63,9 @@ export class ProductCardComponent {
   @Input({ required: true }) product!: Product;
   @Input({ required: true }) categories!: Category[];
   @Input() showAddToCart = false;
+  @Input() catalogProducts: Product[] = [];
+  @Input() profitMargins: ServiceProfitMargins | null = null;
+  @Input() wholesaleDiscount: WholesaleDiscountSettings | null = null;
   @Output() edit = new EventEmitter<Product>();
   @Output() delete = new EventEmitter<Product>();
   @Output() addToCart = new EventEmitter<Product>();
@@ -68,6 +87,58 @@ export class ProductCardComponent {
   /** Sin stock → pedido (§8); con stock → venta de mostrador vía carrito. */
   get cartButtonLabel(): string {
     return this.finishedStock > 0 ? 'Agregar al carrito' : 'Agregar para pedido';
+  }
+
+  get hasFixedPrice(): boolean {
+    return hasFixedCatalogPrice(this.product);
+  }
+
+  get piecesSum(): number | null {
+    if (!productUsesPieceAssembly(this.product)) return null;
+    if (!(this.product.components?.length > 0)) return null;
+    const catalog =
+      this.catalogProducts.length > 0 ? this.catalogProducts : [this.product];
+    const sum = resolveProductUnitPrice(this.product, catalog);
+    return sum > 0 ? sum : null;
+  }
+
+  get listPrice(): number {
+    return Number(this.product.price) || 0;
+  }
+
+  /** Null si el área no aplica o el descuento está inactivo → mostrar «—». */
+  get wholesalePrice(): number | null {
+    const area = resolveProfitArea(this.product);
+    const discount = normalizeWholesaleDiscount(this.wholesaleDiscount);
+    if (
+      !discount.enabled ||
+      !area ||
+      !discount.serviceTypes.includes(area)
+    ) {
+      return null;
+    }
+    return wholesalePriceFromList(this.listPrice, discount.percent);
+  }
+
+  get markupPercent(): number | null {
+    return markupPercentOnCostRounded(this.listPrice, this.product.cost);
+  }
+
+  get targetMarginPercent(): number {
+    if (!this.profitMargins) return 0;
+    return getMarginForProductType(this.product.type, this.profitMargins);
+  }
+
+  get meetsTargetMargin(): boolean {
+    const markup = this.markupPercent;
+    if (markup == null) return true;
+    return markup >= this.targetMarginPercent;
+  }
+
+  get marginBarWidth(): number {
+    const markup = this.markupPercent;
+    if (markup == null) return 0;
+    return Math.min(Math.max(markup, 0), 100);
   }
 
   get specLine(): string {

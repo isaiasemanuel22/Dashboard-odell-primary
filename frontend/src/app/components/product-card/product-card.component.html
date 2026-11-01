@@ -32,22 +32,80 @@
       <p class="product-card__draft">No publicado</p>
     }
 
+    @if (hasFixedPrice || piecesSum != null) {
+      <div class="product-card__flags">
+        @if (hasFixedPrice) {
+          <span class="fixed-price-lock">
+            <svg
+              viewBox="0 0 24 24"
+              width="12"
+              height="12"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.4"
+              aria-hidden="true"
+            >
+              <rect x="5" y="11" width="14" height="9" rx="2"></rect>
+              <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
+            </svg>
+            Precio fijo
+          </span>
+        }
+        @if (piecesSum != null) {
+          <span class="product-card__pieces">
+            Suma de piezas: {{ piecesSum | currencyArs }}
+          </span>
+        }
+      </div>
+    }
+
     <div class="product-card__pricing">
       <div>
-        <small>Precio</small>
-        <strong>{{ product.price | currencyArs }}</strong>
+        <small>Lista</small>
+        <strong>{{ listPrice | currencyArs }}</strong>
+      </div>
+      <div>
+        <small>Mayorista</small>
+        @if (wholesalePrice != null) {
+          <strong>{{ wholesalePrice | currencyArs }}</strong>
+        } @else {
+          <strong class="product-card__na">—</strong>
+        }
       </div>
       <div>
         <small>Costo</small>
-        <span>{{ product.cost | currencyArs }}</span>
-      </div>
-      <div>
-        <small>Ganancia</small>
-        <span class="profit" [class.profit--negative]="product.profit < 0">
-          {{ product.profit | currencyArs }}
-        </span>
+        <strong>{{ product.cost | currencyArs }}</strong>
       </div>
     </div>
+
+    @if (markupPercent != null) {
+      <div class="product-card__margin">
+        <div class="product-card__margin-row">
+          <span class="product-card__margin-label">Margen</span>
+          <strong
+            class="product-card__margin-value"
+            [class.product-card__margin-value--ok]="meetsTargetMargin"
+            [class.product-card__margin-value--low]="!meetsTargetMargin"
+          >
+            {{ markupPercent }}%
+          </strong>
+        </div>
+        <div
+          class="product-card__margin-track"
+          role="meter"
+          [attr.aria-valuenow]="markupPercent"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-label]="'Margen ' + markupPercent + '%'"
+        >
+          <div
+            class="product-card__margin-fill"
+            [class.product-card__margin-fill--low]="!meetsTargetMargin"
+            [style.width.%]="marginBarWidth"
+          ></div>
+        </div>
+      </div>
+    }
 
     <p class="product-card__updated">Actualizado: {{ product.updatedAt | dateShort }}</p>
   </div>
