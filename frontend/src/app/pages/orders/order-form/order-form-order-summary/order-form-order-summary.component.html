@@ -108,7 +108,11 @@
             />
           </div>
           <p class="order-resumen__deposit-hint" id="deposit-amount-hint">
-            {{ depositPercent }}% del total
+            @if (isSuggestedDeposit) {
+              {{ depositPercent }}% del total
+            } @else {
+              Saldo al entregar {{ balanceAfterDeposit | currencyArs }}
+            }
           </p>
         </div>
 

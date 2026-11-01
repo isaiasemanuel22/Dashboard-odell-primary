@@ -13,7 +13,7 @@ import { RealtimeEvent } from '../../core/models/realtime.model';
 import { OrdersService } from '../../core/services/orders.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../core/services/realtime.service';
-import { removeById, upsertById } from '../../core/utils/replace-in-store';
+import { removeById } from '../../core/utils/replace-in-store';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import {
   DbSkeletonComponent,
@@ -155,9 +155,9 @@ export class OrdersComponent implements OnInit {
     });
   }
 
-  onOrderSaved(saved: Order): void {
-    this.orders = upsertById(this.orders, saved);
-    this.cdr.markForCheck();
+  onOrderSaved(_saved: Order): void {
+    // Reaplica filtros activos (estado/área): la fila nueva no debe verse si no calza.
+    this.loadOrders();
   }
 
   deleteOrder(order: Order): void {

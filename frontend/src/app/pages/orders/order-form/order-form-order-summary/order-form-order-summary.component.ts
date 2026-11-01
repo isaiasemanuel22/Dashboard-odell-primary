@@ -103,6 +103,12 @@ export class OrderFormOrderSummaryComponent {
     }).format(amount);
   }
 
+  /** La ayuda «N% del total» solo si el monto coincide con la seña sugerida. */
+  get isSuggestedDeposit(): boolean {
+    if (this.depositAmount == null) return true;
+    return Math.round(Number(this.depositAmount) || 0) === Math.round(Number(this.depositSuggested) || 0);
+  }
+
   onDepositAmountDisplayChange(raw: string): void {
     const digits = String(raw ?? '').replace(/\D/g, '');
     if (!digits) {

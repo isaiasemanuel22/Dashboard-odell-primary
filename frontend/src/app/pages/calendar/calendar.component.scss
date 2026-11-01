@@ -1,5 +1,11 @@
 @use '../../shared/styles/variables' as *;
 
+:host {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .cal-head {
   display: flex;
   flex-wrap: wrap;
@@ -76,11 +82,14 @@
   flex-wrap: wrap;
   gap: 16px;
   align-items: flex-start;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .cal-main {
   flex: 999 1 640px;
   min-width: 0;
+  max-width: 100%;
 }
 
 .cal-side {

@@ -35,9 +35,11 @@
 
 .detail-layout {
   display: grid;
-  grid-template-columns: minmax(240px, 300px) 1fr;
+  grid-template-columns: minmax(200px, 240px) minmax(0, 1fr);
   gap: 1.25rem;
   align-items: start;
+  min-width: 0;
+  max-width: 100%;
 
   @media (max-width: 900px) {
     grid-template-columns: 1fr;
@@ -49,6 +51,49 @@
   flex-direction: column;
   gap: 1rem;
   min-width: 0;
+  max-width: 100%;
+}
+
+.panel--order-lines {
+  min-width: 0;
+  max-width: 100%;
+
+  ::ng-deep .odl-table {
+    th,
+    td {
+      padding: 0.55rem 0.45rem;
+      font-size: 0.75rem;
+    }
+
+    th {
+      white-space: nowrap;
+    }
+  }
+}
+
+.order-item__unit {
+  display: block;
+  white-space: nowrap;
+}
+
+.order-item__list-price {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.7rem;
+  color: $color-text-muted;
+  white-space: nowrap;
+
+  s {
+    font-weight: 500;
+  }
+}
+
+.order-item__print-unit {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.7rem;
+  color: $color-text-muted;
+  white-space: nowrap;
 }
 
 .detail-actions {

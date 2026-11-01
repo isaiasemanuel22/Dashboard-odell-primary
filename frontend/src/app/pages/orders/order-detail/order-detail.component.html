@@ -127,13 +127,14 @@
         </section>
       }
 
-      <section class="panel">
+      <section class="panel panel--order-lines">
         <h3>Líneas del pedido</h3>
         <db-data-table
           label="Líneas del pedido"
           [rows]="order.items"
           [columns]="lineColumns"
           [clientSide]="false"
+          minWidth="0"
         >
           <ng-template odlCell="product" let-item>
             @if (item.productId) {
@@ -146,12 +147,19 @@
           </ng-template>
           <ng-template odlCell="unitPrice" let-item>
             @if (isDesignService(item.serviceType)) {
-              {{ (item.designUnitPrice ?? item.unitPrice) | currencyArs }}
+              <span class="order-item__unit">
+                {{ (item.designUnitPrice ?? item.unitPrice) | currencyArs }}
+              </span>
               @if (item.includesPrint) {
                 <span class="order-item__print-unit">
                   + {{ printUnitPrice(item) | currencyArs }}/u
                 </span>
               }
+            } @else if (hasWholesalePrice(item)) {
+              <span class="order-item__unit">{{ item.unitPrice | currencyArs }}</span>
+              <span class="order-item__list-price">
+                Lista <s>{{ item.listUnitPrice | currencyArs }}</s>
+              </span>
             } @else {
               {{ item.unitPrice | currencyArs }}
             }

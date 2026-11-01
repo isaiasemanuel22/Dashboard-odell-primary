@@ -46,4 +46,20 @@ export class OrderLinePricingComponent {
 
   @Output() unitPriceChange = new EventEmitter<number | string>();
   @Output() resetPrice = new EventEmitter<void>();
+
+  /** Miles con formato es-AR; el modelo emitido sigue siendo numérico. */
+  get unitPriceDisplay(): string {
+    if (this.unitPrice === '' || this.unitPrice == null) return '';
+    const amount = Math.round(Number(this.unitPrice) || 0);
+    return new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(amount);
+  }
+
+  onUnitPriceDisplayChange(raw: string): void {
+    const digits = String(raw ?? '').replace(/\D/g, '');
+    if (!digits) {
+      this.unitPriceChange.emit('');
+      return;
+    }
+    this.unitPriceChange.emit(Math.round(Number(digits)));
+  }
 }

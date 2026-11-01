@@ -113,18 +113,69 @@ export class OrderDetailComponent implements OnInit {
   tasks: PrintJob[] = [];
 
   readonly lineColumns: OdlColumn<OrderItem>[] = [
-    { key: 'service', header: 'Servicio', value: (item) => SERVICE_TYPE_LABELS[item.serviceType] },
-    { key: 'product', header: 'Concepto / producto' },
-    { key: 'quantity', header: 'Cant.', type: 'number' },
-    { key: 'stock', header: 'Stock', type: 'number', value: (item) => this.itemFromStock(item) },
-    { key: 'produce', header: 'A producir', type: 'number', value: (item) => this.itemToProduce(item) },
-    { key: 'reserved', header: 'Reservado', type: 'number', value: (item) => this.itemReserved(item) },
-    { key: 'produced', header: 'Producido', type: 'number', value: (item) => this.itemProduced(item) },
-    { key: 'delivered', header: 'Entregado', type: 'number', value: (item) => this.itemDelivered(item) },
-    { key: 'pending', header: 'Pendiente', type: 'number', value: (item) => this.itemPending(item) },
-    { key: 'unitPrice', header: 'Precio unit.' },
-    { key: 'subtotal', header: 'Subtotal', type: 'money', value: (item) => this.lineSubtotal(item) },
+    {
+      key: 'service',
+      header: 'Servicio',
+      width: '6.5rem',
+      value: (item) => SERVICE_TYPE_LABELS[item.serviceType],
+    },
+    { key: 'product', header: 'Concepto' },
+    { key: 'quantity', header: 'Cant.', type: 'number', width: '3.25rem' },
+    {
+      key: 'stock',
+      header: 'Stock',
+      type: 'number',
+      width: '3.5rem',
+      value: (item) => this.itemFromStock(item),
+    },
+    {
+      key: 'produce',
+      header: 'A prod.',
+      type: 'number',
+      width: '3.75rem',
+      value: (item) => this.itemToProduce(item),
+    },
+    {
+      key: 'reserved',
+      header: 'Res.',
+      type: 'number',
+      width: '3.25rem',
+      value: (item) => this.itemReserved(item),
+    },
+    {
+      key: 'produced',
+      header: 'Hecho',
+      type: 'number',
+      width: '3.5rem',
+      value: (item) => this.itemProduced(item),
+    },
+    {
+      key: 'delivered',
+      header: 'Ent.',
+      type: 'number',
+      width: '3.25rem',
+      value: (item) => this.itemDelivered(item),
+    },
+    {
+      key: 'pending',
+      header: 'Pend.',
+      type: 'number',
+      width: '3.5rem',
+      value: (item) => this.itemPending(item),
+    },
+    { key: 'unitPrice', header: 'P. unit.', width: '6.5rem' },
+    {
+      key: 'subtotal',
+      header: 'Subtotal',
+      type: 'money',
+      width: '5.5rem',
+      value: (item) => this.lineSubtotal(item),
+    },
   ];
+
+  hasWholesalePrice(item: OrderItem): boolean {
+    return item.listUnitPrice != null && Number(item.listUnitPrice) > 0;
+  }
 
   readonly taskColumns: OdlColumn<PrintJob>[] = [
     {

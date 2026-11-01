@@ -98,6 +98,9 @@ button {
 
 // ── Tabla ──────────────────────────────────────────────
 .odl-box {
+  // Contiene los textos solo para lectores de pantalla (.odl-sr, absolute):
+  // sin esto se posicionan contra el body y ensanchan la página en celular.
+  position: relative;
   max-width: 100%;
   background: var(--odl-surface);
   border: 1px solid var(--odl-border);

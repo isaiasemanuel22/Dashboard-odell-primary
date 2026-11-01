@@ -1,6 +1,14 @@
 @use '../../shared/styles/variables' as *;
 
+:host {
+  display: block;
+  min-width: 0;
+  max-width: 100%;
+}
+
 .db-cal-box {
+  max-width: 100%;
+  min-width: 0;
   background: $color-surface;
   border: 1px solid $color-border-soft;
   border-radius: 12px;

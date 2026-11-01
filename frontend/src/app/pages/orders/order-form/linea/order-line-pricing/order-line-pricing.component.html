@@ -23,12 +23,12 @@
   >
     <input
       class="order-line__money-control"
-      type="number"
-      [ngModel]="unitPrice"
-      (ngModelChange)="unitPriceChange.emit($event)"
+      type="text"
+      inputmode="numeric"
+      [ngModel]="unitPriceDisplay"
+      (ngModelChange)="onUnitPriceDisplayChange($event)"
       [name]="'price-' + lineIndex"
-      [min]="0"
-      [step]="1"
+      autocomplete="off"
       [attr.aria-label]="showWholesaleColumns ? 'Precio de lista' : 'Precio unitario'"
       [attr.aria-invalid]="unitPriceError ? true : null"
     />
