@@ -28,6 +28,7 @@ import {
   mergeProfitMargins,
   normalizeProfitMargins,
 } from './profit-margins.util';
+import { normalizeWholesaleDiscount } from './wholesale-discount.util';
 import {
   ColorConfig,
   FilamentPriceConfig,
@@ -41,6 +42,7 @@ import {
   ResinPriceConfig,
   ResinTypeConfig,
   ServiceProfitMargins,
+  WholesaleDiscountSettings,
 } from '../common/interfaces';
 import {
   normalizePaperReferenceSheets,
@@ -83,6 +85,9 @@ export class SettingsService {
     );
     this.store.generalSettings.profitMargins = normalizeProfitMargins(
       this.store.generalSettings.profitMargins,
+    );
+    this.store.generalSettings.wholesaleDiscount = normalizeWholesaleDiscount(
+      this.store.generalSettings.wholesaleDiscount,
     );
     this.store.generalSettings.paperReferenceSheets =
       normalizePaperReferenceSheets(
@@ -310,6 +315,32 @@ export class SettingsService {
     );
     this.recordSettingsChange(['settings', 'products']);
     return structuredClone(this.store.generalSettings.profitMargins);
+  }
+
+  updateWholesaleDiscount(
+    data: Partial<WholesaleDiscountSettings>,
+  ): WholesaleDiscountSettings {
+    if (data.percent !== undefined) {
+      const percent = Number(data.percent);
+      if (!Number.isFinite(percent) || percent < 0 || percent > 99) {
+        throw new BadRequestException(
+          'El descuento por mayor debe estar entre 0 y 99',
+        );
+      }
+    }
+
+    // Solo pisa las claves enviadas: una clave ausente no vuelve al default.
+    const patch = Object.fromEntries(
+      Object.entries(data).filter(([, value]) => value !== undefined),
+    );
+    this.store.generalSettings.wholesaleDiscount = normalizeWholesaleDiscount({
+      ...normalizeWholesaleDiscount(
+        this.store.generalSettings.wholesaleDiscount,
+      ),
+      ...patch,
+    });
+    this.recordSettingsChange(['settings', 'products']);
+    return structuredClone(this.store.generalSettings.wholesaleDiscount);
   }
 
   updatePaperPrices(

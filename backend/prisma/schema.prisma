@@ -14,6 +14,7 @@ model AppSettings {
   graphicDesignRatePerHour Float @default(0) @map("graphic_design_rate_per_hour")
   errorMarginPercent    Float @default(0) @map("error_margin_percent")
   profitMargins         Json  @map("profit_margins")
+  wholesaleDiscount     Json  @default("{}") @map("wholesale_discount")
   paperPricesPerSqm     Json  @map("paper_prices_per_sqm")
   paperReferenceSheets  Json  @default("{}") @map("paper_reference_sheets")
   powerConsumptions     Json  @map("power_consumptions")

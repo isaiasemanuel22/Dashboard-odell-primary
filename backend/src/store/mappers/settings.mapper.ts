@@ -10,6 +10,7 @@ import {
   syncPaperPricesFromReferenceSheets,
 } from '../../common/paper-cost.util';
 import { normalizeProfitMargins } from '../../settings/profit-margins.util';
+import { normalizeWholesaleDiscount } from '../../settings/wholesale-discount.util';
 import {
   persistedFilamentPrice,
   persistedResinPrice,
@@ -24,6 +25,7 @@ export function mapSettingsFromDb(row: {
   graphicDesignRatePerHour: number;
   errorMarginPercent?: number;
   profitMargins: Prisma.JsonValue;
+  wholesaleDiscount?: Prisma.JsonValue;
   paperPricesPerSqm: Prisma.JsonValue;
   paperReferenceSheets?: Prisma.JsonValue;
   powerConsumptions: Prisma.JsonValue;
@@ -54,6 +56,7 @@ export function mapSettingsFromDb(row: {
     profitMargins: fromJson<GeneralSettings['profitMargins']>(
       row.profitMargins,
     ),
+    wholesaleDiscount: normalizeWholesaleDiscount(row.wholesaleDiscount ?? {}),
     paperPricesPerSqm,
     paperReferenceSheets: normalizePaperReferenceSheets(
       rawSheets,
@@ -84,6 +87,7 @@ export function mapSettingsFromDb(row: {
   hydrateFilamentPricesWithTypeIds(base, { seedIfEmpty: true });
   hydrateResinPricesWithTypeIds(base, { seedIfEmpty: true });
   base.profitMargins = normalizeProfitMargins(base.profitMargins);
+  base.wholesaleDiscount = normalizeWholesaleDiscount(base.wholesaleDiscount);
   if (hasSavedSheets) {
     base.paperPricesPerSqm = syncPaperPricesFromReferenceSheets(
       base.paperReferenceSheets,
@@ -97,6 +101,7 @@ export function mapSettingsToDb(settings: GeneralSettings) {
   const normalized = {
     ...settings,
     profitMargins: normalizeProfitMargins(settings.profitMargins),
+    wholesaleDiscount: normalizeWholesaleDiscount(settings.wholesaleDiscount),
     machineProfiles: ensureMachineProfiles(settings),
   };
 
@@ -107,6 +112,7 @@ export function mapSettingsToDb(settings: GeneralSettings) {
     modelingRatePerHour: normalized.modelingRatePerHour ?? 0,
     graphicDesignRatePerHour: normalized.graphicDesignRatePerHour ?? 0,
     profitMargins: toInputJson(normalized.profitMargins),
+    wholesaleDiscount: toInputJson(normalized.wholesaleDiscount),
     paperPricesPerSqm: toInputJson(
       syncPaperPricesFromReferenceSheets(normalized.paperReferenceSheets),
     ),

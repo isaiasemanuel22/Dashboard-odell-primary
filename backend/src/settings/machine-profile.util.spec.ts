@@ -27,6 +27,11 @@ describe('machine-profile.util', () => {
       modelado: 0,
       estampado: 0,
     },
+    wholesaleDiscount: {
+      enabled: true,
+      percent: 20,
+      serviceTypes: [],
+    },
     paperPricesPerSqm: { sublimacion: 0, dtf: 0, dtfUv: 0 },
     paperReferenceSheets: normalizePaperReferenceSheets(undefined, {
       sublimacion: 0,

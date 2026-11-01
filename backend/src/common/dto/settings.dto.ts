@@ -1,4 +1,5 @@
 import {
+  IsArray,
   IsBoolean,
   IsEnum,
   IsNotEmpty,
@@ -6,6 +7,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  Max,
   Min,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
@@ -137,6 +139,23 @@ export class UpdateCoreValuesDto {
 export class UpdateProfitMarginsDto {
   @IsObject()
   profitMargins!: Record<string, number>;
+}
+
+export class UpdateWholesaleDiscountDto {
+  @IsOptional()
+  @IsBoolean()
+  enabled?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(99)
+  percent?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsEnum(ServiceType, { each: true })
+  serviceTypes?: ServiceType[];
 }
 
 export class UpdatePaperPricesDto {

@@ -110,6 +110,13 @@ export interface ServiceProfitMargins {
   estampado: number;
 }
 
+/** Descuento por mayor (revendedor): % sobre precio de lista, por áreas. */
+export interface WholesaleDiscountSettings {
+  enabled: boolean;
+  percent: number;
+  serviceTypes: ServiceType[];
+}
+
 export interface PowerConsumptionConfig {
   id: string;
   name: string;
@@ -152,6 +159,7 @@ export interface GeneralSettings {
   /** Tarifa horaria de diseño gráfico. */
   graphicDesignRatePerHour: number;
   profitMargins: ServiceProfitMargins;
+  wholesaleDiscount: WholesaleDiscountSettings;
   paperPricesPerSqm: PaperPricesPerSqm;
   paperReferenceSheets: PaperReferenceSheets;
   filamentPrices: FilamentPriceConfig[];

@@ -5,6 +5,7 @@ import { StoreChangeService } from '../store/store-change.service';
 import { GeneralSettings } from '../common/interfaces';
 import { ServiceType } from '../common/enums';
 import { normalizePaperReferenceSheets } from '../common/paper-cost.util';
+import { DEFAULT_WHOLESALE_DISCOUNT } from './wholesale-discount.util';
 
 describe('SettingsService.patchGeneralSettings', () => {
   const baseSettings = (): GeneralSettings => ({
@@ -18,6 +19,10 @@ describe('SettingsService.patchGeneralSettings', () => {
       [ServiceType.DISENO_GRAFICO]: 50,
       [ServiceType.MODELADO]: 50,
       [ServiceType.ESTAMPADO]: 35,
+    },
+    wholesaleDiscount: {
+      ...DEFAULT_WHOLESALE_DISCOUNT,
+      serviceTypes: [...DEFAULT_WHOLESALE_DISCOUNT.serviceTypes],
     },
     paperPricesPerSqm: {
       dtf: 0,
@@ -111,5 +116,106 @@ describe('SettingsService.patchGeneralSettings', () => {
     service.removeFilamentPrice(price.id);
     service.removeFilamentType(typed.id);
     expect(service.getGeneralSettings().filamentTypes).toHaveLength(0);
+  });
+});
+
+describe('SettingsService.updateWholesaleDiscount', () => {
+  const baseSettings = (): GeneralSettings => ({
+    electricityCostPerKwh: 2500,
+    laborCostPerHour: 1000,
+    modelingRatePerHour: 0,
+    graphicDesignRatePerHour: 0,
+    errorMarginPercent: 30,
+    profitMargins: {
+      [ServiceType.IMPRESION_3D]: 350,
+      [ServiceType.DISENO_GRAFICO]: 50,
+      [ServiceType.MODELADO]: 50,
+      [ServiceType.ESTAMPADO]: 35,
+    },
+    wholesaleDiscount: {
+      ...DEFAULT_WHOLESALE_DISCOUNT,
+      serviceTypes: [...DEFAULT_WHOLESALE_DISCOUNT.serviceTypes],
+    },
+    paperPricesPerSqm: {
+      dtf: 0,
+      dtfUv: 0,
+      sublimacion: 2500,
+    },
+    paperReferenceSheets: normalizePaperReferenceSheets(undefined, {
+      dtf: 0,
+      dtfUv: 0,
+      sublimacion: 2500,
+    }),
+    powerConsumptions: [],
+    machineCosts: [],
+    machineProfiles: [],
+    filamentPrices: [],
+    resinPrices: [],
+    filamentTypeAverages: {},
+    resinTypeAverages: {},
+    colors: [],
+    filamentTypes: [],
+    resinTypes: [],
+  });
+
+  function createService(initial: GeneralSettings): SettingsService {
+    const store = {
+      generalSettings: structuredClone(initial),
+      supplies: [],
+      nextId: (prefix: string, items: { id: string }[]) => {
+        const max = items.reduce((acc, item) => {
+          const match = item.id.match(new RegExp(`^${prefix}-(\\d+)$`));
+          return match ? Math.max(acc, Number(match[1])) : acc;
+        }, 0);
+        return `${prefix}-${max + 1}`;
+      },
+    } as unknown as StoreService;
+    const persistence = {} as StorePersistenceService;
+    const storeChange = {
+      recordChange: jest.fn(),
+    } as unknown as StoreChangeService;
+
+    return new SettingsService(store, persistence, storeChange);
+  }
+
+  it('actualiza el descuento por mayor', () => {
+    const service = createService(baseSettings());
+
+    const result = service.updateWholesaleDiscount({
+      enabled: false,
+      percent: 15,
+      serviceTypes: [ServiceType.ESTAMPADO],
+    });
+
+    expect(result).toEqual({
+      enabled: false,
+      percent: 15,
+      serviceTypes: [ServiceType.ESTAMPADO],
+    });
+    expect(service.getGeneralSettings().wholesaleDiscount).toEqual(result);
+  });
+
+  it('conserva lo guardado cuando una clave llega sin valor', () => {
+    const service = createService(baseSettings());
+    service.updateWholesaleDiscount({ enabled: false, percent: 15 });
+
+    const result = service.updateWholesaleDiscount({
+      enabled: undefined,
+      percent: 25,
+    });
+
+    expect(result.enabled).toBe(false);
+    expect(result.percent).toBe(25);
+  });
+
+  it('rechaza percent fuera de 0–99', () => {
+    const service = createService(baseSettings());
+
+    expect(() => service.updateWholesaleDiscount({ percent: 100 })).toThrow(
+      'El descuento por mayor debe estar entre 0 y 99',
+    );
+    expect(() => service.updateWholesaleDiscount({ percent: -1 })).toThrow(
+      'El descuento por mayor debe estar entre 0 y 99',
+    );
   });
 });

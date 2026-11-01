@@ -27,6 +27,7 @@ import {
   normalizePaperReferenceSheets,
   syncPaperPricesFromReferenceSheets,
 } from '../common/paper-cost.util';
+import { DEFAULT_WHOLESALE_DISCOUNT } from '../settings/wholesale-discount.util';
 
 function defaultPaperReferenceSheets() {
   return normalizePaperReferenceSheets(undefined, {
@@ -51,6 +52,10 @@ export function createEmptyState(): StoreState {
         diseno_grafico: 50,
         modelado: 50,
         estampado: 35,
+      },
+      wholesaleDiscount: {
+        ...DEFAULT_WHOLESALE_DISCOUNT,
+        serviceTypes: [...DEFAULT_WHOLESALE_DISCOUNT.serviceTypes],
       },
       paperPricesPerSqm: {
         sublimacion: 0,
@@ -111,6 +116,10 @@ export function createSeedState(): StoreState {
       diseno_grafico: 50,
       modelado: 50,
       estampado: 35,
+    },
+    wholesaleDiscount: {
+      ...DEFAULT_WHOLESALE_DISCOUNT,
+      serviceTypes: [...DEFAULT_WHOLESALE_DISCOUNT.serviceTypes],
     },
     paperPricesPerSqm: syncPaperPricesFromReferenceSheets(
       defaultPaperReferenceSheets(),

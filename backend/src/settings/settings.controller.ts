@@ -23,6 +23,7 @@ import {
   UpdateMachineProfileDto,
   UpdatePaperPricesDto,
   UpdateProfitMarginsDto,
+  UpdateWholesaleDiscountDto,
 } from '../common/dto';
 import { CostCalculatorService } from './cost-calculator.service';
 import { SettingsService } from './settings.service';
@@ -52,6 +53,11 @@ export class SettingsController {
   @Patch('profit-margins')
   updateProfitMargins(@Body() data: UpdateProfitMarginsDto) {
     return this.settingsService.updateProfitMargins(data.profitMargins);
+  }
+
+  @Patch('wholesale-discount')
+  updateWholesaleDiscount(@Body() data: UpdateWholesaleDiscountDto) {
+    return this.settingsService.updateWholesaleDiscount(data);
   }
 
   @Patch('paper-prices')
