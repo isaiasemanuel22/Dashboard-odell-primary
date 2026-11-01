@@ -455,9 +455,21 @@ cantidadAProducir =
 El pedido se crea cuando un cliente identificado confirma una operación que
 no se resuelve completamente mediante una venta directa inmediata.
 
-Todo pedido requiere un cliente asociado. Si el cliente es frecuente o compra
-al por mayor, ese criterio lo tiene quien vende. La app no guarda un tipo de
-cliente. El pedido contiene ítems de
+Todo pedido requiere un cliente asociado. El cliente tiene un tipo:
+`Particular`, `Empresa` o `Revendedor` (cambio confirmado el 2026-11-01, v1).
+
+- Un cliente `Revendedor` recibe el **precio mayorista** en pedidos y
+  presupuestos: el precio de lista menos el descuento por mayor configurado
+  en Ajustes › Ganancias. El descuento se resta del precio de venta, no de la
+  ganancia, y solo aplica a las áreas configuradas (por defecto Impresión 3D y
+  Estampado; Diseño gráfico y Modelado se cobran con precio cerrado).
+- El revendedor puede tener una **compra mínima mayorista**. Si el pedido a
+  precio de lista no la alcanza, se cobra precio de lista.
+- Quien vende puede elegir `Lista` o `Mayorista` en cada pedido o
+  presupuesto; al elegir un revendedor se propone `Mayorista`.
+- El cliente puede guardar CUIT (opcional) y cómo llegó (origen).
+
+El pedido contiene ítems de
 productos y servicios, sus cantidades y los ítems de servicio agregados
 manualmente por el vendedor.
 
@@ -965,7 +977,13 @@ PAGADO
 ```
 
 Una seña es un pago parcial identificado como tal y no tiene efectos
-adicionales. Odell no registra el medio de pago.
+adicionales.
+
+Cada pago registra su **medio de pago** (efectivo, transferencia, Mercado
+Pago) y la **cuenta** donde entra el dinero (Caja efectivo, Mercado Pago,
+Banco), más la comisión que cobra el medio, si la hay. La Billetera muestra
+el saldo por cuenta (cambio confirmado el 2026-11-01, v1; antes Odell no
+registraba el medio de pago).
 
 Los pagos parciales o totales no liberan por sí mismos los importes de las
 áreas. La liberación ocurre al registrar la entrega.
