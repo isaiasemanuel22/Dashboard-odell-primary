@@ -1124,15 +1124,16 @@ El saldo disponible se calcula así:
 
 ```text
 Disponible =
-    ingresos por ventas
+    ingresos cobrados
   + ingresos manuales (billetera)
   − egresos (billetera)
 ```
 
 Donde:
 
-- **Ingresos por ventas:** suma del total de todas las ventas registradas
-  (mostrador + pedidos entregados). Ver §25.3.
+- **Ingresos cobrados:** total de las ventas de mostrador más los pagos y
+  señas registrados en pedidos. Un pedido entregado con saldo impago no
+  suma ese saldo a la caja; queda como deuda del cliente (ver §25.2).
 - **Ingresos manuales:** registros de billetera con dirección `Ingreso`.
 - **Egresos:** registros de billetera con dirección `Egreso`, incluidas
   las compras de insumos.
@@ -1275,6 +1276,10 @@ Además de las métricas de pedidos y producción, el Dashboard muestra:
   terminados y cancelados).
 - **Insumos con stock bajo** — cantidad de insumos cuya cantidad es menor o
   igual al stock mínimo.
+- **Deuda de clientes** — saldo impago (`total − pagos`) de los pedidos
+  entregados, agrupado por cliente.
+- **Pedidos vencidos** — pedidos no entregados ni cancelados cuya fecha de
+  entrega ya pasó.
 
 El acceso a Billetera está disponible desde el menú lateral y desde la
 tarjeta de saldo en el Dashboard.
@@ -1559,13 +1564,9 @@ pedidos y tareas conforme a §9–§15.
 
 ### 25.8 Retención de pedidos
 
-El sistema **elimina automáticamente** pedidos en estado terminal
-(**entregado** o **cancelado**) cuya fecha de cierre supera **1 mes**.
-
-- La purga corre al iniciar el servidor y luego cada 24 horas.
-- Las tareas asociadas se eliminan con el pedido.
-
-Esta regla no estaba documentada en las secciones anteriores.
+Los pedidos entregados o cancelados **no se eliminan**. Junto con sus tareas
+forman parte del historial operativo (§13.5, §13.6). La purga automática a
+un mes que existía antes fue retirada del código.
 
 ---
 
@@ -1644,11 +1645,13 @@ persisten entre reinicios).
 
 ### 25.13 Brecha respecto a reglas objetivo ya documentadas
 
-Las secciones **20 (Pagos)** y **21 (Ventas y balances)** describen
-deudas, pagos parciales, retiros, préstamos y libro `DEVENGADO` /
-`DISPONIBLE`. **Esa funcionalidad no está implementada** en la aplicación
-actual; lo implementado hoy es la billetera operativa (§25.1) y el reporte
-de ventas por área (§25.3.3).
+La sección **20 (Pagos)** está implementada en parte: los pedidos registran
+pagos y señas (sin superar el saldo pendiente y nunca en un pedido
+cancelado), y el Dashboard lista la deuda de clientes por pedidos entregados
+con saldo impago. La sección **21 (Ventas y balances)** —libro `DEVENGADO` /
+`DISPONIBLE` por área, retiros y saldo deudor central— **no está
+implementada**; lo que existe hoy es la billetera operativa (§25.1) y el
+reporte de ventas por área (§25.3.3).
 
 Otras reglas objetivo (§10 modificación/clonación de pedidos, §22 roles
 dinámicos, recotización bloqueante, etc.) pueden estar **parcialmente**
