@@ -5,7 +5,7 @@
     <div class="order-resumen__card">
       <p class="order-resumen__row">
         <span>Subtotal a precio de lista</span>
-        <span>{{ listSubtotal | currencyArs }}</span>
+        <span class="order-resumen__amount">{{ listSubtotal | currencyArs }}</span>
       </p>
 
       @if (wholesaleApplied && wholesaleDiscountAmount > 0) {
@@ -14,7 +14,7 @@
             Descuento mayorista −{{ wholesalePercent }}%
             <small>sobre {{ wholesaleProductsBase | currencyArs }} en productos</small>
           </span>
-          <span class="order-resumen__neg">−{{ wholesaleDiscountAmount | currencyArs }}</span>
+          <span class="order-resumen__neg order-resumen__amount">−{{ wholesaleDiscountAmount | currencyArs }}</span>
         </p>
       }
 
@@ -35,20 +35,20 @@
         @if (discountApplied > 0) {
           <p class="order-resumen__row">
             <span>Descuento manual</span>
-            <span class="order-resumen__neg">−{{ discountApplied | currencyArs }}</span>
+            <span class="order-resumen__neg order-resumen__amount">−{{ discountApplied | currencyArs }}</span>
           </p>
         }
       }
 
       <p class="order-resumen__row order-resumen__row--total">
         <span>Total</span>
-        <strong class="order-resumen__total">{{ total | currencyArs }}</strong>
+        <strong class="order-resumen__total order-resumen__amount">{{ total | currencyArs }}</strong>
       </p>
 
       @if (resellerSavings > 0) {
         <p class="order-resumen__row">
           <span>El revendedor ahorra</span>
-          <span class="order-resumen__pos">{{ resellerSavings | currencyArs }}</span>
+          <span class="order-resumen__pos order-resumen__amount">{{ resellerSavings | currencyArs }}</span>
         </p>
       }
     </div>
@@ -56,12 +56,12 @@
     <div class="order-resumen__card">
       <p class="order-resumen__row">
         <span>Costo estimado</span>
-        <span>{{ totalCost | currencyArs }}</span>
+        <span class="order-resumen__amount">{{ totalCost | currencyArs }}</span>
       </p>
       @if (showPaymentFee) {
         <p class="order-resumen__row">
           <span>Comisión del medio de pago</span>
-          <span>{{ paymentFee | currencyArs }}</span>
+          <span class="order-resumen__amount">{{ paymentFee | currencyArs }}</span>
         </p>
       }
       <p
@@ -70,7 +70,7 @@
       >
         <span>Ganancia estimada</span>
         <strong
-          class="order-resumen__pos"
+          class="order-resumen__pos order-resumen__amount"
           [class.order-resumen__neg]="profit < 0"
         >
           {{ profit | currencyArs }}
@@ -81,7 +81,7 @@
       </p>
       <p class="order-resumen__row">
         <span>A precio de lista ganarías</span>
-        <span>{{ listProfit | currencyArs }}</span>
+        <span class="order-resumen__amount">{{ listProfit | currencyArs }}</span>
       </p>
     </div>
 
@@ -92,19 +92,30 @@
           <span class="order-resumen__new">Nuevo</span>
         </h4>
 
-        <db-input
-          label="Monto"
-          type="number"
-          [ngModel]="depositAmount"
-          (ngModelChange)="depositAmountChange.emit($event)"
-          name="depositAmount"
-          [min]="0"
-          [step]="1"
-          [hint]="depositPercent + '% del total'"
-        />
+        <div class="order-resumen__money-field">
+          <label class="order-resumen__label" [attr.for]="depositAmountId">Monto</label>
+          <div class="order-resumen__money-value">
+            <input
+              class="order-resumen__money-control"
+              type="text"
+              inputmode="numeric"
+              [id]="depositAmountId"
+              name="depositAmount"
+              [ngModel]="depositAmountDisplay"
+              (ngModelChange)="onDepositAmountDisplayChange($event)"
+              autocomplete="off"
+              aria-describedby="deposit-amount-hint"
+            />
+          </div>
+          <p class="order-resumen__deposit-hint" id="deposit-amount-hint">
+            {{ depositPercent }}% del total
+          </p>
+        </div>
 
         <span class="order-resumen__label" id="deposit-method-label">Medio de pago</span>
         <db-segmented-control
+          class="order-resumen__seg"
+          size="lg"
           [options]="depositMethodOptions"
           [value]="depositMethod"
           ariaLabel="Medio de pago"
@@ -132,7 +143,7 @@
 
         <p class="order-resumen__row order-resumen__row--balance">
           <span>Saldo al entregar</span>
-          <strong>{{ balanceAfterDeposit | currencyArs }}</strong>
+          <strong class="order-resumen__amount">{{ balanceAfterDeposit | currencyArs }}</strong>
         </p>
       </div>
     }
@@ -142,11 +153,11 @@
         <h4 class="order-resumen__deposit-title">Seña</h4>
         <p class="order-resumen__row">
           <span>Seña {{ depositPercent }}%</span>
-          <strong>{{ depositSuggested | currencyArs }}</strong>
+          <strong class="order-resumen__amount">{{ depositSuggested | currencyArs }}</strong>
         </p>
         <p class="order-resumen__row">
           <span>Saldo antes del despacho</span>
-          <span>{{ balanceAfterDeposit | currencyArs }}</span>
+          <span class="order-resumen__amount">{{ balanceAfterDeposit | currencyArs }}</span>
         </p>
         <p class="order-resumen__deposit-hint">
           El medio de pago se elige al convertirlo en pedido.

@@ -1,4 +1,5 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -53,12 +54,13 @@ export interface QuoteFormDialogData {
         (save)="save($event)"
         (cancel)="cancel()"
         (customerCreated)="onCustomerCreated($event)"
+        (uiMetaChange)="onFormUiMeta()"
       />
     </app-form-dialog-shell>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class QuoteFormDialogComponent implements OnInit {
+export class QuoteFormDialogComponent implements OnInit, AfterViewInit {
   private readonly quotesService = inject(QuotesService);
   private readonly customerCatalog = inject(CustomerCatalogService);
   private readonly productCatalog = inject(ProductCatalogService);
@@ -77,14 +79,16 @@ export class QuoteFormDialogComponent implements OnInit {
   products: Product[] = [];
   loading = false;
   error = '';
+  formSubtitle = '';
   private closing = false;
   private confirmingDiscard = false;
 
   get dialogSubtitle(): string {
-    if (this.quote) {
-      return 'Editá la cotización antes de confirmar el pedido.';
-    }
-    return 'Cotización para un cliente antes de confirmar el pedido';
+    return (
+      this.formSubtitle ||
+      this.form?.modalSubtitle ||
+      'Cotización para un cliente antes de confirmar el pedido'
+    );
   }
 
   ngOnInit(): void {
@@ -104,6 +108,15 @@ export class QuoteFormDialogComponent implements OnInit {
         event.preventDefault();
         this.cancel();
       });
+  }
+
+  ngAfterViewInit(): void {
+    this.onFormUiMeta();
+  }
+
+  onFormUiMeta(): void {
+    this.formSubtitle = this.form?.modalSubtitle ?? this.formSubtitle;
+    this.cdr.markForCheck();
   }
 
   save(data: OrderFormSavePayload): void {
@@ -165,6 +178,7 @@ export class QuoteFormDialogComponent implements OnInit {
   }
 
   onCustomerCreated(customer: Customer): void {
+    this.customerCatalog.upsert(customer);
     const exists = this.customers.some((item) => item.id === customer.id);
     this.customers = exists
       ? this.customers.map((item) =>
@@ -185,6 +199,7 @@ export class QuoteFormDialogComponent implements OnInit {
         this.customers = customers;
         this.products = products;
         this.cdr.markForCheck();
+        void Promise.resolve().then(() => this.onFormUiMeta());
       },
     });
   }

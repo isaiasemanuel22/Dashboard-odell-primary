@@ -107,6 +107,7 @@ import {
 import {
   lineListUnitPrice,
   wholesaleAppliesToService,
+  isWholesaleMarginBelowArea,
   wholesaleMarginPercentOnCost,
 } from '../../../../shared/utils/order-wholesale-preview.util';
 import {
@@ -690,7 +691,11 @@ export class OrderFormLineComponent implements OnInit {
   get wholesaleMarginBelowArea(): boolean {
     if (!this.profitMargins) return false;
     const area = getMarginForService(this.line.serviceType, this.profitMargins);
-    return this.wholesaleMarginOnCostPercent < area;
+    return isWholesaleMarginBelowArea(
+      this.wholesaleUnitPricePreview,
+      this.unitCost,
+      area,
+    );
   }
 
   get wholesaleMarginHint(): string {

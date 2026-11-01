@@ -136,8 +136,9 @@ export class FilamentLineListComponent
   ngOnInit(): void {
     if (this.embedded) {
       this.filamentConfig.addPlacement = 'inside';
+      // min-widths razonables: evita que «Filamento» / cantidad se pisen.
       this.filamentConfig.tableColumns =
-        'minmax(0, 0.85fr) minmax(0, 1.4fr) minmax(0, 0.75fr) 5.25rem minmax(4.5rem, 5.25rem) 1.6rem';
+        'minmax(5.5rem, 0.9fr) minmax(7.5rem, 1.4fr) minmax(5rem, 0.85fr) minmax(5.25rem, 5.75rem) minmax(4.75rem, 5.5rem) 1.75rem';
     }
     this.settingsFacade
       .watchUntilDestroyed(this.destroyRef)

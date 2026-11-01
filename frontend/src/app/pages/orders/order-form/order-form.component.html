@@ -69,6 +69,20 @@
               extraClass="add-line"
               (clicked)="addLine()"
             />
+
+            @if (lowWholesaleMarginNotice; as lowMargin) {
+              <div class="wholesale-margin-note" role="status">
+                <span class="wholesale-margin-note__icon" aria-hidden="true">!</span>
+                <span>
+                  {{ lowMargin.message }}
+                  <a
+                    class="wholesale-margin-note__link"
+                    routerLink="/productos"
+                    fragment="masiva"
+                  >Revisar precios</a>
+                </span>
+              </div>
+            }
           </section>
 
           <db-form-grid-full>
@@ -191,6 +205,20 @@
           extraClass="add-line"
           (clicked)="addLine()"
         />
+
+        @if (lowWholesaleMarginNotice; as lowMargin) {
+          <div class="wholesale-margin-note" role="status">
+            <span class="wholesale-margin-note__icon" aria-hidden="true">!</span>
+            <span>
+              {{ lowMargin.message }}
+              <a
+                class="wholesale-margin-note__link"
+                routerLink="/productos"
+                fragment="masiva"
+              >Revisar precios</a>
+            </span>
+          </div>
+        }
 
       </section>
       </div>

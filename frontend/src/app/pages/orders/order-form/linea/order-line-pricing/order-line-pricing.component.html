@@ -66,16 +66,15 @@
 
 @if (showWholesaleColumns) {
   <div class="order-line__money-field order-line__money-field--wholesale">
-    <span class="order-line__money-label">Lista</span>
-    <div class="order-line__money-value order-line__money-value--muted">
-      <s>{{ listUnitPrice | currencyArs }}</s>
-    </div>
-  </div>
-  <div class="order-line__money-field order-line__money-field--wholesale">
     <span class="order-line__money-label">Mayorista</span>
     <div class="order-line__money-value order-line__money-value--strong">
       {{ wholesaleUnitPrice | currencyArs }}
     </div>
+    @if (listUnitPrice > 0) {
+      <p class="order-line__money-hint">
+        Lista <s>{{ listUnitPrice | currencyArs }}</s>
+      </p>
+    }
   </div>
 }
 

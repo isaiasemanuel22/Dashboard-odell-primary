@@ -91,3 +91,14 @@ export function wholesaleMarginPercentOnCost(
   const profit = Math.round(Number(wholesaleUnitPrice) || 0) - cost;
   return Math.round((profit / cost) * 100);
 }
+
+/** True si el margen por mayor sobre el costo queda bajo el margen del área. */
+export function isWholesaleMarginBelowArea(
+  wholesaleUnitPrice: number,
+  unitCost: number,
+  areaMarginPercent: number,
+): boolean {
+  const area = Number(areaMarginPercent);
+  if (!Number.isFinite(area)) return false;
+  return wholesaleMarginPercentOnCost(wholesaleUnitPrice, unitCost) < area;
+}

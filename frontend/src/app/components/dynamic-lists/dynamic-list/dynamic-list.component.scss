@@ -236,6 +236,19 @@
     border: 0;
     border-radius: 0;
     background: transparent;
+    overflow-x: auto;
+  }
+
+  .line-table__head,
+  .line-table__row {
+    > * {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    > span {
+      white-space: nowrap;
+    }
   }
 
   .line-table__head {
@@ -264,6 +277,31 @@
   .components-empty {
     margin: 0.5rem 0.75rem;
     font-size: 0.75rem;
+  }
+
+  @media (max-width: 720px) {
+    .line-table__head {
+      display: none;
+    }
+
+    .line-table__row {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(8.5rem, 1fr));
+      gap: 0.55rem 0.65rem;
+      align-items: end;
+      padding: 0.75rem 0.65rem;
+    }
+
+    .line-table__row > *:last-child {
+      grid-column: 1 / -1;
+      justify-self: end;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .line-table__row {
+      grid-template-columns: minmax(0, 1fr);
+    }
   }
 }
 

@@ -63,9 +63,12 @@ export class FormDialogService {
         presetCustomerId: options?.presetCustomerId,
         presetCartLines: options?.presetCartLines,
       },
-      'lg',
+      'xl',
       {
         ariaLabel: order ? 'Editar pedido' : 'Nuevo pedido',
+        // Mismo ancho que presupuesto (~1120–1220).
+        panelClass: ['form-dialog-panel--quote'],
+        maxWidth: '1120px',
       },
     );
   }
@@ -74,8 +77,12 @@ export class FormDialogService {
     return this.open(
       OrderFormDialogComponent,
       { order: null, presetQuote: quote },
-      'lg',
-      { ariaLabel: 'Generar pedido desde presupuesto' },
+      'xl',
+      {
+        ariaLabel: 'Generar pedido desde presupuesto',
+        panelClass: ['form-dialog-panel--quote'],
+        maxWidth: '1120px',
+      },
     );
   }
 

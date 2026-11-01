@@ -37,6 +37,9 @@ export type OrderFormDepositMode = 'editable' | 'info' | 'none';
   host: { style: 'display: contents' },
 })
 export class OrderFormOrderSummaryComponent {
+  private static nextDepositId = 0;
+  readonly depositAmountId = `deposit-amount-${++OrderFormOrderSummaryComponent.nextDepositId}`;
+
   @Input() listSubtotal = 0;
   @Input() wholesalePercent = 0;
   @Input() wholesaleDiscountAmount = 0;
@@ -86,4 +89,26 @@ export class OrderFormOrderSummaryComponent {
   @Output() depositMethodChange = new EventEmitter<PaymentMethod>();
   @Output() depositAccountChange = new EventEmitter<string>();
   @Output() depositFeeChange = new EventEmitter<number | null>();
+
+  /** Vista `$ 3.680` (mismo formateo que currencyArs). El modelo sigue numérico. */
+  get depositAmountDisplay(): string {
+    if (this.depositAmount == null || this.depositAmount === ('' as unknown)) {
+      return '';
+    }
+    const amount = Math.round(Number(this.depositAmount) || 0);
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(amount);
+  }
+
+  onDepositAmountDisplayChange(raw: string): void {
+    const digits = String(raw ?? '').replace(/\D/g, '');
+    if (!digits) {
+      this.depositAmountChange.emit(null);
+      return;
+    }
+    this.depositAmountChange.emit(Math.round(Number(digits)));
+  }
 }

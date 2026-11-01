@@ -12,6 +12,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { RouterLink } from '@angular/router';
 import {
   CreateOrderPayload,
   CreateOrderPaymentPayload,
@@ -131,11 +132,13 @@ import {
   wholesalePriceFromList,
 } from '../../../shared/utils/wholesale-example.util';
 import {
+  isWholesaleMarginBelowArea,
   lineListSubtotal,
   lineListUnitPrice,
   linePreviewSubtotal,
   meetsWholesaleMinimum,
   wholesaleAppliesToService,
+  wholesaleMarginPercentOnCost,
   wouldApplyWholesale,
 } from '../../../shared/utils/order-wholesale-preview.util';
 import { defaultAccountForMethod } from '../../../shared/utils/treasury-account.util';
@@ -183,6 +186,7 @@ export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
   standalone: true,
   imports: [
     FormsModule,
+    RouterLink,
     DbFormComponent,
     DbFormGridFullComponent,
     DbTextareaComponent,
@@ -231,6 +235,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
   @Output() save = new EventEmitter<OrderFormSavePayload>();
   @Output() cancel = new EventEmitter<void>();
   @Output() customerCreated = new EventEmitter<Customer>();
+  /** El dialog refresca título/subtítulo (mayorista / revendedor). */
+  @Output() uiMetaChange = new EventEmitter<void>();
 
   customerId = '';
   dueDate = defaultDueDate();
@@ -569,8 +575,97 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }
     return {
       kind: 'warn',
-      message: `No llega a la compra mínima mayorista de ${this.money(min)}: se cobra precio de lista`,
+      message: `No llega a la compra mínima mayorista de ${this.money(min)}: se cobra precio de lista.`,
     };
+  }
+
+  /**
+   * Aviso global debajo de las líneas cuando hay productos con margen por
+   * mayor por debajo del margen del área (mismo cálculo que en cada línea).
+   */
+  get lowWholesaleMarginNotice(): {
+    message: string;
+    namesLabel: string;
+  } | null {
+    if (!this.wholesaleAppliedPreview || !this.profitMargins) {
+      return null;
+    }
+
+    const items: Array<{ name: string; margin: number; areaMargin: number }> =
+      [];
+
+    for (let index = 0; index < this.billableLines.length; index++) {
+      const line = this.billableLines[index];
+      if (!wholesaleAppliesToService(line.serviceType, this.wholesaleDiscount)) {
+        continue;
+      }
+      const list = lineListUnitPrice(line);
+      const wholesale = wholesalePriceFromList(
+        list,
+        this.wholesaleDiscount.percent,
+      );
+      const unitCost = this.lineUnitCost(line);
+      const area = getMarginForService(line.serviceType, this.profitMargins);
+      if (!isWholesaleMarginBelowArea(wholesale, unitCost, area)) {
+        continue;
+      }
+      items.push({
+        name: this.lineTitle(line, index),
+        margin: wholesaleMarginPercentOnCost(wholesale, unitCost),
+        areaMargin: area,
+      });
+    }
+
+    if (!items.length) return null;
+
+    const count = items.length;
+    const head =
+      count === 1
+        ? '1 producto queda con margen bajo por mayor'
+        : `${count} productos quedan con margen bajo por mayor`;
+
+    const namesJoined =
+      count === 1
+        ? items[0].name
+        : count === 2
+          ? `${items[0].name} y ${items[1].name}`
+          : `${items
+              .slice(0, -1)
+              .map((item) => item.name)
+              .join(', ')} y ${items[count - 1].name}`;
+
+    const sameMargin = items.every((item) => item.margin === items[0].margin);
+    const namesLabel = sameMargin
+      ? `${namesJoined}, ${items[0].margin}%`
+      : items.map((item) => `${item.name} ${item.margin}%`).join(', ');
+
+    const areaMargin = items[0].areaMargin;
+    const discount = this.wholesaleDiscount.percent;
+    return {
+      message: `${head} (${namesLabel}). Su margen de lista es del ${areaMargin}%: con −${discount}% quedan cerca del costo.`,
+      namesLabel,
+    };
+  }
+
+  /** Subtítulo del modal según tipo de precio / variante. */
+  get modalSubtitle(): string {
+    const percent = this.wholesaleDiscount.percent;
+    if (this.isQuoteForm) {
+      if (this.priceType === PriceType.MAYORISTA) {
+        return `Cotización para un revendedor · −${percent}% sobre el precio de lista`;
+      }
+      if (this.isEditing) {
+        return 'Editá la cotización antes de confirmar el pedido.';
+      }
+      return 'Cotización para un cliente antes de confirmar el pedido';
+    }
+    if (this.priceType === PriceType.MAYORISTA) {
+      return 'Pedido de revendedor · cada línea genera tareas en la cola de trabajo';
+    }
+    if (this.presetQuote) {
+      return 'Revisá las líneas del presupuesto antes de generar el pedido.';
+    }
+    return 'Podés mezclar servicios en el mismo pedido. Cada línea genera tareas en la cola de trabajo.';
   }
 
   get showDepositBlock(): boolean {
@@ -888,7 +983,23 @@ export class OrderFormComponent implements OnChanges, OnInit {
       changes['presetQuote']
     ) {
       this.resetForm();
+      this.uiMetaChange.emit();
+      return;
     }
+
+    // Catálogo de clientes llegó/actualizó: proponer mayorista + pill sin pisar líneas.
+    if (changes['customers']) {
+      this.applyResellerPriceTypeIfNeeded();
+      this.uiMetaChange.emit();
+    }
+  }
+
+  /** Si el usuario no eligió tipo a mano, alinea con el type del cliente. */
+  private applyResellerPriceTypeIfNeeded(): void {
+    if (this.priceTypeManual) return;
+    this.priceType = this.isResellerCustomer
+      ? PriceType.MAYORISTA
+      : PriceType.LISTA;
   }
 
   serviceLabel(serviceType: ServiceType): string {
@@ -976,16 +1087,14 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   onCustomerIdChange(customerId: string): void {
     this.customerId = customerId;
-    if (!this.priceTypeManual) {
-      this.priceType = this.isResellerCustomer
-        ? PriceType.MAYORISTA
-        : PriceType.LISTA;
-    }
+    this.applyResellerPriceTypeIfNeeded();
+    this.uiMetaChange.emit();
   }
 
   onPriceTypeChange(value: PriceType): void {
     this.priceType = value;
     this.priceTypeManual = true;
+    this.uiMetaChange.emit();
   }
 
   onSalesChannelChange(value: string | null): void {
@@ -1285,7 +1394,10 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.discountAmount = this.order.discountAmount ?? 0;
       this.priceType = this.order.priceType ?? PriceType.LISTA;
       this.salesChannel = this.order.salesChannel ?? null;
-      this.priceTypeManual = true;
+      this.priceTypeManual = !!this.order.priceType;
+      if (!this.priceTypeManual && this.isResellerCustomer) {
+        this.priceType = PriceType.MAYORISTA;
+      }
     } else if (this.presetCartLines.length && this.products.length) {
       this.customerId = this.presetCustomerId;
       this.dueDate = defaultDueDate();

@@ -164,6 +164,31 @@
   margin: 0.25rem 0 0.35rem;
 }
 
+.wholesale-margin-note {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  margin: 0.35rem 0 0;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.75rem;
+  border: 1px solid #f5d9a8;
+  background: #fff8eb;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: #7a4a06;
+
+  &__icon {
+    flex: none;
+    font-weight: 700;
+  }
+
+  &__link {
+    font-weight: 700;
+    color: #7a4a06;
+    text-decoration: underline;
+  }
+}
+
 .quote-lines-section {
   display: flex;
   flex-direction: column;
