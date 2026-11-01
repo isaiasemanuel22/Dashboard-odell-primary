@@ -889,6 +889,15 @@ export interface ClientReceivable {
   orders: ClientReceivableOrder[];
 }
 
+/** Insumo con stock bajo: mismo criterio que el KPI (quantity <= minStock). */
+export interface DashboardLowStockItem {
+  id: string;
+  name: string;
+  quantity: number;
+  unit: string;
+  minStock: number;
+}
+
 export interface DashboardStats {
   totalOrders: number;
   pendingOrders: number;
@@ -904,6 +913,8 @@ export interface DashboardStats {
   queuedPrintJobs: number;
   totalCustomers: number;
   lowStockMaterials: number;
+  /** Misma lista que alimenta lowStockMaterials (quantity <= minStock). */
+  lowStockItems: DashboardLowStockItem[];
   ordersByType: { type: ServiceType; count: number }[];
   recentOrders: Order[];
   monthlyTrend: MonthlyTrendPoint[];

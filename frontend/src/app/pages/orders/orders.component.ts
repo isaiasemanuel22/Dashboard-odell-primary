@@ -20,6 +20,7 @@ import {
   DbStateMessageComponent,
   DbButtonComponent,
   OrderCardComponent,
+  isOrderOverdue,
 } from '@general-components';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { plainTextFromHtml } from '../../shared/utils/rich-text.util';
@@ -64,11 +65,18 @@ export class OrdersComponent implements OnInit {
   search = '';
   statusFilter: OrderStatusFilter = 'abiertos';
   serviceFilter: OrderServiceFilter = 'all';
+  /** Activo con ?filtro=atrasados (filtro client-side sobre el listado). */
+  overdueOnly = false;
 
   readonly statusFilters = orderStatusFilters();
   readonly serviceFilters = orderServiceFilters();
 
   ngOnInit(): void {
+    if (this.route.snapshot.queryParamMap.get('filtro') === 'atrasados') {
+      this.overdueOnly = true;
+      this.statusFilter = 'abiertos';
+    }
+
     this.loadOrders();
     this.realtime.bindSmartReload(
       this.destroyRef,
@@ -84,7 +92,7 @@ export class OrdersComponent implements OnInit {
 
   get filteredOrders(): Order[] {
     const term = this.search.trim().toLowerCase();
-    const list = !term
+    let list = !term
       ? [...this.orders]
       : this.orders.filter((order) =>
           [
@@ -98,6 +106,11 @@ export class OrdersComponent implements OnInit {
             .toLowerCase()
             .includes(term),
         );
+    if (this.overdueOnly) {
+      list = list.filter((order) =>
+        isOrderOverdue(order.dueDate, order.status),
+      );
+    }
     return list.sort(
       (a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -107,6 +120,9 @@ export class OrdersComponent implements OnInit {
   get emptyMessage(): string {
     if (this.search.trim()) {
       return 'No hay pedidos que coincidan con los filtros.';
+    }
+    if (this.overdueOnly) {
+      return 'No hay pedidos atrasados.';
     }
     if (this.statusFilter === 'abiertos') {
       return 'No hay pedidos abiertos.';
@@ -119,6 +135,9 @@ export class OrdersComponent implements OnInit {
 
   setStatusFilter(filter: OrderStatusFilter): void {
     this.statusFilter = filter;
+    if (this.overdueOnly) {
+      this.overdueOnly = false;
+    }
     this.loadOrders();
   }
 

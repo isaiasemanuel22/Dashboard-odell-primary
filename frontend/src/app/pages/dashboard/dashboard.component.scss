@@ -139,8 +139,17 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
   margin-bottom: 1.25rem;
-  align-items: start;
+  align-items: stretch;
   min-width: 0;
+
+  > * {
+    min-width: 0;
+    height: 100%;
+  }
+
+  &--single {
+    grid-template-columns: 1fr;
+  }
 }
 
 .receivables {

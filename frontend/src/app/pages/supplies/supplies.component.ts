@@ -66,7 +66,9 @@ export class SuppliesComponent implements OnInit {
   }
 
   ngOnInit(): void {
-    if (this.route.snapshot.queryParamMap.get('stock') === 'low') {
+    const filtro = this.route.snapshot.queryParamMap.get('filtro');
+    const stock = this.route.snapshot.queryParamMap.get('stock');
+    if (filtro === 'stock_bajo' || stock === 'low') {
       this.stockFilter = 'low';
     }
     this.loadColorCatalog();

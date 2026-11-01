@@ -254,6 +254,85 @@ describe('DashboardService', () => {
     ).toBe('success');
   });
 
+  it('expone lowStockItems con el mismo filtro que el KPI', () => {
+    store.supplies.push(
+      {
+        id: 'sup-low-1',
+        name: 'PLA negro',
+        category: SupplyCategory.FDM,
+        unit: 'kg',
+        quantity: 0.2,
+        minStock: 1,
+        unitPrice: 1000,
+        priceFromSettings: false,
+        updatedAt: '2026-07-01T12:00:00.000Z',
+      },
+      {
+        id: 'sup-low-2',
+        name: 'Tinta cyan',
+        category: SupplyCategory.ESTAMPADO,
+        unit: 'ml',
+        quantity: 10.2,
+        minStock: 50,
+        unitPrice: 100,
+        priceFromSettings: false,
+        updatedAt: '2026-07-01T12:00:00.000Z',
+      },
+      {
+        id: 'sup-ok',
+        name: 'PETG',
+        category: SupplyCategory.FDM,
+        unit: 'kg',
+        quantity: 5,
+        minStock: 1,
+        unitPrice: 1000,
+        priceFromSettings: false,
+        updatedAt: '2026-07-01T12:00:00.000Z',
+      },
+      {
+        id: 'sup-low-3',
+        name: 'Vinilo',
+        category: SupplyCategory.ESTAMPADO,
+        unit: 'unidad',
+        quantity: 0,
+        minStock: 2,
+        unitPrice: 50,
+        priceFromSettings: false,
+        updatedAt: '2026-07-01T12:00:00.000Z',
+      },
+    );
+
+    const stats = service.getStats();
+
+    expect(stats.lowStockMaterials).toBe(3);
+    expect(stats.lowStockItems).toEqual([
+      {
+        id: 'sup-low-1',
+        name: 'PLA negro',
+        quantity: 0.2,
+        unit: 'kg',
+        minStock: 1,
+      },
+      {
+        id: 'sup-low-2',
+        name: 'Tinta cyan',
+        quantity: 10.2,
+        unit: 'ml',
+        minStock: 50,
+      },
+      {
+        id: 'sup-low-3',
+        name: 'Vinilo',
+        quantity: 0,
+        unit: 'unidad',
+        minStock: 2,
+      },
+    ]);
+    expect(
+      stats.notifications.filter((item) => item.kind === 'stock'),
+    ).toHaveLength(3);
+  });
+
   it('separa vendido, cobrado y por cobrar con seña parcial y comisión', () => {
     const now = new Date();
     const inMonth = new Date(

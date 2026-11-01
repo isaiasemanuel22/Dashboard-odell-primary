@@ -11,6 +11,7 @@ import { Router, RouterLink } from '@angular/router';
 import { BehaviorSubject, catchError, of, switchMap } from 'rxjs';
 import {
   ClientReceivable,
+  DashboardLowStockItem,
   DashboardMarginAlert,
   DashboardPeriod,
   DashboardRankBy,
@@ -236,21 +237,6 @@ export class DashboardComponent implements OnInit {
     return 'sin atrasados · esperan iniciar';
   }
 
-  /** «Quedan 0 unidad» → «Quedan 0 unidades»; «1 unidad» se mantiene. */
-  private pluralizeStockMessage(
-    message: string | null | undefined,
-  ): string | null {
-    if (!message) return null;
-    return message.replace(
-      /\bQuedan\s+(-?\d+(?:[.,]\d+)?)\s+unidad\b/i,
-      (_full, rawQty: string) => {
-        const qty = Number(String(rawQty).replace(',', '.'));
-        const unit = qty === 1 ? 'unidad' : 'unidades';
-        return `Quedan ${rawQty} ${unit}`;
-      },
-    );
-  }
-
   productionHint(stats: DashboardStats): string {
     const printing =
       stats.activePrintJobs === 1
@@ -265,6 +251,32 @@ export class DashboardComponent implements OnInit {
 
   lowStockHint(count: number): string {
     return count === 1 ? 'Insumo a reponer' : 'Insumos a reponer';
+  }
+
+  /** Hasta 3 nombres; si hay más, «y N más». */
+  private lowStockNamesLabel(items: DashboardLowStockItem[]): string {
+    const names = items
+      .map((item) => item.name?.trim())
+      .filter((name): name is string => Boolean(name));
+    if (!names.length) return '';
+    const shown = names.slice(0, 3);
+    const rest = names.length - shown.length;
+    if (rest > 0) return `${shown.join(' · ')} y ${rest} más`;
+    return shown.join(' · ');
+  }
+
+  /** «Quedan 10,2 ml» / «Quedan 0 unidades» / «Quedan 1 unidad». */
+  private formatLowStockRemaining(item: DashboardLowStockItem): string {
+    const qty = Number(item.quantity) || 0;
+    const qtyLabel = new Intl.NumberFormat('es-AR', {
+      maximumFractionDigits: 2,
+    }).format(qty);
+    const rawUnit = (item.unit ?? '').trim() || 'unidad';
+    if (/^unidades?$/i.test(rawUnit)) {
+      const word = qty === 1 ? 'unidad' : 'unidades';
+      return `Quedan ${qtyLabel} ${word}`;
+    }
+    return `Quedan ${qtyLabel} ${rawUnit}`;
   }
 
   inProgressCount(stats: DashboardStats): number {
@@ -301,6 +313,7 @@ export class DashboardComponent implements OnInit {
         detail,
         actionLabel: 'Ver pedidos',
         route: '/pedidos',
+        queryParams: { filtro: 'atrasados' },
       });
     }
 
@@ -322,31 +335,30 @@ export class DashboardComponent implements OnInit {
       });
     }
 
-    if (stats.lowStockMaterials > 0) {
-      const stockNotes = stats.notifications.filter(
-        (note) => note.kind === 'stock',
-      );
-      const names = stockNotes
-        .slice(0, 2)
-        .map((note) =>
-          note.title.replace(/^Stock bajo:\s*/i, '').replace(/\s+sin stock$/i, ''),
-        )
-        .filter(Boolean);
-      const first = stockNotes[0];
+    const lowStockItems = stats.lowStockItems ?? [];
+    if (lowStockItems.length > 0) {
+      const first = lowStockItems[0];
+      items.push({
+        id: 'stock',
+        tone: 'warn',
+        title: `Pedí ${this.lowStockNamesLabel(lowStockItems)}`,
+        detail: this.formatLowStockRemaining(first),
+        actionLabel: 'Ver insumos',
+        route: '/insumos',
+        queryParams: { filtro: 'stock_bajo' },
+      });
+    } else if (stats.lowStockMaterials > 0) {
       items.push({
         id: 'stock',
         tone: 'warn',
         title:
-          names.length > 0
-            ? `Pedí ${names.join(' · ')}`
-            : stats.lowStockMaterials === 1
-              ? '1 insumo con stock bajo'
-              : `${stats.lowStockMaterials} insumos con stock bajo`,
-        detail:
-          this.pluralizeStockMessage(first?.message) ??
-          this.lowStockHint(stats.lowStockMaterials),
+          stats.lowStockMaterials === 1
+            ? '1 insumo con stock bajo'
+            : `${stats.lowStockMaterials} insumos con stock bajo`,
+        detail: this.lowStockHint(stats.lowStockMaterials),
         actionLabel: 'Ver insumos',
-        route: first?.route?.split('?')[0] || '/insumos',
+        route: '/insumos',
+        queryParams: { filtro: 'stock_bajo' },
       });
     }
 

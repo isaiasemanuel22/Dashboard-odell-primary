@@ -105,12 +105,17 @@
       <app-dashboard-monthly-trends [trends]="stats.monthlyTrend" />
     }
 
-    <section class="dashboard-split">
+    <section
+      class="dashboard-split"
+      [class.dashboard-split--single]="profit.marginAlerts.length === 0"
+    >
       <app-dashboard-channels [channels]="profit.byChannel" />
-      <app-dashboard-margin-alerts
-        [alerts]="profit.marginAlerts"
-        (raisePrice)="raiseProductPrice($event)"
-      />
+      @if (profit.marginAlerts.length > 0) {
+        <app-dashboard-margin-alerts
+          [alerts]="profit.marginAlerts"
+          (raisePrice)="raiseProductPrice($event)"
+        />
+      }
     </section>
 
     <app-dashboard-ranking

@@ -7,6 +7,7 @@ import {
 } from '../common/enums';
 import {
   ClientReceivable,
+  DashboardLowStockItem,
   DashboardNotification,
   DashboardPeriod,
   DashboardProfitability,
@@ -96,6 +97,7 @@ export class DashboardService {
       .slice(0, 5);
 
     const receivables = this.listReceivables();
+    const lowStockItems = this.listLowStockItems();
 
     return {
       totalOrders: this.store.orders.length,
@@ -123,13 +125,12 @@ export class DashboardService {
         (j) => j.active && j.status === PrintJobStatus.POR_HACER,
       ).length,
       totalCustomers: this.store.customers.length,
-      lowStockMaterials: this.store.supplies.filter(
-        (s) => s.quantity <= s.minStock,
-      ).length,
+      lowStockMaterials: lowStockItems.length,
+      lowStockItems,
       ordersByType,
       recentOrders,
       monthlyTrend: this.buildMonthlyTrend(),
-      notifications: this.buildNotifications(),
+      notifications: this.buildNotifications(lowStockItems),
       profitability: this.buildProfitability(
         period,
         rankBy,
@@ -137,6 +138,19 @@ export class DashboardService {
         receivables.orderCount,
       ),
     };
+  }
+
+  /** Mismo filtro que el KPI de stock bajo: quantity <= minStock. */
+  private listLowStockItems(): DashboardLowStockItem[] {
+    return this.store.supplies
+      .filter((supply) => supply.quantity <= supply.minStock)
+      .map((supply) => ({
+        id: supply.id,
+        name: supply.name,
+        quantity: supply.quantity,
+        unit: supply.unit,
+        minStock: supply.minStock,
+      }));
   }
 
   private buildProfitability(
@@ -357,13 +371,12 @@ export class DashboardService {
     return (profit / cost) * 100;
   }
 
-  private buildNotifications(): DashboardNotification[] {
+  private buildNotifications(
+    lowStockItems: DashboardLowStockItem[] = this.listLowStockItems(),
+  ): DashboardNotification[] {
     const notifications: DashboardNotification[] = [];
 
-    const lowStockSupplies = this.store.supplies.filter(
-      (supply) => supply.quantity <= supply.minStock,
-    );
-    for (const supply of lowStockSupplies) {
+    for (const supply of lowStockItems) {
       const empty = Number(supply.quantity) <= 0;
       notifications.push({
         id: `low-stock-${supply.id}`,
@@ -373,7 +386,7 @@ export class DashboardService {
           ? `${supply.name} sin stock`
           : `Stock bajo: ${supply.name}`,
         message: `Quedan ${supply.quantity} ${supply.unit}`,
-        route: '/insumos?stock=low',
+        route: '/insumos?filtro=stock_bajo',
       });
     }
 
