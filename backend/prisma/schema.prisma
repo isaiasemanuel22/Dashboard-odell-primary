@@ -49,12 +49,16 @@ model Category {
 }
 
 model Customer {
-  id        String   @id @db.VarChar(64)
-  name      String   @db.VarChar(255)
-  email     String   @db.VarChar(255)
-  phone     String   @db.VarChar(64)
-  company   String?  @db.VarChar(255)
-  createdAt DateTime @map("created_at")
+  id                String   @id @db.VarChar(64)
+  name              String   @db.VarChar(255)
+  email             String   @db.VarChar(255)
+  phone             String   @db.VarChar(64)
+  company           String?  @db.VarChar(255)
+  type              String   @default("particular") @db.VarChar(32)
+  wholesaleMinimum  Float?   @map("wholesale_minimum")
+  taxId             String?  @map("tax_id") @db.VarChar(32)
+  source            String?  @db.VarChar(32)
+  createdAt         DateTime @map("created_at")
 
   orders Order[]
   quotes Quote[]

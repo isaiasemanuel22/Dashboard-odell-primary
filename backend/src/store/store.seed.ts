@@ -13,6 +13,7 @@ import {
   CalendarEntryKind,
   CalendarNotify,
   CalendarRepeat,
+  CustomerType,
 } from '../common/enums';
 import { adoptLegacyBrandNames } from './brand-link.util';
 import { StoreState } from './store.state';
@@ -598,6 +599,7 @@ export function createSeedState(): StoreState {
       email: 'maria@disenocreativo.com',
       phone: '+54 11 4567-8901',
       company: 'Diseño Creativo SA',
+      type: CustomerType.PARTICULAR,
       createdAt: '2026-01-15T10:00:00.000Z',
     },
     {
@@ -606,6 +608,7 @@ export function createSeedState(): StoreState {
       email: 'carlos@tallermsur.com',
       phone: '+54 11 2345-6789',
       company: 'Taller Mecánico Sur',
+      type: CustomerType.PARTICULAR,
       createdAt: '2026-02-03T14:30:00.000Z',
     },
     {
@@ -613,6 +616,7 @@ export function createSeedState(): StoreState {
       name: 'Lucía Fernández',
       email: 'lucia.f@gmail.com',
       phone: '+54 11 9876-5432',
+      type: CustomerType.PARTICULAR,
       createdAt: '2026-03-10T09:15:00.000Z',
     },
     {
@@ -621,6 +625,8 @@ export function createSeedState(): StoreState {
       email: 'contacto@empnorte.com',
       phone: '+54 351 555-0100',
       company: 'Emprendimientos Norte',
+      type: CustomerType.REVENDEDOR,
+      wholesaleMinimum: 50000,
       createdAt: '2026-04-22T16:45:00.000Z',
     },
   ];

@@ -4,6 +4,8 @@ import {
   CalendarLinkType,
   CalendarNotify,
   CalendarRepeat,
+  CustomerSource,
+  CustomerType,
   FilamentType,
   OrderStatus,
   PaperType,
@@ -405,6 +407,14 @@ export interface Customer {
   email: string;
   phone: string;
   company?: string;
+  /** Particular | Empresa | Revendedor; datos viejos se leen como particular. */
+  type: CustomerType;
+  /** Compra mínima mayorista (pesos, >= 0); solo aplica a revendedor. */
+  wholesaleMinimum?: number;
+  /** CUIT opcional, normalizado XX-XXXXXXXX-X. */
+  taxId?: string;
+  /** Cómo llegó el cliente. */
+  source?: CustomerSource;
   createdAt: string;
 }
 

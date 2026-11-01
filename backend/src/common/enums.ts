@@ -61,6 +61,21 @@ export enum SaleSource {
   ORDER = 'order',
 }
 
+export enum CustomerType {
+  PARTICULAR = 'particular',
+  EMPRESA = 'empresa',
+  REVENDEDOR = 'revendedor',
+}
+
+export enum CustomerSource {
+  INSTAGRAM = 'instagram',
+  WHATSAPP = 'whatsapp',
+  TIENDANUBE = 'tiendanube',
+  FERIA = 'feria',
+  RECOMENDACION = 'recomendacion',
+  OTRO = 'otro',
+}
+
 export enum TreasuryExpenseCategory {
   SUPPLY_PURCHASE = 'supply_purchase',
   WITHDRAWAL = 'withdrawal',

@@ -1,4 +1,9 @@
-import { FilamentType, QuoteStatus, ServiceType } from '../common/enums';
+import {
+  CustomerType,
+  FilamentType,
+  QuoteStatus,
+  ServiceType,
+} from '../common/enums';
 import { OrdersService } from '../orders/orders.service';
 import { OrderTasksService } from '../print-jobs/order-tasks.service';
 import { PrintJobsService } from '../print-jobs/print-jobs.service';
@@ -23,6 +28,7 @@ describe('QuotesService producto nuevo', () => {
       name: 'Cliente',
       email: 'a@test.com',
       phone: '123',
+      type: CustomerType.PARTICULAR,
       createdAt: '2026-10-21T12:00:00.000Z',
     });
     state.quotes.push({

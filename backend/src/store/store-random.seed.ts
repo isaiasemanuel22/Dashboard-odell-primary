@@ -1,4 +1,5 @@
 import {
+  CustomerType,
   OrderStatus,
   PrintJobStatus,
   ProductType,
@@ -147,6 +148,7 @@ function addExtraCustomers(
       email: `${slug}${randInt(1, 99)}@demo.local`,
       phone: `+54 11 ${randInt(1000, 9999)}-${randInt(1000, 9999)}`,
       company: company ?? undefined,
+      type: CustomerType.PARTICULAR,
       createdAt: daysAgo(randInt(5, 120)),
     });
   }

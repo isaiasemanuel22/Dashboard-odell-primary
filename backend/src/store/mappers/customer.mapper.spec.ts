@@ -1,3 +1,4 @@
+import { CustomerType } from '../../common/enums';
 import { mapCustomerFromDb, mapCustomerToDb } from './customer.mapper';
 
 describe('customer.mapper', () => {
@@ -18,12 +19,17 @@ describe('customer.mapper', () => {
       email: 'maria@test.com',
       phone: '123',
       company: 'Acme',
+      type: CustomerType.PARTICULAR,
+      wholesaleMinimum: undefined,
+      taxId: undefined,
+      source: undefined,
       createdAt: createdAt.toISOString(),
     });
 
     const toDb = mapCustomerToDb(fromDb);
     expect(toDb.id).toBe('cust-1');
     expect(toDb.company).toBe('Acme');
+    expect(toDb.type).toBe(CustomerType.PARTICULAR);
     expect(toDb.createdAt).toEqual(createdAt);
   });
 });

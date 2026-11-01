@@ -1,4 +1,4 @@
-import { ProductType } from '../common/enums';
+import { CustomerType, ProductType } from '../common/enums';
 import { StoreService } from '../store/store.service';
 import { createEmptyState } from '../store/store.seed';
 import { ReferenceDataService } from './reference-data.service';
@@ -12,6 +12,7 @@ describe('ReferenceDataService', () => {
       name: 'Cliente',
       email: 'a@test.com',
       phone: '123',
+      type: CustomerType.PARTICULAR,
       createdAt: '2026-07-01T10:00:00.000Z',
     });
     state.categories.push({

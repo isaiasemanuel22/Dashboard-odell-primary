@@ -1,4 +1,5 @@
 import {
+  CustomerType,
   OrderStatus,
   PrintJobStatus,
   ServiceType,
@@ -25,6 +26,7 @@ describe('OrderTasksService', () => {
       name: 'Cliente Test',
       email: 'test@ejemplo.com',
       phone: '123',
+      type: CustomerType.PARTICULAR,
       createdAt: new Date().toISOString(),
     });
     store.products.push({

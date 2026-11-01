@@ -1,4 +1,4 @@
-import { OrderStatus, ProductType } from '../common/enums';
+import { CustomerType, OrderStatus, ProductType } from '../common/enums';
 import { OrderTasksService } from '../print-jobs/order-tasks.service';
 import { PrintJobsService } from '../print-jobs/print-jobs.service';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
@@ -23,6 +23,7 @@ describe('OrdersService.getOverview', () => {
       name: 'Cliente',
       email: 'a@test.com',
       phone: '123',
+      type: CustomerType.PARTICULAR,
       createdAt: '2026-07-01T10:00:00.000Z',
     });
     state.products.push({
