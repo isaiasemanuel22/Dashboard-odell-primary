@@ -40,6 +40,7 @@ describe('OrderTasksService', () => {
       published: true,
       components: [],
       assemblyTimeHours: 0,
+      includesPieces: false,
       grams: 50,
       printTimeHours: 1,
       workTimeHours: 0,
@@ -456,11 +457,3 @@ describe('OrderTasksService', () => {
   });
 });
 
-describe('OrdersService validations', () => {
-  it('rechaza transición inválida de estado', () => {
-    expect(() => {
-      const { assertOrderStatusTransition } = require('../common/validators/domain.validators');
-      assertOrderStatusTransition(OrderStatus.CANCELADO, OrderStatus.PENDIENTE);
-    }).toThrow(BadRequestException);
-  });
-});

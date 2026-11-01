@@ -33,6 +33,7 @@ import {
   calculateTotalWithDiscount,
   normalizeDiscountFields,
 } from '../common/utils/discount.util';
+import { paidCents } from '../common/utils/money.util';
 import { isRevenueOrder, resolveOrderSoldAt } from './sales-order.util';
 import { computeAreaProfitBalances } from './profit-area.util';
 
@@ -70,18 +71,10 @@ export class SalesService {
     const retailIncome = this.retailSales
       .findAll()
       .reduce((sum, sale) => sum + sale.total, 0);
-    const orderPayments = this.orders
+    const orderPaymentsCents = this.orders
       .findAll()
-      .reduce(
-        (sum, order) =>
-          sum +
-          (order.payments ?? []).reduce(
-            (paid, payment) => paid + (Number(payment.amount) || 0),
-            0,
-          ),
-        0,
-      );
-    return retailIncome + orderPayments;
+      .reduce((sum, order) => sum + paidCents(order), 0);
+    return retailIncome + orderPaymentsCents / 100;
   }
 
   findRetailSale(id: string): RetailSale {

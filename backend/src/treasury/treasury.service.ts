@@ -15,6 +15,7 @@ import { SuppliesService } from '../supplies/supplies.service';
 import { StoreChangeService } from '../store/store-change.service';
 import { SupplyRepository, TreasuryExpenseRepository } from '../store/repositories';
 import { computeDebtorBalances, getDebtorOutstanding } from './treasury-debtor.util';
+import { toCents } from '../common/utils/money.util';
 
 interface ValidatedSupplyPurchaseLine {
   supply: Supply;
@@ -476,10 +477,10 @@ export class TreasuryService {
     }
 
     const totalSpentCents = lines.reduce(
-      (sum, line) => sum + this.toCents(line.amountSpent),
+      (sum, line) => sum + toCents(line.amountSpent),
       0,
     );
-    if (totalSpentCents !== this.toCents(totalAmount)) {
+    if (totalSpentCents !== toCents(totalAmount)) {
       throw new BadRequestException(
         'El monto total no coincide con la suma de gastos por insumo',
       );
@@ -515,10 +516,6 @@ export class TreasuryService {
         ? 'material'
         : 'insumo';
     return `Compra de ${kind}: ${supply.name}`;
-  }
-
-  private toCents(value: number): number {
-    return Math.round(Number(value) * 100);
   }
 
   private parseOccurredAt(value: string): string {

@@ -1,34 +1,7 @@
 import { BadRequestException } from '@nestjs/common';
-import { OrderStatus, PrintJobStatus } from '../enums';
+import { PrintJobStatus } from '../enums';
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-
-const TERMINAL_ORDER_STATUSES = new Set<OrderStatus>([
-  OrderStatus.ENTREGADO,
-  OrderStatus.CANCELADO,
-]);
-
-const ALLOWED_ORDER_TRANSITIONS: Partial<
-  Record<OrderStatus, readonly OrderStatus[]>
-> = {
-  [OrderStatus.PENDIENTE]: [
-    OrderStatus.EN_PRODUCCION,
-    OrderStatus.CANCELADO,
-    OrderStatus.COMPLETADO,
-  ],
-  [OrderStatus.EN_PRODUCCION]: [
-    OrderStatus.PENDIENTE,
-    OrderStatus.COMPLETADO,
-    OrderStatus.CANCELADO,
-  ],
-  [OrderStatus.COMPLETADO]: [
-    OrderStatus.EN_PRODUCCION,
-    OrderStatus.ENTREGADO,
-    OrderStatus.CANCELADO,
-  ],
-  [OrderStatus.ENTREGADO]: [],
-  [OrderStatus.CANCELADO]: [],
-};
 
 export function assertValidEmail(email: string, field = 'email'): void {
   if (!EMAIL_PATTERN.test(email)) {
@@ -49,26 +22,6 @@ export function assertNonNegativeNumber(
   }
   if (value < 0) {
     throw new BadRequestException(`${field} no puede ser negativo`);
-  }
-}
-
-export function assertOrderStatusTransition(
-  current: OrderStatus,
-  next: OrderStatus,
-): void {
-  if (current === next) return;
-
-  if (TERMINAL_ORDER_STATUSES.has(current)) {
-    throw new BadRequestException(
-      `No se puede cambiar el estado de un pedido ${current}`,
-    );
-  }
-
-  const allowed = ALLOWED_ORDER_TRANSITIONS[current] ?? [];
-  if (!allowed.includes(next)) {
-    throw new BadRequestException(
-      `Transición de estado inválida: ${current} → ${next}`,
-    );
   }
 }
 

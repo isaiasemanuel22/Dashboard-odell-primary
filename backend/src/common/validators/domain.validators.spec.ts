@@ -1,7 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { OrderStatus, PrintJobStatus, ServiceType } from '../enums';
 import {
-  assertOrderStatusTransition,
   assertPrintJobStatusTransition,
   assertValidEmail,
 } from './domain.validators';
@@ -10,21 +9,6 @@ describe('domain.validators', () => {
   it('valida emails correctamente', () => {
     expect(() => assertValidEmail('cliente@ejemplo.com')).not.toThrow();
     expect(() => assertValidEmail('invalido')).toThrow(BadRequestException);
-  });
-
-  it('permite transiciones válidas de pedidos', () => {
-    expect(() =>
-      assertOrderStatusTransition(
-        OrderStatus.PENDIENTE,
-        OrderStatus.EN_PRODUCCION,
-      ),
-    ).not.toThrow();
-  });
-
-  it('rechaza transiciones inválidas de pedidos', () => {
-    expect(() =>
-      assertOrderStatusTransition(OrderStatus.ENTREGADO, OrderStatus.PENDIENTE),
-    ).toThrow(BadRequestException);
   });
 
   it('permite reabrir tareas terminadas', () => {

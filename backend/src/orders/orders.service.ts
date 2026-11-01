@@ -20,6 +20,7 @@ import {
   calculateTotalWithDiscount,
   normalizeDiscountFields,
 } from '../common/utils/discount.util';
+import { outstandingCents, toCents } from '../common/utils/money.util';
 import { calculateOrderItemsSubtotal } from './order-pricing.util';
 import {
   DUE_DATE_AFTER_TODAY_MESSAGE,
@@ -328,17 +329,11 @@ export class OrdersService {
       throw new BadRequestException('No se puede cobrar un pedido cancelado');
     }
 
-    const amountCents = this.toCents(data.amount);
+    const amountCents = toCents(data.amount);
     if (amountCents <= 0) {
       throw new BadRequestException('El monto debe ser mayor a cero');
     }
-
-    const paidCents = (order.payments ?? []).reduce(
-      (sum, payment) => sum + this.toCents(payment.amount),
-      0,
-    );
-    const balanceCents = this.toCents(order.total) - paidCents;
-    if (amountCents > balanceCents) {
+    if (amountCents > outstandingCents(order)) {
       throw new BadRequestException('El monto supera el saldo pendiente');
     }
 
@@ -349,7 +344,7 @@ export class OrdersService {
       deposit: data.deposit === true,
       createdAt: new Date().toISOString(),
     });
-    return order;
+    return this.orders.save(order);
   }
 
   deliver(id: string, lines: OrderDeliveryLine[]): Order {
@@ -426,13 +421,7 @@ export class OrdersService {
       items: normalized,
     });
     this.orderTasks.syncOrderStatusFromTasks(order.id);
-    return order;
-  }
-
-  purgeExpiredTerminalOrders(): number {
-    // Los pedidos y sus tareas forman parte del historial operativo.
-    // La retención ya no puede purgarlos físicamente.
-    return 0;
+    return this.orders.save(order);
   }
 
   private normalizeServices(items: OrderItem[]): ServiceType[] {
@@ -480,10 +469,6 @@ export class OrdersService {
     }
 
     return sanitized;
-  }
-
-  private toCents(value: number): number {
-    return Math.round(Number(value) * 100);
   }
 
   private assertDueDateAfterToday(dueDate: string): void {

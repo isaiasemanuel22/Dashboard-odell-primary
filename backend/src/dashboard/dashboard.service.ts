@@ -13,6 +13,7 @@ import { StoreService } from '../store/store.service';
 import { TreasuryService } from '../treasury/treasury.service';
 import { computeDebtorBalances } from '../treasury/treasury-debtor.util';
 import { listOrderPriceNotices } from '../orders/order-price-notice.util';
+import { outstandingCents } from '../common/utils/money.util';
 
 const MONTH_LABELS = [
   'Ene',
@@ -267,7 +268,7 @@ export class DashboardService {
 
     for (const order of this.store.orders) {
       if (order.status !== OrderStatus.ENTREGADO) continue;
-      const cents = this.unpaidCents(order);
+      const cents = outstandingCents(order);
       if (cents <= 0) continue;
       totalCents += cents;
       const key = order.customerId || order.customerName;
@@ -320,15 +321,6 @@ export class DashboardService {
       .filter((name): name is string => !!name);
     if (names.length) return names.join(' · ');
     return (order.description ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
-  }
-
-  private unpaidCents(order: { total: number; payments?: { amount: number }[] }): number {
-    const total = Math.round((Number(order.total) || 0) * 100);
-    const paid = (order.payments ?? []).reduce(
-      (sum, payment) => sum + Math.round((Number(payment.amount) || 0) * 100),
-      0,
-    );
-    return Math.max(0, total - paid);
   }
 
   private computeMonthRevenue(monthStart: Date, monthEnd: Date): number {

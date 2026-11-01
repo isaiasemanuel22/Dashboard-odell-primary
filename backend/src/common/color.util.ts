@@ -1,8 +1,8 @@
 import { BadRequestException } from '@nestjs/common';
 import { SupplyCategory } from './enums';
-import { ColorConfig } from './interfaces';
+import { ColorConfig, INDISTINTO_COLOR_ID } from './interfaces';
 
-export const INDISTINTO_COLOR_ID = 'indistinto';
+export { INDISTINTO_COLOR_ID };
 
 const HEX_COLOR_PATTERN = /^#[0-9A-Fa-f]{6}$/;
 
@@ -16,10 +16,10 @@ export function isValidColorHex(value: string): boolean {
   return HEX_COLOR_PATTERN.test(normalizeColorHex(value));
 }
 
-export function validateColorConfig(data: {
-  name?: string;
-  hex?: string;
-}): { name: string; hex: string } {
+export function validateColorConfig(data: { name?: string; hex?: string }): {
+  name: string;
+  hex: string;
+} {
   const name = data.name?.trim() ?? '';
   if (!name) {
     throw new BadRequestException('El nombre del color es obligatorio');
@@ -53,7 +53,9 @@ export function validateSupplyColorId(
     return undefined;
   }
   if (!findColorById(colors, colorId)) {
-    throw new BadRequestException('El color seleccionado no existe en el catálogo');
+    throw new BadRequestException(
+      'El color seleccionado no existe en el catálogo',
+    );
   }
   return colorId.trim();
 }
