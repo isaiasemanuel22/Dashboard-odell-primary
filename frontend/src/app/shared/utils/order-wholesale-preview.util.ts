@@ -8,16 +8,15 @@ import { wholesalePriceFromList } from './wholesale-example.util';
 
 /** Precio de lista editable/visible: listUnitPrice ?? unitPrice (o design). */
 export function lineListUnitPrice(line: OrderLineDraft): number {
-  if (isDesignService(line.serviceType)) {
+  // `null` no cuenta como precio de lista (Number(null) daría 0).
+  if (line.listUnitPrice != null) {
     const fromList = Number(line.listUnitPrice);
     if (Number.isFinite(fromList) && fromList >= 0) {
       return fromList;
     }
-    return Number(line.designUnitPrice ?? line.unitPrice) || 0;
   }
-  const fromList = Number(line.listUnitPrice);
-  if (Number.isFinite(fromList) && fromList >= 0) {
-    return fromList;
+  if (isDesignService(line.serviceType)) {
+    return Number(line.designUnitPrice ?? line.unitPrice) || 0;
   }
   return Number(line.unitPrice) || 0;
 }
