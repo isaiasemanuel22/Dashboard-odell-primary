@@ -34,13 +34,13 @@
         <db-form-grid>
           <db-input
             label="Compra mínima mayorista"
-            type="number"
-            [(ngModel)]="wholesaleMinimum"
+            type="text"
+            [ngModel]="wholesaleMinimumDisplay"
+            (ngModelChange)="onWholesaleMinimumDisplayChange($event)"
             name="wholesaleMinimum"
-            min="0"
-            step="1"
-            placeholder="0"
-            hint="Si el pedido no llega, se cobra precio de lista"
+            placeholder="Ej.: $ 50.000"
+            hint="Vacío = sin mínimo. Si el pedido no llega, se cobra precio de lista"
+            autocomplete="off"
           />
           <db-input
             label="CUIT (opcional)"
@@ -54,26 +54,33 @@
     }
 
     <db-form-grid>
-      <db-input
-        label="Email"
-        type="email"
-        [(ngModel)]="email"
-        name="email"
-        placeholder="cliente@empresa.com"
-        [required]="true"
-        [error]="emailError"
-      />
+      <div class="customer-form__email" (focusout)="onEmailBlur()">
+        <db-input
+          label="Email"
+          type="email"
+          [(ngModel)]="email"
+          name="email"
+          placeholder="cliente@empresa.com"
+          [required]="true"
+          [error]="emailError"
+        />
+      </div>
 
-      <db-input
-        label="Teléfono"
-        [(ngModel)]="phone"
-        name="phone"
-        placeholder="+54 223 123-4567"
-        autocomplete="tel"
-        hint="Con código de área, para WhatsApp"
-        [required]="true"
-        [error]="phoneError"
-      />
+      <div
+        class="customer-form__phone"
+        [class.customer-form__phone--ready]="phoneReadyForWhatsApp"
+      >
+        <db-input
+          label="Teléfono"
+          [(ngModel)]="phone"
+          name="phone"
+          placeholder="+54 223 123-4567"
+          autocomplete="tel"
+          [hint]="phoneHint"
+          [required]="true"
+          [error]="phoneError"
+        />
+      </div>
     </db-form-grid>
 
     <db-input
@@ -123,7 +130,7 @@
           variant="primary"
           format="solid"
           buttonType="submit"
-          [disabled]="loading || !name.trim() || !email.trim() || !phone.trim()"
+          [disabled]="!canSubmit"
         />
       </div>
     </db-form-footer>

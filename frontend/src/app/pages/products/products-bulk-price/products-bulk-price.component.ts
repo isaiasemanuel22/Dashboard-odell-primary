@@ -115,6 +115,7 @@ export class ProductsBulkPriceComponent implements OnInit {
     {
       key: 'newMarkupPercent',
       header: 'Margen nuevo',
+      type: 'number',
       align: 'end',
     },
   ];
@@ -137,6 +138,14 @@ export class ProductsBulkPriceComponent implements OnInit {
       !this.applying &&
       !this.percentError
     );
+  }
+
+  get applyLabel(): string {
+    if (this.applying) return 'Aplicando…';
+    if (this.previewCount <= 0) return 'Aplicar';
+    return `Aplicar a ${this.previewCount} ${
+      this.previewCount === 1 ? 'producto' : 'productos'
+    }`;
   }
 
   ngOnInit(): void {

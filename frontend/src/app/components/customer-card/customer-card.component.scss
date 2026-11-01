@@ -48,11 +48,16 @@
   height: 1.35rem;
   padding: 0 0.55rem;
   border-radius: $radius-pill;
-  background: $color-primary-bg;
-  color: $color-primary-dark;
+  background: $color-surface-muted;
+  color: $color-text-label;
   font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.01em;
+
+  &--revendedor {
+    background: $color-primary-bg;
+    color: $color-primary-dark;
+  }
 }
 
 .avatar {

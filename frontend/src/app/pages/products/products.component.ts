@@ -218,11 +218,27 @@ export class ProductsComponent implements OnInit {
     );
   }
 
-  get marginAlertMessage(): string {
-    const n = this.marginAlertCount;
-    const base = `${n} ${
-      n === 1 ? 'producto quedó' : 'productos quedaron'
-    } por debajo de su margen`;
+  get outdatedPriceAlerts(): ProductMarginAlert[] {
+    return this.marginAlerts.filter((alert) => !alert.fixedPrice);
+  }
+
+  get fixedPriceMarginAlerts(): ProductMarginAlert[] {
+    return this.marginAlerts.filter((alert) => alert.fixedPrice);
+  }
+
+  get outdatedPriceAlertMessage(): string {
+    const n = this.outdatedPriceAlerts.length;
+    return n === 1
+      ? '1 producto tiene el precio desactualizado respecto de su costo'
+      : `${n} productos tienen el precio desactualizado respecto de su costo`;
+  }
+
+  get fixedPriceMarginAlertMessage(): string {
+    const n = this.fixedPriceMarginAlerts.length;
+    const base =
+      n === 1
+        ? '1 producto con precio fijo quedó por debajo de su margen'
+        : `${n} productos con precio fijo quedaron por debajo de su margen`;
     const supply = this.topSupplyIncrease;
     if (!supply) return base;
     const before = this.currency.transform(supply.priceBefore);
@@ -334,6 +350,35 @@ export class ProductsComponent implements OnInit {
   scrollToBulkPrice(): void {
     const el = document.getElementById('masiva');
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  recalculateOutdatedPrices(): void {
+    const n = this.outdatedPriceAlerts.length;
+    if (n === 0) return;
+    this.formDialogs
+      .openConfirm({
+        title: 'Recalcular precios',
+        message:
+          n === 1
+            ? '¿Recalcular el precio del producto desactualizado según su costo actual?'
+            : `¿Recalcular los precios de ${n} productos desactualizados según su costo actual?`,
+        confirmLabel: 'Recalcular precios',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.productsService.syncPricing().subscribe({
+          next: () => {
+            this.reloadProducts();
+            this.reloadMarginAlerts();
+            this.showNotice('Precios recalculados según el costo actual.');
+          },
+          error: (err) => {
+            this.showNotice(
+              extractApiErrorMessage(err, 'No se pudieron recalcular los precios'),
+            );
+          },
+        });
+      });
   }
 
   onBulkPriceApplied(): void {

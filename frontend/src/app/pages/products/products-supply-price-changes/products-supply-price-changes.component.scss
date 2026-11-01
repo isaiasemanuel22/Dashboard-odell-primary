@@ -44,3 +44,8 @@
     color: $color-success;
   }
 }
+
+/* Encabezados numéricos a la derecha, igual que los valores. */
+:host ::ng-deep .odl-table th.odl-align-end {
+  text-align: right;
+}

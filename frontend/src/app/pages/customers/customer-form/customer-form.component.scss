@@ -13,6 +13,16 @@ form {
   line-height: 1.35;
 }
 
+.customer-form__phone--ready ::ng-deep .db-form-hint {
+  color: $color-success;
+  font-weight: 500;
+}
+
+.customer-form__email,
+.customer-form__phone {
+  min-width: 0;
+}
+
 .customer-form ::ng-deep .db-form-field {
   gap: 0.5rem;
 }

@@ -33,6 +33,12 @@ import {
   CUSTOMER_TYPE_LABELS,
 } from '../../../shared/utils/v1-labels.util';
 
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const EMAIL_ERROR_MSG =
+  'Revisá el email: falta el dominio (por ejemplo, .com)';
+const PHONE_HINT_DEFAULT = 'Con código de área, para WhatsApp';
+const PHONE_HINT_READY = 'Listo para WhatsApp';
+
 @Component({
   selector: 'app-customer-form',
   standalone: true,
@@ -99,6 +105,39 @@ export class CustomerFormComponent implements OnInit, OnChanges {
     return `−${this.wholesaleDiscountPercent}% sobre lista`;
   }
 
+  get phoneDigitCount(): number {
+    return this.phone.replace(/\D/g, '').length;
+  }
+
+  get phoneReadyForWhatsApp(): boolean {
+    return this.phoneDigitCount >= 10;
+  }
+
+  get phoneHint(): string {
+    return this.phoneReadyForWhatsApp ? PHONE_HINT_READY : PHONE_HINT_DEFAULT;
+  }
+
+  get canSubmit(): boolean {
+    return (
+      !this.loading &&
+      !!this.name.trim() &&
+      !!this.email.trim() &&
+      !!this.phone.trim() &&
+      isValidCustomerEmail(this.email.trim()) &&
+      isValidCustomerPhone(this.phone.trim())
+    );
+  }
+
+  /** Vista `$ 50.000` (mismo formateo que currencyArs). El modelo sigue numérico. */
+  get wholesaleMinimumDisplay(): string {
+    if (this.wholesaleMinimum === null || this.wholesaleMinimum === undefined) {
+      return '';
+    }
+    const amount = Math.round(Number(this.wholesaleMinimum));
+    if (!Number.isFinite(amount)) return '';
+    return formatCustomerMoney(amount);
+  }
+
   ngOnInit(): void {
     this.settingsService.getGeneralSettings().subscribe({
       next: (settings) => {
@@ -121,10 +160,25 @@ export class CustomerFormComponent implements OnInit, OnChanges {
     this.type = type;
   }
 
+  onEmailBlur(): void {
+    this.emailError = isValidCustomerEmail(this.email.trim())
+      ? ''
+      : EMAIL_ERROR_MSG;
+  }
+
+  onWholesaleMinimumDisplayChange(raw: string): void {
+    const digits = String(raw ?? '').replace(/\D/g, '');
+    if (!digits) {
+      this.wholesaleMinimum = null;
+      return;
+    }
+    this.wholesaleMinimum = Math.round(Number(digits));
+  }
+
   onSubmit(): void {
     const email = this.email.trim();
     const phone = this.phone.trim();
-    this.emailError = isValidCustomerEmail(email) ? '' : 'El email no es válido';
+    this.emailError = isValidCustomerEmail(email) ? '' : EMAIL_ERROR_MSG;
     this.phoneError = isValidCustomerPhone(phone)
       ? ''
       : 'El teléfono tiene que tener números, sin letras';
@@ -142,7 +196,7 @@ export class CustomerFormComponent implements OnInit, OnChanges {
     if (this.isRevendedor) {
       if (this.wholesaleMinimum !== null && this.wholesaleMinimum !== undefined) {
         const min = Number(this.wholesaleMinimum);
-        if (!Number.isNaN(min) && min >= 0) {
+        if (!Number.isNaN(min) && min > 0) {
           payload.wholesaleMinimum = min;
         }
       }
@@ -163,7 +217,9 @@ export class CustomerFormComponent implements OnInit, OnChanges {
       this.company = this.customer.company ?? '';
       this.type = this.customer.type ?? CustomerType.PARTICULAR;
       this.wholesaleMinimum =
-        this.customer.wholesaleMinimum !== undefined
+        this.customer.wholesaleMinimum !== undefined &&
+        this.customer.wholesaleMinimum !== null &&
+        Number(this.customer.wholesaleMinimum) > 0
           ? this.customer.wholesaleMinimum
           : null;
       this.taxId = this.customer.taxId ?? '';
@@ -184,10 +240,18 @@ export class CustomerFormComponent implements OnInit, OnChanges {
 }
 
 export function isValidCustomerEmail(email: string): boolean {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  return EMAIL_PATTERN.test(email);
 }
 
 export function isValidCustomerPhone(phone: string): boolean {
   if (/[a-zA-Z]/.test(phone)) return false;
   return phone.replace(/\D/g, '').length >= 6;
+}
+
+function formatCustomerMoney(value: number): string {
+  return new Intl.NumberFormat('es-AR', {
+    style: 'currency',
+    currency: 'ARS',
+    maximumFractionDigits: 0,
+  }).format(value);
 }

@@ -9,6 +9,7 @@ import {
   CreateProductPayload,
   Product,
   ProductMarginAlert,
+  ProductPricingFields,
   ProductPricingInput,
   ProductPricingResult,
   ProductOverview,
@@ -56,6 +57,14 @@ export class ProductsService {
     return this.http.post<BulkPricePreviewResult>(
       `${this.baseUrl}/products/bulk-price/apply`,
       data,
+    );
+  }
+
+  /** Recalcula precios de productos sin precio fijo según el costo actual. */
+  syncPricing(): Observable<{ fields: ProductPricingFields[] }> {
+    return this.http.post<{ fields: ProductPricingFields[] }>(
+      `${this.baseUrl}/products/sync-pricing`,
+      {},
     );
   }
 

@@ -18,7 +18,7 @@
   (updatePrices)="scrollToBulkPrice()"
 />
 
-@if (marginAlertCount > 0) {
+@if (outdatedPriceAlerts.length > 0) {
   <div class="products-alert" role="status">
     <svg
       viewBox="0 0 24 24"
@@ -34,9 +34,37 @@
     </svg>
     <div class="products-alert__body">
       <p>
-        <strong>{{ marginAlertMessage }}</strong>.
+        <strong>{{ outdatedPriceAlertMessage }}</strong>.
+      </p>
+      <db-button
+        label="Recalcular precios"
+        variant="primary"
+        format="soft"
+        (clicked)="recalculateOutdatedPrices()"
+      />
+    </div>
+  </div>
+}
+
+@if (fixedPriceMarginAlerts.length > 0) {
+  <div class="products-alert" role="status">
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      aria-hidden="true"
+    >
+      <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
+    </svg>
+    <div class="products-alert__body">
+      <p>
+        <strong>{{ fixedPriceMarginAlertMessage }}</strong>.
         <a href="#masiva" (click)="scrollToBulkPrice(); $event.preventDefault()">
-          Revisar y actualizar
+          Revisar precios en bloque
         </a>
       </p>
     </div>

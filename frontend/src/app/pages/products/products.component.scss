@@ -27,9 +27,15 @@
 .products-alert__body {
   flex: 1;
   min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem 0.85rem;
 
   p {
     margin: 0;
+    flex: 1 1 12rem;
+    min-width: 0;
   }
 }
 

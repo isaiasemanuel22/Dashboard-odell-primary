@@ -103,8 +103,6 @@
         {{ previewCount }}
         {{ previewCount === 1 ? 'producto cambia' : 'productos cambian' }}
         · los pedidos y presupuestos ya enviados mantienen su precio
-      } @else if (!previewLoading) {
-        Ningún producto con precio fijo entra en este filtro
       }
     </p>
     <div class="bulk-price__actions">
@@ -115,13 +113,7 @@
         (clicked)="cancel()"
       />
       <db-button
-        [label]="
-          applying
-            ? 'Aplicando…'
-            : 'Aplicar a ' +
-              previewCount +
-              (previewCount === 1 ? ' producto' : ' productos')
-        "
+        [label]="applyLabel"
         variant="primary"
         format="solid"
         [disabled]="!canApply"

@@ -45,7 +45,7 @@ export class FormDialogService {
     return this.open(CustomerFormDialogComponent, { customer }, 'md', {
       ariaLabel: customer ? 'Editar cliente' : 'Nuevo cliente',
       panelClass: ['form-dialog-panel--customer'],
-      maxWidth: '520px',
+      maxWidth: '600px',
     });
   }
 

@@ -18,16 +18,21 @@ import {
   DB_DATA_TABLE,
   DbButtonComponent,
   OdlActionEvent,
+  OdlBadge,
   OdlColumn,
   OdlFilter,
   OdlRowAction,
+  OdlTone,
 } from '@general-components';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import {
   clearCreateQuery,
   shouldOpenCreateFromQuery,
 } from '../../shared/utils/create-from-query.util';
-import { customerTypeLabel } from '../../shared/utils/v1-labels.util';
+import {
+  customerTypeLabel,
+  CUSTOMER_TYPE_LABELS,
+} from '../../shared/utils/v1-labels.util';
 
 @Component({
   selector: 'app-customers',
@@ -89,10 +94,7 @@ export class CustomersComponent implements OnInit {
       key: 'type',
       header: 'Tipo',
       type: 'badge',
-      badge: (customer) =>
-        customer.type === CustomerType.REVENDEDOR
-          ? { label: 'Revendedor', tone: 'info' }
-          : null,
+      badge: (customer) => customerTypeBadge(customer.type),
     },
     { key: 'email', header: 'Email' },
     { key: 'phone', header: 'Teléfono', value: (customer) => customer.phone || null },
@@ -131,7 +133,9 @@ export class CustomersComponent implements OnInit {
   loadCustomers(): void {
     this.loading = true;
     this.cdr.markForCheck();
-    this.customerCatalog.getCustomers().subscribe({
+    // Siempre desde API para traer type / wholesaleMinimum (el cache de
+    // reference-data a veces no los incluye).
+    this.customerCatalog.getCustomers(true).subscribe({
       next: (customers) => {
         this.customers = customers;
         this.loading = false;
@@ -192,4 +196,18 @@ export class CustomersComponent implements OnInit {
         });
       });
   }
+}
+
+function customerTypeBadge(
+  type: CustomerType | string | null | undefined,
+): OdlBadge | null {
+  if (!type || !(type in CUSTOMER_TYPE_LABELS)) return null;
+  const label = CUSTOMER_TYPE_LABELS[type as CustomerType];
+  const tone: OdlTone =
+    type === CustomerType.REVENDEDOR
+      ? 'info'
+      : type === CustomerType.EMPRESA
+        ? 'pending'
+        : 'neutral';
+  return { label, tone };
 }

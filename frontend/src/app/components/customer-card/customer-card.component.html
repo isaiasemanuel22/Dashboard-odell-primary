@@ -4,8 +4,13 @@
     <div>
       <div class="customer-card__title-row">
         <h3>{{ customer.name }}</h3>
-        @if (isRevendedor) {
-          <span class="customer-card__badge">Revendedor</span>
+        @if (typeLabel) {
+          <span
+            class="customer-card__badge"
+            [class.customer-card__badge--revendedor]="isRevendedor"
+          >
+            {{ typeLabel }}
+          </span>
         }
       </div>
       @if (customer.company) {

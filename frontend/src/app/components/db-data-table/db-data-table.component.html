@@ -50,7 +50,9 @@
           <th
             scope="col"
             [style.width]="col.width ?? null"
-            [class]="'odl-align-' + alignOf(col)"
+            [class.odl-align-start]="alignOf(col) === 'start'"
+            [class.odl-align-center]="alignOf(col) === 'center'"
+            [class.odl-align-end]="alignOf(col) === 'end'"
             [attr.aria-sort]="ariaSort(col)">
             @if (col.sortable) {
               <button type="button" class="odl-sort" (click)="toggleSort(col)">
@@ -103,7 +105,10 @@
             }
 
             @for (col of columns(); track col.key) {
-              <td [class]="'odl-align-' + alignOf(col)">
+              <td
+                [class.odl-align-start]="alignOf(col) === 'start'"
+                [class.odl-align-center]="alignOf(col) === 'center'"
+                [class.odl-align-end]="alignOf(col) === 'end'">
                 @switch (typeOf(col)) {
                   @case ('custom') {
                     <ng-container
