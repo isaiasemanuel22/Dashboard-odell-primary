@@ -2,7 +2,12 @@
   <a [routerLink]="['/clientes', customer.id]" class="card-link customer-card__body">
     <div class="avatar">{{ customer.name.charAt(0) }}</div>
     <div>
-      <h3>{{ customer.name }}</h3>
+      <div class="customer-card__title-row">
+        <h3>{{ customer.name }}</h3>
+        @if (isRevendedor) {
+          <span class="customer-card__badge">Revendedor</span>
+        }
+      </div>
       @if (customer.company) {
         <p class="company">{{ customer.company }}</p>
       }

@@ -5,8 +5,53 @@
       [(ngModel)]="name"
       name="name"
       placeholder="Ej.: María González"
+      autocomplete="name"
       [required]="true"
     />
+
+    <div class="customer-form__type">
+      <span class="customer-form__type-label" id="customer-type-label">
+        Tipo de cliente
+      </span>
+      <db-segmented-control
+        [options]="typeOptions"
+        [value]="type"
+        ariaLabel="Tipo de cliente"
+        (valueChange)="onTypeChange($event)"
+      />
+    </div>
+
+    @if (isRevendedor) {
+      <section class="customer-form__wholesale" aria-labelledby="wholesale-title">
+        <div class="customer-form__wholesale-head">
+          <strong id="wholesale-title">Precio mayorista</strong>
+          <span class="customer-form__pill">{{ wholesaleDiscountLabel }}</span>
+        </div>
+        <p class="customer-form__wholesale-copy">
+          Se aplica solo en pedidos y presupuestos. El porcentaje se cambia en
+          Ajustes › Ganancias.
+        </p>
+        <db-form-grid>
+          <db-input
+            label="Compra mínima mayorista"
+            type="number"
+            [(ngModel)]="wholesaleMinimum"
+            name="wholesaleMinimum"
+            min="0"
+            step="1"
+            placeholder="0"
+            hint="Si el pedido no llega, se cobra precio de lista"
+          />
+          <db-input
+            label="CUIT (opcional)"
+            [(ngModel)]="taxId"
+            name="taxId"
+            placeholder="30-12345678-9"
+            hint="Para facturar"
+          />
+        </db-form-grid>
+      </section>
+    }
 
     <db-form-grid>
       <db-input
@@ -24,6 +69,7 @@
         [(ngModel)]="phone"
         name="phone"
         placeholder="+54 223 123-4567"
+        autocomplete="tel"
         hint="Con código de área, para WhatsApp"
         [required]="true"
         [error]="phoneError"
@@ -35,7 +81,16 @@
       [(ngModel)]="company"
       name="company"
       placeholder="Opcional · Ej.: Café Aurora"
-      hint="Si la completás, el cliente aparece como empresa en los filtros"
+      hint="Nombre de fantasía o razón social, si aplica"
+    />
+
+    <db-select
+      label="¿Cómo llegó?"
+      [(ngModel)]="source"
+      name="source"
+      [options]="sourceOptions"
+      placeholder="Elegí un canal"
+      hint="Se usa para medir qué canal te trae clientes"
     />
 
     @if (error) {
@@ -44,7 +99,11 @@
 
     <db-form-footer class="customer-form__footer">
       <p class="customer-form__note">
-        Lo vas a poder elegir en pedidos y presupuestos
+        @if (isRevendedor) {
+          En pedidos va a aparecer con la etiqueta Revendedor
+        } @else {
+          Lo vas a poder elegir en pedidos y presupuestos
+        }
       </p>
       <div class="customer-form__actions">
         <db-button

@@ -21,17 +21,38 @@
   }
 
   h3 {
-    margin: 0 0 0.25rem;
+    margin: 0;
     color: $color-text;
     transition: color 0.15s ease;
   }
 
   .company {
-    margin: 0 0 0.75rem;
+    margin: 0.25rem 0 0.75rem;
     color: $color-primary;
     font-size: 0.875rem;
     font-weight: 500;
   }
+}
+
+.customer-card__title-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem 0.55rem;
+  margin-bottom: 0.25rem;
+}
+
+.customer-card__badge {
+  display: inline-flex;
+  align-items: center;
+  height: 1.35rem;
+  padding: 0 0.55rem;
+  border-radius: $radius-pill;
+  background: $color-primary-bg;
+  color: $color-primary-dark;
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
 }
 
 .avatar {

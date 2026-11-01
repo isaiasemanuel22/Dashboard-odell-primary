@@ -7,7 +7,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { forkJoin } from 'rxjs';
-import { Customer, Order } from '../../../core/models';
+import { Customer, CustomerType, Order } from '../../../core/models';
 import { CustomersService } from '../../../core/services/customers.service';
 import { OrdersService } from '../../../core/services/orders.service';
 import {
@@ -25,6 +25,10 @@ import {
   CurrencyArsPipe,
   DateShortPipe,
 } from '../../../shared/pipes/labels.pipe';
+import {
+  customerSourceLabel,
+  customerTypeLabel,
+} from '../../../shared/utils/v1-labels.util';
 
 @Component({
   selector: 'app-customer-detail',
@@ -52,6 +56,13 @@ export class CustomerDetailComponent implements OnInit {
   orders: Order[] = [];
   loading = true;
   notFound = false;
+
+  readonly typeLabel = customerTypeLabel;
+  readonly sourceLabel = customerSourceLabel;
+
+  get isRevendedor(): boolean {
+    return this.customer?.type === CustomerType.REVENDEDOR;
+  }
 
   ngOnInit(): void {
     this.route.paramMap

@@ -7,7 +7,7 @@ import {
   inject,
 } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Customer } from '../../core/models';
+import { Customer, CustomerType } from '../../core/models';
 import { CustomerCatalogService } from '../../core/services/customer-catalog.service';
 import { CustomersService } from '../../core/services/customers.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
@@ -27,6 +27,7 @@ import {
   clearCreateQuery,
   shouldOpenCreateFromQuery,
 } from '../../shared/utils/create-from-query.util';
+import { customerTypeLabel } from '../../shared/utils/v1-labels.util';
 
 @Component({
   selector: 'app-customers',
@@ -52,8 +53,21 @@ export class CustomersComponent implements OnInit {
 
   readonly kindFilters: OdlFilter<Customer>[] = [
     { id: 'all', label: 'Todos' },
-    { id: 'company', label: 'Empresas', predicate: (customer) => Boolean(customer.company?.trim()) },
-    { id: 'person', label: 'Particulares', predicate: (customer) => !customer.company?.trim() },
+    {
+      id: 'particular',
+      label: 'Particulares',
+      predicate: (customer) => customer.type === CustomerType.PARTICULAR,
+    },
+    {
+      id: 'empresa',
+      label: 'Empresas',
+      predicate: (customer) => customer.type === CustomerType.EMPRESA,
+    },
+    {
+      id: 'revendedor',
+      label: 'Revendedores',
+      predicate: (customer) => customer.type === CustomerType.REVENDEDOR,
+    },
   ];
 
   readonly actions: OdlRowAction<Customer>[] = [
@@ -68,7 +82,17 @@ export class CustomersComponent implements OnInit {
       header: 'Cliente',
       type: 'avatar',
       sortable: true,
-      secondary: (customer) => customer.company?.trim() || 'Particular',
+      secondary: (customer) =>
+        customer.company?.trim() || customerTypeLabel(customer.type) || null,
+    },
+    {
+      key: 'type',
+      header: 'Tipo',
+      type: 'badge',
+      badge: (customer) =>
+        customer.type === CustomerType.REVENDEDOR
+          ? { label: 'Revendedor', tone: 'info' }
+          : null,
     },
     { key: 'email', header: 'Email' },
     { key: 'phone', header: 'Teléfono', value: (customer) => customer.phone || null },
@@ -88,8 +112,10 @@ export class CustomersComponent implements OnInit {
     }
   }
 
-  get companyCount(): number {
-    return this.customers.filter((customer) => Boolean(customer.company?.trim())).length;
+  get revendedorCount(): number {
+    return this.customers.filter(
+      (customer) => customer.type === CustomerType.REVENDEDOR,
+    ).length;
   }
 
   onAction(event: OdlActionEvent<Customer>): void {

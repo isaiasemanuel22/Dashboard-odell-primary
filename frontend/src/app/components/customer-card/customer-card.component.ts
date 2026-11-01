@@ -6,7 +6,7 @@ import {
   Output,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { Customer } from '../../core/models';
+import { Customer, CustomerType } from '../../core/models';
 import { DateShortPipe } from '../../shared/pipes/labels.pipe';
 import { DbButtonComponent } from '../db-button/db-button.component';
 
@@ -22,4 +22,8 @@ export class CustomerCardComponent {
   @Input({ required: true }) customer!: Customer;
   @Output() edit = new EventEmitter<Customer>();
   @Output() delete = new EventEmitter<Customer>();
+
+  get isRevendedor(): boolean {
+    return this.customer.type === CustomerType.REVENDEDOR;
+  }
 }

@@ -20,7 +20,12 @@
       <div class="title-row">
         <div class="avatar">{{ customer.name.charAt(0) }}</div>
         <div>
-          <h2>{{ customer.name }}</h2>
+          <div class="title-row__heading">
+            <h2>{{ customer.name }}</h2>
+            @if (isRevendedor) {
+              <span class="type-badge">Revendedor</span>
+            }
+          </div>
           @if (customer.company) {
             <p class="company">{{ customer.company }}</p>
           }
@@ -34,12 +39,24 @@
       <h3>Contacto</h3>
       <dl class="detail-list">
         <div>
+          <dt>Tipo</dt>
+          <dd>{{ typeLabel(customer.type) }}</dd>
+        </div>
+        <div>
           <dt>Email</dt>
           <dd>{{ customer.email }}</dd>
         </div>
         <div>
           <dt>Teléfono</dt>
           <dd>{{ customer.phone }}</dd>
+        </div>
+        <div>
+          <dt>CUIT</dt>
+          <dd>{{ customer.taxId || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Origen</dt>
+          <dd>{{ sourceLabel(customer.source) || '—' }}</dd>
         </div>
         <div>
           <dt>Cliente desde</dt>
