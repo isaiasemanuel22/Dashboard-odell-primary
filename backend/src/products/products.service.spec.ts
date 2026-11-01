@@ -224,6 +224,34 @@ describe('ProductsService', () => {
     expect(alerts[0].priceForTarget).toBe(1400);
   });
 
+  it('getMarginAlerts excluye productos no publicados', () => {
+    const store = new StoreService();
+    seedStore(store, [
+      baseProduct({
+        id: 'prod-draft',
+        name: 'Prototipo funcional ABS',
+        price: 500,
+        cost: 1000,
+        profit: -500,
+        published: false,
+        suggestedPrice: 500,
+      }),
+      baseProduct({
+        id: 'prod-low',
+        name: 'Bajo publicado',
+        price: 1100,
+        cost: 1000,
+        profit: 100,
+        published: true,
+        suggestedPrice: 1100,
+      }),
+    ]);
+    const service = createService(store);
+
+    const alerts = service.getMarginAlerts();
+    expect(alerts.map((a) => a.productId)).toEqual(['prod-low']);
+  });
+
   it('preview de precios en bloque no guarda y solo incluye precio fijo', () => {
     const store = new StoreService();
     seedStore(store, [

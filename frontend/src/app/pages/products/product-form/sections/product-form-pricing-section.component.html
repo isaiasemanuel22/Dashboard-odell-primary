@@ -45,9 +45,15 @@
 
     <div class="price-margin">
       <div>
-        <span>Margen {{ vm.profitMarginLabel }}</span>
-        <strong>{{ vm.profitMarginPercent }}%</strong>
+        <span>Margen objetivo ({{ targetMarginLabel }}): {{ targetMarginPercent }} %</span>
       </div>
+      @let realMargin = actualMarginPercent(vm.price, vm.totalCost);
+      @if (realMargin !== null) {
+        <div>
+          <span>Margen</span>
+          <strong [class.is-loss]="realMargin < 0">{{ realMargin }}%</strong>
+        </div>
+      }
       <div>
         <span>Ganancia</span>
         <strong [class.is-loss]="vm.profit < 0">{{ vm.profit | currencyArs }}</strong>
@@ -60,7 +66,7 @@
 
     <div [formGroup]="form">
       <db-input
-        label="Precio manual"
+        [label]="suggestedPriceLabel"
         type="number"
         formControlName="suggestedPrice"
         [min]="0"

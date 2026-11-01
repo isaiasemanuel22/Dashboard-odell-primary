@@ -191,17 +191,25 @@
           {{ row.listPrice | currencyArs }}
         </ng-template>
         <ng-template odlCell="wholesalePrice" let-row>
-          <span [class.is-muted]="!row.applies">{{ row.wholesalePrice | currencyArs }}</span>
+          @if (row.applies) {
+            <span>{{ row.wholesalePrice | currencyArs }}</span>
+          } @else {
+            <span class="is-muted">—</span>
+          }
         </ng-template>
         <ng-template odlCell="wholesaleProfit" let-row>
-          <span class="wholesale-profit" [class.wholesale-profit--loss]="row.wouldLose">
-            <span>{{ row.profit | currencyArs }}</span>
-            @if (row.wouldLose) {
-              <span class="wholesale-profit__alert">Daría pérdida</span>
-            } @else {
-              <span class="wholesale-profit__meta">{{ row.profitPercentOnCost }}% sobre el costo</span>
-            }
-          </span>
+          @if (row.applies) {
+            <span class="wholesale-profit" [class.wholesale-profit--loss]="row.wouldLose">
+              <span>{{ row.profit | currencyArs }}</span>
+              @if (row.wouldLose) {
+                <span class="wholesale-profit__alert">Daría pérdida</span>
+              } @else {
+                <span class="wholesale-profit__meta">{{ row.profitPercentOnCost }}% sobre el costo</span>
+              }
+            </span>
+          } @else {
+            <span class="is-muted">—</span>
+          }
         </ng-template>
       </db-data-table>
       <p class="wholesale-area-table__foot">

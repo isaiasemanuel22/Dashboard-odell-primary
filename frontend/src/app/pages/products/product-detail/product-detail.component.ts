@@ -18,6 +18,7 @@ import {
   Product3D,
   ProductAttachment,
   ProductStockOverview,
+  ServiceProfitMargins,
   isProduct3D,
 } from '../../../core/models';
 import { RealtimeEvent } from '../../../core/models/realtime.model';
@@ -49,6 +50,11 @@ import {
   normalizeProductComponents,
   resolveCategoryNames,
 } from '../../../shared/utils/product.helpers';
+import {
+  DEFAULT_PROFIT_MARGINS,
+  getMarginForProductType,
+  normalizeProfitMargins,
+} from '../../../shared/utils/pricing.util';
 import { DateShortPipe } from '../../../shared/pipes/labels.pipe';
 
 @Component({
@@ -87,6 +93,7 @@ export class ProductDetailComponent implements OnInit {
   private readonly settingsService = inject(SettingsService);
   product: Product | null = null;
   colorCatalog: ColorConfig[] = [];
+  profitMargins: ServiceProfitMargins = { ...DEFAULT_PROFIT_MARGINS };
   attachments: ProductAttachment[] = [];
   categories: Category[] = [];
   catalogProducts: Product[] = [];
@@ -116,6 +123,7 @@ export class ProductDetailComponent implements OnInit {
       .subscribe({
       next: (settings) => {
         this.colorCatalog = settings.colors ?? [];
+        this.profitMargins = normalizeProfitMargins(settings.profitMargins);
         this.cdr.markForCheck();
       },
     });
@@ -174,6 +182,12 @@ export class ProductDetailComponent implements OnInit {
   get displayProfit(): number {
     if (!this.product) return 0;
     return this.product.profit ?? this.displayPrice - this.displayCost;
+  }
+
+  /** Margen objetivo del área del producto (impresión 3D / estampado). */
+  get targetMarginPercent(): number {
+    if (!this.product) return 0;
+    return getMarginForProductType(this.product.type, this.profitMargins);
   }
 
   get isPublished(): boolean {

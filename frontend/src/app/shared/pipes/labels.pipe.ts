@@ -28,6 +28,7 @@ import {
   plainTextFromHtml,
   sanitizeRichTextHtml,
 } from '../utils/rich-text.util';
+import { markupPercentOnCostRounded } from '../utils/product-margin.util';
 import { formatPercentIntegerLabel } from '../utils/percent.util';
 
 @Pipe({ name: 'serviceTypeLabel', standalone: true })
@@ -147,8 +148,8 @@ export class DateTimePipe implements PipeTransform {
 @Pipe({ name: 'profitMargin', standalone: true })
 export class ProfitMarginPipe implements PipeTransform {
   transform(price: number, profit: number): number | null {
-    if (price <= 0) return null;
-    return Math.round((profit / price) * 100);
+    const cost = Number(price) - Number(profit);
+    return markupPercentOnCostRounded(price, cost);
   }
 }
 

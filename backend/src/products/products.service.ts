@@ -563,6 +563,8 @@ export class ProductsService {
     const alerts: ProductMarginAlert[] = [];
 
     for (const raw of this.store.products) {
+      if (raw.published === false) continue;
+
       const product = this.withCurrentCost(raw);
       const cost = Number(product.cost) || 0;
       const price = Number(product.price) || 0;

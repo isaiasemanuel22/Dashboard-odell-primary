@@ -23,6 +23,7 @@ import {
   resolveProductPrice,
   totalCostFromBreakdown,
 } from '../../shared/utils/pricing.util';
+import { markupPercentOnCostRounded } from '../../shared/utils/product-margin.util';
 
 @Injectable({ providedIn: 'root' })
 export class ProductPricingService {
@@ -67,7 +68,7 @@ export class ProductPricingService {
       cost,
       price,
       profit: price - cost,
-      marginPercent: price > 0 ? Math.round(((price - cost) / price) * 100) : 0,
+      marginPercent: markupPercentOnCostRounded(price, cost) ?? 0,
       configuredMarginPercent: margin,
       breakdown: null,
     };

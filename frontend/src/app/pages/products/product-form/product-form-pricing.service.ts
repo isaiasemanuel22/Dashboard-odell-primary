@@ -464,7 +464,7 @@ export class ProductFormPricingService {
           }
 
           this.appliedMarginPercent =
-            result.configuredMarginPercent ?? result.marginPercent;
+            result.configuredMarginPercent ?? this.configuredProfitMargin;
           this.calculatingCost = false;
           this.pricingPreviewSub = null;
           this.emitChange();

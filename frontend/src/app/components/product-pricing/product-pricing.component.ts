@@ -1,5 +1,6 @@
 import { Component, Input } from '@angular/core';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
+import { markupPercentOnCostRounded } from '../../shared/utils/product-margin.util';
 
 @Component({
   selector: 'app-product-pricing',
@@ -13,12 +14,14 @@ export class ProductPricingComponent {
   @Input({ required: true }) profit!: number;
   @Input() layout: 'compact' | 'grid' = 'compact';
   @Input() showMargin = false;
+  /** Margen objetivo del área del producto (sobre el costo). */
+  @Input() targetMarginPercent: number | null = null;
   @Input() priceLabel = 'Precio';
   @Input() costLabel = 'Costo';
   @Input() profitLabel = 'Ganancia';
 
   get marginPercent(): number | null {
-    if (!this.showMargin || this.price <= 0) return null;
-    return Math.round((this.profit / this.price) * 100);
+    if (!this.showMargin) return null;
+    return markupPercentOnCostRounded(this.price, this.cost);
   }
 }

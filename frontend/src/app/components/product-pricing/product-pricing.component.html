@@ -20,7 +20,14 @@
   @if (showMargin && marginPercent !== null) {
     <div class="pricing-item">
       <small>Margen</small>
-      <span [class.negative]="profit < 0">{{ marginPercent }}%</span>
+      <span [class.negative]="profit < 0">
+        {{ marginPercent }}%
+        @if (targetMarginPercent != null) {
+          <span class="pricing-item__target">
+            · objetivo {{ targetMarginPercent }} %
+          </span>
+        }
+      </span>
     </div>
   }
 </div>

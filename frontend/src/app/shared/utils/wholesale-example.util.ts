@@ -206,7 +206,7 @@ export function buildWholesaleAreaRows(
       profit,
       profitPercentOnCost,
       applies,
-      wouldLose: profit < 0,
+      wouldLose: applies && profit < 0,
     };
   });
 }

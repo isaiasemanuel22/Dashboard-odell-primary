@@ -18,6 +18,11 @@ import {
 import { SettingsFacade } from '../../../../store/settings/settings.facade';
 import { getMachineProfilesForProductType } from '../../../../shared/utils/machine-profile.util';
 import { totalFdmFilamentGrams } from '../../../../shared/utils/fdm.helpers';
+import {
+  getMarginForProductType,
+  marginLabelForProductType,
+} from '../../../../shared/utils/pricing.util';
+import { markupPercentOnCostRounded } from '../../../../shared/utils/product-margin.util';
 import { ProductFormGroup } from '../services/product-form-state-manager.service';
 import { ProductFormPricingFacade } from '../store/product-form-pricing/product-form-pricing.facade';
 import { ProductFormFacade } from '../product-form.facade';
@@ -105,6 +110,28 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     const hours = Number(this.form.controls.assemblyTimeHours.value) || 0;
     if (hours <= 0) return null;
     return `${String(hours).replace('.', ',')} h`;
+  }
+
+  /** Objetivo del área (ajustes), no el margen del precio cargado. */
+  get targetMarginPercent(): number {
+    if (!this.settings) return 0;
+    return getMarginForProductType(
+      this.form.controls.type.value,
+      this.settings.profitMargins,
+    );
+  }
+
+  get targetMarginLabel(): string {
+    return marginLabelForProductType(this.form.controls.type.value);
+  }
+
+  get suggestedPriceLabel(): string {
+    const suggested = Number(this.form.controls.suggestedPrice.value) || 0;
+    return suggested > 0 ? 'Precio fijo' : 'Precio calculado';
+  }
+
+  actualMarginPercent(price: number, cost: number): number | null {
+    return markupPercentOnCostRounded(price, cost);
   }
 
   setSavings(componentsPrice: number, salePrice: number): number {

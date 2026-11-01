@@ -96,7 +96,9 @@
           [attr.aria-valuenow]="markupPercent"
           aria-valuemin="0"
           aria-valuemax="100"
-          [attr.aria-label]="'Margen ' + markupPercent + '%'"
+          [attr.aria-label]="
+            'Margen ' + markupPercent + '% · objetivo ' + targetMarginPercent + '%'
+          "
         >
           <div
             class="product-card__margin-fill"
