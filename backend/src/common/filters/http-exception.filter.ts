@@ -52,7 +52,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
       );
     }
 
-    if (status === HttpStatus.NOT_MODIFIED) {
+    if (status === Number(HttpStatus.NOT_MODIFIED)) {
       response.status(HttpStatus.NOT_MODIFIED).end();
       return;
     }

@@ -22,7 +22,6 @@ import {
 import { isIndistintoColor } from '../common/color.util';
 import { appendOrderStatusHistory } from '../orders/order-status-history.util';
 import { StoreService } from '../store/store.service';
-import { isDesignService } from '../common/service-type.util';
 import { isDesignPrintConfigured } from '../orders/design-print.util';
 import {
   isCustomFdmOrderLine,

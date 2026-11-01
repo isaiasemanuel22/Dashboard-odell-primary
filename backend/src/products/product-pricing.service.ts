@@ -3,7 +3,6 @@ import { ProductType } from '../common/enums';
 import {
   Product,
   Product3D,
-  ProductEstampado,
   ProductPricingInput,
   ProductPricingResult,
 } from '../common/interfaces';
@@ -47,7 +46,7 @@ export class ProductPricingService {
     }
 
     if (product.type === ProductType.ESTAMPADO) {
-      const estampado = product as ProductEstampado;
+      const estampado = product;
       return {
         type: ProductType.ESTAMPADO,
         components,
@@ -64,7 +63,7 @@ export class ProductPricingService {
       };
     }
 
-    const product3d = product as Product3D;
+    const product3d = product;
     const filaments =
       product3d.type === ProductType.FDM
         ? normalizeFdmFilaments(product3d.filaments, {
@@ -98,10 +97,7 @@ export class ProductPricingService {
         ? (merged as Partial<Product3D>)
         : null;
 
-    const estampadoData =
-      merged.type === ProductType.ESTAMPADO
-        ? (merged as CreateProductDto)
-        : null;
+    const estampadoData = merged.type === ProductType.ESTAMPADO ? merged : null;
 
     const filaments =
       merged.type === ProductType.FDM

@@ -44,4 +44,4 @@ async function bootstrap() {
   await app.listen(config.port);
   console.log(`API corriendo en http://localhost:${config.port}/api`);
 }
-bootstrap();
+void bootstrap();

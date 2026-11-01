@@ -1,4 +1,5 @@
 import { OrderStatus } from '../common/enums';
+import { Order } from '../common/interfaces';
 import {
   appendOrderStatusHistory,
   ensureOrderStatusHistory,
@@ -6,7 +7,7 @@ import {
 } from './order-status-history.util';
 
 describe('order-status-history.util', () => {
-  const baseOrder = () => ({
+  const baseOrder = (): Order => ({
     id: 'ord-1',
     customerId: 'cust-1',
     customerName: 'Test',

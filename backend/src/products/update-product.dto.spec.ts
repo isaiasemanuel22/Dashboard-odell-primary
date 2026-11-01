@@ -10,7 +10,7 @@ describe('UpdateProductDto validation', () => {
   });
 
   it('preserves published=false', async () => {
-    const result = await pipe.transform(
+    const result: unknown = await pipe.transform(
       { published: false },
       { type: 'body', metatype: UpdateProductDto },
     );
@@ -19,7 +19,7 @@ describe('UpdateProductDto validation', () => {
   });
 
   it('preserves published=true', async () => {
-    const result = await pipe.transform(
+    const result: unknown = await pipe.transform(
       { published: true },
       { type: 'body', metatype: UpdateProductDto },
     );

@@ -2,7 +2,6 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import {
   FilamentType,
   PaperType,
-  MachineProfileRole,
   ProductType,
   ResinType,
   ServiceType,
@@ -32,7 +31,6 @@ import {
 } from './machine-profile.util';
 import { normalizeProfitMargins } from './profit-margins.util';
 import {
-  normalizeEstampadoPressCycles,
   normalizeEstampadoPrints,
   normalizeEstampadoSupplies,
   resolvePrintDimensions,
@@ -531,7 +529,7 @@ export class CostCalculatorService {
     if (!materialType) return null;
 
     const matches = this.store.generalSettings.filamentPrices.filter(
-      (p) => p.materialType === materialType,
+      (p) => p.materialType === (materialType as string),
     );
     if (!matches.length) return null;
 

@@ -22,8 +22,6 @@ describe('PricingSyncService', () => {
     overrides: Partial<Product> & Pick<Product, 'id' | 'name'>,
   ): Product {
     return {
-      id: overrides.id,
-      name: overrides.name,
       type: ProductType.FDM,
       images: [],
       attachments: [],
@@ -41,7 +39,7 @@ describe('PricingSyncService', () => {
       printTimeHours: 1,
       workTimeHours: 0,
       ...overrides,
-    };
+    } as Product;
   }
 
   function createService(store: StoreService) {
@@ -241,7 +239,7 @@ describe('PricingSyncService', () => {
       quotedAt: '2026-10-21T12:00:00.000Z',
       createdAt: '2026-10-21T12:00:00.000Z',
     });
-    store.indexQuote(store.quotes[0]!);
+    store.indexQuote(store.quotes[0]);
 
     store.orders.push({
       id: 'ord-1',
@@ -263,7 +261,7 @@ describe('PricingSyncService', () => {
       dueDate: '2026-10-28T18:00:00.000Z',
       priceHistory: [],
     });
-    store.indexOrder(store.orders[0]!);
+    store.indexOrder(store.orders[0]);
 
     product.price = 1500;
     store.replaceProduct(product);

@@ -1,11 +1,13 @@
-import { BadRequestException } from '@nestjs/common';
 import {
   OrderStatus,
   PrintJobStatus,
   ServiceType,
   TaskType,
   FilamentType,
+  ProductType,
+  SupplyCategory,
 } from '../common/enums';
+import { Order, Product3D } from '../common/interfaces';
 import { INDISTINTO_COLOR_ID } from '../common/color.util';
 import { OrderTasksService } from './order-tasks.service';
 import { StoreService } from '../store/store.service';
@@ -35,7 +37,7 @@ describe('OrderTasksService', () => {
       cost: 500,
       profit: 500,
       categoryIds: [],
-      type: 'fdm' as never,
+      type: ProductType.FDM,
       size: '10cm',
       published: true,
       components: [],
@@ -50,7 +52,7 @@ describe('OrderTasksService', () => {
   });
 
   it('crea Preparar pedido bloqueada para pedidos con productos', () => {
-    const order = {
+    const order: Order = {
       id: 'ord-1',
       customerId: 'cust-1',
       customerName: 'Cliente Test',
@@ -80,7 +82,7 @@ describe('OrderTasksService', () => {
   });
 
   it('reserva stock al iniciar preparación y crea producción solo por faltante', () => {
-    const order = {
+    const order: Order = {
       id: 'ord-stock',
       customerId: 'cust-1',
       customerName: 'Cliente Test',
@@ -125,7 +127,7 @@ describe('OrderTasksService', () => {
 
   it('no reserva al confirmar y crea la producción al preparar', () => {
     store.products[0].stock = 0;
-    const order = {
+    const order: Order = {
       id: 'ord-no-stock',
       customerId: 'cust-1',
       customerName: 'Cliente Test',
@@ -175,7 +177,7 @@ describe('OrderTasksService', () => {
   });
 
   it('no descuenta un pedido sin preparar del stock del siguiente', () => {
-    const first = {
+    const first: Order = {
       id: 'ord-1',
       customerId: 'cust-1',
       customerName: 'Cliente Test',
@@ -194,7 +196,7 @@ describe('OrderTasksService', () => {
       createdAt: new Date().toISOString(),
       dueDate: new Date().toISOString(),
     };
-    const second = {
+    const second: Order = {
       id: 'ord-2',
       customerId: 'cust-1',
       customerName: 'Cliente Test',
@@ -239,7 +241,7 @@ describe('OrderTasksService', () => {
   });
 
   it('considera una tarea bloqueada como pedido pendiente', () => {
-    const order = {
+    const order: Order = {
       id: 'ord-blocked',
       customerId: 'cust-1',
       customerName: 'Cliente Test',
@@ -273,7 +275,7 @@ describe('OrderTasksService', () => {
   });
 
   it('marca tareas como canceladas si el pedido se cancela', () => {
-    const order = {
+    const order: Order = {
       id: 'ord-2',
       customerId: 'cust-1',
       customerName: 'Cliente Test',
@@ -298,9 +300,9 @@ describe('OrderTasksService', () => {
     order.status = OrderStatus.CANCELADO;
     service.syncOrderTasks(order);
 
-    expect(store.printJobs.every((job) => job.status === 'cancelado')).toBe(
-      true,
-    );
+    expect(
+      store.printJobs.every((job) => job.status === PrintJobStatus.CANCELADO),
+    ).toBe(true);
   });
 
   it('exige insumo con color específico cuando el producto FDM lo define', () => {
@@ -312,7 +314,7 @@ describe('OrderTasksService', () => {
       {
         id: 'sup-black',
         name: 'PLA Negro',
-        category: 'fdm',
+        category: SupplyCategory.FDM,
         filamentType: FilamentType.PLA,
         brand: 'FilAr',
         unit: 'kg',
@@ -326,7 +328,7 @@ describe('OrderTasksService', () => {
       {
         id: 'sup-white',
         name: 'PLA Blanco',
-        category: 'fdm',
+        category: SupplyCategory.FDM,
         filamentType: FilamentType.PLA,
         brand: 'FilAr',
         unit: 'kg',
@@ -349,9 +351,9 @@ describe('OrderTasksService', () => {
           colorId: 'clr-black',
         },
       ],
-    };
+    } as Product3D;
 
-    const order = {
+    const order: Order = {
       id: 'ord-color',
       customerId: 'cust-1',
       customerName: 'Cliente Test',
@@ -400,7 +402,7 @@ describe('OrderTasksService', () => {
     store.supplies.push({
       id: 'sup-any',
       name: 'PLA Genérico',
-      category: 'fdm',
+      category: SupplyCategory.FDM,
       filamentType: FilamentType.PLA,
       brand: 'FilAr',
       unit: 'kg',
@@ -422,9 +424,9 @@ describe('OrderTasksService', () => {
           colorId: INDISTINTO_COLOR_ID,
         },
       ],
-    };
+    } as Product3D;
 
-    const order = {
+    const order: Order = {
       id: 'ord-indistinto',
       customerId: 'cust-1',
       customerName: 'Cliente Test',

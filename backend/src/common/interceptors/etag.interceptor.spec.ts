@@ -1,10 +1,5 @@
 import { createHash } from 'crypto';
-import {
-  CallHandler,
-  ExecutionContext,
-  HttpException,
-  HttpStatus,
-} from '@nestjs/common';
+import { ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
 import { of } from 'rxjs';
 import { EtagInterceptor } from './etag.interceptor';
 
@@ -46,7 +41,7 @@ describe('EtagInterceptor', () => {
     const context = createContext(etag);
 
     interceptor.intercept(context, { handle: () => of(body) }).subscribe({
-      error: (err) => {
+      error: (err: HttpException) => {
         expect(err).toBeInstanceOf(HttpException);
         expect(err.getStatus()).toBe(HttpStatus.NOT_MODIFIED);
         done();

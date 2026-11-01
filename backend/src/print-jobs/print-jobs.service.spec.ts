@@ -1,4 +1,4 @@
-import { OrderStatus } from '../common/enums';
+import { OrderStatus, PrintJobStatus, ServiceType } from '../common/enums';
 import { OrderTasksService } from './order-tasks.service';
 import { PrintJobsService } from './print-jobs.service';
 import { StoreService } from '../store/store.service';
@@ -25,13 +25,16 @@ describe('PrintJobsService.getBoard', () => {
       orderItemIndex: 0,
       customerName: 'Cliente',
       productName: 'Pieza',
-      type: 'impresion_3d' as never,
-      status: 'por_hacer' as never,
+      type: ServiceType.IMPRESION_3D,
+      status: PrintJobStatus.POR_HACER,
       active: true,
       priority: 1,
+      machine: '',
+      estimatedHours: 0,
+      dueDate: '2026-07-10T18:00:00.000Z',
     });
     store.applyState(state);
-    store.indexOrder(state.orders[0]!);
+    store.indexOrder(state.orders[0]);
 
     const orderTasks = new OrderTasksService(store);
     const service = new PrintJobsService(store, orderTasks);

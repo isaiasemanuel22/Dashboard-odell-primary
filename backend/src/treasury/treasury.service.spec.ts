@@ -537,7 +537,7 @@ describe('TreasuryService', () => {
         },
       ],
     });
-    store.supplies[0]!.quantity = 1;
+    store.supplies[0].quantity = 1;
 
     expect(() => service.removeExpense(expense.id)).toThrow('stock');
     expect(store.treasuryExpenses).toHaveLength(1);

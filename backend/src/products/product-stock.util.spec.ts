@@ -13,7 +13,7 @@ function baseProduct(overrides: Record<string, unknown> = {}) {
     cost: 500,
     profit: 500,
     categoryIds: [],
-    type: ProductType.FDM,
+    type: ProductType.FDM as const,
     size: '10cm',
     published: true,
     components: [],

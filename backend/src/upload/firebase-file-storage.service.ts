@@ -27,7 +27,7 @@ export class FirebaseFileStorageService implements FileStorage {
       throw new Error('Firebase Storage no está configurado');
     }
 
-    const safeName = file.originalname.replace(/[^\w.\-]+/g, '_');
+    const safeName = file.originalname.replace(/[^\w.-]+/g, '_');
     const filename = `${Date.now()}-${safeName}`;
     const objectPath = `${folder.replace(/\/+$/, '')}/${filename}`;
     const token = randomUUID();

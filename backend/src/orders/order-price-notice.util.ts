@@ -55,7 +55,7 @@ export function rememberKeptLinePrice(
 ): boolean {
   const history = order.priceHistory ?? [];
   for (let index = history.length - 1; index >= 0; index -= 1) {
-    const entry = history[index]!;
+    const entry = history[index];
     if (entry.itemIndex !== itemIndex) continue;
     if (
       entry.previousUnitPrice !== agreedUnitPrice ||

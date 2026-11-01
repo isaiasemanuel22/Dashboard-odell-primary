@@ -55,7 +55,7 @@ function randFloat(min: number, max: number, decimals = 0): number {
 }
 
 function pick<T>(items: T[]): T {
-  return items[randInt(0, items.length - 1)]!;
+  return items[randInt(0, items.length - 1)];
 }
 
 function daysAgo(days: number): string {
@@ -225,7 +225,7 @@ export function createRandomSeedState(): StoreState {
   }));
 
   const categoryIdMap = new Map(
-    base.categories.map((cat, i) => [cat.id, categories[i]!.id]),
+    base.categories.map((cat, i) => [cat.id, categories[i].id]),
   );
 
   const products: Product[] = base.products.map((product) => {
@@ -243,7 +243,7 @@ export function createRandomSeedState(): StoreState {
         ...c,
         productId: idRemap.get(c.productId) ?? nextId(c.productId, 'prod'),
       })),
-    } as Product;
+    };
 
     if (remapped.type !== ProductType.ESTAMPADO) {
       const p3d = remapped as Product & {
@@ -264,7 +264,7 @@ export function createRandomSeedState(): StoreState {
   });
 
   const productIdMap = new Map(
-    base.products.map((p, i) => [p.id, products[i]!.id]),
+    base.products.map((p, i) => [p.id, products[i].id]),
   );
 
   const customers = base.customers.map((customer) => ({
@@ -274,7 +274,7 @@ export function createRandomSeedState(): StoreState {
   }));
 
   const customerIdMap = new Map(
-    base.customers.map((c, i) => [c.id, customers[i]!.id]),
+    base.customers.map((c, i) => [c.id, customers[i].id]),
   );
 
   const orders: Order[] = base.orders.map((order) => {
@@ -320,7 +320,7 @@ export function createRandomSeedState(): StoreState {
   }));
 
   const supplyIdMap = new Map(
-    base.supplies.map((s, i) => [s.id, supplies[i]!.id]),
+    base.supplies.map((s, i) => [s.id, supplies[i].id]),
   );
 
   const generalSettings = {

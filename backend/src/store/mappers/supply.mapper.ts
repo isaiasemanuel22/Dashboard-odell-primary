@@ -1,4 +1,3 @@
-import { SupplyCategory } from '../../common/enums';
 import { Supply } from '../../common/interfaces';
 import { normalizeSupplyCategory } from '../../supplies/supply-category.util';
 

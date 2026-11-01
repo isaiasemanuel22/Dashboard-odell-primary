@@ -25,7 +25,7 @@ describe('SalesService order revenue', () => {
       resolveCatalogUnitPrice: () => 100,
       resolveDesignUnitCost: () => 0,
       resolveOrderItemUnitCost: () => 0,
-    } as CostCalculatorService);
+    } as unknown as CostCalculatorService);
   });
 
   it('solo incluye pedidos entregados en el listado de ventas', () => {
@@ -81,8 +81,8 @@ describe('SalesService order revenue', () => {
     const { entries, stats } = service.getOverview();
     const orderEntries = entries.filter((entry) => entry.orderId);
 
-    expect(isRevenueOrder(store.orders[0]!)).toBe(false);
-    expect(isRevenueOrder(store.orders[1]!)).toBe(true);
+    expect(isRevenueOrder(store.orders[0])).toBe(false);
+    expect(isRevenueOrder(store.orders[1])).toBe(true);
     expect(orderEntries).toHaveLength(1);
     expect(orderEntries[0].orderId).toBe('ord-delivered');
     expect(stats.monthlyOrdersRevenue).toBe(2500);

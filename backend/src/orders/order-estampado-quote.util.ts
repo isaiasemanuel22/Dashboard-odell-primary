@@ -1,10 +1,5 @@
 import { ProductType, ServiceType } from '../common/enums';
-import {
-  EstampadoPressCycle,
-  EstampadoPrintSpec,
-  EstampadoSupplyLine,
-  OrderItem,
-} from '../common/interfaces';
+import { OrderItem } from '../common/interfaces';
 import {
   hasValidPrintSize,
   normalizeEstampadoPressCycles,
@@ -52,14 +47,10 @@ export function buildEstampadoCostInput(
   return {
     type: ProductType.ESTAMPADO as const,
     workTimeHours: 0,
-    estampadoPrints: normalizeEstampadoPrints(
-      item.estampadoPrints,
-    ) as EstampadoPrintSpec[],
+    estampadoPrints: normalizeEstampadoPrints(item.estampadoPrints),
     estampadoPressCycles: normalizeEstampadoPressCycles(
       item.estampadoPressCycles,
-    ) as EstampadoPressCycle[],
-    estampadoSupplies: normalizeEstampadoSupplies(
-      item.estampadoSupplies,
-    ) as EstampadoSupplyLine[],
+    ),
+    estampadoSupplies: normalizeEstampadoSupplies(item.estampadoSupplies),
   };
 }

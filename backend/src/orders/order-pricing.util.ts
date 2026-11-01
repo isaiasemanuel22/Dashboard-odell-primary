@@ -1,7 +1,4 @@
-import {
-  isDesignService,
-  normalizeServiceType,
-} from '../common/service-type.util';
+import { isDesignService } from '../common/service-type.util';
 import { OrderItem } from '../common/interfaces';
 
 export type OrderLinePricingInput = Pick<

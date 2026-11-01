@@ -2,7 +2,6 @@ import { PaperType } from '../common/enums';
 import {
   formatPrintDimensionsCm,
   hasValidPrintSize,
-  normalizeEstampadoPressCycles,
   normalizeEstampadoPrints,
   resolvePrintAreaSecondCm,
   totalEstampadoPressMinutes,

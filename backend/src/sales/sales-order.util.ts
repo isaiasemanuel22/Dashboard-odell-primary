@@ -12,7 +12,7 @@ export function isRevenueOrder(order: Order): boolean {
 export function resolveOrderSoldAt(order: Order): string {
   const deliveries = order.deliveryHistory ?? [];
   if (deliveries.length) {
-    return deliveries[deliveries.length - 1]!.deliveredAt;
+    return deliveries[deliveries.length - 1].deliveredAt;
   }
 
   const deliveredAt = (order.statusHistory ?? [])

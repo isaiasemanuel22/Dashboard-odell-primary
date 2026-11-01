@@ -68,8 +68,6 @@ export function mergeProfitMargins(
 ): ServiceProfitMargins {
   return normalizeProfitMargins({
     ...normalizeProfitMargins(current),
-    ...(patch && typeof patch === 'object'
-      ? (patch as Record<string, unknown>)
-      : {}),
+    ...(patch && typeof patch === 'object' ? patch : {}),
   });
 }

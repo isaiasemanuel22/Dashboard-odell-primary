@@ -1,4 +1,4 @@
-import { ProductType } from '../common/enums';
+import { ProductType, SupplyCategory } from '../common/enums';
 import { CostCalculatorService } from './cost-calculator.service';
 import { StoreService } from '../store/store.service';
 import { createEmptyState } from '../store/store.seed';
@@ -35,7 +35,7 @@ describe('CostCalculatorService', () => {
         {
           id: 'fp-1',
           brand: 'Test',
-          materialType: 'pla' as never,
+          materialType: 'pla',
           pricePerKg: 10000,
         },
       ],
@@ -43,7 +43,7 @@ describe('CostCalculatorService', () => {
         {
           id: 'rp-1',
           brand: 'Test',
-          resinType: 'estandar' as never,
+          resinType: 'estandar',
           pricePerLiter: 30000,
         },
       ],
@@ -51,7 +51,7 @@ describe('CostCalculatorService', () => {
     store.supplies.push({
       id: 'sup-alcohol',
       name: 'Alcohol isopropílico',
-      type: 'alcohol' as never,
+      category: SupplyCategory.RESINA,
       unit: 'L',
       quantity: 2,
       minStock: 0.5,
@@ -102,7 +102,7 @@ describe('CostCalculatorService', () => {
       workTimeHours: 0.5,
       washMinutes: 8,
       cureMinutes: 10,
-      resinType: 'estandar' as never,
+      resinType: 'estandar',
     });
 
     expect(result.materialCost).toBeGreaterThan(40);
@@ -153,7 +153,7 @@ describe('CostCalculatorService', () => {
   });
 
   it('usa precio promedio por tipo cuando el producto no tiene marca', () => {
-    store.generalSettings.filamentTypeAverages = { pla: 20000 } as never;
+    store.generalSettings.filamentTypeAverages = { pla: 20000 };
 
     const result = service.calculateCost({
       type: ProductType.FDM,
@@ -167,7 +167,7 @@ describe('CostCalculatorService', () => {
   });
 
   it('cotiza el filamento con el promedio del tipo aunque haya marca', () => {
-    store.generalSettings.filamentTypeAverages = { pla: 20000 } as never;
+    store.generalSettings.filamentTypeAverages = { pla: 20000 };
 
     const result = service.calculateCost({
       type: ProductType.FDM,
@@ -254,6 +254,7 @@ describe('CostCalculatorService', () => {
         categoryIds: [],
         size: '5 cm',
         published: true,
+        includesPieces: false,
         components: [],
         assemblyTimeHours: 0,
         grams: 10,
@@ -281,8 +282,8 @@ describe('CostCalculatorService', () => {
         workTimeHours: 0,
       },
     );
-    store.indexProduct(store.products[0]!);
-    store.indexProduct(store.products[1]!);
+    store.indexProduct(store.products[0]);
+    store.indexProduct(store.products[1]);
 
     expect(service.resolveProductUnitCost('combo-1')).toBe(2000);
   });
@@ -309,7 +310,7 @@ describe('CostCalculatorService', () => {
       printTimeHours: 1,
       workTimeHours: 0,
     });
-    store.indexProduct(store.products[0]!);
+    store.indexProduct(store.products[0]);
 
     const result = service.calculateCompositeCost(
       [{ productId: 'piece-1', quantity: 2 }],
@@ -331,7 +332,7 @@ describe('CostCalculatorService', () => {
     store.generalSettings.filamentTypeAverages = {
       pla: 10000,
       tpu: 20000,
-    } as never;
+    };
 
     const result = service.calculateCost({
       type: ProductType.FDM,

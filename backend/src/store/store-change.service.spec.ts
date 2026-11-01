@@ -4,11 +4,13 @@ import { StoreChangeService } from './store-change.service';
 
 describe('StoreChangeService', () => {
   it('programa persistencia y notifica realtime', () => {
+    const schedulePersist = jest.fn();
+    const notify = jest.fn();
     const persistence = {
-      schedulePersist: jest.fn(),
+      schedulePersist,
     } as unknown as StorePersistenceService;
     const realtime = {
-      notify: jest.fn(),
+      notify,
     } as unknown as RealtimeService;
     const service = new StoreChangeService(persistence, realtime);
 
@@ -22,8 +24,8 @@ describe('StoreChangeService', () => {
       },
     });
 
-    expect(persistence.schedulePersist).toHaveBeenCalledWith(['customers']);
-    expect(realtime.notify).toHaveBeenCalledWith(['customers'], {
+    expect(schedulePersist).toHaveBeenCalledWith(['customers']);
+    expect(notify).toHaveBeenCalledWith(['customers'], {
       action: 'create',
       entity: 'customer',
       id: 'cust-1',
@@ -31,18 +33,20 @@ describe('StoreChangeService', () => {
   });
 
   it('puede omitir persistencia en notifyAll', () => {
+    const schedulePersist = jest.fn();
+    const notify = jest.fn();
     const persistence = {
-      schedulePersist: jest.fn(),
+      schedulePersist,
     } as unknown as StorePersistenceService;
     const realtime = {
-      notify: jest.fn(),
+      notify,
     } as unknown as RealtimeService;
     const service = new StoreChangeService(persistence, realtime);
 
     service.notifyAll('update');
 
-    expect(persistence.schedulePersist).not.toHaveBeenCalled();
-    expect(realtime.notify).toHaveBeenCalledWith(['all'], {
+    expect(schedulePersist).not.toHaveBeenCalled();
+    expect(notify).toHaveBeenCalledWith(['all'], {
       action: 'update',
       entity: undefined,
       id: undefined,

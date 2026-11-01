@@ -50,7 +50,7 @@ export class StoreChangeService {
     const id =
       idFromPath ??
       (body && typeof body === 'object' && 'id' in body
-        ? String((body as { id: unknown }).id)
+        ? String(body.id)
         : undefined);
 
     this.recordChange({

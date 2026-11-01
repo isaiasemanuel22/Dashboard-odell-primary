@@ -6,7 +6,6 @@ import {
   Param,
   Patch,
   Post,
-  Query,
 } from '@nestjs/common';
 import {
   ColorConfigDto,
@@ -21,7 +20,6 @@ import {
   SupplyDefaultPriceDto,
   UpdateCoreValuesDto,
   LegacyPatchGeneralSettingsDto,
-  UpdateGeneralSettingsDto,
   UpdateMachineProfileDto,
   UpdatePaperPricesDto,
   UpdateProfitMarginsDto,
@@ -95,7 +93,7 @@ export class SettingsController {
     @Param('id') id: string,
     @Body() data: Partial<FilamentPriceDto>,
   ) {
-    return this.settingsService.updateFilamentPrice(id, data as never);
+    return this.settingsService.updateFilamentPrice(id, data);
   }
 
   @Delete('general/filament-prices/:id')
@@ -114,7 +112,7 @@ export class SettingsController {
     @Param('id') id: string,
     @Body() data: Partial<ResinPriceDto>,
   ) {
-    return this.settingsService.updateResinPrice(id, data as never);
+    return this.settingsService.updateResinPrice(id, data);
   }
 
   @Delete('general/resin-prices/:id')
@@ -221,7 +219,7 @@ export class SettingsController {
       data.category,
       data.brand,
       data.filamentType as import('../common/enums').FilamentType,
-      data.resinType as import('../common/enums').ResinType,
+      data.resinType,
     );
   }
 

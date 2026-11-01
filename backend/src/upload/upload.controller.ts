@@ -85,7 +85,7 @@ export class UploadController {
           cb(null, ensureUploadsDir());
         },
         filename: (_req, file, cb) => {
-          const safeName = file.originalname.replace(/[^\w.\-]+/g, '_');
+          const safeName = file.originalname.replace(/[^\w.-]+/g, '_');
           cb(
             null,
             `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`,

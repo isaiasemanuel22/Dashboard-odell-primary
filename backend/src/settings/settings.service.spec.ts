@@ -52,7 +52,7 @@ describe('SettingsService.patchGeneralSettings', () => {
         }, 0);
         return `${prefix}-${max + 1}`;
       },
-    } as StoreService;
+    } as unknown as StoreService;
     const persistence = {} as StorePersistenceService;
     const storeChange = {
       recordChange: jest.fn(),

@@ -1,4 +1,10 @@
-import { OrderStatus, PrintJobStatus } from '../common/enums';
+import {
+  OrderStatus,
+  PrintJobStatus,
+  ServiceType,
+  SupplyCategory,
+  TaskType,
+} from '../common/enums';
 import { DashboardService } from './dashboard.service';
 import { SalesService } from '../sales/sales.service';
 import { TreasuryService } from '../treasury/treasury.service';
@@ -97,9 +103,9 @@ describe('DashboardService', () => {
         createdAt: '2026-07-11T10:00:00.000Z',
       },
     );
-    store.indexOrder(store.orders[0]!);
-    store.indexOrder(store.orders[1]!);
-    store.indexOrder(store.orders[2]!);
+    store.indexOrder(store.orders[0]);
+    store.indexOrder(store.orders[1]);
+    store.indexOrder(store.orders[2]);
 
     const stats = service.getStats();
 
@@ -190,7 +196,7 @@ describe('DashboardService', () => {
     store.supplies.push({
       id: 'sup-1',
       name: 'PLA negro',
-      category: 'fdm',
+      category: SupplyCategory.FDM,
       unit: 'kg',
       quantity: 0.2,
       minStock: 1,
@@ -205,14 +211,14 @@ describe('DashboardService', () => {
       orderItemIndex: 0,
       customerName: 'Cliente',
       productName: 'Pieza demo',
-      type: 'fdm',
+      type: ServiceType.IMPRESION_3D,
       status: PrintJobStatus.BLOQUEADO,
       active: true,
       priority: 1,
       machine: 'Ender',
       estimatedHours: 2,
       dueDate: '2026-07-10T18:00:00.000Z',
-      taskType: 'PRODUCTION',
+      taskType: TaskType.PRODUCTION,
       quantity: 1,
       archived: false,
       blockedReason: 'Insumos insuficientes',

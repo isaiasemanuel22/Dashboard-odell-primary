@@ -307,7 +307,7 @@ export class SalesService {
       throw new BadRequestException('La cantidad debe ser mayor a cero');
     }
 
-    let productId = data.productId?.trim() || undefined;
+    const productId = data.productId?.trim() || undefined;
     let productName = data.productName?.trim() ?? '';
 
     if (productId) {
@@ -360,7 +360,7 @@ export class SalesService {
       }
     }
 
-    for (const [productId, delta] of deltas) {
+    for (const productId of deltas.keys()) {
       const product = this.products.findById(productId);
       if (!product) {
         throw new NotFoundException(`Producto ${productId} no encontrado`);

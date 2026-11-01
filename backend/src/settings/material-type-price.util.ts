@@ -6,7 +6,7 @@ export function averageFilamentPriceByType(
   materialType: FilamentType,
 ): number | null {
   const matches = settings.filamentPrices.filter(
-    (entry) => entry.materialType === materialType,
+    (entry) => entry.materialType === (materialType as string),
   );
   if (!matches.length) {
     return null;

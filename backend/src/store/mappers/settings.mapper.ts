@@ -7,7 +7,6 @@ import {
 } from '../../settings/machine-profile.util';
 import {
   normalizePaperReferenceSheets,
-  referenceSheetFromPricePerSqm,
   syncPaperPricesFromReferenceSheets,
 } from '../../common/paper-cost.util';
 import { normalizeProfitMargins } from '../../settings/profit-margins.util';

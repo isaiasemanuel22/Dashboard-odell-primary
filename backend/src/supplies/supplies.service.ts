@@ -83,7 +83,7 @@ export class SuppliesService {
       ...merged,
       id: existing.id,
       updatedAt: new Date().toISOString(),
-    } as Supply);
+    });
 
     if (
       data.unitPrice !== undefined &&

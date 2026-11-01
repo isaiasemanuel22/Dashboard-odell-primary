@@ -16,8 +16,6 @@ import {
   EstampadoPressCycle,
   EstampadoPrintSpec,
   EstampadoSupplyLine,
-  FdmFilamentLine,
-  ProductAttachment,
 } from '../interfaces';
 
 export class ProductComponentDto {

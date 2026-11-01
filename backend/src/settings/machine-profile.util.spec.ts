@@ -1,4 +1,9 @@
-import { MachineProfileRole, ProductType } from '../common/enums';
+import {
+  MachineProfileRole,
+  ProductType,
+  SupplyCategory,
+} from '../common/enums';
+import { GeneralSettings, Supply } from '../common/interfaces';
 import { normalizePaperReferenceSheets } from '../common/paper-cost.util';
 import {
   calcWashSupplyCost,
@@ -9,7 +14,7 @@ import {
 } from './machine-profile.util';
 
 describe('machine-profile.util', () => {
-  const settings = {
+  const settings: GeneralSettings = {
     electricityCostPerKwh: 100,
     laborCostPerHour: 500,
     modelingRatePerHour: 0,
@@ -30,6 +35,9 @@ describe('machine-profile.util', () => {
     }),
     filamentPrices: [],
     resinPrices: [],
+    errorMarginPercent: 0,
+    filamentTypeAverages: {},
+    resinTypeAverages: {},
     filamentTypes: [],
     resinTypes: [],
     colors: [],
@@ -40,11 +48,11 @@ describe('machine-profile.util', () => {
     ),
   };
 
-  const supplies = [
+  const supplies: Supply[] = [
     {
       id: 'sup-alcohol',
       name: 'Alcohol isopropílico',
-      type: 'alcohol' as never,
+      category: SupplyCategory.RESINA,
       unit: 'L',
       quantity: 2,
       minStock: 0.5,

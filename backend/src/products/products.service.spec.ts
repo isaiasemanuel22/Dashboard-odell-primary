@@ -67,8 +67,12 @@ describe('ProductsService', () => {
       retailSales: [],
       supplies: [],
       impresos: [],
+      brands: [],
+      quotes: [],
+      treasuryExpenses: [],
+      calendarEntries: [],
     });
-    store.indexProduct(store.products[0]!);
+    store.indexProduct(store.products[0]);
 
     const service = createService(store);
     const updated = service.update('prod-1', { published: false });
@@ -98,8 +102,12 @@ describe('ProductsService', () => {
       retailSales: [],
       supplies: [],
       impresos: [],
+      brands: [],
+      quotes: [],
+      treasuryExpenses: [],
+      calendarEntries: [],
     });
-    store.indexProduct(store.products[0]!);
+    store.indexProduct(store.products[0]);
 
     const service = createService(store);
 
@@ -130,6 +138,10 @@ describe('ProductsService', () => {
       retailSales: [],
       supplies: [],
       impresos: [],
+      brands: [],
+      quotes: [],
+      treasuryExpenses: [],
+      calendarEntries: [],
     });
     store.indexProduct(product);
 

@@ -11,7 +11,6 @@ import { Prisma } from '@prisma/client';
 import {
   GeneralSettings,
   Order,
-  PrintJob,
   Quote,
   RetailSale,
 } from '../common/interfaces';
@@ -333,7 +332,7 @@ export class StorePersistenceService
       calendarEntries: calendarEntries.map((row) =>
         mapCalendarEntryFromDb(row),
       ),
-    } as StoreState;
+    };
     adoptLegacyBrandNames(state);
     return state;
   }

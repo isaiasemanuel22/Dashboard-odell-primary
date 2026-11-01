@@ -35,9 +35,9 @@ export enum OrderStatus {
   ENTREGADO = 'entregado',
   CANCELADO = 'cancelado',
   /** @deprecated Compatibilidad de código; se persiste el valor objetivo. */
-  EN_PRODUCCION = 'en_progreso',
+  EN_PRODUCCION = 'en_progreso', // eslint-disable-line @typescript-eslint/no-duplicate-enum-values -- alias de EN_PROGRESO
   /** @deprecated Compatibilidad de código; se persiste el valor objetivo. */
-  COMPLETADO = 'terminado',
+  COMPLETADO = 'terminado', // eslint-disable-line @typescript-eslint/no-duplicate-enum-values -- alias de TERMINADO
 }
 
 export enum PrintJobStatus {

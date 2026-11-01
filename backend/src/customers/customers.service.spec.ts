@@ -15,7 +15,7 @@ describe('CustomersService.remove', () => {
       phone: '123',
       createdAt: '2026-07-01T10:00:00.000Z',
     });
-    store.indexCustomer(store.customers[0]!);
+    store.indexCustomer(store.customers[0]);
 
     service.remove('cust-1');
 

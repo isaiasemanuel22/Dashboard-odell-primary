@@ -477,10 +477,10 @@ export class UserAccessService {
     }
   }
 
-  async assertActorCanManage(
+  assertActorCanManage(
     actor: CurrentUserProfile | null,
     action: PermissionAction,
-  ): Promise<void> {
+  ): void {
     if (!actor) {
       throw new ForbiddenException('Autenticación requerida');
     }
@@ -497,7 +497,9 @@ export class UserAccessService {
   private async bootstrapFirstAdmin(token: DecodedIdToken): Promise<AppUser> {
     const email = token.email?.trim().toLowerCase();
     const displayName =
-      token.name?.trim() || email?.split('@')[0] || 'Administrador';
+      (token.name as string | undefined)?.trim() ||
+      email?.split('@')[0] ||
+      'Administrador';
 
     if (!email) {
       throw new BadRequestException(
@@ -588,9 +590,10 @@ export class UserAccessService {
     await assertFirebaseUidIsUnique(this.db(), firebaseUid, excludeId);
   }
 
-  private async assertAreaCanDeactivate(areaId: string): Promise<void> {
+  private assertAreaCanDeactivate(areaId: string): Promise<void> {
     // Cuando las tareas tengan areaId, validar estados activos (§22).
     void areaId;
+    return Promise.resolve();
   }
 
   private mapRolePermissions(

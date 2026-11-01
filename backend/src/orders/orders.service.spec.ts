@@ -79,8 +79,8 @@ describe('OrdersService.getOverview', () => {
     const overview = service.getOverview('ord-1');
 
     expect(overview.order.id).toBe('ord-1');
-    expect(overview.customers).toBeUndefined();
-    expect(overview.products).toBeUndefined();
+    expect(overview).not.toHaveProperty('customers');
+    expect(overview).not.toHaveProperty('products');
     expect(Array.isArray(overview.tasks)).toBe(true);
   });
 

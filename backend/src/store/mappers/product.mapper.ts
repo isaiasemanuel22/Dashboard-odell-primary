@@ -1,10 +1,5 @@
 import { Prisma } from '@prisma/client';
-import {
-  Product,
-  Product3D,
-  ProductCombo,
-  ProductEstampado,
-} from '../../common/interfaces';
+import { Product, Product3D, ProductEstampado } from '../../common/interfaces';
 import { ProductType } from '../../common/enums';
 import { fromJson, toInputJson } from '../../prisma/json.util';
 import { persistedFdmLine } from '../brand-link.util';
@@ -74,21 +69,21 @@ export function mapProductFromDb(row: {
     includesPieces:
       row.includesPieces === true ||
       components.length > 0 ||
-      row.type === ProductType.COMBO,
+      row.type === (ProductType.COMBO as string),
     components,
     assemblyTimeHours: row.assemblyTimeHours,
     stock: row.stock ?? 0,
   };
 
-  if (row.type === ProductType.COMBO) {
+  if (row.type === (ProductType.COMBO as string)) {
     return {
       ...base,
       type: ProductType.COMBO,
       includesPieces: true,
-    } as ProductCombo;
+    };
   }
 
-  if (row.type === ProductType.ESTAMPADO) {
+  if (row.type === (ProductType.ESTAMPADO as string)) {
     const legacy = {
       paperType: (row.paperType as ProductEstampado['paperType']) ?? undefined,
       impresoId: row.impresoId ?? undefined,
@@ -134,13 +129,10 @@ export function mapProductFromDb(row: {
 }
 
 export function mapProductToDb(product: Product) {
-  const estampado =
-    product.type === ProductType.ESTAMPADO
-      ? (product as ProductEstampado)
-      : null;
+  const estampado = product.type === ProductType.ESTAMPADO ? product : null;
   const product3d =
     product.type === ProductType.FDM || product.type === ProductType.RESINA
-      ? (product as Product3D)
+      ? product
       : null;
   const isCombo = product.type === ProductType.COMBO;
   const fdmFilaments =

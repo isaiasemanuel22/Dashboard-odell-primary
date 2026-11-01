@@ -752,7 +752,8 @@ export class SettingsService {
           ? supply.brandId === filamentPrice.brandId
           : supply.brand?.toLowerCase() ===
             filamentPrice.brand?.toLowerCase()) &&
-        supply.filamentType === filamentPrice.materialType
+        (supply.filamentType as string | undefined) ===
+          filamentPrice.materialType
       ) {
         supply.unitPrice = filamentPrice.pricePerKg;
         supply.updatedAt = now;

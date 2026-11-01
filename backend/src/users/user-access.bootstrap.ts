@@ -1,7 +1,6 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import {
   ADMIN_PERMISSION_ACTIONS,
-  PermissionAction,
   WORK_PERMISSION_ACTIONS,
 } from '../common/enums';
 import { PrismaService } from '../prisma/prisma.service';

@@ -7,7 +7,6 @@ import {
   AppRole,
   AppUser,
   CurrentUserProfile,
-  RolePermissionEntry,
   UserPermissionOverrideEntry,
   WorkArea,
 } from '../common/interfaces';

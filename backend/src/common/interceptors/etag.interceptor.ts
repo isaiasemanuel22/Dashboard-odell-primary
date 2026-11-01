@@ -21,7 +21,10 @@ const CACHEABLE_SEGMENTS = [
 
 @Injectable()
 export class EtagInterceptor implements NestInterceptor {
-  intercept(context: ExecutionContext, next: CallHandler): Observable<unknown> {
+  intercept(
+    context: ExecutionContext,
+    next: CallHandler<unknown>,
+  ): Observable<unknown> {
     if (context.getType() !== 'http') {
       return next.handle();
     }
@@ -39,7 +42,7 @@ export class EtagInterceptor implements NestInterceptor {
     const res = context.switchToHttp().getResponse<Response>();
 
     return next.handle().pipe(
-      map((body) => {
+      map((body: unknown) => {
         if (body === undefined) return body;
 
         const etag = `"${createHash('md5').update(JSON.stringify(body)).digest('hex')}"`;

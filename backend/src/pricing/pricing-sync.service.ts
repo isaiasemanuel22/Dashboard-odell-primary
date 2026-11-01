@@ -179,7 +179,7 @@ export class PricingSyncService {
       return null;
     }
 
-    const current = product as Product3D;
+    const current = product;
     const metrics = sumComponentsProductionMetrics(
       this.store,
       product.components ?? [],

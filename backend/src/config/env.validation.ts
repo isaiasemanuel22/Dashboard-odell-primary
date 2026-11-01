@@ -15,6 +15,7 @@ export interface AppEnv {
 export function validateEnv(
   config: Record<string, unknown>,
 ): Record<string, unknown> {
+  // eslint-disable-next-line @typescript-eslint/no-base-to-string -- variables de entorno: se acepta cualquier valor y se convierte a texto
   const nodeEnv = String(config.NODE_ENV ?? 'development');
   const isProd = nodeEnv === 'production';
   const databaseUrl = optionalString(config.DATABASE_URL);
@@ -59,11 +60,13 @@ export function validateEnv(
 }
 
 function optionalString(value: unknown): string | undefined {
+  // eslint-disable-next-line @typescript-eslint/no-base-to-string -- variables de entorno: se acepta cualquier valor y se convierte a texto
   const trimmed = String(value ?? '').trim();
   return trimmed || undefined;
 }
 
 function parseBoolean(value: unknown, fallback: boolean): boolean {
   if (value === undefined || value === null || value === '') return fallback;
+  // eslint-disable-next-line @typescript-eslint/no-base-to-string -- variables de entorno: se acepta cualquier valor y se convierte a texto
   return String(value).toLowerCase() === 'true';
 }

@@ -1,5 +1,5 @@
 import { BadRequestException } from '@nestjs/common';
-import { FilamentType, ResinType, ServiceType } from '../common/enums';
+import { ResinType, ServiceType } from '../common/enums';
 import { OrderItem } from '../common/interfaces';
 import {
   isDesignService,
@@ -152,7 +152,7 @@ export function normalizeIncomingOrderItems(
               ? []
               : normalizeFdmFilaments(item.filaments, {
                   grams: item.grams != null ? Number(item.grams) : undefined,
-                  filamentType: item.filamentType as FilamentType | undefined,
+                  filamentType: item.filamentType,
                 }).filter((line) => line.grams > 0);
             const grams =
               filaments.length > 0
@@ -163,7 +163,7 @@ export function normalizeIncomingOrderItems(
             const filamentType = isResin
               ? undefined
               : (filaments.find((line) => line.filamentType)?.filamentType ??
-                (item.filamentType as FilamentType | undefined));
+                item.filamentType);
             const laborNote = item.laborNote?.trim() || undefined;
             const workTimeHours =
               item.workTimeHours != null

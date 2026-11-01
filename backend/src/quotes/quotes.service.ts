@@ -209,7 +209,7 @@ export class QuotesService {
     const items = this.attachCatalogProducts(quote.items);
     const order = this.orders.create({
       customerId: quote.customerId ?? undefined,
-      items: items as OrderItem[],
+      items: items,
       discountPercent: quote.discountPercent,
       discountAmount: quote.discountAmount,
       description: quote.description,

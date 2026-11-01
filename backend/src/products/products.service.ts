@@ -11,7 +11,6 @@ import {
   Product3D,
   ProductEstampado,
   ProductComponent,
-  ProductCombo,
   ProductOverview,
   ProductPricingInput,
   ProductPricingResult,
@@ -241,7 +240,7 @@ export class ProductsService {
   update(id: string, data: UpdateProductDto): Product {
     const existing = this.findOne(id);
     const previousPrice = existing.price;
-    const mergedType = (data.type ?? existing.type) as ProductType;
+    const mergedType = data.type ?? existing.type;
     let mergedComponents = normalizeProductComponents(
       data.components !== undefined
         ? data.components
@@ -391,8 +390,8 @@ export class ProductsService {
       mergedType === ProductType.COMBO ||
       existing.type === ProductType.COMBO
     ) {
-      (updated as Product).type = ProductType.COMBO;
-      (updated as Product).includesPieces = true;
+      updated.type = ProductType.COMBO;
+      updated.includesPieces = true;
     } else if (existing.type === ProductType.ESTAMPADO) {
       const current = updated as ProductEstampado;
       if ('workTimeHours' in data && data.workTimeHours !== undefined) {
@@ -680,7 +679,7 @@ export class ProductsService {
       : Number(data.grams ?? fallback?.grams) || 0;
     const filamentType =
       filaments.length === 1
-        ? filaments[0]!.filamentType
+        ? filaments[0].filamentType
         : (data.filamentType ?? fallback?.filamentType);
 
     return { filaments, grams, filamentType };

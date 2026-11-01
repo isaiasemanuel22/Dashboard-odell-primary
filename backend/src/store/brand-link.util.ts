@@ -9,7 +9,6 @@ import {
   FdmFilamentLine,
   FilamentPriceConfig,
   Product,
-  Product3D,
   ResinPriceConfig,
   Supply,
 } from '../common/interfaces';
@@ -132,7 +131,7 @@ function bindProductBrands(store: StoreService, product: Product): void {
   if (product.type !== ProductType.FDM && product.type !== ProductType.RESINA) {
     return;
   }
-  const product3d = product as Product3D;
+  const product3d = product;
   bindBrand(
     store,
     product3d,
@@ -213,7 +212,7 @@ export function hydrateBrandNames(
     ) {
       continue;
     }
-    const product3d = product as Product3D;
+    const product3d = product;
     apply(product3d);
     for (const line of product3d.filaments ?? []) apply(line);
   }
@@ -277,7 +276,7 @@ export function brandIsUsed(state: StoreState, brandId: string): boolean {
     ) {
       return false;
     }
-    const product3d = product as Product3D;
+    const product3d = product;
     if (product3d.brandId === brandId) return true;
     return (product3d.filaments ?? []).some((line) => line.brandId === brandId);
   });

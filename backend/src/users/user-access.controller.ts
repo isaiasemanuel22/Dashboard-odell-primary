@@ -149,7 +149,7 @@ export class UserAccessController {
   ): Promise<CurrentUserProfile | null> {
     const profile = await this.userAccess.resolveCurrentUser(request.user);
     if (profile) {
-      await this.userAccess.assertActorCanManage(profile, action);
+      this.userAccess.assertActorCanManage(profile, action);
       return profile;
     }
 
@@ -158,7 +158,7 @@ export class UserAccessController {
       return null;
     }
 
-    await this.userAccess.assertActorCanManage(null, action);
+    this.userAccess.assertActorCanManage(null, action);
     return null;
   }
 }

@@ -397,7 +397,7 @@ export class OrdersService {
     }
 
     for (const line of normalized) {
-      const item = order.items[line.orderItemIndex]!;
+      const item = order.items[line.orderItemIndex];
       const fromStock = Math.min(line.quantity, item.reservedQuantity ?? 0);
       if (fromStock > 0 && item.productId) {
         const product = this.products.findById(item.productId);
