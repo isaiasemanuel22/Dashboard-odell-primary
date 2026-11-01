@@ -8,6 +8,7 @@ import {
   DashboardProfitabilityRankingItem,
   DashboardRankBy,
 } from '../../../../core/models';
+import { formatPercentIntegerLabel } from '../../../../shared/utils/percent.util';
 import { salesChannelLabel } from '../../../../shared/utils/v1-labels.util';
 import {
   DB_DATA_TABLE,
@@ -75,8 +76,7 @@ export class DashboardRankingComponent {
       key: 'markupPercent',
       header: 'Margen',
       align: 'end',
-      value: (row) =>
-        row.markupPercent == null ? '—' : `${Math.round(row.markupPercent)}%`,
+      value: (row) => formatPercentIntegerLabel(row.markupPercent),
     },
     {
       key: 'totalProfit',

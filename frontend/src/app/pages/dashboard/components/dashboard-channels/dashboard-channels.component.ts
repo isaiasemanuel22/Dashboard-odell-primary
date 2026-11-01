@@ -4,6 +4,7 @@ import {
   SalesChannel,
 } from '../../../../core/models';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
+import { formatPercentInteger } from '../../../../shared/utils/percent.util';
 import { salesChannelLabel } from '../../../../shared/utils/v1-labels.util';
 
 const CHANNEL_COLORS: Record<string, string> = {
@@ -45,7 +46,8 @@ export class DashboardChannelsComponent {
 
   protected markupLabel(row: DashboardProfitabilityChannel): string {
     if (row.markupPercent == null) return 'sin margen';
-    const pct = Math.round(row.markupPercent);
+    const pct = formatPercentInteger(row.markupPercent);
+    if (pct == null) return 'sin margen';
     if (row.channel === SalesChannel.TIENDANUBE) {
       return `margen ${pct}% (con comisión)`;
     }

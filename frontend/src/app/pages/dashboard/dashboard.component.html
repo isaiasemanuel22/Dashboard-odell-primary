@@ -68,15 +68,11 @@
     <section class="stats-grid stats-grid--secondary" aria-label="Estado de la operación">
       <a class="stat-card stat-card--link" routerLink="/pedidos">
         <span class="label">Pedidos pendientes</span>
-        <strong [class.tone-warn]="stats.overdueOrders > 0">{{
-          stats.pendingOrders
-        }}</strong>
-        <span class="hint">
-          <span [class.tone-danger]="stats.overdueOrders > 0">{{
-            overdueHint(stats.overdueOrders)
-          }}</span>
-          · esperan iniciar
-        </span>
+        <strong
+          [class.tone-warn]="stats.overduePendingOrders > 0"
+          >{{ stats.pendingOrders }}</strong
+        >
+        <span class="hint">{{ pendingCardHint(stats) }}</span>
       </a>
       <a class="stat-card stat-card--link" routerLink="/cola">
         <span class="label">En producción</span>
@@ -95,7 +91,11 @@
       <a class="stat-card stat-card--link" routerLink="/pedidos">
         <span class="label">Pedidos en curso</span>
         <strong>{{ inProgressCount(stats) }}</strong>
-        <span class="hint">{{ inProgressHint(stats) }}</span>
+        <span class="hint">
+          <span [class.tone-danger]="inProgressOverdueCount(stats) > 0">{{
+            overdueHint(inProgressOverdueCount(stats))
+          }}</span>
+        </span>
       </a>
     </section>
 
@@ -165,33 +165,32 @@
             </div>
           </div>
 
-          <db-data-table
-            label="Por cobrar"
-            [rows]="lines"
-            [columns]="receivableColumns"
-            [actions]="receivableActions"
-            [clientSide]="false"
-            minWidth="860px"
-            (action)="onReceivableAction($event)"
-          >
-            <ng-template odlCell="id" let-row>
-              <a class="order-link" [routerLink]="['/pedidos', row.id]">{{
-                row.id
-              }}</a>
-              @if (row.summary) {
-                <span class="order-summary">{{ row.summary }}</span>
-              }
-            </ng-template>
-            <ng-template odlCell="balance" let-row>
-              <span class="saldo">{{ row.balance | currencyArs }}</span>
-              <span class="order-summary">de {{ row.total | currencyArs }}</span>
-            </ng-template>
-          </db-data-table>
-
-          <p class="receivables__note">
-            En → vas a tener "Enviar recordatorio por WhatsApp" con el monto y el
-            alias ya cargados.
-          </p>
+          <div class="receivables__table-wrap">
+            <db-data-table
+              label="Por cobrar"
+              [rows]="lines"
+              [columns]="receivableColumns"
+              [actions]="receivableActions"
+              [clientSide]="false"
+              minWidth="860px"
+              (action)="onReceivableAction($event)"
+            >
+              <ng-template odlCell="id" let-row>
+                <a class="order-link" [routerLink]="['/pedidos', row.id]">{{
+                  row.id
+                }}</a>
+                @if (row.summary) {
+                  <span class="order-summary">{{ row.summary }}</span>
+                }
+              </ng-template>
+              <ng-template odlCell="balance" let-row>
+                <span class="saldo">{{ row.balance | currencyArs }}</span>
+                <span class="order-summary"
+                  >de {{ row.total | currencyArs }}</span
+                >
+              </ng-template>
+            </db-data-table>
+          </div>
         </section>
       }
     }
@@ -203,29 +202,31 @@
           <a routerLink="/pedidos">Ver todos los pedidos</a>
         </div>
         @if (stats.recentOrders.length) {
-          <db-data-table
-            label="Pedidos recientes"
-            [rows]="stats.recentOrders"
-            [columns]="recentColumns"
-            [actions]="recentActions"
-            [expandable]="true"
-            [clientSide]="false"
-            minWidth="0"
-            (action)="onRecentAction($event)"
-          >
-            <ng-template odlCell="id" let-order>
-              <a class="order-link" [routerLink]="['/pedidos', order.id]">{{
-                order.id
-              }}</a>
-            </ng-template>
-            <ng-template odlRowDetail let-order>
-              <app-order-card
-                layout="detail"
-                [order]="order"
-                (edit)="editRecent($event)"
-              />
-            </ng-template>
-          </db-data-table>
+          <div class="recent-orders__table-wrap">
+            <db-data-table
+              label="Pedidos recientes"
+              [rows]="stats.recentOrders"
+              [columns]="recentColumns"
+              [actions]="recentActions"
+              [expandable]="true"
+              [clientSide]="false"
+              minWidth="0"
+              (action)="onRecentAction($event)"
+            >
+              <ng-template odlCell="id" let-order>
+                <a class="order-link" [routerLink]="['/pedidos', order.id]">{{
+                  order.id
+                }}</a>
+              </ng-template>
+              <ng-template odlRowDetail let-order>
+                <app-order-card
+                  layout="detail"
+                  [order]="order"
+                  (edit)="editRecent($event)"
+                />
+              </ng-template>
+            </db-data-table>
+          </div>
         } @else {
           <db-state-message [empty]="true" emptyMessage="Sin pedidos abiertos." />
         }

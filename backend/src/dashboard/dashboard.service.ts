@@ -105,6 +105,10 @@ export class DashboardService {
       overdueOrders: this.store.orders.filter((order) =>
         this.isOrderOverdue(order),
       ).length,
+      overduePendingOrders: this.store.orders.filter(
+        (order) =>
+          order.status === OrderStatus.PENDIENTE && this.isOrderOverdue(order),
+      ).length,
       inProductionOrders: this.store.orders.filter(
         (o) => o.status === OrderStatus.EN_PRODUCCION,
       ).length,

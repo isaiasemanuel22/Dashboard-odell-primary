@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, input } from '@angular/core';
-import { RouterLink } from '@angular/router';
+import { Params, RouterLink } from '@angular/router';
 
 export interface DashboardAttentionItem {
   id: string;
@@ -9,6 +9,7 @@ export interface DashboardAttentionItem {
   actionLabel: string;
   route: string;
   fragment?: string;
+  queryParams?: Params;
 }
 
 @Component({

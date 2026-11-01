@@ -16,8 +16,10 @@ import {
   DashboardRankBy,
   DashboardStats,
   Order,
+  OrderStatus,
   ServiceType,
 } from '../../core/models';
+import { formatPercentInteger } from '../../shared/utils/percent.util';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { OrdersService } from '../../core/services/orders.service';
 import { ProductsService } from '../../core/services/products.service';
@@ -226,12 +228,27 @@ export class DashboardComponent implements OnInit {
     return count === 1 ? '1 atrasado' : `${count} atrasados`;
   }
 
-  pendingHint(overdue: number): string {
-    const overdueText =
-      overdue > 0
-        ? this.overdueHint(overdue)
-        : 'sin atrasados';
-    return `${overdueText} · esperan iniciar`;
+  pendingCardHint(stats: DashboardStats): string {
+    const overdue = stats.overduePendingOrders ?? 0;
+    if (overdue > 0) {
+      return `${this.overdueHint(overdue)} · esperan iniciar`;
+    }
+    return 'sin atrasados · esperan iniciar';
+  }
+
+  /** «Quedan 0 unidad» → «Quedan 0 unidades»; «1 unidad» se mantiene. */
+  private pluralizeStockMessage(
+    message: string | null | undefined,
+  ): string | null {
+    if (!message) return null;
+    return message.replace(
+      /\bQuedan\s+(-?\d+(?:[.,]\d+)?)\s+unidad\b/i,
+      (_full, rawQty: string) => {
+        const qty = Number(String(rawQty).replace(',', '.'));
+        const unit = qty === 1 ? 'unidad' : 'unidades';
+        return `Quedan ${rawQty} ${unit}`;
+      },
+    );
   }
 
   productionHint(stats: DashboardStats): string {
@@ -254,8 +271,9 @@ export class DashboardComponent implements OnInit {
     return stats.pendingOrders + stats.inProductionOrders;
   }
 
-  inProgressHint(stats: DashboardStats): string {
-    return `Pendientes + en producción · ${stats.totalOrders} en total`;
+  /** Atrasados entre los pedidos en curso (pendientes + en progreso). */
+  inProgressOverdueCount(stats: DashboardStats): number {
+    return stats.overdueOrders;
   }
 
   attentionItems(stats: DashboardStats): DashboardAttentionItem[] {
@@ -324,7 +342,9 @@ export class DashboardComponent implements OnInit {
             : stats.lowStockMaterials === 1
               ? '1 insumo con stock bajo'
               : `${stats.lowStockMaterials} insumos con stock bajo`,
-        detail: first?.message ?? this.lowStockHint(stats.lowStockMaterials),
+        detail:
+          this.pluralizeStockMessage(first?.message) ??
+          this.lowStockHint(stats.lowStockMaterials),
         actionLabel: 'Ver insumos',
         route: first?.route?.split('?')[0] || '/insumos',
       });
@@ -332,7 +352,8 @@ export class DashboardComponent implements OnInit {
 
     if (profit.marginAlerts.length > 0) {
       const count = profit.marginAlerts.length;
-      const target = profit.marginAlerts[0]?.targetPercent ?? 40;
+      const target =
+        formatPercentInteger(profit.marginAlerts[0]?.targetPercent) ?? '40';
       items.push({
         id: 'margin',
         tone: 'warn',
@@ -343,7 +364,7 @@ export class DashboardComponent implements OnInit {
         detail: 'revisá costos y precios',
         actionLabel: 'Actualizar precios',
         route: '/productos',
-        fragment: 'masiva',
+        queryParams: { filtro: 'below_margin' },
       });
     }
 

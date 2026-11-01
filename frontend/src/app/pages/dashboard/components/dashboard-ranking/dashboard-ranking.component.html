@@ -14,13 +14,15 @@
 
   @if (rankedRows(); as rows) {
     @if (rows.length) {
-      <db-data-table
-        label="Ranking de rentabilidad"
-        [rows]="rows"
-        [columns]="columns"
-        [clientSide]="false"
-        minWidth="760px"
-      />
+      <div class="ranking__table-wrap">
+        <db-data-table
+          label="Ranking de rentabilidad"
+          [rows]="rows"
+          [columns]="columns"
+          [clientSide]="false"
+          minWidth="760px"
+        />
+      </div>
     } @else {
       <p class="ranking__empty">Sin ventas con productos en este período.</p>
     }

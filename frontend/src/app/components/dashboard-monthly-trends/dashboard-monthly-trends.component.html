@@ -3,8 +3,8 @@
     <header class="trend-panel__header">
       <div>
         <h3>Pedidos recibidos</h3>
+        <p class="trend-panel__period">Últimos {{ trends.length }} meses</p>
         <p>
-          Últimos {{ trends.length }} meses ·
           <strong>{{ totalOrders }} pedidos</strong>
           · sin cancelados
         </p>
@@ -19,6 +19,7 @@
     <header class="trend-panel__header">
       <div>
         <h3>Ingresos totales</h3>
+        <p class="trend-panel__period">Últimos {{ trends.length }} meses</p>
         <p>Vendido (pedidos entregados + mostrador) y cobrado, mes a mes</p>
       </div>
       <div class="trend-panel__legend" aria-hidden="true">

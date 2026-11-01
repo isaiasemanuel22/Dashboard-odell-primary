@@ -5,6 +5,14 @@
   flex-direction: column;
   gap: 0.65rem;
   margin-bottom: 1rem;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.ranking__table-wrap {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .ranking__head {

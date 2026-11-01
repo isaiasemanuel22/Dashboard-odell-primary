@@ -6,14 +6,14 @@
         Productos por debajo de tu margen objetivo ({{ targetPercent() }}%)
       </p>
     </div>
-    @if (alerts().length) {
-      <span class="margin-alerts__pill">{{ productsLabel(alerts().length) }}</span>
+    @if (totalCount()) {
+      <span class="margin-alerts__pill">{{ productsLabel(totalCount()) }}</span>
     }
   </header>
 
-  @if (alerts().length) {
+  @if (totalCount()) {
     <ul class="margin-alerts__list" aria-label="Productos con margen bajo">
-      @for (alert of alerts(); track alert.productId) {
+      @for (alert of visibleAlerts(); track alert.productId) {
         <li class="margin-alerts__item">
           <div class="margin-alerts__top">
             <div class="margin-alerts__info">
@@ -23,19 +23,15 @@
                 {{ alert.price | currencyArs }}
               </span>
             </div>
-            <span class="margin-alerts__pct">{{ alert.markupPercent }}%</span>
+            <span class="margin-alerts__pct">{{
+              alert.markupPercent | percentInteger
+            }}</span>
           </div>
 
           <div
             class="margin-alerts__bar"
             role="img"
-            [attr.aria-label]="
-              'Margen ' +
-              alert.markupPercent +
-              '% contra objetivo ' +
-              targetPercent() +
-              '%'
-            "
+            [attr.aria-label]="barAriaLabel(alert.markupPercent)"
           >
             <div
               class="margin-alerts__fill"
@@ -69,8 +65,12 @@
       Línea = margen objetivo {{ targetPercent() }}%
     </p>
 
-    <a class="margin-alerts__bulk" routerLink="/productos" fragment="masiva">
-      Actualizar precios en bloque →
+    <a
+      class="margin-alerts__bulk"
+      routerLink="/productos"
+      [queryParams]="{ filtro: 'below_margin' }"
+    >
+      {{ viewAllLabel(totalCount()) }}
     </a>
   } @else {
     <p class="margin-alerts__empty">

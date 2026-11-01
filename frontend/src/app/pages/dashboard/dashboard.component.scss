@@ -2,21 +2,39 @@
 @use '../../shared/styles/screen' as screen;
 @use '../../shared/styles/mobile' as mobile;
 
+:host {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+  box-sizing: border-box;
+}
+
 .dashboard-header {
-  align-items: center;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
 
   @include mobile.mobile-only {
-    flex-direction: row;
-    flex-wrap: nowrap;
+    flex-direction: column;
+    align-items: stretch;
     gap: 0.75rem;
   }
 }
 
 .dashboard-header__main {
-  flex: 1;
+  flex: 1 1 12rem;
   min-width: 0;
 
+  p {
+    overflow-wrap: anywhere;
+  }
+
   @include mobile.mobile-only {
+    flex: none;
+    width: 100%;
+
     p {
       font-size: 0.85rem;
       line-height: 1.35;
@@ -28,6 +46,14 @@
   @include screen.screen-actions;
   gap: 0.45rem;
   align-items: center;
+  flex: 1 1 auto;
+  flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
+
+  @include mobile.mobile-only {
+    width: 100%;
+  }
 
   ::ng-deep .db-button {
     min-height: 2.25rem;
@@ -71,6 +97,7 @@
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.75rem;
   margin-bottom: 0.75rem;
+  min-width: 0;
 
   strong {
     display: block;
@@ -79,6 +106,7 @@
     font-weight: 700;
     letter-spacing: -0.03em;
     line-height: 1.15;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -87,6 +115,7 @@
 
   .stat-card {
     padding: 0.8rem 1rem 0.85rem;
+    min-width: 0;
   }
 
   strong {
@@ -98,6 +127,7 @@
   color: inherit;
   text-decoration: none;
   transition: border-color 0.15s ease;
+  min-width: 0;
 
   &:hover {
     border-color: $color-brand-light;
@@ -109,7 +139,8 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 1rem;
   margin-bottom: 1.25rem;
-  align-items: stretch;
+  align-items: start;
+  min-width: 0;
 }
 
 .receivables {
@@ -118,6 +149,8 @@
   border-radius: $radius-md;
   padding: 1rem 1.05rem 0.9rem;
   margin-bottom: 1rem;
+  min-width: 0;
+  max-width: 100%;
 
   ::ng-deep .odl-box {
     border-radius: 10px;
@@ -131,6 +164,13 @@
     font-weight: 400;
     color: $color-text-muted;
   }
+}
+
+.receivables__table-wrap,
+.recent-orders__table-wrap {
+  min-width: 0;
+  max-width: 100%;
+  overflow-x: auto;
 }
 
 .receivables__head {
@@ -252,12 +292,6 @@
   }
 }
 
-.receivables__note {
-  margin: 0.75rem 0 0;
-  color: $color-text-muted;
-  font-size: $font-meta;
-}
-
 .order-link {
   color: $color-brand-deep;
   font-weight: 700;
@@ -280,6 +314,12 @@
   grid-template-columns: minmax(0, 1.7fr) minmax(240px, 0.85fr);
   gap: 1rem;
   align-items: start;
+  min-width: 0;
+}
+
+.recent-orders {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .recent-orders__head {
@@ -288,6 +328,7 @@
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 0.65rem;
+  flex-wrap: wrap;
 
   h3 {
     margin: 0;
@@ -308,6 +349,7 @@
   border: 1px solid $color-border-soft;
   border-radius: $radius-md;
   padding: 1rem 1.05rem;
+  min-width: 0;
 
   h3 {
     margin: 0 0 1rem;
@@ -415,6 +457,17 @@
 
   .dashboard-bottom {
     grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 420px) {
+  .stats-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem;
+
+    strong {
+      font-size: 1.2rem;
+    }
   }
 }
 

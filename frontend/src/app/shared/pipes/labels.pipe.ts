@@ -28,6 +28,7 @@ import {
   plainTextFromHtml,
   sanitizeRichTextHtml,
 } from '../utils/rich-text.util';
+import { formatPercentIntegerLabel } from '../utils/percent.util';
 
 @Pipe({ name: 'serviceTypeLabel', standalone: true })
 export class ServiceTypeLabelPipe implements PipeTransform {
@@ -108,6 +109,14 @@ export class CurrencyArsPipe implements PipeTransform {
       currency: 'ARS',
       maximumFractionDigits: 0,
     }).format(value);
+  }
+}
+
+/** Porcentaje entero con `%` para UI (alertas, canales, ranking). */
+@Pipe({ name: 'percentInteger', standalone: true })
+export class PercentIntegerPipe implements PipeTransform {
+  transform(value: number | null | undefined): string {
+    return formatPercentIntegerLabel(value);
   }
 }
 

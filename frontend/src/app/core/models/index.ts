@@ -1111,6 +1111,8 @@ export interface DashboardStats {
   totalOrders: number;
   pendingOrders: number;
   overdueOrders: number;
+  /** Atrasados que todavía están en estado pendiente. */
+  overduePendingOrders: number;
   inProductionOrders: number;
   monthlyRevenue: number;
   walletBalance: number;

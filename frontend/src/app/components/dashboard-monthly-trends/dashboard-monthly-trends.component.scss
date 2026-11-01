@@ -34,6 +34,13 @@
   }
 }
 
+.trend-panel__period {
+  margin: 0.25rem 0 0;
+  color: $color-text-label;
+  font-size: $font-meta;
+  font-weight: 600;
+}
+
 .trend-panel__header {
   display: flex;
   align-items: flex-start;

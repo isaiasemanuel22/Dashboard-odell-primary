@@ -161,6 +161,15 @@ export class ProductsComponent implements OnInit {
       this.handleRealtime(event),
     );
 
+    const filtro = this.route.snapshot.queryParamMap.get('filtro');
+    if (
+      filtro === 'below_margin' ||
+      filtro === 'fixed_price' ||
+      filtro === 'in_stock'
+    ) {
+      this.listFilter = filtro;
+    }
+
     if (shouldOpenCreateFromQuery(this.route)) {
       this.openCreateProduct();
       clearCreateQuery(this.router);
