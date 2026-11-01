@@ -272,7 +272,7 @@ export class DashboardComponent implements OnInit {
       maximumFractionDigits: 2,
     }).format(qty);
     const rawUnit = (item.unit ?? '').trim() || 'unidad';
-    if (/^unidades?$/i.test(rawUnit)) {
+    if (/^unidad(es)?$/i.test(rawUnit)) {
       const word = qty === 1 ? 'unidad' : 'unidades';
       return `Quedan ${qtyLabel} ${word}`;
     }
