@@ -67,6 +67,22 @@ export enum CustomerType {
   REVENDEDOR = 'revendedor',
 }
 
+/** Precio de lista o mayorista por pedido/presupuesto (§10). */
+export enum PriceType {
+  LISTA = 'lista',
+  MAYORISTA = 'mayorista',
+}
+
+/** Canal de venta del pedido/presupuesto. */
+export enum SalesChannel {
+  MAYORISTA = 'mayorista',
+  INSTAGRAM = 'instagram',
+  WHATSAPP = 'whatsapp',
+  TIENDANUBE = 'tiendanube',
+  FERIA = 'feria',
+  MOSTRADOR = 'mostrador',
+}
+
 export enum CustomerSource {
   INSTAGRAM = 'instagram',
   WHATSAPP = 'whatsapp',

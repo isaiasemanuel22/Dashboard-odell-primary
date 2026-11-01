@@ -1,10 +1,23 @@
 import { Prisma } from '@prisma/client';
 import { FdmFilamentLine, Quote, QuoteItem } from '../../common/interfaces';
-import { QuoteStatus } from '../../common/enums';
+import { PriceType, QuoteStatus, SalesChannel } from '../../common/enums';
 import { fromJson, toInputJson } from '../../prisma/json.util';
 import { normalizeServiceType } from '../../common/service-type.util';
 import { normalizeFdmFilaments } from '../../products/fdm-product.util';
 import { persistedFdmLine } from '../brand-link.util';
+
+function normalizePriceType(value?: string | null): PriceType {
+  return value === PriceType.MAYORISTA ? PriceType.MAYORISTA : PriceType.LISTA;
+}
+
+function normalizeSalesChannel(
+  value?: string | null,
+): SalesChannel | undefined {
+  if (!value) return undefined;
+  return Object.values(SalesChannel).includes(value as SalesChannel)
+    ? (value as SalesChannel)
+    : undefined;
+}
 
 export function mapQuoteItemFromDb(item: {
   serviceType: string;
@@ -12,6 +25,7 @@ export function mapQuoteItemFromDb(item: {
   productName: string;
   quantity: number;
   unitPrice: number;
+  listUnitPrice?: number | null;
   unitPriceManual?: boolean;
   unitCost?: number | null;
   includesPrint?: boolean;
@@ -62,6 +76,10 @@ export function mapQuoteItemFromDb(item: {
     productName: item.productName,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    listUnitPrice:
+      item.listUnitPrice != null && Number.isFinite(Number(item.listUnitPrice))
+        ? Number(item.listUnitPrice)
+        : undefined,
     unitPriceManual: item.unitPriceManual || undefined,
     unitCost:
       item.unitCost != null && Number.isFinite(Number(item.unitCost))
@@ -113,6 +131,9 @@ export function mapQuoteFromDb(row: {
   services: Prisma.JsonValue;
   status: string;
   total: number;
+  priceType?: string | null;
+  wholesaleApplied?: boolean | null;
+  salesChannel?: string | null;
   discountPercent?: number;
   discountAmount?: number;
   description?: string | null;
@@ -125,6 +146,7 @@ export function mapQuoteFromDb(row: {
     productName: string;
     quantity: number;
     unitPrice: number;
+    listUnitPrice?: number | null;
     includesPrint?: boolean;
     printPaperType?: string | null;
     printWidthCm?: number | null;
@@ -144,6 +166,9 @@ export function mapQuoteFromDb(row: {
     items: row.items.map((item) => mapQuoteItemFromDb(item)),
     status: row.status as QuoteStatus,
     total: row.total,
+    priceType: normalizePriceType(row.priceType),
+    wholesaleApplied: row.wholesaleApplied === true,
+    salesChannel: normalizeSalesChannel(row.salesChannel),
     discountPercent: row.discountPercent ?? 0,
     discountAmount: row.discountAmount ?? 0,
     description: row.description ?? undefined,
@@ -160,6 +185,9 @@ function mapQuoteScalarsToDb(quote: Quote) {
     services: toInputJson(quote.services),
     status: quote.status,
     total: quote.total,
+    priceType: normalizePriceType(quote.priceType),
+    wholesaleApplied: quote.wholesaleApplied === true,
+    salesChannel: quote.salesChannel ?? null,
     discountPercent: quote.discountPercent ?? 0,
     discountAmount: quote.discountAmount ?? 0,
     description: quote.description ?? null,
@@ -203,6 +231,10 @@ export function mapQuoteItemToDb(
     productName: item.productName,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    listUnitPrice:
+      item.listUnitPrice != null && Number.isFinite(Number(item.listUnitPrice))
+        ? Number(item.listUnitPrice)
+        : null,
     unitPriceManual: item.unitPriceManual === true,
     unitCost:
       item.unitCost != null && Number.isFinite(Number(item.unitCost))

@@ -3,15 +3,29 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { QuoteStatus, ServiceType } from '../common/enums';
-import { Order, OrderItem, Quote, QuoteItem } from '../common/interfaces';
+import {
+  CustomerType,
+  PriceType,
+  QuoteStatus,
+  SalesChannel,
+  ServiceType,
+} from '../common/enums';
+import {
+  Customer,
+  Order,
+  OrderItem,
+  Quote,
+  QuoteItem,
+} from '../common/interfaces';
 import { CreateQuoteDto, UpdateQuoteDto } from '../common/dto';
 import {
   calculateTotalWithDiscount,
   normalizeDiscountFields,
 } from '../common/utils/discount.util';
 import { calculateOrderItemsSubtotal } from '../orders/order-pricing.util';
+import { applyWholesalePricing } from '../orders/wholesale-pricing.util';
 import { OrdersService } from '../orders/orders.service';
+import { normalizeWholesaleDiscount } from '../settings/wholesale-discount.util';
 import {
   CustomerRepository,
   ProductRepository,
@@ -59,8 +73,14 @@ export class QuotesService {
   }
 
   create(data: CreateQuoteDto): Quote {
-    const { customerId, customerName } = this.resolveCustomer(data.customerId);
-    const items = this.normalizeQuoteItems(data.items);
+    const { customerId, customerName, customer } = this.resolveCustomer(
+      data.customerId,
+    );
+    const priceType =
+      data.priceType ?? this.defaultPriceTypeForCustomer(customer);
+    const normalizedItems = this.normalizeQuoteItems(data.items);
+    const priced = this.priceQuoteItems(normalizedItems, priceType, customer);
+    const items = priced.items;
     const services = this.deriveServices(items);
     const discount = normalizeDiscountFields(data);
     const now = new Date();
@@ -77,6 +97,9 @@ export class QuotesService {
       services,
       items,
       status,
+      priceType,
+      wholesaleApplied: priced.wholesaleApplied,
+      salesChannel: this.normalizeSalesChannel(data.salesChannel),
       total: this.calculateTotal(items, discount),
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
@@ -92,17 +115,37 @@ export class QuotesService {
 
     let customerId = current.customerId;
     let customerName = current.customerName;
+    let customer: Customer | undefined;
 
     if (data.customerId !== undefined) {
       const resolved = this.resolveCustomer(data.customerId);
       customerId = resolved.customerId;
       customerName = resolved.customerName;
+      customer = resolved.customer;
     }
 
-    const items =
+    const priceType = data.priceType ?? current.priceType ?? PriceType.LISTA;
+    const shouldReprice =
+      data.priceType !== undefined ||
+      data.customerId !== undefined ||
+      data.items !== undefined;
+
+    let items =
       data.items !== undefined
         ? this.normalizeQuoteItems(data.items)
         : current.items;
+    let wholesaleApplied = current.wholesaleApplied === true;
+
+    if (shouldReprice) {
+      const priced = this.priceQuoteItems(
+        items,
+        priceType,
+        customer ?? (customerId ? this.customers.findById(customerId) : null),
+      );
+      items = priced.items;
+      wholesaleApplied = priced.wholesaleApplied;
+    }
+
     const services =
       data.items !== undefined ? this.deriveServices(items) : current.services;
 
@@ -123,12 +166,20 @@ export class QuotesService {
         : current.status;
     this.assertCustomerForSent(status, customerId);
 
+    const salesChannel =
+      data.salesChannel !== undefined
+        ? this.normalizeSalesChannel(data.salesChannel)
+        : current.salesChannel;
+
     const updated: Quote = {
       ...current,
       customerId,
       customerName,
       services,
       items,
+      priceType,
+      wholesaleApplied,
+      salesChannel,
       total: this.calculateTotal(items, discount),
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
@@ -207,14 +258,22 @@ export class QuotesService {
     }
 
     const items = this.attachCatalogProducts(quote.items);
-    const order = this.orders.create({
-      customerId: quote.customerId ?? undefined,
-      items: items,
-      discountPercent: quote.discountPercent,
-      discountAmount: quote.discountAmount,
-      description: quote.description,
-      dueDate: this.defaultOrderDueDate(),
-    });
+    // Copia priceType, canal y precios cotizados sin recalcularlos (§16.2).
+    const order = this.orders.create(
+      {
+        customerId: quote.customerId ?? undefined,
+        items: items,
+        priceType: quote.priceType ?? PriceType.LISTA,
+        salesChannel: quote.salesChannel,
+        discountPercent: quote.discountPercent,
+        discountAmount: quote.discountAmount,
+        description: quote.description,
+        dueDate: this.defaultOrderDueDate(),
+      },
+      {
+        keepQuotedPrices: { wholesaleApplied: quote.wholesaleApplied === true },
+      },
+    );
 
     this.quotes.save({ ...quote, items, orderId: order.id });
     this.storeChange.recordChange({
@@ -362,6 +421,7 @@ export class QuotesService {
   private resolveCustomer(customerId?: string | null): {
     customerId: string | null;
     customerName: string;
+    customer?: Customer;
   } {
     const trimmed = customerId?.trim();
     if (!trimmed) {
@@ -373,6 +433,38 @@ export class QuotesService {
       throw new BadRequestException('Cliente no válido');
     }
 
-    return { customerId: customer.id, customerName: customer.name };
+    return {
+      customerId: customer.id,
+      customerName: customer.name,
+      customer,
+    };
+  }
+
+  private defaultPriceTypeForCustomer(customer?: Customer | null): PriceType {
+    return customer?.type === CustomerType.REVENDEDOR
+      ? PriceType.MAYORISTA
+      : PriceType.LISTA;
+  }
+
+  private normalizeSalesChannel(
+    value?: SalesChannel | null,
+  ): SalesChannel | undefined {
+    if (value == null) return undefined;
+    return value;
+  }
+
+  private priceQuoteItems(
+    items: QuoteItem[],
+    priceType: PriceType,
+    customer?: Customer | null,
+  ): { items: QuoteItem[]; wholesaleApplied: boolean } {
+    const settings = normalizeWholesaleDiscount(
+      this.store.generalSettings.wholesaleDiscount,
+    );
+    return applyWholesalePricing(items, {
+      priceType,
+      customer: customer ?? null,
+      settings,
+    });
   }
 }

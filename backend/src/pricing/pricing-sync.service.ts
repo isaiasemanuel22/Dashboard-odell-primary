@@ -1,5 +1,5 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { OrderStatus, ProductType } from '../common/enums';
+import { OrderStatus, PriceType, ProductType } from '../common/enums';
 import { Product, Product3D, Quote } from '../common/interfaces';
 import {
   calculateTotalWithDiscount,
@@ -9,8 +9,10 @@ import { appendOrderPriceHistory } from '../orders/order-price-history.util';
 import { hasRecordedPricePair } from '../orders/order-price-notice.util';
 import type { OrderPriceChangeTrigger } from '../orders/order-price-history.util';
 import { calculateOrderItemsSubtotal } from '../orders/order-pricing.util';
+import { applyWholesalePricing } from '../orders/wholesale-pricing.util';
 import { ProductPricingService } from '../products/product-pricing.service';
 import { sumComponentsProductionMetrics } from '../products/product-production.util';
+import { normalizeWholesaleDiscount } from '../settings/wholesale-discount.util';
 import {
   OrderRepository,
   ProductRepository,
@@ -228,11 +230,27 @@ export class PricingSyncService {
       if (!item.productId) continue;
       if (item.unitPriceManual) continue;
       const change = priceChanges.get(item.productId);
-      if (!change || change.newPrice === item.unitPrice) continue;
+      const listPrice = item.listUnitPrice ?? item.unitPrice;
+      if (!change || change.newPrice === listPrice) continue;
+      // Precio de catálogo = lista; el mayorista se reaplica después.
       item.unitPrice = change.newPrice;
+      delete item.listUnitPrice;
       changed = true;
     }
     if (!changed) return false;
+
+    const customer = quote.customerId
+      ? this.store.getCustomerById(quote.customerId)
+      : null;
+    const priced = applyWholesalePricing(quote.items, {
+      priceType: quote.priceType ?? PriceType.LISTA,
+      customer: customer ?? null,
+      settings: normalizeWholesaleDiscount(
+        this.store.generalSettings.wholesaleDiscount,
+      ),
+    });
+    quote.items = priced.items;
+    quote.wholesaleApplied = priced.wholesaleApplied;
 
     quote.total = calculateTotalWithDiscount(
       calculateOrderItemsSubtotal(quote.items),

@@ -9,12 +9,14 @@ import {
   FilamentType,
   OrderStatus,
   PaperType,
+  PriceType,
   PrintJobStatus,
   QuoteStatus,
   MachineProfileRole,
   ProductType,
   ResinType,
   SaleSource,
+  SalesChannel,
   ServiceType,
   SupplyCategory,
   TaskType,
@@ -431,7 +433,13 @@ export interface OrderItem {
   productId?: string;
   productName: string;
   quantity: number;
+  /** Precio que se cobra (lista o mayorista ya aplicado). */
   unitPrice: number;
+  /**
+   * Precio de lista de la línea cuando se aplicó mayorista.
+   * Ausente = unitPrice es de lista (o no hubo descuento en esa línea).
+   */
+  listUnitPrice?: number;
   /** Precio unitario editado a mano (persistido). */
   unitPriceManual?: boolean;
   /** Costo unitario al cotizar (snapshot persistido). */
@@ -514,6 +522,12 @@ export interface Order {
   items: OrderItem[];
   status: OrderStatus;
   total: number;
+  /** Lista | Mayorista; datos viejos se leen como lista. */
+  priceType?: PriceType;
+  /** Si el mayorista efectivamente se aplicó. Datos viejos → false. */
+  wholesaleApplied?: boolean;
+  /** Canal de venta (opcional). */
+  salesChannel?: SalesChannel;
   discountPercent?: number;
   discountAmount?: number;
   description?: string;
@@ -550,6 +564,12 @@ export interface Quote {
   items: QuoteItem[];
   status: QuoteStatus;
   total: number;
+  /** Lista | Mayorista; datos viejos se leen como lista. */
+  priceType?: PriceType;
+  /** Si el mayorista efectivamente se aplicó. Datos viejos → false. */
+  wholesaleApplied?: boolean;
+  /** Canal de venta (opcional). */
+  salesChannel?: SalesChannel;
   discountPercent?: number;
   discountAmount?: number;
   description?: string;

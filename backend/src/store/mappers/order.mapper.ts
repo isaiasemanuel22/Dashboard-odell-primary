@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { OrderStatus } from '../../common/enums';
+import { OrderStatus, PriceType, SalesChannel } from '../../common/enums';
 import { FdmFilamentLine, Order, OrderItem } from '../../common/interfaces';
 import { ensureOrderStatusHistory } from '../../orders/order-status-history.util';
 import { fromJson, toInputJson } from '../../prisma/json.util';
@@ -13,12 +13,26 @@ function normalizeOrderStatus(status: string): OrderStatus {
   return status as OrderStatus;
 }
 
+function normalizePriceType(value?: string | null): PriceType {
+  return value === PriceType.MAYORISTA ? PriceType.MAYORISTA : PriceType.LISTA;
+}
+
+function normalizeSalesChannel(
+  value?: string | null,
+): SalesChannel | undefined {
+  if (!value) return undefined;
+  return Object.values(SalesChannel).includes(value as SalesChannel)
+    ? (value as SalesChannel)
+    : undefined;
+}
+
 export function mapOrderItemFromDb(item: {
   serviceType: string;
   productId: string | null;
   productName: string;
   quantity: number;
   unitPrice: number;
+  listUnitPrice?: number | null;
   unitPriceManual?: boolean;
   unitCost?: number | null;
   includesPrint?: boolean;
@@ -74,6 +88,10 @@ export function mapOrderItemFromDb(item: {
     productName: item.productName,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    listUnitPrice:
+      item.listUnitPrice != null && Number.isFinite(Number(item.listUnitPrice))
+        ? Number(item.listUnitPrice)
+        : undefined,
     unitPriceManual: item.unitPriceManual || undefined,
     unitCost:
       item.unitCost != null && Number.isFinite(Number(item.unitCost))
@@ -130,6 +148,9 @@ export function mapOrderFromDb(row: {
   services: Prisma.JsonValue;
   status: string;
   total: number;
+  priceType?: string | null;
+  wholesaleApplied?: boolean | null;
+  salesChannel?: string | null;
   discountPercent?: number;
   discountAmount?: number;
   description: string | null;
@@ -145,6 +166,7 @@ export function mapOrderFromDb(row: {
     productName: string;
     quantity: number;
     unitPrice: number;
+    listUnitPrice?: number | null;
     printImpresoId?: string | null;
     designUnitPrice?: number | null;
     deliveredQuantity?: number;
@@ -162,6 +184,9 @@ export function mapOrderFromDb(row: {
     items: row.items.map((item) => mapOrderItemFromDb(item)),
     status: normalizeOrderStatus(row.status),
     total: row.total,
+    priceType: normalizePriceType(row.priceType),
+    wholesaleApplied: row.wholesaleApplied === true,
+    salesChannel: normalizeSalesChannel(row.salesChannel),
     discountPercent: row.discountPercent ?? 0,
     discountAmount: row.discountAmount ?? 0,
     description: row.description ?? undefined,
@@ -184,6 +209,9 @@ function mapOrderScalarsToDb(order: Order) {
     services: toInputJson(order.services),
     status: order.status,
     total: order.total,
+    priceType: normalizePriceType(order.priceType),
+    wholesaleApplied: order.wholesaleApplied === true,
+    salesChannel: order.salesChannel ?? null,
     discountPercent: order.discountPercent ?? 0,
     discountAmount: order.discountAmount ?? 0,
     description: order.description ?? null,
@@ -231,6 +259,10 @@ export function mapOrderItemToDb(
     productName: item.productName,
     quantity: item.quantity,
     unitPrice: item.unitPrice,
+    listUnitPrice:
+      item.listUnitPrice != null && Number.isFinite(Number(item.listUnitPrice))
+        ? Number(item.listUnitPrice)
+        : null,
     unitPriceManual: item.unitPriceManual === true,
     unitCost:
       item.unitCost != null && Number.isFinite(Number(item.unitCost))

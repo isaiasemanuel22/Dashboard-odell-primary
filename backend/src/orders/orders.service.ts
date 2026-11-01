@@ -4,12 +4,16 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import {
+  CustomerType,
   OrderStatus,
+  PriceType,
   PrintJobStatus,
+  SalesChannel,
   ServiceType,
   TaskType,
 } from '../common/enums';
 import {
+  Customer,
   Order,
   OrderDeliveryLine,
   OrderItem,
@@ -35,14 +39,17 @@ import { filterOrders, OrderListFilters } from './order-filter.util';
 import { normalizeIncomingOrderItems } from './order-items.normalizer';
 import { appendOrderStatusHistory } from './order-status-history.util';
 import { isDesignPrintConfigured } from './design-print.util';
+import { applyWholesalePricing } from './wholesale-pricing.util';
 import { OrderTasksService } from '../print-jobs/order-tasks.service';
 import { PrintJobsService } from '../print-jobs/print-jobs.service';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
+import { normalizeWholesaleDiscount } from '../settings/wholesale-discount.util';
 import {
   CustomerRepository,
   OrderRepository,
   ProductRepository,
 } from '../store/repositories';
+import { StoreService } from '../store/store.service';
 import {
   ORDER_RICH_TEXT_MAX_LENGTH,
   hasRichTextContent,
@@ -59,6 +66,7 @@ export class OrdersService {
     private readonly orderTasks: OrderTasksService,
     private readonly printJobs: PrintJobsService,
     private readonly costCalculator: CostCalculatorService,
+    private readonly store: StoreService,
   ) {}
 
   findAll(filters: OrderListFilters = {}): Order[] {
@@ -100,25 +108,33 @@ export class OrdersService {
       productId: string;
       productName: string;
       previousUnitPrice: number;
-      newUnitPrice: number;
     }> = [];
 
     order.items.forEach((item, index) => {
       if (!item.productId) return;
       const product = this.products.findById(item.productId);
-      if (!product || product.price === item.unitPrice) return;
+      const listPrice = item.listUnitPrice ?? item.unitPrice;
+      if (!product || product.price === listPrice) return;
       changes.push({
         index,
         productId: item.productId,
         productName: item.productName,
         previousUnitPrice: item.unitPrice,
-        newUnitPrice: product.price,
       });
+      // El precio de catálogo es de lista; el mayorista se reaplica después.
       item.unitPrice = product.price;
+      delete item.listUnitPrice;
     });
 
     if (!changes.length) return order;
 
+    const priced = this.priceOrderItems(
+      order.items,
+      order.priceType ?? PriceType.LISTA,
+      order.customerId,
+    );
+    order.items = priced.items;
+    order.wholesaleApplied = priced.wholesaleApplied;
     order.total = this.calculateTotal(
       order.items,
       normalizeDiscountFields(order),
@@ -130,7 +146,8 @@ export class OrdersService {
         productId: line.productId,
         productName: line.productName,
         previousUnitPrice: line.previousUnitPrice,
-        newUnitPrice: line.newUnitPrice,
+        newUnitPrice:
+          order.items[line.index]?.unitPrice ?? line.previousUnitPrice,
         previousOrderTotal: previousTotal,
         newOrderTotal: order.total,
       });
@@ -146,7 +163,8 @@ export class OrdersService {
     order.items.forEach((item, index) => {
       if (!item.productId) return;
       const product = this.products.findById(item.productId);
-      if (!product || product.price === item.unitPrice) return;
+      const listPrice = item.listUnitPrice ?? item.unitPrice;
+      if (!product || product.price === listPrice) return;
       const kept = rememberKeptLinePrice(
         order,
         index,
@@ -162,14 +180,32 @@ export class OrdersService {
     return this.orders.save(order);
   }
 
-  create(data: CreateOrderDto): Order {
-    const { customerId, customerName } = this.resolveCustomer(data.customerId);
+  /**
+   * `keepQuotedPrices`: el pedido viene de un presupuesto aceptado y conserva
+   * sus precios tal cual (§16.2); no se reaplica el mayorista.
+   */
+  create(
+    data: CreateOrderDto,
+    options: { keepQuotedPrices?: { wholesaleApplied: boolean } } = {},
+  ): Order {
+    const { customerId, customerName, customer } = this.resolveCustomer(
+      data.customerId,
+    );
     if (!data.dueDate?.trim()) {
       throw new BadRequestException('La fecha de entrega es obligatoria');
     }
     this.assertDueDateAfterToday(data.dueDate);
 
-    const items = this.normalizeOrderItems(data.items);
+    const priceType =
+      data.priceType ?? this.defaultPriceTypeForCustomer(customer);
+    const normalizedItems = this.normalizeOrderItems(data.items);
+    const priced = options.keepQuotedPrices
+      ? {
+          items: normalizedItems,
+          wholesaleApplied: options.keepQuotedPrices.wholesaleApplied,
+        }
+      : this.priceOrderItems(normalizedItems, priceType, customerId, customer);
+    const items = priced.items;
     const services = this.normalizeServices(items);
     const discount = normalizeDiscountFields(data);
     const order: Order = {
@@ -180,6 +216,9 @@ export class OrdersService {
       services,
       items,
       status: OrderStatus.PENDIENTE,
+      priceType,
+      wholesaleApplied: priced.wholesaleApplied,
+      salesChannel: this.normalizeSalesChannel(data.salesChannel),
       total: this.calculateTotal(items, discount),
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
@@ -210,17 +249,38 @@ export class OrdersService {
 
     let customerId = current.customerId;
     let customerName = current.customerName;
+    let customer: Customer | undefined;
 
     if (data.customerId !== undefined) {
       const resolved = this.resolveCustomer(data.customerId);
       customerId = resolved.customerId;
       customerName = resolved.customerName;
+      customer = resolved.customer;
     }
 
-    const items =
+    const priceType = data.priceType ?? current.priceType ?? PriceType.LISTA;
+    const shouldReprice =
+      data.priceType !== undefined ||
+      data.customerId !== undefined ||
+      data.items !== undefined;
+
+    let items =
       data.items !== undefined
         ? this.normalizeOrderItems(data.items)
         : current.items;
+    let wholesaleApplied = current.wholesaleApplied === true;
+
+    if (shouldReprice) {
+      const priced = this.priceOrderItems(
+        items,
+        priceType,
+        customerId,
+        customer,
+      );
+      items = priced.items;
+      wholesaleApplied = priced.wholesaleApplied;
+    }
+
     const services =
       data.items !== undefined
         ? this.normalizeServices(items)
@@ -250,6 +310,11 @@ export class OrdersService {
           : current.discountAmount,
     });
 
+    const salesChannel =
+      data.salesChannel !== undefined
+        ? this.normalizeSalesChannel(data.salesChannel)
+        : current.salesChannel;
+
     const updated: Order = {
       ...current,
       ...data,
@@ -257,6 +322,9 @@ export class OrdersService {
       customerName,
       services,
       items,
+      priceType,
+      wholesaleApplied,
+      salesChannel,
       total: this.calculateTotal(items, discount),
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
@@ -524,6 +592,7 @@ export class OrdersService {
   private resolveCustomer(customerId?: string | null): {
     customerId: string | null;
     customerName: string;
+    customer: Customer;
   } {
     const trimmed = customerId?.trim();
     if (!trimmed) {
@@ -535,6 +604,43 @@ export class OrdersService {
       throw new BadRequestException('Cliente no válido');
     }
 
-    return { customerId: customer.id, customerName: customer.name };
+    return {
+      customerId: customer.id,
+      customerName: customer.name,
+      customer,
+    };
+  }
+
+  private defaultPriceTypeForCustomer(customer?: Customer | null): PriceType {
+    return customer?.type === CustomerType.REVENDEDOR
+      ? PriceType.MAYORISTA
+      : PriceType.LISTA;
+  }
+
+  private normalizeSalesChannel(
+    value?: SalesChannel | null,
+  ): SalesChannel | undefined {
+    if (value == null) return undefined;
+    return value;
+  }
+
+  private priceOrderItems(
+    items: OrderItem[],
+    priceType: PriceType,
+    customerId?: string | null,
+    customer?: Customer | null,
+  ): { items: OrderItem[]; wholesaleApplied: boolean } {
+    const resolvedCustomer =
+      customer ??
+      (customerId ? this.customers.findById(customerId) : undefined) ??
+      null;
+    const settings = normalizeWholesaleDiscount(
+      this.store.generalSettings.wholesaleDiscount,
+    );
+    return applyWholesalePricing(items, {
+      priceType,
+      customer: resolvedCustomer,
+      settings,
+    });
   }
 }

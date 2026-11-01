@@ -238,12 +238,18 @@ export function normalizeIncomingOrderItems(
         ? Math.max(0, Number(item.unitCost))
         : undefined;
 
+    const listUnitPrice =
+      item.listUnitPrice != null && Number.isFinite(Number(item.listUnitPrice))
+        ? Math.max(0, Number(item.listUnitPrice))
+        : undefined;
+
     return {
       serviceType,
       productId,
       productName: resolvedProductName,
       quantity,
       unitPrice: resolvedUnitPrice,
+      listUnitPrice,
       unitPriceManual: item.unitPriceManual === true ? true : undefined,
       unitCost,
       ...fdmFields,

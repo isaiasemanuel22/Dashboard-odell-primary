@@ -1,4 +1,11 @@
-import { CustomerType, OrderStatus, ProductType } from '../common/enums';
+import {
+  CustomerType,
+  OrderStatus,
+  PriceType,
+  ProductType,
+  SalesChannel,
+  ServiceType,
+} from '../common/enums';
 import { OrderTasksService } from '../print-jobs/order-tasks.service';
 import { PrintJobsService } from '../print-jobs/print-jobs.service';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
@@ -10,6 +17,12 @@ import {
 import { StoreService } from '../store/store.service';
 import { createEmptyState } from '../store/store.seed';
 import { OrdersService } from './orders.service';
+
+function futureDueDate(daysAhead = 7): string {
+  const date = new Date();
+  date.setDate(date.getDate() + daysAhead);
+  return `${date.toISOString().slice(0, 10)}T18:00:00.000Z`;
+}
 
 describe('OrdersService.getOverview', () => {
   let store: StoreService;
@@ -73,6 +86,7 @@ describe('OrdersService.getOverview', () => {
       orderTasks,
       printJobs,
       {} as CostCalculatorService,
+      store,
     );
   });
 
@@ -194,5 +208,200 @@ describe('OrdersService.getOverview', () => {
       OrderStatus.CANCELADO,
       OrderStatus.PENDIENTE,
     ]);
+  });
+});
+
+describe('OrdersService precio mayorista (§10)', () => {
+  let store: StoreService;
+  let service: OrdersService;
+
+  beforeEach(() => {
+    store = new StoreService();
+    const state = createEmptyState();
+    state.customers.push(
+      {
+        id: 'cust-rev',
+        name: 'Revendedor',
+        email: 'rev@test.com',
+        phone: '111',
+        type: CustomerType.REVENDEDOR,
+        wholesaleMinimum: 5000,
+        createdAt: '2026-07-01T10:00:00.000Z',
+      },
+      {
+        id: 'cust-rev-sin-min',
+        name: 'Revendedor sin mínimo',
+        email: 'rev2@test.com',
+        phone: '222',
+        type: CustomerType.REVENDEDOR,
+        createdAt: '2026-07-01T10:00:00.000Z',
+      },
+      {
+        id: 'cust-part',
+        name: 'Particular',
+        email: 'p@test.com',
+        phone: '333',
+        type: CustomerType.PARTICULAR,
+        createdAt: '2026-07-01T10:00:00.000Z',
+      },
+    );
+    state.products.push({
+      id: 'prod-1',
+      name: 'Pieza',
+      type: ProductType.FDM,
+      images: [],
+      attachments: [],
+      updatedAt: '2026-07-01T10:00:00.000Z',
+      price: 1000,
+      cost: 400,
+      profit: 600,
+      categoryIds: [],
+      size: '10 cm',
+      published: true,
+      components: [],
+      assemblyTimeHours: 0,
+      includesPieces: false,
+      grams: 10,
+      printTimeHours: 1,
+      workTimeHours: 0,
+      stock: 10,
+    });
+    store.applyState(state);
+
+    const orderTasks = new OrderTasksService(store);
+    const printJobs = new PrintJobsService(store, orderTasks);
+    service = new OrdersService(
+      new OrderRepository(store),
+      new CustomerRepository(store),
+      new ProductRepository(store),
+      orderTasks,
+      printJobs,
+      new CostCalculatorService(store),
+      store,
+    );
+  });
+
+  it('pedido de revendedor sale mayorista por defecto', () => {
+    const order = service.create({
+      customerId: 'cust-rev-sin-min',
+      dueDate: futureDueDate(),
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity: 1,
+          unitPrice: 1000,
+        },
+      ],
+    });
+
+    expect(order.priceType).toBe(PriceType.MAYORISTA);
+    expect(order.wholesaleApplied).toBe(true);
+    expect(order.items[0].listUnitPrice).toBe(1000);
+    expect(order.items[0].unitPrice).toBe(800);
+    expect(order.total).toBe(800);
+  });
+
+  it('mínimo no alcanzado → cobra precio de lista', () => {
+    const order = service.create({
+      customerId: 'cust-rev',
+      dueDate: futureDueDate(),
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity: 1,
+          unitPrice: 1000,
+        },
+      ],
+    });
+
+    expect(order.priceType).toBe(PriceType.MAYORISTA);
+    expect(order.wholesaleApplied).toBe(false);
+    expect(order.items[0].listUnitPrice).toBeUndefined();
+    expect(order.items[0].unitPrice).toBe(1000);
+    expect(order.total).toBe(1000);
+  });
+
+  it('diseño no recibe descuento mayorista', () => {
+    const order = service.create({
+      customerId: 'cust-rev-sin-min',
+      dueDate: futureDueDate(),
+      items: [
+        {
+          serviceType: ServiceType.DISENO_GRAFICO,
+          productName: 'Logo',
+          quantity: 1,
+          unitPrice: 5000,
+          designUnitPrice: 5000,
+          chargeMode: 'fixed',
+        },
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity: 1,
+          unitPrice: 1000,
+        },
+      ],
+    });
+
+    expect(order.wholesaleApplied).toBe(true);
+    expect(order.items[0].unitPrice).toBe(5000);
+    expect(order.items[0].listUnitPrice).toBeUndefined();
+    expect(order.items[1].unitPrice).toBe(800);
+    expect(order.items[1].listUnitPrice).toBe(1000);
+  });
+
+  it('editar sin reenviar ítems no descuenta dos veces', () => {
+    const created = service.create({
+      customerId: 'cust-rev-sin-min',
+      dueDate: futureDueDate(),
+      salesChannel: SalesChannel.WHATSAPP,
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity: 2,
+          unitPrice: 1000,
+        },
+      ],
+    });
+
+    expect(created.items[0].unitPrice).toBe(800);
+    expect(created.total).toBe(1600);
+
+    const updated = service.update(created.id, {
+      notes: 'solo nota',
+    });
+
+    expect(updated.items[0].unitPrice).toBe(800);
+    expect(updated.items[0].listUnitPrice).toBe(1000);
+    expect(updated.total).toBe(1600);
+    expect(updated.salesChannel).toBe(SalesChannel.WHATSAPP);
+  });
+
+  it('permite mayorista aunque el cliente no sea revendedor', () => {
+    const order = service.create({
+      customerId: 'cust-part',
+      priceType: PriceType.MAYORISTA,
+      dueDate: futureDueDate(),
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity: 1,
+          unitPrice: 1000,
+        },
+      ],
+    });
+
+    expect(order.priceType).toBe(PriceType.MAYORISTA);
+    expect(order.wholesaleApplied).toBe(true);
+    expect(order.items[0].unitPrice).toBe(800);
   });
 });

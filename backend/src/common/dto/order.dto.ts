@@ -17,7 +17,9 @@ import {
   OrderStatus,
   FilamentType,
   PaperType,
+  PriceType,
   PrintJobStatus,
+  SalesChannel,
   ServiceType,
 } from '../enums';
 import {
@@ -87,6 +89,11 @@ export class OrderItemDto {
   @IsNumber()
   @Min(0)
   unitPrice!: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  listUnitPrice?: number;
 
   @IsOptional()
   @IsBoolean()
@@ -247,6 +254,15 @@ export class CreateOrderDto {
   @IsOptional()
   @IsEnum(OrderStatus)
   status?: OrderStatus;
+
+  @IsOptional()
+  @IsEnum(PriceType)
+  priceType?: PriceType;
+
+  /** Null borra el canal guardado. */
+  @IsOptional()
+  @IsEnum(SalesChannel)
+  salesChannel?: SalesChannel | null;
 
   @IsString()
   @IsNotEmpty()

@@ -144,6 +144,9 @@ model Order {
   services     Json
   status       String   @db.VarChar(32)
   total        Float
+  priceType    String   @default("lista") @map("price_type") @db.VarChar(16)
+  wholesaleApplied Boolean @default(false) @map("wholesale_applied")
+  salesChannel String?  @map("sales_channel") @db.VarChar(32)
   discountPercent Float @default(0) @map("discount_percent")
   discountAmount  Float @default(0) @map("discount_amount")
   description  String?  @db.Text
@@ -170,6 +173,8 @@ model OrderItem {
   productName String @map("product_name") @db.VarChar(255)
   quantity    Int
   unitPrice   Float  @map("unit_price")
+  /** Precio de lista cuando la línea cobró mayorista. */
+  listUnitPrice Float? @map("list_unit_price")
   /** Precio unitario editado a mano; se respeta al reabrir / recalcular. */
   unitPriceManual Boolean @default(false) @map("unit_price_manual")
   /** Costo unitario al cotizar (snapshot; no se pisa por cambios de Ajustes). */
@@ -220,6 +225,9 @@ model Quote {
   services        Json
   status          String   @default("borrador") @db.VarChar(32)
   total           Float
+  priceType       String   @default("lista") @map("price_type") @db.VarChar(16)
+  wholesaleApplied Boolean @default(false) @map("wholesale_applied")
+  salesChannel    String?  @map("sales_channel") @db.VarChar(32)
   discountPercent Float    @default(0) @map("discount_percent")
   discountAmount  Float    @default(0) @map("discount_amount")
   description     String?  @db.Text
@@ -244,6 +252,8 @@ model QuoteItem {
   productName     String  @map("product_name") @db.VarChar(255)
   quantity        Int
   unitPrice       Float   @map("unit_price")
+  /** Precio de lista cuando la línea cobró mayorista. */
+  listUnitPrice   Float?  @map("list_unit_price")
   /** Precio unitario editado a mano; se respeta al reabrir / recalcular. */
   unitPriceManual Boolean @default(false) @map("unit_price_manual")
   /** Costo unitario al cotizar (snapshot; no se pisa por cambios de Ajustes). */

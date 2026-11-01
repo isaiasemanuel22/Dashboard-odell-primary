@@ -9,7 +9,7 @@ import {
 import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
 import { IsEnum } from 'class-validator';
-import { QuoteStatus } from '../enums';
+import { PriceType, QuoteStatus, SalesChannel } from '../enums';
 import { ORDER_RICH_TEXT_HTML_MAX_LENGTH } from '../../orders/rich-text.util';
 import { OrderItemDto } from './order.dto';
 
@@ -21,6 +21,15 @@ export class CreateQuoteDto {
   @ValidateNested({ each: true })
   @Type(() => OrderItemDto)
   items!: OrderItemDto[];
+
+  @IsOptional()
+  @IsEnum(PriceType)
+  priceType?: PriceType;
+
+  /** Null borra el canal guardado. */
+  @IsOptional()
+  @IsEnum(SalesChannel)
+  salesChannel?: SalesChannel | null;
 
   @IsOptional()
   @IsNumber()
