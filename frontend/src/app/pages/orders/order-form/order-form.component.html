@@ -1,42 +1,127 @@
 <db-form class="work-form" [class.quote-form]="isQuoteForm" [class.order-form]="!isQuoteForm">
   <form (ngSubmit)="onSubmit()">
     @if (!isQuoteForm) {
-      <app-order-form-party
-        variant="order"
-        [customerId]="customerId"
-        (customerIdChange)="customerId = $event"
-        [customerOptions]="customerOptions"
-        (newCustomer)="openNewCustomer()"
-        [dueDate]="dueDate"
-        (dueDateChange)="dueDate = $event"
-        [minDueDate]="minDueDate"
-        [dueDateError]="dueDateError"
-        [dueDateHint]="dueDateBusinessDaysHint"
-      />
-    }
+      <div class="order-layout">
+        <div class="order-layout__main">
+          <app-order-form-party
+            variant="order"
+            [customerId]="customerId"
+            (customerIdChange)="onCustomerIdChange($event)"
+            [customerOptions]="customerOptions"
+            (newCustomer)="openNewCustomer()"
+            [dueDate]="dueDate"
+            (dueDateChange)="dueDate = $event"
+            [minDueDate]="minDueDate"
+            [dueDateError]="dueDateError"
+            [dueDateHint]="dueDateBusinessDaysHint"
+            [resellerPillLabel]="resellerPillLabel"
+            [salesChannel]="salesChannel"
+            [salesChannelOptions]="salesChannelOptions"
+            (salesChannelChange)="onSalesChannelChange($event)"
+            [priceType]="priceType"
+            [priceTypeOptions]="priceTypeOptions"
+            (priceTypeChange)="onPriceTypeChange($event)"
+            [wholesaleMinimumNotice]="wholesaleMinimumNotice"
+          />
 
-    @if (!isQuoteForm) {
-      <db-form-grid-full>
-        <db-rich-text-editor
-          label="Descripción"
-          [(ngModel)]="description"
-          name="description"
-          placeholder="Describí el pedido: qué se necesita, cantidades, referencias visuales..."
-          [maxLength]="descriptionMaxLength"
-          [uploadFn]="uploadDescriptionImage"
-        />
-      </db-form-grid-full>
+          <db-form-grid-full>
+            <db-rich-text-editor
+              label="Descripción"
+              [(ngModel)]="description"
+              name="description"
+              placeholder="Describí el pedido: qué se necesita, cantidades, referencias visuales..."
+              [maxLength]="descriptionMaxLength"
+              [uploadFn]="uploadDescriptionImage"
+            />
+          </db-form-grid-full>
 
-      <db-form-grid-full>
-        <db-textarea
-          label="Notas internas"
-          [(ngModel)]="notes"
-          name="notes"
-          placeholder="Detalles internos: talles, colores, acabados..."
-          [rows]="3"
-          hint="Solo las ve el equipo; no aparecen en lo que se le manda al cliente."
+          <section class="quote-lines-section">
+            <header class="quote-lines-section__head quote-lines-section__head--row">
+              <h4 class="quote-lines-section__title">Productos</h4>
+              <p class="quote-lines-section__hint">
+                El descuento se resta del precio total del producto, no de la ganancia
+              </p>
+            </header>
+
+            <div class="order-lines">
+              @for (line of lines; track $index; let i = $index) {
+                <app-order-form-line
+                  [line]="line"
+                  [lineIndex]="i"
+                  variant="order"
+                  [products]="products"
+                  [serviceTypeOptions]="serviceTypeOptions"
+                  [paperTypeOptions]="paperTypeOptions"
+                  [priceType]="priceType"
+                  [wholesaleApplied]="wholesaleAppliedPreview"
+                  [wholesaleDiscount]="wholesaleDiscount"
+                  (remove)="removeLine(i)"
+                  (linkPrintChange)="onLinkPrintChange(line, $event, i)"
+                  (changed)="onLineChanged()"
+                />
+              }
+            </div>
+
+            <db-button
+              label="+ Agregar producto"
+              variant="secondary"
+              format="solid"
+              extraClass="add-line"
+              (clicked)="addLine()"
+            />
+          </section>
+
+          <db-form-grid-full>
+            <db-textarea
+              label="Notas internas"
+              [(ngModel)]="notes"
+              name="notes"
+              placeholder="Colores, talles, acabados…"
+              [rows]="3"
+              hint="Solo las ve el equipo"
+            />
+          </db-form-grid-full>
+        </div>
+
+        <app-order-form-order-summary
+          [listSubtotal]="listSubtotal"
+          [wholesalePercent]="wholesaleDiscount.percent"
+          [wholesaleDiscountAmount]="wholesaleDiscountAmount"
+          [wholesaleProductsBase]="wholesaleProductsBase"
+          [wholesaleApplied]="wholesaleAppliedPreview"
+          [resellerSavings]="resellerSavings"
+          [discountMode]="discountMode"
+          [discountPercent]="discountPercent"
+          [discountAmount]="discountAmount"
+          [discountPercentMax]="discountPercentMax"
+          [discountAmountMax]="discountAmountMax"
+          [discountHint]="discountClampHint"
+          [discountApplied]="discountApplied"
+          [total]="total"
+          [totalCost]="totalCost"
+          [paymentFee]="paymentFeePreview"
+          [profit]="profit"
+          [profitPercentOnCost]="profitPercentOnCost"
+          [listProfit]="listProfit"
+          [showDeposit]="showDepositBlock"
+          [depositAmount]="depositAmountValue"
+          [depositSuggested]="depositAmount"
+          [depositPercent]="depositPercent"
+          [depositMethod]="depositMethod"
+          [depositMethodOptions]="depositMethodOptions"
+          [depositAccount]="depositAccount"
+          [depositAccountOptions]="depositAccountOptions"
+          [depositFee]="depositFeeInput"
+          [balanceAfterDeposit]="balanceAfterDeposit"
+          (modeChange)="setDiscountMode($event)"
+          (percentChange)="onDiscountPercentChange($event)"
+          (amountChange)="onDiscountAmountChange($event)"
+          (depositAmountChange)="onDepositAmountChange($event)"
+          (depositMethodChange)="onDepositMethodChange($event)"
+          (depositAccountChange)="onDepositAccountChange($event)"
+          (depositFeeChange)="onDepositFeeChange($event)"
         />
-      </db-form-grid-full>
+      </div>
     }
 
     @if (isQuoteForm) {
@@ -120,88 +205,6 @@
         (amountChange)="onDiscountAmountChange($event)"
       />
       </div>
-    } @else {
-      <section class="quote-lines-section">
-        <header class="quote-lines-section__head">
-          <h4 class="quote-lines-section__title">Líneas de trabajo</h4>
-          <p class="quote-lines-section__hint">{{ linesHint }}</p>
-        </header>
-
-        <div class="order-lines">
-          @for (line of lines; track $index; let i = $index) {
-
-              <app-order-form-line
-                [line]="line"
-                [lineIndex]="i"
-                variant="order"
-                [products]="products"
-                [serviceTypeOptions]="serviceTypeOptions"
-                [paperTypeOptions]="paperTypeOptions"
-                (remove)="removeLine(i)"
-                (linkPrintChange)="onLinkPrintChange(line, $event, i)"
-                (changed)="onLineChanged()"
-              />
-          }
-        </div>
-
-        <db-button
-          label="+ Agregar línea"
-          variant="secondary"
-          format="solid"
-          extraClass="add-line"
-          (clicked)="addLine()"
-        />
-
-        <div class="quote-totals-row">
-          <app-order-form-discount
-            noneLabel="Sin descuento"
-            [mode]="discountMode"
-            [percent]="discountPercent"
-            [amount]="discountAmount"
-            [percentMax]="discountPercentMax"
-            [amountMax]="discountAmountMax"
-            [hint]="discountClampHint"
-            (modeChange)="setDiscountMode($event)"
-            (percentChange)="onDiscountPercentChange($event)"
-            (amountChange)="onDiscountAmountChange($event)"
-          />
-
-          <div class="order-summary order-summary--quote">
-            <p class="order-summary__row">
-              <span>{{ subtotalLinesLabel }}</span>
-              <strong>{{ subtotal | currencyArs }}</strong>
-            </p>
-            <p class="order-summary__row order-summary__row--discount">
-              <span>Descuento</span>
-              <strong>
-                @if (discountApplied > 0) {
-                  -{{ discountApplied | currencyArs }}
-                } @else {
-                  —
-                }
-              </strong>
-            </p>
-            <p class="order-summary__row">
-              <span>Costo estimado</span>
-              <strong>{{ totalCost | currencyArs }}</strong>
-            </p>
-            <p class="order-summary__row order-summary__row--total">
-              <span>Total</span>
-              <strong>{{ total | currencyArs }}</strong>
-            </p>
-            <p
-              class="order-summary__row order-summary__row--profit"
-              [class.order-summary__row--loss]="profit < 0"
-            >
-              <span>Ganancia estimada</span>
-              <strong>{{ profit | currencyArs }}</strong>
-            </p>
-            @if (profit < 0) {
-              <p class="order-summary__warning">La ganancia queda negativa.</p>
-            }
-          </div>
-        </div>
-      </section>
     }
 
     @if (error) {
@@ -242,7 +245,9 @@
     } @else {
       <db-form-footer class="order-form__footer">
         @if (!isEditing) {
-          <p class="order-form__note">Se crea en estado Pendiente</p>
+          <p class="order-form__note">
+            Se crea en estado Pendiente · la seña queda vinculada al pedido
+          </p>
         } @else {
           <span class="order-form__note-spacer"></span>
         }

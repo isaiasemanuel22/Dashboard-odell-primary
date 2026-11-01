@@ -786,6 +786,7 @@ export type CreateOrderPayload = Omit<
   | 'priceHistory'
   | 'deliveryHistory'
   | 'payments'
+  | 'salesChannel'
 > & {
   customerId?: string | null;
   items: OrderItemPayload[];
@@ -860,6 +861,11 @@ export interface OrderLineDraft {
    */
   unitCost?: number;
   unitPrice: number;
+  /**
+   * Precio de lista cuando la API ya aplicó mayorista (unitPrice = cobrado).
+   * En el form se edita listUnitPrice ?? unitPrice; al guardar se manda lista.
+   */
+  listUnitPrice?: number;
   /**
    * El usuario editó el precio unitario a mano.
    * No se pisa al recalcular costo (gramos, etc.). Se persiste.

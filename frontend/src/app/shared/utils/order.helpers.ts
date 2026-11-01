@@ -228,13 +228,17 @@ export function buildOrderItems(
         const deliverables = (line.deliverables ?? [])
           .map((entry) => entry.trim())
           .filter(Boolean);
+        // El form edita el precio de lista (se carga desde listUnitPrice al
+        // abrir); el backend aplica el mayorista. No usar listUnitPrice acá:
+        // pisaría lo que el usuario cambió.
+        const designList = Number(line.designUnitPrice ?? line.unitPrice) || 0;
         return {
           serviceType: line.serviceType,
           productName: line.customName!.trim(),
           quantity: line.quantity,
           unitPrice: line.includesPrint
             ? resolveLinePrintUnitPrice(line)
-            : (line.designUnitPrice ?? line.unitPrice),
+            : designList,
           unitPriceManual: line.unitPriceManual || undefined,
           unitCost:
             line.unitCost != null && Number.isFinite(Number(line.unitCost))
@@ -282,6 +286,10 @@ export function buildOrderItems(
         ? line.laborNote?.trim() || undefined
         : undefined;
 
+      // unitPrice del form ya es el precio de lista (ver la carga más abajo);
+      // el backend aplica el mayorista.
+      const listUnit = Number(line.unitPrice) || 0;
+
       return {
         serviceType: line.serviceType,
         productId: line.productId?.trim() || undefined,
@@ -290,7 +298,7 @@ export function buildOrderItems(
             ? line.customName!.trim()
             : (product?.name ?? line.customName?.trim() ?? 'Producto'),
         quantity: line.quantity,
-        unitPrice: line.unitPrice,
+        unitPrice: listUnit,
         unitPriceManual: line.unitPriceManual || undefined,
         unitCost:
           line.unitCost != null && Number.isFinite(Number(line.unitCost))
@@ -518,20 +526,28 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
       .map((entry) => entry.trim())
       .filter(Boolean);
 
+    const listUnitPrice =
+      item.listUnitPrice != null && Number.isFinite(Number(item.listUnitPrice))
+        ? Number(item.listUnitPrice)
+        : undefined;
+    const designList = listUnitPrice ?? designUnitPrice;
+
     return {
       serviceType,
       customName: item.productName,
       quantity: item.quantity,
+      // En el form se edita el precio de lista; listUnitPrice ?? unitPrice.
       unitPrice: item.includesPrint
         ? (printUnitPrice ?? item.unitPrice)
-        : designUnitPrice,
+        : designList,
+      listUnitPrice,
+      designUnitPrice: designList,
       unitPriceManual: item.unitPriceManual || undefined,
       includesPrint: item.includesPrint,
       printPaperType: item.printPaperType,
       printWidthCm: item.printWidthCm,
       printLengthCm: item.printLengthCm,
       printImpresoId: item.printImpresoId,
-      designUnitPrice,
       printUnitPrice,
       budgetedHours: item.budgetedHours,
       chargeMode: item.chargeMode,
@@ -546,6 +562,11 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
           : undefined,
     };
   }
+
+  const listUnitPrice =
+    item.listUnitPrice != null && Number.isFinite(Number(item.listUnitPrice))
+      ? Number(item.listUnitPrice)
+      : undefined;
 
   const printProcess =
     item.printProcess === 'fdm' || item.printProcess === 'resina'
@@ -586,7 +607,9 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
         ? item.productName
         : undefined,
     quantity: item.quantity,
-    unitPrice: item.unitPrice,
+    // Precio de lista para editar; si vino mayorista, preferir listUnitPrice.
+    unitPrice: listUnitPrice ?? item.unitPrice,
+    listUnitPrice,
     unitPriceManual: item.unitPriceManual || undefined,
     // Snapshot persistido; si falta, el sync al abrir lo completa.
     unitCost:

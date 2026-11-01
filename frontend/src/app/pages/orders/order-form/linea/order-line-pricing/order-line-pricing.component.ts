@@ -18,6 +18,7 @@ import { CurrencyArsPipe } from '../../../../../shared/pipes/labels.pipe';
   host: {
     class: 'order-line__pricing order-line__pricing--quote order-line__pricing--panel',
     '[class.order-line__pricing--design]': 'designLayout',
+    '[class.order-line__pricing--wholesale]': 'showWholesaleColumns',
   },
 })
 export class OrderLinePricingComponent {
@@ -34,6 +35,14 @@ export class OrderLinePricingComponent {
   @Input() priceHintWarn = false;
   @Input() manualPrice = false;
   @Input() lineTotal = 0;
+
+  /** Vista previa mayorista: columnas Lista (tachada) + Mayorista. */
+  @Input() showWholesaleColumns = false;
+  @Input() listUnitPrice = 0;
+  @Input() wholesaleUnitPrice = 0;
+  @Input() wholesaleMarginHint = '';
+  @Input() wholesaleMarginWarn = false;
+  @Input() closedPriceNote = '';
 
   @Output() unitPriceChange = new EventEmitter<number | string>();
   @Output() resetPrice = new EventEmitter<void>();

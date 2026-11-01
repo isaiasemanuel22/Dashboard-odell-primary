@@ -331,7 +331,13 @@
       [priceHintWarn]="priceHintWarn"
       [manualPrice]="isUnitPriceManual"
       (resetPrice)="resetUnitPriceToSuggested()"
-      [lineTotal]="lineTotal"
+      [lineTotal]="showWholesaleColumns ? wholesaleLineTotalPreview : lineTotal"
+      [showWholesaleColumns]="showWholesaleColumns"
+      [listUnitPrice]="editableUnitPrice"
+      [wholesaleUnitPrice]="wholesaleUnitPricePreview"
+      [wholesaleMarginHint]="wholesaleMarginHint"
+      [wholesaleMarginWarn]="wholesaleMarginBelowArea"
+      [closedPriceNote]="showClosedPriceNote ? 'Precio cerrado: el descuento no aplica' : ''"
     />
 
     @if (stockHint) {

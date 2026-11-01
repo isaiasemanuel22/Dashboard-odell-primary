@@ -1,0 +1,138 @@
+@use '../../../../shared/styles/variables' as *;
+
+:host {
+  display: contents;
+}
+
+.order-resumen {
+  border-left: 1px solid #e3ecf2;
+  background: #f7fafc;
+
+  @media (max-width: 900px) {
+    border-left: 0;
+    border-top: 1px solid #e3ecf2;
+  }
+
+  &__inner {
+    position: sticky;
+    top: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+    padding: 1.25rem 1.5rem;
+  }
+
+  &__title {
+    margin: 0;
+    font-size: 1rem;
+    font-weight: 700;
+    color: $color-text;
+  }
+
+  &__card {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.875rem 1rem;
+    border: 1px solid #e3ecf2;
+    border-radius: 0.65rem;
+    background: #fff;
+  }
+
+  &__row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: 0.8125rem;
+    color: #33495a;
+
+    &--total {
+      padding-top: 0.625rem;
+      border-top: 1px solid #e3ecf2;
+      align-items: baseline;
+
+      span:first-child {
+        font-weight: 700;
+        color: $color-text;
+      }
+    }
+
+    &--balance {
+      padding-top: 0.5rem;
+      border-top: 1px solid #e3ecf2;
+      align-items: baseline;
+
+      span:first-child {
+        font-weight: 700;
+        color: $color-text;
+      }
+    }
+
+    &--loss .order-resumen__pos {
+      color: $color-error;
+    }
+  }
+
+  &__stack {
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+
+    small {
+      color: $color-text-muted;
+      font-size: 0.6875rem;
+    }
+  }
+
+  &__total {
+    color: $color-brand-deep;
+    font-size: 1.625rem;
+    font-weight: 700;
+    line-height: 1.1;
+  }
+
+  &__neg {
+    color: #b91c1c;
+    font-weight: 600;
+  }
+
+  &__pos {
+    color: $color-success;
+    font-weight: 700;
+  }
+
+  &__deposit {
+    gap: 0.65rem;
+  }
+
+  &__deposit-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0;
+    font-size: 0.8125rem;
+    font-weight: 700;
+    color: $color-text;
+  }
+
+  &__new {
+    display: inline-flex;
+    align-items: center;
+    height: 1.25rem;
+    padding: 0 0.5rem;
+    border-radius: $radius-pill;
+    background: #e0f0f8;
+    color: #0b5f86;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: $color-text-muted;
+  }
+}

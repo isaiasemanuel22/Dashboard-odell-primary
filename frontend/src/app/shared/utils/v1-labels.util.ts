@@ -38,7 +38,7 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
 };
 
 export const TREASURY_ACCOUNT_LABELS: Record<TreasuryAccount, string> = {
-  [TreasuryAccount.CAJA]: 'Caja',
+  [TreasuryAccount.CAJA]: 'Caja efectivo',
   [TreasuryAccount.MERCADO_PAGO]: 'Mercado Pago',
   [TreasuryAccount.BANCO]: 'Banco',
 };

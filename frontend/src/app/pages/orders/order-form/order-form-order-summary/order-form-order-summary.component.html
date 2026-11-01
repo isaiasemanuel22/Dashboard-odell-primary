@@ -1,0 +1,136 @@
+<aside class="order-resumen" aria-label="Resumen">
+  <div class="order-resumen__inner">
+    <h3 class="order-resumen__title">Resumen</h3>
+
+    <div class="order-resumen__card">
+      <p class="order-resumen__row">
+        <span>Subtotal a precio de lista</span>
+        <span>{{ listSubtotal | currencyArs }}</span>
+      </p>
+
+      @if (wholesaleApplied && wholesaleDiscountAmount > 0) {
+        <p class="order-resumen__row">
+          <span class="order-resumen__stack">
+            Descuento mayorista −{{ wholesalePercent }}%
+            <small>sobre {{ wholesaleProductsBase | currencyArs }} en productos</small>
+          </span>
+          <span class="order-resumen__neg">−{{ wholesaleDiscountAmount | currencyArs }}</span>
+        </p>
+      }
+
+      <app-order-form-discount
+        variant="resumen"
+        noneLabel="Sin"
+        [mode]="discountMode"
+        [percent]="discountPercent"
+        [amount]="discountAmount"
+        [percentMax]="discountPercentMax"
+        [amountMax]="discountAmountMax"
+        [hint]="discountHint"
+        (modeChange)="modeChange.emit($event)"
+        (percentChange)="percentChange.emit($event)"
+        (amountChange)="amountChange.emit($event)"
+      />
+      @if (discountApplied > 0) {
+        <p class="order-resumen__row">
+          <span>Descuento manual</span>
+          <span class="order-resumen__neg">−{{ discountApplied | currencyArs }}</span>
+        </p>
+      }
+
+      <p class="order-resumen__row order-resumen__row--total">
+        <span>Total</span>
+        <strong class="order-resumen__total">{{ total | currencyArs }}</strong>
+      </p>
+
+      @if (resellerSavings > 0) {
+        <p class="order-resumen__row">
+          <span>El revendedor ahorra</span>
+          <span class="order-resumen__pos">{{ resellerSavings | currencyArs }}</span>
+        </p>
+      }
+    </div>
+
+    <div class="order-resumen__card">
+      <p class="order-resumen__row">
+        <span>Costo estimado</span>
+        <span>{{ totalCost | currencyArs }}</span>
+      </p>
+      <p class="order-resumen__row">
+        <span>Comisión del medio de pago</span>
+        <span>{{ paymentFee | currencyArs }}</span>
+      </p>
+      <p
+        class="order-resumen__row"
+        [class.order-resumen__row--loss]="profit < 0"
+      >
+        <span>Ganancia estimada</span>
+        <strong
+          class="order-resumen__pos"
+          [class.order-resumen__neg]="profit < 0"
+        >
+          {{ profit | currencyArs }}
+          @if (totalCost > 0) {
+            · {{ profitPercentOnCost }}%
+          }
+        </strong>
+      </p>
+      <p class="order-resumen__row">
+        <span>A precio de lista ganarías</span>
+        <span>{{ listProfit | currencyArs }}</span>
+      </p>
+    </div>
+
+    @if (showDeposit) {
+      <div class="order-resumen__card order-resumen__deposit">
+        <h4 class="order-resumen__deposit-title">
+          Seña
+          <span class="order-resumen__new">Nuevo</span>
+        </h4>
+
+        <db-input
+          label="Monto"
+          type="number"
+          [ngModel]="depositAmount"
+          (ngModelChange)="depositAmountChange.emit($event)"
+          name="depositAmount"
+          [min]="0"
+          [step]="1"
+          [hint]="depositPercent + '% del total'"
+        />
+
+        <span class="order-resumen__label" id="deposit-method-label">Medio de pago</span>
+        <db-segmented-control
+          [options]="depositMethodOptions"
+          [value]="depositMethod"
+          ariaLabel="Medio de pago"
+          (valueChange)="depositMethodChange.emit($event)"
+        />
+
+        <db-select
+          label="Entra a la cuenta"
+          [ngModel]="depositAccount"
+          (ngModelChange)="depositAccountChange.emit($event)"
+          name="depositAccount"
+          [options]="depositAccountOptions"
+        />
+
+        <db-input
+          label="Comisión (opcional)"
+          type="number"
+          [ngModel]="depositFee"
+          (ngModelChange)="depositFeeChange.emit($event)"
+          name="depositFee"
+          [min]="0"
+          [step]="1"
+          placeholder="0"
+        />
+
+        <p class="order-resumen__row order-resumen__row--balance">
+          <span>Saldo al entregar</span>
+          <strong>{{ balanceAfterDeposit | currencyArs }}</strong>
+        </p>
+      </div>
+    }
+  </div>
+</aside>

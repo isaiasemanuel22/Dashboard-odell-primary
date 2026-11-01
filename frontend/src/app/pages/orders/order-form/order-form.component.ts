@@ -14,9 +14,11 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import {
   CreateOrderPayload,
+  CreateOrderPaymentPayload,
   CostBreakdown,
   CreateQuotePayload,
   Customer,
+  CustomerType,
   FdmFilamentLine,
   FilamentType,
   ProductType,
@@ -25,11 +27,16 @@ import {
   ImpresoWithCost,
   Order,
   OrderLineDraft,
+  PaymentMethod,
+  PriceType,
   Product,
   Quote,
   QuoteStatus,
+  SalesChannel,
   ServiceProfitMargins,
   ServiceType,
+  TreasuryAccount,
+  WholesaleDiscountSettings,
 } from '../../../core/models';
 import { SettingsService, SuppliesService } from '../../../core/services/settings.service';
 import { ImpresosService } from '../../../core/services/impresos.service';
@@ -95,7 +102,6 @@ import {
 import {
   calculateMachineOverhead,
 } from '../../../shared/utils/machine-profile.util';
-import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import { plainTextFromHtml, hasRichTextContent, sanitizeRichTextHtml } from '../../../shared/utils/rich-text.util';
 import { MediaUploadService } from '../../../core/services/media-upload.service';
 import { DbFileUploadFn } from '../../../components/dashboard-form/db-file-upload/db-file-upload.types';
@@ -103,6 +109,8 @@ import { firstValueFrom } from 'rxjs';
 import {
   DiscountMode,
   DISCOUNT_PERCENT_MAX,
+  calculateDiscountValue,
+  calculateTotalWithDiscount,
   clampDiscountAmount,
   clampDiscountPercent,
   discountAmountClampMessage,
@@ -110,13 +118,35 @@ import {
   discountPayloadFromMode,
   discountPercentClampMessage,
 } from '../../../shared/utils/discount.util';
-import { DbSelectOption } from '../../../components/dashboard-form/db-select/db-select.types';
+import {
+  DbSegmentOption,
+  DbSelectOption,
+} from '@general-components';
 import {
   syncDesignPrintPricing,
 } from '../../../shared/utils/design-print.util';
 import {
+  labelsToSelectOptions,
   paperTypeOptions,
 } from '../../../shared/utils/select-options';
+import {
+  normalizeWholesaleDiscount,
+  wholesalePriceFromList,
+} from '../../../shared/utils/wholesale-example.util';
+import {
+  lineListSubtotal,
+  lineListUnitPrice,
+  linePreviewSubtotal,
+  meetsWholesaleMinimum,
+  wholesaleAppliesToService,
+  wouldApplyWholesale,
+} from '../../../shared/utils/order-wholesale-preview.util';
+import { defaultAccountForMethod } from '../../../shared/utils/treasury-account.util';
+import {
+  PAYMENT_METHOD_LABELS,
+  SALES_CHANNEL_LABELS,
+  TREASURY_ACCOUNT_LABELS,
+} from '../../../shared/utils/v1-labels.util';
 import {
   applyProductSpecsToFdmLine,
   impresion3DMargin,
@@ -146,11 +176,13 @@ import { OrderFormLineComponent } from './linea/order-form-line.component';
 import { OrderFormDiscountComponent } from './order-form-discount/order-form-discount.component';
 import { OrderFormPartyComponent } from './order-form-party/order-form-party.component';
 import { OrderFormQuoteSummaryComponent } from './order-form-quote-summary/order-form-quote-summary.component';
+import { OrderFormOrderSummaryComponent } from './order-form-order-summary/order-form-order-summary.component';
 import {
   buildQuoteAreaShares,
   buildQuoteResumenItems,
   buildQuoteResumenWarnings,
 } from './order-form-quote-summary/order-form-quote-summary.util';
+import type { WholesaleMinimumNotice } from './order-form-party/order-form-party.component';
 
 export type OrderFormVariant = 'order' | 'quote';
 
@@ -168,11 +200,10 @@ export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
     DbFormErrorComponent,
     DbFormFooterComponent,
     DbButtonComponent,
-    CurrencyArsPipe,
     OrderFormLineComponent,
-    OrderFormDiscountComponent,
     OrderFormPartyComponent,
     OrderFormQuoteSummaryComponent,
+    OrderFormOrderSummaryComponent,
   ],
   templateUrl: './order-form.component.html',
   styleUrl: './order-form.component.scss',
@@ -187,6 +218,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
   private readonly destroyRef = inject(DestroyRef);
 
   readonly paperTypeOptions = paperTypeOptions();
+  readonly PriceType = PriceType;
+  readonly PaymentMethod = PaymentMethod;
 
   readonly uploadDescriptionImage: DbFileUploadFn = (file) =>
     firstValueFrom(this.mediaUpload.uploadProductImage(file));
@@ -223,9 +256,22 @@ export class OrderFormComponent implements OnChanges, OnInit {
   /** null hasta que carguen Ajustes reales; no usar defaults inventados en hints. */
   profitMargins: ServiceProfitMargins | null = null;
   generalSettings: GeneralSettings | null = null;
+  wholesaleDiscount: WholesaleDiscountSettings = normalizeWholesaleDiscount(null);
   impresos: ImpresoWithCost[] = [];
   supplies: Supply[] = [];
   readonly depositPercent = Math.round(DEPOSIT_FACTOR * 100);
+
+  priceType: PriceType = PriceType.LISTA;
+  salesChannel: SalesChannel | null = null;
+  /** El usuario eligió tipo de precio a mano; no pisar al cambiar cliente. */
+  private priceTypeManual = false;
+
+  /** Seña solo en alta de pedido. */
+  depositAmountInput: number | null = null;
+  depositMethod: PaymentMethod = PaymentMethod.TRANSFERENCIA;
+  depositAccount: TreasuryAccount = TreasuryAccount.BANCO;
+  depositFeeInput: number | null = null;
+  private depositAmountTouched = false;
 
   readonly serviceTypeOptions = serviceTypeOptions();
   readonly discountModeOptions: DbSelectOption[] = [
@@ -292,6 +338,46 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }));
   }
 
+  get selectedCustomer(): Customer | undefined {
+    return this.customers.find((c) => c.id === this.customerId);
+  }
+
+  get isResellerCustomer(): boolean {
+    return this.selectedCustomer?.type === CustomerType.REVENDEDOR;
+  }
+
+  get resellerPillLabel(): string {
+    if (!this.isResellerCustomer) return '';
+    const percent = this.wholesaleDiscount.percent;
+    return `Revendedor · −${percent}%`;
+  }
+
+  get salesChannelOptions(): DbSelectOption[] {
+    return [
+      { value: '', label: 'Sin canal' },
+      ...labelsToSelectOptions(SALES_CHANNEL_LABELS),
+    ];
+  }
+
+  get priceTypeOptions(): DbSegmentOption<PriceType>[] {
+    const percent = this.wholesaleDiscount.percent;
+    return [
+      { value: PriceType.LISTA, label: 'Lista' },
+      {
+        value: PriceType.MAYORISTA,
+        label: percent > 0 ? `Mayorista −${percent}%` : 'Mayorista',
+      },
+    ];
+  }
+
+  get depositMethodOptions(): DbSegmentOption<PaymentMethod>[] {
+    return labelsToSelectOptions(PAYMENT_METHOD_LABELS);
+  }
+
+  get depositAccountOptions(): DbSelectOption[] {
+    return labelsToSelectOptions(TREASURY_ACCOUNT_LABELS);
+  }
+
   get dueDateBusinessDaysHint(): string {
     if (!this.dueDate) return '';
     const days = this.countCalendarDaysFromToday(this.dueDate);
@@ -327,42 +413,136 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return this.lines.filter((line) => isLineBillable(line));
   }
 
+  /** Subtotal a precio de lista (líneas del form editan lista). */
+  get listSubtotal(): number {
+    if (this.isQuoteForm) {
+      return calculateOrderSubtotal(this.billableLines);
+    }
+    return this.billableLines.reduce(
+      (sum, line) => sum + lineListSubtotal(line),
+      0,
+    );
+  }
+
   get subtotal(): number {
-    return calculateOrderSubtotal(this.billableLines);
+    if (this.isQuoteForm) {
+      return calculateOrderSubtotal(this.billableLines);
+    }
+    return this.chargedSubtotal;
+  }
+
+  get wholesaleAppliedPreview(): boolean {
+    if (this.isQuoteForm) return false;
+    return wouldApplyWholesale({
+      priceType: this.priceType,
+      listSubtotal: this.listSubtotal,
+      customerMinimum: this.selectedCustomer?.wholesaleMinimum,
+      settings: this.wholesaleDiscount,
+    });
+  }
+
+  /** Monto de productos elegibles al descuento mayorista (a lista). */
+  get wholesaleProductsBase(): number {
+    if (!this.wholesaleAppliedPreview) return 0;
+    return this.billableLines.reduce((sum, line) => {
+      if (!wholesaleAppliesToService(line.serviceType, this.wholesaleDiscount)) {
+        return sum;
+      }
+      return sum + lineListSubtotal(line);
+    }, 0);
+  }
+
+  get wholesaleDiscountAmount(): number {
+    if (!this.wholesaleAppliedPreview) return 0;
+    return this.billableLines.reduce((sum, line) => {
+      if (!wholesaleAppliesToService(line.serviceType, this.wholesaleDiscount)) {
+        return sum;
+      }
+      const list = lineListUnitPrice(line);
+      const wholesale = wholesalePriceFromList(
+        list,
+        this.wholesaleDiscount.percent,
+      );
+      const qty = Math.max(0, Number(line.quantity) || 0);
+      return sum + Math.round((list - wholesale) * qty);
+    }, 0);
+  }
+
+  /** Subtotal cobrado (lista − mayorista) antes del descuento manual. */
+  get chargedSubtotal(): number {
+    if (this.isQuoteForm) {
+      return calculateOrderSubtotal(this.billableLines);
+    }
+    return this.billableLines.reduce(
+      (sum, line) =>
+        sum +
+        linePreviewSubtotal(
+          line,
+          this.wholesaleAppliedPreview,
+          this.wholesaleDiscount,
+        ),
+      0,
+    );
   }
 
   get discountPercentMax(): number {
     return DISCOUNT_PERCENT_MAX;
   }
 
-  /** Tope de descuento en $: subtotal − 1 (0 si no hay subtotal). */
+  /** Tope de descuento en $: subtotal cobrado − 1 (0 si no hay subtotal). */
   get discountAmountMax(): number {
-    return Math.max(0, Math.round(this.subtotal) - 1);
+    return Math.max(0, Math.round(this.chargedSubtotal) - 1);
   }
 
   get discountApplied(): number {
+    if (this.isQuoteForm) {
+      const discount = discountPayloadFromMode(
+        this.discountMode,
+        this.discountPercent,
+        this.discountAmount,
+        this.subtotal,
+      );
+      return calculateOrderDiscount(
+        this.billableLines,
+        discount.discountPercent,
+        discount.discountAmount,
+      );
+    }
     const discount = discountPayloadFromMode(
       this.discountMode,
       this.discountPercent,
       this.discountAmount,
-      this.subtotal,
+      this.chargedSubtotal,
     );
-    return calculateOrderDiscount(
-      this.billableLines,
+    return calculateDiscountValue(
+      this.chargedSubtotal,
       discount.discountPercent,
       discount.discountAmount,
     );
   }
 
   get total(): number {
+    if (this.isQuoteForm) {
+      const discount = discountPayloadFromMode(
+        this.discountMode,
+        this.discountPercent,
+        this.discountAmount,
+        this.subtotal,
+      );
+      return calculateOrderTotal(
+        this.billableLines,
+        discount.discountPercent,
+        discount.discountAmount,
+      );
+    }
     const discount = discountPayloadFromMode(
       this.discountMode,
       this.discountPercent,
       this.discountAmount,
-      this.subtotal,
+      this.chargedSubtotal,
     );
-    return calculateOrderTotal(
-      this.billableLines,
+    return calculateTotalWithDiscount(
+      this.chargedSubtotal,
       discount.discountPercent,
       discount.discountAmount,
     );
@@ -389,12 +569,65 @@ export class OrderFormComponent implements OnChanges, OnInit {
     );
   }
 
+  get paymentFeePreview(): number {
+    if (this.isQuoteForm || this.isEditing) return 0;
+    return Math.max(0, Number(this.depositFeeInput) || 0);
+  }
+
   get profit(): number {
-    return this.total - this.totalCost;
+    return this.total - this.totalCost - this.paymentFeePreview;
+  }
+
+  get profitPercentOnCost(): number {
+    if (!(this.totalCost > 0)) return 0;
+    return Math.round((this.profit / this.totalCost) * 100);
+  }
+
+  get listProfit(): number {
+    return this.listSubtotal - this.discountApplied - this.totalCost;
+  }
+
+  get resellerSavings(): number {
+    return this.wholesaleDiscountAmount;
   }
 
   get depositAmount(): number {
     return Math.round(this.total * DEPOSIT_FACTOR);
+  }
+
+  get depositAmountValue(): number | null {
+    if (this.depositAmountTouched) return this.depositAmountInput;
+    return this.depositAmountInput ?? this.depositAmount;
+  }
+
+  get balanceAfterDeposit(): number {
+    const deposit = Math.max(0, Number(this.depositAmountValue) || 0);
+    return Math.max(0, Math.round(this.total - deposit));
+  }
+
+  get wholesaleMinimumNotice(): WholesaleMinimumNotice {
+    if (this.isQuoteForm || this.priceType !== PriceType.MAYORISTA) {
+      return null;
+    }
+    const minimum = this.selectedCustomer?.wholesaleMinimum;
+    if (minimum == null || !Number.isFinite(Number(minimum))) {
+      return null;
+    }
+    const min = Number(minimum);
+    if (meetsWholesaleMinimum(this.listSubtotal, min)) {
+      return {
+        kind: 'ok',
+        message: `Supera la compra mínima mayorista de ${this.money(min)}.`,
+      };
+    }
+    return {
+      kind: 'warn',
+      message: `No llega a la compra mínima mayorista de ${this.money(min)}: se cobra precio de lista`,
+    };
+  }
+
+  get showDepositBlock(): boolean {
+    return !this.isQuoteForm && !this.isEditing;
   }
 
   get quoteResumenItems() {
@@ -796,8 +1029,9 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   onDiscountAmountChange(raw: number | string): void {
     const n = Number(raw);
-    this.discountClampHint = discountAmountClampMessage(n, this.subtotal);
-    this.discountAmount = clampDiscountAmount(n, this.subtotal);
+    const base = this.chargedSubtotal;
+    this.discountClampHint = discountAmountClampMessage(n, base);
+    this.discountAmount = clampDiscountAmount(n, base);
   }
 
   /** Ajusta %/$ al rango válido (tipeo, pegado o cambio de subtotal). */
@@ -810,16 +1044,75 @@ export class OrderFormComponent implements OnChanges, OnInit {
       }
     } else if (this.discountMode === 'amount') {
       const before = this.discountAmount;
-      this.discountAmount = clampDiscountAmount(before, this.subtotal);
+      const base = this.chargedSubtotal;
+      this.discountAmount = clampDiscountAmount(before, base);
       if (this.discountAmount !== before) {
-        this.discountClampHint = discountAmountClampMessage(
-          before,
-          this.subtotal,
-        );
+        this.discountClampHint = discountAmountClampMessage(before, base);
       }
     } else {
       this.discountClampHint = '';
     }
+  }
+
+  onCustomerIdChange(customerId: string): void {
+    this.customerId = customerId;
+    if (!this.priceTypeManual) {
+      this.priceType = this.isResellerCustomer
+        ? PriceType.MAYORISTA
+        : PriceType.LISTA;
+    }
+  }
+
+  onPriceTypeChange(value: PriceType): void {
+    this.priceType = value;
+    this.priceTypeManual = true;
+  }
+
+  onSalesChannelChange(value: string | null): void {
+    this.salesChannel =
+      value && Object.values(SalesChannel).includes(value as SalesChannel)
+        ? (value as SalesChannel)
+        : null;
+  }
+
+  onDepositAmountChange(raw: number | null): void {
+    this.depositAmountTouched = true;
+    this.depositAmountInput =
+      raw === null || raw === ('' as unknown) ? null : Number(raw);
+  }
+
+  onDepositMethodChange(method: PaymentMethod): void {
+    this.depositMethod = method;
+    this.depositAccount = defaultAccountForMethod(method);
+  }
+
+  onDepositAccountChange(value: string): void {
+    if (Object.values(TreasuryAccount).includes(value as TreasuryAccount)) {
+      this.depositAccount = value as TreasuryAccount;
+    }
+  }
+
+  onDepositFeeChange(raw: number | null): void {
+    this.depositFeeInput =
+      raw === null || raw === ('' as unknown) ? null : Number(raw);
+  }
+
+  /**
+   * Seña a registrar tras crear el pedido (alta). Null si monto 0/vacío.
+   * Lo consume el dialog después del create.
+   */
+  getInitialDeposit(): CreateOrderPaymentPayload | null {
+    if (!this.showDepositBlock) return null;
+    const amount = Number(this.depositAmountValue);
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+    const fee = Number(this.depositFeeInput);
+    return {
+      amount: Math.round(amount),
+      deposit: true,
+      method: this.depositMethod,
+      account: this.depositAccount,
+      ...(Number.isFinite(fee) && fee > 0 ? { fee: Math.round(fee) } : {}),
+    };
   }
 
 
@@ -928,6 +1221,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
         : undefined,
       notes: this.notes.trim() || undefined,
       dueDate: toOrderDueDate(this.dueDate),
+      priceType: this.priceType,
+      salesChannel: this.salesChannel,
     } satisfies CreateOrderPayload);
   }
 
@@ -935,7 +1230,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     this.formDialogs.openCustomer().subscribe((customer) => {
       if (!customer) return;
       this.customerCreated.emit(customer);
-      this.customerId = customer.id;
+      this.onCustomerIdChange(customer.id);
     });
   }
 
@@ -1006,6 +1301,13 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   private resetForm(): void {
+    this.priceTypeManual = false;
+    this.depositAmountTouched = false;
+    this.depositAmountInput = null;
+    this.depositFeeInput = null;
+    this.depositMethod = PaymentMethod.TRANSFERENCIA;
+    this.depositAccount = defaultAccountForMethod(this.depositMethod);
+
     if (this.isQuoteForm && this.quote) {
       this.customerId = this.quote.customerId ?? '';
       this.description = this.quote.description ?? '';
@@ -1019,6 +1321,9 @@ export class OrderFormComponent implements OnChanges, OnInit {
       );
       this.discountPercent = this.quote.discountPercent ?? 0;
       this.discountAmount = this.quote.discountAmount ?? 0;
+      this.priceType = this.quote.priceType ?? PriceType.LISTA;
+      this.salesChannel = this.quote.salesChannel ?? null;
+      this.priceTypeManual = !!this.quote.priceType;
     } else if (this.presetQuote) {
       this.customerId = this.presetQuote.customerId ?? '';
       this.dueDate = defaultDueDate();
@@ -1033,6 +1338,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
       );
       this.discountPercent = this.presetQuote.discountPercent ?? 0;
       this.discountAmount = this.presetQuote.discountAmount ?? 0;
+      this.priceType = this.presetQuote.priceType ?? PriceType.LISTA;
+      this.salesChannel = this.presetQuote.salesChannel ?? null;
+      this.priceTypeManual = !!this.presetQuote.priceType;
+      if (!this.priceTypeManual && this.isResellerCustomer) {
+        this.priceType = PriceType.MAYORISTA;
+      }
     } else if (this.order) {
       this.customerId = this.order.customerId ?? '';
       this.dueDate = toDateInputValue(this.order.dueDate);
@@ -1047,6 +1358,9 @@ export class OrderFormComponent implements OnChanges, OnInit {
       );
       this.discountPercent = this.order.discountPercent ?? 0;
       this.discountAmount = this.order.discountAmount ?? 0;
+      this.priceType = this.order.priceType ?? PriceType.LISTA;
+      this.salesChannel = this.order.salesChannel ?? null;
+      this.priceTypeManual = true;
     } else if (this.presetCartLines.length && this.products.length) {
       this.customerId = this.presetCustomerId;
       this.dueDate = defaultDueDate();
@@ -1056,6 +1370,10 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.discountMode = 'none';
       this.discountPercent = 0;
       this.discountAmount = 0;
+      this.salesChannel = null;
+      this.priceType = this.isResellerCustomer
+        ? PriceType.MAYORISTA
+        : PriceType.LISTA;
     } else {
       this.customerId = this.presetCustomerId;
       this.dueDate = defaultDueDate();
@@ -1065,6 +1383,10 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.discountMode = 'none';
       this.discountPercent = 0;
       this.discountAmount = 0;
+      this.salesChannel = null;
+      this.priceType = this.isResellerCustomer
+        ? PriceType.MAYORISTA
+        : PriceType.LISTA;
     }
     this.relinkPrintLinesFromModelado();
     this.syncDesignLineCosts({ preserveCost: this.isEditing });
@@ -1301,6 +1623,9 @@ export class OrderFormComponent implements OnChanges, OnInit {
   private applyGeneralSettings(settings: GeneralSettings): void {
     this.generalSettings = settings;
     this.profitMargins = normalizeProfitMargins(settings.profitMargins);
+    this.wholesaleDiscount = normalizeWholesaleDiscount(
+      settings.wholesaleDiscount,
+    );
   }
 
   /** Costo de diseño/modelado: horas × tarifa. Precio fijo → 0. */

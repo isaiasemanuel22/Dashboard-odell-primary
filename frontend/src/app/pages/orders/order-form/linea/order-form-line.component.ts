@@ -35,11 +35,13 @@ import {
   ImpresoWithCost,
   OrderLineDraft,
   PaperType,
+  PriceType,
   Product,
   ProductType,
   ServiceProfitMargins,
   ServiceType,
   Supply,
+  WholesaleDiscountSettings,
 } from '../../../../core/models';
 import { ImpresosService } from '../../../../core/services/impresos.service';
 import { ProductCostCalculationService } from '../../../../core/services/product-cost-calculation.service';
@@ -102,6 +104,15 @@ import {
   productComponentSelectLabel,
   resolveProductUnitCost,
 } from '../../../../shared/utils/product.helpers';
+import {
+  lineListUnitPrice,
+  wholesaleAppliesToService,
+  wholesaleMarginPercentOnCost,
+} from '../../../../shared/utils/order-wholesale-preview.util';
+import {
+  normalizeWholesaleDiscount,
+  wholesalePriceFromList,
+} from '../../../../shared/utils/wholesale-example.util';
 import { combineLatest } from 'rxjs';
 
 export type OrderFormLineVariant = 'quote' | 'order';
@@ -143,6 +154,11 @@ export class OrderFormLineComponent implements OnInit {
   @Input() products: Product[] = [];
   @Input() serviceTypeOptions: Array<{ value: ServiceType; label: string }> = [];
   @Input() paperTypeOptions: DbSelectOption[] = [];
+  /** Pedido v1: tipo de precio y descuento mayorista para la vista previa. */
+  @Input() priceType: PriceType = PriceType.LISTA;
+  @Input() wholesaleApplied = false;
+  @Input() wholesaleDiscount: WholesaleDiscountSettings =
+    normalizeWholesaleDiscount(null);
 
   @Output() remove = new EventEmitter<void>();
   @Output() linkPrintChange = new EventEmitter<boolean>();
@@ -627,12 +643,67 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   get editableUnitPrice(): number {
-    return this.isDesign()
-      ? this.designUnitPrice
-      : Number(this.line.unitPrice) || 0;
+    return lineListUnitPrice(this.line);
+  }
+
+  /** Vista previa mayorista en la línea (misma fórmula que el backend). */
+  get showWholesaleColumns(): boolean {
+    return (
+      this.variant === 'order' &&
+      this.wholesaleApplied &&
+      wholesaleAppliesToService(this.line.serviceType, this.wholesaleDiscount)
+    );
+  }
+
+  get showClosedPriceNote(): boolean {
+    return (
+      this.variant === 'order' &&
+      this.wholesaleApplied &&
+      isDesignService(this.line.serviceType) &&
+      !wholesaleAppliesToService(this.line.serviceType, this.wholesaleDiscount)
+    );
+  }
+
+  get wholesaleUnitPricePreview(): number {
+    return wholesalePriceFromList(
+      this.editableUnitPrice,
+      this.wholesaleDiscount.percent,
+    );
+  }
+
+  get wholesaleLineTotalPreview(): number {
+    const qty = Math.max(0, Number(this.line.quantity) || 0);
+    return Math.round(this.wholesaleUnitPricePreview * qty);
+  }
+
+  get wholesaleMarginOnCostPercent(): number {
+    return wholesaleMarginPercentOnCost(
+      this.wholesaleUnitPricePreview,
+      this.unitCost,
+    );
+  }
+
+  get wholesaleUnitProfit(): number {
+    return (
+      Math.round(this.wholesaleUnitPricePreview) - Math.round(this.unitCost)
+    );
+  }
+
+  get wholesaleMarginBelowArea(): boolean {
+    if (!this.profitMargins) return false;
+    const area = getMarginForService(this.line.serviceType, this.profitMargins);
+    return this.wholesaleMarginOnCostPercent < area;
+  }
+
+  get wholesaleMarginHint(): string {
+    const margin = this.wholesaleMarginOnCostPercent;
+    const profit = this.money(this.wholesaleUnitProfit);
+    return `Margen por mayor ${margin}% · gana ${profit} / u`;
   }
 
   onEditableUnitPriceChange(raw: number | string): void {
+    // El usuario edita precio de lista; limpiar listUnitPrice para no descontar 2 veces.
+    this.line.listUnitPrice = undefined;
     if (this.isDesign()) {
       this.onDesignUnitPriceChange(raw);
       return;

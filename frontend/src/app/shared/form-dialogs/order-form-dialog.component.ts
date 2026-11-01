@@ -9,7 +9,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { filter, forkJoin } from 'rxjs';
+import { catchError, filter, forkJoin, of, switchMap } from 'rxjs';
 import {
   CreateOrderPayload,
   Customer,
@@ -133,12 +133,22 @@ export class OrderFormDialogComponent implements OnInit {
     this.error = '';
     this.cdr.markForCheck();
 
+    const isCreate = !this.order;
+    const deposit = isCreate ? this.form?.getInitialDeposit() ?? null : null;
+
     const request = this.order
       ? this.ordersService.updateOrder(
           this.order.id,
           data as UpdateOrderPayload,
         )
-      : this.ordersService.createOrder(data as CreateOrderPayload);
+      : this.ordersService.createOrder(data as CreateOrderPayload).pipe(
+          switchMap((created) => {
+            if (!deposit) return of(created);
+            return this.ordersService.addPayment(created.id, deposit).pipe(
+              catchError(() => of(created)),
+            );
+          }),
+        );
 
     request.subscribe({
       next: (saved) => {

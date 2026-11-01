@@ -10,18 +10,34 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { Order } from '../../../../core/models';
+import {
+  Order,
+  PaymentMethod,
+  TreasuryAccount,
+} from '../../../../core/models';
 import { OrdersService } from '../../../../core/services/orders.service';
 import {
   DbButtonComponent,
   DbCheckboxComponent,
   DbInputComponent,
+  DbSegmentedControlComponent,
+  DbSelectComponent,
+  DbSegmentOption,
+  DbSelectOption,
 } from '@general-components';
 import { extractApiErrorMessage } from '../../../../shared/utils/api-error';
 import {
   CurrencyArsPipe,
   DateShortPipe,
 } from '../../../../shared/pipes/labels.pipe';
+import {
+  PAYMENT_METHOD_LABELS,
+  TREASURY_ACCOUNT_LABELS,
+  paymentMethodLabel,
+  treasuryAccountLabel,
+} from '../../../../shared/utils/v1-labels.util';
+import { labelsToSelectOptions } from '../../../../shared/utils/select-options';
+import { defaultAccountForMethod } from '../../../../shared/utils/treasury-account.util';
 
 @Component({
   selector: 'app-order-detail-payments',
@@ -31,6 +47,8 @@ import {
     DbInputComponent,
     DbCheckboxComponent,
     DbButtonComponent,
+    DbSelectComponent,
+    DbSegmentedControlComponent,
     CurrencyArsPipe,
     DateShortPipe,
   ],
@@ -49,8 +67,19 @@ export class OrderDetailPaymentsComponent {
 
   paymentAmount: number | null = null;
   paymentDeposit = false;
+  paymentMethod: PaymentMethod = PaymentMethod.EFECTIVO;
+  paymentAccount: TreasuryAccount = TreasuryAccount.CAJA;
+  paymentFee: number | null = null;
   paymentLoading = false;
   paymentError = '';
+
+  readonly methodOptions: DbSegmentOption<PaymentMethod>[] =
+    labelsToSelectOptions(PAYMENT_METHOD_LABELS);
+  readonly accountOptions: DbSelectOption[] =
+    labelsToSelectOptions(TREASURY_ACCOUNT_LABELS);
+
+  readonly paymentMethodLabel = paymentMethodLabel;
+  readonly treasuryAccountLabel = treasuryAccountLabel;
 
   get paidAmount(): number {
     return (this.order.payments ?? []).reduce(
@@ -79,21 +108,33 @@ export class OrderDetailPaymentsComponent {
     });
   }
 
+  onMethodChange(method: PaymentMethod): void {
+    this.paymentMethod = method;
+    this.paymentAccount = defaultAccountForMethod(method);
+  }
+
   registerPayment(): void {
     if (this.paymentLoading || !this.paymentAmount) return;
     this.paymentLoading = true;
     this.paymentError = '';
     this.cdr.markForCheck();
+    const fee = Number(this.paymentFee);
     this.ordersService
       .addPayment(this.order.id, {
         amount: Number(this.paymentAmount),
         deposit: this.paymentDeposit,
+        method: this.paymentMethod,
+        account: this.paymentAccount,
+        ...(Number.isFinite(fee) && fee > 0 ? { fee: Math.round(fee) } : {}),
       })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (order) => {
           this.paymentAmount = null;
           this.paymentDeposit = false;
+          this.paymentFee = null;
+          this.paymentMethod = PaymentMethod.EFECTIVO;
+          this.paymentAccount = defaultAccountForMethod(this.paymentMethod);
           this.paymentLoading = false;
           this.orderChange.emit(order);
           this.cdr.markForCheck();

@@ -4,6 +4,10 @@
   display: contents;
 }
 
+.quote-form__top--order-v1 {
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+}
+
 .quote-customer-field {
   display: flex;
   flex-direction: column;
@@ -33,6 +37,70 @@
     font-size: 0.8125rem;
     font-weight: 600;
     padding: 0;
+  }
+
+  &__pill-wrap {
+    margin: 0;
+  }
+
+  &__pill {
+    display: inline-flex;
+    align-items: center;
+    height: 1.25rem;
+    padding: 0 0.625rem;
+    border-radius: $radius-pill;
+    background: #e0f0f8;
+    color: #0b5f86;
+    font-size: 0.75rem;
+    font-weight: 500;
+  }
+}
+
+.quote-channel-field {
+  min-width: 0;
+}
+
+.quote-price-type {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  min-width: 0;
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: $color-text-muted;
+  }
+}
+
+.wholesale-min-note {
+  display: flex;
+  gap: 0.65rem;
+  align-items: flex-start;
+  margin: 0;
+  padding: 0.75rem 0.875rem;
+  border-radius: 0.75rem;
+  border: 1px solid #e3ecf2;
+  background: #f4f8fb;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  color: #33495a;
+
+  &__icon {
+    flex: none;
+    font-weight: 700;
+  }
+
+  &--ok {
+    background: #f0faf3;
+    border-color: #b7e1c3;
+    color: #14532d;
+  }
+
+  &--warn {
+    background: #fff8eb;
+    border-color: #f5d9a8;
+    color: #7a4a06;
   }
 }
 

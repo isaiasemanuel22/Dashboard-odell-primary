@@ -43,8 +43,44 @@
   border-top: 1px solid $color-border;
 }
 
-.order-payments__error {
-  margin: 0.5rem 0 0;
-  color: $color-error;
+.order-payments {
+  margin: 1rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
   font-size: 0.875rem;
+  color: $color-text-label;
+
+  &__amount {
+    font-weight: 700;
+    color: $color-text;
+  }
+
+  &__date {
+    color: $color-text-muted;
+  }
+
+  &__form {
+    grid-template-columns: 1fr;
+  }
+
+  &__method {
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+  }
+
+  &__label {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: $color-text-muted;
+  }
+
+  &__error {
+    margin: 0.5rem 0 0;
+    color: $color-error;
+    font-size: 0.875rem;
+  }
 }

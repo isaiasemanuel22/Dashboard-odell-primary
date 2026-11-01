@@ -11,7 +11,13 @@
   </p>
 </div>
 <div class="order-line__money-field">
-  <span class="order-line__money-label">Precio unitario</span>
+  <span class="order-line__money-label">
+    @if (showWholesaleColumns) {
+      Precio de lista
+    } @else {
+      Precio unitario
+    }
+  </span>
   <div
     class="order-line__money-value order-line__money-value--editable order-line__money-value--with-prefix"
   >
@@ -23,12 +29,22 @@
       [name]="'price-' + lineIndex"
       [min]="0"
       [step]="1"
-      aria-label="Precio unitario"
+      [attr.aria-label]="showWholesaleColumns ? 'Precio de lista' : 'Precio unitario'"
       [attr.aria-invalid]="unitPriceError ? true : null"
     />
   </div>
   @if (unitPriceError) {
     <p class="order-line__money-hint order-line__money-hint--warn">{{ unitPriceError }}</p>
+  } @else if (closedPriceNote) {
+    <p class="order-line__money-hint order-line__lock">{{ closedPriceNote }}</p>
+  } @else if (showWholesaleColumns && wholesaleMarginHint) {
+    <p
+      class="order-line__money-hint"
+      [class.order-line__money-hint--warn]="wholesaleMarginWarn"
+      [class.order-line__money-hint--ok]="!wholesaleMarginWarn"
+    >
+      {{ wholesaleMarginHint }}
+    </p>
   } @else {
     <p
       class="order-line__money-hint"
@@ -47,6 +63,21 @@
     </button>
   }
 </div>
+
+@if (showWholesaleColumns) {
+  <div class="order-line__money-field order-line__money-field--wholesale">
+    <span class="order-line__money-label">Lista</span>
+    <div class="order-line__money-value order-line__money-value--muted">
+      <s>{{ listUnitPrice | currencyArs }}</s>
+    </div>
+  </div>
+  <div class="order-line__money-field order-line__money-field--wholesale">
+    <span class="order-line__money-label">Mayorista</span>
+    <div class="order-line__money-value order-line__money-value--strong">
+      {{ wholesaleUnitPrice | currencyArs }}
+    </div>
+  </div>
+}
 
 <div class="order-line__subtotal">
   <span class="order-line__subtotal-label">
