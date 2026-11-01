@@ -38,14 +38,14 @@ describe('sales-report.util', () => {
           : null,
     );
 
-    expect(sections).toHaveLength(1);
+    expect(sections.length).toBe(1);
     expect(sections[0]?.area).toBe(ServiceType.ESTAMPADO);
     expect(sections[0]?.rows).toEqual([
-      expect.objectContaining({
+      jasmine.objectContaining({
         productName: 'Taza de cerámica',
         quantity: 1,
       }),
-      expect.objectContaining({
+      jasmine.objectContaining({
         productName: 'Taza mágica',
         quantity: 2,
       }),
