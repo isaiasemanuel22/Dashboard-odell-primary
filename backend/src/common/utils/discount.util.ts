@@ -10,10 +10,15 @@ export interface NormalizedDiscount {
   discountAmount: number;
 }
 
-export function normalizeDiscountFields(input: DiscountInput): NormalizedDiscount {
+/** Máximo % de descuento (§16.1: 100 % dejaría el total en $0). */
+export const DISCOUNT_PERCENT_MAX = 99;
+
+export function normalizeDiscountFields(
+  input: DiscountInput,
+): NormalizedDiscount {
   const discountPercent = Math.min(
     Math.max(Number(input.discountPercent) || 0, 0),
-    100,
+    DISCOUNT_PERCENT_MAX,
   );
   const discountAmount = Math.max(Number(input.discountAmount) || 0, 0);
 
@@ -39,7 +44,9 @@ export function calculateDiscountValue(
   if (subtotal <= 0) return 0;
 
   if (discount.discountAmount > 0) {
-    return Math.min(Math.round(discount.discountAmount), subtotal);
+    // §16.1: el monto fijo llega como máximo a un peso menos que el subtotal.
+    const maxAmount = Math.max(0, Math.round(subtotal) - 1);
+    return Math.min(Math.round(discount.discountAmount), maxAmount);
   }
 
   if (discount.discountPercent > 0) {
