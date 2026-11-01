@@ -38,6 +38,7 @@ export class OrderDetailHistoryComponent {
     settings: 'Ajustes del sistema',
     supply_price: 'Precio de insumo',
     product_update: 'Actualización de producto',
+    bulk_price: 'Precios en bloque',
   };
 
   historyTransition(entry: OrderStatusHistoryEntry): string {

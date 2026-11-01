@@ -132,6 +132,49 @@ export enum SaleSource {
   ORDER = 'order',
 }
 
+export enum CustomerType {
+  PARTICULAR = 'particular',
+  EMPRESA = 'empresa',
+  REVENDEDOR = 'revendedor',
+}
+
+/** Precio de lista o mayorista por pedido/presupuesto (§10). */
+export enum PriceType {
+  LISTA = 'lista',
+  MAYORISTA = 'mayorista',
+}
+
+/** Canal de venta del pedido/presupuesto. */
+export enum SalesChannel {
+  MAYORISTA = 'mayorista',
+  INSTAGRAM = 'instagram',
+  WHATSAPP = 'whatsapp',
+  TIENDANUBE = 'tiendanube',
+  FERIA = 'feria',
+  MOSTRADOR = 'mostrador',
+}
+
+export enum CustomerSource {
+  INSTAGRAM = 'instagram',
+  WHATSAPP = 'whatsapp',
+  TIENDANUBE = 'tiendanube',
+  FERIA = 'feria',
+  RECOMENDACION = 'recomendacion',
+  OTRO = 'otro',
+}
+
+export enum PaymentMethod {
+  EFECTIVO = 'efectivo',
+  TRANSFERENCIA = 'transferencia',
+  MERCADO_PAGO = 'mercado_pago',
+}
+
+export enum TreasuryAccount {
+  CAJA = 'caja',
+  MERCADO_PAGO = 'mercado_pago',
+  BANCO = 'banco',
+}
+
 export enum TreasuryExpenseCategory {
   SUPPLY_PURCHASE = 'supply_purchase',
   WITHDRAWAL = 'withdrawal',
@@ -140,6 +183,7 @@ export enum TreasuryExpenseCategory {
   PAYMENT = 'payment',
   LOAN = 'loan',
   LOAN_REPAYMENT = 'loan_repayment',
+  TRANSFER = 'transfer',
   OTHER = 'other',
 }
 
@@ -239,6 +283,13 @@ export interface ServiceProfitMargins {
   estampado: number;
 }
 
+/** Descuento por mayor (revendedor): % sobre precio de lista, por áreas. */
+export interface WholesaleDiscountSettings {
+  enabled: boolean;
+  percent: number;
+  serviceTypes: ServiceType[];
+}
+
 export interface PowerConsumptionConfig {
   id: string;
   name: string;
@@ -277,6 +328,7 @@ export interface GeneralSettings {
   /** Tarifa horaria de diseño gráfico ($/h). */
   graphicDesignRatePerHour: number;
   profitMargins: ServiceProfitMargins;
+  wholesaleDiscount: WholesaleDiscountSettings;
   paperPricesPerSqm: PaperPricesPerSqm;
   paperReferenceSheets: PaperReferenceSheets;
   filamentPrices: FilamentPriceConfig[];
@@ -314,6 +366,11 @@ export interface ImpresoCostPreview {
 export type CreateImpresoPayload = Omit<Impreso, 'id' | 'updatedAt'>;
 export type UpdateImpresoPayload = Partial<CreateImpresoPayload>;
 
+export interface SupplyPriceHistoryEntry {
+  at: string;
+  unitPrice: number;
+}
+
 export interface Supply {
   id: string;
   name: string;
@@ -329,7 +386,20 @@ export interface Supply {
   priceFromSettings: boolean;
   supplier?: string;
   colorId?: string;
+  /** Historial del precio unitario (precio NUEVO en cada cambio). Máx. 50. */
+  priceHistory?: SupplyPriceHistoryEntry[];
   updatedAt: string;
+}
+
+/** Fila de GET /supplies/price-changes. */
+export interface SupplyPriceChangeRow {
+  supplyId: string;
+  name: string;
+  unit: string;
+  priceBefore: number;
+  priceNow: number;
+  variationPercent: number;
+  affectedProducts: number;
 }
 
 export interface CostBreakdown {
@@ -542,10 +612,28 @@ export interface Customer {
   email: string;
   phone: string;
   company?: string;
+  /** Particular | Empresa | Revendedor; datos viejos se leen como particular. */
+  type: CustomerType;
+  /** Compra mínima mayorista (pesos, >= 0); solo aplica a revendedor. */
+  wholesaleMinimum?: number;
+  /** CUIT opcional, normalizado XX-XXXXXXXX-X. */
+  taxId?: string;
+  /** Cómo llegó el cliente. */
+  source?: CustomerSource;
   createdAt: string;
 }
 
-export type CreateCustomerPayload = Omit<Customer, 'id' | 'createdAt'>;
+/** Payload alineado con CreateCustomerDto (type/origen opcionales al crear). */
+export type CreateCustomerPayload = {
+  name: string;
+  email: string;
+  phone: string;
+  company?: string;
+  type?: CustomerType;
+  wholesaleMinimum?: number;
+  taxId?: string;
+  source?: CustomerSource;
+};
 export type UpdateCustomerPayload = Partial<CreateCustomerPayload>;
 
 export interface OrderItemPayload {
@@ -553,7 +641,13 @@ export interface OrderItemPayload {
   productId?: string;
   productName: string;
   quantity: number;
+  /** Precio que se cobra (lista o mayorista ya aplicado). */
   unitPrice: number;
+  /**
+   * Precio de lista de la línea cuando se aplicó mayorista.
+   * Ausente = unitPrice es de lista (o no hubo descuento en esa línea).
+   */
+  listUnitPrice?: number;
   /** Precio unitario editado a mano (persistido). */
   unitPriceManual?: boolean;
   /** Costo unitario al cotizar (snapshot persistido). */
@@ -614,7 +708,8 @@ export interface OrderStatusHistoryEntry {
 export type OrderPriceChangeTrigger =
   | 'settings'
   | 'supply_price'
-  | 'product_update';
+  | 'product_update'
+  | 'bulk_price';
 
 export interface OrderPriceHistoryEntry {
   id: string;
@@ -638,6 +733,12 @@ export interface Order {
   items: OrderItem[];
   status: OrderStatus;
   total: number;
+  /** Lista | Mayorista; datos viejos se leen como lista. */
+  priceType?: PriceType;
+  /** Si el mayorista efectivamente se aplicó. Datos viejos → false. */
+  wholesaleApplied?: boolean;
+  /** Canal de venta (opcional). */
+  salesChannel?: SalesChannel;
   discountPercent?: number;
   discountAmount?: number;
   description?: string;
@@ -655,7 +756,21 @@ export interface OrderPayment {
   amount: number;
   deposit: boolean;
   createdAt: string;
+  /** Medio de pago; datos viejos se leen como efectivo. */
+  method?: PaymentMethod;
+  /** Cuenta donde entra el dinero; default según el medio. */
+  account?: TreasuryAccount;
+  /** Comisión del medio en pesos. */
+  fee?: number;
 }
+
+export type CreateOrderPaymentPayload = {
+  amount: number;
+  deposit?: boolean;
+  method?: PaymentMethod;
+  account?: TreasuryAccount;
+  fee?: number;
+};
 
 export type CreateOrderPayload = Omit<
   Order,
@@ -667,9 +782,15 @@ export type CreateOrderPayload = Omit<
   | 'statusHistory'
   | 'customerId'
   | 'items'
+  | 'wholesaleApplied'
+  | 'priceHistory'
+  | 'deliveryHistory'
+  | 'payments'
 > & {
   customerId?: string | null;
   items: OrderItemPayload[];
+  /** Null borra el canal guardado. */
+  salesChannel?: SalesChannel | null;
 };
 
 export type UpdateOrderPayload = Partial<CreateOrderPayload>;
@@ -687,6 +808,12 @@ export interface Quote {
   items: QuoteItem[];
   status: QuoteStatus;
   total: number;
+  /** Lista | Mayorista; datos viejos se leen como lista. */
+  priceType?: PriceType;
+  /** Si el mayorista efectivamente se aplicó. Datos viejos → false. */
+  wholesaleApplied?: boolean;
+  /** Canal de venta (opcional). */
+  salesChannel?: SalesChannel;
   discountPercent?: number;
   discountAmount?: number;
   description?: string;
@@ -698,6 +825,9 @@ export interface Quote {
 export type CreateQuotePayload = {
   customerId?: string | null;
   items: OrderItemPayload[];
+  priceType?: PriceType;
+  /** Null borra el canal guardado. */
+  salesChannel?: SalesChannel | null;
   discountPercent?: number;
   discountAmount?: number;
   description?: string;
@@ -878,6 +1008,61 @@ export interface MonthlyTrendPoint {
   label: string;
   ordersCount: number;
   revenue: number;
+  /** Cobrado en el mes (pagos netos + mostrador), mismo criterio que profitability.collected. */
+  collected: number;
+}
+
+/** Período calendario del dashboard de rentabilidad. */
+export type DashboardPeriod = 'month' | 'quarter' | 'year';
+
+export type DashboardRankBy = 'profit' | 'markup' | 'units';
+
+export interface DashboardProfitabilityChannel {
+  channel: string;
+  sold: number;
+  cost: number;
+  profit: number;
+  markupPercent: number | null;
+}
+
+export interface DashboardProfitabilityRankingItem {
+  productId: string;
+  productName: string;
+  units: number;
+  profitPerUnit: number;
+  markupPercent: number | null;
+  totalProfit: number;
+  mainChannel: string;
+  fixedPrice: boolean;
+}
+
+export interface DashboardMarginAlert {
+  productId: string;
+  name: string;
+  price: number;
+  cost: number;
+  markupPercent: number;
+  targetPercent: number;
+  priceForTarget: number;
+  fixedPrice: boolean;
+}
+
+/** Alias del shape de GET /products/margin-alerts. */
+export type ProductMarginAlert = DashboardMarginAlert;
+
+export interface DashboardProfitability {
+  period: DashboardPeriod;
+  from: string;
+  to: string;
+  sold: number;
+  collected: number;
+  fees: number;
+  netProfit: number;
+  receivable: number;
+  receivableOrders: number;
+  byChannel: DashboardProfitabilityChannel[];
+  ranking: DashboardProfitabilityRankingItem[];
+  marginAlerts: DashboardMarginAlert[];
 }
 
 export type DashboardNotificationType = 'info' | 'warning' | 'success';
@@ -933,6 +1118,12 @@ export interface DashboardStats {
   recentOrders: Order[];
   monthlyTrend: MonthlyTrendPoint[];
   notifications: DashboardNotification[];
+  profitability: DashboardProfitability;
+}
+
+export interface DashboardStatsQuery {
+  period?: DashboardPeriod;
+  rankBy?: DashboardRankBy;
 }
 
 export interface TreasuryExpense {
@@ -945,8 +1136,38 @@ export interface TreasuryExpense {
   amount: number;
   description?: string;
   referenceId?: string;
+  /** Cuenta afectada; datos viejos → caja. */
+  account?: TreasuryAccount;
+  voidedAt?: string;
+  voidReason?: string;
   occurredAt: string;
   createdAt: string;
+}
+
+export type TreasuryMovementSource = 'order_payment' | 'retail_sale' | 'record';
+
+export interface TreasuryMovement {
+  id: string;
+  source: TreasuryMovementSource;
+  occurredAt: string;
+  concept: string;
+  detail?: string;
+  account?: TreasuryAccount;
+  method?: PaymentMethod;
+  /** Importe con signo (ingreso +, egreso −). */
+  amount: number;
+  fee: number;
+  net: number;
+  voided: boolean;
+  voidReason?: string;
+  orderId?: string;
+  recordId?: string;
+}
+
+export interface TreasuryAccountBalance {
+  account: TreasuryAccount;
+  balance: number;
+  fees: number;
 }
 
 export interface TreasuryDebtorBalance {
@@ -960,6 +1181,8 @@ export interface TreasuryOverview {
   totalExpenses: number;
   totalSalesIncome: number;
   totalManualIncome: number;
+  accounts: TreasuryAccountBalance[];
+  movements: TreasuryMovement[];
   expenses: TreasuryExpense[];
   recordNameSuggestions: string[];
   recipientNameSuggestions: string[];
@@ -973,6 +1196,7 @@ export interface CreateTreasuryExpensePayload {
   category?: TreasuryExpenseCategory;
   amount: number;
   occurredAt: string;
+  account?: TreasuryAccount;
   supplyLines?: CreateTreasurySupplyLinePayload[];
 }
 
@@ -990,6 +1214,18 @@ export interface UpdateTreasuryExpensePayload {
   occurredAt?: string;
   quantity?: number;
   unitPrice?: number;
+  account?: TreasuryAccount;
+}
+
+export interface VoidTreasuryExpensePayload {
+  reason: string;
+}
+
+export interface CreateTreasuryTransferPayload {
+  from: TreasuryAccount;
+  to: TreasuryAccount;
+  amount: number;
+  occurredAt: string;
 }
 
 export interface RetailSaleItem {
@@ -1007,6 +1243,8 @@ export interface RetailSale {
   discountPercent?: number;
   discountAmount?: number;
   notes?: string;
+  method?: PaymentMethod;
+  account?: TreasuryAccount;
   soldAt: string;
   createdAt: string;
 }
@@ -1024,6 +1262,8 @@ export type CreateRetailSalePayload = {
   soldAt?: string;
   discountPercent?: number;
   discountAmount?: number;
+  method?: PaymentMethod;
+  account?: TreasuryAccount;
 };
 
 export type UpdateRetailSalePayload = Partial<CreateRetailSalePayload>;
@@ -1035,6 +1275,14 @@ export interface SaleEntryItem {
   unitPrice: number;
   lineTotal: number;
   serviceType?: ServiceType;
+  printTimeHours?: number;
+  grams?: number;
+  filamentType?: FilamentType;
+  workTimeHours?: number;
+  printProcess?: 'fdm' | 'resina';
+  resinType?: ResinType | string;
+  washMinutes?: number;
+  cureMinutes?: number;
 }
 
 export type ProfitArea =
@@ -1071,7 +1319,34 @@ export interface SaleEntry {
   notes?: string;
   orderId?: string;
   retailSaleId?: string;
+  /** Canal del pedido; ausente en mostrador o pedidos sin canal. */
+  salesChannel?: SalesChannel;
   editable: boolean;
+}
+
+export type BulkPriceScope = 'all' | 'category' | 'filament_type';
+
+export interface BulkPricePayload {
+  scope: BulkPriceScope;
+  categoryId?: string;
+  filamentType?: FilamentType;
+  percent: number;
+  roundTo: 0 | 100 | 500;
+}
+
+export interface BulkPricePreviewItem {
+  productId: string;
+  name: string;
+  currentPrice: number;
+  newPrice: number;
+  newWholesalePrice: number;
+  cost: number;
+  newMarkupPercent: number | null;
+}
+
+export interface BulkPricePreviewResult {
+  items: BulkPricePreviewItem[];
+  count: number;
 }
 
 export interface SalesStats {

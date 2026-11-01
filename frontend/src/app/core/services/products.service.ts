@@ -3,9 +3,12 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  BulkPricePayload,
+  BulkPricePreviewResult,
   Category,
   CreateProductPayload,
   Product,
+  ProductMarginAlert,
   ProductPricingInput,
   ProductPricingResult,
   ProductOverview,
@@ -33,6 +36,26 @@ export class ProductsService {
   getProductOverview(id: string): Observable<ProductOverview> {
     return this.http.get<ProductOverview>(
       `${this.baseUrl}/products/${id}/overview`,
+    );
+  }
+
+  getMarginAlerts(): Observable<ProductMarginAlert[]> {
+    return this.http.get<ProductMarginAlert[]>(
+      `${this.baseUrl}/products/margin-alerts`,
+    );
+  }
+
+  previewBulkPrice(data: BulkPricePayload): Observable<BulkPricePreviewResult> {
+    return this.http.post<BulkPricePreviewResult>(
+      `${this.baseUrl}/products/bulk-price/preview`,
+      data,
+    );
+  }
+
+  applyBulkPrice(data: BulkPricePayload): Observable<BulkPricePreviewResult> {
+    return this.http.post<BulkPricePreviewResult>(
+      `${this.baseUrl}/products/bulk-price/apply`,
+      data,
     );
   }
 

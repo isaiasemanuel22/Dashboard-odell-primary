@@ -5,6 +5,7 @@ import { environment } from '../../../environments/environment';
 import {
   Customer,
   DashboardStats,
+  DashboardStatsQuery,
   Order,
   PrintJob,
 } from '../models';
@@ -15,9 +16,14 @@ export class ApiService {
 
   constructor(private readonly http: HttpClient) {}
 
-  getDashboardStats(): Observable<DashboardStats | null> {
+  getDashboardStats(
+    query: DashboardStatsQuery = {},
+  ): Observable<DashboardStats | null> {
+    const params: Record<string, string> = {};
+    if (query.period) params['period'] = query.period;
+    if (query.rankBy) params['rankBy'] = query.rankBy;
     return this.http
-      .get<DashboardStats>(`${this.baseUrl}/dashboard/stats`)
+      .get<DashboardStats>(`${this.baseUrl}/dashboard/stats`, { params })
       .pipe(catchError(() => of(null)));
   }
 

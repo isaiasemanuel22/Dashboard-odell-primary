@@ -1,8 +1,8 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Supply, SupplyCategory } from '../models';
+import { Supply, SupplyCategory, SupplyPriceChangeRow } from '../models';
 import { SuppliesFacade } from '../../store/supplies/supplies.facade';
 
 @Injectable({ providedIn: 'root' })
@@ -32,6 +32,18 @@ export class SuppliesService {
 
   getLowStock(): Observable<Supply[]> {
     return this.http.get<Supply[]>(`${this.baseUrl}/low-stock`);
+  }
+
+  /** Solo lectura; no pasa por el store NgRx de insumos. */
+  getPriceChanges(days?: number): Observable<SupplyPriceChangeRow[]> {
+    let params = new HttpParams();
+    if (days !== undefined) {
+      params = params.set('days', String(days));
+    }
+    return this.http.get<SupplyPriceChangeRow[]>(
+      `${this.baseUrl}/price-changes`,
+      { params },
+    );
   }
 
   getDefaultPrice(data: {

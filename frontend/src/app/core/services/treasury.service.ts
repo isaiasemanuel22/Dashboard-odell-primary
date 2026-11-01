@@ -4,9 +4,11 @@ import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   CreateTreasuryExpensePayload,
+  CreateTreasuryTransferPayload,
   TreasuryExpense,
   TreasuryOverview,
   UpdateTreasuryExpensePayload,
+  VoidTreasuryExpensePayload,
 } from '../models';
 
 @Injectable({ providedIn: 'root' })
@@ -31,6 +33,25 @@ export class TreasuryService {
   ): Observable<TreasuryExpense> {
     return this.http.patch<TreasuryExpense>(
       `${this.baseUrl}/expenses/${id}`,
+      data,
+    );
+  }
+
+  voidExpense(
+    id: string,
+    data: VoidTreasuryExpensePayload,
+  ): Observable<TreasuryExpense> {
+    return this.http.post<TreasuryExpense>(
+      `${this.baseUrl}/expenses/${id}/void`,
+      data,
+    );
+  }
+
+  createTransfer(
+    data: CreateTreasuryTransferPayload,
+  ): Observable<TreasuryExpense[]> {
+    return this.http.post<TreasuryExpense[]>(
+      `${this.baseUrl}/transfers`,
       data,
     );
   }

@@ -15,6 +15,7 @@ import {
   ResinTypeConfig,
   ServiceProfitMargins,
   SupplyCategory,
+  WholesaleDiscountSettings,
 } from '../models';
 import { SettingsFacade } from '../../store/settings/settings.facade';
 import { pricePerSqmFromReferenceSheet } from '../../shared/utils/paper-cost.util';
@@ -65,6 +66,21 @@ export class SettingsService {
           this.patchSettings({
             profitMargins: margins,
           }),
+        ),
+      );
+  }
+
+  updateWholesaleDiscount(
+    data: Partial<WholesaleDiscountSettings>,
+  ): Observable<WholesaleDiscountSettings> {
+    return this.http
+      .patch<WholesaleDiscountSettings>(
+        `${this.baseUrl}/wholesale-discount`,
+        data,
+      )
+      .pipe(
+        tap((wholesaleDiscount) =>
+          this.patchSettings({ wholesaleDiscount }),
         ),
       );
   }

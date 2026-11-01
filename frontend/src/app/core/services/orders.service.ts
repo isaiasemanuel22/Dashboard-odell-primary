@@ -6,6 +6,7 @@ import { environment } from '../../../environments/environment';
 import {
   CreateOrderPayload,
   CreateOrderDeliveryPayload,
+  CreateOrderPaymentPayload,
   Order,
   OrderOverview,
   OrderStatus,
@@ -75,7 +76,7 @@ export class OrdersService {
 
   addPayment(
     id: string,
-    data: { amount: number; deposit?: boolean },
+    data: CreateOrderPaymentPayload,
   ): Observable<Order> {
     return this.http.post<Order>(`${this.baseUrl}/orders/${id}/payments`, data);
   }
