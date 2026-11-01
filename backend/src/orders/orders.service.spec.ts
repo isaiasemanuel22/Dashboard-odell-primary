@@ -40,6 +40,7 @@ describe('OrdersService.getOverview', () => {
       published: true,
       components: [],
       assemblyTimeHours: 0,
+      includesPieces: false,
       grams: 10,
       printTimeHours: 1,
       workTimeHours: 0,
@@ -57,7 +58,7 @@ describe('OrdersService.getOverview', () => {
       dueDate: '2026-07-10T18:00:00.000Z',
     });
     store.applyState(state);
-    store.indexOrder(state.orders[0]!);
+    store.indexOrder(state.orders[0]);
 
     const orderTasks = new OrderTasksService(store);
     const printJobs = new PrintJobsService(store, orderTasks);
@@ -84,7 +85,7 @@ describe('OrdersService.getOverview', () => {
   });
 
   it('registra entrega parcial y descuenta solo stock reservado', () => {
-    const order = store.orders[0]!;
+    const order = store.orders[0];
     order.items = [
       {
         serviceType: ProductType.FDM as never,
@@ -127,7 +128,7 @@ describe('OrdersService.getOverview', () => {
   });
 
   it('mantiene el total hasta actualizar el precio del producto', () => {
-    const order = store.orders[0]!;
+    const order = store.orders[0];
     order.items = [
       {
         serviceType: ProductType.FDM as never,
@@ -138,16 +139,59 @@ describe('OrdersService.getOverview', () => {
       },
     ];
     order.total = 160;
-    store.products[0]!.price = 100;
+    store.products[0].price = 100;
 
     const kept = service.keepCatalogPrices(order.id);
     expect(kept.total).toBe(160);
-    expect(kept.items[0]!.unitPrice).toBe(80);
+    expect(kept.items[0].unitPrice).toBe(80);
     expect(service.getOverview(order.id).priceNotices).toEqual([]);
 
-    store.products[0]!.price = 120;
+    store.products[0].price = 120;
     const applied = service.applyCatalogPrices(order.id);
-    expect(applied.items[0]!.unitPrice).toBe(120);
+    expect(applied.items[0].unitPrice).toBe(120);
     expect(applied.total).toBe(240);
+  });
+
+  it('registra pagos sin superar el saldo pendiente', () => {
+    const order = store.orders[0];
+    order.total = 100;
+
+    service.addPayment(order.id, { amount: 40, deposit: true });
+    expect(order.payments).toHaveLength(1);
+    expect(order.payments![0].deposit).toBe(true);
+
+    expect(() => service.addPayment(order.id, { amount: 60.01 })).toThrow(
+      /supera el saldo pendiente/,
+    );
+    service.addPayment(order.id, { amount: 60 });
+    expect(order.payments).toHaveLength(2);
+  });
+
+  it('no permite cobrar un pedido cancelado', () => {
+    const order = store.orders[0];
+    order.total = 100;
+    service.updateStatus(order.id, OrderStatus.CANCELADO);
+
+    expect(() => service.addPayment(order.id, { amount: 10 })).toThrow(
+      /cancelado/,
+    );
+  });
+
+  it('solo permite cancelar o reabrir manualmente (§13)', () => {
+    const order = store.orders[0];
+
+    expect(() => service.updateStatus(order.id, OrderStatus.TERMINADO)).toThrow(
+      /cancelar o reabrir/,
+    );
+
+    service.updateStatus(order.id, OrderStatus.CANCELADO);
+    expect(order.status).toBe(OrderStatus.CANCELADO);
+
+    service.updateStatus(order.id, OrderStatus.PENDIENTE);
+    expect(order.status).toBe(OrderStatus.PENDIENTE);
+    expect(order.statusHistory?.map((entry) => entry.toStatus)).toEqual([
+      OrderStatus.CANCELADO,
+      OrderStatus.PENDIENTE,
+    ]);
   });
 });

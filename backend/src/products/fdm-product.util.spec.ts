@@ -1,7 +1,6 @@
 import { FilamentType } from '../common/enums';
-import { FdmFilamentLine } from '../common/interfaces';
+import { FdmFilamentLine, INDISTINTO_COLOR_ID } from '../common/interfaces';
 import {
-  createFdmFilamentLineId,
   normalizeFdmFilaments,
   totalFdmFilamentGrams,
 } from './fdm-product.util';
@@ -13,7 +12,9 @@ describe('fdm-product.util', () => {
       { id: 'ff-2', filamentType: FilamentType.TPU, grams: 15 },
     ];
 
-    expect(normalizeFdmFilaments(lines)).toEqual(lines);
+    expect(normalizeFdmFilaments(lines)).toEqual(
+      lines.map((line) => ({ ...line, colorId: INDISTINTO_COLOR_ID })),
+    );
     expect(totalFdmFilamentGrams(lines)).toBe(55);
   });
 

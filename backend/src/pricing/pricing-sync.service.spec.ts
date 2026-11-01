@@ -34,6 +34,7 @@ describe('PricingSyncService', () => {
       published: true,
       components: [],
       assemblyTimeHours: 0,
+      includesPieces: false,
       grams: 50,
       printTimeHours: 1,
       workTimeHours: 0,

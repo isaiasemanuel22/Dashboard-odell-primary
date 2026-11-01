@@ -13,6 +13,7 @@ describe('store.collections', () => {
     ]);
     expect(collectionsFromPath('/api/settings/general')).toEqual([
       'settings',
+      'brands',
       'supplies',
       'products',
     ]);

@@ -21,6 +21,7 @@ describe('ProductsService', () => {
     published: true,
     components: [],
     assemblyTimeHours: 0,
+    includesPieces: false,
     grams: 50,
     printTimeHours: 2,
     workTimeHours: 1,
