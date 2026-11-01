@@ -10,6 +10,7 @@ import {
 } from '@nestjs/common';
 import { ProductType } from '../common/enums';
 import {
+  BulkPriceDto,
   CreateProductDto,
   ProductPricingInputDto,
   UpdateProductDto,
@@ -24,6 +25,21 @@ export class ProductsController {
   findAll(@Query('type') type?: ProductType, @Query('all') all?: string) {
     const includeUnpublished = all === 'true' || all === '1';
     return this.productsService.findAll(type, includeUnpublished);
+  }
+
+  @Get('margin-alerts')
+  getMarginAlerts() {
+    return this.productsService.getMarginAlerts();
+  }
+
+  @Post('bulk-price/preview')
+  previewBulkPrice(@Body() data: BulkPriceDto) {
+    return this.productsService.previewBulkPrice(data);
+  }
+
+  @Post('bulk-price/apply')
+  applyBulkPrice(@Body() data: BulkPriceDto) {
+    return this.productsService.applyBulkPrice(data);
   }
 
   @Post('preview-pricing')

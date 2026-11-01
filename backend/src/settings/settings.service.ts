@@ -29,6 +29,7 @@ import {
   normalizeProfitMargins,
 } from './profit-margins.util';
 import { normalizeWholesaleDiscount } from './wholesale-discount.util';
+import { appendSupplyPriceHistory } from '../supplies/supply-price-history.util';
 import {
   ColorConfig,
   FilamentPriceConfig,
@@ -786,7 +787,15 @@ export class SettingsService {
         (supply.filamentType as string | undefined) ===
           filamentPrice.materialType
       ) {
-        supply.unitPrice = filamentPrice.pricePerKg;
+        const nextPrice = filamentPrice.pricePerKg;
+        if (Math.round(Number(supply.unitPrice)) !== Math.round(nextPrice)) {
+          supply.priceHistory = appendSupplyPriceHistory(
+            supply.priceHistory,
+            nextPrice,
+            now,
+          );
+        }
+        supply.unitPrice = nextPrice;
         supply.updatedAt = now;
       }
     }
@@ -804,7 +813,15 @@ export class SettingsService {
           : supply.brand?.toLowerCase() === resinPrice.brand?.toLowerCase()) &&
         supply.resinType === resinPrice.resinType
       ) {
-        supply.unitPrice = resinPrice.pricePerLiter;
+        const nextPrice = resinPrice.pricePerLiter;
+        if (Math.round(Number(supply.unitPrice)) !== Math.round(nextPrice)) {
+          supply.priceHistory = appendSupplyPriceHistory(
+            supply.priceHistory,
+            nextPrice,
+            now,
+          );
+        }
+        supply.unitPrice = nextPrice;
         supply.updatedAt = now;
       }
     }

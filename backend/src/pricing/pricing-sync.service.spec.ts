@@ -283,4 +283,46 @@ describe('PricingSyncService', () => {
       newOrderTotal: 2000,
     });
   });
+
+  it('no cambia el precio de un presupuesto aceptado (§16.2)', () => {
+    const store = new StoreService();
+    store.applyState(createEmptyState());
+    const product = createProduct({
+      id: 'prod-1',
+      name: 'Mate',
+      price: 1000,
+      cost: 400,
+      profit: 600,
+    });
+    store.products.push(product);
+    store.indexProduct(product);
+    store.quotes.push({
+      id: 'qte-ok',
+      customerId: null,
+      customerName: 'Sin cliente',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Mate',
+          quantity: 2,
+          unitPrice: 1000,
+        },
+      ],
+      status: QuoteStatus.ACEPTADO,
+      total: 2000,
+      quotedAt: '2026-10-21T12:00:00.000Z',
+      createdAt: '2026-10-21T12:00:00.000Z',
+    });
+    store.indexQuote(store.quotes[0]);
+
+    product.price = 1500;
+    store.replaceProduct(product);
+    const { service } = createService(store);
+    service.syncAfterProductSave('prod-1', 1000);
+
+    expect(store.getQuoteById('qte-ok')?.items[0]?.unitPrice).toBe(1000);
+    expect(store.getQuoteById('qte-ok')?.total).toBe(2000);
+  });
 });

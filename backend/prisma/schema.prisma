@@ -120,6 +120,7 @@ model Supply {
   priceFromSettings Boolean  @default(false) @map("price_from_settings")
   supplier          String?  @db.VarChar(255)
   colorId           String?  @map("color_id") @db.VarChar(64)
+  priceHistory      Json     @default("[]") @map("price_history")
   updatedAt         DateTime @map("updated_at")
 
   @@map("supplies")

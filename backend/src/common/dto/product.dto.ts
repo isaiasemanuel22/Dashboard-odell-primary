@@ -3,11 +3,14 @@ import {
   IsArray,
   IsBoolean,
   IsEnum,
+  IsIn,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
@@ -255,4 +258,26 @@ export class UpdateProductDto extends PartialType(CreateProductDto) {}
 export class ProductPricingInputDto extends PartialType(CreateProductDto) {
   @IsEnum(ProductType)
   type!: ProductType;
+}
+
+export class BulkPriceDto {
+  @IsIn(['all', 'category', 'filament_type'])
+  scope!: 'all' | 'category' | 'filament_type';
+
+  @ValidateIf((data: BulkPriceDto) => data.scope === 'category')
+  @IsString()
+  @IsNotEmpty()
+  categoryId?: string;
+
+  @ValidateIf((data: BulkPriceDto) => data.scope === 'filament_type')
+  @IsEnum(FilamentType)
+  filamentType?: FilamentType;
+
+  @IsNumber()
+  @Min(-50)
+  @Max(200)
+  percent!: number;
+
+  @IsIn([0, 100, 500])
+  roundTo!: 0 | 100 | 500;
 }

@@ -3,8 +3,9 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { ProductType } from '../common/enums';
+import { FilamentType, ProductType, ServiceType } from '../common/enums';
 import { resolveProductColorId } from '../common/color.util';
+import { BulkPriceDto } from '../common/dto';
 import {
   CreateProductDto,
   Product,
@@ -18,7 +19,16 @@ import {
   UpdateProductDto,
 } from '../common/interfaces';
 import { ProductPricingService } from './product-pricing.service';
-import { PricingSyncService } from '../pricing/pricing-sync.service';
+import {
+  PricingSyncService,
+  ProductPriceChange,
+} from '../pricing/pricing-sync.service';
+import { resolveProfitArea } from '../sales/profit-area.util';
+import { CostCalculatorService } from '../settings/cost-calculator.service';
+import {
+  normalizeWholesaleDiscount,
+  wholesaleUnitPrice,
+} from '../settings/wholesale-discount.util';
 import { ProductRepository } from '../store/repositories/product.repository';
 import { StoreChangeService } from '../store/store-change.service';
 import { linkProductBrands } from '../store/brand-link.util';
@@ -33,6 +43,11 @@ import {
   storedFdmFilaments,
   totalFdmFilamentGrams,
 } from './fdm-product.util';
+import {
+  priceForTargetMarkup,
+  productMarkupPercent,
+  roundPrice,
+} from './product-margin.util';
 import { normalizeProductComponents } from './product-component.util';
 import {
   normalizeProductImages,
@@ -54,6 +69,32 @@ import {
   withResolvedProductionMetrics,
 } from './product-production.util';
 
+export interface ProductMarginAlert {
+  productId: string;
+  name: string;
+  price: number;
+  cost: number;
+  markupPercent: number;
+  targetPercent: number;
+  priceForTarget: number;
+  fixedPrice: boolean;
+}
+
+export interface BulkPricePreviewItem {
+  productId: string;
+  name: string;
+  currentPrice: number;
+  newPrice: number;
+  newWholesalePrice: number;
+  cost: number;
+  newMarkupPercent: number | null;
+}
+
+export interface BulkPricePreviewResult {
+  items: BulkPricePreviewItem[];
+  count: number;
+}
+
 @Injectable()
 export class ProductsService {
   constructor(
@@ -62,6 +103,7 @@ export class ProductsService {
     private readonly pricing: ProductPricingService,
     private readonly pricingSync: PricingSyncService,
     private readonly storeChange: StoreChangeService,
+    private readonly costCalculator: CostCalculatorService,
   ) {}
 
   findAll(type?: ProductType, includeUnpublished = false): Product[] {
@@ -515,6 +557,170 @@ export class ProductsService {
       },
     });
     return this.getPricingFields();
+  }
+
+  getMarginAlerts(): ProductMarginAlert[] {
+    const alerts: ProductMarginAlert[] = [];
+
+    for (const raw of this.store.products) {
+      const product = this.withCurrentCost(raw);
+      const cost = Number(product.cost) || 0;
+      const price = Number(product.price) || 0;
+      const markupPercent = productMarkupPercent(price, cost);
+      if (markupPercent == null) continue;
+
+      const targetPercent = this.costCalculator.getMarginForProductType(
+        product.type,
+      );
+      if (markupPercent >= targetPercent) continue;
+
+      alerts.push({
+        productId: product.id,
+        name: product.name,
+        price,
+        cost,
+        markupPercent,
+        targetPercent,
+        priceForTarget: priceForTargetMarkup(cost, targetPercent),
+        fixedPrice: this.hasFixedPrice(product),
+      });
+    }
+
+    return alerts.sort((a, b) => a.markupPercent - b.markupPercent);
+  }
+
+  previewBulkPrice(data: BulkPriceDto): BulkPricePreviewResult {
+    const items = this.buildBulkPriceItems(data);
+    return { items, count: items.length };
+  }
+
+  applyBulkPrice(data: BulkPriceDto): BulkPricePreviewResult {
+    const items = this.buildBulkPriceItems(data);
+    const priceChanges = new Map<string, ProductPriceChange>();
+    const now = new Date().toISOString();
+
+    for (const item of items) {
+      const current = this.store.getProductById(item.productId);
+      if (!current) continue;
+
+      priceChanges.set(item.productId, {
+        oldPrice: item.currentPrice,
+        newPrice: item.newPrice,
+      });
+
+      this.products.save({
+        ...current,
+        suggestedPrice: item.newPrice,
+        price: item.newPrice,
+        profit: item.newPrice - item.cost,
+        updatedAt: now,
+      });
+    }
+
+    this.pricingSync.syncCatalogPriceChanges(priceChanges, 'bulk_price');
+    return { items, count: items.length };
+  }
+
+  private buildBulkPriceItems(data: BulkPriceDto): BulkPricePreviewItem[] {
+    this.assertBulkPriceInput(data);
+    const wholesale = normalizeWholesaleDiscount(
+      this.store.generalSettings.wholesaleDiscount,
+    );
+    const targets = this.selectFixedPriceProducts(data);
+    const items: BulkPricePreviewItem[] = [];
+
+    for (const raw of targets) {
+      const product = this.withCurrentCost(raw);
+      const currentPrice = Number(product.price) || 0;
+      const cost = Number(product.cost) || 0;
+      const newPrice = roundPrice(
+        currentPrice * (1 + Number(data.percent) / 100),
+        data.roundTo,
+      );
+      const area = resolveProfitArea(product) ?? ServiceType.IMPRESION_3D;
+      items.push({
+        productId: product.id,
+        name: product.name,
+        currentPrice,
+        newPrice,
+        newWholesalePrice: wholesaleUnitPrice(newPrice, wholesale, area),
+        cost,
+        newMarkupPercent: productMarkupPercent(newPrice, cost),
+      });
+    }
+
+    return items;
+  }
+
+  private assertBulkPriceInput(data: BulkPriceDto): void {
+    const percent = Number(data.percent);
+    if (!Number.isFinite(percent) || percent === 0) {
+      throw new BadRequestException('El porcentaje debe ser distinto de 0');
+    }
+    if (percent < -50 || percent > 200) {
+      throw new BadRequestException('El porcentaje debe estar entre -50 y 200');
+    }
+    if (![0, 100, 500].includes(Number(data.roundTo))) {
+      throw new BadRequestException('roundTo debe ser 0, 100 o 500');
+    }
+
+    if (data.scope === 'category') {
+      const categoryId = data.categoryId?.trim();
+      if (!categoryId) {
+        throw new BadRequestException('Indicá la categoría');
+      }
+      if (
+        !this.store.categories.some((category) => category.id === categoryId)
+      ) {
+        throw new BadRequestException(`Categoría ${categoryId} no encontrada`);
+      }
+    }
+
+    if (data.scope === 'filament_type') {
+      if (
+        !data.filamentType ||
+        !Object.values(FilamentType).includes(data.filamentType)
+      ) {
+        throw new BadRequestException('Indicá un tipo de filamento válido');
+      }
+    }
+  }
+
+  private selectFixedPriceProducts(data: BulkPriceDto): Product[] {
+    return this.store.products.filter((product) => {
+      if (!this.hasFixedPrice(product)) return false;
+
+      if (data.scope === 'category') {
+        return (product.categoryIds ?? []).includes(data.categoryId!);
+      }
+
+      if (data.scope === 'filament_type') {
+        return this.productUsesFilamentType(product, data.filamentType!);
+      }
+
+      return true;
+    });
+  }
+
+  private productUsesFilamentType(
+    product: Product,
+    filamentType: FilamentType,
+  ): boolean {
+    if (product.type !== ProductType.FDM) return false;
+    const filaments = resolveFdmFilaments({
+      filaments: product.filaments,
+      grams: product.grams,
+      filamentType: product.filamentType,
+      brand: product.brand,
+    });
+    if (filaments.length) {
+      return filaments.some((line) => line.filamentType === filamentType);
+    }
+    return product.filamentType === filamentType;
+  }
+
+  private hasFixedPrice(product: Product): boolean {
+    return product.suggestedPrice != null && Number(product.suggestedPrice) > 0;
   }
 
   private validateProductData(

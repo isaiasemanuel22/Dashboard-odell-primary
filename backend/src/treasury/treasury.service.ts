@@ -28,6 +28,7 @@ import {
 } from '../common/interfaces';
 import { SalesService } from '../sales/sales.service';
 import { SuppliesService } from '../supplies/supplies.service';
+import { appendSupplyPriceHistory } from '../supplies/supply-price-history.util';
 import { StoreChangeService } from '../store/store-change.service';
 import {
   OrderRepository,
@@ -950,7 +951,11 @@ export class TreasuryService {
       ...supply,
       quantity: nextQuantity < 1e-6 ? 0 : nextQuantity,
       ...(unitPriceChanged
-        ? { unitPrice: price, priceFromSettings: false }
+        ? {
+            unitPrice: price,
+            priceFromSettings: false,
+            priceHistory: appendSupplyPriceHistory(supply.priceHistory, price),
+          }
         : {}),
       updatedAt: new Date().toISOString(),
     });

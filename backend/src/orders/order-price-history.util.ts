@@ -1,7 +1,7 @@
 import { Order, OrderPriceHistoryEntry } from '../common/interfaces';
 
 export type OrderPriceChangeTrigger =
-  'settings' | 'supply_price' | 'product_update';
+  'settings' | 'supply_price' | 'product_update' | 'bulk_price';
 
 export function appendOrderPriceHistory(
   order: Order,

@@ -1,5 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { OrderStatus, PriceType, ProductType } from '../common/enums';
+import {
+  OrderStatus,
+  PriceType,
+  ProductType,
+  QuoteStatus,
+} from '../common/enums';
 import { Product, Product3D, Quote } from '../common/interfaces';
 import {
   calculateTotalWithDiscount,
@@ -25,6 +30,12 @@ export interface ProductPriceChange {
   oldPrice: number;
   newPrice: number;
 }
+
+const CLOSED_QUOTE_STATUSES = new Set<QuoteStatus>([
+  QuoteStatus.ACEPTADO,
+  QuoteStatus.RECHAZADO,
+  QuoteStatus.CANCELADO,
+]);
 
 @Injectable()
 export class PricingSyncService {
@@ -66,6 +77,17 @@ export class PricingSyncService {
       priceChanges.size > 0 || compositeRecalculated,
       quotesChanged,
     );
+  }
+
+  /** Registra avisos en pedidos (y sync de presupuestos) tras un cambio de catálogo ya guardado. */
+  syncCatalogPriceChanges(
+    priceChanges: Map<string, ProductPriceChange>,
+    trigger: OrderPriceChangeTrigger,
+  ): void {
+    if (!priceChanges.size) return;
+    const quotesChanged = this.syncQuotePrices(priceChanges);
+    this.syncOrderPrices(priceChanges, trigger);
+    this.notifyChanges(true, quotesChanged);
   }
 
   private recalculateAllProducts(): {
@@ -208,6 +230,8 @@ export class PricingSyncService {
 
     let quotesUpdated = 0;
     for (const quote of this.quotes.findAll()) {
+      // §5: borrador y enviado siguen al catálogo; cerrado no (§16.2).
+      if (CLOSED_QUOTE_STATUSES.has(quote.status)) continue;
       if (!this.applyQuotePriceChanges(quote, priceChanges)) continue;
       this.quotes.save(quote);
       quotesUpdated += 1;

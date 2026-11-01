@@ -30,6 +30,12 @@ export class SuppliesController {
     return this.suppliesService.findLowStock();
   }
 
+  @Get('price-changes')
+  getPriceChanges(@Query('days') days?: string) {
+    const parsed = days === undefined ? 90 : Number(days);
+    return this.suppliesService.getPriceChanges(parsed);
+  }
+
   @Post('default-price')
   getDefaultPrice(@Body() data: SupplyDefaultPriceDto) {
     return this.suppliesService.resolveDefaultPrice(data as never);

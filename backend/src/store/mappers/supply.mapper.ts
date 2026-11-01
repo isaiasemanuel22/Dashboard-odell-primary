@@ -1,5 +1,7 @@
 import { Supply } from '../../common/interfaces';
+import { fromJson, toInputJson } from '../../prisma/json.util';
 import { normalizeSupplyCategory } from '../../supplies/supply-category.util';
+import { normalizeSupplyPriceHistory } from '../../supplies/supply-price-history.util';
 
 export function mapSupplyFromDb(row: {
   id: string;
@@ -15,6 +17,7 @@ export function mapSupplyFromDb(row: {
   priceFromSettings: boolean;
   supplier: string | null;
   colorId?: string | null;
+  priceHistory?: unknown;
   updatedAt: Date;
 }): Supply {
   return {
@@ -31,6 +34,7 @@ export function mapSupplyFromDb(row: {
     priceFromSettings: row.priceFromSettings,
     supplier: row.supplier ?? undefined,
     colorId: row.colorId ?? undefined,
+    priceHistory: normalizeSupplyPriceHistory(fromJson(row.priceHistory ?? [])),
     updatedAt: row.updatedAt.toISOString(),
   };
 }
@@ -50,6 +54,9 @@ export function mapSupplyToDb(supply: Supply) {
     priceFromSettings: supply.priceFromSettings,
     supplier: supply.supplier ?? null,
     colorId: supply.colorId ?? null,
+    priceHistory: toInputJson(
+      normalizeSupplyPriceHistory(supply.priceHistory ?? []),
+    ),
     updatedAt: new Date(supply.updatedAt),
   };
 }

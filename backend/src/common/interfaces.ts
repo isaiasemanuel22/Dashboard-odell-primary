@@ -197,6 +197,11 @@ export interface ImpresoWithCost extends Impreso {
 export type CreateImpresoDto = Omit<Impreso, 'id' | 'updatedAt'>;
 export type UpdateImpresoDto = Partial<CreateImpresoDto>;
 
+export interface SupplyPriceHistoryEntry {
+  at: string;
+  unitPrice: number;
+}
+
 export interface Supply {
   id: string;
   name: string;
@@ -213,6 +218,8 @@ export interface Supply {
   priceFromSettings: boolean;
   supplier?: string;
   colorId?: string;
+  /** Historial del precio unitario (precio NUEVO en cada cambio). Máx. 50. */
+  priceHistory?: SupplyPriceHistoryEntry[];
   updatedAt: string;
 }
 
@@ -499,7 +506,7 @@ export interface OrderStatusHistoryEntry {
 }
 
 export type OrderPriceChangeTrigger =
-  'settings' | 'supply_price' | 'product_update';
+  'settings' | 'supply_price' | 'product_update' | 'bulk_price';
 
 export interface OrderPriceHistoryEntry {
   id: string;
