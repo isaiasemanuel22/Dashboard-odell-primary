@@ -18,6 +18,8 @@
   display: flex;
   flex-direction: column;
   gap: 12px;
+  max-width: 100%;
+  min-width: 0;
   color: var(--odl-text);
   font: inherit;
 }
@@ -96,6 +98,7 @@ button {
 
 // ── Tabla ──────────────────────────────────────────────
 .odl-box {
+  max-width: 100%;
   background: var(--odl-surface);
   border: 1px solid var(--odl-border);
   border-radius: var(--odl-radius);
@@ -115,6 +118,9 @@ button {
     padding: 12px 14px;
     white-space: nowrap;
     text-align: left;
+
+    &.odl-align-center { text-align: center; }
+    &.odl-align-end { text-align: right; }
   }
 
   td {
@@ -147,6 +153,11 @@ button {
 .odl-align-start { text-align: left; }
 .odl-align-center { text-align: center; }
 .odl-align-end { text-align: right; }
+
+.odl-table th.odl-align-end .odl-sort {
+  width: 100%;
+  justify-content: flex-end;
+}
 
 .odl-w0 {
   width: 1%;

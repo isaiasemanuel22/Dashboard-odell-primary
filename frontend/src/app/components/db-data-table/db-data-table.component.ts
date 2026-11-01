@@ -19,6 +19,7 @@ import {
   QUOTE_STATUS_LABELS,
   SERVICE_TYPE_LABELS,
 } from '../../shared/constants/labels';
+import { formatDateDayMonth } from '../../shared/utils/date-format.util';
 import { DbPillGroupComponent, DbPillOption } from '../db-pill-group/db-pill-group.component';
 import { DbAreaChipComponent } from '../db-area-chip/db-area-chip.component';
 
@@ -176,7 +177,6 @@ type Key = string | number;
 
 const MONEY = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 });
 const NUMBER = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
-const DATE = new Intl.DateTimeFormat('es-AR', { day: '2-digit', month: 'short', year: 'numeric' });
 
 @Component({
   selector: 'db-data-table',
@@ -461,10 +461,7 @@ export class DbDataTableComponent<T> {
 
   date(v: unknown): string {
     if (!v) return '—';
-    const d = v instanceof Date ? v : new Date(String(v));
-    if (isNaN(d.getTime())) return String(v);
-    // "14 sept 2026" → "14 de sept de 2026"
-    return DATE.format(d).replace(/^(\d+) (\S+) (\d+)$/, '$1 de $2 de $3');
+    return formatDateDayMonth(v instanceof Date ? v : String(v));
   }
 
   initials(v: unknown): string {

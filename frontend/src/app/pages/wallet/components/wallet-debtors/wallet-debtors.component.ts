@@ -9,17 +9,21 @@ import {
   OdlActionEvent,
   OdlColumn,
 } from '../../../../components/db-data-table';
+import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 
-interface DebtorActivity {
-  headline: string | null;
-  detail: string | null;
-  overdue: boolean;
+/** Misma normalización que el backend (`loanPersonName`). */
+function loanPersonKey(name: string): string {
+  return name
+    .trim()
+    .replace(/^préstamo a\s+/i, '')
+    .trim()
+    .toLocaleLowerCase('es');
 }
 
 @Component({
   selector: 'app-wallet-debtors',
   standalone: true,
-  imports: [...DB_DATA_TABLE],
+  imports: [...DB_DATA_TABLE, CurrencyArsPipe],
   templateUrl: './wallet-debtors.component.html',
   styleUrl: './wallet-debtors.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -32,100 +36,62 @@ export class WalletDebtorsComponent {
   readonly columns: OdlColumn<TreasuryDebtorBalance>[] = [
     { key: 'name', header: 'Persona', type: 'primary' },
     {
-      key: 'activity',
-      header: 'Último movimiento',
-      value: (debtor) => this.debtorActivity(debtor).headline,
-      secondary: (debtor) => {
-        const activity = this.debtorActivity(debtor);
-        return activity.overdue ? null : activity.detail;
-      },
-      note: (debtor) => {
-        const activity = this.debtorActivity(debtor);
-        return activity.overdue && activity.detail ? { text: activity.detail, tone: 'danger' } : null;
-      },
+      key: 'lent',
+      header: 'Le prestaste',
+      type: 'custom',
+      align: 'end',
+      value: (debtor) => this.lentTotal(debtor),
     },
-    { key: 'amount', header: 'Monto adeudado', type: 'money' },
-    { key: 'repay', header: '', type: 'button', buttonLabel: 'Registrar devolución' },
+    {
+      key: 'repaid',
+      header: 'Te devolvió',
+      type: 'custom',
+      align: 'end',
+      value: (debtor) => this.repaidTotal(debtor),
+    },
+    { key: 'amount', header: 'Debe', type: 'money', align: 'end' },
+    {
+      key: 'repay',
+      header: '',
+      type: 'button',
+      buttonLabel: 'Registrar devolución',
+    },
   ];
 
   onAction(event: OdlActionEvent<TreasuryDebtorBalance>): void {
     if (event.actionId === 'repay') this.repay.emit(event.row);
   }
 
-  debtorActivity(debtor: TreasuryDebtorBalance): DebtorActivity {
-    const key = debtor.name.trim().toLocaleLowerCase('es');
-    const records = this.expenses.filter(
-      (expense) => expense.name.trim().toLocaleLowerCase('es') === key,
+  /** Totales de presentación desde expenses (solo loan / loan_repayment). */
+  lentTotal(debtor: TreasuryDebtorBalance): number {
+    return this.sumFor(debtor, TreasuryExpenseCategory.LOAN);
+  }
+
+  repaidTotal(debtor: TreasuryDebtorBalance): number {
+    return this.sumFor(debtor, TreasuryExpenseCategory.LOAN_REPAYMENT);
+  }
+
+  hasLoanHistory(debtor: TreasuryDebtorBalance): boolean {
+    return this.recordsFor(debtor).length > 0;
+  }
+
+  private sumFor(
+    debtor: TreasuryDebtorBalance,
+    category: TreasuryExpenseCategory,
+  ): number {
+    return this.recordsFor(debtor)
+      .filter((expense) => expense.category === category)
+      .reduce((sum, expense) => sum + expense.amount, 0);
+  }
+
+  private recordsFor(debtor: TreasuryDebtorBalance): TreasuryExpense[] {
+    const key = loanPersonKey(debtor.name);
+    return this.expenses.filter(
+      (expense) =>
+        !expense.voidedAt &&
+        (expense.category === TreasuryExpenseCategory.LOAN ||
+          expense.category === TreasuryExpenseCategory.LOAN_REPAYMENT) &&
+        loanPersonKey(expense.name) === key,
     );
-    const latestLoan = this.latestByDate(
-      records.filter((expense) => expense.category === TreasuryExpenseCategory.LOAN),
-    );
-    const latestFollowUp = this.latestByDate(
-      records.filter(
-        (expense) =>
-          expense.category === TreasuryExpenseCategory.LOAN_REPAYMENT ||
-          expense.category === TreasuryExpenseCategory.PAYMENT,
-      ),
-    );
-    const followUpApplies =
-      latestFollowUp != null &&
-      (latestLoan == null ||
-        new Date(latestFollowUp.occurredAt).getTime() >=
-          new Date(latestLoan.occurredAt).getTime());
-
-    let detail: string | null = null;
-    let overdue = false;
-    if (followUpApplies && latestFollowUp) {
-      const verb =
-        latestFollowUp.category === TreasuryExpenseCategory.LOAN_REPAYMENT
-          ? 'Devolvió'
-          : 'Pagó';
-      detail = `${verb} ${this.formatMoney(latestFollowUp.amount)}`;
-    } else if (latestLoan && this.isOlderThanDays(latestLoan.occurredAt, 90)) {
-      detail = 'Más de 90 días';
-      overdue = true;
-    }
-
-    return {
-      headline: latestLoan
-        ? `Préstamo · ${this.expenseDateLabel(latestLoan)}`
-        : null,
-      detail,
-      overdue,
-    };
-  }
-
-  private expenseDateLabel(expense: TreasuryExpense): string {
-    return new Date(expense.occurredAt).toLocaleDateString('es-AR', {
-      day: '2-digit',
-      month: 'short',
-      year: 'numeric',
-    });
-  }
-
-  private latestByDate(records: TreasuryExpense[]): TreasuryExpense | null {
-    return records.reduce<TreasuryExpense | null>((latest, record) => {
-      if (!latest) return record;
-      return new Date(record.occurredAt).getTime() >
-        new Date(latest.occurredAt).getTime()
-        ? record
-        : latest;
-    }, null);
-  }
-
-  private isOlderThanDays(iso: string, days: number): boolean {
-    const date = new Date(iso);
-    const today = new Date();
-    date.setHours(0, 0, 0, 0);
-    today.setHours(0, 0, 0, 0);
-    return today.getTime() - date.getTime() > days * 24 * 60 * 60 * 1000;
-  }
-
-  private formatMoney(value: number): string {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS',
-      maximumFractionDigits: 0,
-    }).format(value);
   }
 }

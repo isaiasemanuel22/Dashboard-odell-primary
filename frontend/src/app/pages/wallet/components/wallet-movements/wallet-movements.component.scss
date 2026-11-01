@@ -2,6 +2,12 @@
 @use '../../../../shared/styles/variables' as *;
 @use '../../../../shared/styles/screen' as screen;
 
+:host {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+}
+
 .concept-name {
   display: block;
   font-weight: 700;

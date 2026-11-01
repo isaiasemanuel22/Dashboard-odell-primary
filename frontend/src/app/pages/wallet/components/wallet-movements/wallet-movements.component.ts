@@ -23,6 +23,7 @@ import {
   treasuryAccountLabel,
   TREASURY_ACCOUNT_LABELS,
 } from '../../../../shared/utils/v1-labels.util';
+import { formatDateDayMonth } from '../../../../shared/utils/date-format.util';
 import { TREASURY_ACCOUNTS_ORDER } from '../../../../shared/utils/treasury-account.util';
 
 @Component({
@@ -170,9 +171,6 @@ export class WalletMovementsComponent {
   }
 
   private formatDayMonth(iso: string): string {
-    return new Date(iso).toLocaleDateString('es-AR', {
-      day: '2-digit',
-      month: '2-digit',
-    });
+    return formatDateDayMonth(iso);
   }
 }

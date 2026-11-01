@@ -41,10 +41,7 @@ export class WalletMetricsComponent {
     return ACCOUNT_HELP[account] ?? null;
   }
 
-  showFees(
-    account: TreasuryAccount,
-    entry: TreasuryAccountBalance | undefined,
-  ): boolean {
-    return account === TreasuryAccount.MERCADO_PAGO && (entry?.fees ?? 0) > 0;
+  isMercadoPago(account: TreasuryAccount): boolean {
+    return account === TreasuryAccount.MERCADO_PAGO;
   }
 }

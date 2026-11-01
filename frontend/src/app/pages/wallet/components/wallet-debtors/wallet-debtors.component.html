@@ -9,7 +9,27 @@
       [columns]="columns"
       [clientSide]="false"
       (action)="onAction($event)"
-    />
+    >
+      <ng-template odlCell="lent" let-debtor>
+        @if (lentTotal(debtor) > 0) {
+          <span class="wallet-table__amount">{{ lentTotal(debtor) | currencyArs }}</span>
+        } @else if (!hasLoanHistory(debtor)) {
+          <span class="wallet-table__dash" title="Préstamos anteriores">—</span>
+        } @else {
+          <span class="wallet-table__dash">—</span>
+        }
+      </ng-template>
+
+      <ng-template odlCell="repaid" let-debtor>
+        @if (repaidTotal(debtor) > 0) {
+          <span class="wallet-table__amount">{{ repaidTotal(debtor) | currencyArs }}</span>
+        } @else if (!hasLoanHistory(debtor)) {
+          <span class="wallet-table__dash" title="Préstamos anteriores">—</span>
+        } @else {
+          <span class="wallet-table__dash">—</span>
+        }
+      </ng-template>
+    </db-data-table>
   } @else {
     <p class="empty-group">No hay deudores con saldo pendiente.</p>
   }

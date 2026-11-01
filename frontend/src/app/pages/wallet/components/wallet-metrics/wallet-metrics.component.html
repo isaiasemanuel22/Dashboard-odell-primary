@@ -14,8 +14,12 @@
     <article class="metric-card">
       <span>{{ accountLabel(account) }}</span>
       <strong>{{ (entry?.balance ?? 0) | currencyArs }}</strong>
-      @if (showFees(account, entry)) {
-        <small>Comisiones del mes: −{{ entry!.fees | currencyArs }}</small>
+      @if (isMercadoPago(account)) {
+        @if ((entry?.fees ?? 0) > 0) {
+          <small>Comisiones del mes: −{{ entry!.fees | currencyArs }}</small>
+        } @else {
+          <small>Sin comisiones este mes</small>
+        }
       } @else if (help) {
         <small>{{ help }}</small>
       }

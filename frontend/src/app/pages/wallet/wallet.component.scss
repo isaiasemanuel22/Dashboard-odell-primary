@@ -1,6 +1,48 @@
 @use '../../shared/styles/variables' as *;
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: clip;
+  box-sizing: border-box;
+}
+
+.page-header {
+  min-width: 0;
+  max-width: 100%;
+
+  > div:first-child {
+    flex: 1 1 12rem;
+    min-width: 0;
+  }
+}
+
+.header-actions {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
 
 .tone-danger {
   color: $color-error;
   font-weight: 600;
+}
+
+@include mobile.mobile-only {
+  .page-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+
+    > div:first-child {
+      flex: none;
+      width: 100%;
+    }
+  }
+
+  .header-actions {
+    width: 100%;
+  }
 }
