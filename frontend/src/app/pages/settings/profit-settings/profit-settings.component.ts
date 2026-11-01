@@ -9,11 +9,35 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { GeneralSettings, ServiceType } from '../../../core/models';
+import {
+  GeneralSettings,
+  ServiceType,
+  WholesaleDiscountSettings,
+} from '../../../core/models';
 import { SettingsService } from '../../../core/services/settings.service';
 import { SERVICE_TYPE_LABELS } from '../../../shared/constants/labels';
 import { normalizeProfitMargins } from '../../../shared/utils/pricing.util';
-import { DbButtonComponent, DbStateMessageComponent, DB_DATA_TABLE, OdlColumn, serviceTag } from '@general-components';
+import {
+  WHOLESALE_EXAMPLE_COST,
+  WholesaleAreaExampleRow,
+  WholesaleCorrectExample,
+  WholesaleWrongExample,
+  buildWholesaleAreaRows,
+  buildWholesaleCorrectExample,
+  buildWholesaleWrongExample,
+  normalizeWholesaleDiscount,
+  wholesaleBreakEvenMarginPercent,
+} from '../../../shared/utils/wholesale-example.util';
+import {
+  DbButtonComponent,
+  DbCheckboxComponent,
+  DbCheckboxGroupComponent,
+  DbInputComponent,
+  DbStateMessageComponent,
+  DB_DATA_TABLE,
+  OdlColumn,
+  serviceTag,
+} from '@general-components';
 
 interface MarginField {
   service: ServiceType;
@@ -30,6 +54,9 @@ interface MarginField {
     CurrencyArsPipe,
     DbStateMessageComponent,
     DbButtonComponent,
+    DbCheckboxComponent,
+    DbCheckboxGroupComponent,
+    DbInputComponent,
     ...DB_DATA_TABLE,
   ],
   templateUrl: './profit-settings.component.html',
@@ -41,14 +68,46 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
   private settingsSub?: Subscription;
 
   settings: GeneralSettings | null = null;
-  saving = false;
-  message = '';
+  savingMargins = false;
+  savingDiscount = false;
+  marginsMessage = '';
+  discountMessage = '';
+
+  readonly exampleCost = WHOLESALE_EXAMPLE_COST;
 
   readonly marginColumns: OdlColumn<MarginField>[] = [
-    { key: 'area', header: 'Área', type: 'tags', tags: (field) => [serviceTag(field.service)] },
-    { key: 'appliesTo', header: 'Se aplica a', value: (field) => field.appliesTo },
+    {
+      key: 'area',
+      header: 'Área',
+      type: 'tags',
+      tags: (field) => [serviceTag(field.service)],
+    },
+    {
+      key: 'appliesTo',
+      header: 'Se aplica a',
+      value: (field) => field.appliesTo,
+    },
     { key: 'margen', header: 'Margen', width: '140px' },
     { key: 'ejemplo', header: 'Ejemplo', align: 'end' },
+  ];
+
+  readonly areaExampleColumns: OdlColumn<WholesaleAreaExampleRow>[] = [
+    {
+      key: 'area',
+      header: 'Área',
+      type: 'tags',
+      tags: (row) => [serviceTag(row.service)],
+      secondary: (row) => (row.applies ? null : 'No aplica'),
+    },
+    {
+      key: 'margen',
+      header: 'Margen',
+      align: 'end',
+      value: (row) => `${row.marginPercent}%`,
+    },
+    { key: 'listPrice', header: 'Precio de lista', align: 'end' },
+    { key: 'wholesalePrice', header: 'Precio mayorista', align: 'end' },
+    { key: 'wholesaleProfit', header: 'Ganancia por mayor', align: 'end' },
   ];
 
   readonly marginFields: MarginField[] = [
@@ -74,20 +133,74 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
     },
   ];
 
+  readonly areaOptions = this.marginFields.map((field) => ({
+    service: field.service,
+    label: field.label,
+  }));
+
   ngOnInit(): void {
-    this.settingsSub = this.settingsService.watchGeneralSettings().subscribe((settings) => {
-      if (!settings || this.saving) return;
-      this.settings = {
-        ...structuredClone(settings),
-        profitMargins: normalizeProfitMargins(settings.profitMargins),
-      };
-      this.cdr.markForCheck();
-    });
+    this.settingsSub = this.settingsService
+      .watchGeneralSettings()
+      .subscribe((settings) => {
+        if (!settings || this.savingMargins || this.savingDiscount) return;
+        this.settings = {
+          ...structuredClone(settings),
+          profitMargins: normalizeProfitMargins(settings.profitMargins),
+          wholesaleDiscount: normalizeWholesaleDiscount(
+            settings.wholesaleDiscount,
+          ),
+        };
+        this.cdr.markForCheck();
+      });
     this.settingsService.getGeneralSettings(false).subscribe();
   }
 
   ngOnDestroy(): void {
     this.settingsSub?.unsubscribe();
+  }
+
+  get wholesale(): WholesaleDiscountSettings {
+    return normalizeWholesaleDiscount(this.settings?.wholesaleDiscount);
+  }
+
+  get exampleService(): ServiceType {
+    const selected = this.wholesale.serviceTypes;
+    return selected[0] ?? ServiceType.IMPRESION_3D;
+  }
+
+  get exampleMarginPercent(): number {
+    if (!this.settings) return 0;
+    return this.marginValue(this.exampleService);
+  }
+
+  get correctExample(): WholesaleCorrectExample {
+    return buildWholesaleCorrectExample(
+      this.exampleCost,
+      this.exampleMarginPercent,
+      this.wholesale.percent,
+    );
+  }
+
+  get wrongExample(): WholesaleWrongExample {
+    return buildWholesaleWrongExample(
+      this.exampleCost,
+      this.exampleMarginPercent,
+      this.wholesale.percent,
+    );
+  }
+
+  get areaExampleRows(): WholesaleAreaExampleRow[] {
+    if (!this.settings) return [];
+    return buildWholesaleAreaRows(
+      this.exampleCost,
+      this.settings.profitMargins,
+      this.wholesale,
+      this.marginFields.map((field) => field.service),
+    );
+  }
+
+  get breakEvenMarginPercent(): number {
+    return wholesaleBreakEvenMarginPercent(this.wholesale.percent);
   }
 
   marginValue(service: ServiceType): number {
@@ -114,6 +227,31 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
     return Math.round(cost * (1 + markup / 100));
   }
 
+  setWholesaleEnabled(enabled: boolean): void {
+    this.patchWholesale({ enabled: !!enabled });
+  }
+
+  setWholesalePercent(value: number | string): void {
+    const parsed = Number(value);
+    this.patchWholesale({
+      percent: Number.isFinite(parsed) ? parsed : 0,
+    });
+  }
+
+  isAreaSelected(service: ServiceType): boolean {
+    return this.wholesale.serviceTypes.includes(service);
+  }
+
+  setAreaSelected(service: ServiceType, selected: boolean): void {
+    const current = new Set(this.wholesale.serviceTypes);
+    if (selected) {
+      current.add(service);
+    } else {
+      current.delete(service);
+    }
+    this.patchWholesale({ serviceTypes: [...current] });
+  }
+
   saveMargins(): void {
     if (!this.settings) return;
 
@@ -123,13 +261,13 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
     for (const field of this.marginFields) {
       const value = profitMargins[field.service];
       if (value < 0 || value > 999) {
-        this.message = `El margen de ${field.label} debe estar entre 0 y 999 %`;
+        this.marginsMessage = `El margen de ${field.label} debe estar entre 0 y 999 %`;
         return;
       }
     }
 
-    this.saving = true;
-    this.message = '';
+    this.savingMargins = true;
+    this.marginsMessage = '';
 
     this.settingsService.updateProfitMargins(profitMargins).subscribe({
       next: (saved) => {
@@ -139,15 +277,70 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
             profitMargins: saved,
           };
         }
-        this.saving = false;
-        this.message = 'Márgenes guardados correctamente';
+        this.savingMargins = false;
+        this.marginsMessage = 'Márgenes guardados correctamente';
         this.cdr.markForCheck();
       },
       error: () => {
-        this.saving = false;
-        this.message = 'Error al guardar los márgenes';
+        this.savingMargins = false;
+        this.marginsMessage = 'Error al guardar los márgenes';
         this.cdr.markForCheck();
       },
     });
+  }
+
+  saveDiscount(): void {
+    if (!this.settings) return;
+
+    const wholesaleDiscount = normalizeWholesaleDiscount(
+      this.settings.wholesaleDiscount,
+    );
+    const percent = Number(wholesaleDiscount.percent);
+
+    if (!Number.isFinite(percent) || percent < 0 || percent > 99) {
+      this.discountMessage = 'El descuento debe estar entre 0 y 99 %';
+      return;
+    }
+
+    wholesaleDiscount.percent = percent;
+    this.settings.wholesaleDiscount = wholesaleDiscount;
+    this.savingDiscount = true;
+    this.discountMessage = '';
+
+    this.settingsService.updateWholesaleDiscount(wholesaleDiscount).subscribe({
+      next: (saved) => {
+        if (this.settings) {
+          this.settings = {
+            ...this.settings,
+            wholesaleDiscount: normalizeWholesaleDiscount(saved),
+          };
+        }
+        this.savingDiscount = false;
+        this.discountMessage = 'Descuento por mayor guardado correctamente';
+        this.cdr.markForCheck();
+      },
+      error: () => {
+        this.savingDiscount = false;
+        this.discountMessage = 'Error al guardar el descuento por mayor';
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private patchWholesale(
+    partial: Partial<WholesaleDiscountSettings>,
+  ): void {
+    if (!this.settings) return;
+    const current = normalizeWholesaleDiscount(this.settings.wholesaleDiscount);
+    this.settings = {
+      ...this.settings,
+      wholesaleDiscount: {
+        ...current,
+        ...partial,
+        serviceTypes: partial.serviceTypes
+          ? [...partial.serviceTypes]
+          : [...current.serviceTypes],
+      },
+    };
   }
 }
