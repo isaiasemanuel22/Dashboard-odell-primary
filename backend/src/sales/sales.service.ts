@@ -59,6 +59,16 @@ export class SalesService {
     };
   }
 
+  /** Entradas de venta con economía ya calculada (un solo cálculo de costo). */
+  listEntries(): SaleEntry[] {
+    return this.buildEntries();
+  }
+
+  /** Costo unitario de una línea, mismo criterio que computeEntryEconomics. */
+  resolveItemUnitCost(item: SaleEntryItem): number {
+    return this.costCalculator.resolveOrderItemUnitCost(item);
+  }
+
   /** Ingreso reconocido como venta (mostrador + pedidos entregados). */
   getTotalIncome(): number {
     return this.buildEntries().reduce((sum, entry) => sum + entry.total, 0);
@@ -201,6 +211,7 @@ export class SalesService {
       soldAt: resolveOrderSoldAt(order),
       notes: order.description,
       orderId: order.id,
+      salesChannel: order.salesChannel,
       editable: false,
     };
   }

@@ -1,19 +1,42 @@
 import { Injectable } from '@nestjs/common';
-import { OrderStatus, PrintJobStatus, ServiceType } from '../common/enums';
+import {
+  OrderStatus,
+  PrintJobStatus,
+  SaleSource,
+  ServiceType,
+} from '../common/enums';
 import {
   ClientReceivable,
   DashboardNotification,
+  DashboardPeriod,
+  DashboardProfitability,
+  DashboardProfitabilityChannel,
+  DashboardProfitabilityRankingItem,
+  DashboardRankBy,
   DashboardStats,
   MonthlyTrendPoint,
+  SaleEntry,
+  SaleEntryItem,
 } from '../common/interfaces';
 import { CalendarService } from '../calendar/calendar.service';
 import { SalesService } from '../sales/sales.service';
 import { isRevenueOrder, resolveOrderSoldAt } from '../sales/sales-order.util';
+import { ProductsService } from '../products/products.service';
 import { StoreService } from '../store/store.service';
 import { TreasuryService } from '../treasury/treasury.service';
 import { computeDebtorBalances } from '../treasury/treasury-debtor.util';
 import { listOrderPriceNotices } from '../orders/order-price-notice.util';
-import { outstandingCents } from '../common/utils/money.util';
+import {
+  outstandingCents,
+  paymentFeeCents,
+  paymentNetCents,
+  toCents,
+} from '../common/utils/money.util';
+import {
+  getPeriodRange,
+  isDateInMonthRange,
+  MonthRange,
+} from '../common/utils/month-range.util';
 
 const MONTH_LABELS = [
   'Ene',
@@ -31,6 +54,9 @@ const MONTH_LABELS = [
 ];
 
 const TREND_MONTHS = 6;
+const RANKING_LIMIT = 10;
+const CHANNEL_RETAIL = 'mostrador';
+const CHANNEL_MISSING = 'sin_canal';
 
 const RECENT_ORDERS_EXCLUDED_STATUSES: OrderStatus[] = [
   OrderStatus.COMPLETADO,
@@ -45,9 +71,13 @@ export class DashboardService {
     private readonly salesService: SalesService,
     private readonly treasuryService: TreasuryService,
     private readonly calendarService: CalendarService,
+    private readonly productsService: ProductsService,
   ) {}
 
-  getStats(): DashboardStats {
+  getStats(
+    period: DashboardPeriod = 'month',
+    rankBy: DashboardRankBy = 'profit',
+  ): DashboardStats {
     const monthlyRevenue = this.salesService.getOverview().stats.monthlyRevenue;
 
     const ordersByType = Object.values(ServiceType).map((type) => ({
@@ -96,7 +126,231 @@ export class DashboardService {
       recentOrders,
       monthlyTrend: this.buildMonthlyTrend(),
       notifications: this.buildNotifications(),
+      profitability: this.buildProfitability(
+        period,
+        rankBy,
+        receivables.clientDebt,
+        receivables.orderCount,
+      ),
     };
+  }
+
+  private buildProfitability(
+    period: DashboardPeriod,
+    rankBy: DashboardRankBy,
+    receivable: number,
+    receivableOrders: number,
+  ): DashboardProfitability {
+    const range = getPeriodRange(period);
+    const entries = this.salesService
+      .listEntries()
+      .filter((entry) => isDateInMonthRange(new Date(entry.soldAt), range));
+
+    const sold = entries.reduce((sum, entry) => sum + entry.total, 0);
+    const periodProfit = entries.reduce((sum, entry) => sum + entry.profit, 0);
+    const { collected, fees } = this.computeCollectedAndFees(range);
+    const netProfit = periodProfit - fees;
+
+    return {
+      period,
+      from: range.start.toISOString(),
+      to: range.end.toISOString(),
+      sold,
+      collected,
+      fees,
+      netProfit,
+      receivable,
+      receivableOrders,
+      byChannel: this.buildByChannel(entries),
+      ranking: this.buildRanking(entries, rankBy),
+      marginAlerts: this.productsService.getMarginAlerts(),
+    };
+  }
+
+  private computeCollectedAndFees(range: MonthRange): {
+    collected: number;
+    fees: number;
+  } {
+    let collectedCents = 0;
+    let feesCents = 0;
+
+    for (const order of this.store.orders) {
+      for (const payment of order.payments ?? []) {
+        const createdAt = new Date(payment.createdAt);
+        if (!isDateInMonthRange(createdAt, range)) continue;
+        collectedCents += paymentNetCents(payment);
+        feesCents += paymentFeeCents(payment);
+      }
+    }
+
+    for (const sale of this.store.retailSales) {
+      const soldAt = new Date(sale.soldAt);
+      if (!isDateInMonthRange(soldAt, range)) continue;
+      collectedCents += toCents(sale.total);
+    }
+
+    return {
+      collected: collectedCents / 100,
+      fees: feesCents / 100,
+    };
+  }
+
+  private buildByChannel(
+    entries: SaleEntry[],
+  ): DashboardProfitabilityChannel[] {
+    const grouped = new Map<
+      string,
+      { sold: number; cost: number; profit: number }
+    >();
+
+    for (const entry of entries) {
+      const channel = this.resolveEntryChannel(entry);
+      const current = grouped.get(channel) ?? { sold: 0, cost: 0, profit: 0 };
+      current.sold += entry.total;
+      current.cost += entry.cost;
+      current.profit += entry.profit;
+      grouped.set(channel, current);
+    }
+
+    return [...grouped.entries()]
+      .map(([channel, totals]) => ({
+        channel,
+        sold: totals.sold,
+        cost: totals.cost,
+        profit: totals.profit,
+        markupPercent: this.markupPercent(totals.profit, totals.cost),
+      }))
+      .sort(
+        (a, b) => b.sold - a.sold || a.channel.localeCompare(b.channel, 'es'),
+      );
+  }
+
+  private buildRanking(
+    entries: SaleEntry[],
+    rankBy: DashboardRankBy,
+  ): DashboardProfitabilityRankingItem[] {
+    type Acc = {
+      productId: string;
+      productName: string;
+      units: number;
+      totalProfit: number;
+      totalCost: number;
+      channelUnits: Map<string, number>;
+    };
+
+    const byProduct = new Map<string, Acc>();
+
+    for (const entry of entries) {
+      const channel = this.resolveEntryChannel(entry);
+      const subtotal = entry.items.reduce(
+        (sum, item) => sum + item.lineTotal,
+        0,
+      );
+
+      for (const item of entry.items) {
+        const productId = item.productId?.trim();
+        if (!productId) continue;
+
+        const lineCost =
+          this.salesService.resolveItemUnitCost(item) * item.quantity;
+        const lineRevenue =
+          subtotal > 0 ? (item.lineTotal / subtotal) * entry.total : 0;
+        const lineProfit = lineRevenue - lineCost;
+
+        const current = byProduct.get(productId) ?? {
+          productId,
+          productName: this.resolveProductName(productId, item),
+          units: 0,
+          totalProfit: 0,
+          totalCost: 0,
+          channelUnits: new Map<string, number>(),
+        };
+        current.units += item.quantity;
+        current.totalProfit += lineProfit;
+        current.totalCost += lineCost;
+        current.channelUnits.set(
+          channel,
+          (current.channelUnits.get(channel) ?? 0) + item.quantity,
+        );
+        byProduct.set(productId, current);
+      }
+    }
+
+    const items = [...byProduct.values()].map((row) => {
+      const profitPerUnit = row.units > 0 ? row.totalProfit / row.units : 0;
+      return {
+        productId: row.productId,
+        productName: row.productName,
+        units: row.units,
+        profitPerUnit,
+        markupPercent: this.markupPercent(row.totalProfit, row.totalCost),
+        totalProfit: row.totalProfit,
+        mainChannel: this.resolveMainChannel(row.channelUnits),
+        fixedPrice: this.productsService.isFixedPrice(row.productId),
+      };
+    });
+
+    items.sort((a, b) => this.compareRanking(a, b, rankBy));
+    return items.slice(0, RANKING_LIMIT);
+  }
+
+  private compareRanking(
+    a: DashboardProfitabilityRankingItem,
+    b: DashboardProfitabilityRankingItem,
+    rankBy: DashboardRankBy,
+  ): number {
+    if (rankBy === 'units') {
+      return (
+        b.units - a.units ||
+        b.totalProfit - a.totalProfit ||
+        a.productName.localeCompare(b.productName, 'es')
+      );
+    }
+    if (rankBy === 'markup') {
+      const markupA = a.markupPercent ?? Number.NEGATIVE_INFINITY;
+      const markupB = b.markupPercent ?? Number.NEGATIVE_INFINITY;
+      return (
+        markupB - markupA ||
+        b.totalProfit - a.totalProfit ||
+        a.productName.localeCompare(b.productName, 'es')
+      );
+    }
+    return (
+      b.totalProfit - a.totalProfit ||
+      b.units - a.units ||
+      a.productName.localeCompare(b.productName, 'es')
+    );
+  }
+
+  private resolveProductName(productId: string, item: SaleEntryItem): string {
+    return (
+      this.store.getProductById(productId)?.name?.trim() || item.productName
+    );
+  }
+
+  private resolveMainChannel(channelUnits: Map<string, number>): string {
+    let bestChannel = CHANNEL_MISSING;
+    let bestUnits = -1;
+    for (const [channel, units] of channelUnits) {
+      if (
+        units > bestUnits ||
+        (units === bestUnits && channel.localeCompare(bestChannel, 'es') < 0)
+      ) {
+        bestChannel = channel;
+        bestUnits = units;
+      }
+    }
+    return bestChannel;
+  }
+
+  private resolveEntryChannel(entry: SaleEntry): string {
+    if (entry.source === SaleSource.RETAIL) return CHANNEL_RETAIL;
+    return entry.salesChannel ?? CHANNEL_MISSING;
+  }
+
+  private markupPercent(profit: number, cost: number): number | null {
+    if (!Number.isFinite(cost) || cost <= 0) return null;
+    return (profit / cost) * 100;
   }
 
   private buildNotifications(): DashboardNotification[] {
@@ -231,6 +485,7 @@ export class DashboardService {
         59,
         999,
       );
+      const range: MonthRange = { start: monthStart, end: monthEnd };
 
       const month = `${monthStart.getFullYear()}-${String(monthStart.getMonth() + 1).padStart(2, '0')}`;
       const label = `${MONTH_LABELS[monthStart.getMonth()]} ${monthStart.getFullYear()}`;
@@ -240,6 +495,7 @@ export class DashboardService {
         label,
         ordersCount: this.countOrdersReceived(monthStart, monthEnd),
         revenue: this.computeMonthRevenue(monthStart, monthEnd),
+        collected: this.computeCollectedAndFees(range).collected,
       });
     }
 
@@ -254,7 +510,11 @@ export class DashboardService {
   }
 
   /** Saldo impago de pedidos ya entregados. No entra en la caja. */
-  private listReceivables(): { clientDebt: number; rows: ClientReceivable[] } {
+  private listReceivables(): {
+    clientDebt: number;
+    rows: ClientReceivable[];
+    orderCount: number;
+  } {
     const grouped = new Map<
       string,
       {
@@ -267,12 +527,14 @@ export class DashboardService {
       }
     >();
     let totalCents = 0;
+    let orderCount = 0;
 
     for (const order of this.store.orders) {
       if (order.status !== OrderStatus.ENTREGADO) continue;
       const cents = outstandingCents(order);
       if (cents <= 0) continue;
       totalCents += cents;
+      orderCount += 1;
       const key = order.customerId || order.customerName;
       const customer = order.customerId
         ? this.store.getCustomerById(order.customerId)
@@ -311,7 +573,7 @@ export class DashboardService {
           a.customerName.localeCompare(b.customerName, 'es'),
       );
 
-    return { clientDebt: totalCents / 100, rows };
+    return { clientDebt: totalCents / 100, rows, orderCount };
   }
 
   private receivableSummary(order: {

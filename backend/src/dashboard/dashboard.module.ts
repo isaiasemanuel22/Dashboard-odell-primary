@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
 import { CalendarModule } from '../calendar/calendar.module';
+import { ProductsModule } from '../products/products.module';
 import { SalesModule } from '../sales/sales.module';
 import { TreasuryModule } from '../treasury/treasury.module';
 import { DashboardController } from './dashboard.controller';
 import { DashboardService } from './dashboard.service';
 
 @Module({
-  imports: [SalesModule, TreasuryModule, CalendarModule],
+  imports: [SalesModule, TreasuryModule, CalendarModule, ProductsModule],
   controllers: [DashboardController],
   providers: [DashboardService],
 })

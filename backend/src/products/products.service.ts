@@ -589,6 +589,12 @@ export class ProductsService {
     return alerts.sort((a, b) => a.markupPercent - b.markupPercent);
   }
 
+  /** Precio fijo de catálogo (suggestedPrice > 0), misma regla que alertas de margen. */
+  isFixedPrice(productId: string): boolean {
+    const product = this.store.getProductById(productId);
+    return product ? this.hasFixedPrice(product) : false;
+  }
+
   previewBulkPrice(data: BulkPriceDto): BulkPricePreviewResult {
     const items = this.buildBulkPriceItems(data);
     return { items, count: items.length };

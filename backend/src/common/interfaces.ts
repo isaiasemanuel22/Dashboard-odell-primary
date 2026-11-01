@@ -25,6 +25,9 @@ import {
   TreasuryExpenseCategory,
   TreasuryMovementDirection,
 } from './enums';
+import type { DashboardPeriod } from './utils/month-range.util';
+
+export type { DashboardPeriod };
 
 export interface Category {
   id: string;
@@ -773,6 +776,8 @@ export interface SaleEntry {
   notes?: string;
   orderId?: string;
   retailSaleId?: string;
+  /** Canal del pedido; ausente en mostrador o pedidos sin canal. */
+  salesChannel?: SalesChannel;
   editable: boolean;
 }
 
@@ -801,6 +806,55 @@ export interface MonthlyTrendPoint {
   label: string;
   ordersCount: number;
   revenue: number;
+  /** Cobrado en el mes (pagos netos + mostrador), mismo criterio que profitability.collected. */
+  collected: number;
+}
+
+export type DashboardRankBy = 'profit' | 'markup' | 'units';
+
+export interface DashboardProfitabilityChannel {
+  channel: string;
+  sold: number;
+  cost: number;
+  profit: number;
+  markupPercent: number | null;
+}
+
+export interface DashboardProfitabilityRankingItem {
+  productId: string;
+  productName: string;
+  units: number;
+  profitPerUnit: number;
+  markupPercent: number | null;
+  totalProfit: number;
+  mainChannel: string;
+  fixedPrice: boolean;
+}
+
+export interface DashboardMarginAlert {
+  productId: string;
+  name: string;
+  price: number;
+  cost: number;
+  markupPercent: number;
+  targetPercent: number;
+  priceForTarget: number;
+  fixedPrice: boolean;
+}
+
+export interface DashboardProfitability {
+  period: DashboardPeriod;
+  from: string;
+  to: string;
+  sold: number;
+  collected: number;
+  fees: number;
+  netProfit: number;
+  receivable: number;
+  receivableOrders: number;
+  byChannel: DashboardProfitabilityChannel[];
+  ranking: DashboardProfitabilityRankingItem[];
+  marginAlerts: DashboardMarginAlert[];
 }
 
 export type DashboardNotificationType = 'info' | 'warning' | 'success';
@@ -852,6 +906,7 @@ export interface DashboardStats {
   recentOrders: Order[];
   monthlyTrend: MonthlyTrendPoint[];
   notifications: DashboardNotification[];
+  profitability: DashboardProfitability;
 }
 
 export interface TreasuryExpense {
@@ -957,13 +1012,6 @@ export interface TreasuryOverview {
   recordNameSuggestions: string[];
   recipientNameSuggestions: string[];
   debtors: TreasuryDebtorBalance[];
-}
-
-export interface MonthlyTrendPoint {
-  month: string;
-  label: string;
-  ordersCount: number;
-  revenue: number;
 }
 
 /** Payload de creación/actualización alineado con el DTO HTTP. */

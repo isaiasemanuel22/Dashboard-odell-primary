@@ -8,3 +8,4 @@ export * from './shared.dto';
 export * from './treasury.dto';
 export * from './calendar.dto';
 export * from './user-access.dto';
+export * from './dashboard.dto';
