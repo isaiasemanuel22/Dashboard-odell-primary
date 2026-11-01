@@ -496,6 +496,64 @@ describe('DashboardService', () => {
     expect(byUnits[1].productId).toBe('prod-high-profit');
   });
 
+  it('ranking no infla la ganancia del producto cuando el pedido tiene diseño', () => {
+    const now = new Date();
+    const inMonth = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      14,
+      12,
+      0,
+      0,
+    ).toISOString();
+
+    store.products.push({
+      id: 'prod-llavero',
+      name: 'Llavero',
+      type: ProductType.FDM,
+      price: 1000,
+      cost: 400,
+      profit: 600,
+      stock: 10,
+      createdAt: inMonth,
+      updatedAt: inMonth,
+    } as never);
+    store.orders.push({
+      id: 'ord-design',
+      customerId: 'cust-1',
+      customerName: 'Cliente',
+      services: [ServiceType.IMPRESION_3D, ServiceType.DISENO_GRAFICO],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-llavero',
+          productName: 'Llavero',
+          quantity: 2,
+          unitPrice: 1000,
+        },
+        {
+          // El diseño se cobra cerrado: 5000 aunque unitPrice × cantidad dé 0.
+          serviceType: ServiceType.DISENO_GRAFICO,
+          productName: 'Logo',
+          quantity: 1,
+          unitPrice: 0,
+          designUnitPrice: 5000,
+        },
+      ],
+      status: OrderStatus.ENTREGADO,
+      total: 7000,
+      createdAt: inMonth,
+      dueDate: inMonth,
+      deliveryHistory: [{ id: 'del-d', deliveredAt: inMonth, items: [] }],
+    });
+
+    const row = service
+      .getStats('month', 'profit')
+      .profitability.ranking.find((item) => item.productId === 'prod-llavero');
+    expect(row?.totalProfit).toBe(1200);
+    expect(row?.profitPerUnit).toBe(600);
+  });
+
   it('período quarter incluye ventas de los 3 meses del trimestre', () => {
     const now = new Date();
     const quarter = getPeriodRange('quarter', now);

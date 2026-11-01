@@ -36,6 +36,7 @@ import {
 import { collectedPaymentsCents, toCents } from '../common/utils/money.util';
 import { defaultAccountForMethod } from '../treasury/treasury-account.util';
 import { isRevenueOrder, resolveOrderSoldAt } from './sales-order.util';
+import { calculateOrderLineSubtotal } from '../orders/order-pricing.util';
 import { computeAreaProfitBalances } from './profit-area.util';
 
 @Injectable()
@@ -186,7 +187,8 @@ export class SalesService {
       productName: item.productName,
       quantity: item.quantity,
       unitPrice: item.unitPrice,
-      lineTotal: item.quantity * item.unitPrice,
+      // Mismo cálculo que el total del pedido: el diseño es precio cerrado.
+      lineTotal: calculateOrderLineSubtotal(item),
       serviceType: item.serviceType,
       printTimeHours: item.printTimeHours,
       grams: item.grams,
