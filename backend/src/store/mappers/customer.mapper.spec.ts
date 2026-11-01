@@ -1,7 +1,4 @@
-import {
-  mapCustomerFromDb,
-  mapCustomerToDb,
-} from './customer.mapper';
+import { mapCustomerFromDb, mapCustomerToDb } from './customer.mapper';
 
 describe('customer.mapper', () => {
   it('hace round-trip de cliente', () => {

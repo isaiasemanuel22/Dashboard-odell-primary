@@ -61,10 +61,7 @@ export class CostCalculatorService {
     const workTimeHours = Number(dto.workTimeHours) || 0;
     const pressMinutes =
       dto.type === ProductType.ESTAMPADO
-        ? totalEstampadoPressMinutes(
-            dto.estampadoPressCycles,
-            dto.pressMinutes,
-          )
+        ? totalEstampadoPressMinutes(dto.estampadoPressCycles, dto.pressMinutes)
         : Number(dto.pressMinutes) || 0;
     const materialCost = this.calculateMaterialCost(dto, settings);
     const overhead = calculateMachineOverhead(settings, dto.type, {
@@ -267,7 +264,10 @@ export class CostCalculatorService {
         input.type,
       );
       cost = breakdown.totalCost;
-    } else if (input.type === ProductType.FDM || input.type === ProductType.RESINA) {
+    } else if (
+      input.type === ProductType.FDM ||
+      input.type === ProductType.RESINA
+    ) {
       const fdmFilaments =
         input.type === ProductType.FDM ? resolveFdmFilaments(input) : [];
       const hasFdmMaterial = hasValidFdmFilamentInput(fdmFilaments);
@@ -290,7 +290,12 @@ export class CostCalculatorService {
       );
       const hasPaperCost = this.hasEstampadoPaperCost(input);
       const hasSupplyCost = this.hasEstampadoSupplyCost(input);
-      if (totalPressMinutes > 0 || workTimeHours > 0 || hasPaperCost || hasSupplyCost) {
+      if (
+        totalPressMinutes > 0 ||
+        workTimeHours > 0 ||
+        hasPaperCost ||
+        hasSupplyCost
+      ) {
         breakdown = this.calculateCost(this.toCalculateCostDto(input));
         cost = breakdown.totalCost;
       } else {
@@ -327,10 +332,7 @@ export class CostCalculatorService {
     hasComponents = (input.components ?? []).length > 0,
     cost = Number(input.cost) || 0,
   ): number {
-    if (
-      input.suggestedPrice != null &&
-      Number(input.suggestedPrice) > 0
-    ) {
+    if (input.suggestedPrice != null && Number(input.suggestedPrice) > 0) {
       return Number(input.suggestedPrice);
     }
 
@@ -594,7 +596,8 @@ export class CostCalculatorService {
     }
     if (category === SupplyCategory.RESINA && !resinType) {
       const washSupplies = this.store.supplies.filter(
-        (supply) => supply.category === SupplyCategory.RESINA && !supply.resinType,
+        (supply) =>
+          supply.category === SupplyCategory.RESINA && !supply.resinType,
       );
       if (!washSupplies.length) return null;
       const total = washSupplies.reduce(

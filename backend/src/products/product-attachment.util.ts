@@ -6,9 +6,7 @@ export function createProductAttachmentId(): string {
   return `att-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
-export function normalizeProductAttachments(
-  raw: unknown,
-): ProductAttachment[] {
+export function normalizeProductAttachments(raw: unknown): ProductAttachment[] {
   if (!Array.isArray(raw)) return [];
 
   return raw
@@ -39,7 +37,9 @@ export function validateProductAttachments(
   }
 }
 
-function normalizeOneProductAttachment(item: unknown): ProductAttachment | null {
+function normalizeOneProductAttachment(
+  item: unknown,
+): ProductAttachment | null {
   if (!item || typeof item !== 'object') return null;
 
   const record = item as Record<string, unknown>;

@@ -1,9 +1,5 @@
 import { MachineProfileRole, ProductType } from '../common/enums';
-import {
-  GeneralSettings,
-  MachineProfile,
-  Supply,
-} from '../common/interfaces';
+import { GeneralSettings, MachineProfile, Supply } from '../common/interfaces';
 
 export interface MachineTimeContext {
   printTimeHours: number;
@@ -110,9 +106,11 @@ export function ensureMachineProfiles(
     return normalizeMachineProfiles(raw);
   }
 
-  const legacy = (settings as GeneralSettings & {
-    processProfiles?: LegacyProcessProfile[];
-  }).processProfiles;
+  const legacy = (
+    settings as GeneralSettings & {
+      processProfiles?: LegacyProcessProfile[];
+    }
+  ).processProfiles;
   if (legacy?.length) {
     return normalizeMachineProfiles(migrateFromLegacyProfiles(legacy));
   }
@@ -156,9 +154,8 @@ function migrateLegacyPowerAndMachineCosts(
       name: power?.name ?? machine?.name ?? profile.name,
       watts: power?.watts ?? profile.watts,
       costPerHour:
-        ('costPerHour' in (machine ?? {})
-          ? machine?.costPerHour
-          : undefined) ?? profile.costPerHour,
+        ('costPerHour' in (machine ?? {}) ? machine?.costPerHour : undefined) ??
+        profile.costPerHour,
     };
   });
 }

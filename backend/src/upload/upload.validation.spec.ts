@@ -12,7 +12,9 @@ describe('upload.validation', () => {
   });
 
   it('detecta PNG por magic bytes', () => {
-    const buffer = Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]);
+    const buffer = Buffer.from([
+      0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a,
+    ]);
     expect(detectImageMime(buffer)).toBe('image/png');
   });
 
@@ -22,10 +24,12 @@ describe('upload.validation', () => {
 
   it('bloquea ejecutables como adjuntos', () => {
     expect(isBlockedAttachmentExtension('setup.exe')).toBe(true);
-    expect(validateUploadedAttachment({
-      originalname: 'setup.exe',
-      mimetype: 'application/octet-stream',
-    } as Express.Multer.File).ok).toBe(false);
+    expect(
+      validateUploadedAttachment({
+        originalname: 'setup.exe',
+        mimetype: 'application/octet-stream',
+      } as Express.Multer.File).ok,
+    ).toBe(false);
   });
 
   it('acepta adjuntos genéricos', () => {

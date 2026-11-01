@@ -1,13 +1,18 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { DATABASE_RESET_CODE } from '../common/dto';
 import { ensureBrand, hydrateBrandNames } from '../store/brand-link.util';
 import { BrandMaterialType } from '../common/enums';
 import { StoreChangeService } from '../store/store-change.service';
 import { StorePersistenceService } from '../store/store-persistence.service';
+import { assertNonNegativeNumber } from '../common/validators/domain.validators';
 import {
-  assertNonNegativeNumber,
-} from '../common/validators/domain.validators';
-import { ensureMachineProfiles, normalizeMachineProfiles } from './machine-profile.util';
+  ensureMachineProfiles,
+  normalizeMachineProfiles,
+} from './machine-profile.util';
 import {
   addMachineCost as addMachineCostEntry,
   addMachineProfile as addMachineProfileEntry,
@@ -19,7 +24,10 @@ import {
   updateMachineProfile as updateMachineProfileEntry,
   updatePowerConsumption as updatePowerConsumptionEntry,
 } from './machine-equipment.settings';
-import { mergeProfitMargins, normalizeProfitMargins } from './profit-margins.util';
+import {
+  mergeProfitMargins,
+  normalizeProfitMargins,
+} from './profit-margins.util';
 import {
   ColorConfig,
   FilamentPriceConfig,
@@ -190,9 +198,7 @@ export class SettingsService {
     }
 
     if (data.machineProfiles !== undefined) {
-      this.replaceMachineProfiles(
-        data.machineProfiles as MachineProfile[],
-      );
+      this.replaceMachineProfiles(data.machineProfiles as MachineProfile[]);
     }
 
     if (
@@ -231,7 +237,10 @@ export class SettingsService {
     | 'errorMarginPercent'
   > {
     if (data.electricityCostPerKwh !== undefined) {
-      assertNonNegativeNumber(data.electricityCostPerKwh, 'electricityCostPerKwh');
+      assertNonNegativeNumber(
+        data.electricityCostPerKwh,
+        'electricityCostPerKwh',
+      );
     }
     if (data.laborCostPerHour !== undefined) {
       assertNonNegativeNumber(data.laborCostPerHour, 'laborCostPerHour');
@@ -255,7 +264,8 @@ export class SettingsService {
     }
 
     if (data.electricityCostPerKwh !== undefined) {
-      this.store.generalSettings.electricityCostPerKwh = data.electricityCostPerKwh;
+      this.store.generalSettings.electricityCostPerKwh =
+        data.electricityCostPerKwh;
     }
     if (data.laborCostPerHour !== undefined) {
       this.store.generalSettings.laborCostPerHour = data.laborCostPerHour;
@@ -307,8 +317,14 @@ export class SettingsService {
   ): PaperReferenceSheets {
     for (const [key, sheet] of Object.entries(paperReferenceSheets)) {
       if (!sheet) continue;
-      assertNonNegativeNumber(sheet.widthCm, `paperReferenceSheets.${key}.widthCm`);
-      assertNonNegativeNumber(sheet.lengthCm, `paperReferenceSheets.${key}.lengthCm`);
+      assertNonNegativeNumber(
+        sheet.widthCm,
+        `paperReferenceSheets.${key}.widthCm`,
+      );
+      assertNonNegativeNumber(
+        sheet.lengthCm,
+        `paperReferenceSheets.${key}.lengthCm`,
+      );
       assertNonNegativeNumber(sheet.price, `paperReferenceSheets.${key}.price`);
     }
 
@@ -329,60 +345,85 @@ export class SettingsService {
   }
 
   getMachineProfiles(): MachineProfile[] {
-    return structuredClone(
-      ensureMachineProfiles(this.store.generalSettings),
-    );
+    return structuredClone(ensureMachineProfiles(this.store.generalSettings));
   }
 
-  addMachineProfile(
-    data: Omit<MachineProfile, 'id'>,
-  ): MachineProfile {
-    return addMachineProfileEntry(this.store.generalSettings, data, (prefix, list) => this.store.nextId(prefix, list), () => this.recordSettingsChange(['settings', 'products']));
+  addMachineProfile(data: Omit<MachineProfile, 'id'>): MachineProfile {
+    return addMachineProfileEntry(
+      this.store.generalSettings,
+      data,
+      (prefix, list) => this.store.nextId(prefix, list),
+      () => this.recordSettingsChange(['settings', 'products']),
+    );
   }
 
   updateMachineProfile(
     id: string,
     data: Partial<Omit<MachineProfile, 'id'>>,
   ): MachineProfile {
-    return updateMachineProfileEntry(this.store.generalSettings, id, data, () => this.recordSettingsChange(['settings', 'products']));
+    return updateMachineProfileEntry(this.store.generalSettings, id, data, () =>
+      this.recordSettingsChange(['settings', 'products']),
+    );
   }
 
   removeMachineProfile(id: string): void {
-    removeMachineProfileEntry(this.store.generalSettings, id, () => this.recordSettingsChange(['settings', 'products']));
+    removeMachineProfileEntry(this.store.generalSettings, id, () =>
+      this.recordSettingsChange(['settings', 'products']),
+    );
   }
 
   addPowerConsumption(
     data: Omit<PowerConsumptionConfig, 'id'>,
   ): PowerConsumptionConfig {
-    return addPowerConsumptionEntry(this.store.generalSettings, data, (prefix, list) => this.store.nextId(prefix, list), () => this.recordSettingsChange(['settings', 'products']));
+    return addPowerConsumptionEntry(
+      this.store.generalSettings,
+      data,
+      (prefix, list) => this.store.nextId(prefix, list),
+      () => this.recordSettingsChange(['settings', 'products']),
+    );
   }
 
   updatePowerConsumption(
     id: string,
     data: Partial<Omit<PowerConsumptionConfig, 'id'>>,
   ): PowerConsumptionConfig {
-    return updatePowerConsumptionEntry(this.store.generalSettings, id, data, () => this.recordSettingsChange(['settings', 'products']));
+    return updatePowerConsumptionEntry(
+      this.store.generalSettings,
+      id,
+      data,
+      () => this.recordSettingsChange(['settings', 'products']),
+    );
   }
 
   removePowerConsumption(id: string): void {
-    removePowerConsumptionEntry(this.store.generalSettings, id, () => this.recordSettingsChange(['settings', 'products']));
+    removePowerConsumptionEntry(this.store.generalSettings, id, () =>
+      this.recordSettingsChange(['settings', 'products']),
+    );
   }
 
   addMachineCost(data: Omit<MachineCostConfig, 'id'>): MachineCostConfig {
-    return addMachineCostEntry(this.store.generalSettings, data, (prefix, list) => this.store.nextId(prefix, list), () => this.recordSettingsChange(['settings', 'products']));
+    return addMachineCostEntry(
+      this.store.generalSettings,
+      data,
+      (prefix, list) => this.store.nextId(prefix, list),
+      () => this.recordSettingsChange(['settings', 'products']),
+    );
   }
 
   updateMachineCost(
     id: string,
     data: Partial<Omit<MachineCostConfig, 'id'>>,
   ): MachineCostConfig {
-    return updateMachineCostEntry(this.store.generalSettings, id, data, () => this.recordSettingsChange(['settings', 'products']));
+    return updateMachineCostEntry(this.store.generalSettings, id, data, () =>
+      this.recordSettingsChange(['settings', 'products']),
+    );
   }
 
   removeMachineCost(id: string): void {
-    removeMachineCostEntry(this.store.generalSettings, id, () => this.recordSettingsChange(['settings', 'products']));
+    removeMachineCostEntry(this.store.generalSettings, id, () =>
+      this.recordSettingsChange(['settings', 'products']),
+    );
   }
-
 
   addFilamentPrice(
     data: Omit<FilamentPriceConfig, 'id'> & {
@@ -672,10 +713,7 @@ export class SettingsService {
     return entry;
   }
 
-  updateColor(
-    id: string,
-    data: Partial<Omit<ColorConfig, 'id'>>,
-  ): ColorConfig {
+  updateColor(id: string, data: Partial<Omit<ColorConfig, 'id'>>): ColorConfig {
     const colors = this.store.generalSettings.colors ?? [];
     const index = colors.findIndex((color) => color.id === id);
     if (index === -1) {
@@ -712,7 +750,8 @@ export class SettingsService {
         supply.priceFromSettings &&
         (supply.brandId && filamentPrice.brandId
           ? supply.brandId === filamentPrice.brandId
-          : supply.brand?.toLowerCase() === filamentPrice.brand?.toLowerCase()) &&
+          : supply.brand?.toLowerCase() ===
+            filamentPrice.brand?.toLowerCase()) &&
         supply.filamentType === filamentPrice.materialType
       ) {
         supply.unitPrice = filamentPrice.pricePerKg;
@@ -757,9 +796,7 @@ export class SettingsService {
     this.storeChange.recordChange({
       collections: persistCollections,
       realtime: {
-        scopes: [
-          ...new Set(persistCollections),
-        ] as RealtimeScope[],
+        scopes: [...new Set(persistCollections)] as RealtimeScope[],
         action: 'update',
         entity: 'settings',
       },

@@ -59,9 +59,7 @@ export function hydrateFilamentPricesWithTypeIds(
     if (!code) continue;
     let typeId = filamentTypeIdForCode(code);
     if (!typeId) {
-      const byName = catalog.find(
-        (entry) => entry.name.toLowerCase() === code,
-      );
+      const byName = catalog.find((entry) => entry.name.toLowerCase() === code);
       typeId = byName?.id;
     }
     if (!typeId) {
@@ -90,9 +88,7 @@ export function findFilamentTypeByName(
   name: string,
 ): FilamentTypeConfig | undefined {
   const normalized = normalizeFilamentTypeName(name).toLowerCase();
-  return catalog.find(
-    (entry) => entry.name.toLowerCase() === normalized,
-  );
+  return catalog.find((entry) => entry.name.toLowerCase() === normalized);
 }
 
 export function resolveFilamentTypeForPrice(

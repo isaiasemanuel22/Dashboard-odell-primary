@@ -75,7 +75,9 @@ describe('QuotesService producto nuevo', () => {
     expect(product?.published).toBe(false);
     expect(product?.name).toBe('Mate nuevo');
     expect(product?.categoryIds).toEqual([]);
-    expect(product && 'brandId' in product ? product.brandId : undefined).toBeUndefined();
+    expect(
+      product && 'brandId' in product ? product.brandId : undefined,
+    ).toBeUndefined();
     expect(order.items[0]?.unitPrice).toBe(2500);
     expect(store.getQuoteById('qte-1')?.items[0]?.productId).toBe(productId);
   });

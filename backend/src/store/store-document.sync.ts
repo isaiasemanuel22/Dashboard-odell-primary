@@ -1,5 +1,10 @@
 import { Prisma } from '@prisma/client';
-import { GeneralSettings, Order, Quote, RetailSale } from '../common/interfaces';
+import {
+  GeneralSettings,
+  Order,
+  Quote,
+  RetailSale,
+} from '../common/interfaces';
 import {
   mapOrderItemToDb,
   mapOrderToDbCreate,

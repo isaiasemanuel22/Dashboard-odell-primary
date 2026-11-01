@@ -104,9 +104,7 @@ export class QuotesService {
         ? this.normalizeQuoteItems(data.items)
         : current.items;
     const services =
-      data.items !== undefined
-        ? this.deriveServices(items)
-        : current.services;
+      data.items !== undefined ? this.deriveServices(items) : current.services;
 
     const discount = normalizeDiscountFields({
       discountPercent:

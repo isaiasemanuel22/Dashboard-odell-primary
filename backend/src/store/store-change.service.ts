@@ -43,11 +43,7 @@ export class StoreChangeService {
     }
   }
 
-  recordHttpMutation(
-    path: string,
-    method: string,
-    body: unknown,
-  ): void {
+  recordHttpMutation(path: string, method: string, body: unknown): void {
     const meta = routeMutationMetaFromPath(path);
     const action = actionFromHttpMethod(method);
     const idFromPath = idFromMutationPath(path);

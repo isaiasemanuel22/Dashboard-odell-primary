@@ -20,22 +20,24 @@ describe('SalesService order revenue', () => {
     const retailSales = new RetailSaleRepository(store);
     const orders = new OrderRepository(store);
     const products = new ProductRepository(store);
-    service = new SalesService(
-      retailSales,
-      orders,
-      products,
-      {
-        resolveCatalogUnitCost: () => 0,
-        resolveCatalogUnitPrice: () => 100,
-        resolveDesignUnitCost: () => 0,
-        resolveOrderItemUnitCost: () => 0,
-      } as CostCalculatorService,
-    );
+    service = new SalesService(retailSales, orders, products, {
+      resolveCatalogUnitCost: () => 0,
+      resolveCatalogUnitPrice: () => 100,
+      resolveDesignUnitCost: () => 0,
+      resolveOrderItemUnitCost: () => 0,
+    } as CostCalculatorService);
   });
 
   it('solo incluye pedidos entregados en el listado de ventas', () => {
     const now = new Date();
-    const dueDate = new Date(now.getFullYear(), now.getMonth(), 15, 18, 0, 0).toISOString();
+    const dueDate = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      15,
+      18,
+      0,
+      0,
+    ).toISOString();
 
     store.orders.push(
       {

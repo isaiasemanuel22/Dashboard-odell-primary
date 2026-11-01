@@ -155,7 +155,9 @@ export class ProductsService {
       profit: pricing.profit,
       suggestedPrice,
       categoryIds: data.categoryIds ?? [],
-      size: (data.size ?? '').trim() || (data.type === ProductType.COMBO ? 'Combo' : ''),
+      size:
+        (data.size ?? '').trim() ||
+        (data.type === ProductType.COMBO ? 'Combo' : ''),
       published: data.published !== false,
       includesPieces,
       components,
@@ -198,9 +200,7 @@ export class ProductsService {
     } else {
       const dto = data;
       const fdmFields =
-        dto.type === ProductType.FDM
-          ? this.resolveFdmProductFields(dto)
-          : null;
+        dto.type === ProductType.FDM ? this.resolveFdmProductFields(dto) : null;
       product = {
         ...base,
         type: dto.type as ProductType.FDM | ProductType.RESINA,
@@ -209,13 +209,10 @@ export class ProductsService {
         workTimeHours: Number(dto.workTimeHours) || 0,
         brand: dto.brand?.trim(),
         filamentType:
-          dto.type === ProductType.FDM
-            ? fdmFields?.filamentType
-            : undefined,
+          dto.type === ProductType.FDM ? fdmFields?.filamentType : undefined,
         filaments:
           dto.type === ProductType.FDM ? fdmFields?.filaments : undefined,
-        resinType:
-          dto.type === ProductType.RESINA ? dto.resinType : undefined,
+        resinType: dto.type === ProductType.RESINA ? dto.resinType : undefined,
         colorId:
           dto.type === ProductType.RESINA
             ? resolveProductColorId(
@@ -246,7 +243,9 @@ export class ProductsService {
     const previousPrice = existing.price;
     const mergedType = (data.type ?? existing.type) as ProductType;
     let mergedComponents = normalizeProductComponents(
-      data.components !== undefined ? data.components : existing.components ?? [],
+      data.components !== undefined
+        ? data.components
+        : (existing.components ?? []),
     );
     if (
       mergedComponents.length === 0 &&
@@ -258,7 +257,7 @@ export class ProductsService {
     const mergedAssembly =
       data.assemblyTimeHours !== undefined
         ? Number(data.assemblyTimeHours) || 0
-        : existing.assemblyTimeHours ?? 0;
+        : (existing.assemblyTimeHours ?? 0);
 
     const mergedSuggestedPrice =
       data.suggestedPrice !== undefined
@@ -370,10 +369,12 @@ export class ProductsService {
       attachments: normalizeProductAttachments(
         data.attachments !== undefined
           ? data.attachments
-          : existing.attachments ?? [],
+          : (existing.attachments ?? []),
       ),
       published:
-        data.published !== undefined ? data.published !== false : existing.published !== false,
+        data.published !== undefined
+          ? data.published !== false
+          : existing.published !== false,
       includesPieces:
         mergedType === ProductType.COMBO ||
         data.includesPieces === true ||
@@ -383,10 +384,13 @@ export class ProductsService {
       stock:
         data.stock !== undefined
           ? Math.max(0, Math.trunc(Number(data.stock) || 0))
-          : existing.stock ?? 0,
+          : (existing.stock ?? 0),
     } as Product;
 
-    if (mergedType === ProductType.COMBO || existing.type === ProductType.COMBO) {
+    if (
+      mergedType === ProductType.COMBO ||
+      existing.type === ProductType.COMBO
+    ) {
       (updated as Product).type = ProductType.COMBO;
       (updated as Product).includesPieces = true;
     } else if (existing.type === ProductType.ESTAMPADO) {
@@ -450,12 +454,10 @@ export class ProductsService {
         );
       }
       if ('washMinutes' in data && data.washMinutes !== undefined) {
-        current.washMinutes =
-          Number(data.washMinutes) || undefined;
+        current.washMinutes = Number(data.washMinutes) || undefined;
       }
       if ('cureMinutes' in data && data.cureMinutes !== undefined) {
-        current.cureMinutes =
-          Number(data.cureMinutes) || undefined;
+        current.cureMinutes = Number(data.cureMinutes) || undefined;
       }
     }
 
@@ -463,7 +465,10 @@ export class ProductsService {
     if (index === -1) {
       throw new NotFoundException(`Producto ${id} no encontrado`);
     }
-    const saved = this.applyCompositeProductionMetrics(updated, mergedComponents);
+    const saved = this.applyCompositeProductionMetrics(
+      updated,
+      mergedComponents,
+    );
     linkProductBrands(this.store, saved);
     this.products.save(saved);
     this.pricingSync.syncAfterProductSave(id, previousPrice);
@@ -567,9 +572,7 @@ export class ProductsService {
     if (!isUpdate || data.categoryIds !== undefined) {
       const ids = data.categoryIds ?? [];
       if (ids.length < 1 || ids.length > 5) {
-        throw new BadRequestException(
-          'Seleccioná entre 1 y 5 categorías',
-        );
+        throw new BadRequestException('Seleccioná entre 1 y 5 categorías');
       }
       for (const catId of ids) {
         const category = this.store.categories.find((c) => c.id === catId);
@@ -678,7 +681,7 @@ export class ProductsService {
     const filamentType =
       filaments.length === 1
         ? filaments[0]!.filamentType
-        : data.filamentType ?? fallback?.filamentType;
+        : (data.filamentType ?? fallback?.filamentType);
 
     return { filaments, grams, filamentType };
   }
@@ -712,15 +715,13 @@ export class ProductsService {
     );
   }
 
-
   private applyCompositeProductionMetrics(
     product: Product,
     components: ProductComponent[],
   ): Product {
     if (
       components.length === 0 ||
-      (product.type !== ProductType.FDM &&
-        product.type !== ProductType.RESINA)
+      (product.type !== ProductType.FDM && product.type !== ProductType.RESINA)
     ) {
       return product;
     }

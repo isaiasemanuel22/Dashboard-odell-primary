@@ -26,7 +26,9 @@ export class CustomerRepository {
   }
 
   save(customer: Customer): Customer {
-    const index = this.store.customers.findIndex((item) => item.id === customer.id);
+    const index = this.store.customers.findIndex(
+      (item) => item.id === customer.id,
+    );
     if (index === -1) {
       this.store.customers.push(customer);
     } else {

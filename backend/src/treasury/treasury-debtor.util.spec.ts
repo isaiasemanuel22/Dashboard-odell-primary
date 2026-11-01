@@ -49,28 +49,19 @@ describe('computeDebtorBalances', () => {
 
   it('resta devoluciones parciales', () => {
     expect(
-      computeDebtorBalances([
-        loan('Juan', 10000),
-        repayment('Juan', 4000),
-      ]),
+      computeDebtorBalances([loan('Juan', 10000), repayment('Juan', 4000)]),
     ).toEqual([{ name: 'Juan', amount: 6000 }]);
   });
 
   it('omite personas saldadas', () => {
     expect(
-      computeDebtorBalances([
-        loan('Juan', 5000),
-        repayment('Juan', 5000),
-      ]),
+      computeDebtorBalances([loan('Juan', 5000), repayment('Juan', 5000)]),
     ).toEqual([]);
   });
 
   it('unifica nombres sin distinguir mayúsculas', () => {
     expect(
-      computeDebtorBalances([
-        loan('juan', 1000),
-        loan('Juan', 500),
-      ]),
+      computeDebtorBalances([loan('juan', 1000), loan('Juan', 500)]),
     ).toEqual([{ name: 'Juan', amount: 1500 }]);
   });
 });

@@ -56,7 +56,9 @@ export class DashboardService {
     }));
 
     const recentOrders = [...this.store.orders]
-      .filter((order) => !RECENT_ORDERS_EXCLUDED_STATUSES.includes(order.status))
+      .filter(
+        (order) => !RECENT_ORDERS_EXCLUDED_STATUSES.includes(order.status),
+      )
       .sort(
         (a, b) =>
           new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -109,7 +111,9 @@ export class DashboardService {
         id: `low-stock-${supply.id}`,
         type: 'warning',
         kind: 'stock',
-        title: empty ? `${supply.name} sin stock` : `Stock bajo: ${supply.name}`,
+        title: empty
+          ? `${supply.name} sin stock`
+          : `Stock bajo: ${supply.name}`,
         message: `Quedan ${supply.quantity} ${supply.unit}`,
         route: '/insumos?stock=low',
       });
@@ -117,9 +121,7 @@ export class DashboardService {
 
     const blockedTasks = this.store.printJobs.filter(
       (job) =>
-        job.active &&
-        !job.archived &&
-        job.status === PrintJobStatus.BLOQUEADO,
+        job.active && !job.archived && job.status === PrintJobStatus.BLOQUEADO,
     );
     for (const job of blockedTasks) {
       const suppliesReady = !!job.suppliesAvailableNotifiedAt;
@@ -320,7 +322,10 @@ export class DashboardService {
       .map((item) => item.productName?.trim())
       .filter((name): name is string => !!name);
     if (names.length) return names.join(' · ');
-    return (order.description ?? '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
+    return (order.description ?? '')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
   }
 
   private computeMonthRevenue(monthStart: Date, monthEnd: Date): number {

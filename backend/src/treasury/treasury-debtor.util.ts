@@ -8,7 +8,10 @@ export interface TreasuryDebtorBalance {
 
 /** El alta nueva guarda solo la persona; el seed viejo guardó «Préstamo a …». */
 export function loanPersonName(name: string): string {
-  return name.trim().replace(/^préstamo a\s+/i, '').trim();
+  return name
+    .trim()
+    .replace(/^préstamo a\s+/i, '')
+    .trim();
 }
 
 export function computeDebtorBalances(

@@ -274,8 +274,12 @@ describe('TreasuryService', () => {
 
     expect(expenses).toHaveLength(2);
     expect(store.treasuryExpenses).toHaveLength(2);
-    expect(store.supplies.find((item) => item.id === 'sup-1')?.quantity).toBe(3);
-    expect(store.supplies.find((item) => item.id === 'sup-2')?.quantity).toBe(1);
+    expect(store.supplies.find((item) => item.id === 'sup-1')?.quantity).toBe(
+      3,
+    );
+    expect(store.supplies.find((item) => item.id === 'sup-2')?.quantity).toBe(
+      1,
+    );
     expect(suppliesService.recordPurchase).toHaveBeenCalledTimes(2);
     expect(storeChange.recordChange).toHaveBeenCalledTimes(1);
   });

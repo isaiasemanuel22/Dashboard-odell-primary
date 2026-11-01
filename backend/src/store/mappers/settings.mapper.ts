@@ -40,8 +40,8 @@ export function mapSettingsFromDb(row: {
 }): GeneralSettings {
   const rawProfiles = fromJson<unknown[]>(row.processProfiles ?? []);
   const paperPricesPerSqm = fromJson<GeneralSettings['paperPricesPerSqm']>(
-      row.paperPricesPerSqm,
-    );
+    row.paperPricesPerSqm,
+  );
   const rawSheets = fromJson<Partial<GeneralSettings['paperReferenceSheets']>>(
     row.paperReferenceSheets ?? {},
   );

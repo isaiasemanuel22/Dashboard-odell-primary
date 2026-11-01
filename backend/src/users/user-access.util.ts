@@ -92,9 +92,7 @@ export function hasPermission(
 
   const globalGrant = permissions.some(
     (entry) =>
-      entry.granted &&
-      entry.action === action &&
-      entry.areaId === null,
+      entry.granted && entry.action === action && entry.areaId === null,
   );
   if (globalGrant) return true;
 
@@ -106,9 +104,7 @@ export function hasPermission(
 
   return permissions.some(
     (entry) =>
-      entry.granted &&
-      entry.action === action &&
-      entry.areaId === areaId,
+      entry.granted && entry.action === action && entry.areaId === areaId,
   );
 }
 

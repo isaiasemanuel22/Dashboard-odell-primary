@@ -1,5 +1,10 @@
 import { createHash } from 'crypto';
-import { CallHandler, ExecutionContext, HttpException, HttpStatus } from '@nestjs/common';
+import {
+  CallHandler,
+  ExecutionContext,
+  HttpException,
+  HttpStatus,
+} from '@nestjs/common';
 import { of } from 'rxjs';
 import { EtagInterceptor } from './etag.interceptor';
 
@@ -40,15 +45,13 @@ describe('EtagInterceptor', () => {
     const etag = `"${createHash('md5').update(JSON.stringify(body)).digest('hex')}"`;
     const context = createContext(etag);
 
-    interceptor
-      .intercept(context, { handle: () => of(body) })
-      .subscribe({
-        error: (err) => {
-          expect(err).toBeInstanceOf(HttpException);
-          expect(err.getStatus()).toBe(HttpStatus.NOT_MODIFIED);
-          done();
-        },
-      });
+    interceptor.intercept(context, { handle: () => of(body) }).subscribe({
+      error: (err) => {
+        expect(err).toBeInstanceOf(HttpException);
+        expect(err.getStatus()).toBe(HttpStatus.NOT_MODIFIED);
+        done();
+      },
+    });
   });
 
   it('incluye ETag cuando el contenido cambió', (done) => {
@@ -56,14 +59,12 @@ describe('EtagInterceptor', () => {
     const context = createContext();
     const res = context.switchToHttp().getResponse<{ setHeader: jest.Mock }>();
 
-    interceptor
-      .intercept(context, { handle: () => of(body) })
-      .subscribe({
-        next: (result) => {
-          expect(result).toEqual(body);
-          expect(res.setHeader).toHaveBeenCalledWith('ETag', expect.any(String));
-          done();
-        },
-      });
+    interceptor.intercept(context, { handle: () => of(body) }).subscribe({
+      next: (result) => {
+        expect(result).toEqual(body);
+        expect(res.setHeader).toHaveBeenCalledWith('ETag', expect.any(String));
+        done();
+      },
+    });
   });
 });

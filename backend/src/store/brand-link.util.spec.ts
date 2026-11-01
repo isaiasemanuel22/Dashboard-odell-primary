@@ -1,4 +1,8 @@
-import { BrandMaterialType, FilamentType, SupplyCategory } from '../common/enums';
+import {
+  BrandMaterialType,
+  FilamentType,
+  SupplyCategory,
+} from '../common/enums';
 import { createEmptyState } from './store.seed';
 import { adoptLegacyBrandNames, ensureBrand } from './brand-link.util';
 import { StoreService } from './store.service';

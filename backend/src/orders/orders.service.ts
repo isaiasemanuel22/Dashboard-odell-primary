@@ -33,9 +33,7 @@ import {
 } from './order-price-notice.util';
 import { filterOrders, OrderListFilters } from './order-filter.util';
 import { normalizeIncomingOrderItems } from './order-items.normalizer';
-import {
-  appendOrderStatusHistory,
-} from './order-status-history.util';
+import { appendOrderStatusHistory } from './order-status-history.util';
 import { isDesignPrintConfigured } from './design-print.util';
 import { OrderTasksService } from '../print-jobs/order-tasks.service';
 import { PrintJobsService } from '../print-jobs/print-jobs.service';
@@ -121,7 +119,10 @@ export class OrdersService {
 
     if (!changes.length) return order;
 
-    order.total = this.calculateTotal(order.items, normalizeDiscountFields(order));
+    order.total = this.calculateTotal(
+      order.items,
+      normalizeDiscountFields(order),
+    );
     for (const line of changes) {
       appendOrderPriceHistory(order, {
         trigger: 'product_update',
@@ -264,7 +265,9 @@ export class OrdersService {
           ? this.normalizeDescription(data.description)
           : current.description,
       notes:
-        data.notes !== undefined ? data.notes.trim() || undefined : current.notes,
+        data.notes !== undefined
+          ? data.notes.trim() || undefined
+          : current.notes,
       dueDate:
         data.dueDate !== undefined ? data.dueDate.trim() : current.dueDate,
       statusHistory: current.statusHistory ?? [],
@@ -288,7 +291,10 @@ export class OrdersService {
     const order = this.findOne(id);
     if (
       status !== OrderStatus.CANCELADO &&
-      !(order.status === OrderStatus.CANCELADO && status === OrderStatus.PENDIENTE)
+      !(
+        order.status === OrderStatus.CANCELADO &&
+        status === OrderStatus.PENDIENTE
+      )
     ) {
       throw new BadRequestException(
         'Solo se permite cancelar o reabrir manualmente un pedido',
@@ -320,10 +326,7 @@ export class OrdersService {
     this.updateStatus(id, OrderStatus.CANCELADO);
   }
 
-  addPayment(
-    id: string,
-    data: { amount: number; deposit?: boolean },
-  ): Order {
+  addPayment(id: string, data: { amount: number; deposit?: boolean }): Order {
     const order = this.findOne(id);
     if (order.status === OrderStatus.CANCELADO) {
       throw new BadRequestException('No se puede cobrar un pedido cancelado');
@@ -410,8 +413,7 @@ export class OrdersService {
       item.deliveredFromProductionQuantity =
         (item.deliveredFromProductionQuantity ?? 0) +
         (line.quantity - fromStock);
-      item.deliveredQuantity =
-        (item.deliveredQuantity ?? 0) + line.quantity;
+      item.deliveredQuantity = (item.deliveredQuantity ?? 0) + line.quantity;
     }
 
     order.deliveryHistory ??= [];
@@ -447,7 +449,6 @@ export class OrdersService {
       findProductById: (productId) => this.products.findById(productId),
     });
   }
-
 
   private calculateTotal(
     items: OrderItem[],
@@ -491,10 +492,7 @@ export class OrdersService {
     item: OrderItem,
     itemIndex: number,
   ): number {
-    const pending = Math.max(
-      item.quantity - (item.deliveredQuantity ?? 0),
-      0,
-    );
+    const pending = Math.max(item.quantity - (item.deliveredQuantity ?? 0), 0);
     if (pending <= 0) return 0;
 
     const tasks = this.printJobs.findByOrderId(order.id);

@@ -17,9 +17,9 @@ describe('product-image.util', () => {
   });
 
   it('rechaza URLs que no sean https al validar', () => {
-    expect(() =>
-      validateProductImageUrls(['/uploads/foo.jpg']),
-    ).toThrow(BadRequestException);
+    expect(() => validateProductImageUrls(['/uploads/foo.jpg'])).toThrow(
+      BadRequestException,
+    );
     expect(() =>
       validateProductImageUrls(['http://example.com/foo.jpg']),
     ).toThrow(BadRequestException);
@@ -27,9 +27,9 @@ describe('product-image.util', () => {
 
   it('acepta URLs https', () => {
     expect(() =>
-      validateProductImageUrls(
-        ['https://firebasestorage.googleapis.com/v0/b/x/o/y?alt=media'],
-      ),
+      validateProductImageUrls([
+        'https://firebasestorage.googleapis.com/v0/b/x/o/y?alt=media',
+      ]),
     ).not.toThrow();
   });
 

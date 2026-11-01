@@ -30,7 +30,12 @@ async function bootstrap() {
   app.enableCors({
     origin: config.corsOrigins,
     methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Request-Id', 'If-None-Match'],
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Request-Id',
+      'If-None-Match',
+    ],
     exposedHeaders: ['X-Request-Id', 'ETag'],
   });
   ensureUploadsDir();

@@ -13,9 +13,9 @@ describe('month-range.util', () => {
     const range = getMonthRange(new Date(2026, 6, 10));
 
     expect(isDateInMonthRange(new Date(2026, 6, 1), range)).toBe(true);
-    expect(isDateInMonthRange(new Date(2026, 6, 31, 23, 59, 59, 999), range)).toBe(
-      true,
-    );
+    expect(
+      isDateInMonthRange(new Date(2026, 6, 31, 23, 59, 59, 999), range),
+    ).toBe(true);
     expect(isDateInMonthRange(new Date(2026, 5, 30), range)).toBe(false);
     expect(isDateInMonthRange(new Date(2026, 7, 1), range)).toBe(false);
   });

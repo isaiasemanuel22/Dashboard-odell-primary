@@ -18,7 +18,7 @@ export function calculatePaperCostFromPricePerSqm(
     return 0;
   }
 
-  return Math.round((width * length) / 10000 * price);
+  return Math.round(((width * length) / 10000) * price);
 }
 
 export function calculatePaperCostFromReferenceSheet(
@@ -98,7 +98,10 @@ export function normalizePaperReferenceSheets(
   };
 
   return {
-    sublimacion: normalizePaperReferenceSheet(raw?.sublimacion, fallback.sublimacion),
+    sublimacion: normalizePaperReferenceSheet(
+      raw?.sublimacion,
+      fallback.sublimacion,
+    ),
     dtf: normalizePaperReferenceSheet(raw?.dtf, fallback.dtf),
     dtfUv: normalizePaperReferenceSheet(raw?.dtfUv, fallback.dtfUv),
   };

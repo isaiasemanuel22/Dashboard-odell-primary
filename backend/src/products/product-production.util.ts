@@ -35,7 +35,10 @@ export function resolveProductGrams(
     id: entry.id,
     name: entry.name,
   }));
-  const components = normalizeProductComponents(product.components ?? [], catalog);
+  const components = normalizeProductComponents(
+    product.components ?? [],
+    catalog,
+  );
 
   if (!productUsesPieceAssembly(product) || components.length === 0) {
     return Math.max(0, Number(product.grams) || 0);
@@ -44,7 +47,9 @@ export function resolveProductGrams(
   visiting.add(productId);
   const total = components.reduce((sum, component) => {
     const qty = Math.max(1, Math.trunc(Number(component.quantity) || 1));
-    return sum + resolveProductGrams(store, component.productId, visiting) * qty;
+    return (
+      sum + resolveProductGrams(store, component.productId, visiting) * qty
+    );
   }, 0);
   visiting.delete(productId);
 
@@ -69,7 +74,10 @@ function resolveProductPrintTimeHoursRaw(
     id: entry.id,
     name: entry.name,
   }));
-  const components = normalizeProductComponents(product.components ?? [], catalog);
+  const components = normalizeProductComponents(
+    product.components ?? [],
+    catalog,
+  );
 
   if (!productUsesPieceAssembly(product) || components.length === 0) {
     return Math.max(0, Number(product.printTimeHours) || 0);
@@ -117,7 +125,10 @@ function resolveProductWorkTimeHoursRaw(
     id: entry.id,
     name: entry.name,
   }));
-  const components = normalizeProductComponents(product.components ?? [], catalog);
+  const components = normalizeProductComponents(
+    product.components ?? [],
+    catalog,
+  );
 
   if (!productUsesPieceAssembly(product) || components.length === 0) {
     return Math.max(0, Number(product.workTimeHours) || 0);
@@ -163,7 +174,8 @@ export function sumComponentsProductionMetrics(
       resolveProductPrintTimeHoursRaw(store, component.productId, visiting) *
       qty;
     partsWork +=
-      resolveProductWorkTimeHoursRaw(store, component.productId, visiting) * qty;
+      resolveProductWorkTimeHoursRaw(store, component.productId, visiting) *
+      qty;
   }
 
   return {
@@ -187,7 +199,10 @@ export function withResolvedProductionMetrics(
     id: entry.id,
     name: entry.name,
   }));
-  const components = normalizeProductComponents(product.components ?? [], catalog);
+  const components = normalizeProductComponents(
+    product.components ?? [],
+    catalog,
+  );
 
   if (!productUsesPieceAssembly(product) || components.length === 0) {
     return {

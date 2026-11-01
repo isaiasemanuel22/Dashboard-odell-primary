@@ -68,7 +68,8 @@ export function mapQuoteItemFromDb(item: {
         ? Number(item.unitCost)
         : undefined,
     includesPrint: item.includesPrint ?? undefined,
-    printPaperType: (item.printPaperType as QuoteItem['printPaperType']) ?? undefined,
+    printPaperType:
+      (item.printPaperType as QuoteItem['printPaperType']) ?? undefined,
     printWidthCm: item.printWidthCm ?? undefined,
     printLengthCm: item.printLengthCm ?? undefined,
     printImpresoId: item.printImpresoId ?? undefined,

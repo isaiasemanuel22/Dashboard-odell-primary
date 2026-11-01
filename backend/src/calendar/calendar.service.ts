@@ -10,15 +10,9 @@ import {
   CalendarRepeat,
   OrderStatus,
 } from '../common/enums';
-import {
-  CreateCalendarEntryDto,
-  UpdateCalendarEntryDto,
-} from '../common/dto';
+import { CreateCalendarEntryDto, UpdateCalendarEntryDto } from '../common/dto';
 import { CalendarEntry, CalendarFeedItem } from '../common/interfaces';
-import {
-  calendarDay,
-  todayCalendarDay,
-} from '../orders/due-date.util';
+import { calendarDay, todayCalendarDay } from '../orders/due-date.util';
 import { StoreService } from '../store/store.service';
 import { expandEntryDates } from './calendar-repeat.util';
 
@@ -57,7 +51,8 @@ export class CalendarService {
 
   findOneEntry(id: string): CalendarEntry {
     const entry = this.store.getCalendarEntryById(id);
-    if (!entry) throw new NotFoundException('Entrada de calendario no encontrada');
+    if (!entry)
+      throw new NotFoundException('Entrada de calendario no encontrada');
     return entry;
   }
 
@@ -156,7 +151,10 @@ export class CalendarService {
       const due = calendarDay(order.dueDate);
       if (!due || due < from || due > to) continue;
       const late = due < today;
-      const qty = order.items.reduce((sum, item) => sum + (item.quantity || 0), 0);
+      const qty = order.items.reduce(
+        (sum, item) => sum + (item.quantity || 0),
+        0,
+      );
       items.push({
         id: `delivery-${order.id}`,
         type: 'delivery',
@@ -239,10 +237,16 @@ export class CalendarService {
     linkId: string,
   ): void {
     if (!linkType) return;
-    if (linkType === CalendarLinkType.ORDER && !this.store.getOrderById(linkId)) {
+    if (
+      linkType === CalendarLinkType.ORDER &&
+      !this.store.getOrderById(linkId)
+    ) {
       throw new BadRequestException('Pedido vinculado no encontrado');
     }
-    if (linkType === CalendarLinkType.QUOTE && !this.store.getQuoteById(linkId)) {
+    if (
+      linkType === CalendarLinkType.QUOTE &&
+      !this.store.getQuoteById(linkId)
+    ) {
       throw new BadRequestException('Presupuesto vinculado no encontrado');
     }
     if (

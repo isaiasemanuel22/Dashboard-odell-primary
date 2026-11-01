@@ -18,7 +18,9 @@ import { createEmptyState } from '../store/store.seed';
 import { PricingSyncService } from './pricing-sync.service';
 
 describe('PricingSyncService', () => {
-  function createProduct(overrides: Partial<Product> & Pick<Product, 'id' | 'name'>): Product {
+  function createProduct(
+    overrides: Partial<Product> & Pick<Product, 'id' | 'name'>,
+  ): Product {
     return {
       id: overrides.id,
       name: overrides.name,

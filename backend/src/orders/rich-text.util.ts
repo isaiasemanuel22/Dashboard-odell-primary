@@ -43,26 +43,32 @@ export function sanitizeRichTextHtml(html: string | null | undefined): string {
     .replace(/&nbsp;/gi, ' ')
     .replace(/\u00a0/g, ' ')
     .trim();
-  output = output.replace(/<\s*(script|style|iframe)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi, '');
+  output = output.replace(
+    /<\s*(script|style|iframe)[^>]*>[\s\S]*?<\s*\/\s*\1\s*>/gi,
+    '',
+  );
   output = output.replace(/<\s*(script|style|iframe)[^>]*\/?>/gi, '');
 
-  output = output.replace(/<\/?([a-z0-9]+)([^>]*)>/gi, (match, tagRaw, attrsRaw) => {
-    const tag = String(tagRaw).toLowerCase();
-    if (!ALLOWED_TAGS.has(tag)) {
-      return '';
-    }
+  output = output.replace(
+    /<\/?([a-z0-9]+)([^>]*)>/gi,
+    (match, tagRaw, attrsRaw) => {
+      const tag = String(tagRaw).toLowerCase();
+      if (!ALLOWED_TAGS.has(tag)) {
+        return '';
+      }
 
-    if (tag === 'br') {
-      return '<br>';
-    }
+      if (tag === 'br') {
+        return '<br>';
+      }
 
-    const attrs = sanitizeAttributes(tag, String(attrsRaw ?? ''));
-    if (match.startsWith('</')) {
-      return `</${tag}>`;
-    }
+      const attrs = sanitizeAttributes(tag, String(attrsRaw ?? ''));
+      if (match.startsWith('</')) {
+        return `</${tag}>`;
+      }
 
-    return attrs ? `<${tag} ${attrs}>` : `<${tag}>`;
-  });
+      return attrs ? `<${tag} ${attrs}>` : `<${tag}>`;
+    },
+  );
 
   return output.trim();
 }

@@ -44,8 +44,7 @@ export function mapPrintJobFromDb(row: {
     archived: row.archived ?? false,
     blockedReason: row.blockedReason ?? undefined,
     responsibleUserId: row.responsibleUserId ?? undefined,
-    suppliesAvailableNotifiedAt:
-      row.suppliesAvailableNotifiedAt?.toISOString(),
+    suppliesAvailableNotifiedAt: row.suppliesAvailableNotifiedAt?.toISOString(),
   };
 }
 

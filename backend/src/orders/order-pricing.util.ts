@@ -1,4 +1,7 @@
-import { isDesignService, normalizeServiceType } from '../common/service-type.util';
+import {
+  isDesignService,
+  normalizeServiceType,
+} from '../common/service-type.util';
 import { OrderItem } from '../common/interfaces';
 
 export type OrderLinePricingInput = Pick<
@@ -22,7 +25,9 @@ export function resolveLinePrintUnitPrice(
   return unitPrice;
 }
 
-export function calculateOrderLineSubtotal(line: OrderLinePricingInput): number {
+export function calculateOrderLineSubtotal(
+  line: OrderLinePricingInput,
+): number {
   const quantity = Math.max(Math.trunc(Number(line.quantity) || 0), 0);
   if (quantity <= 0) return 0;
 
@@ -48,8 +53,5 @@ export function calculateOrderLineSubtotal(line: OrderLinePricingInput): number 
 export function calculateOrderItemsSubtotal(
   items: OrderLinePricingInput[],
 ): number {
-  return items.reduce(
-    (sum, item) => sum + calculateOrderLineSubtotal(item),
-    0,
-  );
+  return items.reduce((sum, item) => sum + calculateOrderLineSubtotal(item), 0);
 }

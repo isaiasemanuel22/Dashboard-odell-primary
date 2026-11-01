@@ -58,7 +58,9 @@ export function totalFdmFilamentGrams(filaments: FdmFilamentLine[]): number {
   );
 }
 
-export function hasValidFdmFilamentInput(filaments: FdmFilamentLine[]): boolean {
+export function hasValidFdmFilamentInput(
+  filaments: FdmFilamentLine[],
+): boolean {
   return filaments.some(
     (line) =>
       Number(line.grams) > 0 &&
@@ -81,7 +83,9 @@ export function resolveFdmFilaments(input: {
   });
 }
 
-export function storedFdmFilaments(filaments: FdmFilamentLine[]): FdmFilamentLine[] {
+export function storedFdmFilaments(
+  filaments: FdmFilamentLine[],
+): FdmFilamentLine[] {
   return filaments.filter((line) => Number(line.grams) > 0);
 }
 

@@ -18,9 +18,7 @@ export function resolveOrderSoldAt(order: Order): string {
   const deliveredAt = (order.statusHistory ?? [])
     .filter((entry) => entry.toStatus === OrderStatus.ENTREGADO)
     .map((entry) => entry.changedAt)
-    .sort(
-      (a, b) => new Date(b).getTime() - new Date(a).getTime(),
-    )[0];
+    .sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0];
 
   if (deliveredAt) {
     return deliveredAt;

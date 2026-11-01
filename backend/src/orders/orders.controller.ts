@@ -66,10 +66,7 @@ export class OrdersController {
   }
 
   @Post(':id/price-decision')
-  decidePrice(
-    @Param('id') id: string,
-    @Body() body: OrderPriceDecisionDto,
-  ) {
+  decidePrice(@Param('id') id: string, @Body() body: OrderPriceDecisionDto) {
     return body.action === 'apply'
       ? this.ordersService.applyCatalogPrices(id)
       : this.ordersService.keepCatalogPrices(id);
@@ -81,10 +78,7 @@ export class OrdersController {
   }
 
   @Post(':id/deliveries')
-  deliver(
-    @Param('id') id: string,
-    @Body() body: CreateOrderDeliveryDto,
-  ) {
+  deliver(@Param('id') id: string, @Body() body: CreateOrderDeliveryDto) {
     return this.ordersService.deliver(id, body.items);
   }
 

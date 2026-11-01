@@ -21,7 +21,9 @@ export function validateProductImageUrls(images: string[] | undefined): void {
   }
 }
 
-export function isPersistableProductImageUrl(url: string | null | undefined): boolean {
+export function isPersistableProductImageUrl(
+  url: string | null | undefined,
+): boolean {
   if (!url?.trim()) return false;
   return /^https:\/\//i.test(url.trim());
 }

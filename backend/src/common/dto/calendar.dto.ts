@@ -69,7 +69,9 @@ export class CreateCalendarEntryDto {
   linkId?: string;
 }
 
-export class UpdateCalendarEntryDto extends PartialType(CreateCalendarEntryDto) {}
+export class UpdateCalendarEntryDto extends PartialType(
+  CreateCalendarEntryDto,
+) {}
 
 export class CompleteCalendarEntryDto {
   @IsBoolean()

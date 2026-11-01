@@ -1,4 +1,9 @@
-import { BadRequestException, ForbiddenException, Injectable, OnModuleInit } from '@nestjs/common';
+import {
+  BadRequestException,
+  ForbiddenException,
+  Injectable,
+  OnModuleInit,
+} from '@nestjs/common';
 import {
   OrderStatus,
   PrintJobStatus,
@@ -7,14 +12,18 @@ import {
   SupplyCategory,
   TaskType,
 } from '../common/enums';
-import { Order, OrderItem, OrderAlert, PrintJob, Supply } from '../common/interfaces';
+import {
+  Order,
+  OrderItem,
+  OrderAlert,
+  PrintJob,
+  Supply,
+} from '../common/interfaces';
 import { isIndistintoColor } from '../common/color.util';
 import { appendOrderStatusHistory } from '../orders/order-status-history.util';
 import { StoreService } from '../store/store.service';
 import { isDesignService } from '../common/service-type.util';
-import {
-  isDesignPrintConfigured,
-} from '../orders/design-print.util';
+import { isDesignPrintConfigured } from '../orders/design-print.util';
 import {
   isCustomFdmOrderLine,
   isFdmQuoteConfigured,
@@ -68,10 +77,7 @@ export class OrderTasksService implements OnModuleInit {
       this.ensureItemTask(order, item, index, TaskType.SERVICE);
       if (isDesignPrintConfigured(item)) {
         this.planDesignPrintFulfillment(order, item, index);
-      } else if (
-        isCustomFdmOrderLine(item) &&
-        isFdmQuoteConfigured(item)
-      ) {
+      } else if (isCustomFdmOrderLine(item) && isFdmQuoteConfigured(item)) {
         this.planCustomFdmFulfillment(order, item, index);
       } else {
         this.cancelOpenProductionTask(order.id, index);
@@ -288,9 +294,7 @@ export class OrderTasksService implements OnModuleInit {
   }
 
   private isTerminalOrder(status: OrderStatus): boolean {
-    return (
-      status === OrderStatus.ENTREGADO || status === OrderStatus.CANCELADO
-    );
+    return status === OrderStatus.ENTREGADO || status === OrderStatus.CANCELADO;
   }
 
   /** Pedidos entregados no tienen tareas en la cola de trabajo. */
@@ -504,10 +508,7 @@ export class OrderTasksService implements OnModuleInit {
     index: number,
   ): void {
     this.ensureFulfillment(item);
-    const pending = Math.max(
-      item.quantity - (item.deliveredQuantity ?? 0),
-      0,
-    );
+    const pending = Math.max(item.quantity - (item.deliveredQuantity ?? 0), 0);
     item.productionRequiredQuantity = Math.max(
       pending - (item.producedQuantity ?? 0),
       0,
@@ -526,10 +527,7 @@ export class OrderTasksService implements OnModuleInit {
     index: number,
   ): void {
     this.ensureFulfillment(item);
-    const pending = Math.max(
-      item.quantity - (item.deliveredQuantity ?? 0),
-      0,
-    );
+    const pending = Math.max(item.quantity - (item.deliveredQuantity ?? 0), 0);
     item.productionRequiredQuantity = Math.max(
       pending - (item.producedQuantity ?? 0),
       0,
@@ -554,10 +552,7 @@ export class OrderTasksService implements OnModuleInit {
     const product = this.store.getProductById(item.productId);
     if (!product) return;
 
-    const pending = Math.max(
-      item.quantity - (item.deliveredQuantity ?? 0),
-      0,
-    );
+    const pending = Math.max(item.quantity - (item.deliveredQuantity ?? 0), 0);
     const available = this.getAvailableStock(item.productId, order.id);
     const produced = item.producedQuantity ?? 0;
     const fromStock = Math.min(pending, Math.max(available, 0));
@@ -606,7 +601,10 @@ export class OrderTasksService implements OnModuleInit {
     });
   }
 
-  private prepareStillHasOpenWork(orderId: string, prepareJobId: string): boolean {
+  private prepareStillHasOpenWork(
+    orderId: string,
+    prepareJobId: string,
+  ): boolean {
     return this.getTasksForOrder(orderId).some(
       (task) =>
         task.id !== prepareJobId &&
@@ -635,12 +633,11 @@ export class OrderTasksService implements OnModuleInit {
     const quantity = Math.max(job.quantity ?? 1, 1);
 
     if (product.type === ProductType.FDM) {
-      const lines =
-        product.filaments?.length
-          ? product.filaments
-          : product.filamentType
-            ? [{ filamentType: product.filamentType, grams: product.grams }]
-            : [];
+      const lines = product.filaments?.length
+        ? product.filaments
+        : product.filamentType
+          ? [{ filamentType: product.filamentType, grams: product.grams }]
+          : [];
       return lines.every((line) => {
         const availableGrams = this.store.supplies
           .filter(
@@ -738,7 +735,6 @@ export class OrderTasksService implements OnModuleInit {
   private productionTaskName(item: OrderItem, quantity?: number): string {
     return buildProductionTaskName(item, quantity);
   }
-
 
   private updateTaskMetadata(
     job: PrintJob,

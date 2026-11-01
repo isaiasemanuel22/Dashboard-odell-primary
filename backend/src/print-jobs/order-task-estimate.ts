@@ -25,11 +25,12 @@ export function calcTaskPriority(dueDate: string): number {
   return 1;
 }
 
-export function defaultTaskMachine(item: OrderItem, taskType: TaskType = TaskType.SERVICE, products: Product[] = []): string {
-  if (
-    taskType === TaskType.PRODUCTION &&
-    isDesignPrintConfigured(item)
-  ) {
+export function defaultTaskMachine(
+  item: OrderItem,
+  taskType: TaskType = TaskType.SERVICE,
+  products: Product[] = [],
+): string {
+  if (taskType === TaskType.PRODUCTION && isDesignPrintConfigured(item)) {
     return designPrintMachineLabel(item.printPaperType);
   }
 
@@ -51,19 +52,17 @@ export function defaultTaskMachine(item: OrderItem, taskType: TaskType = TaskTyp
   return 'Estampado';
 }
 
-export function estimateTaskHours(item: OrderItem, taskType: TaskType = TaskType.SERVICE, products: Product[] = []): number {
-  if (
-    taskType === TaskType.PRODUCTION &&
-    isDesignPrintConfigured(item)
-  ) {
+export function estimateTaskHours(
+  item: OrderItem,
+  taskType: TaskType = TaskType.SERVICE,
+  products: Product[] = [],
+): number {
+  if (taskType === TaskType.PRODUCTION && isDesignPrintConfigured(item)) {
     return Math.max(1, item.quantity);
   }
 
   if (item.printTimeHours) {
-    return Math.max(
-      1,
-      Math.ceil(Number(item.printTimeHours) * item.quantity),
-    );
+    return Math.max(1, Math.ceil(Number(item.printTimeHours) * item.quantity));
   }
 
   if (item.productId) {
@@ -71,10 +70,7 @@ export function estimateTaskHours(item: OrderItem, taskType: TaskType = TaskType
     if (product) {
       const product3d = product as Product3D;
       if (product3d.printTimeHours) {
-        return Math.max(
-          1,
-          Math.ceil(product3d.printTimeHours * item.quantity),
-        );
+        return Math.max(1, Math.ceil(product3d.printTimeHours * item.quantity));
       }
       if (product.assemblyTimeHours) {
         return Math.max(

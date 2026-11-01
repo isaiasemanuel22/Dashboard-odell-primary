@@ -1,5 +1,14 @@
-import { FilamentType, PaperType, ProductType, ResinType } from '../common/enums';
-import { CalculateCostDto, GeneralSettings, Supply } from '../common/interfaces';
+import {
+  FilamentType,
+  PaperType,
+  ProductType,
+  ResinType,
+} from '../common/enums';
+import {
+  CalculateCostDto,
+  GeneralSettings,
+  Supply,
+} from '../common/interfaces';
 import { calcWashSupplyCost } from './machine-profile.util';
 import {
   resolveFilamentPricePerKg,
@@ -24,8 +33,7 @@ export function calculateMaterialCost(
     if (filaments.length) {
       return filaments.reduce(
         (sum, line) =>
-          sum +
-          calcFilamentCost(line.filamentType, line.grams, settings),
+          sum + calcFilamentCost(line.filamentType, line.grams, settings),
         0,
       );
     }

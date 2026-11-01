@@ -37,7 +37,7 @@ export function resolveProfitArea(
   }
 
   const normalized = serviceType
-    ? normalizeServiceType(serviceType) ?? serviceType
+    ? (normalizeServiceType(serviceType) ?? serviceType)
     : undefined;
 
   if (normalized === ServiceType.ESTAMPADO) {
@@ -96,7 +96,7 @@ export function computeAreaProfitBalances(
       if (!area) continue;
 
       const normalizedService = item.serviceType
-        ? normalizeServiceType(item.serviceType) ?? item.serviceType
+        ? (normalizeServiceType(item.serviceType) ?? item.serviceType)
         : undefined;
       const quantityMultiplier =
         normalizedService && isDesignService(normalizedService)

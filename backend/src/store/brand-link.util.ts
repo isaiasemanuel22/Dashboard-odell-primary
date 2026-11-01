@@ -1,5 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
-import { BrandMaterialType, ProductType, SupplyCategory } from '../common/enums';
+import {
+  BrandMaterialType,
+  ProductType,
+  SupplyCategory,
+} from '../common/enums';
 import {
   Brand,
   FdmFilamentLine,
@@ -154,7 +158,11 @@ export function assignSupplyBrand(store: StoreService, supply: Supply): void {
     return;
   }
   if (supply.category === SupplyCategory.RESINA && supply.resinType) {
-    const brand = requireBrandForMaterial(store, named, BrandMaterialType.RESIN);
+    const brand = requireBrandForMaterial(
+      store,
+      named,
+      BrandMaterialType.RESIN,
+    );
     supply.brandId = brand.id;
     supply.brand = brand.name;
     return;
@@ -184,7 +192,10 @@ export function linkProductBrands(store: StoreService, product: Product): void {
 }
 
 export function hydrateBrandNames(
-  state: Pick<StoreState, 'brands' | 'generalSettings' | 'supplies' | 'products'>,
+  state: Pick<
+    StoreState,
+    'brands' | 'generalSettings' | 'supplies' | 'products'
+  >,
 ): void {
   const brands = state.brands ?? [];
   const apply = (entry: BrandCarrier): void => {
@@ -196,7 +207,10 @@ export function hydrateBrandNames(
   for (const price of state.generalSettings?.resinPrices ?? []) apply(price);
   for (const supply of state.supplies ?? []) apply(supply);
   for (const product of state.products ?? []) {
-    if (product.type !== ProductType.FDM && product.type !== ProductType.RESINA) {
+    if (
+      product.type !== ProductType.FDM &&
+      product.type !== ProductType.RESINA
+    ) {
       continue;
     }
     const product3d = product as Product3D;
@@ -244,16 +258,23 @@ export function persistedFdmLine(
 
 export function brandIsUsed(state: StoreState, brandId: string): boolean {
   if (
-    state.generalSettings.filamentPrices.some((price) => price.brandId === brandId)
+    state.generalSettings.filamentPrices.some(
+      (price) => price.brandId === brandId,
+    )
   ) {
     return true;
   }
-  if (state.generalSettings.resinPrices.some((price) => price.brandId === brandId)) {
+  if (
+    state.generalSettings.resinPrices.some((price) => price.brandId === brandId)
+  ) {
     return true;
   }
   if (state.supplies.some((supply) => supply.brandId === brandId)) return true;
   return state.products.some((product) => {
-    if (product.type !== ProductType.FDM && product.type !== ProductType.RESINA) {
+    if (
+      product.type !== ProductType.FDM &&
+      product.type !== ProductType.RESINA
+    ) {
       return false;
     }
     const product3d = product as Product3D;

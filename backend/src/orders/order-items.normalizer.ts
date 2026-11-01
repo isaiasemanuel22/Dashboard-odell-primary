@@ -1,7 +1,10 @@
 import { BadRequestException } from '@nestjs/common';
 import { FilamentType, ResinType, ServiceType } from '../common/enums';
 import { OrderItem } from '../common/interfaces';
-import { isDesignService, normalizeServiceType } from '../common/service-type.util';
+import {
+  isDesignService,
+  normalizeServiceType,
+} from '../common/service-type.util';
 import { isDesignPrintConfigured } from './design-print.util';
 import {
   isCustomEstampadoOrderLine,
@@ -57,15 +60,11 @@ export function normalizeIncomingOrderItems(
     const productId = item.productId?.trim() || undefined;
 
     if (!serviceType) {
-      throw new BadRequestException(
-        `Línea ${index + 1}: servicio inválido`,
-      );
+      throw new BadRequestException(`Línea ${index + 1}: servicio inválido`);
     }
 
     if (!productName) {
-      throw new BadRequestException(
-        `Línea ${index + 1}: descripción inválida`,
-      );
+      throw new BadRequestException(`Línea ${index + 1}: descripción inválida`);
     }
 
     if (isDesignService(serviceType) && productId) {
@@ -90,9 +89,7 @@ export function normalizeIncomingOrderItems(
       !isCustomFdmOrderLine({ serviceType, productId }) &&
       !isCustomEstampadoOrderLine({ serviceType, productId })
     ) {
-      throw new BadRequestException(
-        `Línea ${index + 1}: producto inválido`,
-      );
+      throw new BadRequestException(`Línea ${index + 1}: producto inválido`);
     }
 
     if (isCustomFdmOrderLine({ serviceType, productId })) {
@@ -118,9 +115,7 @@ export function normalizeIncomingOrderItems(
     }
 
     if (!Number.isFinite(quantity) || quantity <= 0) {
-      throw new BadRequestException(
-        `Línea ${index + 1}: cantidad inválida`,
-      );
+      throw new BadRequestException(`Línea ${index + 1}: cantidad inválida`);
     }
 
     if (!Number.isFinite(unitPrice) || unitPrice < 0) {
@@ -152,8 +147,7 @@ export function normalizeIncomingOrderItems(
             const printProcess =
               normalizePrintProcess(item.printProcess) ??
               (item.resinType ? 'resina' : undefined);
-            const isResin =
-              printProcess === 'resina' || !!item.resinType;
+            const isResin = printProcess === 'resina' || !!item.resinType;
             const filaments = isResin
               ? []
               : normalizeFdmFilaments(item.filaments, {
@@ -168,8 +162,8 @@ export function normalizeIncomingOrderItems(
                   : undefined;
             const filamentType = isResin
               ? undefined
-              : filaments.find((line) => line.filamentType)?.filamentType ??
-                (item.filamentType as FilamentType | undefined);
+              : (filaments.find((line) => line.filamentType)?.filamentType ??
+                (item.filamentType as FilamentType | undefined));
             const laborNote = item.laborNote?.trim() || undefined;
             const workTimeHours =
               item.workTimeHours != null

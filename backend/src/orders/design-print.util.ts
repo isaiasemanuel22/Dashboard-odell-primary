@@ -1,7 +1,9 @@
 import { PaperType } from '../common/enums';
 import { OrderItem } from '../common/interfaces';
 
-export function hasValidDesignPrintSize(item: Pick<OrderItem, 'printWidthCm' | 'printLengthCm'>): boolean {
+export function hasValidDesignPrintSize(
+  item: Pick<OrderItem, 'printWidthCm' | 'printLengthCm'>,
+): boolean {
   const width = Number(item.printWidthCm) || 0;
   const length = Number(item.printLengthCm) || 0;
   return width > 0 && length > 0;

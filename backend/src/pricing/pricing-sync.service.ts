@@ -56,7 +56,8 @@ export class PricingSyncService {
       });
     }
 
-    const compositeRecalculated = this.recalculateCompositeProducts(priceChanges);
+    const compositeRecalculated =
+      this.recalculateCompositeProducts(priceChanges);
     const quotesChanged = this.syncQuotePrices(priceChanges);
     this.syncOrderPrices(priceChanges, 'product_update');
     this.notifyChanges(
@@ -163,9 +164,10 @@ export class PricingSyncService {
     return true;
   }
 
-  private resolveCompositeProductionMetrics(
-    product: Product,
-  ): { changed: boolean; values: Pick<Product3D, 'grams' | 'printTimeHours' | 'workTimeHours'> } | null {
+  private resolveCompositeProductionMetrics(product: Product): {
+    changed: boolean;
+    values: Pick<Product3D, 'grams' | 'printTimeHours' | 'workTimeHours'>;
+  } | null {
     if (!this.hasComponents(product)) {
       return null;
     }
@@ -210,7 +212,9 @@ export class PricingSyncService {
     }
 
     if (quotesUpdated > 0) {
-      this.logger.log(`Precios actualizados en ${quotesUpdated} presupuesto(s)`);
+      this.logger.log(
+        `Precios actualizados en ${quotesUpdated} presupuesto(s)`,
+      );
     }
     return quotesUpdated > 0;
   }
@@ -259,12 +263,7 @@ export class PricingSyncService {
         const change = priceChanges.get(item.productId);
         if (!change || change.newPrice === item.unitPrice) continue;
         if (
-          hasRecordedPricePair(
-            order,
-            index,
-            item.unitPrice,
-            change.newPrice,
-          )
+          hasRecordedPricePair(order, index, item.unitPrice, change.newPrice)
         ) {
           continue;
         }

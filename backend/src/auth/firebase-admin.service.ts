@@ -2,7 +2,13 @@ import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { getStorage } from 'firebase-admin/storage';
 import { readFileSync } from 'fs';
 import { resolve } from 'path';
-import { App, cert, getApps, initializeApp, ServiceAccount } from 'firebase-admin/app';
+import {
+  App,
+  cert,
+  getApps,
+  initializeApp,
+  ServiceAccount,
+} from 'firebase-admin/app';
 import { DecodedIdToken, getAuth } from 'firebase-admin/auth';
 import { AppConfigService } from '../config/app-config.service';
 
@@ -93,7 +99,9 @@ export class FirebaseAdminService implements OnModuleInit {
     if (!this.app || !this.storageBucket) return;
 
     try {
-      const [exists] = await getStorage(this.app).bucket(this.storageBucket).exists();
+      const [exists] = await getStorage(this.app)
+        .bucket(this.storageBucket)
+        .exists();
       if (exists) {
         this.logger.log(`Firebase Storage bucket OK: ${this.storageBucket}`);
         return;

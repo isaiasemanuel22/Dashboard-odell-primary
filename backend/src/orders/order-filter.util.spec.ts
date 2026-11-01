@@ -8,7 +8,14 @@ describe('filterOrders', () => {
       customerId: 'cust-1',
       customerName: 'Ana',
       services: [ServiceType.IMPRESION_3D],
-      items: [{ productName: 'Pieza A', serviceType: ServiceType.IMPRESION_3D, quantity: 1, unitPrice: 10 }],
+      items: [
+        {
+          productName: 'Pieza A',
+          serviceType: ServiceType.IMPRESION_3D,
+          quantity: 1,
+          unitPrice: 10,
+        },
+      ],
       status: OrderStatus.PENDIENTE,
       total: 10,
       createdAt: '2026-07-01T10:00:00.000Z',
@@ -19,7 +26,14 @@ describe('filterOrders', () => {
       customerId: 'cust-2',
       customerName: 'Bruno',
       services: [ServiceType.ESTAMPADO],
-      items: [{ productName: 'Remera', serviceType: ServiceType.ESTAMPADO, quantity: 2, unitPrice: 20 }],
+      items: [
+        {
+          productName: 'Remera',
+          serviceType: ServiceType.ESTAMPADO,
+          quantity: 2,
+          unitPrice: 20,
+        },
+      ],
       status: OrderStatus.ENTREGADO,
       total: 40,
       createdAt: '2026-07-02T10:00:00.000Z',

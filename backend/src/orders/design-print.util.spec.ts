@@ -19,12 +19,12 @@ describe('design-print.util', () => {
   });
 
   it('validates print size', () => {
-    expect(hasValidDesignPrintSize({ printWidthCm: 10, printLengthCm: 20 })).toBe(
-      true,
-    );
-    expect(hasValidDesignPrintSize({ printWidthCm: 0, printLengthCm: 20 })).toBe(
-      false,
-    );
+    expect(
+      hasValidDesignPrintSize({ printWidthCm: 10, printLengthCm: 20 }),
+    ).toBe(true);
+    expect(
+      hasValidDesignPrintSize({ printWidthCm: 0, printLengthCm: 20 }),
+    ).toBe(false);
   });
 
   it('detects configured design print lines', () => {

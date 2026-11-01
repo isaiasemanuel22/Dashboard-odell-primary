@@ -114,8 +114,7 @@ const PATH_RULES: PathRule[] = [
     },
   },
   {
-    matches: (path) =>
-      path.includes('/settings') || path.includes('/upload'),
+    matches: (path) => path.includes('/settings') || path.includes('/upload'),
     meta: {
       collections: ['settings', 'brands', 'supplies', 'products'],
       scopes: ['settings', 'products'],
@@ -177,10 +176,7 @@ export function shouldTrackHttpMutation(path: string, method: string): boolean {
   if (!['POST', 'PATCH', 'PUT', 'DELETE'].includes(method.toUpperCase())) {
     return false;
   }
-  if (
-    path.includes('/events/') ||
-    path.includes('/preview-')
-  ) {
+  if (path.includes('/events/') || path.includes('/preview-')) {
     return false;
   }
   return true;

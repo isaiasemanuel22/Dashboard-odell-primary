@@ -1,12 +1,18 @@
 import { ProductType, ServiceType } from '../common/enums';
-import { resolveProfitArea, computeAreaProfitBalances } from './profit-area.util';
+import {
+  resolveProfitArea,
+  computeAreaProfitBalances,
+} from './profit-area.util';
 import { SaleEntry, SaleEntryItem } from '../common/interfaces';
 
 describe('profit-area.util', () => {
   describe('resolveProfitArea', () => {
     it('clasifica productos de estampado', () => {
       expect(
-        resolveProfitArea({ type: ProductType.ESTAMPADO }, ServiceType.IMPRESION_3D),
+        resolveProfitArea(
+          { type: ProductType.ESTAMPADO },
+          ServiceType.IMPRESION_3D,
+        ),
       ).toBe(ServiceType.ESTAMPADO);
     });
 

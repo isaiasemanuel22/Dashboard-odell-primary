@@ -45,21 +45,19 @@ describe('user-access.util', () => {
       ...operatorRole,
       id: 'role-design',
       name: 'Diseño',
-      permissions: [
-        { action: PermissionAction.VIEW, areaId: 'area-design' },
-      ],
+      permissions: [{ action: PermissionAction.VIEW, areaId: 'area-design' }],
     };
 
     const resolved = resolvePermissions([operatorRole, designRole], []);
-    expect(
-      hasPermission(resolved, PermissionAction.VIEW, area3d.id),
-    ).toBe(true);
-    expect(
-      hasPermission(resolved, PermissionAction.VIEW, 'area-design'),
-    ).toBe(true);
-    expect(
-      hasPermission(resolved, PermissionAction.CREATE, area3d.id),
-    ).toBe(false);
+    expect(hasPermission(resolved, PermissionAction.VIEW, area3d.id)).toBe(
+      true,
+    );
+    expect(hasPermission(resolved, PermissionAction.VIEW, 'area-design')).toBe(
+      true,
+    );
+    expect(hasPermission(resolved, PermissionAction.CREATE, area3d.id)).toBe(
+      false,
+    );
   });
 
   it('aplica excepciones deny sobre grants', () => {
@@ -72,12 +70,12 @@ describe('user-access.util', () => {
     ];
 
     const resolved = resolvePermissions([operatorRole], overrides);
-    expect(
-      hasPermission(resolved, PermissionAction.MODIFY, area3d.id),
-    ).toBe(false);
-    expect(
-      hasPermission(resolved, PermissionAction.VIEW, area3d.id),
-    ).toBe(true);
+    expect(hasPermission(resolved, PermissionAction.MODIFY, area3d.id)).toBe(
+      false,
+    );
+    expect(hasPermission(resolved, PermissionAction.VIEW, area3d.id)).toBe(
+      true,
+    );
   });
 
   it('detecta administrador con permisos globales', () => {

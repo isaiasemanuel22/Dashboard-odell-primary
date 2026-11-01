@@ -1,6 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { OrderStatus, PrintJobStatus } from '../common/enums';
-import { PrintJob, PrintJobsBoard, UpdatePrintJobDto } from '../common/interfaces';
+import {
+  PrintJob,
+  PrintJobsBoard,
+  UpdatePrintJobDto,
+} from '../common/interfaces';
 import {
   assertPrintJobStatus,
   assertPrintJobStatusTransition,

@@ -85,7 +85,9 @@ export function normalizeEstampadoPrints(
           ? print.lengthCm
           : undefined,
       heightCm:
-        print.heightCm != null && print.heightCm > 0 ? print.heightCm : undefined,
+        print.heightCm != null && print.heightCm > 0
+          ? print.heightCm
+          : undefined,
       quantity: Math.max(1, Math.round(Number(print.quantity) || 1)),
       label: print.label?.trim() || undefined,
     }));
@@ -124,8 +126,7 @@ export function normalizeEstampadoSupplies(
       supplyId: line.supplyId?.trim() ?? '',
       quantity: Math.max(Number(line.quantity) || 0, 0),
       label: line.label?.trim() || undefined,
-      colorId:
-        normalizeProductColorId(line.colorId) ?? INDISTINTO_COLOR_ID,
+      colorId: normalizeProductColorId(line.colorId) ?? INDISTINTO_COLOR_ID,
     }))
     .filter((line) => line.supplyId && line.quantity > 0);
 }
@@ -234,10 +235,7 @@ export function totalEstampadoPressMinutes(
   cycles: EstampadoPressCycle[] | undefined,
   legacyPressMinutes?: number,
 ): number {
-  const normalized = normalizeEstampadoPressCycles(
-    cycles,
-    legacyPressMinutes,
-  );
+  const normalized = normalizeEstampadoPressCycles(cycles, legacyPressMinutes);
   return normalized.reduce(
     (sum, cycle) =>
       sum + (Number(cycle.pressMinutes) || 0) * (Number(cycle.bajadas) || 1),
@@ -262,9 +260,7 @@ export function formatEstampadoSizeLabel(
       );
       if (print.impresoId) {
         const impreso = getImpresoById(print.impresoId);
-        const base = impreso
-          ? `${impreso.name} (${sizeLabel})`
-          : sizeLabel;
+        const base = impreso ? `${impreso.name} (${sizeLabel})` : sizeLabel;
         return print.label?.trim() ? `${print.label}: ${base}` : base;
       }
       return print.label?.trim() ? `${print.label}: ${sizeLabel}` : sizeLabel;
@@ -273,7 +269,9 @@ export function formatEstampadoSizeLabel(
     .join(' · ');
 }
 
-export function asEstampadoProduct(product: ProductEstampado): ProductEstampado {
+export function asEstampadoProduct(
+  product: ProductEstampado,
+): ProductEstampado {
   return {
     ...product,
     prints: normalizeEstampadoPrints(product.prints, {

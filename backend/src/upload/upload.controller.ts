@@ -31,7 +31,10 @@ export class UploadController {
         },
         filename: (_req, file, cb) => {
           if (!isAllowedImageExtension(file.originalname)) {
-            cb(new BadRequestException('Extensión de archivo no permitida'), '');
+            cb(
+              new BadRequestException('Extensión de archivo no permitida'),
+              '',
+            );
             return;
           }
           const extension = extname(file.originalname).toLowerCase();
@@ -83,7 +86,10 @@ export class UploadController {
         },
         filename: (_req, file, cb) => {
           const safeName = file.originalname.replace(/[^\w.\-]+/g, '_');
-          cb(null, `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`);
+          cb(
+            null,
+            `${Date.now()}-${Math.round(Math.random() * 1e9)}-${safeName}`,
+          );
         },
       }),
       limits: { fileSize: 25 * 1024 * 1024 },

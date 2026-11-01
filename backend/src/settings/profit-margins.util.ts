@@ -24,7 +24,9 @@ function readMargin(
   return Math.min(Math.max(parsed, 0), 999);
 }
 
-function readLegacyDesignMargin(raw: Record<string, unknown>): number | undefined {
+function readLegacyDesignMargin(
+  raw: Record<string, unknown>,
+): number | undefined {
   const value = raw[LEGACY_DESIGN_SERVICE];
   if (value === undefined || value === null || value === '') {
     return undefined;
@@ -39,9 +41,7 @@ function readLegacyDesignMargin(raw: Record<string, unknown>): number | undefine
 /** Asegura claves de servicio y valores numéricos al cargar o guardar márgenes. */
 export function normalizeProfitMargins(raw: unknown): ServiceProfitMargins {
   const source =
-    raw && typeof raw === 'object'
-      ? (raw as Record<string, unknown>)
-      : {};
+    raw && typeof raw === 'object' ? (raw as Record<string, unknown>) : {};
   const legacyDiseno = readLegacyDesignMargin(source);
 
   return {

@@ -6,12 +6,15 @@ import {
   OnModuleInit,
 } from '@nestjs/common';
 import { AppConfigService } from '../config/app-config.service';
-import {
-  ALL_STORE_COLLECTIONS,
-  StoreCollection,
-} from './store.collections';
+import { ALL_STORE_COLLECTIONS, StoreCollection } from './store.collections';
 import { Prisma } from '@prisma/client';
-import { GeneralSettings, Order, PrintJob, Quote, RetailSale } from '../common/interfaces';
+import {
+  GeneralSettings,
+  Order,
+  PrintJob,
+  Quote,
+  RetailSale,
+} from '../common/interfaces';
 import { PrismaService } from '../prisma/prisma.service';
 import { resolveAllProductComponents } from '../products/product-component.util';
 import {
@@ -176,9 +179,7 @@ export class StorePersistenceService
     this.store.applyState(createEmptyState());
 
     if (!this.dbEnabled) {
-      this.logger.warn(
-        'Base vaciada en memoria (MySQL no disponible).',
-      );
+      this.logger.warn('Base vaciada en memoria (MySQL no disponible).');
       return;
     }
 
@@ -530,7 +531,6 @@ export class StorePersistenceService
   ): Promise<void> {
     await syncCollectionRows(tx, rows, deleteOrphans, upsert);
   }
-
 
   private errorMessage(error: unknown): string {
     return error instanceof Error ? error.message : String(error);

@@ -102,7 +102,11 @@ describe('machine-profile.util', () => {
           : profile,
       ),
     };
-    const cost = calcWashSupplyCost(settingsWithZero, supplies, ProductType.RESINA);
+    const cost = calcWashSupplyCost(
+      settingsWithZero,
+      supplies,
+      ProductType.RESINA,
+    );
     expect(cost).toBe(40);
   });
 
@@ -115,7 +119,11 @@ describe('machine-profile.util', () => {
           : profile,
       ),
     };
-    const cost = calcWashSupplyCost(settingsWithFive, supplies, ProductType.RESINA);
+    const cost = calcWashSupplyCost(
+      settingsWithFive,
+      supplies,
+      ProductType.RESINA,
+    );
     expect(cost).toBe(80);
   });
 });

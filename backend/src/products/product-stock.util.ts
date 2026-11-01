@@ -51,7 +51,10 @@ export function computeAssemblableUnits(
     id: entry.id,
     name: entry.name,
   }));
-  const components = normalizeProductComponents(product.components ?? [], catalog);
+  const components = normalizeProductComponents(
+    product.components ?? [],
+    catalog,
+  );
 
   if (!productUsesPieceAssembly(product) || components.length === 0) {
     return 0;
@@ -86,7 +89,10 @@ export function resolveProductPhysicalStock(
     id: entry.id,
     name: entry.name,
   }));
-  const components = normalizeProductComponents(product.components ?? [], catalog);
+  const components = normalizeProductComponents(
+    product.components ?? [],
+    catalog,
+  );
 
   if (!productUsesPieceAssembly(product) || components.length === 0) {
     return finished;

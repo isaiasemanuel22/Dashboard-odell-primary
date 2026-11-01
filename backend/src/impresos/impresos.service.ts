@@ -126,9 +126,7 @@ export class ImpresosService {
       Number(data.widthCm) <= 0 ||
       resolvePrintAreaSecondCm(data.lengthCm, data.heightCm) <= 0
     ) {
-      throw new BadRequestException(
-        'Ancho y largo deben ser mayores a 0',
-      );
+      throw new BadRequestException('Ancho y largo deben ser mayores a 0');
     }
   }
 
@@ -137,11 +135,12 @@ export class ImpresosService {
       impreso.lengthCm,
       impreso.heightCm,
     );
-    const { areaSqm, paperCost } = this.costCalculator.calculateImpresoPaperCost(
-      impreso.paperType,
-      impreso.widthCm,
-      areaSecond,
-    );
+    const { areaSqm, paperCost } =
+      this.costCalculator.calculateImpresoPaperCost(
+        impreso.paperType,
+        impreso.widthCm,
+        areaSecond,
+      );
 
     return {
       ...impreso,

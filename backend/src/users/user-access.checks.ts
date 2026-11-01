@@ -1,9 +1,6 @@
 import { BadRequestException, ConflictException } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
-import {
-  RolePermissionDto,
-  UserPermissionOverrideDto,
-} from '../common/dto';
+import { RolePermissionDto, UserPermissionOverrideDto } from '../common/dto';
 import {
   RolePermissionEntry,
   UserPermissionOverrideEntry,

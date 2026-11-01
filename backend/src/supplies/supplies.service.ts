@@ -3,11 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import {
-  FilamentType,
-  ResinType,
-  SupplyCategory,
-} from '../common/enums';
+import { FilamentType, ResinType, SupplyCategory } from '../common/enums';
 import { Supply } from '../common/interfaces';
 import {
   supplyRequiresColor,
@@ -140,9 +136,7 @@ export class SuppliesService {
     const saved = this.supplies.save({
       ...existing,
       quantity: nextQuantity,
-      ...(unitPriceChanged
-        ? { unitPrice, priceFromSettings: false }
-        : {}),
+      ...(unitPriceChanged ? { unitPrice, priceFromSettings: false } : {}),
       updatedAt: new Date().toISOString(),
     });
 

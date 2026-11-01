@@ -471,9 +471,7 @@ export interface OrderStatusHistoryEntry {
 }
 
 export type OrderPriceChangeTrigger =
-  | 'settings'
-  | 'supply_price'
-  | 'product_update';
+  'settings' | 'supply_price' | 'product_update';
 
 export interface OrderPriceHistoryEntry {
   id: string;
@@ -751,11 +749,7 @@ export interface MonthlyTrendPoint {
 export type DashboardNotificationType = 'info' | 'warning' | 'success';
 
 export type DashboardNotificationKind =
-  | 'order'
-  | 'stock'
-  | 'queue'
-  | 'calendar'
-  | 'other';
+  'order' | 'stock' | 'queue' | 'calendar' | 'other';
 
 export interface DashboardNotification {
   id: string;

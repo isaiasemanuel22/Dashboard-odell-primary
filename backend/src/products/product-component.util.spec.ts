@@ -9,9 +9,7 @@ describe('normalizeProductComponents', () => {
 
   it('preserva el formato estándar', () => {
     expect(
-      normalizeProductComponents([
-        { productId: 'prod-7', quantity: 2 },
-      ]),
+      normalizeProductComponents([{ productId: 'prod-7', quantity: 2 }]),
     ).toEqual([{ productId: 'prod-7', quantity: 2, colorId: 'indistinto' }]);
   });
 
@@ -23,9 +21,9 @@ describe('normalizeProductComponents', () => {
   });
 
   it('acepta alias legacy id/qty', () => {
-    expect(
-      normalizeProductComponents([{ id: 'prod-9', qty: 28 }]),
-    ).toEqual([{ productId: 'prod-9', quantity: 28, colorId: 'indistinto' }]);
+    expect(normalizeProductComponents([{ id: 'prod-9', qty: 28 }])).toEqual([
+      { productId: 'prod-9', quantity: 28, colorId: 'indistinto' },
+    ]);
   });
 
   it('convierte mapas productId → cantidad', () => {

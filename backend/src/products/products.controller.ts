@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Param,
+  Patch,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ProductType } from '../common/enums';
 import {
   CreateProductDto,
@@ -12,10 +21,7 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get()
-  findAll(
-    @Query('type') type?: ProductType,
-    @Query('all') all?: string,
-  ) {
+  findAll(@Query('type') type?: ProductType, @Query('all') all?: string) {
     const includeUnpublished = all === 'true' || all === '1';
     return this.productsService.findAll(type, includeUnpublished);
   }

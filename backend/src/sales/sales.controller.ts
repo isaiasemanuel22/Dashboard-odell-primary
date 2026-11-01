@@ -8,10 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import {
-  CreateRetailSaleDto,
-  UpdateRetailSaleDto,
-} from '../common/dto';
+import { CreateRetailSaleDto, UpdateRetailSaleDto } from '../common/dto';
 import { SalesService } from './sales.service';
 
 @Controller('sales')
@@ -34,10 +31,7 @@ export class SalesController {
   }
 
   @Patch('retail/:id')
-  updateRetailSale(
-    @Param('id') id: string,
-    @Body() data: UpdateRetailSaleDto,
-  ) {
+  updateRetailSale(@Param('id') id: string, @Body() data: UpdateRetailSaleDto) {
     return this.salesService.updateRetail(id, data);
   }
 

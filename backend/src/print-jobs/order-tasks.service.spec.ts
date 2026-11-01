@@ -385,7 +385,9 @@ describe('OrderTasksService', () => {
     expect(production).toBeDefined();
     expect(production?.status).not.toBe(PrintJobStatus.BLOQUEADO);
 
-    store.supplies = store.supplies.filter((supply) => supply.id !== 'sup-black');
+    store.supplies = store.supplies.filter(
+      (supply) => supply.id !== 'sup-black',
+    );
     service.syncOrderTasks(order);
 
     expect(
@@ -456,4 +458,3 @@ describe('OrderTasksService', () => {
     ).not.toBe(PrintJobStatus.BLOQUEADO);
   });
 });
-

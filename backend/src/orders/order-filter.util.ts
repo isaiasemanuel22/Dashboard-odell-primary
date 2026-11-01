@@ -20,7 +20,10 @@ export function isClosedOrderStatus(status: OrderStatus): boolean {
   return CLOSED_ORDER_STATUSES.includes(status);
 }
 
-export function filterOrders(orders: Order[], filters: OrderListFilters): Order[] {
+export function filterOrders(
+  orders: Order[],
+  filters: OrderListFilters,
+): Order[] {
   let result = orders;
 
   if (filters.customerId) {

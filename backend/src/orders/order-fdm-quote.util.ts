@@ -9,7 +9,10 @@ import { OrderItem } from '../common/interfaces';
 export type PrintProcess = 'fdm' | 'resina';
 
 export function isFdmQuoteConfigured(
-  item: Pick<OrderItem, 'grams' | 'printTimeHours' | 'filamentType' | 'filaments'>,
+  item: Pick<
+    OrderItem,
+    'grams' | 'printTimeHours' | 'filamentType' | 'filaments'
+  >,
 ): boolean {
   const printTimeHours = Number(item.printTimeHours) || 0;
   if (item.filaments?.length) {
@@ -26,7 +29,10 @@ export function isFdmQuoteConfigured(
 }
 
 export function isResinQuoteConfigured(
-  item: Pick<OrderItem, 'grams' | 'printTimeHours' | 'resinType' | 'printProcess'>,
+  item: Pick<
+    OrderItem,
+    'grams' | 'printTimeHours' | 'resinType' | 'printProcess'
+  >,
 ): boolean {
   if (item.printProcess === 'fdm') return false;
   if (item.printProcess !== 'resina' && !item.resinType) return false;
@@ -43,7 +49,10 @@ export function isCustomFdmOrderLine(
 }
 
 export function isManualResinOrderLine(
-  item: Pick<OrderItem, 'serviceType' | 'productId' | 'printProcess' | 'resinType'>,
+  item: Pick<
+    OrderItem,
+    'serviceType' | 'productId' | 'printProcess' | 'resinType'
+  >,
 ): boolean {
   return (
     isCustomFdmOrderLine(item) &&
@@ -59,7 +68,10 @@ export function normalizePrintProcess(
 }
 
 export function buildFdmCostInput(
-  item: Pick<OrderItem, 'grams' | 'printTimeHours' | 'filamentType' | 'workTimeHours'>,
+  item: Pick<
+    OrderItem,
+    'grams' | 'printTimeHours' | 'filamentType' | 'workTimeHours'
+  >,
 ) {
   return {
     type: ProductType.FDM as const,

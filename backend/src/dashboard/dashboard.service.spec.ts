@@ -221,12 +221,12 @@ describe('DashboardService', () => {
 
     const stats = service.getStats();
 
-    expect(stats.notifications.some((item) => item.id === 'low-stock-sup-1')).toBe(
-      true,
-    );
-    expect(stats.notifications.some((item) => item.id === 'blocked-job-1')).toBe(
-      true,
-    );
+    expect(
+      stats.notifications.some((item) => item.id === 'low-stock-sup-1'),
+    ).toBe(true);
+    expect(
+      stats.notifications.some((item) => item.id === 'blocked-job-1'),
+    ).toBe(true);
     expect(
       stats.notifications.find((item) => item.id === 'blocked-job-1')?.type,
     ).toBe('success');

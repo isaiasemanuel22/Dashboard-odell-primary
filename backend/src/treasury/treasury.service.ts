@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import {
   CreateTreasuryExpenseDto,
   TreasurySupplyLineDto,
@@ -9,12 +13,22 @@ import {
   TreasuryExpenseCategory,
   TreasuryMovementDirection,
 } from '../common/enums';
-import { Supply, TreasuryExpense, TreasuryOverview } from '../common/interfaces';
+import {
+  Supply,
+  TreasuryExpense,
+  TreasuryOverview,
+} from '../common/interfaces';
 import { SalesService } from '../sales/sales.service';
 import { SuppliesService } from '../supplies/supplies.service';
 import { StoreChangeService } from '../store/store-change.service';
-import { SupplyRepository, TreasuryExpenseRepository } from '../store/repositories';
-import { computeDebtorBalances, getDebtorOutstanding } from './treasury-debtor.util';
+import {
+  SupplyRepository,
+  TreasuryExpenseRepository,
+} from '../store/repositories';
+import {
+  computeDebtorBalances,
+  getDebtorOutstanding,
+} from './treasury-debtor.util';
 import { toCents } from '../common/utils/money.util';
 
 interface ValidatedSupplyPurchaseLine {
@@ -42,12 +56,13 @@ export class TreasuryService {
       .filter((record) => record.direction === TreasuryMovementDirection.INCOME)
       .reduce((sum, record) => sum + record.amount, 0);
     const totalExpenses = records
-      .filter((record) => record.direction === TreasuryMovementDirection.EXPENSE)
+      .filter(
+        (record) => record.direction === TreasuryMovementDirection.EXPENSE,
+      )
       .reduce((sum, record) => sum + record.amount, 0);
 
     return {
-      availableBalance:
-        totalSalesIncome + totalManualIncome - totalExpenses,
+      availableBalance: totalSalesIncome + totalManualIncome - totalExpenses,
       totalIncome: totalSalesIncome + totalManualIncome,
       totalExpenses,
       totalSalesIncome,
@@ -273,7 +288,8 @@ export class TreasuryService {
       throw new BadRequestException('El nombre es obligatorio');
     }
 
-    const quantityChanged = Math.abs(quantity - Number(current.quantity)) > 1e-9;
+    const quantityChanged =
+      Math.abs(quantity - Number(current.quantity)) > 1e-9;
     const priceChanged =
       Math.round(unitPrice) !== Math.round(Number(current.unitPrice));
 
@@ -497,7 +513,9 @@ export class TreasuryService {
       const unitPrice = Number(line.unitPrice);
 
       if (quantity <= 0 || amountSpent <= 0 || unitPrice < 0) {
-        throw new BadRequestException('Revisá cantidad, gasto y valor unitario');
+        throw new BadRequestException(
+          'Revisá cantidad, gasto y valor unitario',
+        );
       }
 
       return {

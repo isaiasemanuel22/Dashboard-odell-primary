@@ -21,9 +21,9 @@ describe('route-registry', () => {
 
   it('detecta mutaciones HTTP rastreables', () => {
     expect(shouldTrackHttpMutation('/api/products', 'POST')).toBe(true);
-    expect(shouldTrackHttpMutation('/api/products/preview-pricing', 'POST')).toBe(
-      false,
-    );
+    expect(
+      shouldTrackHttpMutation('/api/products/preview-pricing', 'POST'),
+    ).toBe(false);
     expect(shouldTrackHttpMutation('/api/products', 'GET')).toBe(false);
   });
 

@@ -33,7 +33,10 @@ export function validateEnv(
 
   const corsRaw = optionalString(config.CORS_ORIGINS);
   const corsOrigins = corsRaw
-    ? corsRaw.split(',').map((origin) => origin.trim()).filter(Boolean)
+    ? corsRaw
+        .split(',')
+        .map((origin) => origin.trim())
+        .filter(Boolean)
     : ['http://localhost:4200'];
 
   const port = Number(config.PORT ?? 3000);

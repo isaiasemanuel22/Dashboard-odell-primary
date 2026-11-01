@@ -23,7 +23,9 @@ export class RealtimeService {
     options?: RealtimeNotifyOptions,
   ): void {
     const scopeList = Array.isArray(scopes) ? scopes : [scopes];
-    const unique = scopeList.length ? [...new Set(scopeList)] : (['all'] as RealtimeScope[]);
+    const unique = scopeList.length
+      ? [...new Set(scopeList)]
+      : (['all'] as RealtimeScope[]);
     const at = new Date().toISOString();
     for (const scope of unique) {
       this.pushEvent({
@@ -52,7 +54,10 @@ export class RealtimeService {
   private pushEvent(event: RealtimeEvent): void {
     this.recentEvents.push(event);
     if (this.recentEvents.length > MAX_BUFFERED_EVENTS) {
-      this.recentEvents.splice(0, this.recentEvents.length - MAX_BUFFERED_EVENTS);
+      this.recentEvents.splice(
+        0,
+        this.recentEvents.length - MAX_BUFFERED_EVENTS,
+      );
     }
   }
 }

@@ -120,10 +120,7 @@ export function validateProductComponents(
       products,
     );
 
-    resolveProductColorId(
-      colors,
-      component.colorId,
-    );
+    resolveProductColorId(colors, component.colorId);
   }
 }
 

@@ -98,12 +98,14 @@ export class SalesService {
     }
 
     const merged: CreateRetailSaleDto = {
-      items: data.items ?? current.items.map((item) => ({
-        productId: item.productId,
-        productName: item.productName,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-      })),
+      items:
+        data.items ??
+        current.items.map((item) => ({
+          productId: item.productId,
+          productName: item.productName,
+          quantity: item.quantity,
+          unitPrice: item.unitPrice,
+        })),
       notes: data.notes !== undefined ? data.notes : current.notes,
       soldAt: data.soldAt ?? current.soldAt,
       discountPercent:

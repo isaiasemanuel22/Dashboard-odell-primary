@@ -1,4 +1,9 @@
-import { Injectable, NotFoundException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { Customer } from '../common/interfaces';
 import { assertValidEmail } from '../common/validators/domain.validators';
 import { CustomerRepository } from '../store/repositories/customer.repository';
@@ -24,7 +29,9 @@ export class CustomersService {
     const email = data.email?.trim();
     const phone = data.phone?.trim();
     if (!name || !email || !phone) {
-      throw new BadRequestException('Nombre, email y teléfono son obligatorios');
+      throw new BadRequestException(
+        'Nombre, email y teléfono son obligatorios',
+      );
     }
     assertValidEmail(email);
     if (this.customers.emailExists(email)) {
@@ -58,7 +65,9 @@ export class CustomersService {
     };
 
     if (!updated.name || !updated.email || !updated.phone) {
-      throw new BadRequestException('Nombre, email y teléfono son obligatorios');
+      throw new BadRequestException(
+        'Nombre, email y teléfono son obligatorios',
+      );
     }
     assertValidEmail(updated.email);
     if (this.customers.emailExists(updated.email, id)) {

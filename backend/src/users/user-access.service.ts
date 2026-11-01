@@ -85,7 +85,9 @@ export class UserAccessService {
       throw new BadRequestException('El nombre del área es obligatorio');
     }
 
-    const existing = await this.db().workArea.findMany({ select: { slug: true } });
+    const existing = await this.db().workArea.findMany({
+      select: { slug: true },
+    });
     const slug =
       data.slug?.trim() ||
       buildUniqueAreaSlug(name, new Set(existing.map((row) => row.slug)));
@@ -127,7 +129,9 @@ export class UserAccessService {
     if (data.slug !== undefined) {
       slug = data.slug.trim();
       if (!slug) {
-        throw new BadRequestException('El identificador del área es obligatorio');
+        throw new BadRequestException(
+          'El identificador del área es obligatorio',
+        );
       }
       const duplicate = await this.db().workArea.findFirst({
         where: { slug, NOT: { id } },
@@ -244,7 +248,7 @@ export class UserAccessService {
           description:
             data.description !== undefined
               ? data.description.trim() || null
-              : current.description ?? null,
+              : (current.description ?? null),
           updatedAt: now,
           permissions: {
             create: permissions.map((permission, index) => ({
@@ -351,9 +355,13 @@ export class UserAccessService {
   async updateUser(id: string, data: UpdateAppUserDto): Promise<AppUser> {
     const current = await this.findUser(id);
     const email =
-      data.email !== undefined ? data.email.trim().toLowerCase() : current.email;
+      data.email !== undefined
+        ? data.email.trim().toLowerCase()
+        : current.email;
     const displayName =
-      data.displayName !== undefined ? data.displayName.trim() : current.displayName;
+      data.displayName !== undefined
+        ? data.displayName.trim()
+        : current.displayName;
 
     if (!displayName) {
       throw new BadRequestException('El nombre es obligatorio');
@@ -391,7 +399,7 @@ export class UserAccessService {
           firebaseUid:
             data.firebaseUid !== undefined
               ? data.firebaseUid?.trim() || null
-              : current.firebaseUid ?? null,
+              : (current.firebaseUid ?? null),
           active: data.active ?? current.active,
           updatedAt: now,
           userRoles: {
@@ -489,9 +497,7 @@ export class UserAccessService {
   private async bootstrapFirstAdmin(token: DecodedIdToken): Promise<AppUser> {
     const email = token.email?.trim().toLowerCase();
     const displayName =
-      token.name?.trim() ||
-      email?.split('@')[0] ||
-      'Administrador';
+      token.name?.trim() || email?.split('@')[0] || 'Administrador';
 
     if (!email) {
       throw new BadRequestException(
@@ -508,7 +514,10 @@ export class UserAccessService {
     });
   }
 
-  private async linkFirebaseUid(userId: string, firebaseUid: string): Promise<AppUser> {
+  private async linkFirebaseUid(
+    userId: string,
+    firebaseUid: string,
+  ): Promise<AppUser> {
     await this.assertUniqueFirebaseUid(firebaseUid, userId);
     await this.db().appUser.update({
       where: { id: userId },

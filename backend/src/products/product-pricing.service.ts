@@ -15,10 +15,7 @@ import {
   normalizeEstampadoPrints,
   normalizeEstampadoSupplies,
 } from './estampado-product.util';
-import {
-  normalizeFdmFilaments,
-  resolveFdmFilaments,
-} from './fdm-product.util';
+import { normalizeFdmFilaments, resolveFdmFilaments } from './fdm-product.util';
 import { normalizeProductComponents } from './product-component.util';
 
 @Injectable()

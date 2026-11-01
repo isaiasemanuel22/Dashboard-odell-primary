@@ -18,9 +18,6 @@ export function getMonthRange(reference = new Date()): MonthRange {
   };
 }
 
-export function isDateInMonthRange(
-  date: Date,
-  range: MonthRange,
-): boolean {
+export function isDateInMonthRange(date: Date, range: MonthRange): boolean {
   return date >= range.start && date <= range.end;
 }

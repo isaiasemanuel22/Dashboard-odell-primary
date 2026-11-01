@@ -31,8 +31,12 @@ describe('unpublishedProductFromQuoteLine', () => {
       price: 2500,
       cost: 0,
     });
-    expect(product && 'brand' in product ? product.brand : undefined).toBeUndefined();
-    expect(product && 'brandId' in product ? product.brandId : undefined).toBeUndefined();
+    expect(
+      product && 'brand' in product ? product.brand : undefined,
+    ).toBeUndefined();
+    expect(
+      product && 'brandId' in product ? product.brandId : undefined,
+    ).toBeUndefined();
   });
 
   it('no crea un producto para una línea de diseño', () => {
@@ -84,10 +88,12 @@ describe('unpublishedProductFromQuoteLine', () => {
       published: false,
       price: 8000,
     });
-    expect(product && 'supplies' in product ? product.supplies : []).toHaveLength(
+    expect(
+      product && 'supplies' in product ? product.supplies : [],
+    ).toHaveLength(1);
+    expect(product && 'prints' in product ? product.prints : []).toHaveLength(
       1,
     );
-    expect(product && 'prints' in product ? product.prints : []).toHaveLength(1);
     expect(
       product && 'pressCycles' in product ? product.pressCycles : [],
     ).toHaveLength(1);

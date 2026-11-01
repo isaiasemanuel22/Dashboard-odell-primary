@@ -100,8 +100,6 @@ describe('material-type-price.util', () => {
     });
 
     expect(averageResinPriceByType(settings, ResinType.ESTANDAR)).toBe(35000);
-    expect(resolveResinPricePerLiter(settings, ResinType.ESTANDAR)).toBe(
-      35000,
-    );
+    expect(resolveResinPricePerLiter(settings, ResinType.ESTANDAR)).toBe(35000);
   });
 });

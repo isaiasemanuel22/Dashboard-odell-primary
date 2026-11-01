@@ -4,11 +4,7 @@ import {
   ProductType,
   ServiceType,
 } from '../common/enums';
-import {
-  Order,
-  PrintJob,
-  Product,
-} from '../common/interfaces';
+import { Order, PrintJob, Product } from '../common/interfaces';
 import { ensureOrderStatusHistory } from '../orders/order-status-history.util';
 import { createSeedState } from './store.seed';
 import { StoreState } from './store.state';
@@ -114,11 +110,18 @@ function buildPrintJobs(orders: Order[], run: string): PrintJob[] {
         status,
         active,
         priority: randInt(1, 5),
-        machine: pick(['Bambu P1S', 'Ender 3 V3', 'Saturn 4 Ultra', 'X1 Carbon']),
+        machine: pick([
+          'Bambu P1S',
+          'Ender 3 V3',
+          'Saturn 4 Ultra',
+          'X1 Carbon',
+        ]),
         estimatedHours: randFloat(1.5, 18, 1),
         dueDate: order.dueDate,
         startedAt:
-          status === PrintJobStatus.EN_PROCESO ? daysAgo(randInt(0, 3)) : undefined,
+          status === PrintJobStatus.EN_PROCESO
+            ? daysAgo(randInt(0, 3))
+            : undefined,
       });
     });
   }
@@ -126,7 +129,11 @@ function buildPrintJobs(orders: Order[], run: string): PrintJob[] {
   return jobs;
 }
 
-function addExtraCustomers(state: StoreState, run: string, startIndex: number): void {
+function addExtraCustomers(
+  state: StoreState,
+  run: string,
+  startIndex: number,
+): void {
   const extra = randInt(2, 4);
   for (let i = 0; i < extra; i++) {
     const first = pick(FIRST_NAMES);
@@ -145,7 +152,11 @@ function addExtraCustomers(state: StoreState, run: string, startIndex: number): 
   }
 }
 
-function addExtraOrders(state: StoreState, run: string, startIndex: number): void {
+function addExtraOrders(
+  state: StoreState,
+  run: string,
+  startIndex: number,
+): void {
   const products = state.products.filter((p) => p.published);
   if (!products.length || !state.customers.length) return;
 
@@ -271,7 +282,7 @@ export function createRandomSeedState(): StoreState {
       ...order,
       id: nextId(order.id, 'ord'),
       customerId: order.customerId
-        ? customerIdMap.get(order.customerId) ?? order.customerId
+        ? (customerIdMap.get(order.customerId) ?? order.customerId)
         : null,
       total: jitter(order.total, 0.1),
       createdAt: daysAgo(randInt(1, 60)),
@@ -279,7 +290,7 @@ export function createRandomSeedState(): StoreState {
       items: order.items.map((item) => ({
         ...item,
         productId: item.productId
-          ? productIdMap.get(item.productId) ?? item.productId
+          ? (productIdMap.get(item.productId) ?? item.productId)
           : undefined,
         unitPrice: jitter(item.unitPrice, 0.08),
         quantity: Math.max(1, item.quantity + randInt(-1, 2)),
@@ -332,7 +343,7 @@ export function createRandomSeedState(): StoreState {
       ...profile,
       id: nextId(profile.id, 'mp'),
       washSupplyId: profile.washSupplyId
-        ? supplyIdMap.get(profile.washSupplyId) ?? profile.washSupplyId
+        ? (supplyIdMap.get(profile.washSupplyId) ?? profile.washSupplyId)
         : profile.washSupplyId,
     })),
     filamentPrices: base.generalSettings.filamentPrices.map((entry) => ({
@@ -369,7 +380,7 @@ export function createRandomSeedState(): StoreState {
       const items = sale.items.map((item) => ({
         ...item,
         productId: item.productId
-          ? productIdMap.get(item.productId) ?? item.productId
+          ? (productIdMap.get(item.productId) ?? item.productId)
           : undefined,
         quantity: Math.max(1, item.quantity + randInt(-1, 1)),
         unitPrice: jitter(item.unitPrice, 0.1),

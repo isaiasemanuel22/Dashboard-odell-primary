@@ -44,7 +44,6 @@ export function sortStatusHistoryNewestFirst(
   history: OrderStatusHistoryEntry[],
 ): OrderStatusHistoryEntry[] {
   return [...history].sort(
-    (a, b) =>
-      new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime(),
+    (a, b) => new Date(b.changedAt).getTime() - new Date(a.changedAt).getTime(),
   );
 }

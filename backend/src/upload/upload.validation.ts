@@ -1,21 +1,18 @@
 import { readFileSync } from 'fs';
 import { extname } from 'path';
 
-const IMAGE_SIGNATURES: Array<{ mime: string; bytes: number[]; offset?: number }> =
-  [
-    { mime: 'image/jpeg', bytes: [0xff, 0xd8, 0xff] },
-    { mime: 'image/png', bytes: [0x89, 0x50, 0x4e, 0x47] },
-    { mime: 'image/gif', bytes: [0x47, 0x49, 0x46] },
-    { mime: 'image/webp', bytes: [0x52, 0x49, 0x46, 0x46], offset: 0 },
-  ];
+const IMAGE_SIGNATURES: Array<{
+  mime: string;
+  bytes: number[];
+  offset?: number;
+}> = [
+  { mime: 'image/jpeg', bytes: [0xff, 0xd8, 0xff] },
+  { mime: 'image/png', bytes: [0x89, 0x50, 0x4e, 0x47] },
+  { mime: 'image/gif', bytes: [0x47, 0x49, 0x46] },
+  { mime: 'image/webp', bytes: [0x52, 0x49, 0x46, 0x46], offset: 0 },
+];
 
-const ALLOWED_EXTENSIONS = new Set([
-  '.jpg',
-  '.jpeg',
-  '.png',
-  '.gif',
-  '.webp',
-]);
+const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp']);
 
 export function isAllowedImageExtension(filename: string): boolean {
   const extension = extname(filename).toLowerCase();
@@ -33,10 +30,7 @@ export function detectImageMime(buffer: Buffer): string | null {
     if (matches) return signature.mime;
   }
 
-  if (
-    buffer.length >= 12 &&
-    buffer.toString('ascii', 8, 12) === 'WEBP'
-  ) {
+  if (buffer.length >= 12 && buffer.toString('ascii', 8, 12) === 'WEBP') {
     return 'image/webp';
   }
 

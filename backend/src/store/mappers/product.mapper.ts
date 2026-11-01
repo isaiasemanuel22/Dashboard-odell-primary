@@ -103,7 +103,9 @@ export function mapProductFromDb(row: {
         legacy,
       ),
       pressCycles: normalizeEstampadoPressCycles(
-        fromJson<ProductEstampado['pressCycles']>(row.estampadoPressCycles ?? []),
+        fromJson<ProductEstampado['pressCycles']>(
+          row.estampadoPressCycles ?? [],
+        ),
         row.pressMinutes ?? undefined,
       ),
       supplies: normalizeEstampadoSupplies(
@@ -133,7 +135,9 @@ export function mapProductFromDb(row: {
 
 export function mapProductToDb(product: Product) {
   const estampado =
-    product.type === ProductType.ESTAMPADO ? (product as ProductEstampado) : null;
+    product.type === ProductType.ESTAMPADO
+      ? (product as ProductEstampado)
+      : null;
   const product3d =
     product.type === ProductType.FDM || product.type === ProductType.RESINA
       ? (product as Product3D)
@@ -163,7 +167,9 @@ export function mapProductToDb(product: Product) {
     size: product.size,
     published: product.published !== false,
     includesPieces:
-      isCombo || product.includesPieces === true || product.components.length > 0,
+      isCombo ||
+      product.includesPieces === true ||
+      product.components.length > 0,
     components: toInputJson(product.components),
     assemblyTimeHours: product.assemblyTimeHours,
     grams:
@@ -179,13 +185,19 @@ export function mapProductToDb(product: Product) {
     brandId:
       !isCombo && 'brandId' in product ? (product.brandId ?? null) : null,
     filamentType:
-      !isCombo && 'filamentType' in product ? (product.filamentType ?? null) : null,
+      !isCombo && 'filamentType' in product
+        ? (product.filamentType ?? null)
+        : null,
     resinType:
       !isCombo && 'resinType' in product ? (product.resinType ?? null) : null,
     washMinutes:
-      !isCombo && 'washMinutes' in product ? (product.washMinutes ?? null) : null,
+      !isCombo && 'washMinutes' in product
+        ? (product.washMinutes ?? null)
+        : null,
     cureMinutes:
-      !isCombo && 'cureMinutes' in product ? (product.cureMinutes ?? null) : null,
+      !isCombo && 'cureMinutes' in product
+        ? (product.cureMinutes ?? null)
+        : null,
     pressMinutes: null,
     paperType: null,
     impresoId: null,

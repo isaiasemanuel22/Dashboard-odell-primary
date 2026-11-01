@@ -80,7 +80,8 @@ export function mapOrderItemFromDb(item: {
         ? Number(item.unitCost)
         : undefined,
     includesPrint: item.includesPrint ?? undefined,
-    printPaperType: (item.printPaperType as OrderItem['printPaperType']) ?? undefined,
+    printPaperType:
+      (item.printPaperType as OrderItem['printPaperType']) ?? undefined,
     printWidthCm: item.printWidthCm ?? undefined,
     printLengthCm: item.printLengthCm ?? undefined,
     printImpresoId: item.printImpresoId ?? undefined,
@@ -118,8 +119,7 @@ export function mapOrderItemFromDb(item: {
     reservedQuantity: item.reservedQuantity ?? 0,
     productionRequiredQuantity: item.productionRequiredQuantity ?? 0,
     producedQuantity: item.producedQuantity ?? 0,
-    deliveredFromProductionQuantity:
-      item.deliveredFromProductionQuantity ?? 0,
+    deliveredFromProductionQuantity: item.deliveredFromProductionQuantity ?? 0,
   };
 }
 
@@ -197,18 +197,26 @@ function mapOrderScalarsToDb(order: Order) {
 }
 
 /** Usa campos escalares (unchecked) para evitar ambigüedad con relaciones en upsert. */
-export function mapOrderToDbCreate(order: Order): Prisma.OrderUncheckedCreateInput {
+export function mapOrderToDbCreate(
+  order: Order,
+): Prisma.OrderUncheckedCreateInput {
   return {
     id: order.id,
     ...mapOrderScalarsToDb(order),
   };
 }
 
-export function mapOrderToDbUpdate(order: Order): Prisma.OrderUncheckedUpdateInput {
+export function mapOrderToDbUpdate(
+  order: Order,
+): Prisma.OrderUncheckedUpdateInput {
   return mapOrderScalarsToDb(order);
 }
 
-export function mapOrderItemToDb(orderId: string, index: number, item: OrderItem) {
+export function mapOrderItemToDb(
+  orderId: string,
+  index: number,
+  item: OrderItem,
+) {
   const filaments = normalizeFdmFilaments(item.filaments, {
     grams: item.grams,
     filamentType: item.filamentType,
@@ -258,7 +266,6 @@ export function mapOrderItemToDb(orderId: string, index: number, item: OrderItem
     reservedQuantity: item.reservedQuantity ?? 0,
     productionRequiredQuantity: item.productionRequiredQuantity ?? 0,
     producedQuantity: item.producedQuantity ?? 0,
-    deliveredFromProductionQuantity:
-      item.deliveredFromProductionQuantity ?? 0,
+    deliveredFromProductionQuantity: item.deliveredFromProductionQuantity ?? 0,
   };
 }

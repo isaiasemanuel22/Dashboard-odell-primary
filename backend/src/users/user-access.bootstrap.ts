@@ -10,7 +10,12 @@ import { slugifyAreaName } from './user-access.util';
 export const ADMIN_ROLE_ID = 'role-admin';
 
 export const DEFAULT_WORK_AREAS = [
-  { id: 'area-sublimacion', name: 'Sublimación', slug: 'sublimacion', sortOrder: 1 },
+  {
+    id: 'area-sublimacion',
+    name: 'Sublimación',
+    slug: 'sublimacion',
+    sortOrder: 1,
+  },
   { id: 'area-3d', name: '3D', slug: '3d', sortOrder: 2 },
   { id: 'area-grabado', name: 'Grabado', slug: 'grabado', sortOrder: 3 },
   { id: 'area-diseno', name: 'Diseño', slug: 'diseno', sortOrder: 4 },
@@ -106,10 +111,7 @@ export class UserAccessBootstrapService implements OnModuleInit {
   }
 }
 
-export function buildUniqueAreaSlug(
-  name: string,
-  taken: Set<string>,
-): string {
+export function buildUniqueAreaSlug(name: string, taken: Set<string>): string {
   const base = slugifyAreaName(name) || 'area';
   if (!taken.has(base)) return base;
 

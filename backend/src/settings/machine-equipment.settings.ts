@@ -6,7 +6,10 @@ import {
   MachineProfile,
   PowerConsumptionConfig,
 } from '../common/interfaces';
-import { ensureMachineProfiles, normalizeMachineProfiles } from './machine-profile.util';
+import {
+  ensureMachineProfiles,
+  normalizeMachineProfiles,
+} from './machine-profile.util';
 
 export function addMachineProfile(
   settings: GeneralSettings,
@@ -74,9 +77,7 @@ export function removeMachineProfile(
     throw new NotFoundException('Perfil de máquina no encontrado');
   }
 
-  settings.machineProfiles = profiles.filter(
-    (profile) => profile.id !== id,
-  );
+  settings.machineProfiles = profiles.filter((profile) => profile.id !== id);
   onChange();
 }
 
@@ -104,9 +105,7 @@ export function updatePowerConsumption(
   if (data.watts !== undefined) {
     assertNonNegativeNumber(data.watts, 'watts');
   }
-  const index = settings.powerConsumptions.findIndex(
-    (p) => p.id === id,
-  );
+  const index = settings.powerConsumptions.findIndex((p) => p.id === id);
   if (index === -1) {
     throw new NotFoundException('Consumo eléctrico no encontrado');
   }
@@ -123,8 +122,9 @@ export function removePowerConsumption(
   id: string,
   onChange: () => void,
 ): void {
-  settings.powerConsumptions =
-    settings.powerConsumptions.filter((p) => p.id !== id);
+  settings.powerConsumptions = settings.powerConsumptions.filter(
+    (p) => p.id !== id,
+  );
   onChange();
 }
 
@@ -152,9 +152,7 @@ export function updateMachineCost(
   if (data.costPerHour !== undefined) {
     assertNonNegativeNumber(data.costPerHour, 'costPerHour');
   }
-  const index = settings.machineCosts.findIndex(
-    (m) => m.id === id,
-  );
+  const index = settings.machineCosts.findIndex((m) => m.id === id);
   if (index === -1) {
     throw new NotFoundException('Costo de máquina no encontrado');
   }
@@ -171,7 +169,6 @@ export function removeMachineCost(
   id: string,
   onChange: () => void,
 ): void {
-  settings.machineCosts =
-    settings.machineCosts.filter((m) => m.id !== id);
+  settings.machineCosts = settings.machineCosts.filter((m) => m.id !== id);
   onChange();
 }

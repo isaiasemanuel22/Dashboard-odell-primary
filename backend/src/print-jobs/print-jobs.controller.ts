@@ -1,9 +1,14 @@
-import { Body, Controller, Get, Param, Patch, Query, Req } from '@nestjs/common';
-import type { Request } from 'express';
 import {
-  UpdatePrintJobDto,
-  UpdatePrintJobStatusDto,
-} from '../common/dto';
+  Body,
+  Controller,
+  Get,
+  Param,
+  Patch,
+  Query,
+  Req,
+} from '@nestjs/common';
+import type { Request } from 'express';
+import { UpdatePrintJobDto, UpdatePrintJobStatusDto } from '../common/dto';
 import { PrintJobsService } from './print-jobs.service';
 
 @Controller('print-jobs')

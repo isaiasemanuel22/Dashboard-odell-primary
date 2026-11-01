@@ -29,9 +29,7 @@ export class CategoriesService {
       throw new BadRequestException('El nombre es obligatorio');
     }
     if (!data.productTypes?.length) {
-      throw new BadRequestException(
-        'Seleccioná al menos un tipo de producto',
-      );
+      throw new BadRequestException('Seleccioná al menos un tipo de producto');
     }
     if (this.categories.nameExists(name)) {
       throw new BadRequestException('Ya existe una categoría con ese nombre');

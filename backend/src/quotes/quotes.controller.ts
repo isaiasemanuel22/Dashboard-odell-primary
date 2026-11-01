@@ -39,10 +39,7 @@ export class QuotesController {
   }
 
   @Patch(':id/status')
-  updateStatus(
-    @Param('id') id: string,
-    @Body() body: UpdateQuoteStatusDto,
-  ) {
+  updateStatus(@Param('id') id: string, @Body() body: UpdateQuoteStatusDto) {
     return this.quotesService.updateStatus(id, body.status);
   }
 

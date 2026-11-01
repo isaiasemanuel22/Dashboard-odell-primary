@@ -72,8 +72,7 @@ describe('CostCalculatorService', () => {
       filamentType: 'pla' as never,
     });
 
-    const base =
-      result.materialCost + result.energyCost + result.machineCost;
+    const base = result.materialCost + result.energyCost + result.machineCost;
     expect(result.errorMarginCost).toBe(Math.round(base * 0.1));
     expect(result.totalCost).toBe(
       base + result.errorMarginCost + result.laborCost,
@@ -134,9 +133,7 @@ describe('CostCalculatorService', () => {
   it('suma minutos de plancha según cantidad de bajadas', () => {
     const result = service.calculateCost({
       type: ProductType.ESTAMPADO,
-      estampadoPressCycles: [
-        { id: 'c1', pressMinutes: 2, bajadas: 3 },
-      ],
+      estampadoPressCycles: [{ id: 'c1', pressMinutes: 2, bajadas: 3 }],
       workTimeHours: 0,
     });
 
