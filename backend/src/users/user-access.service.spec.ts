@@ -1,5 +1,6 @@
 import { ForbiddenException } from '@nestjs/common';
 import { DecodedIdToken } from 'firebase-admin/auth';
+import { AppConfigService } from '../config/app-config.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { UserAccessBootstrapService } from './user-access.bootstrap';
 import { UserAccessService } from './user-access.service';
@@ -145,5 +146,94 @@ describe('UserAccessService.resolveCurrentUser cache', () => {
     await expect(service.resolveCurrentUser(token)).rejects.toBeInstanceOf(
       ForbiddenException,
     );
+  });
+});
+
+describe('UserAccessService administrador por ADMIN_EMAIL', () => {
+  const adminRow = {
+    id: 'user-admin',
+    email: 'dueno@test.com',
+    displayName: 'Dueño',
+    firebaseUid: 'firebase-dueno',
+    active: true,
+    roleIds: ['role-admin'],
+    permissionOverrides: [],
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  };
+
+  function build(found: Partial<typeof adminRow> | null) {
+    const prismaService = {
+      isConfigured: () => true,
+      prisma: { appRole: { findMany: jest.fn().mockResolvedValue([]) } },
+    } as unknown as PrismaService;
+    const bootstrap = {
+      syncDefaults: jest.fn().mockResolvedValue(undefined),
+    } as unknown as UserAccessBootstrapService;
+    const config = { adminEmail: 'dueno@test.com' } as AppConfigService;
+    const service = new UserAccessService(prismaService, bootstrap, config);
+
+    const internals = service as unknown as {
+      findUserByFirebaseUid: jest.Mock;
+      findUserByEmail: jest.Mock;
+    };
+    internals.findUserByFirebaseUid = jest.fn().mockResolvedValue(null);
+    internals.findUserByEmail = jest
+      .fn()
+      .mockResolvedValue(found ? { ...adminRow, ...found } : null);
+    const createUser = jest
+      .spyOn(service, 'createUser')
+      .mockResolvedValue(adminRow);
+    const updateUser = jest
+      .spyOn(service, 'updateUser')
+      .mockResolvedValue(adminRow);
+    return { service, createUser, updateUser, internals };
+  }
+
+  const dueno = (verified: boolean) =>
+    ({
+      uid: 'firebase-dueno',
+      email: 'Dueno@Test.com',
+      email_verified: verified,
+    }) as unknown as DecodedIdToken;
+
+  it('crea al administrador si no existe', async () => {
+    const { service, createUser } = build(null);
+
+    const profile = await service.resolveCurrentUser(dueno(true));
+
+    expect(createUser).toHaveBeenCalledWith(
+      expect.objectContaining({
+        email: 'dueno@test.com',
+        roleIds: ['role-admin'],
+        active: true,
+      }),
+    );
+    expect(profile?.id).toBe('user-admin');
+  });
+
+  it('reactiva y devuelve el rol de admin si lo había perdido', async () => {
+    const { service, updateUser } = build({
+      active: false,
+      roleIds: ['role-op'],
+    });
+
+    await service.resolveCurrentUser(dueno(true));
+
+    expect(updateUser).toHaveBeenCalledWith('user-admin', {
+      active: true,
+      roleIds: ['role-op', 'role-admin'],
+    });
+  });
+
+  it('con el email sin verificar no lo trata como administrador', async () => {
+    const { service, createUser, updateUser, internals } = build(null);
+
+    const profile = await service.resolveCurrentUser(dueno(false));
+
+    expect(profile).toBeNull();
+    expect(createUser).not.toHaveBeenCalled();
+    expect(updateUser).not.toHaveBeenCalled();
+    expect(internals.findUserByEmail).not.toHaveBeenCalled();
   });
 });

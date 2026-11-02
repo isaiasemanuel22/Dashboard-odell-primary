@@ -12,6 +12,7 @@ export interface AppEnv {
   REQUIRE_AUTH: boolean;
   /** Código para POST /settings/reset-database. Si falta, el reseteo queda deshabilitado. */
   DATABASE_RESET_CODE?: string;
+  ADMIN_EMAIL?: string;
 }
 
 export function validateEnv(
@@ -59,6 +60,7 @@ export function validateEnv(
     REQUIRE_DATABASE: parseBoolean(config.REQUIRE_DATABASE, isProd),
     REQUIRE_AUTH: parseBoolean(config.REQUIRE_AUTH, isProd),
     DATABASE_RESET_CODE: optionalString(config.DATABASE_RESET_CODE),
+    ADMIN_EMAIL: optionalString(config.ADMIN_EMAIL),
   };
 }
 

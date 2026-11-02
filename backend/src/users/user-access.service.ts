@@ -7,6 +7,7 @@ import {
   ServiceUnavailableException,
 } from '@nestjs/common';
 import { DecodedIdToken } from 'firebase-admin/auth';
+import { AppConfigService } from '../config/app-config.service';
 import {
   CreateAppRoleDto,
   CreateAppUserDto,
@@ -60,6 +61,7 @@ export class UserAccessService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly bootstrap: UserAccessBootstrapService,
+    private readonly config?: AppConfigService,
   ) {}
 
   private db() {
@@ -462,7 +464,11 @@ export class UserAccessService {
       const verifiedEmail =
         token.email_verified === true ? token.email?.toLowerCase() : undefined;
 
-      let user = await this.findUserByFirebaseUid(token.uid);
+      const adminEmail = this.config?.adminEmail;
+      let user =
+        verifiedEmail && adminEmail && verifiedEmail === adminEmail
+          ? await this.ensureConfiguredAdmin(token, verifiedEmail)
+          : await this.findUserByFirebaseUid(token.uid);
       if (!user && verifiedEmail) {
         const byEmail = await this.findUserByEmail(verifiedEmail);
         // Un usuario ya vinculado a otra cuenta de Firebase no se re-vincula.
@@ -543,12 +549,52 @@ export class UserAccessService {
     return message.includes('does not exist');
   }
 
-  private async bootstrapFirstAdmin(token: DecodedIdToken): Promise<AppUser> {
-    const email = token.email?.trim().toLowerCase();
-    const displayName =
+  /**
+   * El email de ADMIN_EMAIL (verificado por Firebase) siempre entra como
+   * administrador activo: se crea si no existe y se le restituye el rol si lo
+   * perdió. Así el dueño nunca queda afuera, sin depender del orden de login.
+   */
+  private async ensureConfiguredAdmin(
+    token: DecodedIdToken,
+    email: string,
+  ): Promise<AppUser> {
+    await this.bootstrap.syncDefaults();
+
+    const existing =
+      (await this.findUserByFirebaseUid(token.uid)) ??
+      (await this.findUserByEmail(email));
+
+    if (!existing) {
+      return this.createUser({
+        email,
+        displayName: this.displayNameFromToken(token, email),
+        firebaseUid: token.uid,
+        roleIds: [ADMIN_ROLE_ID],
+        active: true,
+      });
+    }
+
+    if (existing.active && existing.roleIds.includes(ADMIN_ROLE_ID)) {
+      return existing;
+    }
+
+    return this.updateUser(existing.id, {
+      active: true,
+      roleIds: [...new Set([...existing.roleIds, ADMIN_ROLE_ID])],
+    });
+  }
+
+  private displayNameFromToken(token: DecodedIdToken, email?: string): string {
+    return (
       (token.name as string | undefined)?.trim() ||
       email?.split('@')[0] ||
-      'Administrador';
+      'Administrador'
+    );
+  }
+
+  private async bootstrapFirstAdmin(token: DecodedIdToken): Promise<AppUser> {
+    const email = token.email?.trim().toLowerCase();
+    const displayName = this.displayNameFromToken(token, email);
 
     if (!email) {
       throw new BadRequestException(

@@ -53,4 +53,12 @@ export class AppConfigService {
   get databaseResetCode(): string | undefined {
     return this.config.get('DATABASE_RESET_CODE', { infer: true });
   }
+
+  /** Email que siempre entra como administrador (en minúsculas). */
+  get adminEmail(): string | undefined {
+    return (
+      this.config.get('ADMIN_EMAIL', { infer: true })?.trim().toLowerCase() ||
+      undefined
+    );
+  }
 }
