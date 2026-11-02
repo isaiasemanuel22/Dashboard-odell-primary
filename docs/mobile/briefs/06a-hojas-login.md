@@ -1,9 +1,8 @@
 Leé primero docs/mobile/reglas-implementacion.md y seguilo al pie de la letra (rediseño mobile ≤768px de Odell; desktop no cambia). Ya hay pantallas migradas como referencia (ver ese archivo).
 
-Tarea: hojas de acción, Login y Ajustes mobile.
+Tarea: hojas de acción y Login mobile.
 1. Registrar pago (docs/mobile/artboards/MobRegistrarPago.dc.html) y Entregar (MobEntregar.dc.html): hoy son formularios inline en pages/orders/order-detail/order-detail-payments y order-detail-deliveries, y el detalle mobile los abre en un acordeón. En mobile, convertilos en hojas inferiores (con manija, título, campos de 48px, medio de pago en 3 botones, pie fijo con el botón primario) que se abren desde la barra de acciones del detalle; reusá exactamente la misma lógica y validaciones (podés montar el mismo subcomponente dentro de la hoja). Usá LayoutUiService.pushOverlay.
 2. Billetera: registro y transferencia (MobTransferir.dc.html): los formularios de pages/wallet/components (wallet-record-form, wallet-transfer-form, wallet-repayment-form, wallet-void-form) en mobile como hojas inferiores con el mismo estilo; misma lógica.
 3. Login (pages/login, MobLogin.dc.html): versión mobile según el artboard, mismo flujo de autenticación.
-4. Ajustes (/ajustes y sus hijas: valores-generales, filamento, resina, colores, impresos, ganancias, usuarios/roles/areas; pages/settings/**) → MobAjustes.dc.html (índice en filas con ícono, título y resumen que lleva a cada subpantalla; en mobile /ajustes muestra ese índice en lugar de redirigir a la primera) y MobAjustesGeneral, MobAjustesMateriales (patrón para filamento y resina), MobAjustesColores, MobAjustesImpresos, MobAjustesGanancias, MobAjustesUsuarios: cada subpantalla con db-mobile-bar (volver a /ajustes) y sus formularios/tablas convertidos a tarjetas y filas usables a 390px, con un botón Guardar fijo abajo donde hoy haya guardar. El menú lateral de ajustes (settings-layout) se oculta en mobile. Misma lógica, mismos servicios; el reseteo de base y lo que sea solo admin sigue igual.
 
 Criterio: el de reglas-implementacion.md. Respondé con archivos tocados, decisiones y lo que quede pendiente.

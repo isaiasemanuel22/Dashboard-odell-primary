@@ -5,12 +5,45 @@
 }
 
 @include mobile.mobile-only {
+  :host .modal-backdrop {
+    align-items: flex-end;
+    justify-content: stretch;
+    padding: 0;
+    background: rgba(15, 42, 58, 0.45);
+  }
+
   :host .modal {
     display: flex;
     flex-direction: column;
+    width: 100%;
+    max-width: none;
     max-height: 92vh;
     min-height: 0;
     overflow: hidden;
+    border-radius: mobile.$m-radius-lg mobile.$m-radius-lg 0 0;
+    box-shadow: 0 -12px 32px rgba(15, 42, 58, 0.2);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+
+    &::before {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 4px;
+      border-radius: 999px;
+      background: mobile.$m-border-input;
+      margin: 10px auto 2px;
+      flex: none;
+    }
+  }
+
+  :host .modal__header {
+    padding: 6px 16px 8px;
+    border-bottom: 0;
+    align-items: center;
+
+    h3 {
+      font-size: 18px;
+    }
   }
 
   :host .modal__body {
@@ -19,5 +52,6 @@
     overflow-y: auto;
     display: flex;
     flex-direction: column;
+    padding: 4px 16px 0;
   }
 }

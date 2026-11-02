@@ -1,48 +1,140 @@
-<section class="panel" id="order-deliveries">
-  <h3>Entregas</h3>
-  @if (order.status !== 'cancelado' && order.status !== 'entregado') {
-    <div class="delivery-form">
+@if (presentation === 'sheet') {
+  <div class="od-del-sheet">
+    <span class="od-del-sheet__hint">
+      Elegí cuánto entregás de cada producto. Lo que falte queda pendiente.
+    </span>
+
+    <div class="m-card m-card--flush od-del-sheet__list">
       @for (item of order.items; track $index; let itemIndex = $index) {
         @if (itemPending(item) > 0) {
-          <db-input
-            [label]="item.productName + ' (máx. ' + itemDeliverableMax(item, itemIndex) + ')'"
-            type="number"
-            [(ngModel)]="deliveryDraft[itemIndex]"
-            [name]="'delivery-' + itemIndex"
-            [min]="0"
-            step="1"
-          />
+          @let max = itemDeliverableMax(item, itemIndex);
+          <div
+            class="od-del-sheet__row"
+            [class.od-del-sheet__row--disabled]="max <= 0"
+          >
+            <div class="od-del-sheet__t">
+              <b>{{ item.productName }}</b>
+              <span>
+                @if (max <= 0) {
+                  Todavía en producción
+                } @else {
+                  Listo {{ max }} de {{ itemPending(item) }}
+                }
+              </span>
+            </div>
+            <div
+              class="od-del-sheet__step"
+              role="group"
+              [attr.aria-label]="'Cantidad a entregar de ' + item.productName"
+            >
+              <button
+                type="button"
+                aria-label="Restar uno"
+                [disabled]="max <= 0 || (deliveryDraft[itemIndex] || 0) <= 0"
+                (click)="stepDelivery(itemIndex, -1)"
+              >
+                −
+              </button>
+              <span>{{ deliveryDraft[itemIndex] || 0 }}</span>
+              <button
+                type="button"
+                aria-label="Sumar uno"
+                [disabled]="max <= 0 || (deliveryDraft[itemIndex] || 0) >= max"
+                (click)="stepDelivery(itemIndex, 1)"
+              >
+                +
+              </button>
+            </div>
+          </div>
         }
       }
-      @if (nothingReadyToDeliver) {
-        <p class="empty-group">
-          Todavía no hay unidades listas para entregar. Se habilita cuando la
-          producción avance o haya stock.
-        </p>
-      }
-      @if (deliveryError) {
-        <p class="order-payments__error" role="alert">{{ deliveryError }}</p>
-      }
+    </div>
+
+    @if (nothingReadyToDeliver) {
+      <p class="empty-group">
+        Todavía no hay unidades listas para entregar. Se habilita cuando la
+        producción avance o haya stock.
+      </p>
+    }
+
+    @if (unpaidBalance > 0) {
+      <div class="od-del-sheet__note" role="status">
+        Queda un saldo de {{ unpaidBalance | currencyArs }}. Podés entregar igual:
+        se anota como deuda del cliente.
+      </div>
       <db-button
-        [label]="deliveryLoading ? 'Registrando...' : 'Registrar entrega'"
+        label="Cobrar antes de entregar"
+        variant="secondary"
+        format="soft"
+        (clicked)="chargeBefore.emit()"
+      />
+    }
+
+    @if (deliveryError) {
+      <p class="order-payments__error" role="alert">{{ deliveryError }}</p>
+    }
+
+    <div class="od-del-sheet__foot">
+      <db-button
+        [label]="
+          deliveryLoading
+            ? 'Registrando...'
+            : deliveryUnitsLabel
+        "
         variant="primary"
         format="solid"
         [disabled]="!canRegisterDelivery"
         (clicked)="registerDelivery()"
       />
     </div>
-  }
-  @if (deliveries.length) {
-    <ul class="delivery-list">
-      @for (delivery of deliveries; track delivery.id) {
-        <li>
-          <strong>{{ delivery.deliveredAt | dateTime }}</strong>
-          <span>{{ delivery.items.length }} línea(s)</span>
-          @if (delivery.notes) { <span>{{ delivery.notes }}</span> }
-        </li>
-      }
-    </ul>
-  } @else {
-    <p class="empty-group">Todavía no se registraron entregas.</p>
-  }
-</section>
+  </div>
+} @else {
+  <section class="panel" id="order-deliveries">
+    <h3>Entregas</h3>
+    @if (presentation === 'full' && order.status !== 'cancelado' && order.status !== 'entregado') {
+      <div class="delivery-form">
+        @for (item of order.items; track $index; let itemIndex = $index) {
+          @if (itemPending(item) > 0) {
+            <db-input
+              [label]="item.productName + ' (máx. ' + itemDeliverableMax(item, itemIndex) + ')'"
+              type="number"
+              [(ngModel)]="deliveryDraft[itemIndex]"
+              [name]="'delivery-' + itemIndex"
+              [min]="0"
+              step="1"
+            />
+          }
+        }
+        @if (nothingReadyToDeliver) {
+          <p class="empty-group">
+            Todavía no hay unidades listas para entregar. Se habilita cuando la
+            producción avance o haya stock.
+          </p>
+        }
+        @if (deliveryError) {
+          <p class="order-payments__error" role="alert">{{ deliveryError }}</p>
+        }
+        <db-button
+          [label]="deliveryLoading ? 'Registrando...' : 'Registrar entrega'"
+          variant="primary"
+          format="solid"
+          [disabled]="!canRegisterDelivery"
+          (clicked)="registerDelivery()"
+        />
+      </div>
+    }
+    @if (deliveries.length) {
+      <ul class="delivery-list">
+        @for (delivery of deliveries; track delivery.id) {
+          <li>
+            <strong>{{ delivery.deliveredAt | dateTime }}</strong>
+            <span>{{ delivery.items.length }} línea(s)</span>
+            @if (delivery.notes) { <span>{{ delivery.notes }}</span> }
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="empty-group">Todavía no se registraron entregas.</p>
+    }
+  </section>
+}

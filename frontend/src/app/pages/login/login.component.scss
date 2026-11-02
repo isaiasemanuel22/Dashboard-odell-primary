@@ -1,6 +1,12 @@
 @use '../../shared/styles/variables' as *;
+@use '../../shared/styles/mobile' as mobile;
 
 .login-page {
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+.login-page__desktop {
   min-height: 100vh;
   display: grid;
   place-items: center;
@@ -49,7 +55,8 @@
     padding: 0.75rem 0.85rem;
     border: 1px solid $color-border-input;
     border-radius: $radius-sm;
-    font: inherit;
+    font-family: inherit;
+    font-size: inherit;
 
     &:disabled {
       opacity: 0.7;
@@ -95,5 +102,95 @@
 
   code {
     font-size: 0.82rem;
+  }
+}
+
+@include mobile.mobile-only {
+  .login-m {
+    min-height: 100vh;
+    min-height: 100dvh;
+    background: #0f2a3a;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+  }
+
+  .login-m__hero {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #fff;
+    padding: 24px 16px;
+  }
+
+  .login-m__mark {
+    width: 72px;
+    height: 72px;
+    border-radius: 22px;
+    background: #0e7aab;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 34px;
+    font-weight: 700;
+  }
+
+  .login-m__name {
+    font-size: 26px;
+    font-weight: 700;
+  }
+
+  .login-m__tagline {
+    font-size: 14px;
+    color: #b9ccd9;
+  }
+
+  .login-m__panel {
+    background: #fff;
+    border-radius: 24px 24px 0 0;
+    padding: 24px 16px calc(28px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .login-m__divider {
+    margin: 0;
+  }
+
+  .login-m__form {
+    gap: 14px;
+
+    ::ng-deep {
+      input.db-input:not([type='checkbox']):not([type='radio']) {
+        min-height: 48px;
+        box-sizing: border-box;
+      }
+
+      .login-m__submit,
+      .db-button.login-m__submit {
+        min-height: 52px;
+      }
+    }
+  }
+
+  .login-m__note {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #fff5f5;
+    border: 1px solid #f3b4b4;
+    font-size: 12px;
+    color: #8a1c1c;
+  }
+
+  .login-m__panel ::ng-deep .db-button--google,
+  .login-m__panel ::ng-deep .db-button.db-button--google {
+    min-height: 52px;
   }
 }

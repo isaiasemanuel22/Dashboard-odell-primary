@@ -1,90 +1,163 @@
-<section class="panel" id="order-payments">
-  <h3>Pagos</h3>
-  <dl class="detail-list">
-    <div>
-      <dt>Importe pagado</dt>
-      <dd>{{ paidAmount | currencyArs }}</dd>
+@if (presentation === 'sheet') {
+  <div class="od-pay-sheet">
+    <div class="od-pay-sheet__ln">
+      <span class="od-pay-sheet__hint">Saldo pendiente</span>
+      <b class="od-pay-sheet__num">{{ balanceAmount | currencyArs }}</b>
     </div>
-    <div>
-      <dt>Saldo</dt>
-      <dd>{{ balanceAmount | currencyArs }}</dd>
-    </div>
-    <div>
-      <dt>Estado de pago</dt>
-      <dd>{{ paymentStatusLabel }}</dd>
-    </div>
-  </dl>
-  @if (order.payments?.length) {
-    <ul class="order-payments">
-      @for (payment of order.payments; track payment.id) {
-        <li>
-          <span class="order-payments__amount">{{ payment.amount | currencyArs }}</span>
-          @if (payment.deposit) {
-            <span> · seña</span>
-          }
-          <span> · {{ paymentMethodLabel(payment.method) || 'Efectivo' }}</span>
-          <span> · {{ treasuryAccountLabel(payment.account) || 'Caja efectivo' }}</span>
-          @if (payment.fee && payment.fee > 0) {
-            <span> · comisión {{ payment.fee | currencyArs }}</span>
-          }
-          <span class="order-payments__date"> · {{ payment.createdAt | dateShort }}</span>
-        </li>
-      }
-    </ul>
-  }
-  @if (balanceAmount > 0 && order.status !== 'cancelado') {
-    <div class="assign-customer order-payments__form">
-      <db-input
-        label="Monto del pago"
-        type="number"
-        [(ngModel)]="paymentAmount"
-        name="paymentAmount"
-        [min]="0.01"
-        [step]="0.01"
-      />
-      <db-checkbox
-        label="Seña"
-        name="paymentDeposit"
-        [(ngModel)]="paymentDeposit"
-      />
 
-      <div class="order-payments__method">
-        <span class="order-payments__label" id="payment-method-label">Medio de pago</span>
-        <db-segmented-control
-          [options]="methodOptions"
-          [value]="paymentMethod"
-          ariaLabel="Medio de pago"
-          (valueChange)="onMethodChange($event)"
-        />
-      </div>
+    <db-input
+      label="Monto"
+      type="number"
+      [(ngModel)]="paymentAmount"
+      name="paymentAmountSheet"
+      [min]="0.01"
+      [step]="0.01"
+    />
 
+    <div class="od-pay-sheet__method">
+      <span class="od-pay-sheet__label" id="payment-method-sheet-label">Medio de pago</span>
+      <db-segmented-control
+        [options]="methodOptions"
+        [value]="paymentMethod"
+        ariaLabel="Medio de pago"
+        (valueChange)="onMethodChange($event)"
+      />
+    </div>
+
+    <div class="od-pay-sheet__two">
       <db-select
-        label="Entra a la cuenta"
+        label="Entra a"
         [(ngModel)]="paymentAccount"
-        name="paymentAccount"
+        name="paymentAccountSheet"
         [options]="accountOptions"
       />
-
       <db-input
-        label="Comisión (opcional)"
+        label="Comisión"
         type="number"
         [(ngModel)]="paymentFee"
-        name="paymentFee"
+        name="paymentFeeSheet"
         [min]="0"
         [step]="1"
         placeholder="0"
       />
+    </div>
 
+    @if (netAmount != null) {
+      <div class="od-pay-sheet__ln">
+        <span class="od-pay-sheet__hint">Neto que entra</span>
+        <b class="od-pay-sheet__num od-pay-sheet__num--pos">{{ netAmount | currencyArs }}</b>
+      </div>
+    }
+
+    <db-checkbox
+      label="Es una seña"
+      name="paymentDepositSheet"
+      [(ngModel)]="paymentDeposit"
+    />
+
+    @if (paymentError) {
+      <p class="order-payments__error" role="alert">{{ paymentError }}</p>
+    }
+
+    <div class="od-pay-sheet__foot">
       <db-button
-        [label]="paymentLoading ? 'Registrando...' : 'Registrar pago'"
+        [label]="sheetSubmitLabel"
         variant="primary"
         format="solid"
         [disabled]="paymentLoading || !paymentAmount"
         (clicked)="registerPayment()"
       />
     </div>
-    @if (paymentError) {
-      <p class="order-payments__error">{{ paymentError }}</p>
+  </div>
+} @else {
+  <section class="panel" id="order-payments">
+    <h3>Pagos</h3>
+    <dl class="detail-list">
+      <div>
+        <dt>Importe pagado</dt>
+        <dd>{{ paidAmount | currencyArs }}</dd>
+      </div>
+      <div>
+        <dt>Saldo</dt>
+        <dd>{{ balanceAmount | currencyArs }}</dd>
+      </div>
+      <div>
+        <dt>Estado de pago</dt>
+        <dd>{{ paymentStatusLabel }}</dd>
+      </div>
+    </dl>
+    @if (order.payments?.length) {
+      <ul class="order-payments">
+        @for (payment of order.payments; track payment.id) {
+          <li>
+            <span class="order-payments__amount">{{ payment.amount | currencyArs }}</span>
+            @if (payment.deposit) {
+              <span> · seña</span>
+            }
+            <span> · {{ paymentMethodLabel(payment.method) || 'Efectivo' }}</span>
+            <span> · {{ treasuryAccountLabel(payment.account) || 'Caja efectivo' }}</span>
+            @if (payment.fee && payment.fee > 0) {
+              <span> · comisión {{ payment.fee | currencyArs }}</span>
+            }
+            <span class="order-payments__date"> · {{ payment.createdAt | dateShort }}</span>
+          </li>
+        }
+      </ul>
     }
-  }
-</section>
+    @if (presentation === 'full' && balanceAmount > 0 && order.status !== 'cancelado') {
+      <div class="assign-customer order-payments__form">
+        <db-input
+          label="Monto del pago"
+          type="number"
+          [(ngModel)]="paymentAmount"
+          name="paymentAmount"
+          [min]="0.01"
+          [step]="0.01"
+        />
+        <db-checkbox
+          label="Seña"
+          name="paymentDeposit"
+          [(ngModel)]="paymentDeposit"
+        />
+
+        <div class="order-payments__method">
+          <span class="order-payments__label" id="payment-method-label">Medio de pago</span>
+          <db-segmented-control
+            [options]="methodOptions"
+            [value]="paymentMethod"
+            ariaLabel="Medio de pago"
+            (valueChange)="onMethodChange($event)"
+          />
+        </div>
+
+        <db-select
+          label="Entra a la cuenta"
+          [(ngModel)]="paymentAccount"
+          name="paymentAccount"
+          [options]="accountOptions"
+        />
+
+        <db-input
+          label="Comisión (opcional)"
+          type="number"
+          [(ngModel)]="paymentFee"
+          name="paymentFee"
+          [min]="0"
+          [step]="1"
+          placeholder="0"
+        />
+
+        <db-button
+          [label]="paymentLoading ? 'Registrando...' : 'Registrar pago'"
+          variant="primary"
+          format="solid"
+          [disabled]="paymentLoading || !paymentAmount"
+          (clicked)="registerPayment()"
+        />
+      </div>
+      @if (paymentError) {
+        <p class="order-payments__error">{{ paymentError }}</p>
+      }
+    }
+  </section>
+}

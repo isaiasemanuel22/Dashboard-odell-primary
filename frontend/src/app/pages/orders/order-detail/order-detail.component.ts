@@ -4,6 +4,7 @@ import {
   Component,
   DestroyRef,
   HostListener,
+  OnDestroy,
   OnInit,
   ViewChild,
   inject,
@@ -32,6 +33,7 @@ import { CustomerCatalogService } from '../../../core/services/customer-catalog.
 import { RealtimeCatalogSyncService } from '../../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
 import { BreakpointService } from '../../../core/services/breakpoint.service';
+import { LayoutUiService } from '../../../layout/layout-ui.service';
 import {
   DbButtonComponent,
   DbSelectComponent,
@@ -121,7 +123,7 @@ type MobileAccordionKey = 'payments' | 'tasks' | 'deliveries' | 'history';
   styleUrl: './order-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrderDetailComponent implements OnInit {
+export class OrderDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly ordersService = inject(OrdersService);
@@ -132,14 +134,15 @@ export class OrderDetailComponent implements OnInit {
   private readonly customerCatalog = inject(CustomerCatalogService);
   private readonly settingsFacade = inject(SettingsFacade);
   private readonly breakpoint = inject(BreakpointService);
+  private readonly layoutUi = inject(LayoutUiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
-  @ViewChild(OrderDetailPaymentsComponent)
-  private payments?: OrderDetailPaymentsComponent;
+  @ViewChild('paymentSheet')
+  private paymentSheet?: OrderDetailPaymentsComponent;
 
-  @ViewChild(OrderDetailDeliveriesComponent)
-  private deliveriesPanel?: OrderDetailDeliveriesComponent;
+  @ViewChild('deliverySheet')
+  private deliverySheet?: OrderDetailDeliveriesComponent;
 
   readonly isMobile = this.breakpoint.isMobile;
 
@@ -243,6 +246,8 @@ export class OrderDetailComponent implements OnInit {
 
   mobileActionsOpen = false;
   mobileAlertsExpanded = false;
+  mobilePaymentSheetOpen = false;
+  mobileDeliverySheetOpen = false;
   private readonly mobileOpenAccordions = new Set<MobileAccordionKey>();
   private profitMargins: ServiceProfitMargins = { ...DEFAULT_PROFIT_MARGINS };
   private wholesalePercentSetting = 0;
@@ -589,16 +594,37 @@ export class OrderDetailComponent implements OnInit {
   }
 
   openMobilePaymentsFromDock(): void {
-    this.openDockAccordion('payments', 'od-m-acc-payments', () => {
-      const balance = this.balanceAmount;
-      if (balance > 0) this.payments?.preparePayment(balance, { scroll: false });
-    });
+    this.openPaymentSheet(this.balanceAmount);
   }
 
   openMobileDeliveriesFromDock(): void {
-    this.openDockAccordion('deliveries', 'od-m-acc-deliveries', () => {
-      this.deliveriesPanel?.prepareDelivery();
-    });
+    this.openDeliverySheet();
+  }
+
+  closePaymentSheet(): void {
+    if (!this.mobilePaymentSheetOpen) return;
+    this.mobilePaymentSheetOpen = false;
+    this.layoutUi.popOverlay();
+    this.cdr.markForCheck();
+  }
+
+  closeDeliverySheet(): void {
+    if (!this.mobileDeliverySheetOpen) return;
+    this.mobileDeliverySheetOpen = false;
+    this.layoutUi.popOverlay();
+    this.cdr.markForCheck();
+  }
+
+  onChargeBeforeDelivery(): void {
+    this.closeDeliverySheet();
+    this.openPaymentSheet(this.balanceAmount);
+  }
+
+  ngOnDestroy(): void {
+    if (this.mobilePaymentSheetOpen) this.layoutUi.popOverlay();
+    if (this.mobileDeliverySheetOpen) this.layoutUi.popOverlay();
+    this.mobilePaymentSheetOpen = false;
+    this.mobileDeliverySheetOpen = false;
   }
 
   openAssignCustomer(): void {
@@ -647,6 +673,7 @@ export class OrderDetailComponent implements OnInit {
   onDeliveryRegistered(): void {
     const order = this.order;
     if (!order) return;
+    this.closeDeliverySheet();
     const balance = Math.max(
       0,
       Math.round(
@@ -677,7 +704,7 @@ export class OrderDetailComponent implements OnInit {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((confirmed) => {
         if (!confirmed) return;
-        this.payments?.preparePayment(balance);
+        this.openPaymentSheet(balance);
       });
   }
 
@@ -873,6 +900,7 @@ export class OrderDetailComponent implements OnInit {
 
   onPaymentRegistered(order: Order): void {
     this.order = order;
+    this.closePaymentSheet();
     this.cdr.markForCheck();
   }
 
@@ -893,6 +921,14 @@ export class OrderDetailComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
+    if (this.mobilePaymentSheetOpen) {
+      this.closePaymentSheet();
+      return;
+    }
+    if (this.mobileDeliverySheetOpen) {
+      this.closeDeliverySheet();
+      return;
+    }
     if (this.mobileActionsOpen) {
       this.closeMobileActions();
       return;
@@ -900,32 +936,32 @@ export class OrderDetailComponent implements OnInit {
     this.closeImagePreview();
   }
 
-  /**
-   * Dock: Pagos y Entregas son exclusivos. Abre el pedido, prepara el form
-   * y recién después scrollea (siguiente ciclo) con margen para el título.
-   */
-  private openDockAccordion(
-    key: 'payments' | 'deliveries',
-    elementId: string,
-    afterOpen?: () => void,
-  ): void {
-    const other: MobileAccordionKey =
-      key === 'payments' ? 'deliveries' : 'payments';
-    this.mobileOpenAccordions.delete(other);
-    this.mobileOpenAccordions.add(key);
+  private openPaymentSheet(amount?: number): void {
+    this.closeDeliverySheet();
+    if (!this.mobilePaymentSheetOpen) {
+      this.mobilePaymentSheetOpen = true;
+      this.layoutUi.pushOverlay();
+    }
     this.cdr.markForCheck();
-
     setTimeout(() => {
-      afterOpen?.();
+      const balance = amount ?? this.balanceAmount;
+      if (balance > 0) {
+        this.paymentSheet?.preparePayment(balance, { scroll: false });
+      }
       this.cdr.markForCheck();
-      requestAnimationFrame(() => {
-        requestAnimationFrame(() => {
-          document.getElementById(elementId)?.scrollIntoView({
-            behavior: 'smooth',
-            block: 'start',
-          });
-        });
-      });
+    }, 0);
+  }
+
+  private openDeliverySheet(): void {
+    this.closePaymentSheet();
+    if (!this.mobileDeliverySheetOpen) {
+      this.mobileDeliverySheetOpen = true;
+      this.layoutUi.pushOverlay();
+    }
+    this.cdr.markForCheck();
+    setTimeout(() => {
+      this.deliverySheet?.prepareDelivery();
+      this.cdr.markForCheck();
     }, 0);
   }
 

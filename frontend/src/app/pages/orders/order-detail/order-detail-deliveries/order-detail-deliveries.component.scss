@@ -20,6 +20,126 @@
   .delivery-form {
     grid-template-columns: 1fr;
   }
+
+  .od-del-sheet {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    min-height: 0;
+    flex: 1 1 auto;
+  }
+
+  .od-del-sheet__hint {
+    font-size: 12px;
+    color: mobile.$m-text-secondary;
+  }
+
+  .od-del-sheet__list {
+    overflow: hidden;
+  }
+
+  .od-del-sheet__row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    min-height: 48px;
+    box-sizing: border-box;
+
+    & + & {
+      border-top: 1px solid mobile.$m-border;
+    }
+
+    &--disabled {
+      opacity: 0.55;
+    }
+  }
+
+  .od-del-sheet__t {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+
+    b {
+      font-size: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    span {
+      font-size: 12px;
+      color: mobile.$m-text-secondary;
+    }
+  }
+
+  .od-del-sheet__step {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid mobile.$m-border-input;
+    border-radius: mobile.$m-radius-sm;
+    overflow: hidden;
+    flex: none;
+
+    button {
+      width: 44px;
+      height: 44px;
+      border: 0;
+      background: #f4f8fb;
+      font-family: inherit;
+      font-size: 18px;
+      font-weight: 700;
+      color: mobile.$m-text;
+      cursor: pointer;
+
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+    }
+
+    span {
+      min-width: 44px;
+      text-align: center;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+    }
+  }
+
+  .od-del-sheet__note {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: mobile.$m-radius-md;
+    background: #fff8eb;
+    border: 1px solid #f5d9a8;
+    font-size: 13px;
+    color: #7a4a06;
+  }
+
+  .od-del-sheet__foot {
+    margin-top: auto;
+    margin-left: -16px;
+    margin-right: -16px;
+    padding: 12px 16px 20px;
+    border-top: 1px solid mobile.$m-border;
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+
+    db-button {
+      display: block;
+      width: 100%;
+    }
+
+    ::ng-deep .db-button {
+      min-height: 52px;
+      width: 100%;
+    }
+  }
 }
 
 .panel h3 {

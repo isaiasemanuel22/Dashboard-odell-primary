@@ -63,6 +63,8 @@ export class OrderDetailPaymentsComponent {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
+  /** full = panel desktop; summary = historial mobile; sheet = hoja inferior. */
+  @Input() presentation: 'full' | 'summary' | 'sheet' = 'full';
   @Input({ required: true }) order!: Order;
   @Output() orderChange = new EventEmitter<Order>();
 
@@ -94,6 +96,27 @@ export class OrderDetailPaymentsComponent {
     if (this.paidAmount <= 0) return 'No pagado';
     if (this.balanceAmount <= 0) return 'Pagado';
     return 'Parcialmente pagado';
+  }
+
+  /** Neto = monto − comisión (solo si hay monto válido). */
+  get netAmount(): number | null {
+    const amount = Number(this.paymentAmount);
+    if (!Number.isFinite(amount) || amount <= 0) return null;
+    const fee = Number(this.paymentFee);
+    const safeFee = Number.isFinite(fee) && fee > 0 ? fee : 0;
+    return Math.round((amount - safeFee) * 100) / 100;
+  }
+
+  get sheetSubmitLabel(): string {
+    if (this.paymentLoading) return 'Registrando...';
+    const amount = Number(this.paymentAmount);
+    if (!Number.isFinite(amount) || amount <= 0) return 'Registrar pago';
+    const formatted = new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(amount);
+    return `Registrar ${formatted}`;
   }
 
   preparePayment(amount: number, options?: { scroll?: boolean }): void {

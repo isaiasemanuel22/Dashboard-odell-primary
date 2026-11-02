@@ -99,6 +99,8 @@ export class WalletComponent implements OnInit, OnDestroy {
   mobileSearch = '';
   mobileAccountFilter: WalletAccountFilter = 'all';
   payLoanSheetOpen = false;
+  /** Overlay activo por un form-modal de billetera en mobile. */
+  private formOverlayPushed = false;
 
   readonly periodLabel = WalletComponent.currentPeriodLabel();
 
@@ -167,6 +169,7 @@ export class WalletComponent implements OnInit, OnDestroy {
       this.layoutUi.popOverlay();
       this.payLoanSheetOpen = false;
     }
+    this.releaseFormOverlay();
   }
 
   toggleMobileSearch(): void {
@@ -221,6 +224,7 @@ export class WalletComponent implements OnInit, OnDestroy {
     this.editingExpense = null;
     this.formMode = 'general';
     this.showForm = true;
+    this.claimFormOverlay();
     this.cdr.markForCheck();
   }
 
@@ -228,6 +232,7 @@ export class WalletComponent implements OnInit, OnDestroy {
     this.editingExpense = null;
     this.formMode = 'payment';
     this.showForm = true;
+    this.claimFormOverlay();
     this.cdr.markForCheck();
   }
 
@@ -235,21 +240,25 @@ export class WalletComponent implements OnInit, OnDestroy {
     this.editingExpense = null;
     this.formMode = 'loan';
     this.showForm = true;
+    this.claimFormOverlay();
     this.cdr.markForCheck();
   }
 
   openTransferForm(): void {
     this.showTransferForm = true;
+    this.claimFormOverlay();
     this.cdr.markForCheck();
   }
 
   closeTransferForm(): void {
     this.showTransferForm = false;
+    this.releaseFormOverlay();
     this.cdr.markForCheck();
   }
 
   onTransferSaved(): void {
     this.showTransferForm = false;
+    this.releaseFormOverlay();
     this.refreshOverview();
   }
 
@@ -273,31 +282,37 @@ export class WalletComponent implements OnInit, OnDestroy {
     this.showForm = false;
     this.purchasePreset = false;
     this.editingExpense = null;
+    this.releaseFormOverlay();
     this.cdr.markForCheck();
   }
 
   onFormSaved(): void {
     this.showForm = false;
+    this.releaseFormOverlay();
     this.refreshOverview();
   }
 
   openRepaymentForm(debtor: TreasuryDebtorBalance): void {
     this.repaymentDebtor = debtor;
+    this.claimFormOverlay();
     this.cdr.markForCheck();
   }
 
   closeRepaymentForm(): void {
     this.repaymentDebtor = null;
+    this.releaseFormOverlay();
     this.cdr.markForCheck();
   }
 
   onRepaymentSaved(): void {
     this.repaymentDebtor = null;
+    this.releaseFormOverlay();
     this.refreshOverview();
   }
 
   closeVoidForm(): void {
     this.voidingExpense = null;
+    this.releaseFormOverlay();
     this.cdr.markForCheck();
   }
 
@@ -305,6 +320,7 @@ export class WalletComponent implements OnInit, OnDestroy {
     const wasPurchase =
       this.voidingExpense?.category === TreasuryExpenseCategory.SUPPLY_PURCHASE;
     this.voidingExpense = null;
+    this.releaseFormOverlay();
     if (wasPurchase) {
       this.suppliesService.refreshSupplies().subscribe();
     }
@@ -318,6 +334,7 @@ export class WalletComponent implements OnInit, OnDestroy {
     this.editingExpense = expense;
     this.formMode = this.modeFor(expense);
     this.showForm = true;
+    this.claimFormOverlay();
     this.cdr.markForCheck();
   }
 
@@ -327,6 +344,7 @@ export class WalletComponent implements OnInit, OnDestroy {
     this.repaymentDebtor = null;
     this.editingExpense = null;
     this.voidingExpense = expense;
+    this.claimFormOverlay();
     this.cdr.markForCheck();
   }
 
@@ -375,5 +393,17 @@ export class WalletComponent implements OnInit, OnDestroy {
           .subscribe();
       },
     });
+  }
+
+  private claimFormOverlay(): void {
+    if (!this.isMobile() || this.formOverlayPushed) return;
+    this.formOverlayPushed = true;
+    this.layoutUi.pushOverlay();
+  }
+
+  private releaseFormOverlay(): void {
+    if (!this.formOverlayPushed) return;
+    this.formOverlayPushed = false;
+    this.layoutUi.popOverlay();
   }
 }

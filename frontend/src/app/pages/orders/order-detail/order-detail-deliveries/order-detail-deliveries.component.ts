@@ -22,12 +22,25 @@ import {
 import { OrdersService } from '../../../../core/services/orders.service';
 import { DbButtonComponent, DbInputComponent } from '@general-components';
 import { extractApiErrorMessage } from '../../../../shared/utils/api-error';
-import { DateTimePipe } from '../../../../shared/pipes/labels.pipe';
+import {
+  CurrencyArsPipe,
+  DateTimePipe,
+} from '../../../../shared/pipes/labels.pipe';
+import {
+  orderBalanceAmount,
+  pluralize,
+} from '../../../../shared/utils/order.helpers';
 
 @Component({
   selector: 'app-order-detail-deliveries',
   standalone: true,
-  imports: [FormsModule, DbInputComponent, DbButtonComponent, DateTimePipe],
+  imports: [
+    FormsModule,
+    DbInputComponent,
+    DbButtonComponent,
+    DateTimePipe,
+    CurrencyArsPipe,
+  ],
   templateUrl: './order-detail-deliveries.component.html',
   styleUrl: './order-detail-deliveries.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -38,10 +51,13 @@ export class OrderDetailDeliveriesComponent implements OnChanges {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
+  /** full = panel desktop; summary = historial mobile; sheet = hoja inferior. */
+  @Input() presentation: 'full' | 'summary' | 'sheet' = 'full';
   @Input({ required: true }) order!: Order;
   @Input() tasks: PrintJob[] = [];
   @Input() deliveries: OrderDelivery[] = [];
   @Output() delivered = new EventEmitter<void>();
+  @Output() chargeBefore = new EventEmitter<void>();
 
   deliveryDraft: number[] = [];
   deliveryLoading = false;
@@ -76,8 +92,39 @@ export class OrderDetailDeliveriesComponent implements OnChanges {
     );
   }
 
+  get unpaidBalance(): number {
+    return orderBalanceAmount(this.order);
+  }
+
+  get deliveryUnitsTotal(): number {
+    return this.deliveryDraft.reduce(
+      (sum, quantity) => sum + Math.max(0, Math.trunc(Number(quantity) || 0)),
+      0,
+    );
+  }
+
+  get deliveryUnitsLabel(): string {
+    const units = this.deliveryUnitsTotal;
+    if (units <= 0) return 'Entregar';
+    return `Entregar ${pluralize(units, 'producto', 'productos')}`;
+  }
+
   /** Prepara el formulario de entrega (el scroll lo hace el dock mobile). */
   prepareDelivery(): void {
+    this.deliveryDraft = this.order.items.map((item, index) => {
+      const max = this.itemDeliverableMax(item, index);
+      return max > 0 ? max : 0;
+    });
+    this.deliveryError = '';
+    this.cdr.markForCheck();
+  }
+
+  stepDelivery(itemIndex: number, delta: number): void {
+    const item = this.order.items[itemIndex];
+    if (!item) return;
+    const max = this.itemDeliverableMax(item, itemIndex);
+    const current = Math.trunc(Number(this.deliveryDraft[itemIndex]) || 0);
+    this.deliveryDraft[itemIndex] = Math.min(max, Math.max(0, current + delta));
     this.cdr.markForCheck();
   }
 

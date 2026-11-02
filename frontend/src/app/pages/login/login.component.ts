@@ -2,6 +2,7 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
+import { BreakpointService } from '../../core/services/breakpoint.service';
 import {
   NO_ACCESS_MESSAGE,
   authErrorMessage,
@@ -21,7 +22,9 @@ import { DbButtonComponent, DbInputComponent } from '@general-components';
 export class LoginComponent implements OnInit {
   private readonly auth = inject(AuthService);
   private readonly router = inject(Router);
+  private readonly breakpoint = inject(BreakpointService);
 
+  readonly isMobile = this.breakpoint.isMobile;
   readonly firebaseConfigured = isFirebaseConfigured(environment.firebase);
 
   email = '';
