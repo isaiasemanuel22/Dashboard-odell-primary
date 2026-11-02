@@ -18,6 +18,7 @@ import {
   Quote,
   UpdateQuotePayload,
 } from '../../core/models';
+import { BreakpointService } from '../../core/services/breakpoint.service';
 import { CustomerCatalogService } from '../../core/services/customer-catalog.service';
 import { ProductCatalogService } from '../../core/services/product-catalog.service';
 import { QuotesService } from '../../core/services/quotes.service';
@@ -38,12 +39,46 @@ export interface QuoteFormDialogData {
   imports: [FormDialogShellComponent, OrderFormComponent],
   template: `
     <app-form-dialog-shell
-      [title]="quote ? 'Editar presupuesto' : 'Nuevo presupuesto'"
+      [title]="dialogTitle"
       [subtitle]="dialogSubtitle"
       size="xl"
       [stickyHeader]="true"
       (close)="cancel()"
     >
+      @if (isMobile()) {
+        <header class="order-dialog-m-bar">
+          <button
+            type="button"
+            class="m-ib"
+            aria-label="Cerrar sin guardar"
+            (click)="cancel()"
+          >
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M6 6l12 12M18 6L6 18"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+          <h2 class="order-dialog-m-bar__title">{{ dialogTitle }}</h2>
+          <button
+            type="button"
+            class="m-ib txt"
+            [disabled]="loading || !canSaveDraft"
+            (click)="saveDraft()"
+          >
+            Guardar borrador
+          </button>
+        </header>
+      }
       <app-order-form
         variant="quote"
         [quote]="quote"
@@ -65,6 +100,7 @@ export class QuoteFormDialogComponent implements OnInit, AfterViewInit {
   private readonly customerCatalog = inject(CustomerCatalogService);
   private readonly productCatalog = inject(ProductCatalogService);
   private readonly formDialogs = inject(FormDialogService);
+  private readonly breakpoint = inject(BreakpointService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
   private readonly dialogRef = inject(DialogRef<Quote>);
@@ -74,14 +110,21 @@ export class QuoteFormDialogComponent implements OnInit, AfterViewInit {
 
   @ViewChild(OrderFormComponent) private form?: OrderFormComponent;
 
+  readonly isMobile = this.breakpoint.isMobile;
+
   quote: Quote | null = null;
   customers: Customer[] = [];
   products: Product[] = [];
   loading = false;
   error = '';
   formSubtitle = '';
+  canSaveDraft = false;
   private closing = false;
   private confirmingDiscard = false;
+
+  get dialogTitle(): string {
+    return this.quote ? 'Editar presupuesto' : 'Nuevo presupuesto';
+  }
 
   get dialogSubtitle(): string {
     return (
@@ -116,7 +159,12 @@ export class QuoteFormDialogComponent implements OnInit, AfterViewInit {
 
   onFormUiMeta(): void {
     this.formSubtitle = this.form?.modalSubtitle ?? this.formSubtitle;
+    this.canSaveDraft = !!this.form?.canSubmit(true);
     this.cdr.markForCheck();
+  }
+
+  saveDraft(): void {
+    this.form?.onSubmit(true);
   }
 
   save(data: OrderFormSavePayload): void {

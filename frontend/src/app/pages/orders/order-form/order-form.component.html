@@ -175,117 +175,137 @@
 
     @if (isQuoteForm) {
       <div class="quote-layout">
-      <div class="quote-layout__main">
-      <app-order-form-party
-        variant="quote"
-        [customerId]="customerId"
-        (customerIdChange)="onCustomerIdChange($event)"
-        [customerOptions]="customerOptions"
-        (newCustomer)="openNewCustomer()"
-        [quotedAtLabel]="quotedAtLabel"
-        [quoteValidityLabel]="quoteValidityLabel"
-        [resellerPillLabel]="resellerPillLabel"
-        [salesChannel]="salesChannel"
-        [salesChannelOptions]="salesChannelOptions"
-        (salesChannelChange)="onSalesChannelChange($event)"
-        [priceType]="priceType"
-        [priceTypeOptions]="priceTypeOptions"
-        (priceTypeChange)="onPriceTypeChange($event)"
-        [wholesaleMinimumNotice]="wholesaleMinimumNotice"
-      />
-
-      <db-form-grid-full class="quote-description-field">
-        <db-rich-text-editor
-          label="Descripción"
-          [(ngModel)]="description"
-          name="quoteDescription"
-          placeholder="Describí el trabajo: qué necesita el cliente, referencias, alcances..."
-          [maxLength]="descriptionMaxLength"
-          [uploadFn]="uploadDescriptionImage"
-        />
-      </db-form-grid-full>
-
-      <section class="quote-lines-section">
-        <header class="quote-lines-section__head quote-lines-section__head--row">
-          <h4 class="quote-lines-section__title">Productos</h4>
-          <p class="quote-lines-section__hint">
-            El descuento se resta del precio total del producto, no de la ganancia
-          </p>
-        </header>
-
-        <div class="order-lines">
-          @for (line of lines; track $index; let i = $index) {
-              <app-order-form-line
-                [line]="line"
-                [lineIndex]="i"
+        <div class="quote-layout__main">
+          <section class="order-m-sec quote-party-sec">
+            <h2 class="m-sec-t mobile-only">1 · Cliente</h2>
+            <div class="order-m-card">
+              <app-order-form-party
                 variant="quote"
-                [products]="products"
-                [serviceTypeOptions]="serviceTypeOptions"
-                [paperTypeOptions]="paperTypeOptions"
+                [customerId]="customerId"
+                (customerIdChange)="onCustomerIdChange($event)"
+                [customerOptions]="customerOptions"
+                (newCustomer)="openNewCustomer()"
+                [quotedAtLabel]="quotedAtLabel"
+                [quoteValidityLabel]="quoteValidityLabel"
+                [resellerPillLabel]="resellerPillLabel"
+                [salesChannel]="salesChannel"
+                [salesChannelOptions]="salesChannelOptions"
+                (salesChannelChange)="onSalesChannelChange($event)"
                 [priceType]="priceType"
-                [wholesaleApplied]="wholesaleAppliedPreview"
-                [wholesaleDiscount]="wholesaleDiscount"
-                (remove)="removeLine(i)"
-                (linkPrintChange)="onLinkPrintChange(line, $event, i)"
-                (changed)="onLineChanged()"
+                [priceTypeOptions]="priceTypeOptions"
+                (priceTypeChange)="onPriceTypeChange($event)"
+                [wholesaleMinimumNotice]="wholesaleMinimumNotice"
               />
-          }
+            </div>
+          </section>
+
+          <section class="order-m-sec quote-description-sec">
+            <h2 class="m-sec-t mobile-only">3 · Descripción para el cliente</h2>
+            <div class="order-m-card quote-description-field">
+              <db-form-grid-full>
+                <db-rich-text-editor
+                  label="Descripción"
+                  [(ngModel)]="description"
+                  name="quoteDescription"
+                  placeholder="Describí el trabajo: qué necesita el cliente, referencias, alcances..."
+                  [maxLength]="descriptionMaxLength"
+                  [uploadFn]="uploadDescriptionImage"
+                />
+              </db-form-grid-full>
+            </div>
+          </section>
+
+          <section class="order-m-sec quote-lines-section">
+            <header class="quote-lines-section__head quote-lines-section__head--row desktop-only">
+              <h4 class="quote-lines-section__title">Productos</h4>
+              <p class="quote-lines-section__hint">
+                El descuento se resta del precio total del producto, no de la ganancia
+              </p>
+            </header>
+            <h2 class="m-sec-t mobile-only">2 · Líneas</h2>
+
+            <div class="order-m-card order-m-card--lines">
+              <div class="order-lines">
+                @for (line of lines; track $index; let i = $index) {
+                  <app-order-form-line
+                    [line]="line"
+                    [lineIndex]="i"
+                    variant="quote"
+                    [products]="products"
+                    [serviceTypeOptions]="serviceTypeOptions"
+                    [paperTypeOptions]="paperTypeOptions"
+                    [priceType]="priceType"
+                    [wholesaleApplied]="wholesaleAppliedPreview"
+                    [wholesaleDiscount]="wholesaleDiscount"
+                    (remove)="removeLine(i)"
+                    (linkPrintChange)="onLinkPrintChange(line, $event, i)"
+                    (changed)="onLineChanged()"
+                  />
+                }
+              </div>
+
+              <db-button
+                class="desktop-only"
+                label="+ Agregar producto"
+                variant="secondary"
+                format="solid"
+                extraClass="add-line"
+                (clicked)="addLine()"
+              />
+              <button
+                type="button"
+                class="order-m-add mobile-only"
+                (click)="addLine()"
+              >
+                + Agregar producto o servicio
+              </button>
+
+              @if (lowWholesaleMarginNotice; as lowMargin) {
+                <div class="wholesale-margin-note" role="status">
+                  <span class="wholesale-margin-note__icon" aria-hidden="true">!</span>
+                  <span>
+                    {{ lowMargin.message }}
+                    <a
+                      class="wholesale-margin-note__link"
+                      routerLink="/productos"
+                      fragment="masiva"
+                    >Revisar precios</a>
+                  </span>
+                </div>
+              }
+            </div>
+          </section>
         </div>
 
-        <db-button
-          label="+ Agregar producto"
-          variant="secondary"
-          format="solid"
-          extraClass="add-line"
-          (clicked)="addLine()"
+        <app-order-form-order-summary
+          [listSubtotal]="listSubtotal"
+          [wholesalePercent]="wholesaleDiscount.percent"
+          [wholesaleDiscountAmount]="wholesaleDiscountAmount"
+          [wholesaleProductsBase]="wholesaleProductsBase"
+          [wholesaleApplied]="wholesaleAppliedPreview"
+          [resellerSavings]="resellerSavings"
+          [discountMode]="discountMode"
+          [discountPercent]="discountPercent"
+          [discountAmount]="discountAmount"
+          [discountPercentMax]="discountPercentMax"
+          [discountAmountMax]="discountAmountMax"
+          [discountHint]="discountClampHint"
+          [discountApplied]="discountApplied"
+          [total]="total"
+          [totalCost]="totalCost"
+          [paymentFee]="0"
+          [showPaymentFee]="false"
+          [profit]="profit"
+          [profitPercentOnCost]="profitPercentOnCost"
+          [listProfit]="listProfit"
+          depositMode="info"
+          [depositSuggested]="depositAmount"
+          [depositPercent]="depositPercent"
+          [balanceAfterDeposit]="balanceAfterDeposit"
+          (modeChange)="setDiscountMode($event)"
+          (percentChange)="onDiscountPercentChange($event)"
+          (amountChange)="onDiscountAmountChange($event)"
         />
-
-        @if (lowWholesaleMarginNotice; as lowMargin) {
-          <div class="wholesale-margin-note" role="status">
-            <span class="wholesale-margin-note__icon" aria-hidden="true">!</span>
-            <span>
-              {{ lowMargin.message }}
-              <a
-                class="wholesale-margin-note__link"
-                routerLink="/productos"
-                fragment="masiva"
-              >Revisar precios</a>
-            </span>
-          </div>
-        }
-
-      </section>
-      </div>
-
-      <app-order-form-order-summary
-        [listSubtotal]="listSubtotal"
-        [wholesalePercent]="wholesaleDiscount.percent"
-        [wholesaleDiscountAmount]="wholesaleDiscountAmount"
-        [wholesaleProductsBase]="wholesaleProductsBase"
-        [wholesaleApplied]="wholesaleAppliedPreview"
-        [resellerSavings]="resellerSavings"
-        [discountMode]="discountMode"
-        [discountPercent]="discountPercent"
-        [discountAmount]="discountAmount"
-        [discountPercentMax]="discountPercentMax"
-        [discountAmountMax]="discountAmountMax"
-        [discountHint]="discountClampHint"
-        [discountApplied]="discountApplied"
-        [total]="total"
-        [totalCost]="totalCost"
-        [paymentFee]="0"
-        [showPaymentFee]="false"
-        [profit]="profit"
-        [profitPercentOnCost]="profitPercentOnCost"
-        [listProfit]="listProfit"
-        depositMode="info"
-        [depositSuggested]="depositAmount"
-        [depositPercent]="depositPercent"
-        [balanceAfterDeposit]="balanceAfterDeposit"
-        (modeChange)="setDiscountMode($event)"
-        (percentChange)="onDiscountPercentChange($event)"
-        (amountChange)="onDiscountAmountChange($event)"
-      />
       </div>
     }
 
@@ -295,17 +315,19 @@
 
     @if (isQuoteForm) {
       <db-form-footer class="quote-form__footer">
-        <p class="quote-form__note">
+        <p class="quote-form__note desktop-only">
           Se guarda como Borrador · al aceptarlo se convierte en pedido
         </p>
         <div class="quote-form__actions" data-discard-safe>
           <db-button
+            class="desktop-only"
             label="Cancelar"
             variant="secondary"
             format="solid"
             (clicked)="cancel.emit()"
           />
           <db-button
+            class="desktop-only"
             label="Guardar borrador"
             variant="secondary"
             format="solid"
@@ -313,15 +335,26 @@
             (clicked)="onSubmit(true)"
           />
           <db-button
+            class="desktop-only"
             [label]="submitLabel"
             variant="primary"
             format="solid"
             buttonType="submit"
             [disabled]="loading || !canSubmit(false)"
           />
+          <db-button
+            class="mobile-only order-form__dock-submit"
+            [label]="submitLabelMobile"
+            variant="primary"
+            format="solid"
+            buttonType="submit"
+            [disabled]="loading || !canSubmit(false)"
+          />
         </div>
-        @if (quoteNeedsCustomerHint) {
-          <p class="quote-form__warning">{{ quoteNeedsCustomerHint }}</p>
+        @if (!canSubmit(false) && submitMissingLabel) {
+          <p class="order-form__missing mobile-only" role="status">{{ submitMissingLabel }}</p>
+        } @else if (quoteNeedsCustomerHint) {
+          <p class="quote-form__warning desktop-only">{{ quoteNeedsCustomerHint }}</p>
         }
       </db-form-footer>
     } @else {

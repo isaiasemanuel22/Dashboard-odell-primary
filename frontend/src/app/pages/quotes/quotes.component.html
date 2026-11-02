@@ -1,33 +1,122 @@
-<header class="quotes-header">
-  <div>
-    <h2>Presupuestos</h2>
-    <p>Cotizaciones para clientes antes de confirmar un pedido</p>
-  </div>
-  <db-button
-    label="+ Nuevo presupuesto"
-    variant="primary"
-    format="solid"
-    (clicked)="openCreateQuote()"
-  />
-</header>
+<div class="mobile-only quotes-m">
+  <db-mobile-bar title="Presupuestos" backLink="/mas">
+    <button
+      type="button"
+      class="m-ib"
+      aria-label="Nuevo presupuesto"
+      (click)="openCreateQuote()"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="22"
+        height="22"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+    </button>
+  </db-mobile-bar>
 
-<db-data-table
-  label="Presupuestos"
-  [rows]="quotes"
-  [columns]="columns"
-  [actions]="actions"
-  [filters]="statusFilters"
-  [areaFilters]="serviceFilters"
-  [loading]="loading"
-  [expandable]="true"
-  searchPlaceholder="Buscar por cliente o concepto"
-  [searchText]="searchText"
-  emptyText="No hay presupuestos registrados."
-  emptyActionLabel="Crear primer presupuesto"
-  (action)="onAction($event)"
-  (emptyAction)="openCreateQuote()"
->
-  <ng-template odlRowDetail let-quote>
-    <app-quote-card layout="detail" [quote]="quote" (edit)="openEditQuote($event)" />
-  </ng-template>
-</db-data-table>
+  <div class="m-tools">
+    <label class="m-search">
+      <svg
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="#5B7083"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="M20 20l-3.5-3.5" />
+      </svg>
+      <input
+        type="search"
+        placeholder="Cliente o n.º"
+        aria-label="Buscar presupuestos"
+        [(ngModel)]="search"
+        (ngModelChange)="onSearchChange()"
+      />
+    </label>
+    <div class="m-chips" role="group" aria-label="Estado">
+      @for (chip of mobileChips; track chip.value) {
+        <button
+          type="button"
+          class="m-chip"
+          [class.m-chip--on]="mobileChip === chip.value"
+          (click)="setMobileChip(chip.value)"
+        >
+          {{ chip.label }}
+          @if (chipCount(chip.value); as n) {
+            <span class="quotes-m__chip-n">{{ n }}</span>
+          }
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="quotes-m__list">
+      <db-skeleton variant="cards" [count]="3" />
+    </div>
+  } @else if (mobileFilteredQuotes.length === 0) {
+    <div class="quotes-m__list">
+      <div class="m-card quotes-m__empty">
+        <p>{{ mobileEmptyMessage }}</p>
+        <db-button
+          label="Nuevo presupuesto"
+          variant="primary"
+          format="solid"
+          (clicked)="openCreateQuote()"
+        />
+      </div>
+    </div>
+  } @else {
+    <div class="quotes-m__list">
+      @for (quote of mobileFilteredQuotes; track quote.id) {
+        <app-quote-mobile-card [quote]="quote" />
+      }
+    </div>
+  }
+</div>
+
+<div class="desktop-only">
+  <header class="quotes-header">
+    <div>
+      <h2>Presupuestos</h2>
+      <p>Cotizaciones para clientes antes de confirmar un pedido</p>
+    </div>
+    <db-button
+      label="+ Nuevo presupuesto"
+      variant="primary"
+      format="solid"
+      (clicked)="openCreateQuote()"
+    />
+  </header>
+
+  <db-data-table
+    label="Presupuestos"
+    [rows]="quotes"
+    [columns]="columns"
+    [actions]="actions"
+    [filters]="statusFilters"
+    [areaFilters]="serviceFilters"
+    [loading]="loading"
+    [expandable]="true"
+    searchPlaceholder="Buscar por cliente o concepto"
+    [searchText]="searchText"
+    emptyText="No hay presupuestos registrados."
+    emptyActionLabel="Crear primer presupuesto"
+    (action)="onAction($event)"
+    (emptyAction)="openCreateQuote()"
+  >
+    <ng-template odlRowDetail let-quote>
+      <app-quote-card layout="detail" [quote]="quote" (edit)="openEditQuote($event)" />
+    </ng-template>
+  </db-data-table>
+</div>

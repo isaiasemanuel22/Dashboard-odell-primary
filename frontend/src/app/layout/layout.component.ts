@@ -53,8 +53,9 @@ export class LayoutComponent implements OnInit {
   readonly authEnabled = this.auth.enabled;
 
   hideBottomNav = false;
-  /** En `/ventas` el FAB abre venta de mostrador; en el resto, nuevo pedido. */
+  /** En `/ventas` el FAB abre venta de mostrador; en `/presupuestos`, nuevo presupuesto. */
   fabOpensCounterSale = false;
+  fabOpensQuote = false;
 
   readonly navItems: NavItem[] = [
     { label: 'Dashboard', route: '/dashboard', icon: 'dashboard', exact: true },
@@ -145,19 +146,25 @@ export class LayoutComponent implements OnInit {
     const path = url.split(/[?#]/)[0];
     this.hideBottomNav = this.shouldHideBottomNav(path);
     this.fabOpensCounterSale = path === '/ventas';
+    this.fabOpensQuote = path === '/presupuestos';
   }
 
   private shouldHideBottomNav(path: string): boolean {
     return (
       path.includes('/ventas/nueva') ||
       /\/ventas\/[^/]+\/editar/.test(path) ||
-      /^\/pedidos\/[^/]+$/.test(path)
+      /^\/pedidos\/[^/]+$/.test(path) ||
+      /^\/presupuestos\/[^/]+$/.test(path)
     );
   }
 
   onFabClick(): void {
     if (this.fabOpensCounterSale) {
       void this.router.navigateByUrl('/ventas/nueva');
+      return;
+    }
+    if (this.fabOpensQuote) {
+      this.openNewQuote();
       return;
     }
     this.openNewOrder();
@@ -167,6 +174,13 @@ export class LayoutComponent implements OnInit {
     this.formDialogs.openOrder().subscribe((saved) => {
       if (!saved) return;
       void this.router.navigateByUrl('/pedidos');
+    });
+  }
+
+  openNewQuote(): void {
+    this.formDialogs.openQuote().subscribe((saved) => {
+      if (!saved) return;
+      void this.router.navigateByUrl('/presupuestos');
     });
   }
 

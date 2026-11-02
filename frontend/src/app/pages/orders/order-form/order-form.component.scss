@@ -443,24 +443,42 @@
 }
 
 @include mobile.mobile-only {
-  .order-form {
+  .order-form,
+  .quote-form {
     form {
       gap: 0;
       background: mobile.$m-bg;
       min-height: 100%;
     }
 
-    .order-layout {
+    .order-layout,
+    .quote-layout {
       display: flex;
       flex-direction: column;
       margin: 0;
       gap: 14px;
     }
 
-    .order-layout__main {
+    .order-layout__main,
+    .quote-layout__main {
       padding: 14px 16px 0;
       gap: 14px;
       background: mobile.$m-bg;
+    }
+
+    .quote-layout__main {
+      // Mobile: 1 Cliente → 2 Líneas → 3 Descripción (DOM: party, desc, lines).
+      .quote-party-sec {
+        order: 1;
+      }
+
+      .quote-lines-section {
+        order: 2;
+      }
+
+      .quote-description-sec {
+        order: 3;
+      }
     }
 
     .order-m-sec {
@@ -525,14 +543,16 @@
       padding: 0;
     }
 
-    .order-form__footer {
+    .order-form__footer,
+    .quote-form__footer {
       margin: 0;
       position: sticky;
       bottom: 0;
       z-index: 5;
     }
 
-    .order-form__footer ::ng-deep .db-form-footer {
+    .order-form__footer ::ng-deep .db-form-footer,
+    .quote-form__footer ::ng-deep .db-form-footer {
       flex-direction: column;
       align-items: stretch;
       gap: 8px;
@@ -543,19 +563,24 @@
       background: #fff;
     }
 
-    .order-form__actions {
+    .order-form__actions,
+    .quote-form__actions {
       width: 100%;
       margin: 0;
     }
 
     .order-form__actions ::ng-deep db-button.order-form__dock-submit,
-    .order-form__actions ::ng-deep .order-form__dock-submit {
+    .order-form__actions ::ng-deep .order-form__dock-submit,
+    .quote-form__actions ::ng-deep db-button.order-form__dock-submit,
+    .quote-form__actions ::ng-deep .order-form__dock-submit {
       display: block;
       width: 100%;
     }
 
     .order-form__actions ::ng-deep .order-form__dock-submit .db-button,
-    .order-form__footer ::ng-deep .order-form__dock-submit .db-button {
+    .order-form__footer ::ng-deep .order-form__dock-submit .db-button,
+    .quote-form__actions ::ng-deep .order-form__dock-submit .db-button,
+    .quote-form__footer ::ng-deep .order-form__dock-submit .db-button {
       width: 100%;
       min-height: 54px;
       height: 54px;
@@ -595,39 +620,6 @@
       border-radius: mobile.$m-radius-sm;
       border-color: mobile.$m-border-input;
     }
-  }
-
-  // Presupuesto mobile: pie con 3 botones en 2 filas (primario arriba).
-  .quote-form__actions:has(> db-button:nth-child(3)) {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    width: 100%;
-    margin: 0;
-
-    ::ng-deep db-button {
-      display: block;
-      width: 100%;
-      max-width: none;
-    }
-
-    ::ng-deep db-button:has(.db-button--primary) {
-      grid-column: 1 / -1;
-      order: -1;
-    }
-
-    ::ng-deep .db-button {
-      width: 100%;
-      min-height: 52px;
-      height: 52px;
-      white-space: nowrap;
-      box-sizing: border-box;
-    }
-  }
-
-  .quote-form__footer ::ng-deep .db-form-footer {
-    flex-direction: column;
-    align-items: stretch;
   }
 }
 

@@ -239,7 +239,8 @@
 }
 
 @include mobile.mobile-only {
-  :host-context(.order-form) {
+  :host-context(.order-form),
+  :host-context(.quote-form) {
     .order-resumen {
       border-left: 0;
       border-top: 0;

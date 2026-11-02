@@ -3,6 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   DestroyRef,
+  HostListener,
   OnInit,
   inject,
 } from '@angular/core';
@@ -10,6 +11,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   Quote,
+  QuoteItem,
   QuoteStatus,
 } from '../../../core/models';
 import { QuotesService } from '../../../core/services/quotes.service';
@@ -21,15 +23,28 @@ import {
   DbSkeletonComponent,
   DbStateMessageComponent,
   DbStatusBadgeComponent,
+  MobileBarComponent,
 } from '@general-components';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import {
   canGenerateOrderFromQuote,
   formatQuoteValidityLabel,
   isQuoteEditable,
+  quoteEstimatedProfit,
+  quoteStatusPillClass,
 } from '../../../shared/utils/quote.helpers';
-import { QUOTE_STATUS_LABELS } from '../../../shared/constants/labels';
 import {
+  calculateLinePriceTotal,
+  calculateOrderDiscount,
+  calculateOrderSubtotal,
+  isDesignService,
+} from '../../../shared/utils/order.helpers';
+import { resolveLinePrintUnitPrice } from '../../../shared/utils/design-print.util';
+import { DEPOSIT_FACTOR } from '../../../shared/utils/quote-document.util';
+import { salesChannelLabel } from '../../../shared/utils/v1-labels.util';
+import { QUOTE_STATUS_LABELS, SERVICE_TYPE_LABELS } from '../../../shared/constants/labels';
+import {
+  CurrencyArsPipe,
   DateShortPipe,
   QuoteStatusLabelPipe,
   RichTextPipe,
@@ -44,11 +59,13 @@ import { QuoteDetailLinesComponent } from './quote-detail-lines/quote-detail-lin
     DateShortPipe,
     QuoteStatusLabelPipe,
     RichTextPipe,
+    CurrencyArsPipe,
     DbSkeletonComponent,
     DbStateMessageComponent,
     DbButtonComponent,
     DbStatusBadgeComponent,
     DbServiceBadgesComponent,
+    MobileBarComponent,
     QuoteDetailLinesComponent,
   ],
   templateUrl: './quote-detail.component.html',
@@ -69,8 +86,11 @@ export class QuoteDetailComponent implements OnInit {
   notFound = false;
   statusLoading = false;
   generatingOrder = false;
+  mobileActionsOpen = false;
 
   readonly QuoteStatus = QuoteStatus;
+  readonly depositPercent = Math.round(DEPOSIT_FACTOR * 100);
+  readonly isDesignService = isDesignService;
 
   ngOnInit(): void {
     this.route.paramMap
@@ -117,6 +137,111 @@ export class QuoteDetailComponent implements OnInit {
     return formatQuoteValidityLabel(this.quote?.quotedAt);
   }
 
+  get mobileValidityLabel(): string {
+    if (!this.quote) return '';
+    // Artboard: «Válido hasta 15/11/2026».
+    const base = new Date(this.quote.quotedAt ?? Date.now());
+    const validUntil = new Date(base);
+    validUntil.setDate(validUntil.getDate() + 15);
+    return `Válido hasta ${validUntil.getDate()}/${validUntil.getMonth() + 1}/${validUntil.getFullYear()}`;
+  }
+
+  get statusPillClass(): string {
+    return this.quote ? quoteStatusPillClass(this.quote.status) : 'm-pill';
+  }
+
+  get salesChannelPill(): string | null {
+    if (!this.quote?.salesChannel) return null;
+    const label = salesChannelLabel(this.quote.salesChannel);
+    return label ? `Canal: ${label}` : null;
+  }
+
+  get wholesalePill(): string | null {
+    if (!this.quote?.wholesaleApplied) return null;
+    const percent = this.wholesalePercentFromItems();
+    if (percent != null && percent > 0) return `Mayorista −${percent}%`;
+    return 'Mayorista';
+  }
+
+  get quoteSubtotal(): number {
+    return this.quote ? calculateOrderSubtotal(this.quote.items) : 0;
+  }
+
+  get quoteDiscount(): number {
+    if (!this.quote) return 0;
+    return calculateOrderDiscount(
+      this.quote.items,
+      this.quote.discountPercent,
+      this.quote.discountAmount,
+    );
+  }
+
+  get discountLabel(): string {
+    if (!this.quote) return 'Descuento';
+    if (this.quote.wholesaleApplied) {
+      const percent = this.wholesalePercentFromItems();
+      if (percent != null && percent > 0) {
+        return `Descuento mayorista`;
+      }
+    }
+    const percent = this.quote.discountPercent ?? 0;
+    if (percent > 0) {
+      const formatted = percent.toLocaleString('es-AR', {
+        maximumFractionDigits: 2,
+      });
+      return `Descuento ${formatted}%`;
+    }
+    return 'Descuento';
+  }
+
+  get depositAmount(): number {
+    return this.quote ? Math.round(this.quote.total * DEPOSIT_FACTOR) : 0;
+  }
+
+  get estimatedProfit(): number {
+    return this.quote ? quoteEstimatedProfit(this.quote) : 0;
+  }
+
+  /** Exportar siempre; CTA primario según desktop. */
+  get showMobileDock(): boolean {
+    return !!this.quote;
+  }
+
+  get showMobileAccept(): boolean {
+    if (!this.quote) return false;
+    if (this.quote.orderId) return false;
+    return this.canGenerateOrder || this.editable;
+  }
+
+  get mobileAcceptLabel(): string {
+    if (this.canGenerateOrder) return 'Aceptar y crear pedido';
+    return 'Aceptar y crear pedido';
+  }
+
+  /** Opciones del selector de estado (actual + transiciones, sin cancelado). */
+  mobileStatusOptions(): Array<{ status: QuoteStatus; label: string }> {
+    if (!this.quote || !this.editable) return [];
+    const current = this.quote.status;
+    const allowed = new Set<QuoteStatus>([
+      current,
+      ...this.statusActions()
+        .map((a) => a.status)
+        .filter((s) => s !== QuoteStatus.CANCELADO),
+    ]);
+    const order = [
+      QuoteStatus.BORRADOR,
+      QuoteStatus.ENVIADO,
+      QuoteStatus.ACEPTADO,
+      QuoteStatus.RECHAZADO,
+    ];
+    return order
+      .filter((status) => allowed.has(status))
+      .map((status) => ({
+        status,
+        label: QUOTE_STATUS_LABELS[status],
+      }));
+  }
+
   statusActions(): Array<{ status: QuoteStatus; label: string }> {
     if (!this.quote || !this.editable) return [];
     return (
@@ -132,6 +257,22 @@ export class QuoteDetailComponent implements OnInit {
         status,
         label: QUOTE_STATUS_LABELS[status],
       }));
+  }
+
+  lineSubtotal(item: QuoteItem): number {
+    return calculateLinePriceTotal(item);
+  }
+
+  lineHasListPrice(item: QuoteItem): boolean {
+    return item.listUnitPrice != null && Number(item.listUnitPrice) > 0;
+  }
+
+  printUnitPrice(item: QuoteItem): number {
+    return resolveLinePrintUnitPrice(item);
+  }
+
+  serviceLabel(item: QuoteItem): string {
+    return SERVICE_TYPE_LABELS[item.serviceType] ?? item.serviceType;
   }
 
   openEdit(): void {
@@ -186,8 +327,21 @@ export class QuoteDetailComponent implements OnInit {
     });
   }
 
+  /** Dock: aceptar (si editable) o generar pedido (si ya aceptado). */
+  onMobileAccept(): void {
+    if (!this.quote) return;
+    if (this.canGenerateOrder) {
+      this.generateOrder();
+      return;
+    }
+    if (this.editable) {
+      this.updateStatus(QuoteStatus.ACEPTADO);
+    }
+  }
+
   updateStatus(status: QuoteStatus): void {
     if (!this.quote || this.statusLoading) return;
+    if (status === this.quote.status) return;
     if (status === QuoteStatus.ACEPTADO) {
       const createsProduct = this.quote.items.some((item) => !item.productId);
       const message = createsProduct
@@ -217,6 +371,9 @@ export class QuoteDetailComponent implements OnInit {
         this.quote = updated;
         this.statusLoading = false;
         this.cdr.markForCheck();
+        if (updated.orderId) {
+          void this.router.navigate(['/pedidos', updated.orderId]);
+        }
       },
       error: (err) => {
         this.statusLoading = false;
@@ -258,6 +415,54 @@ export class QuoteDetailComponent implements OnInit {
           },
         });
       });
+  }
+
+  openMobileActions(): void {
+    this.mobileActionsOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  closeMobileActions(): void {
+    if (!this.mobileActionsOpen) return;
+    this.mobileActionsOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  onMobileEdit(): void {
+    this.closeMobileActions();
+    this.openEdit();
+  }
+
+  onMobileCancelStatus(): void {
+    this.closeMobileActions();
+    this.updateStatus(QuoteStatus.CANCELADO);
+  }
+
+  onMobileDelete(): void {
+    this.closeMobileActions();
+    this.deleteQuote();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    this.closeMobileActions();
+  }
+
+  private wholesalePercentFromItems(): number | null {
+    if (!this.quote?.wholesaleApplied) return null;
+    for (const item of this.quote.items) {
+      const list = Number(item.listUnitPrice);
+      const unit = Number(item.unitPrice);
+      if (
+        Number.isFinite(list) &&
+        list > 0 &&
+        Number.isFinite(unit) &&
+        unit < list
+      ) {
+        return Math.round((1 - unit / list) * 100);
+      }
+    }
+    return null;
   }
 
   private loadQuote(id: string): void {

@@ -1,0 +1,18 @@
+<a class="qmc" [routerLink]="['/presupuestos', quote().id]">
+  <div class="qmc__row">
+    <span class="qmc__meta">{{ metaLabel() }}</span>
+    <span [class]="statusPillClass()">{{ statusLabel() }}</span>
+  </div>
+
+  <div class="qmc__row qmc__row--customer">
+    <strong class="qmc__customer">{{ customerLabel() }}</strong>
+    @if (wholesalePill(); as wholesale) {
+      <span class="m-pill m-pill--b">{{ wholesale }}</span>
+    }
+  </div>
+
+  <div class="qmc__row qmc__row--foot">
+    <span class="qmc__hint">{{ contextHint() }}</span>
+    <strong class="qmc__total">{{ quote().total | currencyArs }}</strong>
+  </div>
+</a>

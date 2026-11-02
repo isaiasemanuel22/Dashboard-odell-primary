@@ -331,6 +331,10 @@ export class OrderFormComponent implements OnChanges, OnInit {
   /** Dock mobile: mismo submit + total ya calculado. */
   get submitLabelMobile(): string {
     if (this.loading) return 'Guardando...';
+    if (this.isQuoteForm) {
+      if (this.isEditing) return 'Guardar cambios';
+      return 'Crear y enviar';
+    }
     const totalLabel = this.money(this.total);
     if (this.isEditing) return `Guardar cambios · ${totalLabel}`;
     if (this.presetQuote) return `Generar pedido · ${totalLabel}`;
@@ -338,11 +342,13 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   /**
-   * Faltantes del pedido (mismas reglas que `canSubmit` en modo order).
-   * Vacío ⇒ se puede guardar.
+   * Faltantes del submit principal (pedido, o presupuesto «Crear y enviar»).
+   * Vacío ⇒ se puede guardar. Borrador de presupuesto no usa esta lista.
    */
   get submitMissing(): string[] {
-    if (this.isQuoteForm) return [];
+    if (this.isQuoteForm) {
+      return this.quoteSubmitMissing(false);
+    }
     const missing: string[] = [];
 
     if (!this.customerId.trim()) missing.push('cliente');
@@ -374,6 +380,35 @@ export class OrderFormComponent implements OnChanges, OnInit {
       plainTextFromHtml(this.description).length > this.descriptionMaxLength
     ) {
       missing.push('descripción más corta');
+    }
+
+    return missing;
+  }
+
+  /** Mismas reglas que `canSubmit` del presupuesto. */
+  private quoteSubmitMissing(asDraft: boolean): string[] {
+    const missing: string[] = [];
+    const relevant = this.lines
+      .map((line, index) => ({ line, index }))
+      .filter(({ line }) => !isLineBlank(line));
+
+    if (!relevant.length) {
+      missing.push('al menos un producto');
+    } else {
+      for (const { line, index } of relevant) {
+        if (isLineValid(line)) continue;
+        missing.push(...this.lineMissingReasons(line, index + 1));
+      }
+    }
+
+    if (
+      plainTextFromHtml(this.description).length > this.descriptionMaxLength
+    ) {
+      missing.push('descripción más corta');
+    }
+
+    if (!asDraft && !this.customerId.trim()) {
+      missing.push('cliente');
     }
 
     return missing;
@@ -759,6 +794,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   onLineChanged(): void {
     // Mutaciones in-place en la línea; el resumen/totales se recalculan al leer getters.
+    // Avisa al diálogo (p. ej. «Guardar borrador» en la barra mobile).
+    this.uiMetaChange.emit();
   }
 
   unitPriceForLine(line: OrderLineDraft): number {
@@ -1271,11 +1308,13 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   addLine(): void {
     this.lines = [...this.lines, createEmptyLine(ServiceType.IMPRESION_3D)];
+    this.uiMetaChange.emit();
   }
 
   removeLine(index: number): void {
     if (this.lines.length === 1) {
       this.lines = [createEmptyLine(ServiceType.IMPRESION_3D)];
+      this.uiMetaChange.emit();
       return;
     }
     const removed = this.lines[index];
@@ -1288,6 +1327,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (!this.lines.length) {
       this.lines = [createEmptyLine(ServiceType.IMPRESION_3D)];
     }
+    this.uiMetaChange.emit();
   }
 
   onSubmit(asDraft = false): void {
@@ -1383,17 +1423,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   canSubmit(asDraft = false): boolean {
     this.clampDiscountFields();
     if (this.isQuoteForm) {
-      const relevant = this.lines.filter((line) => !isLineBlank(line));
-      if (!relevant.length || !relevant.every((line) => isLineValid(line))) {
-        return false;
-      }
-      if (
-        plainTextFromHtml(this.description).length > this.descriptionMaxLength
-      ) {
-        return false;
-      }
-      if (asDraft) return true;
-      return !!this.customerId.trim();
+      return this.quoteSubmitMissing(asDraft).length === 0;
     }
     return this.submitMissing.length === 0;
   }

@@ -78,9 +78,15 @@
     </div>
 
     @if (variant === 'quote') {
+      <div class="order-line__m-head mobile-only">
+        <strong class="order-line__m-title">{{ lineTitle }}</strong>
+        <span class="m-pill">{{ serviceLabel }}</span>
+      </div>
+
       <div class="order-line__product-row order-line__product-row--quote">
         @if (isDesign()) {
           <db-select
+            class="desktop-only"
             label="Producto"
             [ngModel]="''"
             [name]="'design-product-' + lineIndex"
@@ -133,6 +139,7 @@
         }
 
         <db-input
+          class="desktop-only"
           label="Cantidad"
           type="number"
           [(ngModel)]="line.quantity"
@@ -143,20 +150,39 @@
           [error]="quantityError"
         />
       </div>
-    } @else {
-      @if (variant === 'order') {
-        <div class="order-line__m-head mobile-only">
-          <strong class="order-line__m-title">Línea {{ lineIndex + 1 }}</strong>
-          <button
-            type="button"
-            class="order-line__m-remove"
-            aria-label="Quitar línea"
-            (click)="remove.emit()"
-          >
-            ✕
-          </button>
+
+      <div class="order-line__m-qty-price mobile-only">
+        <div class="order-line__stepper" role="group" aria-label="Cantidad">
+          <button type="button" (click)="adjustQuantity(-1)" aria-label="Restar cantidad">−</button>
+          <span>{{ line.quantity }}</span>
+          <button type="button" (click)="adjustQuantity(1)" aria-label="Sumar cantidad">+</button>
         </div>
-      }
+        <div class="order-line__m-price-main">
+          @if (showWholesaleColumns && editableUnitPrice > 0) {
+            <span class="order-line__m-list">
+              <s>{{ editableUnitPrice | currencyArs }}</s>
+              <span>· mayorista</span>
+            </span>
+          }
+          <strong class="order-line__m-unit">{{ appliedUnitPriceLabel }}</strong>
+        </div>
+      </div>
+      <div class="order-line__m-subtotal mobile-only">
+        <span>Subtotal</span>
+        <strong>{{ (showWholesaleColumns ? wholesaleLineTotalPreview : lineTotal) | currencyArs }}</strong>
+      </div>
+    } @else {
+      <div class="order-line__m-head mobile-only">
+        <strong class="order-line__m-title">{{ lineTitle }}</strong>
+        <button
+          type="button"
+          class="order-line__m-remove"
+          aria-label="Quitar línea"
+          (click)="remove.emit()"
+        >
+          ✕
+        </button>
+      </div>
 
       <div class="order-line__product-row">
         @if (isDesign()) {
@@ -203,28 +229,26 @@
         </div>
       </div>
 
-      @if (variant === 'order') {
-        <div class="order-line__m-qty-price mobile-only">
-          <div class="order-line__stepper" role="group" aria-label="Cantidad">
-            <button type="button" (click)="adjustQuantity(-1)" aria-label="Restar cantidad">−</button>
-            <span>{{ line.quantity }}</span>
-            <button type="button" (click)="adjustQuantity(1)" aria-label="Sumar cantidad">+</button>
-          </div>
-          <div class="order-line__m-price-main">
-            @if (showWholesaleColumns && editableUnitPrice > 0) {
-              <span class="order-line__m-list">
-                <s>{{ editableUnitPrice | currencyArs }}</s>
-                <span>· mayorista</span>
-              </span>
-            }
-            <strong class="order-line__m-unit">{{ appliedUnitPriceLabel }}</strong>
-          </div>
+      <div class="order-line__m-qty-price mobile-only">
+        <div class="order-line__stepper" role="group" aria-label="Cantidad">
+          <button type="button" (click)="adjustQuantity(-1)" aria-label="Restar cantidad">−</button>
+          <span>{{ line.quantity }}</span>
+          <button type="button" (click)="adjustQuantity(1)" aria-label="Sumar cantidad">+</button>
         </div>
-        <div class="order-line__m-subtotal mobile-only">
-          <span>Subtotal</span>
-          <strong>{{ (showWholesaleColumns ? wholesaleLineTotalPreview : lineTotal) | currencyArs }}</strong>
+        <div class="order-line__m-price-main">
+          @if (showWholesaleColumns && editableUnitPrice > 0) {
+            <span class="order-line__m-list">
+              <s>{{ editableUnitPrice | currencyArs }}</s>
+              <span>· mayorista</span>
+            </span>
+          }
+          <strong class="order-line__m-unit">{{ appliedUnitPriceLabel }}</strong>
         </div>
-      }
+      </div>
+      <div class="order-line__m-subtotal mobile-only">
+        <span>Subtotal</span>
+        <strong>{{ (showWholesaleColumns ? wholesaleLineTotalPreview : lineTotal) | currencyArs }}</strong>
+      </div>
 
       @if (isImpresion3D() && !line.productId) {
         <div class="order-line__fdm-concept">
@@ -253,7 +277,7 @@
       }
     }
 
-    @if (variant === 'order' && hasCostComposition) {
+    @if ((variant === 'order' || variant === 'quote') && hasCostComposition) {
       <button
         type="button"
         class="order-line__cost-fold mobile-only"
@@ -263,13 +287,23 @@
       >
         @if (isCostCompositionReady) {
           <span>
-            Composición del costo · {{ unitCostFormatted }} c/u
+            @if (variant === 'quote') {
+              Cotización · {{ unitCostFormatted }} c/u
+            } @else {
+              Composición del costo · {{ unitCostFormatted }} c/u
+            }
             @if (lineMarginPercent != null) {
               · margen {{ lineMarginPercent }} %
             }
           </span>
         } @else {
-          <span>Completá la composición del costo</span>
+          <span>
+            @if (variant === 'quote') {
+              Completá la cotización
+            } @else {
+              Completá la composición del costo
+            }
+          </span>
         }
         <span class="order-line__cost-fold-chevron" aria-hidden="true">▾</span>
       </button>

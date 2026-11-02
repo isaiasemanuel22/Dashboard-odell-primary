@@ -117,7 +117,11 @@ export class FormDialogService {
             'xl',
             {
               ariaLabel: quote ? 'Editar presupuesto' : 'Nuevo presupuesto',
-              panelClass: ['form-dialog-panel--quote'],
+              // Mismo ancho desktop; en mobile: pantalla completa como el pedido.
+              panelClass: [
+                'form-dialog-panel--quote',
+                'form-dialog-panel--order-fullscreen',
+              ],
               maxWidth: '1120px',
             },
           ),

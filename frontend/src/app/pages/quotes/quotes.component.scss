@@ -1,13 +1,35 @@
 @use '../../shared/styles/screen' as screen;
+@use '../../shared/styles/mobile' as mobile;
 
 @include screen.prefixed-screen('quotes');
 
-@media (max-width: 768px) {
-  .quotes-header {
-    flex-wrap: wrap;
-  }
+.quotes-m__chip-n {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
 
-  .quotes-search {
-    width: 100%;
+.quotes-m__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+}
+
+.quotes-m__empty {
+  align-items: flex-start;
+  gap: 12px;
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: mobile.$m-text-label;
+  }
+}
+
+@include mobile.mobile-only {
+  .quotes-m .m-ib {
+    color: mobile.$m-primary;
   }
 }

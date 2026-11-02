@@ -73,3 +73,96 @@ export function formatQuoteValidityLabel(quotedAt?: string | Date | null): strin
   ];
   return `Válido hasta el ${validUntil.getDate()} de ${months[validUntil.getMonth()]} de ${validUntil.getFullYear()}`;
 }
+
+/** Chip de la lista mobile: Abiertos (= activos) + cada QuoteStatus. */
+export type QuoteMobileChip = 'abiertos' | QuoteStatus;
+
+export function quoteMobileChips(): { value: QuoteMobileChip; label: string }[] {
+  return [
+    { value: 'abiertos', label: 'Abiertos' },
+    ...Object.values(QuoteStatus).map((status) => ({
+      value: status,
+      label: QUOTE_STATUS_LABELS[status],
+    })),
+  ];
+}
+
+export function matchesQuoteMobileChip(
+  status: QuoteStatus,
+  chip: QuoteMobileChip,
+): boolean {
+  if (chip === 'abiertos') {
+    return matchesQuoteStatusFilter(status, 'activos');
+  }
+  return status === chip;
+}
+
+/** «Válido hasta 15/11» (corto, para tarjetas). */
+export function formatQuoteMobileValidityShort(
+  quotedAt?: string | Date | null,
+): string {
+  const base = new Date(quotedAt ?? Date.now());
+  const validUntil = new Date(base);
+  validUntil.setDate(validUntil.getDate() + 15);
+  return `Válido hasta ${validUntil.getDate()}/${validUntil.getMonth() + 1}`;
+}
+
+/** Línea de contexto de la tarjeta mobile. */
+export function formatQuoteMobileContextHint(quote: Quote): string {
+  if (quote.orderId) {
+    return `Pedido ${quote.orderId} generado`;
+  }
+  if (!quote.customerId) {
+    return 'Falta cliente para enviarlo';
+  }
+
+  const validity = formatQuoteMobileValidityShort(quote.quotedAt);
+  if (quote.status === QuoteStatus.ENVIADO) {
+    const days = daysSince(quote.quotedAt);
+    if (days == null) return validity;
+    if (days <= 0) return `${validity} · enviado hoy`;
+    if (days === 1) return `${validity} · enviado hace 1 día`;
+    return `${validity} · enviado hace ${days} días`;
+  }
+  return validity;
+}
+
+export function quoteLinesMetaLabel(quote: Quote): string {
+  const lines = quote.items.length;
+  const noun = lines === 1 ? 'línea' : 'líneas';
+  return `${quote.id} · ${lines} ${noun}`;
+}
+
+/** Clase de pill de estado (m-pill + variante). */
+export function quoteStatusPillClass(status: QuoteStatus): string {
+  switch (status) {
+    case QuoteStatus.ACEPTADO:
+      return 'm-pill m-pill--ok';
+    case QuoteStatus.RECHAZADO:
+    case QuoteStatus.CANCELADO:
+      return 'm-pill m-pill--d';
+    case QuoteStatus.ENVIADO:
+      return 'm-pill m-pill--b';
+    case QuoteStatus.BORRADOR:
+    default:
+      return 'm-pill';
+  }
+}
+
+/** Ganancia estimada: total − Σ(unitCost × qty). */
+export function quoteEstimatedProfit(quote: Quote): number {
+  const cost = quote.items.reduce((sum, item) => {
+    const unit = Number(item.unitCost) || 0;
+    const qty = Number(item.quantity) || 0;
+    return sum + unit * qty;
+  }, 0);
+  return Math.round(quote.total - cost);
+}
+
+function daysSince(iso: string | Date | null | undefined): number | null {
+  if (!iso) return null;
+  const then = new Date(iso);
+  if (Number.isNaN(then.getTime())) return null;
+  const ms = Date.now() - then.getTime();
+  return Math.floor(ms / (24 * 60 * 60 * 1000));
+}

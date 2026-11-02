@@ -26,123 +26,329 @@
 }
 
 @if (!loading && quote && !notFound) {
-  <header class="page-header detail-header">
-    <div>
-      <a routerLink="/presupuestos" class="back-link">← Presupuestos</a>
-      <div class="title-row">
-        <h2>Presupuesto {{ quote.id }}</h2>
-        <db-status-badge
-          [statusClass]="quote.status"
-          [label]="quote.status | quoteStatusLabel"
-        />
-      </div>
-      <p class="meta-line">
-        Fecha: {{ quote.quotedAt | dateShort }} · Creado: {{ quote.createdAt | dateShort }}
-        · {{ quoteValidityLabel }}
-      </p>
-    </div>
-    <div class="header-actions">
-      <db-button
-        label="Generar presupuesto"
-        variant="secondary"
-        format="soft"
-        (clicked)="generateDocument()"
-      />
-      @if (quote.orderId) {
-        <db-button
-          label="Ver pedido"
-          variant="primary"
-          format="solid"
-          [routerLink]="['/pedidos', quote.orderId]"
-        />
-      } @else if (canGenerateOrder) {
-        <db-button
-          [label]="generateOrderLabel"
-          variant="primary"
-          format="solid"
-          [disabled]="generatingOrder"
-          (clicked)="generateOrder()"
-        />
-      }
-    </div>
-  </header>
+  <div class="mobile-only qd-m" [class.qd-m--dock]="showMobileDock">
+    <db-mobile-bar [title]="quote.id" backLink="/presupuestos">
+      <button
+        type="button"
+        class="m-ib"
+        aria-label="Más acciones"
+        (click)="openMobileActions()"
+      >
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.4"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M5 12h.01M12 12h.01M19 12h.01" />
+        </svg>
+      </button>
+    </db-mobile-bar>
 
-  <div class="detail-layout">
-    <section class="panel">
-      <h3>Cliente</h3>
-      <dl class="detail-list">
-        <div>
-          <dt>Nombre</dt>
-          <dd>
-            @if (quote.customerId) {
-              <a [routerLink]="['/clientes', quote.customerId]" class="customer-link">
-                {{ quote.customerName }}
-              </a>
-            } @else {
-              <span class="no-customer">Sin cliente asignado</span>
+    <div class="m-body qd-m__body">
+      <section class="m-card" aria-label="Resumen del presupuesto">
+        <div class="m-ln">
+          <span [class]="statusPillClass">{{ quote.status | quoteStatusLabel }}</span>
+          <span class="m-lbl">{{ mobileValidityLabel }}</span>
+        </div>
+
+        @if (quote.customerId) {
+          <strong class="qd-m__customer">{{ quote.customerName }}</strong>
+        } @else {
+          <strong class="qd-m__customer qd-m__customer--empty">Sin cliente</strong>
+        }
+
+        @if (wholesalePill || salesChannelPill) {
+          <div class="qd-m__pills">
+            @if (wholesalePill; as wholesale) {
+              <span class="m-pill m-pill--b">{{ wholesale }}</span>
             }
-          </dd>
-        </div>
-        <div>
-          <dt>Servicios</dt>
-          <dd><db-service-badges [types]="quote.services" /></dd>
-        </div>
-        @if (quote.orderId) {
-          <div>
-            <dt>Pedido</dt>
-            <dd>
-              <a [routerLink]="['/pedidos', quote.orderId]" class="customer-link">
-                {{ quote.orderId }}
-              </a>
-            </dd>
+            @if (salesChannelPill; as channel) {
+              <span class="m-pill qd-m__pill-channel">{{ channel }}</span>
+            }
           </div>
         }
-      </dl>
-    </section>
 
-    <div class="detail-main">
-      <section class="panel description-panel">
-        <div class="description-panel__header">
-          <h3>Descripción</h3>
+        @if (mobileStatusOptions().length) {
+          <div class="qd-m__seg" role="group" aria-label="Cambiar estado">
+            @for (opt of mobileStatusOptions(); track opt.status) {
+              <button
+                type="button"
+                [class.on]="quote.status === opt.status"
+                [disabled]="statusLoading"
+                (click)="updateStatus(opt.status)"
+              >
+                {{ opt.label }}
+              </button>
+            }
+          </div>
+        }
+      </section>
+
+      <h2 class="m-sec-t">Líneas</h2>
+      <section class="m-card m-card--flush" aria-label="Líneas del presupuesto">
+        @for (item of quote.items; track $index) {
+          <div class="m-row qd-m__line">
+            <div class="m-row__text">
+              <b>{{ item.productName }}</b>
+              <span>
+                @if (isDesignService(item.serviceType) && !item.includesPrint) {
+                  {{ serviceLabel(item) }} · precio cerrado
+                } @else {
+                  {{ item.quantity }} ×
+                  @if (lineHasListPrice(item) && item.listUnitPrice != null) {
+                    <s>{{ item.listUnitPrice | currencyArs }}</s>
+                    {{ item.unitPrice | currencyArs }}
+                  } @else if (isDesignService(item.serviceType)) {
+                    {{ (item.designUnitPrice ?? item.unitPrice) | currencyArs }}
+                    @if (item.includesPrint) {
+                      + {{ printUnitPrice(item) | currencyArs }}/u
+                    }
+                  } @else {
+                    {{ item.unitPrice | currencyArs }}
+                  }
+                  · {{ serviceLabel(item) }}
+                }
+              </span>
+            </div>
+            <div class="qd-m__line-end">{{ lineSubtotal(item) | currencyArs }}</div>
+          </div>
+        }
+      </section>
+
+      <section class="m-card" aria-label="Totales">
+        <div class="m-ln">
+          <span>Subtotal a lista</span>
+          <span class="qd-m__num">{{ quoteSubtotal | currencyArs }}</span>
         </div>
-        <div class="quote-description rich-content">
-          @if (quote.description) {
-            <div [innerHTML]="quote.description | richText"></div>
-          } @else {
-            <span class="quote-description--empty">Sin descripción</span>
-          }
+        @if (quoteDiscount > 0) {
+          <div class="m-ln">
+            <span>{{ discountLabel }}</span>
+            <span class="qd-m__num qd-m__num--neg">−{{ quoteDiscount | currencyArs }}</span>
+          </div>
+        }
+        <div class="m-ln qd-m__total-row">
+          <b>Total</b>
+          <span class="m-big qd-m__total">{{ quote.total | currencyArs }}</span>
+        </div>
+        <div class="m-ln">
+          <span class="m-hint">Seña sugerida {{ depositPercent }} %</span>
+          <span class="qd-m__num">{{ depositAmount | currencyArs }}</span>
+        </div>
+        <div class="m-ln">
+          <span class="m-hint">Ganancia estimada</span>
+          <span
+            class="qd-m__num"
+            [class.qd-m__num--pos]="estimatedProfit >= 0"
+            [class.qd-m__num--neg]="estimatedProfit < 0"
+          >{{ estimatedProfit | currencyArs }}</span>
         </div>
       </section>
 
-      <app-quote-detail-lines [quote]="quote" />
+      <h2 class="m-sec-t">Descripción</h2>
+      <section class="m-card">
+        @if (quote.description) {
+          <div class="qd-m__rich rich-content" [innerHTML]="quote.description | richText"></div>
+        } @else {
+          <span class="m-hint">Sin descripción</span>
+        }
+      </section>
+    </div>
 
-      <section class="panel quote-actions">
-        @if (editable) {
-          <db-button
-            label="Editar presupuesto"
-            variant="secondary"
-            format="soft"
-            (clicked)="openEdit()"
-          />
-          @for (action of statusActions(); track action.status) {
-            <db-button
-              [label]="action.label"
-              variant="primary-outline"
-              format="soft"
+    @if (showMobileDock) {
+      <div class="qd-m__dock">
+        <button
+          type="button"
+          class="qd-m__dock-btn qd-m__dock-btn--sec"
+          (click)="generateDocument()"
+        >
+          Exportar PDF
+        </button>
+        @if (quote.orderId) {
+          <a
+            class="qd-m__dock-btn qd-m__dock-btn--pri"
+            [routerLink]="['/pedidos', quote.orderId]"
+          >
+            Ver pedido
+          </a>
+        } @else if (showMobileAccept) {
+          <button
+            type="button"
+            class="qd-m__dock-btn qd-m__dock-btn--pri"
+            [disabled]="generatingOrder || statusLoading"
+            (click)="onMobileAccept()"
+          >
+            {{ mobileAcceptLabel }}
+          </button>
+        }
+      </div>
+    }
+
+    @if (mobileActionsOpen) {
+      <div class="qd-m__sheet-scrim" (click)="closeMobileActions()"></div>
+      <div
+        class="qd-m__sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Más acciones"
+      >
+        <div class="qd-m__sheet-grab" aria-hidden="true"></div>
+        <div class="qd-m__sheet-body">
+          @if (editable) {
+            <button type="button" class="qd-m__sheet-action" (click)="onMobileEdit()">
+              Editar
+            </button>
+          }
+          @if (editable && quote.status !== QuoteStatus.CANCELADO) {
+            <button
+              type="button"
+              class="qd-m__sheet-action"
               [disabled]="statusLoading"
-              (clicked)="updateStatus(action.status)"
+              (click)="onMobileCancelStatus()"
+            >
+              Cancelar presupuesto
+            </button>
+          }
+          @if (quote.status !== QuoteStatus.ACEPTADO) {
+            <button
+              type="button"
+              class="qd-m__sheet-action qd-m__sheet-action--danger"
+              (click)="onMobileDelete()"
+            >
+              Eliminar
+            </button>
+          }
+          <button type="button" class="qd-m__sheet-action" (click)="closeMobileActions()">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="desktop-only">
+    <header class="page-header detail-header">
+      <div>
+        <a routerLink="/presupuestos" class="back-link">← Presupuestos</a>
+        <div class="title-row">
+          <h2>Presupuesto {{ quote.id }}</h2>
+          <db-status-badge
+            [statusClass]="quote.status"
+            [label]="quote.status | quoteStatusLabel"
+          />
+        </div>
+        <p class="meta-line">
+          Fecha: {{ quote.quotedAt | dateShort }} · Creado: {{ quote.createdAt | dateShort }}
+          · {{ quoteValidityLabel }}
+        </p>
+      </div>
+      <div class="header-actions">
+        <db-button
+          label="Generar presupuesto"
+          variant="secondary"
+          format="soft"
+          (clicked)="generateDocument()"
+        />
+        @if (quote.orderId) {
+          <db-button
+            label="Ver pedido"
+            variant="primary"
+            format="solid"
+            [routerLink]="['/pedidos', quote.orderId]"
+          />
+        } @else if (canGenerateOrder) {
+          <db-button
+            [label]="generateOrderLabel"
+            variant="primary"
+            format="solid"
+            [disabled]="generatingOrder"
+            (clicked)="generateOrder()"
+          />
+        }
+      </div>
+    </header>
+
+    <div class="detail-layout">
+      <section class="panel">
+        <h3>Cliente</h3>
+        <dl class="detail-list">
+          <div>
+            <dt>Nombre</dt>
+            <dd>
+              @if (quote.customerId) {
+                <a [routerLink]="['/clientes', quote.customerId]" class="customer-link">
+                  {{ quote.customerName }}
+                </a>
+              } @else {
+                <span class="no-customer">Sin cliente asignado</span>
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Servicios</dt>
+            <dd><db-service-badges [types]="quote.services" /></dd>
+          </div>
+          @if (quote.orderId) {
+            <div>
+              <dt>Pedido</dt>
+              <dd>
+                <a [routerLink]="['/pedidos', quote.orderId]" class="customer-link">
+                  {{ quote.orderId }}
+                </a>
+              </dd>
+            </div>
+          }
+        </dl>
+      </section>
+
+      <div class="detail-main">
+        <section class="panel description-panel">
+          <div class="description-panel__header">
+            <h3>Descripción</h3>
+          </div>
+          <div class="quote-description rich-content">
+            @if (quote.description) {
+              <div [innerHTML]="quote.description | richText"></div>
+            } @else {
+              <span class="quote-description--empty">Sin descripción</span>
+            }
+          </div>
+        </section>
+
+        <app-quote-detail-lines [quote]="quote" />
+
+        <section class="panel quote-actions">
+          @if (editable) {
+            <db-button
+              label="Editar presupuesto"
+              variant="secondary"
+              format="soft"
+              (clicked)="openEdit()"
+            />
+            @for (action of statusActions(); track action.status) {
+              <db-button
+                [label]="action.label"
+                variant="primary-outline"
+                format="soft"
+                [disabled]="statusLoading"
+                (clicked)="updateStatus(action.status)"
+              />
+            }
+          }
+          @if (quote.status !== 'aceptado') {
+            <db-button
+              label="Eliminar"
+              variant="delete"
+              format="soft"
+              (clicked)="deleteQuote()"
             />
           }
-        }
-        @if (quote.status !== 'aceptado') {
-          <db-button
-            label="Eliminar"
-            variant="delete"
-            format="soft"
-            (clicked)="deleteQuote()"
-          />
-        }
-      </section>
+        </section>
+      </div>
     </div>
   </div>
 }
