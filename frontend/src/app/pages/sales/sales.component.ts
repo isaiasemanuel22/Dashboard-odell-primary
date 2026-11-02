@@ -232,8 +232,21 @@ export class SalesComponent implements OnInit {
 
     this.productsService.getProducts(undefined, { all: true }).subscribe({
       next: (products) => {
-        downloadSalesReportPdf(this.stats!, this.entries, products, this.monthLabel);
-        this.reportMessage = `Listo: se descargó el reporte de ${this.monthLabel}.`;
+        void downloadSalesReportPdf(
+          this.stats!,
+          this.entries,
+          products,
+          this.monthLabel,
+        )
+          .then(() => {
+            this.reportMessage = `Listo: se descargó el reporte de ${this.monthLabel}.`;
+          })
+          .catch((err) => {
+            this.reportMessage = extractApiErrorMessage(
+              err,
+              'No se pudo generar el reporte',
+            );
+          });
       },
       error: (err) => {
         this.reportMessage = extractApiErrorMessage(err, 'No se pudo generar el reporte');

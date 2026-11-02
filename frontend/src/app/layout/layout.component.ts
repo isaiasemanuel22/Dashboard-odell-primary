@@ -8,8 +8,9 @@ import { UserAccessService } from '../core/services/user-access.service';
 import { RealtimeService } from '../core/services/realtime.service';
 import { StoreBootstrapService } from '../store/store-bootstrap.service';
 import { SuppliesFacade } from '../store/supplies/supplies.facade';
-import { DbButtonComponent, NavIconComponent } from '@general-components';
-import { FormDialogService } from '../shared/form-dialogs/public-api';
+import { DbButtonComponent } from '../components/db-button/db-button.component';
+import { NavIconComponent } from '../components/nav-icon/nav-icon.component';
+import { FormDialogService } from '../shared/form-dialogs/form-dialog.service';
 import { LayoutUiService } from './layout-ui.service';
 
 interface NavItem {

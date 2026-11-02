@@ -1,5 +1,3 @@
-import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
 import {
   Customer,
   OrderItemPayload,
@@ -440,6 +438,7 @@ async function waitForImages(root: HTMLElement): Promise<void> {
 async function renderPagesToCanvases(
   pagesHtml: string[],
 ): Promise<HTMLCanvasElement[]> {
+  const { default: html2canvas } = await import('html2canvas');
   const host = document.createElement('div');
   host.style.cssText =
     'position:fixed;left:-10000px;top:0;width:0;height:0;overflow:hidden;pointer-events:none;';
@@ -494,6 +493,7 @@ async function downloadPdf(
   canvases: HTMLCanvasElement[],
   filename: string,
 ): Promise<void> {
+  const { jsPDF } = await import('jspdf');
   const pdf = new jsPDF({
     orientation: 'portrait',
     unit: 'mm',

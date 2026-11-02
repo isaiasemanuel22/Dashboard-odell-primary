@@ -1,10 +1,8 @@
-import { jsPDF } from 'jspdf';
-import autoTable from 'jspdf-autotable';
+import type { jsPDF } from 'jspdf';
 import {
   Product,
   ProfitArea,
   SaleEntry,
-  SaleEntryItem,
   SalesStats,
 } from '../../core/models';
 import { SERVICE_TYPE_LABELS } from '../constants/labels';
@@ -27,6 +25,8 @@ export interface SalesReportAreaSection {
   areaLabel: string;
   rows: SalesReportProductRow[];
 }
+
+type AutoTableFn = typeof import('jspdf-autotable').default;
 
 function formatCurrency(value: number): string {
   return new Intl.NumberFormat('es-AR', {
@@ -118,7 +118,12 @@ export function buildSalesReportAreaSections(
     .filter((section) => section.rows.length > 0);
 }
 
-function appendAreaBalanceSection(doc: jsPDF, stats: SalesStats, startY: number): number {
+function appendAreaBalanceSection(
+  doc: jsPDF,
+  autoTable: AutoTableFn,
+  stats: SalesStats,
+  startY: number,
+): number {
   autoTable(doc, {
     startY,
     head: [['Área', 'Vendido', 'Costos', 'Ganancia', 'Ventas', 'Pedidos']],
@@ -141,6 +146,7 @@ function appendAreaBalanceSection(doc: jsPDF, stats: SalesStats, startY: number)
 
 function appendProductSections(
   doc: jsPDF,
+  autoTable: AutoTableFn,
   sections: SalesReportAreaSection[],
   startY: number,
 ): void {
@@ -179,12 +185,17 @@ function appendProductSections(
   }
 }
 
-export function downloadSalesReportPdf(
+export async function downloadSalesReportPdf(
   stats: SalesStats,
   entries: SaleEntry[],
   products: Product[],
   monthLabel = currentMonthLabel(),
-): void {
+): Promise<void> {
+  const [{ jsPDF }, { default: autoTable }] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable'),
+  ]);
+
   const resolveProduct = (productId: string) =>
     products.find((product) => product.id === productId) ?? null;
   const sections = buildSalesReportAreaSections(entries, resolveProduct);
@@ -235,7 +246,7 @@ export function downloadSalesReportPdf(
   doc.text('Balance por área', 14, y);
   y += 4;
 
-  y = appendAreaBalanceSection(doc, stats, y) + 10;
+  y = appendAreaBalanceSection(doc, autoTable, stats, y) + 10;
 
   if (y > 240) {
     doc.addPage();
@@ -246,7 +257,7 @@ export function downloadSalesReportPdf(
   doc.setFontSize(12);
   doc.text('Detalle por área y producto', 14, y);
 
-  appendProductSections(doc, sections, y);
+  appendProductSections(doc, autoTable, sections, y);
 
   doc.save(`reporte-ventas-${currentMonthFileSuffix()}.pdf`);
 }

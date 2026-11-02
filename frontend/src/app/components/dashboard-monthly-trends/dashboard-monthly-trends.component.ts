@@ -7,30 +7,11 @@ import {
   OnDestroy,
   ViewChild,
 } from '@angular/core';
-import {
+import type {
   Chart,
   ChartConfiguration,
-  Filler,
-  Legend,
-  LineController,
-  LineElement,
-  LinearScale,
-  PointElement,
-  Tooltip,
-  CategoryScale,
 } from 'chart.js';
 import { MonthlyTrendPoint } from '../../core/models';
-
-Chart.register(
-  LineController,
-  LineElement,
-  PointElement,
-  LinearScale,
-  CategoryScale,
-  Tooltip,
-  Legend,
-  Filler,
-);
 
 const COLOR_SOLD = '#15803d';
 const COLOR_COLLECTED = '#0e7aab';
@@ -77,6 +58,10 @@ export class DashboardMonthlyTrendsComponent
   private ordersChart?: Chart<'line'>;
   private revenueChart?: Chart<'line'>;
   private viewReady = false;
+  private destroyed = false;
+  private chartApi: typeof import('chart.js') | null = null;
+  private chartLoad: Promise<typeof import('chart.js')> | null = null;
+  private renderGeneration = 0;
 
   get totalOrders(): number {
     return this.trends.reduce((sum, point) => sum + point.ordersCount, 0);
@@ -84,26 +69,54 @@ export class DashboardMonthlyTrendsComponent
 
   ngAfterViewInit(): void {
     this.viewReady = true;
-    this.renderCharts();
+    void this.renderCharts();
   }
 
   ngOnChanges(): void {
-    this.renderCharts();
+    void this.renderCharts();
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.ordersChart?.destroy();
     this.revenueChart?.destroy();
   }
 
-  private renderCharts(): void {
-    if (!this.viewReady || !this.trends.length) return;
-
-    this.renderOrdersChart();
-    this.renderRevenueChart();
+  private async ensureChartApi(): Promise<typeof import('chart.js')> {
+    if (this.chartApi) {
+      return this.chartApi;
+    }
+    if (!this.chartLoad) {
+      this.chartLoad = import('chart.js').then((mod) => {
+        mod.Chart.register(
+          mod.LineController,
+          mod.LineElement,
+          mod.PointElement,
+          mod.LinearScale,
+          mod.CategoryScale,
+          mod.Tooltip,
+          mod.Legend,
+          mod.Filler,
+        );
+        this.chartApi = mod;
+        return mod;
+      });
+    }
+    return this.chartLoad;
   }
 
-  private renderOrdersChart(): void {
+  private async renderCharts(): Promise<void> {
+    if (!this.viewReady || !this.trends.length || this.destroyed) return;
+
+    const generation = ++this.renderGeneration;
+    const { Chart } = await this.ensureChartApi();
+    if (this.destroyed || generation !== this.renderGeneration) return;
+
+    this.renderOrdersChart(Chart);
+    this.renderRevenueChart(Chart);
+  }
+
+  private renderOrdersChart(ChartCtor: typeof Chart): void {
     const canvas = this.ordersCanvas?.nativeElement;
     if (!canvas) return;
 
@@ -142,10 +155,10 @@ export class DashboardMonthlyTrendsComponent
       return;
     }
 
-    this.ordersChart = new Chart(canvas, config);
+    this.ordersChart = new ChartCtor(canvas, config);
   }
 
-  private renderRevenueChart(): void {
+  private renderRevenueChart(ChartCtor: typeof Chart): void {
     const canvas = this.revenueCanvas?.nativeElement;
     if (!canvas) return;
 
@@ -200,7 +213,7 @@ export class DashboardMonthlyTrendsComponent
       return;
     }
 
-    this.revenueChart = new Chart(canvas, config);
+    this.revenueChart = new ChartCtor(canvas, config);
   }
 
   private baseLineOptions(
