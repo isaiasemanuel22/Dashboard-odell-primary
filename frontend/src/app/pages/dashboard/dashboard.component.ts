@@ -4,27 +4,37 @@ import {
   Component,
   DestroyRef,
   OnInit,
+  computed,
   inject,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
-import { BehaviorSubject, catchError, of, switchMap } from 'rxjs';
+import { BehaviorSubject, catchError, map, of, switchMap } from 'rxjs';
 import {
   ClientReceivable,
+  CurrentUserProfile,
   DashboardLowStockItem,
   DashboardMarginAlert,
   DashboardPeriod,
+  DashboardProfitabilityChannel,
+  DashboardProfitabilityRankingItem,
   DashboardRankBy,
   DashboardStats,
+  MonthlyTrendPoint,
   Order,
   OrderStatus,
   ServiceType,
 } from '../../core/models';
-import { formatPercentInteger } from '../../shared/utils/percent.util';
+import {
+  formatPercentInteger,
+  formatPercentIntegerLabel,
+} from '../../shared/utils/percent.util';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { OrdersService } from '../../core/services/orders.service';
 import { ProductsService } from '../../core/services/products.service';
 import { RealtimeService } from '../../core/services/realtime.service';
+import { UserAccessService } from '../../core/services/user-access.service';
 import {
   CurrencyArsPipe,
   ServiceTypeLabelPipe,
@@ -32,15 +42,19 @@ import {
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { cancelOrderConfirmMessage } from '../../shared/utils/order.helpers';
+import { salesChannelLabel } from '../../shared/utils/v1-labels.util';
 import { environment } from '../../../environments/environment';
 import {
   DB_DATA_TABLE,
   DbButtonComponent,
+  DbPillGroupComponent,
+  DbPillOption,
   DbSegmentedControlComponent,
   DbSegmentOption,
   DbStateMessageComponent,
   DashboardMonthlyTrendsComponent,
   DashboardNotificationsComponent,
+  MobileBarComponent,
   OdlActionEvent,
   OdlColumn,
   OdlRowAction,
@@ -81,10 +95,12 @@ const DEBT_RECENT_DAYS = 15;
     CurrencyArsPipe,
     ServiceTypeLabelPipe,
     DbButtonComponent,
+    DbPillGroupComponent,
     DbSegmentedControlComponent,
     DbStateMessageComponent,
     DashboardMonthlyTrendsComponent,
     DashboardNotificationsComponent,
+    MobileBarComponent,
     DashboardAttentionComponent,
     DashboardChannelsComponent,
     DashboardMarginAlertsComponent,
@@ -101,6 +117,7 @@ export class DashboardComponent implements OnInit {
   private readonly ordersService = inject(OrdersService);
   private readonly productsService = inject(ProductsService);
   private readonly realtime = inject(RealtimeService);
+  private readonly userAccess = inject(UserAccessService);
   private readonly formDialogs = inject(FormDialogService);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -112,6 +129,34 @@ export class DashboardComponent implements OnInit {
 
   period: DashboardPeriod = 'month';
   rankBy: DashboardRankBy = 'profit';
+  /** Valor del enum para el KPI mobile «Pendientes» → /pedidos?estado=… */
+  readonly pendingStatus = OrderStatus.PENDIENTE;
+
+  /** Criterios de ranking mobile (mismos values que desktop). */
+  readonly mobileRankOptions: DbPillOption<DashboardRankBy>[] = [
+    { value: 'profit', label: 'Ganancia' },
+    { value: 'markup', label: 'Margen %' },
+    { value: 'units', label: 'Unidades' },
+  ];
+
+  private readonly profile = toSignal(
+    this.userAccess.currentUser$.pipe(
+      map((value) =>
+        value && 'authenticated' in value && value.authenticated === false
+          ? null
+          : (value as CurrentUserProfile | null),
+      ),
+    ),
+    { initialValue: null },
+  );
+
+  /** Saludo mobile: «Hola, Isaías» o «Hola» si no hay nombre. */
+  readonly greetingTitle = computed(() => {
+    const name = this.profile()?.displayName?.trim();
+    if (!name) return 'Hola';
+    const first = name.split(/\s+/)[0];
+    return `Hola, ${first}`;
+  });
 
   readonly periodOptions: DbSegmentOption<DashboardPeriod>[] = [
     { value: 'month', label: 'Mes' },
@@ -189,6 +234,11 @@ export class DashboardComponent implements OnInit {
     return `${this.periodHeading()} · el estado general del emprendimiento de un vistazo`;
   }
 
+  /** Etiqueta corta del período (mobile): «Noviembre 2026», «T4 2026», etc. */
+  periodLabel(): string {
+    return this.periodHeading();
+  }
+
   private periodHeading(): string {
     if (this.period === 'quarter') {
       const now = new Date();
@@ -199,6 +249,91 @@ export class DashboardComponent implements OnInit {
       return String(new Date().getFullYear());
     }
     return this.currentMonthLabel();
+  }
+
+  /** Fragmento del ancla «por cobrar» en la versión mobile (evita id duplicado). */
+  attentionFragment(item: DashboardAttentionItem): string | undefined {
+    if (item.fragment === 'por-cobrar') return 'por-cobrar-m';
+    return item.fragment;
+  }
+
+  /** Últimos 6 puntos de tendencia mensual para el gráfico CSS mobile. */
+  mobileTrendPoints(trends: MonthlyTrendPoint[]): MonthlyTrendPoint[] {
+    return trends.slice(-6);
+  }
+
+  mobileTrendMax(points: MonthlyTrendPoint[]): number {
+    return Math.max(
+      1,
+      ...points.flatMap((point) => [point.revenue, point.collected]),
+    );
+  }
+
+  mobileTrendHeight(value: number, max: number): number {
+    if (max <= 0 || value <= 0) return 0;
+    // Mínimo 3px para que montos chicos (ej. $131) no queden invisibles.
+    return Math.max(3, Math.round((value / max) * 72));
+  }
+
+  /** Tooltip / aria de un par de barras del trend mobile. */
+  mobileTrendPointTitle(point: MonthlyTrendPoint): string {
+    return `${point.label}: vendido ${this.formatMoney(point.revenue)}, cobrado ${this.formatMoney(point.collected)}`;
+  }
+
+  /** Abreviatura de 3 letras del mes a partir del label del trend. */
+  monthShort(label: string): string {
+    const first = (label.split(/\s+/)[0] ?? label).trim();
+    const short = first.slice(0, 3);
+    return short.charAt(0).toUpperCase() + short.slice(1);
+  }
+
+  /** Hasta 5 filas del ranking mobile, con posición 1-based. */
+  mobileRankingRows(
+    ranking: DashboardProfitabilityRankingItem[],
+  ): (DashboardProfitabilityRankingItem & { rank: number })[] {
+    return ranking.slice(0, 5).map((row, index) => ({ ...row, rank: index + 1 }));
+  }
+
+  /** Valor principal según `rankBy` (ganancia / margen / unidades). */
+  mobileRankPrimary(row: DashboardProfitabilityRankingItem): string {
+    if (this.rankBy === 'markup') {
+      return formatPercentIntegerLabel(row.markupPercent);
+    }
+    if (this.rankBy === 'units') {
+      return String(row.units);
+    }
+    return this.formatMoney(row.totalProfit);
+  }
+
+  /** Dato complementario: unidades o margen, según el criterio activo. */
+  mobileRankSecondary(row: DashboardProfitabilityRankingItem): string {
+    if (this.rankBy === 'units') {
+      return `Margen ${formatPercentIntegerLabel(row.markupPercent)}`;
+    }
+    const word = row.units === 1 ? 'unidad' : 'unidades';
+    return `${row.units} ${word}`;
+  }
+
+  channelLabel(channel: string): string {
+    return salesChannelLabel(channel) || channel;
+  }
+
+  channelMaxSold(channels: DashboardProfitabilityChannel[]): number {
+    return Math.max(1, ...channels.map((row) => row.sold));
+  }
+
+  channelBarWidth(sold: number, max: number): number {
+    return Math.max(2, (sold / Math.max(1, max)) * 100);
+  }
+
+  mobileTrendAriaLabel(points: MonthlyTrendPoint[]): string {
+    if (!points.length) return 'Ingresos de los últimos 6 meses';
+    const parts = points.map((point) => {
+      const sold = this.formatMoney(point.revenue);
+      const collected = this.formatMoney(point.collected);
+      return `${point.label}: vendido ${sold}, cobrado ${collected}`;
+    });
+    return `Ingresos de los últimos 6 meses. ${parts.join('. ')}`;
   }
 
   currentMonthLabel(): string {

@@ -29,6 +29,18 @@ commit.
 | S9 | Navegar desde el menú lateral | En el menú lateral, tocar Clientes | Se cierra el menú y abre Clientes | ✅ 2026-11-02 · shell |
 | S10 | Cerrar sesión | Solo mirar «Más» | La opción está, en rojo, debajo del interruptor (no tocarla) | ✅ 2026-11-02 · shell |
 
+## Dashboard
+
+| # | Caso | Pasos | Esperado | Último resultado |
+|---|------|-------|----------|------------------|
+| D1 | Barra superior | Entrar a /dashboard | «Hola» o «Hola, <nombre>», ☰ y campana con número; la campana abre la hoja de notificaciones y se cierra tocando afuera | ✅ 2026-11-02 · dashboard |
+| D2 | Período | Tocar Mes, Trimestre y Año; comparar con desktop | Cambian Vendido, Cobrado, Ganancia neta y la etiqueta; los 4 números coinciden con desktop (Por cobrar no depende del período) | ✅ 2026-11-02 · dashboard |
+| D3 | Por cobrar | Tocar el recuadro «Por cobrar» | Baja a la sección Por cobrar; la suma de las líneas y «Total a cobrar» coinciden con el recuadro | ✅ 2026-11-02 · dashboard (el total se agregó después) |
+| D4 | Para hoy | Tocar cada fila y volver | Cada fila lleva a una lista coherente con lo que dice (atrasados, por cobrar, insumos con stock bajo, productos bajo margen) | ✅ 2026-11-02 · dashboard |
+| D5 | Producción | Tocar Pendientes y En producción | Pendientes lleva a Pedidos filtrado por pendiente; En producción lleva a Cola de trabajo | ⏸ Pendientes se corrigió después de la prueba |
+| D6 | Ingresos, canales y ranking | Mirar el gráfico, tocar «Ver ranking de productos» | Barras de los últimos 6 meses (un mes con monto > 0 nunca queda vacío); el link baja a «Ranking de productos» con los 5 primeros y criterio Ganancia / Margen % / Unidades | ⏸ Ranking y alto mínimo se corrigieron después de la prueba |
+| D7 | Por cobrar en desktop | En desktop, tocar el recuadro «Por cobrar» | Baja a la sección Por cobrar | ✅ 2026-11-02 · dashboard |
+
 Observaciones del 2026-11-02, a resolver al migrar cada pantalla:
 
 - Nuevo pedido: el primer producto aparece desplegado con 0 g y Crear pedido queda deshabilitado sin decir por qué.

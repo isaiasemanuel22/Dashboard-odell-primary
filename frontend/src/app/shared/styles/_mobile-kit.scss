@@ -172,9 +172,12 @@
       font-size: 14px;
       font-weight: 700;
       color: mobile.$m-text;
-      white-space: nowrap;
+      // Hasta dos líneas antes de cortar: los títulos largos se leen enteros.
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
       overflow: hidden;
-      text-overflow: ellipsis;
     }
 
     span {

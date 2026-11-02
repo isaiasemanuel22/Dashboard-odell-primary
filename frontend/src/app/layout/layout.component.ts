@@ -106,6 +106,21 @@ export class LayoutComponent implements OnInit {
         if (!urlChanged) return;
         this.closeNav();
       });
+
+    this.scheduleDialogPrefetch();
+  }
+
+  /** Precarga diálogos frecuentes cuando el browser está idle. */
+  private scheduleDialogPrefetch(): void {
+    const run = () => this.formDialogs.prefetchCommon();
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void) => number;
+    };
+    if (typeof w.requestIdleCallback === 'function') {
+      w.requestIdleCallback(run);
+    } else {
+      setTimeout(run, 2000);
+    }
   }
 
   openNav(): void {

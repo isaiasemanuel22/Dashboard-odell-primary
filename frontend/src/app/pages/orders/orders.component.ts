@@ -75,6 +75,14 @@ export class OrdersComponent implements OnInit {
     if (this.route.snapshot.queryParamMap.get('filtro') === 'atrasados') {
       this.overdueOnly = true;
       this.statusFilter = 'abiertos';
+    } else {
+      const estado = this.route.snapshot.queryParamMap.get('estado');
+      if (
+        estado &&
+        (Object.values(OrderStatus) as string[]).includes(estado)
+      ) {
+        this.statusFilter = estado as OrderStatus;
+      }
     }
 
     this.loadOrders();

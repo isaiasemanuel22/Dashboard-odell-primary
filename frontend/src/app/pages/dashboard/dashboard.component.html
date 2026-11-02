@@ -15,250 +15,535 @@
 } @else {
   @if (stats$ | async; as stats) {
     @let profit = stats.profitability;
+    @let attention = attentionItems(stats);
+    @let recvLines = receivableLines(stats.receivables);
+    @let trendPoints = mobileTrendPoints(stats.monthlyTrend);
+    @let trendMax = mobileTrendMax(trendPoints);
+    @let channelMax = channelMaxSold(profit.byChannel);
 
-    <header class="page-header dashboard-header">
-      <div class="dashboard-header__main">
-        <h2>Dashboard</h2>
-        <p>{{ headerSubtitle() }}</p>
-      </div>
-      <div class="header-actions">
-        <db-segmented-control
-          [options]="periodOptions"
-          [value]="period"
-          ariaLabel="Período"
-          (valueChange)="setPeriod($event)"
+    <div class="mobile-only dash-m">
+      <db-mobile-bar [title]="greetingTitle()" [showMenu]="true">
+        <app-dashboard-notifications
+          class="dash-m__notif"
+          [notifications]="stats.notifications"
         />
-        <db-button
-          label="+ Nuevo pedido"
-          variant="primary"
-          format="solid"
-          (clicked)="openForm('order')"
-        />
-        <app-dashboard-notifications [notifications]="stats.notifications" />
-      </div>
-    </header>
+      </db-mobile-bar>
 
-    <section class="stats-grid" aria-label="Indicadores">
-      <article class="stat-card">
-        <span class="label">Vendido</span>
-        <strong>{{ profit.sold | currencyArs }}</strong>
-        <span class="hint">Pedidos entregados + mostrador</span>
-      </article>
-      <article class="stat-card accent">
-        <span class="label">Cobrado</span>
-        <strong class="tone-success">{{ profit.collected | currencyArs }}</strong>
-        <span class="hint">Entró a tus cuentas {{ periodHintWord() }}</span>
-      </article>
-      <article class="stat-card">
-        <span class="label">Ganancia neta</span>
-        <strong>{{ profit.netProfit | currencyArs }}</strong>
-        <span class="hint">{{ netProfitHint(profit.fees) }}</span>
-      </article>
-      <a
-        class="stat-card danger stat-card--link"
-        routerLink="/dashboard"
-        fragment="por-cobrar"
-      >
-        <span class="label">Por cobrar</span>
-        <strong>{{ profit.receivable | currencyArs }}</strong>
-        <span class="hint">{{ receivableHint(profit.receivableOrders) }}</span>
-      </a>
-    </section>
-
-    <section class="stats-grid stats-grid--secondary" aria-label="Estado de la operación">
-      <a class="stat-card stat-card--link" routerLink="/pedidos">
-        <span class="label">Pedidos pendientes</span>
-        <strong
-          [class.tone-warn]="stats.overduePendingOrders > 0"
-          >{{ stats.pendingOrders }}</strong
-        >
-        <span class="hint">{{ pendingCardHint(stats) }}</span>
-      </a>
-      <a class="stat-card stat-card--link" routerLink="/cola">
-        <span class="label">En producción</span>
-        <strong>{{ stats.inProductionOrders }}</strong>
-        <span class="hint">{{ productionHint(stats) }}</span>
-      </a>
-      <a
-        class="stat-card stat-card--link"
-        [class.danger]="stats.lowStockMaterials > 0"
-        routerLink="/insumos"
-      >
-        <span class="label">Stock bajo</span>
-        <strong>{{ stats.lowStockMaterials }}</strong>
-        <span class="hint">{{ lowStockHint(stats.lowStockMaterials) }}</span>
-      </a>
-      <a class="stat-card stat-card--link" routerLink="/pedidos">
-        <span class="label">Pedidos en curso</span>
-        <strong>{{ inProgressCount(stats) }}</strong>
-        <span class="hint">
-          <span [class.tone-danger]="inProgressOverdueCount(stats) > 0">{{
-            overdueHint(inProgressOverdueCount(stats))
-          }}</span>
-        </span>
-      </a>
-    </section>
-
-    <app-dashboard-attention [items]="attentionItems(stats)" />
-
-    @if (stats.monthlyTrend.length) {
-      <app-dashboard-monthly-trends [trends]="stats.monthlyTrend" />
-    }
-
-    <section
-      class="dashboard-split"
-      [class.dashboard-split--single]="profit.marginAlerts.length === 0"
-    >
-      <app-dashboard-channels [channels]="profit.byChannel" />
-      @if (profit.marginAlerts.length > 0) {
-        <app-dashboard-margin-alerts
-          [alerts]="profit.marginAlerts"
-          (raisePrice)="raiseProductPrice($event)"
-        />
-      }
-    </section>
-
-    <app-dashboard-ranking
-      [ranking]="profit.ranking"
-      [rankBy]="rankBy"
-      (rankByChange)="setRankBy($event)"
-    />
-
-    @if (receivableLines(stats.receivables); as lines) {
-      @if (lines.length) {
-        <section class="receivables" id="por-cobrar" aria-label="Por cobrar">
-          <header class="receivables__head">
-            <div>
-              <h3>Por cobrar</h3>
-              <p>
-                Pedidos entregados con saldo pendiente
-                @if (oldDebtCount(lines); as oldCount) {
-                  · <span class="tone-danger">{{ oldDebtLabel(oldCount) }}</span>
-                }
-              </p>
-            </div>
-            <div class="receivables__total">
-              <span>Total a cobrar</span>
-              <strong>{{ profit.receivable | currencyArs }}</strong>
-            </div>
-          </header>
-
-          <div class="aging">
-            <div class="aging__head">
-              <span>Antigüedad de la deuda</span>
-              <a routerLink="/billetera">Ver en Billetera</a>
-            </div>
-            <div class="aging__track" aria-hidden="true">
-              <span
-                class="aging__fill aging__fill--recent"
-                [style.flex-grow]="bucketAmount(lines, false)"
-              ></span>
-              <span
-                class="aging__fill aging__fill--old"
-                [style.flex-grow]="bucketAmount(lines, true)"
-              ></span>
-            </div>
-            <div class="aging__legend">
-              <span>
-                <i class="aging__dot aging__dot--recent"></i>
-                Hasta 15 días · {{ bucketAmount(lines, false) | currencyArs }}
-              </span>
-              <span>
-                <i class="aging__dot aging__dot--old"></i>
-                Más de 15 días · {{ bucketAmount(lines, true) | currencyArs }}
-              </span>
-            </div>
-          </div>
-
-          <div class="receivables__table-wrap">
-            <db-data-table
-              label="Por cobrar"
-              [rows]="lines"
-              [columns]="receivableColumns"
-              [actions]="receivableActions"
-              [clientSide]="false"
-              minWidth="860px"
-              (action)="onReceivableAction($event)"
+      <div class="m-body">
+        <p class="dash-m__period-label">{{ periodLabel() }}</p>
+        <div class="dash-m__period" role="group" aria-label="Período">
+          @for (opt of periodOptions; track opt.value) {
+            <button
+              type="button"
+              class="dash-m__period-btn"
+              [class.dash-m__period-btn--on]="period === opt.value"
+              (click)="setPeriod(opt.value)"
             >
-              <ng-template odlCell="id" let-row>
-                <a class="order-link" [routerLink]="['/pedidos', row.id]">{{
-                  row.id
-                }}</a>
-                @if (row.summary) {
-                  <span class="order-summary">{{ row.summary }}</span>
-                }
-              </ng-template>
-              <ng-template odlCell="balance" let-row>
-                <span class="saldo">{{ row.balance | currencyArs }}</span>
-                <span class="order-summary"
-                  >de {{ row.total | currencyArs }}</span
-                >
-              </ng-template>
-            </db-data-table>
-          </div>
-        </section>
-      }
-    }
-
-    <section class="dashboard-bottom">
-      <article class="recent-orders">
-        <div class="recent-orders__head">
-          <h3>Pedidos recientes</h3>
-          <a routerLink="/pedidos">Ver todos los pedidos</a>
+              {{ opt.label }}
+            </button>
+          }
         </div>
-        @if (stats.recentOrders.length) {
-          <div class="recent-orders__table-wrap">
-            <db-data-table
-              label="Pedidos recientes"
-              [rows]="stats.recentOrders"
-              [columns]="recentColumns"
-              [actions]="recentActions"
-              [expandable]="true"
-              [clientSide]="false"
-              minWidth="0"
-              (action)="onRecentAction($event)"
-            >
-              <ng-template odlCell="id" let-order>
-                <a class="order-link" [routerLink]="['/pedidos', order.id]">{{
-                  order.id
-                }}</a>
-              </ng-template>
-              <ng-template odlRowDetail let-order>
-                <app-order-card
-                  layout="detail"
-                  [order]="order"
-                  (edit)="editRecent($event)"
-                />
-              </ng-template>
-            </db-data-table>
-          </div>
-        } @else {
-          <db-state-message [empty]="true" emptyMessage="Sin pedidos abiertos." />
-        }
-      </article>
 
-      <article class="service-panel">
-        <h3>Pedidos por servicio</h3>
-        <div class="type-stats">
-          @for (item of orderedServices(stats.ordersByType); track item.type) {
-            <div class="type-bar">
-              <span class="type-dot" [class]="'type-dot--' + item.type"></span>
-              <span class="type-name">{{ item.type | serviceTypeLabel }}</span>
-              <div class="bar-track">
-                <div
-                  class="bar-fill"
-                  [class]="'bar-fill--' + item.type"
-                  [style.width.%]="
-                    (item.count / serviceMax(stats.ordersByType)) * 100
-                  "
-                ></div>
-              </div>
-              <strong>{{ item.count }}</strong>
+        <section class="m-kpis" aria-label="Indicadores">
+          <article class="m-kpi">
+            <span class="m-lbl">Vendido</span>
+            <strong class="m-big">{{ profit.sold | currencyArs }}</strong>
+            <span class="m-hint dash-m__kpi-hint"
+              >Pedidos entregados + mostrador</span
+            >
+          </article>
+          <article class="m-kpi">
+            <span class="m-lbl">Cobrado</span>
+            <strong class="m-big dash-m__pos">{{
+              profit.collected | currencyArs
+            }}</strong>
+            <span class="m-hint dash-m__kpi-hint"
+              >Entró a tus cuentas {{ periodHintWord() }}</span
+            >
+          </article>
+          <article class="m-kpi">
+            <span class="m-lbl">Ganancia neta</span>
+            <strong class="m-big">{{ profit.netProfit | currencyArs }}</strong>
+            <span class="m-hint dash-m__kpi-hint">{{
+              netProfitHint(profit.fees)
+            }}</span>
+          </article>
+          <a
+            class="m-kpi dash-m__kpi-link"
+            routerLink="/dashboard"
+            fragment="por-cobrar-m"
+          >
+            <span class="m-lbl">Por cobrar</span>
+            <strong class="m-big dash-m__neg">{{
+              profit.receivable | currencyArs
+            }}</strong>
+            <span class="m-hint dash-m__kpi-hint">{{
+              receivableHint(profit.receivableOrders)
+            }}</span>
+          </a>
+        </section>
+
+        <h2 class="m-sec-t">Para hoy</h2>
+        <div class="m-card m-card--flush" aria-label="Para hoy">
+          @if (attention.length) {
+            @for (item of attention; track item.id) {
+              <a
+                class="m-row"
+                [routerLink]="item.route"
+                [queryParams]="item.queryParams"
+                [fragment]="attentionFragment(item)"
+              >
+                <span
+                  class="dash-m__dot"
+                  [class.dash-m__dot--danger]="item.tone === 'danger'"
+                  [class.dash-m__dot--warn]="item.tone === 'warn'"
+                  aria-hidden="true"
+                ></span>
+                <span class="m-row__text">
+                  <b>{{ item.title }}</b>
+                  @if (item.detail) {
+                    <span>{{ item.detail }}</span>
+                  }
+                </span>
+                <svg
+                  class="dash-m__chev"
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M9 18l6-6-6-6" />
+                </svg>
+              </a>
+            }
+          } @else {
+            <div class="m-row dash-m__empty-row">
+              <span class="m-row__text">
+                <b>Nada urgente por hoy</b>
+              </span>
             </div>
           }
         </div>
-      </article>
-    </section>
+
+        <h2 class="m-sec-t">Producción</h2>
+        <section class="m-kpis" aria-label="Producción">
+          <a
+            class="m-kpi dash-m__kpi-link"
+            routerLink="/pedidos"
+            [queryParams]="{ estado: pendingStatus }"
+          >
+            <span class="m-lbl">Pendientes</span>
+            <strong
+              class="m-big"
+              [class.dash-m__warn]="stats.overduePendingOrders > 0"
+              >{{ stats.pendingOrders }}</strong
+            >
+            <span class="m-hint dash-m__kpi-hint">{{
+              pendingCardHint(stats)
+            }}</span>
+          </a>
+          <a class="m-kpi dash-m__kpi-link" routerLink="/cola">
+            <span class="m-lbl">En producción</span>
+            <strong class="m-big">{{ stats.inProductionOrders }}</strong>
+            <span class="m-hint dash-m__kpi-hint">{{
+              productionHint(stats)
+            }}</span>
+          </a>
+        </section>
+
+        @if (trendPoints.length) {
+          <h2 class="m-sec-t">Ingresos · últimos 6 meses</h2>
+          <section
+            class="m-card dash-m__trends"
+            [attr.aria-label]="mobileTrendAriaLabel(trendPoints)"
+          >
+            <div class="dash-m__legend" aria-hidden="true">
+              <span
+                ><i class="dash-m__legend-swatch dash-m__legend-swatch--sold"></i>
+                Vendido</span
+              >
+              <span
+                ><i
+                  class="dash-m__legend-swatch dash-m__legend-swatch--collected"
+                ></i>
+                Cobrado</span
+              >
+            </div>
+            <div class="dash-m__bars" role="img">
+              @for (point of trendPoints; track point.month) {
+                <div
+                  class="dash-m__bar-group"
+                  [attr.title]="mobileTrendPointTitle(point)"
+                  [attr.aria-label]="mobileTrendPointTitle(point)"
+                >
+                  <div class="dash-m__bar-pair">
+                    <span
+                      class="dash-m__bar dash-m__bar--sold"
+                      [style.height.px]="
+                        mobileTrendHeight(point.revenue, trendMax)
+                      "
+                    ></span>
+                    <span
+                      class="dash-m__bar dash-m__bar--collected"
+                      [style.height.px]="
+                        mobileTrendHeight(point.collected, trendMax)
+                      "
+                    ></span>
+                  </div>
+                  <span class="dash-m__bar-label">{{
+                    monthShort(point.label)
+                  }}</span>
+                </div>
+              }
+            </div>
+          </section>
+        }
+
+        <h2 class="m-sec-t">Ventas por canal</h2>
+        <section class="m-card dash-m__channels" aria-label="Ventas por canal">
+          @if (profit.byChannel.length) {
+            <ul class="dash-m__channel-list">
+              @for (row of profit.byChannel; track row.channel) {
+                <li class="dash-m__channel">
+                  <div class="dash-m__channel-row">
+                    <span>{{ channelLabel(row.channel) }}</span>
+                    <strong>{{ row.sold | currencyArs }}</strong>
+                  </div>
+                  <div class="dash-m__channel-track" aria-hidden="true">
+                    <span
+                      class="dash-m__channel-fill"
+                      [style.width.%]="channelBarWidth(row.sold, channelMax)"
+                    ></span>
+                  </div>
+                </li>
+              }
+            </ul>
+          } @else {
+            <p class="dash-m__channels-empty">Sin ventas en este período.</p>
+          }
+          <a
+            class="dash-m__channels-link"
+            routerLink="/dashboard"
+            fragment="ranking-m"
+            >Ver ranking de productos →</a
+          >
+        </section>
+
+        <h2 class="m-sec-t" id="ranking-m">Ranking de productos</h2>
+        <div class="m-card m-card--flush dash-m__ranking" aria-label="Ranking de productos">
+          <div class="dash-m__rank-filters">
+            <db-pill-group
+              [options]="mobileRankOptions"
+              [value]="rankBy"
+              size="sm"
+              ariaLabel="Ordenar ranking"
+              (valueChange)="setRankBy($event)"
+            />
+          </div>
+          @if (mobileRankingRows(profit.ranking); as rows) {
+            @if (rows.length) {
+              @for (row of rows; track row.productId) {
+                <div class="m-row dash-m__rank-row">
+                  <span class="dash-m__rank-pos" aria-hidden="true">{{
+                    row.rank
+                  }}</span>
+                  <span class="m-row__text">
+                    <b>{{ row.productName }}</b>
+                    <span>{{ mobileRankSecondary(row) }}</span>
+                  </span>
+                  <strong class="dash-m__rank-value">{{
+                    mobileRankPrimary(row)
+                  }}</strong>
+                </div>
+              }
+            } @else {
+              <div class="m-row dash-m__empty-row">
+                <span class="m-row__text">
+                  <b>Sin ventas en este período</b>
+                </span>
+              </div>
+            }
+          }
+        </div>
+
+        @if (recvLines.length) {
+          <h2 class="m-sec-t" id="por-cobrar-m">Por cobrar</h2>
+          <div class="m-card m-card--flush" aria-label="Por cobrar">
+            @for (line of recvLines; track line.id) {
+              <a class="m-row" [routerLink]="['/pedidos', line.id]">
+                <span class="m-row__text">
+                  <b>{{ line.customerName }}</b>
+                  <span>{{ line.id }}</span>
+                </span>
+                <span class="dash-m__recv-end">
+                  <strong>{{ line.balance | currencyArs }}</strong>
+                  @if (line.days >= 0) {
+                    <small>{{ daysLabel(line.days) }}</small>
+                  }
+                </span>
+              </a>
+            }
+            <div class="m-row dash-m__recv-total">
+              <span class="m-row__text">
+                <b>Total a cobrar</b>
+              </span>
+              <strong>{{ profit.receivable | currencyArs }}</strong>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="desktop-only">
+      <header class="page-header dashboard-header">
+        <div class="dashboard-header__main">
+          <h2>Dashboard</h2>
+          <p>{{ headerSubtitle() }}</p>
+        </div>
+        <div class="header-actions">
+          <db-segmented-control
+            [options]="periodOptions"
+            [value]="period"
+            ariaLabel="Período"
+            (valueChange)="setPeriod($event)"
+          />
+          <db-button
+            label="+ Nuevo pedido"
+            variant="primary"
+            format="solid"
+            (clicked)="openForm('order')"
+          />
+          <app-dashboard-notifications [notifications]="stats.notifications" />
+        </div>
+      </header>
+
+      <section class="stats-grid" aria-label="Indicadores">
+        <article class="stat-card">
+          <span class="label">Vendido</span>
+          <strong>{{ profit.sold | currencyArs }}</strong>
+          <span class="hint">Pedidos entregados + mostrador</span>
+        </article>
+        <article class="stat-card accent">
+          <span class="label">Cobrado</span>
+          <strong class="tone-success">{{ profit.collected | currencyArs }}</strong>
+          <span class="hint">Entró a tus cuentas {{ periodHintWord() }}</span>
+        </article>
+        <article class="stat-card">
+          <span class="label">Ganancia neta</span>
+          <strong>{{ profit.netProfit | currencyArs }}</strong>
+          <span class="hint">{{ netProfitHint(profit.fees) }}</span>
+        </article>
+        <a
+          class="stat-card danger stat-card--link"
+          routerLink="/dashboard"
+          fragment="por-cobrar"
+        >
+          <span class="label">Por cobrar</span>
+          <strong>{{ profit.receivable | currencyArs }}</strong>
+          <span class="hint">{{ receivableHint(profit.receivableOrders) }}</span>
+        </a>
+      </section>
+
+      <section class="stats-grid stats-grid--secondary" aria-label="Estado de la operación">
+        <a class="stat-card stat-card--link" routerLink="/pedidos">
+          <span class="label">Pedidos pendientes</span>
+          <strong
+            [class.tone-warn]="stats.overduePendingOrders > 0"
+            >{{ stats.pendingOrders }}</strong
+          >
+          <span class="hint">{{ pendingCardHint(stats) }}</span>
+        </a>
+        <a class="stat-card stat-card--link" routerLink="/cola">
+          <span class="label">En producción</span>
+          <strong>{{ stats.inProductionOrders }}</strong>
+          <span class="hint">{{ productionHint(stats) }}</span>
+        </a>
+        <a
+          class="stat-card stat-card--link"
+          [class.danger]="stats.lowStockMaterials > 0"
+          routerLink="/insumos"
+        >
+          <span class="label">Stock bajo</span>
+          <strong>{{ stats.lowStockMaterials }}</strong>
+          <span class="hint">{{ lowStockHint(stats.lowStockMaterials) }}</span>
+        </a>
+        <a class="stat-card stat-card--link" routerLink="/pedidos">
+          <span class="label">Pedidos en curso</span>
+          <strong>{{ inProgressCount(stats) }}</strong>
+          <span class="hint">
+            <span [class.tone-danger]="inProgressOverdueCount(stats) > 0">{{
+              overdueHint(inProgressOverdueCount(stats))
+            }}</span>
+          </span>
+        </a>
+      </section>
+
+      <app-dashboard-attention [items]="attentionItems(stats)" />
+
+      @if (stats.monthlyTrend.length) {
+        <app-dashboard-monthly-trends [trends]="stats.monthlyTrend" />
+      }
+
+      <section
+        class="dashboard-split"
+        [class.dashboard-split--single]="profit.marginAlerts.length === 0"
+      >
+        <app-dashboard-channels [channels]="profit.byChannel" />
+        @if (profit.marginAlerts.length > 0) {
+          <app-dashboard-margin-alerts
+            [alerts]="profit.marginAlerts"
+            (raisePrice)="raiseProductPrice($event)"
+          />
+        }
+      </section>
+
+      <app-dashboard-ranking
+        [ranking]="profit.ranking"
+        [rankBy]="rankBy"
+        (rankByChange)="setRankBy($event)"
+      />
+
+      @if (receivableLines(stats.receivables); as lines) {
+        @if (lines.length) {
+          <section class="receivables" id="por-cobrar" aria-label="Por cobrar">
+            <header class="receivables__head">
+              <div>
+                <h3>Por cobrar</h3>
+                <p>
+                  Pedidos entregados con saldo pendiente
+                  @if (oldDebtCount(lines); as oldCount) {
+                    · <span class="tone-danger">{{ oldDebtLabel(oldCount) }}</span>
+                  }
+                </p>
+              </div>
+              <div class="receivables__total">
+                <span>Total a cobrar</span>
+                <strong>{{ profit.receivable | currencyArs }}</strong>
+              </div>
+            </header>
+
+            <div class="aging">
+              <div class="aging__head">
+                <span>Antigüedad de la deuda</span>
+                <a routerLink="/billetera">Ver en Billetera</a>
+              </div>
+              <div class="aging__track" aria-hidden="true">
+                <span
+                  class="aging__fill aging__fill--recent"
+                  [style.flex-grow]="bucketAmount(lines, false)"
+                ></span>
+                <span
+                  class="aging__fill aging__fill--old"
+                  [style.flex-grow]="bucketAmount(lines, true)"
+                ></span>
+              </div>
+              <div class="aging__legend">
+                <span>
+                  <i class="aging__dot aging__dot--recent"></i>
+                  Hasta 15 días · {{ bucketAmount(lines, false) | currencyArs }}
+                </span>
+                <span>
+                  <i class="aging__dot aging__dot--old"></i>
+                  Más de 15 días · {{ bucketAmount(lines, true) | currencyArs }}
+                </span>
+              </div>
+            </div>
+
+            <div class="receivables__table-wrap">
+              <db-data-table
+                label="Por cobrar"
+                [rows]="lines"
+                [columns]="receivableColumns"
+                [actions]="receivableActions"
+                [clientSide]="false"
+                minWidth="860px"
+                (action)="onReceivableAction($event)"
+              >
+                <ng-template odlCell="id" let-row>
+                  <a class="order-link" [routerLink]="['/pedidos', row.id]">{{
+                    row.id
+                  }}</a>
+                  @if (row.summary) {
+                    <span class="order-summary">{{ row.summary }}</span>
+                  }
+                </ng-template>
+                <ng-template odlCell="balance" let-row>
+                  <span class="saldo">{{ row.balance | currencyArs }}</span>
+                  <span class="order-summary"
+                    >de {{ row.total | currencyArs }}</span
+                  >
+                </ng-template>
+              </db-data-table>
+            </div>
+          </section>
+        }
+      }
+
+      <section class="dashboard-bottom">
+        <article class="recent-orders">
+          <div class="recent-orders__head">
+            <h3>Pedidos recientes</h3>
+            <a routerLink="/pedidos">Ver todos los pedidos</a>
+          </div>
+          @if (stats.recentOrders.length) {
+            <div class="recent-orders__table-wrap">
+              <db-data-table
+                label="Pedidos recientes"
+                [rows]="stats.recentOrders"
+                [columns]="recentColumns"
+                [actions]="recentActions"
+                [expandable]="true"
+                [clientSide]="false"
+                minWidth="0"
+                (action)="onRecentAction($event)"
+              >
+                <ng-template odlCell="id" let-order>
+                  <a class="order-link" [routerLink]="['/pedidos', order.id]">{{
+                    order.id
+                  }}</a>
+                </ng-template>
+                <ng-template odlRowDetail let-order>
+                  <app-order-card
+                    layout="detail"
+                    [order]="order"
+                    (edit)="editRecent($event)"
+                  />
+                </ng-template>
+              </db-data-table>
+            </div>
+          } @else {
+            <db-state-message [empty]="true" emptyMessage="Sin pedidos abiertos." />
+          }
+        </article>
+
+        <article class="service-panel">
+          <h3>Pedidos por servicio</h3>
+          <div class="type-stats">
+            @for (item of orderedServices(stats.ordersByType); track item.type) {
+              <div class="type-bar">
+                <span class="type-dot" [class]="'type-dot--' + item.type"></span>
+                <span class="type-name">{{ item.type | serviceTypeLabel }}</span>
+                <div class="bar-track">
+                  <div
+                    class="bar-fill"
+                    [class]="'bar-fill--' + item.type"
+                    [style.width.%]="
+                      (item.count / serviceMax(stats.ordersByType)) * 100
+                    "
+                  ></div>
+                </div>
+                <strong>{{ item.count }}</strong>
+              </div>
+            }
+          </div>
+        </article>
+      </section>
+    </div>
   } @else {
     <db-state-message [loading]="true" loadingMessage="Cargando dashboard..." />
   }

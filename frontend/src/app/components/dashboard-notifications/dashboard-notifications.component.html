@@ -5,7 +5,11 @@
     [class.notifications__trigger--active]="open"
     [attr.aria-expanded]="open"
     aria-haspopup="true"
-    aria-label="Notificaciones"
+    [attr.aria-label]="
+      unreadCount > 0
+        ? 'Notificaciones, ' + unreadCount + ' sin leer'
+        : 'Notificaciones'
+    "
     (click)="togglePanel()"
   >
     <span class="notifications__icon" aria-hidden="true">

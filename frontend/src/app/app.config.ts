@@ -5,6 +5,7 @@ import {
 import { provideHttpClient, withInterceptors } from '@angular/common/http';
 import {
   provideRouter,
+  withInMemoryScrolling,
   withPreloading,
 } from '@angular/router';
 
@@ -17,7 +18,11 @@ import { storeProviders } from './store';
 export const appConfig: ApplicationConfig = {
   providers: [
     provideZoneChangeDetection({ eventCoalescing: true }),
-    provideRouter(routes, withPreloading(SelectivePreloadStrategy)),
+    provideRouter(
+      routes,
+      withPreloading(SelectivePreloadStrategy),
+      withInMemoryScrolling({ anchorScrolling: 'enabled' }),
+    ),
     provideHttpClient(withInterceptors([authInterceptor, etagInterceptor])),
     ...storeProviders,
   ],

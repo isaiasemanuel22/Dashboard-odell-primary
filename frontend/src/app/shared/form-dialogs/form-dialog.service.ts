@@ -254,6 +254,17 @@ export class FormDialogService {
     );
   }
 
+  /**
+   * Precarga en idle los diálogos más usados (sin abrirlos).
+   * Así el primer toque no espera el `import()` dinámico.
+   */
+  prefetchCommon(): void {
+    void import('./order-form-dialog.component').catch(() => undefined);
+    void import('./confirm-dialog.component').catch(() => undefined);
+    void import('./customer-form-dialog.component').catch(() => undefined);
+    void import('./quote-form-dialog.component').catch(() => undefined);
+  }
+
   private baseConfig(size: ModalSize) {
     return formDialogConfig(size, {
       isMobile: this.breakpoint.isMobile(),
