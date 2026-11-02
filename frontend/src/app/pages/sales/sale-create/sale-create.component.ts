@@ -17,13 +17,14 @@ import { ProductsService } from '../../../core/services/products.service';
 import { SalesService } from '../../../core/services/sales.service';
 import { SaleCartService } from '../../../core/services/sale-cart.service';
 import { SaleFormComponent } from '../sale-form/sale-form.component';
+import { MobileBarComponent } from '@general-components';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import { productStockOverview } from '../../../shared/utils/stock.helpers';
 
 @Component({
   selector: 'app-sale-create',
   standalone: true,
-  imports: [RouterLink, SaleFormComponent],
+  imports: [RouterLink, SaleFormComponent, MobileBarComponent],
   templateUrl: './sale-create.component.html',
   styleUrl: './sale-create.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -67,6 +68,10 @@ export class SaleCreateComponent implements OnInit {
 
   get title(): string {
     return this.sale ? 'Editar venta' : 'Nueva venta';
+  }
+
+  get mobileTitle(): string {
+    return this.sale ? 'Editar venta' : 'Venta de mostrador';
   }
 
   save(data: CreateRetailSalePayload): void {

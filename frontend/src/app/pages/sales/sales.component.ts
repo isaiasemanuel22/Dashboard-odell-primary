@@ -1,6 +1,8 @@
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {
+  AreaProfitBalance,
+  ProfitArea,
   SaleEntry,
   SaleSource,
   SalesStats,
@@ -14,6 +16,7 @@ import {
   DB_DATA_TABLE,
   DbStateMessageComponent,
   DbButtonComponent,
+  MobileBarComponent,
   OdlActionEvent,
   OdlColumn,
   OdlFilter,
@@ -23,7 +26,11 @@ import {
 } from '@general-components';
 import { SALE_SOURCE_LABELS, SERVICE_TYPE_LABELS } from '../../shared/constants/labels';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
+import { formatDateDayMonth } from '../../shared/utils/date-format.util';
+import { pluralize } from '../../shared/utils/order.helpers';
 import { downloadSalesReportPdf } from '../../shared/utils/sales-report.util';
+import { salesChannelLabel } from '../../shared/utils/v1-labels.util';
+import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 import { ProductsService } from '../../core/services/products.service';
 
 const SALE_AREAS: ServiceType[] = [
@@ -39,7 +46,9 @@ const SALE_AREAS: ServiceType[] = [
   imports: [
     DbStateMessageComponent,
     DbButtonComponent,
+    MobileBarComponent,
     SalesStatsGridComponent,
+    CurrencyArsPipe,
     ...DB_DATA_TABLE,
   ],
   templateUrl: './sales.component.html',
@@ -67,8 +76,22 @@ export class SalesComponent implements OnInit {
       .replace(' de ', ' ');
   }
 
+  /** Mes con inicial mayúscula para la barra mobile. */
+  get monthLabelDisplay(): string {
+    const label = this.monthLabel;
+    return label ? label.charAt(0).toUpperCase() + label.slice(1) : label;
+  }
+
   get monthName(): string {
     return this.viewMonth.toLocaleDateString('es-AR', { month: 'long' });
+  }
+
+  get salesCountLabel(): string {
+    return pluralize(this.entries.length, 'venta', 'ventas');
+  }
+
+  get mobileAreas(): AreaProfitBalance[] {
+    return (this.stats?.profitByArea ?? []).filter((area) => area.revenue > 0);
   }
 
   readonly searchText = (entry: SaleEntry) =>
@@ -155,12 +178,83 @@ export class SalesComponent implements OnInit {
     void this.router.navigate(['/ventas/nueva']);
   }
 
+  openMobileEntry(entry: SaleEntry): void {
+    if (entry.editable) {
+      this.openEditSale(entry);
+      return;
+    }
+    if (entry.orderId) {
+      void this.router.navigate(['/pedidos', entry.orderId]);
+    }
+  }
+
+  areaLabel(area: ProfitArea): string {
+    return SERVICE_TYPE_LABELS[area];
+  }
+
+  areaSourceLabel(area: AreaProfitBalance): string {
+    const parts: string[] = [];
+    if (area.retail.revenue > 0) {
+      parts.push(`Mostrador ${this.formatMoney(area.retail.revenue)}`);
+    }
+    if (area.orders.revenue > 0) {
+      parts.push(`pedidos ${this.formatMoney(area.orders.revenue)}`);
+    }
+    if (!parts.length) return '';
+    if (parts.length === 1 && area.orders.revenue > 0 && area.retail.revenue <= 0) {
+      return `Pedidos ${this.formatMoney(area.orders.revenue)}`;
+    }
+    return parts.join(' · ');
+  }
+
+  entryAvatar(entry: SaleEntry): string {
+    if (entry.source === SaleSource.RETAIL) return 'M';
+    return this.initials(entry.customerName || entry.saleId);
+  }
+
+  entryTitle(entry: SaleEntry): string {
+    if (entry.source === SaleSource.RETAIL) {
+      const note = entry.notes?.trim();
+      if (note) return `Mostrador · ${note}`;
+      const count = entry.items.reduce((sum, item) => sum + item.quantity, 0);
+      return `Mostrador · ${pluralize(count, 'producto', 'productos')}`;
+    }
+    const customer = entry.customerName?.trim();
+    return customer ? `${entry.saleId} · ${customer}` : entry.saleId;
+  }
+
+  entryMeta(entry: SaleEntry): string {
+    const day = formatDateDayMonth(entry.soldAt);
+    if (entry.source === SaleSource.RETAIL) {
+      if (entry.editable) return `${day} · editable`;
+      const count = entry.items.reduce((sum, item) => sum + item.quantity, 0);
+      return `${day} · ${pluralize(count, 'producto', 'productos')}`;
+    }
+    const channel = salesChannelLabel(entry.salesChannel);
+    return channel ? `Entregado ${day} · ${channel}` : `Entregado ${day}`;
+  }
+
   onAction(event: OdlActionEvent<SaleEntry>): void {
     if (event.actionId === 'editar') this.openEditSale(event.row);
     if (event.actionId === 'eliminar') this.deleteSale(event.row);
     if (event.actionId === 'ver' && event.row.orderId) {
       void this.router.navigate(['/pedidos', event.row.orderId]);
     }
+  }
+
+  private initials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+  }
+
+  private formatMoney(value: number): string {
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(value);
   }
 
   openEditSale(entry: SaleEntry): void {

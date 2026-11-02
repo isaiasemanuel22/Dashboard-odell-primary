@@ -1,11 +1,16 @@
 @if (isMobile) {
-  <div class="sales-cards">
+  <div class="m-card m-card--flush sales-table-m">
     @for (entry of entries; track entry.id) {
-      <app-sale-entry-card
-        [entry]="entry"
-        (edit)="edit.emit($event)"
-        (delete)="delete.emit($event)"
-      />
+      <button type="button" class="m-row" (click)="openEntry(entry)">
+        <span class="sales-table-m__av" aria-hidden="true">{{
+          entryAvatar(entry)
+        }}</span>
+        <div class="m-row__text">
+          <b>{{ entryTitle(entry) }}</b>
+          <span>{{ entryMeta(entry) }}</span>
+        </div>
+        <div class="sales-table-m__end">{{ entry.total | currencyArs }}</div>
+      </button>
     }
   </div>
 } @else {

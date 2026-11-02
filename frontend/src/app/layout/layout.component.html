@@ -93,8 +93,10 @@
           <button
             type="button"
             class="bottom-nav__fab"
-            aria-label="Nuevo pedido"
-            (click)="openNewOrder()"
+            [attr.aria-label]="
+              fabOpensCounterSale ? 'Nueva venta de mostrador' : 'Nuevo pedido'
+            "
+            (click)="onFabClick()"
           >
             <span class="bottom-nav__fab-icon" aria-hidden="true">
               <db-nav-icon [name]="item.icon" />

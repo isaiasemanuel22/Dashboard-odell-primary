@@ -1,72 +1,227 @@
-<header class="page-header">
-  <div>
-    <h2>Ventas</h2>
-    <p>
-      Vendido, costos y ganancias de {{ monthLabel }} · {{ entries.length }} ventas registradas
-    </p>
-  </div>
-  <div class="header-actions">
-    <db-button label="Mes anterior" variant="secondary" format="soft" (clicked)="shiftMonth(-1)" />
-    <db-button label="Mes siguiente" variant="secondary" format="soft" (clicked)="shiftMonth(1)" />
-    <db-button
-      label="Generar reporte"
-      variant="secondary"
-      format="solid"
+<div class="mobile-only sales-m">
+  <db-mobile-bar title="Ventas" backLink="/mas">
+    <button
+      type="button"
+      class="m-ib txt"
       [disabled]="loading || !entries.length"
-      (clicked)="generateReport()"
-    />
-    <db-button
-      label="+ Venta de mostrador"
-      variant="primary"
-      format="solid"
-      routerLink="/ventas/nueva"
-    />
+      (click)="generateReport()"
+    >
+      PDF
+    </button>
+  </db-mobile-bar>
+
+  <div class="m-tools">
+    <div class="sales-m__month">
+      <button
+        type="button"
+        class="m-ib"
+        aria-label="Mes anterior"
+        (click)="shiftMonth(-1)"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M15 6l-6 6 6 6" />
+        </svg>
+      </button>
+      <b>{{ monthLabelDisplay }}</b>
+      <button
+        type="button"
+        class="m-ib"
+        aria-label="Mes siguiente"
+        (click)="shiftMonth(1)"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      </button>
+    </div>
   </div>
-</header>
 
-@if (reportMessage) {
-  <p class="sales-report-notice">{{ reportMessage }}</p>
-}
+  <div class="m-body sales-m__body">
+    @if (reportMessage) {
+      <p class="sales-report-notice">{{ reportMessage }}</p>
+    }
 
-@if (loadError) {
-  <db-state-message
-    [empty]="true"
-    emptyMessage="No se pudo cargar la información de ventas."
-  >
-    <db-button
-      emptyActions
-      label="Reintentar"
-      variant="secondary"
-      format="soft"
-      (clicked)="loadData()"
-    />
-  </db-state-message>
-} @else if (loading) {
-  <db-state-message [loading]="true" loadingMessage="Cargando ventas..." />
-} @else {
-  @if (stats) {
-    <app-sales-stats-grid [stats]="stats" />
+    @if (loadError) {
+      <div class="m-card">
+        <p class="sales-m__state">No se pudo cargar la información de ventas.</p>
+        <db-button
+          label="Reintentar"
+          variant="secondary"
+          format="soft"
+          (clicked)="loadData()"
+        />
+      </div>
+    } @else if (loading) {
+      <div class="m-card">
+        <p class="sales-m__state">Cargando ventas...</p>
+      </div>
+    } @else if (stats) {
+      <div class="m-kpis" aria-label="Resumen del mes">
+        <div class="m-kpi">
+          <span class="m-lbl">Vendido</span>
+          <span class="sales-m__kv">{{ stats.monthlyRevenue | currencyArs }}</span>
+          <span class="sales-m__ks">{{ salesCountLabel }}</span>
+        </div>
+        <div class="m-kpi">
+          <span class="m-lbl">Ganancia</span>
+          <span
+            class="sales-m__kv"
+            [class.sales-m__kv--pos]="stats.monthlyProfit >= 0"
+            [class.sales-m__kv--neg]="stats.monthlyProfit < 0"
+          >
+            {{ stats.monthlyProfit | currencyArs }}
+          </span>
+          <span class="sales-m__ks"
+            >Costo {{ stats.monthlyCost | currencyArs }}</span
+          >
+        </div>
+      </div>
+
+      @if (mobileAreas.length) {
+        <h2 class="m-sec-t">Por área</h2>
+        <div class="m-card m-card--flush">
+          @for (area of mobileAreas; track area.area) {
+            <div class="m-row">
+              <div class="m-row__text">
+                <b>{{ areaLabel(area.area) }}</b>
+                <span>{{ areaSourceLabel(area) }}</span>
+              </div>
+              <div class="sales-m__end">
+                {{ area.revenue | currencyArs }}
+                <small
+                  [class.sales-m__pos]="area.profit >= 0"
+                  [class.sales-m__neg]="area.profit < 0"
+                >
+                  gana {{ area.profit | currencyArs }}
+                </small>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <h2 class="m-sec-t">Operaciones</h2>
+      @if (!entries.length) {
+        <div class="m-card">
+          <p class="sales-m__state">{{ emptyText }}</p>
+          <db-button
+            label="Registrar una venta de mostrador"
+            variant="primary"
+            format="solid"
+            (clicked)="openCreateSale()"
+          />
+        </div>
+      } @else {
+        <div class="m-card m-card--flush">
+          @for (entry of entries; track entry.id) {
+            <button
+              type="button"
+              class="m-row"
+              (click)="openMobileEntry(entry)"
+            >
+              <span class="sales-m__av" aria-hidden="true">{{
+                entryAvatar(entry)
+              }}</span>
+              <div class="m-row__text">
+                <b>{{ entryTitle(entry) }}</b>
+                <span>{{ entryMeta(entry) }}</span>
+              </div>
+              <div class="sales-m__end">{{ entry.total | currencyArs }}</div>
+            </button>
+          }
+        </div>
+      }
+    }
+  </div>
+</div>
+
+<div class="desktop-only">
+  <header class="page-header">
+    <div>
+      <h2>Ventas</h2>
+      <p>
+        Vendido, costos y ganancias de {{ monthLabel }} · {{ entries.length }} ventas registradas
+      </p>
+    </div>
+    <div class="header-actions">
+      <db-button label="Mes anterior" variant="secondary" format="soft" (clicked)="shiftMonth(-1)" />
+      <db-button label="Mes siguiente" variant="secondary" format="soft" (clicked)="shiftMonth(1)" />
+      <db-button
+        label="Generar reporte"
+        variant="secondary"
+        format="solid"
+        [disabled]="loading || !entries.length"
+        (clicked)="generateReport()"
+      />
+      <db-button
+        label="+ Venta de mostrador"
+        variant="primary"
+        format="solid"
+        routerLink="/ventas/nueva"
+      />
+    </div>
+  </header>
+
+  @if (reportMessage) {
+    <p class="sales-report-notice">{{ reportMessage }}</p>
   }
 
-  <section class="sales-list">
-    <div>
-      <h3>Listado de ventas del mes</h3>
-      <p>Ventas de mostrador y pedidos entregados con fecha de entrega en el mes</p>
-    </div>
+  @if (loadError) {
+    <db-state-message
+      [empty]="true"
+      emptyMessage="No se pudo cargar la información de ventas."
+    >
+      <db-button
+        emptyActions
+        label="Reintentar"
+        variant="secondary"
+        format="soft"
+        (clicked)="loadData()"
+      />
+    </db-state-message>
+  } @else if (loading) {
+    <db-state-message [loading]="true" loadingMessage="Cargando ventas..." />
+  } @else {
+    @if (stats) {
+      <app-sales-stats-grid [stats]="stats" />
+    }
 
-    <db-data-table
-      label="Ventas del mes"
-      [rows]="entries"
-      [columns]="columns"
-      [actions]="actions"
-      [filters]="sourceFilters"
-      [areaFilters]="areaFilters"
-      searchPlaceholder="Buscar por ID, producto o cliente"
-      [searchText]="searchText"
-      [emptyText]="emptyText"
-      emptyActionLabel="Registrar una venta de mostrador"
-      (action)="onAction($event)"
-      (emptyAction)="openCreateSale()"
-    />
-  </section>
-}
+    <section class="sales-list">
+      <div>
+        <h3>Listado de ventas del mes</h3>
+        <p>Ventas de mostrador y pedidos entregados con fecha de entrega en el mes</p>
+      </div>
+
+      <db-data-table
+        label="Ventas del mes"
+        [rows]="entries"
+        [columns]="columns"
+        [actions]="actions"
+        [filters]="sourceFilters"
+        [areaFilters]="areaFilters"
+        searchPlaceholder="Buscar por ID, producto o cliente"
+        [searchText]="searchText"
+        [emptyText]="emptyText"
+        emptyActionLabel="Registrar una venta de mostrador"
+        (action)="onAction($event)"
+        (emptyAction)="openCreateSale()"
+      />
+    </section>
+  }
+</div>

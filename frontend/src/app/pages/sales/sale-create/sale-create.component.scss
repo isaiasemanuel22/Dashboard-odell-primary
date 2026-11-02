@@ -1,4 +1,14 @@
 @use '../../../shared/styles/variables' as *;
+@use '../../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+
+  @include mobile.mobile-only {
+    // El form mobile trae su propio dock fijo.
+    padding-bottom: 0;
+  }
+}
 
 .back-link {
   display: inline-block;
@@ -19,8 +29,16 @@
 .sale-create-loading {
   margin: 0;
   color: $color-text-muted;
+  padding: 14px 16px;
 }
 
 .sale-create-panel {
   padding-bottom: 0;
+
+  @include mobile.mobile-only {
+    padding: 0;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
 }

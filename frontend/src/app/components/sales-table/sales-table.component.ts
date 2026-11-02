@@ -15,18 +15,21 @@ import {
   OdlColumn,
   OdlRowAction,
 } from '../db-data-table';
-import { SaleEntryCardComponent } from '../sale-entry-card/sale-entry-card.component';
 import { SaleEntryItemComponent } from '../sale-entry-item/sale-entry-item.component';
 import { SaleSourceBadgeComponent } from '../sale-source-badge/sale-source-badge.component';
+import { formatDateDayMonth } from '../../shared/utils/date-format.util';
+import { pluralize } from '../../shared/utils/order.helpers';
+import { salesChannelLabel } from '../../shared/utils/v1-labels.util';
+import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 
 @Component({
   selector: 'app-sales-table',
   standalone: true,
   imports: [
     RouterLink,
-    SaleEntryCardComponent,
     SaleEntryItemComponent,
     SaleSourceBadgeComponent,
+    CurrencyArsPipe,
     ...DB_DATA_TABLE,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -63,11 +66,55 @@ export class SalesTableComponent {
     return this.breakpoint.isMobile();
   }
 
+  openEntry(entry: SaleEntry): void {
+    if (entry.editable) {
+      this.edit.emit(entry);
+      return;
+    }
+    if (entry.orderId) {
+      void this.router.navigate(['/pedidos', entry.orderId]);
+    }
+  }
+
+  entryAvatar(entry: SaleEntry): string {
+    if (entry.source === SaleSource.RETAIL) return 'M';
+    return this.initials(entry.customerName || entry.saleId);
+  }
+
+  entryTitle(entry: SaleEntry): string {
+    if (entry.source === SaleSource.RETAIL) {
+      const note = entry.notes?.trim();
+      if (note) return `Mostrador · ${note}`;
+      const count = entry.items.reduce((sum, item) => sum + item.quantity, 0);
+      return `Mostrador · ${pluralize(count, 'producto', 'productos')}`;
+    }
+    const customer = entry.customerName?.trim();
+    return customer ? `${entry.saleId} · ${customer}` : entry.saleId;
+  }
+
+  entryMeta(entry: SaleEntry): string {
+    const day = formatDateDayMonth(entry.soldAt);
+    if (entry.source === SaleSource.RETAIL) {
+      if (entry.editable) return `${day} · editable`;
+      const count = entry.items.reduce((sum, item) => sum + item.quantity, 0);
+      return `${day} · ${pluralize(count, 'producto', 'productos')}`;
+    }
+    const channel = salesChannelLabel(entry.salesChannel);
+    return channel ? `Entregado ${day} · ${channel}` : `Entregado ${day}`;
+  }
+
   onAction(event: OdlActionEvent<SaleEntry>): void {
     if (event.actionId === 'editar') this.edit.emit(event.row);
     if (event.actionId === 'eliminar') this.delete.emit(event.row);
     if (event.actionId === 'ver' && event.row.orderId) {
       void this.router.navigate(['/pedidos', event.row.orderId]);
     }
+  }
+
+  private initials(name: string): string {
+    const parts = name.trim().split(/\s+/).filter(Boolean);
+    if (!parts.length) return '?';
+    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
   }
 }

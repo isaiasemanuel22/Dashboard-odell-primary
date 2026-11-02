@@ -1,10 +1,20 @@
-<header class="page-header sale-create-header">
-  <div>
-    <a routerLink="/ventas" class="back-link">← Ventas</a>
-    <h2>{{ title }}</h2>
-    <p>Mostrador — agregá productos y cerrá la venta</p>
-  </div>
-</header>
+<div class="mobile-only">
+  <db-mobile-bar
+    [title]="mobileTitle"
+    closeAriaLabel="Cerrar sin guardar"
+    (close)="cancel()"
+  />
+</div>
+
+<div class="desktop-only">
+  <header class="page-header sale-create-header">
+    <div>
+      <a routerLink="/ventas" class="back-link">← Ventas</a>
+      <h2>{{ title }}</h2>
+      <p>Mostrador — agregá productos y cerrá la venta</p>
+    </div>
+  </header>
+</div>
 
 @if (loadingSale) {
   <p class="sale-create-loading">Cargando venta...</p>

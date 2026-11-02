@@ -53,6 +53,8 @@ export class LayoutComponent implements OnInit {
   readonly authEnabled = this.auth.enabled;
 
   hideBottomNav = false;
+  /** En `/ventas` el FAB abre venta de mostrador; en el resto, nuevo pedido. */
+  fabOpensCounterSale = false;
 
   readonly navItems: NavItem[] = [
     { label: 'Dashboard', route: '/dashboard', icon: 'dashboard', exact: true },
@@ -91,7 +93,7 @@ export class LayoutComponent implements OnInit {
     this.destroyRef.onDestroy(() => this.realtime.disconnect());
 
     this.lastNavUrl = this.router.url;
-    this.hideBottomNav = this.shouldHideBottomNav(this.router.url);
+    this.applyRouteUi(this.router.url);
 
     this.router.events
       .pipe(
@@ -102,7 +104,7 @@ export class LayoutComponent implements OnInit {
       .subscribe((url) => {
         const urlChanged = url !== this.lastNavUrl;
         this.lastNavUrl = url;
-        this.hideBottomNav = this.shouldHideBottomNav(url);
+        this.applyRouteUi(url);
         if (!urlChanged) return;
         this.closeNav();
       });
@@ -139,13 +141,26 @@ export class LayoutComponent implements OnInit {
     );
   }
 
-  private shouldHideBottomNav(url: string): boolean {
+  private applyRouteUi(url: string): void {
     const path = url.split(/[?#]/)[0];
+    this.hideBottomNav = this.shouldHideBottomNav(path);
+    this.fabOpensCounterSale = path === '/ventas';
+  }
+
+  private shouldHideBottomNav(path: string): boolean {
     return (
       path.includes('/ventas/nueva') ||
       /\/ventas\/[^/]+\/editar/.test(path) ||
       /^\/pedidos\/[^/]+$/.test(path)
     );
+  }
+
+  onFabClick(): void {
+    if (this.fabOpensCounterSale) {
+      void this.router.navigateByUrl('/ventas/nueva');
+      return;
+    }
+    this.openNewOrder();
   }
 
   openNewOrder(): void {

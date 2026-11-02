@@ -1,9 +1,11 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  EventEmitter,
   Input,
   OnDestroy,
   OnInit,
+  Output,
   inject,
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
@@ -23,6 +25,9 @@ export class MobileBarComponent implements OnInit, OnDestroy {
   @Input({ required: true }) title = '';
   @Input() backLink?: string | any[];
   @Input() showMenu = false;
+  /** Si está definido, muestra una X a la izquierda y emite `close` (tiene prioridad sobre backLink/menú). */
+  @Input() closeAriaLabel?: string;
+  @Output() readonly close = new EventEmitter<void>();
 
   ngOnInit(): void {
     this.layoutUi.registerPageBar();
@@ -34,5 +39,9 @@ export class MobileBarComponent implements OnInit, OnDestroy {
 
   openMenu(): void {
     this.layoutUi.openNav();
+  }
+
+  onClose(): void {
+    this.close.emit();
   }
 }

@@ -1,5 +1,28 @@
-<header class="m-bar" [class.m-bar--title-only]="!backLink && !showMenu">
-  @if (backLink) {
+<header
+  class="m-bar"
+  [class.m-bar--title-only]="!closeAriaLabel && !backLink && !showMenu"
+>
+  @if (closeAriaLabel) {
+    <button
+      type="button"
+      class="m-ib"
+      [attr.aria-label]="closeAriaLabel"
+      (click)="onClose()"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="22"
+        height="22"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M6 6l12 12M18 6L6 18" />
+      </svg>
+    </button>
+  } @else if (backLink) {
     <a
       class="m-ib"
       [routerLink]="backLink"

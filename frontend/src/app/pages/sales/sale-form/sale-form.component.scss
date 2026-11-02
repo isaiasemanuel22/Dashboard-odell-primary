@@ -1,4 +1,5 @@
 @use '../../../shared/styles/variables' as *;
+@use '../../../shared/styles/mobile' as mobile;
 
 .cart-actions {
   display: flex;
@@ -21,10 +22,240 @@
   }
 }
 
+.sale-form__stock-hint {
+  margin: 0;
+  color: $color-error;
+  font-size: 0.875rem;
+}
+
 :host ::ng-deep .sale-form--mobile .sale-form__footer--sticky {
   position: sticky;
   bottom: 0;
   z-index: 2;
   margin: 0 -1rem -1rem;
   padding: 0.85rem 1rem calc(0.85rem + env(safe-area-inset-bottom, 0));
+}
+
+@include mobile.mobile-only {
+  .sale-m {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+
+  .sale-m__body {
+    padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .sale-m__suggest {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid mobile.$m-border;
+    border-radius: mobile.$m-radius-sm;
+    background: mobile.$m-surface;
+    overflow: hidden;
+  }
+
+  .sale-m__suggest-item {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    padding: 12px 14px;
+    border: 0;
+    border-bottom: 1px solid mobile.$m-border;
+    background: transparent;
+    text-align: left;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 600;
+    color: mobile.$m-text;
+    cursor: pointer;
+    min-height: 44px;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  .sale-m__suggest-meta {
+    font-size: 12px;
+    font-weight: 400;
+    color: mobile.$m-text-secondary;
+  }
+
+  .sale-m__suggest-empty,
+  .sale-m__picker-error,
+  .sale-m__empty-cart {
+    margin: 0;
+    font-size: 13px;
+    color: mobile.$m-text-secondary;
+  }
+
+  .sale-m__picker-error {
+    color: #b91c1c;
+  }
+
+  .sale-m__empty-cart a {
+    color: mobile.$m-primary;
+    font-weight: 700;
+  }
+
+  .sale-m__line {
+    align-items: center;
+  }
+
+  .sale-m__thumb {
+    width: 56px;
+    height: 56px;
+    border-radius: mobile.$m-radius-sm;
+    background: #e9f3f9;
+    flex: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: mobile.$m-text-secondary;
+    font-size: 10px;
+    text-align: center;
+    overflow: hidden;
+
+    img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+  }
+
+  .sale-m__step {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid mobile.$m-border-input;
+    border-radius: mobile.$m-radius-sm;
+    overflow: hidden;
+    flex: none;
+
+    button {
+      width: 44px;
+      height: 44px;
+      border: 0;
+      background: #f4f8fb;
+      font-family: inherit;
+      font-size: 18px;
+      font-weight: 700;
+      color: mobile.$m-text;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    span {
+      min-width: 44px;
+      text-align: center;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      font-size: 14px;
+    }
+  }
+
+  .sale-m__note {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    padding: 12px 14px;
+    border-radius: mobile.$m-radius-md;
+    background: #f4f8fb;
+    border: 1px solid mobile.$m-border;
+    font-size: 13px;
+    color: mobile.$m-text-label;
+
+    svg {
+      flex: none;
+    }
+  }
+
+  .sale-m__cobro {
+    gap: 14px;
+  }
+
+  .sale-m__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .sale-m__fl {
+    font-size: 13px;
+    font-weight: 500;
+    color: mobile.$m-text-label;
+  }
+
+  .sale-m__account {
+    align-items: center;
+
+    ::ng-deep db-select {
+      flex: 1;
+      min-width: 0;
+    }
+
+    ::ng-deep .db-form-field__label {
+      display: none;
+    }
+  }
+
+  .sale-m__seg {
+    display: block;
+    width: 100%;
+
+    ::ng-deep .db-seg,
+    ::ng-deep .db-seg.db-seg--lg {
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
+      width: 100%;
+      border-radius: mobile.$m-radius-sm;
+      border-color: mobile.$m-border-input;
+    }
+
+    ::ng-deep .db-seg.db-seg--lg .db-seg__btn,
+    ::ng-deep .db-seg__btn {
+      min-height: 44px;
+      height: auto;
+      padding: 0 6px;
+      font-size: 13px;
+      color: mobile.$m-text-label;
+      background: mobile.$m-surface;
+      border-right-color: mobile.$m-border-input;
+
+      &.is-on {
+        background: mobile.$m-primary;
+        color: #fff;
+        font-weight: 700;
+      }
+    }
+  }
+
+  .sale-m__num {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+  }
+
+  .sale-m__total {
+    color: mobile.$m-primary;
+  }
+
+  .sale-m__dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    background: mobile.$m-surface;
+    border-top: 1px solid mobile.$m-border;
+    padding: 12px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    gap: 10px;
+  }
 }

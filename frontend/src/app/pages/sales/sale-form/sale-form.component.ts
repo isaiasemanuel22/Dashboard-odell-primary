@@ -9,12 +9,15 @@ import {
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
+import { Router, RouterLink } from '@angular/router';
 import {
   CreateRetailSalePayload,
   Order,
+  PaymentMethod,
   Product,
   ProductStockOverview,
   RetailSale,
+  TreasuryAccount,
 } from '../../../core/models';
 import {
   DbFieldsetComponent,
@@ -26,12 +29,13 @@ import {
   DbSelectComponent,
   DbTextareaComponent,
   DbButtonComponent,
+  DbSegmentedControlComponent,
+  DbSegmentOption,
 } from '@general-components';
 import { SaleFormCartComponent } from './sale-form-cart/sale-form-cart.component';
 import { SaleCartLine } from '@general-components';
 import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { SaleCartService } from '../../../core/services/sale-cart.service';
-import { Router } from '@angular/router';
 import { DbSelectOption } from '../../../components/dashboard-form/db-select/db-select.types';
 import {
   DiscountMode,
@@ -43,6 +47,15 @@ import {
 } from '../../../shared/utils/discount.util';
 import { calculateCatalogLinesCost } from '../../../shared/utils/product.helpers';
 import { productStockOverview, canCloseRetailSale } from '../../../shared/utils/stock.helpers';
+import { labelsToSelectOptions } from '../../../shared/utils/select-options';
+import { defaultAccountForMethod } from '../../../shared/utils/treasury-account.util';
+import { resolveMediaUrl } from '../../../shared/utils/media-url.util';
+import { pluralize } from '../../../shared/utils/order.helpers';
+import {
+  PAYMENT_METHOD_LABELS,
+  TREASURY_ACCOUNT_LABELS,
+} from '../../../shared/utils/v1-labels.util';
+import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 
 let cartLineKey = 0;
 
@@ -51,6 +64,7 @@ let cartLineKey = 0;
   standalone: true,
   imports: [
     FormsModule,
+    RouterLink,
     DbFormComponent,
     DbFieldsetComponent,
     DbFormGridComponent,
@@ -60,7 +74,9 @@ let cartLineKey = 0;
     DbTextareaComponent,
     DbFormFooterComponent,
     DbButtonComponent,
+    DbSegmentedControlComponent,
     SaleFormCartComponent,
+    CurrencyArsPipe,
   ],
   templateUrl: './sale-form.component.html',
   styleUrl: './sale-form.component.scss',
@@ -83,12 +99,17 @@ export class SaleFormComponent implements OnChanges {
 
   productId = '';
   pickQuantity = 1;
+  productSearch = '';
   private editCart: SaleCartLine[] = [];
   notes = '';
   pickerError = '';
   discountMode: DiscountMode = 'none';
   discountPercent = 0;
   discountAmount = 0;
+  method: PaymentMethod = PaymentMethod.EFECTIVO;
+  account: TreasuryAccount = defaultAccountForMethod(PaymentMethod.EFECTIVO);
+  /** Valor `YYYY-MM-DD` para el input date mobile. */
+  soldAtLocal = '';
 
   readonly discountModeOptions: DbSelectOption[] = [
     { value: 'none', label: 'Sin descuento' },
@@ -96,12 +117,33 @@ export class SaleFormComponent implements OnChanges {
     { value: 'amount', label: 'Monto fijo ($)' },
   ];
 
+  readonly discountSegmentOptions: DbSegmentOption<DiscountMode>[] = [
+    { value: 'none', label: 'Sin' },
+    { value: 'percent', label: '%' },
+    { value: 'amount', label: '$' },
+  ];
+
+  readonly paymentMethodOptions: DbSegmentOption<PaymentMethod>[] =
+    labelsToSelectOptions(PAYMENT_METHOD_LABELS);
+
+  readonly accountOptions: DbSelectOption[] =
+    labelsToSelectOptions(TREASURY_ACCOUNT_LABELS);
+
   get isEditing(): boolean {
     return this.sale !== null;
   }
 
+  get showMobileSaleUi(): boolean {
+    return this.breakpoint.isMobile();
+  }
+
   get cart(): SaleCartLine[] {
     return this.isEditing ? this.editCart : this.saleCart.getLines();
+  }
+
+  get cartSectionTitle(): string {
+    const count = this.cart.reduce((sum, line) => sum + line.quantity, 0);
+    return `Carrito · ${pluralize(count, 'producto', 'productos')}`;
   }
 
   get productOptions(): DbSelectOption[] {
@@ -110,6 +152,18 @@ export class SaleFormComponent implements OnChanges {
       label: `${product.name} · ${this.formatPrice(product.price)} · ${this.availableStock(product.id)} disp.`,
       disabled: this.availableStock(product.id) < 1,
     }));
+  }
+
+  get searchableProducts(): Product[] {
+    const query = this.productSearch.trim().toLowerCase();
+    if (!query) return [];
+    return this.products
+      .filter((product) => {
+        if (product.published === false) return false;
+        if (this.availableStock(product.id) < 1) return false;
+        return product.name.toLowerCase().includes(query);
+      })
+      .slice(0, 8);
   }
 
   get hasAvailableProducts(): boolean {
@@ -186,6 +240,12 @@ export class SaleFormComponent implements OnChanges {
     return this.breakpoint.isMobile();
   }
 
+  get mobilePrimaryLabel(): string {
+    if (this.loading) return 'Guardando...';
+    if (this.isEditing) return 'Guardar cambios';
+    return `Cobrar ${this.formatPrice(this.cartTotal)}`;
+  }
+
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['sale'] || changes['products']) {
       this.resetForm();
@@ -196,11 +256,23 @@ export class SaleFormComponent implements OnChanges {
     }
   }
 
+  onMethodChange(method: PaymentMethod): void {
+    this.method = method;
+    this.account = defaultAccountForMethod(method);
+  }
+
   onProductChange(): void {
     this.pickerError =
       this.productId && this.availableStock(this.productId) < 1
         ? 'Este producto no tiene stock disponible. Creá un pedido para producirlo.'
         : '';
+  }
+
+  addProductFromSearch(product: Product): void {
+    this.productId = product.id;
+    this.pickQuantity = 1;
+    this.addToCart();
+    this.productSearch = '';
   }
 
   addToCart(): void {
@@ -253,10 +325,24 @@ export class SaleFormComponent implements OnChanges {
 
   updateLineQuantity(line: SaleCartLine, quantity: number): void {
     if (this.isEditing) {
+      if (!quantity || quantity <= 0) {
+        this.editCart = this.editCart.filter((item) => item.key !== line.key);
+        return;
+      }
       line.quantity = quantity;
       return;
     }
     this.saleCart.updateLineQuantity(line.key, quantity);
+  }
+
+  bumpQuantity(line: SaleCartLine, delta: number): void {
+    this.updateLineQuantity(line, line.quantity + delta);
+  }
+
+  lineImage(line: SaleCartLine): string | null {
+    const product = this.products.find((item) => item.id === line.productId);
+    const raw = product?.images?.find((src) => !!src?.trim()) ?? null;
+    return resolveMediaUrl(raw);
   }
 
   closeSale(): void {
@@ -268,6 +354,8 @@ export class SaleFormComponent implements OnChanges {
       this.discountAmount,
     );
 
+    const soldAt = this.resolveSoldAtPayload();
+
     this.save.emit({
       items: this.cart.map((line) => ({
         productId: line.productId,
@@ -276,9 +364,11 @@ export class SaleFormComponent implements OnChanges {
         unitPrice: line.unitPrice,
       })),
       notes: this.notes.trim() || undefined,
-      soldAt: this.isEditing ? this.sale!.soldAt : undefined,
+      soldAt,
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
+      method: this.method,
+      account: this.account,
     });
   }
 
@@ -315,37 +405,7 @@ export class SaleFormComponent implements OnChanges {
     this.cancel.emit();
   }
 
-  private resetForm(): void {
-    this.pickerError = '';
-    this.notes = '';
-    this.pickQuantity = 1;
-    this.productId =
-      this.products.find((product) => this.availableStock(product.id) > 0)?.id ??
-      '';
-    this.editCart = [];
-    this.discountMode = 'none';
-    this.discountPercent = 0;
-    this.discountAmount = 0;
-
-    if (this.sale) {
-      this.notes = this.sale.notes ?? '';
-      this.discountMode = discountModeFromValues(
-        this.sale.discountPercent,
-        this.sale.discountAmount,
-      );
-      this.discountPercent = this.sale.discountPercent ?? 0;
-      this.discountAmount = this.sale.discountAmount ?? 0;
-      this.editCart = this.sale.items.map((item) => ({
-        key: `line-${++cartLineKey}`,
-        productId: item.productId ?? '',
-        productName: item.productName,
-        quantity: item.quantity,
-        unitPrice: item.unitPrice,
-      }));
-    }
-  }
-
-  private formatPrice(value: number): string {
+  formatPrice(value: number): string {
     return new Intl.NumberFormat('es-AR', {
       style: 'currency',
       currency: 'ARS',
@@ -360,5 +420,69 @@ export class SaleFormComponent implements OnChanges {
       return productStockOverview(product, overview, this.products).available;
     }
     return Math.max(0, Math.trunc(Number(overview?.available) || 0));
+  }
+
+  private resolveSoldAtPayload(): string | undefined {
+    if (this.showMobileSaleUi && this.soldAtLocal) {
+      const date = new Date(`${this.soldAtLocal}T12:00:00`);
+      if (!Number.isNaN(date.getTime())) return date.toISOString();
+    }
+    if (this.isEditing) return this.sale!.soldAt;
+    return undefined;
+  }
+
+  private toDateInputValue(value: string | Date | undefined | null): string {
+    const fallback = new Date();
+    const date = !value
+      ? fallback
+      : value instanceof Date
+        ? value
+        : new Date(value);
+    const safe = Number.isNaN(date.getTime()) ? fallback : date;
+    const month = String(safe.getMonth() + 1).padStart(2, '0');
+    const day = String(safe.getDate()).padStart(2, '0');
+    return `${safe.getFullYear()}-${month}-${day}`;
+  }
+
+  private todayInputValue(): string {
+    return this.toDateInputValue(new Date());
+  }
+
+  private resetForm(): void {
+    this.pickerError = '';
+    this.productSearch = '';
+    this.notes = '';
+    this.pickQuantity = 1;
+    this.productId =
+      this.products.find((product) => this.availableStock(product.id) > 0)?.id ??
+      '';
+    this.editCart = [];
+    this.discountMode = 'none';
+    this.discountPercent = 0;
+    this.discountAmount = 0;
+    this.method = PaymentMethod.EFECTIVO;
+    this.account = defaultAccountForMethod(PaymentMethod.EFECTIVO);
+    this.soldAtLocal = this.todayInputValue();
+
+    if (this.sale) {
+      this.notes = this.sale.notes ?? '';
+      this.discountMode = discountModeFromValues(
+        this.sale.discountPercent,
+        this.sale.discountAmount,
+      );
+      this.discountPercent = this.sale.discountPercent ?? 0;
+      this.discountAmount = this.sale.discountAmount ?? 0;
+      this.method = this.sale.method ?? PaymentMethod.EFECTIVO;
+      this.account =
+        this.sale.account ?? defaultAccountForMethod(this.method);
+      this.soldAtLocal = this.toDateInputValue(this.sale.soldAt);
+      this.editCart = this.sale.items.map((item) => ({
+        key: `line-${++cartLineKey}`,
+        productId: item.productId ?? '',
+        productName: item.productName,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+      }));
+    }
   }
 }
