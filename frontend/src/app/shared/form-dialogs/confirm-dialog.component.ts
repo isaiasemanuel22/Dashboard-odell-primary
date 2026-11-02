@@ -50,6 +50,10 @@ export interface ConfirmDialogData {
       justify-content: flex-end;
       gap: 0.75rem;
     }
+
+    .confirm-actions ::ng-deep .db-button {
+      white-space: nowrap;
+    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

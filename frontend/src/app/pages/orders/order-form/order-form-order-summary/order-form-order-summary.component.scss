@@ -1,4 +1,5 @@
 @use '../../../../shared/styles/variables' as *;
+@use '../../../../shared/styles/mobile' as mobile;
 
 :host {
   display: contents;
@@ -129,6 +130,7 @@
   &__money-value {
     display: flex;
     align-items: center;
+    gap: 0.5rem;
     min-height: 2.55rem;
     padding: 0.55rem 0.75rem;
     border: 1px solid $color-border-input;
@@ -143,16 +145,34 @@
   }
 
   &__money-control {
-    width: 100%;
+    flex: 1 1 auto;
+    width: auto;
     min-width: 0;
     border: 0;
     outline: none;
     background: transparent;
     padding: 0;
     margin: 0;
-    font: inherit;
+    font-family: inherit;
     font-size: 0.9rem;
+    font-weight: inherit;
     color: $color-text;
+  }
+
+  // Gana a `.modal input:not(...)` (_forms): el borde lo pone la caja, no el input.
+  &__money-value input.order-resumen__money-control {
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    min-height: 0;
+  }
+
+  &__money-suffix {
+    flex: none;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    color: $color-text-muted;
+    white-space: nowrap;
   }
 
   &__seg {
@@ -163,19 +183,21 @@
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       width: 100%;
+      // Evita que overflow:hidden del control recorte la primera letra.
+      overflow: visible;
     }
 
-    ::ng-deep .db-seg__btn {
+    // Gana a `.db-seg--lg .db-seg__btn { height: 44px }` del componente
+    // (especificidad: .db-seg.db-seg--lg .db-seg__btn).
+    ::ng-deep .db-seg.db-seg--lg .db-seg__btn {
       height: auto;
       min-height: 2.5rem;
-      padding: 0.35rem 0.2rem;
+      padding: 0.4rem 0.35rem;
       font-size: 0.75rem;
       white-space: nowrap;
       line-height: 1.2;
       text-align: center;
-      overflow-wrap: normal;
-      word-break: normal;
-      hyphens: none;
+      overflow: visible;
     }
   }
 
@@ -213,5 +235,175 @@
     font-size: 0.75rem;
     line-height: 1.35;
     color: $color-text-muted;
+  }
+}
+
+@include mobile.mobile-only {
+  :host-context(.order-form) {
+    .order-resumen {
+      border-left: 0;
+      border-top: 0;
+      background: transparent;
+    }
+
+    .order-resumen__inner {
+      position: static;
+      padding: 0 16px 120px;
+      gap: 14px;
+      display: flex;
+      flex-direction: column;
+      background: mobile.$m-bg;
+      box-sizing: border-box;
+    }
+
+    .order-resumen__m-title--deposit {
+      order: 1;
+      margin: 0;
+    }
+
+    .order-resumen__deposit {
+      order: 2;
+    }
+
+    .order-resumen__m-title--totals {
+      order: 3;
+      margin: 0;
+    }
+
+    .order-resumen__totals {
+      order: 4;
+    }
+
+    .order-resumen__card {
+      background: mobile.$m-surface;
+      border: 1px solid mobile.$m-border;
+      border-radius: mobile.$m-radius-md;
+      padding: 14px;
+      gap: 12px;
+    }
+
+    .order-resumen__m-title {
+      margin: 0;
+    }
+
+    .order-resumen__row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 14px;
+      color: mobile.$m-text-label;
+    }
+
+    .order-resumen__amount {
+      flex: none;
+      text-align: right;
+    }
+
+    .order-resumen__row--total {
+      padding-top: 10px;
+      border-top: 1px solid mobile.$m-border;
+
+      span:first-child {
+        font-weight: 700;
+      }
+    }
+
+    .order-resumen__total {
+      font-size: 20px;
+      font-weight: 700;
+      color: mobile.$m-primary;
+    }
+
+    .order-resumen__neg {
+      color: #b91c1c;
+    }
+
+    .order-resumen__pos {
+      color: #15803d;
+    }
+
+    .order-resumen__label {
+      font-size: 13px;
+      font-weight: 500;
+      color: mobile.$m-text-label;
+    }
+
+    .order-resumen__money-value {
+      min-height: 48px;
+      height: 48px;
+      padding: 0 12px;
+      border-radius: mobile.$m-radius-sm;
+      border-color: mobile.$m-border-input;
+      box-shadow: none;
+    }
+
+    .order-resumen__money-control {
+      font-size: 15px;
+      font-weight: 700;
+      color: mobile.$m-text;
+    }
+
+    .order-resumen__money-suffix {
+      font-size: 12px;
+      color: mobile.$m-text-secondary;
+    }
+
+    // Medio de pago: 3 botones sueltos (no segmento continuo).
+    .order-resumen__seg {
+      ::ng-deep .db-seg,
+      ::ng-deep .db-seg.db-seg--lg {
+        display: flex;
+        gap: 8px;
+        border: 0;
+        background: transparent;
+        overflow: visible;
+        border-radius: 0;
+      }
+
+      ::ng-deep .db-seg.db-seg--lg .db-seg__btn,
+      ::ng-deep .db-seg__btn {
+        flex: 1 1 0;
+        min-width: 0;
+        min-height: 44px;
+        height: auto;
+        border: 1px solid #c9d8e3;
+        border-right: 1px solid #c9d8e3;
+        border-radius: 12px;
+        padding: 8px 6px;
+        font-size: 12px;
+        font-weight: 500;
+        color: mobile.$m-text-label;
+        background: #fff;
+        white-space: normal;
+        line-height: 1.2;
+
+        &.is-on {
+          background: #e0f0f8;
+          border-color: #0e7aab;
+          color: #0b5f86;
+          font-weight: 700;
+          box-shadow: none;
+        }
+      }
+    }
+
+    ::ng-deep .quote-discount--resumen .discount-segment,
+    ::ng-deep .discount-segment {
+      min-height: 44px;
+      padding: 0 0.7rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+
+    ::ng-deep input.db-input,
+    ::ng-deep select.db-select,
+    ::ng-deep .db-select {
+      min-height: 48px;
+      border-radius: mobile.$m-radius-sm;
+      border-color: mobile.$m-border-input;
+    }
   }
 }

@@ -168,6 +168,12 @@ export class OrderFormLineComponent implements OnInit {
   /** Solo quote: colapso local. */
   collapsed = false;
 
+  /**
+   * Mobile (pedido): composición de costo plegada.
+   * `null` = aún no tocado → se deriva de `isCostCompositionReady`.
+   */
+  private costCompositionExpandedOverride: boolean | null = null;
+
   private generalSettings: GeneralSettings | null = null;
   private profitMargins: ServiceProfitMargins | null = null;
   private supplies: Supply[] = [];
@@ -205,6 +211,62 @@ export class OrderFormLineComponent implements OnInit {
   toggleCollapsed(): void {
     this.collapsed = !this.collapsed;
     this.cdr.markForCheck();
+  }
+
+  toggleCostComposition(): void {
+    this.costCompositionExpandedOverride = !this.costCompositionExpanded;
+    this.cdr.markForCheck();
+  }
+
+  /** Datos suficientes para costear la composición (gramos, etc.). */
+  get isCostCompositionReady(): boolean {
+    if (this.line.productId?.trim()) return true;
+    if (isDesignService(this.line.serviceType)) {
+      return !!this.line.customName?.trim() && this.unitCost >= 0;
+    }
+    if (isImpresion3DLine(this.line.serviceType)) {
+      if (isResinQuoteLine(this.line, this.product ?? undefined)) {
+        return isResinQuoteConfigured(this.line);
+      }
+      return isFdmQuoteConfigured(this.line);
+    }
+    if (isEstampadoLine(this.line.serviceType)) {
+      return isEstampadoQuoteConfigured(this.line);
+    }
+    return true;
+  }
+
+  get costCompositionExpanded(): boolean {
+    if (this.costCompositionExpandedOverride != null) {
+      return this.costCompositionExpandedOverride;
+    }
+    return !this.isCostCompositionReady;
+  }
+
+  get hasCostComposition(): boolean {
+    return this.showFdm() || this.showEstampado() || this.isDesign();
+  }
+
+  get lineMarginPercent(): number | null {
+    const cost = this.unitCost;
+    const price = this.appliedUnitPrice;
+    if (!(cost > 0) || !(price > 0)) return null;
+    return Math.round(((price - cost) / cost) * 100);
+  }
+
+  get appliedUnitPrice(): number {
+    if (this.showWholesaleColumns) return this.wholesaleUnitPricePreview;
+    return this.editableUnitPrice;
+  }
+
+  get appliedUnitPriceLabel(): string {
+    return `${this.money(this.appliedUnitPrice)} c/u`;
+  }
+
+  adjustQuantity(delta: number): void {
+    const next = Math.max(1, Math.round(Number(this.line.quantity) || 1) + delta);
+    this.line.quantity = next;
+    this.onQuantityChange();
   }
 
   // ── Display helpers ──────────────────────────────────────────────

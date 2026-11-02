@@ -1,8 +1,9 @@
 <aside class="order-resumen" aria-label="Resumen">
   <div class="order-resumen__inner">
-    <h3 class="order-resumen__title">Resumen</h3>
+    <h3 class="order-resumen__title desktop-only">Resumen</h3>
 
-    <div class="order-resumen__card">
+    <h2 class="m-sec-t mobile-only order-resumen__m-title order-resumen__m-title--totals">Resumen</h2>
+    <div class="order-resumen__card order-resumen__totals">
       <p class="order-resumen__row">
         <span>Subtotal a precio de lista</span>
         <span class="order-resumen__amount">{{ listSubtotal | currencyArs }}</span>
@@ -12,7 +13,7 @@
         <p class="order-resumen__row">
           <span class="order-resumen__stack">
             Descuento mayorista −{{ wholesalePercent }}%
-            <small>sobre {{ wholesaleProductsBase | currencyArs }} en productos</small>
+            <small class="desktop-only">sobre {{ wholesaleProductsBase | currencyArs }} en productos</small>
           </span>
           <span class="order-resumen__neg order-resumen__amount">−{{ wholesaleDiscountAmount | currencyArs }}</span>
         </p>
@@ -46,14 +47,36 @@
       </p>
 
       @if (resellerSavings > 0) {
-        <p class="order-resumen__row">
+        <p class="order-resumen__row desktop-only">
           <span>El revendedor ahorra</span>
           <span class="order-resumen__pos order-resumen__amount">{{ resellerSavings | currencyArs }}</span>
         </p>
       }
+
+      <p
+        class="order-resumen__row mobile-only"
+        [class.order-resumen__row--loss]="profit < 0"
+      >
+        <span>Ganancia estimada</span>
+        <strong
+          class="order-resumen__pos order-resumen__amount"
+          [class.order-resumen__neg]="profit < 0"
+        >
+          {{ profit | currencyArs }}
+          @if (totalCost > 0) {
+            · {{ profitPercentOnCost }}%
+          }
+        </strong>
+      </p>
+      @if (depositMode === 'editable' || depositMode === 'info') {
+        <p class="order-resumen__row mobile-only">
+          <span>Saldo al entregar</span>
+          <strong class="order-resumen__amount">{{ balanceAfterDeposit | currencyArs }}</strong>
+        </p>
+      }
     </div>
 
-    <div class="order-resumen__card">
+    <div class="order-resumen__card order-resumen__profit desktop-only">
       <p class="order-resumen__row">
         <span>Costo estimado</span>
         <span class="order-resumen__amount">{{ totalCost | currencyArs }}</span>
@@ -86,8 +109,9 @@
     </div>
 
     @if (depositMode === 'editable') {
+      <h2 class="m-sec-t mobile-only order-resumen__m-title order-resumen__m-title--deposit">3 · Seña</h2>
       <div class="order-resumen__card order-resumen__deposit">
-        <h4 class="order-resumen__deposit-title">
+        <h4 class="order-resumen__deposit-title desktop-only">
           Seña
           <span class="order-resumen__new">Nuevo</span>
         </h4>
@@ -106,14 +130,14 @@
               autocomplete="off"
               aria-describedby="deposit-amount-hint"
             />
+            <span class="order-resumen__money-suffix" id="deposit-amount-hint">
+              @if (isSuggestedDeposit) {
+                {{ depositPercent }}% del total
+              } @else {
+                Saldo {{ balanceAfterDeposit | currencyArs }}
+              }
+            </span>
           </div>
-          <p class="order-resumen__deposit-hint" id="deposit-amount-hint">
-            @if (isSuggestedDeposit) {
-              {{ depositPercent }}% del total
-            } @else {
-              Saldo al entregar {{ balanceAfterDeposit | currencyArs }}
-            }
-          </p>
         </div>
 
         <span class="order-resumen__label" id="deposit-method-label">Medio de pago</span>
@@ -145,7 +169,7 @@
           placeholder="0"
         />
 
-        <p class="order-resumen__row order-resumen__row--balance">
+        <p class="order-resumen__row order-resumen__row--balance desktop-only">
           <span>Saldo al entregar</span>
           <strong class="order-resumen__amount">{{ balanceAfterDeposit | currencyArs }}</strong>
         </p>

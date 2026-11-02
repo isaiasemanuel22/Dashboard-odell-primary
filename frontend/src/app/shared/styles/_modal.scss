@@ -304,42 +304,163 @@
     box-sizing: border-box;
   }
 
-  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--secondary),
-  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--cancel),
-  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--secondary),
-  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--cancel),
-  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--secondary),
-  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--cancel) {
+  // 120px solo con exactamente 2 botones (Cancelar corto + primario).
+  // Con 3+ el pie pasa a 2 filas más abajo.
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--secondary),
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--cancel),
+  .cdk-overlay-pane.form-dialog-panel .modal__footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--secondary),
+  .cdk-overlay-pane.form-dialog-panel .modal__footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--cancel),
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--secondary),
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--cancel) {
     flex: none;
-    width: 120px;
-    max-width: 120px;
+    width: auto;
+    min-width: 120px;
+    max-width: none;
   }
 
-  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--secondary) .db-button,
-  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--cancel) .db-button,
-  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--secondary) .db-button,
-  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--cancel) .db-button,
-  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--secondary) .db-button,
-  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--cancel) .db-button {
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--secondary) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--cancel) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .modal__footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--secondary) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .modal__footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--cancel) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--secondary) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--cancel) .db-button {
     width: 100%;
+    white-space: nowrap;
   }
 
-  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--primary),
-  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--delete),
-  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--primary),
-  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--delete),
-  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--primary),
-  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--delete) {
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--primary),
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--delete),
+  .cdk-overlay-pane.form-dialog-panel .modal__footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--primary),
+  .cdk-overlay-pane.form-dialog-panel .modal__footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--delete),
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--primary),
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--delete) {
     flex: 1;
     min-width: 0;
   }
 
-  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--primary) .db-button,
-  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--delete) .db-button,
-  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--primary) .db-button,
-  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--delete) .db-button,
-  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--primary) .db-button,
-  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--delete) .db-button {
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--primary) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--delete) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .modal__footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--primary) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .modal__footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--delete) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--primary) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer:has(> db-button:nth-child(2):last-child) db-button:has(.db-button--delete) .db-button {
     width: 100%;
+    white-space: nowrap;
+  }
+
+  // 3+ botones: primario a ancho completo arriba; los otros 50/50 abajo.
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions:has(> db-button:nth-child(3)),
+  .cdk-overlay-pane.form-dialog-panel .modal__footer:has(> db-button:nth-child(3)),
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer:has(> db-button:nth-child(3)),
+  .cdk-overlay-pane.form-dialog-panel .quote-form__actions:has(> db-button:nth-child(3)),
+  .cdk-overlay-pane.form-dialog-panel .order-form__actions:has(> db-button:nth-child(3)):not(:has(.order-form__dock-submit)) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions:has(> db-button:nth-child(3)) db-button:has(.db-button--primary),
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions:has(> db-button:nth-child(3)) db-button:has(.db-button--delete),
+  .cdk-overlay-pane.form-dialog-panel .modal__footer:has(> db-button:nth-child(3)) db-button:has(.db-button--primary),
+  .cdk-overlay-pane.form-dialog-panel .modal__footer:has(> db-button:nth-child(3)) db-button:has(.db-button--delete),
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer:has(> db-button:nth-child(3)) db-button:has(.db-button--primary),
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer:has(> db-button:nth-child(3)) db-button:has(.db-button--delete),
+  .cdk-overlay-pane.form-dialog-panel .quote-form__actions:has(> db-button:nth-child(3)) db-button:has(.db-button--primary),
+  .cdk-overlay-pane.form-dialog-panel .quote-form__actions:has(> db-button:nth-child(3)) db-button:has(.db-button--delete) {
+    grid-column: 1 / -1;
+    order: -1;
+    width: 100%;
+    max-width: none;
+    flex: none;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions:has(> db-button:nth-child(3)) db-button,
+  .cdk-overlay-pane.form-dialog-panel .modal__footer:has(> db-button:nth-child(3)) db-button,
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer:has(> db-button:nth-child(3)) db-button,
+  .cdk-overlay-pane.form-dialog-panel .quote-form__actions:has(> db-button:nth-child(3)) db-button {
+    display: block;
+    width: 100%;
+    max-width: none;
+    min-width: 0;
+    flex: none;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions:has(> db-button:nth-child(3)) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .modal__footer:has(> db-button:nth-child(3)) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer:has(> db-button:nth-child(3)) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .quote-form__actions:has(> db-button:nth-child(3)) .db-button {
+    width: 100%;
+    min-height: 52px;
+    height: 52px;
+    white-space: nowrap;
+    box-sizing: border-box;
+  }
+
+  /* Pedido: pantalla completa (sin hoja ni manija). */
+  .cdk-overlay-pane.form-dialog-panel.form-dialog-panel--order-fullscreen {
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: 100dvh !important;
+    max-height: 100dvh !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+
+    .modal,
+    .modal--xl {
+      max-width: 100%;
+      max-height: 100dvh;
+      height: 100dvh;
+      border-radius: 0;
+      box-shadow: none;
+    }
+
+    .modal::before {
+      display: none;
+    }
+
+    .modal__header {
+      display: none;
+    }
+
+    // `.modal` sube la especificidad sobre el padding de --quote (form-dialog-shell).
+    .modal .modal__body {
+      padding: 0;
+      background: mobile.$m-bg;
+    }
+
+    .order-dialog-m-bar {
+      flex: none;
+      height: 56px;
+      background: #fff;
+      border-bottom: 1px solid mobile.$m-border;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 0 8px;
+      box-sizing: border-box;
+      position: sticky;
+      top: 0;
+      z-index: 3;
+    }
+
+    .order-dialog-m-bar__title {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 700;
+      color: mobile.$m-text;
+      flex: 1;
+      min-width: 0;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
   }
 }

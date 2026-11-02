@@ -1,4 +1,5 @@
 @use '../../../../shared/styles/variables' as *;
+@use '../../../../shared/styles/mobile' as mobile;
 
 :host {
   display: flex;
@@ -78,5 +79,22 @@
   ::ng-deep .db-input {
     min-height: 2.1rem;
     background: #eef3f7;
+  }
+}
+
+@include mobile.mobile-only {
+  :host(.quote-discount--resumen) {
+    .discount-segment {
+      min-height: 44px;
+      padding: 0 0.75rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+
+    ::ng-deep .db-input {
+      min-height: 44px;
+    }
   }
 }

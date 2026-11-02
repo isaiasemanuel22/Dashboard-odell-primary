@@ -70,6 +70,9 @@ import {
   isLineBlank,
   isLineValid,
   lineFromOrderItem,
+  lineConceptError,
+  lineQuantityError,
+  lineUnitPriceError,
   orderLinesFromSaleCart,
   orderLineStockHint,
   ORDER_DESCRIPTION_MAX_LENGTH,
@@ -77,6 +80,7 @@ import {
   toDateInputValue,
   toOrderDueDate,
 } from '../../../shared/utils/order.helpers';
+import { isDesignPrintConfigured } from '../../../shared/utils/design-print.util';
 import {
   calculateOrderLinesCost,
   resolveProductUnitCost,
@@ -268,6 +272,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
   depositFeeInput: number | null = null;
   private depositAmountTouched = false;
 
+  /**
+   * Mobile «DETALLES»: plegado si descripción y notas están vacías.
+   * En desktop los campos se muestran siempre (CSS).
+   */
+  detailsExpanded = false;
+
   readonly serviceTypeOptions = serviceTypeOptions();
   readonly discountModeOptions: DbSelectOption[] = [
     { value: 'none', label: 'Sin descuento' },
@@ -316,6 +326,58 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (this.isEditing) return 'Guardar cambios';
     if (this.presetQuote) return 'Generar pedido';
     return this.isQuoteForm ? 'Crear presupuesto' : 'Crear pedido';
+  }
+
+  /** Dock mobile: mismo submit + total ya calculado. */
+  get submitLabelMobile(): string {
+    if (this.loading) return 'Guardando...';
+    const totalLabel = this.money(this.total);
+    if (this.isEditing) return `Guardar cambios · ${totalLabel}`;
+    if (this.presetQuote) return `Generar pedido · ${totalLabel}`;
+    return `Crear pedido · ${totalLabel}`;
+  }
+
+  /**
+   * Faltantes del pedido (mismas reglas que `canSubmit` en modo order).
+   * Vacío ⇒ se puede guardar.
+   */
+  get submitMissing(): string[] {
+    if (this.isQuoteForm) return [];
+    const missing: string[] = [];
+
+    if (!this.customerId.trim()) missing.push('cliente');
+    if (!this.dueDate) {
+      missing.push('fecha de entrega');
+    } else if (this.dueDateError) {
+      missing.push('fecha de entrega válida');
+    }
+
+    const relevant = this.lines
+      .map((line, index) => ({ line, index }))
+      .filter(({ line }) => !isLineBlank(line));
+
+    if (!relevant.length) {
+      missing.push('al menos un producto');
+    } else {
+      for (const { line, index } of relevant) {
+        if (isLineValid(line)) continue;
+        missing.push(...this.lineMissingReasons(line, index + 1));
+      }
+    }
+
+    if (
+      plainTextFromHtml(this.description).length > this.descriptionMaxLength
+    ) {
+      missing.push('descripción más corta');
+    }
+
+    return missing;
+  }
+
+  get submitMissingLabel(): string {
+    const items = this.submitMissing;
+    if (!items.length) return '';
+    return `Falta: ${items.join(', ')}`;
   }
 
   get isEditing(): boolean {
@@ -562,6 +624,16 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (this.priceType !== PriceType.MAYORISTA) {
       return null;
     }
+    // Recién con al menos una línea con precio (no apenas se elige cliente).
+    const hasPricedLine = this.lines.some((line) => {
+      if (isLineBlank(line)) return false;
+      if (isDesignService(line.serviceType)) {
+        return (Number(line.designUnitPrice ?? line.unitPrice) || 0) > 0;
+      }
+      return (Number(line.unitPrice) || 0) > 0;
+    });
+    if (!hasPricedLine) return null;
+
     const minimum = this.selectedCustomer?.wholesaleMinimum;
     if (minimum == null || !Number.isFinite(Number(minimum))) {
       return null;
@@ -1305,25 +1377,79 @@ export class OrderFormComponent implements OnChanges, OnInit {
   /** Borrador: sin cliente OK. Crear/Enviado: exige cliente. */
   canSubmit(asDraft = false): boolean {
     this.clampDiscountFields();
-    const relevant = this.lines.filter((line) => !isLineBlank(line));
-    if (!relevant.length || !relevant.every((line) => isLineValid(line))) {
-      return false;
-    }
-    // El descuento se clampea al tipear/pegar; no bloquea guardar.
-    if (
-      plainTextFromHtml(this.description).length > this.descriptionMaxLength
-    ) {
-      return false;
-    }
     if (this.isQuoteForm) {
+      const relevant = this.lines.filter((line) => !isLineBlank(line));
+      if (!relevant.length || !relevant.every((line) => isLineValid(line))) {
+        return false;
+      }
+      if (
+        plainTextFromHtml(this.description).length > this.descriptionMaxLength
+      ) {
+        return false;
+      }
       if (asDraft) return true;
       return !!this.customerId.trim();
     }
-    return (
-      !!this.customerId.trim() &&
-      !!this.dueDate &&
-      !this.dueDateError
-    );
+    return this.submitMissing.length === 0;
+  }
+
+  expandDetails(): void {
+    this.detailsExpanded = true;
+  }
+
+  private syncDetailsExpanded(): void {
+    this.detailsExpanded =
+      hasRichTextContent(this.description) || !!this.notes?.trim();
+  }
+
+  /**
+   * Motivos legibles por línea inválida, reusando los mismos chequeos
+   * que `isLineValid` / mensajes de error de línea.
+   */
+  private lineMissingReasons(line: OrderLineDraft, lineNumber: number): string[] {
+    const reasons: string[] = [];
+    const n = lineNumber;
+
+    if (lineQuantityError(line.quantity)) {
+      reasons.push(`cantidad de la línea ${n}`);
+    }
+    if (lineConceptError(line)) {
+      reasons.push(`concepto de la línea ${n}`);
+    }
+    if (lineUnitPriceError(line)) {
+      reasons.push(`precio de la línea ${n}`);
+    }
+
+    if (isDesignService(line.serviceType)) {
+      if (line.includesPrint && !isDesignPrintConfigured(line)) {
+        reasons.push(`impresión de la línea ${n}`);
+      }
+    } else if (isImpresion3DLine(line.serviceType) && !line.productId?.trim()) {
+      const product = this.productForLine(line);
+      const resin = isResinQuoteLine(line, product);
+      const configured = resin
+        ? isResinQuoteConfigured(line)
+        : isFdmQuoteConfigured(line);
+      if (!configured) {
+        reasons.push(`gramos de la línea ${n}`);
+      }
+    } else if (isEstampadoLine(line.serviceType) && !line.productId?.trim()) {
+      if (!isEstampadoQuoteConfigured(line)) {
+        reasons.push(`composición de la línea ${n}`);
+      }
+    } else if (
+      !isDesignService(line.serviceType) &&
+      !isImpresion3DLine(line.serviceType) &&
+      !isEstampadoLine(line.serviceType) &&
+      !line.productId?.trim()
+    ) {
+      reasons.push(`producto de la línea ${n}`);
+    }
+
+    if (!reasons.length) {
+      reasons.push(`datos de la línea ${n}`);
+    }
+    return reasons;
   }
 
   get quoteNeedsCustomerHint(): string {
@@ -1437,6 +1563,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       preserveCost: this.isEditing,
     });
     this.clampDiscountFields();
+    this.syncDetailsExpanded();
   }
 
   /**

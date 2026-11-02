@@ -1,4 +1,5 @@
 @use '../../../../shared/styles/variables' as *;
+@use '../../../../shared/styles/mobile' as mobile;
 
 :host {
   display: contents;
@@ -37,6 +38,11 @@
     font-size: 0.8125rem;
     font-weight: 600;
     padding: 0;
+  }
+
+  &__control {
+    position: relative;
+    min-width: 0;
   }
 
   &__pill-wrap {
@@ -101,6 +107,123 @@
     background: #fff8eb;
     border-color: #f5d9a8;
     color: #7a4a06;
+  }
+}
+
+@include mobile.mobile-only {
+  :host-context(.order-form) {
+    .quote-form__top--order-v1 {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px 10px;
+    }
+
+    .quote-customer-field {
+      order: 1;
+      grid-column: 1 / -1;
+      gap: 6px;
+
+      &__label {
+        font-size: 13px;
+        font-weight: 500;
+        color: mobile.$m-text-label;
+      }
+
+      &__control--with-pill {
+        ::ng-deep .db-select,
+        ::ng-deep select.db-select {
+          padding-right: 7.5rem;
+        }
+      }
+
+      &__pill--inline {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        z-index: 1;
+        pointer-events: none;
+        white-space: nowrap;
+        max-width: 46%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .quote-price-type {
+      order: 2;
+      grid-column: 1 / -1;
+      gap: 6px;
+
+      &__label {
+        font-size: 13px;
+        font-weight: 500;
+        color: mobile.$m-text-label;
+      }
+
+      ::ng-deep .db-seg {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        width: 100%;
+        border-radius: mobile.$m-radius-sm;
+        border-color: mobile.$m-border-input;
+        overflow: hidden;
+      }
+
+      ::ng-deep .db-seg__btn {
+        min-height: 44px;
+        height: auto;
+        padding: 0 8px;
+        white-space: normal;
+        line-height: 1.2;
+        font-size: 13px;
+        font-weight: 500;
+        color: mobile.$m-text-label;
+
+        &.is-on {
+          background: mobile.$m-primary;
+          color: #fff;
+          font-weight: 700;
+        }
+      }
+    }
+
+    .quote-channel-field {
+      order: 3;
+      min-width: 0;
+    }
+
+    .quote-date-field {
+      order: 4;
+      min-width: 0;
+    }
+
+    .wholesale-min-note--ok {
+      background: #f0faf3;
+      border-color: #b7e1c3;
+      color: #14532d;
+    }
+
+    .wholesale-min-note--warn {
+      background: #fffbeb;
+      border-color: #fcd34d;
+      color: #92400e;
+    }
+
+    ::ng-deep .db-form-field__label,
+    ::ng-deep .db-form-field label {
+      font-size: 13px;
+      font-weight: 500;
+      color: mobile.$m-text-label;
+    }
+
+    ::ng-deep input.db-input,
+    ::ng-deep select.db-select,
+    ::ng-deep .db-select {
+      min-height: 48px;
+      border-radius: mobile.$m-radius-sm;
+      border-color: mobile.$m-border-input;
+    }
   }
 }
 

@@ -66,8 +66,11 @@ export class FormDialogService {
             'xl',
             {
               ariaLabel: order ? 'Editar pedido' : 'Nuevo pedido',
-              // Mismo ancho que presupuesto (~1120–1220).
-              panelClass: ['form-dialog-panel--quote'],
+              // Mismo ancho que presupuesto (~1120–1220). En mobile: pantalla completa.
+              panelClass: [
+                'form-dialog-panel--quote',
+                'form-dialog-panel--order-fullscreen',
+              ],
               maxWidth: '1120px',
             },
           ),
@@ -85,7 +88,10 @@ export class FormDialogService {
             'xl',
             {
               ariaLabel: 'Generar pedido desde presupuesto',
-              panelClass: ['form-dialog-panel--quote'],
+              panelClass: [
+                'form-dialog-panel--quote',
+                'form-dialog-panel--order-fullscreen',
+              ],
               maxWidth: '1120px',
             },
           ),

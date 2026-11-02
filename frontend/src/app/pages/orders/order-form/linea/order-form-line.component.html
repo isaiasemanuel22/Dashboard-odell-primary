@@ -144,6 +144,20 @@
         />
       </div>
     } @else {
+      @if (variant === 'order') {
+        <div class="order-line__m-head mobile-only">
+          <strong class="order-line__m-title">Línea {{ lineIndex + 1 }}</strong>
+          <button
+            type="button"
+            class="order-line__m-remove"
+            aria-label="Quitar línea"
+            (click)="remove.emit()"
+          >
+            ✕
+          </button>
+        </div>
+      }
+
       <div class="order-line__product-row">
         @if (isDesign()) {
           <db-input
@@ -174,17 +188,43 @@
           />
         }
 
-        <db-input
-          label="Cantidad"
-          type="number"
-          [(ngModel)]="line.quantity"
-          [name]="'qty-' + lineIndex"
-          [min]="1"
-          [step]="1"
-          (ngModelChange)="onQuantityChange()"
-          [error]="quantityError"
-        />
+        <div class="order-line__qty-field">
+          <db-input
+            class="order-line__qty-input"
+            label="Cantidad"
+            type="number"
+            [(ngModel)]="line.quantity"
+            [name]="'qty-' + lineIndex"
+            [min]="1"
+            [step]="1"
+            (ngModelChange)="onQuantityChange()"
+            [error]="quantityError"
+          />
+        </div>
       </div>
+
+      @if (variant === 'order') {
+        <div class="order-line__m-qty-price mobile-only">
+          <div class="order-line__stepper" role="group" aria-label="Cantidad">
+            <button type="button" (click)="adjustQuantity(-1)" aria-label="Restar cantidad">−</button>
+            <span>{{ line.quantity }}</span>
+            <button type="button" (click)="adjustQuantity(1)" aria-label="Sumar cantidad">+</button>
+          </div>
+          <div class="order-line__m-price-main">
+            @if (showWholesaleColumns && editableUnitPrice > 0) {
+              <span class="order-line__m-list">
+                <s>{{ editableUnitPrice | currencyArs }}</s>
+                <span>· mayorista</span>
+              </span>
+            }
+            <strong class="order-line__m-unit">{{ appliedUnitPriceLabel }}</strong>
+          </div>
+        </div>
+        <div class="order-line__m-subtotal mobile-only">
+          <span>Subtotal</span>
+          <strong>{{ (showWholesaleColumns ? wholesaleLineTotalPreview : lineTotal) | currencyArs }}</strong>
+        </div>
+      }
 
       @if (isImpresion3D() && !line.productId) {
         <div class="order-line__fdm-concept">
@@ -213,110 +253,140 @@
       }
     }
 
-    @if (showFdm()) {
-      @if (!line.productId) {
-        <div
-          class="discount-segments order-line__process"
-          role="group"
-          aria-label="Proceso de impresión"
-        >
-          <button
-            type="button"
-            class="discount-segment"
-            [class.discount-segment--active]="!isResinProcess()"
-            (click)="setPrintProcess('fdm')"
+    @if (variant === 'order' && hasCostComposition) {
+      <button
+        type="button"
+        class="order-line__cost-fold mobile-only"
+        [class.order-line__cost-fold--warn]="!isCostCompositionReady"
+        [attr.aria-expanded]="costCompositionExpanded"
+        (click)="toggleCostComposition()"
+      >
+        @if (isCostCompositionReady) {
+          <span>
+            Composición del costo · {{ unitCostFormatted }} c/u
+            @if (lineMarginPercent != null) {
+              · margen {{ lineMarginPercent }} %
+            }
+          </span>
+        } @else {
+          <span>Completá la composición del costo</span>
+        }
+        <span class="order-line__cost-fold-chevron" aria-hidden="true">▾</span>
+      </button>
+    }
+
+    <div
+      class="order-line__composition"
+      [class.order-line__composition--collapsed]="
+        variant === 'order' && hasCostComposition && !costCompositionExpanded
+      "
+    >
+      @if (showFdm()) {
+        @if (!line.productId) {
+          <div
+            class="discount-segments order-line__process"
+            role="group"
+            aria-label="Proceso de impresión"
           >
-            Filamento
-          </button>
-          <button
-            type="button"
-            class="discount-segment"
-            [class.discount-segment--active]="isResinProcess()"
-            (click)="setPrintProcess('resina')"
-          >
-            Resina
-          </button>
-        </div>
-      }
-      <app-order-quote-3d-composition
-        [line]="line"
-        [product]="product"
-        [lineIndex]="lineIndex"
-        [showProcessToggle]="false"
-        [printProcess]="line.printProcess"
-        (changed)="onFdmQuoteChange()"
-      />
-    }
-
-    @if (showEstampado()) {
-      <app-order-quote-estampado-composition
-        [line]="line"
-        [product]="product"
-        [lineIndex]="lineIndex"
-        (changed)="onEstampadoQuoteChange()"
-      />
-    }
-
-    @if (isDesign()) {
-      <app-order-quote-design-composition
-        [line]="line"
-        [product]="product"
-        [lineIndex]="lineIndex"
-        (changed)="onDesignCompositionChanged()"
-        (linkPrintChange)="onLinkPrintFromComposition($event)"
-      />
-    }
-
-    @if (variant === 'order' && isGraphic()) {
-      <div class="order-line__print">
-        <db-checkbox
-          label="Incluye impresión"
-          [ngModel]="!!line.includesPrint"
-          (ngModelChange)="onIncludesPrintChange($event)"
-          [name]="'includes-print-' + lineIndex"
-        />
-
-        @if (line.includesPrint) {
-          <div class="order-line__print-fields">
-            <db-select
-              label="Tipo de impresión"
-              [(ngModel)]="line.printPaperType"
-              [name]="'print-type-' + lineIndex"
-              [options]="paperTypeOptions"
-              (ngModelChange)="onPrintPaperTypeChange()"
-            />
-            <db-select
-              label="Tamaño del catálogo"
-              [(ngModel)]="line.printImpresoId"
-              [name]="'print-impreso-' + lineIndex"
-              placeholder="Opcional — elegir tamaño..."
-              [options]="impresoOptions"
-              (ngModelChange)="onPrintImpresoChange()"
-            />
-            <db-input
-              label="Ancho (cm)"
-              type="number"
-              [(ngModel)]="line.printWidthCm"
-              [name]="'print-width-' + lineIndex"
-              [min]="0.1"
-              [step]="0.1"
-              (ngModelChange)="onPrintDimensionsChange()"
-            />
-            <db-input
-              label="Alto (cm)"
-              type="number"
-              [(ngModel)]="line.printLengthCm"
-              [name]="'print-height-' + lineIndex"
-              [min]="0.1"
-              [step]="0.1"
-              (ngModelChange)="onPrintDimensionsChange()"
-            />
+            <button
+              type="button"
+              class="discount-segment"
+              [class.discount-segment--active]="!isResinProcess()"
+              (click)="setPrintProcess('fdm')"
+            >
+              Filamento
+            </button>
+            <button
+              type="button"
+              class="discount-segment"
+              [class.discount-segment--active]="isResinProcess()"
+              (click)="setPrintProcess('resina')"
+            >
+              Resina
+            </button>
           </div>
         }
-      </div>
-    }
+        <app-order-quote-3d-composition
+          [line]="line"
+          [product]="product"
+          [lineIndex]="lineIndex"
+          [showProcessToggle]="false"
+          [printProcess]="line.printProcess"
+          (changed)="onFdmQuoteChange()"
+        />
+      }
+
+      @if (showEstampado()) {
+        <app-order-quote-estampado-composition
+          [line]="line"
+          [product]="product"
+          [lineIndex]="lineIndex"
+          (changed)="onEstampadoQuoteChange()"
+        />
+      }
+
+      @if (isDesign()) {
+        <app-order-quote-design-composition
+          [line]="line"
+          [product]="product"
+          [lineIndex]="lineIndex"
+          (changed)="onDesignCompositionChanged()"
+          (linkPrintChange)="onLinkPrintFromComposition($event)"
+        />
+      }
+
+      @if (variant === 'order' && isGraphic()) {
+        <div class="order-line__print">
+          <db-checkbox
+            label="Incluye impresión"
+            [ngModel]="!!line.includesPrint"
+            (ngModelChange)="onIncludesPrintChange($event)"
+            [name]="'includes-print-' + lineIndex"
+          />
+
+          @if (line.includesPrint) {
+            <div class="order-line__print-fields">
+              <db-select
+                label="Tipo de impresión"
+                [(ngModel)]="line.printPaperType"
+                [name]="'print-type-' + lineIndex"
+                [options]="paperTypeOptions"
+                (ngModelChange)="onPrintPaperTypeChange()"
+              />
+              <db-select
+                label="Tamaño del catálogo"
+                [(ngModel)]="line.printImpresoId"
+                [name]="'print-impreso-' + lineIndex"
+                placeholder="Opcional — elegir tamaño..."
+                [options]="impresoOptions"
+                (ngModelChange)="onPrintImpresoChange()"
+              />
+              <db-input
+                label="Ancho (cm)"
+                type="number"
+                [(ngModel)]="line.printWidthCm"
+                [name]="'print-width-' + lineIndex"
+                [min]="0.1"
+                [step]="0.1"
+                (ngModelChange)="onPrintDimensionsChange()"
+              />
+              <db-input
+                label="Alto (cm)"
+                type="number"
+                [(ngModel)]="line.printLengthCm"
+                [name]="'print-height-' + lineIndex"
+                [min]="0.1"
+                [step]="0.1"
+                (ngModelChange)="onPrintDimensionsChange()"
+              />
+            </div>
+          }
+        </div>
+      }
+    </div>
 
     <app-order-line-pricing
+      class="order-line__pricing"
       [designLayout]="variant === 'order' && isDesign()"
       [quoteVariant]="variant === 'quote'"
       [quantity]="line.quantity"

@@ -18,16 +18,26 @@
         (clicked)="newCustomer.emit()"
       />
     </div>
-    <db-select
-      [ngModel]="customerId"
-      (ngModelChange)="customerIdChange.emit($event)"
-      name="customerId"
-      placeholder="Seleccionar cliente"
-      [required]="variant === 'order'"
-      [options]="customerOptions"
-    />
+    <div
+      class="quote-customer-field__control"
+      [class.quote-customer-field__control--with-pill]="!!resellerPillLabel"
+    >
+      <db-select
+        [ngModel]="customerId"
+        (ngModelChange)="customerIdChange.emit($event)"
+        name="customerId"
+        placeholder="Seleccionar cliente"
+        [required]="variant === 'order'"
+        [options]="customerOptions"
+      />
+      @if (resellerPillLabel) {
+        <span class="quote-customer-field__pill quote-customer-field__pill--inline mobile-only">
+          {{ resellerPillLabel }}
+        </span>
+      }
+    </div>
     @if (resellerPillLabel) {
-      <p class="quote-customer-field__pill-wrap">
+      <p class="quote-customer-field__pill-wrap desktop-only">
         <span class="quote-customer-field__pill">{{ resellerPillLabel }}</span>
       </p>
     }

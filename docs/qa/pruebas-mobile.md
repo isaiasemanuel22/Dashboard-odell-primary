@@ -23,7 +23,7 @@ commit.
 | S3 | Accesos de «Más» | En «Más», tocar cada uno de los 8 accesos y volver | Abren Presupuestos, Ventas, Productos, Insumos, Clientes, Cola, Calendario y Ajustes; «Más» queda marcado en esas secciones | ✅ 2026-11-02 · shell (el marcado de «Más» se agregó después de la prueba) |
 | S4 | Tarjeta de usuario | Mirar la parte de arriba de «Más» | Iniciales, nombre (o email) y «Rol · email» si el usuario tiene rol | ✅ 2026-11-02 · shell (el usuario de prueba no tiene nombre ni rol: muestra solo el email) |
 | S5 | Sincronizar en tiempo real | Cambiar el interruptor, ir a Inicio, volver | Queda como se dejó | ✅ 2026-11-02 · shell |
-| S6 | Hoja de nuevo pedido | Tocar «+», después Cancelar | Abre desde abajo con Cancelar y Crear pedido visibles sin bajar; Cancelar cierra sin crear | ✅ 2026-11-02 · shell |
+| S6 | Nuevo pedido desde «+» | Tocar «+», después la X | Abre a pantalla completa con X y «Crear pedido · $ …» fijo abajo; la X cierra sin crear (pide confirmar si hay datos) | ✅ 2026-11-02 · nuevo pedido |
 | S7 | Crear pedido desde «+» | Crear pedido con cliente QA Revendedor, una línea de Impresión 3D y descripción «QA-…» | Lleva a /pedidos y el pedido aparece arriba de la lista | ✅ 2026-11-02 · shell (ord-14) |
 | S8 | Menú lateral (pantallas viejas) | En /pedidos, abrir ☰ y cerrar tocando afuera, 3 veces | Responde siempre al primer toque | ✅ 2026-11-02 · shell |
 | S9 | Navegar desde el menú lateral | En el menú lateral, tocar Clientes | Se cierra el menú y abre Clientes | ✅ 2026-11-02 · shell |
@@ -68,6 +68,22 @@ commit.
 | DP8 | Sin cliente y alertas | ord-10 | «Sin cliente» + «Asignar cliente» (con Cancelar); varias alertas en «Atención (N)» con «Ver todas» | ✅ 2026-11-02 · detalle (Cancelar se agregó después) |
 | DP9 | Toques | Recorrer botones y casillas | Todo cómodo de tocar (≥44 px) | ✅ 2026-11-02 · detalle |
 
+## Nuevo pedido
+
+| # | Caso | Pasos | Esperado | Último resultado |
+|---|------|-------|----------|------------------|
+| NP1 | Faltantes | Tocar «+» y completar de a poco | «Crear pedido · $ …» deshabilitado con «Falta: …» que se achica; al final la nota de estado Pendiente | ✅ 2026-11-02 · nuevo pedido |
+| NP2 | Cliente revendedor | Elegir «QA Revendedor»; alternar Lista/Mayorista | Badge «Revendedor · −N%» y tipo de precio Mayorista; se puede cambiar | ✅ 2026-11-02 · nuevo pedido |
+| NP3 | Línea | Impresión 3D «QA-…», 20 g de filamento, cantidad 2 con + | Precio c/u, Subtotal (= cantidad × c/u) y Total se actualizan; la composición se pliega/despliega | ✅ 2026-11-02 · nuevo pedido |
+| NP4 | Seña | Mirar sugerida; alternar medios | «N % del total» dentro de la caja; Efectivo/Transferencia/Mercado Pago completos; la cuenta acompaña al medio | ✅ 2026-11-02 · nuevo pedido |
+| NP5 | Resumen | Mirar el resumen | Total, Ganancia estimada y Saldo al entregar (= Total − seña) alineados a la derecha | ✅ 2026-11-02 · nuevo pedido |
+| NP6 | Compra mínima mayorista | Con total menor al mínimo | Aviso de que se cobra precio de lista | ✅ 2026-11-02 · nuevo pedido |
+| NP7 | Crear | «Crear pedido · $ X» y abrir el pedido | Lleva a /pedidos con el pedido arriba; el detalle coincide con lo cargado | ✅ 2026-11-02 · nuevo pedido (ord-15) |
+| NP8 | Descartar | Cargar algo y tocar la X | Pide confirmar; «Seguir editando» vuelve; «Descartar» cierra sin crear | ✅ 2026-11-02 · nuevo pedido |
+| NP9 | Editar | Desde el detalle, «⋯» → Editar y cerrar | Pantalla completa «Editar pedido» con los datos y «Guardar cambios · $ …»; sin cambios cierra sin preguntar | ✅ 2026-11-02 · nuevo pedido |
+
+Observaciones de Nuevo pedido: con el aviso de compra mínima activo, «Mayorista −N%» sigue marcado aunque se cobra lista; la seña arranca en Transferencia. La seña sugerida del 50 % y el medio por defecto quedan por definir.
+
 Sin probar todavía: opciones de Entrega (Hoy / Esta semana / Atrasados) de la hoja, y chip + estado contradictorios (ej. Abiertos + Entregado).
 
 Observaciones del 2026-11-02, a resolver al migrar cada pantalla:
@@ -80,4 +96,4 @@ Observaciones del 2026-11-02, a resolver al migrar cada pantalla:
 
 | Pantalla | Fallo | Encontrado | Estado |
 |----------|-------|------------|--------|
-| Nuevo pedido (desktop y mobile) | Los botones de medio de pago cortan el texto («ransferenc», «lercado Pag») | 2026-11-02 · QA visual | Abierto: se corrige al migrar Nuevo pedido |
+| Nuevo pedido (desktop y mobile) | Los botones de medio de pago cortan el texto («ransferenc», «lercado Pag») | 2026-11-02 · QA visual | Resuelto 2026-11-02 · nuevo pedido |

@@ -32,11 +32,11 @@ $m-radius-lg: 20px;
   }
 }
 
+// Solo oculta en desktop: en mobile cada elemento conserva su propio display
+// (un `display: revert` acá pisaba los flex/grid de los componentes).
 .mobile-only {
-  display: none !important;
-
-  @include mobile-only {
-    display: revert !important;
+  @include desktop-only {
+    display: none !important;
   }
 }
 

@@ -1,5 +1,6 @@
 @use '../../../shared/styles/variables' as *;
 @use '../../../shared/styles/screen' as screen;
+@use '../../../shared/styles/mobile' as mobile;
 
 .work-form,
 .quote-form,
@@ -49,7 +50,8 @@
 .quote-layout,
 .order-layout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 300px;
+  // 340px: en el sidebar caben «Transferencia» y «Mercado Pago» en una línea.
+  grid-template-columns: minmax(0, 1fr) 340px;
   align-items: stretch;
   margin: -1.5rem -1.5rem 0;
 
@@ -437,5 +439,210 @@
 
   .order-line__product-row {
     grid-template-columns: 1fr;
+  }
+}
+
+@include mobile.mobile-only {
+  .order-form {
+    form {
+      gap: 0;
+      background: mobile.$m-bg;
+      min-height: 100%;
+    }
+
+    .order-layout {
+      display: flex;
+      flex-direction: column;
+      margin: 0;
+      gap: 14px;
+    }
+
+    .order-layout__main {
+      padding: 14px 16px 0;
+      gap: 14px;
+      background: mobile.$m-bg;
+    }
+
+    .order-m-sec {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .order-m-card {
+      background: mobile.$m-surface;
+      border: 1px solid mobile.$m-border;
+      border-radius: mobile.$m-radius-md;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .order-m-card--lines {
+      gap: 12px;
+    }
+
+    .order-lines {
+      gap: 16px;
+    }
+
+    .order-m-add {
+      min-height: 48px;
+      width: 100%;
+      border-radius: mobile.$m-radius-sm;
+      border: 1px dashed mobile.$m-primary;
+      background: #f4fafd;
+      color: mobile.$m-primary-dark;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-sizing: border-box;
+    }
+
+    .order-m-details__fields {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+
+      &--collapsed {
+        display: none;
+      }
+    }
+
+    .order-m-details__add {
+      min-height: 44px;
+      width: 100%;
+      border: 0;
+      background: transparent;
+      color: mobile.$m-primary;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      text-align: left;
+      cursor: pointer;
+      padding: 0;
+    }
+
+    .order-form__footer {
+      margin: 0;
+      position: sticky;
+      bottom: 0;
+      z-index: 5;
+    }
+
+    .order-form__footer ::ng-deep .db-form-footer {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 8px;
+      padding: 12px 16px 20px;
+      margin: 0;
+      border-radius: 0;
+      border-top: 1px solid mobile.$m-border;
+      background: #fff;
+    }
+
+    .order-form__actions {
+      width: 100%;
+      margin: 0;
+    }
+
+    .order-form__actions ::ng-deep db-button.order-form__dock-submit,
+    .order-form__actions ::ng-deep .order-form__dock-submit {
+      display: block;
+      width: 100%;
+    }
+
+    .order-form__actions ::ng-deep .order-form__dock-submit .db-button,
+    .order-form__footer ::ng-deep .order-form__dock-submit .db-button {
+      width: 100%;
+      min-height: 54px;
+      height: 54px;
+      border-radius: mobile.$m-radius-md;
+      font-size: 15px;
+      font-weight: 700;
+    }
+
+    .order-form__note--dock {
+      margin: 0;
+      text-align: center;
+      font-size: 12px;
+      color: mobile.$m-text-secondary;
+      width: 100%;
+    }
+
+    .order-form__missing {
+      margin: 0;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 500;
+      color: #92400e;
+      width: 100%;
+    }
+
+    ::ng-deep .db-form-field__label,
+    ::ng-deep .db-form-field label {
+      font-size: 13px;
+      font-weight: 500;
+      color: mobile.$m-text-label;
+    }
+
+    ::ng-deep input.db-input:not([type='checkbox']):not([type='radio']),
+    ::ng-deep select.db-select,
+    ::ng-deep .db-select {
+      min-height: 48px;
+      border-radius: mobile.$m-radius-sm;
+      border-color: mobile.$m-border-input;
+    }
+  }
+
+  // Presupuesto mobile: pie con 3 botones en 2 filas (primario arriba).
+  .quote-form__actions:has(> db-button:nth-child(3)) {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+    margin: 0;
+
+    ::ng-deep db-button {
+      display: block;
+      width: 100%;
+      max-width: none;
+    }
+
+    ::ng-deep db-button:has(.db-button--primary) {
+      grid-column: 1 / -1;
+      order: -1;
+    }
+
+    ::ng-deep .db-button {
+      width: 100%;
+      min-height: 52px;
+      height: 52px;
+      white-space: nowrap;
+      box-sizing: border-box;
+    }
+  }
+
+  .quote-form__footer ::ng-deep .db-form-footer {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+@include mobile.desktop-only {
+  .order-m-details__fields--collapsed {
+    display: flex;
+    flex-direction: column;
+    gap: 1.1rem;
+  }
+
+  .order-m-card {
+    display: contents;
+  }
+
+  .order-m-sec {
+    display: contents;
   }
 }

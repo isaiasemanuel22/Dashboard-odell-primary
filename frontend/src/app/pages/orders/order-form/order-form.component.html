@@ -3,98 +3,132 @@
     @if (!isQuoteForm) {
       <div class="order-layout">
         <div class="order-layout__main">
-          <app-order-form-party
-            variant="order"
-            [customerId]="customerId"
-            (customerIdChange)="onCustomerIdChange($event)"
-            [customerOptions]="customerOptions"
-            (newCustomer)="openNewCustomer()"
-            [dueDate]="dueDate"
-            (dueDateChange)="dueDate = $event"
-            [minDueDate]="minDueDate"
-            [dueDateError]="dueDateError"
-            [dueDateHint]="dueDateBusinessDaysHint"
-            [resellerPillLabel]="resellerPillLabel"
-            [salesChannel]="salesChannel"
-            [salesChannelOptions]="salesChannelOptions"
-            (salesChannelChange)="onSalesChannelChange($event)"
-            [priceType]="priceType"
-            [priceTypeOptions]="priceTypeOptions"
-            (priceTypeChange)="onPriceTypeChange($event)"
-            [wholesaleMinimumNotice]="wholesaleMinimumNotice"
-          />
+          <section class="order-m-sec">
+            <h2 class="m-sec-t mobile-only">1 · Cliente</h2>
+            <div class="order-m-card">
+              <app-order-form-party
+                variant="order"
+                [customerId]="customerId"
+                (customerIdChange)="onCustomerIdChange($event)"
+                [customerOptions]="customerOptions"
+                (newCustomer)="openNewCustomer()"
+                [dueDate]="dueDate"
+                (dueDateChange)="dueDate = $event"
+                [minDueDate]="minDueDate"
+                [dueDateError]="dueDateError"
+                [dueDateHint]="dueDateBusinessDaysHint"
+                [resellerPillLabel]="resellerPillLabel"
+                [salesChannel]="salesChannel"
+                [salesChannelOptions]="salesChannelOptions"
+                (salesChannelChange)="onSalesChannelChange($event)"
+                [priceType]="priceType"
+                [priceTypeOptions]="priceTypeOptions"
+                (priceTypeChange)="onPriceTypeChange($event)"
+                [wholesaleMinimumNotice]="wholesaleMinimumNotice"
+              />
+            </div>
+          </section>
 
-          <db-form-grid-full>
-            <db-rich-text-editor
-              label="Descripción"
-              [(ngModel)]="description"
-              name="description"
-              placeholder="Describí el pedido: qué se necesita, cantidades, referencias visuales..."
-              [maxLength]="descriptionMaxLength"
-              [uploadFn]="uploadDescriptionImage"
-            />
-          </db-form-grid-full>
-
-          <section class="quote-lines-section">
-            <header class="quote-lines-section__head quote-lines-section__head--row">
+          <section class="order-m-sec quote-lines-section">
+            <header class="quote-lines-section__head quote-lines-section__head--row desktop-only">
               <h4 class="quote-lines-section__title">Productos</h4>
               <p class="quote-lines-section__hint">
                 El descuento se resta del precio total del producto, no de la ganancia
               </p>
             </header>
+            <h2 class="m-sec-t mobile-only">2 · Productos</h2>
 
-            <div class="order-lines">
-              @for (line of lines; track $index; let i = $index) {
-                <app-order-form-line
-                  [line]="line"
-                  [lineIndex]="i"
-                  variant="order"
-                  [products]="products"
-                  [serviceTypeOptions]="serviceTypeOptions"
-                  [paperTypeOptions]="paperTypeOptions"
-                  [priceType]="priceType"
-                  [wholesaleApplied]="wholesaleAppliedPreview"
-                  [wholesaleDiscount]="wholesaleDiscount"
-                  (remove)="removeLine(i)"
-                  (linkPrintChange)="onLinkPrintChange(line, $event, i)"
-                  (changed)="onLineChanged()"
-                />
+            <div class="order-m-card order-m-card--lines">
+              <div class="order-lines">
+                @for (line of lines; track $index; let i = $index) {
+                  <app-order-form-line
+                    [line]="line"
+                    [lineIndex]="i"
+                    variant="order"
+                    [products]="products"
+                    [serviceTypeOptions]="serviceTypeOptions"
+                    [paperTypeOptions]="paperTypeOptions"
+                    [priceType]="priceType"
+                    [wholesaleApplied]="wholesaleAppliedPreview"
+                    [wholesaleDiscount]="wholesaleDiscount"
+                    (remove)="removeLine(i)"
+                    (linkPrintChange)="onLinkPrintChange(line, $event, i)"
+                    (changed)="onLineChanged()"
+                  />
+                }
+              </div>
+
+              <db-button
+                class="desktop-only"
+                label="+ Agregar producto"
+                variant="secondary"
+                format="solid"
+                extraClass="add-line"
+                (clicked)="addLine()"
+              />
+              <button
+                type="button"
+                class="order-m-add mobile-only"
+                (click)="addLine()"
+              >
+                + Agregar producto o servicio
+              </button>
+
+              @if (lowWholesaleMarginNotice; as lowMargin) {
+                <div class="wholesale-margin-note" role="status">
+                  <span class="wholesale-margin-note__icon" aria-hidden="true">!</span>
+                  <span>
+                    {{ lowMargin.message }}
+                    <a
+                      class="wholesale-margin-note__link"
+                      routerLink="/productos"
+                      fragment="masiva"
+                    >Revisar precios</a>
+                  </span>
+                </div>
               }
             </div>
-
-            <db-button
-              label="+ Agregar producto"
-              variant="secondary"
-              format="solid"
-              extraClass="add-line"
-              (clicked)="addLine()"
-            />
-
-            @if (lowWholesaleMarginNotice; as lowMargin) {
-              <div class="wholesale-margin-note" role="status">
-                <span class="wholesale-margin-note__icon" aria-hidden="true">!</span>
-                <span>
-                  {{ lowMargin.message }}
-                  <a
-                    class="wholesale-margin-note__link"
-                    routerLink="/productos"
-                    fragment="masiva"
-                  >Revisar precios</a>
-                </span>
-              </div>
-            }
           </section>
 
-          <db-form-grid-full>
-            <db-textarea
-              label="Notas internas"
-              [(ngModel)]="notes"
-              name="notes"
-              placeholder="Colores, talles, acabados…"
-              [rows]="3"
-              hint="Solo las ve el equipo"
-            />
-          </db-form-grid-full>
+          <section class="order-m-sec order-m-details">
+            <h2 class="m-sec-t mobile-only">Detalles</h2>
+            <div class="order-m-card">
+              @if (!detailsExpanded) {
+                <button
+                  type="button"
+                  class="order-m-details__add mobile-only"
+                  (click)="expandDetails()"
+                >
+                  + Agregar descripción o notas
+                </button>
+              }
+              <div
+                class="order-m-details__fields"
+                [class.order-m-details__fields--collapsed]="!detailsExpanded"
+              >
+                <db-form-grid-full>
+                  <db-rich-text-editor
+                    label="Descripción"
+                    [(ngModel)]="description"
+                    name="description"
+                    placeholder="Describí el pedido: qué se necesita, cantidades, referencias visuales..."
+                    [maxLength]="descriptionMaxLength"
+                    [uploadFn]="uploadDescriptionImage"
+                  />
+                </db-form-grid-full>
+                <db-form-grid-full>
+                  <db-textarea
+                    label="Notas internas"
+                    [(ngModel)]="notes"
+                    name="notes"
+                    placeholder="Colores, talles, acabados…"
+                    [rows]="3"
+                    hint="Solo las ve el equipo"
+                  />
+                </db-form-grid-full>
+              </div>
+            </div>
+          </section>
         </div>
 
         <app-order-form-order-summary
@@ -293,27 +327,44 @@
     } @else {
       <db-form-footer class="order-form__footer">
         @if (!isEditing) {
-          <p class="order-form__note">
+          <p class="order-form__note desktop-only">
             Se crea en estado Pendiente · la seña queda vinculada al pedido
           </p>
         } @else {
-          <span class="order-form__note-spacer"></span>
+          <span class="order-form__note-spacer desktop-only"></span>
         }
         <div class="order-form__actions" data-discard-safe>
           <db-button
+            class="desktop-only"
             label="Cancelar"
             variant="secondary"
             format="solid"
             (clicked)="cancel.emit()"
           />
           <db-button
+            class="desktop-only"
             [label]="submitLabel"
             variant="primary"
             format="solid"
             buttonType="submit"
             [disabled]="loading || !canSubmit()"
           />
+          <db-button
+            class="mobile-only order-form__dock-submit"
+            [label]="submitLabelMobile"
+            variant="primary"
+            format="solid"
+            buttonType="submit"
+            [disabled]="loading || !canSubmit()"
+          />
         </div>
+        @if (!canSubmit() && submitMissingLabel) {
+          <p class="order-form__missing mobile-only" role="status">{{ submitMissingLabel }}</p>
+        } @else if (!isEditing) {
+          <p class="order-form__note order-form__note--dock mobile-only">
+            Se crea en estado Pendiente · la seña queda vinculada al pedido
+          </p>
+        }
       </db-form-footer>
     }
   </form>
