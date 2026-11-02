@@ -22,6 +22,7 @@ import {
 import { formatDateDayMonth } from '../../shared/utils/date-format.util';
 import { DbPillGroupComponent, DbPillOption } from '../db-pill-group/db-pill-group.component';
 import { DbAreaChipComponent } from '../db-area-chip/db-area-chip.component';
+import { orderIsOverdue } from '../../shared/utils/order.helpers';
 
 export type OdlTone = 'pending' | 'ok' | 'danger' | 'info' | 'neutral';
 export type OdlArea = 'impresion3d' | 'diseno' | 'modelado' | 'estampado' | 'general';
@@ -164,13 +165,7 @@ export function quoteStatusBadge(status: QuoteStatus): OdlBadge {
 }
 
 export function isOrderOverdue(dueDate: string, status: OrderStatus): boolean {
-  if (status === OrderStatus.ENTREGADO || status === OrderStatus.CANCELADO) return false;
-  const due = new Date(dueDate);
-  if (Number.isNaN(due.getTime())) return false;
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  due.setHours(0, 0, 0, 0);
-  return due < today;
+  return orderIsOverdue(dueDate, status);
 }
 
 type Key = string | number;

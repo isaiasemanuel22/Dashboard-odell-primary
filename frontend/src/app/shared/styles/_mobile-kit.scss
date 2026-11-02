@@ -13,7 +13,9 @@
     color: mobile.$m-text;
     text-decoration: none;
     flex: none;
-    font: 700 13px inherit;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
     cursor: pointer;
     padding: 0;
 
@@ -117,6 +119,11 @@
     overflow-x: auto;
     margin: 0 -16px;
     padding: 0 16px;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+      display: none;
+    }
   }
 
   .m-chip {
@@ -126,7 +133,9 @@
     border-radius: 999px;
     border: 1px solid mobile.$m-border-input;
     background: mobile.$m-surface;
-    font: 500 13px inherit;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
     color: mobile.$m-text-label;
     display: inline-flex;
     align-items: center;
@@ -249,10 +258,16 @@
     box-sizing: border-box;
     background: mobile.$m-surface;
 
+    svg {
+      flex: none;
+      display: block;
+    }
+
     input {
       border: 0;
       outline: 0;
-      font: 14px inherit;
+      font-family: inherit;
+      font-size: 14px;
       flex: 1;
       min-width: 0;
       background: transparent;
@@ -267,7 +282,9 @@
     border: 1px solid mobile.$m-border-input;
     background: mobile.$m-surface;
     color: mobile.$m-text;
-    font: 700 13px inherit;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
     display: inline-flex;
     align-items: center;
     gap: 6px;

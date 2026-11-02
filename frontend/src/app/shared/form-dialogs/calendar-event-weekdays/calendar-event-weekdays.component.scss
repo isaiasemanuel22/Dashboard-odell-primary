@@ -12,7 +12,9 @@
   border-radius: 999px;
   border: 1px solid $color-border-soft;
   background: $color-surface;
-  font: 700 12px inherit;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
   color: $color-text-label;
   cursor: pointer;
 

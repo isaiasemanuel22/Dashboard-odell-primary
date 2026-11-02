@@ -41,6 +41,21 @@ commit.
 | D6 | Ingresos, canales y ranking | Mirar el gráfico, tocar «Ver ranking de productos» | Barras de los últimos 6 meses (un mes con monto > 0 nunca queda vacío); el link baja a «Ranking de productos» con los 5 primeros y criterio Ganancia / Margen % / Unidades | ⏸ Ranking y alto mínimo se corrigieron después de la prueba |
 | D7 | Por cobrar en desktop | En desktop, tocar el recuadro «Por cobrar» | Baja a la sección Por cobrar | ✅ 2026-11-02 · dashboard |
 
+## Pedidos (lista y filtros)
+
+| # | Caso | Pasos | Esperado | Último resultado |
+|---|------|-------|----------|------------------|
+| P1 | Barra | Entrar a /pedidos y tocar volver | «Pedidos» y «N abiertos» (total de abiertos, no los visibles); volver lleva al dashboard | ✅ 2026-11-02 · pedidos |
+| P2 | Chips | Tocar Abiertos, Atrasados, Para entregar, Con saldo y Todos | La cantidad de tarjetas coincide con el número del chip. Atrasados: entrega vencida y no entregado. Para entregar: terminados. Con saldo: falta cobrar algo y no está cancelado (incluye entregados con deuda y pedidos en curso; «Por cobrar» del dashboard cuenta solo las deudas de pedidos entregados) | ✅ 2026-11-02 · pedidos |
+| P3 | Buscador | Buscar por cliente, por n.º (ord-14) y por producto | La lista se acota y se combina con el chip activo | ✅ 2026-11-02 · pedidos |
+| P4 | Tarjeta | Comparar 2 tarjetas con su detalle | Coinciden n.º, «1 producto»/«N productos», unidades, cliente, áreas (con nombre, ej. «Diseño gráfico»), entrega, total y la línea de dinero (seña/pagado/saldo o «Sin pagos») | ✅ 2026-11-02 · pedidos (línea de dinero y nombre de área se mejoraron después) |
+| P5 | Hoja de filtros | Elegir estado y área, aplicar; reabrir; «Solo con saldo pendiente»; Limpiar; Cancelar | «Ver N pedidos» cambia en vivo y coincide con lo aplicado; «Filtros · N»; las opciones quedan marcadas; Limpiar vuelve a «Filtros»; Cancelar no cambia nada | ✅ 2026-11-02 · pedidos |
+| P6 | Pedidos por estado | Entrar a /pedidos?estado=pendiente, y desde el recuadro Pendientes del dashboard | Chip Todos activo y visible, «Filtros · 1», solo pendientes | ✅ 2026-11-02 · pedidos |
+| P7 | Abrir detalle y volver | Tocar una tarjeta, después volver | Abre el detalle; al volver la lista conserva chip, filtros, búsqueda y scroll | ✅ abrir 2026-11-02 · ⏸ conservar estado se agregó después |
+| P8 | Sin resultados | Buscar «zzzz» | Mensaje claro y botón «Limpiar búsqueda y filtros» | ✅ mensaje 2026-11-02 · ⏸ botón se agregó después |
+
+Sin probar todavía: opciones de Entrega (Hoy / Esta semana / Atrasados) de la hoja, y chip + estado contradictorios (ej. Abiertos + Entregado).
+
 Observaciones del 2026-11-02, a resolver al migrar cada pantalla:
 
 - Nuevo pedido: el primer producto aparece desplegado con 0 g y Crear pedido queda deshabilitado sin decir por qué.

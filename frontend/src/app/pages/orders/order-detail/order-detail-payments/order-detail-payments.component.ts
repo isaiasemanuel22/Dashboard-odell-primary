@@ -38,6 +38,7 @@ import {
 } from '../../../../shared/utils/v1-labels.util';
 import { labelsToSelectOptions } from '../../../../shared/utils/select-options';
 import { defaultAccountForMethod } from '../../../../shared/utils/treasury-account.util';
+import { orderBalanceAmount, orderPaidAmount } from '../../../../shared/utils/order.helpers';
 
 @Component({
   selector: 'app-order-detail-payments',
@@ -82,14 +83,11 @@ export class OrderDetailPaymentsComponent {
   readonly treasuryAccountLabel = treasuryAccountLabel;
 
   get paidAmount(): number {
-    return (this.order.payments ?? []).reduce(
-      (sum, payment) => sum + (Number(payment.amount) || 0),
-      0,
-    );
+    return orderPaidAmount(this.order);
   }
 
   get balanceAmount(): number {
-    return Math.max(0, Math.round((this.order.total - this.paidAmount) * 100) / 100);
+    return orderBalanceAmount(this.order);
   }
 
   get paymentStatusLabel(): string {

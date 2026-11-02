@@ -22,6 +22,8 @@ import type { ConfirmDialogData } from './confirm-dialog.component';
 import type { OrderFormDialogData } from './order-form-dialog.component';
 import type { QuoteDocumentExportDialogData } from './quote-document-export-dialog.component';
 import type { CalendarEventDialogData } from './calendar-event-dialog.component';
+import type { OrderFiltersSheetData } from './order-filters-sheet.component';
+import type { OrderMobileSheetFilters } from '../utils/order.helpers';
 
 @Injectable({ providedIn: 'root' })
 export class FormDialogService {
@@ -251,6 +253,24 @@ export class FormDialogService {
         });
         return ref.closed as Observable<boolean>;
       }),
+    );
+  }
+
+  openOrderFilters(
+    data: OrderFiltersSheetData,
+  ): Observable<OrderMobileSheetFilters | undefined> {
+    return from(import('./order-filters-sheet.component')).pipe(
+      switchMap(
+        ({
+          OrderFiltersSheetComponent,
+        }): Observable<OrderMobileSheetFilters | undefined> =>
+          this.open<OrderFiltersSheetData, OrderMobileSheetFilters>(
+            OrderFiltersSheetComponent,
+            data,
+            'md',
+            { ariaLabel: 'Filtrar pedidos' },
+          ),
+      ),
     );
   }
 

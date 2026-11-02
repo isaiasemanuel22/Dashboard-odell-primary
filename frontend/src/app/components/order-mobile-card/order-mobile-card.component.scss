@@ -1,0 +1,136 @@
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+}
+
+.omc {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid mobile.$m-border;
+  background: mobile.$m-surface;
+  text-decoration: none;
+  color: inherit;
+  box-sizing: border-box;
+
+  &--overdue {
+    border-color: #f3b4b4;
+  }
+}
+
+.omc__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+
+  &--customer {
+    align-items: flex-start;
+  }
+
+  &--foot {
+    align-items: flex-end;
+  }
+}
+
+.omc__meta {
+  font-size: 12px;
+  font-weight: 500;
+  color: mobile.$m-text-secondary;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.omc__customer {
+  font-size: 15px;
+  font-weight: 700;
+  color: mobile.$m-text;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.omc__areas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.omc__area {
+  font-size: 11px;
+  font-weight: 500;
+  color: mobile.$m-text-label;
+  background: mobile.$m-bg;
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+
+.omc__delivery {
+  font-size: 12px;
+  font-weight: 700;
+  color: mobile.$m-text;
+
+  &--late {
+    color: #b91c1c;
+  }
+}
+
+.omc__money {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
+  min-width: 0;
+}
+
+.omc__total {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: mobile.$m-text;
+}
+
+.omc__deposit {
+  font-size: 12px;
+  font-weight: 400;
+  color: mobile.$m-text-secondary;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+// Pills de estado (override del m-pill base).
+.omc__status {
+  &--pendiente {
+    background: #fef3c7;
+    color: #92400e;
+  }
+
+  &--en_progreso {
+    background: #e0f0f8;
+    color: #0b5f86;
+  }
+
+  &--terminado {
+    background: #dcfce7;
+    color: #166534;
+  }
+
+  &--en_revision {
+    background: #f3e8ff;
+    color: #6b21a8;
+  }
+
+  &--entregado,
+  &--cancelado,
+  &--parcialmente_entregado {
+    background: #eef4f8;
+    color: #33495a;
+  }
+}

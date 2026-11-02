@@ -1,0 +1,97 @@
+<div class="modal modal--md order-filters-sheet">
+  <header class="modal__header order-filters-sheet__header">
+    <div class="modal__heading">
+      <h3>Filtrar pedidos</h3>
+    </div>
+    <button
+      type="button"
+      class="order-filters-sheet__clear"
+      (click)="clearAll()"
+    >
+      Limpiar
+    </button>
+  </header>
+
+  <div class="modal__body order-filters-sheet__body">
+    <section class="order-filters-sheet__group" aria-label="Estado">
+      <h4 class="m-sec-t">Estado</h4>
+      <div class="order-filters-sheet__opts">
+        @for (opt of statusOptions; track opt.value) {
+          <button
+            type="button"
+            class="order-filters-sheet__opt"
+            [class.order-filters-sheet__opt--on]="isStatusOn(opt.value)"
+            [attr.aria-pressed]="isStatusOn(opt.value)"
+            (click)="toggleStatus(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="order-filters-sheet__group" aria-label="Área">
+      <h4 class="m-sec-t">Área</h4>
+      <div class="order-filters-sheet__opts">
+        @for (opt of serviceOptions; track opt.value) {
+          <button
+            type="button"
+            class="order-filters-sheet__opt"
+            [class.order-filters-sheet__opt--on]="isServiceOn(opt.value)"
+            [attr.aria-pressed]="isServiceOn(opt.value)"
+            (click)="toggleService(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="order-filters-sheet__group" aria-label="Entrega">
+      <h4 class="m-sec-t">Entrega</h4>
+      <div class="order-filters-sheet__opts">
+        @for (opt of deliveryOptions; track opt.value) {
+          <button
+            type="button"
+            class="order-filters-sheet__opt"
+            [class.order-filters-sheet__opt--on]="draft.delivery === opt.value"
+            [attr.aria-pressed]="draft.delivery === opt.value"
+            (click)="toggleDelivery(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    </section>
+
+    <div class="order-filters-sheet__switch-row">
+      <span>Solo con saldo pendiente</span>
+      <button
+        type="button"
+        class="m-sw"
+        [class.m-sw--on]="draft.balanceOnly"
+        role="switch"
+        [attr.aria-checked]="draft.balanceOnly"
+        aria-label="Solo con saldo pendiente"
+        (click)="toggleBalanceOnly()"
+        (keydown.enter)="toggleBalanceOnly(); $event.preventDefault()"
+        (keydown.space)="toggleBalanceOnly(); $event.preventDefault()"
+      ></button>
+    </div>
+  </div>
+
+  <div class="confirm-actions order-filters-sheet__foot">
+    <db-button
+      label="Cancelar"
+      variant="secondary"
+      format="solid"
+      (clicked)="cancel()"
+    />
+    <db-button
+      [label]="applyLabel"
+      variant="primary"
+      format="solid"
+      (clicked)="apply()"
+    />
+  </div>
+</div>

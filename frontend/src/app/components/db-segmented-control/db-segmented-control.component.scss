@@ -14,7 +14,9 @@
   border: 0;
   border-right: 1px solid $color-border-soft;
   background: $color-surface;
-  font: 500 13px inherit;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
   color: $color-text-label;
   cursor: pointer;
 

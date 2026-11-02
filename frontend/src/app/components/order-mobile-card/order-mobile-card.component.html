@@ -1,0 +1,53 @@
+<a
+  class="omc"
+  [class.omc--overdue]="overdue()"
+  [routerLink]="['/pedidos', order().id]"
+>
+  <div class="omc__row">
+    <span class="omc__meta">{{ summaryMeta() }}</span>
+    @if (overdue()) {
+      <span class="m-pill m-pill--d">Atrasado {{ overdueDays() }} días</span>
+    } @else {
+      <span [class]="statusPillClass()">{{ statusLabel() }}</span>
+    }
+  </div>
+
+  <div class="omc__row omc__row--customer">
+    <strong class="omc__customer">{{ order().customerName }}</strong>
+    @if (overdue()) {
+      <span [class]="statusPillClass()">{{ statusLabel() }}</span>
+    }
+  </div>
+
+  @if (areaLabels().length) {
+    <div class="omc__areas">
+      @for (label of areaLabels(); track label) {
+        <span class="omc__area">{{ label }}</span>
+      }
+    </div>
+  }
+
+  <div class="omc__row omc__row--foot">
+    <span class="omc__delivery" [class.omc__delivery--late]="overdue()">
+      {{ deliveryLabel() }}
+    </span>
+    <span class="omc__money">
+      <strong class="omc__total">{{ order().total | currencyArs }}</strong>
+      @if (paymentLine(); as line) {
+        <span class="omc__deposit">
+          @switch (line.kind) {
+            @case ('deposit') {
+              Seña {{ line.deposit | currencyArs }} · saldo {{ line.balance | currencyArs }}
+            }
+            @case ('paid') {
+              Pagado {{ line.paid | currencyArs }} · saldo {{ line.balance | currencyArs }}
+            }
+            @case ('none') {
+              Sin pagos
+            }
+          }
+        </span>
+      }
+    </span>
+  </div>
+</a>

@@ -766,3 +766,208 @@ export function toDateInputValue(isoDate: string): string {
 export function toOrderDueDate(dateValue: string): string {
   return new Date(`${dateValue}T18:00:00.000Z`).toISOString();
 }
+
+/** Regla única de atraso: entregado y cancelado nunca atrasan. */
+export function orderIsOverdue(
+  dueDate: string,
+  status: OrderStatus,
+  reference = new Date(),
+): boolean {
+  if (status === OrderStatus.ENTREGADO || status === OrderStatus.CANCELADO) {
+    return false;
+  }
+  const due = new Date(dueDate);
+  if (Number.isNaN(due.getTime())) return false;
+  const today = new Date(reference);
+  today.setHours(0, 0, 0, 0);
+  due.setHours(0, 0, 0, 0);
+  return due < today;
+}
+
+export function orderPaidAmount(order: Pick<Order, 'payments'>): number {
+  return (order.payments ?? []).reduce(
+    (sum, payment) => sum + (Number(payment.amount) || 0),
+    0,
+  );
+}
+
+/** Saldo pendiente: total − pagos. */
+export function orderBalanceAmount(
+  order: Pick<Order, 'total' | 'payments'>,
+): number {
+  return Math.max(
+    0,
+    Math.round((Number(order.total) - orderPaidAmount(order)) * 100) / 100,
+  );
+}
+
+export function orderDepositAmount(order: Pick<Order, 'payments'>): number {
+  return (order.payments ?? [])
+    .filter((payment) => payment.deposit)
+    .reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0);
+}
+
+/** Hay saldo para cobrar: un pedido cancelado nunca lo tiene. */
+export function orderHasPendingBalance(
+  order: Pick<Order, 'total' | 'payments' | 'status'>,
+): boolean {
+  return order.status !== OrderStatus.CANCELADO && orderBalanceAmount(order) > 0;
+}
+
+/** Días de atraso (0 si no está atrasado). */
+export function orderOverdueDays(
+  dueDate: string,
+  status: OrderStatus,
+  reference = new Date(),
+): number {
+  if (!orderIsOverdue(dueDate, status, reference)) return 0;
+  const due = new Date(dueDate);
+  if (Number.isNaN(due.getTime())) return 0;
+  const today = new Date(reference);
+  today.setHours(0, 0, 0, 0);
+  due.setHours(0, 0, 0, 0);
+  return Math.max(1, Math.round((today.getTime() - due.getTime()) / 86_400_000));
+}
+
+/** «Entrega dom 8/11» o «Vencía 30/10» si está atrasado. */
+export function formatOrderMobileDeliveryLabel(
+  dueDate: string,
+  overdue: boolean,
+): string {
+  const date = new Date(dueDate);
+  if (Number.isNaN(date.getTime())) return '';
+  const day = date.getDate();
+  const month = date.getMonth() + 1;
+  const dm = `${day}/${month}`;
+  if (overdue) return `Vencía ${dm}`;
+  const weekday = date
+    .toLocaleDateString('es-AR', { weekday: 'short' })
+    .replace(/\./g, '')
+    .trim()
+    .toLowerCase();
+  return `Entrega ${weekday} ${dm}`;
+}
+
+export type OrderMobileChip =
+  | 'abiertos'
+  | 'atrasados'
+  | 'para_entregar'
+  | 'con_saldo'
+  | 'todos';
+
+export type OrderDeliveryWindowFilter = 'hoy' | 'semana' | 'atrasados';
+
+export interface OrderMobileSheetFilters {
+  statuses: OrderStatus[];
+  services: ServiceType[];
+  delivery: OrderDeliveryWindowFilter | null;
+  balanceOnly: boolean;
+}
+
+export function emptyOrderMobileSheetFilters(): OrderMobileSheetFilters {
+  return {
+    statuses: [],
+    services: [],
+    delivery: null,
+    balanceOnly: false,
+  };
+}
+
+export function countOrderMobileSheetFilters(
+  filters: OrderMobileSheetFilters,
+): number {
+  return (
+    filters.statuses.length +
+    filters.services.length +
+    (filters.delivery ? 1 : 0) +
+    (filters.balanceOnly ? 1 : 0)
+  );
+}
+
+export function matchesOrderMobileChip(
+  order: Order,
+  chip: OrderMobileChip,
+  reference = new Date(),
+): boolean {
+  switch (chip) {
+    case 'abiertos':
+      return !isClosedOrder(order.status);
+    case 'atrasados':
+      return orderIsOverdue(order.dueDate, order.status, reference);
+    case 'para_entregar':
+      // Terminado = listo para entregar (aún no entregado).
+      return order.status === OrderStatus.TERMINADO;
+    case 'con_saldo':
+      return orderHasPendingBalance(order);
+    case 'todos':
+      return true;
+  }
+}
+
+export function matchesOrderDeliveryWindow(
+  dueDate: string,
+  status: OrderStatus,
+  window: OrderDeliveryWindowFilter,
+  reference = new Date(),
+): boolean {
+  if (window === 'atrasados') {
+    return orderIsOverdue(dueDate, status, reference);
+  }
+  const dueDay = toDateInputValue(dueDate);
+  const today = localCalendarDay(reference);
+  if (window === 'hoy') return dueDay === today;
+
+  const start = startOfLocalWeekMonday(reference);
+  const end = endOfLocalWeekSunday(reference);
+  return dueDay >= localCalendarDay(start) && dueDay <= localCalendarDay(end);
+}
+
+export function matchesOrderMobileSheetFilters(
+  order: Order,
+  filters: OrderMobileSheetFilters,
+  reference = new Date(),
+): boolean {
+  if (
+    filters.statuses.length &&
+    !filters.statuses.includes(order.status)
+  ) {
+    return false;
+  }
+  if (
+    filters.services.length &&
+    !filters.services.some((service) => order.services.includes(service))
+  ) {
+    return false;
+  }
+  if (
+    filters.delivery &&
+    !matchesOrderDeliveryWindow(
+      order.dueDate,
+      order.status,
+      filters.delivery,
+      reference,
+    )
+  ) {
+    return false;
+  }
+  if (filters.balanceOnly && !orderHasPendingBalance(order)) {
+    return false;
+  }
+  return true;
+}
+
+function startOfLocalWeekMonday(reference: Date): Date {
+  const date = new Date(reference);
+  date.setHours(0, 0, 0, 0);
+  const day = date.getDay(); // 0=dom … 6=sáb
+  const offset = day === 0 ? -6 : 1 - day;
+  date.setDate(date.getDate() + offset);
+  return date;
+}
+
+function endOfLocalWeekSunday(reference: Date): Date {
+  const start = startOfLocalWeekMonday(reference);
+  const end = new Date(start);
+  end.setDate(start.getDate() + 6);
+  return end;
+}

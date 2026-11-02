@@ -1,91 +1,185 @@
-<header class="orders-header">
-  <div>
-    <h2>Pedidos</h2>
-    <p>Gestión de pedidos de impresión 3D y estampados</p>
-  </div>
-  <db-button
-    label="+ Nuevo pedido"
-    variant="primary"
-    format="solid"
-    (clicked)="openCreateOrder()"
-  />
-</header>
+<div class="mobile-only orders-m">
+  <db-mobile-bar title="Pedidos" backLink="/dashboard">
+    <span class="orders-m__open">{{ openOrdersCount }} abiertos</span>
+  </db-mobile-bar>
 
-<div class="orders-toolbar">
-  <div class="orders-pills" role="group" aria-label="Estado del pedido">
-    @for (filter of statusFilters; track filter.value) {
+  <div class="m-tools">
+    <div class="orders-m__tools-row">
+      <label class="m-search">
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="#5B7083"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="M20 20l-3.5-3.5" />
+        </svg>
+        <input
+          type="search"
+          placeholder="Cliente, producto o n.º"
+          aria-label="Buscar pedidos"
+          [(ngModel)]="search"
+          (ngModelChange)="onSearchChange()"
+        />
+      </label>
       <button
         type="button"
-        class="orders-pill"
-        [class.orders-pill--active]="statusFilter === filter.value"
-        (click)="setStatusFilter(filter.value)"
+        class="m-fbtn"
+        [class.orders-m__fbtn--on]="mobileSheetFilterCount > 0"
+        (click)="openMobileFilters()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M4 6h16M7 12h10M10 18h4" />
+        </svg>
+        {{ filtersButtonLabel }}
+      </button>
+    </div>
+    <div class="m-chips" role="group" aria-label="Filtro rápido">
+      @for (chip of mobileChips; track chip.value) {
+        <button
+          type="button"
+          class="m-chip"
+          [class.m-chip--on]="mobileChip === chip.value"
+          (click)="setMobileChip(chip.value)"
+        >
+          {{ chip.label }}
+          @if (chip.value !== 'todos') {
+            <span class="orders-m__chip-n">{{ mobileChipCounts[chip.value] }}</span>
+          }
+        </button>
+      }
+    </div>
+  </div>
+
+  @if (loading) {
+    <div class="orders-m__list">
+      <db-skeleton variant="cards" [count]="3" />
+    </div>
+  } @else if (mobileFilteredOrders.length === 0) {
+    <div class="orders-m__list">
+      <div class="m-card orders-m__empty">
+        <p>{{ mobileEmptyMessage }}</p>
+        <db-button
+          [label]="mobileEmptyActionLabel"
+          variant="primary"
+          format="solid"
+          (clicked)="onMobileEmptyAction()"
+        />
+      </div>
+    </div>
+  } @else {
+    <div class="orders-m__list">
+      @for (order of mobileFilteredOrders; track order.id) {
+        <app-order-mobile-card [order]="order" />
+      }
+    </div>
+  }
+</div>
+
+<div class="desktop-only">
+  <header class="orders-header">
+    <div>
+      <h2>Pedidos</h2>
+      <p>Gestión de pedidos de impresión 3D y estampados</p>
+    </div>
+    <db-button
+      label="+ Nuevo pedido"
+      variant="primary"
+      format="solid"
+      (clicked)="openCreateOrder()"
+    />
+  </header>
+
+  <div class="orders-toolbar">
+    <div class="orders-pills" role="group" aria-label="Estado del pedido">
+      @for (filter of statusFilters; track filter.value) {
+        <button
+          type="button"
+          class="orders-pill"
+          [class.orders-pill--active]="statusFilter === filter.value"
+          (click)="setStatusFilter(filter.value)"
+        >
+          {{ filter.label }}
+        </button>
+      }
+    </div>
+    <label class="orders-search">
+      <span aria-hidden="true">⌕</span>
+      <input
+        type="search"
+        placeholder="Buscar por cliente, producto o pedido"
+        [(ngModel)]="search"
+        (ngModelChange)="onSearchChange()"
+      />
+    </label>
+  </div>
+
+  <div class="orders-areas">
+    <span>Área</span>
+    @for (filter of serviceFilters; track filter.value) {
+      <button
+        type="button"
+        class="orders-area-pill"
+        [class]="'orders-area-pill--' + filter.value"
+        [class.orders-area-pill--active]="serviceFilter === filter.value"
+        (click)="setServiceFilter(filter.value)"
       >
         {{ filter.label }}
       </button>
     }
   </div>
-  <label class="orders-search">
-    <span aria-hidden="true">⌕</span>
-    <input
-      type="search"
-      placeholder="Buscar por cliente, producto o pedido"
-      [(ngModel)]="search"
-    />
-  </label>
-</div>
 
-<div class="orders-areas">
-  <span>Área</span>
-  @for (filter of serviceFilters; track filter.value) {
-    <button
-      type="button"
-      class="orders-area-pill"
-      [class]="'orders-area-pill--' + filter.value"
-      [class.orders-area-pill--active]="serviceFilter === filter.value"
-      (click)="setServiceFilter(filter.value)"
+  @if (loading) {
+    <db-skeleton variant="cards" [count]="3" />
+  } @else {
+    <db-state-message
+      [loading]="false"
+      [empty]="filteredOrders.length === 0"
+      [emptyMessage]="emptyMessage"
     >
-      {{ filter.label }}
-    </button>
+      <db-button
+        emptyActions
+        [label]="orders.length ? 'Nuevo pedido' : 'Crear primer pedido'"
+        variant="primary"
+        format="solid"
+        (clicked)="openCreateOrder()"
+      />
+    </db-state-message>
+
+    @if (filteredOrders.length) {
+      <div class="orders-board">
+        <div class="orders-board__head">
+          <span></span>
+          <span>Pedido</span>
+          <span>Cliente</span>
+          <span>Áreas</span>
+          <span>Entrega</span>
+          <span>Estado</span>
+          <span class="is-end">Total</span>
+          <span></span>
+        </div>
+        @for (order of filteredOrders; track order.id) {
+          <app-order-card
+            layout="card"
+            [order]="order"
+            (edit)="openEditOrder($event)"
+            (delete)="deleteOrder($event)"
+          />
+        }
+      </div>
+    }
   }
 </div>
-
-@if (loading) {
-  <db-skeleton variant="cards" [count]="3" />
-} @else {
-  <db-state-message
-    [loading]="false"
-    [empty]="filteredOrders.length === 0"
-    [emptyMessage]="emptyMessage"
-  >
-    <db-button
-      emptyActions
-      [label]="orders.length ? 'Nuevo pedido' : 'Crear primer pedido'"
-      variant="primary"
-      format="solid"
-      (clicked)="openCreateOrder()"
-    />
-  </db-state-message>
-
-  @if (filteredOrders.length) {
-    <div class="orders-board">
-      <div class="orders-board__head">
-        <span></span>
-        <span>Pedido</span>
-        <span>Cliente</span>
-        <span>Áreas</span>
-        <span>Entrega</span>
-        <span>Estado</span>
-        <span class="is-end">Total</span>
-        <span></span>
-      </div>
-      @for (order of filteredOrders; track order.id) {
-        <app-order-card
-          layout="card"
-          [order]="order"
-          (edit)="openEditOrder($event)"
-          (delete)="deleteOrder($event)"
-        />
-      }
-    </div>
-  }
-}

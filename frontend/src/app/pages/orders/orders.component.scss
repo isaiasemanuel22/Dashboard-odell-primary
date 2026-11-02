@@ -1,5 +1,6 @@
 @use '../../shared/styles/variables' as *;
 @use '../../shared/styles/screen' as screen;
+@use '../../shared/styles/mobile' as mobile;
 
 @include screen.prefixed-screen('orders');
 
@@ -23,5 +24,50 @@
 
   .is-end {
     text-align: right;
+  }
+}
+
+.orders-m__open {
+  font-size: 12px;
+  font-weight: 500;
+  color: mobile.$m-text-secondary;
+  white-space: nowrap;
+  padding-right: 8px;
+}
+
+.orders-m__tools-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.orders-m__fbtn--on {
+  border-color: mobile.$m-primary !important;
+  background: mobile.$m-primary-pale !important;
+  color: mobile.$m-primary-dark !important;
+}
+
+.orders-m__chip-n {
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  opacity: 0.75;
+}
+
+.orders-m__list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 16px;
+  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+}
+
+.orders-m__empty {
+  align-items: flex-start;
+  gap: 12px;
+
+  p {
+    margin: 0;
+    font-size: 14px;
+    color: mobile.$m-text-label;
   }
 }

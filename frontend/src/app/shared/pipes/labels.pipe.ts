@@ -30,11 +30,14 @@ import {
 } from '../utils/rich-text.util';
 import { markupPercentOnCostRounded } from '../utils/product-margin.util';
 import { formatPercentIntegerLabel } from '../utils/percent.util';
+import { normalizeServiceType } from '../utils/service-type.util';
 
 @Pipe({ name: 'serviceTypeLabel', standalone: true })
 export class ServiceTypeLabelPipe implements PipeTransform {
-  transform(value: ServiceType): string {
-    return SERVICE_TYPE_LABELS[value] ?? value;
+  transform(value: ServiceType | string): string {
+    const normalized = normalizeServiceType(value);
+    if (normalized) return SERVICE_TYPE_LABELS[normalized];
+    return SERVICE_TYPE_LABELS[value as ServiceType] ?? String(value ?? '');
   }
 }
 
