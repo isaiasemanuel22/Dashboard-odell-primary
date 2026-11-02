@@ -1,7 +1,7 @@
 <div
   class="layout"
   [class.layout--nav-open]="layoutUi.navOpen()"
-  [class.layout--compact-nav]="hideBottomNav"
+  [class.layout--compact-nav]="hideBottomNav || layoutUi.overlayCount() > 0"
   [class.layout--page-bar]="layoutUi.pageBarCount() > 0"
 >
   <div
@@ -83,7 +83,11 @@
       <router-outlet />
     </main>
 
-    <nav class="bottom-nav" aria-label="Navegación principal" [class.bottom-nav--hidden]="hideBottomNav">
+    <nav
+      class="bottom-nav"
+      aria-label="Navegación principal"
+      [class.bottom-nav--hidden]="hideBottomNav || layoutUi.overlayCount() > 0"
+    >
       @for (item of bottomNavItems; track trackBottomSlot($index, item)) {
         @if (item.kind === 'fab') {
           <button

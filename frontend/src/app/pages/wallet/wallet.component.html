@@ -1,73 +1,281 @@
-<header class="page-header">
-  <div>
-    <h2>Billetera</h2>
-    <p>
-      Lo cobrado, separado por cuenta · {{ periodLabel }}
-      @if (overview && overview.availableBalance < 0) {
-        · <span class="tone-danger">saldo negativo</span>
-      }
-    </p>
-  </div>
-  <div class="header-actions">
-    <db-button
-      label="Transferir entre cuentas"
-      variant="secondary"
-      format="soft"
-      [disabled]="loading || !overview"
-      (clicked)="openTransferForm()"
-    />
-    <db-button
-      label="Pagar"
-      variant="secondary"
-      format="soft"
-      [disabled]="loading || !overview"
-      (clicked)="openPaymentForm()"
-    />
-    <db-button
-      label="Prestar"
-      variant="secondary"
-      format="soft"
-      [disabled]="loading || !overview"
-      (clicked)="openLoanForm()"
-    />
-    <db-button
-      label="+ Agregar registro"
-      variant="primary"
-      format="solid"
-      [disabled]="loading || !overview"
-      (clicked)="openForm()"
-    />
-  </div>
-</header>
+<div class="mobile-only wallet-m">
+  <db-mobile-bar title="Billetera" backLink="/dashboard">
+    <button
+      type="button"
+      class="m-ib"
+      aria-label="Buscar movimiento"
+      [attr.aria-pressed]="showMobileSearch"
+      (click)="toggleMobileSearch()"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="22"
+        height="22"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="M20 20l-3.5-3.5" />
+      </svg>
+    </button>
+  </db-mobile-bar>
 
-@if (loadError) {
-  <db-state-message
-    [empty]="true"
-    emptyMessage="No se pudo cargar la billetera."
-  >
-    <db-button
-      emptyActions
-      label="Reintentar"
-      variant="secondary"
-      format="soft"
-      (clicked)="loadOverview()"
-    />
-  </db-state-message>
-} @else if (loading) {
-  <db-state-message [loading]="true" loadingMessage="Cargando billetera..." />
-} @else if (overview) {
-  <app-wallet-metrics [overview]="overview" [clientDebt]="clientDebt" />
-  <app-wallet-movements
-    [movements]="overview.movements"
-    [expenses]="overview.expenses"
-    (action)="onMovementAction($event)"
-  />
-  <app-wallet-debtors
-    [debtors]="overview.debtors"
-    [expenses]="overview.expenses"
-    (repay)="openRepaymentForm($event)"
-  />
-}
+  <div class="m-body wallet-m__body">
+    @if (loadError) {
+      <div class="m-card">
+        <p class="wallet-m__state">No se pudo cargar la billetera.</p>
+        <db-button
+          label="Reintentar"
+          variant="secondary"
+          format="soft"
+          (clicked)="loadOverview()"
+        />
+      </div>
+    } @else if (loading) {
+      <div class="m-card">
+        <p class="wallet-m__state">Cargando billetera...</p>
+      </div>
+    } @else if (overview) {
+      @if (isMobile()) {
+        <app-wallet-metrics
+          [overview]="overview"
+          [clientDebt]="clientDebt"
+          [periodLabel]="periodLabel"
+          [selectedAccount]="mobileAccountFilter"
+          (accountSelect)="onMobileAccountSelect($event)"
+        />
+
+        <div class="wallet-m__actions" role="group" aria-label="Acciones">
+          <button
+            type="button"
+            class="wallet-m__action"
+            [disabled]="loading || !overview"
+            (click)="openForm()"
+          >
+            <svg
+              class="wallet-m__action-icon"
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            <span>Registro</span>
+          </button>
+          <button
+            type="button"
+            class="wallet-m__action"
+            [disabled]="loading || !overview"
+            (click)="openTransferForm()"
+          >
+            <svg
+              class="wallet-m__action-icon"
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path d="M7 8h11M7 8l3-3M18 8l-3 3M17 16H6M17 16l-3 3M6 16l3-3" />
+            </svg>
+            <span>Transferir</span>
+          </button>
+          <button
+            type="button"
+            class="wallet-m__action"
+            [disabled]="loading || !overview"
+            (click)="openPayLoanSheet()"
+          >
+            <svg
+              class="wallet-m__action-icon"
+              viewBox="0 0 24 24"
+              width="22"
+              height="22"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M12 19V5M6 11l6-6 6 6" />
+            </svg>
+            <span>Pagar / prestar</span>
+          </button>
+        </div>
+
+        @if (showMobileSearch) {
+          <label class="m-search wallet-m__search">
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="#5B7083"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="M20 20l-3.5-3.5" />
+            </svg>
+            <input
+              type="search"
+              placeholder="Buscar movimiento"
+              aria-label="Buscar movimiento"
+              [(ngModel)]="mobileSearch"
+              (ngModelChange)="onMobileSearchChange()"
+            />
+            @if (mobileSearch) {
+              <button
+                type="button"
+                class="wallet-m__search-clear"
+                aria-label="Borrar búsqueda"
+                (click)="clearMobileSearch($event)"
+              >
+                ✕
+              </button>
+            }
+          </label>
+        }
+
+        <h2 class="m-sec-t">Movimientos</h2>
+        <app-wallet-movements
+          [movements]="overview.movements"
+          [expenses]="overview.expenses"
+          [mobileAccountFilter]="mobileAccountFilter"
+          [mobileSearch]="mobileSearch"
+          (action)="onMovementAction($event)"
+        />
+
+        @if (overview.debtors.length) {
+          <h2 class="m-sec-t">Te deben</h2>
+          <app-wallet-debtors
+            [debtors]="overview.debtors"
+            [expenses]="overview.expenses"
+            (repay)="openRepaymentForm($event)"
+          />
+        }
+      }
+    }
+  </div>
+
+  @if (payLoanSheetOpen) {
+    <div class="wallet-m__scrim" (click)="closePayLoanSheet()"></div>
+    <div
+      class="wallet-m__sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Pagar o prestar"
+    >
+      <div class="wallet-m__grab" aria-hidden="true"></div>
+      <div class="wallet-m__sheet-body">
+        <button
+          type="button"
+          class="wallet-m__sheet-btn"
+          (click)="choosePayment()"
+        >
+          Pagar
+        </button>
+        <button
+          type="button"
+          class="wallet-m__sheet-btn"
+          (click)="chooseLoan()"
+        >
+          Prestar
+        </button>
+        <button
+          type="button"
+          class="wallet-m__sheet-btn"
+          (click)="closePayLoanSheet()"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+  }
+</div>
+
+<div class="desktop-only">
+  <header class="page-header">
+    <div>
+      <h2>Billetera</h2>
+      <p>
+        Lo cobrado, separado por cuenta · {{ periodLabel }}
+        @if (overview && overview.availableBalance < 0) {
+          · <span class="tone-danger">saldo negativo</span>
+        }
+      </p>
+    </div>
+    <div class="header-actions">
+      <db-button
+        label="Transferir entre cuentas"
+        variant="secondary"
+        format="soft"
+        [disabled]="loading || !overview"
+        (clicked)="openTransferForm()"
+      />
+      <db-button
+        label="Pagar"
+        variant="secondary"
+        format="soft"
+        [disabled]="loading || !overview"
+        (clicked)="openPaymentForm()"
+      />
+      <db-button
+        label="Prestar"
+        variant="secondary"
+        format="soft"
+        [disabled]="loading || !overview"
+        (clicked)="openLoanForm()"
+      />
+      <db-button
+        label="+ Agregar registro"
+        variant="primary"
+        format="solid"
+        [disabled]="loading || !overview"
+        (clicked)="openForm()"
+      />
+    </div>
+  </header>
+
+  @if (loadError) {
+    <db-state-message
+      [empty]="true"
+      emptyMessage="No se pudo cargar la billetera."
+    >
+      <db-button
+        emptyActions
+        label="Reintentar"
+        variant="secondary"
+        format="soft"
+        (clicked)="loadOverview()"
+      />
+    </db-state-message>
+  } @else if (loading) {
+    <db-state-message [loading]="true" loadingMessage="Cargando billetera..." />
+  } @else if (overview) {
+    @if (!isMobile()) {
+      <app-wallet-metrics [overview]="overview" [clientDebt]="clientDebt" />
+      <app-wallet-movements
+        [movements]="overview.movements"
+        [expenses]="overview.expenses"
+        (action)="onMovementAction($event)"
+      />
+      <app-wallet-debtors
+        [debtors]="overview.debtors"
+        [expenses]="overview.expenses"
+        (repay)="openRepaymentForm($event)"
+      />
+    }
+  }
+</div>
 
 @if (showForm) {
   <app-wallet-record-form

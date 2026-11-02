@@ -1,4 +1,10 @@
-import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  EventEmitter,
+  Input,
+  Output,
+} from '@angular/core';
 import { RouterLink } from '@angular/router';
 import {
   TreasuryAccount,
@@ -15,6 +21,8 @@ const ACCOUNT_HELP: Partial<Record<TreasuryAccount, string>> = {
   [TreasuryAccount.BANCO]: 'Transferencias',
 };
 
+export type WalletAccountFilter = 'all' | TreasuryAccount;
+
 @Component({
   selector: 'app-wallet-metrics',
   standalone: true,
@@ -26,6 +34,11 @@ const ACCOUNT_HELP: Partial<Record<TreasuryAccount, string>> = {
 export class WalletMetricsComponent {
   @Input({ required: true }) overview!: TreasuryOverview;
   @Input() clientDebt = 0;
+  /** Período mostrado en la tarjeta mobile (ej. «noviembre 2026»). */
+  @Input() periodLabel = '';
+  /** Cuenta elegida en el scroll mobile; no afecta el layout desktop. */
+  @Input() selectedAccount: WalletAccountFilter = 'all';
+  @Output() accountSelect = new EventEmitter<WalletAccountFilter>();
 
   readonly accountOrder = TREASURY_ACCOUNTS_ORDER;
 
@@ -43,5 +56,9 @@ export class WalletMetricsComponent {
 
   isMercadoPago(account: TreasuryAccount): boolean {
     return account === TreasuryAccount.MERCADO_PAGO;
+  }
+
+  onSelectAccount(account: WalletAccountFilter): void {
+    this.accountSelect.emit(account);
   }
 }

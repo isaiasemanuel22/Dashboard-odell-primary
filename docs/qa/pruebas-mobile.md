@@ -82,7 +82,22 @@ commit.
 | NP8 | Descartar | Cargar algo y tocar la X | Pide confirmar; «Seguir editando» vuelve; «Descartar» cierra sin crear | ✅ 2026-11-02 · nuevo pedido |
 | NP9 | Editar | Desde el detalle, «⋯» → Editar y cerrar | Pantalla completa «Editar pedido» con los datos y «Guardar cambios · $ …»; sin cambios cierra sin preguntar | ✅ 2026-11-02 · nuevo pedido |
 
+Ajustes del 2026-11-02 (decisiones del usuario), probados ✅: la seña arranca en Efectivo / Caja efectivo; con total bajo la compra mínima del cliente aparece «No aplica: no llega a la compra mínima de este cliente» junto a Mayorista; al editar un pedido atrasado el faltante dice «nueva fecha de entrega (la actual ya pasó)».
+
 Observaciones de Nuevo pedido: con el aviso de compra mínima activo, «Mayorista −N%» sigue marcado aunque se cobra lista; la seña arranca en Transferencia. La seña sugerida del 50 % y el medio por defecto quedan por definir.
+
+## Billetera
+
+| # | Caso | Pasos | Esperado | Último resultado |
+|---|------|-------|----------|------------------|
+| B1 | Disponible total | Comparar con desktop | Mismo monto; si es negativo, se aclara «saldo negativo» | ✅ 2026-11-02 · billetera |
+| B2 | Cuentas | Comparar con desktop y tocar cada cuenta | Mismos disponibles; tocar una filtra los movimientos; «Todas» vuelve | ✅ 2026-11-02 · billetera |
+| B3 | Buscar | Lupa, buscar una palabra, borrar | La lista se acota; una sola ✕ borra | ✅ 2026-11-02 · billetera (la ✕ duplicada se quitó después) |
+| B4 | Movimientos | Mirar la lista | Agrupados por día; ingresos verdes, egresos rojos con «−», transferencias neutras, anulados tachados; 20 y «Ver más» | ✅ 2026-11-02 · billetera (sin datos de comisión ni transferencia vigente) |
+| B5 | Menú de movimiento | Tocar un movimiento y «Cerrar» | Título, monto y fecha; acciones de desktop (Editar/Anular, o Ver pedido / Ver venta con aclaración); el menú inferior no tapa nada | ✅ 2026-11-02 · billetera |
+| B6 | Pagar / prestar | Abrir y elegir Pagar; cancelar | Opciones sin taparse; el formulario abre y cancela | ✅ 2026-11-02 · billetera |
+| B7 | Registro y Transferir | Abrir y cancelar | Abren su formulario (todavía el de desktop) | ✅ 2026-11-02 · billetera |
+| B8 | Te deben | Comparar con desktop; «Registrar devolución» y cancelar | Mismos deudores y montos; botón de 44 px; precarga el monto | ✅ 2026-11-02 · billetera |
 
 Sin probar todavía: opciones de Entrega (Hoy / Esta semana / Atrasados) de la hoja, y chip + estado contradictorios (ej. Abiertos + Entregado).
 

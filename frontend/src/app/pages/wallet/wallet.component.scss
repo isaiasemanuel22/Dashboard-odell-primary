@@ -31,18 +31,112 @@
 }
 
 @include mobile.mobile-only {
-  .page-header {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 0.75rem;
+  .wallet-m__state {
+    margin: 0;
+    font-size: 14px;
+    color: mobile.$m-text-label;
+  }
 
-    > div:first-child {
-      flex: none;
-      width: 100%;
+  .wallet-m__actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .wallet-m__action {
+    min-height: 64px;
+    border-radius: 14px;
+    border: 1px solid mobile.$m-border;
+    background: mobile.$m-surface;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 8px 6px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 500;
+    color: mobile.$m-text;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
     }
   }
 
-  .header-actions {
+  .wallet-m__action-icon {
+    color: mobile.$m-primary;
+    display: block;
+  }
+
+  .wallet-m__search {
     width: 100%;
+  }
+
+  .wallet-m__search-clear {
+    flex: none;
+    width: 44px;
+    height: 44px;
+    margin-right: -12px;
+    border: 0;
+    border-radius: mobile.$m-radius-sm;
+    background: transparent;
+    color: mobile.$m-text-secondary;
+    font-family: inherit;
+    font-size: 16px;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .wallet-m__scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 130;
+    background: rgba(15, 42, 58, 0.45);
+  }
+
+  .wallet-m__sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 131;
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -12px 32px rgba(15, 42, 58, 0.2);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .wallet-m__grab {
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: mobile.$m-border-input;
+    margin: 10px auto 2px;
+  }
+
+  .wallet-m__sheet-body {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 16px 16px;
+    gap: 8px;
+  }
+
+  .wallet-m__sheet-btn {
+    min-height: 52px;
+    border-radius: 14px;
+    border: 1px solid mobile.$m-border-input;
+    background: #fff;
+    color: mobile.$m-text;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
   }
 }

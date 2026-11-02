@@ -1,5 +1,6 @@
 @use '../wallet-table';
 @use '../../../../shared/styles/variables' as *;
+@use '../../../../shared/styles/mobile' as mobile;
 
 .wallet-debtors {
   margin-top: 1.5rem;
@@ -26,4 +27,43 @@
 
 .wallet-table__dash {
   color: $color-text-muted;
+}
+
+@include mobile.mobile-only {
+  .wallet-debtors-m__row {
+    align-items: flex-start;
+  }
+
+  .wallet-debtors-m__end {
+    flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+    max-width: 55%;
+  }
+
+  .wallet-debtors-m__amt {
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: mobile.$m-text;
+    text-align: right;
+  }
+
+  .wallet-debtors-m__repay {
+    min-height: 44px;
+    box-sizing: border-box;
+    padding: 0 10px;
+    border-radius: mobile.$m-radius-sm;
+    border: 1px solid mobile.$m-border-input;
+    background: mobile.$m-bg;
+    color: mobile.$m-text-label;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    line-height: 1.2;
+  }
 }

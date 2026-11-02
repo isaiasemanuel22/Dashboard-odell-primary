@@ -1,65 +1,203 @@
-<db-data-table
-  label="Movimientos de la billetera"
-  [rows]="sortedMovements"
-  [columns]="columns"
-  [actions]="actions"
-  [filters]="accountFilters"
-  searchPlaceholder="Buscar movimiento"
-  [searchText]="searchText"
-  [pageSize]="12"
-  [minWidth]="'900px'"
-  emptyText="Todavía no hay movimientos."
-  (action)="action.emit($event)"
->
-  <ng-template odlCell="concept" let-movement>
-    <span
-      class="concept-name"
-      [class.concept-name--voided]="movement.voided"
-    >
-      {{ movement.concept }}
-    </span>
-    @if (conceptSecondary(movement); as secondary) {
-      <span class="concept-meta">{{ secondary }}</span>
-    }
-  </ng-template>
-
-  <ng-template odlCell="amount" let-movement>
-    <span
-      class="wallet-table__amount"
-      [class.wallet-table__amount--income]="!movement.voided && movement.amount > 0"
-      [class.wallet-table__amount--expense]="!movement.voided && movement.amount < 0"
-      [class.wallet-table__amount--voided]="movement.voided"
-    >
-      {{ movement.amount | currencyArs }}
-    </span>
-  </ng-template>
-
-  <ng-template odlCell="fee" let-movement>
-    @if (movement.fee > 0) {
-      <span class="wallet-table__amount wallet-table__amount--expense">
-        −{{ movement.fee | currencyArs }}
+<div class="desktop-only">
+  <db-data-table
+    label="Movimientos de la billetera"
+    [rows]="sortedMovements"
+    [columns]="columns"
+    [actions]="actions"
+    [filters]="accountFilters"
+    searchPlaceholder="Buscar movimiento"
+    [searchText]="searchText"
+    [pageSize]="12"
+    [minWidth]="'900px'"
+    emptyText="Todavía no hay movimientos."
+    (action)="action.emit($event)"
+  >
+    <ng-template odlCell="concept" let-movement>
+      <span
+        class="concept-name"
+        [class.concept-name--voided]="movement.voided"
+      >
+        {{ movement.concept }}
       </span>
-    } @else {
-      <span class="wallet-table__dash">—</span>
-    }
-  </ng-template>
+      @if (conceptSecondary(movement); as secondary) {
+        <span class="concept-meta">{{ secondary }}</span>
+      }
+    </ng-template>
 
-  <ng-template odlCell="net" let-movement>
-    @if (movement.voided) {
-      <span class="wallet-void-pill">Anulado</span>
-    } @else {
+    <ng-template odlCell="amount" let-movement>
       <span
         class="wallet-table__amount"
-        [class.wallet-table__amount--income]="movement.net > 0"
-        [class.wallet-table__amount--expense]="movement.net < 0"
+        [class.wallet-table__amount--income]="!movement.voided && movement.amount > 0"
+        [class.wallet-table__amount--expense]="!movement.voided && movement.amount < 0"
+        [class.wallet-table__amount--voided]="movement.voided"
       >
-        {{ movement.net | currencyArs }}
+        {{ movement.amount | currencyArs }}
       </span>
-    }
-  </ng-template>
-</db-data-table>
+    </ng-template>
 
-<p class="wallet-movements-note" role="note">
-  Cada registro se puede editar o anular desde ···. Anular no borra: deja el
-  registro tachado con el motivo, para no perder el historial.
-</p>
+    <ng-template odlCell="fee" let-movement>
+      @if (movement.fee > 0) {
+        <span class="wallet-table__amount wallet-table__amount--expense">
+          −{{ movement.fee | currencyArs }}
+        </span>
+      } @else {
+        <span class="wallet-table__dash">—</span>
+      }
+    </ng-template>
+
+    <ng-template odlCell="net" let-movement>
+      @if (movement.voided) {
+        <span class="wallet-void-pill">Anulado</span>
+      } @else {
+        <span
+          class="wallet-table__amount"
+          [class.wallet-table__amount--income]="movement.net > 0"
+          [class.wallet-table__amount--expense]="movement.net < 0"
+        >
+          {{ movement.net | currencyArs }}
+        </span>
+      }
+    </ng-template>
+  </db-data-table>
+
+  <p class="wallet-movements-note" role="note">
+    Cada registro se puede editar o anular desde ···. Anular no borra: deja el
+    registro tachado con el motivo, para no perder el historial.
+  </p>
+</div>
+
+<div class="wallet-movements-m mobile-only">
+  @if (mobileDayGroups.length === 0) {
+    <div class="m-card">
+      <p class="wallet-movements-m__empty">Todavía no hay movimientos.</p>
+    </div>
+  } @else {
+    @for (group of mobileDayGroups; track group.key) {
+      <div class="wallet-movements-m__group">
+        <h3 class="wallet-movements-m__day">{{ group.label }}</h3>
+        <div class="m-card m-card--flush">
+          @for (movement of group.movements; track movement.id) {
+            @let kind = movementKind(movement);
+            @let rowActions = visibleActions(movement);
+            <button
+              type="button"
+              class="m-row wallet-movements-m__row"
+              [disabled]="rowActions.length === 0"
+              (click)="openSheet(movement)"
+            >
+              <span
+                class="wallet-movements-m__icon"
+                [class.wallet-movements-m__icon--in]="kind === 'income'"
+                [class.wallet-movements-m__icon--out]="kind === 'expense'"
+                [class.wallet-movements-m__icon--xfer]="kind === 'transfer'"
+                aria-hidden="true"
+                >{{ movementIcon(movement) }}</span
+              >
+              <span class="m-row__text">
+                <b [class.wallet-movements-m__title--voided]="movement.voided">{{
+                  movement.concept
+                }}</b>
+                <span>{{ mobileDetail(movement) }}</span>
+              </span>
+              <span class="wallet-movements-m__end">
+                @if (movement.voided) {
+                  <span class="wallet-movements-m__amt wallet-movements-m__amt--void"
+                    >Anulado</span
+                  >
+                } @else {
+                  <span
+                    class="wallet-movements-m__amt"
+                    [class.wallet-movements-m__amt--in]="kind === 'income'"
+                    [class.wallet-movements-m__amt--out]="kind === 'expense'"
+                  >
+                    @if (kind === 'expense') {
+                      −{{ (movement.amount < 0 ? -movement.amount : movement.amount) | currencyArs }}
+                    } @else {
+                      {{ movement.amount | currencyArs }}
+                    }
+                  </span>
+                }
+                @if (!movement.voided && movement.fee > 0) {
+                  <small>Comisión −{{ movement.fee | currencyArs }}</small>
+                }
+              </span>
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    @if (mobileRemaining > 0) {
+      <button
+        type="button"
+        class="wallet-movements-m__more"
+        (click)="showMoreMobile()"
+      >
+        Ver más
+      </button>
+    }
+  }
+
+  @if (sheetMovement; as movement) {
+    <div class="wallet-movements-m__scrim" (click)="closeSheet()"></div>
+    <div
+      class="wallet-movements-m__sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="wallet-movements-sheet-title"
+    >
+      <div class="wallet-movements-m__grab" aria-hidden="true"></div>
+      <header class="wallet-movements-m__sheet-head">
+        <div class="wallet-movements-m__sheet-meta">
+          <h2
+            id="wallet-movements-sheet-title"
+            class="wallet-movements-m__sheet-title"
+          >
+            {{ movement.concept }}
+          </h2>
+          <p class="wallet-movements-m__sheet-sub">
+            @if (movement.voided) {
+              Anulado
+            } @else if (movementKind(movement) === 'expense') {
+              −{{
+                (movement.amount < 0 ? -movement.amount : movement.amount)
+                  | currencyArs
+              }}
+            } @else {
+              {{ movement.amount | currencyArs }}
+            }
+            · {{ sheetDate(movement) }}
+          </p>
+        </div>
+        <button
+          type="button"
+          class="wallet-movements-m__sheet-close"
+          (click)="closeSheet()"
+        >
+          Cerrar
+        </button>
+      </header>
+      <div class="wallet-movements-m__sheet-body">
+        @for (item of visibleActions(movement); track item.id) {
+          <button
+            type="button"
+            class="wallet-movements-m__sheet-btn"
+            [class.wallet-movements-m__sheet-btn--danger]="item.danger"
+            (click)="runSheetAction(item.id)"
+          >
+            {{ item.label }}
+          </button>
+        }
+        @if (movement.orderId) {
+          <p class="wallet-movements-m__sheet-sub">
+            Este movimiento sale de un pedido: se corrige o anula desde el pedido.
+          </p>
+        } @else if (movement.source === 'retail_sale') {
+          <p class="wallet-movements-m__sheet-sub">
+            Este movimiento sale de una venta: se corrige desde la venta.
+          </p>
+        }
+      </div>
+    </div>
+  }
+</div>

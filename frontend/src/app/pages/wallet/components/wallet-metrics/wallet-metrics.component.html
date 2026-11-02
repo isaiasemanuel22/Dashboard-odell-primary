@@ -1,4 +1,4 @@
-<section class="wallet-metrics" aria-label="Resumen de caja">
+<section class="wallet-metrics desktop-only" aria-label="Resumen de caja">
   <article
     class="metric-card metric-card--total"
     [class.metric-card--negative]="overview.availableBalance < 0"
@@ -38,3 +38,78 @@
     <small>No suma al disponible</small>
   </a>
 </section>
+
+<div class="wallet-metrics-m mobile-only" aria-label="Resumen de caja">
+  <article
+    class="wallet-metrics-m__hero"
+    [class.wallet-metrics-m__hero--neg]="overview.availableBalance < 0"
+  >
+    <span class="wallet-metrics-m__hero-lbl"
+      >Disponible total · {{ periodLabel }}</span
+    >
+    <strong class="wallet-metrics-m__hero-val">{{
+      overview.availableBalance | currencyArs
+    }}</strong>
+    @if (overview.availableBalance < 0) {
+      <span class="wallet-metrics-m__hero-warn">saldo negativo</span>
+    }
+    <span class="wallet-metrics-m__hero-sub"
+      >Cobrado − egresos · por cobrar
+      {{ clientDebt | currencyArs }} aparte</span
+    >
+  </article>
+
+  <div
+    class="wallet-metrics-m__accounts"
+    role="group"
+    aria-label="Filtrar por cuenta"
+  >
+    <button
+      type="button"
+      class="wallet-metrics-m__acc"
+      [class.wallet-metrics-m__acc--on]="selectedAccount === 'all'"
+      [attr.aria-pressed]="selectedAccount === 'all'"
+      (click)="onSelectAccount('all')"
+    >
+      <span class="wallet-metrics-m__acc-name">Todas</span>
+      <strong class="wallet-metrics-m__acc-val">{{
+        overview.availableBalance | currencyArs
+      }}</strong>
+      <span class="wallet-metrics-m__acc-sub"
+        >{{ accountOrder.length }} cuentas</span
+      >
+    </button>
+
+    @for (account of accountOrder; track account) {
+      @let entry = accountBalance(account);
+      @let help = accountHelp(account);
+      <button
+        type="button"
+        class="wallet-metrics-m__acc"
+        [class.wallet-metrics-m__acc--on]="selectedAccount === account"
+        [attr.aria-pressed]="selectedAccount === account"
+        (click)="onSelectAccount(account)"
+      >
+        <span class="wallet-metrics-m__acc-name">{{
+          accountLabel(account)
+        }}</span>
+        <strong class="wallet-metrics-m__acc-val">{{
+          (entry?.balance ?? 0) | currencyArs
+        }}</strong>
+        @if (isMercadoPago(account)) {
+          @if ((entry?.fees ?? 0) > 0) {
+            <span class="wallet-metrics-m__acc-sub"
+              >Comisiones −{{ entry!.fees | currencyArs }}</span
+            >
+          } @else {
+            <span class="wallet-metrics-m__acc-sub"
+              >Sin comisiones este mes</span
+            >
+          }
+        } @else if (help) {
+          <span class="wallet-metrics-m__acc-sub">{{ help }}</span>
+        }
+      </button>
+    }
+  </div>
+</div>

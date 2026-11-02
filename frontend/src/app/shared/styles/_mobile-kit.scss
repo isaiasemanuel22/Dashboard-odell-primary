@@ -258,6 +258,12 @@
     box-sizing: border-box;
     background: mobile.$m-surface;
 
+    // Sin la ✕ nativa del navegador: cada buscador trae la suya.
+    input[type='search']::-webkit-search-cancel-button {
+      -webkit-appearance: none;
+      appearance: none;
+    }
+
     svg {
       flex: none;
       display: block;

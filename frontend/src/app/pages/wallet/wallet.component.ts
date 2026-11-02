@@ -3,10 +3,12 @@ import {
   ChangeDetectorRef,
   Component,
   DestroyRef,
+  OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin } from 'rxjs';
 import {
@@ -17,16 +19,25 @@ import {
   TreasuryMovement,
   TreasuryOverview,
 } from '../../core/models';
+import { BreakpointService } from '../../core/services/breakpoint.service';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { SuppliesService } from '../../core/services/settings.service';
 import { TreasuryService } from '../../core/services/treasury.service';
 import { OdlActionEvent } from '../../components/db-data-table';
+import { LayoutUiService } from '../../layout/layout-ui.service';
 import { FormDialogService } from '../../shared/form-dialogs/form-dialog.service';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
-import { DbButtonComponent, DbStateMessageComponent } from '@general-components';
+import {
+  DbButtonComponent,
+  DbStateMessageComponent,
+  MobileBarComponent,
+} from '@general-components';
 import { WalletDebtorsComponent } from './components/wallet-debtors/wallet-debtors.component';
-import { WalletMetricsComponent } from './components/wallet-metrics/wallet-metrics.component';
+import {
+  WalletAccountFilter,
+  WalletMetricsComponent,
+} from './components/wallet-metrics/wallet-metrics.component';
 import { WalletMovementsComponent } from './components/wallet-movements/wallet-movements.component';
 import {
   WalletFormMode,
@@ -40,8 +51,10 @@ import { WalletVoidFormComponent } from './components/wallet-void-form/wallet-vo
   selector: 'app-wallet',
   standalone: true,
   imports: [
+    FormsModule,
     DbButtonComponent,
     DbStateMessageComponent,
+    MobileBarComponent,
     WalletMetricsComponent,
     WalletMovementsComponent,
     WalletDebtorsComponent,
@@ -54,7 +67,7 @@ import { WalletVoidFormComponent } from './components/wallet-void-form/wallet-vo
   styleUrl: './wallet.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WalletComponent implements OnInit {
+export class WalletComponent implements OnInit, OnDestroy {
   private readonly treasuryService = inject(TreasuryService);
   private readonly dashboardService = inject(DashboardService);
   private readonly suppliesService = inject(SuppliesService);
@@ -64,6 +77,10 @@ export class WalletComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly breakpoint = inject(BreakpointService);
+  private readonly layoutUi = inject(LayoutUiService);
+
+  readonly isMobile = this.breakpoint.isMobile;
 
   overview: TreasuryOverview | null = null;
   clientDebt = 0;
@@ -77,6 +94,11 @@ export class WalletComponent implements OnInit {
   voidingExpense: TreasuryExpense | null = null;
   purchasePreset = false;
   repaymentDebtor: TreasuryDebtorBalance | null = null;
+
+  showMobileSearch = false;
+  mobileSearch = '';
+  mobileAccountFilter: WalletAccountFilter = 'all';
+  payLoanSheetOpen = false;
 
   readonly periodLabel = WalletComponent.currentPeriodLabel();
 
@@ -138,6 +160,61 @@ export class WalletComponent implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  ngOnDestroy(): void {
+    if (this.payLoanSheetOpen) {
+      this.layoutUi.popOverlay();
+      this.payLoanSheetOpen = false;
+    }
+  }
+
+  toggleMobileSearch(): void {
+    this.showMobileSearch = !this.showMobileSearch;
+    if (!this.showMobileSearch) {
+      this.mobileSearch = '';
+    }
+    this.cdr.markForCheck();
+  }
+
+  onMobileSearchChange(): void {
+    this.cdr.markForCheck();
+  }
+
+  clearMobileSearch(event?: Event): void {
+    event?.preventDefault();
+    event?.stopPropagation();
+    this.mobileSearch = '';
+    this.cdr.markForCheck();
+  }
+
+  onMobileAccountSelect(account: WalletAccountFilter): void {
+    this.mobileAccountFilter = account;
+    this.cdr.markForCheck();
+  }
+
+  openPayLoanSheet(): void {
+    if (this.payLoanSheetOpen) return;
+    this.payLoanSheetOpen = true;
+    this.layoutUi.pushOverlay();
+    this.cdr.markForCheck();
+  }
+
+  closePayLoanSheet(): void {
+    if (!this.payLoanSheetOpen) return;
+    this.payLoanSheetOpen = false;
+    this.layoutUi.popOverlay();
+    this.cdr.markForCheck();
+  }
+
+  choosePayment(): void {
+    this.closePayLoanSheet();
+    this.openPaymentForm();
+  }
+
+  chooseLoan(): void {
+    this.closePayLoanSheet();
+    this.openLoanForm();
   }
 
   openForm(): void {

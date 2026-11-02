@@ -1,6 +1,7 @@
 @use '../wallet-table';
 @use '../../../../shared/styles/variables' as *;
 @use '../../../../shared/styles/screen' as screen;
+@use '../../../../shared/styles/mobile' as mobile;
 
 :host {
   display: block;
@@ -67,4 +68,223 @@
   color: $color-text-label;
   font-size: $font-meta;
   line-height: 1.45;
+}
+
+@include mobile.mobile-only {
+  .wallet-movements-m {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .wallet-movements-m__empty {
+    margin: 0;
+    font-size: 14px;
+    color: mobile.$m-text-label;
+  }
+
+  .wallet-movements-m__group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .wallet-movements-m__day {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 700;
+    color: mobile.$m-text-secondary;
+  }
+
+  .wallet-movements-m__row {
+    min-height: 44px;
+    align-items: flex-start;
+
+    &:disabled {
+      cursor: default;
+      opacity: 1;
+    }
+  }
+
+  .wallet-movements-m__icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    flex: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+    font-weight: 700;
+    margin-top: 2px;
+
+    &--in {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    &--out {
+      background: #fee2e2;
+      color: #991b1b;
+    }
+
+    &--xfer {
+      background: #e0f0f8;
+      color: #0b5f86;
+    }
+  }
+
+  .wallet-movements-m__title--voided {
+    text-decoration: line-through;
+    color: mobile.$m-text-secondary;
+  }
+
+  .wallet-movements-m__end {
+    flex: none;
+    text-align: right;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    max-width: 42%;
+
+    small {
+      font-size: 11px;
+      font-weight: 400;
+      color: mobile.$m-text-secondary;
+    }
+  }
+
+  .wallet-movements-m__amt {
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: mobile.$m-text;
+
+    &--in {
+      color: mobile.$m-positive;
+    }
+
+    &--out {
+      color: mobile.$m-negative;
+    }
+
+    &--void {
+      color: mobile.$m-text-secondary;
+      font-weight: 600;
+    }
+  }
+
+  .wallet-movements-m__more {
+    width: 100%;
+    min-height: 44px;
+    box-sizing: border-box;
+    border-radius: mobile.$m-radius-sm;
+    border: 1px solid mobile.$m-border-input;
+    background: mobile.$m-surface;
+    color: mobile.$m-text;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .wallet-movements-m__scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 130;
+    background: rgba(15, 42, 58, 0.45);
+  }
+
+  .wallet-movements-m__sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 131;
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -12px 32px rgba(15, 42, 58, 0.2);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .wallet-movements-m__grab {
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: mobile.$m-border-input;
+    margin: 10px auto 2px;
+  }
+
+  .wallet-movements-m__sheet-head {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 8px 16px 4px;
+  }
+
+  .wallet-movements-m__sheet-meta {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .wallet-movements-m__sheet-title {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 700;
+    color: mobile.$m-text;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+  }
+
+  .wallet-movements-m__sheet-sub {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 400;
+    color: mobile.$m-text-secondary;
+  }
+
+  .wallet-movements-m__sheet-close {
+    flex: none;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 0 10px;
+    border: 0;
+    border-radius: mobile.$m-radius-sm;
+    background: transparent;
+    color: mobile.$m-primary;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .wallet-movements-m__sheet-body {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 16px 16px;
+    gap: 8px;
+  }
+
+  .wallet-movements-m__sheet-btn {
+    min-height: 52px;
+    border-radius: 14px;
+    border: 1px solid mobile.$m-border-input;
+    background: #fff;
+    color: mobile.$m-text;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+
+    &--danger {
+      border-color: #f3b4b4;
+      color: #b91c1c;
+    }
+  }
 }

@@ -1,4 +1,4 @@
-<section class="wallet-debtors">
+<section class="wallet-debtors desktop-only">
   <h3>Deudores</h3>
   <p>Saldo pendiente por préstamos registrados</p>
 
@@ -34,3 +34,30 @@
     <p class="empty-group">No hay deudores con saldo pendiente.</p>
   }
 </section>
+
+@if (debtors.length) {
+  <div class="wallet-debtors-m mobile-only" aria-label="Te deben">
+    <div class="m-card m-card--flush">
+      @for (debtor of debtors; track debtor.name) {
+        <div class="m-row wallet-debtors-m__row">
+          <span class="m-row__text">
+            <b>{{ debtor.name }}</b>
+            <span>Saldo pendiente</span>
+          </span>
+          <span class="wallet-debtors-m__end">
+            <span class="wallet-debtors-m__amt">{{
+              debtor.amount | currencyArs
+            }}</span>
+            <button
+              type="button"
+              class="wallet-debtors-m__repay"
+              (click)="repay.emit(debtor)"
+            >
+              Registrar devolución
+            </button>
+          </span>
+        </div>
+      }
+    </div>
+  </div>
+}
