@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Ganancias</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/8d80655a3ce2fd18937d7dfc20caabc4">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}.pct{width:96px;flex:none;text-align:right}</style>
+</helmet>
+<div class="ph" style="height: 1000px">
+<div class="bar">
+<a class="ib" href="MobAjustes.dc.html" aria-label="Volver a ajustes"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+<div class="ttl">Ganancias</div>
+</div>
+<div class="body dock-pad">
+<h2 class="sec-t">Margen sobre el costo</h2>
+<div class="card flush">
+<div class="row"><div class="t"><b>Impresión 3D</b><span>Costo $ 1.000 → precio $ 2.000</span></div><input class="inp pct" type="text" inputmode="numeric" value="100 %" aria-label="Margen de Impresión 3D"></div>
+<div class="row"><div class="t"><b>Estampado</b><span>Costo $ 1.000 → precio $ 2.000</span></div><input class="inp pct" type="text" inputmode="numeric" value="100 %" aria-label="Margen de Estampado"></div>
+<div class="row"><div class="t"><b>Diseño gráfico</b><span>Sobre la tarifa por hora</span></div><input class="inp pct" type="text" inputmode="numeric" value="10 %" aria-label="Margen de Diseño gráfico"></div>
+<div class="row"><div class="t"><b>Modelado 3D</b><span>Sobre la tarifa por hora</span></div><input class="inp pct" type="text" inputmode="numeric" value="10 %" aria-label="Margen de Modelado 3D"></div>
+</div>
+<h2 class="sec-t">Descuento por mayor</h2>
+<div class="card">
+<div class="ln"><b>Activo</b><span class="sw on" role="switch" aria-checked="true" aria-label="Descuento por mayor activo" tabindex="0"></span></div>
+<div class="ln"><span>Descuento sobre la lista</span><input class="inp pct" type="text" inputmode="numeric" value="20 %" aria-label="Descuento por mayor"></div>
+<div class="field"><span class="fl">Se aplica a</span><div class="opts"><button type="button" class="opt on">Impresión 3D</button><button type="button" class="opt on">Estampado</button><button type="button" class="opt">Diseño gráfico</button><button type="button" class="opt">Modelado</button></div></div>
+<span class="hint">Lo reciben los clientes Revendedor y los pedidos o presupuestos marcados como mayoristas.</span>
+</div>
+<div class="card" style="background: #F4F8FB">
+<b style="font-size: 14px">Así se calcula · costo $ 1.000</b>
+<div class="ln"><span class="hint">Precio de lista (margen 100 %)</span><span class="num">$ 2.000</span></div>
+<div class="ln"><span class="hint">− 20 % sobre $ 2.000</span><span class="num neg">−$ 400</span></div>
+<div class="ln"><b>Precio mayorista</b><b class="num">$ 1.600</b></div>
+<div class="ln"><span class="hint">Te queda</span><span class="num pos">$ 600 · 60 % sobre el costo</span></div>
+</div>
+<div class="note note-w"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path></svg>Con −20 %, cualquier área con margen menor a 25 % vende a pérdida por mayor.</div>
+</div>
+<div class="dock"><a class="btn btn-p" href="MobAjustes.dc.html">Guardar</a></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

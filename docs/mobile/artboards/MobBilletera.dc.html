@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Billetera</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+.ph{width:390px;box-sizing:border-box;background:#EEF4F8;font-family:Ubuntu,"Segoe UI",system-ui,sans-serif;color:#0F2A3A;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.bar{height:56px;background:#fff;border-bottom:1px solid #E3ECF2;display:flex;align-items:center;gap:6px;padding:0 8px;flex:none}
+.ib{width:44px;height:44px;border-radius:12px;border:0;background:transparent;display:inline-flex;align-items:center;justify-content:center;color:#0F2A3A;text-decoration:none}
+.ttl{font-size:17px;font-weight:700;flex:1}
+.body{padding:14px 16px 96px;display:flex;flex-direction:column;gap:12px}
+.hero{background:#0F2A3A;color:#fff;border-radius:16px;padding:16px;display:flex;flex-direction:column;gap:4px}
+.hero small{color:#B9CCD9;font-size:12px}
+.hero b{font-size:28px;font-variant-numeric:tabular-nums}
+.accs{display:flex;gap:10px;overflow-x:auto;margin:0 -16px;padding:0 16px 2px}
+.acc{flex:none;width:150px;background:#fff;border:1px solid #E3ECF2;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:2px}
+.acc.on{border-color:#0E7AAB;box-shadow:inset 0 0 0 1px #0E7AAB}
+.lbl{font-size:12px;color:#5B7083}
+.av{font-size:18px;font-weight:700;font-variant-numeric:tabular-nums}
+.acts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.act{min-height:64px;border-radius:14px;border:1px solid #E3ECF2;background:#fff;font:500 12px Ubuntu,sans-serif;color:#0F2A3A;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px}
+.act svg{color:#0E7AAB}
+.sec-t{margin:4px 0 0;font-size:12px;font-weight:700;letter-spacing:.06em;color:#5B7083;text-transform:uppercase}
+.day{font-size:12px;font-weight:700;color:#5B7083;padding:8px 2px 0}
+.mv{display:flex;align-items:center;gap:12px;padding:12px 14px;min-height:44px}
+.mv+.mv{border-top:1px solid #E3ECF2}
+.ico{width:36px;height:36px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none;font-weight:700;font-size:16px}
+.in{background:#DCFCE7;color:#166534}.out{background:#FEE2E2;color:#991B1B}.xf{background:#E0F0F8;color:#0B5F86}
+.mv .t{flex:1;min-width:0}
+.mv .t b{display:block;font-size:14px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.mv .t span{font-size:12px;color:#5B7083}
+.amt{font-size:15px;font-weight:700;font-variant-numeric:tabular-nums;text-align:right}
+.amt small{display:block;font-size:11px;font-weight:400;color:#5B7083}
+.void b{text-decoration:line-through;color:#5B7083}
+.card{background:#fff;border:1px solid #E3ECF2;border-radius:14px;display:flex;flex-direction:column}
+.nav{position:absolute;left:0;right:0;bottom:0;height:72px;background:#fff;border-top:1px solid #E3ECF2;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center}
+.nav a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:#5B7083;text-decoration:none;min-height:48px;justify-content:center}
+.nav a.on{color:#0E7AAB;font-weight:700}
+.nav a.fab{width:56px;height:56px;min-height:56px;border-radius:18px;background:#0E7AAB;color:#fff;margin:-30px auto 0;box-shadow:0 8px 18px rgba(14,122,171,.35);font-size:0}
+</style>
+</helmet>
+<div class="ph" style="height: 1000px">
+<div class="bar">
+<a class="ib" href="MobDashboard.dc.html" aria-label="Volver al inicio"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+<div class="ttl">Billetera</div>
+<button class="ib" type="button" aria-label="Buscar movimiento"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg></button>
+</div>
+
+<div class="body">
+<div class="hero"><small>Disponible total · noviembre 2026</small><b>$ 171.740</b><small>Cobrado − egresos · por cobrar $ 93.350 aparte</small></div>
+
+<div class="accs" role="group" aria-label="Cuentas">
+<div class="acc on"><span class="lbl">Todas</span><span class="av">$ 171.740</span><span class="lbl">3 cuentas</span></div>
+<div class="acc"><span class="lbl">Caja efectivo</span><span class="av">$ 48.500</span><span class="lbl">Ferias y mostrador</span></div>
+<div class="acc"><span class="lbl">Mercado Pago</span><span class="av">$ 31.240</span><span class="lbl">Comisiones −$ 6.180</span></div>
+<div class="acc"><span class="lbl">Banco</span><span class="av">$ 92.000</span><span class="lbl">Transferencias</span></div>
+</div>
+
+<div class="acts">
+<button type="button" class="act"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg>Registro</button>
+<a class="act" href="MobTransferir.dc.html" style="text-decoration: none"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 7h12l-3-3M17 17H5l3 3"></path></svg>Transferir</a>
+<button type="button" class="act"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M12 19V5M6 11l6-6 6 6"></path></svg>Pagar / prestar</button>
+</div>
+
+<h2 class="sec-t">Movimientos</h2>
+<div class="day">Hoy</div>
+<div class="card">
+<div class="mv"><span class="ico in" aria-hidden="true">+</span><div class="t"><b>Seña ord-13 · Emprendimientos Norte</b><span>Banco · Transferencia</span></div><div class="amt" style="color: #15803D">$ 26.845</div></div>
+<div class="mv"><span class="ico in" aria-hidden="true">+</span><div class="t"><b>Venta de mostrador</b><span>Caja · Efectivo · 3 productos</span></div><div class="amt" style="color: #15803D">$ 12.400</div></div>
+</div>
+<div class="day">30 oct</div>
+<div class="card">
+<div class="mv"><span class="ico in" aria-hidden="true">+</span><div class="t"><b>Pago ord-8 · QA Cliente Uno</b><span>Mercado Pago · Link de pago</span></div><div class="amt" style="color: #15803D">$ 17.142<small>Comisión −$ 808</small></div></div>
+<div class="mv"><span class="ico xf" aria-hidden="true">⇄</span><div class="t"><b>Transferencia Caja → Banco</b><span>Entre cuentas</span></div><div class="amt">$ 20.000</div></div>
+<div class="mv"><span class="ico out" aria-hidden="true">−</span><div class="t"><b>Compra filamento PLA</b><span>Banco · 2 kg sumados a Insumos</span></div><div class="amt" style="color: #B91C1C">−$ 39.600</div></div>
+<div class="mv void"><span class="ico out" aria-hidden="true">−</span><div class="t"><b>Pago operador (duplicado)</b><span>Anulado el 12/10 · cargado dos veces</span></div><div class="amt" style="color: #5B7083">Anulado</div></div>
+</div>
+</div>
+
+<nav class="nav" aria-label="Navegación principal">
+<a href="MobDashboard.dc.html"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z"></path></svg>Inicio</a>
+<a href="MobPedidos.dc.html"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8"></path></svg>Pedidos</a>
+<a href="MobNuevoPedido.dc.html" class="fab" aria-label="Nuevo pedido"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
+<a href="MobBilletera.dc.html" class="on"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v13H3zM3 7l3-3h12l3 3M16 14h2"></path></svg>Billetera</a>
+<a href="MobMas.dc.html"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"></path></svg>Más</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Valores generales</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/8d80655a3ce2fd18937d7dfc20caabc4">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ph" style="height: 1000px">
+<div class="bar">
+<a class="ib" href="MobAjustes.dc.html" aria-label="Volver a ajustes"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+<div class="ttl">Valores generales</div>
+</div>
+<div class="body dock-pad">
+<h2 class="sec-t">Tarifas por hora</h2>
+<div class="card">
+<div class="two">
+<div class="field"><label for="g-mo">Mano de obra</label><input id="g-mo" class="inp" type="text" inputmode="numeric" value="$ 1.000"></div>
+<div class="field"><label for="g-mod">Modelado 3D</label><input id="g-mod" class="inp" type="text" inputmode="numeric" value="$ 3.500"></div>
+</div>
+<div class="field"><label for="g-dg">Diseño gráfico</label><input id="g-dg" class="inp" type="text" inputmode="numeric" value="$ 0"><span class="hint neg">En $ 0, las líneas de diseño salen sin costo</span></div>
+</div>
+<h2 class="sec-t">Energía y error</h2>
+<div class="card">
+<div class="two">
+<div class="field"><label for="g-kwh">Luz por kWh</label><input id="g-kwh" class="inp" type="text" inputmode="decimal" value="$ 180"></div>
+<div class="field"><label for="g-err">Margen de error</label><input id="g-err" class="inp" type="text" inputmode="decimal" value="4 %"></div>
+</div>
+<span class="hint">El margen de error se suma sobre material, energía y máquina.</span>
+</div>
+<h2 class="sec-t">Equipos</h2>
+<div class="card flush">
+<div class="row"><div class="t"><b>Bambu Lab A1 #1</b><span>Impresión · 120 W · $ 220 / h</span></div><svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></div>
+<div class="row"><div class="t"><b>Elegoo Mars 4</b><span>Impresión resina · 60 W · $ 180 / h</span></div><svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></div>
+<div class="row"><div class="t"><b>Lavado y curado</b><span>Post-proceso · 40 W</span></div><svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></div>
+<div class="row"><div class="t"><b>Prensa térmica 38 × 38</b><span>Estampado · 1.800 W</span></div><svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></div>
+</div>
+<button type="button" class="add">+ Agregar equipo</button>
+</div>
+<div class="dock"><a class="btn btn-p" href="MobAjustes.dc.html">Guardar y recalcular precios</a></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

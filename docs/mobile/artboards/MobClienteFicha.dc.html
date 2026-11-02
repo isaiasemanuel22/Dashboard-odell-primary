@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Ficha del cliente</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/8d80655a3ce2fd18937d7dfc20caabc4">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ph" style="height: 1000px">
+<div class="bar">
+<a class="ib" href="MobClientes.dc.html" aria-label="Volver a clientes"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+<div class="ttl">Cliente</div>
+<a class="ib txt" href="MobNuevoCliente.dc.html">Editar</a>
+</div>
+<div class="body dock-pad">
+<div class="card" style="align-items: center; text-align: center">
+<span class="av" style="width: 64px; height: 64px; font-size: 22px" aria-hidden="true">EN</span>
+<b style="font-size: 19px">Emprendimientos Norte</b>
+<div class="ln" style="justify-content: center"><span class="pill p-b">Revendedor · −20%</span><span class="pill">Llegó por Instagram</span></div>
+</div>
+<div class="two">
+<a class="btn btn-s" href="#">WhatsApp</a>
+<a class="btn btn-s" href="#">Llamar</a>
+</div>
+<div class="kpis">
+<div class="kpi"><span class="lbl">Comprado</span><span class="kv">$ 486.200</span><span class="ks">6 pedidos · desde mar</span></div>
+<div class="kpi"><span class="lbl">Saldo</span><span class="kv neg">$ 26.845</span><span class="ks">1 pedido con saldo</span></div>
+</div>
+<h2 class="sec-t">Datos</h2>
+<div class="card flush">
+<div class="row"><div class="t"><span>Email</span><b>contacto@empnorte.com</b></div></div>
+<div class="row"><div class="t"><span>Teléfono</span><b>+54 351 555-0100</b></div></div>
+<div class="row"><div class="t"><span>CUIT</span><b>30-71234567-9</b></div></div>
+<div class="row"><div class="t"><span>Compra mínima mayorista</span><b>$ 50.000</b></div></div>
+</div>
+<h2 class="sec-t">Pedidos</h2>
+<div class="card flush">
+<a class="row" href="MobPedidoDetalle.dc.html"><div class="t"><b>ord-13 · 65 llaveros</b><span>Pendiente · entrega 8/11</span></div><div class="end">$ 53.690</div></a>
+<a class="row" href="MobPedidoDetalle.dc.html"><div class="t"><b>ord-9 · remeras y árboles</b><span>Entregado 30/10</span></div><div class="end">$ 104.000</div></a>
+<a class="row" href="MobPresupuestoDetalle.dc.html"><div class="t"><b>qte-14 · presupuesto</b><span>Enviado · válido hasta 15/11</span></div><div class="end">$ 277.500</div></a>
+</div>
+</div>
+<div class="dock"><a class="btn btn-s" href="MobNuevoPresupuesto.dc.html">Presupuesto</a><a class="btn btn-p" href="MobNuevoPedido.dc.html">Nuevo pedido</a></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

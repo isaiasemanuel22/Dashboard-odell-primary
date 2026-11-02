@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Nuevo cliente</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/8d80655a3ce2fd18937d7dfc20caabc4">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ph" style="height: 1000px">
+<div class="bar">
+<a class="ib" href="MobClientes.dc.html" aria-label="Cerrar sin guardar"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+<div class="ttl">Nuevo cliente</div>
+</div>
+<div class="body dock-pad">
+<div class="card">
+<div class="field"><label for="c-n">Nombre *</label><input id="c-n" class="inp" type="text" value="Emprendimientos Norte" autocomplete="name"></div>
+<div class="field"><span class="fl">Tipo de cliente</span><div class="seg" role="radiogroup" aria-label="Tipo de cliente"><button type="button" role="radio" aria-checked="false">Particular</button><button type="button" role="radio" aria-checked="false">Empresa</button><button type="button" class="on" role="radio" aria-checked="true">Revendedor</button></div></div>
+<div class="field"><label for="c-e">Email *</label><input id="c-e" class="inp err" type="email" value="contacto@empnorte" aria-invalid="true" aria-describedby="c-e-e"><span id="c-e-e" class="hint neg">Revisá el email: falta el dominio (por ejemplo, .com)</span></div>
+<div class="field"><label for="c-p">Teléfono *</label><input id="c-p" class="inp" type="tel" value="+54 351 555-0100" autocomplete="tel"><span class="hint pos">Listo para WhatsApp</span></div>
+<div class="field"><label for="c-o">¿Cómo llegó?</label><div class="inp" id="c-o"><span>Instagram</span><span aria-hidden="true">▾</span></div></div>
+</div>
+<div class="card" style="background: #F4F8FB">
+<div class="ln"><b>Precio mayorista</b><span class="pill p-b">−20% sobre lista</span></div>
+<span class="hint">Se aplica en pedidos y presupuestos. El % se cambia en Ajustes › Ganancias.</span>
+<div class="field"><label for="c-min">Compra mínima mayorista</label><input id="c-min" class="inp" type="text" inputmode="numeric" value="$ 50.000"><span class="hint">Si el pedido no llega, se cobra precio de lista</span></div>
+<div class="field"><label for="c-cuit">CUIT (opcional)</label><input id="c-cuit" class="inp" type="text" inputmode="numeric" placeholder="30-12345678-9"></div>
+</div>
+</div>
+<div class="dock"><a class="btn btn-s" href="MobClientes.dc.html" style="flex: 0 0 120px">Cancelar</a><a class="btn btn-p" href="MobClienteFicha.dc.html">Crear cliente</a></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

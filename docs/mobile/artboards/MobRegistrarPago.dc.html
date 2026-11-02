@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Registrar pago</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/8d80655a3ce2fd18937d7dfc20caabc4">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}.amt{font:700 30px Ubuntu,sans-serif;text-align:center;border:0;border-bottom:2px solid #0E7AAB;width:100%;padding:8px 0;color:#0F2A3A;background:transparent;font-variant-numeric:tabular-nums}</style>
+</helmet>
+<div class="ph" style="height: 844px">
+<div class="ghost" aria-hidden="true"><div class="gc"></div><div class="gc"></div><div class="gc"></div></div>
+<div class="scrim" aria-hidden="true"></div>
+<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="pg-t">
+<div class="grab" aria-hidden="true"></div>
+<div class="sh"><h2 id="pg-t">Registrar pago · ord-13</h2><a class="ib" href="MobPedidoDetalle.dc.html" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a></div>
+<div class="sb">
+<div class="ln"><span class="hint">Saldo pendiente</span><b class="num">$ 26.845</b></div>
+<label class="field" for="pg-a"><span class="fl" style="text-align: center">Monto</span><input id="pg-a" class="amt" type="text" inputmode="numeric" value="$ 26.845"></label>
+<div class="opts" style="justify-content: center"><button type="button" class="opt on">Todo el saldo</button><button type="button" class="opt">50 %</button><button type="button" class="opt">Otro monto</button></div>
+<div class="field"><span class="fl">Medio de pago</span><div class="seg" role="radiogroup" aria-label="Medio de pago"><button type="button" role="radio" aria-checked="false">Efectivo</button><button type="button" role="radio" aria-checked="false">Transferencia</button><button type="button" class="on" role="radio" aria-checked="true">Mercado Pago</button></div></div>
+<div class="two">
+<div class="field"><span class="fl">Entra a</span><div class="inp"><span>Mercado Pago</span><span aria-hidden="true">▾</span></div></div>
+<div class="field"><label for="pg-f">Comisión</label><input id="pg-f" class="inp" type="text" inputmode="numeric" value="$ 1.208"></div>
+</div>
+<div class="ln"><span class="hint">Neto que entra</span><b class="num pos">$ 25.637</b></div>
+<div class="ln"><span style="font-size: 14px">Es una seña</span><span class="sw" role="switch" aria-checked="false" aria-label="Es una seña" tabindex="0"></span></div>
+</div>
+<div class="sfoot"><a class="btn btn-p" href="MobPedidoDetalle.dc.html">Registrar $ 26.845</a></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

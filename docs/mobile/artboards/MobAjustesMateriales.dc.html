@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Filamento</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/8d80655a3ce2fd18937d7dfc20caabc4">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ph" style="height: 900px">
+<div class="bar">
+<a class="ib" href="MobAjustes.dc.html" aria-label="Volver a ajustes"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+<div class="ttl">Filamento</div>
+<button class="ib" type="button" aria-label="Agregar precio" style="color: #0E7AAB"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+</div>
+<div class="tabs" role="tablist" aria-label="Sección"><button type="button" class="tab on" role="tab" aria-selected="true">Precios</button><button type="button" class="tab" role="tab" aria-selected="false">Tipos</button><button type="button" class="tab" role="tab" aria-selected="false">Marcas</button></div>
+<div class="body">
+<span class="hint">Precio por kg según tipo y marca. Los insumos con «precio desde Ajustes» lo toman de acá; el costo de los productos usa el promedio por tipo.</span>
+<h2 class="sec-t">PLA · promedio $ 10.036 / kg</h2>
+<div class="card flush">
+<div class="row"><div class="t"><b>FilAr</b><span>Actualizado 28/10</span></div><div class="end">$ 5.000</div></div>
+<div class="row"><div class="t"><b>Printalot</b><span>Actualizado 12/10</span></div><div class="end">$ 15.072</div></div>
+</div>
+<h2 class="sec-t">PETG · promedio $ 16.500 / kg</h2>
+<div class="card flush">
+<div class="row"><div class="t"><b>Grilon3</b><span>Actualizado 2/10</span></div><div class="end">$ 16.500</div></div>
+</div>
+<h2 class="sec-t">TPU · promedio $ 24.000 / kg</h2>
+<div class="card flush">
+<div class="row"><div class="t"><b>FilAr</b><span>Actualizado 2/10</span></div><div class="end">$ 24.000</div></div>
+</div>
+<div class="note"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg>Resina usa esta misma pantalla, con precios por litro.</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

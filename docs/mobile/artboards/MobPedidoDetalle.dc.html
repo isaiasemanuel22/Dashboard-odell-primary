@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Detalle de pedido</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+.ph{width:390px;box-sizing:border-box;background:#EEF4F8;font-family:Ubuntu,"Segoe UI",system-ui,sans-serif;color:#0F2A3A;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.bar{height:56px;background:#fff;border-bottom:1px solid #E3ECF2;display:flex;align-items:center;gap:6px;padding:0 8px;flex:none}
+.ib{width:44px;height:44px;border-radius:12px;border:0;background:transparent;display:inline-flex;align-items:center;justify-content:center;color:#0F2A3A;text-decoration:none}
+.ttl{font-size:17px;font-weight:700;flex:1}
+.body{padding:14px 16px 112px;display:flex;flex-direction:column;gap:12px}
+.card{background:#fff;border:1px solid #E3ECF2;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.ln{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.lbl{font-size:12px;color:#5B7083}
+.pill{display:inline-flex;align-items:center;height:22px;padding:0 9px;border-radius:999px;font-size:11px;font-weight:700;white-space:nowrap}
+.sec-t{margin:4px 0 0;font-size:12px;font-weight:700;letter-spacing:.06em;color:#5B7083;text-transform:uppercase}
+.money{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;text-align:center}
+.money b{display:block;font-size:16px;font-variant-numeric:tabular-nums}
+.track{height:8px;border-radius:999px;background:#EEF4F8;overflow:hidden}
+.fill{height:8px;background:#15803D}
+.item{display:flex;flex-direction:column;gap:6px;padding:12px 0;border-top:1px solid #E3ECF2}
+.item:first-of-type{border-top:0;padding-top:0}
+.prog{font-size:12px;color:#5B7083}
+.acc{display:flex;align-items:center;justify-content:space-between;min-height:52px;padding:0 14px;background:#fff;border:1px solid #E3ECF2;border-radius:14px;font-size:15px;font-weight:700;color:inherit;text-decoration:none}
+.acc span{font-size:12px;color:#5B7083;font-weight:400;margin-left:6px}
+.dock{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #E3ECF2;padding:12px 16px 20px;display:flex;gap:10px}
+.btn{min-height:52px;border-radius:14px;font:700 15px Ubuntu,sans-serif;display:inline-flex;align-items:center;justify-content:center;gap:6px;text-decoration:none;border:0}
+.btn-s{flex:1;border:1px solid #C9D8E3;background:#fff;color:#0F2A3A}
+.btn-p{flex:1.4;background:#0E7AAB;color:#fff}
+</style>
+</helmet>
+<div class="ph" style="height: 1180px">
+<div class="bar">
+<a class="ib" href="MobPedidos.dc.html" aria-label="Volver a pedidos"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+<div class="ttl">ord-13</div>
+<button class="ib" type="button" aria-label="Más acciones: editar, clonar, cancelar"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"></path></svg></button>
+</div>
+
+<div class="body">
+<div class="card">
+<div class="ln"><span class="pill" style="background: #FEF3C7; color: #92400E">Pendiente</span><span class="lbl">Creado 1/11 · entrega dom 8/11</span></div>
+<div>
+<div style="font-size: 18px; font-weight: 700">Emprendimientos Norte</div>
+<div class="ln" style="justify-content: flex-start; margin-top: 4px"><span class="pill" style="background: #E0F0F8; color: #0B5F86">Revendedor · −20%</span><span class="pill" style="background: #EEF4F8; color: #33495A">Canal: Mayorista</span></div>
+</div>
+<div class="ln" style="justify-content: flex-start; gap: 10px">
+<a class="btn btn-s" style="flex: 1; min-height: 44px; font-size: 13px" href="#">WhatsApp</a>
+<a class="btn btn-s" style="flex: 1; min-height: 44px; font-size: 13px" href="#">Llamar</a>
+</div>
+</div>
+
+<div class="card">
+<div class="money">
+<div><span class="lbl">Total</span><b>$ 53.690</b></div>
+<div><span class="lbl">Pagado</span><b style="color: #15803D">$ 26.845</b></div>
+<div><span class="lbl">Saldo</span><b style="color: #B91C1C">$ 26.845</b></div>
+</div>
+<div class="track" aria-label="Pagado el 50 %"><div class="fill" style="width: 50%"></div></div>
+<div class="lbl">Seña $ 26.845 · Transferencia · Banco · 1/11</div>
+</div>
+
+<h2 class="sec-t">Productos</h2>
+<div class="card" style="gap: 0">
+<div class="item">
+<div class="ln"><b style="font-size: 15px">Llavero corporativo 3D</b><b style="font-variant-numeric: tabular-nums">$ 53.690</b></div>
+<div class="ln"><span class="lbl">65 u. × <s>$ 1.032</s> <b style="color: #0F2A3A">$ 826</b></span><span class="pill" style="background: #DCFCE7; color: #166534">Margen 128 %</span></div>
+<div class="prog">Preparar: 0 de 65 · Entregado: 0</div>
+</div>
+</div>
+
+<a class="acc" href="MobCola.dc.html">Tareas<span>1 bloqueada</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#9AAFBF" stroke-width="2" style="margin-left: auto" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a>
+<a class="acc" href="#">Entregas<span>Ninguna todavía</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#9AAFBF" stroke-width="2" style="margin-left: auto" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a>
+<a class="acc" href="#">Historial<span>2 cambios</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#9AAFBF" stroke-width="2" style="margin-left: auto" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a>
+
+<h2 class="sec-t">Notas internas</h2>
+<div class="card"><span style="font-size: 14px; color: #33495A">Logo en una cara, colores a confirmar con el cliente.</span></div>
+</div>
+
+<div class="dock">
+<a class="btn btn-s" href="MobRegistrarPago.dc.html">Registrar pago</a>
+<a class="btn btn-p" href="MobEntregar.dc.html">Entregar</a>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 1180}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

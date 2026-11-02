@@ -1,112 +1,349 @@
-<header class="page-header cal-head">
-  <div>
-    <h2>Calendario</h2>
-    <p class="cal-head__sub" [innerHTML]="subtitleHtml"></p>
-  </div>
-  <div class="header-actions">
-    <db-button
-      label="+ Recordatorio"
-      variant="secondary"
-      format="soft"
-      (clicked)="openNew(reminderKind)"
-    />
-    <db-button
-      label="+ Nuevo evento"
-      variant="primary"
-      format="solid"
-      (clicked)="openNew(eventKind)"
-    />
-  </div>
-</header>
-
-@if (error) {
-  <p class="cal-error" role="alert">{{ error }}</p>
-}
-
-<div class="cal-bar">
-  <div class="cal-nav">
+<div class="mobile-only cal-m">
+  <db-mobile-bar title="Calendario" backLink="/dashboard">
     <button
       type="button"
-      class="cal-nav__icon"
-      aria-label="Anterior"
-      (click)="prevPeriod()"
+      class="m-ib txt"
+      aria-label="Ir a hoy"
+      (click)="goToday()"
     >
-      ‹
+      Hoy
     </button>
-    <span class="cal-nav__month" aria-live="polite">{{ monthTitle }}</span>
-    <button
-      type="button"
-      class="cal-nav__icon"
-      aria-label="Siguiente"
-      (click)="nextPeriod()"
-    >
-      ›
-    </button>
-    <db-button
-      label="Hoy"
-      variant="secondary"
-      format="soft"
-      (clicked)="goToday()"
-    />
+  </db-mobile-bar>
+
+  @if (error) {
+    <p class="cal-m__error" role="alert">{{ error }}</p>
+  }
+
+  <div class="cal-m__week">
+    @if (mobileView === 'agenda') {
+      <div class="cal-m__wh">
+        <button
+          type="button"
+          class="m-ib"
+          aria-label="Semana anterior"
+          (click)="prevMobileWeek()"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M15 6l-6 6 6 6" />
+          </svg>
+        </button>
+        <b>{{ mobileWeekTitle }}</b>
+        <button
+          type="button"
+          class="m-ib"
+          aria-label="Semana siguiente"
+          (click)="nextMobileWeek()"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
+      </div>
+      <div class="cal-m__days" role="group" aria-label="Días de la semana">
+        @for (day of mobileWeekDays; track day.date) {
+          <button
+            type="button"
+            class="cal-m__d"
+            [class.cal-m__d--on]="day.selected"
+            (click)="selectMobileDay(day.date)"
+          >
+            {{ day.shortName }}
+            <b>{{ day.dayNumber }}</b>
+            <i
+              [style.background]="
+                day.selected ? '#fff' : day.dotColor || 'transparent'
+              "
+              [class.cal-m__dot--empty]="!day.dotColor"
+            ></i>
+          </button>
+        }
+      </div>
+    } @else {
+      <div class="cal-m__wh">
+        <button
+          type="button"
+          class="m-ib"
+          aria-label="Mes anterior"
+          (click)="prevMobileMonth()"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M15 6l-6 6 6 6" />
+          </svg>
+        </button>
+        <b>{{ monthTitle }}</b>
+        <button
+          type="button"
+          class="m-ib"
+          aria-label="Mes siguiente"
+          (click)="nextMobileMonth()"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
+      </div>
+    }
+
+    <div class="cal-m__seg" role="group" aria-label="Vista">
+      <button
+        type="button"
+        [class.on]="mobileView === 'agenda'"
+        (click)="setMobileView('agenda')"
+      >
+        Agenda
+      </button>
+      <button
+        type="button"
+        [class.on]="mobileView === 'month'"
+        (click)="setMobileView('month')"
+      >
+        Mes
+      </button>
+    </div>
   </div>
-  <db-segmented-control
-    [options]="viewOptions"
-    [value]="view"
-    ariaLabel="Vista"
-    (valueChange)="setView($event)"
-  />
-</div>
 
-<div class="cal-filters">
-  <db-pill-group
-    [options]="filterOptions"
-    [value]="filter"
-    ariaLabel="Filtros"
-    (valueChange)="setFilter($event)"
-  />
-</div>
-
-@if (loading) {
-  <p class="cal-loading">Cargando calendario…</p>
-} @else {
-  <div class="cal-layout">
-    <div class="cal-main">
-      @if (view === 'month') {
-        <db-calendar-month
-          [days]="monthCells"
-          [ariaLabel]="monthTitle"
-          (dayClick)="onDayClick($event)"
-          (itemClick)="onItemClick($event)"
-        />
-      } @else if (view === 'week') {
-        <db-calendar-month
-          [days]="weekCells"
-          ariaLabel="Semana"
-          (dayClick)="onDayClick($event)"
-          (itemClick)="onItemClick($event)"
-        />
-      } @else {
-        <section class="cal-card">
-          <h3 class="cal-card__title">Lista del mes</h3>
-          <db-calendar-agenda
-            [rows]="listRows"
-            emptyText="No hay elementos este mes."
-            (toggle)="onAgendaToggle($event)"
-            (open)="onAgendaOpen($event)"
-          />
-        </section>
+  @if (loading) {
+    <p class="cal-m__loading">Cargando calendario…</p>
+  } @else if (mobileView === 'agenda') {
+    <div class="cal-m__body">
+      @for (day of mobileAgendaDays; track day.date) {
+        <div class="cal-m__dh">{{ day.header }}</div>
+        @if (day.isToday && mobileOverdueSummary; as overdue) {
+          <button
+            type="button"
+            class="cal-m__ev"
+            (click)="openOverdueOrders()"
+          >
+            <span class="cal-m__bar" style="background: #b91c1c"></span>
+            <div class="cal-m__t">
+              <b class="cal-m__late">{{ overdue.title }}</b>
+              @if (overdue.subtitle) {
+                <span>{{ overdue.subtitle }}</span>
+              }
+            </div>
+          </button>
+        }
+        @for (item of day.items; track item.id) {
+          <button
+            type="button"
+            class="cal-m__ev"
+            (click)="onItemClick(item)"
+          >
+            @if (itemTimeLabel(item); as time) {
+              <span class="cal-m__time">{{ time }}</span>
+            }
+            <span
+              class="cal-m__bar"
+              [style.background]="itemBarColor(item)"
+            ></span>
+            <div class="cal-m__t">
+              <b [class.cal-m__late]="item.late">{{ item.title }}</b>
+              <span>{{ item.subtitle || itemTypeLabel(item) }}</span>
+            </div>
+          </button>
+        } @empty {
+          @if (!(day.isToday && mobileOverdueSummary)) {
+            <div class="cal-m__empty">Sin entregas ni eventos</div>
+          }
+        }
       }
     </div>
+  } @else {
+    <div class="cal-m__month">
+      <div class="cal-m__month-dow" aria-hidden="true">
+        @for (label of ['L', 'M', 'M', 'J', 'V', 'S', 'D']; track $index) {
+          <span>{{ label }}</span>
+        }
+      </div>
+      <div class="cal-m__month-grid" role="grid" [attr.aria-label]="monthTitle">
+        @for (cell of mobileMonthCells; track cell.date + '-' + $index) {
+          <button
+            type="button"
+            class="cal-m__month-day"
+            [class.cal-m__month-day--out]="!cell.inMonth"
+            [class.cal-m__month-day--today]="cell.isToday"
+            [class.cal-m__month-day--on]="cell.date === mobileSelectedDay"
+            [attr.aria-label]="cell.ariaLabel"
+            (click)="selectMobileDay(cell.date)"
+          >
+            <b>{{ cell.dayNumber }}</b>
+            @if (cell.items.length) {
+              <i
+                [style.background]="
+                  cell.items[0].late ? '#B91C1C' : itemBarColor(cell.items[0])
+                "
+              ></i>
+            }
+          </button>
+        }
+      </div>
+    </div>
+  }
 
-    <app-calendar-side
-      [todayLabel]="todayLabel"
-      [todayRows]="todayRows"
-      [overdueCount]="overdueCount"
-      [overdueRows]="overdueRows"
-      [upcomingRows]="upcomingRows"
-      (toggleRow)="onAgendaToggle($event)"
-      (openRow)="onAgendaOpen($event)"
-      (showList)="setView('list')"
+  <button
+    type="button"
+    class="cal-m__fab"
+    (click)="openNew(eventKind)"
+  >
+    <svg
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2.4"
+      stroke-linecap="round"
+      aria-hidden="true"
+    >
+      <path d="M12 5v14M5 12h14" />
+    </svg>
+    Evento
+  </button>
+</div>
+
+<div class="desktop-only">
+  <header class="page-header cal-head">
+    <div>
+      <h2>Calendario</h2>
+      <p class="cal-head__sub" [innerHTML]="subtitleHtml"></p>
+    </div>
+    <div class="header-actions">
+      <db-button
+        label="+ Recordatorio"
+        variant="secondary"
+        format="soft"
+        (clicked)="openNew(reminderKind)"
+      />
+      <db-button
+        label="+ Nuevo evento"
+        variant="primary"
+        format="solid"
+        (clicked)="openNew(eventKind)"
+      />
+    </div>
+  </header>
+
+  @if (error) {
+    <p class="cal-error" role="alert">{{ error }}</p>
+  }
+
+  <div class="cal-bar">
+    <div class="cal-nav">
+      <button
+        type="button"
+        class="cal-nav__icon"
+        aria-label="Anterior"
+        (click)="prevPeriod()"
+      >
+        ‹
+      </button>
+      <span class="cal-nav__month" aria-live="polite">{{ monthTitle }}</span>
+      <button
+        type="button"
+        class="cal-nav__icon"
+        aria-label="Siguiente"
+        (click)="nextPeriod()"
+      >
+        ›
+      </button>
+      <db-button
+        label="Hoy"
+        variant="secondary"
+        format="soft"
+        (clicked)="goToday()"
+      />
+    </div>
+    <db-segmented-control
+      [options]="viewOptions"
+      [value]="view"
+      ariaLabel="Vista"
+      (valueChange)="setView($event)"
     />
   </div>
-}
+
+  <div class="cal-filters">
+    <db-pill-group
+      [options]="filterOptions"
+      [value]="filter"
+      ariaLabel="Filtros"
+      (valueChange)="setFilter($event)"
+    />
+  </div>
+
+  @if (loading) {
+    <p class="cal-loading">Cargando calendario…</p>
+  } @else {
+    <div class="cal-layout">
+      <div class="cal-main">
+        @if (view === 'month') {
+          <db-calendar-month
+            [days]="monthCells"
+            [ariaLabel]="monthTitle"
+            (dayClick)="onDayClick($event)"
+            (itemClick)="onItemClick($event)"
+          />
+        } @else if (view === 'week') {
+          <db-calendar-month
+            [days]="weekCells"
+            ariaLabel="Semana"
+            (dayClick)="onDayClick($event)"
+            (itemClick)="onItemClick($event)"
+          />
+        } @else {
+          <section class="cal-card">
+            <h3 class="cal-card__title">Lista del mes</h3>
+            <db-calendar-agenda
+              [rows]="listRows"
+              emptyText="No hay elementos este mes."
+              (toggle)="onAgendaToggle($event)"
+              (open)="onAgendaOpen($event)"
+            />
+          </section>
+        }
+      </div>
+
+      <app-calendar-side
+        [todayLabel]="todayLabel"
+        [todayRows]="todayRows"
+        [overdueCount]="overdueCount"
+        [overdueRows]="overdueRows"
+        [upcomingRows]="upcomingRows"
+        (toggleRow)="onAgendaToggle($event)"
+        (openRow)="onAgendaOpen($event)"
+        (showList)="setView('list')"
+      />
+    </div>
+  }
+</div>

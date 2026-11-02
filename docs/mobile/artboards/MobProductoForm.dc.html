@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Producto</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/8d80655a3ce2fd18937d7dfc20caabc4">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+.acc{background:#fff;border:1px solid #E3ECF2;border-radius:14px}
+.acc-h{display:flex;align-items:center;justify-content:space-between;min-height:56px;padding:0 14px;font-size:15px;font-weight:700;width:100%;border:0;background:transparent;color:#0F2A3A;font-family:inherit}
+.acc-h span{font-size:12px;font-weight:400;color:#5B7083;margin-left:8px}
+.acc-b{padding:0 14px 14px;display:flex;flex-direction:column;gap:12px}
+</style>
+</helmet>
+<div class="ph" style="height: 1000px">
+<div class="bar">
+<a class="ib" href="MobProductoDetalle.dc.html" aria-label="Cerrar sin guardar"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+<div class="ttl">Editar producto</div>
+</div>
+<div class="body dock-pad" style="gap: 10px">
+<div class="field"><span class="fl">Tipo</span><div class="seg" role="radiogroup" aria-label="Tipo de producto"><button type="button" class="on" role="radio" aria-checked="true">FDM</button><button type="button" role="radio" aria-checked="false">Resina</button><button type="button" role="radio" aria-checked="false">Estampado</button><button type="button" role="radio" aria-checked="false">Combo</button></div></div>
+
+<div class="acc">
+<button type="button" class="acc-h" aria-expanded="true">Datos<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#5B7083" stroke-width="2" aria-hidden="true"><path d="M6 15l6-6 6 6"></path></svg></button>
+<div class="acc-b">
+<div class="field"><label for="p-n">Nombre *</label><input id="p-n" class="inp" type="text" value="Llavero corporativo 3D"></div>
+<div class="two">
+<div class="field"><span class="fl">Categoría</span><div class="inp"><span>Llaveros</span><span aria-hidden="true">▾</span></div></div>
+<div class="field"><label for="p-t">Medida</label><input id="p-t" class="inp" type="text" value="4 × 3 cm"></div>
+</div>
+<div class="ln"><span style="font-size: 14px">Publicado en el catálogo</span><span class="sw on" role="switch" aria-checked="true" aria-label="Publicado" tabindex="0"></span></div>
+</div>
+</div>
+
+<div class="acc">
+<button type="button" class="acc-h" aria-expanded="false">Producción<span>12 g PLA · 0,6 h</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#5B7083" stroke-width="2" style="margin-left: auto" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+</div>
+<div class="acc">
+<button type="button" class="acc-h" aria-expanded="false">Fotos y archivos<span>1 foto · 1 STL</span><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#5B7083" stroke-width="2" style="margin-left: auto" aria-hidden="true"><path d="M6 9l6 6 6-6"></path></svg></button>
+</div>
+
+<div class="acc">
+<button type="button" class="acc-h" aria-expanded="true">Precio<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#5B7083" stroke-width="2" aria-hidden="true"><path d="M6 15l6-6 6 6"></path></svg></button>
+<div class="acc-b">
+<div class="ln"><span class="hint">Costo calculado</span><b class="num">$ 363</b></div>
+<div class="ln"><span class="hint">Margen objetivo (Impresión 3D)</span><b>100 %</b></div>
+<div class="seg" role="radiogroup" aria-label="Cómo se fija el precio"><button type="button" class="on" role="radio" aria-checked="true">Calculado</button><button type="button" role="radio" aria-checked="false">Precio fijo</button></div>
+<div class="field"><span class="fl">Precio calculado</span><div class="inp" style="background: #F4F8FB"><b>$ 726</b><span class="hint">sigue al costo</span></div></div>
+<div class="note note-w"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path></svg>Hoy se vende a $ 1.032: el precio quedó desactualizado. Al guardar pasa a $ 726.</div>
+<div class="note"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg>Con precio fijo el precio no cambia cuando sube un insumo; te avisamos si queda bajo el margen.</div>
+</div>
+</div>
+</div>
+<div class="dock"><a class="btn btn-s" href="MobProductoDetalle.dc.html" style="flex: 0 0 120px">Cancelar</a><a class="btn btn-p" href="MobProductoDetalle.dc.html">Guardar</a></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

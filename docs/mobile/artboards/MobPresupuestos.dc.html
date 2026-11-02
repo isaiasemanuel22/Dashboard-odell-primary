@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Presupuestos</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/8d80655a3ce2fd18937d7dfc20caabc4">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ph" style="height: 844px">
+<div class="bar">
+<a class="ib" href="MobMas.dc.html" aria-label="Volver al menú"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+<div class="ttl">Presupuestos</div>
+<a class="ib" href="MobNuevoPresupuesto.dc.html" aria-label="Nuevo presupuesto" style="color: #0E7AAB"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
+</div>
+<div class="tools">
+<label class="search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#5B7083" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><input type="search" placeholder="Cliente o n.º" aria-label="Buscar presupuestos"></label>
+<div class="chips" role="group" aria-label="Estado">
+<button type="button" class="chip on">Abiertos 5</button>
+<button type="button" class="chip">Borrador 2</button>
+<button type="button" class="chip">Enviado 3</button>
+<button type="button" class="chip">Aceptado</button>
+<button type="button" class="chip">Cerrados</button>
+</div>
+</div>
+<div class="body">
+<a class="card" href="MobPresupuestoDetalle.dc.html">
+<div class="ln"><span class="lbl">qte-14 · 3 líneas</span><span class="pill p-b">Enviado</span></div>
+<div class="ln"><b style="font-size: 15px">Emprendimientos Norte</b><span class="pill p-b">Mayorista −20%</span></div>
+<div class="ln"><span class="hint">Válido hasta 15/11 · enviado hace 2 días</span><span class="big" style="font-size: 17px">$ 277.500</span></div>
+</a>
+<a class="card" href="MobPresupuestoDetalle.dc.html">
+<div class="ln"><span class="lbl">qte-13 · 1 línea</span><span class="pill p-w">Borrador</span></div>
+<div class="ln"><b style="font-size: 15px">Sin cliente</b></div>
+<div class="ln"><span class="hint">Falta cliente para enviarlo</span><span class="big" style="font-size: 17px">$ 8.500</span></div>
+</a>
+<a class="card" href="MobPresupuestoDetalle.dc.html">
+<div class="ln"><span class="lbl">qte-12 · 2 líneas</span><span class="pill p-ok">Aceptado</span></div>
+<div class="ln"><b style="font-size: 15px">Marco Santos</b></div>
+<div class="ln"><span class="hint">Pedido ord-12 generado</span><span class="big" style="font-size: 17px">$ 9.500</span></div>
+</a>
+<a class="card" href="MobPresupuestoDetalle.dc.html">
+<div class="ln"><span class="lbl">qte-11 · 4 líneas</span><span class="pill p-b">Enviado</span></div>
+<div class="ln"><b style="font-size: 15px">Diseño Creativo SA</b></div>
+</a>
+</div>
+<nav class="nav" aria-label="Navegación principal">
+<a href="MobDashboard.dc.html"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z"></path></svg>Inicio</a>
+<a href="MobPedidos.dc.html"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8"></path></svg>Pedidos</a>
+<a href="MobNuevoPresupuesto.dc.html" class="fab" aria-label="Nuevo presupuesto"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
+<a href="MobBilletera.dc.html"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v13H3zM3 7l3-3h12l3 3M16 14h2"></path></svg>Billetera</a>
+<a href="MobMas.dc.html" class="on"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"></path></svg>Más</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

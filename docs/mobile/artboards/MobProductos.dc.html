@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Productos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+.ph{width:390px;box-sizing:border-box;background:#EEF4F8;font-family:Ubuntu,"Segoe UI",system-ui,sans-serif;color:#0F2A3A;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.bar{height:56px;background:#fff;border-bottom:1px solid #E3ECF2;display:flex;align-items:center;gap:6px;padding:0 8px;flex:none}
+.ib{width:44px;height:44px;border-radius:12px;border:0;background:transparent;display:inline-flex;align-items:center;justify-content:center;color:#0F2A3A;text-decoration:none}
+.ttl{font-size:17px;font-weight:700;flex:1}
+.tools{background:#fff;padding:10px 16px 12px;display:flex;flex-direction:column;gap:10px;border-bottom:1px solid #E3ECF2}
+.search{display:flex;align-items:center;gap:8px;flex:1;height:44px;border:1px solid #C9D8E3;border-radius:12px;padding:0 12px;box-sizing:border-box}
+.search input{border:0;outline:0;font:14px Ubuntu,sans-serif;flex:1;min-width:0;background:transparent}
+.fbtn{height:44px;padding:0 14px;border-radius:12px;border:1px solid #C9D8E3;background:#fff;color:#0F2A3A;font:700 13px Ubuntu,sans-serif;display:inline-flex;align-items:center;gap:6px;flex:none}
+.chips{display:flex;gap:8px;overflow-x:auto;margin:0 -16px;padding:0 16px}
+.chip{flex:none;height:36px;padding:0 14px;border-radius:999px;border:1px solid #C9D8E3;background:#fff;font:500 13px Ubuntu,sans-serif;color:#33495A}
+.chip.on{background:#0F2A3A;border-color:#0F2A3A;color:#fff}
+.body{padding:12px 16px 96px;display:flex;flex-direction:column;gap:10px}
+.warn{display:flex;gap:10px;align-items:center;padding:12px 14px;border-radius:14px;background:#FFF8EB;border:1px solid #F5D9A8;color:#7A4A06;font-size:13px}
+.warn button{margin-left:auto;flex:none;min-height:40px;padding:0 12px;border-radius:10px;border:1px solid #D9A548;background:#fff;color:#7A4A06;font:700 12px Ubuntu,sans-serif}
+.pc{background:#fff;border:1px solid #E3ECF2;border-radius:14px;padding:12px;display:flex;gap:12px}
+.thumb{width:72px;height:72px;border-radius:12px;background:#E9F3F9;flex:none;display:flex;align-items:center;justify-content:center;color:#5B7083;font-size:11px;text-align:center}
+.info{flex:1;min-width:0;display:flex;flex-direction:column;gap:6px}
+.nm{font-size:14px;font-weight:700}
+.sub{font-size:12px;color:#5B7083}
+.prices{display:flex;gap:12px;font-size:12px;color:#5B7083}
+.prices b{display:block;font-size:14px;color:#0F2A3A;font-variant-numeric:tabular-nums}
+.mg{display:flex;align-items:center;gap:8px;font-size:12px}
+.track{flex:1;height:6px;border-radius:999px;background:#EEF4F8;overflow:hidden}
+.fill{height:6px}
+.lock{font-size:10px;font-weight:700;color:#0B5F86;background:#E0F0F8;border-radius:999px;padding:2px 7px;margin-left:6px;vertical-align:1px}
+.nav{position:absolute;left:0;right:0;bottom:0;height:72px;background:#fff;border-top:1px solid #E3ECF2;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center}
+.nav a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:#5B7083;text-decoration:none;min-height:48px;justify-content:center}
+.nav a.on{color:#0E7AAB;font-weight:700}
+.nav a.fab{width:56px;height:56px;min-height:56px;border-radius:18px;background:#0E7AAB;color:#fff;margin:-30px auto 0;box-shadow:0 8px 18px rgba(14,122,171,.35);font-size:0}
+</style>
+</helmet>
+<div class="ph" style="height: 1000px">
+<div class="bar">
+<a class="ib" href="MobDashboard.dc.html" aria-label="Volver al inicio"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+<div class="ttl">Productos</div>
+<button class="ib" type="button" aria-label="Nuevo producto" style="color: #0E7AAB"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+</div>
+
+<div class="tools">
+<div style="display: flex; gap: 8px">
+<label class="search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#5B7083" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><input type="search" placeholder="Buscar producto" aria-label="Buscar productos"></label>
+<button type="button" class="fbtn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 6h16M7 12h10M10 18h4"></path></svg>Tipo y categoría</button>
+</div>
+<div class="chips" role="group" aria-label="Vista">
+<button type="button" class="chip on">Todos 16</button>
+<button type="button" class="chip">Bajo margen 6</button>
+<button type="button" class="chip">Precio fijo 2</button>
+<button type="button" class="chip">Con stock</button>
+</div>
+</div>
+
+<div class="body">
+<div class="warn"><span><b>6 precios desactualizados</b><br>respecto de su costo actual</span><button type="button">Recalcular</button></div>
+
+<div class="pc">
+<div class="thumb">Sin imagen</div>
+<div class="info">
+<a class="nm" href="MobProductoDetalle.dc.html" style="color: inherit">Llavero corporativo 3D</a>
+<div class="sub">FDM · Llaveros · Stock 20</div>
+<div class="prices"><span>Lista<b>$ 1.032</b></span><span>Mayorista<b>$ 826</b></span><span>Costo<b>$ 363</b></span></div>
+<div class="mg"><span>Margen</span><div class="track"><div class="fill" style="width: 100%; background: #15803D"></div></div><b style="color: #15803D">184 %</b></div>
+</div>
+</div>
+
+<div class="pc">
+<div class="thumb">Sin imagen</div>
+<div class="info">
+<div class="nm">Árbol de equilibrio<span class="lock">Precio fijo</span></div>
+<div class="sub">FDM · Repuestos · 3 piezas</div>
+<div class="prices"><span>Lista<b>$ 14.500</b></span><span>Mayorista<b>$ 11.600</b></span><span>Costo<b>$ 9.425</b></span></div>
+<div class="mg"><span>Margen</span><div class="track"><div class="fill" style="width: 54%; background: #B91C1C"></div></div><b style="color: #B91C1C">54 %</b></div>
+</div>
+</div>
+
+<div class="pc">
+<div class="thumb">Sin imagen</div>
+<div class="info">
+<div class="nm">Remera estampada DTF</div>
+<div class="sub">Estampado · Remeras · Stock 8</div>
+<div class="prices"><span>Lista<b>$ 6.500</b></span><span>Mayorista<b>$ 5.200</b></span><span>Costo<b>$ 3.120</b></span></div>
+<div class="mg"><span>Margen</span><div class="track"><div class="fill" style="width: 100%; background: #15803D"></div></div><b style="color: #15803D">108 %</b></div>
+</div>
+</div>
+
+<div class="pc">
+<div class="thumb">Sin imagen</div>
+<div class="info">
+<div class="nm">Taza Frozen</div>
+<div class="sub">Estampado · Tazas · Stock 2</div>
+<div class="prices"><span>Lista<b>$ 3.934</b></span><span>Mayorista<b>$ 3.147</b></span><span>Costo<b>$ 6.517</b></span></div>
+<div class="mg"><span>Margen</span><div class="track"><div class="fill" style="width: 4%; background: #B91C1C"></div></div><b style="color: #B91C1C">−40 %</b></div>
+</div>
+</div>
+</div>
+
+<nav class="nav" aria-label="Navegación principal">
+<a href="MobDashboard.dc.html"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z"></path></svg>Inicio</a>
+<a href="MobPedidos.dc.html"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8"></path></svg>Pedidos</a>
+<a href="MobNuevoPedido.dc.html" class="fab" aria-label="Nuevo pedido"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
+<a href="MobBilletera.dc.html"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v13H3zM3 7l3-3h12l3 3M16 14h2"></path></svg>Billetera</a>
+<a href="MobMas.dc.html" class="on"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"></path></svg>Más</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -148,6 +148,26 @@ export class CalendarEventDialogComponent implements OnInit {
     return `Se repite ${names} hasta que lo pares`;
   }
 
+  /** Etiquetas cortas de repetir para las píldoras mobile. */
+  mobileRepeatLabel(value: string | number | boolean): string {
+    switch (value) {
+      case CalendarRepeat.NONE:
+        return 'No';
+      case CalendarRepeat.WEEKLY:
+        return 'Cada semana';
+      case CalendarRepeat.MONTHLY:
+        return 'Cada mes';
+      case CalendarRepeat.YEARLY:
+        return 'Cada año';
+      default:
+        return String(value);
+    }
+  }
+
+  setRepeat(value: string | number | boolean): void {
+    this.repeat = value as CalendarRepeat;
+  }
+
   ngOnInit(): void {
     const entry = this.data.entry;
     if (entry) {

@@ -25,6 +25,7 @@ import {
   DbPillOption,
   DbSegmentOption,
   DbSegmentedControlComponent,
+  MobileBarComponent,
 } from '@general-components';
 import {
   addDaysYmd,
@@ -35,6 +36,7 @@ import {
   formatMonthTitle,
   formatWhenLabel,
   groupItemsByDate,
+  parseYmd,
   startOfMonth,
   todayYmd,
   weekRangeContaining,
@@ -44,6 +46,8 @@ import { CalendarSideComponent } from './calendar-side/calendar-side.component';
 
 type CalendarView = 'month' | 'week' | 'list';
 type CalendarFilter = 'todos' | CalendarFeedType;
+/** Mobile: Agenda (lista) y Mes compacto. Semana desktop no entra en 390px. */
+type MobileCalendarView = 'agenda' | 'month';
 
 const TYPE_COLORS: Record<CalendarFeedType | 'todos', string> = {
   todos: '#5B7083',
@@ -51,6 +55,44 @@ const TYPE_COLORS: Record<CalendarFeedType | 'todos', string> = {
   event: '#15803D',
   reminder: '#D97706',
 };
+
+const TYPE_LABELS: Record<CalendarFeedType, string> = {
+  delivery: 'Entrega',
+  event: 'Evento',
+  reminder: 'Recordatorio',
+};
+
+const DAY_SHORT = ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'];
+const MONTH_NAMES = [
+  'enero',
+  'febrero',
+  'marzo',
+  'abril',
+  'mayo',
+  'junio',
+  'julio',
+  'agosto',
+  'septiembre',
+  'octubre',
+  'noviembre',
+  'diciembre',
+];
+
+export interface MobileWeekDay {
+  date: string;
+  shortName: string;
+  dayNumber: number;
+  selected: boolean;
+  isToday: boolean;
+  dotColor: string | null;
+}
+
+export interface MobileAgendaDay {
+  date: string;
+  header: string;
+  isToday: boolean;
+  items: CalendarFeedItem[];
+}
 
 @Component({
   selector: 'app-calendar',
@@ -62,6 +104,7 @@ const TYPE_COLORS: Record<CalendarFeedType | 'todos', string> = {
     DbPillGroupComponent,
     DbSegmentedControlComponent,
     CalendarSideComponent,
+    MobileBarComponent,
   ],
   templateUrl: './calendar.component.html',
   styleUrl: './calendar.component.scss',
@@ -77,6 +120,7 @@ export class CalendarComponent implements OnInit {
 
   readonly eventKind = CalendarEntryKind.EVENT;
   readonly reminderKind = CalendarEntryKind.REMINDER;
+  readonly typeLabels = TYPE_LABELS;
 
   readonly viewOptions: DbSegmentOption<CalendarView>[] = [
     { value: 'month', label: 'Mes' },
@@ -97,6 +141,14 @@ export class CalendarComponent implements OnInit {
   loading = true;
   error = '';
   private allItems: CalendarFeedItem[] = [];
+
+  /** Mobile state */
+  mobileView: MobileCalendarView = 'agenda';
+  mobileSelectedDay = todayYmd();
+  mobileWeekDays: MobileWeekDay[] = [];
+  mobileAgendaDays: MobileAgendaDay[] = [];
+  mobileMonthCells: DbCalendarDayCell[] = [];
+  mobileWeekTitle = '';
 
   monthCells: DbCalendarDayCell[] = [];
   weekCells: DbCalendarDayCell[] = [];
@@ -152,6 +204,7 @@ export class CalendarComponent implements OnInit {
   goToday(): void {
     const today = todayYmd();
     this.cursorMonth = this.view === 'week' ? today : startOfMonth(today);
+    this.mobileSelectedDay = today;
     this.reload();
   }
 
@@ -173,9 +226,72 @@ export class CalendarComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
+  setMobileView(view: MobileCalendarView): void {
+    this.mobileView = view;
+    if (view === 'month') {
+      this.cursorMonth = startOfMonth(this.mobileSelectedDay);
+    }
+    this.rebuildViews();
+    this.cdr.markForCheck();
+  }
+
+  prevMobileWeek(): void {
+    this.mobileSelectedDay = addDaysYmd(this.mobileSelectedDay, -7);
+    this.cursorMonth = startOfMonth(this.mobileSelectedDay);
+    this.rebuildViews();
+    this.cdr.markForCheck();
+  }
+
+  nextMobileWeek(): void {
+    this.mobileSelectedDay = addDaysYmd(this.mobileSelectedDay, 7);
+    this.cursorMonth = startOfMonth(this.mobileSelectedDay);
+    this.rebuildViews();
+    this.cdr.markForCheck();
+  }
+
+  prevMobileMonth(): void {
+    this.cursorMonth = addMonths(this.cursorMonth, -1);
+    this.mobileSelectedDay = this.cursorMonth;
+    this.rebuildViews();
+    this.cdr.markForCheck();
+  }
+
+  nextMobileMonth(): void {
+    this.cursorMonth = addMonths(this.cursorMonth, 1);
+    this.mobileSelectedDay = this.cursorMonth;
+    this.rebuildViews();
+    this.cdr.markForCheck();
+  }
+
+  selectMobileDay(date: string): void {
+    this.mobileSelectedDay = date;
+    this.cursorMonth = startOfMonth(date);
+    if (this.mobileView === 'month') {
+      this.mobileView = 'agenda';
+    }
+    this.rebuildViews();
+    this.cdr.markForCheck();
+  }
+
+  itemBarColor(item: CalendarFeedItem): string {
+    return item.late ? '#B91C1C' : TYPE_COLORS[item.type];
+  }
+
+  itemTimeLabel(item: CalendarFeedItem): string {
+    if (item.allDay || !item.startTime) return '';
+    return item.startTime.slice(0, 5);
+  }
+
+  itemTypeLabel(item: CalendarFeedItem): string {
+    return TYPE_LABELS[item.type] ?? '';
+  }
+
   openNew(kind: CalendarEntryKind, date?: string): void {
     this.formDialogs
-      .openCalendarEvent({ presetKind: kind, presetDate: date })
+      .openCalendarEvent({
+        presetKind: kind,
+        presetDate: date ?? this.mobileSelectedDay,
+      })
       .subscribe((saved) => {
         if (saved) this.reload();
       });
@@ -290,6 +406,90 @@ export class CalendarComponent implements OnInit {
     this.upcomingRows = filtered
       .filter((item) => item.date > today && item.date <= upcomingTo)
       .map((item) => this.toAgendaRow(item, true));
+
+    this.rebuildMobileViews(byDate, today);
+  }
+
+  private rebuildMobileViews(
+    byDate: Map<string, CalendarFeedItem[]>,
+    today: string,
+  ): void {
+    const week = weekRangeContaining(this.mobileSelectedDay);
+    const fromDate = parseYmd(week.from);
+    const toDate = parseYmd(week.to);
+    const monthName = MONTH_NAMES[toDate.getMonth()];
+    this.mobileWeekTitle = `${fromDate.getDate()} – ${toDate.getDate()} de ${monthName}`;
+
+    this.mobileWeekDays = [];
+    for (let i = 0; i < 7; i++) {
+      const date = addDaysYmd(week.from, i);
+      const d = parseYmd(date);
+      const items = byDate.get(date) ?? [];
+      this.mobileWeekDays.push({
+        date,
+        shortName: DAY_SHORT[d.getDay()],
+        dayNumber: d.getDate(),
+        selected: date === this.mobileSelectedDay,
+        isToday: date === today,
+        dotColor: this.dayDotColor(items),
+      });
+    }
+
+    this.mobileAgendaDays = [];
+    for (let i = 0; i < 7; i++) {
+      const date = addDaysYmd(week.from, i);
+      this.mobileAgendaDays.push({
+        date,
+        header: this.mobileDayHeader(date, today),
+        isToday: date === today,
+        items: byDate.get(date) ?? [],
+      });
+    }
+
+    this.mobileMonthCells = buildMonthCells(this.cursorMonth, byDate, today);
+  }
+
+  get mobileOverdueSummary(): { title: string; subtitle: string } | null {
+    if (this.overdueCount <= 0) return null;
+    const overdue = this.allItems.filter(
+      (item) => item.type === 'delivery' && item.late,
+    );
+    const title =
+      this.overdueCount === 1
+        ? '1 entrega atrasada'
+        : `${this.overdueCount} entregas atrasadas`;
+    const subtitle = overdue
+      .slice(0, 3)
+      .map(
+        (item) =>
+          `${item.orderId || ''} ${item.customerName || ''}`.trim(),
+      )
+      .filter(Boolean)
+      .join(' · ');
+    return { title, subtitle };
+  }
+
+  openOverdueOrders(): void {
+    void this.router.navigate(['/pedidos'], {
+      queryParams: { filtro: 'atrasados' },
+    });
+  }
+
+  private dayDotColor(items: CalendarFeedItem[]): string | null {
+    if (!items.length) return null;
+    const late = items.find((item) => item.late);
+    if (late) return '#B91C1C';
+    return TYPE_COLORS[items[0].type];
+  }
+
+  private mobileDayHeader(date: string, today: string): string {
+    const d = parseYmd(date);
+    const weekday = d
+      .toLocaleDateString('es-AR', { weekday: 'long' })
+      .toUpperCase();
+    const day = d.getDate();
+    if (date === today) return `${weekday} ${day} · HOY`;
+    return `${weekday} ${day}`;
   }
 
   private filteredItems(items: CalendarFeedItem[]): CalendarFeedItem[] {

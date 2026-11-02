@@ -19,7 +19,8 @@
 
     <db-input label="Título *" [(ngModel)]="title" name="title" />
 
-    <div class="cal-dialog__row">
+    <!-- Desktop: fecha + horas + checkbox -->
+    <div class="cal-dialog__row desktop-only">
       <db-input
         label="Fecha *"
         type="date"
@@ -42,14 +43,78 @@
       />
     </div>
 
-    <db-checkbox label="Todo el día" [(ngModel)]="allDay" name="allDay" />
+    <db-checkbox
+      class="desktop-only"
+      label="Todo el día"
+      [(ngModel)]="allDay"
+      name="allDay"
+    />
 
+    <!-- Mobile: interruptor + Desde/Hasta en 2 columnas -->
+    <div class="cal-dialog__allday mobile-only">
+      <span>Todo el día</span>
+      <button
+        type="button"
+        class="m-sw"
+        [class.m-sw--on]="allDay"
+        role="switch"
+        [attr.aria-checked]="allDay"
+        aria-label="Todo el día"
+        (click)="allDay = !allDay"
+      ></button>
+    </div>
+
+    <div class="cal-dialog__row cal-dialog__row--2 mobile-only">
+      <db-input
+        label="Fecha *"
+        type="date"
+        [(ngModel)]="date"
+        name="dateMobile"
+      />
+    </div>
+
+    @if (!allDay) {
+      <div class="cal-dialog__row cal-dialog__row--2 mobile-only">
+        <db-input
+          label="Desde"
+          type="time"
+          [(ngModel)]="startTime"
+          name="startTimeMobile"
+        />
+        <db-input
+          label="Hasta"
+          type="time"
+          [(ngModel)]="endTime"
+          name="endTimeMobile"
+        />
+      </div>
+    }
+
+    <!-- Desktop: select de repetir -->
     <db-select
+      class="desktop-only"
       label="Repetir"
       [options]="repeatOptions"
       [(ngModel)]="repeat"
       name="repeat"
     />
+
+    <!-- Mobile: píldoras de repetir -->
+    <div class="cal-dialog__field mobile-only">
+      <span class="cal-dialog__fl">Repetir</span>
+      <div class="cal-dialog__opts" role="group" aria-label="Repetir">
+        @for (opt of repeatOptions; track opt.value) {
+          <button
+            type="button"
+            class="cal-dialog__opt"
+            [class.cal-dialog__opt--on]="repeat === opt.value"
+            (click)="setRepeat(opt.value)"
+          >
+            {{ mobileRepeatLabel(opt.value) }}
+          </button>
+        }
+      </div>
+    </div>
 
     @if (repeat === CalendarRepeat.WEEKLY) {
       <app-calendar-event-weekdays
@@ -88,7 +153,8 @@
     </div>
   </div>
 
-  <div class="cal-dialog__footer">
+  <!-- Desktop footer -->
+  <div class="cal-dialog__footer desktop-only">
     <span class="cal-dialog__hint">{{ repeatHint }}</span>
     <div class="cal-dialog__actions">
       @if (isEdit) {
@@ -115,5 +181,31 @@
         (clicked)="save()"
       />
     </div>
+  </div>
+
+  <!-- Mobile footer: un primario; Cancelar = X del shell -->
+  <div class="cal-dialog__footer cal-dialog__footer--m mobile-only">
+    @if (isEdit) {
+      <db-button
+        label="Eliminar"
+        variant="delete"
+        format="soft"
+        [disabled]="loading"
+        (clicked)="remove()"
+      />
+    }
+    <db-button
+      [label]="
+        loading
+          ? 'Guardando…'
+          : kind === CalendarEntryKind.REMINDER
+            ? 'Guardar recordatorio'
+            : 'Guardar evento'
+      "
+      variant="primary"
+      format="solid"
+      [disabled]="loading"
+      (clicked)="save()"
+    />
   </div>
 </app-form-dialog-shell>

@@ -11,110 +11,253 @@
     />
   </db-state-message>
 } @else {
-  <app-print-jobs-toolbar
-    [tasksOnBoardCount]="tasksOnBoardCount"
-    [backlogCount]="backlogCount"
-    [blockedCount]="blockedCount"
-    [searchQuery]="searchQuery"
-    (searchQueryChange)="searchQuery = $event; onSearchChange()"
-    (newTask)="onNewTaskClick()"
-    [areaFilters]="areaFilters"
-    [areaFilter]="areaFilter"
-    (areaFilterChange)="setAreaFilter($event)"
-    [customerChips]="customerChips"
-    [customerFilter]="customerFilter"
-    (customerFilterToggle)="toggleCustomerFilter($event)"
-    [statusNotice]="statusNotice"
-  />
-
-  <section
-    class="work-board"
-    [class.work-board--updating]="updating"
-    [style.--board-columns]="boardColumnCount"
-  >
-    @for (column of visibleColumns; track column.status) {
-      <div
-        class="board-column"
-        [class]="'board-column--' + column.status + ' board-column--accent-' + column.accent"
+  <div class="mobile-only cola-m">
+    <db-mobile-bar title="Cola de trabajo" backLink="/dashboard">
+      <button
+        type="button"
+        class="m-ib"
+        aria-label="Buscar tarea"
+        [attr.aria-pressed]="mobileSearchOpen"
+        (click)="toggleMobileSearch()"
       >
-        <header class="board-column__header">
-          <h3 class="board-column__title">
-            @if (column.status === doneStatus) {
-              <span class="board-column__done-icon" aria-hidden="true">✓</span>
-            } @else {
-              <span
-                class="board-column__dot"
-                [class]="'board-column__dot--' + column.accent"
-                aria-hidden="true"
-              ></span>
-            }
-            {{ column.label }}
-          </h3>
-          <span class="board-column__count">{{ columnTaskCount(column.status) }}</span>
-        </header>
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="M20 20l-3.5-3.5" />
+        </svg>
+      </button>
+    </db-mobile-bar>
 
-        <div class="board-column__body">
-          @if (column.status === porHacerStatus && backlogJobs.length) {
-            <div class="board-column__zone">
-              <p class="board-column__zone-label">Por agregar al tablero</p>
-              <div
-                class="board-column__list board-column__list--backlog"
-                cdkDropList
-                [id]="backlogListId"
-                [cdkDropListData]="backlogJobs"
-                [cdkDropListConnectedTo]="connectedLists"
-                (cdkDropListDropped)="dropOnBacklog($event)"
-              >
-                @for (job of backlogJobs; track job.id) {
-                  <div class="board-card board-card--backlog" cdkDrag [cdkDragData]="job">
-                    <app-print-job-card
-                      cdkDragHandle
-                      [job]="job"
-                      variant="board"
-                      [orderStatus]="orderStatusByOrderId[job.orderId]"
-                    />
-                    <db-button
-                      extraClass="board-card__add"
-                      label="+ Agregar al tablero"
-                      variant="secondary"
-                      format="soft"
-                      [disabled]="updating"
-                      (clicked)="addToBoard(job)"
-                    />
-                  </div>
-                }
-              </div>
-            </div>
-          }
-
-          <div
-            class="board-column__list"
-            cdkDropList
-            [id]="column.status"
-            [cdkDropListData]="boardColumns[column.status]"
-            [cdkDropListConnectedTo]="connectedLists"
-            (cdkDropListDropped)="dropOnBoard($event, column.status)"
+    @if (mobileSearchOpen) {
+      <div class="m-tools">
+        <label class="m-search">
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="#5B7083"
+            stroke-width="2"
+            aria-hidden="true"
           >
-            @for (job of boardColumns[column.status]; track job.id) {
-              <div class="board-card" cdkDrag [cdkDragData]="job">
-                <app-print-job-card
-                  cdkDragHandle
-                  [job]="job"
-                  variant="board"
-                  [orderStatus]="orderStatusByOrderId[job.orderId]"
-                />
-              </div>
-            } @empty {
-              @if (!(column.status === porHacerStatus && backlogJobs.length)) {
-                <div class="board-column__empty">
-                  <p>Sin tareas</p>
-                  <span>Arrastrá una tarjeta acá</span>
-                </div>
-              }
-            }
-          </div>
-        </div>
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-3.5-3.5" />
+          </svg>
+          <input
+            type="search"
+            placeholder="Pedido, cliente o tarea"
+            aria-label="Buscar tarea"
+            [(ngModel)]="searchQuery"
+            (ngModelChange)="onSearchChange()"
+          />
+        </label>
       </div>
     }
-  </section>
+
+    <div class="cola-m__tabs" role="tablist" aria-label="Estado de las tareas">
+      @for (column of visibleColumns; track column.status) {
+        <button
+          type="button"
+          role="tab"
+          class="cola-m__tab"
+          [class.cola-m__tab--on]="mobileTabStatus === column.status"
+          [attr.aria-selected]="mobileTabStatus === column.status"
+          (click)="setMobileTab(column.status)"
+        >
+          <b>{{ columnTaskCount(column.status) }}</b>
+          {{ column.label }}
+        </button>
+      }
+    </div>
+
+    <div class="m-chips cola-m__chips" role="group" aria-label="Área">
+      @for (filter of areaFilters; track filter.label) {
+        <button
+          type="button"
+          class="m-chip"
+          [class.m-chip--on]="areaFilter === filter.value"
+          (click)="setAreaFilter(filter.value)"
+        >
+          {{ filter.label }}
+        </button>
+      }
+    </div>
+
+    @if (statusNotice) {
+      <p class="cola-m__notice" role="status">{{ statusNotice }}</p>
+    }
+
+    <div class="cola-m__list" [class.cola-m__list--updating]="updating">
+      @for (job of mobileTabJobs; track job.id) {
+        <article
+          class="cola-m__card"
+          [class.cola-m__card--blk]="isJobBlocked(job)"
+        >
+          <div class="cola-m__ln">
+            <span class="cola-m__oid"
+              >{{ job.orderId }} · {{ job.customerName }}</span
+            >
+            <span
+              class="cola-m__pr"
+              [class.cola-m__pr--urgent]="jobPriorityUrgent(job)"
+              >{{ jobPriorityBadge(job) }}</span
+            >
+          </div>
+          <div class="cola-m__tt">{{ jobTitle(job) }}</div>
+          @if (jobDetailLine(job); as detail) {
+            <div class="cola-m__meta">{{ detail }}</div>
+          }
+          <div class="cola-m__ln">
+            @if (isPrepareOrder(job)) {
+              <span class="cola-m__area cola-m__area--ventas">Ventas</span>
+            } @else {
+              <db-service-badge [type]="job.type" />
+            }
+            @if (jobDeliveryLabel(job); as delivery) {
+              <span class="cola-m__meta">{{ delivery }}</span>
+            } @else {
+              <span
+                class="cola-m__who"
+                [attr.aria-label]="'Cliente: ' + job.customerName"
+                >{{ customerInitials(job.customerName) }}</span
+              >
+            }
+          </div>
+          <div class="cola-m__actions">
+            @for (action of mobileActions(job); track action.label) {
+              <button
+                type="button"
+                class="cola-m__go"
+                [class.cola-m__go--s]="!action.primary"
+                [disabled]="updating"
+                (click)="runMobileAction(job, action)"
+              >
+                {{ action.label }}
+              </button>
+            }
+          </div>
+        </article>
+      } @empty {
+        <div class="m-card cola-m__empty">
+          <p>Sin tareas en esta columna</p>
+        </div>
+      }
+    </div>
+  </div>
+
+  <div class="desktop-only">
+    <app-print-jobs-toolbar
+      [tasksOnBoardCount]="tasksOnBoardCount"
+      [backlogCount]="backlogCount"
+      [blockedCount]="blockedCount"
+      [searchQuery]="searchQuery"
+      (searchQueryChange)="searchQuery = $event; onSearchChange()"
+      (newTask)="onNewTaskClick()"
+      [areaFilters]="areaFilters"
+      [areaFilter]="areaFilter"
+      (areaFilterChange)="setAreaFilter($event)"
+      [customerChips]="customerChips"
+      [customerFilter]="customerFilter"
+      (customerFilterToggle)="toggleCustomerFilter($event)"
+      [statusNotice]="statusNotice"
+    />
+
+    <section
+      class="work-board"
+      [class.work-board--updating]="updating"
+      [style.--board-columns]="boardColumnCount"
+    >
+      @for (column of visibleColumns; track column.status) {
+        <div
+          class="board-column"
+          [class]="'board-column--' + column.status + ' board-column--accent-' + column.accent"
+        >
+          <header class="board-column__header">
+            <h3 class="board-column__title">
+              @if (column.status === doneStatus) {
+                <span class="board-column__done-icon" aria-hidden="true">✓</span>
+              } @else {
+                <span
+                  class="board-column__dot"
+                  [class]="'board-column__dot--' + column.accent"
+                  aria-hidden="true"
+                ></span>
+              }
+              {{ column.label }}
+            </h3>
+            <span class="board-column__count">{{ columnTaskCount(column.status) }}</span>
+          </header>
+
+          <div class="board-column__body">
+            @if (column.status === porHacerStatus && backlogJobs.length) {
+              <div class="board-column__zone">
+                <p class="board-column__zone-label">Por agregar al tablero</p>
+                <div
+                  class="board-column__list board-column__list--backlog"
+                  cdkDropList
+                  [id]="backlogListId"
+                  [cdkDropListData]="backlogJobs"
+                  [cdkDropListConnectedTo]="connectedLists"
+                  (cdkDropListDropped)="dropOnBacklog($event)"
+                >
+                  @for (job of backlogJobs; track job.id) {
+                    <div class="board-card board-card--backlog" cdkDrag [cdkDragData]="job">
+                      <app-print-job-card
+                        cdkDragHandle
+                        [job]="job"
+                        variant="board"
+                        [orderStatus]="orderStatusByOrderId[job.orderId]"
+                      />
+                      <db-button
+                        extraClass="board-card__add"
+                        label="+ Agregar al tablero"
+                        variant="secondary"
+                        format="soft"
+                        [disabled]="updating"
+                        (clicked)="addToBoard(job)"
+                      />
+                    </div>
+                  }
+                </div>
+              </div>
+            }
+
+            <div
+              class="board-column__list"
+              cdkDropList
+              [id]="column.status"
+              [cdkDropListData]="boardColumns[column.status]"
+              [cdkDropListConnectedTo]="connectedLists"
+              (cdkDropListDropped)="dropOnBoard($event, column.status)"
+            >
+              @for (job of boardColumns[column.status]; track job.id) {
+                <div class="board-card" cdkDrag [cdkDragData]="job">
+                  <app-print-job-card
+                    cdkDragHandle
+                    [job]="job"
+                    variant="board"
+                    [orderStatus]="orderStatusByOrderId[job.orderId]"
+                  />
+                </div>
+              } @empty {
+                @if (!(column.status === porHacerStatus && backlogJobs.length)) {
+                  <div class="board-column__empty">
+                    <p>Sin tareas</p>
+                    <span>Arrastrá una tarjeta acá</span>
+                  </div>
+                }
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </section>
+  </div>
 }

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Nuevo presupuesto</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/8d80655a3ce2fd18937d7dfc20caabc4">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ph" style="height: 1000px">
+<div class="bar">
+<a class="ib" href="MobPresupuestos.dc.html" aria-label="Cerrar sin guardar"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+<div class="ttl">Nuevo presupuesto</div>
+<button class="ib txt" type="button">Guardar borrador</button>
+</div>
+<div class="body dock-pad">
+<h2 class="sec-t">1 · Cliente</h2>
+<div class="card">
+<div class="field"><span class="fl">Cliente</span><div class="inp"><span class="hint">Elegí un cliente (opcional en borrador)</span><span aria-hidden="true">▾</span></div></div>
+<div class="field"><span class="fl">Tipo de precio</span><div class="seg" role="radiogroup" aria-label="Tipo de precio"><button type="button" class="on" role="radio" aria-checked="true">Lista</button><button type="button" role="radio" aria-checked="false">Mayorista −20%</button></div></div>
+<div class="two">
+<div class="field"><span class="fl">Fecha</span><div class="inp"><span>2/11</span></div></div>
+<div class="field"><span class="fl">Válido hasta</span><div class="inp"><span>17/11</span></div></div>
+</div>
+</div>
+<h2 class="sec-t">2 · Líneas</h2>
+<div class="card">
+<div class="ln"><b style="font-size: 15px">Figura personalizada PLA</b><span class="pill">Impresión 3D</span></div>
+<div class="ln"><div class="step" role="group" aria-label="Cantidad"><button type="button" aria-label="Restar uno">−</button><span>1</span><button type="button" aria-label="Sumar uno">+</button></div><b style="font-size: 18px" class="num">$ 8.500</b></div>
+<div class="ln" style="border-top: 1px dashed #C9D8E3; padding-top: 10px"><span class="hint">Cotización: 45 g · 3,5 h · PLA</span><span aria-hidden="true">▸</span></div>
+</div>
+<div class="two">
+<button type="button" class="add">+ Del catálogo</button>
+<button type="button" class="add">+ A medida</button>
+</div>
+<h2 class="sec-t">3 · Descripción para el cliente</h2>
+<div class="inp ta">Detalle, plazos o condiciones que salen en el PDF</div>
+<div class="card">
+<div class="ln"><b>Total</b><span class="big" style="color: #0E7AAB">$ 8.500</span></div>
+<div class="ln"><span class="hint">Seña 50 % · saldo antes del despacho</span><span class="num">$ 4.250</span></div>
+<span class="hint">El medio de pago se elige al convertirlo en pedido.</span>
+</div>
+</div>
+<div class="dock"><a class="btn btn-p" href="MobPresupuestoDetalle.dc.html">Crear y enviar</a></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Detalle de presupuesto</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/8d80655a3ce2fd18937d7dfc20caabc4">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ph" style="height: 1000px">
+<div class="bar">
+<a class="ib" href="MobPresupuestos.dc.html" aria-label="Volver a presupuestos"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+<div class="ttl">qte-14</div>
+<button class="ib" type="button" aria-label="Más acciones: editar, duplicar, cancelar, eliminar"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"></path></svg></button>
+</div>
+<div class="body dock-pad">
+<div class="card">
+<div class="ln"><span class="pill p-b">Enviado</span><span class="lbl">Válido hasta 15/11/2026</span></div>
+<b style="font-size: 18px">Emprendimientos Norte</b>
+<div class="ln" style="justify-content: flex-start"><span class="pill p-b">Mayorista −20%</span><span class="pill">Canal: Mayorista</span></div>
+<div class="seg" role="group" aria-label="Cambiar estado"><button type="button">Borrador</button><button type="button" class="on">Enviado</button><button type="button">Aceptado</button><button type="button">Rechazado</button></div>
+</div>
+<h2 class="sec-t">Líneas</h2>
+<div class="card flush">
+<div class="row"><div class="t"><b>Árbol de equilibrio</b><span>10 × <s>$ 14.500</s> $ 11.600 · Impresión 3D</span></div><div class="end">$ 116.000</div></div>
+<div class="row"><div class="t"><b>Remera estampada DTF</b><span>20 × <s>$ 6.500</s> $ 5.200 · Estampado</span></div><div class="end">$ 104.000</div></div>
+<div class="row"><div class="t"><b>Llavero con logo</b><span>50 × <s>$ 1.200</s> $ 960 · Impresión 3D</span></div><div class="end">$ 48.000</div></div>
+<div class="row"><div class="t"><b>Adaptación del logo</b><span>Diseño gráfico · precio cerrado</span></div><div class="end">$ 9.500</div></div>
+</div>
+<div class="card">
+<div class="ln"><span>Subtotal a lista</span><span class="num">$ 344.500</span></div>
+<div class="ln"><span>Descuento mayorista</span><span class="num neg">−$ 67.000</span></div>
+<div class="ln" style="border-top: 1px solid #E3ECF2; padding-top: 8px"><b>Total</b><span class="big" style="color: #0E7AAB">$ 277.500</span></div>
+<div class="ln"><span class="hint">Seña sugerida 50 %</span><span class="num">$ 138.750</span></div>
+<div class="ln"><span class="hint">Ganancia estimada</span><span class="num pos">$ 77.510</span></div>
+</div>
+<h2 class="sec-t">Descripción</h2>
+<div class="card"><span style="font-size: 14px; color: #33495A">Seña del 50 % para empezar. Saldo antes del despacho. Envío a cargo del cliente.</span></div>
+</div>
+<div class="dock"><a class="btn btn-s" href="#">Exportar PDF</a><a class="btn btn-p" href="MobPedidoDetalle.dc.html">Aceptar y crear pedido</a></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Insumo</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/8d80655a3ce2fd18937d7dfc20caabc4">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ph" style="height: 844px">
+<div class="ghost" aria-hidden="true"><div class="gc"></div><div class="gc"></div></div>
+<div class="scrim" aria-hidden="true"></div>
+<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="i-t">
+<div class="grab" aria-hidden="true"></div>
+<div class="sh"><h2 id="i-t">Editar insumo</h2><a class="ib" href="MobInsumos.dc.html" aria-label="Cerrar"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a></div>
+<div class="sb">
+<div class="field"><span class="fl">Categoría</span><div class="seg" role="radiogroup" aria-label="Categoría"><button type="button" class="on" role="radio" aria-checked="true">FDM</button><button type="button" role="radio" aria-checked="false">Resina</button><button type="button" role="radio" aria-checked="false">Estampado</button><button type="button" role="radio" aria-checked="false">General</button></div></div>
+<div class="field"><label for="i-n">Nombre *</label><input id="i-n" class="inp" type="text" value="PLA negro"></div>
+<div class="two">
+<div class="field"><span class="fl">Tipo de filamento</span><div class="inp"><span>PLA</span><span aria-hidden="true">▾</span></div></div>
+<div class="field"><span class="fl">Marca *</span><div class="inp"><span>FilAr</span><span aria-hidden="true">▾</span></div></div>
+</div>
+<div class="field"><span class="fl">Color</span><div class="inp"><span style="display: inline-flex; align-items: center; gap: 8px"><span style="width: 16px; height: 16px; border-radius: 999px; background: #111; display: inline-block"></span>Negro</span><span aria-hidden="true">▾</span></div></div>
+<div class="two">
+<div class="field"><label for="i-q">Cantidad (kg)</label><input id="i-q" class="inp" type="text" inputmode="decimal" value="3,2"></div>
+<div class="field"><label for="i-m">Mínimo (kg)</label><input id="i-m" class="inp" type="text" inputmode="decimal" value="1"></div>
+</div>
+<div class="field"><span class="fl">Precio por kg</span><div class="inp" style="background: #F4F8FB"><b>$ 19.800</b><span class="hint">desde Ajustes › Filamento</span></div></div>
+</div>
+<div class="sfoot"><a class="btn btn-s" href="MobInsumos.dc.html" style="flex: 0 0 120px">Cancelar</a><a class="btn btn-p" href="MobInsumos.dc.html">Guardar</a></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

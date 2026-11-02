@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Usuarios</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/8d80655a3ce2fd18937d7dfc20caabc4">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ph" style="height: 900px">
+<div class="bar">
+<a class="ib" href="MobAjustes.dc.html" aria-label="Volver a ajustes"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M15 6l-6 6 6 6"></path></svg></a>
+<div class="ttl">Equipo</div>
+<button class="ib" type="button" aria-label="Dar de alta un usuario" style="color: #0E7AAB"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></button>
+</div>
+<div class="tabs" role="tablist" aria-label="Sección"><button type="button" class="tab on" role="tab" aria-selected="true">Usuarios</button><button type="button" class="tab" role="tab" aria-selected="false">Roles</button><button type="button" class="tab" role="tab" aria-selected="false">Áreas</button></div>
+<div class="body">
+<div class="note"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg>Solo entran a la app las personas que des de alta acá, con el mismo email con el que inician sesión.</div>
+<div class="card flush">
+<div class="row"><span class="av" aria-hidden="true">IC</span><div class="t"><b>Isaías Calfin</b><span>isaiasemanuelcalfin@gmail.com</span></div><span class="pill p-b">Admin</span></div>
+<div class="row"><span class="av" aria-hidden="true">SO</span><div class="t"><b>Sofía Ortiz</b><span>Producción · 3D y Estampado</span></div><span class="pill p-ok">Activa</span></div>
+<div class="row"><span class="av" aria-hidden="true">MV</span><div class="t"><b>Martín Vega</b><span>Ventas · todas las áreas</span></div><span class="pill">Inactivo</span></div>
+</div>
+<h2 class="sec-t">Editar: Sofía Ortiz</h2>
+<div class="card">
+<div class="ln"><span style="font-size: 14px">Puede entrar a la app</span><span class="sw on" role="switch" aria-checked="true" aria-label="Usuario activo" tabindex="0"></span></div>
+<div class="field"><span class="fl">Rol</span><div class="opts"><button type="button" class="opt">Administrador</button><button type="button" class="opt on">Producción</button><button type="button" class="opt">Ventas</button></div></div>
+<div class="field"><span class="fl">Áreas</span><div class="opts"><button type="button" class="opt on">3D</button><button type="button" class="opt on">Estampado</button><button type="button" class="opt">Diseño</button><button type="button" class="opt">Modelado</button></div></div>
+<a class="btn btn-p" href="#">Guardar cambios</a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

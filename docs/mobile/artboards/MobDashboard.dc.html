@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Dashboard</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+.ph{width:390px;box-sizing:border-box;background:#EEF4F8;font-family:Ubuntu,"Segoe UI",system-ui,sans-serif;color:#0F2A3A;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.bar{height:56px;background:#fff;border-bottom:1px solid #E3ECF2;display:flex;align-items:center;gap:6px;padding:0 8px;flex:none}
+.ib{width:44px;height:44px;border-radius:12px;border:0;background:transparent;display:inline-flex;align-items:center;justify-content:center;color:#0F2A3A;position:relative;text-decoration:none}
+.ttl{font-size:17px;font-weight:700;flex:1}
+.badge{position:absolute;top:6px;right:6px;min-width:18px;height:18px;border-radius:999px;background:#B91C1C;color:#fff;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;padding:0 4px;box-sizing:border-box}
+.body{padding:14px 16px 96px;display:flex;flex-direction:column;gap:12px}
+.card{background:#fff;border:1px solid #E3ECF2;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px}
+.lbl{font-size:12px;color:#5B7083}
+.ln{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.seg{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border:1px solid #C9D8E3;border-radius:12px;overflow:hidden;background:#fff}
+.seg button{border:0;background:#fff;min-height:40px;font:500 13px Ubuntu,sans-serif;color:#33495A}
+.seg button+button{border-left:1px solid #C9D8E3}
+.seg .on{background:#0E7AAB;color:#fff}
+.kpis{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}
+.kpi{background:#fff;border:1px solid #E3ECF2;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:2px;text-decoration:none;color:inherit}
+.kv{font-size:20px;font-weight:700;font-variant-numeric:tabular-nums}
+.ks{font-size:11px;color:#5B7083}
+.neg{color:#B91C1C}.pos{color:#15803D}
+.sec-t{margin:4px 0 0;font-size:12px;font-weight:700;letter-spacing:.06em;color:#5B7083;text-transform:uppercase}
+.todo{display:flex;align-items:center;gap:12px;padding:12px 14px;text-decoration:none;color:inherit;min-height:44px}
+.todo+.todo{border-top:1px solid #E3ECF2}
+.dot{width:10px;height:10px;border-radius:999px;flex:none}
+.todo b{font-size:14px;display:block}
+.todo span{font-size:12px;color:#5B7083}
+.chev{margin-left:auto;color:#9AAFBF;flex:none}
+.bars{display:flex;align-items:flex-end;gap:10px;height:96px;padding-top:6px}
+.bcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;font-size:11px;color:#5B7083}
+.bpair{display:flex;align-items:flex-end;gap:3px;height:72px}
+.bv{width:10px;border-radius:4px 4px 0 0;background:#0E7AAB}
+.bc{width:10px;border-radius:4px 4px 0 0;background:#8CC8E4}
+.leg{display:flex;gap:14px;font-size:12px;color:#33495A}
+.leg i{display:inline-block;width:10px;height:10px;border-radius:3px;margin-right:6px;vertical-align:-1px}
+.nav{position:absolute;left:0;right:0;bottom:0;height:72px;background:#fff;border-top:1px solid #E3ECF2;display:grid;grid-template-columns:repeat(5,minmax(0,1fr));align-items:center}
+.nav a{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:11px;color:#5B7083;text-decoration:none;min-height:48px;justify-content:center}
+.nav a.on{color:#0E7AAB;font-weight:700}
+.nav a.fab{width:56px;height:56px;min-height:56px;border-radius:18px;background:#0E7AAB;color:#fff;margin:-30px auto 0;box-shadow:0 8px 18px rgba(14,122,171,.35);font-size:0}
+</style>
+</helmet>
+<div class="ph" style="height: 1180px">
+<div class="bar">
+<button class="ib" type="button" aria-label="Abrir menú"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 7h16M4 12h16M4 17h16"></path></svg></button>
+<div class="ttl">Hola, Isaías</div>
+<button class="ib" type="button" aria-label="Notificaciones, 4 sin leer"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 16V11a6 6 0 0 1 12 0v5l1.5 2h-15zM10 20a2 2 0 0 0 4 0"></path></svg><span class="badge">4</span></button>
+</div>
+
+<div class="body">
+<div style="display: flex; flex-direction: column; gap: 10px">
+<div class="lbl">Noviembre 2026</div>
+<div class="seg" role="group" aria-label="Período"><button type="button" class="on">Mes</button><button type="button">Trimestre</button><button type="button">Año</button></div>
+</div>
+
+<div class="kpis">
+<div class="kpi"><span class="lbl">Vendido</span><span class="kv">$ 412.300</span><span class="ks">Entregados + mostrador</span></div>
+<div class="kpi"><span class="lbl">Cobrado</span><span class="kv pos">$ 318.950</span><span class="ks">Entró a tus cuentas</span></div>
+<div class="kpi"><span class="lbl">Ganancia neta</span><span class="kv">$ 176.420</span><span class="ks">Sin costos ni comisiones</span></div>
+<a class="kpi" href="MobBilletera.dc.html"><span class="lbl">Por cobrar</span><span class="kv neg">$ 93.350</span><span class="ks">3 pedidos con saldo</span></a>
+</div>
+
+<h2 class="sec-t">Para hoy</h2>
+<div class="card" style="padding: 0; gap: 0">
+<a class="todo" href="MobPedidos.dc.html"><span class="dot" style="background: #B91C1C"></span><div><b>2 pedidos atrasados</b><span>ord-10 · ord-11</span></div><svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a>
+<a class="todo" href="MobBilletera.dc.html"><span class="dot" style="background: #B91C1C"></span><div><b>$ 71.448 por cobrar</b><span>ord-28 lleva 102 días sin pagar</span></div><svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a>
+<a class="todo" href="MobProductos.dc.html"><span class="dot" style="background: #D97706"></span><div><b>Reponer 3 insumos</b><span>Spray adhesivo · Tinta DTF · Remeras</span></div><svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a>
+<a class="todo" href="MobProductos.dc.html"><span class="dot" style="background: #D97706"></span><div><b>6 productos bajo margen</b><span>Revisá costos y precios</span></div><svg class="chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6"></path></svg></a>
+</div>
+
+<h2 class="sec-t">Producción</h2>
+<div class="kpis">
+<a class="kpi" href="MobPedidos.dc.html"><span class="lbl">Pendientes</span><span class="kv">2</span><span class="ks">Esperan iniciar</span></a>
+<a class="kpi" href="MobCola.dc.html"><span class="lbl">En producción</span><span class="kv">2</span><span class="ks">2 imprimiendo · 0 en cola</span></a>
+</div>
+
+<h2 class="sec-t">Ingresos · últimos 6 meses</h2>
+<div class="card">
+<div class="leg"><span><i style="background: #0E7AAB"></i>Vendido</span><span><i style="background: #8CC8E4"></i>Cobrado</span></div>
+<div class="bars" aria-label="Vendido y cobrado por mes">
+<div class="bcol"><div class="bpair"><div class="bv" style="height: 30px"></div><div class="bc" style="height: 26px"></div></div>Jun</div>
+<div class="bcol"><div class="bpair"><div class="bv" style="height: 44px"></div><div class="bc" style="height: 38px"></div></div>Jul</div>
+<div class="bcol"><div class="bpair"><div class="bv" style="height: 38px"></div><div class="bc" style="height: 30px"></div></div>Ago</div>
+<div class="bcol"><div class="bpair"><div class="bv" style="height: 56px"></div><div class="bc" style="height: 46px"></div></div>Sep</div>
+<div class="bcol"><div class="bpair"><div class="bv" style="height: 62px"></div><div class="bc" style="height: 50px"></div></div>Oct</div>
+<div class="bcol"><div class="bpair"><div class="bv" style="height: 72px"></div><div class="bc" style="height: 56px"></div></div>Nov</div>
+</div>
+</div>
+
+<h2 class="sec-t">Ventas por canal</h2>
+<div class="card" style="gap: 12px">
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="ln" style="font-size: 13px"><span>Mayorista</span><b>$ 164.000</b></div><div style="height: 8px; border-radius: 999px; background: #EEF4F8"><div style="height: 8px; width: 100%; border-radius: 999px; background: #0E7AAB"></div></div></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="ln" style="font-size: 13px"><span>Instagram</span><b>$ 98.500</b></div><div style="height: 8px; border-radius: 999px; background: #EEF4F8"><div style="height: 8px; width: 60%; border-radius: 999px; background: #0E7AAB"></div></div></div>
+<div style="display: flex; flex-direction: column; gap: 4px"><div class="ln" style="font-size: 13px"><span>Mostrador</span><b>$ 52.000</b></div><div style="height: 8px; border-radius: 999px; background: #EEF4F8"><div style="height: 8px; width: 32%; border-radius: 999px; background: #0E7AAB"></div></div></div>
+<a href="#" style="font-size: 13px; font-weight: 700; text-decoration: none">Ver ranking de productos →</a>
+</div>
+</div>
+
+<nav class="nav" aria-label="Navegación principal">
+<a href="MobDashboard.dc.html" class="on"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z"></path></svg>Inicio</a>
+<a href="MobPedidos.dc.html"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8"></path></svg>Pedidos</a>
+<a href="MobNuevoPedido.dc.html" class="fab" aria-label="Nuevo pedido"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14"></path></svg></a>
+<a href="MobBilletera.dc.html"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round" aria-hidden="true"><path d="M3 7h18v13H3zM3 7l3-3h12l3 3M16 14h2"></path></svg>Billetera</a>
+<a href="MobMas.dc.html"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"></path></svg>Más</a>
+</nav>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 1180}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

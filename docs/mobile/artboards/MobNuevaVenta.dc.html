@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Venta de mostrador</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/8d80655a3ce2fd18937d7dfc20caabc4">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>body{margin:0}</style>
+</helmet>
+<div class="ph" style="height: 1000px">
+<div class="bar">
+<a class="ib" href="MobVentas.dc.html" aria-label="Cerrar sin guardar"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+<div class="ttl">Venta de mostrador</div>
+</div>
+<div class="tools">
+<label class="search"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#5B7083" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><input type="search" placeholder="Agregar producto publicado" aria-label="Buscar producto para agregar"></label>
+</div>
+<div class="body dock-pad">
+<h2 class="sec-t">Carrito · 3 productos</h2>
+<div class="card flush">
+<div class="row"><span class="thumb" aria-hidden="true">Img</span><div class="t"><b>Llavero corporativo 3D</b><span>$ 1.032 c/u · quedan 18</span></div><div class="step" role="group" aria-label="Cantidad de llaveros"><button type="button" aria-label="Restar uno">−</button><span>2</span><button type="button" aria-label="Sumar uno">+</button></div></div>
+<div class="row"><span class="thumb" aria-hidden="true">Img</span><div class="t"><b>Remera estampada DTF</b><span>$ 6.500 c/u · quedan 7</span></div><div class="step" role="group" aria-label="Cantidad de remeras"><button type="button" aria-label="Restar uno">−</button><span>1</span><button type="button" aria-label="Sumar uno">+</button></div></div>
+<div class="row"><span class="thumb" aria-hidden="true">Img</span><div class="t"><b>Taza personalizada</b><span>$ 3.836 c/u · quedan 9</span></div><div class="step" role="group" aria-label="Cantidad de tazas"><button type="button" aria-label="Restar uno">−</button><span>1</span><button type="button" aria-label="Sumar uno">+</button></div></div>
+</div>
+<div class="note"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg>El stock se descuenta al guardar y vuelve si borrás la venta.</div>
+<h2 class="sec-t">Cobro</h2>
+<div class="card">
+<div class="field"><span class="fl">Medio de pago</span><div class="seg" role="radiogroup" aria-label="Medio de pago"><button type="button" class="on" role="radio" aria-checked="true">Efectivo</button><button type="button" role="radio" aria-checked="false">Transferencia</button><button type="button" role="radio" aria-checked="false">Mercado Pago</button></div></div>
+<div class="ln"><span class="hint">Entra a</span><b style="font-size: 14px">Caja efectivo ▾</b></div>
+<div class="field"><span class="fl">Descuento</span><div class="seg" role="radiogroup" aria-label="Tipo de descuento"><button type="button" class="on" role="radio" aria-checked="true">Sin</button><button type="button" role="radio" aria-checked="false">%</button><button type="button" role="radio" aria-checked="false">$</button></div></div>
+<div class="field"><label for="v-f">Fecha</label><div class="inp" id="v-f"><span>Hoy, 2 nov</span><span aria-hidden="true">▾</span></div></div>
+<div class="field"><label for="v-n">Nota</label><div class="inp" id="v-n"><span class="hint">Opcional</span></div></div>
+</div>
+<div class="card">
+<div class="ln"><span>Subtotal</span><span class="num">$ 12.400</span></div>
+<div class="ln"><b>Total</b><span class="big" style="color: #0E7AAB">$ 12.400</span></div>
+</div>
+</div>
+<div class="dock"><a class="btn btn-p" href="MobVentas.dc.html">Cobrar $ 12.400</a></div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Nuevo pedido</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+.ph{width:390px;box-sizing:border-box;background:#EEF4F8;font-family:Ubuntu,"Segoe UI",system-ui,sans-serif;color:#0F2A3A;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.bar{height:56px;background:#fff;border-bottom:1px solid #E3ECF2;display:flex;align-items:center;gap:6px;padding:0 8px;flex:none}
+.ib{width:44px;height:44px;border-radius:12px;border:0;background:transparent;display:inline-flex;align-items:center;justify-content:center;color:#0F2A3A;text-decoration:none}
+.ttl{font-size:17px;font-weight:700;flex:1}
+.body{padding:14px 16px 120px;display:flex;flex-direction:column;gap:14px}
+.card{background:#fff;border:1px solid #E3ECF2;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:12px}
+.sec-t{margin:0;font-size:12px;font-weight:700;letter-spacing:.06em;color:#5B7083;text-transform:uppercase}
+.field{display:flex;flex-direction:column;gap:6px}
+.field label{font-size:13px;font-weight:500;color:#33495A}
+.inp{height:48px;border:1px solid #C9D8E3;border-radius:12px;padding:0 12px;font:15px Ubuntu,sans-serif;color:#0F2A3A;background:#fff;display:flex;align-items:center;justify-content:space-between;box-sizing:border-box}
+.hint{font-size:12px;color:#5B7083}
+.seg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));border:1px solid #C9D8E3;border-radius:12px;overflow:hidden}
+.seg button{border:0;background:#fff;min-height:44px;font:500 14px Ubuntu,sans-serif;color:#33495A}
+.seg button+button{border-left:1px solid #C9D8E3}
+.seg .on{background:#0E7AAB;color:#fff;font-weight:700}
+.ok{display:flex;gap:8px;align-items:center;padding:10px 12px;border-radius:12px;background:#F0FAF3;border:1px solid #B7E1C3;color:#14532D;font-size:13px}
+.ln{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.step{display:inline-flex;align-items:center;border:1px solid #C9D8E3;border-radius:12px;overflow:hidden}
+.step button{width:44px;height:44px;border:0;background:#F4F8FB;font:700 18px Ubuntu,sans-serif;color:#0F2A3A}
+.step span{min-width:48px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.fold{display:flex;align-items:center;justify-content:space-between;min-height:44px;border-top:1px dashed #C9D8E3;padding-top:10px;font-size:13px;color:#33495A}
+.add{min-height:48px;border-radius:12px;border:1px dashed #0E7AAB;background:#F4FAFD;color:#0B5F86;font:700 14px Ubuntu,sans-serif}
+.sum{display:flex;flex-direction:column;gap:6px;font-size:14px}
+.sum .ln span:last-child{font-variant-numeric:tabular-nums}
+.pay{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.pay button{min-height:44px;border-radius:12px;border:1px solid #C9D8E3;background:#fff;font:500 13px Ubuntu,sans-serif;color:#0F2A3A}
+.pay .on{background:#E0F0F8;border-color:#0E7AAB;color:#0B5F86;font-weight:700}
+.dock{position:absolute;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #E3ECF2;padding:12px 16px 20px;display:flex;flex-direction:column;gap:6px}
+.cta{min-height:54px;border-radius:14px;border:0;background:#0E7AAB;color:#fff;font:700 16px Ubuntu,sans-serif;display:flex;align-items:center;justify-content:center;text-decoration:none}
+</style>
+</helmet>
+<div class="ph" style="height: 1320px">
+<div class="bar">
+<a class="ib" href="MobPedidos.dc.html" aria-label="Cerrar sin guardar"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></a>
+<div class="ttl">Nuevo pedido</div>
+<span style="font-size: 12px; color: #5B7083; padding-right: 8px">Borrador guardado</span>
+</div>
+
+<div class="body">
+<h2 class="sec-t">1 · Cliente</h2>
+<div class="card">
+<div class="field"><label for="m-c">Cliente</label><div class="inp" id="m-c"><span>Emprendimientos Norte</span><span style="font-size: 11px; font-weight: 700; color: #0B5F86; background: #E0F0F8; border-radius: 999px; padding: 3px 8px">Revendedor · −20%</span></div></div>
+<div class="field"><label>Tipo de precio</label><div class="seg" role="radiogroup" aria-label="Tipo de precio"><button type="button" role="radio" aria-checked="false">Lista</button><button type="button" role="radio" aria-checked="true" class="on">Mayorista −20%</button></div></div>
+<div class="ln" style="gap: 10px">
+<div class="field" style="flex: 1"><label for="m-ch">Canal</label><div class="inp" id="m-ch"><span>Mayorista</span><span aria-hidden="true">▾</span></div></div>
+<div class="field" style="flex: 1"><label for="m-f">Entrega</label><div class="inp" id="m-f"><span>dom 8/11</span><span aria-hidden="true">▾</span></div></div>
+</div>
+<span class="hint">7 días desde hoy · tiene que ser posterior a hoy</span>
+</div>
+
+<h2 class="sec-t">2 · Productos</h2>
+<div class="card">
+<div class="ln"><b style="font-size: 15px">Llavero corporativo 3D</b><button class="ib" type="button" aria-label="Quitar Llavero corporativo 3D" style="width: 36px; height: 36px; color: #B91C1C"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+<div class="ln">
+<div class="step" role="group" aria-label="Cantidad"><button type="button" aria-label="Restar uno">−</button><span>65</span><button type="button" aria-label="Sumar uno">+</button></div>
+<div style="text-align: right"><div class="hint"><s>$ 1.032</s> · mayorista</div><b style="font-size: 18px">$ 826 c/u</b></div>
+</div>
+<div class="ln"><span class="hint">Subtotal</span><b>$ 53.690</b></div>
+<div class="fold"><span>Composición del costo · $ 363 c/u · margen 128 %</span><span aria-hidden="true">▸</span></div>
+</div>
+<button type="button" class="add">+ Agregar producto o servicio</button>
+<div class="ok"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><path d="M5 12l5 5L20 7"></path></svg>Supera la compra mínima mayorista de $ 50.000</div>
+
+<h2 class="sec-t">3 · Seña</h2>
+<div class="card">
+<div class="field"><label for="m-s">Monto</label><div class="inp" id="m-s"><b>$ 26.845</b><span class="hint">50 % del total</span></div></div>
+<div class="pay" role="radiogroup" aria-label="Medio de pago"><button type="button" role="radio" aria-checked="false">Efectivo</button><button type="button" role="radio" aria-checked="true" class="on">Transferencia</button><button type="button" role="radio" aria-checked="false">Mercado Pago</button></div>
+<div class="ln"><span class="hint">Entra a</span><b style="font-size: 14px">Banco ▾</b></div>
+</div>
+
+<h2 class="sec-t">Resumen</h2>
+<div class="card sum">
+<div class="ln"><span>Subtotal a lista</span><span>$ 67.080</span></div>
+<div class="ln"><span>Descuento mayorista</span><span style="color: #B91C1C">−$ 13.390</span></div>
+<div class="ln" style="border-top: 1px solid #E3ECF2; padding-top: 8px"><b>Total</b><b style="font-size: 20px; color: #0E7AAB">$ 53.690</b></div>
+<div class="ln"><span class="hint">Ganancia estimada</span><span style="color: #15803D; font-weight: 700">$ 30.095 · 128 %</span></div>
+<div class="ln"><span class="hint">Saldo al entregar</span><span>$ 26.845</span></div>
+</div>
+</div>
+
+<div class="dock">
+<a class="cta" href="MobPedidoDetalle.dc.html">Crear pedido · $ 53.690</a>
+<span class="hint" style="text-align: center">Se crea en Pendiente y la seña queda registrada</span>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 1320}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

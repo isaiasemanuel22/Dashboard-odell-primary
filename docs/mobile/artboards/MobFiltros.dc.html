@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell mobile · Filtros de pedidos</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+.ph{width:390px;height:844px;box-sizing:border-box;background:#EEF4F8;font-family:Ubuntu,"Segoe UI",system-ui,sans-serif;color:#0F2A3A;display:flex;flex-direction:column;position:relative;overflow:hidden}
+.ghost{padding:16px;display:flex;flex-direction:column;gap:10px}
+.gc{height:118px;border-radius:14px;background:#fff;border:1px solid #E3ECF2}
+.scrim{position:absolute;inset:0;background:rgba(15,42,58,.45)}
+.sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:20px 20px 0 0;box-shadow:0 -12px 32px rgba(15,42,58,.2);display:flex;flex-direction:column;max-height:760px}
+.grab{width:40px;height:4px;border-radius:999px;background:#C9D8E3;margin:10px auto 2px}
+.sh{display:flex;justify-content:space-between;align-items:center;padding:6px 16px 10px}
+.sh h2{margin:0;font-size:18px}
+.clear{border:0;background:transparent;color:#0E7AAB;font:700 14px Ubuntu,sans-serif;min-height:44px;padding:0 4px}
+.sb{padding:4px 16px 16px;display:flex;flex-direction:column;gap:18px;overflow:auto}
+.grp{display:flex;flex-direction:column;gap:10px}
+.gt{font-size:12px;font-weight:700;letter-spacing:.06em;color:#5B7083;text-transform:uppercase}
+.opts{display:flex;flex-wrap:wrap;gap:8px}
+.opt{min-height:40px;padding:0 14px;border-radius:999px;border:1px solid #C9D8E3;background:#fff;font:500 13px Ubuntu,sans-serif;color:#33495A;display:inline-flex;align-items:center;gap:6px}
+.opt.on{background:#E0F0F8;border-color:#0E7AAB;color:#0B5F86;font-weight:700}
+.row{display:flex;align-items:center;justify-content:space-between;min-height:48px;font-size:14px;border-top:1px solid #E3ECF2}
+.row:first-child{border-top:0}
+.sw{width:44px;height:26px;border-radius:999px;background:#C9D8E3;position:relative;flex:none}
+.sw.on{background:#0E7AAB}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:20px;height:20px;border-radius:999px;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.sw.on::after{left:21px}
+.foot{padding:12px 16px 20px;border-top:1px solid #E3ECF2;display:flex;gap:10px}
+.btn{min-height:52px;border-radius:14px;font:700 15px Ubuntu,sans-serif;display:inline-flex;align-items:center;justify-content:center;text-decoration:none}
+.btn-s{flex:0 0 120px;border:1px solid #C9D8E3;background:#fff;color:#0F2A3A}
+.btn-p{flex:1;border:0;background:#0E7AAB;color:#fff}
+</style>
+</helmet>
+<div class="ph">
+<div class="ghost" aria-hidden="true"><div class="gc"></div><div class="gc"></div><div class="gc"></div><div class="gc"></div><div class="gc"></div></div>
+<div class="scrim" aria-hidden="true"></div>
+<div class="sheet" role="dialog" aria-modal="true" aria-labelledby="f-t">
+<div class="grab" aria-hidden="true"></div>
+<div class="sh"><h2 id="f-t">Filtrar pedidos</h2><button type="button" class="clear">Limpiar</button></div>
+<div class="sb">
+<div class="grp">
+<div class="gt">Estado</div>
+<div class="opts">
+<button type="button" class="opt on">Pendiente</button>
+<button type="button" class="opt on">En progreso</button>
+<button type="button" class="opt on">En revisión</button>
+<button type="button" class="opt">Terminado</button>
+<button type="button" class="opt">Parcialmente entregado</button>
+<button type="button" class="opt">Entregado</button>
+<button type="button" class="opt">Cancelado</button>
+</div>
+</div>
+<div class="grp">
+<div class="gt">Área</div>
+<div class="opts">
+<button type="button" class="opt on">Impresión 3D</button>
+<button type="button" class="opt">Estampado</button>
+<button type="button" class="opt">Diseño gráfico</button>
+<button type="button" class="opt">Modelado</button>
+</div>
+</div>
+<div class="grp">
+<div class="gt">Entrega</div>
+<div class="opts">
+<button type="button" class="opt">Hoy</button>
+<button type="button" class="opt">Esta semana</button>
+<button type="button" class="opt">Atrasados</button>
+</div>
+</div>
+<div class="grp" style="gap: 0">
+<div class="row"><span>Solo con saldo pendiente</span><span class="sw" role="switch" aria-checked="false" aria-label="Solo con saldo pendiente" tabindex="0"></span></div>
+<div class="row"><span>Solo revendedores</span><span class="sw" role="switch" aria-checked="false" aria-label="Solo revendedores" tabindex="0"></span></div>
+</div>
+</div>
+<div class="foot">
+<a class="btn btn-s" href="MobPedidos.dc.html">Cancelar</a>
+<a class="btn btn-p" href="MobPedidos.dc.html">Ver 6 pedidos</a>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 390, "height": 844}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

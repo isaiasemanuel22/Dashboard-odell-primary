@@ -1,9 +1,201 @@
 @use '../../shared/styles/variables' as *;
+@use '../../shared/styles/mobile' as mobile;
 
 :host {
   display: block;
   min-width: 0;
   max-width: 100%;
+}
+
+@include mobile.mobile-only {
+  .cola-m {
+    background: mobile.$m-bg;
+    min-height: 100%;
+  }
+
+  .cola-m__tabs {
+    background: mobile.$m-surface;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(72px, 1fr));
+    border-bottom: 1px solid mobile.$m-border;
+  }
+
+  .cola-m__tab {
+    min-height: 52px;
+    border: 0;
+    background: transparent;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 500;
+    color: mobile.$m-text-secondary;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    border-bottom: 3px solid transparent;
+    padding: 6px 4px;
+    cursor: pointer;
+
+    b {
+      font-size: 15px;
+      font-weight: 700;
+      color: mobile.$m-text;
+    }
+
+    &--on {
+      color: mobile.$m-primary;
+      border-bottom-color: mobile.$m-primary;
+      font-weight: 700;
+
+      b {
+        color: mobile.$m-primary;
+      }
+    }
+  }
+
+  .cola-m__chips {
+    padding: 12px 16px 4px;
+    margin: 0;
+  }
+
+  .cola-m__notice {
+    margin: 8px 16px 0;
+    font-size: 12px;
+    color: mobile.$m-primary-dark;
+  }
+
+  .cola-m__list {
+    padding: 8px 16px;
+    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+
+    &--updating {
+      opacity: 0.85;
+      pointer-events: none;
+    }
+  }
+
+  .cola-m__card {
+    background: mobile.$m-surface;
+    border: 1px solid mobile.$m-border;
+    border-radius: mobile.$m-radius-md;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+
+    &--blk {
+      border-color: #f3b4b4;
+      background: #fffbfb;
+    }
+  }
+
+  .cola-m__ln {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .cola-m__oid {
+    font-size: 12px;
+    color: mobile.$m-text-secondary;
+    font-weight: 500;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .cola-m__pr {
+    font-size: 11px;
+    font-weight: 700;
+    color: mobile.$m-text-label;
+    flex: none;
+
+    &--urgent {
+      color: #b91c1c;
+    }
+  }
+
+  .cola-m__tt {
+    font-size: 15px;
+    font-weight: 700;
+    color: mobile.$m-text;
+  }
+
+  .cola-m__meta {
+    font-size: 12px;
+    color: mobile.$m-text-secondary;
+  }
+
+  .cola-m__area {
+    font-size: 11px;
+    font-weight: 500;
+    padding: 2px 8px;
+    border-radius: 6px;
+
+    &--ventas {
+      background: #f1f5f9;
+      color: #33495a;
+    }
+  }
+
+  .cola-m__who {
+    width: 28px;
+    height: 28px;
+    border-radius: 999px;
+    background: mobile.$m-primary-pale;
+    color: mobile.$m-primary-dark;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex: none;
+  }
+
+  .cola-m__actions {
+    display: flex;
+    gap: 10px;
+  }
+
+  .cola-m__go {
+    flex: 1.4;
+    min-height: 44px;
+    border-radius: mobile.$m-radius-sm;
+    border: 0;
+    background: mobile.$m-primary;
+    color: #fff;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0 12px;
+
+    &--s {
+      flex: 1;
+      background: mobile.$m-surface;
+      color: mobile.$m-text;
+      border: 1px solid mobile.$m-border-input;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
+  .cola-m__empty {
+    p {
+      margin: 0;
+      font-size: 14px;
+      color: mobile.$m-text-label;
+    }
+  }
 }
 
 .work-board {
