@@ -17,6 +17,7 @@ import {
 } from '../../../core/models';
 import { SettingsService, SuppliesService } from '../../../core/services/settings.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import {
   DbButtonComponent,
   DbCheckboxComponent,
@@ -25,6 +26,7 @@ import {
   DbPillGroupComponent,
   DbSelectOption,
   DbStateMessageComponent,
+  MobileBarComponent,
   DB_DATA_TABLE,
   OdlActionEvent,
   OdlColumn,
@@ -44,6 +46,7 @@ import { GeneralValuesProfileEditorComponent } from './general-values-profile-ed
     DbButtonComponent,
     DbPillGroupComponent,
     DbStateMessageComponent,
+    MobileBarComponent,
     ...DB_DATA_TABLE,
     GeneralValuesProfileEditorComponent,
   ],
@@ -78,8 +81,11 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
   private readonly settingsService = inject(SettingsService);
   private readonly suppliesService = inject(SuppliesService);
   private readonly realtime = inject(RealtimeService);
+  private readonly breakpoint = inject(BreakpointService);
   private readonly destroyRef = inject(DestroyRef);
   private settingsSub?: Subscription;
+
+  readonly isMobile = this.breakpoint.isMobile;
 
   settings: GeneralSettings | null = null;
   supplies: Supply[] = [];
@@ -320,6 +326,20 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
 
   isWash(profile: MachineProfile): boolean {
     return profile.role === MachineProfileRole.WASH;
+  }
+
+  machineRowCaption(profile: MachineProfile): string {
+    const role = this.roleLabels[profile.role];
+    const watts = `${profile.watts || 0} W`;
+    if (profile.costPerHour) {
+      const money = new Intl.NumberFormat('es-AR', {
+        style: 'currency',
+        currency: 'ARS',
+        maximumFractionDigits: 0,
+      }).format(profile.costPerHour);
+      return `${role} · ${watts} · ${money} / h`;
+    }
+    return `${role} · ${watts}`;
   }
 
   productTypeLabel(profile: MachineProfile): string | null {

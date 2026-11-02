@@ -1,94 +1,172 @@
 @if (settings) {
-  <section class="settings-card">
-    @if (message) {
-      <p class="message">{{ message }}</p>
-    }
+  @if (isMobile()) {
+    <div class="st-m">
+      <db-mobile-bar title="Colores" backLink="/ajustes">
+        <button type="button" class="m-ib" aria-label="Agregar color" (click)="showMobileCreate = true">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        </button>
+      </db-mobile-bar>
 
-    <div class="settings-card__head">
-      <div>
-        <h3>Catálogo de colores</h3>
-        <p>
-          Colores disponibles para insumos y productos, con nombre y código hexadecimal
-          · {{ settings.colors.length }} colores
-        </p>
+      <div class="m-tools">
+        <label class="m-search">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="#5B7083" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+          <input type="search" placeholder="Buscar color" aria-label="Buscar colores" [(ngModel)]="search" name="mColorSearch" />
+        </label>
       </div>
-      <db-button
-        label="+ Agregar color"
-        variant="primary"
-        format="solid"
-        (clicked)="focusCreate()"
-      />
-    </div>
 
-    <div class="color-toolbar">
-      <db-pill-group
-        [options]="families"
-        [value]="family"
-        label="Familia"
-        size="sm"
-        ariaLabel="Filtrar por familia"
-        (valueChange)="family = $event"
-      />
-      <label class="list-search">
-        <span aria-hidden="true">⌕</span>
-        <input
-          type="search"
-          placeholder="Buscar por nombre o HEX"
-          [(ngModel)]="search"
-          name="colorSearch"
-        />
-      </label>
-    </div>
-
-    <form class="color-create" id="color-form" (ngSubmit)="addColor()">
-      <span class="color-swatch color-swatch--lg" [style.background-color]="previewHex"></span>
-      <db-input
-        id="new-color-name"
-        name="newColorName"
-        placeholder="Ej: Azul Odell"
-        [(ngModel)]="newColor.name"
-      />
-      <db-input
-        name="newColorHex"
-        placeholder="#0E7AAB"
-        [(ngModel)]="newColor.hex"
-      />
-      <db-button label="Agregar" variant="primary" format="solid" buttonType="submit" />
-    </form>
-
-    @if (visibleColors.length) {
-      <div class="color-grid">
-        @for (item of visibleColors; track item.id) {
-          <article class="color-item">
-            @if (editingId === item.id) {
-              <span class="color-swatch" [style.background-color]="editForm.hex"></span>
-              <db-input [(ngModel)]="editForm.name" [name]="'editName' + item.id" />
-              <db-input [(ngModel)]="editForm.hex" [name]="'editHex' + item.id" />
-              <db-button label="Guardar" variant="primary" format="solid" (clicked)="saveEdit()" />
-              <db-button label="Cancelar" variant="secondary" format="soft" (clicked)="cancelEdit()" />
-            } @else {
-              <span class="color-swatch" [style.background-color]="item.hex"></span>
-              <div>
-                <strong>{{ item.name }}</strong>
-                <small>{{ item.hex }}</small>
-              </div>
-              <db-row-menu
-                [open]="openMenuId === item.id"
-                top="2.3rem"
-                right="0.4rem"
-                (toggled)="toggleMenu(item.id)"
-              >
-                <button type="button" (click)="startEdit(item)">Editar</button>
-                <button type="button" class="is-danger" (click)="deleteColor(item.id)">Eliminar</button>
-              </db-row-menu>
-            }
-          </article>
+      <div class="m-body">
+        @if (message) {
+          <p class="st-m__msg">{{ message }}</p>
         }
+        <span class="st-m__hint">{{ settings.colors.length }} colores · tocá uno para editarlo. Los que usa algún insumo no se pueden borrar.</span>
+
+        @if (showMobileCreate) {
+          <div class="m-card">
+            <div class="st-m__field">
+              <label for="m-color-name">Nombre</label>
+              <input id="m-color-name" class="st-m__inp" [(ngModel)]="newColor.name" name="mNewColorName" />
+            </div>
+            <div class="st-m__field">
+              <label for="m-color-hex">HEX</label>
+              <input id="m-color-hex" class="st-m__inp" [(ngModel)]="newColor.hex" name="mNewColorHex" />
+            </div>
+            <span class="st-m__dot" [style.background-color]="previewHex"></span>
+            <div class="st-m__opts">
+              <button type="button" class="st-m__opt" (click)="showMobileCreate = false">Cancelar</button>
+              <button type="button" class="st-m__opt st-m__opt--on" (click)="addColor(); showMobileCreate = false">Agregar</button>
+            </div>
+          </div>
+        }
+
+        @if (editingId) {
+          <div class="m-card">
+            <div class="st-m__field">
+              <label for="m-edit-color-name">Nombre</label>
+              <input id="m-edit-color-name" class="st-m__inp" [(ngModel)]="editForm.name" name="mEditColorName" />
+            </div>
+            <div class="st-m__field">
+              <label for="m-edit-color-hex">HEX</label>
+              <input id="m-edit-color-hex" class="st-m__inp" [(ngModel)]="editForm.hex" name="mEditColorHex" />
+            </div>
+            <span class="st-m__dot" [style.background-color]="editForm.hex"></span>
+            <div class="st-m__opts">
+              <button type="button" class="st-m__opt" (click)="cancelEdit()">Cancelar</button>
+              <button type="button" class="st-m__opt st-m__opt--on" (click)="saveEdit()">Guardar</button>
+              <button type="button" class="st-m__opt" (click)="deleteColor(editingId!)">Eliminar</button>
+            </div>
+          </div>
+        }
+
+        <div class="st-m__colors">
+          @for (item of visibleColors; track item.id) {
+            <button type="button" class="st-m__sw" (click)="startEdit(item)">
+              <span class="st-m__dot" [style.background]="item.hex"></span>
+              <b>{{ item.name }}</b>
+              <small>{{ colorMeta(item) }}</small>
+            </button>
+          }
+        </div>
       </div>
-    } @else {
-      <p class="empty-group">No hay colores que coincidan con la búsqueda.</p>
-    }
-  </section>
+    </div>
+  } @else {
+    <section class="settings-card">
+      @if (message) {
+        <p class="message">{{ message }}</p>
+      }
+
+      <div class="settings-card__head">
+        <div>
+          <h3>Catálogo de colores</h3>
+          <p>
+            Colores disponibles para insumos y productos, con nombre y código hexadecimal
+            · {{ settings.colors.length }} colores
+          </p>
+        </div>
+        <db-button
+          label="+ Agregar color"
+          variant="primary"
+          format="solid"
+          (clicked)="focusCreate()"
+        />
+      </div>
+
+      <div class="color-toolbar">
+        <db-pill-group
+          [options]="families"
+          [value]="family"
+          label="Familia"
+          size="sm"
+          ariaLabel="Filtrar por familia"
+          (valueChange)="family = $event"
+        />
+        <label class="list-search">
+          <span aria-hidden="true">⌕</span>
+          <input
+            type="search"
+            placeholder="Buscar por nombre o HEX"
+            [(ngModel)]="search"
+            name="colorSearch"
+          />
+        </label>
+      </div>
+
+      <form class="color-create" id="color-form" (ngSubmit)="addColor()">
+        <span class="color-swatch color-swatch--lg" [style.background-color]="previewHex"></span>
+        <db-input
+          id="new-color-name"
+          name="newColorName"
+          placeholder="Ej: Azul Odell"
+          [(ngModel)]="newColor.name"
+        />
+        <db-input
+          name="newColorHex"
+          placeholder="#0E7AAB"
+          [(ngModel)]="newColor.hex"
+        />
+        <db-button label="Agregar" variant="primary" format="solid" buttonType="submit" />
+      </form>
+
+      @if (visibleColors.length) {
+        <div class="color-grid">
+          @for (item of visibleColors; track item.id) {
+            <article class="color-item">
+              @if (editingId === item.id) {
+                <span class="color-swatch" [style.background-color]="editForm.hex"></span>
+                <db-input [(ngModel)]="editForm.name" [name]="'editName' + item.id" />
+                <db-input [(ngModel)]="editForm.hex" [name]="'editHex' + item.id" />
+                <db-button label="Guardar" variant="primary" format="solid" (clicked)="saveEdit()" />
+                <db-button label="Cancelar" variant="secondary" format="soft" (clicked)="cancelEdit()" />
+              } @else {
+                <span class="color-swatch" [style.background-color]="item.hex"></span>
+                <div>
+                  <strong>{{ item.name }}</strong>
+                  <small>{{ item.hex }}</small>
+                </div>
+                <db-row-menu
+                  [open]="openMenuId === item.id"
+                  top="2.3rem"
+                  right="0.4rem"
+                  (toggled)="toggleMenu(item.id)"
+                >
+                  <button type="button" (click)="startEdit(item)">Editar</button>
+                  <button type="button" class="is-danger" (click)="deleteColor(item.id)">Eliminar</button>
+                </db-row-menu>
+              }
+            </article>
+          }
+        </div>
+      } @else {
+        <p class="empty-group">No hay colores que coincidan con la búsqueda.</p>
+      }
+    </section>
+  }
 } @else {
-  <db-state-message [loading]="true" loadingMessage="Cargando configuración..." />
+  @if (isMobile()) {
+    <db-mobile-bar title="Colores" backLink="/ajustes" />
+    <div class="m-body">
+      <db-state-message [loading]="true" loadingMessage="Cargando configuración..." />
+    </div>
+  } @else {
+    <db-state-message [loading]="true" loadingMessage="Cargando configuración..." />
+  }
 }

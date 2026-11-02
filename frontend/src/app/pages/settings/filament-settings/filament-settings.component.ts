@@ -12,6 +12,7 @@ import {
   GeneralSettings,
 } from '../../../core/models';
 import { SettingsService } from '../../../core/services/settings.service';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import {
   buildFilamentTypeOptions,
   filamentTypeDisplayLabel,
@@ -24,11 +25,20 @@ import {
   DbInputComponent,
   DbPillGroupComponent,
   DbStateMessageComponent,
+  MobileBarComponent,
   DB_DATA_TABLE,
   OdlActionEvent,
   OdlColumn,
   OdlRowAction,
 } from '@general-components';
+import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
+
+interface FilamentPriceGroup {
+  key: string;
+  label: string;
+  average: number;
+  items: FilamentPriceConfig[];
+}
 
 @Component({
   selector: 'app-filament-settings',
@@ -40,6 +50,8 @@ import {
     DbInputComponent,
     DbPillGroupComponent,
     DbStateMessageComponent,
+    MobileBarComponent,
+    CurrencyArsPipe,
     ...DB_DATA_TABLE,
   ],
   templateUrl: './filament-settings.component.html',
@@ -47,7 +59,10 @@ import {
 })
 export class FilamentSettingsComponent implements OnInit, OnDestroy {
   private readonly settingsService = inject(SettingsService);
+  private readonly breakpoint = inject(BreakpointService);
   private settingsSub?: Subscription;
+
+  readonly isMobile = this.breakpoint.isMobile;
 
   settings: GeneralSettings | null = null;
   message = '';
@@ -58,6 +73,8 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
   extraFilamentTypes: string[] = [];
   search = '';
   typeFilter = 'all';
+  mobileTab: 'precios' | 'tipos' | 'marcas' = 'precios';
+  showMobileCreate = false;
 
   readonly priceActions: OdlRowAction<FilamentPriceConfig>[] = [
     { id: 'editar', label: 'Editar' },
@@ -130,9 +147,55 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
     });
   }
 
+  get priceGroups(): FilamentPriceGroup[] {
+    const catalog = this.settings?.filamentTypes ?? [];
+    const map = new Map<string, FilamentPriceConfig[]>();
+    for (const item of this.settings?.filamentPrices ?? []) {
+      const key = item.filamentTypeId || item.materialType || 'sin-tipo';
+      const list = map.get(key) ?? [];
+      list.push(item);
+      map.set(key, list);
+    }
+    return [...map.entries()]
+      .map(([key, items]) => {
+        const sum = items.reduce((acc, row) => acc + (row.pricePerKg || 0), 0);
+        const average = items.length ? Math.round(sum / items.length) : 0;
+        return {
+          key,
+          label: filamentTypeDisplayLabel(key, catalog),
+          average,
+          items: items.slice().sort((a, b) => a.brand.localeCompare(b.brand, 'es')),
+        };
+      })
+      .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+  }
+
+  get brandList(): string[] {
+    const brands = new Set<string>();
+    for (const item of this.settings?.filamentPrices ?? []) {
+      if (item.brand.trim()) brands.add(item.brand.trim());
+    }
+    return [...brands].sort((a, b) => a.localeCompare(b, 'es'));
+  }
+
+  typePriceCount(typeId: string): number {
+    return (this.settings?.filamentPrices ?? []).filter(
+      (item) => (item.filamentTypeId || item.materialType) === typeId,
+    ).length;
+  }
+
+  brandPriceCount(brand: string): number {
+    return (this.settings?.filamentPrices ?? []).filter(
+      (item) => item.brand.trim() === brand,
+    ).length;
+  }
+
   focusCreate(): void {
     this.cancelEdit();
-    queueMicrotask(() => document.getElementById('filament-brand')?.focus());
+    this.showMobileCreate = true;
+    queueMicrotask(() =>
+      document.getElementById(this.isMobile() ? 'fm-new-brand' : 'filament-brand')?.focus(),
+    );
   }
 
   onPriceAction(event: OdlActionEvent<FilamentPriceConfig>): void {

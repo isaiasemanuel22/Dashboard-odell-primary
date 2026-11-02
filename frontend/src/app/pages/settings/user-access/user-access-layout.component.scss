@@ -1,5 +1,8 @@
 @use '../../../shared/styles/variables' as *;
 @use '../../../shared/styles/screen' as screen;
+@use '../settings-mobile' as st;
+
+@include st.settings-mobile;
 
 :host {
   display: block;

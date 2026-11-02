@@ -1,78 +1,129 @@
-<section class="settings-card">
-  <app-user-access-head
-    [detail]="'Perfiles, roles y áreas de trabajo · ' + activeUserLabel"
-  >
-    <db-button
-      label="+ Nuevo usuario"
-      variant="primary"
-      format="solid"
-      (clicked)="openCreate()"
-    />
-  </app-user-access-head>
+@if (isMobile()) {
+  <app-settings-users-mobile-shell>
+    <button
+      barAction
+      type="button"
+      class="m-ib"
+      aria-label="Dar de alta un usuario"
+      (click)="openCreate()"
+    >
+      <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+    </button>
 
-  @if (error && !modalOpen) {
-    <div class="error-banner">{{ error }}</div>
-  }
+    @if (error && !modalOpen) {
+      <div class="st-m__note st-m__note--w">{{ error }}</div>
+    }
 
-  <db-state-message
-    [loading]="loading"
-    [empty]="!loading && users.length === 0"
-    loadingMessage="Cargando usuarios..."
-    emptyMessage="Todavía no hay usuarios registrados."
-  >
-    <db-button
-      emptyActions
-      label="Crear primer usuario"
-      variant="primary"
-      format="solid"
-      (clicked)="openCreate()"
-    />
-  </db-state-message>
-
-  @if (!loading && users.length) {
-    <div class="access-toolbar">
-      <app-user-access-nav />
-      <label class="list-search">
-        <span aria-hidden="true">⌕</span>
-        <input
-          type="search"
-          placeholder="Buscar por nombre o email"
-          [(ngModel)]="search"
-          name="userSearch"
-        />
-      </label>
+    <div class="st-m__note">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="12" r="9" /><path d="M12 8v5M12 16h.01" /></svg>
+      Solo entran a la app las personas que des de alta acá, con el mismo email con el que inician sesión.
     </div>
 
-    <db-data-table
-      label="Usuarios"
-      [rows]="visibleUsers"
-      [columns]="userColumns"
-      [actions]="userActions"
-      [clientSide]="false"
-      emptyText="No hay usuarios que coincidan con la búsqueda."
-      (action)="onUserAction($event)"
+    @if (loading) {
+      <db-state-message [loading]="true" loadingMessage="Cargando usuarios..." />
+    } @else {
+      <div class="m-card m-card--flush">
+        @for (user of visibleUsers; track user.id) {
+          <button type="button" class="m-row" (click)="openEdit(user)">
+            <span class="st-m__av" aria-hidden="true">{{ initials(user.displayName) }}</span>
+            <div class="m-row__text">
+              <b>{{ user.displayName }}</b>
+              <span>{{ userMobileSubtitle(user) }}</span>
+            </div>
+            @if (isAdminUser(user)) {
+              <span class="m-pill m-pill--b">Admin</span>
+            } @else {
+              <span class="m-pill" [class.m-pill--ok]="user.active">{{ user.active ? 'Activo' : 'Inactivo' }}</span>
+            }
+          </button>
+        } @empty {
+          <div class="m-row">
+            <div class="m-row__text">
+              <b>Sin usuarios</b>
+              <span>Dá de alta el primero</span>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </app-settings-users-mobile-shell>
+} @else {
+  <section class="settings-card">
+    <app-user-access-head
+      [detail]="'Perfiles, roles y áreas de trabajo · ' + activeUserLabel"
     >
-      <ng-template odlCell="roles" let-user>
-        <div class="chip-row">
-          @for (roleId of user.roleIds; track roleId) {
-            <span class="role-pill">{{ roleName(roleId) }}</span>
-          } @empty {
-            <span class="role-pill">Sin roles</span>
-          }
-        </div>
-      </ng-template>
-      <ng-template odlCell="areas" let-user>
-        <div class="chip-row">
-          @for (area of userAreas(user); track area.id) {
-            <db-area-chip [area]="area.slug" [label]="area.name" />
-          } @empty {
-            <db-area-chip area="general" label="Sin áreas" />
-          }
-        </div>
-      </ng-template>
-    </db-data-table>
-  }
-</section>
+      <db-button
+        label="+ Nuevo usuario"
+        variant="primary"
+        format="solid"
+        (clicked)="openCreate()"
+      />
+    </app-user-access-head>
+
+    @if (error && !modalOpen) {
+      <div class="error-banner">{{ error }}</div>
+    }
+
+    <db-state-message
+      [loading]="loading"
+      [empty]="!loading && users.length === 0"
+      loadingMessage="Cargando usuarios..."
+      emptyMessage="Todavía no hay usuarios registrados."
+    >
+      <db-button
+        emptyActions
+        label="Crear primer usuario"
+        variant="primary"
+        format="solid"
+        (clicked)="openCreate()"
+      />
+    </db-state-message>
+
+    @if (!loading && users.length) {
+      <div class="access-toolbar">
+        <app-user-access-nav />
+        <label class="list-search">
+          <span aria-hidden="true">⌕</span>
+          <input
+            type="search"
+            placeholder="Buscar por nombre o email"
+            [(ngModel)]="search"
+            name="userSearch"
+          />
+        </label>
+      </div>
+
+      <db-data-table
+        label="Usuarios"
+        [rows]="visibleUsers"
+        [columns]="userColumns"
+        [actions]="userActions"
+        [clientSide]="false"
+        emptyText="No hay usuarios que coincidan con la búsqueda."
+        (action)="onUserAction($event)"
+      >
+        <ng-template odlCell="roles" let-user>
+          <div class="chip-row">
+            @for (roleId of user.roleIds; track roleId) {
+              <span class="role-pill">{{ roleName(roleId) }}</span>
+            } @empty {
+              <span class="role-pill">Sin roles</span>
+            }
+          </div>
+        </ng-template>
+        <ng-template odlCell="areas" let-user>
+          <div class="chip-row">
+            @for (area of userAreas(user); track area.id) {
+              <db-area-chip [area]="area.slug" [label]="area.name" />
+            } @empty {
+              <db-area-chip area="general" label="Sin áreas" />
+            }
+          </div>
+        </ng-template>
+      </db-data-table>
+    }
+  </section>
+}
 
 @if (modalOpen) {
   <app-form-modal

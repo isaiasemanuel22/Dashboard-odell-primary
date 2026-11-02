@@ -1,19 +1,23 @@
 import {
   Component,
+  DestroyRef,
   OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
-import { ColorConfig, GeneralSettings } from '../../../core/models';
-import { SettingsService } from '../../../core/services/settings.service';
+import { ColorConfig, GeneralSettings, Supply } from '../../../core/models';
+import { SettingsService, SuppliesService } from '../../../core/services/settings.service';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import {
   DbButtonComponent,
   DbInputComponent,
   DbPillGroupComponent,
   DbRowMenuComponent,
   DbStateMessageComponent,
+  MobileBarComponent,
 } from '@general-components';
 
 type ColorFamily =
@@ -35,16 +39,23 @@ type ColorFamily =
     DbPillGroupComponent,
     DbRowMenuComponent,
     DbStateMessageComponent,
+    MobileBarComponent,
   ],
   templateUrl: './color-settings.component.html',
   styleUrl: './color-settings.component.scss',
 })
 export class ColorSettingsComponent implements OnInit, OnDestroy {
   private readonly settingsService = inject(SettingsService);
+  private readonly suppliesService = inject(SuppliesService);
+  private readonly breakpoint = inject(BreakpointService);
+  private readonly destroyRef = inject(DestroyRef);
   private settingsSub?: Subscription;
+
+  readonly isMobile = this.breakpoint.isMobile;
 
   settings: GeneralSettings | null = null;
   message = '';
+  supplies: Supply[] = [];
 
   newColor = { name: '', hex: '#0E7AAB' };
   editingId: string | null = null;
@@ -52,6 +63,7 @@ export class ColorSettingsComponent implements OnInit, OnDestroy {
   search = '';
   family: ColorFamily = 'all';
   openMenuId: string | null = null;
+  showMobileCreate = false;
 
   readonly families: { value: ColorFamily; label: string }[] = [
     { value: 'all', label: 'Todos' },
@@ -68,6 +80,12 @@ export class ColorSettingsComponent implements OnInit, OnDestroy {
       this.settings = settings ? structuredClone(settings) : null;
     });
     this.settingsService.getGeneralSettings(false).subscribe();
+    this.suppliesService
+      .watchSupplies()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((items) => {
+        this.supplies = items;
+      });
   }
 
   ngOnDestroy(): void {
@@ -98,6 +116,15 @@ export class ColorSettingsComponent implements OnInit, OnDestroy {
 
   focusCreate(): void {
     document.getElementById('new-color-name')?.focus();
+  }
+
+  colorMeta(item: ColorConfig): string {
+    const count = this.supplies.filter((supply) => supply.colorId === item.id).length;
+    if (count > 0) {
+      const noun = count === 1 ? 'insumo' : 'insumos';
+      return `${item.hex} · ${count} ${noun}`;
+    }
+    return item.hex;
   }
 
   toggleMenu(id: string): void {

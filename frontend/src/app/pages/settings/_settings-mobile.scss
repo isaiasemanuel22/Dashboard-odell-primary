@@ -1,0 +1,277 @@
+@use '../../shared/styles/mobile' as mobile;
+
+@mixin settings-mobile {
+  @include mobile.mobile-only {
+    .st-m {
+      display: flex;
+      flex-direction: column;
+      min-height: 100%;
+    }
+
+    .st-m--dock .m-body {
+      padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+    }
+
+    .st-m__tabs {
+      background: mobile.$m-surface;
+      display: grid;
+      grid-auto-flow: column;
+      grid-auto-columns: minmax(0, 1fr);
+      border-bottom: 1px solid mobile.$m-border;
+      flex: none;
+    }
+
+    .st-m__tab {
+      min-height: 48px;
+      border: 0;
+      background: transparent;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: mobile.$m-text-secondary;
+      border-bottom: 3px solid transparent;
+      cursor: pointer;
+      padding: 0 6px;
+
+      &--on {
+        color: mobile.$m-primary;
+        border-bottom-color: mobile.$m-primary;
+        font-weight: 700;
+      }
+    }
+
+    .st-m__field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 0;
+
+      label,
+      .st-m__fl {
+        font-size: 13px;
+        font-weight: 500;
+        color: mobile.$m-text-label;
+      }
+    }
+
+    .st-m__two {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .st-m__inp {
+      min-height: 48px;
+      border: 1px solid mobile.$m-border-input;
+      border-radius: mobile.$m-radius-sm;
+      padding: 0 12px;
+      font-family: inherit;
+      font-size: 15px;
+      color: mobile.$m-text;
+      background: mobile.$m-surface;
+      box-sizing: border-box;
+      width: 100%;
+    }
+
+    .st-m__inp--pct {
+      width: 96px;
+      flex: none;
+      text-align: right;
+    }
+
+    .st-m__hint {
+      font-size: 12px;
+      color: mobile.$m-text-secondary;
+    }
+
+    .st-m__hint--neg {
+      color: #b91c1c;
+    }
+
+    .st-m__end {
+      text-align: right;
+      font-weight: 700;
+      font-size: 14px;
+      font-variant-numeric: tabular-nums;
+      color: mobile.$m-text;
+      flex: none;
+
+      small {
+        display: block;
+        font-size: 11px;
+        font-weight: 400;
+        color: mobile.$m-text-secondary;
+      }
+    }
+
+    .st-m__chev {
+      color: #9aafbf;
+      flex: none;
+    }
+
+    .st-m__av {
+      width: 40px;
+      height: 40px;
+      border-radius: 999px;
+      background: mobile.$m-primary-pale;
+      color: mobile.$m-primary-dark;
+      font-weight: 700;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex: none;
+    }
+
+    .st-m__add {
+      min-height: 48px;
+      border-radius: mobile.$m-radius-sm;
+      border: 1px dashed mobile.$m-primary;
+      background: #f4fafd;
+      color: mobile.$m-primary-dark;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .st-m__note {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      padding: 12px 14px;
+      border-radius: mobile.$m-radius-md;
+      background: #f4f8fb;
+      border: 1px solid mobile.$m-border;
+      font-size: 13px;
+      color: mobile.$m-text-label;
+
+      &--w {
+        background: #fff8eb;
+        border-color: #f5d9a8;
+        color: #7a4a06;
+      }
+    }
+
+    .st-m__opts {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .st-m__opt {
+      min-height: 40px;
+      padding: 0 14px;
+      border-radius: 999px;
+      border: 1px solid mobile.$m-border-input;
+      background: mobile.$m-surface;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: mobile.$m-text-label;
+      cursor: pointer;
+
+      &--on {
+        background: mobile.$m-primary-pale;
+        border-color: mobile.$m-primary;
+        color: mobile.$m-primary-dark;
+        font-weight: 700;
+      }
+    }
+
+    .st-m__dock {
+      position: fixed;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      z-index: 40;
+      background: #fff;
+      border-top: 1px solid mobile.$m-border;
+      padding: 12px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+      display: flex;
+      gap: 10px;
+    }
+
+    .st-m__dock-btn {
+      flex: 1;
+      min-height: 52px;
+      border-radius: mobile.$m-radius-md;
+      font-family: inherit;
+      font-size: 15px;
+      font-weight: 700;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 0;
+      padding: 0 16px;
+      cursor: pointer;
+      box-sizing: border-box;
+      background: mobile.$m-primary;
+      color: #fff;
+
+      &:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+    }
+
+    .st-m__neg {
+      color: #b91c1c;
+    }
+
+    .st-m__pos {
+      color: #15803d;
+    }
+
+    .st-m__num {
+      font-variant-numeric: tabular-nums;
+    }
+
+    .st-m__colors {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .st-m__sw {
+      background: mobile.$m-surface;
+      border: 1px solid mobile.$m-border;
+      border-radius: mobile.$m-radius-md;
+      padding: 10px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      font-family: inherit;
+      font-size: 12px;
+      min-height: 44px;
+      text-align: left;
+      color: inherit;
+      cursor: pointer;
+
+      b {
+        font-size: 12px;
+        font-weight: 700;
+        color: mobile.$m-text;
+      }
+
+      small {
+        color: mobile.$m-text-secondary;
+        font-size: 11px;
+      }
+    }
+
+    .st-m__dot {
+      height: 44px;
+      border-radius: 10px;
+      border: 1px solid mobile.$m-border;
+      flex: none;
+    }
+
+    .st-m__msg {
+      margin: 0;
+      font-size: 13px;
+      color: mobile.$m-primary-dark;
+    }
+  }
+}

@@ -15,6 +15,7 @@ import {
   WorkArea,
 } from '../../../core/models';
 import { UserAccessService } from '../../../core/services/user-access.service';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import {
   DbButtonComponent,
   DbCheckboxComponent,
@@ -31,6 +32,7 @@ import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import { PERMISSION_ACTION_LABELS } from './user-access.util';
 import { UserAccessHeadComponent } from './user-access-head.component';
 import { UserAccessNavComponent } from './user-access-nav.component';
+import { SettingsUsersMobileShellComponent } from './settings-users-mobile-shell.component';
 
 @Component({
   selector: 'app-roles-admin-page',
@@ -45,6 +47,7 @@ import { UserAccessNavComponent } from './user-access-nav.component';
     FormModalComponent,
     UserAccessHeadComponent,
     UserAccessNavComponent,
+    SettingsUsersMobileShellComponent,
     ...DB_DATA_TABLE,
   ],
   templateUrl: './roles-admin-page.component.html',
@@ -53,7 +56,10 @@ import { UserAccessNavComponent } from './user-access-nav.component';
 })
 export class RolesAdminPageComponent implements OnInit {
   private readonly userAccess = inject(UserAccessService);
+  private readonly breakpoint = inject(BreakpointService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  readonly isMobile = this.breakpoint.isMobile;
 
   readonly workActions = WORK_PERMISSION_ACTIONS;
   readonly adminActions = ADMIN_PERMISSION_ACTIONS;

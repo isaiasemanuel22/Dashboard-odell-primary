@@ -164,7 +164,14 @@ export const routes: Routes = [
             (m) => m.SettingsLayoutComponent,
           ),
         children: [
-          { path: '', redirectTo: 'valores-generales', pathMatch: 'full' },
+          {
+            path: '',
+            loadComponent: () =>
+              import('./pages/settings/settings-home/settings-home.component').then(
+                (m) => m.SettingsHomeComponent,
+              ),
+            pathMatch: 'full',
+          },
           {
             path: 'valores-generales',
             loadComponent: () =>

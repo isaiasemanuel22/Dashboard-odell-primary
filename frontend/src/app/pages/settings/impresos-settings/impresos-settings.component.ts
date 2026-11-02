@@ -13,6 +13,7 @@ import {
 } from '../../../core/models';
 import { ImpresosService } from '../../../core/services/impresos.service';
 import { SettingsService } from '../../../core/services/settings.service';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { PAPER_TYPE_LABELS } from '../../../shared/constants/labels';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import { formatPrintDimensionsCm } from '../../../shared/utils/estampado.helpers';
@@ -23,6 +24,7 @@ import {
   DbInputComponent,
   DbPillGroupComponent,
   DbStateMessageComponent,
+  MobileBarComponent,
   DB_DATA_TABLE,
   OdlActionEvent,
   OdlColumn,
@@ -43,6 +45,7 @@ interface PaperSheetGroup {
     DbInputComponent,
     DbPillGroupComponent,
     DbStateMessageComponent,
+    MobileBarComponent,
     CurrencyArsPipe,
     ...DB_DATA_TABLE,
   ],
@@ -53,7 +56,10 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
   private readonly settingsService = inject(SettingsService);
   private readonly impresosService = inject(ImpresosService);
   private readonly formDialogs = inject(FormDialogService);
+  private readonly breakpoint = inject(BreakpointService);
   private settingsSub?: Subscription;
+
+  readonly isMobile = this.breakpoint.isMobile;
 
   settings: GeneralSettings | null = null;
   impresos: ImpresoWithCost[] = [];
@@ -213,5 +219,25 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
       item.widthCm,
       item.lengthCm && item.lengthCm > 0 ? item.lengthCm : item.heightCm,
     );
+  }
+
+  get mobileImpresoGroups(): { type: PaperType; label: string; items: ImpresoWithCost[] }[] {
+    return this.groupOrder.map((group) => ({
+      ...group,
+      items: this.impresos
+        .filter((item) => item.paperType === group.type)
+        .sort((a, b) => a.name.localeCompare(b.name, 'es')),
+    }));
+  }
+
+  formatCostPerCm2(item: ImpresoWithCost): string {
+    const areaCm2 = (item.areaSqm || 0) * 10000;
+    const value = areaCm2 > 0 ? item.paperCost / areaCm2 : 0;
+    return new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(value);
   }
 }

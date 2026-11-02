@@ -10,6 +10,7 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AppRole, AppUser, WorkArea } from '../../../core/models';
 import { UserAccessService } from '../../../core/services/user-access.service';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import {
   DbAreaChipComponent,
   DbButtonComponent,
@@ -26,6 +27,7 @@ import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import { UserAccessHeadComponent } from './user-access-head.component';
 import { UserAccessNavComponent } from './user-access-nav.component';
 import { UsersAdminFormComponent } from './users-admin-form/users-admin-form.component';
+import { SettingsUsersMobileShellComponent } from './settings-users-mobile-shell.component';
 
 @Component({
   selector: 'app-users-admin-page',
@@ -39,6 +41,7 @@ import { UsersAdminFormComponent } from './users-admin-form/users-admin-form.com
     UserAccessHeadComponent,
     UserAccessNavComponent,
     UsersAdminFormComponent,
+    SettingsUsersMobileShellComponent,
     ...DB_DATA_TABLE,
   ],
   templateUrl: './users-admin-page.component.html',
@@ -47,8 +50,11 @@ import { UsersAdminFormComponent } from './users-admin-form/users-admin-form.com
 })
 export class UsersAdminPageComponent implements OnInit {
   private readonly userAccess = inject(UserAccessService);
+  private readonly breakpoint = inject(BreakpointService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+
+  readonly isMobile = this.breakpoint.isMobile;
 
   users: AppUser[] = [];
 
@@ -128,6 +134,30 @@ export class UsersAdminPageComponent implements OnInit {
     if (!parts.length) return '?';
     if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
     return `${parts[0][0]}${parts[parts.length - 1][0]}`.toUpperCase();
+  }
+
+  isAdminUser(user: AppUser): boolean {
+    return user.roleIds.some((roleId) => {
+      const role = this.roles.find((item) => item.id === roleId);
+      return role?.name?.toLowerCase().includes('admin') ?? false;
+    });
+  }
+
+  userMobileSubtitle(user: AppUser): string {
+    const roleNames = user.roleIds
+      .map((roleId) => this.roleName(roleId))
+      .filter(Boolean);
+    const areas = this.userAreas(user)
+      .map((area) => area.name)
+      .filter(Boolean);
+    if (this.isAdminUser(user)) {
+      return user.email;
+    }
+    const rolePart = roleNames.join(', ') || 'Sin rol';
+    if (areas.length) {
+      return `${rolePart} · ${areas.join(' y ')}`;
+    }
+    return `${rolePart} · ${user.email}`;
   }
 
   userAreas(user: AppUser): WorkArea[] {

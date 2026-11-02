@@ -158,7 +158,10 @@ export class LayoutComponent implements OnInit {
       /^\/pedidos\/[^/]+$/.test(path) ||
       /^\/presupuestos\/[^/]+$/.test(path) ||
       /^\/clientes\/[^/]+$/.test(path) ||
-      /^\/productos\/[^/]+$/.test(path)
+      /^\/productos\/[^/]+$/.test(path) ||
+      path === '/ajustes/valores-generales' ||
+      path === '/ajustes/ganancias' ||
+      path === '/ajustes/impresos'
     );
   }
 

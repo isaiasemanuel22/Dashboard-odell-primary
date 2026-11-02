@@ -1,127 +1,277 @@
 @if (settings) {
-  <div class="material-page">
-    @if (message) {
-      <p class="message">{{ message }}</p>
-    }
+  @if (isMobile()) {
+    <div class="st-m">
+      <db-mobile-bar title="Filamento" backLink="/ajustes">
+        <button
+          type="button"
+          class="m-ib"
+          aria-label="Agregar precio"
+          (click)="mobileTab = 'precios'; focusCreate()"
+        >
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        </button>
+      </db-mobile-bar>
 
-    <section class="settings-card">
-      <div class="settings-card__head">
-        <div>
-          <h3>Precios de filamento por marca</h3>
-          <p>
-            Precio por kilo según marca y tipo. Se usa al cargar insumos y calcular costos FDM; al editar un precio se actualizan los insumos vinculados.
-          </p>
-        </div>
+      <div class="st-m__tabs" role="tablist" aria-label="Sección">
+        <button type="button" class="st-m__tab" [class.st-m__tab--on]="mobileTab === 'precios'" role="tab" [attr.aria-selected]="mobileTab === 'precios'" (click)="mobileTab = 'precios'">Precios</button>
+        <button type="button" class="st-m__tab" [class.st-m__tab--on]="mobileTab === 'tipos'" role="tab" [attr.aria-selected]="mobileTab === 'tipos'" (click)="mobileTab = 'tipos'">Tipos</button>
+        <button type="button" class="st-m__tab" [class.st-m__tab--on]="mobileTab === 'marcas'" role="tab" [attr.aria-selected]="mobileTab === 'marcas'" (click)="mobileTab = 'marcas'">Marcas</button>
       </div>
 
-      <db-button
-        label="+ Agregar filamento"
-        variant="primary"
-        format="solid"
-        (clicked)="focusCreate()"
-      />
+      <div class="m-body">
+        @if (message) {
+          <p class="st-m__msg">{{ message }}</p>
+        }
 
-      <div class="material-toolbar">
-        <db-pill-group
-          [options]="typeFilterOptions"
-          [value]="typeFilter"
-          label="Tipo"
-          size="sm"
-          ariaLabel="Filtrar por tipo"
-          (valueChange)="typeFilter = $event"
-        />
-        <label class="list-search">
-          <span aria-hidden="true">⌕</span>
-          <input
-            type="search"
-            placeholder="Buscar marca"
-            [(ngModel)]="search"
-            name="filamentSearch"
-          />
-        </label>
+        @if (mobileTab === 'precios') {
+          <span class="st-m__hint">Precio por kg según tipo y marca. Los insumos con «precio desde Ajustes» lo toman de acá; el costo de los productos usa el promedio por tipo.</span>
+
+          @for (group of priceGroups; track group.key) {
+            <h2 class="m-sec-t">{{ group.label }} · promedio {{ group.average | currencyArs }} / kg</h2>
+            <div class="m-card m-card--flush">
+              @for (item of group.items; track item.id) {
+                <button type="button" class="m-row" (click)="startEdit(item)">
+                  <div class="m-row__text">
+                    <b>{{ item.brand }}</b>
+                    <span>Precio por kg</span>
+                  </div>
+                  <div class="st-m__end">{{ item.pricePerKg | currencyArs }}</div>
+                </button>
+              }
+            </div>
+          } @empty {
+            <div class="m-card">
+              <p class="st-m__hint">Todavía no hay precios de filamento.</p>
+            </div>
+          }
+
+          @if (editingId || showMobileCreate) {
+            <h2 class="m-sec-t">{{ editingId ? 'Editar precio' : 'Nuevo precio' }}</h2>
+            <div class="m-card">
+              @if (editingId) {
+                <div class="st-m__field">
+                  <label for="fm-brand">Marca</label>
+                  <input id="fm-brand" class="st-m__inp" [(ngModel)]="editForm.brand" name="mEditBrand" />
+                </div>
+                <div class="st-m__field">
+                  <label for="fm-type">Tipo</label>
+                  <db-autocomplete
+                    [(ngModel)]="editForm.materialType"
+                    name="mEditType"
+                    placeholder="Tipo"
+                    [options]="filamentTypeOptions"
+                    (optionCreated)="onFilamentTypeCreated($event)"
+                  />
+                </div>
+                <div class="st-m__field">
+                  <label for="fm-price">Precio / kg ($)</label>
+                  <input id="fm-price" class="st-m__inp" type="number" min="0" [(ngModel)]="editForm.pricePerKg" name="mEditPrice" />
+                </div>
+                <div class="st-m__opts">
+                  <button type="button" class="st-m__opt" (click)="cancelEdit(); showMobileCreate = false">Cancelar</button>
+                  <button type="button" class="st-m__opt st-m__opt--on" (click)="saveEdit()">Guardar</button>
+                </div>
+              } @else {
+                <div class="st-m__field">
+                  <label for="fm-new-brand">Marca</label>
+                  <input id="fm-new-brand" class="st-m__inp" [(ngModel)]="newFilament.brand" name="mNewBrand" />
+                </div>
+                <div class="st-m__field">
+                  <label for="fm-new-type">Tipo</label>
+                  <db-autocomplete
+                    [(ngModel)]="newFilament.materialType"
+                    name="mNewType"
+                    placeholder="Tipo"
+                    [options]="filamentTypeOptions"
+                    (optionCreated)="onFilamentTypeCreated($event)"
+                  />
+                </div>
+                <div class="st-m__field">
+                  <label for="fm-new-price">Precio / kg ($)</label>
+                  <input id="fm-new-price" class="st-m__inp" type="number" min="0" [(ngModel)]="newFilament.pricePerKg" name="mNewPrice" />
+                </div>
+                <div class="st-m__opts">
+                  <button type="button" class="st-m__opt" (click)="showMobileCreate = false">Cancelar</button>
+                  <button type="button" class="st-m__opt st-m__opt--on" (click)="addFilamentPrice(); showMobileCreate = false">Agregar</button>
+                </div>
+              }
+            </div>
+          }
+        }
+
+        @if (mobileTab === 'tipos') {
+          <div class="m-card m-card--flush">
+            @for (type of settings.filamentTypes; track type.id) {
+              <div class="m-row">
+                <div class="m-row__text">
+                  <b>{{ type.name }}</b>
+                  <span>{{ typePriceCount(type.id) }} precios</span>
+                </div>
+              </div>
+            } @empty {
+              <div class="m-row">
+                <div class="m-row__text">
+                  <b>Sin tipos</b>
+                  <span>Se crean al agregar un precio</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+
+        @if (mobileTab === 'marcas') {
+          <div class="m-card m-card--flush">
+            @for (brand of brandList; track brand) {
+              <div class="m-row">
+                <div class="m-row__text">
+                  <b>{{ brand }}</b>
+                  <span>{{ brandPriceCount(brand) }} precios</span>
+                </div>
+              </div>
+            } @empty {
+              <div class="m-row">
+                <div class="m-row__text">
+                  <b>Sin marcas</b>
+                  <span>Se listan desde los precios</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
       </div>
+    </div>
+  } @else {
+    <div class="material-page">
+      @if (message) {
+        <p class="message">{{ message }}</p>
+      }
 
-      @if (visiblePrices.length) {
-        <db-data-table
-          label="Precios de filamento"
-          [rows]="visiblePrices"
-          [columns]="priceColumns"
-          [actions]="priceActions"
-          [clientSide]="false"
-          emptyText="No hay precios que coincidan con la búsqueda."
-          (action)="onPriceAction($event)"
+      <section class="settings-card">
+        <div class="settings-card__head">
+          <div>
+            <h3>Precios de filamento por marca</h3>
+            <p>
+              Precio por kilo según marca y tipo. Se usa al cargar insumos y calcular costos FDM; al editar un precio se actualizan los insumos vinculados.
+            </p>
+          </div>
+        </div>
+
+        <db-button
+          label="+ Agregar filamento"
+          variant="primary"
+          format="solid"
+          (clicked)="focusCreate()"
         />
-      } @else {
-        <p class="empty-group">No hay precios que coincidan con la búsqueda.</p>
-      }
-    </section>
 
-    <section class="quick-card">
-      <h4>{{ editingId ? 'Editar precio' : 'Carga rápida' }}</h4>
-      @if (editingId) {
-        <div class="quick-form">
-          <db-input
-            id="filament-brand"
-            label="Marca"
-            [(ngModel)]="editForm.brand"
-            name="editFilamentBrand"
-            placeholder="Ej.: Grilon3"
+        <div class="material-toolbar">
+          <db-pill-group
+            [options]="typeFilterOptions"
+            [value]="typeFilter"
+            label="Tipo"
+            size="sm"
+            ariaLabel="Filtrar por tipo"
+            (valueChange)="typeFilter = $event"
           />
-          <div class="quick-field">
-            <span>Tipo</span>
-            <db-autocomplete
-              [(ngModel)]="editForm.materialType"
-              name="editFilamentType"
-              placeholder="Tipo"
-              [options]="filamentTypeOptions"
-              (optionCreated)="onFilamentTypeCreated($event)"
+          <label class="list-search">
+            <span aria-hidden="true">⌕</span>
+            <input
+              type="search"
+              placeholder="Buscar marca"
+              [(ngModel)]="search"
+              name="filamentSearch"
             />
-          </div>
-          <db-input
-            label="Precio / kg ($)"
-            type="number"
-            [min]="0"
-            [(ngModel)]="editForm.pricePerKg"
-            name="editFilamentPrice"
-          />
-          <div class="quick-actions">
-            <db-button label="Cancelar" variant="secondary" format="soft" (clicked)="cancelEdit()" />
-            <db-button label="Guardar" variant="primary" format="solid" (clicked)="saveEdit()" />
-          </div>
+          </label>
         </div>
-      } @else {
-        <div class="quick-form">
-          <db-input
-            id="filament-brand"
-            label="Marca"
-            [(ngModel)]="newFilament.brand"
-            name="newFilamentBrand"
-            placeholder="Ej.: Grilon3"
+
+        @if (visiblePrices.length) {
+          <db-data-table
+            label="Precios de filamento"
+            [rows]="visiblePrices"
+            [columns]="priceColumns"
+            [actions]="priceActions"
+            [clientSide]="false"
+            emptyText="No hay precios que coincidan con la búsqueda."
+            (action)="onPriceAction($event)"
           />
-          <div class="quick-field">
-            <span>Tipo</span>
-            <db-autocomplete
-              [(ngModel)]="newFilament.materialType"
-              name="newFilamentType"
-              placeholder="Tipo"
-              [options]="filamentTypeOptions"
-              (optionCreated)="onFilamentTypeCreated($event)"
+        } @else {
+          <p class="empty-group">No hay precios que coincidan con la búsqueda.</p>
+        }
+      </section>
+
+      <section class="quick-card">
+        <h4>{{ editingId ? 'Editar precio' : 'Carga rápida' }}</h4>
+        @if (editingId) {
+          <div class="quick-form">
+            <db-input
+              id="filament-brand"
+              label="Marca"
+              [(ngModel)]="editForm.brand"
+              name="editFilamentBrand"
+              placeholder="Ej.: Grilon3"
             />
+            <div class="quick-field">
+              <span>Tipo</span>
+              <db-autocomplete
+                [(ngModel)]="editForm.materialType"
+                name="editFilamentType"
+                placeholder="Tipo"
+                [options]="filamentTypeOptions"
+                (optionCreated)="onFilamentTypeCreated($event)"
+              />
+            </div>
+            <db-input
+              label="Precio / kg ($)"
+              type="number"
+              [min]="0"
+              [(ngModel)]="editForm.pricePerKg"
+              name="editFilamentPrice"
+            />
+            <div class="quick-actions">
+              <db-button label="Cancelar" variant="secondary" format="soft" (clicked)="cancelEdit()" />
+              <db-button label="Guardar" variant="primary" format="solid" (clicked)="saveEdit()" />
+            </div>
           </div>
-          <db-input
-            label="Precio / kg ($)"
-            type="number"
-            [min]="0"
-            [(ngModel)]="newFilament.pricePerKg"
-            name="newFilamentPrice"
-          />
-          <div class="quick-actions">
-            <db-button label="Agregar" variant="primary" format="solid" (clicked)="addFilamentPrice()" />
+        } @else {
+          <div class="quick-form">
+            <db-input
+              id="filament-brand"
+              label="Marca"
+              [(ngModel)]="newFilament.brand"
+              name="newFilamentBrand"
+              placeholder="Ej.: Grilon3"
+            />
+            <div class="quick-field">
+              <span>Tipo</span>
+              <db-autocomplete
+                [(ngModel)]="newFilament.materialType"
+                name="newFilamentType"
+                placeholder="Tipo"
+                [options]="filamentTypeOptions"
+                (optionCreated)="onFilamentTypeCreated($event)"
+              />
+            </div>
+            <db-input
+              label="Precio / kg ($)"
+              type="number"
+              [min]="0"
+              [(ngModel)]="newFilament.pricePerKg"
+              name="newFilamentPrice"
+            />
+            <div class="quick-actions">
+              <db-button label="Agregar" variant="primary" format="solid" (clicked)="addFilamentPrice()" />
+            </div>
           </div>
-        </div>
-      }
-    </section>
-  </div>
+        }
+      </section>
+    </div>
+  }
 } @else {
-  <db-state-message [loading]="true" loadingMessage="Cargando configuración..." />
+  @if (isMobile()) {
+    <db-mobile-bar title="Filamento" backLink="/ajustes" />
+    <div class="m-body">
+      <db-state-message [loading]="true" loadingMessage="Cargando configuración..." />
+    </div>
+  } @else {
+    <db-state-message [loading]="true" loadingMessage="Cargando configuración..." />
+  }
 }

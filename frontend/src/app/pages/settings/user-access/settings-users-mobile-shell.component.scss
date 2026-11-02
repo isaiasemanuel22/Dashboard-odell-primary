@@ -1,0 +1,14 @@
+@use '../settings-mobile' as st;
+
+@include st.settings-mobile;
+
+:host {
+  display: block;
+}
+
+.st-m__tab {
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}

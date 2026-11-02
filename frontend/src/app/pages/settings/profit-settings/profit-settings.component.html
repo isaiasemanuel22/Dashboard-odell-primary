@@ -1,234 +1,363 @@
 @if (settings) {
-  <section class="settings-card">
-    @if (marginsMessage) {
-      <p class="message">{{ marginsMessage }}</p>
-    }
+  @if (isMobile()) {
+    <div class="st-m st-m--dock">
+      <db-mobile-bar title="Ganancias" backLink="/ajustes" />
 
-    <div class="settings-card__head">
-      <div>
-        <h3>Márgenes de ganancia por servicio</h3>
-        <p>
-          Porcentaje sobre el costo. Al crear o editar un producto:
-          <strong>precio = costo × (1 + margen ÷ 100)</strong>, salvo que cargues un precio manual.
-        </p>
+      <div class="m-body">
+        @if (marginsMessage) {
+          <p class="st-m__msg">{{ marginsMessage }}</p>
+        }
+        @if (discountMessage) {
+          <p class="st-m__msg">{{ discountMessage }}</p>
+        }
+
+        <h2 class="m-sec-t">Margen sobre el costo</h2>
+        <div class="m-card m-card--flush">
+          @for (field of marginFields; track field.service) {
+            <div class="m-row">
+              <div class="m-row__text">
+                <b>{{ field.label }}</b>
+                <span>{{ mobileMarginHint(field.service) }}</span>
+              </div>
+              <input
+                class="st-m__inp st-m__inp--pct"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="999"
+                [ngModel]="marginValue(field.service)"
+                (ngModelChange)="setMargin(field.service, $event)"
+                [name]="'m-margin-' + field.service"
+                [attr.aria-label]="'Margen de ' + field.label"
+              />
+            </div>
+          }
+        </div>
+
+        <h2 class="m-sec-t">Descuento por mayor</h2>
+        <div class="m-card">
+          <div class="m-ln">
+            <b>Activo</b>
+            <button
+              type="button"
+              class="m-sw"
+              [class.m-sw--on]="wholesale.enabled"
+              role="switch"
+              [attr.aria-checked]="wholesale.enabled"
+              aria-label="Descuento por mayor activo"
+              (click)="setWholesaleEnabled(!wholesale.enabled)"
+            ></button>
+          </div>
+          <div class="m-ln">
+            <span>Descuento sobre la lista</span>
+            <input
+              class="st-m__inp st-m__inp--pct"
+              type="number"
+              inputmode="numeric"
+              min="0"
+              max="99"
+              [ngModel]="wholesale.percent"
+              (ngModelChange)="setWholesalePercent($event)"
+              name="mWholesalePercent"
+              aria-label="Descuento por mayor"
+            />
+          </div>
+          <div class="st-m__field">
+            <span class="st-m__fl">Se aplica a</span>
+            <div class="st-m__opts">
+              @for (area of areaOptions; track area.service) {
+                <button
+                  type="button"
+                  class="st-m__opt"
+                  [class.st-m__opt--on]="isAreaSelected(area.service)"
+                  (click)="setAreaSelected(area.service, !isAreaSelected(area.service))"
+                >
+                  {{ area.label }}
+                </button>
+              }
+            </div>
+          </div>
+          <span class="st-m__hint">Lo reciben los clientes Revendedor y los pedidos o presupuestos marcados como mayoristas.</span>
+        </div>
+
+        <div class="m-card" style="background: #F4F8FB">
+          <b style="font-size: 14px">Así se calcula · costo {{ correctExample.cost | currencyArs }}</b>
+          <div class="m-ln">
+            <span class="st-m__hint">Precio de lista (margen {{ correctExample.marginPercent }} %)</span>
+            <span class="st-m__num">{{ correctExample.listPrice | currencyArs }}</span>
+          </div>
+          <div class="m-ln">
+            <span class="st-m__hint">− {{ correctExample.discountPercent }} % sobre {{ correctExample.listPrice | currencyArs }}</span>
+            <span class="st-m__num st-m__neg">−{{ correctExample.discountAmount | currencyArs }}</span>
+          </div>
+          <div class="m-ln">
+            <b>Precio mayorista</b>
+            <b class="st-m__num">{{ correctExample.wholesalePrice | currencyArs }}</b>
+          </div>
+          <div class="m-ln">
+            <span class="st-m__hint">Te queda</span>
+            <span class="st-m__num" [class.st-m__pos]="correctExample.profit >= 0" [class.st-m__neg]="correctExample.profit < 0">
+              {{ correctExample.profit | currencyArs }} · {{ correctExample.profitPercentOnCost }} % sobre el costo
+            </span>
+          </div>
+        </div>
+
+        <div class="st-m__note st-m__note--w">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><path d="M12 3l9 16H3zM12 10v4M12 17h.01" /></svg>
+          Con −{{ wholesale.percent }} %, cualquier área con margen menor a {{ breakEvenMarginPercent }} % vende a pérdida por mayor.
+        </div>
+      </div>
+
+      <div class="st-m__dock">
+        <button
+          type="button"
+          class="st-m__dock-btn"
+          [disabled]="savingMargins || savingDiscount"
+          (click)="saveAllMobile()"
+        >
+          {{ savingMargins || savingDiscount ? 'Guardando…' : 'Guardar' }}
+        </button>
       </div>
     </div>
+  } @else {
+    <section class="settings-card">
+      @if (marginsMessage) {
+        <p class="message">{{ marginsMessage }}</p>
+      }
 
-    <db-button
-      [label]="savingMargins ? 'Guardando...' : 'Guardar márgenes'"
-      variant="primary"
-      format="solid"
-      [disabled]="savingMargins"
-      (clicked)="saveMargins()"
-    />
-
-    <db-data-table
-      label="Márgenes de ganancia"
-      [rows]="marginFields"
-      [columns]="marginColumns"
-      [clientSide]="false"
-      minWidth="560px"
-    >
-      <ng-template odlCell="margen" let-field>
-        <label class="margin-cell">
-          <input
-            type="number"
-            min="0"
-            max="999"
-            step="1"
-            [ngModel]="marginValue(field.service)"
-            (ngModelChange)="setMargin(field.service, $event)"
-            [name]="'margin-' + field.service"
-          />
-          <span>%</span>
-        </label>
-      </ng-template>
-      <ng-template odlCell="ejemplo" let-field>
-        <span class="profit-example">
-          <span>Costo {{ 1000 | currencyArs }}</span>
-          <strong>Precio {{ examplePrice(1000, marginValue(field.service)) | currencyArs }}</strong>
-        </span>
-      </ng-template>
-    </db-data-table>
-
-    @if (!settings.modelingRatePerHour || !settings.graphicDesignRatePerHour) {
-      <p class="rate-note">
-        Diseño gráfico y Modelado calculan sobre su tarifa por hora en Valores generales.
-        Hasta que la cargues, esas líneas salen sin costo.
-        <a routerLink="../valores-generales">Ir a Valores generales</a>
-      </p>
-    }
-  </section>
-
-  <section class="settings-card wholesale-card" aria-labelledby="wholesale-title">
-    @if (discountMessage) {
-      <p class="message">{{ discountMessage }}</p>
-    }
-
-    <div class="settings-card__head wholesale-card__head">
-      <div>
-        <h3 id="wholesale-title">
-          Descuento por mayor
-          <span class="wholesale-badge">Nuevo</span>
-        </h3>
-        <p>
-          Precio para revendedores.
-          <strong>Se descuenta del precio de venta, no de la ganancia.</strong>
-        </p>
+      <div class="settings-card__head">
+        <div>
+          <h3>Márgenes de ganancia por servicio</h3>
+          <p>
+            Porcentaje sobre el costo. Al crear o editar un producto:
+            <strong>precio = costo × (1 + margen ÷ 100)</strong>, salvo que cargues un precio manual.
+          </p>
+        </div>
       </div>
-      <db-checkbox
-        label="Activo"
-        name="wholesaleEnabled"
-        [ngModel]="wholesale.enabled"
-        (ngModelChange)="setWholesaleEnabled($event)"
+
+      <db-button
+        [label]="savingMargins ? 'Guardando...' : 'Guardar márgenes'"
+        variant="primary"
+        format="solid"
+        [disabled]="savingMargins"
+        (clicked)="saveMargins()"
       />
-    </div>
 
-    <div class="wholesale-fields">
-      <div class="wholesale-field">
-        <db-input
-          label="Descuento (%)"
-          type="number"
-          name="wholesalePercent"
-          [min]="0"
-          [max]="99"
-          [step]="1"
-          hint="Sobre el precio de lista de cada producto"
-          [ngModel]="wholesale.percent"
-          (ngModelChange)="setWholesalePercent($event)"
+      <db-data-table
+        label="Márgenes de ganancia"
+        [rows]="marginFields"
+        [columns]="marginColumns"
+        [clientSide]="false"
+        minWidth="560px"
+      >
+        <ng-template odlCell="margen" let-field>
+          <label class="margin-cell">
+            <input
+              type="number"
+              min="0"
+              max="999"
+              step="1"
+              [ngModel]="marginValue(field.service)"
+              (ngModelChange)="setMargin(field.service, $event)"
+              [name]="'margin-' + field.service"
+            />
+            <span>%</span>
+          </label>
+        </ng-template>
+        <ng-template odlCell="ejemplo" let-field>
+          <span class="profit-example">
+            <span>Costo {{ 1000 | currencyArs }}</span>
+            <strong>Precio {{ examplePrice(1000, marginValue(field.service)) | currencyArs }}</strong>
+          </span>
+        </ng-template>
+      </db-data-table>
+
+      @if (!settings.modelingRatePerHour || !settings.graphicDesignRatePerHour) {
+        <p class="rate-note">
+          Diseño gráfico y Modelado calculan sobre su tarifa por hora en Valores generales.
+          Hasta que la cargues, esas líneas salen sin costo.
+          <a routerLink="../valores-generales">Ir a Valores generales</a>
+        </p>
+      }
+    </section>
+
+    <section class="settings-card wholesale-card" aria-labelledby="wholesale-title">
+      @if (discountMessage) {
+        <p class="message">{{ discountMessage }}</p>
+      }
+
+      <div class="settings-card__head wholesale-card__head">
+        <div>
+          <h3 id="wholesale-title">
+            Descuento por mayor
+            <span class="wholesale-badge">Nuevo</span>
+          </h3>
+          <p>
+            Precio para revendedores.
+            <strong>Se descuenta del precio de venta, no de la ganancia.</strong>
+          </p>
+        </div>
+        <db-checkbox
+          label="Activo"
+          name="wholesaleEnabled"
+          [ngModel]="wholesale.enabled"
+          (ngModelChange)="setWholesaleEnabled($event)"
         />
       </div>
 
-      <div class="wholesale-field wholesale-field--text">
-        <span class="wholesale-field__label" id="wholesale-who-label">Quién lo recibe</span>
-        <p class="wholesale-field__copy" aria-labelledby="wholesale-who-label">
-          Clientes de tipo Revendedor y pedidos o presupuestos marcados como mayoristas.
-        </p>
-        <small>Se aplica al elegir el cliente o el canal mayorista</small>
-      </div>
+      <div class="wholesale-fields">
+        <div class="wholesale-field">
+          <db-input
+            label="Descuento (%)"
+            type="number"
+            name="wholesalePercent"
+            [min]="0"
+            [max]="99"
+            [step]="1"
+            hint="Sobre el precio de lista de cada producto"
+            [ngModel]="wholesale.percent"
+            (ngModelChange)="setWholesalePercent($event)"
+          />
+        </div>
 
-      <div class="wholesale-field">
-        <span class="wholesale-field__label" id="wholesale-areas-label">Áreas</span>
-        <db-checkbox-group aria-labelledby="wholesale-areas-label">
-          @for (area of areaOptions; track area.service) {
-            <db-checkbox
-              [label]="area.label"
-              [name]="'wholesaleArea-' + area.service"
-              [ngModel]="isAreaSelected(area.service)"
-              (ngModelChange)="setAreaSelected(area.service, $event)"
-            />
-          }
-        </db-checkbox-group>
-        <small>Diseño y modelado se cobran con precio cerrado</small>
-      </div>
-    </div>
+        <div class="wholesale-field wholesale-field--text">
+          <span class="wholesale-field__label" id="wholesale-who-label">Quién lo recibe</span>
+          <p class="wholesale-field__copy" aria-labelledby="wholesale-who-label">
+            Clientes de tipo Revendedor y pedidos o presupuestos marcados como mayoristas.
+          </p>
+          <small>Se aplica al elegir el cliente o el canal mayorista</small>
+        </div>
 
-    <div class="wholesale-examples">
-      <div class="calc-box calc-box--ok">
-        <span class="calc-box__title">Así se calcula</span>
-        <div class="calc-box__row">
-          <span>Costo</span>
-          <span>{{ correctExample.cost | currencyArs }}</span>
-        </div>
-        <div class="calc-box__row">
-          <span>Precio de lista (margen {{ correctExample.marginPercent }}%)</span>
-          <strong>{{ correctExample.listPrice | currencyArs }}</strong>
-        </div>
-        <div class="calc-box__row calc-box__row--discount">
-          <span>− {{ correctExample.discountPercent }}% sobre {{ correctExample.listPrice | currencyArs }}</span>
-          <span>− {{ correctExample.discountAmount | currencyArs }}</span>
-        </div>
-        <div class="calc-box__row calc-box__row--total">
-          <strong>Precio mayorista</strong>
-          <strong>{{ correctExample.wholesalePrice | currencyArs }}</strong>
-        </div>
-        <div class="calc-box__row">
-          <span>Te queda de ganancia</span>
-          <span
-            class="calc-box__profit"
-            [class.calc-box__profit--loss]="correctExample.profit < 0"
-          >
-            {{ correctExample.profit | currencyArs }}
-            ({{ correctExample.profitPercentOnCost }}% sobre el costo)
-          </span>
+        <div class="wholesale-field">
+          <span class="wholesale-field__label" id="wholesale-areas-label">Áreas</span>
+          <db-checkbox-group aria-labelledby="wholesale-areas-label">
+            @for (area of areaOptions; track area.service) {
+              <db-checkbox
+                [label]="area.label"
+                [name]="'wholesaleArea-' + area.service"
+                [ngModel]="isAreaSelected(area.service)"
+                (ngModelChange)="setAreaSelected(area.service, $event)"
+              />
+            }
+          </db-checkbox-group>
+          <small>Diseño y modelado se cobran con precio cerrado</small>
         </div>
       </div>
 
-      <div class="calc-box calc-box--wrong">
-        <span class="calc-box__title">No se calcula así</span>
-        <div class="calc-box__row">
-          <span>
-            − {{ wrongExample.discountPercent }}% sobre la ganancia
-            ({{ wrongExample.listProfit | currencyArs }})
-          </span>
-          <span class="calc-box__strike">− {{ wrongExample.wrongDiscountAmount | currencyArs }}</span>
-        </div>
-        <div class="calc-box__row">
-          <span>Precio</span>
-          <span class="calc-box__strike">{{ wrongExample.wrongPrice | currencyArs }}</span>
-        </div>
-        <div class="calc-box__row">
-          <span>Ganancia</span>
-          <span class="calc-box__strike">{{ wrongExample.wrongProfit | currencyArs }}</span>
-        </div>
-        <p class="calc-box__note">
-          Con este error el revendedor pagaría
-          {{ wrongExample.overpay | currencyArs }} de más por unidad.
-        </p>
-      </div>
-    </div>
-
-    <div class="wholesale-area-table">
-      <span class="wholesale-area-table__title">Cuánto te queda por área</span>
-      <db-data-table
-        label="Cuánto te queda por área"
-        [rows]="areaExampleRows"
-        [columns]="areaExampleColumns"
-        [clientSide]="false"
-        minWidth="600px"
-      >
-        <ng-template odlCell="listPrice" let-row>
-          {{ row.listPrice | currencyArs }}
-        </ng-template>
-        <ng-template odlCell="wholesalePrice" let-row>
-          @if (row.applies) {
-            <span>{{ row.wholesalePrice | currencyArs }}</span>
-          } @else {
-            <span class="is-muted">—</span>
-          }
-        </ng-template>
-        <ng-template odlCell="wholesaleProfit" let-row>
-          @if (row.applies) {
-            <span class="wholesale-profit" [class.wholesale-profit--loss]="row.wouldLose">
-              <span>{{ row.profit | currencyArs }}</span>
-              @if (row.wouldLose) {
-                <span class="wholesale-profit__alert">Daría pérdida</span>
-              } @else {
-                <span class="wholesale-profit__meta">{{ row.profitPercentOnCost }}% sobre el costo</span>
-              }
+      <div class="wholesale-examples">
+        <div class="calc-box calc-box--ok">
+          <span class="calc-box__title">Así se calcula</span>
+          <div class="calc-box__row">
+            <span>Costo</span>
+            <span>{{ correctExample.cost | currencyArs }}</span>
+          </div>
+          <div class="calc-box__row">
+            <span>Precio de lista (margen {{ correctExample.marginPercent }}%)</span>
+            <strong>{{ correctExample.listPrice | currencyArs }}</strong>
+          </div>
+          <div class="calc-box__row calc-box__row--discount">
+            <span>− {{ correctExample.discountPercent }}% sobre {{ correctExample.listPrice | currencyArs }}</span>
+            <span>− {{ correctExample.discountAmount | currencyArs }}</span>
+          </div>
+          <div class="calc-box__row calc-box__row--total">
+            <strong>Precio mayorista</strong>
+            <strong>{{ correctExample.wholesalePrice | currencyArs }}</strong>
+          </div>
+          <div class="calc-box__row">
+            <span>Te queda de ganancia</span>
+            <span
+              class="calc-box__profit"
+              [class.calc-box__profit--loss]="correctExample.profit < 0"
+            >
+              {{ correctExample.profit | currencyArs }}
+              ({{ correctExample.profitPercentOnCost }}% sobre el costo)
             </span>
-          } @else {
-            <span class="is-muted">—</span>
-          }
-        </ng-template>
-      </db-data-table>
-      <p class="wholesale-area-table__foot">
-        Ejemplo con un costo de {{ exampleCost | currencyArs }}.
-        Con un descuento del {{ wholesale.percent }}%, cualquier área con margen menor al
-        {{ breakEvenMarginPercent }}% vende a pérdida por mayor.
-      </p>
-    </div>
+          </div>
+        </div>
 
-    <div class="wholesale-actions">
-      <db-button
-        [label]="savingDiscount ? 'Guardando...' : 'Guardar descuento'"
-        variant="primary"
-        format="solid"
-        [disabled]="savingDiscount"
-        (clicked)="saveDiscount()"
-      />
-    </div>
-  </section>
+        <div class="calc-box calc-box--wrong">
+          <span class="calc-box__title">No se calcula así</span>
+          <div class="calc-box__row">
+            <span>
+              − {{ wrongExample.discountPercent }}% sobre la ganancia
+              ({{ wrongExample.listProfit | currencyArs }})
+            </span>
+            <span class="calc-box__strike">− {{ wrongExample.wrongDiscountAmount | currencyArs }}</span>
+          </div>
+          <div class="calc-box__row">
+            <span>Precio</span>
+            <span class="calc-box__strike">{{ wrongExample.wrongPrice | currencyArs }}</span>
+          </div>
+          <div class="calc-box__row">
+            <span>Ganancia</span>
+            <span class="calc-box__strike">{{ wrongExample.wrongProfit | currencyArs }}</span>
+          </div>
+          <p class="calc-box__note">
+            Con este error el revendedor pagaría
+            {{ wrongExample.overpay | currencyArs }} de más por unidad.
+          </p>
+        </div>
+      </div>
+
+      <div class="wholesale-area-table">
+        <span class="wholesale-area-table__title">Cuánto te queda por área</span>
+        <db-data-table
+          label="Cuánto te queda por área"
+          [rows]="areaExampleRows"
+          [columns]="areaExampleColumns"
+          [clientSide]="false"
+          minWidth="600px"
+        >
+          <ng-template odlCell="listPrice" let-row>
+            {{ row.listPrice | currencyArs }}
+          </ng-template>
+          <ng-template odlCell="wholesalePrice" let-row>
+            @if (row.applies) {
+              <span>{{ row.wholesalePrice | currencyArs }}</span>
+            } @else {
+              <span class="is-muted">—</span>
+            }
+          </ng-template>
+          <ng-template odlCell="wholesaleProfit" let-row>
+            @if (row.applies) {
+              <span class="wholesale-profit" [class.wholesale-profit--loss]="row.wouldLose">
+                <span>{{ row.profit | currencyArs }}</span>
+                @if (row.wouldLose) {
+                  <span class="wholesale-profit__alert">Daría pérdida</span>
+                } @else {
+                  <span class="wholesale-profit__meta">{{ row.profitPercentOnCost }}% sobre el costo</span>
+                }
+              </span>
+            } @else {
+              <span class="is-muted">—</span>
+            }
+          </ng-template>
+        </db-data-table>
+        <p class="wholesale-area-table__foot">
+          Ejemplo con un costo de {{ exampleCost | currencyArs }}.
+          Con un descuento del {{ wholesale.percent }}%, cualquier área con margen menor al
+          {{ breakEvenMarginPercent }}% vende a pérdida por mayor.
+        </p>
+      </div>
+
+      <div class="wholesale-actions">
+        <db-button
+          [label]="savingDiscount ? 'Guardando...' : 'Guardar descuento'"
+          variant="primary"
+          format="solid"
+          [disabled]="savingDiscount"
+          (clicked)="saveDiscount()"
+        />
+      </div>
+    </section>
+  }
 } @else {
-  <db-state-message [loading]="true" loadingMessage="Cargando márgenes..." />
+  @if (isMobile()) {
+    <db-mobile-bar title="Ganancias" backLink="/ajustes" />
+    <div class="m-body">
+      <db-state-message [loading]="true" loadingMessage="Cargando márgenes..." />
+    </div>
+  } @else {
+    <db-state-message [loading]="true" loadingMessage="Cargando márgenes..." />
+  }
 }

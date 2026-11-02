@@ -1,0 +1,30 @@
+<div class="st-m">
+  <db-mobile-bar title="Equipo" backLink="/ajustes">
+    <ng-content select="[barAction]" />
+  </db-mobile-bar>
+
+  <div class="st-m__tabs" role="tablist" aria-label="Sección">
+    <a
+      class="st-m__tab"
+      routerLink="/ajustes/usuarios/usuarios"
+      routerLinkActive="st-m__tab--on"
+      role="tab"
+    >Usuarios</a>
+    <a
+      class="st-m__tab"
+      routerLink="/ajustes/usuarios/roles"
+      routerLinkActive="st-m__tab--on"
+      role="tab"
+    >Roles</a>
+    <a
+      class="st-m__tab"
+      routerLink="/ajustes/usuarios/areas"
+      routerLinkActive="st-m__tab--on"
+      role="tab"
+    >Áreas</a>
+  </div>
+
+  <div class="m-body">
+    <ng-content />
+  </div>
+</div>

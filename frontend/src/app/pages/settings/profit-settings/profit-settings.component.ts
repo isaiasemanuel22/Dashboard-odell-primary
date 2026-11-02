@@ -15,6 +15,7 @@ import {
   WholesaleDiscountSettings,
 } from '../../../core/models';
 import { SettingsService } from '../../../core/services/settings.service';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { SERVICE_TYPE_LABELS } from '../../../shared/constants/labels';
 import { normalizeProfitMargins } from '../../../shared/utils/pricing.util';
 import {
@@ -34,6 +35,7 @@ import {
   DbCheckboxGroupComponent,
   DbInputComponent,
   DbStateMessageComponent,
+  MobileBarComponent,
   DB_DATA_TABLE,
   OdlColumn,
   serviceTag,
@@ -57,6 +59,7 @@ interface MarginField {
     DbCheckboxComponent,
     DbCheckboxGroupComponent,
     DbInputComponent,
+    MobileBarComponent,
     ...DB_DATA_TABLE,
   ],
   templateUrl: './profit-settings.component.html',
@@ -64,8 +67,11 @@ interface MarginField {
 })
 export class ProfitSettingsComponent implements OnInit, OnDestroy {
   private readonly settingsService = inject(SettingsService);
+  private readonly breakpoint = inject(BreakpointService);
   private readonly cdr = inject(ChangeDetectorRef);
   private settingsSub?: Subscription;
+
+  readonly isMobile = this.breakpoint.isMobile;
 
   settings: GeneralSettings | null = null;
   savingMargins = false;
@@ -250,6 +256,27 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
       current.delete(service);
     }
     this.patchWholesale({ serviceTypes: [...current] });
+  }
+
+  mobileMarginHint(service: ServiceType): string {
+    if (
+      service === ServiceType.DISENO_GRAFICO ||
+      service === ServiceType.MODELADO
+    ) {
+      return 'Sobre la tarifa por hora';
+    }
+    const price = this.examplePrice(1000, this.marginValue(service));
+    const money = new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(price);
+    return `Costo $ 1.000 → precio ${money}`;
+  }
+
+  saveAllMobile(): void {
+    this.saveMargins();
+    this.saveDiscount();
   }
 
   saveMargins(): void {

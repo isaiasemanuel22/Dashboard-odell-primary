@@ -12,6 +12,7 @@ import {
   ResinTypeConfig,
 } from '../../../core/models';
 import { SettingsService } from '../../../core/services/settings.service';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import {
   buildResinTypeOptions,
   resinTypeDisplayLabel,
@@ -24,11 +25,20 @@ import {
   DbInputComponent,
   DbPillGroupComponent,
   DbStateMessageComponent,
+  MobileBarComponent,
   DB_DATA_TABLE,
   OdlActionEvent,
   OdlColumn,
   OdlRowAction,
 } from '@general-components';
+import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
+
+interface ResinPriceGroup {
+  key: string;
+  label: string;
+  average: number;
+  items: ResinPriceConfig[];
+}
 
 @Component({
   selector: 'app-resin-settings',
@@ -40,6 +50,8 @@ import {
     DbInputComponent,
     DbPillGroupComponent,
     DbStateMessageComponent,
+    MobileBarComponent,
+    CurrencyArsPipe,
     ...DB_DATA_TABLE,
   ],
   templateUrl: './resin-settings.component.html',
@@ -47,7 +59,10 @@ import {
 })
 export class ResinSettingsComponent implements OnInit, OnDestroy {
   private readonly settingsService = inject(SettingsService);
+  private readonly breakpoint = inject(BreakpointService);
   private settingsSub?: Subscription;
+
+  readonly isMobile = this.breakpoint.isMobile;
 
   settings: GeneralSettings | null = null;
   message = '';
@@ -58,6 +73,8 @@ export class ResinSettingsComponent implements OnInit, OnDestroy {
   extraResinTypes: string[] = [];
   search = '';
   typeFilter = 'all';
+  mobileTab: 'precios' | 'tipos' | 'marcas' = 'precios';
+  showMobileCreate = false;
 
   readonly priceActions: OdlRowAction<ResinPriceConfig>[] = [
     { id: 'editar', label: 'Editar' },
@@ -130,9 +147,55 @@ export class ResinSettingsComponent implements OnInit, OnDestroy {
     });
   }
 
+  get priceGroups(): ResinPriceGroup[] {
+    const catalog = this.settings?.resinTypes ?? [];
+    const map = new Map<string, ResinPriceConfig[]>();
+    for (const item of this.settings?.resinPrices ?? []) {
+      const key = item.resinTypeId || String(item.resinType) || 'sin-tipo';
+      const list = map.get(key) ?? [];
+      list.push(item);
+      map.set(key, list);
+    }
+    return [...map.entries()]
+      .map(([key, items]) => {
+        const sum = items.reduce((acc, row) => acc + (row.pricePerLiter || 0), 0);
+        const average = items.length ? Math.round(sum / items.length) : 0;
+        return {
+          key,
+          label: resinTypeDisplayLabel(key, catalog),
+          average,
+          items: items.slice().sort((a, b) => a.brand.localeCompare(b.brand, 'es')),
+        };
+      })
+      .sort((a, b) => a.label.localeCompare(b.label, 'es'));
+  }
+
+  get brandList(): string[] {
+    const brands = new Set<string>();
+    for (const item of this.settings?.resinPrices ?? []) {
+      if (item.brand.trim()) brands.add(item.brand.trim());
+    }
+    return [...brands].sort((a, b) => a.localeCompare(b, 'es'));
+  }
+
+  typePriceCount(typeId: string): number {
+    return (this.settings?.resinPrices ?? []).filter(
+      (item) => (item.resinTypeId || String(item.resinType)) === typeId,
+    ).length;
+  }
+
+  brandPriceCount(brand: string): number {
+    return (this.settings?.resinPrices ?? []).filter(
+      (item) => item.brand.trim() === brand,
+    ).length;
+  }
+
   focusCreate(): void {
     this.cancelEdit();
-    queueMicrotask(() => document.getElementById('resin-brand')?.focus());
+    this.showMobileCreate = true;
+    queueMicrotask(() =>
+      document.getElementById(this.isMobile() ? 'rm-new-brand' : 'resin-brand')?.focus(),
+    );
   }
 
   onPriceAction(event: OdlActionEvent<ResinPriceConfig>): void {
