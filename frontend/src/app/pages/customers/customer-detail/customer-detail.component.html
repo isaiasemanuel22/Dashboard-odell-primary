@@ -1,134 +1,356 @@
-<db-state-message
-  [loading]="loading"
-  [empty]="!loading && (notFound || !customer)"
-  loadingMessage="Cargando cliente..."
-  emptyMessage="Cliente no encontrado."
->
-  <db-button
-    emptyActions
-    label="Volver a clientes"
-    variant="secondary"
-    format="soft"
-    routerLink="/clientes"
-  />
-</db-state-message>
-
-@if (!loading && customer && !notFound) {
-  <header class="page-header detail-header">
-    <div>
-      <a routerLink="/clientes" class="back-link">← Clientes</a>
-      <div class="title-row">
-        <div class="avatar">{{ customer.name.charAt(0) }}</div>
-        <div>
-          <div class="title-row__heading">
-            <h2>{{ customer.name }}</h2>
-            @if (isRevendedor) {
-              <span class="type-badge">Revendedor</span>
-            }
-          </div>
-          @if (customer.company) {
-            <p class="company">{{ customer.company }}</p>
-          }
-        </div>
-      </div>
-    </div>
-  </header>
-
-  <div class="detail-layout">
-    <section class="panel customer-info">
-      <h3>Contacto</h3>
-      <dl class="detail-list">
-        <div>
-          <dt>Tipo</dt>
-          <dd>{{ typeLabel(customer.type) }}</dd>
-        </div>
-        <div>
-          <dt>Email</dt>
-          <dd>{{ customer.email }}</dd>
-        </div>
-        <div>
-          <dt>Teléfono</dt>
-          <dd>{{ customer.phone }}</dd>
-        </div>
-        <div>
-          <dt>CUIT</dt>
-          <dd>{{ customer.taxId || '—' }}</dd>
-        </div>
-        <div>
-          <dt>Origen</dt>
-          <dd>{{ sourceLabel(customer.source) || '—' }}</dd>
-        </div>
-        <div>
-          <dt>Cliente desde</dt>
-          <dd>{{ customer.createdAt | dateShort }}</dd>
-        </div>
-      </dl>
-    </section>
-
-    <div class="detail-main">
-      <div class="stats-row">
-        <div class="stat-card">
-          <span class="label">Pedidos totales</span>
-          <strong>{{ orders.length }}</strong>
-        </div>
-        <div class="stat-card accent">
-          <span class="label">En curso</span>
-          <strong>{{ activeOrders.length }}</strong>
-        </div>
-        <div class="stat-card">
-          <span class="label">Finalizados</span>
-          <strong>{{ finishedOrders.length }}</strong>
-        </div>
-        <div class="stat-card">
-          <span class="label">Facturado (finalizados)</span>
-          <strong>{{ totalSpent | currencyArs }}</strong>
-        </div>
-      </div>
-
-      <section class="panel">
-        <h3>Pedidos en curso</h3>
-        @if (activeOrders.length) {
-          <app-orders-table [orders]="activeOrders" [embedded]="true" />
-        } @else {
-          <p class="empty-group">No hay pedidos pendientes o en producción.</p>
-        }
-      </section>
-
-      <section class="panel">
-        <h3>Pedidos finalizados</h3>
-        @if (finishedOrders.length) {
-          <app-orders-table [orders]="finishedOrders" [embedded]="true" />
-        } @else {
-          <p class="empty-group">Todavía no hay pedidos completados o entregados.</p>
-        }
-      </section>
-    </div>
-
-    <footer class="panel detail-actions">
-      <db-button
-        label="Agregar pedido"
-        variant="primary"
-        format="soft"
-        (clicked)="addOrder()"
+@if (loading) {
+  <div class="mobile-only">
+    <db-mobile-bar title="Cliente" backLink="/clientes" />
+    <div class="m-body">
+      <db-state-message
+        [loading]="true"
+        [empty]="false"
+        loadingMessage="Cargando cliente..."
       />
+    </div>
+  </div>
+  <div class="desktop-only">
+    <db-state-message
+      [loading]="true"
+      [empty]="false"
+      loadingMessage="Cargando cliente..."
+    />
+  </div>
+} @else if (notFound || !customer) {
+  <div class="mobile-only">
+    <db-mobile-bar title="Cliente" backLink="/clientes" />
+    <div class="m-body">
+      <div class="m-card">
+        <p>Cliente no encontrado.</p>
+        <db-button
+          label="Volver a clientes"
+          variant="secondary"
+          format="soft"
+          routerLink="/clientes"
+        />
+      </div>
+    </div>
+  </div>
+  <div class="desktop-only">
+    <db-state-message
+      [loading]="false"
+      [empty]="true"
+      emptyMessage="Cliente no encontrado."
+    >
       <db-button
-        label="Agregar venta"
+        emptyActions
+        label="Volver a clientes"
         variant="secondary"
         format="soft"
-        (clicked)="addSale()"
+        routerLink="/clientes"
       />
-      <db-button
-        label="Editar cliente"
-        variant="primary"
-        format="solid"
-        (clicked)="openEdit()"
-      />
-      <db-button
-        label="Eliminar"
-        variant="delete"
-        format="solid"
-        (clicked)="deleteCustomer()"
-      />
-    </footer>
+    </db-state-message>
+  </div>
+}
+
+@if (!loading && customer && !notFound) {
+  <div class="mobile-only cd-m cd-m--dock">
+    <db-mobile-bar title="Cliente" backLink="/clientes">
+      <button type="button" class="m-ib txt" (click)="openEdit()">Editar</button>
+      <button
+        type="button"
+        class="m-ib"
+        aria-label="Más acciones"
+        (click)="openMobileActions()"
+      >
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.4"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M5 12h.01M12 12h.01M19 12h.01" />
+        </svg>
+      </button>
+    </db-mobile-bar>
+
+    <div class="m-body cd-m__body">
+      <section class="m-card cd-m__hero" aria-label="Resumen del cliente">
+        <span class="cd-m__av" aria-hidden="true">{{ customerInitials }}</span>
+        <b class="cd-m__name">{{ customer.name }}</b>
+        <div class="cd-m__pills">
+          <span class="m-pill m-pill--b">{{ typePillLabel }}</span>
+          @if (sourcePillLabel) {
+            <span class="m-pill">{{ sourcePillLabel }}</span>
+          }
+        </div>
+      </section>
+
+      @if (showContactActions) {
+        <div class="cd-m__contact">
+          @if (whatsappHref; as wa) {
+            <a
+              class="cd-m__contact-btn"
+              [href]="wa"
+              target="_blank"
+              rel="noopener noreferrer"
+              >WhatsApp</a
+            >
+          }
+          @if (telHref; as tel) {
+            <a class="cd-m__contact-btn" [href]="tel">Llamar</a>
+          }
+        </div>
+      }
+
+      <div class="m-kpis">
+        <div class="m-kpi">
+          <span class="m-lbl">Comprado</span>
+          <span class="cd-m__kv">{{ totalSpent | currencyArs }}</span>
+          <span class="cd-m__ks">{{ purchasedKpiSub }}</span>
+        </div>
+        <div class="m-kpi">
+          <span class="m-lbl">Saldo</span>
+          <span
+            class="cd-m__kv"
+            [class.cd-m__kv--neg]="balanceAmount > 0"
+            >{{ balanceAmount | currencyArs }}</span
+          >
+          <span class="cd-m__ks">{{ balanceKpiSub }}</span>
+        </div>
+      </div>
+
+      <h2 class="m-sec-t">Datos</h2>
+      <div class="m-card m-card--flush">
+        @if (customer.email) {
+          <div class="m-row">
+            <div class="m-row__text">
+              <span>Email</span>
+              <b>{{ customer.email }}</b>
+            </div>
+          </div>
+        }
+        @if (customer.phone) {
+          <div class="m-row">
+            <div class="m-row__text">
+              <span>Teléfono</span>
+              <b>{{ customer.phone }}</b>
+            </div>
+          </div>
+        }
+        @if (customer.taxId) {
+          <div class="m-row">
+            <div class="m-row__text">
+              <span>CUIT</span>
+              <b>{{ customer.taxId }}</b>
+            </div>
+          </div>
+        }
+        @if (isRevendedor && customer.wholesaleMinimum) {
+          <div class="m-row">
+            <div class="m-row__text">
+              <span>Compra mínima mayorista</span>
+              <b>{{ customer.wholesaleMinimum | currencyArs }}</b>
+            </div>
+          </div>
+        }
+        @if (customer.company) {
+          <div class="m-row">
+            <div class="m-row__text">
+              <span>Empresa</span>
+              <b>{{ customer.company }}</b>
+            </div>
+          </div>
+        }
+      </div>
+
+      <h2 class="m-sec-t">Pedidos</h2>
+      <div class="m-card m-card--flush">
+        @if (orders.length === 0) {
+          <div class="m-row">
+            <div class="m-row__text">
+              <span>Todavía no hay pedidos de este cliente.</span>
+            </div>
+          </div>
+        } @else {
+          @for (order of orders; track order.id) {
+            <a
+              class="m-row"
+              [routerLink]="['/pedidos', order.id]"
+            >
+              <div class="m-row__text">
+                <b>{{ orderRowTitle(order) }}</b>
+                <span>{{ orderRowMeta(order) }}</span>
+              </div>
+              <div class="cd-m__row-end">{{ order.total | currencyArs }}</div>
+            </a>
+          }
+        }
+      </div>
+    </div>
+
+    <div class="cd-m__dock">
+      <button
+        type="button"
+        class="cd-m__dock-btn cd-m__dock-btn--sec"
+        (click)="addQuote()"
+      >
+        Presupuesto
+      </button>
+      <button
+        type="button"
+        class="cd-m__dock-btn cd-m__dock-btn--pri"
+        (click)="addOrder()"
+      >
+        Nuevo pedido
+      </button>
+    </div>
+
+    @if (mobileActionsOpen) {
+      <div class="cd-m__sheet-scrim" (click)="closeMobileActions()"></div>
+      <div
+        class="cd-m__sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Más acciones"
+      >
+        <div class="cd-m__sheet-grab" aria-hidden="true"></div>
+        <div class="cd-m__sheet-body">
+          <button
+            type="button"
+            class="cd-m__sheet-action"
+            (click)="addSale()"
+          >
+            Agregar venta
+          </button>
+          <button
+            type="button"
+            class="cd-m__sheet-action cd-m__sheet-action--danger"
+            (click)="deleteCustomer()"
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="desktop-only">
+    <header class="page-header detail-header">
+      <div>
+        <a routerLink="/clientes" class="back-link">← Clientes</a>
+        <div class="title-row">
+          <div class="avatar">{{ customer.name.charAt(0) }}</div>
+          <div>
+            <div class="title-row__heading">
+              <h2>{{ customer.name }}</h2>
+              @if (isRevendedor) {
+                <span class="type-badge">Revendedor</span>
+              }
+            </div>
+            @if (customer.company) {
+              <p class="company">{{ customer.company }}</p>
+            }
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="detail-layout">
+      <section class="panel customer-info">
+        <h3>Contacto</h3>
+        <dl class="detail-list">
+          <div>
+            <dt>Tipo</dt>
+            <dd>{{ typeLabel(customer.type) }}</dd>
+          </div>
+          <div>
+            <dt>Email</dt>
+            <dd>{{ customer.email }}</dd>
+          </div>
+          <div>
+            <dt>Teléfono</dt>
+            <dd>{{ customer.phone }}</dd>
+          </div>
+          <div>
+            <dt>CUIT</dt>
+            <dd>{{ customer.taxId || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Origen</dt>
+            <dd>{{ sourceLabel(customer.source) || '—' }}</dd>
+          </div>
+          <div>
+            <dt>Cliente desde</dt>
+            <dd>{{ customer.createdAt | dateShort }}</dd>
+          </div>
+        </dl>
+      </section>
+
+      <div class="detail-main">
+        <div class="stats-row">
+          <div class="stat-card">
+            <span class="label">Pedidos totales</span>
+            <strong>{{ orders.length }}</strong>
+          </div>
+          <div class="stat-card accent">
+            <span class="label">En curso</span>
+            <strong>{{ activeOrders.length }}</strong>
+          </div>
+          <div class="stat-card">
+            <span class="label">Finalizados</span>
+            <strong>{{ finishedOrders.length }}</strong>
+          </div>
+          <div class="stat-card">
+            <span class="label">Facturado (finalizados)</span>
+            <strong>{{ totalSpent | currencyArs }}</strong>
+          </div>
+        </div>
+
+        <section class="panel">
+          <h3>Pedidos en curso</h3>
+          @if (activeOrders.length) {
+            <app-orders-table [orders]="activeOrders" [embedded]="true" />
+          } @else {
+            <p class="empty-group">No hay pedidos pendientes o en producción.</p>
+          }
+        </section>
+
+        <section class="panel">
+          <h3>Pedidos finalizados</h3>
+          @if (finishedOrders.length) {
+            <app-orders-table [orders]="finishedOrders" [embedded]="true" />
+          } @else {
+            <p class="empty-group">Todavía no hay pedidos completados o entregados.</p>
+          }
+        </section>
+      </div>
+
+      <footer class="panel detail-actions">
+        <db-button
+          label="Agregar pedido"
+          variant="primary"
+          format="soft"
+          (clicked)="addOrder()"
+        />
+        <db-button
+          label="Agregar venta"
+          variant="secondary"
+          format="soft"
+          (clicked)="addSale()"
+        />
+        <db-button
+          label="Editar cliente"
+          variant="primary"
+          format="solid"
+          (clicked)="openEdit()"
+        />
+        <db-button
+          label="Eliminar"
+          variant="delete"
+          format="solid"
+          (clicked)="deleteCustomer()"
+        />
+      </footer>
+    </div>
   </div>
 }

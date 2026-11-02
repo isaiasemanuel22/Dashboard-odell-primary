@@ -1,39 +1,154 @@
-<header class="page-header">
-  <div>
-    <h2>Clientes</h2>
-    <p>
-      Base de clientes del emprendimiento · {{ customers.length }} clientes
-      · {{ revendedorCount }} revendedores
-    </p>
-  </div>
-  <db-button
-    label="+ Nuevo cliente"
-    variant="primary"
-    format="solid"
-    (clicked)="openCreateCustomer()"
-  />
-</header>
+<div class="mobile-only customers-m">
+  <db-mobile-bar title="Clientes" backLink="/mas">
+    <button
+      type="button"
+      class="m-ib"
+      aria-label="Nuevo cliente"
+      (click)="openCreateCustomer()"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="22"
+        height="22"
+        fill="none"
+        stroke="#0E7AAB"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+    </button>
+  </db-mobile-bar>
 
-<db-data-table
-  label="Clientes"
-  [rows]="customers"
-  [columns]="columns"
-  [actions]="actions"
-  [filters]="kindFilters"
-  [loading]="loading"
-  searchPlaceholder="Buscar por nombre, email o teléfono"
-  emptyText="No hay clientes registrados."
-  emptyActionLabel="Crear primer cliente"
-  [clickableRows]="true"
-  (rowClick)="openCustomer($event)"
-  (action)="onAction($event)"
-  (emptyAction)="openCreateCustomer()"
->
-  <ng-template odlCell="email" let-customer>
-    @if (customer.email) {
-      <a [href]="'mailto:' + customer.email">{{ customer.email }}</a>
+  <div class="m-tools">
+    <label class="m-search">
+      <svg
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="#5B7083"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="M20 20l-3.5-3.5" />
+      </svg>
+      <input
+        type="search"
+        placeholder="Nombre, email o teléfono"
+        aria-label="Buscar clientes"
+        [(ngModel)]="search"
+        (ngModelChange)="onSearchChange()"
+      />
+    </label>
+    <div class="m-chips" role="group" aria-label="Tipo de cliente">
+      @for (chip of mobileListChips; track chip.value) {
+        <button
+          type="button"
+          class="m-chip"
+          [class.m-chip--on]="mobileChip === chip.value"
+          (click)="setMobileChip(chip.value)"
+        >
+          {{ chip.label }}
+          <span class="customers-m__chip-n">{{ chip.count }}</span>
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="m-body customers-m__list">
+    @if (loading) {
+      <db-skeleton variant="cards" [count]="4" />
+    } @else if (filteredMobileCustomers.length === 0) {
+      <div class="m-card customers-m__empty">
+        <p>No hay clientes registrados.</p>
+        <db-button
+          label="Crear primer cliente"
+          variant="primary"
+          format="solid"
+          (clicked)="openCreateCustomer()"
+        />
+      </div>
     } @else {
-      —
+      <div class="m-card m-card--flush">
+        @for (customer of filteredMobileCustomers; track customer.id) {
+          <a
+            class="m-row customers-m__row"
+            [routerLink]="['/clientes', customer.id]"
+          >
+            <span class="customers-m__av" aria-hidden="true">{{
+              customerInitials(customer)
+            }}</span>
+            <div class="m-row__text">
+              <b>{{ customer.name }}</b>
+              <span>{{ customerSubtitle(customer) }}</span>
+            </div>
+            @if (customerBalance(customer) > 0) {
+              <div class="customers-m__end customers-m__end--neg">
+                {{ customerBalance(customer) | currencyArs }}
+                <small>saldo</small>
+              </div>
+            } @else {
+              <svg
+                class="customers-m__chev"
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path d="M9 6l6 6-6 6" />
+              </svg>
+            }
+          </a>
+        }
+      </div>
     }
-  </ng-template>
-</db-data-table>
+  </div>
+</div>
+
+<div class="desktop-only">
+  <header class="page-header">
+    <div>
+      <h2>Clientes</h2>
+      <p>
+        Base de clientes del emprendimiento · {{ customers.length }} clientes
+        · {{ revendedorCount }} revendedores
+      </p>
+    </div>
+    <db-button
+      label="+ Nuevo cliente"
+      variant="primary"
+      format="solid"
+      (clicked)="openCreateCustomer()"
+    />
+  </header>
+
+  <db-data-table
+    label="Clientes"
+    [rows]="customers"
+    [columns]="columns"
+    [actions]="actions"
+    [filters]="kindFilters"
+    [loading]="loading"
+    searchPlaceholder="Buscar por nombre, email o teléfono"
+    emptyText="No hay clientes registrados."
+    emptyActionLabel="Crear primer cliente"
+    [clickableRows]="true"
+    (rowClick)="openCustomer($event)"
+    (action)="onAction($event)"
+    (emptyAction)="openCreateCustomer()"
+  >
+    <ng-template odlCell="email" let-customer>
+      @if (customer.email) {
+        <a [href]="'mailto:' + customer.email">{{ customer.email }}</a>
+      } @else {
+        —
+      }
+    </ng-template>
+  </db-data-table>
+</div>

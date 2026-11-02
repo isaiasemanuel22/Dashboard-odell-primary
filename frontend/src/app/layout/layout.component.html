@@ -94,7 +94,13 @@
             type="button"
             class="bottom-nav__fab"
             [attr.aria-label]="
-              fabOpensCounterSale ? 'Nueva venta de mostrador' : 'Nuevo pedido'
+              fabOpensCounterSale
+                ? 'Nueva venta de mostrador'
+                : fabOpensQuote
+                  ? 'Nuevo presupuesto'
+                  : fabOpensCustomer
+                    ? 'Nuevo cliente'
+                    : 'Nuevo pedido'
             "
             (click)="onFabClick()"
           >

@@ -11,6 +11,7 @@ import {
   Customer,
   UpdateCustomerPayload,
 } from '../../core/models';
+import { BreakpointService } from '../../core/services/breakpoint.service';
 import { CustomerCatalogService } from '../../core/services/customer-catalog.service';
 import { CustomersService } from '../../core/services/customers.service';
 import { FormDialogShellComponent } from '../../components/form-dialog-shell/form-dialog-shell.component';
@@ -27,10 +28,38 @@ export interface CustomerFormDialogData {
   template: `
     <app-form-dialog-shell
       [title]="customer ? 'Editar cliente' : 'Nuevo cliente'"
-      subtitle="Los campos con * son obligatorios"
+      [subtitle]="isMobile() ? '' : 'Los campos con * son obligatorios'"
       size="md"
       (close)="cancel()"
     >
+      @if (isMobile()) {
+        <header class="order-dialog-m-bar">
+          <button
+            type="button"
+            class="m-ib"
+            aria-label="Cerrar sin guardar"
+            (click)="cancel()"
+          >
+            <svg
+              width="22"
+              height="22"
+              viewBox="0 0 24 24"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M6 6l12 12M18 6L6 18"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+              />
+            </svg>
+          </button>
+          <h2 class="order-dialog-m-bar__title">
+            {{ customer ? 'Editar cliente' : 'Nuevo cliente' }}
+          </h2>
+        </header>
+      }
       @if (savedNotice) {
         <p class="customer-saved" role="status">{{ savedNotice }}</p>
       }
@@ -55,9 +84,12 @@ export interface CustomerFormDialogData {
 export class CustomerFormDialogComponent implements OnInit {
   private readonly customersService = inject(CustomersService);
   private readonly customerCatalog = inject(CustomerCatalogService);
+  private readonly breakpoint = inject(BreakpointService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly dialogRef = inject(DialogRef<Customer>);
   private readonly data = inject<CustomerFormDialogData>(DIALOG_DATA);
+
+  readonly isMobile = this.breakpoint.isMobile;
 
   customer: Customer | null = null;
   loading = false;

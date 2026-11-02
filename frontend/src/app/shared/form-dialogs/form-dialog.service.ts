@@ -43,7 +43,11 @@ export class FormDialogService {
         ({ CustomerFormDialogComponent }): Observable<Customer | undefined> =>
           this.open(CustomerFormDialogComponent, { customer }, 'md', {
             ariaLabel: customer ? 'Editar cliente' : 'Nuevo cliente',
-            panelClass: ['form-dialog-panel--customer'],
+            // Desktop: hoja md; mobile: pantalla completa como pedido.
+            panelClass: [
+              'form-dialog-panel--customer',
+              'form-dialog-panel--order-fullscreen',
+            ],
             maxWidth: '600px',
           }),
       ),
@@ -103,7 +107,10 @@ export class FormDialogService {
     );
   }
 
-  openQuote(quote: Quote | null = null): Observable<Quote | undefined> {
+  openQuote(
+    quote: Quote | null = null,
+    options?: { presetCustomerId?: string },
+  ): Observable<Quote | undefined> {
     if (this.quoteDialogLocked) {
       return of(undefined);
     }
@@ -111,9 +118,15 @@ export class FormDialogService {
     return from(import('./quote-form-dialog.component')).pipe(
       switchMap(
         ({ QuoteFormDialogComponent }): Observable<Quote | undefined> =>
-          this.open<{ quote: Quote | null }, Quote>(
+          this.open<
+            { quote: Quote | null; presetCustomerId?: string },
+            Quote
+          >(
             QuoteFormDialogComponent,
-            { quote },
+            {
+              quote,
+              presetCustomerId: options?.presetCustomerId,
+            },
             'xl',
             {
               ariaLabel: quote ? 'Editar presupuesto' : 'Nuevo presupuesto',

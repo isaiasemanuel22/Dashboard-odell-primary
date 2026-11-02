@@ -1,5 +1,6 @@
 @use '../../shared/styles/variables' as *;
 @use '../../shared/styles/screen' as screen;
+@use '../../shared/styles/mobile' as mobile;
 
 .customers-table {
   td {
@@ -50,4 +51,62 @@
   margin-top: 0.1rem;
   font-size: $font-meta;
   color: $color-text-muted;
+}
+
+.customers-m__chip-n {
+  font-size: 11px;
+  opacity: 0.85;
+}
+
+.customers-m__list {
+  padding-top: 14px;
+}
+
+.customers-m__empty {
+  align-items: flex-start;
+  gap: 12px;
+
+  p {
+    margin: 0;
+    color: mobile.$m-text-secondary;
+    font-size: 14px;
+  }
+}
+
+.customers-m__av {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: #e0f0f8;
+  color: #0b5f86;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+}
+
+.customers-m__end {
+  text-align: right;
+  font-weight: 700;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  flex: none;
+
+  small {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: mobile.$m-text-secondary;
+  }
+
+  &--neg {
+    color: #b91c1c;
+  }
+}
+
+.customers-m__chev {
+  color: #9aafbf;
+  flex: none;
 }

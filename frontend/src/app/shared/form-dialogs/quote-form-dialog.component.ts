@@ -32,6 +32,7 @@ import { FormDialogService } from './form-dialog.service';
 
 export interface QuoteFormDialogData {
   quote?: Quote | null;
+  presetCustomerId?: string;
 }
 
 @Component({
@@ -84,6 +85,7 @@ export interface QuoteFormDialogData {
         [quote]="quote"
         [customers]="customers"
         [products]="products"
+        [presetCustomerId]="presetCustomerId"
         [loading]="loading"
         [error]="error"
         (save)="save($event)"
@@ -113,6 +115,7 @@ export class QuoteFormDialogComponent implements OnInit, AfterViewInit {
   readonly isMobile = this.breakpoint.isMobile;
 
   quote: Quote | null = null;
+  presetCustomerId = '';
   customers: Customer[] = [];
   products: Product[] = [];
   loading = false;
@@ -136,6 +139,7 @@ export class QuoteFormDialogComponent implements OnInit, AfterViewInit {
 
   ngOnInit(): void {
     this.quote = this.data?.quote ?? null;
+    this.presetCustomerId = this.data?.presetCustomerId ?? '';
     this.resetState();
     this.loadCatalogs();
     this.dialogRef.disableClose = true;
