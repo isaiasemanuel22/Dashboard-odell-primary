@@ -140,7 +140,12 @@ export class LayoutComponent implements OnInit {
   }
 
   private shouldHideBottomNav(url: string): boolean {
-    return url.includes('/ventas/nueva') || /\/ventas\/[^/]+\/editar/.test(url);
+    const path = url.split(/[?#]/)[0];
+    return (
+      path.includes('/ventas/nueva') ||
+      /\/ventas\/[^/]+\/editar/.test(path) ||
+      /^\/pedidos\/[^/]+$/.test(path)
+    );
   }
 
   openNewOrder(): void {

@@ -1,4 +1,5 @@
 @use '../../../shared/styles/variables' as *;
+@use '../../../shared/styles/mobile' as mobile;
 
 .back-link {
   display: inline-block;
@@ -365,4 +366,528 @@
 
 .order-discount-row td {
   color: $color-error;
+}
+
+@include mobile.mobile-only {
+  .od-m {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+
+  .od-m__body {
+    padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .od-m--dock .od-m__body {
+    padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .od-m__status-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .od-m__meta {
+    font-size: 12px;
+    color: mobile.$m-text-secondary;
+    text-align: right;
+    min-width: 0;
+    white-space: nowrap;
+  }
+
+  .od-m__meta--late {
+    color: #b91c1c;
+    font-weight: 700;
+  }
+
+  .od-m__customer {
+    font-size: 18px;
+    font-weight: 700;
+    color: mobile.$m-text;
+
+    &--empty {
+      color: mobile.$m-text-secondary;
+      font-style: italic;
+      font-weight: 600;
+    }
+  }
+
+  .od-m__pills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .od-m__pill-channel {
+    background: #eef4f8;
+    color: #33495a;
+  }
+
+  .od-m__status {
+    &--pendiente {
+      background: #fef3c7;
+      color: #92400e;
+    }
+
+    &--en_progreso {
+      background: #e0f0f8;
+      color: #0b5f86;
+    }
+
+    &--terminado {
+      background: #dcfce7;
+      color: #166534;
+    }
+
+    &--en_revision {
+      background: #f3e8ff;
+      color: #6b21a8;
+    }
+
+    &--entregado,
+    &--cancelado,
+    &--parcialmente_entregado {
+      background: #eef4f8;
+      color: #33495a;
+    }
+  }
+
+  .od-m__assign {
+    display: grid;
+    gap: 10px;
+    padding-top: 4px;
+  }
+
+  .od-m__contact {
+    display: flex;
+    gap: 8px;
+  }
+
+  .od-m__contact-btn {
+    flex: 1;
+    min-height: 44px;
+    border-radius: 12px;
+    border: 1px solid mobile.$m-border-input;
+    background: mobile.$m-surface;
+    color: mobile.$m-text;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    box-sizing: border-box;
+  }
+
+  .od-m__notice {
+    display: grid;
+    gap: 10px;
+    padding: 12px 14px;
+    border-radius: 14px;
+    border: 1px solid #f5d9a8;
+    background: #fff8eb;
+    color: #7a4a06;
+    font-size: 13px;
+
+    p,
+    span {
+      margin: 0;
+    }
+
+    &--warn {
+      border-color: #f5d9a8;
+      background: #fff8eb;
+      color: #7a4a06;
+    }
+
+    &--error {
+      border-color: #f3b4b4;
+      background: #fff5f5;
+      color: #8a1c1c;
+    }
+  }
+
+  .od-m__notice-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+
+    // Mobile: primario sólido #0E7AAB (sin degradado desktop), ≥44px.
+    ::ng-deep .db-button--solid.db-button--primary {
+      min-height: 44px;
+      background: mobile.$m-primary;
+      border: none;
+      color: #fff;
+
+      &:hover:not(:disabled) {
+        background: mobile.$m-primary-dark;
+        opacity: 1;
+      }
+    }
+
+    ::ng-deep .db-button--soft.db-button--secondary {
+      min-height: 44px;
+    }
+  }
+
+  .od-m__alerts {
+    display: grid;
+    gap: 8px;
+  }
+
+  .od-m__alert-extra {
+    display: block;
+  }
+
+  .od-m__alerts-toggle {
+    justify-self: start;
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 12px;
+    border: 1px solid mobile.$m-border-input;
+    background: #fff;
+    color: mobile.$m-text;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .od-m__money-cols {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+    text-align: center;
+  }
+
+  .od-m__money-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+  }
+
+  .od-m__money-val {
+    font-size: 16px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: mobile.$m-text;
+
+    &--pos {
+      color: #15803d;
+    }
+
+    &--neg {
+      color: #b91c1c;
+    }
+  }
+
+  .od-m__track {
+    height: 8px;
+    border-radius: 999px;
+    background: #eef4f8;
+    overflow: hidden;
+  }
+
+  .od-m__fill {
+    height: 8px;
+    background: #15803d;
+    border-radius: 999px;
+  }
+
+  .od-m__deposit {
+    margin: 0;
+  }
+
+  .od-m__line {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    padding: 12px 14px;
+
+    & + & {
+      border-top: 1px solid mobile.$m-border;
+    }
+  }
+
+  .od-m__line-top,
+  .od-m__line-mid {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .od-m__line-name {
+    font-size: 15px;
+    font-weight: 700;
+    color: mobile.$m-text;
+    min-width: 0;
+  }
+
+  .od-m__line-sub {
+    font-size: 15px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: mobile.$m-text;
+    flex: none;
+
+    &--neg {
+      color: #b91c1c;
+    }
+  }
+
+  .od-m__line-qty {
+    font-size: 12px;
+    color: mobile.$m-text-secondary;
+    font-variant-numeric: tabular-nums;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 4px;
+
+    s {
+      color: mobile.$m-text-secondary;
+    }
+
+    strong {
+      color: mobile.$m-text;
+      font-weight: 700;
+    }
+  }
+
+  .od-m__line-progress {
+    margin: 0;
+    font-size: 12px;
+    color: mobile.$m-text-secondary;
+  }
+
+  .od-m__acc {
+    background: mobile.$m-surface;
+    border: 1px solid mobile.$m-border;
+    border-radius: 14px;
+    overflow: hidden;
+    // Margen para que el título quede visible al scrollear desde el dock.
+    scroll-margin-top: 72px;
+  }
+
+  .od-m__acc-btn {
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 14px;
+    border: 0;
+    background: mobile.$m-surface;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    text-align: left;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: inherit;
+    color: inherit;
+    cursor: pointer;
+  }
+
+  .od-m__acc-title {
+    font-size: 15px;
+    font-weight: 700;
+    color: mobile.$m-text;
+    flex: none;
+  }
+
+  .od-m__acc-summary {
+    margin-left: auto;
+    font-size: 12px;
+    color: #5b7083;
+    text-align: right;
+    min-width: 0;
+  }
+
+  .od-m__chev {
+    flex: none;
+    display: block;
+    transition: transform 0.15s ease;
+
+    &--open {
+      transform: rotate(90deg);
+    }
+  }
+
+  .od-m__acc-body {
+    padding: 12px 14px 14px;
+    border-top: 1px solid #e3ecf2;
+  }
+
+  .od-m__tasks {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .od-m__task {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 0;
+
+    & + & {
+      border-top: 1px solid mobile.$m-border;
+    }
+  }
+
+  .od-m__task-main {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+
+    strong {
+      font-size: 14px;
+      color: mobile.$m-text;
+    }
+
+    span {
+      font-size: 12px;
+      color: mobile.$m-text-secondary;
+    }
+  }
+
+  .od-m__task-block {
+    color: #b91c1c !important;
+  }
+
+  .od-m__empty {
+    margin: 0;
+    font-size: 13px;
+    color: mobile.$m-text-secondary;
+  }
+
+  .od-m__rich {
+    .order-description,
+    &.order-description {
+      min-height: 0;
+      padding: 0;
+      border: 0;
+      background: transparent;
+    }
+
+    img {
+      max-width: 100%;
+      width: 100%;
+      height: auto;
+      border-radius: 10px;
+    }
+  }
+
+  .od-m__notes p {
+    margin: 0;
+    font-size: 14px;
+    color: mobile.$m-text-label;
+    white-space: pre-wrap;
+  }
+
+  .od-m__dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    background: #fff;
+    border-top: 1px solid mobile.$m-border;
+    padding: 12px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    gap: 10px;
+  }
+
+  .od-m__dock-btn {
+    min-height: 52px;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    padding: 0 16px;
+    cursor: pointer;
+    box-sizing: border-box;
+
+    &--sec {
+      flex: 1;
+      border: 1px solid mobile.$m-border-input;
+      background: #fff;
+      color: mobile.$m-text;
+    }
+
+    &--pri {
+      flex: 1.4;
+      background: mobile.$m-primary;
+      color: #fff;
+    }
+  }
+
+  .od-m__sheet-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(15, 42, 58, 0.45);
+  }
+
+  .od-m__sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 51;
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -12px 32px rgba(15, 42, 58, 0.2);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .od-m__sheet-grab {
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: mobile.$m-border-input;
+    margin: 10px auto 2px;
+  }
+
+  .od-m__sheet-body {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 16px 16px;
+    gap: 8px;
+  }
+
+  .od-m__sheet-action {
+    min-height: 52px;
+    border-radius: 14px;
+    border: 1px solid mobile.$m-border-input;
+    background: #fff;
+    color: mobile.$m-text;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+
+    &--danger {
+      border-color: #f3b4b4;
+      color: #b91c1c;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
 }

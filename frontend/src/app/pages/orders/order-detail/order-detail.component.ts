@@ -19,9 +19,11 @@ import {
   OrderPriceHistoryEntry,
   OrderAlert,
   OrderDelivery,
+  OrderPayment,
   OrderPriceNotice,
   PrintJob,
   Customer,
+  ServiceProfitMargins,
 } from '../../../core/models';
 import { RealtimeEvent } from '../../../core/models/realtime.model';
 import { OrdersService } from '../../../core/services/orders.service';
@@ -29,6 +31,7 @@ import { PrintJobsService } from '../../../core/services/print-jobs.service';
 import { CustomerCatalogService } from '../../../core/services/customer-catalog.service';
 import { RealtimeCatalogSyncService } from '../../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import {
   DbButtonComponent,
   DbSelectComponent,
@@ -37,9 +40,11 @@ import {
   DbStateMessageComponent,
   DbStatusBadgeComponent,
   DB_DATA_TABLE,
+  MobileBarComponent,
   OdlColumn,
 } from '@general-components';
 import { FormDialogService } from '../../../shared/form-dialogs/public-api';
+import { SettingsFacade } from '../../../store/settings/settings.facade';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import {
   ORDER_DESCRIPTION_MAX_LENGTH,
@@ -47,7 +52,14 @@ import {
   calculateOrderDiscount,
   calculateLinePriceTotal,
   cancelOrderConfirmMessage,
+  formatOrderMobileDeliveryLabel,
   isDesignService,
+  orderBalanceAmount,
+  orderDepositAmount,
+  orderIsOverdue,
+  orderOverdueDays,
+  orderPaidAmount,
+  pluralize,
 } from '../../../shared/utils/order.helpers';
 import { resolveLinePrintUnitPrice } from '../../../shared/utils/design-print.util';
 import {
@@ -63,9 +75,23 @@ import {
   PlainTextLengthPipe,
 } from '../../../shared/pipes/labels.pipe';
 import { priorityTierClass } from '../../../shared/utils/priority.helpers';
+import { markupPercentOnCostRounded } from '../../../shared/utils/product-margin.util';
+import {
+  DEFAULT_PROFIT_MARGINS,
+  getMarginForService,
+  normalizeProfitMargins,
+} from '../../../shared/utils/pricing.util';
+import { normalizeWholesaleDiscount } from '../../../shared/utils/wholesale-example.util';
+import {
+  paymentMethodLabel,
+  salesChannelLabel,
+  treasuryAccountLabel,
+} from '../../../shared/utils/v1-labels.util';
 import { OrderDetailHistoryComponent } from './order-detail-history/order-detail-history.component';
 import { OrderDetailPaymentsComponent } from './order-detail-payments/order-detail-payments.component';
 import { OrderDetailDeliveriesComponent } from './order-detail-deliveries/order-detail-deliveries.component';
+
+type MobileAccordionKey = 'payments' | 'tasks' | 'deliveries' | 'history';
 
 @Component({
   selector: 'app-order-detail',
@@ -85,6 +111,7 @@ import { OrderDetailDeliveriesComponent } from './order-detail-deliveries/order-
     DbStateMessageComponent,
     DbStatusBadgeComponent,
     DbServiceBadgesComponent,
+    MobileBarComponent,
     ...DB_DATA_TABLE,
     OrderDetailHistoryComponent,
     OrderDetailPaymentsComponent,
@@ -103,11 +130,18 @@ export class OrderDetailComponent implements OnInit {
   private readonly realtime = inject(RealtimeService);
   private readonly formDialogs = inject(FormDialogService);
   private readonly customerCatalog = inject(CustomerCatalogService);
+  private readonly settingsFacade = inject(SettingsFacade);
+  private readonly breakpoint = inject(BreakpointService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
   @ViewChild(OrderDetailPaymentsComponent)
   private payments?: OrderDetailPaymentsComponent;
+
+  @ViewChild(OrderDetailDeliveriesComponent)
+  private deliveriesPanel?: OrderDetailDeliveriesComponent;
+
+  readonly isMobile = this.breakpoint.isMobile;
 
   order: Order | null = null;
   tasks: PrintJob[] = [];
@@ -201,10 +235,17 @@ export class OrderDetailComponent implements OnInit {
 
   assignCustomerId = '';
   assignLoading = false;
+  assignCustomerOpen = false;
   private customers: Customer[] = [];
 
   statusLoading = false;
   previewImageUrl: string | null = null;
+
+  mobileActionsOpen = false;
+  mobileAlertsExpanded = false;
+  private readonly mobileOpenAccordions = new Set<MobileAccordionKey>();
+  private profitMargins: ServiceProfitMargins = { ...DEFAULT_PROFIT_MARGINS };
+  private wholesalePercentSetting = 0;
 
   readonly descriptionMaxLength = ORDER_DESCRIPTION_MAX_LENGTH;
   readonly priorityTierClass = priorityTierClass;
@@ -315,6 +356,148 @@ export class OrderDetailComponent implements OnInit {
     }));
   }
 
+  get paidAmount(): number {
+    return this.order ? orderPaidAmount(this.order) : 0;
+  }
+
+  get balanceAmount(): number {
+    return this.order ? orderBalanceAmount(this.order) : 0;
+  }
+
+  get depositAmount(): number {
+    return this.order ? orderDepositAmount(this.order) : 0;
+  }
+
+  get paidPercent(): number {
+    if (!this.order || this.order.total <= 0) return 0;
+    return Math.min(
+      100,
+      Math.round((this.paidAmount / Number(this.order.total)) * 100),
+    );
+  }
+
+  get isOrderOverdue(): boolean {
+    if (!this.order) return false;
+    return orderIsOverdue(this.order.dueDate, this.order.status);
+  }
+
+  get overdueDays(): number {
+    if (!this.order) return 0;
+    return orderOverdueDays(this.order.dueDate, this.order.status);
+  }
+
+  get mobileCreatedLabel(): string {
+    return this.order ? `Creado ${this.formatDayMonth(this.order.createdAt)}` : '';
+  }
+
+  get mobileDeliveryLabel(): string {
+    if (!this.order) return '';
+    return formatOrderMobileDeliveryLabel(
+      this.order.dueDate,
+      this.isOrderOverdue,
+    ).replace(/^Entrega\b/, 'entrega');
+  }
+
+  /** «<1 %» cuando hay algo pagado pero el redondeo daría 0. */
+  get paidPercentLabel(): string {
+    const percent = this.paidPercent;
+    return percent === 0 && this.paidAmount > 0 ? '<1 %' : `${percent} %`;
+  }
+
+  get salesChannelPill(): string | null {
+    if (!this.order?.salesChannel) return null;
+    const label = salesChannelLabel(this.order.salesChannel);
+    return label ? `Canal: ${label}` : null;
+  }
+
+  get wholesalePill(): string | null {
+    if (!this.order?.wholesaleApplied) return null;
+    const percent = this.wholesaleDiscountPercent();
+    if (percent == null || percent <= 0) return 'Mayorista';
+    return `Mayorista · −${percent}%`;
+  }
+
+  get assignedCustomerPhone(): string | null {
+    if (!this.order?.customerId) return null;
+    const customer = this.customers.find((item) => item.id === this.order!.customerId);
+    const phone = customer?.phone?.trim();
+    return phone || null;
+  }
+
+  get whatsappHref(): string | null {
+    const phone = this.assignedCustomerPhone;
+    if (!phone) return null;
+    const normalized = this.normalizeWhatsAppPhone(phone);
+    return normalized ? `https://wa.me/${normalized}` : null;
+  }
+
+  get telHref(): string | null {
+    const phone = this.assignedCustomerPhone;
+    if (!phone) return null;
+    const digits = phone.replace(/[^\d+]/g, '');
+    return digits ? `tel:${digits}` : null;
+  }
+
+  get depositSummary(): string | null {
+    if (!this.order) return null;
+    const deposit = (this.order.payments ?? []).find((payment) => payment.deposit);
+    if (!deposit) return null;
+    return this.formatPaymentSummary(deposit);
+  }
+
+  get blockedTasksCount(): number {
+    return this.tasks.filter((task) => task.status === 'bloqueado').length;
+  }
+
+  get tasksAccordionSummary(): string {
+    if (!this.tasks.length) return 'Sin tareas';
+    const blocked = this.blockedTasksCount;
+    const tasksLabel = pluralize(this.tasks.length, 'tarea', 'tareas');
+    if (blocked > 0) {
+      return `${tasksLabel} · ${pluralize(blocked, 'bloqueada', 'bloqueadas')}`;
+    }
+    return tasksLabel;
+  }
+
+  get deliveriesAccordionSummary(): string {
+    if (!this.deliveries.length) return 'Ninguna todavía';
+    return pluralize(this.deliveries.length, 'entrega', 'entregas');
+  }
+
+  get historyAccordionSummary(): string {
+    const changes = this.statusHistory.length + this.priceHistory.length;
+    if (changes <= 0) return 'Sin cambios';
+    return pluralize(changes, 'cambio', 'cambios');
+  }
+
+  get primaryAlert(): OrderAlert | null {
+    return this.alerts[0] ?? null;
+  }
+
+  get extraAlerts(): OrderAlert[] {
+    return this.alerts.slice(1);
+  }
+
+  get showMobileRegisterPayment(): boolean {
+    return (
+      !!this.order &&
+      this.order.status !== OrderStatus.CANCELADO &&
+      this.balanceAmount > 0
+    );
+  }
+
+  get showMobileDeliver(): boolean {
+    return (
+      !!this.order &&
+      this.order.status !== OrderStatus.CANCELADO &&
+      this.order.status !== OrderStatus.ENTREGADO
+    );
+  }
+
+  get showMobileDock(): boolean {
+    return this.showMobileRegisterPayment || this.showMobileDeliver;
+  }
+
   ngOnInit(): void {
     this.customerCatalog
       .getCustomers()
@@ -322,6 +505,23 @@ export class OrderDetailComponent implements OnInit {
       .subscribe((customers) => {
         this.customers = customers;
         this.cdr.markForCheck();
+      });
+
+    this.settingsFacade
+      .ensureLoaded()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (settings) => {
+          this.profitMargins = normalizeProfitMargins(settings.profitMargins);
+          this.wholesalePercentSetting = normalizeWholesaleDiscount(
+            settings.wholesaleDiscount,
+          ).percent;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.profitMargins = { ...DEFAULT_PROFIT_MARGINS };
+          this.cdr.markForCheck();
+        },
       });
 
     this.route.paramMap
@@ -334,6 +534,10 @@ export class OrderDetailComponent implements OnInit {
           this.cdr.markForCheck();
           return;
         }
+        this.mobileActionsOpen = false;
+        this.assignCustomerOpen = false;
+        this.mobileAlertsExpanded = false;
+        this.mobileOpenAccordions.clear();
         this.loadOrder(id);
       });
 
@@ -345,6 +549,99 @@ export class OrderDetailComponent implements OnInit {
         skip: () => this.statusLoading,
       },
     );
+  }
+
+  statusPillClass(status: OrderStatus | string): string {
+    return `m-pill od-m__status od-m__status--${status}`;
+  }
+
+  isAccordionOpen(key: MobileAccordionKey): boolean {
+    return this.mobileOpenAccordions.has(key);
+  }
+
+  toggleAccordion(key: MobileAccordionKey): void {
+    // Uno abierto por vez: el detalle no se vuelve interminable.
+    const wasOpen = this.mobileOpenAccordions.has(key);
+    this.mobileOpenAccordions.clear();
+    if (!wasOpen) this.mobileOpenAccordions.add(key);
+    this.cdr.markForCheck();
+  }
+
+  openMobileActions(): void {
+    this.mobileActionsOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  closeMobileActions(): void {
+    if (!this.mobileActionsOpen) return;
+    this.mobileActionsOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  onMobileEdit(): void {
+    this.closeMobileActions();
+    this.openEdit();
+  }
+
+  onMobileCancel(): void {
+    this.closeMobileActions();
+    this.cancelOrder();
+  }
+
+  openMobilePaymentsFromDock(): void {
+    this.openDockAccordion('payments', 'od-m-acc-payments', () => {
+      const balance = this.balanceAmount;
+      if (balance > 0) this.payments?.preparePayment(balance, { scroll: false });
+    });
+  }
+
+  openMobileDeliveriesFromDock(): void {
+    this.openDockAccordion('deliveries', 'od-m-acc-deliveries', () => {
+      this.deliveriesPanel?.prepareDelivery();
+    });
+  }
+
+  openAssignCustomer(): void {
+    this.assignCustomerOpen = true;
+    this.cdr.markForCheck();
+  }
+
+  toggleMobileAlerts(): void {
+    this.mobileAlertsExpanded = !this.mobileAlertsExpanded;
+    this.cdr.markForCheck();
+  }
+
+  lineAppliedUnitPrice(item: OrderItem): number {
+    if (isDesignService(item.serviceType)) {
+      const design = Number(item.designUnitPrice ?? item.unitPrice) || 0;
+      if (item.includesPrint) return design + this.printUnitPrice(item);
+      return design;
+    }
+    return Number(item.unitPrice) || 0;
+  }
+
+  lineHasListPrice(item: OrderItem): boolean {
+    return this.hasWholesalePrice(item);
+  }
+
+  lineMarginPercent(item: OrderItem): number | null {
+    const cost = Number(item.unitCost);
+    if (!Number.isFinite(cost) || cost <= 0) return null;
+    return markupPercentOnCostRounded(this.lineAppliedUnitPrice(item), cost);
+  }
+
+  lineMarginOk(item: OrderItem): boolean {
+    const margin = this.lineMarginPercent(item);
+    if (margin == null) return true;
+    const minimum = getMarginForService(item.serviceType, this.profitMargins);
+    return margin >= minimum;
+  }
+
+  lineProgressLabel(item: OrderItem): string {
+    const produced = this.itemProduced(item);
+    const delivered = this.itemDelivered(item);
+    const total = delivered + this.itemPending(item);
+    return `Preparar: ${produced} de ${total} · Entregado: ${delivered}`;
   }
 
   onDeliveryRegistered(): void {
@@ -489,6 +786,7 @@ export class OrderDetailComponent implements OnInit {
           this.assignLoading = false;
           this.order = updated;
           this.assignCustomerId = '';
+          this.assignCustomerOpen = false;
           this.reloadTasks(updated.id);
           this.cdr.markForCheck();
         },
@@ -595,6 +893,77 @@ export class OrderDetailComponent implements OnInit {
 
   @HostListener('document:keydown.escape')
   onEscapeKey(): void {
+    if (this.mobileActionsOpen) {
+      this.closeMobileActions();
+      return;
+    }
     this.closeImagePreview();
+  }
+
+  /**
+   * Dock: Pagos y Entregas son exclusivos. Abre el pedido, prepara el form
+   * y recién después scrollea (siguiente ciclo) con margen para el título.
+   */
+  private openDockAccordion(
+    key: 'payments' | 'deliveries',
+    elementId: string,
+    afterOpen?: () => void,
+  ): void {
+    const other: MobileAccordionKey =
+      key === 'payments' ? 'deliveries' : 'payments';
+    this.mobileOpenAccordions.delete(other);
+    this.mobileOpenAccordions.add(key);
+    this.cdr.markForCheck();
+
+    setTimeout(() => {
+      afterOpen?.();
+      this.cdr.markForCheck();
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          document.getElementById(elementId)?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'start',
+          });
+        });
+      });
+    }, 0);
+  }
+
+  private wholesaleDiscountPercent(): number | null {
+    if (!this.order?.wholesaleApplied) return null;
+    for (const item of this.order.items) {
+      const list = Number(item.listUnitPrice);
+      const unit = Number(item.unitPrice);
+      if (Number.isFinite(list) && list > 0 && Number.isFinite(unit) && unit < list) {
+        return Math.round((1 - unit / list) * 100);
+      }
+    }
+    return this.wholesalePercentSetting > 0 ? this.wholesalePercentSetting : null;
+  }
+
+  private formatDayMonth(iso: string): string {
+    const date = new Date(iso);
+    if (Number.isNaN(date.getTime())) return '';
+    return `${date.getDate()}/${date.getMonth() + 1}`;
+  }
+
+  private formatPaymentSummary(payment: OrderPayment): string {
+    const amount = new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(Number(payment.amount) || 0);
+    const method = paymentMethodLabel(payment.method) || 'Efectivo';
+    const account = treasuryAccountLabel(payment.account) || 'Caja efectivo';
+    const date = this.formatDayMonth(payment.createdAt);
+    return `Seña ${amount} · ${method} · ${account} · ${date}`;
+  }
+
+  private normalizeWhatsAppPhone(phone: string): string {
+    const digits = phone.replace(/\D/g, '');
+    if (!digits) return '';
+    if (digits.startsWith('54')) return digits;
+    if (digits.startsWith('0')) return `54${digits.slice(1)}`;
+    return `54${digits}`;
   }
 }

@@ -6,6 +6,7 @@ import {
   lineQuantityError,
   lineUnitPriceError,
   lineValidationMessage,
+  pluralize,
 } from './order.helpers';
 import { discountValidationMessage } from './discount.util';
 import type { OrderLineDraft } from '../../core/models';
@@ -78,5 +79,11 @@ describe('B9 order line validations', () => {
     expect(lineValidationMessage(baseLine({ quantity: 2.5 }))).toContain(
       'entero',
     );
+  });
+
+  it('pluralize uses singular only for 1', () => {
+    expect(pluralize(0, 'tarea', 'tareas')).toBe('0 tareas');
+    expect(pluralize(1, 'tarea', 'tareas')).toBe('1 tarea');
+    expect(pluralize(2, 'entrega', 'entregas')).toBe('2 entregas');
   });
 });

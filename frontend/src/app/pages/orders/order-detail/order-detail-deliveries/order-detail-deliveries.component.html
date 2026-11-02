@@ -1,4 +1,4 @@
-<section class="panel">
+<section class="panel" id="order-deliveries">
   <h3>Entregas</h3>
   @if (order.status !== 'cancelado' && order.status !== 'entregado') {
     <div class="delivery-form">
@@ -13,6 +13,12 @@
             step="1"
           />
         }
+      }
+      @if (nothingReadyToDeliver) {
+        <p class="empty-group">
+          Todavía no hay unidades listas para entregar. Se habilita cuando la
+          producción avance o haya stock.
+        </p>
       }
       @if (deliveryError) {
         <p class="order-payments__error" role="alert">{{ deliveryError }}</p>

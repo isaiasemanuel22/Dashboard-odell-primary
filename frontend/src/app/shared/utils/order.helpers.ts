@@ -814,6 +814,15 @@ export function orderHasPendingBalance(
   return order.status !== OrderStatus.CANCELADO && orderBalanceAmount(order) > 0;
 }
 
+/** «1 tarea» / «3 tareas» (0 y >1 usan plural). */
+export function pluralize(
+  count: number,
+  singular: string,
+  plural: string,
+): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
 /** Días de atraso (0 si no está atrasado). */
 export function orderOverdueDays(
   dueDate: string,

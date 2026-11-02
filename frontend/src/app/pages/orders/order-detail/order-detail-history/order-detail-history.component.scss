@@ -1,7 +1,23 @@
 @use '../../../../shared/styles/variables' as *;
+@use '../../../../shared/styles/mobile' as mobile;
 
 :host {
   display: contents;
+}
+
+@include mobile.mobile-only {
+  .panel,
+  .status-history-panel {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .panel > h3,
+  .status-history-panel > h3 {
+    display: none;
+  }
 }
 
 .panel h3,

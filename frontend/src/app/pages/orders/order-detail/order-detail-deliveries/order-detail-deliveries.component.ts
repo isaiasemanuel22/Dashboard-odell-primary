@@ -65,6 +65,22 @@ export class OrderDetailDeliveriesComponent implements OnChanges {
     );
   }
 
+  /** Hay pendientes pero ninguna unidad lista: explica por qué no se puede entregar. */
+  get nothingReadyToDeliver(): boolean {
+    const pending = this.order.items
+      .map((item, index) => ({ item, index }))
+      .filter(({ item }) => this.itemPending(item) > 0);
+    return (
+      pending.length > 0 &&
+      pending.every(({ item, index }) => this.itemDeliverableMax(item, index) === 0)
+    );
+  }
+
+  /** Prepara el formulario de entrega (el scroll lo hace el dock mobile). */
+  prepareDelivery(): void {
+    this.cdr.markForCheck();
+  }
+
   itemPending(item: OrderItem): number {
     return Math.max(item.quantity - (item.deliveredQuantity ?? item.delivered ?? 0), 0);
   }

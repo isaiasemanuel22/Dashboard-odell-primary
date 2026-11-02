@@ -54,6 +54,20 @@ commit.
 | P7 | Abrir detalle y volver | Tocar una tarjeta, después volver | Abre el detalle; al volver la lista conserva chip, filtros, búsqueda y scroll | ✅ abrir 2026-11-02 · ⏸ conservar estado se agregó después |
 | P8 | Sin resultados | Buscar «zzzz» | Mensaje claro y botón «Limpiar búsqueda y filtros» | ✅ mensaje 2026-11-02 · ⏸ botón se agregó después |
 
+## Detalle de pedido
+
+| # | Caso | Pasos | Esperado | Último resultado |
+|---|------|-------|----------|------------------|
+| DP1 | Barra y menú | Volver; tocar «⋯» → Editar y cerrar sin guardar | Volver lleva a la lista; «⋯» ofrece Editar y Cancelar pedido | ✅ 2026-11-02 · detalle |
+| DP2 | Resumen | Mirar ord-10, ord-13 y ord-14 | Estado; «Creado d/m · entrega …» en una línea (solo «Vencía d/m» en rojo si está atrasado) y pill «Atrasado N días»; cliente; «Mayorista · −N%» si aplica; WhatsApp y Llamar solo si hay teléfono | ✅ 2026-11-02 · detalle (la línea de fechas se ajustó después) |
+| DP3 | Dinero | Comparar Total/Pagado/Saldo con la sección Pagos | Coinciden; la barra refleja el %; «<1 %» si hay algo pagado pero menos de 1 %; «Seña $ …» si hubo seña | ✅ 2026-11-02 · detalle |
+| DP4 | Productos | Comparar con el detalle en desktop | Unidades × precio (lista tachada si hay otro aplicado), subtotal y «Preparar: N de M · Entregado: K» coinciden; margen sobre costo cuando el producto tiene costo | ✅ 2026-11-02 · detalle (desktop no muestra margen: sin contraste) |
+| DP5 | Acordeones | Abrir y cerrar Pagos, Tareas, Entregas e Historial | Abren y cierran, uno por vez; el resumen de la derecha coincide con el contenido | ✅ 2026-11-02 · detalle (uno por vez se agregó después) |
+| DP6 | Registrar pago | En ord-14, «Registrar pago» y cargar $10 en efectivo | Abre Pagos con el saldo precargado; al registrar, Pagado y Saldo se actualizan | ✅ 2026-11-02 · detalle (pago QA de $10 en ord-14) |
+| DP7 | Entregar | En ord-13, «Entregar» (sin confirmar) | Abre Entregas, baja al formulario, cierra Pagos; si no hay nada listo, lo explica | ✅ 2026-11-02 · detalle (el aviso se agregó después) |
+| DP8 | Sin cliente y alertas | ord-10 | «Sin cliente» + «Asignar cliente» (con Cancelar); varias alertas en «Atención (N)» con «Ver todas» | ✅ 2026-11-02 · detalle (Cancelar se agregó después) |
+| DP9 | Toques | Recorrer botones y casillas | Todo cómodo de tocar (≥44 px) | ✅ 2026-11-02 · detalle |
+
 Sin probar todavía: opciones de Entrega (Hoy / Esta semana / Atrasados) de la hoja, y chip + estado contradictorios (ej. Abiertos + Entregado).
 
 Observaciones del 2026-11-02, a resolver al migrar cada pantalla:

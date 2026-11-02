@@ -96,10 +96,11 @@ export class OrderDetailPaymentsComponent {
     return 'Parcialmente pagado';
   }
 
-  preparePayment(amount: number): void {
+  preparePayment(amount: number, options?: { scroll?: boolean }): void {
     this.paymentAmount = amount;
     this.paymentError = '';
     this.cdr.markForCheck();
+    if (options?.scroll === false) return;
     document.getElementById('order-payments')?.scrollIntoView({
       behavior: 'smooth',
       block: 'center',

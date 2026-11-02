@@ -17,87 +17,122 @@
 }
 
 @if (!loading && order && !notFound) {
-  <header class="page-header detail-header">
-    <div>
-      <a routerLink="/pedidos" class="back-link">← Pedidos</a>
-      <div class="title-row">
-        <h2>Pedido {{ order.id }}</h2>
-        <db-status-badge
-          [statusClass]="order.status"
-          [label]="order.status | orderStatusLabel"
-        />
-      </div>
-      <p class="meta-line">Creado: {{ order.createdAt | dateShort }}</p>
-    </div>
-  </header>
+  <div class="mobile-only od-m" [class.od-m--dock]="showMobileDock">
+    <db-mobile-bar [title]="order.id" backLink="/pedidos">
+      <button
+        type="button"
+        class="m-ib"
+        aria-label="Más acciones"
+        (click)="openMobileActions()"
+      >
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.4"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M5 12h.01M12 12h.01M19 12h.01" />
+        </svg>
+      </button>
+    </db-mobile-bar>
 
-  <div class="detail-layout">
-    <section class="panel">
-      <div class="panel-header-row">
-        <h3>Cliente</h3>
-        @if (!order.customerId) {
-          <db-button
-            label="Cliente nuevo"
-            variant="secondary"
-            format="soft"
-            (clicked)="openNewCustomer()"
-          />
-        }
-      </div>
-      <dl class="detail-list">
-        <div>
-          <dt>Nombre</dt>
-          <dd>
-            @if (order.customerId) {
-              <a [routerLink]="['/clientes', order.customerId]" class="customer-link">
-                {{ order.customerName }}
-              </a>
-            } @else {
-              <span class="no-customer">Sin cliente asignado</span>
+    <div class="m-body od-m__body">
+      <section class="m-card od-m__summary" aria-label="Resumen del pedido">
+        <div class="m-ln">
+          <div class="od-m__status-row">
+            <span [class]="statusPillClass(order.status)">{{
+              order.status | orderStatusLabel
+            }}</span>
+            @if (isOrderOverdue) {
+              <span class="m-pill m-pill--d"
+                >Atrasado {{ overdueDays }} días</span
+              >
             }
-          </dd>
+          </div>
+          <span class="od-m__meta"
+            >{{ mobileCreatedLabel }} ·
+            <span [class.od-m__meta--late]="isOrderOverdue">{{
+              mobileDeliveryLabel
+            }}</span></span
+          >
         </div>
-        <div>
-          <dt>Servicios</dt>
-          <dd><db-service-badges [types]="order.services" /></dd>
-        </div>
-        <div>
-          <dt>Entrega prevista</dt>
-          <dd>{{ order.dueDate | dateShort }}</dd>
-        </div>
-        @if (order.notes) {
-          <div>
-            <dt>Notas</dt>
-            <dd>{{ order.notes }}</dd>
+
+        @if (order.customerId) {
+          <strong class="od-m__customer">{{ order.customerName }}</strong>
+        } @else {
+          <strong class="od-m__customer od-m__customer--empty">Sin cliente</strong>
+          @if (!assignCustomerOpen) {
+            <db-button
+              label="Asignar cliente"
+              variant="secondary"
+              format="soft"
+              (clicked)="openAssignCustomer()"
+            />
+          }
+        }
+
+        @if (salesChannelPill || wholesalePill) {
+          <div class="od-m__pills">
+            @if (salesChannelPill; as channel) {
+              <span class="m-pill od-m__pill-channel">{{ channel }}</span>
+            }
+            @if (wholesalePill; as wholesale) {
+              <span class="m-pill m-pill--b">{{ wholesale }}</span>
+            }
           </div>
         }
-      </dl>
 
-      @if (!order.customerId) {
-        <div class="assign-customer">
-          <db-select
-            label="Asignar cliente existente"
-            [(ngModel)]="assignCustomerId"
-            name="assignCustomerId"
-            placeholder="Seleccionar cliente"
-            [options]="customerOptions"
-          />
-          <db-button
-            [label]="assignLoading ? 'Asignando...' : 'Agregar cliente'"
-            variant="primary"
-            format="solid"
-            [disabled]="assignLoading || !assignCustomerId"
-            (clicked)="assignCustomer()"
-          />
-        </div>
-      }
-    </section>
+        @if (!order.customerId && assignCustomerOpen) {
+          <div class="od-m__assign">
+            <db-select
+              label="Asignar cliente existente"
+              [(ngModel)]="assignCustomerId"
+              name="assignCustomerIdMobile"
+              placeholder="Seleccionar cliente"
+              [options]="customerOptions"
+            />
+            <db-button
+              [label]="assignLoading ? 'Asignando...' : 'Asignar'"
+              variant="primary"
+              format="solid"
+              [disabled]="assignLoading || !assignCustomerId"
+              (clicked)="assignCustomer()"
+            />
+            <db-button
+              label="+ Cliente nuevo"
+              variant="secondary"
+              format="soft"
+              (clicked)="openNewCustomer()"
+            />
+            <db-button
+              label="Cancelar"
+              variant="secondary"
+              format="bare"
+              (clicked)="assignCustomerOpen = false"
+            />
+          </div>
+        } @else if (order.customerId && (whatsappHref || telHref)) {
+          <div class="od-m__contact">
+            @if (whatsappHref; as wa) {
+              <a class="od-m__contact-btn" [href]="wa" target="_blank" rel="noopener noreferrer"
+                >WhatsApp</a
+              >
+            }
+            @if (telHref; as tel) {
+              <a class="od-m__contact-btn" [href]="tel">Llamar</a>
+            }
+          </div>
+        }
+      </section>
 
-    <div class="detail-main">
       @if (priceNotices.length) {
-        <section class="price-notice" aria-label="Cambio de precio del producto">
+        <section class="od-m__notice od-m__notice--price" aria-label="Cambio de precio del producto">
           <p>El producto cambió de precio. El valor del pedido sigue igual hasta que lo actualices.</p>
-          <div class="price-notice__actions">
+          <div class="od-m__notice-actions">
             <db-button
               [label]="priceDecisionLoading ? 'Guardando...' : 'Actualizar valor'"
               variant="primary"
@@ -116,168 +151,632 @@
         </section>
       }
 
-      @if (alerts.length) {
-        <section class="operational-alerts" aria-label="Alertas operativas">
-          @for (alertItem of alerts; track alertItem.code + '-' + $index) {
-            <div [class]="'operational-alert operational-alert--' + alertItem.severity">
+      @if (primaryAlert; as alertItem) {
+        <section class="od-m__alerts" aria-label="Alertas operativas">
+          @if (alerts.length === 1) {
+            <div
+              class="od-m__notice"
+              [class.od-m__notice--warn]="alertItem.severity === 'warning'"
+              [class.od-m__notice--error]="alertItem.severity === 'error'"
+            >
               <strong>Atención</strong>
               <span>{{ alertItem.message }}</span>
+            </div>
+          } @else {
+            <div
+              class="od-m__notice od-m__notice--grouped"
+              [class.od-m__notice--warn]="alertItem.severity === 'warning'"
+              [class.od-m__notice--error]="alertItem.severity === 'error'"
+            >
+              <strong>Atención ({{ alerts.length }})</strong>
+              <span>{{ alertItem.message }}</span>
+              @if (mobileAlertsExpanded) {
+                @for (extra of extraAlerts; track extra.code + '-' + $index) {
+                  <span class="od-m__alert-extra">{{ extra.message }}</span>
+                }
+              }
+              <button
+                type="button"
+                class="od-m__alerts-toggle"
+                (click)="toggleMobileAlerts()"
+              >
+                {{ mobileAlertsExpanded ? 'Ver menos' : 'Ver todas' }}
+              </button>
             </div>
           }
         </section>
       }
 
-      <section class="panel panel--order-lines">
-        <h3>Líneas del pedido</h3>
-        <db-data-table
-          label="Líneas del pedido"
-          [rows]="order.items"
-          [columns]="lineColumns"
-          [clientSide]="false"
-          minWidth="0"
-        >
-          <ng-template odlCell="product" let-item>
-            @if (item.productId) {
-              <a [routerLink]="['/productos', item.productId]" class="product-link">
-                {{ item.productName }}
-              </a>
-            } @else {
-              {{ item.productName }}
-            }
-          </ng-template>
-          <ng-template odlCell="unitPrice" let-item>
-            @if (isDesignService(item.serviceType)) {
-              <span class="order-item__unit">
-                {{ (item.designUnitPrice ?? item.unitPrice) | currencyArs }}
-              </span>
-              @if (item.includesPrint) {
-                <span class="order-item__print-unit">
-                  + {{ printUnitPrice(item) | currencyArs }}/u
-                </span>
-              }
-            } @else if (hasWholesalePrice(item)) {
-              <span class="order-item__unit">{{ item.unitPrice | currencyArs }}</span>
-              <span class="order-item__list-price">
-                Lista <s>{{ item.listUnitPrice | currencyArs }}</s>
-              </span>
-            } @else {
-              {{ item.unitPrice | currencyArs }}
-            }
-          </ng-template>
-        </db-data-table>
-        <table class="data-table">
-          <tbody>
-            <tr>
-              <td><strong>Subtotal</strong></td>
-              <td><strong>{{ orderSubtotal | currencyArs }}</strong></td>
-            </tr>
-            @if (orderDiscount > 0) {
-              <tr class="order-discount-row">
-                <td><strong>Descuento</strong></td>
-                <td><strong>-{{ orderDiscount | currencyArs }}</strong></td>
-              </tr>
-            }
-            <tr>
-              <td><strong>Total</strong></td>
-              <td><strong>{{ order.total | currencyArs }}</strong></td>
-            </tr>
-          </tbody>
-        </table>
-      </section>
-
-      <app-order-detail-payments
-        [order]="order"
-        (orderChange)="onPaymentRegistered($event)"
-      />
-
-      <section class="panel">
-        <div class="panel-header-row">
-          <h3>Tareas del pedido</h3>
-          <db-button
-            label="Ir al tablero"
-            variant="primary"
-            format="link"
-            routerLink="/cola"
-          />
+      <section class="m-card od-m__money" aria-label="Dinero del pedido">
+        <div class="od-m__money-cols">
+          <div class="od-m__money-col">
+            <span class="m-lbl">Total</span>
+            <strong class="od-m__money-val">{{ order.total | currencyArs }}</strong>
+          </div>
+          <div class="od-m__money-col">
+            <span class="m-lbl">Pagado</span>
+            <strong class="od-m__money-val od-m__money-val--pos">{{
+              paidAmount | currencyArs
+            }}</strong>
+          </div>
+          <div class="od-m__money-col">
+            <span class="m-lbl">Saldo</span>
+            <strong
+              class="od-m__money-val"
+              [class.od-m__money-val--neg]="balanceAmount > 0"
+              [class.od-m__money-val--pos]="balanceAmount <= 0"
+              >{{ balanceAmount | currencyArs }}</strong
+            >
+          </div>
         </div>
-        @if (tasks.length) {
-          <db-data-table
-            label="Tareas del pedido"
-            [rows]="tasks"
-            [columns]="taskColumns"
-            [clientSide]="false"
-          >
-            <ng-template odlCell="status" let-task>
-              <db-status-badge
-                [statusClass]="task.status"
-                [label]="task.status | printJobStatusLabel"
-              />
-            </ng-template>
-          </db-data-table>
-        } @else if (order.status === 'entregado') {
-          <p class="empty-group">Pedido entregado — las tareas ya no aparecen en la cola de trabajo.</p>
-        } @else {
-          <p class="empty-group">No hay tareas generadas para este pedido.</p>
+        <div
+          class="od-m__track"
+          role="progressbar"
+          [attr.aria-valuenow]="paidPercent"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-label]="'Pagado el ' + paidPercentLabel"
+        >
+          <div class="od-m__fill" [style.width.%]="paidPercent"></div>
+        </div>
+        @if (depositSummary; as depositLine) {
+          <p class="m-hint od-m__deposit">{{ depositLine }}</p>
         }
       </section>
 
-      <section class="panel status-panel">
-        <h3>Estado del pedido</h3>
-        <p class="automatic-status">
-          El estado se calcula automáticamente desde las tareas y entregas.
-        </p>
+      <h2 class="m-sec-t">Productos</h2>
+      <section class="m-card m-card--flush od-m__products" aria-label="Productos del pedido">
+        @for (item of order.items; track $index) {
+          <div class="od-m__line">
+            <div class="od-m__line-top">
+              <strong class="od-m__line-name">{{ item.productName }}</strong>
+              <strong class="od-m__line-sub">{{ lineSubtotal(item) | currencyArs }}</strong>
+            </div>
+            <div class="od-m__line-mid">
+              <span class="od-m__line-qty">
+                {{ item.quantity }} u. ×
+                @if (lineHasListPrice(item) && item.listUnitPrice != null) {
+                  <s>{{ item.listUnitPrice | currencyArs }}</s>
+                  <strong>{{ item.unitPrice | currencyArs }}</strong>
+                } @else if (isDesignService(item.serviceType)) {
+                  <strong>{{ (item.designUnitPrice ?? item.unitPrice) | currencyArs }}</strong>
+                  @if (item.includesPrint) {
+                    <span>+ {{ printUnitPrice(item) | currencyArs }}/u</span>
+                  }
+                } @else {
+                  <strong>{{ item.unitPrice | currencyArs }}</strong>
+                }
+              </span>
+              @if (lineMarginPercent(item); as margin) {
+                <span
+                  class="m-pill"
+                  [class.m-pill--ok]="lineMarginOk(item)"
+                  [class.m-pill--w]="!lineMarginOk(item)"
+                  >Margen {{ margin }} %</span
+                >
+              }
+            </div>
+            <p class="od-m__line-progress">{{ lineProgressLabel(item) }}</p>
+          </div>
+        }
+        @if (orderDiscount > 0) {
+          <div class="od-m__line od-m__line--discount">
+            <div class="od-m__line-top">
+              <strong class="od-m__line-name">Descuento</strong>
+              <strong class="od-m__line-sub od-m__line-sub--neg"
+                >-{{ orderDiscount | currencyArs }}</strong
+              >
+            </div>
+          </div>
+        }
       </section>
 
-      <app-order-detail-deliveries
-        [order]="order"
-        [tasks]="tasks"
-        [deliveries]="deliveries"
-        (delivered)="onDeliveryRegistered()"
-      />
-
-      <app-order-detail-history
-        [statusHistory]="statusHistory"
-        [priceHistory]="priceHistory"
-      />
-
-      <section class="panel description-panel">
-        <div class="description-panel__header">
-          <h3>Descripción</h3>
-          @if (order.description) {
-            <span class="description-panel__count">
-              {{ order.description | plainTextLength }}/{{ descriptionMaxLength }}
-            </span>
+      <div class="od-m__acc" id="od-m-acc-payments">
+        <button
+          type="button"
+          class="od-m__acc-btn"
+          [attr.aria-expanded]="isAccordionOpen('payments')"
+          (click)="toggleAccordion('payments')"
+        >
+          <strong class="od-m__acc-title">Pagos</strong>
+          <span class="od-m__acc-summary">Pagado {{ paidPercentLabel }}</span>
+          <svg
+            class="od-m__chev"
+            [class.od-m__chev--open]="isAccordionOpen('payments')"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#9AAFBF"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
+        <div
+          class="od-m__acc-body"
+          [class.od-m__acc-body--open]="isAccordionOpen('payments')"
+          [hidden]="!isAccordionOpen('payments')"
+        >
+          @if (isMobile()) {
+            <app-order-detail-payments
+              [order]="order"
+              (orderChange)="onPaymentRegistered($event)"
+            />
           }
         </div>
-        <div class="order-description rich-content" (click)="onDescriptionClick($event)">
-          @if (order.description) {
-            <div [innerHTML]="order.description | richText"></div>
-          } @else {
-            <span class="order-description--empty">Sin descripción</span>
+      </div>
+
+      <div class="od-m__acc" id="od-m-acc-tasks">
+        <button
+          type="button"
+          class="od-m__acc-btn"
+          [attr.aria-expanded]="isAccordionOpen('tasks')"
+          (click)="toggleAccordion('tasks')"
+        >
+          <strong class="od-m__acc-title">Tareas</strong>
+          <span class="od-m__acc-summary">{{ tasksAccordionSummary }}</span>
+          <svg
+            class="od-m__chev"
+            [class.od-m__chev--open]="isAccordionOpen('tasks')"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#9AAFBF"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
+        @if (isAccordionOpen('tasks')) {
+          <div class="od-m__acc-body">
+            @if (tasks.length) {
+              <ul class="od-m__tasks">
+                @for (task of tasks; track task.id) {
+                  <li class="od-m__task">
+                    <div class="od-m__task-main">
+                      <strong>{{ task.productName }}</strong>
+                      <span>{{ taskKindLabels[task.taskKind] }} · {{ task.active ? 'Tablero' : 'Pendiente' }}</span>
+                      @if (task.status === 'bloqueado' && task.blockedReason) {
+                        <span class="od-m__task-block">Bloqueo: {{ task.blockedReason }}</span>
+                      }
+                    </div>
+                    <db-status-badge
+                      [statusClass]="task.status"
+                      [label]="task.status | printJobStatusLabel"
+                    />
+                  </li>
+                }
+              </ul>
+            } @else if (order.status === 'entregado') {
+              <p class="od-m__empty">Pedido entregado — las tareas ya no aparecen en la cola de trabajo.</p>
+            } @else {
+              <p class="od-m__empty">No hay tareas generadas para este pedido.</p>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="od-m__acc" id="od-m-acc-deliveries">
+        <button
+          type="button"
+          class="od-m__acc-btn"
+          [attr.aria-expanded]="isAccordionOpen('deliveries')"
+          (click)="toggleAccordion('deliveries')"
+        >
+          <strong class="od-m__acc-title">Entregas</strong>
+          <span class="od-m__acc-summary">{{ deliveriesAccordionSummary }}</span>
+          <svg
+            class="od-m__chev"
+            [class.od-m__chev--open]="isAccordionOpen('deliveries')"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#9AAFBF"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
+        <div
+          class="od-m__acc-body"
+          [class.od-m__acc-body--open]="isAccordionOpen('deliveries')"
+          [hidden]="!isAccordionOpen('deliveries')"
+        >
+          @if (isMobile()) {
+            <app-order-detail-deliveries
+              [order]="order"
+              [tasks]="tasks"
+              [deliveries]="deliveries"
+              (delivered)="onDeliveryRegistered()"
+            />
           }
         </div>
-      </section>
+      </div>
+
+      <div class="od-m__acc" id="od-m-acc-history">
+        <button
+          type="button"
+          class="od-m__acc-btn"
+          [attr.aria-expanded]="isAccordionOpen('history')"
+          (click)="toggleAccordion('history')"
+        >
+          <strong class="od-m__acc-title">Historial</strong>
+          <span class="od-m__acc-summary">{{ historyAccordionSummary }}</span>
+          <svg
+            class="od-m__chev"
+            [class.od-m__chev--open]="isAccordionOpen('history')"
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#9AAFBF"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M9 6l6 6-6 6" />
+          </svg>
+        </button>
+        <div
+          class="od-m__acc-body"
+          [class.od-m__acc-body--open]="isAccordionOpen('history')"
+          [hidden]="!isAccordionOpen('history')"
+        >
+          @if (isMobile()) {
+            <app-order-detail-history
+              [statusHistory]="statusHistory"
+              [priceHistory]="priceHistory"
+            />
+          }
+        </div>
+      </div>
+
+      @if (order.description) {
+        <h2 class="m-sec-t">Descripción</h2>
+        <section
+          class="m-card od-m__rich order-description rich-content"
+          (click)="onDescriptionClick($event)"
+        >
+          <div [innerHTML]="order.description | richText"></div>
+        </section>
+      }
+
+      @if (order.notes) {
+        <h2 class="m-sec-t">Notas internas</h2>
+        <section class="m-card od-m__notes">
+          <p>{{ order.notes }}</p>
+        </section>
+      }
     </div>
 
-    <footer class="panel detail-actions">
-      @if (canEditOrder) {
-        <db-button
-          label="Editar pedido"
-          variant="primary"
-          format="solid"
-          (clicked)="openEdit()"
-        />
-      }
-      @if (order.status !== 'cancelado') {
-        <db-button
-          [label]="statusLoading ? 'Cancelando...' : 'Cancelar pedido'"
-          variant="delete"
-          format="soft"
-          [disabled]="statusLoading"
-          (clicked)="cancelOrder()"
-        />
-      }
-    </footer>
+    @if (showMobileDock) {
+      <div class="od-m__dock">
+        @if (showMobileRegisterPayment) {
+          <button
+            type="button"
+            class="od-m__dock-btn od-m__dock-btn--sec"
+            (click)="openMobilePaymentsFromDock()"
+          >
+            Registrar pago
+          </button>
+        }
+        @if (showMobileDeliver) {
+          <button
+            type="button"
+            class="od-m__dock-btn od-m__dock-btn--pri"
+            (click)="openMobileDeliveriesFromDock()"
+          >
+            Entregar
+          </button>
+        }
+      </div>
+    }
+
+    @if (mobileActionsOpen) {
+      <div class="od-m__sheet-scrim" (click)="closeMobileActions()"></div>
+      <div
+        class="od-m__sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Más acciones"
+      >
+        <div class="od-m__sheet-grab" aria-hidden="true"></div>
+        <div class="od-m__sheet-body">
+          @if (canEditOrder) {
+            <button type="button" class="od-m__sheet-action" (click)="onMobileEdit()">
+              Editar
+            </button>
+          }
+          @if (order.status !== 'cancelado') {
+            <button
+              type="button"
+              class="od-m__sheet-action od-m__sheet-action--danger"
+              [disabled]="statusLoading"
+              (click)="onMobileCancel()"
+            >
+              {{ statusLoading ? 'Cancelando...' : 'Cancelar pedido' }}
+            </button>
+          }
+          <button type="button" class="od-m__sheet-action" (click)="closeMobileActions()">
+            Cerrar
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+
+  <div class="desktop-only">
+    <header class="page-header detail-header">
+      <div>
+        <a routerLink="/pedidos" class="back-link">← Pedidos</a>
+        <div class="title-row">
+          <h2>Pedido {{ order.id }}</h2>
+          <db-status-badge
+            [statusClass]="order.status"
+            [label]="order.status | orderStatusLabel"
+          />
+        </div>
+        <p class="meta-line">Creado: {{ order.createdAt | dateShort }}</p>
+      </div>
+    </header>
+
+    <div class="detail-layout">
+      <section class="panel">
+        <div class="panel-header-row">
+          <h3>Cliente</h3>
+          @if (!order.customerId) {
+            <db-button
+              label="Cliente nuevo"
+              variant="secondary"
+              format="soft"
+              (clicked)="openNewCustomer()"
+            />
+          }
+        </div>
+        <dl class="detail-list">
+          <div>
+            <dt>Nombre</dt>
+            <dd>
+              @if (order.customerId) {
+                <a [routerLink]="['/clientes', order.customerId]" class="customer-link">
+                  {{ order.customerName }}
+                </a>
+              } @else {
+                <span class="no-customer">Sin cliente asignado</span>
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Servicios</dt>
+            <dd><db-service-badges [types]="order.services" /></dd>
+          </div>
+          <div>
+            <dt>Entrega prevista</dt>
+            <dd>{{ order.dueDate | dateShort }}</dd>
+          </div>
+          @if (order.notes) {
+            <div>
+              <dt>Notas</dt>
+              <dd>{{ order.notes }}</dd>
+            </div>
+          }
+        </dl>
+
+        @if (!order.customerId) {
+          <div class="assign-customer">
+            <db-select
+              label="Asignar cliente existente"
+              [(ngModel)]="assignCustomerId"
+              name="assignCustomerId"
+              placeholder="Seleccionar cliente"
+              [options]="customerOptions"
+            />
+            <db-button
+              [label]="assignLoading ? 'Asignando...' : 'Agregar cliente'"
+              variant="primary"
+              format="solid"
+              [disabled]="assignLoading || !assignCustomerId"
+              (clicked)="assignCustomer()"
+            />
+          </div>
+        }
+      </section>
+
+      <div class="detail-main">
+        @if (priceNotices.length) {
+          <section class="price-notice" aria-label="Cambio de precio del producto">
+            <p>El producto cambió de precio. El valor del pedido sigue igual hasta que lo actualices.</p>
+            <div class="price-notice__actions">
+              <db-button
+                [label]="priceDecisionLoading ? 'Guardando...' : 'Actualizar valor'"
+                variant="primary"
+                format="solid"
+                [disabled]="priceDecisionLoading"
+                (clicked)="decideProductPrice('apply')"
+              />
+              <db-button
+                label="Dejarlo como estaba"
+                variant="secondary"
+                format="soft"
+                [disabled]="priceDecisionLoading"
+                (clicked)="decideProductPrice('keep')"
+              />
+            </div>
+          </section>
+        }
+
+        @if (alerts.length) {
+          <section class="operational-alerts" aria-label="Alertas operativas">
+            @for (alertItem of alerts; track alertItem.code + '-' + $index) {
+              <div [class]="'operational-alert operational-alert--' + alertItem.severity">
+                <strong>Atención</strong>
+                <span>{{ alertItem.message }}</span>
+              </div>
+            }
+          </section>
+        }
+
+        <section class="panel panel--order-lines">
+          <h3>Líneas del pedido</h3>
+          <db-data-table
+            label="Líneas del pedido"
+            [rows]="order.items"
+            [columns]="lineColumns"
+            [clientSide]="false"
+            minWidth="0"
+          >
+            <ng-template odlCell="product" let-item>
+              @if (item.productId) {
+                <a [routerLink]="['/productos', item.productId]" class="product-link">
+                  {{ item.productName }}
+                </a>
+              } @else {
+                {{ item.productName }}
+              }
+            </ng-template>
+            <ng-template odlCell="unitPrice" let-item>
+              @if (isDesignService(item.serviceType)) {
+                <span class="order-item__unit">
+                  {{ (item.designUnitPrice ?? item.unitPrice) | currencyArs }}
+                </span>
+                @if (item.includesPrint) {
+                  <span class="order-item__print-unit">
+                    + {{ printUnitPrice(item) | currencyArs }}/u
+                  </span>
+                }
+              } @else if (hasWholesalePrice(item)) {
+                <span class="order-item__unit">{{ item.unitPrice | currencyArs }}</span>
+                <span class="order-item__list-price">
+                  Lista <s>{{ item.listUnitPrice | currencyArs }}</s>
+                </span>
+              } @else {
+                {{ item.unitPrice | currencyArs }}
+              }
+            </ng-template>
+          </db-data-table>
+          <table class="data-table">
+            <tbody>
+              <tr>
+                <td><strong>Subtotal</strong></td>
+                <td><strong>{{ orderSubtotal | currencyArs }}</strong></td>
+              </tr>
+              @if (orderDiscount > 0) {
+                <tr class="order-discount-row">
+                  <td><strong>Descuento</strong></td>
+                  <td><strong>-{{ orderDiscount | currencyArs }}</strong></td>
+                </tr>
+              }
+              <tr>
+                <td><strong>Total</strong></td>
+                <td><strong>{{ order.total | currencyArs }}</strong></td>
+              </tr>
+            </tbody>
+          </table>
+        </section>
+
+        @if (!isMobile()) {
+          <app-order-detail-payments
+            [order]="order"
+            (orderChange)="onPaymentRegistered($event)"
+          />
+        }
+
+        <section class="panel">
+          <div class="panel-header-row">
+            <h3>Tareas del pedido</h3>
+            <db-button
+              label="Ir al tablero"
+              variant="primary"
+              format="link"
+              routerLink="/cola"
+            />
+          </div>
+          @if (tasks.length) {
+            <db-data-table
+              label="Tareas del pedido"
+              [rows]="tasks"
+              [columns]="taskColumns"
+              [clientSide]="false"
+            >
+              <ng-template odlCell="status" let-task>
+                <db-status-badge
+                  [statusClass]="task.status"
+                  [label]="task.status | printJobStatusLabel"
+                />
+              </ng-template>
+            </db-data-table>
+          } @else if (order.status === 'entregado') {
+            <p class="empty-group">Pedido entregado — las tareas ya no aparecen en la cola de trabajo.</p>
+          } @else {
+            <p class="empty-group">No hay tareas generadas para este pedido.</p>
+          }
+        </section>
+
+        <section class="panel status-panel">
+          <h3>Estado del pedido</h3>
+          <p class="automatic-status">
+            El estado se calcula automáticamente desde las tareas y entregas.
+          </p>
+        </section>
+
+        @if (!isMobile()) {
+          <app-order-detail-deliveries
+            [order]="order"
+            [tasks]="tasks"
+            [deliveries]="deliveries"
+            (delivered)="onDeliveryRegistered()"
+          />
+
+          <app-order-detail-history
+            [statusHistory]="statusHistory"
+            [priceHistory]="priceHistory"
+          />
+        }
+
+        <section class="panel description-panel">
+          <div class="description-panel__header">
+            <h3>Descripción</h3>
+            @if (order.description) {
+              <span class="description-panel__count">
+                {{ order.description | plainTextLength }}/{{ descriptionMaxLength }}
+              </span>
+            }
+          </div>
+          <div class="order-description rich-content" (click)="onDescriptionClick($event)">
+            @if (order.description) {
+              <div [innerHTML]="order.description | richText"></div>
+            } @else {
+              <span class="order-description--empty">Sin descripción</span>
+            }
+          </div>
+        </section>
+      </div>
+
+      <footer class="panel detail-actions">
+        @if (canEditOrder) {
+          <db-button
+            label="Editar pedido"
+            variant="primary"
+            format="solid"
+            (clicked)="openEdit()"
+          />
+        }
+        @if (order.status !== 'cancelado') {
+          <db-button
+            [label]="statusLoading ? 'Cancelando...' : 'Cancelar pedido'"
+            variant="delete"
+            format="soft"
+            [disabled]="statusLoading"
+            (clicked)="cancelOrder()"
+          />
+        }
+      </footer>
+    </div>
   </div>
 
   @if (previewImageUrl) {

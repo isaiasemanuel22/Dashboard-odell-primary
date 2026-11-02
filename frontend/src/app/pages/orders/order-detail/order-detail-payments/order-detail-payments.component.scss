@@ -1,7 +1,36 @@
 @use '../../../../shared/styles/variables' as *;
+@use '../../../../shared/styles/mobile' as mobile;
 
 :host {
   display: contents;
+}
+
+@include mobile.mobile-only {
+  .panel {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .panel > h3 {
+    display: none;
+  }
+
+  .detail-list {
+    gap: 0.55rem;
+  }
+
+  .order-payments__form {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+  }
+
+  // Efectivo / Transferencia / Mercado Pago: toque ≥44px.
+  .order-payments__method ::ng-deep .db-seg__btn {
+    min-height: 44px;
+    height: 44px;
+  }
 }
 
 .panel h3 {

@@ -309,4 +309,37 @@
     flex-direction: column;
     gap: 12px;
   }
+
+  // Toques ≥44px: botones de acción (no chips, íconos, filtros, links ni bare).
+  .db-button:not(.db-button--chip):not(.db-button--icon):not(.db-button--filter):not(.db-button--bare):not(.db-button--inline):not(.db-button--link):not(.db-button--overlay) {
+    min-height: 44px;
+  }
+
+  // Inputs de formulario (texto / número / fecha / select). No toca textarea ni chips.
+  input.db-input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not([type='file']):not([type='range']):not([type='color']),
+  select.db-select,
+  .db-select {
+    min-height: 44px;
+    box-sizing: border-box;
+  }
+
+  // Checkbox / radio nativos: control 22×22 y label clickeable ≥44px.
+  .db-checkbox {
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .db-checkbox__input,
+  input[type='checkbox'].db-checkbox__input,
+  input[type='radio'] {
+    width: 22px;
+    height: 22px;
+    flex: none;
+  }
+
+  .db-checkbox > label {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
 }
