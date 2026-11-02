@@ -1,0 +1,50 @@
+<div class="more mobile-only">
+  <db-mobile-bar title="Más" />
+
+  <div class="m-body">
+    <section class="m-card more__user">
+      <div class="more__avatar" aria-hidden="true">{{ initials() }}</div>
+      <div class="more__user-text">
+        <strong>{{ primaryLine() }}</strong>
+        @if (secondaryLine()) {
+          <span>{{ secondaryLine() }}</span>
+        }
+      </div>
+    </section>
+
+    <section class="more__tiles" aria-label="Más secciones">
+      @for (tile of tiles(); track tile.route) {
+        <a class="more__tile" [routerLink]="tile.route">
+          <span class="more__tile-icon" aria-hidden="true">
+            <db-nav-icon [name]="tile.icon" />
+          </span>
+          <strong>{{ tile.label }}</strong>
+          <span>{{ tile.subtitle }}</span>
+        </a>
+      }
+    </section>
+
+    <section class="m-card m-card--flush">
+      <div class="m-row">
+        <div class="m-row__text">
+          <b>Sincronizar en tiempo real</b>
+          <span>Actualiza las pantallas abiertas</span>
+        </div>
+        <button
+          type="button"
+          class="m-sw"
+          [class.m-sw--on]="realtimeSyncEnabled()"
+          role="switch"
+          [attr.aria-checked]="realtimeSyncEnabled()"
+          aria-label="Sincronizar en tiempo real"
+          (click)="toggleRealtimeSync()"
+        ></button>
+      </div>
+      @if (authEnabled) {
+        <button type="button" class="m-row more__logout" (click)="logout()">
+          Cerrar sesión
+        </button>
+      }
+    </section>
+  </div>
+</div>

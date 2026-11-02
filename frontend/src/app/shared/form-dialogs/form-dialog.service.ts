@@ -1,5 +1,6 @@
 import { Injectable, Type, inject } from '@angular/core';
 import { Dialog } from '@angular/cdk/dialog';
+import { Overlay } from '@angular/cdk/overlay';
 import { Observable, finalize, from, of, switchMap } from 'rxjs';
 import {
   Category,
@@ -13,6 +14,7 @@ import {
   Supply,
   SupplyCategory,
 } from '../../core/models';
+import { BreakpointService } from '../../core/services/breakpoint.service';
 import { formDialogConfig } from './form-dialog.config';
 import { ModalSize } from './modal-size';
 import { CategoryFormDialogComponent } from '../../components/category-form-dialog/category-form-dialog.component';
@@ -38,6 +40,8 @@ import { SupplyFormDialogComponent } from './supply-form-dialog.component';
 @Injectable({ providedIn: 'root' })
 export class FormDialogService {
   private readonly dialog = inject(Dialog);
+  private readonly overlay = inject(Overlay);
+  private readonly breakpoint = inject(BreakpointService);
   /** Evita apilar varios modales de presupuesto por clicks/teclas repetidas. */
   private quoteDialogLocked = false;
 
@@ -185,12 +189,20 @@ export class FormDialogService {
   }
 
   openConfirm(data: ConfirmDialogData): Observable<boolean> {
+    const base = this.baseConfig('sm');
     const ref = this.dialog.open(ConfirmDialogComponent, {
-      ...formDialogConfig('sm'),
+      ...base,
       ariaLabel: data.title,
       data,
     });
     return ref.closed as Observable<boolean>;
+  }
+
+  private baseConfig(size: ModalSize) {
+    return formDialogConfig(size, {
+      isMobile: this.breakpoint.isMobile(),
+      overlay: this.overlay,
+    });
   }
 
   private open<TData, TResult>(
@@ -203,11 +215,12 @@ export class FormDialogService {
       maxWidth?: string;
     },
   ): Observable<TResult | undefined> {
-    const base = formDialogConfig(size);
+    const base = this.baseConfig(size);
+    const isMobile = this.breakpoint.isMobile();
     const ref = this.dialog.open(component, {
       ...base,
       panelClass: [...base.panelClass, ...(overrides.panelClass ?? [])],
-      maxWidth: overrides.maxWidth ?? base.maxWidth,
+      maxWidth: isMobile ? '100%' : (overrides.maxWidth ?? base.maxWidth),
       ariaLabel: overrides.ariaLabel,
       data,
     });

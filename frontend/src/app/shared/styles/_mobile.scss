@@ -1,7 +1,24 @@
 @use 'variables' as *;
 
-$mobile-bottom-nav-height: 4.25rem;
-$mobile-header-height: 3.5rem;
+$mobile-bottom-nav-height: 72px;
+$mobile-header-height: 56px;
+
+// Tokens mobile (artboards 390px — docs/mobile/estilos-compartidos.css)
+$m-bg: #eef4f8;
+$m-surface: #fff;
+$m-border: #e3ecf2;
+$m-border-input: #c9d8e3;
+$m-text: #0f2a3a;
+$m-text-secondary: #5b7083;
+$m-text-label: #33495a;
+$m-primary: #0e7aab;
+$m-primary-dark: #0b5f86;
+$m-primary-pale: #e0f0f8;
+$m-positive: #15803d;
+$m-negative: #b91c1c;
+$m-radius-sm: 12px;
+$m-radius-md: 14px;
+$m-radius-lg: 20px;
 
 @mixin mobile-only {
   @media (max-width: 768px) {
@@ -77,5 +94,11 @@ $mobile-header-height: 3.5rem;
     &:active {
       transform: scale(0.98);
     }
+  }
+}
+
+@include mobile-only {
+  .content {
+    background: $m-bg;
   }
 }

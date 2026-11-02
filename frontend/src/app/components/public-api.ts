@@ -1,6 +1,8 @@
 export * from './dashboard-form/public-api';
 export * from './db-button';
 export { DbIconTrashComponent } from './db-icon-trash/db-icon-trash.component';
+export { MobileBarComponent } from './mobile-bar/mobile-bar.component';
+export { NavIconComponent } from './nav-icon/nav-icon.component';
 export * from './db-data-table';
 export * from './db-row-menu';
 export * from './form-modal';

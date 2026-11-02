@@ -1,3 +1,4 @@
+import { Overlay } from '@angular/cdk/overlay';
 import { ModalSize } from './modal-size';
 
 export const FORM_DIALOG_BACKDROP_CLASS = 'form-dialog-backdrop';
@@ -10,15 +11,28 @@ const SIZE_MAX_WIDTH: Record<ModalSize, string> = {
   xl: '1040px',
 };
 
-export function formDialogConfig(size: ModalSize) {
+export function formDialogConfig(
+  size: ModalSize,
+  options?: {
+    isMobile?: boolean;
+    overlay?: Overlay;
+  },
+) {
+  const isMobile = options?.isMobile === true;
+  const positionStrategy =
+    isMobile && options?.overlay
+      ? options.overlay.position().global().centerHorizontally().bottom('0')
+      : undefined;
+
   return {
     hasBackdrop: true,
     backdropClass: FORM_DIALOG_BACKDROP_CLASS,
     panelClass: [FORM_DIALOG_PANEL_CLASS, `${FORM_DIALOG_PANEL_CLASS}--${size}`],
-    maxWidth: SIZE_MAX_WIDTH[size],
+    maxWidth: isMobile ? '100%' : SIZE_MAX_WIDTH[size],
     width: '100%',
-    maxHeight: '90vh',
+    maxHeight: isMobile ? '92vh' : '90vh',
     autoFocus: 'first-tabbable' as const,
     restoreFocus: true,
+    ...(positionStrategy ? { positionStrategy } : {}),
   };
 }

@@ -1,0 +1,48 @@
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: none;
+
+  @include mobile.mobile-only {
+    display: contents;
+  }
+}
+
+.m-bar {
+  height: mobile.$mobile-header-height;
+  background: mobile.$m-surface;
+  border-bottom: 1px solid mobile.$m-border;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  flex: none;
+  position: sticky;
+  top: 0;
+  /* Por encima del backdrop del drawer (190). */
+  z-index: 195;
+}
+
+.m-bar__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: mobile.$m-text;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m-bar--title-only .m-bar__title {
+  margin-left: 8px;
+}
+
+.m-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: none;
+  margin-left: auto;
+}

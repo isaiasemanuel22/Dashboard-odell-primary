@@ -1,6 +1,5 @@
 @use 'variables' as *;
-
-@use 'variables' as *;
+@use 'mobile' as mobile;
 
 .form-dialog-backdrop {
   background: rgba(36, 48, 62, 0.72);
@@ -143,26 +142,204 @@
   flex-shrink: 0;
 }
 
-@media (max-width: 768px) {
-  .cdk-overlay-pane.form-dialog-panel {
-    max-width: 100vw !important;
-    width: 100vw !important;
-    height: 100dvh;
-    max-height: 100dvh;
-    position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 0 !important;
+@include mobile.mobile-only {
+  .form-dialog-backdrop {
+    background: rgba(15, 42, 58, 0.45);
+  }
+
+  .cdk-overlay-pane.form-dialog-panel,
+  .cdk-overlay-pane.form-dialog-panel.form-dialog-panel--customer,
+  .cdk-overlay-pane.form-dialog-panel.form-dialog-panel--quote,
+  .cdk-overlay-pane.form-dialog-panel--sm,
+  .cdk-overlay-pane.form-dialog-panel--md,
+  .cdk-overlay-pane.form-dialog-panel--lg,
+  .cdk-overlay-pane.form-dialog-panel--xl {
+    width: 100% !important;
+    max-width: 100% !important;
+    max-height: 92vh !important;
+    border-radius: mobile.$m-radius-lg mobile.$m-radius-lg 0 0;
+    box-shadow: 0 -12px 32px rgba(15, 42, 58, 0.2);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel > *,
+  .cdk-overlay-pane.form-dialog-panel app-form-dialog-shell {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .modal,
+  .cdk-overlay-pane.form-dialog-panel .modal--sm,
+  .cdk-overlay-pane.form-dialog-panel .modal--md,
+  .cdk-overlay-pane.form-dialog-panel .modal--lg,
+  .cdk-overlay-pane.form-dialog-panel .modal--xl {
+    max-width: 100%;
+    max-height: 92vh;
+    height: 100%;
+    border-radius: mobile.$m-radius-lg mobile.$m-radius-lg 0 0;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
   }
 
   .cdk-overlay-pane.form-dialog-panel .modal {
-    max-height: 100dvh;
-    height: 100%;
-    border-radius: 0;
+    position: relative;
+
+    &::before {
+      content: '';
+      display: block;
+      width: 40px;
+      height: 4px;
+      border-radius: 999px;
+      background: mobile.$m-border-input;
+      margin: 10px auto 2px;
+      flex: none;
+    }
   }
 
-  .form-dialog-backdrop {
-    background: rgba(15, 23, 42, 0.65);
+  .cdk-overlay-pane.form-dialog-panel .modal__header {
+    flex: none;
+  }
+
+  /* El cuerpo scrollea; el pie queda fijo al final de la hoja. */
+  .cdk-overlay-pane.form-dialog-panel .modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    padding: 1rem 1rem 0;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .modal__body > .db-form,
+  .cdk-overlay-pane.form-dialog-panel .modal__body > db-form,
+  .cdk-overlay-pane.form-dialog-panel .modal__body > form,
+  .cdk-overlay-pane.form-dialog-panel .modal__body > app-order-form,
+  .cdk-overlay-pane.form-dialog-panel .modal__body > app-customer-form,
+  .cdk-overlay-pane.form-dialog-panel .modal__body > app-supply-form,
+  .cdk-overlay-pane.form-dialog-panel .modal__body > app-sale-form,
+  .cdk-overlay-pane.form-dialog-panel .modal__body > app-impreso-form,
+  .cdk-overlay-pane.form-dialog-panel .modal__body > app-category-form,
+  .cdk-overlay-pane.form-dialog-panel .modal__body > app-product-form {
+    flex: 1 1 auto;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .modal__body .db-form,
+  .cdk-overlay-pane.form-dialog-panel .modal__body form {
+    flex: 1 1 auto;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .modal__footer,
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer,
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions {
+    display: flex;
+    align-items: stretch;
+    gap: 10px;
+    padding: 12px 16px 20px;
+    margin-top: auto;
+    position: sticky;
+    bottom: 0;
+    flex: none;
+    background: #fff;
+    border-top: 1px solid mobile.$m-border;
+    z-index: 2;
+    box-sizing: border-box;
+  }
+
+  // El pie vive dentro del formulario: el host es lo que se pega abajo y los
+  // contenedores intermedios no se encogen, así sticky tiene recorrido.
+  // Le gana al padding de los paneles --quote y --customer (form-dialog-shell).
+  .cdk-overlay-pane.form-dialog-panel .modal .modal__body:has(db-form-footer) {
+    padding-bottom: 0;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .modal__body *:has(db-form-footer) {
+    flex-shrink: 0;
+    min-height: auto;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel db-form-footer {
+    display: block;
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    margin-top: auto;
+    margin-bottom: 0;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel db-form-footer .db-form-footer {
+    position: static;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions,
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer {
+    justify-content: stretch;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button,
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button,
+  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button {
+    display: block;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions .db-button,
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer .db-button,
+  .cdk-overlay-pane.form-dialog-panel .modal__footer .db-button {
+    min-height: 52px;
+    height: 52px;
+    border-radius: mobile.$m-radius-md;
+    box-sizing: border-box;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--secondary),
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--cancel),
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--secondary),
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--cancel),
+  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--secondary),
+  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--cancel) {
+    flex: none;
+    width: 120px;
+    max-width: 120px;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--secondary) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--cancel) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--secondary) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--cancel) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--secondary) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--cancel) .db-button {
+    width: 100%;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--primary),
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--delete),
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--primary),
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--delete),
+  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--primary),
+  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--delete) {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--primary) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .confirm-actions db-button:has(.db-button--delete) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--primary) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .db-form-footer db-button:has(.db-button--delete) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--primary) .db-button,
+  .cdk-overlay-pane.form-dialog-panel .modal__footer db-button:has(.db-button--delete) .db-button {
+    width: 100%;
   }
 }

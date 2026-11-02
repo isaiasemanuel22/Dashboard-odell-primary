@@ -29,7 +29,7 @@
   display: none;
 }
 
-nav {
+.sidebar nav {
   flex: 1;
   display: flex;
   flex-direction: column;
@@ -198,11 +198,12 @@ nav {
     gap: 0.75rem;
     position: sticky;
     top: 0;
-    z-index: 100;
+    /* Por encima del backdrop (190) para que el primer toque en ☰ no se pierda. */
+    z-index: 195;
     height: mobile.$mobile-header-height;
     padding: 0 1rem;
-    background: $color-surface;
-    border-bottom: 1px solid $color-border;
+    background: mobile.$m-surface;
+    border-bottom: 1px solid mobile.$m-border;
   }
 
   .mobile-header__menu {
@@ -223,7 +224,7 @@ nav {
     align-items: center;
     gap: 0.5rem;
     font-weight: 700;
-    color: $color-text;
+    color: mobile.$m-text;
 
     img {
       border-radius: $radius-sm;
@@ -236,22 +237,28 @@ nav {
 
   .content {
     padding: 1rem;
+    background: mobile.$m-bg;
     min-height: calc(100vh - #{mobile.$mobile-header-height} - #{mobile.$mobile-bottom-nav-height});
+  }
+
+  .layout--page-bar .content {
+    padding: 0;
+    min-height: calc(100vh - #{mobile.$mobile-bottom-nav-height});
   }
 
   .bottom-nav {
     display: grid;
-    grid-template-columns: repeat(4, 1fr);
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    align-items: center;
     position: fixed;
     left: 0;
     right: 0;
     bottom: 0;
     z-index: 120;
     height: mobile.$mobile-bottom-nav-height;
-    padding: 0.35rem 0.25rem calc(0.35rem + env(safe-area-inset-bottom, 0));
-    background: $color-surface;
-    border-top: 1px solid $color-border;
-    box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.06);
+    padding: 0 0 env(safe-area-inset-bottom, 0);
+    background: mobile.$m-surface;
+    border-top: 1px solid mobile.$m-border;
   }
 
   .bottom-nav__item {
@@ -259,26 +266,44 @@ nav {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 0.15rem;
+    gap: 3px;
     border: none;
+    border-radius: 0;
     background: transparent;
-    color: $color-text-muted;
+    color: mobile.$m-text-secondary;
     font: inherit;
-    font-size: 0.65rem;
-    font-weight: 600;
+    font-size: 11px;
+    font-weight: 500;
     text-decoration: none;
     cursor: pointer;
-    min-height: 44px;
+    min-height: 48px;
+    padding: 0;
 
-    &--active {
-      color: $color-primary;
+    &:hover,
+    &:focus,
+    &:active {
+      color: mobile.$m-text-secondary;
+      background: transparent;
+    }
+
+    // --section: «Más» marcado en las secciones que se abren desde ahí.
+    &--active,
+    &--section {
+      color: mobile.$m-primary;
+      font-weight: 700;
+
+      &:hover,
+      &:focus,
+      &:active {
+        color: mobile.$m-primary;
+      }
     }
   }
 
   .bottom-nav__icon {
     display: flex;
-    width: 1.15rem;
-    height: 1.15rem;
+    width: 22px;
+    height: 22px;
 
     svg {
       width: 100%;
@@ -288,6 +313,35 @@ nav {
 
   .bottom-nav__label {
     line-height: 1.1;
+  }
+
+  .bottom-nav__fab {
+    width: 56px;
+    height: 56px;
+    min-height: 56px;
+    border: none;
+    border-radius: 18px;
+    background: mobile.$m-primary;
+    color: #fff;
+    margin: -30px auto 0;
+    box-shadow: 0 8px 18px rgba(14, 122, 171, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+  }
+
+  .bottom-nav__fab-icon {
+    display: flex;
+    width: 28px;
+    height: 28px;
+
+    svg {
+      width: 100%;
+      height: 100%;
+      stroke-width: 2.25;
+    }
   }
 
   .layout--compact-nav .layout-main {

@@ -1,3 +1,23 @@
+@use '../../shared/styles/mobile' as mobile;
+
 :host {
   display: contents;
+}
+
+@include mobile.mobile-only {
+  :host .modal {
+    display: flex;
+    flex-direction: column;
+    max-height: 92vh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  :host .modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+  }
 }

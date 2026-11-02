@@ -30,6 +30,11 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'mas',
+        loadComponent: () =>
+          import('./pages/more/more.component').then((m) => m.MoreComponent),
+      },
+      {
         path: 'ventas',
         children: [
           {
