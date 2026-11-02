@@ -1,14 +1,19 @@
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   DestroyRef,
+  ElementRef,
+  OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { ActivatedRoute, Router } from '@angular/router';
+import { FormsModule } from '@angular/forms';
+import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
 import { combineLatest } from 'rxjs';
+import { filter } from 'rxjs/operators';
 import {
   Category,
   Product,
@@ -19,6 +24,7 @@ import {
   WholesaleDiscountSettings,
 } from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
+import { BreakpointService } from '../../core/services/breakpoint.service';
 import { CategoryCatalogService } from '../../core/services/category-catalog.service';
 import { ProductsService } from '../../core/services/products.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
@@ -33,7 +39,9 @@ import {
   DbButtonComponent,
   DbPillOption,
   ProductCardComponent,
+  MobileBarComponent,
 } from '@general-components';
+import { ProductMobileCardComponent } from '../../components/product-mobile-card/product-mobile-card.component';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import {
   clearCreateQuery,
@@ -47,32 +55,43 @@ import {
 import { resolveCategoryNamesText } from '../../shared/utils/product.helpers';
 import { productPhysicalStock } from '../../shared/utils/stock.helpers';
 import { normalizeWholesaleDiscount } from '../../shared/utils/wholesale-example.util';
+import { countProductMobileSheetFilters } from '../../shared/form-dialogs/product-filters-sheet.component';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 import { ProductsBulkPriceComponent } from './products-bulk-price/products-bulk-price.component';
 import { ProductsSupplyPriceChangesComponent } from './products-supply-price-changes/products-supply-price-changes.component';
 import { ProductsToolbarComponent } from './products-toolbar/products-toolbar.component';
+import { ProductsMobileStateService } from './products-mobile-state.service';
 
 type TypeFilter = ProductType | 'all';
 type ListFilter = 'all' | 'below_margin' | 'fixed_price' | 'in_stock';
+
+interface MobileListChip {
+  value: ListFilter;
+  label: string;
+  count: number;
+}
 
 @Component({
   selector: 'app-products',
   standalone: true,
   imports: [
+    FormsModule,
     DbSkeletonComponent,
     DbStateMessageComponent,
     DbButtonComponent,
     ProductCardComponent,
+    ProductMobileCardComponent,
     ProductsToolbarComponent,
     ProductsBulkPriceComponent,
     ProductsSupplyPriceChangesComponent,
+    MobileBarComponent,
   ],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProductsComponent implements OnInit {
+export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly catalog = inject(CatalogFacade);
   private readonly productsService = inject(ProductsService);
   private readonly suppliesService = inject(SuppliesService);
@@ -86,6 +105,9 @@ export class ProductsComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly formDialogs = inject(FormDialogService);
   private readonly saleCart = inject(SaleCartService);
+  private readonly breakpoint = inject(BreakpointService);
+  private readonly host = inject(ElementRef<HTMLElement>);
+  private readonly mobileState = inject(ProductsMobileStateService);
   private readonly currency = new CurrencyArsPipe();
 
   products: Product[] = [];
@@ -107,6 +129,8 @@ export class ProductsComponent implements OnInit {
     normalizeWholesaleDiscount(null);
 
   private belowMarginIds = new Set<string>();
+  private scrollActiveChipOnInit = false;
+  private pendingScrollY: number | null = null;
 
   readonly ProductType = ProductType;
   readonly typeFilters: { value: TypeFilter; label: string }[] = [
@@ -117,6 +141,11 @@ export class ProductsComponent implements OnInit {
   ];
 
   ngOnInit(): void {
+    const queryApplied = this.applyMobileQueryParams();
+    if (!queryApplied) {
+      this.restoreMobileState();
+    }
+
     this.catalog.load();
     this.settingsFacade.load();
 
@@ -133,6 +162,9 @@ export class ProductsComponent implements OnInit {
         this.categories = categories;
         this.allProducts = allProducts;
         this.cdr.markForCheck();
+        if (!loading) {
+          this.restoreScrollIfNeeded();
+        }
       });
 
     this.settingsFacade
@@ -161,19 +193,30 @@ export class ProductsComponent implements OnInit {
       this.handleRealtime(event),
     );
 
-    const filtro = this.route.snapshot.queryParamMap.get('filtro');
-    if (
-      filtro === 'below_margin' ||
-      filtro === 'fixed_price' ||
-      filtro === 'in_stock'
-    ) {
-      this.listFilter = filtro;
-    }
+    this.router.events
+      .pipe(
+        filter(
+          (event): event is NavigationStart => event instanceof NavigationStart,
+        ),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => this.persistMobileState());
 
     if (shouldOpenCreateFromQuery(this.route)) {
       this.openCreateProduct();
       clearCreateQuery(this.router);
     }
+  }
+
+  ngAfterViewInit(): void {
+    if (!this.scrollActiveChipOnInit) return;
+    requestAnimationFrame(() => this.scrollActiveMobileChipIntoView());
+  }
+
+  ngOnDestroy(): void {
+    // Sin scroll: al destruirse la página ya está arriba y pisaría el guardado
+    // en NavigationStart.
+    this.persistMobileState({ keepScroll: true });
   }
 
   get targetMarginPercent(): number {
@@ -197,6 +240,43 @@ export class ProductsComponent implements OnInit {
       },
       { value: 'in_stock', label: 'Con stock' },
     ];
+  }
+
+  /**
+   * Chips mobile: contadores sobre búsqueda + tipo + categoría
+   * (lo que se vería al tocar ese chip). Se ocultan los de contador 0,
+   * salvo «Todos» y el chip activo.
+   */
+  get mobileListChips(): MobileListChip[] {
+    const base = this.productsMatchingSearchTypeCategory;
+    const chips: MobileListChip[] = [
+      {
+        value: 'all',
+        label: 'Todos',
+        count: base.filter((p) => p.published !== false).length,
+      },
+      {
+        value: 'below_margin',
+        label: 'Bajo margen',
+        count: base.filter((p) => this.belowMarginIds.has(p.id)).length,
+      },
+      {
+        value: 'fixed_price',
+        label: 'Precio fijo',
+        count: base.filter((p) => hasFixedCatalogPrice(p)).length,
+      },
+      {
+        value: 'in_stock',
+        label: 'Con stock',
+        count: base.filter((p) => productPhysicalStock(p) > 0).length,
+      },
+    ];
+    return chips.filter(
+      (chip) =>
+        chip.value === 'all' ||
+        chip.count > 0 ||
+        this.listFilter === chip.value,
+    );
   }
 
   get marginAlertCount(): number {
@@ -226,6 +306,29 @@ export class ProductsComponent implements OnInit {
     return this.marginAlerts.filter((alert) => alert.fixedPrice);
   }
 
+  /** Alertas mobile: solo productos que pasan búsqueda + tipo + categoría. */
+  get mobileOutdatedPriceAlerts(): ProductMarginAlert[] {
+    const ids = this.productsMatchingSearchTypeCategoryIds;
+    return this.outdatedPriceAlerts.filter((alert) => ids.has(alert.productId));
+  }
+
+  get mobileFixedPriceMarginAlerts(): ProductMarginAlert[] {
+    const ids = this.productsMatchingSearchTypeCategoryIds;
+    return this.fixedPriceMarginAlerts.filter((alert) =>
+      ids.has(alert.productId),
+    );
+  }
+
+  get mobileOutdatedPriceAlertTitle(): string {
+    const n = this.mobileOutdatedPriceAlerts.length;
+    return n === 1 ? '1 precio desactualizado' : `${n} precios desactualizados`;
+  }
+
+  get mobileFixedPriceMarginAlertTitle(): string {
+    const n = this.mobileFixedPriceMarginAlerts.length;
+    return n === 1 ? '1 precio fijo' : `${n} precios fijos`;
+  }
+
   get outdatedPriceAlertMessage(): string {
     const n = this.outdatedPriceAlerts.length;
     return n === 1
@@ -247,7 +350,25 @@ export class ProductsComponent implements OnInit {
     return `${base} después del aumento del ${supply.name} (${before} → ${now}${unit})`;
   }
 
+  /** Productos filtrados por búsqueda, tipo y categoría (sin chip de lista). */
+  get productsMatchingSearchTypeCategory(): Product[] {
+    return this.products.filter((p) => this.matchesSearchTypeCategory(p));
+  }
+
+  private get productsMatchingSearchTypeCategoryIds(): Set<string> {
+    return new Set(
+      this.productsMatchingSearchTypeCategory.map((product) => product.id),
+    );
+  }
+
   get filteredProducts(): Product[] {
+    return this.products.filter(
+      (p) => this.matchesListFilter(p) && this.matchesSearchTypeCategory(p),
+    );
+  }
+
+  /** Lista para el contador de la hoja: chip + búsqueda (sin tipo/categoría). */
+  get productsForSheet(): Product[] {
     return this.products.filter((p) => {
       const matchesList = this.matchesListFilter(p);
       const query = this.search.trim().toLowerCase();
@@ -257,12 +378,7 @@ export class ProductsComponent implements OnInit {
         resolveCategoryNamesText(p.categoryIds, this.categories)
           .toLowerCase()
           .includes(query);
-      const matchesType =
-        this.typeFilter === 'all' || p.type === this.typeFilter;
-      const matchesCategory =
-        this.categoryFilter === 'all' ||
-        p.categoryIds.includes(this.categoryFilter);
-      return matchesList && matchesSearch && matchesType && matchesCategory;
+      return matchesList && matchesSearch;
     });
   }
 
@@ -297,6 +413,18 @@ export class ProductsComponent implements OnInit {
   get publishedCount(): number {
     return this.products.filter((product) => product.published !== false)
       .length;
+  }
+
+  get mobileSheetFilterCount(): number {
+    return countProductMobileSheetFilters({
+      typeFilter: this.typeFilter,
+      categoryFilter: this.categoryFilter,
+    });
+  }
+
+  get filtersButtonLabel(): string {
+    const n = this.mobileSheetFilterCount;
+    return n > 0 ? `Tipo y categoría · ${n}` : 'Tipo y categoría';
   }
 
   reloadProducts(): void {
@@ -336,6 +464,10 @@ export class ProductsComponent implements OnInit {
     });
   }
 
+  onSearchChange(): void {
+    this.cdr.markForCheck();
+  }
+
   setTypeFilter(filter: TypeFilter | string): void {
     this.typeFilter = filter as TypeFilter;
     this.categoryFilter = 'all';
@@ -347,13 +479,34 @@ export class ProductsComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
+  openMobileFilters(): void {
+    this.formDialogs
+      .openProductFilters({
+        filters: {
+          typeFilter: this.typeFilter,
+          categoryFilter: this.categoryFilter,
+        },
+        typeFilters: this.typeFilters,
+        categories: this.categories,
+        products: this.productsForSheet,
+      })
+      .subscribe((next) => {
+        if (!next) return;
+        this.typeFilter = next.typeFilter;
+        this.categoryFilter = next.categoryFilter;
+        this.cdr.markForCheck();
+      });
+  }
+
   scrollToBulkPrice(): void {
     const el = document.getElementById('masiva');
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   recalculateOutdatedPrices(): void {
-    const n = this.outdatedPriceAlerts.length;
+    const n = this.breakpoint.isMobile()
+      ? this.mobileOutdatedPriceAlerts.length
+      : this.outdatedPriceAlerts.length;
     if (n === 0) return;
     this.formDialogs
       .openConfirm({
@@ -456,6 +609,83 @@ export class ProductsComponent implements OnInit {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  private applyMobileQueryParams(): boolean {
+    const filtro = this.route.snapshot.queryParamMap.get('filtro');
+    if (
+      filtro === 'below_margin' ||
+      filtro === 'fixed_price' ||
+      filtro === 'in_stock'
+    ) {
+      this.listFilter = filtro;
+      this.scrollActiveChipOnInit = true;
+      return true;
+    }
+    return false;
+  }
+
+  /** Para la tarjeta mobile: mismo conjunto que el chip «Bajo margen». */
+  isBelowMargin(product: Product): boolean {
+    return this.belowMarginIds.has(product.id);
+  }
+
+  private restoreMobileState(): void {
+    const saved = this.mobileState.read();
+    if (!saved) return;
+    this.listFilter = saved.listFilter;
+    this.typeFilter = saved.typeFilter;
+    this.categoryFilter = saved.categoryFilter;
+    this.search = saved.search;
+    if (saved.scrollY > 0) {
+      this.pendingScrollY = saved.scrollY;
+    }
+  }
+
+  private persistMobileState(options: { keepScroll?: boolean } = {}): void {
+    if (!this.breakpoint.isMobile()) return;
+    const scrollY = options.keepScroll
+      ? (this.mobileState.read()?.scrollY ?? 0)
+      : window.scrollY;
+    this.mobileState.save({
+      listFilter: this.listFilter,
+      typeFilter: this.typeFilter,
+      categoryFilter: this.categoryFilter,
+      search: this.search,
+      scrollY,
+    });
+  }
+
+  private restoreScrollIfNeeded(): void {
+    const y = this.pendingScrollY;
+    if (y == null || y <= 0) return;
+    this.pendingScrollY = null;
+    requestAnimationFrame(() => {
+      window.scrollTo(0, y);
+    });
+  }
+
+  private scrollActiveMobileChipIntoView(): void {
+    const chip = this.host.nativeElement.querySelector(
+      '.m-chip.m-chip--on',
+    ) as HTMLElement | null;
+    chip?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+  }
+
+  private matchesSearchTypeCategory(product: Product): boolean {
+    const query = this.search.trim().toLowerCase();
+    const matchesSearch =
+      !query ||
+      product.name.toLowerCase().includes(query) ||
+      resolveCategoryNamesText(product.categoryIds, this.categories)
+        .toLowerCase()
+        .includes(query);
+    const matchesType =
+      this.typeFilter === 'all' || product.type === this.typeFilter;
+    const matchesCategory =
+      this.categoryFilter === 'all' ||
+      product.categoryIds.includes(this.categoryFilter);
+    return matchesSearch && matchesType && matchesCategory;
   }
 
   private matchesListFilter(product: Product): boolean {

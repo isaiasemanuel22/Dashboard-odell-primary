@@ -24,6 +24,10 @@ import type { QuoteDocumentExportDialogData } from './quote-document-export-dial
 import type { CalendarEventDialogData } from './calendar-event-dialog.component';
 import type { OrderFiltersSheetData } from './order-filters-sheet.component';
 import type { OrderMobileSheetFilters } from '../utils/order.helpers';
+import type {
+  ProductFiltersSheetData,
+  ProductMobileSheetFilters,
+} from './product-filters-sheet.component';
 
 @Injectable({ providedIn: 'root' })
 export class FormDialogService {
@@ -275,6 +279,24 @@ export class FormDialogService {
             data,
             'md',
             { ariaLabel: 'Filtrar pedidos' },
+          ),
+      ),
+    );
+  }
+
+  openProductFilters(
+    data: ProductFiltersSheetData,
+  ): Observable<ProductMobileSheetFilters | undefined> {
+    return from(import('./product-filters-sheet.component')).pipe(
+      switchMap(
+        ({
+          ProductFiltersSheetComponent,
+        }): Observable<ProductMobileSheetFilters | undefined> =>
+          this.open<ProductFiltersSheetData, ProductMobileSheetFilters>(
+            ProductFiltersSheetComponent,
+            data,
+            'md',
+            { ariaLabel: 'Tipo y categoría' },
           ),
       ),
     );

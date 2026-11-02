@@ -99,6 +99,21 @@ Observaciones de Nuevo pedido: con el aviso de compra mínima activo, «Mayorist
 | B7 | Registro y Transferir | Abrir y cancelar | Abren su formulario (todavía el de desktop) | ✅ 2026-11-02 · billetera |
 | B8 | Te deben | Comparar con desktop; «Registrar devolución» y cancelar | Mismos deudores y montos; botón de 44 px; precarga el monto | ✅ 2026-11-02 · billetera |
 
+## Productos (lista y filtros)
+
+| # | Caso | Pasos | Esperado | Último resultado |
+|---|------|-------|----------|------------------|
+| PR1 | Barra | Volver; tocar «+» y cerrar | Volver lleva a «Más»; «+» abre Nuevo producto | ✅ 2026-11-02 · productos |
+| PR2 | Tarjeta | Comparar precios, costo y margen con desktop | Coinciden; margen = (precio − costo) ÷ costo con «N %»; barra roja exactamente en los productos de «Bajo margen» y franja mínima si el margen es negativo | ✅ 2026-11-02 · productos (el color se alineó con «Bajo margen» después) |
+| PR3 | Chips | Tocar cada chip | «Todos N», «Bajo margen N»…; la cantidad coincide; los de 0 no aparecen (salvo Todos y el activo) | ✅ 2026-11-02 · productos |
+| PR4 | Tipo y categoría | Elegir tipo y categoría, aplicar, Limpiar | «Ver N productos» coincide; «Tipo y categoría · 2»; los chips se recalculan; Limpiar vuelve todo | ✅ 2026-11-02 · productos |
+| PR5 | Buscador | Buscar por nombre | Se combina con chips y filtros; los contadores se ajustan | ✅ 2026-11-02 · productos |
+| PR6 | Precios desactualizados | Mirar el aviso (no tocar Recalcular) | El número coincide con los visibles; Recalcular a la derecha | ✅ 2026-11-02 · productos |
+| PR7 | Detalle y volver | Bajar, abrir una tarjeta y volver | Se conservan chip, filtros, búsqueda y posición del scroll | ✅ 2026-11-02 · productos (el scroll se corrigió después; también en Pedidos) |
+| PR8 | Filtro por URL | /productos?filtro=below_margin | Abre con «Bajo margen» activo | ✅ 2026-11-02 · productos |
+
+Inaccesible en mobile por ahora (resolver al migrar detalle/producto/ventas): actualizar precios en bloque, cambios de precio de insumos y carrito. Observaciones: las tarjetas no marcan cuáles son los precios desactualizados; «N piezas» (compuesto) vs «Stock N» en desktop.
+
 Sin probar todavía: opciones de Entrega (Hoy / Esta semana / Atrasados) de la hoja, y chip + estado contradictorios (ej. Abiertos + Entregado).
 
 Observaciones del 2026-11-02, a resolver al migrar cada pantalla:

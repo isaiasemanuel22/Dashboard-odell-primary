@@ -142,7 +142,9 @@ export class OrdersComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    this.persistMobileState();
+    // Sin scroll: al destruirse la página ya está arriba y pisaría el guardado
+    // en NavigationStart.
+    this.persistMobileState({ keepScroll: true });
   }
 
   private applyMobileQueryParams(): boolean {
@@ -183,13 +185,16 @@ export class OrdersComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private persistMobileState(): void {
+  private persistMobileState(options: { keepScroll?: boolean } = {}): void {
     if (!this.breakpoint.isMobile()) return;
+    const scrollY = options.keepScroll
+      ? (this.mobileState.read()?.scrollY ?? 0)
+      : window.scrollY;
     this.mobileState.save({
       chip: this.mobileChip,
       sheetFilters: this.mobileSheetFilters,
       search: this.search,
-      scrollY: window.scrollY,
+      scrollY,
     });
   }
 

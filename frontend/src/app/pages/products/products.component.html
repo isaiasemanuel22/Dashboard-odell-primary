@@ -1,122 +1,262 @@
-<app-products-toolbar
-  [publishedCount]="publishedCount"
-  [targetMarginPercent]="targetMarginPercent"
-  [cartItemCount]="cartItemCount"
-  [listFilters]="listFilters"
-  [listFilter]="listFilter"
-  (listFilterChange)="setListFilter($event)"
-  [search]="search"
-  (searchChange)="search = $event"
-  [typeFilters]="typeFilters"
-  [typeFilter]="typeFilter"
-  (typeFilterChange)="setTypeFilter($event)"
-  [categoryFilterOptions]="categoryFilterOptions"
-  [categoryFilter]="categoryFilter"
-  (categoryFilterChange)="categoryFilter = $event"
-  (newCategory)="openCategoryForm()"
-  (newProduct)="openCreateProduct()"
-  (updatePrices)="scrollToBulkPrice()"
-/>
-
-@if (outdatedPriceAlerts.length > 0) {
-  <div class="products-alert" role="status">
-    <svg
-      viewBox="0 0 24 24"
-      width="18"
-      height="18"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      aria-hidden="true"
+<div class="mobile-only products-m">
+  <db-mobile-bar title="Productos" backLink="/mas">
+    <button
+      type="button"
+      class="m-ib"
+      aria-label="Nuevo producto"
+      (click)="openCreateProduct()"
     >
-      <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
-    </svg>
-    <div class="products-alert__body">
-      <p>
-        <strong>{{ outdatedPriceAlertMessage }}</strong>.
-      </p>
-      <db-button
-        label="Recalcular precios"
-        variant="primary"
-        format="soft"
-        (clicked)="recalculateOutdatedPrices()"
-      />
-    </div>
-  </div>
-}
+      <svg
+        viewBox="0 0 24 24"
+        width="22"
+        height="22"
+        fill="none"
+        stroke="#0E7AAB"
+        stroke-width="2"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+    </button>
+  </db-mobile-bar>
 
-@if (fixedPriceMarginAlerts.length > 0) {
-  <div class="products-alert" role="status">
-    <svg
-      viewBox="0 0 24 24"
-      width="18"
-      height="18"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      aria-hidden="true"
-    >
-      <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
-    </svg>
-    <div class="products-alert__body">
-      <p>
-        <strong>{{ fixedPriceMarginAlertMessage }}</strong>.
-        <a href="#masiva" (click)="scrollToBulkPrice(); $event.preventDefault()">
-          Revisar precios en bloque
-        </a>
-      </p>
-    </div>
-  </div>
-}
-
-@if (cartNotice) {
-  <p class="products-cart-notice">{{ cartNotice }}</p>
-}
-
-@if (loading) {
-  <db-skeleton variant="cards" [count]="6" />
-} @else {
-  <db-state-message
-    [loading]="false"
-    [empty]="filteredProducts.length === 0"
-    [emptyMessage]="emptyMessage"
-  >
-    <db-button
-      emptyActions
-      label="Crear primer producto"
-      variant="primary"
-      format="solid"
-      (clicked)="openCreateProduct()"
-    />
-  </db-state-message>
-
-  @if (filteredProducts.length) {
-    <div class="products-grid">
-      @for (product of filteredProducts; track product.id) {
-        <app-product-card
-          [product]="product"
-          [categories]="categories"
-          [catalogProducts]="allProducts"
-          [profitMargins]="profitMargins"
-          [wholesaleDiscount]="wholesaleDiscount"
-          [showAddToCart]="true"
-          (edit)="openEditProduct($event)"
-          (delete)="deleteProduct($event)"
-          (addToCart)="addProductToCart($event)"
+  <div class="m-tools">
+    <div class="products-m__tools-row">
+      <label class="m-search">
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="#5B7083"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <circle cx="11" cy="11" r="7" />
+          <path d="M20 20l-3.5-3.5" />
+        </svg>
+        <input
+          type="search"
+          placeholder="Buscar producto"
+          aria-label="Buscar producto"
+          [(ngModel)]="search"
+          (ngModelChange)="onSearchChange()"
         />
+      </label>
+      <button
+        type="button"
+        class="m-fbtn"
+        [class.products-m__fbtn--on]="mobileSheetFilterCount > 0"
+        (click)="openMobileFilters()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M4 6h16M7 12h10M10 18h4" />
+        </svg>
+        {{ filtersButtonLabel }}
+      </button>
+    </div>
+    <div class="m-chips" role="group" aria-label="Filtro rápido">
+      @for (chip of mobileListChips; track chip.value) {
+        <button
+          type="button"
+          class="m-chip"
+          [class.m-chip--on]="listFilter === chip.value"
+          (click)="setListFilter(chip.value)"
+        >
+          {{ chip.label }}
+          <span class="products-m__chip-n">{{ chip.count }}</span>
+        </button>
       }
     </div>
+  </div>
+
+  <div class="products-m__list">
+    @if (mobileOutdatedPriceAlerts.length > 0) {
+      <div class="products-m__alert" role="status">
+        <div class="products-m__alert-text">
+          <strong>{{ mobileOutdatedPriceAlertTitle }}</strong>
+          <span>respecto de su costo actual</span>
+        </div>
+        <button
+          type="button"
+          class="products-m__alert-btn"
+          (click)="recalculateOutdatedPrices()"
+        >
+          Recalcular
+        </button>
+      </div>
+    }
+
+    @if (mobileFixedPriceMarginAlerts.length > 0) {
+      <div class="products-m__alert" role="status">
+        <div class="products-m__alert-text">
+          <strong>{{ mobileFixedPriceMarginAlertTitle }}</strong>
+          <span>quedaron bajo el margen</span>
+        </div>
+      </div>
+    }
+
+    @if (cartNotice) {
+      <p class="products-m__notice">{{ cartNotice }}</p>
+    }
+
+    @if (loading) {
+      <db-skeleton variant="cards" [count]="4" />
+    } @else if (filteredProducts.length === 0) {
+      <div class="m-card products-m__empty">
+        <p>{{ emptyMessage }}</p>
+        <db-button
+          label="Nuevo producto"
+          variant="primary"
+          format="solid"
+          (clicked)="openCreateProduct()"
+        />
+      </div>
+    } @else {
+      @for (product of filteredProducts; track product.id) {
+        <app-product-mobile-card
+          [product]="product"
+          [categories]="categories"
+          [profitMargins]="profitMargins"
+          [wholesaleDiscount]="wholesaleDiscount"
+          [belowMargin]="isBelowMargin(product)"
+        />
+      }
+    }
+  </div>
+</div>
+
+<div class="desktop-only">
+  <app-products-toolbar
+    [publishedCount]="publishedCount"
+    [targetMarginPercent]="targetMarginPercent"
+    [cartItemCount]="cartItemCount"
+    [listFilters]="listFilters"
+    [listFilter]="listFilter"
+    (listFilterChange)="setListFilter($event)"
+    [search]="search"
+    (searchChange)="search = $event"
+    [typeFilters]="typeFilters"
+    [typeFilter]="typeFilter"
+    (typeFilterChange)="setTypeFilter($event)"
+    [categoryFilterOptions]="categoryFilterOptions"
+    [categoryFilter]="categoryFilter"
+    (categoryFilterChange)="categoryFilter = $event"
+    (newCategory)="openCategoryForm()"
+    (newProduct)="openCreateProduct()"
+    (updatePrices)="scrollToBulkPrice()"
+  />
+
+  @if (outdatedPriceAlerts.length > 0) {
+    <div class="products-alert" role="status">
+      <svg
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
+      </svg>
+      <div class="products-alert__body">
+        <p>
+          <strong>{{ outdatedPriceAlertMessage }}</strong>.
+        </p>
+        <db-button
+          label="Recalcular precios"
+          variant="primary"
+          format="soft"
+          (clicked)="recalculateOutdatedPrices()"
+        />
+      </div>
+    </div>
   }
-}
 
-<app-products-bulk-price
-  [categories]="categories"
-  (applied)="onBulkPriceApplied()"
-/>
+  @if (fixedPriceMarginAlerts.length > 0) {
+    <div class="products-alert" role="status">
+      <svg
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
+      </svg>
+      <div class="products-alert__body">
+        <p>
+          <strong>{{ fixedPriceMarginAlertMessage }}</strong>.
+          <a href="#masiva" (click)="scrollToBulkPrice(); $event.preventDefault()">
+            Revisar precios en bloque
+          </a>
+        </p>
+      </div>
+    </div>
+  }
 
-<app-products-supply-price-changes
-  [rows]="supplyPriceChanges"
-  [loading]="supplyChangesLoading"
-/>
+  @if (cartNotice) {
+    <p class="products-cart-notice">{{ cartNotice }}</p>
+  }
+
+  @if (loading) {
+    <db-skeleton variant="cards" [count]="6" />
+  } @else {
+    <db-state-message
+      [loading]="false"
+      [empty]="filteredProducts.length === 0"
+      [emptyMessage]="emptyMessage"
+    >
+      <db-button
+        emptyActions
+        label="Crear primer producto"
+        variant="primary"
+        format="solid"
+        (clicked)="openCreateProduct()"
+      />
+    </db-state-message>
+
+    @if (filteredProducts.length) {
+      <div class="products-grid">
+        @for (product of filteredProducts; track product.id) {
+          <app-product-card
+            [product]="product"
+            [categories]="categories"
+            [catalogProducts]="allProducts"
+            [profitMargins]="profitMargins"
+            [wholesaleDiscount]="wholesaleDiscount"
+            [showAddToCart]="true"
+            (edit)="openEditProduct($event)"
+            (delete)="deleteProduct($event)"
+            (addToCart)="addProductToCart($event)"
+          />
+        }
+      </div>
+    }
+  }
+
+  <app-products-bulk-price
+    [categories]="categories"
+    (applied)="onBulkPriceApplied()"
+  />
+
+  <app-products-supply-price-changes
+    [rows]="supplyPriceChanges"
+    [loading]="supplyChangesLoading"
+  />
+</div>

@@ -1,0 +1,69 @@
+<a class="pmc" [routerLink]="detailLink()">
+  @if (imageUrl(); as src) {
+    <img
+      class="pmc__thumb"
+      [src]="src | mediaUrl"
+      [alt]="product().name"
+      loading="lazy"
+    />
+  } @else {
+    <div class="pmc__thumb pmc__thumb--empty" aria-hidden="true">Sin imagen</div>
+  }
+
+  <div class="pmc__body">
+    <div class="pmc__title-row">
+      <strong class="pmc__name">{{ product().name }}</strong>
+      @if (hasFixedPrice()) {
+        <span class="pmc__fixed">Precio fijo</span>
+      }
+    </div>
+    <p class="pmc__sub">{{ subtitle() }}</p>
+
+    <div class="pmc__prices">
+      <div class="pmc__price">
+        <span class="pmc__price-label">Lista</span>
+        <strong class="pmc__price-value">{{ listPrice() | currencyArs }}</strong>
+      </div>
+      @if (wholesalePrice(); as mayorista) {
+        <div class="pmc__price">
+          <span class="pmc__price-label">Mayorista</span>
+          <strong class="pmc__price-value">{{ mayorista | currencyArs }}</strong>
+        </div>
+      }
+      <div class="pmc__price">
+        <span class="pmc__price-label">Costo</span>
+        <strong class="pmc__price-value">{{ product().cost | currencyArs }}</strong>
+      </div>
+    </div>
+
+    @if (markupPercent(); as markup) {
+      <div class="pmc__margin">
+        <span class="pmc__price-label">Margen</span>
+        <div
+          class="pmc__track"
+          role="meter"
+          [attr.aria-valuenow]="markup"
+          aria-valuemin="0"
+          [attr.aria-valuemax]="targetMarginPercent()"
+          [attr.aria-label]="
+            'Margen ' + markup + ' % · objetivo ' + targetMarginPercent() + ' %'
+          "
+        >
+          <div
+            class="pmc__fill"
+            [class.pmc__fill--ok]="meetsTargetMargin()"
+            [class.pmc__fill--low]="!meetsTargetMargin()"
+            [style.width.%]="marginBarWidth()"
+          ></div>
+        </div>
+        <strong
+          class="pmc__margin-pct"
+          [class.pmc__margin-pct--ok]="meetsTargetMargin()"
+          [class.pmc__margin-pct--low]="!meetsTargetMargin()"
+        >
+          {{ markup }}{{ thinSpace }}%
+        </strong>
+      </div>
+    }
+  </div>
+</a>

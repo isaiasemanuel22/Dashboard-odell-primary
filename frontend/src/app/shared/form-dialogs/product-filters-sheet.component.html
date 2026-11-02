@@ -1,0 +1,65 @@
+<div class="modal modal--md product-filters-sheet">
+  <header class="modal__header product-filters-sheet__header">
+    <div class="modal__heading">
+      <h3>Tipo y categoría</h3>
+    </div>
+    <button
+      type="button"
+      class="product-filters-sheet__clear"
+      (click)="clearAll()"
+    >
+      Limpiar
+    </button>
+  </header>
+
+  <div class="modal__body product-filters-sheet__body">
+    <section class="product-filters-sheet__group" aria-label="Tipo">
+      <h4 class="m-sec-t">Tipo</h4>
+      <div class="product-filters-sheet__opts">
+        @for (opt of typeFilters; track opt.value) {
+          <button
+            type="button"
+            class="product-filters-sheet__opt"
+            [class.product-filters-sheet__opt--on]="draft.typeFilter === opt.value"
+            [attr.aria-pressed]="draft.typeFilter === opt.value"
+            (click)="setType(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    </section>
+
+    <section class="product-filters-sheet__group" aria-label="Categoría">
+      <h4 class="m-sec-t">Categoría</h4>
+      <div class="product-filters-sheet__opts">
+        @for (opt of categoryOptions; track opt.value) {
+          <button
+            type="button"
+            class="product-filters-sheet__opt"
+            [class.product-filters-sheet__opt--on]="draft.categoryFilter === opt.value"
+            [attr.aria-pressed]="draft.categoryFilter === opt.value"
+            (click)="setCategory(opt.value)"
+          >
+            {{ opt.label }}
+          </button>
+        }
+      </div>
+    </section>
+  </div>
+
+  <div class="confirm-actions product-filters-sheet__foot">
+    <db-button
+      label="Cancelar"
+      variant="secondary"
+      format="solid"
+      (clicked)="cancel()"
+    />
+    <db-button
+      [label]="applyLabel"
+      variant="primary"
+      format="solid"
+      (clicked)="apply()"
+    />
+  </div>
+</div>

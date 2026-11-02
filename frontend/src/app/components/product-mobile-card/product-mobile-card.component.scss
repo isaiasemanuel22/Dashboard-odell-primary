@@ -1,0 +1,162 @@
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+}
+
+.pmc {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px;
+  border-radius: mobile.$m-radius-md;
+  border: 1px solid mobile.$m-border;
+  background: mobile.$m-surface;
+  text-decoration: none;
+  color: inherit;
+  box-sizing: border-box;
+}
+
+.pmc__thumb {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  object-fit: cover;
+  flex: none;
+  background: #e9f3f9;
+
+  &--empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: mobile.$m-text-secondary;
+    font-size: 10px;
+    font-weight: 500;
+    text-align: center;
+    padding: 6px;
+    box-sizing: border-box;
+  }
+}
+
+.pmc__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pmc__title-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pmc__name {
+  flex: 1;
+  min-width: 0;
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.2;
+  color: mobile.$m-text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pmc__fixed {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  height: 18px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: #e0f0f8;
+  color: #0b5f86;
+  font-size: 10px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.pmc__sub {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.2;
+  color: mobile.$m-text-secondary;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pmc__prices {
+  display: flex;
+  gap: 12px;
+  min-width: 0;
+}
+
+.pmc__price {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.pmc__price-label {
+  font-size: 11px;
+  line-height: 1.2;
+  color: mobile.$m-text-secondary;
+}
+
+.pmc__price-value {
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.2;
+  font-variant-numeric: tabular-nums;
+  color: mobile.$m-text;
+}
+
+.pmc__margin {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pmc__track {
+  flex: 1;
+  min-width: 0;
+  height: 6px;
+  border-radius: 999px;
+  background: #eef4f8;
+  overflow: hidden;
+}
+
+.pmc__fill {
+  height: 100%;
+  border-radius: inherit;
+
+  &--ok {
+    background: #15803d;
+  }
+
+  &--low {
+    background: #b91c1c;
+  }
+}
+
+.pmc__margin-pct {
+  flex: none;
+  font-size: 13px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+
+  &--ok {
+    color: #15803d;
+  }
+
+  &--low {
+    color: #b91c1c;
+  }
+}
