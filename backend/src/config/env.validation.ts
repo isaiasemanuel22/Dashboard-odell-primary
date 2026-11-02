@@ -10,6 +10,8 @@ export interface AppEnv {
   FIREBASE_STORAGE_BUCKET?: string;
   REQUIRE_DATABASE: boolean;
   REQUIRE_AUTH: boolean;
+  /** Código para POST /settings/reset-database. Si falta, el reseteo queda deshabilitado. */
+  DATABASE_RESET_CODE?: string;
 }
 
 export function validateEnv(
@@ -56,6 +58,7 @@ export function validateEnv(
     FIREBASE_STORAGE_BUCKET: optionalString(config.FIREBASE_STORAGE_BUCKET),
     REQUIRE_DATABASE: parseBoolean(config.REQUIRE_DATABASE, isProd),
     REQUIRE_AUTH: parseBoolean(config.REQUIRE_AUTH, isProd),
+    DATABASE_RESET_CODE: optionalString(config.DATABASE_RESET_CODE),
   };
 }
 

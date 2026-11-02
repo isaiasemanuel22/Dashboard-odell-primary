@@ -49,4 +49,8 @@ export class AppConfigService {
   get requireAuth(): boolean {
     return this.config.get('REQUIRE_AUTH', { infer: true });
   }
+
+  get databaseResetCode(): string | undefined {
+    return this.config.get('DATABASE_RESET_CODE', { infer: true });
+  }
 }

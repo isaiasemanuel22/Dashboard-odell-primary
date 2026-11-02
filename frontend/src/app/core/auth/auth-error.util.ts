@@ -1,4 +1,21 @@
+import { HttpErrorResponse } from '@angular/common/http';
+
+export const NO_ACCESS_MESSAGE =
+  'Tu cuenta no tiene acceso. Pedile al administrador que te dé de alta.';
+
+export function isNoAccessHttpError(error: unknown): boolean {
+  if (!(error instanceof HttpErrorResponse) || error.status !== 403) {
+    return false;
+  }
+  const message = extractHttpMessage(error);
+  return message.includes('no tiene acceso');
+}
+
 export function authErrorMessage(error: unknown): string {
+  if (isNoAccessHttpError(error)) {
+    return NO_ACCESS_MESSAGE;
+  }
+
   const code =
     typeof error === 'object' &&
     error &&
@@ -36,4 +53,17 @@ export function authErrorMessage(error: unknown): string {
       }
       return 'No se pudo iniciar sesión. Intentá de nuevo.';
   }
+}
+
+function extractHttpMessage(error: HttpErrorResponse): string {
+  const body = error.error;
+  if (typeof body === 'string') return body;
+  if (body && typeof body === 'object') {
+    const message = (body as { message?: unknown }).message;
+    if (typeof message === 'string') return message;
+    if (Array.isArray(message)) {
+      return message.filter((part): part is string => typeof part === 'string').join(' ');
+    }
+  }
+  return error.message ?? '';
 }

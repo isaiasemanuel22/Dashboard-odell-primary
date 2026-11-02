@@ -11,6 +11,7 @@ import {
 import { BehaviorSubject, filter, firstValueFrom, take } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { FirebaseAppService } from '../firebase/firebase-app.service';
+import { NO_ACCESS_MESSAGE } from './auth-error.util';
 
 /** Campos que usa la app. El usuario de Firebase los cumple. */
 interface SessionUser {
@@ -21,6 +22,7 @@ interface SessionUser {
 const LOCAL_TEST_EMAIL = 'testing@test.com';
 const LOCAL_TEST_PASSWORD = '123456';
 const LOCAL_TEST_SESSION_KEY = 'odell.localTestSession';
+const LOGIN_MESSAGE_KEY = 'odell.loginMessage';
 
 const LOCAL_TEST_USER: SessionUser = {
   email: LOCAL_TEST_EMAIL,
@@ -134,6 +136,27 @@ export class AuthService {
       await signOut(this.firebase.auth);
     }
     this.currentUserSubject.next(null);
+  }
+
+  /**
+   * Cierra la sesión de Firebase y deja el mensaje para la pantalla de login
+   * cuando la API responde 403 por falta de alta.
+   */
+  async handleNoAccess(message: string = NO_ACCESS_MESSAGE): Promise<void> {
+    this.setPendingLoginMessage(message);
+    await this.logout();
+  }
+
+  setPendingLoginMessage(message: string): void {
+    sessionStorage.setItem(LOGIN_MESSAGE_KEY, message);
+  }
+
+  consumePendingLoginMessage(): string {
+    const message = sessionStorage.getItem(LOGIN_MESSAGE_KEY) ?? '';
+    if (message) {
+      sessionStorage.removeItem(LOGIN_MESSAGE_KEY);
+    }
+    return message;
   }
 
   async getIdToken(): Promise<string | null> {

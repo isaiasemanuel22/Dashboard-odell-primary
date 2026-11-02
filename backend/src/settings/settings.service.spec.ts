@@ -63,7 +63,11 @@ describe('SettingsService.patchGeneralSettings', () => {
       recordChange: jest.fn(),
     } as unknown as StoreChangeService;
 
-    return new SettingsService(store, persistence, storeChange);
+    const config = {
+      databaseResetCode: undefined as string | undefined,
+    } as unknown as import('../config/app-config.service').AppConfigService;
+
+    return new SettingsService(store, persistence, storeChange, config);
   }
 
   it('no borra core values al actualizar solo paperPricesPerSqm', () => {
@@ -175,7 +179,11 @@ describe('SettingsService.updateWholesaleDiscount', () => {
       recordChange: jest.fn(),
     } as unknown as StoreChangeService;
 
-    return new SettingsService(store, persistence, storeChange);
+    const config = {
+      databaseResetCode: undefined as string | undefined,
+    } as unknown as import('../config/app-config.service').AppConfigService;
+
+    return new SettingsService(store, persistence, storeChange, config);
   }
 
   it('actualiza el descuento por mayor', () => {

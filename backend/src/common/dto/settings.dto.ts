@@ -500,8 +500,6 @@ export class SupplyDefaultPriceQueryDto {
   resinType?: string;
 }
 
-export const DATABASE_RESET_CODE = '22899';
-
 export class ResetDatabaseDto {
   @IsString()
   @IsNotEmpty()

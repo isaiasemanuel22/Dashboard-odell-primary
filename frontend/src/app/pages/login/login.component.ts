@@ -2,7 +2,11 @@ import { Component, OnInit, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { AuthService } from '../../core/auth/auth.service';
-import { authErrorMessage } from '../../core/auth/auth-error.util';
+import {
+  NO_ACCESS_MESSAGE,
+  authErrorMessage,
+  isNoAccessHttpError,
+} from '../../core/auth/auth-error.util';
 import { isFirebaseConfigured } from '../../../environments/firebase.config';
 import { environment } from '../../../environments/environment';
 import { DbButtonComponent, DbInputComponent } from '@general-components';
@@ -26,6 +30,11 @@ export class LoginComponent implements OnInit {
   error = '';
 
   async ngOnInit(): Promise<void> {
+    const pending = this.auth.consumePendingLoginMessage();
+    if (pending) {
+      this.error = pending;
+    }
+
     if (!this.firebaseConfigured) return;
 
     this.loading = true;
@@ -35,7 +44,7 @@ export class LoginComponent implements OnInit {
         await this.router.navigateByUrl('/dashboard');
       }
     } catch (err) {
-      this.error = authErrorMessage(err);
+      this.error = this.mapLoginError(err);
     } finally {
       this.loading = false;
     }
@@ -51,7 +60,7 @@ export class LoginComponent implements OnInit {
       await this.auth.login(this.email, this.password);
       await this.router.navigateByUrl('/dashboard');
     } catch (err) {
-      this.error = authErrorMessage(err);
+      this.error = this.mapLoginError(err);
     } finally {
       this.loading = false;
     }
@@ -69,9 +78,16 @@ export class LoginComponent implements OnInit {
         await this.router.navigateByUrl('/dashboard');
       }
     } catch (err) {
-      this.error = authErrorMessage(err);
+      this.error = this.mapLoginError(err);
     } finally {
       this.loading = false;
     }
+  }
+
+  private mapLoginError(err: unknown): string {
+    if (isNoAccessHttpError(err)) {
+      return NO_ACCESS_MESSAGE;
+    }
+    return authErrorMessage(err);
   }
 }

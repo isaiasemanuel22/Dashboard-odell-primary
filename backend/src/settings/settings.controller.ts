@@ -6,7 +6,9 @@ import {
   Param,
   Patch,
   Post,
+  Req,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import {
   ColorConfigDto,
   FilamentPriceDto,
@@ -230,7 +232,7 @@ export class SettingsController {
   }
 
   @Post('reset-database')
-  resetDatabase(@Body() body: ResetDatabaseDto) {
-    return this.settingsService.resetDatabase(body.code);
+  resetDatabase(@Req() request: Request, @Body() body: ResetDatabaseDto) {
+    return this.settingsService.resetDatabase(body.code, request.appUser);
   }
 }

@@ -1,11 +1,14 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { DATABASE_RESET_CODE } from '../common/dto';
+import { timingSafeEqual } from 'crypto';
 import { ensureBrand, hydrateBrandNames } from '../store/brand-link.util';
 import { BrandMaterialType } from '../common/enums';
+import { CurrentUserProfile } from '../common/interfaces';
+import { AppConfigService } from '../config/app-config.service';
 import { StoreChangeService } from '../store/store-change.service';
 import { StorePersistenceService } from '../store/store-persistence.service';
 import { assertNonNegativeNumber } from '../common/validators/domain.validators';
@@ -77,6 +80,7 @@ export class SettingsService {
     private readonly store: StoreService,
     private readonly persistence: StorePersistenceService,
     private readonly storeChange: StoreChangeService,
+    private readonly config: AppConfigService,
   ) {}
 
   getGeneralSettings(): GeneralSettings {
@@ -827,14 +831,37 @@ export class SettingsService {
     }
   }
 
-  async resetDatabase(code: string): Promise<{ reset: true }> {
-    if (code !== DATABASE_RESET_CODE) {
+  async resetDatabase(
+    code: string,
+    actor?: CurrentUserProfile | null,
+  ): Promise<{ reset: true }> {
+    if (!actor?.isAdmin) {
+      throw new ForbiddenException(
+        'Solo un administrador puede resetear la base',
+      );
+    }
+
+    const expected = this.config.databaseResetCode;
+    if (!expected) {
+      throw new ForbiddenException('El reseteo de la base está deshabilitado');
+    }
+
+    if (!this.resetCodesMatch(code, expected)) {
       throw new BadRequestException('Código de confirmación incorrecto');
     }
 
     await this.persistence.clearDatabase();
     this.storeChange.notifyAll('update');
     return { reset: true };
+  }
+
+  private resetCodesMatch(provided: string, expected: string): boolean {
+    const providedBuf = Buffer.from(provided, 'utf8');
+    const expectedBuf = Buffer.from(expected, 'utf8');
+    if (providedBuf.length !== expectedBuf.length) {
+      return false;
+    }
+    return timingSafeEqual(providedBuf, expectedBuf);
   }
 
   private recordSettingsChange(

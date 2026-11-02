@@ -50,6 +50,13 @@ import {
 
 @Injectable()
 export class UserAccessService {
+  private static readonly PROFILE_CACHE_TTL_MS = 60_000;
+
+  private readonly profileCache = new Map<
+    string,
+    { profile: CurrentUserProfile; expiresAt: number }
+  >();
+
   constructor(
     private readonly prismaService: PrismaService,
     private readonly bootstrap: UserAccessBootstrapService,
@@ -62,6 +69,11 @@ export class UserAccessService {
       );
     }
     return this.prismaService.prisma;
+  }
+
+  /** Invalida el cache de perfiles usados por el guard global. */
+  invalidateAccessCache(): void {
+    this.profileCache.clear();
   }
 
   async listWorkAreas(): Promise<WorkArea[]> {
@@ -219,6 +231,7 @@ export class UserAccessService {
       },
       include: { permissions: true },
     });
+    this.invalidateAccessCache();
     return mapAppRoleFromDb(row);
   }
 
@@ -261,6 +274,7 @@ export class UserAccessService {
       }),
     ]);
 
+    this.invalidateAccessCache();
     return this.findRole(id);
   }
 
@@ -278,6 +292,7 @@ export class UserAccessService {
     }
 
     await this.db().appRole.delete({ where: { id } });
+    this.invalidateAccessCache();
   }
 
   async listUsers(): Promise<AppUser[]> {
@@ -349,6 +364,7 @@ export class UserAccessService {
         permissionOverrides: true,
       },
     });
+    this.invalidateAccessCache();
     return mapAppUserFromDb(row);
   }
 
@@ -422,12 +438,14 @@ export class UserAccessService {
     ];
 
     await this.db().$transaction(operations);
+    this.invalidateAccessCache();
     return this.findUser(id);
   }
 
   async removeUser(id: string): Promise<void> {
     await this.findUser(id);
     await this.db().appUser.delete({ where: { id } });
+    this.invalidateAccessCache();
   }
 
   async resolveCurrentUser(
@@ -435,15 +453,25 @@ export class UserAccessService {
   ): Promise<CurrentUserProfile | null> {
     if (!token?.uid) return null;
 
+    const cached = this.getCachedProfile(token.uid);
+    if (cached) return cached;
+
     try {
-      await this.bootstrap.syncDefaults();
+      // El email solo identifica si Firebase lo verificó: si no, cualquiera
+      // podría registrarse con el email de otro usuario y entrar como él.
+      const verifiedEmail =
+        token.email_verified === true ? token.email?.toLowerCase() : undefined;
 
       let user = await this.findUserByFirebaseUid(token.uid);
-      if (!user) {
-        user = await this.findUserByEmail(token.email?.toLowerCase() ?? '');
+      if (!user && verifiedEmail) {
+        const byEmail = await this.findUserByEmail(verifiedEmail);
+        // Un usuario ya vinculado a otra cuenta de Firebase no se re-vincula.
+        if (byEmail && !byEmail.firebaseUid) user = byEmail;
       }
 
-      if (!user) {
+      if (!user && verifiedEmail) {
+        // syncDefaults solo acá: hace falta el rol admin antes del primer alta.
+        await this.bootstrap.syncDefaults();
         const userCount = await this.db().appUser.count();
         if (userCount === 0) {
           user = await this.bootstrapFirstAdmin(token);
@@ -463,18 +491,39 @@ export class UserAccessService {
       const roles = await this.loadRolesForUser(user.roleIds);
       const permissions = resolvePermissions(roles, user.permissionOverrides);
 
-      return {
+      const profile: CurrentUserProfile = {
         ...user,
         roles,
         permissions,
         isAdmin: userIsAdmin(permissions),
       };
+      this.setCachedProfile(token.uid, profile);
+      return profile;
     } catch (error) {
       if (this.isMissingSchemaError(error)) {
-        return null;
+        throw new ServiceUnavailableException(
+          'Usuarios y permisos no están disponibles',
+        );
       }
       throw error;
     }
+  }
+
+  private getCachedProfile(uid: string): CurrentUserProfile | null {
+    const entry = this.profileCache.get(uid);
+    if (!entry) return null;
+    if (Date.now() > entry.expiresAt) {
+      this.profileCache.delete(uid);
+      return null;
+    }
+    return entry.profile;
+  }
+
+  private setCachedProfile(uid: string, profile: CurrentUserProfile): void {
+    this.profileCache.set(uid, {
+      profile,
+      expiresAt: Date.now() + UserAccessService.PROFILE_CACHE_TTL_MS,
+    });
   }
 
   assertActorCanManage(
