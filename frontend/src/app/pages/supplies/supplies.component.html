@@ -1,79 +1,219 @@
-<header class="page-header">
-  <div>
-    <h2>Insumos</h2>
-    <p>
-      Control de filamentos, resinas, tintas, textiles y más ·
-      {{ supplies.length }} {{ supplies.length === 1 ? 'insumo' : 'insumos' }}
-      @if (lowStockCount) {
-        · <span class="tone-danger">{{ lowStockCount }} con stock bajo</span>
-      }
-    </p>
-  </div>
-  <div class="header-actions">
-    <db-button
-      label="Registrar compra"
-      variant="primary-outline"
-      format="solid"
-      (clicked)="openPurchase()"
-    />
-    <db-button
-      label="+ Nuevo insumo"
-      variant="primary"
-      format="solid"
-      (clicked)="openCreate()"
-    />
-  </div>
-</header>
+<div class="mobile-only supplies-m">
+  <db-mobile-bar title="Insumos" backLink="/mas">
+    <button
+      type="button"
+      class="m-ib"
+      aria-label="Nuevo insumo"
+      (click)="openCreate()"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="22"
+        height="22"
+        fill="none"
+        stroke="#0E7AAB"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+    </button>
+  </db-mobile-bar>
 
-<div class="list-toolbar">
-  <db-pill-group
-    [options]="stockFilters"
-    [value]="stockFilter"
-    ariaLabel="Estado de stock"
-    (valueChange)="stockFilter = $event"
-  />
-  <label class="list-search">
-    <span aria-hidden="true">⌕</span>
-    <input
-      type="search"
-      placeholder="Buscar por nombre, marca o material"
-      [(ngModel)]="search"
-    />
-  </label>
+  <div class="m-tools">
+    <label class="m-search">
+      <svg
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="#5B7083"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="M20 20l-3.5-3.5" />
+      </svg>
+      <input
+        type="search"
+        placeholder="Buscar insumo"
+        aria-label="Buscar insumos"
+        [(ngModel)]="search"
+      />
+    </label>
+    <div class="m-chips" role="group" aria-label="Filtro de insumos">
+      <button
+        type="button"
+        class="m-chip"
+        [class.m-chip--on]="mobileChip === 'all'"
+        (click)="setMobileChip('all')"
+      >
+        Todos {{ supplies.length }}
+      </button>
+      <button
+        type="button"
+        class="m-chip"
+        [class.m-chip--on]="mobileChip === 'low'"
+        (click)="setMobileChip('low')"
+      >
+        Stock bajo {{ lowStockCount }}
+      </button>
+      @for (chip of mobileCategoryChips; track chip.value) {
+        <button
+          type="button"
+          class="m-chip"
+          [class.m-chip--on]="mobileChip === chip.value"
+          (click)="setMobileChip(chip.value)"
+        >
+          {{ chip.label }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="m-body supplies-m__body">
+    @if (lowStockCount > 0 && stockFilter === 'all' && categoryFilter === 'all') {
+      <div class="supplies-m__note" role="status">
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M12 3l9 16H3zM12 10v4M12 17h.01" />
+        </svg>
+        {{ lowStockCount }}
+        {{ lowStockCount === 1 ? 'insumo' : 'insumos' }}
+        con stock bajo. Comprá desde Billetera para sumar stock y registrar el gasto.
+      </div>
+    }
+
+    @if (loading) {
+      <db-skeleton variant="cards" [count]="4" />
+    } @else if (filteredSupplies.length === 0) {
+      <div class="m-card">
+        <p>{{ emptyMessage }}</p>
+        <db-button
+          label="Nuevo insumo"
+          variant="primary"
+          format="solid"
+          (clicked)="openCreate()"
+        />
+      </div>
+    } @else {
+      <div class="m-card m-card--flush">
+        @for (supply of filteredSupplies; track supply.id) {
+          <button
+            type="button"
+            class="m-row supplies-m__row"
+            (click)="openEdit(supply)"
+          >
+            <div class="m-row__text">
+              <b>{{ supply.name }}</b>
+              <span>{{ mobileRowMeta(supply) }}</span>
+            </div>
+            <div
+              class="supplies-m__end"
+              [class.supplies-m__end--neg]="isLowStock(supply)"
+            >
+              {{ formatQuantity(supply) }}
+              <div class="supplies-m__lvl" aria-hidden="true">
+                <i
+                  [style.width.%]="stockLevelPercent(supply)"
+                  [style.background]="stockLevelColor(supply)"
+                ></i>
+              </div>
+            </div>
+          </button>
+        }
+      </div>
+    }
+  </div>
 </div>
 
-<db-pill-group
-  class="list-areas"
-  [options]="categoryFilters"
-  [value]="categoryFilter"
-  label="Categoría"
-  size="sm"
-  ariaLabel="Filtrar por categoría"
-  (valueChange)="categoryFilter = $event"
-/>
+<div class="desktop-only">
+  <header class="page-header">
+    <div>
+      <h2>Insumos</h2>
+      <p>
+        Control de filamentos, resinas, tintas, textiles y más ·
+        {{ supplies.length }} {{ supplies.length === 1 ? 'insumo' : 'insumos' }}
+        @if (lowStockCount) {
+          · <span class="tone-danger">{{ lowStockCount }} con stock bajo</span>
+        }
+      </p>
+    </div>
+    <div class="header-actions">
+      <db-button
+        label="Registrar compra"
+        variant="primary-outline"
+        format="solid"
+        (clicked)="openPurchase()"
+      />
+      <db-button
+        label="+ Nuevo insumo"
+        variant="primary"
+        format="solid"
+        (clicked)="openCreate()"
+      />
+    </div>
+  </header>
 
-<db-state-message
-  [loading]="loading"
-  [empty]="!loading && filteredSupplies.length === 0"
-  loadingMessage="Cargando insumos..."
-  [emptyMessage]="emptyMessage"
->
-  @if (!supplies.length) {
-    <db-button
-      emptyActions
-      label="Crear primer insumo"
-      variant="primary"
-      format="solid"
-      (clicked)="openCreate()"
+  <div class="list-toolbar">
+    <db-pill-group
+      [options]="stockFilters"
+      [value]="stockFilter"
+      ariaLabel="Estado de stock"
+      (valueChange)="stockFilter = $event"
+    />
+    <label class="list-search">
+      <span aria-hidden="true">⌕</span>
+      <input
+        type="search"
+        placeholder="Buscar por nombre, marca o material"
+        [(ngModel)]="search"
+      />
+    </label>
+  </div>
+
+  <db-pill-group
+    class="list-areas"
+    [options]="categoryFilters"
+    [value]="categoryFilter"
+    label="Categoría"
+    size="sm"
+    ariaLabel="Filtrar por categoría"
+    (valueChange)="categoryFilter = $event"
+  />
+
+  <db-state-message
+    [loading]="loading"
+    [empty]="!loading && filteredSupplies.length === 0"
+    loadingMessage="Cargando insumos..."
+    [emptyMessage]="emptyMessage"
+  >
+    @if (!supplies.length) {
+      <db-button
+        emptyActions
+        label="Crear primer insumo"
+        variant="primary"
+        format="solid"
+        (clicked)="openCreate()"
+      />
+    }
+  </db-state-message>
+
+  @if (!loading && filteredSupplies.length) {
+    <app-supplies-table
+      [supplies]="filteredSupplies"
+      [colorCatalog]="colorCatalog"
+      (edit)="openEdit($event)"
+      (delete)="deleteSupply($event)"
     />
   }
-</db-state-message>
-
-@if (!loading && filteredSupplies.length) {
-  <app-supplies-table
-    [supplies]="filteredSupplies"
-    [colorCatalog]="colorCatalog"
-    (edit)="openEdit($event)"
-    (delete)="deleteSupply($event)"
-  />
-}
+</div>

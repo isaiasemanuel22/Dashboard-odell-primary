@@ -192,6 +192,8 @@ export class FormDialogService {
         ({ ProductFormDialogComponent }): Observable<Product | undefined> =>
           this.open(ProductFormDialogComponent, { product }, 'xl', {
             ariaLabel: product ? 'Editar producto' : 'Nuevo producto',
+            // Mobile: pantalla completa como pedido.
+            panelClass: ['form-dialog-panel--order-fullscreen'],
           }),
       ),
     );

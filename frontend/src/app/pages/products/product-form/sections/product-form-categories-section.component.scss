@@ -1,0 +1,106 @@
+@use '../../../../shared/styles/variables' as *;
+
+.category-picker {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.55rem;
+  align-items: center;
+  margin-bottom: 0;
+}
+
+.category-field {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-width: 0;
+  min-height: 2.65rem;
+  padding: 0.2rem 0.35rem 0.2rem 0.5rem;
+  border: 1px solid $color-border-input;
+  border-radius: 10px;
+  background: #fff;
+
+  db-select {
+    flex: 1 1 8rem;
+    min-width: 0;
+  }
+}
+
+.category-field ::ng-deep select {
+  border: 0;
+  box-shadow: none;
+  background-color: transparent;
+  min-height: 2.1rem;
+  padding-top: 0.35rem;
+  padding-bottom: 0.35rem;
+}
+
+.selected-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  min-height: 0;
+  padding: 0;
+  background: transparent;
+  border: none;
+}
+
+.category-chip button {
+  border: none;
+  background: transparent;
+  color: $color-text-muted;
+  cursor: pointer;
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.selected-categories {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  min-height: 2.5rem;
+  padding: 0.65rem 0.75rem;
+  background: $color-surface-muted;
+  border: 1px solid $color-border;
+  border-radius: $radius-sm;
+}
+
+.category-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.5rem 0.25rem 0.65rem;
+  background: $color-primary-bg;
+  color: $color-primary-dark;
+  border-radius: $radius-pill;
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.chip-remove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.25rem;
+  height: 1.25rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: rgba(79, 70, 229, 0.15);
+  color: $color-primary-dark;
+  font-size: 1rem;
+  line-height: 1;
+  cursor: pointer;
+
+  &:hover {
+    background: rgba(79, 70, 229, 0.25);
+  }
+}
+
+.category-empty,
+.category-hint {
+  margin: 0 0 0.75rem;
+  font-size: 0.85rem;
+  color: $color-text-muted;
+  line-height: 1.45;
+}

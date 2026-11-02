@@ -29,7 +29,7 @@ import { FormDialogService } from '../../../../shared/form-dialogs/public-api';
     DbButtonComponent,
   ],
   templateUrl: './product-form-categories-section.component.html',
-  styleUrl: '../product-form.component.scss',
+  styleUrl: './product-form-categories-section.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductFormCategoriesSectionComponent implements OnInit, OnDestroy {

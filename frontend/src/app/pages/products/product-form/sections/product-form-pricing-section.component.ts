@@ -33,7 +33,7 @@ import { DbInputComponent } from '@dashboard-form';
   standalone: true,
   imports: [ReactiveFormsModule, AsyncPipe, CurrencyArsPipe, DbInputComponent],
   templateUrl: './product-form-pricing-section.component.html',
-  styleUrl: '../product-form.component.scss',
+  styleUrl: './product-form-pricing-section.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {

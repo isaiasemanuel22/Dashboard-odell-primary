@@ -46,7 +46,7 @@ export interface ProductFormComponentsValue {
     ProductFormAssemblyComponent,
   ],
   templateUrl: './product-form-components-section.component.html',
-  styleUrl: '../product-form.component.scss',
+  styleUrl: './product-form-components-section.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy {

@@ -1,46 +1,190 @@
 <db-form>
   <form [formGroup]="facade.form" (ngSubmit)="onSubmit()" autocomplete="off">
     <div class="product-create">
+      @if (isMobile()) {
+        <div class="pf-m-type">
+          <span class="pf-m-type__label">Tipo</span>
+          <div class="type-switch" role="radiogroup" aria-label="Tipo de producto">
+            @for (option of facade.productTypeOptions; track option.value) {
+              <button
+                type="button"
+                class="type-switch__item"
+                role="radio"
+                [attr.aria-checked]="productType === option.value"
+                [class.type-switch__item--active]="productType === option.value"
+                (click)="selectMobileType($any(option.value))"
+              >
+                {{ shortTypeLabel($any(option.value)) }}
+              </button>
+            }
+          </div>
+        </div>
+      }
+
       <div class="product-create__main">
-        <app-product-form-basic-fields
-          [value]="basicFields ?? facade.basicFieldsValue"
-          [productTypeOptions]="facade.productTypeOptions"
-          (valueChange)="onBasicFieldsChange($event)"
-        >
-          <app-product-form-categories-section
-            [productType]="productType"
-            [value]="categoryIds"
-            (valueChange)="onCategoriesChange($event)"
-          />
-        </app-product-form-basic-fields>
+        <div class="pf-m-acc" [class.pf-m-acc--open]="accDatos">
+          <button
+            type="button"
+            class="pf-m-acc__h"
+            [attr.aria-expanded]="accDatos"
+            (click)="toggleAcc('datos')"
+          >
+            Datos
+            <svg
+              class="pf-m-acc__chev"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+          <div class="pf-m-acc__b">
+            <app-product-form-basic-fields
+              [value]="basicFields ?? facade.basicFieldsValue"
+              [productTypeOptions]="facade.productTypeOptions"
+              [hideTypeSwitch]="isMobile()"
+              (valueChange)="onBasicFieldsChange($event)"
+            >
+              <app-product-form-categories-section
+                [productType]="productType"
+                [value]="categoryIds"
+                (valueChange)="onCategoriesChange($event)"
+              />
+            </app-product-form-basic-fields>
+          </div>
+        </div>
 
         @if (facade.showComponentsSection) {
-          <app-product-form-components-section
-            [productType]="productType"
-            [editingProductId]="product?.id ?? null"
-            [value]="componentsValue ?? facade.componentsValue"
-            (valueChange)="onComponentsChange($event)"
-          />
+          <div class="pf-m-acc" [class.pf-m-acc--open]="accPiezas">
+            <button
+              type="button"
+              class="pf-m-acc__h"
+              [attr.aria-expanded]="accPiezas"
+              (click)="toggleAcc('piezas')"
+            >
+              Piezas
+              <span class="pf-m-acc__summary">{{ componentsSummary }}</span>
+              <svg
+                class="pf-m-acc__chev"
+                viewBox="0 0 24 24"
+                width="18"
+                height="18"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                aria-hidden="true"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </button>
+            <div class="pf-m-acc__b">
+              <app-product-form-components-section
+                [productType]="productType"
+                [editingProductId]="product?.id ?? null"
+                [value]="componentsValue ?? facade.componentsValue"
+                (valueChange)="onComponentsChange($event)"
+              />
+            </div>
+          </div>
         }
 
-        <app-product-form-production-fields
-          [form]="facade.form"
-          [productType]="productType"
-          [includesPieces]="facade.includesPieces"
-        />
+        <div class="pf-m-acc" [class.pf-m-acc--open]="accProduccion">
+          <button
+            type="button"
+            class="pf-m-acc__h"
+            [attr.aria-expanded]="accProduccion"
+            (click)="toggleAcc('produccion')"
+          >
+            Producción
+            <span class="pf-m-acc__summary">{{ productionSummary }}</span>
+            <svg
+              class="pf-m-acc__chev"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+          <div class="pf-m-acc__b">
+            <app-product-form-production-fields
+              [form]="facade.form"
+              [productType]="productType"
+              [includesPieces]="facade.includesPieces"
+            />
+          </div>
+        </div>
 
-        <app-product-form-media-section
-          #mediaSection
-          [facade]="facade"
-          [uploadProductImage]="facade.uploadProductImage"
-          [uploadProductAttachment]="facade.uploadProductAttachment"
-        />
+        <div class="pf-m-acc" [class.pf-m-acc--open]="accMedia">
+          <button
+            type="button"
+            class="pf-m-acc__h"
+            [attr.aria-expanded]="accMedia"
+            (click)="toggleAcc('media')"
+          >
+            Fotos y archivos
+            <span class="pf-m-acc__summary">{{ mediaSummary }}</span>
+            <svg
+              class="pf-m-acc__chev"
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </button>
+          <div class="pf-m-acc__b">
+            <app-product-form-media-section
+              #mediaSection
+              [facade]="facade"
+              [uploadProductImage]="facade.uploadProductImage"
+              [uploadProductAttachment]="facade.uploadProductAttachment"
+            />
+          </div>
+        </div>
       </div>
 
-      <app-product-form-pricing-section
-        [facade]="facade"
-        [form]="facade.form"
-      />
+      <div class="pf-m-acc" [class.pf-m-acc--open]="accPrecio">
+        <button
+          type="button"
+          class="pf-m-acc__h"
+          [attr.aria-expanded]="accPrecio"
+          (click)="toggleAcc('precio')"
+        >
+          Precio
+          <svg
+            class="pf-m-acc__chev"
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+        <div class="pf-m-acc__b">
+          <app-product-form-pricing-section
+            [facade]="facade"
+            [form]="facade.form"
+          />
+        </div>
+      </div>
     </div>
 
     @if (error || clientError || facade.imageUploadError) {

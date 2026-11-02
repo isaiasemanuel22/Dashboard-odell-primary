@@ -28,7 +28,7 @@ import { ProductFormFacade } from '../product-form.facade';
     DbFormErrorComponent,
   ],
   templateUrl: './product-form-media-section.component.html',
-  styleUrl: '../product-form.component.scss',
+  styleUrl: './product-form-media-section.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductFormMediaSectionComponent {

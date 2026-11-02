@@ -11,7 +11,12 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
+import {
+  ActivatedRoute,
+  NavigationStart,
+  Router,
+  RouterLink,
+} from '@angular/router';
 import { combineLatest } from 'rxjs';
 import { filter } from 'rxjs/operators';
 import {
@@ -58,6 +63,7 @@ import { normalizeWholesaleDiscount } from '../../shared/utils/wholesale-example
 import { countProductMobileSheetFilters } from '../../shared/form-dialogs/product-filters-sheet.component';
 import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
+import { LayoutUiService } from '../../layout/layout-ui.service';
 import { ProductsBulkPriceComponent } from './products-bulk-price/products-bulk-price.component';
 import { ProductsSupplyPriceChangesComponent } from './products-supply-price-changes/products-supply-price-changes.component';
 import { ProductsToolbarComponent } from './products-toolbar/products-toolbar.component';
@@ -77,6 +83,7 @@ interface MobileListChip {
   standalone: true,
   imports: [
     FormsModule,
+    RouterLink,
     DbSkeletonComponent,
     DbStateMessageComponent,
     DbButtonComponent,
@@ -108,7 +115,10 @@ export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly breakpoint = inject(BreakpointService);
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly mobileState = inject(ProductsMobileStateService);
+  private readonly layoutUi = inject(LayoutUiService);
   private readonly currency = new CurrencyArsPipe();
+
+  readonly isMobile = this.breakpoint.isMobile;
 
   products: Product[] = [];
   allProducts: Product[] = [];
@@ -120,6 +130,9 @@ export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
   typeFilter: TypeFilter = 'all';
   categoryFilter = 'all';
   listFilter: ListFilter = 'all';
+  mobileMoreOpen = false;
+  mobileBulkOpen = false;
+  mobileSupplyChangesOpen = false;
 
   marginAlerts: ProductMarginAlert[] = [];
   supplyPriceChanges: SupplyPriceChangeRow[] = [];
@@ -217,6 +230,66 @@ export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
     // Sin scroll: al destruirse la página ya está arriba y pisaría el guardado
     // en NavigationStart.
     this.persistMobileState({ keepScroll: true });
+    this.closeAllMobileSheets();
+  }
+
+  openMobileMore(): void {
+    if (this.mobileMoreOpen) return;
+    this.mobileMoreOpen = true;
+    this.layoutUi.pushOverlay();
+    this.cdr.markForCheck();
+  }
+
+  closeMobileMore(): void {
+    if (!this.mobileMoreOpen) return;
+    this.mobileMoreOpen = false;
+    this.layoutUi.popOverlay();
+    this.cdr.markForCheck();
+  }
+
+  openMobileBulkPrice(): void {
+    this.closeMobileMore();
+    if (this.mobileBulkOpen) return;
+    this.mobileBulkOpen = true;
+    this.layoutUi.pushOverlay();
+    this.cdr.markForCheck();
+  }
+
+  closeMobileBulkPrice(): void {
+    if (!this.mobileBulkOpen) return;
+    this.mobileBulkOpen = false;
+    this.layoutUi.popOverlay();
+    this.cdr.markForCheck();
+  }
+
+  openMobileSupplyChanges(): void {
+    this.closeMobileMore();
+    if (this.mobileSupplyChangesOpen) return;
+    this.mobileSupplyChangesOpen = true;
+    this.layoutUi.pushOverlay();
+    this.cdr.markForCheck();
+  }
+
+  closeMobileSupplyChanges(): void {
+    if (!this.mobileSupplyChangesOpen) return;
+    this.mobileSupplyChangesOpen = false;
+    this.layoutUi.popOverlay();
+    this.cdr.markForCheck();
+  }
+
+  private closeAllMobileSheets(): void {
+    if (this.mobileMoreOpen) {
+      this.mobileMoreOpen = false;
+      this.layoutUi.popOverlay();
+    }
+    if (this.mobileBulkOpen) {
+      this.mobileBulkOpen = false;
+      this.layoutUi.popOverlay();
+    }
+    if (this.mobileSupplyChangesOpen) {
+      this.mobileSupplyChangesOpen = false;
+      this.layoutUi.popOverlay();
+    }
   }
 
   get targetMarginPercent(): number {

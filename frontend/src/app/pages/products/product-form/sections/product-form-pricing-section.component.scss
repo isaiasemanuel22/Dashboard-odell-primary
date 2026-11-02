@@ -1,0 +1,80 @@
+@use '../../../../shared/styles/variables' as *;
+
+.price-card {
+  position: sticky;
+  top: 0;
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  min-height: 100%;
+  padding: 0.85rem 0.9rem 1rem;
+  border-radius: 14px;
+  background: #f3f7fa;
+
+  h4 {
+    margin: 0 0 0.15rem;
+    font-size: 0.9rem;
+    font-weight: 700;
+  }
+}
+
+.price-lines {
+  margin: 0;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.1rem 0;
+    font-size: 0.8125rem;
+  }
+
+  dt,
+  dd {
+    margin: 0;
+  }
+
+  dt span {
+    color: $color-text-muted;
+  }
+}
+
+.price-lines__total {
+  margin-top: 0.25rem;
+  border-top: 1px solid $color-border-soft;
+  font-weight: 700;
+}
+
+.price-margin {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  padding: 0.75rem 0.8rem;
+  border-radius: 12px;
+  background: #e7f8ee;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+  }
+}
+
+.price-margin__sale strong {
+  font-size: 1.35rem;
+  color: $color-brand-deep;
+}
+
+.is-loss {
+  color: #dc2626;
+}
+
+.price-note {
+  margin: 0;
+  color: $color-text-muted;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+

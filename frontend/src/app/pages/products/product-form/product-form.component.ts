@@ -24,6 +24,8 @@ import {
   DbFormErrorComponent,
 } from '@dashboard-form';
 import { DbButtonComponent } from '../../../components/db-button/db-button.component';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
+import { PRODUCT_TYPE_LABELS } from '../../../shared/constants/labels';
 import { computeAssemblableUnits } from '../../../shared/utils/stock.helpers';
 import { ProductFormPricingFacade } from './store/product-form-pricing/product-form-pricing.facade';
 import { ProductFormFacade } from './product-form.facade';
@@ -34,6 +36,8 @@ import { ProductFormComponentsSectionComponent, ProductFormComponentsValue } fro
 import { ProductFormCategoriesSectionComponent } from './sections/product-form-categories-section.component';
 import { ProductFormMediaSectionComponent } from './sections/product-form-media-section.component';
 import { ProductFormPricingSectionComponent } from './sections/product-form-pricing-section.component';
+
+type AccordionKey = 'datos' | 'piezas' | 'produccion' | 'media' | 'precio';
 
 @Component({
   selector: 'app-product-form',
@@ -52,13 +56,16 @@ import { ProductFormPricingSectionComponent } from './sections/product-form-pric
   ],
   providers: [ProductFormFacade, ProductFormPricingService],
   templateUrl: './product-form.component.html',
-  styleUrl: './product-form.component.scss',
+  styleUrls: ['./product-form.component.scss', './product-form.mobile.scss'],
 })
 export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   readonly facade = inject(ProductFormFacade);
   private readonly pricingStore = inject(ProductFormPricingFacade);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly breakpoint = inject(BreakpointService);
   private readonly destroy$ = new Subject<void>();
+
+  readonly isMobile = this.breakpoint.isMobile;
 
   @Input() product: Product | null = null;
   @Input() loading = false;
@@ -82,6 +89,12 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   basicFields: ProductFormBasicFieldsValue | null = null;
   categoryIds: string[] | null = null;
   componentsValue: ProductFormComponentsValue | null = null;
+
+  accDatos = true;
+  accPiezas = false;
+  accProduccion = false;
+  accMedia = false;
+  accPrecio = true;
 
   get productType(): ProductType {
     return this.basicFields?.type ?? this.facade.type;
@@ -127,6 +140,9 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     this.facade.form.controls.components.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.cdr.markForCheck());
+    this.facade.form.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.cdr.markForCheck());
     this.facade.basicFieldsSync$
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
@@ -165,6 +181,68 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     }
     this.syncComponentsValue();
     this.cdr.markForCheck();
+  }
+
+  selectMobileType(type: ProductType): void {
+    const current =
+      this.basicFieldsSection?.readValue() ??
+      this.basicFields ??
+      this.facade.basicFieldsValue;
+    this.onBasicFieldsChange({ ...current, type });
+  }
+
+  shortTypeLabel(type: ProductType): string {
+    return PRODUCT_TYPE_LABELS[type] ?? type;
+  }
+
+  toggleAcc(key: AccordionKey): void {
+    if (!this.isMobile()) return;
+    switch (key) {
+      case 'datos':
+        this.accDatos = !this.accDatos;
+        break;
+      case 'piezas':
+        this.accPiezas = !this.accPiezas;
+        break;
+      case 'produccion':
+        this.accProduccion = !this.accProduccion;
+        break;
+      case 'media':
+        this.accMedia = !this.accMedia;
+        break;
+      case 'precio':
+        this.accPrecio = !this.accPrecio;
+        break;
+    }
+    this.cdr.markForCheck();
+  }
+
+  get productionSummary(): string {
+    const grams = Number(this.facade.form.controls.grams.value) || 0;
+    const hours = Number(this.facade.form.controls.printTimeHours.value) || 0;
+    const parts: string[] = [];
+    if (grams > 0) parts.push(`${grams} g`);
+    if (hours > 0) parts.push(`${hours} h`);
+    return parts.join(' · ') || 'Sin datos';
+  }
+
+  get mediaSummary(): string {
+    const images = this.facade.form.controls.images.value?.length ?? 0;
+    const files = this.facade.form.controls.attachments.value?.length ?? 0;
+    const parts: string[] = [];
+    if (images > 0) {
+      parts.push(images === 1 ? '1 foto' : `${images} fotos`);
+    }
+    if (files > 0) {
+      parts.push(files === 1 ? '1 archivo' : `${files} archivos`);
+    }
+    return parts.join(' · ') || 'Sin archivos';
+  }
+
+  get componentsSummary(): string {
+    const n = this.facade.components.length;
+    if (n <= 0) return 'Sin piezas';
+    return n === 1 ? '1 pieza' : `${n} piezas`;
   }
 
   onCategoriesChange(categoryIds: string[]): void {

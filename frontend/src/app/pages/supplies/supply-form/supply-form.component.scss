@@ -1,0 +1,42 @@
+@use '../../../shared/styles/mobile' as mobile;
+
+@include mobile.mobile-only {
+  :host {
+    display: block;
+  }
+
+  :host ::ng-deep {
+    .db-input,
+    select.db-select,
+    .db-form-field input,
+    .db-form-field select {
+      min-height: 48px;
+    }
+
+    .db-form-footer {
+      position: sticky;
+      bottom: 0;
+      z-index: 2;
+      margin-top: 12px;
+      padding: 12px 0 calc(8px + env(safe-area-inset-bottom, 0px));
+      background: #fff;
+      border-top: 1px solid mobile.$m-border;
+      display: flex;
+      gap: 10px;
+
+      db-button:first-child {
+        flex: 0 0 120px;
+        max-width: 120px;
+      }
+
+      db-button:last-child {
+        flex: 1;
+        min-width: 0;
+      }
+
+      .db-button {
+        min-height: 52px;
+      }
+    }
+  }
+}

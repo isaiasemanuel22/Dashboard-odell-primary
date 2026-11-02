@@ -1,19 +1,21 @@
 <div class="basic-fields">
-  <section class="form-block">
-    <h4>Tipo de producto</h4>
-    <div class="type-switch" role="tablist">
-      @for (option of productTypeOptions; track option.value) {
-        <button
-          type="button"
-          class="type-switch__item"
-          [class.type-switch__item--active]="type === option.value"
-          (click)="selectType(option.value)"
-        >
-          {{ typeLabel(option.value) }}
-        </button>
-      }
-    </div>
-  </section>
+  @if (!hideTypeSwitch) {
+    <section class="form-block">
+      <h4>Tipo de producto</h4>
+      <div class="type-switch" role="tablist">
+        @for (option of productTypeOptions; track option.value) {
+          <button
+            type="button"
+            class="type-switch__item"
+            [class.type-switch__item--active]="type === option.value"
+            (click)="selectType(option.value)"
+          >
+            {{ typeLabel(option.value) }}
+          </button>
+        }
+      </div>
+    </section>
+  }
 
   <section class="form-block">
     <h4>Datos del producto</h4>

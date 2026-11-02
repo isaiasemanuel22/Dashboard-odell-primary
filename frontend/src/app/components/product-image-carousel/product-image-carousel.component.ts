@@ -8,7 +8,7 @@ import {
 import { RouterLink } from '@angular/router';
 import { resolveMediaUrls } from '../../shared/utils/media-url.util';
 
-export type ProductImageCarouselVariant = 'card' | 'detail';
+export type ProductImageCarouselVariant = 'card' | 'detail' | 'mobile';
 type SlideDirection = 'next' | 'prev';
 
 @Component({

@@ -1,4 +1,5 @@
 @use '../../../shared/styles/variables' as *;
+@use '../../../shared/styles/mobile' as mobile;
 
 .back-link {
   display: inline-block;
@@ -143,4 +144,163 @@
   border-radius: 50%;
   border: 1px solid $color-border;
   flex-shrink: 0;
+}
+
+@include mobile.mobile-only {
+  .pd-m {
+    display: flex;
+    flex-direction: column;
+    min-height: 100%;
+  }
+
+  .pd-m__gallery {
+    width: 100%;
+    background: #e9f3f9;
+  }
+
+  .pd-m__body {
+    padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .pd-m__pills {
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .pd-m__name {
+    font-size: 19px;
+    font-weight: 700;
+    color: mobile.$m-text;
+  }
+
+  .pd-m__kv {
+    font-size: 19px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: mobile.$m-text;
+  }
+
+  .pd-m__ks {
+    font-size: 11px;
+    color: mobile.$m-text-secondary;
+  }
+
+  .pd-m__num {
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+  }
+
+  .pd-m__dock {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 40;
+    background: #fff;
+    border-top: 1px solid mobile.$m-border;
+    padding: 12px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+    display: flex;
+    gap: 10px;
+  }
+
+  .pd-m__dock-btn {
+    flex: 1;
+    min-height: 52px;
+    border-radius: 14px;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    padding: 0 16px;
+    cursor: pointer;
+    box-sizing: border-box;
+
+    &--pri {
+      background: mobile.$m-primary;
+      color: #fff;
+    }
+
+    &--sec {
+      border: 1px solid mobile.$m-border-input;
+      background: #fff;
+      color: mobile.$m-text;
+    }
+  }
+
+  .pd-m__sheet-scrim {
+    position: fixed;
+    inset: 0;
+    z-index: 50;
+    background: rgba(15, 42, 58, 0.45);
+  }
+
+  .pd-m__sheet {
+    position: fixed;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    z-index: 51;
+    background: #fff;
+    border-radius: 20px 20px 0 0;
+    box-shadow: 0 -12px 32px rgba(15, 42, 58, 0.2);
+    display: flex;
+    flex-direction: column;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .pd-m__sheet-grab {
+    width: 40px;
+    height: 4px;
+    border-radius: 999px;
+    background: mobile.$m-border-input;
+    margin: 10px auto 2px;
+  }
+
+  .pd-m__sheet-body {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 8px 16px;
+  }
+
+  .pd-m__sheet-action {
+    min-height: 52px;
+    border: 0;
+    background: transparent;
+    font-family: inherit;
+    font-size: 16px;
+    font-weight: 600;
+    color: mobile.$m-text;
+    text-align: left;
+    padding: 0 16px;
+    cursor: pointer;
+    border-radius: 12px;
+
+    &--danger {
+      color: #b91c1c;
+    }
+
+    &:disabled {
+      opacity: 0.5;
+      cursor: default;
+    }
+  }
+
+  .pd-m__notice {
+    position: fixed;
+    left: 16px;
+    right: 16px;
+    bottom: calc(84px + env(safe-area-inset-bottom, 0px));
+    z-index: 45;
+    margin: 0;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #e0f0f8;
+    color: #0b5f86;
+    font-size: 13px;
+    font-weight: 600;
+  }
 }

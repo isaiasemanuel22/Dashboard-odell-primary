@@ -7,7 +7,9 @@ import { SuppliesService, SettingsService } from '../../core/services/settings.s
 import {
   DbButtonComponent,
   DbPillGroupComponent,
+  DbSkeletonComponent,
   DbStateMessageComponent,
+  MobileBarComponent,
   SuppliesTableComponent,
 } from '@general-components';
 import {
@@ -19,10 +21,12 @@ import { FormDialogService } from '../../shared/form-dialogs/public-api';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { resolveColorLabel } from '../../shared/utils/color.helpers';
 import { supplyCategoryFilters } from '../../shared/utils/list-filters';
+import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 import { SuppliesFacade } from '../../store/supplies/supplies.facade';
 
 type CategoryFilter = SupplyCategory | 'all';
 type StockFilter = 'all' | 'ok' | 'low';
+type MobileChip = 'all' | 'low' | SupplyCategory;
 
 @Component({
   selector: 'app-supplies',
@@ -32,6 +36,8 @@ type StockFilter = 'all' | 'ok' | 'low';
     DbStateMessageComponent,
     DbButtonComponent,
     DbPillGroupComponent,
+    DbSkeletonComponent,
+    MobileBarComponent,
     SuppliesTableComponent,
   ],
   templateUrl: './supplies.component.html',
@@ -45,6 +51,7 @@ export class SuppliesComponent implements OnInit {
   private readonly formDialogs = inject(FormDialogService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
+  private readonly currency = new CurrencyArsPipe();
 
   supplies: Supply[] = [];
   colorCatalog: ColorConfig[] = [];
@@ -63,6 +70,25 @@ export class SuppliesComponent implements OnInit {
     return supplyCategoryFilters().map((filter) =>
       filter.value === 'all' ? { ...filter, label: 'Todas' } : filter,
     );
+  }
+
+  get mobileCategoryChips(): { value: SupplyCategory; label: string }[] {
+    return (Object.keys(SUPPLY_CATEGORY_LABELS) as SupplyCategory[]).map(
+      (value) => ({ value, label: SUPPLY_CATEGORY_LABELS[value] }),
+    );
+  }
+
+  get mobileChip(): MobileChip {
+    if (this.stockFilter === 'low' && this.categoryFilter === 'all') {
+      return 'low';
+    }
+    if (this.categoryFilter !== 'all' && this.stockFilter === 'all') {
+      return this.categoryFilter;
+    }
+    if (this.stockFilter === 'all' && this.categoryFilter === 'all') {
+      return 'all';
+    }
+    return this.categoryFilter !== 'all' ? this.categoryFilter : 'all';
   }
 
   ngOnInit(): void {
@@ -102,11 +128,16 @@ export class SuppliesComponent implements OnInit {
   }
 
   get lowStockCount(): number {
-    return this.supplies.filter((supply) => supply.quantity <= supply.minStock).length;
+    return this.supplies.filter((supply) => supply.quantity <= supply.minStock)
+      .length;
   }
 
   get hasListFilters(): boolean {
-    return this.search.trim().length > 0 || this.categoryFilter !== 'all' || this.stockFilter !== 'all';
+    return (
+      this.search.trim().length > 0 ||
+      this.categoryFilter !== 'all' ||
+      this.stockFilter !== 'all'
+    );
   }
 
   get emptyMessage(): string {
@@ -131,11 +162,63 @@ export class SuppliesComponent implements OnInit {
     });
   }
 
+  setMobileChip(chip: MobileChip): void {
+    if (chip === 'all') {
+      this.stockFilter = 'all';
+      this.categoryFilter = 'all';
+      return;
+    }
+    if (chip === 'low') {
+      this.stockFilter = 'low';
+      this.categoryFilter = 'all';
+      return;
+    }
+    this.stockFilter = 'all';
+    this.categoryFilter = chip;
+  }
+
+  isLowStock(supply: Supply): boolean {
+    return supply.quantity <= supply.minStock;
+  }
+
+  formatQuantity(supply: Supply): string {
+    const qty = Number(supply.quantity) || 0;
+    const formatted = Number.isInteger(qty)
+      ? String(qty)
+      : qty.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+    return `${formatted} ${supply.unit}`;
+  }
+
+  mobileRowMeta(supply: Supply): string {
+    const category = SUPPLY_CATEGORY_LABELS[supply.category] ?? supply.category;
+    if (this.isLowStock(supply)) {
+      const min = Number(supply.minStock) || 0;
+      const minLabel = Number.isInteger(min)
+        ? String(min)
+        : min.toLocaleString('es-AR', { maximumFractionDigits: 2 });
+      return `${category} · mínimo ${minLabel}`;
+    }
+    if (supply.unitPrice > 0) {
+      return `${category} · ${this.currency.transform(supply.unitPrice)} / ${supply.unit}`;
+    }
+    return category;
+  }
+
+  stockLevelPercent(supply: Supply): number {
+    if (supply.quantity <= 0) return 0;
+    const target = Math.max(Number(supply.minStock) * 2, 1);
+    return Math.min(100, Math.round((supply.quantity / target) * 100));
+  }
+
+  stockLevelColor(supply: Supply): string {
+    return this.isLowStock(supply) ? '#B91C1C' : '#15803D';
+  }
+
   private supplySearchText(supply: Supply): string {
     const material = supply.filamentType
       ? FILAMENT_TYPE_LABELS[supply.filamentType]
       : supply.resinType
-        ? RESIN_TYPE_LABELS[supply.resinType as ResinType] ?? supply.resinType
+        ? (RESIN_TYPE_LABELS[supply.resinType as ResinType] ?? supply.resinType)
         : '';
     return [
       supply.name,

@@ -3,6 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   DestroyRef,
+  OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
@@ -19,6 +20,7 @@ import {
   ProductAttachment,
   ProductStockOverview,
   ServiceProfitMargins,
+  WholesaleDiscountSettings,
   isProduct3D,
 } from '../../../core/models';
 import { RealtimeEvent } from '../../../core/models/realtime.model';
@@ -28,7 +30,9 @@ import { ProductCatalogService } from '../../../core/services/product-catalog.se
 import { ProductsService } from '../../../core/services/products.service';
 import { RealtimeCatalogSyncService } from '../../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
+import { SaleCartService } from '../../../core/services/sale-cart.service';
 import { SettingsService } from '../../../core/services/settings.service';
+import { LayoutUiService } from '../../../layout/layout-ui.service';
 import { productStockOverview } from '../../../shared/utils/stock.helpers';
 import { ProductDetailProductionComponent } from './product-detail-production/product-detail-production.component';
 import {
@@ -37,6 +41,7 @@ import {
   DbButtonComponent,
   DbSkeletonComponent,
   DbStateMessageComponent,
+  MobileBarComponent,
   ProductBadgesComponent,
   ProductComponentsTableComponent,
   ProductImageCarouselComponent,
@@ -45,17 +50,33 @@ import {
 import { normalizeProductAttachments } from '../../../shared/utils/product-attachment.helpers';
 import { FormDialogService } from '../../../shared/form-dialogs/public-api';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
+import { resolveColorLabel } from '../../../shared/utils/color.helpers';
+import { markupPercentOnCostRounded } from '../../../shared/utils/product-margin.util';
 import {
   isProductPublished,
   normalizeProductComponents,
   resolveCategoryNames,
+  resolveProductGrams,
+  resolveProductPrintTimeHours,
+  resolveProductWorkTimeHours,
 } from '../../../shared/utils/product.helpers';
 import {
   DEFAULT_PROFIT_MARGINS,
   getMarginForProductType,
   normalizeProfitMargins,
 } from '../../../shared/utils/pricing.util';
-import { DateShortPipe } from '../../../shared/pipes/labels.pipe';
+import {
+  DEFAULT_WHOLESALE_DISCOUNT,
+  normalizeWholesaleDiscount,
+  wholesalePriceFromList,
+} from '../../../shared/utils/wholesale-example.util';
+import {
+  CurrencyArsPipe,
+  DateShortPipe,
+  FilamentTypeLabelPipe,
+  ProductTypeLabelPipe,
+  ResinTypeLabelPipe,
+} from '../../../shared/pipes/labels.pipe';
 
 @Component({
   selector: 'app-product-detail',
@@ -63,11 +84,16 @@ import { DateShortPipe } from '../../../shared/pipes/labels.pipe';
   imports: [
     FormsModule,
     RouterLink,
+    CurrencyArsPipe,
     DateShortPipe,
+    FilamentTypeLabelPipe,
+    ProductTypeLabelPipe,
+    ResinTypeLabelPipe,
     DbButtonComponent,
     DbAttachmentUploadComponent,
     DbSkeletonComponent,
     DbStateMessageComponent,
+    MobileBarComponent,
     ProductBadgesComponent,
     ProductImageCarouselComponent,
     ProductPricingComponent,
@@ -78,7 +104,7 @@ import { DateShortPipe } from '../../../shared/pipes/labels.pipe';
   styleUrl: './product-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProductDetailComponent implements OnInit {
+export class ProductDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly productsService = inject(ProductsService);
@@ -91,9 +117,14 @@ export class ProductDetailComponent implements OnInit {
   private readonly formDialogs = inject(FormDialogService);
   private readonly mediaUpload = inject(MediaUploadService);
   private readonly settingsService = inject(SettingsService);
+  private readonly saleCart = inject(SaleCartService);
+  private readonly layoutUi = inject(LayoutUiService);
   product: Product | null = null;
   colorCatalog: ColorConfig[] = [];
   profitMargins: ServiceProfitMargins = { ...DEFAULT_PROFIT_MARGINS };
+  wholesaleDiscount: WholesaleDiscountSettings = {
+    ...DEFAULT_WHOLESALE_DISCOUNT,
+  };
   attachments: ProductAttachment[] = [];
   categories: Category[] = [];
   catalogProducts: Product[] = [];
@@ -104,6 +135,8 @@ export class ProductDetailComponent implements OnInit {
   publishLoading = false;
   attachmentsSaving = false;
   attachmentsError = '';
+  mobileActionsOpen = false;
+  cartNotice = '';
 
   readonly uploadProductAttachment: DbAttachmentUploadFn = (file) =>
     firstValueFrom(this.mediaUpload.uploadProductAttachment(file));
@@ -124,6 +157,9 @@ export class ProductDetailComponent implements OnInit {
       next: (settings) => {
         this.colorCatalog = settings.colors ?? [];
         this.profitMargins = normalizeProfitMargins(settings.profitMargins);
+        this.wholesaleDiscount = normalizeWholesaleDiscount(
+          settings.wholesaleDiscount,
+        );
         this.cdr.markForCheck();
       },
     });
@@ -196,6 +232,86 @@ export class ProductDetailComponent implements OnInit {
 
   get publishActionLabel(): string {
     return this.isPublished ? 'Despublicar' : 'Publicar';
+  }
+
+  get grams(): number {
+    if (!this.product3d) return 0;
+    return resolveProductGrams(this.product3d, this.catalogProducts);
+  }
+
+  get printHours(): number {
+    if (!this.product3d) return 0;
+    return resolveProductPrintTimeHours(this.product3d, this.catalogProducts);
+  }
+
+  get workHours(): number {
+    if (!this.product3d) return 0;
+    return resolveProductWorkTimeHours(this.product3d, this.catalogProducts);
+  }
+
+  get wholesalePrice(): number | null {
+    const percent = this.wholesaleDiscount.percent;
+    if (!(percent > 0) || !(this.displayPrice > 0)) return null;
+    return wholesalePriceFromList(this.displayPrice, percent);
+  }
+
+  get mobileMetaLine(): string {
+    if (!this.product) return '';
+    const parts: string[] = [];
+    if (this.categoryNames.length) {
+      parts.push(this.categoryNames.join(', '));
+    }
+    if (this.product.size?.trim()) {
+      parts.push(this.product.size.trim());
+    }
+    const updated = formatUpdatedRelative(this.product.updatedAt);
+    if (updated) parts.push(updated);
+    return parts.join(' · ');
+  }
+
+  get mobileMarginLine(): string {
+    const margin = markupPercentOnCostRounded(
+      this.displayPrice,
+      this.displayCost,
+    );
+    const target = this.targetMarginPercent;
+    const marginPart =
+      margin == null ? 'Sin margen' : `Margen ${margin} %`;
+    return `${marginPart} · objetivo ${target} %`;
+  }
+
+  colorLabel(colorId?: string): string {
+    return resolveColorLabel(colorId, this.colorCatalog);
+  }
+
+  ngOnDestroy(): void {
+    this.closeMobileActions();
+  }
+
+  openMobileActions(): void {
+    if (this.mobileActionsOpen) return;
+    this.mobileActionsOpen = true;
+    this.layoutUi.pushOverlay();
+    this.cdr.markForCheck();
+  }
+
+  closeMobileActions(): void {
+    if (!this.mobileActionsOpen) return;
+    this.mobileActionsOpen = false;
+    this.layoutUi.popOverlay();
+    this.cdr.markForCheck();
+  }
+
+  sellProduct(): void {
+    if (!this.product) return;
+    const result = this.saleCart.addProduct(this.product, 1);
+    this.cartNotice = result.ok
+      ? `${this.product.name} quedó en el carrito de ventas.`
+      : (result.error ?? 'No se pudo agregar al carrito');
+    this.cdr.markForCheck();
+    if (result.ok) {
+      void this.router.navigateByUrl('/ventas/nueva');
+    }
   }
 
   openEdit(): void {
@@ -380,4 +496,19 @@ export class ProductDetailComponent implements OnInit {
       }),
     );
   }
+}
+
+function formatUpdatedRelative(value: string | null | undefined): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const diffMs = Date.now() - date.getTime();
+  if (diffMs < 0) return 'actualizado recién';
+  const days = Math.floor(diffMs / 86_400_000);
+  if (days <= 0) return 'actualizado hoy';
+  if (days === 1) return 'actualizado hace 1 día';
+  if (days < 30) return `actualizado hace ${days} días`;
+  const months = Math.floor(days / 30);
+  if (months === 1) return 'actualizado hace 1 mes';
+  return `actualizado hace ${months} meses`;
 }

@@ -1,164 +1,396 @@
 @if (loading) {
-  <db-skeleton variant="detail" />
-} @else {
-  <db-state-message
-    [loading]="false"
-    [empty]="notFound || !product"
-    emptyMessage="Producto no encontrado."
-  >
-    <db-button
-      emptyActions
-      label="Volver al catálogo"
-      variant="secondary"
-      format="soft"
-      routerLink="/productos"
-    />
-  </db-state-message>
-}
-
-@if (!loading && product && !notFound) {
-  <header class="page-header detail-header">
-    <div>
-      <a routerLink="/productos" class="back-link">← Productos</a>
-      <div class="title-row">
-        <h2>{{ product.name }}</h2>
-        <app-product-badges
-          [type]="product.type"
-          [published]="product.published"
-          internalLabel="Producto interno"
+  <div class="mobile-only">
+    <db-mobile-bar title="Producto" backLink="/productos" />
+    <div class="m-body">
+      <db-skeleton variant="detail" />
+    </div>
+  </div>
+  <div class="desktop-only">
+    <db-skeleton variant="detail" />
+  </div>
+} @else if (notFound || !product) {
+  <div class="mobile-only">
+    <db-mobile-bar title="Producto" backLink="/productos" />
+    <div class="m-body">
+      <div class="m-card">
+        <p>Producto no encontrado.</p>
+        <db-button
+          label="Volver al catálogo"
+          variant="secondary"
+          format="soft"
+          routerLink="/productos"
         />
       </div>
-      <p>Actualizado: {{ product.updatedAt | dateShort }}</p>
     </div>
-  </header>
-
-  <div class="detail-layout">
-    <section class="panel gallery-panel">
-      <app-product-image-carousel
-        [images]="product.images"
-        [alt]="product.name"
-        variant="detail"
-      />
-    </section>
-
-    <div class="detail-panels">
-      <section class="panel">
-        <h3>Precios</h3>
-        <app-product-pricing
-          layout="grid"
-          [price]="displayPrice"
-          [cost]="displayCost"
-          [profit]="displayProfit"
-          [showMargin]="true"
-          [targetMarginPercent]="targetMarginPercent"
-          priceLabel="Precio de venta"
-        />
-      </section>
-
-      <section class="panel">
-        <h3>Información general</h3>
-        <dl class="detail-list">
-          <div>
-            <dt>Tamaño</dt>
-            <dd>{{ product.size }}</dd>
-          </div>
-          @if (categoryNames.length) {
-            <div>
-              <dt>Categorías</dt>
-              <dd>
-                <div class="tag-list">
-                  @for (name of categoryNames; track name) {
-                    <span class="tag">{{ name }}</span>
-                  }
-                </div>
-              </dd>
-            </div>
-          }
-        </dl>
-      </section>
-
-      <section class="panel">
-        <h3>Stock terminado</h3>
-        <dl class="stock-overview">
-          <div>
-            <dt>Físico</dt>
-            <dd>{{ stockOverview.physical }}</dd>
-          </div>
-          <div>
-            <dt>Reservado</dt>
-            <dd>{{ stockOverview.reserved }}</dd>
-          </div>
-          <div class="stock-overview__available">
-            <dt>Disponible</dt>
-            <dd>{{ stockOverview.available }}</dd>
-          </div>
-        </dl>
-        <p class="attachments-hint">
-          Reservado y disponible son valores calculados por el backend.
-        </p>
-      </section>
-
-      <section class="panel">
-        <h3>Archivos adjuntos</h3>
-        <p class="attachments-hint">
-          Planos, STL, PDF u otros archivos de referencia. Los cambios se guardan al subir o quitar un archivo.
-        </p>
-        <db-attachment-upload
-          [ngModel]="attachments"
-          (attachmentsChange)="onAttachmentsChange($event)"
-          name="productAttachments"
-          [uploadFn]="uploadProductAttachment"
-          [disabled]="attachmentsSaving"
-          [error]="attachmentsError"
-        />
-      </section>
-
-      @if (hasComponents) {
-        <section class="panel">
-          <h3>Piezas incluidas</h3>
-          <app-product-components-table
-            mode="read"
-            [components]="resolvedComponents"
-            [catalog]="catalogProducts"
-            [colorCatalog]="colorCatalog"
-          />
-          @if (product.assemblyTimeHours > 0) {
-            <p class="assembly-note">Tiempo de armado: {{ product.assemblyTimeHours }} h</p>
-          }
-        </section>
-      }
-
-            @if (product3d; as printed) {
-        <app-product-detail-production
-          [product]="printed"
-          [hasComponents]="hasComponents"
-          [catalogProducts]="catalogProducts"
-          [colorCatalog]="colorCatalog"
-        />
-      }
-    </div>
-
-    <footer class="panel detail-actions">
+  </div>
+  <div class="desktop-only">
+    <db-state-message
+      [loading]="false"
+      [empty]="true"
+      emptyMessage="Producto no encontrado."
+    >
       <db-button
-        [label]="publishLoading ? 'Guardando...' : publishActionLabel"
-        [variant]="isPublished ? 'secondary' : 'primary'"
-        format="solid"
-        [disabled]="publishLoading"
-        (clicked)="togglePublished()"
+        emptyActions
+        label="Volver al catálogo"
+        variant="secondary"
+        format="soft"
+        routerLink="/productos"
       />
-      <db-button
-        label="Editar producto"
-        variant="primary"
-        format="solid"
-        (clicked)="openEdit()"
-      />
-      <db-button
-        label="Eliminar"
-        variant="delete"
-        format="solid"
-        (clicked)="deleteProduct()"
-      />
-    </footer>
+    </db-state-message>
   </div>
 }
 
+@if (!loading && product && !notFound) {
+  <div class="mobile-only pd-m pd-m--dock">
+    <db-mobile-bar title="Producto" backLink="/productos">
+      <button type="button" class="m-ib txt" (click)="openEdit()">Editar</button>
+      <button
+        type="button"
+        class="m-ib"
+        aria-label="Más acciones"
+        (click)="openMobileActions()"
+      >
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.4"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M5 12h.01M12 12h.01M19 12h.01" />
+        </svg>
+      </button>
+    </db-mobile-bar>
+
+    <div class="pd-m__gallery">
+      <app-product-image-carousel
+        [images]="product.images"
+        [alt]="product.name"
+        variant="mobile"
+      />
+    </div>
+
+    <div class="m-body pd-m__body">
+      <section class="m-card" aria-label="Resumen del producto">
+        <div class="m-ln pd-m__pills">
+          <span class="m-pill m-pill--b">{{ product.type | productTypeLabel }}</span>
+          @if (isPublished) {
+            <span class="m-pill m-pill--ok">Publicado</span>
+          } @else {
+            <span class="m-pill">Producto interno</span>
+          }
+        </div>
+        <b class="pd-m__name">{{ product.name }}</b>
+        <span class="m-hint">{{ mobileMetaLine }}</span>
+      </section>
+
+      <div class="m-kpis">
+        <div class="m-kpi">
+          <span class="m-lbl">Precio de lista</span>
+          <span class="pd-m__kv">{{ displayPrice | currencyArs }}</span>
+          @if (wholesalePrice; as mayorista) {
+            <span class="pd-m__ks">Mayorista {{ mayorista | currencyArs }}</span>
+          }
+        </div>
+        <div class="m-kpi">
+          <span class="m-lbl">Costo</span>
+          <span class="pd-m__kv">{{ displayCost | currencyArs }}</span>
+          <span class="pd-m__ks">{{ mobileMarginLine }}</span>
+        </div>
+      </div>
+
+      <h2 class="m-sec-t">Stock</h2>
+      <div class="m-card">
+        <div class="m-ln">
+          <span>Disponible</span>
+          <b class="pd-m__num">{{ stockOverview.available }}</b>
+        </div>
+        <div class="m-ln">
+          <span class="m-hint">Reservado en pedidos</span>
+          <span class="pd-m__num">{{ stockOverview.reserved }}</span>
+        </div>
+        <div class="m-ln">
+          <span class="m-hint">Físico</span>
+          <span class="pd-m__num">{{ stockOverview.physical }}</span>
+        </div>
+      </div>
+
+      @if (product3d; as printed) {
+        <h2 class="m-sec-t">Composición del costo</h2>
+        <div class="m-card m-card--flush">
+          @if (!hasComponents && printed.filaments?.length) {
+            @for (line of printed.filaments; track line.id) {
+              <div class="m-row">
+                <div class="m-row__text">
+                  <b>Filamento {{ line.filamentType | filamentTypeLabel }} · {{ line.grams }} g</b>
+                  <span>{{ colorLabel(line.colorId) }}</span>
+                </div>
+              </div>
+            }
+          } @else if (!hasComponents && (grams > 0 || printed.filamentType)) {
+            <div class="m-row">
+              <div class="m-row__text">
+                <b>
+                  @if (printed.filamentType) {
+                    Filamento {{ printed.filamentType | filamentTypeLabel }} · {{ grams }} g
+                  } @else if (printed.resinType) {
+                    Resina {{ printed.resinType | resinTypeLabel }} · {{ grams }} g
+                  } @else {
+                    Material · {{ grams }} g
+                  }
+                </b>
+                @if (printed.brand) {
+                  <span>{{ printed.brand }}</span>
+                }
+              </div>
+            </div>
+          }
+          @if (printHours > 0) {
+            <div class="m-row">
+              <div class="m-row__text">
+                <b>Impresión · {{ printHours }} h</b>
+                <span>{{ product.type | productTypeLabel }}</span>
+              </div>
+            </div>
+          }
+          @if (workHours > 0) {
+            <div class="m-row">
+              <div class="m-row__text">
+                <b>Mano de obra · {{ workHours }} h</b>
+              </div>
+            </div>
+          }
+          @if (printed.washMinutes) {
+            <div class="m-row">
+              <div class="m-row__text">
+                <b>Lavado · {{ printed.washMinutes }} min</b>
+              </div>
+            </div>
+          }
+          @if (printed.cureMinutes) {
+            <div class="m-row">
+              <div class="m-row__text">
+                <b>Curado · {{ printed.cureMinutes }} min</b>
+              </div>
+            </div>
+          }
+          @if (hasComponents) {
+            <div class="m-row">
+              <div class="m-row__text">
+                <b>Piezas incluidas · {{ resolvedComponents.length }}</b>
+                @if (product.assemblyTimeHours > 0) {
+                  <span>Armado {{ product.assemblyTimeHours }} h</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      @if (attachments.length) {
+        <h2 class="m-sec-t">Archivos</h2>
+        <div class="m-card m-card--flush">
+          @for (file of attachments; track file.id || file.url) {
+            <div class="m-row">
+              <div class="m-row__text">
+                <b>{{ file.name || 'Archivo' }}</b>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+
+    <div class="pd-m__dock">
+      <button
+        type="button"
+        class="pd-m__dock-btn pd-m__dock-btn--pri"
+        (click)="sellProduct()"
+      >
+        Vender
+      </button>
+    </div>
+
+    @if (mobileActionsOpen) {
+      <div class="pd-m__sheet-scrim" (click)="closeMobileActions()"></div>
+      <div
+        class="pd-m__sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Más acciones"
+      >
+        <div class="pd-m__sheet-grab" aria-hidden="true"></div>
+        <div class="pd-m__sheet-body">
+          <button
+            type="button"
+            class="pd-m__sheet-action"
+            [disabled]="publishLoading"
+            (click)="closeMobileActions(); togglePublished()"
+          >
+            {{ publishActionLabel }}
+          </button>
+          <button
+            type="button"
+            class="pd-m__sheet-action pd-m__sheet-action--danger"
+            (click)="closeMobileActions(); deleteProduct()"
+          >
+            Eliminar
+          </button>
+        </div>
+      </div>
+    }
+
+    @if (cartNotice) {
+      <p class="pd-m__notice" role="status">{{ cartNotice }}</p>
+    }
+  </div>
+
+  <div class="desktop-only">
+    <header class="page-header detail-header">
+      <div>
+        <a routerLink="/productos" class="back-link">← Productos</a>
+        <div class="title-row">
+          <h2>{{ product.name }}</h2>
+          <app-product-badges
+            [type]="product.type"
+            [published]="product.published"
+            internalLabel="Producto interno"
+          />
+        </div>
+        <p>Actualizado: {{ product.updatedAt | dateShort }}</p>
+      </div>
+    </header>
+
+    <div class="detail-layout">
+      <section class="panel gallery-panel">
+        <app-product-image-carousel
+          [images]="product.images"
+          [alt]="product.name"
+          variant="detail"
+        />
+      </section>
+
+      <div class="detail-panels">
+        <section class="panel">
+          <h3>Precios</h3>
+          <app-product-pricing
+            layout="grid"
+            [price]="displayPrice"
+            [cost]="displayCost"
+            [profit]="displayProfit"
+            [showMargin]="true"
+            [targetMarginPercent]="targetMarginPercent"
+            priceLabel="Precio de venta"
+          />
+        </section>
+
+        <section class="panel">
+          <h3>Información general</h3>
+          <dl class="detail-list">
+            <div>
+              <dt>Tamaño</dt>
+              <dd>{{ product.size }}</dd>
+            </div>
+            @if (categoryNames.length) {
+              <div>
+                <dt>Categorías</dt>
+                <dd>
+                  <div class="tag-list">
+                    @for (name of categoryNames; track name) {
+                      <span class="tag">{{ name }}</span>
+                    }
+                  </div>
+                </dd>
+              </div>
+            }
+          </dl>
+        </section>
+
+        <section class="panel">
+          <h3>Stock terminado</h3>
+          <dl class="stock-overview">
+            <div>
+              <dt>Físico</dt>
+              <dd>{{ stockOverview.physical }}</dd>
+            </div>
+            <div>
+              <dt>Reservado</dt>
+              <dd>{{ stockOverview.reserved }}</dd>
+            </div>
+            <div class="stock-overview__available">
+              <dt>Disponible</dt>
+              <dd>{{ stockOverview.available }}</dd>
+            </div>
+          </dl>
+          <p class="attachments-hint">
+            Reservado y disponible son valores calculados por el backend.
+          </p>
+        </section>
+
+        <section class="panel">
+          <h3>Archivos adjuntos</h3>
+          <p class="attachments-hint">
+            Planos, STL, PDF u otros archivos de referencia. Los cambios se guardan al subir o quitar un archivo.
+          </p>
+          <db-attachment-upload
+            [ngModel]="attachments"
+            (attachmentsChange)="onAttachmentsChange($event)"
+            name="productAttachments"
+            [uploadFn]="uploadProductAttachment"
+            [disabled]="attachmentsSaving"
+            [error]="attachmentsError"
+          />
+        </section>
+
+        @if (hasComponents) {
+          <section class="panel">
+            <h3>Piezas incluidas</h3>
+            <app-product-components-table
+              mode="read"
+              [components]="resolvedComponents"
+              [catalog]="catalogProducts"
+              [colorCatalog]="colorCatalog"
+            />
+            @if (product.assemblyTimeHours > 0) {
+              <p class="assembly-note">Tiempo de armado: {{ product.assemblyTimeHours }} h</p>
+            }
+          </section>
+        }
+
+        @if (product3d; as printed) {
+          <app-product-detail-production
+            [product]="printed"
+            [hasComponents]="hasComponents"
+            [catalogProducts]="catalogProducts"
+            [colorCatalog]="colorCatalog"
+          />
+        }
+      </div>
+
+      <footer class="panel detail-actions">
+        <db-button
+          [label]="publishLoading ? 'Guardando...' : publishActionLabel"
+          [variant]="isPublished ? 'secondary' : 'primary'"
+          format="solid"
+          [disabled]="publishLoading"
+          (clicked)="togglePublished()"
+        />
+        <db-button
+          label="Editar producto"
+          variant="primary"
+          format="solid"
+          (clicked)="openEdit()"
+        />
+        <db-button
+          label="Eliminar"
+          variant="delete"
+          format="solid"
+          (clicked)="deleteProduct()"
+        />
+      </footer>
+    </div>
+  </div>
+}

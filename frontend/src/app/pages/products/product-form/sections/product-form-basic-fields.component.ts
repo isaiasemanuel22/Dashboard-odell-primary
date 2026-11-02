@@ -33,6 +33,8 @@ export class ProductFormBasicFieldsComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   @Input({ required: true }) productTypeOptions!: DbSelectOption[];
+  /** En mobile el tipo vive fuera, en el segmentado del form. */
+  @Input() hideTypeSwitch = false;
   @Output() readonly valueChange =
     new EventEmitter<ProductFormBasicFieldsValue>();
 

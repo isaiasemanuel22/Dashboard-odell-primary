@@ -3,6 +3,25 @@
     <button
       type="button"
       class="m-ib"
+      aria-label="Más acciones"
+      (click)="openMobileMore()"
+    >
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.4"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M5 12h.01M12 12h.01M19 12h.01" />
+      </svg>
+    </button>
+    <button
+      type="button"
+      class="m-ib"
       aria-label="Nuevo producto"
       (click)="openCreateProduct()"
     >
@@ -134,6 +153,128 @@
       }
     }
   </div>
+
+  @if (mobileMoreOpen) {
+    <div class="products-m__sheet-scrim" (click)="closeMobileMore()"></div>
+    <div
+      class="products-m__sheet"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Más acciones"
+    >
+      <div class="products-m__sheet-grab" aria-hidden="true"></div>
+      <div class="products-m__sheet-body">
+        <button
+          type="button"
+          class="products-m__sheet-action"
+          (click)="openMobileBulkPrice()"
+        >
+          Actualizar precios en bloque
+        </button>
+        <button
+          type="button"
+          class="products-m__sheet-action"
+          (click)="openMobileSupplyChanges()"
+        >
+          Cambios de precio de insumos
+        </button>
+        @if (cartItemCount > 0) {
+          <a
+            class="products-m__sheet-action"
+            routerLink="/ventas/nueva"
+            (click)="closeMobileMore()"
+          >
+            Carrito ({{ cartItemCount }})
+          </a>
+        }
+      </div>
+    </div>
+  }
+
+  @if (mobileBulkOpen) {
+    <div class="products-m__sheet-scrim" (click)="closeMobileBulkPrice()"></div>
+    <div
+      class="products-m__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Actualizar precios en bloque"
+    >
+      <div class="products-m__panel-bar">
+        <button
+          type="button"
+          class="m-ib"
+          aria-label="Cerrar"
+          (click)="closeMobileBulkPrice()"
+        >
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+        <h2 class="products-m__panel-title">Precios en bloque</h2>
+      </div>
+      <div class="products-m__panel-body">
+        @if (isMobile()) {
+          <app-products-bulk-price
+            [categories]="categories"
+            (applied)="onBulkPriceApplied(); closeMobileBulkPrice()"
+          />
+        }
+      </div>
+    </div>
+  }
+
+  @if (mobileSupplyChangesOpen) {
+    <div
+      class="products-m__sheet-scrim"
+      (click)="closeMobileSupplyChanges()"
+    ></div>
+    <div
+      class="products-m__panel"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Cambios de precio de insumos"
+    >
+      <div class="products-m__panel-bar">
+        <button
+          type="button"
+          class="m-ib"
+          aria-label="Cerrar"
+          (click)="closeMobileSupplyChanges()"
+        >
+          <svg
+            width="22"
+            height="22"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+        <h2 class="products-m__panel-title">Cambios de insumos</h2>
+      </div>
+      <div class="products-m__panel-body">
+        @if (isMobile()) {
+          <app-products-supply-price-changes
+            [rows]="supplyPriceChanges"
+            [loading]="supplyChangesLoading"
+          />
+        }
+      </div>
+    </div>
+  }
 </div>
 
 <div class="desktop-only">
@@ -250,13 +391,15 @@
     }
   }
 
-  <app-products-bulk-price
-    [categories]="categories"
-    (applied)="onBulkPriceApplied()"
-  />
+  @if (!isMobile()) {
+    <app-products-bulk-price
+      [categories]="categories"
+      (applied)="onBulkPriceApplied()"
+    />
 
-  <app-products-supply-price-changes
-    [rows]="supplyPriceChanges"
-    [loading]="supplyChangesLoading"
-  />
+    <app-products-supply-price-changes
+      [rows]="supplyPriceChanges"
+      [loading]="supplyChangesLoading"
+    />
+  }
 </div>
