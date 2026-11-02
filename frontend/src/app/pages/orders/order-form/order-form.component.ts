@@ -267,8 +267,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   /** Seña solo en alta de pedido. */
   depositAmountInput: number | null = null;
-  depositMethod: PaymentMethod = PaymentMethod.TRANSFERENCIA;
-  depositAccount: TreasuryAccount = TreasuryAccount.BANCO;
+  depositMethod: PaymentMethod = PaymentMethod.EFECTIVO;
+  depositAccount: TreasuryAccount = defaultAccountForMethod(PaymentMethod.EFECTIVO);
   depositFeeInput: number | null = null;
   private depositAmountTouched = false;
 
@@ -349,7 +349,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (!this.dueDate) {
       missing.push('fecha de entrega');
     } else if (this.dueDateError) {
-      missing.push('fecha de entrega válida');
+      // Un pedido atrasado se edita eligiendo una nueva fecha (decisión 2026-11-02).
+      missing.push(
+        this.isEditing
+          ? 'nueva fecha de entrega (la actual ya pasó)'
+          : 'fecha de entrega válida',
+      );
     }
 
     const relevant = this.lines
@@ -642,12 +647,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (meetsWholesaleMinimum(this.listSubtotal, min)) {
       return {
         kind: 'ok',
-        message: `Supera la compra mínima mayorista de ${this.money(min)}.`,
+        message: `Supera la compra mínima mayorista de ${this.money(min)} de este cliente.`,
       };
     }
     return {
       kind: 'warn',
-      message: `No llega a la compra mínima mayorista de ${this.money(min)}: se cobra precio de lista.`,
+      message: `No llega a la compra mínima mayorista de ${this.money(min)} de este cliente: se cobra precio de lista.`,
     };
   }
 
@@ -1462,7 +1467,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     this.depositAmountTouched = false;
     this.depositAmountInput = null;
     this.depositFeeInput = null;
-    this.depositMethod = PaymentMethod.TRANSFERENCIA;
+    this.depositMethod = PaymentMethod.EFECTIVO;
     this.depositAccount = defaultAccountForMethod(this.depositMethod);
 
     if (this.isQuoteForm && this.quote) {

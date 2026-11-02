@@ -77,6 +77,12 @@
     font-weight: 500;
     color: $color-text-muted;
   }
+
+  &__not-applied {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: $color-warning-text;
+  }
 }
 
 .wholesale-min-note {

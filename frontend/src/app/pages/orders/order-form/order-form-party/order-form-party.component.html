@@ -87,6 +87,11 @@
         ariaLabel="Tipo de precio"
         (valueChange)="priceTypeChange.emit($event)"
       />
+      @if (wholesaleMinimumNotice?.kind === 'warn') {
+        <span class="quote-price-type__not-applied">
+          No aplica: no llega a la compra mínima de este cliente.
+        </span>
+      }
     </div>
   }
 </db-form-grid>

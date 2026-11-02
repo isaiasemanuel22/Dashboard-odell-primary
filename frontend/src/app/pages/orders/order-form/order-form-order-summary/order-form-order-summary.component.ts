@@ -74,7 +74,7 @@ export class OrderFormOrderSummaryComponent {
   @Input() depositAmount: number | null = null;
   @Input() depositSuggested = 0;
   @Input() depositPercent = 50;
-  @Input() depositMethod: PaymentMethod = PaymentMethod.TRANSFERENCIA;
+  @Input() depositMethod: PaymentMethod = PaymentMethod.EFECTIVO;
   @Input() depositMethodOptions: DbSegmentOption<PaymentMethod>[] = [];
   @Input() depositAccount = '';
   @Input() depositAccountOptions: DbSelectOption[] = [];
