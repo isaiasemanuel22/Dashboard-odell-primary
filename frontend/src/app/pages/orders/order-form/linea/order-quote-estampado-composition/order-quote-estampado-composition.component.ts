@@ -180,7 +180,7 @@ export class OrderQuoteEstampadoCompositionComponent implements OnInit {
     const percent = this.errorMarginPercent;
     const errorMargin = percent
       ? Math.round(
-          (prints + supplies + overhead.energyCost + overhead.machineCost) *
+          (prints + overhead.energyCost + overhead.machineCost) *
             (percent / 100),
         )
       : 0;

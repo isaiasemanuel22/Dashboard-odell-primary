@@ -48,7 +48,7 @@ import {
   ProductPricingComponent,
 } from '@general-components';
 import { normalizeProductAttachments } from '../../../shared/utils/product-attachment.helpers';
-import { FormDialogService } from '../../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../../modals/public-api';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import { resolveColorLabel } from '../../../shared/utils/color.helpers';
 import { markupPercentOnCostRounded } from '../../../shared/utils/product-margin.util';

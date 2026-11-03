@@ -23,7 +23,7 @@ import { DbInputComponent } from '../../../../../components/dashboard-form/db-in
 import { DbSelectComponent } from '../../../../../components/dashboard-form/db-select/db-select.component';
 import { DbSelectOption } from '../../../../../components/dashboard-form/db-select/db-select.types';
 import { CurrencyArsPipe } from '../../../../../shared/pipes/labels.pipe';
-import { FormDialogService } from '../../../../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../../../../modals/public-api';
 import { isGraphicDesignService } from '../../../../../shared/utils/order.helpers';
 import {
   getMarginForService,

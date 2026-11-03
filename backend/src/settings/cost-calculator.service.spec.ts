@@ -347,4 +347,112 @@ describe('CostCalculatorService', () => {
 
     expect(result.materialCost).toBe(900);
   });
+
+  it('suma el insumo encima del margen, sin aplicárselo', () => {
+    store.generalSettings.errorMarginPercent = 0;
+    store.generalSettings.profitMargins = {
+      impresion_3d: 50,
+      diseno_grafico: 0,
+      modelado: 0,
+      estampado: 50,
+    };
+    store.supplies.push({
+      id: 'sup-polimero',
+      name: 'Polímero',
+      category: SupplyCategory.GENERAL,
+      unit: 'u',
+      quantity: 10,
+      minStock: 0,
+      unitPrice: 800,
+      priceFromSettings: false,
+      updatedAt: new Date().toISOString(),
+    });
+
+    const baseInput = {
+      type: ProductType.FDM,
+      grams: 100,
+      printTimeHours: 0,
+      workTimeHours: 0,
+      brand: 'Test',
+      filamentType: 'pla' as never,
+    };
+    const base = service.calculateProductPricing(baseInput);
+    const withSupply = service.calculateProductPricing({
+      ...baseInput,
+      estampadoSupplies: [
+        { id: 'l1', supplyId: 'sup-polimero', quantity: 1 },
+      ],
+    });
+
+    expect(base.cost).toBe(1000);
+    expect(base.price).toBe(1500);
+    expect(withSupply.cost).toBe(1800);
+    expect(withSupply.price).toBe(2300);
+    expect(withSupply.profit).toBe(base.profit);
+    expect(withSupply.profit).toBe(500);
+  });
+
+  it('suma el insumo encima del precio sugerido', () => {
+    store.generalSettings.errorMarginPercent = 0;
+    store.supplies.push({
+      id: 'sup-polimero',
+      name: 'Polímero',
+      category: SupplyCategory.GENERAL,
+      unit: 'u',
+      quantity: 10,
+      minStock: 0,
+      unitPrice: 800,
+      priceFromSettings: false,
+      updatedAt: new Date().toISOString(),
+    });
+
+    const result = service.calculateProductPricing({
+      type: ProductType.FDM,
+      grams: 100,
+      printTimeHours: 0,
+      workTimeHours: 0,
+      brand: 'Test',
+      filamentType: 'pla' as never,
+      suggestedPrice: 2000,
+      estampadoSupplies: [
+        { id: 'l1', supplyId: 'sup-polimero', quantity: 1 },
+      ],
+    });
+
+    expect(result.cost).toBe(1800);
+    expect(result.price).toBe(2800);
+    expect(result.profit).toBe(1000);
+  });
+
+  it('no mete los insumos del producto en el costo de material del estampado', () => {
+    setPaperPricePerSqm(store, 'dtf', 6500);
+    store.supplies.push({
+      id: 'sup-remera',
+      name: 'Remera',
+      category: SupplyCategory.ESTAMPADO,
+      unit: 'u',
+      quantity: 4,
+      minStock: 0,
+      unitPrice: 800,
+      priceFromSettings: false,
+      updatedAt: new Date().toISOString(),
+    });
+
+    const result = service.calculateCost({
+      type: ProductType.ESTAMPADO,
+      estampadoPrints: [
+        {
+          id: 'p1',
+          paperType: 'dtf' as never,
+          widthCm: 10,
+          heightCm: 10,
+        },
+      ],
+      estampadoSupplies: [{ id: 'l1', supplyId: 'sup-remera', quantity: 1 }],
+      pressMinutes: 0,
+      workTimeHours: 0,
+    });
+
+    expect(result.materialCost).toBe(65);
+  });
 });

@@ -6,7 +6,7 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Order, OrderStatus } from '../../core/models';
-import { ORDER_STATUS_LABELS, SERVICE_TYPE_LABELS } from '../../shared/constants/labels';
+import { ORDER_STATUS_LABELS, serviceTypeLabel } from '../../shared/constants/labels';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 import {
   formatOrderMobileDeliveryLabel,
@@ -81,8 +81,8 @@ export class OrderMobileCardComponent {
 /** Misma resolución que el detalle (badge + valores heredados como «diseno»). */
 export function serviceAreaLabel(service: string): string {
   const normalized = normalizeServiceType(service);
-  if (normalized) return SERVICE_TYPE_LABELS[normalized];
-  return SERVICE_TYPE_LABELS[service as keyof typeof SERVICE_TYPE_LABELS] ?? service;
+  if (normalized) return serviceTypeLabel(normalized);
+  return service;
 }
 
 export function orderMobilePaymentLine(

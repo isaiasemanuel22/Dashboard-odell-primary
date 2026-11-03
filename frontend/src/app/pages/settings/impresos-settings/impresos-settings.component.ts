@@ -18,7 +18,7 @@ import { PAPER_TYPE_LABELS } from '../../../shared/constants/labels';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import { formatPrintDimensionsCm } from '../../../shared/utils/estampado.helpers';
 import { pricePerSqmFromReferenceSheet } from '../../../shared/utils/paper-cost.util';
-import { FormDialogService } from '../../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../../modals/public-api';
 import {
   DbButtonComponent,
   DbInputComponent,

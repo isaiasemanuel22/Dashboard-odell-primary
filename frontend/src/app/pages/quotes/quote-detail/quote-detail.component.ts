@@ -16,7 +16,7 @@ import {
 } from '../../../core/models';
 import { QuotesService } from '../../../core/services/quotes.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
-import { FormDialogService } from '../../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../../modals/public-api';
 import {
   DbButtonComponent,
   DbServiceBadgesComponent,
@@ -42,7 +42,7 @@ import {
 import { resolveLinePrintUnitPrice } from '../../../shared/utils/design-print.util';
 import { DEPOSIT_FACTOR } from '../../../shared/utils/quote-document.util';
 import { salesChannelLabel } from '../../../shared/utils/v1-labels.util';
-import { QUOTE_STATUS_LABELS, SERVICE_TYPE_LABELS } from '../../../shared/constants/labels';
+import { QUOTE_STATUS_LABELS, serviceTypeLabel } from '../../../shared/constants/labels';
 import {
   CurrencyArsPipe,
   DateShortPipe,
@@ -272,7 +272,7 @@ export class QuoteDetailComponent implements OnInit {
   }
 
   serviceLabel(item: QuoteItem): string {
-    return SERVICE_TYPE_LABELS[item.serviceType] ?? item.serviceType;
+    return serviceTypeLabel(item.serviceType);
   }
 
   openEdit(): void {

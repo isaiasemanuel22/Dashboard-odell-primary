@@ -81,12 +81,16 @@ export class ProductPricingService {
   ): ProductPricingResult {
     const storedCost = Number(input.cost) || 0;
     const hasComponents = (input.components ?? []).length > 0;
+    const supplyValue = this.costCalculation.supplyLinesValue(
+      input.estampadoSupplies,
+    );
     const { cost, breakdown } = this.resolveCost(input, catalog, settings);
-    const resolvedCost = hasComponents
-      ? cost
-      : cost <= 0 && storedCost > 0
-        ? storedCost
-        : cost;
+    const resolvedCost =
+      hasComponents || supplyValue > 0
+        ? cost
+        : cost <= 0 && storedCost > 0
+          ? storedCost
+          : cost;
     const resolvedBreakdown =
       hasComponents || cost > 0 || storedCost <= 0
         ? breakdown
@@ -100,6 +104,7 @@ export class ProductPricingService {
       settings,
       resolvedCost,
       resolvedBreakdown,
+      supplyValue,
     );
   }
 
@@ -109,9 +114,25 @@ export class ProductPricingService {
     settings: GeneralSettings,
     cost: number,
     breakdown: CostBreakdown | null,
+    supplyValue = 0,
   ): ProductPricingResult {
     const result = this.applyMarginToCost(input, cost, catalog, settings);
-    return { ...result, breakdown };
+    const hasComponents = (input.components ?? []).length > 0;
+    const suggested =
+      input.suggestedPrice != null && Number(input.suggestedPrice) > 0;
+    let processPrice = result.price;
+    if (supplyValue > 0 && !suggested && !hasComponents && cost <= 0) {
+      processPrice = 0;
+    }
+    const price = processPrice + supplyValue;
+    const fullCost = cost + supplyValue;
+    return {
+      ...result,
+      cost: fullCost,
+      price,
+      profit: price - fullCost,
+      breakdown,
+    };
   }
 
   private resolveCost(

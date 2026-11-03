@@ -5,7 +5,7 @@ export { MobileBarComponent } from './mobile-bar/mobile-bar.component';
 export { NavIconComponent } from './nav-icon/nav-icon.component';
 export * from './db-data-table';
 export * from './db-row-menu';
-export * from './form-modal';
+export * from '../modals/form-modal';
 export * from './dynamic-lists/dynamic-list/dynamic-list.component';
 export type {
   DynamicDimensionsFieldConfig,
@@ -44,8 +44,8 @@ export * from './product-pricing/product-pricing.component';
 export * from './product-components-table/product-components-table.component';
 export * from './product-card/product-card.component';
 export * from './product-image-carousel/product-image-carousel.component';
-export * from './product-form-dialog/product-form-dialog.component';
-export * from './category-form-dialog/category-form-dialog.component';
+export * from '../modals/product-form-dialog/product-form-dialog.component';
+export * from '../modals/category-form-dialog/category-form-dialog.component';
 export * from './customer-card/customer-card.component';
 export * from './print-job-card/print-job-card.component';
 export * from './order-card/order-card.component';

@@ -18,6 +18,7 @@ import {
   QuoteItem,
 } from '../common/interfaces';
 import { CreateQuoteDto, UpdateQuoteDto } from '../common/dto';
+import { isAreaService } from '../common/service-type.util';
 import {
   calculateTotalWithDiscount,
   normalizeDiscountFields,
@@ -354,13 +355,13 @@ export class QuotesService {
   }
 
   private deriveServices(items: QuoteItem[]): ServiceType[] {
-    const services = [...new Set(items.map((item) => item.serviceType))];
-    if (!services.length) {
-      throw new BadRequestException(
-        'El presupuesto debe incluir al menos un servicio',
-      );
-    }
-    return services;
+    return [
+      ...new Set(
+        items
+          .map((item) => item.serviceType)
+          .filter((serviceType) => isAreaService(serviceType)),
+      ),
+    ];
   }
 
   private toQuoteItems(items: OrderItem[]): QuoteItem[] {

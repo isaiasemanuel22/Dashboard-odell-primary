@@ -22,10 +22,10 @@ import { resolveFdmFilaments } from '../../shared/utils/fdm.helpers';
 import {
   normalizeEstampadoPressCycles,
   normalizeEstampadoPrints,
-  normalizeEstampadoSupplies,
   resolvePrintDimensions,
   totalEstampadoPressMinutes,
 } from '../../shared/utils/estampado.helpers';
+import { supplyLinesValue as sumSupplyLines } from '../../shared/utils/supply-line-value.util';
 import {
   calcWashSupplyCost,
   calculateMachineOverhead,
@@ -305,18 +305,19 @@ export class ProductCostCalculationService {
       }, 0);
     }
 
-    const supplyCost = normalizeEstampadoSupplies(dto.estampadoSupplies).reduce(
-      (sum, line) => {
-        const supply = supplies.find((item) => item.id === line.supplyId);
-        if (!supply) {
-          return sum;
-        }
-        return sum + Number(supply.unitPrice) * Number(line.quantity);
-      },
-      0,
-    );
+    return paperCost;
+  }
 
-    return paperCost + supplyCost;
+  /** Valor de insumos del producto o de la línea a medida. No incluye alcohol de lavado. */
+  supplyLinesValue(
+    lines: CalculateCostPayload['estampadoSupplies'],
+    supplies?: Supply[],
+  ): number {
+    const catalog = supplies?.length ? supplies : this.suppliesSignal();
+    return sumSupplyLines(lines, (supplyId) => {
+      const supply = catalog.find((item) => item.id === supplyId);
+      return supply ? Number(supply.unitPrice) || 0 : 0;
+    });
   }
 
   private calcFilamentCost(

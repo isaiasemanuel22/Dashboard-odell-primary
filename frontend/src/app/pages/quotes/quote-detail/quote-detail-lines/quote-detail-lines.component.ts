@@ -15,7 +15,7 @@ import { formatFdmFilamentsSummary } from '../../../../shared/utils/fdm.helpers'
 import { isImpresion3DLine } from '../../../../shared/utils/order-fdm-quote.util';
 import { resolveLinePrintUnitPrice } from '../../../../shared/utils/design-print.util';
 import { DEPOSIT_FACTOR } from '../../../../shared/utils/quote-document.util';
-import { SERVICE_TYPE_LABELS } from '../../../../shared/constants/labels';
+import { serviceTypeLabel } from '../../../../shared/constants/labels';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 
 @Component({
@@ -33,7 +33,7 @@ export class QuoteDetailLinesComponent {
   readonly isDesignService = isDesignService;
   readonly depositPercent = Math.round(DEPOSIT_FACTOR * 100);
   readonly lineColumns: OdlColumn<QuoteItem>[] = [
-    { key: 'service', header: 'Servicio', value: (item) => SERVICE_TYPE_LABELS[item.serviceType] },
+    { key: 'service', header: 'Servicio', value: (item) => serviceTypeLabel(item.serviceType) },
     { key: 'product', header: 'Concepto / producto' },
     { key: 'quantity', header: 'Cant.', type: 'number' },
     { key: 'unitPrice', header: 'Precio unit.' },

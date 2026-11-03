@@ -22,6 +22,10 @@ import {
 import { ProductFormGroup } from '../services/product-form-state-manager.service';
 import { DbColorSelectComponent, DbInputComponent } from '@dashboard-form';
 import { OrderQuote3dCompositionComponent } from '../../../orders/order-form/linea/order-quote-3d-composition/order-quote-3d-composition.component';
+import { OrderQuoteEstampadoSuppliesComponent } from '../../../../components/order-quote-estampado-supplies/order-quote-estampado-supplies.component';
+import { supplyLinesValue } from '../../../../shared/utils/supply-line-value.util';
+import { SuppliesService } from '../../../../core/services/settings.service';
+import { Supply } from '../../../../core/models';
 import { OrderQuoteEstampadoCompositionComponent } from '../../../orders/order-form/linea/order-quote-estampado-composition/order-quote-estampado-composition.component';
 import { createEmptyFdmFilamentLine } from '../../../../shared/utils/fdm.helpers';
 import {
@@ -38,6 +42,7 @@ import {
     DbColorSelectComponent,
     OrderQuote3dCompositionComponent,
     OrderQuoteEstampadoCompositionComponent,
+    OrderQuoteEstampadoSuppliesComponent,
   ],
   templateUrl: './product-form-production-fields.component.html',
   styleUrl: './product-form-production-fields.component.scss',
@@ -46,6 +51,8 @@ import {
 export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly suppliesService = inject(SuppliesService);
+  private supplies: Supply[] = [];
 
   @Input({ required: true }) form!: ProductFormGroup;
   @Input({ required: true }) productType!: ProductType;
@@ -57,6 +64,13 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
   private writing = false;
 
   ngOnInit(): void {
+    this.suppliesService
+      .watchSupplies()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((items) => {
+        this.supplies = items;
+        this.cdr.markForCheck();
+      });
     this.hydrateLineFromForm();
 
     this.form.valueChanges
@@ -96,6 +110,13 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
 
   get is3D(): boolean {
     return isProductType3D(this.productType);
+  }
+
+  get suppliesCost(): number {
+    return supplyLinesValue(this.line.estampadoSupplies, (supplyId) => {
+      const supply = this.supplies.find((item) => item.id === supplyId);
+      return supply ? Number(supply.unitPrice) || 0 : 0;
+    });
   }
 
   get printProcess(): 'fdm' | 'resina' | undefined {
@@ -145,6 +166,10 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
     draft.workTimeHours = Number(v.workTimeHours) || 0;
     draft.grams = Number(v.grams) || 0;
 
+    if (isResina || isFdm) {
+      draft.estampadoSupplies = structuredClone(v.supplyLines ?? []);
+    }
+
     if (isResina) {
       // isResinQuoteLine() trata cualquier resinType como resina: solo setearlo en RESINA.
       draft.printProcess = 'resina';
@@ -159,11 +184,14 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
       draft.washMinutes = undefined;
       draft.cureMinutes = undefined;
       draft.filamentType = v.filamentType;
-      draft.filaments = structuredClone(
+      const nextFilaments = structuredClone(
         v.filamentLines?.length
           ? v.filamentLines
           : [createEmptyFdmFilamentLine(v.filamentType)],
       );
+      draft.filaments = this.sameJson(this.line.filaments, nextFilaments)
+        ? this.line.filaments
+        : nextFilaments;
     }
 
     if (this.productType === ProductType.ESTAMPADO) {
@@ -194,6 +222,14 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
       }
     } else {
       this.line = draft;
+    }
+  }
+
+  private sameJson(a: unknown, b: unknown): boolean {
+    try {
+      return JSON.stringify(a ?? null) === JSON.stringify(b ?? null);
+    } catch {
+      return false;
     }
   }
 

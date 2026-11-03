@@ -3,7 +3,7 @@ import {
   PriceType,
   WholesaleDiscountSettings,
 } from '../../core/models';
-import { isDesignService } from './service-type.util';
+import { isAreaService, isDesignService } from './service-type.util';
 import { wholesalePriceFromList } from './wholesale-example.util';
 
 /** Precio de lista editable/visible: listUnitPrice ?? unitPrice (o design). */
@@ -26,6 +26,7 @@ export function wholesaleAppliesToService(
   settings: WholesaleDiscountSettings | null | undefined,
 ): boolean {
   if (!settings?.enabled) return false;
+  if (!isAreaService(serviceType)) return false;
   return settings.serviceTypes.includes(serviceType);
 }
 

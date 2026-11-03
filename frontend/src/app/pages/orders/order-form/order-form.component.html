@@ -58,21 +58,53 @@
                 }
               </div>
 
-              <db-button
-                class="desktop-only"
-                label="+ Agregar producto"
-                variant="secondary"
-                format="solid"
-                extraClass="add-line"
-                (clicked)="addLine()"
-              />
-              <button
-                type="button"
-                class="order-m-add mobile-only"
-                (click)="addLine()"
-              >
-                + Agregar producto o servicio
-              </button>
+              <div class="add-line-row">
+                <db-button
+                  class="desktop-only"
+                  label="+ Agregar producto"
+                  variant="secondary"
+                  format="solid"
+                  extraClass="add-line"
+                  (clicked)="addLine()"
+                />
+                <db-button
+                  class="desktop-only"
+                  label="+ Agregar insumo"
+                  variant="secondary"
+                  format="solid"
+                  extraClass="add-line"
+                  (clicked)="addSupplyLine()"
+                />
+                <db-button
+                  class="desktop-only"
+                  label="+ Agregar servicio"
+                  variant="secondary"
+                  format="solid"
+                  extraClass="add-line"
+                  (clicked)="addThirdPartyLine()"
+                />
+                <button
+                  type="button"
+                  class="order-m-add mobile-only"
+                  (click)="addLine()"
+                >
+                  + Agregar producto
+                </button>
+                <button
+                  type="button"
+                  class="order-m-add mobile-only"
+                  (click)="addSupplyLine()"
+                >
+                  + Agregar insumo
+                </button>
+                <button
+                  type="button"
+                  class="order-m-add mobile-only"
+                  (click)="addThirdPartyLine()"
+                >
+                  + Agregar servicio
+                </button>
+              </div>
 
               @if (lowWholesaleMarginNotice; as lowMargin) {
                 <div class="wholesale-margin-note" role="status">
@@ -244,21 +276,53 @@
                 }
               </div>
 
-              <db-button
-                class="desktop-only"
-                label="+ Agregar producto"
-                variant="secondary"
-                format="solid"
-                extraClass="add-line"
-                (clicked)="addLine()"
-              />
-              <button
-                type="button"
-                class="order-m-add mobile-only"
-                (click)="addLine()"
-              >
-                + Agregar producto o servicio
-              </button>
+              <div class="add-line-row">
+                <db-button
+                  class="desktop-only"
+                  label="+ Agregar producto"
+                  variant="secondary"
+                  format="solid"
+                  extraClass="add-line"
+                  (clicked)="addLine()"
+                />
+                <db-button
+                  class="desktop-only"
+                  label="+ Agregar insumo"
+                  variant="secondary"
+                  format="solid"
+                  extraClass="add-line"
+                  (clicked)="addSupplyLine()"
+                />
+                <db-button
+                  class="desktop-only"
+                  label="+ Agregar servicio"
+                  variant="secondary"
+                  format="solid"
+                  extraClass="add-line"
+                  (clicked)="addThirdPartyLine()"
+                />
+                <button
+                  type="button"
+                  class="order-m-add mobile-only"
+                  (click)="addLine()"
+                >
+                  + Agregar producto
+                </button>
+                <button
+                  type="button"
+                  class="order-m-add mobile-only"
+                  (click)="addSupplyLine()"
+                >
+                  + Agregar insumo
+                </button>
+                <button
+                  type="button"
+                  class="order-m-add mobile-only"
+                  (click)="addThirdPartyLine()"
+                >
+                  + Agregar servicio
+                </button>
+              </div>
 
               @if (lowWholesaleMarginNotice; as lowMargin) {
                 <div class="wholesale-margin-note" role="status">

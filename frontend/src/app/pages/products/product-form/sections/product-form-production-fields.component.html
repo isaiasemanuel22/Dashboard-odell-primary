@@ -10,6 +10,15 @@
     </section>
   }
 
+  @if ((is3D || isEstampado) && includesPieces) {
+    <app-order-quote-estampado-supplies
+      [line]="line"
+      [lineIndex]="0"
+      [suppliesCost]="suppliesCost"
+      (changed)="onQuoteChanged()"
+    />
+  }
+
   @if (showProductionFields && is3D) {
     @if (isResina) {
       <section class="form-block resin-color">

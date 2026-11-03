@@ -6,7 +6,7 @@ import {
   QuoteItem,
   WholesaleDiscountSettings,
 } from '../../core/models';
-import { SERVICE_TYPE_LABELS } from '../constants/labels';
+import { serviceTypeLabel } from '../constants/labels';
 import {
   calculateLinePriceTotal,
   calculateOrderDiscount,
@@ -145,7 +145,7 @@ export function buildQuoteDocumentInput(
     const quantity = Math.max(Math.trunc(Number(item.quantity) || 0), 0);
     return {
       productName: item.productName || 'Sin nombre',
-      subtitle: SERVICE_TYPE_LABELS[item.serviceType] ?? '',
+      subtitle: serviceTypeLabel(item.serviceType),
       measures: measuresForItem(item, product),
       quantity,
       listPrice,

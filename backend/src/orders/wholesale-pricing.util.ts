@@ -1,4 +1,5 @@
 import { PriceType } from '../common/enums';
+import { isAreaService } from '../common/service-type.util';
 import {
   Customer,
   OrderItem,
@@ -66,6 +67,11 @@ export function applyWholesalePricing<T extends WholesalePricedItem>(
     delete next.listUnitPrice;
 
     if (!wholesaleApplied) {
+      return next;
+    }
+
+    // Insumo suelto y servicio de un tercero no pertenecen a un área.
+    if (!isAreaService(item.serviceType)) {
       return next;
     }
 

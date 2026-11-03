@@ -22,6 +22,7 @@ import {
   OrderOverview,
 } from '../common/interfaces';
 import { CreateOrderDto, UpdateOrderDto } from '../common/dto';
+import { isAreaService } from '../common/service-type.util';
 import {
   calculateTotalWithDiscount,
   normalizeDiscountFields,
@@ -524,15 +525,13 @@ export class OrdersService {
   }
 
   private normalizeServices(items: OrderItem[]): ServiceType[] {
-    const services = [...new Set(items.map((item) => item.serviceType))];
-
-    if (!services.length) {
-      throw new BadRequestException(
-        'El pedido debe incluir al menos un servicio',
-      );
-    }
-
-    return services;
+    return [
+      ...new Set(
+        items
+          .map((item) => item.serviceType)
+          .filter((serviceType) => isAreaService(serviceType)),
+      ),
+    ];
   }
 
   normalizeOrderItems(items: OrderItem[]): OrderItem[] {
@@ -591,6 +590,10 @@ export class OrdersService {
   ): number {
     const pending = Math.max(item.quantity - (item.deliveredQuantity ?? 0), 0);
     if (pending <= 0) return 0;
+
+    if (!isAreaService(item.serviceType)) {
+      return pending;
+    }
 
     const tasks = this.printJobs.findByOrderId(order.id);
     if (isDesignPrintConfigured(item)) {

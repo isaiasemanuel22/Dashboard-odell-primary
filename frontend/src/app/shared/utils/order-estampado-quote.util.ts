@@ -144,19 +144,26 @@ export function syncEstampadoQuotePricing(
     },
   );
 
+  if (line.productId?.trim()) {
+    return;
+  }
+
+  const supplyValue = costCalculator.supplyLinesValue(
+    line.estampadoSupplies,
+    options?.supplies,
+  );
+  const processCost = breakdown.totalCost;
   const keepCost =
     options?.preserveCost &&
     line.unitCost != null &&
     Number.isFinite(Number(line.unitCost));
   if (!keepCost) {
-    line.unitCost = breakdown.totalCost;
+    line.unitCost = processCost + supplyValue;
   }
   const preserve = options?.preservePrice || !!line.unitPriceManual;
   if (!preserve) {
-    const costForPrice = keepCost
-      ? Number(line.unitCost)
-      : breakdown.totalCost;
-    line.unitPrice = priceFromCostAndMargin(costForPrice, marginPercent);
+    line.unitPrice =
+      priceFromCostAndMargin(processCost, marginPercent) + supplyValue;
   }
 }
 

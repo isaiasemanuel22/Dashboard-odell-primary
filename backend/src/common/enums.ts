@@ -3,6 +3,10 @@ export enum ServiceType {
   DISENO_GRAFICO = 'diseno_grafico',
   MODELADO = 'modelado',
   ESTAMPADO = 'estampado',
+  /** Línea propia de insumo. No es un área (§5.1, §10). */
+  INSUMO = 'insumo',
+  /** Servicio de un tercero. No es un área (§5.1, §16.3). */
+  SERVICIO_TERCERO = 'servicio_tercero',
 }
 
 export enum ProductType {

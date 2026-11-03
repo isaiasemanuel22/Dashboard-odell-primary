@@ -31,6 +31,11 @@
     <div class="order-line__service-row">
       <div class="order-line__service">
         <span class="order-line__line-label">Línea {{ lineIndex + 1 }}</span>
+        @if (isExtraLine) {
+          <span class="service-badge" [ngClass]="'service-badge--' + line.serviceType">
+            {{ serviceLabel }}
+          </span>
+        } @else {
         <div class="service-pills" role="group" aria-label="Servicio">
           @for (opt of serviceTypeOptions; track opt.value) {
             <button
@@ -40,10 +45,11 @@
               [class.service-pill--active]="line.serviceType === opt.value"
               (click)="setLineService(opt.value)"
             >
-              {{ opt.label }}
-            </button>
+            {{ opt.label }}
+          </button>
           }
         </div>
+        }
       </div>
       @if (variant === 'quote') {
         <div class="order-line__tools">
@@ -84,7 +90,34 @@
       </div>
 
       <div class="order-line__product-row order-line__product-row--quote">
-        @if (isDesign()) {
+        @if (isExtraLine) {
+          @if (isSupplyLine) {
+            <db-select
+              label="Insumo"
+              [ngModel]="selectedSupplyId"
+              [name]="'supply-' + lineIndex"
+              placeholder="Seleccionar insumo"
+              [options]="supplyOptions"
+              (ngModelChange)="onSupplySelected($event)"
+            />
+          } @else {
+            <db-input
+              label="Nombre"
+              [ngModel]="line.customName"
+              [name]="'third-' + lineIndex"
+              placeholder="Ej.: Envío, bordado externo"
+              (ngModelChange)="onConceptChange($event)"
+              [error]="conceptError"
+            />
+            <db-input
+              label="Detalle"
+              [ngModel]="line.laborNote"
+              [name]="'third-detail-' + lineIndex"
+              placeholder="Opcional"
+              (ngModelChange)="onThirdPartyDetailChange($event)"
+            />
+          }
+        } @else if (isDesign()) {
           <db-select
             class="desktop-only"
             label="Producto"
@@ -185,7 +218,34 @@
       </div>
 
       <div class="order-line__product-row">
-        @if (isDesign()) {
+        @if (isExtraLine) {
+          @if (isSupplyLine) {
+            <db-select
+              label="Insumo"
+              [ngModel]="selectedSupplyId"
+              [name]="'supply-order-' + lineIndex"
+              placeholder="Seleccionar insumo"
+              [options]="supplyOptions"
+              (ngModelChange)="onSupplySelected($event)"
+            />
+          } @else {
+            <db-input
+              label="Nombre"
+              [ngModel]="line.customName"
+              [name]="'third-order-' + lineIndex"
+              placeholder="Ej.: Envío, bordado externo"
+              (ngModelChange)="onConceptChange($event)"
+              [error]="conceptError"
+            />
+            <db-input
+              label="Detalle"
+              [ngModel]="line.laborNote"
+              [name]="'third-order-detail-' + lineIndex"
+              placeholder="Opcional"
+              (ngModelChange)="onThirdPartyDetailChange($event)"
+            />
+          }
+        } @else if (isDesign()) {
           <db-input
             label="Concepto"
             [ngModel]="line.customName"
@@ -433,7 +493,8 @@
       [unitPriceError]="unitPriceError"
       [priceHint]="priceHint"
       [priceHintWarn]="priceHintWarn"
-      [manualPrice]="isUnitPriceManual"
+      [manualPrice]="isUnitPriceManual && !isExtraLine"
+      [priceLocked]="priceLocked"
       (resetPrice)="resetUnitPriceToSuggested()"
       [lineTotal]="showWholesaleColumns ? wholesaleLineTotalPreview : lineTotal"
       [showWholesaleColumns]="showWholesaleColumns"

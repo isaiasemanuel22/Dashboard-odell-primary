@@ -36,6 +36,12 @@
           <dt>Mano de obra @if (laborLabel) { <span>· {{ laborLabel }}</span> }</dt>
           <dd>{{ (vm.costBreakdown?.laborCost ?? 0) | currencyArs }}</dd>
         </div>
+        @if (supplyCost > 0) {
+          <div>
+            <dt>Insumos</dt>
+            <dd>{{ supplyCost | currencyArs }}</dd>
+          </div>
+        }
       }
       <div class="price-lines__total">
         <dt>Costo total</dt>
@@ -64,16 +70,27 @@
       </div>
     </div>
 
-    <div [formGroup]="form">
-      <db-input
-        [label]="suggestedPriceLabel"
-        type="number"
-        formControlName="suggestedPrice"
-        [min]="0"
-        placeholder="Opcional · reemplaza el calculado"
-      />
+    <div class="unit-price">
+      <span class="unit-price__label">Precio unitario</span>
+      <div class="unit-price__box">
+        <input
+          class="unit-price__control"
+          type="text"
+          inputmode="numeric"
+          [ngModel]="unitPriceDisplay(vm.price)"
+          (ngModelChange)="onUnitPriceDisplayChange($event)"
+          [ngModelOptions]="{ standalone: true }"
+          autocomplete="off"
+          aria-label="Precio unitario"
+        />
+      </div>
+      <p class="price-note">{{ unitPriceHint(vm.price, vm.totalCost) }}</p>
+      @if (priceManual) {
+        <button type="button" class="unit-price__reset" (click)="resetUnitPrice()">
+          Volver al sugerido
+        </button>
+      }
     </div>
-    <p class="price-note">Si lo cargás, la ganancia se recalcula con este precio.</p>
 
     @if (facade.usesPieceAssembly && facade.components.length && vm.componentsPrice > 0) {
       <div class="price-savings">

@@ -20,6 +20,7 @@ export {
 } from './db-checkbox/db-checkbox.component';
 export { DbFieldsetComponent } from './db-fieldset/db-fieldset.component';
 export { DbFormFooterComponent } from './db-form-footer/db-form-footer.component';
+export { FileUploadSession } from './file-upload/file-upload.session';
 export { DbFileUploadComponent } from './db-file-upload/db-file-upload.component';
 export type { DbFileUploadFn } from './db-file-upload/db-file-upload.types';
 export { DbAttachmentUploadComponent } from './db-attachment-upload/db-attachment-upload.component';

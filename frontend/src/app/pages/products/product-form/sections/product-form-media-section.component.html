@@ -1,50 +1,13 @@
 <section class="form-block">
   <h4>Imágenes y archivos</h4>
   <div class="media-grid">
-    <div class="media-card">
-      <span class="media-card__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <rect x="4" y="5" width="16" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.6" />
-          <circle cx="9" cy="10" r="1.4" fill="currentColor" />
-          <path d="M7 16l3.2-3.2a1 1 0 0 1 1.4 0L16 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-        </svg>
-      </span>
-      <p class="media-card__title">Fotos y reels</p>
-      <p class="media-card__hint">Arrastralas o</p>
-      @if (facade.legacyImagesNotice) {
-        <p class="media-card__hint">{{ facade.legacyImagesNotice }}</p>
-      }
-      <div [formGroup]="facade.form">
-        <db-file-upload
-          formControlName="images"
-          addLabel="Elegir archivos"
-          [thumbAlt]="facade.name"
-          [uploadFn]="uploadProductImage"
-        />
-      </div>
-      <p class="media-card__note">La primera es la portada</p>
-    </div>
-
-    <div class="media-card">
-      <span class="media-card__icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24">
-          <path d="M7 3.5h7l5 5V20a1.5 1.5 0 0 1-1.5 1.5h-10.5A1.5 1.5 0 0 1 5.5 20V5A1.5 1.5 0 0 1 7 3.5z" fill="none" stroke="currentColor" stroke-width="1.6" />
-          <path d="M14 3.5V9h5.5" fill="none" stroke="currentColor" stroke-width="1.6" />
-        </svg>
-      </span>
-      <p class="media-card__title">Archivos adjuntos</p>
-      <p class="media-card__hint">STL, 3MF, PDF o referencias</p>
-      <div [formGroup]="facade.form">
-        <db-attachment-upload
-          formControlName="attachments"
-          addLabel="Elegir archivos"
-          [uploadFn]="uploadProductAttachment"
-        />
-      </div>
-      <p class="media-card__note">Solo los ve el equipo</p>
-      @if (facade.attachmentUploadError) {
-        <db-form-error>{{ facade.attachmentUploadError }}</db-form-error>
-      }
-    </div>
+    <app-product-form-photos-upload
+      [facade]="facade"
+      [uploadFn]="uploadProductImage"
+    />
+    <app-product-form-attachments-upload
+      [facade]="facade"
+      [uploadFn]="uploadProductAttachment"
+    />
   </div>
 </section>

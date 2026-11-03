@@ -1,4 +1,5 @@
 import { Pipe, PipeTransform, inject } from '@angular/core';
+import { formatCurrencyArs } from '../utils/currency-ars.util';
 import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import {
   FilamentType,
@@ -19,7 +20,7 @@ import {
   PRINT_JOB_STATUS_LABELS,
   PRODUCT_TYPE_LABELS,
   RESIN_TYPE_LABELS,
-  SERVICE_TYPE_LABELS,
+  serviceTypeLabel,
   SUPPLY_CATEGORY_LABELS,
 } from '../constants/labels';
 import { resolveMediaUrl } from '../utils/media-url.util';
@@ -36,8 +37,8 @@ import { normalizeServiceType } from '../utils/service-type.util';
 export class ServiceTypeLabelPipe implements PipeTransform {
   transform(value: ServiceType | string): string {
     const normalized = normalizeServiceType(value);
-    if (normalized) return SERVICE_TYPE_LABELS[normalized];
-    return SERVICE_TYPE_LABELS[value as ServiceType] ?? String(value ?? '');
+    if (normalized) return serviceTypeLabel(normalized);
+    return String(value ?? '');
   }
 }
 
@@ -108,11 +109,7 @@ export class PrintJobStatusLabelPipe implements PipeTransform {
 @Pipe({ name: 'currencyArs', standalone: true })
 export class CurrencyArsPipe implements PipeTransform {
   transform(value: number): string {
-    return new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS',
-      maximumFractionDigits: 0,
-    }).format(value);
+    return formatCurrencyArs(value);
   }
 }
 

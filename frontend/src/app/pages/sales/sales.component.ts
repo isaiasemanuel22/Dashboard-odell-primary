@@ -11,7 +11,7 @@ import {
 import { RealtimeService } from '../../core/services/realtime.service';
 import { BreakpointService } from '../../core/services/breakpoint.service';
 import { SalesService } from '../../core/services/sales.service';
-import { FormDialogService } from '../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../modals/public-api';
 import {
   DB_DATA_TABLE,
   DbStateMessageComponent,
@@ -24,7 +24,11 @@ import {
   SalesStatsGridComponent,
   serviceTag,
 } from '@general-components';
-import { SALE_SOURCE_LABELS, SERVICE_TYPE_LABELS } from '../../shared/constants/labels';
+import {
+  AreaServiceType,
+  SALE_SOURCE_LABELS,
+  SERVICE_TYPE_LABELS,
+} from '../../shared/constants/labels';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { formatDateDayMonth } from '../../shared/utils/date-format.util';
 import { pluralize } from '../../shared/utils/order.helpers';
@@ -33,7 +37,7 @@ import { salesChannelLabel } from '../../shared/utils/v1-labels.util';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 import { ProductsService } from '../../core/services/products.service';
 
-const SALE_AREAS: ServiceType[] = [
+const SALE_AREAS: AreaServiceType[] = [
   ServiceType.IMPRESION_3D,
   ServiceType.DISENO_GRAFICO,
   ServiceType.MODELADO,

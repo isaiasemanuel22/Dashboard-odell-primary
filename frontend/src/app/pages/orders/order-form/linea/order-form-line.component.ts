@@ -47,8 +47,9 @@ import { ImpresosService } from '../../../../core/services/impresos.service';
 import { ProductCostCalculationService } from '../../../../core/services/product-cost-calculation.service';
 import { SuppliesService } from '../../../../core/services/settings.service';
 import { SettingsFacade } from '../../../../store/settings/settings.facade';
-import { FormDialogService } from '../../../../shared/form-dialogs/public-api';
-import { SERVICE_TYPE_LABELS } from '../../../../shared/constants/labels';
+import { FormDialogService } from '../../../../modals/public-api';
+import { serviceTypeLabel } from '../../../../shared/constants/labels';
+import { isCatalogInsumo } from '../../../../shared/utils/supply-line-value.util';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import {
   applyImpresoToDesignLine,
@@ -70,6 +71,8 @@ import {
   calculateLinePriceTotal,
   isDesignService,
   isGraphicDesignService,
+  isSupplyOrderLine,
+  isThirdPartyService,
   isLineBlank,
   lineConceptError as orderLineConceptError,
   lineQuantityError as orderLineQuantityError,
@@ -90,6 +93,7 @@ import {
   impresion3DMargin,
   isFdmQuoteConfigured,
   isImpresion3DLine,
+  lineHasCatalogSupplies,
   isResinQuoteConfigured,
   isResinQuoteLine,
   shouldShowFdmQuoteFields,
@@ -300,7 +304,31 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   get serviceLabel(): string {
-    return SERVICE_TYPE_LABELS[this.line.serviceType];
+    if (isSupplyOrderLine(this.line.serviceType)) return 'Insumo';
+    if (isThirdPartyService(this.line.serviceType)) return 'Servicio';
+    return serviceTypeLabel(this.line.serviceType);
+  }
+
+  get isSupplyLine(): boolean {
+    return isSupplyOrderLine(this.line.serviceType);
+  }
+
+  get isExtraLine(): boolean {
+    return (
+      isSupplyOrderLine(this.line.serviceType) ||
+      isThirdPartyService(this.line.serviceType)
+    );
+  }
+
+  get supplyOptions(): DbSelectOption[] {
+    return this.supplies.filter(isCatalogInsumo).map((supply) => ({
+      value: supply.id,
+      label: supply.name,
+    }));
+  }
+
+  get selectedSupplyId(): string {
+    return this.line.estampadoSupplies?.[0]?.supplyId ?? '';
   }
 
   get accentClass(): string {
@@ -383,6 +411,10 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   get unitCost(): number {
+    if (isThirdPartyService(this.line.serviceType)) return 0;
+    if (isSupplyOrderLine(this.line.serviceType)) {
+      return Number(this.line.unitPrice) || 0;
+    }
     if (
       isEstampadoLine(this.line.serviceType) &&
       isEstampadoQuoteConfigured(this.line)
@@ -416,6 +448,12 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   get unitCostHint(): string {
+    if (isSupplyOrderLine(this.line.serviceType)) {
+      return 'Igual al precio · sin ganancia';
+    }
+    if (isThirdPartyService(this.line.serviceType)) {
+      return 'No entra en el costo';
+    }
     if (isDesignService(this.line.serviceType)) {
       return isGraphicDesignService(this.line.serviceType)
         ? 'Sin costo de material'
@@ -426,7 +464,7 @@ export class OrderFormLineComponent implements OnInit {
         return 'Calculado: impresos + insumos + plancha';
       }
       if (isImpresion3DLine(this.line.serviceType)) {
-        return 'Calculado: material + impresión + mano de obra + error';
+        return 'Calculado: material + impresión + mano de obra + error + insumos';
       }
       return 'Calculado desde el formulario';
     }
@@ -435,7 +473,17 @@ export class OrderFormLineComponent implements OnInit {
     return 'Calculado con material, luz y máquina';
   }
 
+  get priceLocked(): boolean {
+    return isSupplyOrderLine(this.line.serviceType);
+  }
+
   get priceHint(): string {
+    if (isSupplyOrderLine(this.line.serviceType)) {
+      return 'Cantidad × precio del insumo, sin margen';
+    }
+    if (isThirdPartyService(this.line.serviceType)) {
+      return 'Lo que paga el cliente · sin costo interno';
+    }
     if (isDesignService(this.line.serviceType)) return this.designPriceHint;
     return this.variant === 'quote'
       ? this.suggestedUnitPriceHint
@@ -773,6 +821,10 @@ export class OrderFormLineComponent implements OnInit {
       this.onDesignUnitPriceChange(raw);
       return;
     }
+    if (isSupplyOrderLine(this.line.serviceType)) return;
+    if (isThirdPartyService(this.line.serviceType)) {
+      this.line.unitCost = 0;
+    }
     this.onUnitPriceChange(raw);
   }
 
@@ -863,6 +915,38 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   onQuantityChange(): void {
+    if (isSupplyOrderLine(this.line.serviceType)) {
+      const entry = this.line.estampadoSupplies?.[0];
+      if (entry) {
+        entry.quantity = Math.max(1, Number(this.line.quantity) || 1);
+      }
+      this.line.unitCost = Number(this.line.unitPrice) || 0;
+    }
+    this.emitChanged();
+  }
+
+  onSupplySelected(supplyId: string): void {
+    const supply = this.supplies.find((item) => item.id === supplyId);
+    const quantity = Math.max(1, Number(this.line.quantity) || 1);
+    this.line.estampadoSupplies = supply
+      ? [
+          {
+            id: this.line.estampadoSupplies?.[0]?.id || `insumo-${this.lineIndex}`,
+            supplyId: supply.id,
+            quantity,
+          },
+        ]
+      : [];
+    this.line.customName = supply?.name ?? '';
+    const unit = Number(supply?.unitPrice) || 0;
+    this.line.unitPrice = unit;
+    this.line.unitCost = unit;
+    this.line.unitPriceManual = undefined;
+    this.emitChanged();
+  }
+
+  onThirdPartyDetailChange(value: string): void {
+    this.line.laborNote = value;
     this.emitChanged();
   }
 
@@ -1058,7 +1142,7 @@ export class OrderFormLineComponent implements OnInit {
         ? ` Se van a borrar: ${lost.join(', ')}.`
         : ' Se van a borrar los datos cargados en esta línea.';
 
-    return `Al cambiar a «${SERVICE_TYPE_LABELS[next]}» la línea se reinicia.${detail} ¿Continuar?`;
+    return `Al cambiar a «${serviceTypeLabel(next)}» la línea se reinicia.${detail} ¿Continuar?`;
   }
 
   // ── Private: pricing / sync ──────────────────────────────────────
@@ -1068,7 +1152,7 @@ export class OrderFormLineComponent implements OnInit {
       this.line.unitPrice = product.price;
       this.line.unitPriceManual = undefined;
     }
-    if (!(Number(this.line.unitCost) > 0) && Number(product.cost) > 0) {
+    if (Number(product.cost) > 0) {
       this.line.unitCost = product.cost;
     }
   }
@@ -1270,7 +1354,7 @@ export class OrderFormLineComponent implements OnInit {
     const percent = this.errorMarginPercent;
     const errorMargin = percent
       ? Math.round(
-          (prints + supplies + overhead.energyCost + overhead.machineCost) *
+          (prints + overhead.energyCost + overhead.machineCost) *
             (percent / 100),
         )
       : 0;
@@ -1340,8 +1424,9 @@ export class OrderFormLineComponent implements OnInit {
       });
     const configured =
       (!isResin && isFdmQuoteConfigured(this.line)) || resinConfigured;
+    const hasSupplies = lineHasCatalogSupplies(this.line);
 
-    if (configured) {
+    if (configured || hasSupplies) {
       syncFdmQuotePricing(
         this.line,
         this.generalSettings,
@@ -1351,6 +1436,7 @@ export class OrderFormLineComponent implements OnInit {
           ...options,
           preservePrice: options?.preservePrice || !!this.line.unitPriceManual,
           preserveCost: options?.preserveCost,
+          supplies: this.supplies,
           productType: isResin
             ? ProductType.RESINA
             : product?.type === ProductType.FDM ||

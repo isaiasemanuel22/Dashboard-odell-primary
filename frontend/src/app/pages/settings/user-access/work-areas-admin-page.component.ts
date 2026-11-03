@@ -19,7 +19,7 @@ import {
   OdlColumn,
   OdlRowAction,
 } from '@general-components';
-import { FormModalComponent } from '../../../components/form-modal/form-modal.component';
+import { FormModalComponent } from '../../../modals/form-modal/form-modal.component';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import { UserAccessHeadComponent } from './user-access-head.component';
 import { UserAccessNavComponent } from './user-access-nav.component';

@@ -20,7 +20,7 @@ import { OrdersService } from '../../core/services/orders.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { removeById } from '../../core/utils/replace-in-store';
-import { FormDialogService } from '../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../modals/public-api';
 import {
   DbSkeletonComponent,
   DbStateMessageComponent,

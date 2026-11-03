@@ -3,8 +3,8 @@ import { OrderItem } from '../common/interfaces';
 
 export type OrderLinePricingInput = Pick<
   OrderItem,
-  'serviceType' | 'quantity' | 'unitPrice' | 'designUnitPrice' | 'includesPrint'
->;
+  'quantity' | 'unitPrice' | 'designUnitPrice' | 'includesPrint'
+> & { serviceType?: OrderItem['serviceType'] };
 
 export function resolveLinePrintUnitPrice(
   line: Pick<OrderItem, 'unitPrice' | 'designUnitPrice' | 'includesPrint'>,

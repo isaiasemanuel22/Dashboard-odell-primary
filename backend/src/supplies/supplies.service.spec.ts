@@ -18,6 +18,7 @@ describe('SuppliesService', () => {
       { getUnitPriceForSupply: jest.fn() } as never,
       { recordChange: jest.fn() } as never,
       { notifySupplyAvailability: jest.fn() } as never,
+      { syncAllProductsAndOrders: jest.fn() } as never,
     );
   }
 

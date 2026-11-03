@@ -38,7 +38,7 @@ import {
 } from '../../shared/constants/labels';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { formatOrderMobileDeliveryLabel } from '../../shared/utils/order.helpers';
-import { FormDialogService } from '../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../modals/public-api';
 import {
   PrintJobCustomerChip,
   PrintJobsToolbarComponent,

@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "odell-dev",
+      "runtimeExecutable": "bash",
+      "runtimeArgs": ["-c", "PORT=3000 npm run dev"],
+      "port": 4200
+    }
+  ]
+}

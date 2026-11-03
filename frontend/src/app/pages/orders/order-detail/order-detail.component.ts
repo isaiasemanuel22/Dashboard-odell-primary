@@ -45,7 +45,7 @@ import {
   MobileBarComponent,
   OdlColumn,
 } from '@general-components';
-import { FormDialogService } from '../../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../../modals/public-api';
 import { SettingsFacade } from '../../../store/settings/settings.facade';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import {
@@ -66,7 +66,7 @@ import {
 import { resolveLinePrintUnitPrice } from '../../../shared/utils/design-print.util';
 import {
   TASK_KIND_LABELS,
-  SERVICE_TYPE_LABELS,
+  serviceTypeLabel,
 } from '../../../shared/constants/labels';
 import {
   CurrencyArsPipe,
@@ -154,7 +154,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
       key: 'service',
       header: 'Servicio',
       width: '6.5rem',
-      value: (item) => SERVICE_TYPE_LABELS[item.serviceType],
+      value: (item) => serviceTypeLabel(item.serviceType),
     },
     { key: 'product', header: 'Concepto' },
     { key: 'quantity', header: 'Cant.', type: 'number', width: '3.25rem' },

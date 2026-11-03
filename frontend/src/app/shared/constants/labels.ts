@@ -12,12 +12,24 @@ import {
   TaskKind,
 } from '../../core/models';
 
-export const SERVICE_TYPE_LABELS: Record<ServiceType, string> = {
+/** Áreas de Odell. Insumo y servicio de un tercero no son filtros ni pills de área. */
+export type AreaServiceType = Exclude<
+  ServiceType,
+  ServiceType.INSUMO | ServiceType.SERVICIO_TERCERO
+>;
+
+export const SERVICE_TYPE_LABELS: Record<AreaServiceType, string> = {
   [ServiceType.IMPRESION_3D]: 'Impresión 3D',
   [ServiceType.DISENO_GRAFICO]: 'Diseño gráfico',
   [ServiceType.MODELADO]: 'Modelado',
   [ServiceType.ESTAMPADO]: 'Estampado',
 };
+
+export function serviceTypeLabel(service: ServiceType): string {
+  if (service === ServiceType.INSUMO) return 'Insumo';
+  if (service === ServiceType.SERVICIO_TERCERO) return 'Servicio';
+  return SERVICE_TYPE_LABELS[service];
+}
 
 export const PRODUCT_TYPE_LABELS: Record<ProductType, string> = {
   [ProductType.FDM]: 'FDM',

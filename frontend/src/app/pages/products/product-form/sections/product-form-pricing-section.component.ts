@@ -6,7 +6,7 @@ import {
   OnDestroy,
   OnInit,
   inject, DestroyRef } from '@angular/core';
-import { ReactiveFormsModule } from '@angular/forms';
+import { FormsModule } from '@angular/forms';
 import { AsyncPipe } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
@@ -26,18 +26,19 @@ import { markupPercentOnCostRounded } from '../../../../shared/utils/product-mar
 import { ProductFormGroup } from '../services/product-form-state-manager.service';
 import { ProductFormPricingFacade } from '../store/product-form-pricing/product-form-pricing.facade';
 import { ProductFormFacade } from '../product-form.facade';
-import { DbInputComponent } from '@dashboard-form';
+import { ProductFormPricingService } from '../product-form-pricing.service';
 
 @Component({
   selector: 'app-product-form-pricing-section',
   standalone: true,
-  imports: [ReactiveFormsModule, AsyncPipe, CurrencyArsPipe, DbInputComponent],
+  imports: [FormsModule, AsyncPipe, CurrencyArsPipe],
   templateUrl: './product-form-pricing-section.component.html',
   styleUrl: './product-form-pricing-section.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   private readonly pricingStore = inject(ProductFormPricingFacade);
+  private readonly pricing = inject(ProductFormPricingService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly settingsFacade = inject(SettingsFacade);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -50,12 +51,10 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   readonly vm$ = this.pricingStore.vm$;
 
   ngOnInit(): void {
-    this.pricingStore.setSuggestedPrice(this.form.controls.suggestedPrice.value);
-    this.form.controls.suggestedPrice.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe((suggestedPrice) => {
-        this.pricingStore.setSuggestedPrice(suggestedPrice);
-      });
+    const stored = Number(this.form.controls.suggestedPrice.value) || 0;
+    if (stored > 0) {
+      this.pricing.adoptStoredManualPrice();
+    }
     this.form.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.cdr.markForCheck();
     });
@@ -125,9 +124,61 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     return marginLabelForProductType(this.form.controls.type.value);
   }
 
-  get suggestedPriceLabel(): string {
-    const suggested = Number(this.form.controls.suggestedPrice.value) || 0;
-    return suggested > 0 ? 'Precio fijo' : 'Precio calculado';
+  get supplyCost(): number {
+    return this.pricing.supplyValue();
+  }
+
+  get priceManual(): boolean {
+    return this.pricing.manualUnitPrice != null && this.pricing.manualUnitPrice > 0;
+  }
+
+  unitPriceDisplay(calculatedPrice: number): string {
+    const amount = this.priceManual
+      ? this.pricing.manualUnitPrice!
+      : calculatedPrice;
+    return new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(
+      Math.round(Number(amount) || 0),
+    );
+  }
+
+  onUnitPriceDisplayChange(raw: string): void {
+    const digits = String(raw ?? '').replace(/\D/g, '');
+    if (!digits) {
+      this.resetUnitPrice();
+      return;
+    }
+    this.pricing.applyManualUnitPrice(Math.round(Number(digits)));
+    this.cdr.markForCheck();
+  }
+
+  resetUnitPrice(): void {
+    this.pricing.clearManualUnitPrice();
+    this.cdr.markForCheck();
+  }
+
+  unitPriceHint(calculatedPrice: number, cost: number): string {
+    const calculated = Number(this.pricing.computedPrice) || calculatedPrice;
+    const calculatedLabel =
+      calculated > 0
+        ? `Calculado ${this.money(calculated)}`
+        : 'Sin precio calculado aún';
+    const price = this.priceManual
+      ? Number(this.pricing.manualUnitPrice) || 0
+      : calculated;
+    const margin =
+      cost > 0 && price > 0
+        ? Math.round(((price - cost) / cost) * 100)
+        : null;
+    if (this.priceManual && margin != null && margin < 0) {
+      return `${calculatedLabel} · precio manual · margen ${margin}%`;
+    }
+    if (this.priceManual) {
+      return `${calculatedLabel} · precio manual`;
+    }
+    if (margin != null) {
+      return `${calculatedLabel} · margen ${margin}%`;
+    }
+    return calculatedLabel;
   }
 
   actualMarginPercent(price: number, cost: number): number | null {

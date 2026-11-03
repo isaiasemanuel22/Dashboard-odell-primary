@@ -115,9 +115,19 @@ export class DynamicListComponent<T extends object>
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    if (changes['initialValue'] || changes['config']) {
-      this.resetFromInitial();
-      this.applyLockedState();
+    const configChanged = !!changes['config'] && !changes['config'].firstChange;
+    const valueChanged =
+      !!changes['initialValue'] && !changes['initialValue'].firstChange;
+    if (configChanged || valueChanged) {
+      // El padre reescribe la misma lista en cada tecla. Reconstruir el form
+      // desarma el input con foco y los gramos quedan en pantalla pero no en el modelo.
+      if (
+        configChanged ||
+        !this.sameItems(this.initialValue, this.rawItems())
+      ) {
+        this.resetFromInitial();
+        this.applyLockedState();
+      }
     }
     if (changes['locked'] && !changes['locked'].firstChange) {
       this.applyLockedState();
@@ -133,6 +143,10 @@ export class DynamicListComponent<T extends object>
   }
 
   writeValue(value: T[] | null): void {
+    if (this.sameItems(value, this.rawItems())) {
+      this.initialValue = value;
+      return;
+    }
     this.initialValue = value;
     this.resetFromInitial();
     this.applyLockedState();
@@ -297,6 +311,16 @@ export class DynamicListComponent<T extends object>
       return `color-select-${field.name}-${index}`;
     }
     return `${field.type}-${field.name}-${index}`;
+  }
+
+  private sameItems(next: T[] | null | undefined, current: T[]): boolean {
+    const incoming = next ?? [];
+    if (incoming.length !== current.length) return false;
+    try {
+      return JSON.stringify(incoming) === JSON.stringify(current);
+    } catch {
+      return false;
+    }
   }
 
   private resetFromInitial(): void {

@@ -17,7 +17,7 @@ import {
   RESIN_TYPE_LABELS,
   SUPPLY_CATEGORY_LABELS,
 } from '../../shared/constants/labels';
-import { FormDialogService } from '../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../modals/public-api';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { resolveColorLabel } from '../../shared/utils/color.helpers';
 import { supplyCategoryFilters } from '../../shared/utils/list-filters';

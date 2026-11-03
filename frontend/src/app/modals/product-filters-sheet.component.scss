@@ -1,0 +1,94 @@
+@use '../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+}
+
+.product-filters-sheet.modal::before {
+  margin: 10px auto 2px;
+}
+
+.product-filters-sheet__header {
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px 10px;
+  border-bottom: none;
+
+  h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: mobile.$m-text;
+  }
+}
+
+.product-filters-sheet__clear {
+  min-height: 44px;
+  min-width: 44px;
+  padding: 0 12px;
+  border: 0;
+  background: transparent;
+  color: mobile.$m-primary;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  flex: none;
+}
+
+.product-filters-sheet__group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.product-filters-sheet__opts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.product-filters-sheet__opt {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid mobile.$m-border-input;
+  background: mobile.$m-surface;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: mobile.$m-text-label;
+  cursor: pointer;
+
+  &--on {
+    background: mobile.$m-primary-pale;
+    border-color: mobile.$m-primary;
+    color: mobile.$m-primary-dark;
+    font-weight: 700;
+  }
+}
+
+.product-filters-sheet__foot {
+  margin-top: auto;
+  padding: 12px 16px 20px;
+  border-top: 1px solid mobile.$m-border;
+  display: flex;
+  gap: 10px;
+  background: #fff;
+  box-sizing: border-box;
+
+  ::ng-deep db-button:has(.db-button--secondary) .db-button,
+  ::ng-deep .db-button--solid.db-button--secondary {
+    background: #fff;
+    border: 1px solid #c9d8e3;
+    color: #0f2a3a;
+  }
+
+  ::ng-deep db-button:has(.db-button--primary) .db-button,
+  ::ng-deep .db-button--solid.db-button--primary {
+    background: #0e7aab;
+    border: none;
+    color: #fff;
+  }
+}

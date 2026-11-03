@@ -1,6 +1,9 @@
 import { ProductType, ServiceType } from '../common/enums';
 import { Product, QuoteItem } from '../common/interfaces';
-import { isDesignService } from '../common/service-type.util';
+import {
+  isAreaService,
+  isDesignService,
+} from '../common/service-type.util';
 import {
   normalizeEstampadoPressCycles,
   normalizeEstampadoPrints,
@@ -15,7 +18,9 @@ export function isQuoteLineMissingFromCatalog(
   item: Pick<QuoteItem, 'serviceType' | 'productId'>,
   catalogHasProduct: (productId: string) => boolean,
 ): boolean {
-  if (isDesignService(item.serviceType)) return false;
+  if (!isAreaService(item.serviceType) || isDesignService(item.serviceType)) {
+    return false;
+  }
   const productId = item.productId?.trim();
   if (!productId) return true;
   return !catalogHasProduct(productId);
@@ -27,7 +32,9 @@ export function unpublishedProductFromQuoteLine(
   id: string,
   updatedAt: string,
 ): Product | null {
-  if (isDesignService(item.serviceType)) return null;
+  if (!isAreaService(item.serviceType) || isDesignService(item.serviceType)) {
+    return null;
+  }
 
   const name = item.productName.trim();
   if (!name) return null;
@@ -79,6 +86,7 @@ export function unpublishedProductFromQuoteLine(
       filaments.find((line) => line.filamentType)?.filamentType ??
       item.filamentType,
     filaments: filaments.length ? filaments : undefined,
+    supplies: normalizeEstampadoSupplies(item.estampadoSupplies),
   };
 }
 

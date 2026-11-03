@@ -1,0 +1,19 @@
+<span class="file-card__icon" aria-hidden="true">
+  <svg viewBox="0 0 24 24">
+    <path d="M7 3.5h7l5 5V20a1.5 1.5 0 0 1-1.5 1.5h-10.5A1.5 1.5 0 0 1 5.5 20V5A1.5 1.5 0 0 1 7 3.5z" fill="none" stroke="currentColor" stroke-width="1.6" />
+    <path d="M14 3.5V9h5.5" fill="none" stroke="currentColor" stroke-width="1.6" />
+  </svg>
+</span>
+<p class="file-card__title">Archivos adjuntos</p>
+<p class="file-card__hint">STL, 3MF, PDF o referencias</p>
+<div [formGroup]="facade.form">
+  <db-attachment-upload
+    formControlName="attachments"
+    addLabel="Elegir archivos"
+    [uploadFn]="uploadFn"
+  />
+</div>
+<p class="file-card__note">Solo los ve el equipo</p>
+@if (facade.attachmentUploadError) {
+  <db-form-error>{{ facade.attachmentUploadError }}</db-form-error>
+}

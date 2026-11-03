@@ -11,6 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { Subscription } from 'rxjs';
 import {
   GeneralSettings,
+  ServiceProfitMargins,
   ServiceType,
   WholesaleDiscountSettings,
 } from '../../../core/models';
@@ -211,7 +212,7 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
 
   marginValue(service: ServiceType): number {
     if (!this.settings) return 0;
-    return this.settings.profitMargins[service];
+    return this.settings.profitMargins[service as keyof ServiceProfitMargins] ?? 0;
   }
 
   setMargin(service: ServiceType, value: number | string): void {
@@ -286,7 +287,7 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
     this.settings.profitMargins = profitMargins;
 
     for (const field of this.marginFields) {
-      const value = profitMargins[field.service];
+      const value = profitMargins[field.service as keyof ServiceProfitMargins] ?? 0;
       if (value < 0 || value > 999) {
         this.marginsMessage = `El margen de ${field.label} debe estar entre 0 y 999 %`;
         return;

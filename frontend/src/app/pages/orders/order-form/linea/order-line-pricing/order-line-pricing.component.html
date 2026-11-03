@@ -21,17 +21,23 @@
   <div
     class="order-line__money-value order-line__money-value--editable order-line__money-value--with-prefix"
   >
-    <input
-      class="order-line__money-control"
-      type="text"
-      inputmode="numeric"
-      [ngModel]="unitPriceDisplay"
-      (ngModelChange)="onUnitPriceDisplayChange($event)"
-      [name]="'price-' + lineIndex"
-      autocomplete="off"
-      [attr.aria-label]="showWholesaleColumns ? 'Precio de lista' : 'Precio unitario'"
-      [attr.aria-invalid]="unitPriceError ? true : null"
-    />
+    @if (priceLocked) {
+      <span class="order-line__money-control" aria-label="Precio unitario">
+        {{ unitPriceDisplay }}
+      </span>
+    } @else {
+      <input
+        class="order-line__money-control"
+        type="text"
+        inputmode="numeric"
+        [ngModel]="unitPriceDisplay"
+        (ngModelChange)="onUnitPriceDisplayChange($event)"
+        [name]="'price-' + lineIndex"
+        autocomplete="off"
+        [attr.aria-label]="showWholesaleColumns ? 'Precio de lista' : 'Precio unitario'"
+        [attr.aria-invalid]="unitPriceError ? true : null"
+      />
+    }
   </div>
   @if (unitPriceError) {
     <p class="order-line__money-hint order-line__money-hint--warn">{{ unitPriceError }}</p>

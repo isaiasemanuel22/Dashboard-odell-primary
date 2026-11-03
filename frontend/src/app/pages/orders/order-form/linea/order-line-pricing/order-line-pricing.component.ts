@@ -34,6 +34,8 @@ export class OrderLinePricingComponent {
   @Input() priceHint = '';
   @Input() priceHintWarn = false;
   @Input() manualPrice = false;
+  /** Precio tomado del catálogo: no se edita (línea de insumo). */
+  @Input() priceLocked = false;
   @Input() lineTotal = 0;
 
   /** Vista previa mayorista: columnas Lista (tachada) + Mayorista. */

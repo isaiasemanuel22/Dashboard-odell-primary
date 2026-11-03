@@ -269,6 +269,9 @@ export class ProductsService {
           dto.type === ProductType.RESINA && dto.cureMinutes !== undefined
             ? Number(dto.cureMinutes) || undefined
             : undefined,
+        supplies: normalizeEstampadoSupplies(
+          dto.estampadoSupplies ?? dto.supplies,
+        ),
       };
     }
 
@@ -363,6 +366,12 @@ export class ProductsService {
               'colorId' in data && data.colorId !== undefined
                 ? data.colorId
                 : (existing as Product3D).colorId,
+            supplies:
+              'estampadoSupplies' in data && data.estampadoSupplies !== undefined
+                ? data.estampadoSupplies
+                : 'supplies' in data && data.supplies !== undefined
+                  ? data.supplies
+                  : (existing as Product3D).supplies,
           }
         : {
             workTimeHours:
@@ -496,6 +505,11 @@ export class ProductsService {
       }
       if ('washMinutes' in data && data.washMinutes !== undefined) {
         current.washMinutes = Number(data.washMinutes) || undefined;
+      }
+      if ('estampadoSupplies' in data && data.estampadoSupplies !== undefined) {
+        current.supplies = normalizeEstampadoSupplies(data.estampadoSupplies);
+      } else if ('supplies' in data && data.supplies !== undefined) {
+        current.supplies = normalizeEstampadoSupplies(data.supplies);
       }
       if ('cureMinutes' in data && data.cureMinutes !== undefined) {
         current.cureMinutes = Number(data.cureMinutes) || undefined;
@@ -866,7 +880,11 @@ export class ProductsService {
     if (data.type === ProductType.RESINA && data.colorId !== undefined) {
       resolveProductColorId(colors, data.colorId);
     }
-    if (data.type === ProductType.ESTAMPADO) {
+    if (
+      data.type === ProductType.ESTAMPADO ||
+      data.type === ProductType.FDM ||
+      data.type === ProductType.RESINA
+    ) {
       const supplyLines = normalizeEstampadoSupplies(
         data.estampadoSupplies ?? data.supplies,
       );

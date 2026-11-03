@@ -175,4 +175,47 @@ describe('applyWholesalePricing', () => {
     expect(result.items[0].unitPrice).toBe(1000);
     expect(result.items[0].listUnitPrice).toBeUndefined();
   });
+
+  it('no descuenta la línea de insumo ni el servicio de un tercero', () => {
+    const result = applyWholesalePricing(
+      [
+        line({
+          serviceType: ServiceType.IMPRESION_3D,
+          productName: 'Pieza',
+          quantity: 1,
+          unitPrice: 1000,
+        }),
+        line({
+          serviceType: ServiceType.INSUMO,
+          productName: 'Polímero',
+          quantity: 2,
+          unitPrice: 400,
+        }),
+        line({
+          serviceType: ServiceType.SERVICIO_TERCERO,
+          productName: 'Envío',
+          quantity: 1,
+          unitPrice: 1500,
+        }),
+      ],
+      {
+        priceType: PriceType.MAYORISTA,
+        customer: { wholesaleMinimum: undefined },
+        settings: {
+          enabled: true,
+          percent: 20,
+          serviceTypes: [
+            ServiceType.IMPRESION_3D,
+            ServiceType.INSUMO,
+            ServiceType.SERVICIO_TERCERO,
+          ],
+        },
+      },
+    );
+
+    expect(result.wholesaleApplied).toBe(true);
+    expect(result.items[0].unitPrice).toBe(800);
+    expect(result.items[1].unitPrice).toBe(400);
+    expect(result.items[2].unitPrice).toBe(1500);
+  });
 });

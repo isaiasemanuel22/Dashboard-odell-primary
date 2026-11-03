@@ -142,6 +142,7 @@ export class ProductPayloadBuilderService {
               colorId: input.isResina ? input.colorId : undefined,
               washMinutes: input.isResina ? Number(input.washMinutes) || undefined : undefined,
               cureMinutes: input.isResina ? Number(input.cureMinutes) || undefined : undefined,
+              supplies: input.supplyLines,
             }
           : {
               workTimeHours: Number(input.workTimeHours) || 0,
@@ -215,6 +216,7 @@ export class ProductPayloadBuilderService {
               colorId: isResina ? colorId : undefined,
               washMinutes: isResina ? Number(washMinutes) || undefined : undefined,
               cureMinutes: isResina ? Number(cureMinutes) || undefined : undefined,
+              estampadoSupplies: supplyLines,
             }
           : {
               workTimeHours: Number(workTimeHours) || 0,

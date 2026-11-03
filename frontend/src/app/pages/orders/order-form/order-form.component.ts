@@ -53,13 +53,15 @@ import {
   DbRichTextEditorComponent,
   DbButtonComponent,
 } from '@general-components';
-import { FormDialogService } from '../../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../../modals/public-api';
 import {
   buildOrderItems,
   calculateLinePriceTotal,
   deriveOrderServices,
   isLineBillable,
   createEmptyLine,
+  createSupplyLine,
+  createThirdPartyLine,
   ensureLineUiId,
   DUE_DATE_AFTER_TODAY_MESSAGE,
   defaultDueDate,
@@ -90,9 +92,7 @@ import {
   priceFromCostAndMargin,
   getMarginForService,
 } from '../../../shared/utils/pricing.util';
-import {
-  SERVICE_TYPE_LABELS,
-} from '../../../shared/constants/labels';
+import { serviceTypeLabel } from '../../../shared/constants/labels';
 import { DEPOSIT_FACTOR } from '../../../shared/utils/quote-document.util';
 import {
   normalizeEstampadoPrints,
@@ -135,6 +135,7 @@ import {
   normalizeWholesaleDiscount,
   wholesalePriceFromList,
 } from '../../../shared/utils/wholesale-example.util';
+import { isThirdPartyService } from '../../../shared/utils/service-type.util';
 import {
   isWholesaleMarginBelowArea,
   lineListSubtotal,
@@ -156,6 +157,7 @@ import {
   impresion3DMargin,
   isFdmQuoteConfigured,
   isImpresion3DLine,
+  lineHasCatalogSupplies,
   isResinQuoteConfigured,
   isResinQuoteLine,
   syncFdmQuotePricing,
@@ -630,7 +632,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   get profit(): number {
-    return this.total - this.totalCost - this.paymentFeePreview;
+    return (
+      this.total -
+      this.thirdPartyChargedShare -
+      this.totalCost -
+      this.paymentFeePreview
+    );
   }
 
   get profitPercentOnCost(): number {
@@ -639,7 +646,30 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   get listProfit(): number {
-    return this.listSubtotal - this.discountApplied - this.totalCost;
+    return (
+      this.listSubtotal -
+      this.thirdPartyListShare -
+      this.discountApplied -
+      this.totalCost
+    );
+  }
+
+  /** Lo que paga el cliente por servicios de un tercero. No es ganancia. */
+  private get thirdPartyChargedShare(): number {
+    return this.shareOfCharged(this.thirdPartyListShare);
+  }
+
+  private get thirdPartyListShare(): number {
+    return this.billableLines.reduce((sum, line) => {
+      if (!isThirdPartyService(line.serviceType)) return sum;
+      return sum + linePreviewSubtotal(line, false, this.wholesaleDiscount);
+    }, 0);
+  }
+
+  private shareOfCharged(amount: number): number {
+    const base = this.chargedSubtotal;
+    if (!(amount > 0) || !(base > 0)) return 0;
+    return Math.round(amount * (this.total / base));
   }
 
   get resellerSavings(): number {
@@ -1117,7 +1147,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   serviceLabel(serviceType: ServiceType): string {
-    return SERVICE_TYPE_LABELS[serviceType];
+    return serviceTypeLabel(serviceType);
   }
 
   lineServiceOptions() {
@@ -1308,6 +1338,16 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   addLine(): void {
     this.lines = [...this.lines, createEmptyLine(ServiceType.IMPRESION_3D)];
+    this.uiMetaChange.emit();
+  }
+
+  addSupplyLine(): void {
+    this.lines = [...this.lines, createSupplyLine()];
+    this.uiMetaChange.emit();
+  }
+
+  addThirdPartyLine(): void {
+    this.lines = [...this.lines, createThirdPartyLine()];
     this.uiMetaChange.emit();
   }
 
@@ -1715,9 +1755,11 @@ export class OrderFormComponent implements OnChanges, OnInit {
     });
     const configured =
       (!isResin && isFdmQuoteConfigured(line)) || resinConfigured;
+    const hasSupplies = lineHasCatalogSupplies(line);
 
     // Costear; precio/costo se preservan si son manual/snapshot o al reabrir.
-    if (configured) {
+    // Un insumo solo también entra: el proceso puede seguir en 0.
+    if (configured || hasSupplies) {
       syncFdmQuotePricing(
         line,
         this.generalSettings,
@@ -1727,6 +1769,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
           ...options,
           preservePrice: options?.preservePrice || !!line.unitPriceManual,
           preserveCost: options?.preserveCost,
+          supplies: this.supplies,
           productType: isResin
             ? ProductType.RESINA
             : product?.type === ProductType.FDM ||

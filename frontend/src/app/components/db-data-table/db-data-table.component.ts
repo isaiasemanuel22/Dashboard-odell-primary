@@ -15,6 +15,7 @@ import {
 import { NgTemplateOutlet } from '@angular/common';
 import { OrderStatus, QuoteStatus, ServiceType } from '../../core/models';
 import {
+  AreaServiceType,
   ORDER_STATUS_LABELS,
   QUOTE_STATUS_LABELS,
   SERVICE_TYPE_LABELS,
@@ -128,7 +129,7 @@ export class OdlRowDetailDef<T = any> {
   }
 }
 
-const SERVICE_AREA: Record<ServiceType, OdlArea> = {
+const SERVICE_AREA: Record<AreaServiceType, OdlArea> = {
   [ServiceType.IMPRESION_3D]: 'impresion3d',
   [ServiceType.DISENO_GRAFICO]: 'diseno',
   [ServiceType.MODELADO]: 'modelado',
@@ -136,6 +137,12 @@ const SERVICE_AREA: Record<ServiceType, OdlArea> = {
 };
 
 export function serviceTag(service: ServiceType): OdlTag {
+  if (service === ServiceType.INSUMO) {
+    return { label: 'Insumo', area: 'general' };
+  }
+  if (service === ServiceType.SERVICIO_TERCERO) {
+    return { label: 'Servicio', area: 'general' };
+  }
   return { label: SERVICE_TYPE_LABELS[service], area: SERVICE_AREA[service] };
 }
 

@@ -16,10 +16,10 @@ import {
   EstampadoSupplyLine,
   INDISTINTO_COLOR_ID,
   Supply,
-  SupplyCategory,
 } from '../../../core/models';
 import { SuppliesService } from '../../../core/services/settings.service';
 import { createEmptyEstampadoSupplyLine } from '../../../shared/utils/estampado.helpers';
+import { isCatalogInsumo } from '../../../shared/utils/supply-line-value.util';
 import type { DbSelectOption } from '@dashboard-form';
 import { Subject, takeUntil } from 'rxjs';
 import {
@@ -66,7 +66,7 @@ export class SupplyLineListComponent
   readonly supplyConfig: DynamicListConfig<EstampadoSupplyLine> = {
     legend: 'Insumos',
     description:
-      'Prenda, taza o soporte que se estampa. El costo sale del precio unitario en Insumos.',
+      'Del catálogo de insumos. El valor es cantidad × precio unitario, sin margen.',
     layout: 'table',
     addPlacement: 'inside',
     tableColumns: 'minmax(14rem, 2.2fr) 7.5rem 5.75rem 4.75rem 2rem',
@@ -124,10 +124,10 @@ export class SupplyLineListComponent
 
   ngOnInit(): void {
     this.suppliesService
-      .watchSupplies(SupplyCategory.ESTAMPADO)
+      .watchSupplies()
       .pipe(takeUntil(this.destroy$))
       .subscribe((items: Supply[]) => {
-        this.suppliesCatalog = items;
+        this.suppliesCatalog = items.filter(isCatalogInsumo);
         this.cdr.markForCheck();
       });
   }

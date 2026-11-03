@@ -39,7 +39,7 @@ import {
   CurrencyArsPipe,
   ServiceTypeLabelPipe,
 } from '../../shared/pipes/labels.pipe';
-import { FormDialogService } from '../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../modals/public-api';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { cancelOrderConfirmMessage } from '../../shared/utils/order.helpers';
 import { salesChannelLabel } from '../../shared/utils/v1-labels.util';

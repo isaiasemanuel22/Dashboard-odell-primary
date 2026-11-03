@@ -6,6 +6,7 @@ import {
   ProductType,
   ResinType,
   ServiceType,
+  Supply,
   isProduct3D,
 } from '../../core/models';
 import { ProductCostCalculationService } from '../../core/services/product-cost-calculation.service';
@@ -54,6 +55,17 @@ export function isResinQuoteConfigured(
 
 export function isImpresion3DLine(serviceType: ServiceType): boolean {
   return serviceType === ServiceType.IMPRESION_3D;
+}
+
+/** Insumo de catálogo en la línea: cantidad × precio, aunque el proceso aún esté en 0. */
+export function lineHasCatalogSupplies(
+  line: {
+    estampadoSupplies?: { supplyId?: string; quantity?: number }[] | null;
+  },
+): boolean {
+  return (line.estampadoSupplies ?? []).some(
+    (entry) => !!entry.supplyId?.trim() && Number(entry.quantity) > 0,
+  );
 }
 
 /** Catálogo RESINA o presupuesto manual en modo resina. */
@@ -124,6 +136,7 @@ export function applyProductSpecsToFdmLine(
       if (product.grams != null) line.grams = product.grams;
     }
     line.workTimeHours = resolveQuoteLaborHoursFromProduct(product, catalog);
+    line.estampadoSupplies = structuredClone(product.supplies ?? []);
 
     if (product.type === ProductType.RESINA) {
       // Resina no usa filamentos; alcanza grams + tiempos del producto.
@@ -185,6 +198,7 @@ export function syncFdmQuotePricing(
     resinType?: ResinType | string;
     washMinutes?: number;
     cureMinutes?: number;
+    supplies?: Supply[];
   },
 ): void {
   if (!isImpresion3DLine(line.serviceType)) return;
@@ -198,10 +212,9 @@ export function syncFdmQuotePricing(
     isResin &&
     !!resinType &&
     ((Number(line.grams) || 0) > 0 || (Number(line.printTimeHours) || 0) > 0);
-  if (!isResin && !isFdmQuoteConfigured(line)) {
-    return;
-  }
-  if (isResin && !resinReady) {
+  const processReady = isResin ? resinReady : isFdmQuoteConfigured(line);
+  const hasSupplies = lineHasCatalogSupplies(line);
+  if (!processReady && !hasSupplies) {
     return;
   }
 
@@ -212,37 +225,45 @@ export function syncFdmQuotePricing(
     ? undefined
     : (line.filaments ?? []).map((row) => ({ ...row, brand: undefined }));
 
-  const breakdown = costCalculator.calculateCost(
-    {
-      type,
-      grams: Number(line.grams) || 0,
-      printTimeHours: Number(line.printTimeHours) || 0,
-      workTimeHours: Number(line.workTimeHours) || 0,
-      filamentType: isResin
-        ? undefined
-        : (line.filamentType as FilamentType),
-      filaments: filamentsForQuote?.length ? filamentsForQuote : undefined,
-      brand: isResin ? options?.brand : undefined,
-      resinType: isResin ? resinType : undefined,
-      washMinutes: options?.washMinutes,
-      cureMinutes: options?.cureMinutes,
-    },
-    { settings },
-  );
+  const processCost = processReady
+    ? costCalculator.calculateCost(
+        {
+          type,
+          grams: Number(line.grams) || 0,
+          printTimeHours: Number(line.printTimeHours) || 0,
+          workTimeHours: Number(line.workTimeHours) || 0,
+          filamentType: isResin
+            ? undefined
+            : (line.filamentType as FilamentType),
+          filaments: filamentsForQuote?.length ? filamentsForQuote : undefined,
+          brand: isResin ? options?.brand : undefined,
+          resinType: isResin ? resinType : undefined,
+          washMinutes: options?.washMinutes,
+          cureMinutes: options?.cureMinutes,
+        },
+        { settings, supplies: options?.supplies },
+      ).totalCost
+    : 0;
 
+  if (line.productId?.trim()) {
+    return;
+  }
+
+  const supplyValue = costCalculator.supplyLinesValue(
+    line.estampadoSupplies,
+    options?.supplies,
+  );
   const keepCost =
     options?.preserveCost &&
     line.unitCost != null &&
     Number.isFinite(Number(line.unitCost));
   if (!keepCost) {
-    line.unitCost = breakdown.totalCost;
+    line.unitCost = processCost + supplyValue;
   }
   const preserve = options?.preservePrice || !!line.unitPriceManual;
   if (!preserve) {
-    const costForPrice = keepCost
-      ? Number(line.unitCost)
-      : breakdown.totalCost;
-    line.unitPrice = priceFromCostAndMargin(costForPrice, marginPercent);
+    line.unitPrice =
+      priceFromCostAndMargin(processCost, marginPercent) + supplyValue;
   }
 }
 

@@ -324,6 +324,10 @@ export class ProductFormStateManagerService {
       state.colorId = normalizeColorId(product.colorId);
       state.washMinutes = product.washMinutes ?? 0;
       state.cureMinutes = product.cureMinutes ?? 0;
+      state.supplyLines = structuredClone(product.supplies ?? []).map((line) => ({
+        ...line,
+        colorId: normalizeColorId(line.colorId),
+      }));
     } else {
       const estampado = product as ProductEstampado;
       state.workTimeHours = estampado.workTimeHours ?? 0;

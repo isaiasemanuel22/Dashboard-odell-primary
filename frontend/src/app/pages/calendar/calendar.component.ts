@@ -14,7 +14,7 @@ import {
 } from '../../core/models';
 import { CalendarService } from '../../core/services/calendar.service';
 import { RealtimeService } from '../../core/services/realtime.service';
-import { FormDialogService } from '../../shared/form-dialogs/form-dialog.service';
+import { FormDialogService } from '../../modals/form-dialog.service';
 import {
   DbButtonComponent,
   DbCalendarAgendaComponent,

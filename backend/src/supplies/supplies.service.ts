@@ -10,6 +10,7 @@ import {
   validateSupplyColorId,
 } from '../common/color.util';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
+import { PricingSyncService } from '../pricing/pricing-sync.service';
 import { StoreChangeService } from '../store/store-change.service';
 import { assignSupplyBrand } from '../store/brand-link.util';
 import { StoreService } from '../store/store.service';
@@ -43,6 +44,7 @@ export class SuppliesService {
     private readonly costCalculator: CostCalculatorService,
     private readonly storeChange: StoreChangeService,
     private readonly orderTasks: OrderTasksService,
+    private readonly pricingSync: PricingSyncService,
   ) {}
 
   findAll(category?: SupplyCategory): Supply[] {
@@ -125,6 +127,7 @@ export class SuppliesService {
           entity: 'settings',
         },
       });
+      this.pricingSync.syncAllProductsAndOrders('supply_price');
     }
 
     if (
@@ -187,6 +190,10 @@ export class SuppliesService {
 
     if (notify) {
       this.orderTasks.notifySupplyAvailability();
+    }
+
+    if (unitPriceChanged && persist) {
+      this.pricingSync.syncAllProductsAndOrders('supply_price');
     }
 
     return saved;

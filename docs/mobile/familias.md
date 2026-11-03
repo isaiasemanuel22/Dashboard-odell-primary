@@ -249,8 +249,8 @@ a) **Extraer**
 - Estilos de campo (`m-lbl`, `m-hint`, error inline): unificar en `_mobile-kit.scss`.
 
 b) **Si cambiás X, tocá**
-- Encabezado/pie del form: `mobile-form-shell` (hoy `order-form`, `sale-form`, `customer-form`, `supply-form`, `product-form`, `quote-form`, `event` y `shared/form-dialogs`).
-- Apertura a pantalla completa: `shared/form-dialogs` (`form-dialog-panel--order-fullscreen`) y `shared/styles/_modal.scss`.
+- Encabezado/pie del form: `mobile-form-shell` (hoy `order-form`, `sale-form`, `customer-form`, `supply-form`, `product-form`, `quote-form`, `event` y `modals`).
+- Apertura a pantalla completa: `modals` (`form-dialog-panel--order-fullscreen`) y `shared/styles/_modal.scss`.
 - Stepper o segmentado: componentes nuevos + order-form-products, quote lines, sale-form-cart.
 
 ### D · Hojas inferiores (Registrar pago, Entregar, Filtros, Movimiento de billetera)
@@ -269,7 +269,7 @@ a) **Extraer**
 b) **Si cambiás X, tocá**
 - Look de la hoja (manija, radio, pie): `mobile-sheet` + `_mobile-kit.scss` (`m-sheet*`) + `shared/styles/_modal.scss`.
 - Overlay y menú inferior: `layout/layout-ui.service.ts` (`pushOverlay/popOverlay`).
-- Cada hoja: `shared/form-dialogs/*-filters-sheet*`, `order-detail-payments`, `order-detail-deliveries`, `wallet/components/*-form`.
+- Cada hoja: `modals/*-filters-sheet*`, `order-detail-payments`, `order-detail-deliveries`, `wallet/components/*-form`.
 
 ### E · Paneles (Dashboard, Ventas, Billetera)
 

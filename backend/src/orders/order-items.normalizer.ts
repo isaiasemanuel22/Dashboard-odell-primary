@@ -3,6 +3,8 @@ import { ResinType, ServiceType } from '../common/enums';
 import { OrderItem } from '../common/interfaces';
 import {
   isDesignService,
+  isSupplyOrderLine,
+  isThirdPartyService,
   normalizeServiceType,
 } from '../common/service-type.util';
 import { isDesignPrintConfigured } from './design-print.util';
@@ -83,8 +85,32 @@ export function normalizeIncomingOrderItems(
       );
     }
 
+    const supplyLine = isSupplyOrderLine(serviceType);
+    const thirdPartyLine = isThirdPartyService(serviceType);
+
+    if (supplyLine && productId) {
+      throw new BadRequestException(
+        `Línea ${index + 1}: el insumo no se vincula a un producto`,
+      );
+    }
+    if (thirdPartyLine && productId) {
+      throw new BadRequestException(
+        `Línea ${index + 1}: el servicio de un tercero no sale del catálogo`,
+      );
+    }
+    if (supplyLine) {
+      const supplies = normalizeEstampadoSupplies(item.estampadoSupplies);
+      if (supplies.length !== 1) {
+        throw new BadRequestException(
+          `Línea ${index + 1}: elegí un insumo del catálogo`,
+        );
+      }
+    }
+
     if (
       !isDesignService(serviceType) &&
+      !supplyLine &&
+      !thirdPartyLine &&
       !productId &&
       !isCustomFdmOrderLine({ serviceType, productId }) &&
       !isCustomEstampadoOrderLine({ serviceType, productId })
@@ -93,13 +119,15 @@ export function normalizeIncomingOrderItems(
     }
 
     if (isCustomFdmOrderLine({ serviceType, productId })) {
+      const hasSupplies =
+        normalizeEstampadoSupplies(item.estampadoSupplies).length > 0;
       if (isManualResinOrderLine(item)) {
-        if (!isResinQuoteConfigured(item)) {
+        if (!isResinQuoteConfigured(item) && !hasSupplies) {
           throw new BadRequestException(
             `Línea ${index + 1}: completá tipo de resina y ml u horas de impresión`,
           );
         }
-      } else if (!isFdmQuoteConfigured(item)) {
+      } else if (!isFdmQuoteConfigured(item) && !hasSupplies) {
         throw new BadRequestException(
           `Línea ${index + 1}: completá tipo de filamento y gramos u horas de impresión`,
         );
@@ -211,7 +239,17 @@ export function normalizeIncomingOrderItems(
               item.estampadoSupplies,
             ),
           }
-        : {};
+        : serviceType === ServiceType.IMPRESION_3D || supplyLine
+          ? {
+              estampadoSupplies: normalizeEstampadoSupplies(
+                item.estampadoSupplies,
+              ),
+            }
+          : {};
+
+    const thirdPartyFields = thirdPartyLine
+      ? { laborNote: item.laborNote?.trim() || undefined }
+      : {};
 
     const designFields = isDesignService(serviceType)
       ? {
@@ -233,10 +271,13 @@ export function normalizeIncomingOrderItems(
         }
       : {};
 
-    const unitCost =
-      item.unitCost != null && Number.isFinite(Number(item.unitCost))
-        ? Math.max(0, Number(item.unitCost))
-        : undefined;
+    const unitCost = supplyLine
+      ? resolvedUnitPrice
+      : thirdPartyLine
+        ? 0
+        : item.unitCost != null && Number.isFinite(Number(item.unitCost))
+          ? Math.max(0, Number(item.unitCost))
+          : undefined;
 
     const listUnitPrice =
       item.listUnitPrice != null && Number.isFinite(Number(item.listUnitPrice))
@@ -254,6 +295,7 @@ export function normalizeIncomingOrderItems(
       unitCost,
       ...fdmFields,
       ...estampadoFields,
+      ...thirdPartyFields,
       ...designFields,
       includesPrint:
         serviceType === ServiceType.DISENO_GRAFICO

@@ -37,6 +37,7 @@ import { collectedPaymentsCents, toCents } from '../common/utils/money.util';
 import { defaultAccountForMethod } from '../treasury/treasury-account.util';
 import { isRevenueOrder, resolveOrderSoldAt } from './sales-order.util';
 import { calculateOrderLineSubtotal } from '../orders/order-pricing.util';
+import { isThirdPartyService } from '../common/service-type.util';
 import { computeAreaProfitBalances } from './profit-area.util';
 
 @Injectable()
@@ -223,13 +224,24 @@ export class SalesService {
     total: number,
   ): { cost: number; profit: number } {
     const cost = items.reduce((sum, item) => {
+      if (item.serviceType && isThirdPartyService(item.serviceType)) return sum;
       const unitCost = this.costCalculator.resolveOrderItemUnitCost(item);
       return sum + unitCost * item.quantity;
     }, 0);
+    const linesTotal = items.reduce(
+      (sum, item) => sum + calculateOrderLineSubtotal(item),
+      0,
+    );
+    const thirdParty = items.reduce((sum, item) => {
+      if (!item.serviceType || !isThirdPartyService(item.serviceType)) return sum;
+      return sum + calculateOrderLineSubtotal(item);
+    }, 0);
+    const chargedThird =
+      linesTotal > 0 ? Math.round(thirdParty * (total / linesTotal)) : 0;
 
     return {
       cost,
-      profit: total - cost,
+      profit: total - cost - chargedThird,
     };
   }
 

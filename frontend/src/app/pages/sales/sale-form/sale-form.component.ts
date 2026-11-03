@@ -382,7 +382,7 @@ export class SaleFormComponent implements OnChanges {
     }));
 
     // Import dinámico: evita ciclo SaleForm → FormDialogService → SaleFormDialog → SaleForm (ɵcmp).
-    void import('../../../shared/form-dialogs/form-dialog.service').then(
+    void import('../../../modals/form-dialog.service').then(
       ({ FormDialogService }) => {
         this.injector
           .get(FormDialogService)

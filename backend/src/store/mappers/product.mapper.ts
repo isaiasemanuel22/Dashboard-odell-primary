@@ -125,6 +125,9 @@ export function mapProductFromDb(row: {
     }),
     resinType: row.resinType as Product3D['resinType'],
     colorId: row.colorId ?? undefined,
+    supplies: normalizeEstampadoSupplies(
+      fromJson<Product3D['supplies']>(row.estampadoSupplies ?? []),
+    ),
   } as Product;
 }
 
@@ -197,7 +200,9 @@ export function mapProductToDb(product: Product) {
     heightCm: null,
     estampadoPrints: toInputJson(estampado?.prints ?? []),
     estampadoPressCycles: toInputJson(estampado?.pressCycles ?? []),
-    estampadoSupplies: toInputJson(estampado?.supplies ?? []),
+    estampadoSupplies: toInputJson(
+      estampado?.supplies ?? product3d?.supplies ?? [],
+    ),
     fdmFilaments: toInputJson(fdmFilaments.map(persistedFdmLine)),
     stock: Math.max(0, Math.trunc(product.stock ?? 0)),
     colorId:

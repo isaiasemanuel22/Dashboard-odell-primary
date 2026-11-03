@@ -12,7 +12,7 @@ import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { UserAccessService } from '../../../core/services/user-access.service';
 import { ImpresosService } from '../../../core/services/impresos.service';
-import { FormDialogService } from '../../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../../modals/public-api';
 import { MobileBarComponent } from '@general-components';
 import { CurrentUserProfile, GeneralSettings } from '../../../core/models';
 

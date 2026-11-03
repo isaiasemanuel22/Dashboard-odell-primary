@@ -32,8 +32,11 @@ import {
   normalizeEstampadoSupplies,
 } from './estampado.helpers';
 import {
+  isAreaService,
   isDesignService,
   isGraphicDesignService,
+  isSupplyOrderLine,
+  isThirdPartyService,
   normalizeServiceType,
 } from './service-type.util';
 import {
@@ -42,7 +45,12 @@ import {
   totalFdmFilamentGrams,
 } from './fdm.helpers';
 
-export { isDesignService, isGraphicDesignService };
+export {
+  isDesignService,
+  isGraphicDesignService,
+  isSupplyOrderLine,
+  isThirdPartyService,
+};
 
 export const ACTIVE_ORDER_STATUSES: OrderStatus[] = [
   OrderStatus.PENDIENTE,
@@ -207,7 +215,13 @@ export function orderLineStockHint(
 export function deriveOrderServices(
   lines: Array<{ serviceType: ServiceType }>,
 ): ServiceType[] {
-  return [...new Set(lines.map((line) => line.serviceType))];
+  return [
+    ...new Set(
+      lines
+        .map((line) => line.serviceType)
+        .filter((serviceType) => isAreaService(serviceType)),
+    ),
+  ];
 }
 
 export function orderIncludesService(
@@ -224,6 +238,34 @@ export function buildOrderItems(
   return lines
     .filter((line) => isLineValid(line))
     .map((line) => {
+      if (isSupplyOrderLine(line.serviceType) || isThirdPartyService(line.serviceType)) {
+        const supplyId = line.estampadoSupplies?.[0]?.supplyId;
+        return {
+          serviceType: line.serviceType,
+          productName: (
+            line.customName ||
+            (isSupplyOrderLine(line.serviceType) ? 'Insumo' : '')
+          ).trim(),
+          quantity: line.quantity,
+          unitPrice: Number(line.unitPrice) || 0,
+          unitCost: isSupplyOrderLine(line.serviceType)
+            ? Number(line.unitPrice) || 0
+            : 0,
+          estampadoSupplies: isSupplyOrderLine(line.serviceType)
+            ? normalizeEstampadoSupplies([
+                {
+                  id: line.estampadoSupplies?.[0]?.id || line.uiId || 'insumo',
+                  supplyId: supplyId || '',
+                  quantity: line.quantity,
+                },
+              ])
+            : undefined,
+          laborNote: isThirdPartyService(line.serviceType)
+            ? line.laborNote?.trim() || undefined
+            : undefined,
+        };
+      }
+
       if (isDesignService(line.serviceType)) {
         const deliverables = (line.deliverables ?? [])
           .map((entry) => entry.trim())
@@ -334,9 +376,10 @@ export function buildOrderItems(
         estampadoPressCycles: isEstampadoLine(line.serviceType)
           ? line.estampadoPressCycles
           : undefined,
-        estampadoSupplies: isEstampadoLine(line.serviceType)
-          ? line.estampadoSupplies
-          : undefined,
+        estampadoSupplies:
+          isEstampadoLine(line.serviceType) || isImpresion3DLine(line.serviceType)
+            ? line.estampadoSupplies
+            : undefined,
       };
     });
 }
@@ -384,6 +427,14 @@ export function lineUnitPriceError(line: OrderLineDraft): string {
 
 export function lineConceptError(line: OrderLineDraft): string {
   if (line.productId?.trim()) return '';
+  if (isThirdPartyService(line.serviceType)) {
+    if (isLineBlank(line)) return '';
+    return line.customName?.trim() ? '' : 'Indicá el nombre del servicio';
+  }
+  if (isSupplyOrderLine(line.serviceType)) {
+    if (isLineBlank(line)) return '';
+    return line.estampadoSupplies?.[0]?.supplyId ? '' : 'Elegí un insumo';
+  }
   if (isDesignService(line.serviceType)) {
     return line.customName?.trim() ? '' : 'Indicá un concepto';
   }
@@ -471,6 +522,14 @@ export function isLineValid(line: OrderLineDraft): boolean {
   const price = lineEffectiveUnitPrice(line);
   if (price < 0) return false;
 
+  if (isSupplyOrderLine(line.serviceType)) {
+    return !!line.estampadoSupplies?.[0]?.supplyId && price > 0;
+  }
+
+  if (isThirdPartyService(line.serviceType)) {
+    return !!line.customName?.trim() && price > 0;
+  }
+
   if (isDesignService(line.serviceType)) {
     if (!line.customName?.trim()) return false;
     if (line.includesPrint && !isDesignPrintConfigured(line)) return false;
@@ -516,6 +575,23 @@ export function orderLinesFromSaleCart(
 export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
   const serviceType =
     normalizeServiceType(item.serviceType) ?? item.serviceType;
+
+  if (isSupplyOrderLine(serviceType) || isThirdPartyService(serviceType)) {
+    return {
+      serviceType,
+      customName: item.productName,
+      quantity: item.quantity,
+      unitPrice: item.listUnitPrice ?? item.unitPrice,
+      unitCost: isSupplyOrderLine(serviceType)
+        ? (item.unitCost ?? item.unitPrice)
+        : 0,
+      laborNote: isThirdPartyService(serviceType) ? item.laborNote : undefined,
+      estampadoSupplies: isSupplyOrderLine(serviceType)
+        ? normalizeEstampadoSupplies(item.estampadoSupplies)
+        : undefined,
+      unitPriceManual: item.unitPriceManual || undefined,
+    };
+  }
 
   if (isDesignService(serviceType)) {
     const designUnitPrice = item.designUnitPrice ?? item.unitPrice;
@@ -593,9 +669,10 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
   const estampadoPressCycles = isEstampadoLine(item.serviceType)
     ? normalizeEstampadoPressCycles(item.estampadoPressCycles)
     : undefined;
-  const estampadoSupplies = isEstampadoLine(item.serviceType)
-    ? normalizeEstampadoSupplies(item.estampadoSupplies)
-    : undefined;
+  const estampadoSupplies =
+    isEstampadoLine(item.serviceType) || isImpresion3DLine(item.serviceType)
+      ? normalizeEstampadoSupplies(item.estampadoSupplies)
+      : undefined;
 
   return {
     serviceType: item.serviceType,
@@ -641,6 +718,30 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
       ? estampadoPressCycles
       : undefined,
     estampadoSupplies: estampadoSupplies?.length ? estampadoSupplies : undefined,
+  };
+}
+
+export function createSupplyLine(): OrderLineDraft {
+  return {
+    serviceType: ServiceType.INSUMO,
+    uiId: createLineUiId(),
+    customName: '',
+    quantity: 1,
+    unitPrice: 0,
+    unitCost: 0,
+    estampadoSupplies: [],
+  };
+}
+
+export function createThirdPartyLine(): OrderLineDraft {
+  return {
+    serviceType: ServiceType.SERVICIO_TERCERO,
+    uiId: createLineUiId(),
+    customName: '',
+    quantity: 1,
+    unitPrice: 0,
+    unitCost: 0,
+    laborNote: '',
   };
 }
 

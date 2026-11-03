@@ -17,7 +17,7 @@ import { BreakpointService } from '../../core/services/breakpoint.service';
 import { QuotesService } from '../../core/services/quotes.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { removeById, upsertById } from '../../core/utils/replace-in-store';
-import { FormDialogService } from '../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../modals/public-api';
 import {
   DB_DATA_TABLE,
   DbButtonComponent,

@@ -1,6 +1,7 @@
 import {
   Component,
   EventEmitter,
+  HostListener,
   Input,
   OnChanges,
   OnDestroy,
@@ -95,6 +96,34 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   accProduccion = false;
   accMedia = false;
   accPrecio = true;
+
+  /** True tras interacción del usuario; ignora la carga inicial del producto. */
+  private userEdited = false;
+
+  /** True si el usuario tocó el form y se perderían cambios al cerrar. */
+  hasUnsavedChanges(): boolean {
+    return this.userEdited;
+  }
+
+  @HostListener('input')
+  @HostListener('change')
+  onFormFieldEdit(): void {
+    this.userEdited = true;
+  }
+
+  @HostListener('click', ['$event'])
+  onFormClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+    if (target.closest('[data-discard-safe]')) return;
+    if (
+      target.closest(
+        'button, [role="button"], input, select, textarea, .type-switch__item, .pf-m-acc__h',
+      )
+    ) {
+      this.userEdited = true;
+    }
+  }
 
   get productType(): ProductType {
     return this.basicFields?.type ?? this.facade.type;

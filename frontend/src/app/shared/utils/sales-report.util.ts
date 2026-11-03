@@ -6,11 +6,16 @@ import {
   SalesStats,
 } from '../../core/models';
 import { SERVICE_TYPE_LABELS } from '../constants/labels';
+import { formatCurrencyArs } from './currency-ars.util';
 import {
   allocateSaleEntryItemEconomics,
   listProfitAreas,
   resolveProfitArea,
 } from './profit-area.util';
+
+function formatCurrency(value: number): string {
+  return formatCurrencyArs(Math.round(value));
+}
 
 export interface SalesReportProductRow {
   productName: string;
@@ -28,13 +33,6 @@ export interface SalesReportAreaSection {
 
 type AutoTableFn = typeof import('jspdf-autotable').default;
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    maximumFractionDigits: 0,
-  }).format(Math.round(value));
-}
 
 function formatQuantity(value: number): string {
   return Number.isInteger(value) ? String(value) : value.toFixed(2);

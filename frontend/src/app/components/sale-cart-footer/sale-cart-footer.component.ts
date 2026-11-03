@@ -22,7 +22,7 @@ import {
   canCloseRetailSale,
   productStockOverview,
 } from '../../shared/utils/stock.helpers';
-import { FormDialogService } from '../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../modals/public-api';
 
 @Component({
   selector: 'app-sale-cart-footer',

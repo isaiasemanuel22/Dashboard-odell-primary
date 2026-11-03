@@ -353,6 +353,8 @@ export interface Product3D extends ProductBase {
   filaments?: FdmFilamentLine[];
   resinType?: ResinType | string;
   colorId?: string;
+  /** Insumos del producto. Mismo contrato que el estampado: supplyId + cantidad. */
+  supplies?: EstampadoSupplyLine[];
 }
 
 export interface EstampadoPrintSpec {

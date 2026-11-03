@@ -18,7 +18,12 @@ import {
 } from '../common/interfaces';
 import { StoreService } from '../store/store.service';
 import { calculatePaperCostFromPricePerSqm } from '../common/paper-cost.util';
-import { isDesignService } from '../common/service-type.util';
+import {
+  isAreaService,
+  isDesignService,
+  isSupplyOrderLine,
+  isThirdPartyService,
+} from '../common/service-type.util';
 import {
   buildFdmCostInput,
   buildResinCostInput,
@@ -36,6 +41,7 @@ import {
   resolvePrintDimensions,
   totalEstampadoPressMinutes,
 } from '../products/estampado-product.util';
+import { supplyLinesValue } from '../products/supply-line-value.util';
 import {
   hasValidFdmFilamentInput,
   resolveFdmFilaments,
@@ -303,15 +309,25 @@ export class CostCalculatorService {
       cost = Number(input.cost) || 0;
     }
 
+    const supplyValue = this.supplyValue(input.estampadoSupplies);
     const storedCost = Number(input.cost) || 0;
-    if (cost <= 0 && storedCost > 0) {
+    // El costo guardado ya incluye insumos. No usarlo si hay que sumarlos de nuevo.
+    if (cost <= 0 && storedCost > 0 && supplyValue <= 0) {
       cost = storedCost;
       if (breakdown?.totalCost === 0) {
         breakdown = null;
       }
     }
 
-    const price = this.resolveProductPrice(input, hasComponents, cost);
+    const processCost = cost;
+    cost = processCost + supplyValue;
+    const processPrice = this.resolveProductPrice(
+      input,
+      hasComponents,
+      processCost,
+      supplyValue <= 0,
+    );
+    const price = processPrice + supplyValue;
     const profit = price - cost;
     const configuredMarginPercent = this.getMarginForProductType(input.type);
 
@@ -329,6 +345,7 @@ export class CostCalculatorService {
     input: ProductPricingInput,
     hasComponents = (input.components ?? []).length > 0,
     cost = Number(input.cost) || 0,
+    allowStoredPrice = true,
   ): number {
     if (input.suggestedPrice != null && Number(input.suggestedPrice) > 0) {
       return Number(input.suggestedPrice);
@@ -346,6 +363,7 @@ export class CostCalculatorService {
       return this.priceFromCostAndMargin(cost, margin);
     }
 
+    if (!allowStoredPrice) return 0;
     return Number(input.price) || 0;
   }
 
@@ -353,7 +371,8 @@ export class CostCalculatorService {
     const margins = normalizeProfitMargins(
       this.store.generalSettings.profitMargins,
     );
-    return margins[service] ?? 0;
+    if (!isAreaService(service)) return 0;
+    return margins[service as keyof typeof margins] ?? 0;
   }
 
   getMarginForProductType(type: ProductType): number {
@@ -467,6 +486,16 @@ export class CostCalculatorService {
     printLengthCm?: number;
   }): number {
     // Snapshot persistido al cotizar: no recalcular con Ajustes actuales.
+    if (item.serviceType && isThirdPartyService(item.serviceType)) {
+      return 0;
+    }
+    if (item.serviceType && isSupplyOrderLine(item.serviceType)) {
+      const snapshot =
+        item.unitCost != null && Number.isFinite(Number(item.unitCost))
+          ? Number(item.unitCost)
+          : Number(item.unitPrice) || 0;
+      return Math.max(0, snapshot);
+    }
     if (item.unitCost != null && Number.isFinite(Number(item.unitCost))) {
       return Math.max(0, Number(item.unitCost));
     }
@@ -711,18 +740,16 @@ export class CostCalculatorService {
       }
     }
 
-    const supplyCost = normalizeEstampadoSupplies(dto.estampadoSupplies).reduce(
-      (sum, line) => {
-        const supply = this.store.getSupplyById(line.supplyId);
-        if (!supply) {
-          return sum;
-        }
-        return sum + Number(supply.unitPrice) * Number(line.quantity);
-      },
-      0,
-    );
+    return paperCost;
+  }
 
-    return paperCost + supplyCost;
+  private supplyValue(
+    lines: CalculateCostDto['estampadoSupplies'],
+  ): number {
+    return supplyLinesValue(lines, (supplyId) => {
+      const supply = this.store.getSupplyById(supplyId);
+      return supply ? Number(supply.unitPrice) || 0 : 0;
+    });
   }
 
   private getPaperPricePerSqm(paperType: PaperType): number {

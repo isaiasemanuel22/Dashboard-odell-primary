@@ -85,13 +85,14 @@ export class ProductCostCalculatorService {
     isResina: boolean,
     grams: number,
     is3D: boolean,
+    hasSupplyValue = false,
   ): boolean {
     if (isCombo) return components.length > 0;
     if (usesPieceAssembly) return components.length > 0;
-    if (isEstampado) return hasEstampadoPricingInput;
-    if (isFdm) return hasValidFdmFilamentInput;
-    if (isResina) return Number(grams) > 0;
+    if (isEstampado) return hasEstampadoPricingInput || hasSupplyValue;
+    if (isFdm) return hasValidFdmFilamentInput || hasSupplyValue;
+    if (isResina) return Number(grams) > 0 || hasSupplyValue;
     if (!is3D) return false;
-    return Number(grams) > 0;
+    return Number(grams) > 0 || hasSupplyValue;
   }
 }

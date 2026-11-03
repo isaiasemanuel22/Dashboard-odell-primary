@@ -10,7 +10,7 @@ import { StoreBootstrapService } from '../store/store-bootstrap.service';
 import { SuppliesFacade } from '../store/supplies/supplies.facade';
 import { DbButtonComponent } from '../components/db-button/db-button.component';
 import { NavIconComponent } from '../components/nav-icon/nav-icon.component';
-import { FormDialogService } from '../shared/form-dialogs/form-dialog.service';
+import { FormDialogService } from '../modals/form-dialog.service';
 import { LayoutUiService } from './layout-ui.service';
 
 interface NavItem {

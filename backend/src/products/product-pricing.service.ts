@@ -88,6 +88,7 @@ export class ProductPricingService {
       resinType: product3d.resinType,
       washMinutes: product3d.washMinutes,
       cureMinutes: product3d.cureMinutes,
+      estampadoSupplies: normalizeEstampadoSupplies(product3d.supplies),
     };
   }
 
@@ -139,7 +140,9 @@ export class ProductPricingService {
         estampadoData?.pressMinutes,
       ),
       estampadoSupplies: normalizeEstampadoSupplies(
-        estampadoData?.estampadoSupplies ?? estampadoData?.supplies,
+        estampadoData?.estampadoSupplies ??
+          estampadoData?.supplies ??
+          merged.supplies,
       ),
     };
   }

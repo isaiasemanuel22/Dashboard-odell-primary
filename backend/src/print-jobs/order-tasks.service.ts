@@ -22,6 +22,7 @@ import {
 import { isIndistintoColor } from '../common/color.util';
 import { appendOrderStatusHistory } from '../orders/order-status-history.util';
 import { StoreService } from '../store/store.service';
+import { isAreaService } from '../common/service-type.util';
 import { isDesignPrintConfigured } from '../orders/design-print.util';
 import {
   isCustomFdmOrderLine,
@@ -69,6 +70,10 @@ export class OrderTasksService implements OnModuleInit {
     order.items.forEach((item) => this.ensureFulfillment(item));
 
     order.items.forEach((item, index) => {
+      if (!isAreaService(item.serviceType)) {
+        this.cancelOpenItemTasks(order.id, index);
+        return;
+      }
       if (item.productId) {
         this.planCatalogItemFulfillment(order, item, index);
         return;
@@ -567,6 +572,21 @@ export class OrderTasksService implements OnModuleInit {
       this.ensureItemTask(order, item, index, TaskType.PRODUCTION);
     } else if (!reserve || item.productionRequiredQuantity <= 0) {
       this.cancelOpenProductionTask(order.id, index);
+    }
+  }
+
+  /** Insumo suelto y servicio de un tercero no generan tarea (§11). */
+  private cancelOpenItemTasks(orderId: string, itemIndex: number): void {
+    for (const job of this.store.printJobs) {
+      if (job.orderId !== orderId || job.orderItemIndex !== itemIndex) continue;
+      if (
+        job.status === PrintJobStatus.TERMINADO ||
+        job.status === PrintJobStatus.CANCELADO
+      ) {
+        continue;
+      }
+      job.status = PrintJobStatus.CANCELADO;
+      job.active = false;
     }
   }
 

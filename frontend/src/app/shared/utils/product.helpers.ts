@@ -8,7 +8,7 @@ import {
   ServiceProfitMargins,
   ServiceType,
 } from '../../core/models';
-import { isDesignService } from './service-type.util';
+import { isDesignService, isThirdPartyService } from './service-type.util';
 
 export function normalizeProductComponents(
   raw: ProductComponent[] | unknown,
@@ -270,6 +270,10 @@ export function calculateOrderLinesCost(
 ): number {
   return lines.reduce((sum, line) => {
     const qty = Math.max(0, Number(line.quantity) || 0);
+
+    if (line.serviceType && isThirdPartyService(line.serviceType)) {
+      return sum;
+    }
 
     // Diseño: costo = horas × tarifa del form (unitCost). No inventar desde precio.
     if (line.serviceType && isDesignService(line.serviceType)) {

@@ -26,7 +26,7 @@ import { SuppliesService } from '../../core/services/settings.service';
 import { TreasuryService } from '../../core/services/treasury.service';
 import { OdlActionEvent } from '../../components/db-data-table';
 import { LayoutUiService } from '../../layout/layout-ui.service';
-import { FormDialogService } from '../../shared/form-dialogs/form-dialog.service';
+import { FormDialogService } from '../../modals/form-dialog.service';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import {
   DbButtonComponent,

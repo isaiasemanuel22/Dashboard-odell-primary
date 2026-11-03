@@ -112,11 +112,12 @@ La cantidad y el tipo de material son obligatorios, y de ahí sale el costo:
   (ml ÷ 1000) y usa el precio por litro del tipo.
 
 A ese material se suman energía, máquina, mano de obra y el margen de error
-de Ajustes. Si con esos datos el costo queda en 0, el guardado se rechaza.
+de Ajustes. Ese conjunto es el costo del proceso. Si con esos datos el costo
+queda en 0, el guardado se rechaza.
 
-El precio de venta es ese costo con el margen de Impresión 3D. Si se carga
-un precio sugerido, ese valor reemplaza al precio calculado. La ganancia es
-el precio de venta menos el costo.
+El precio del proceso es ese costo con el margen del área (Impresión 3D o
+Estampado). Si se carga un precio sugerido, ese valor reemplaza al precio
+del proceso. Los insumos del producto no entran en ese margen (§9.1).
 
 El producto incompleto que nace al aceptar un presupuesto (§5) sigue
 pudiendo crearse con el nombre. Cuando después se edita y se guarda como
@@ -126,13 +127,33 @@ y el tipo de material.
 Los productos también pueden contener la información necesaria para su
 producción y composición.
 
-Al armar un producto se pueden usar otros productos e insumos. El material
-no se agrega como pieza: entra al proceso que fabrica esos productos.
-Filamento y resina son ese material.
+Al armar un producto de Impresión 3D o de Estampado se pueden usar otros
+productos e insumos. El material no se agrega como pieza: entra al proceso
+que fabrica esos productos. Filamento y resina son ese material.
 
-Ejemplo: un mate 3D se arma con el producto mate impreso y el insumo
-polímero mate escalonado. El mate impreso se fabrica por impresión 3D, que
-consume filamento o resina.
+El insumo se elige del catálogo, con cantidad (confirmado el 2026-11-03).
+Su valor es cantidad × precio unitario. Ese valor se suma igual al costo y
+al precio del producto. Odell no saca ganancia por el insumo.
+
+```text
+costo del producto = costo del proceso + valor de los insumos
+precio del producto = precio del proceso + valor de los insumos
+ganancia = precio del producto − costo del producto
+```
+
+El precio del proceso es el costo del proceso con el margen del área, o el
+precio sugerido si se cargó uno. En los dos casos el valor de los insumos
+se suma encima.
+
+Ejemplo: imprimir el mate cuesta $1.000 y el margen de Impresión 3D es 50 %.
+El polímero vale $800. El costo del producto es $1.800, el precio es $2.300
+y la ganancia es $500.
+
+El mate 3D se arma con el producto mate impreso y el insumo polímero mate
+escalonado. El mate impreso se fabrica por impresión 3D, que consume
+filamento o resina. Del mismo modo entran el aluminio de los chops, el metal
+de un llavero y el imán de neodimio: son insumos del producto, no material
+del proceso.
 
 Un producto personalizado puede estar relacionado con servicios de distintas
 áreas. Esas relaciones sirven como referencia para el vendedor, pero no
@@ -253,6 +274,28 @@ línea cuando el pedido cotiza impresión 3D):
 - **Concepto.** En líneas de impresión 3D y estampado, el campo Concepto
   muestra el nombre del producto de catálogo (o el texto manual). Al reabrir
   un presupuesto debe verse ese valor, no quedar vacío.
+- **Insumos dentro de la línea** (confirmado el 2026-11-03). Una línea de
+  Impresión 3D o de Estampado puede incluir insumos del catálogo, con
+  cantidad. Si la línea sale de un producto de catálogo, los insumos del
+  producto se copian a la línea: ya están en el precio y en el costo de ese
+  producto, y no se cobran de nuevo. Si la línea es a medida, se cargan en
+  la composición y entran en el costo y en el precio de la línea con la
+  misma fórmula del producto (§3): el margen del área se aplica al proceso
+  y el valor de los insumos se suma igual al costo y al precio.
+- **Línea de insumo.** Un insumo puede no formar parte de ninguna línea de
+  Impresión 3D ni de Estampado. En ese caso es una línea propia. El precio
+  y el costo son la cantidad por el precio unitario del insumo, y la
+  ganancia de la línea es cero. El mayorista no la modifica, porque no
+  pertenece a esas áreas.
+- **Servicio de un tercero.** Es una línea propia. No sale del catálogo ni
+  de un área de Odell. Se carga el nombre, un detalle opcional y el precio.
+  Ese precio es lo que paga el cliente y se suma al total. La línea no
+  registra costo, no entra en el costo total y no se le calcula ganancia.
+  No lleva margen de área, el mayorista no la modifica y no genera tarea.
+- **Botones.** Al lado de «Agregar producto» están «Agregar insumo» y
+  «Agregar servicio». Valen en el presupuesto y en el pedido, en escritorio
+  y en celular. «Agregar producto» sigue abriendo una línea de Impresión 3D,
+  Estampado, Diseño gráfico o Modelado.
 
 ---
 
@@ -386,7 +429,16 @@ resina.
 Un producto puede armarse con otro producto más uno o más insumos. Ejemplo:
 un mate 3D se arma con el producto mate impreso y el insumo polímero mate
 escalonado. El mate impreso se fabrica por impresión 3D, que consume
-filamento o resina.
+filamento o resina. También son insumos el aluminio de los chops, el metal
+de un llavero y el imán de neodimio.
+
+El valor del insumo entra al costo y al precio por el mismo importe, en el
+producto y en la línea de Impresión 3D o de Estampado del pedido y del
+presupuesto (§3, §5.1). Odell no saca ganancia por el insumo. El margen del
+área se calcula solo sobre el costo del proceso.
+
+El alcohol de lavado no sigue esta regla: sigue siendo parte del proceso de
+resina y sale del insumo vinculado a la máquina de lavado (§5.1).
 
 Para determinar la disponibilidad de FDM o resina, se suma la cantidad del
 material compatible que el producto requiere.
@@ -473,6 +525,20 @@ El pedido contiene ítems de
 productos y servicios, sus cantidades y los ítems de servicio agregados
 manualmente por el vendedor.
 
+En el formulario, al lado de «Agregar producto», hay «Agregar insumo» y
+«Agregar servicio» (confirmado el 2026-11-03). El presupuesto usa los mismos
+botones y las mismas líneas (§5.1).
+
+- **Agregar producto** abre una línea de Impresión 3D, Estampado, Diseño
+  gráfico o Modelado. Dentro de Impresión 3D y de Estampado la línea lleva
+  los insumos del producto, o los que se carguen si la línea es a medida.
+- **Agregar insumo** abre una línea de un insumo del catálogo que no forma
+  parte de una línea de Impresión 3D ni de Estampado. Precio y costo son la
+  cantidad por el precio unitario. La ganancia es cero.
+- **Agregar servicio** abre un servicio de un tercero: nombre, detalle
+  opcional y precio. No sale del catálogo, no tiene costo interno y no
+  genera tarea.
+
 El pedido tiene fecha de entrega. Al crearlo viene a 7 días. Quien crea el
 pedido tiene que revisarla antes de guardarlo. Puede dejar esos 7 días o
 poner otra fecha. La fecha que guarda tiene que ser posterior al día de hoy.
@@ -536,7 +602,7 @@ trabajos.
 
 Al confirmar el pedido:
 
-- cada ítem de servicio genera una tarea;
+- cada ítem de servicio de un área genera una tarea;
 - varias unidades iguales se agrupan en una sola tarea con la cantidad
   total;
 - una tarea de servicio no mezcla productos o servicios distintos.
@@ -554,6 +620,9 @@ personalizados, aunque provengan de distintas áreas.
 Un pedido compuesto únicamente por servicios no genera `Preparar pedido`.
 Sin embargo, terminar sus tareas no equivale a entregarlo: puede permanecer
 `TERMINADO` hasta que Ventas registre la entrega.
+
+Una línea de insumo y un servicio de un tercero no son trabajo de un área.
+No generan tarea (§5.1, §10).
 
 ---
 
@@ -867,6 +936,20 @@ servicio quedan fijos. Solo se recotizan si el cliente cambia el alcance. Por
 ahora Odell no registra el tiempo real trabajado, únicamente el
 presupuestado.
 
+### 16.3 Insumo y servicio de un tercero
+
+El insumo no genera ganancia (confirmado el 2026-11-03). Su valor se suma
+al costo y al precio del producto, y de la línea de Impresión 3D o de
+Estampado, por el mismo importe (§3).
+
+En una línea propia de insumo, el precio y el costo son la cantidad por el
+precio unitario. La ganancia de esa línea es cero.
+
+El servicio de un tercero solo tiene el precio que paga el cliente. No
+registra lo que Odell le paga al tercero: no entra en el costo total y no
+se le calcula ganancia. El precio sí entra en el total del pedido o del
+presupuesto.
+
 ---
 
 ## 17. Costos dinámicos
@@ -882,7 +965,7 @@ Insumo
   ↓
 Productos que utilizan ese insumo
   ↓
-Cambio de costo del producto
+Cambio de costo y de precio del producto
   ↓
 Pedidos relacionados
   ↓
@@ -891,6 +974,10 @@ Cambio de valores calculados
 
 Los productos del catálogo deben verse afectados por los cambios de costo
 de los insumos que utilizan y de los materiales que consume su proceso.
+
+Si cambia el precio unitario de un insumo que forma parte del producto, el
+costo y el precio de catálogo se mueven por el mismo importe. La ganancia
+del proceso no cambia (§3, §16.3).
 
 En pedidos confirmados:
 
@@ -1417,6 +1504,8 @@ Reglas codificadas:
 - El presupuesto puede crearse sin cliente (nombre «Sin cliente»); **Crear /
   Enviar** exige cliente (el borrador no).
 - Cotización de líneas FDM/resina, precio manual, armado y fecha: ver §5.1.
+- El formulario solo tiene «Agregar producto». No hay «Agregar insumo» ni
+  «Agregar servicio», ni insumos dentro de la línea de Impresión 3D (§5.1).
 - Presupuesto manual 3D: selector Filamento / Resina (`printProcess` +
   `resinType` persistidos).
 - Cada línea puede persistir `unitPriceManual` y un snapshot de `unitCost`
@@ -1530,7 +1619,10 @@ fdm | resina | estampado | combo
   precio de venta es ese costo con el margen de Impresión 3D, salvo un
   precio sugerido. Sin cantidad, sin tipo o con costo 0 el API rechaza el
   alta o la edición.
-- **Estampado:** insumos de estampado, ciclos de prensa, impresiones.
+- **Estampado:** insumos de estampado, ciclos de prensa, impresiones. El
+  costo de esos insumos entra al material y el margen del área se aplica
+  también sobre ese total. La regla de §3 (el insumo se suma sin margen)
+  todavía no está implementada. Impresión 3D no guarda insumos del producto.
 - **Combo:** producto compuesto por otros productos (piezas); el stock
   disponible puede derivar del ensamblaje de piezas.
 
@@ -1670,6 +1762,12 @@ con saldo impago. La sección **21 (Ventas y balances)** —libro `DEVENGADO` /
 `DISPONIBLE` por área, retiros y saldo deudor central— **no está
 implementada**; lo que existe hoy es la billetera operativa (§25.1) y el
 reporte de ventas por área (§25.3.3).
+
+Insumos en el precio (§3, §5.1, §9.1, §10, §16.3), confirmados el
+2026-11-03, no están implementados. El estampado guarda insumos en el
+producto y en la línea, pero el margen del área se les aplica. Impresión 3D
+no tiene esa lista. No existen la línea propia de insumo, el servicio de un
+tercero ni los botones «Agregar insumo» y «Agregar servicio».
 
 Otras reglas objetivo (§10 modificación/clonación de pedidos, §22 roles
 dinámicos, recotización bloqueante, etc.) pueden estar **parcialmente**

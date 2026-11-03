@@ -17,7 +17,7 @@ import {
   resolveProductUnitCost,
 } from '../../shared/utils/product.helpers';
 import { productPhysicalStock } from '../../shared/utils/stock.helpers';
-import { FormDialogService } from '../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../modals/public-api';
 import { DbButtonComponent } from '../db-button/db-button.component';
 
 @Component({

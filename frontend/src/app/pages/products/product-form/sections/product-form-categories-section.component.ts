@@ -18,7 +18,7 @@ import {
   DbSelectComponent,
 } from '@dashboard-form';
 import type { DbSelectOption } from '@dashboard-form';
-import { FormDialogService } from '../../../../shared/form-dialogs/public-api';
+import { FormDialogService } from '../../../../modals/public-api';
 
 @Component({
   selector: 'app-product-form-categories-section',

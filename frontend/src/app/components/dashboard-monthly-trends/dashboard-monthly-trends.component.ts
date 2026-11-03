@@ -12,6 +12,7 @@ import type {
   ChartConfiguration,
 } from 'chart.js';
 import { MonthlyTrendPoint } from '../../core/models';
+import { formatCurrencyArs } from '../../shared/utils/currency-ars.util';
 
 const COLOR_SOLD = '#15803d';
 const COLOR_COLLECTED = '#0e7aab';
@@ -30,13 +31,6 @@ function formatAxisCurrency(value: number): string {
   return `${sign}$${abs}`;
 }
 
-function formatCurrency(value: number): string {
-  return new Intl.NumberFormat('es-AR', {
-    style: 'currency',
-    currency: 'ARS',
-    maximumFractionDigits: 0,
-  }).format(value);
-}
 
 @Component({
   selector: 'app-dashboard-monthly-trends',
@@ -241,7 +235,7 @@ export class DashboardMonthlyTrendsComponent
             label: (context) => {
               const value = context.parsed.y ?? 0;
               const formatted = currency
-                ? formatCurrency(value)
+                ? formatCurrencyArs(value)
                 : `${value} pedidos`;
               return ` ${context.dataset.label}: ${formatted}`;
             },

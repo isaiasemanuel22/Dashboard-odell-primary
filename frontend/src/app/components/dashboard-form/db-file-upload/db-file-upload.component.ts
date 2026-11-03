@@ -16,6 +16,7 @@ import { DbFormFieldComponent } from '../db-form-field/db-form-field.component';
 import { DbFormErrorComponent } from '../db-form-error/db-form-error.component';
 import { DbButtonComponent } from '../../db-button/db-button.component';
 import { MediaUrlPipe } from '../../../shared/pipes/labels.pipe';
+import { FileUploadSession } from '../file-upload/file-upload.session';
 import {
   DbFileUploadFn,
   DbFileUploadStagedItem,
@@ -155,27 +156,34 @@ export class DbFileUploadComponent implements ControlValueAccessor, OnDestroy {
       this.files = [...this.files, ...urls];
       this.emitChange();
     } catch (err: unknown) {
-      this.uploadError = this.resolveUploadError(err);
+      this.uploadError = FileUploadSession.uploadError(err);
     } finally {
       this.uploading = false;
     }
   }
 
   onFileInputChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const selected = input.files ? Array.from(input.files) : [];
-    input.value = '';
+    this.addFiles(FileUploadSession.fromInput(event));
+  }
 
-    if (!selected.length) return;
+  addFiles(selected: File[]): void {
+    if (!selected.length || !this.canAddMore) return;
 
-    let filesToProcess = selected;
-    if (this.maxFiles !== undefined) {
-      const remaining = this.maxFiles - this.totalCount;
-      if (remaining <= 0) return;
-      if (filesToProcess.length > remaining) {
-        filesToProcess = filesToProcess.slice(0, remaining);
-      }
+    const accepted = selected.filter((file) =>
+      FileUploadSession.accepts(file, this.accept),
+    );
+    if (!accepted.length) {
+      this.uploadError = 'Solo se pueden soltar imágenes';
+      return;
     }
+    this.uploadError = '';
+
+    const filesToProcess = FileUploadSession.withinLimit(
+      accepted,
+      this.totalCount,
+      this.maxFiles,
+    );
+    if (!filesToProcess.length) return;
 
     if (this.uploadFn && this.previewBeforeUpload) {
       this.stageFiles(filesToProcess);
@@ -190,7 +198,7 @@ export class DbFileUploadComponent implements ControlValueAccessor, OnDestroy {
 
   private stageFiles(selected: File[]): void {
     const next = selected.map((file) => ({
-      id: `staged-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      id: FileUploadSession.stagedId(),
       file,
       previewUrl: URL.createObjectURL(file),
     }));
@@ -208,7 +216,7 @@ export class DbFileUploadComponent implements ControlValueAccessor, OnDestroy {
       this.files = [...this.files, ...urls];
       this.emitChange();
     } catch (err: unknown) {
-      this.uploadError = this.resolveUploadError(err);
+      this.uploadError = FileUploadSession.uploadError(err);
     } finally {
       this.uploading = false;
     }
@@ -216,17 +224,5 @@ export class DbFileUploadComponent implements ControlValueAccessor, OnDestroy {
 
   private emitChange(): void {
     this.onChange([...this.files]);
-  }
-
-  private resolveUploadError(err: unknown): string {
-    if (err && typeof err === 'object' && 'error' in err) {
-      const body = (err as { error?: { message?: string } | string }).error;
-      if (typeof body === 'string' && body.trim()) return body;
-      if (body && typeof body === 'object' && 'message' in body) {
-        const message = (body as { message?: string }).message;
-        if (message?.trim()) return message;
-      }
-    }
-    return 'Error al subir el archivo';
   }
 }

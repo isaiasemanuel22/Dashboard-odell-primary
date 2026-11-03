@@ -33,7 +33,7 @@ import type { DbAutocompleteOption } from '@dashboard-form/db-autocomplete/db-au
 import type { DbSelectOption } from '@dashboard-form/db-select/db-select.types';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import { extractApiErrorMessage } from '../../../../shared/utils/api-error';
-import { FormDialogService } from '../../../../shared/form-dialogs/form-dialog.service';
+import { FormDialogService } from '../../../../modals/form-dialog.service';
 import { labelsToSelectOptions } from '../../../../shared/utils/select-options';
 import { TREASURY_ACCOUNT_LABELS } from '../../../../shared/utils/v1-labels.util';
 import {

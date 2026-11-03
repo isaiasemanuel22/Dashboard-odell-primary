@@ -30,6 +30,7 @@ import {
 } from '../../../../../shared/utils/resin-type.util';
 import { SettingsFacade } from '../../../../../store/settings/settings.facade';
 import { OrderQuoteErrorMarginComponent } from '../../../../../components/order-quote-error-margin/order-quote-error-margin.component';
+import { OrderQuoteEstampadoSuppliesComponent } from '../../../../../components/order-quote-estampado-supplies/order-quote-estampado-supplies.component';
 import { OrderQuoteFilamentsComponent } from '../../../../../components/order-quote-filaments/order-quote-filaments.component';
 import { OrderQuoteLaborComponent } from '../../../../../components/order-quote-labor/order-quote-labor.component';
 import { OrderQuotePrintComponent } from '../../../../../components/order-quote-print/order-quote-print.component';
@@ -42,6 +43,7 @@ import {
   resolveOrderQuoteCureMinutes,
   resolveOrderQuoteWashMinutes,
 } from '../../../../../components/order-quote-composition.util';
+import { supplyLinesValue } from '../../../../../shared/utils/supply-line-value.util';
 
 @Component({
   selector: 'app-order-quote-3d-composition',
@@ -54,6 +56,7 @@ import {
     OrderQuoteFilamentsComponent,
     OrderQuotePrintComponent,
     OrderQuoteLaborComponent,
+    OrderQuoteEstampadoSuppliesComponent,
     OrderQuoteErrorMarginComponent,
   ],
   templateUrl: './order-quote-3d-composition.component.html',
@@ -111,6 +114,13 @@ export class OrderQuote3dCompositionComponent implements OnInit {
       Math.max(Number(this.generalSettings?.errorMarginPercent) || 0, 0),
       100,
     );
+  }
+
+  get suppliesCost(): number {
+    return supplyLinesValue(this.line.estampadoSupplies, (supplyId) => {
+      const supply = this.supplies.find((item) => item.id === supplyId);
+      return supply ? Number(supply.unitPrice) || 0 : 0;
+    });
   }
 
   get errorMarginCost(): number {

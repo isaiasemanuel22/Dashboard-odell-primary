@@ -18,6 +18,7 @@ import { DbButtonComponent } from '../../db-button/db-button.component';
 import { DbIconTrashComponent } from '../../db-icon-trash/db-icon-trash.component';
 import { DbFormErrorComponent } from '../db-form-error/db-form-error.component';
 import { DbFormFieldComponent } from '../db-form-field/db-form-field.component';
+import { FileUploadSession } from '../file-upload/file-upload.session';
 import {
   DbAttachmentUploadFn,
   DbAttachmentUploadStagedItem,
@@ -159,27 +160,25 @@ export class DbAttachmentUploadComponent
       ];
       this.emitChange();
     } catch (err: unknown) {
-      this.uploadError = this.resolveUploadError(err);
+      this.uploadError = FileUploadSession.uploadError(err);
     } finally {
       this.uploading = false;
     }
   }
 
   onFileInputChange(event: Event): void {
-    const input = event.target as HTMLInputElement;
-    const selected = input.files ? Array.from(input.files) : [];
-    input.value = '';
+    this.addFiles(FileUploadSession.fromInput(event));
+  }
 
-    if (!selected.length) return;
+  addFiles(selected: File[]): void {
+    if (!selected.length || !this.canAddMore) return;
 
-    let filesToProcess = selected;
-    if (this.maxFiles !== undefined) {
-      const remaining = this.maxFiles - this.totalCount;
-      if (remaining <= 0) return;
-      if (filesToProcess.length > remaining) {
-        filesToProcess = filesToProcess.slice(0, remaining);
-      }
-    }
+    const filesToProcess = FileUploadSession.withinLimit(
+      selected,
+      this.totalCount,
+      this.maxFiles,
+    );
+    if (!filesToProcess.length) return;
 
     if (this.uploadFn && this.previewBeforeUpload) {
       this.stageFiles(filesToProcess);
@@ -205,7 +204,7 @@ export class DbAttachmentUploadComponent
 
   private stageFiles(selected: File[]): void {
     const next = selected.map((file) => ({
-      id: `staged-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      id: FileUploadSession.stagedId(),
       file,
     }));
     this.staged = [...this.staged, ...next];
@@ -230,7 +229,7 @@ export class DbAttachmentUploadComponent
       ];
       this.emitChange();
     } catch (err: unknown) {
-      this.uploadError = this.resolveUploadError(err);
+      this.uploadError = FileUploadSession.uploadError(err);
     } finally {
       this.uploading = false;
     }
@@ -240,17 +239,5 @@ export class DbAttachmentUploadComponent
     const next = [...this.attachments];
     this.onChange(next);
     this.attachmentsChange.emit(next);
-  }
-
-  private resolveUploadError(err: unknown): string {
-    if (err && typeof err === 'object' && 'error' in err) {
-      const body = (err as { error?: { message?: string } | string }).error;
-      if (typeof body === 'string' && body.trim()) return body;
-      if (body && typeof body === 'object' && 'message' in body) {
-        const message = (body as { message?: string }).message;
-        if (message?.trim()) return message;
-      }
-    }
-    return 'Error al subir el archivo';
   }
 }

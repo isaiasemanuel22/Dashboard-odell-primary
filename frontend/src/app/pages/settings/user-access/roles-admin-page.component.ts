@@ -27,7 +27,7 @@ import {
   OdlColumn,
   OdlRowAction,
 } from '@general-components';
-import { FormModalComponent } from '../../../components/form-modal/form-modal.component';
+import { FormModalComponent } from '../../../modals/form-modal/form-modal.component';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import { PERMISSION_ACTION_LABELS } from './user-access.util';
 import { UserAccessHeadComponent } from './user-access-head.component';

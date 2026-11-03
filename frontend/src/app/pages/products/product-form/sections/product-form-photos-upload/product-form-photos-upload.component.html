@@ -1,0 +1,21 @@
+<span class="file-card__icon" aria-hidden="true">
+  <svg viewBox="0 0 24 24">
+    <rect x="4" y="5" width="16" height="14" rx="2" fill="none" stroke="currentColor" stroke-width="1.6" />
+    <circle cx="9" cy="10" r="1.4" fill="currentColor" />
+    <path d="M7 16l3.2-3.2a1 1 0 0 1 1.4 0L16 17" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+  </svg>
+</span>
+<p class="file-card__title">Fotos y reels</p>
+<p class="file-card__hint">Arrastralas o</p>
+@if (facade.legacyImagesNotice) {
+  <p class="file-card__hint">{{ facade.legacyImagesNotice }}</p>
+}
+<div [formGroup]="facade.form">
+  <db-file-upload
+    formControlName="images"
+    addLabel="Elegir archivos"
+    [thumbAlt]="facade.name"
+    [uploadFn]="uploadFn"
+  />
+</div>
+<p class="file-card__note">La primera es la portada</p>

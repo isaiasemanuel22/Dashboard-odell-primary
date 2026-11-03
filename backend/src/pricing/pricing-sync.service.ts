@@ -164,27 +164,25 @@ export class PricingSyncService {
     }
 
     const oldPrice = current.price;
-    const lockedPrice =
-      current.suggestedPrice != null && Number(current.suggestedPrice) > 0
-        ? Number(current.suggestedPrice)
-        : null;
-    const nextPrice = lockedPrice ?? result.price;
     const updated: Product = {
       ...current,
-      price: nextPrice,
+      price: result.price,
       cost: result.cost,
-      profit: nextPrice - result.cost,
-      suggestedPrice: lockedPrice,
+      profit: result.profit,
+      suggestedPrice:
+        current.suggestedPrice != null && Number(current.suggestedPrice) > 0
+          ? Number(current.suggestedPrice)
+          : null,
       updatedAt: new Date().toISOString(),
       ...(productionMetrics?.values ?? {}),
     };
 
     this.products.save(updated);
 
-    if (oldPrice !== nextPrice) {
+    if (oldPrice !== result.price) {
       priceChanges.set(current.id, {
         oldPrice,
-        newPrice: nextPrice,
+        newPrice: result.price,
       });
     }
 

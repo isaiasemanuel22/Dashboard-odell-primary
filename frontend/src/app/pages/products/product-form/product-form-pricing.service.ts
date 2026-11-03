@@ -8,6 +8,7 @@ import {
   isProductType3D,
 } from '../../../core/models';
 import { ProductPricingService } from '../../../core/services/product-pricing.service';
+import { ProductCostCalculationService } from '../../../core/services/product-cost-calculation.service';
 import { ProductCostCalculatorService } from './services/product-cost-calculator.service';
 import { ProductPayloadBuilderService } from './services/product-payload-builder.service';
 import { SettingsFacade } from '../../../store/settings/settings.facade';
@@ -43,6 +44,7 @@ export interface ProductFormPricingContext {
 @Injectable()
 export class ProductFormPricingService {
   private readonly productPricing = inject(ProductPricingService);
+  private readonly productCost = inject(ProductCostCalculationService);
   private readonly costCalculator = inject(ProductCostCalculatorService);
   private readonly payloadBuilder = inject(ProductPayloadBuilderService);
   private readonly settingsFacade = inject(SettingsFacade);
@@ -133,7 +135,7 @@ export class ProductFormPricingService {
   get effectiveCost(): number {
     if (!this.context) return 0;
     const form = this.context.form;
-    return this.costCalculator.calculateEffectiveCost({
+    const base = this.costCalculator.calculateEffectiveCost({
       type: formType(form),
       usesPieceAssembly: usesFormPieceAssembly(form),
       cost: this.cost,
@@ -145,15 +147,20 @@ export class ProductFormPricingService {
       ),
       components: form.controls.components.value,
     });
+    if (usesFormPieceAssembly(form)) {
+      return base + this.catalogSupplyValue();
+    }
+    return base;
   }
 
   get finalPrice(): number {
     if (!this.context) return 0;
     const form = this.context.form;
     const suggestedPrice = form.controls.suggestedPrice.value;
+    const supplyValue = this.catalogSupplyValue();
 
     if (suggestedPrice != null && Number(suggestedPrice) > 0) {
-      return Number(suggestedPrice);
+      return Number(suggestedPrice) + supplyValue;
     }
 
     if (usesFormPieceAssembly(form)) {
@@ -162,9 +169,9 @@ export class ProductFormPricingService {
         form,
       );
       if (partsPrice > 0) {
-        return partsPrice;
+        return partsPrice + supplyValue;
       }
-      return 0;
+      return supplyValue;
     }
 
     if (this.computedPrice != null) {
@@ -197,6 +204,7 @@ export class ProductFormPricingService {
       isFormResina(form),
       form.controls.grams.value,
       isForm3D(form),
+      this.catalogSupplyValue() > 0,
     );
   }
 
@@ -359,12 +367,19 @@ export class ProductFormPricingService {
     }
 
     if (!isForm3D(form) && !isFormEstampado(form)) return;
-    if (isForm3D(form) && isFormResina(form) && Number(form.controls.grams.value) <= 0) {
+    const hasSupplies = this.catalogSupplyValue() > 0;
+    if (
+      isForm3D(form) &&
+      isFormResina(form) &&
+      Number(form.controls.grams.value) <= 0 &&
+      !hasSupplies
+    ) {
       return;
     }
     if (
       isFormFdm(form) &&
-      !hasValidFdmFilamentInput(form.controls.filamentLines.value)
+      !hasValidFdmFilamentInput(form.controls.filamentLines.value) &&
+      !hasSupplies
     ) {
       return;
     }
@@ -631,6 +646,70 @@ export class ProductFormPricingService {
       this.pricingStore.setAppliedMargin(this.appliedMarginPercent);
     }
 
-    this.pricingStore.setSuggestedPrice(form.controls.suggestedPrice.value);
+    const process = Number(form.controls.suggestedPrice.value) || 0;
+    if (process > 0) {
+      this.manualUnitPrice = process + this.catalogSupplyValue();
+      this.pricingStore.setSuggestedPrice(this.manualUnitPrice);
+      return;
+    }
+    if (this.manualUnitPrice != null && this.manualUnitPrice > 0) {
+      this.pricingStore.setSuggestedPrice(this.manualUnitPrice);
+      return;
+    }
+    this.pricingStore.setSuggestedPrice(null);
+  }
+
+  /** Precio unitario que el usuario escribió. Null si sigue el calculado. */
+  manualUnitPrice: number | null = null;
+
+  supplyValue(): number {
+    return this.catalogSupplyValue();
+  }
+
+  /** El número del campo es el precio unitario. El sugerido guarda solo el proceso. */
+  applyManualUnitPrice(fullPrice: number): void {
+    if (!this.context) return;
+    const typed = Math.round(Number(fullPrice) || 0);
+    if (typed <= 0) {
+      this.clearManualUnitPrice();
+      return;
+    }
+    this.manualUnitPrice = typed;
+    const supply = this.catalogSupplyValue();
+    const process = Math.round(typed - supply);
+    this.context.form.controls.suggestedPrice.setValue(
+      process > 0 ? process : null,
+      { emitEvent: false },
+    );
+    this.pricingStore.setSuggestedPrice(typed);
+  }
+
+  clearManualUnitPrice(): void {
+    this.manualUnitPrice = null;
+    if (!this.context) return;
+    this.context.form.controls.suggestedPrice.setValue(null, {
+      emitEvent: false,
+    });
+    this.pricingStore.setSuggestedPrice(null);
+  }
+
+  /** Al reabrir, el precio unitario es el proceso guardado más los insumos. */
+  adoptStoredManualPrice(): void {
+    if (!this.context) return;
+    const process = Number(this.context.form.controls.suggestedPrice.value) || 0;
+    if (process <= 0) {
+      this.manualUnitPrice = null;
+      return;
+    }
+    this.manualUnitPrice = process + this.catalogSupplyValue();
+    this.pricingStore.setSuggestedPrice(this.manualUnitPrice);
+  }
+
+  /** Valor de insumos del catálogo: cantidad × precio unitario, sin margen. */
+  private catalogSupplyValue(): number {
+    if (!this.context) return 0;
+    return this.productCost.supplyLinesValue(
+      this.context.form.controls.supplyLines.value,
+    );
   }
 }
