@@ -36,11 +36,7 @@ export function assertPrintJobStatusTransition(
   next: PrintJobStatus,
 ): void {
   assertPrintJobStatus(next);
+  // Salir de cancelado se confirma en el tablero. Permisos e insumos
+  // siguen en beforeStatusChange.
   if (current === next) return;
-
-  if (current === PrintJobStatus.CANCELADO) {
-    throw new BadRequestException(
-      `No se puede cambiar el estado de una tarea ${current}`,
-    );
-  }
 }

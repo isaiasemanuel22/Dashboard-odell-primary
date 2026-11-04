@@ -681,7 +681,8 @@ TERMINADO
 
 `REVISION` no es un estado de pedido.
 
-Las tareas también pueden estar `CANCELADAS`.
+Las tareas también pueden estar `CANCELADAS`. Sacar una tarea de cancelado
+exige confirmación.
 
 Una tarea también puede estar `BLOQUEADA`. Una tarea bloqueada no puede pasar
 a `EN PROGRESO` hasta que se resuelva la condición que produjo el bloqueo.

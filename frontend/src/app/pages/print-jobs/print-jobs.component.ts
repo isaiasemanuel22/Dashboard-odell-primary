@@ -384,15 +384,7 @@ export class PrintJobsComponent implements OnInit {
       this.persistMove(job, targetStatus, true, fromBacklog);
     };
 
-    if (
-      job.status === PrintJobStatus.TERMINADO &&
-      targetStatus !== PrintJobStatus.TERMINADO
-    ) {
-      this.confirmReopenFinished(job, targetStatus, apply);
-      return;
-    }
-
-    apply();
+    this.requestStatusMove(job, targetStatus, apply);
   }
 
   onNewTaskClick(): void {
@@ -477,17 +469,9 @@ export class PrintJobsComponent implements OnInit {
     const job = event.previousContainer.data[event.previousIndex];
     const fromBacklog = event.previousContainer.id === this.backlogListId;
 
-    if (
-      job.status === PrintJobStatus.TERMINADO &&
-      targetStatus !== PrintJobStatus.TERMINADO
-    ) {
-      this.confirmReopenFinished(job, targetStatus, () => {
-        this.applyBoardMove(event, job, targetStatus, fromBacklog);
-      });
-      return;
-    }
-
-    this.applyBoardMove(event, job, targetStatus, fromBacklog);
+    this.requestStatusMove(job, targetStatus, () => {
+      this.applyBoardMove(event, job, targetStatus, fromBacklog);
+    });
   }
 
   private applyBoardMove(
@@ -540,6 +524,34 @@ export class PrintJobsComponent implements OnInit {
       .subscribe();
   }
 
+  /**
+   * Terminado y cancelado no salen de su columna sin confirmación.
+   * Si el usuario cierra el diálogo, no se toca el tablero ni se persiste.
+   */
+  private requestStatusMove(
+    job: PrintJob,
+    targetStatus: PrintJobStatus,
+    apply: () => void,
+  ): void {
+    if (
+      job.status === PrintJobStatus.TERMINADO &&
+      targetStatus !== PrintJobStatus.TERMINADO
+    ) {
+      this.confirmReopenFinished(job, targetStatus, apply);
+      return;
+    }
+
+    if (
+      job.status === PrintJobStatus.CANCELADO &&
+      targetStatus !== PrintJobStatus.CANCELADO
+    ) {
+      this.confirmReturnToCirculation(job, targetStatus, apply);
+      return;
+    }
+
+    apply();
+  }
+
   private confirmReopenFinished(
     job: PrintJob,
     targetStatus: PrintJobStatus,
@@ -552,6 +564,28 @@ export class PrintJobsComponent implements OnInit {
         title: 'Reabrir tarea terminada',
         message: `«${job.productName}» está terminada. ¿Querés moverla a «${targetLabel}»?`,
         confirmLabel: 'Sí, reabrir',
+        cancelLabel: 'Cancelar',
+        confirmVariant: 'primary',
+      })
+      .subscribe((confirmed) => {
+        if (confirmed) {
+          onConfirm();
+        }
+      });
+  }
+
+  private confirmReturnToCirculation(
+    job: PrintJob,
+    targetStatus: PrintJobStatus,
+    onConfirm: () => void,
+  ): void {
+    const targetLabel = PRINT_JOB_STATUS_LABELS[targetStatus];
+
+    this.formDialogs
+      .openConfirm({
+        title: 'Volver a circulación',
+        message: `«${job.productName}» está cancelada y va a volver a la cola de trabajo. ¿Querés moverla a «${targetLabel}»?`,
+        confirmLabel: 'Volver a circulación',
         cancelLabel: 'Cancelar',
         confirmVariant: 'primary',
       })

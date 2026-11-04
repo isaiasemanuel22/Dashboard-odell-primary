@@ -20,13 +20,13 @@ describe('domain.validators', () => {
     ).not.toThrow();
   });
 
-  it('rechaza cambios desde tareas canceladas', () => {
+  it('permite volver a circulación una tarea cancelada', () => {
     expect(() =>
       assertPrintJobStatusTransition(
         PrintJobStatus.CANCELADO,
         PrintJobStatus.EN_PROCESO,
       ),
-    ).toThrow(BadRequestException);
+    ).not.toThrow();
   });
 });
 
