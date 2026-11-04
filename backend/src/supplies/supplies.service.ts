@@ -132,12 +132,37 @@ export class SuppliesService {
 
     if (
       data.quantity !== undefined &&
-      Number(data.quantity) > Number(existing.quantity)
+      Number(data.quantity) !== Number(existing.quantity)
     ) {
-      this.orderTasks.notifySupplyAvailability();
+      this.noteStockChange(Number(existing.quantity), saved);
     }
 
     return saved;
+  }
+
+  /**
+   * Subir stock avisa a las tareas bloqueadas. Bajar a 0 las bloquea si
+   * necesitan este insumo. Un ajuste que no llega a 0 no cambia tareas.
+   */
+  noteStockChange(previousQuantity: number, supply: Supply): void {
+    const previous = Number(previousQuantity);
+    const next = Number(supply.quantity);
+    if (next > previous + 1e-9) {
+      this.orderTasks.notifySupplyAvailability();
+      return;
+    }
+    if (previous > 1e-9 && next <= 1e-9) {
+      const blocked = this.orderTasks.blockTasksForDepletedSupply(supply);
+      if (!blocked) return;
+      this.storeChange.recordChange({
+        collections: ['printJobs'],
+        realtime: {
+          scopes: ['print-jobs', 'orders', 'dashboard'],
+          action: 'update',
+          entity: 'print-job',
+        },
+      });
+    }
   }
 
   increaseStock(supplyId: string, delta: number): Supply {

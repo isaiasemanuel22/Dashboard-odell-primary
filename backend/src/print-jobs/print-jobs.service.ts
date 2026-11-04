@@ -32,6 +32,7 @@ export class PrintJobsService {
   }
 
   getBoard(): PrintJobsBoard {
+    this.orderTasks.blockTasksMissingStock();
     const jobs = this.findAll();
     const orderStatuses: Record<string, OrderStatus> = {};
 
@@ -52,6 +53,14 @@ export class PrintJobsService {
       .sort((a, b) => a.orderItemIndex - b.orderItemIndex);
   }
 
+  supplyShortages(id: string) {
+    return this.orderTasks.describeSupplyShortages(this.findOne(id));
+  }
+
+  blockMissingSupplies(): boolean {
+    return this.orderTasks.blockTasksMissingStock();
+  }
+
   findOne(id: string): PrintJob {
     const job = this.store.getPrintJobById(id);
     if (!job) {
@@ -66,6 +75,10 @@ export class PrintJobsService {
     actor?: PrintJobActor,
   ): PrintJobUpdateResult {
     const job = this.findOne(id);
+
+    if (dto.supplyReplacements) {
+      this.orderTasks.applySupplyReplacements(job, dto.supplyReplacements);
+    }
 
     if (dto.status !== undefined) {
       assertPrintJobStatus(dto.status);

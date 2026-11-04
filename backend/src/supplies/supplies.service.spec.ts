@@ -17,7 +17,10 @@ describe('SuppliesService', () => {
       store,
       { getUnitPriceForSupply: jest.fn() } as never,
       { recordChange: jest.fn() } as never,
-      { notifySupplyAvailability: jest.fn() } as never,
+      {
+        notifySupplyAvailability: jest.fn(),
+        blockTasksForDepletedSupply: jest.fn(() => false),
+      } as never,
       { syncAllProductsAndOrders: jest.fn() } as never,
     );
   }
@@ -185,6 +188,34 @@ describe('SuppliesService', () => {
       affectedProducts: 1,
     });
     expect(rows[0].variationPercent).toBeCloseTo(50);
+  });
+
+  it('al dejar el stock en 0 pide bloquear las tareas que usan ese insumo', () => {
+    const store = new StoreService();
+    const orderTasks = {
+      notifySupplyAvailability: jest.fn(),
+      blockTasksForDepletedSupply: jest.fn(() => true),
+    };
+    const storeChange = { recordChange: jest.fn() };
+    seed(store, [baseSupply({ quantity: 4 })]);
+    const service = new SuppliesService(
+      new SupplyRepository(store),
+      store,
+      { getUnitPriceForSupply: jest.fn() } as never,
+      storeChange as never,
+      orderTasks as never,
+      { syncAllProductsAndOrders: jest.fn() } as never,
+    );
+
+    service.update('sup-1', { quantity: 0 });
+
+    expect(orderTasks.blockTasksForDepletedSupply).toHaveBeenCalledWith(
+      expect.objectContaining({ id: 'sup-1', quantity: 0 }),
+    );
+    expect(orderTasks.notifySupplyAvailability).not.toHaveBeenCalled();
+    expect(storeChange.recordChange).toHaveBeenCalledWith(
+      expect.objectContaining({ collections: ['printJobs'] }),
+    );
   });
 
   it('excluye variación 0 en price-changes', () => {

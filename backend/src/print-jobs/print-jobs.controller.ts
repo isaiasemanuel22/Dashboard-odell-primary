@@ -4,6 +4,7 @@ import {
   Get,
   Param,
   Patch,
+  Post,
   Query,
   Req,
 } from '@nestjs/common';
@@ -22,12 +23,22 @@ export class PrintJobsController {
     return this.printJobsService.getBoard();
   }
 
+  @Post('reconcile-missing-supplies')
+  reconcileMissingSupplies() {
+    return { blocked: this.printJobsService.blockMissingSupplies() };
+  }
+
   @Get()
   findAll(@Query('orderId') orderId?: string) {
     if (orderId) {
       return this.printJobsService.findByOrderId(orderId);
     }
     return this.printJobsService.findAll();
+  }
+
+  @Get(':id/supply-shortages')
+  supplyShortages(@Param('id') id: string) {
+    return this.printJobsService.supplyShortages(id);
   }
 
   @Get(':id')

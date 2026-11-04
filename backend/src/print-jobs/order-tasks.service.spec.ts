@@ -9,7 +9,7 @@ import {
   ProductType,
   SupplyCategory,
 } from '../common/enums';
-import { Order, Product3D } from '../common/interfaces';
+import { Order, PrintJob, Product3D } from '../common/interfaces';
 import { INDISTINTO_COLOR_ID } from '../common/color.util';
 import { OrderTasksService } from './order-tasks.service';
 import { StoreService } from '../store/store.service';
@@ -468,7 +468,7 @@ describe('OrderTasksService', () => {
   function productionJob(
     status: PrintJobStatus,
     responsibleUserId = 'uid-responsable',
-  ) {
+  ): PrintJob {
     return {
       id: 'job-move',
       orderId: 'ord-move',
@@ -594,6 +594,301 @@ describe('OrderTasksService', () => {
         userId: 'uid-responsable',
       }),
     ).toThrow(BadRequestException);
+    expect(job.status).toBe(PrintJobStatus.BLOQUEADO);
+    expect(job.blockedReason).toBe('Insumos insuficientes');
+  });
+
+  it('reemplaza el faltante por un insumo de la misma categoría y deja mover la tarea', () => {
+    store.products[0] = {
+      ...store.products[0],
+      filaments: [
+        { id: 'ff-1', filamentType: FilamentType.PLA, grams: 50 },
+      ],
+    } as Product3D;
+    store.supplies.push({
+      id: 'sup-petg',
+      name: 'PETG negro',
+      category: SupplyCategory.FDM,
+      filamentType: FilamentType.PETG,
+      unit: 'kg',
+      quantity: 1,
+      minStock: 0,
+      unitPrice: 10000,
+      priceFromSettings: false,
+      updatedAt: new Date().toISOString(),
+    });
+    const job = productionJob(PrintJobStatus.BLOQUEADO);
+    service.applySupplyReplacements(job, [
+      { requirementKey: 'fdm:0', supplyId: 'sup-petg' },
+    ]);
+    service.beforeStatusChange(job, PrintJobStatus.EN_PROCESO, adminActor);
+    expect(job.blockedReason).toBeUndefined();
+    expect(job.supplyReplacements).toEqual([
+      { requirementKey: 'fdm:0', supplyId: 'sup-petg' },
+    ]);
+  });
+
+  it('no acepta un reemplazo de otra categoría', () => {
+    store.products[0] = {
+      ...store.products[0],
+      filaments: [
+        { id: 'ff-1', filamentType: FilamentType.PLA, grams: 50 },
+      ],
+    } as Product3D;
+    store.supplies.push({
+      id: 'sup-polimero',
+      name: 'Polímero',
+      category: SupplyCategory.GENERAL,
+      unit: 'unidad',
+      quantity: 4,
+      minStock: 0,
+      unitPrice: 1000,
+      priceFromSettings: false,
+      updatedAt: new Date().toISOString(),
+    });
+    const job = productionJob(PrintJobStatus.BLOQUEADO);
+    expect(() =>
+      service.applySupplyReplacements(job, [
+        { requirementKey: 'fdm:0', supplyId: 'sup-polimero' },
+      ]),
+    ).toThrow(BadRequestException);
+  });
+
+  it('bloquea la tarea abierta cuando el material que usa pasa a 0', () => {
+    store.products[0] = {
+      ...store.products[0],
+      filaments: [{ id: 'ff-1', filamentType: FilamentType.PLA, grams: 50 }],
+    } as Product3D;
+    const supply = {
+      id: 'sup-pla',
+      name: 'PLA',
+      category: SupplyCategory.FDM,
+      filamentType: FilamentType.PLA,
+      unit: 'kg',
+      quantity: 0,
+      minStock: 0,
+      unitPrice: 10000,
+      priceFromSettings: false,
+      updatedAt: new Date().toISOString(),
+    };
+    store.supplies.push(supply);
+    const job = productionJob(PrintJobStatus.EN_PROCESO);
+    store.printJobs.push(job);
+
+    expect(service.blockTasksForDepletedSupply(supply)).toBe(true);
+    expect(job.status).toBe(PrintJobStatus.BLOQUEADO);
+    expect(job.blockedReason).toBe('Insumos insuficientes');
+  });
+
+  it('no bloquea si otro insumo del mismo material todavía cubre', () => {
+    store.products[0] = {
+      ...store.products[0],
+      filaments: [{ id: 'ff-1', filamentType: FilamentType.PLA, grams: 50 }],
+    } as Product3D;
+    const depleted = {
+      id: 'sup-pla-vacio',
+      name: 'PLA vacío',
+      category: SupplyCategory.FDM,
+      filamentType: FilamentType.PLA,
+      unit: 'kg',
+      quantity: 0,
+      minStock: 0,
+      unitPrice: 10000,
+      priceFromSettings: false,
+      updatedAt: new Date().toISOString(),
+    };
+    store.supplies.push(depleted, {
+      id: 'sup-pla-lleno',
+      name: 'PLA lleno',
+      category: SupplyCategory.FDM,
+      filamentType: FilamentType.PLA,
+      unit: 'kg',
+      quantity: 1,
+      minStock: 0,
+      unitPrice: 10000,
+      priceFromSettings: false,
+      updatedAt: new Date().toISOString(),
+    });
+    const job = productionJob(PrintJobStatus.POR_HACER);
+    store.printJobs.push(job);
+
+    expect(service.blockTasksForDepletedSupply(depleted)).toBe(false);
+    expect(job.status).toBe(PrintJobStatus.POR_HACER);
+  });
+
+  it('bloquea la tarea si el insumo del producto pasa a 0', () => {
+    store.products[0] = {
+      ...store.products[0],
+      supplies: [{ id: 'line-1', supplyId: 'sup-pol', quantity: 1 }],
+    } as Product3D;
+    const supply = {
+      id: 'sup-pol',
+      name: 'Polímero',
+      category: SupplyCategory.GENERAL,
+      unit: 'unidad',
+      quantity: 0,
+      minStock: 0,
+      unitPrice: 800,
+      priceFromSettings: false,
+      updatedAt: new Date().toISOString(),
+    };
+    store.supplies.push(supply);
+    const open = productionJob(PrintJobStatus.POR_HACER);
+    const done = productionJob(PrintJobStatus.TERMINADO);
+    done.id = 'job-done';
+    store.printJobs.push(open, done);
+
+    expect(service.blockTasksForDepletedSupply(supply)).toBe(true);
+    expect(open.status).toBe(PrintJobStatus.BLOQUEADO);
+    expect(open.blockedReason).toBe('Insumos insuficientes');
+    expect(done.status).toBe(PrintJobStatus.TERMINADO);
+  });
+
+  it('bloquea la tarea de estampado que ya estaba en progreso si la taza está en 0', () => {
+    store.products[0] = {
+      ...store.products[0],
+      name: 'Taza Frozen',
+      type: ProductType.ESTAMPADO,
+      stock: 0,
+      supplies: [{ id: 'line-1', supplyId: 'sup-taza', quantity: 1 }],
+    } as unknown as Product3D;
+    store.supplies.push({
+      id: 'sup-taza',
+      name: 'Tazas cerámica blanca',
+      category: SupplyCategory.ESTAMPADO,
+      unit: 'unidad',
+      quantity: 0,
+      minStock: 0,
+      unitPrice: 2500,
+      priceFromSettings: false,
+      updatedAt: new Date().toISOString(),
+    });
+    const order: Order = {
+      id: 'ord-10',
+      customerId: 'cust-1',
+      customerName: 'Cliente Test',
+      services: [ServiceType.ESTAMPADO],
+      items: [
+        {
+          serviceType: ServiceType.ESTAMPADO,
+          productId: 'prod-1',
+          productName: 'Taza Frozen',
+          quantity: 1,
+          unitPrice: 3500,
+        },
+      ],
+      status: OrderStatus.EN_PROGRESO,
+      total: 3500,
+      createdAt: new Date().toISOString(),
+      dueDate: new Date().toISOString(),
+    };
+    store.orders.push(order);
+    const job = productionJob(PrintJobStatus.EN_PROCESO);
+    job.orderId = order.id;
+    job.productName = 'Hacer 1 Taza Frozen';
+    job.quantity = 1;
+    store.printJobs.push(
+      job,
+      productionJob(PrintJobStatus.EN_REVISION, 'uid-responsable'),
+    );
+    const prepare = store.printJobs[store.printJobs.length - 1];
+    prepare.id = 'job-prep';
+    prepare.orderId = order.id;
+    prepare.orderItemIndex = -1;
+    prepare.taskType = TaskType.PREPARE_ORDER;
+    prepare.productName = 'Preparar pedido #ord-10';
+
+    service.syncOrderTasks(order);
+
+    expect(job.status).toBe(PrintJobStatus.BLOQUEADO);
+    expect(job.blockedReason).toBe('Insumos insuficientes');
+    expect(() =>
+      service.beforeStatusChange(job, PrintJobStatus.EN_PROCESO, adminActor),
+    ).toThrow(BadRequestException);
+  });
+
+  it('no analiza insumos de una tarea en revisión o terminada', () => {
+    store.products[0] = {
+      ...store.products[0],
+      name: 'Taza Frozen',
+      type: ProductType.ESTAMPADO,
+      stock: 0,
+      supplies: [{ id: 'line-1', supplyId: 'sup-taza', quantity: 1 }],
+    } as unknown as Product3D;
+    const supply = {
+      id: 'sup-taza',
+      name: 'Tazas cerámica blanca',
+      category: SupplyCategory.ESTAMPADO,
+      unit: 'unidad',
+      quantity: 0,
+      minStock: 0,
+      unitPrice: 2500,
+      priceFromSettings: false,
+      updatedAt: new Date().toISOString(),
+    };
+    store.supplies.push(supply);
+    const order: Order = {
+      id: 'ord-revision',
+      customerId: 'cust-1',
+      customerName: 'Cliente Test',
+      services: [ServiceType.ESTAMPADO],
+      items: [
+        {
+          serviceType: ServiceType.ESTAMPADO,
+          productId: 'prod-1',
+          productName: 'Taza Frozen',
+          quantity: 1,
+          unitPrice: 3500,
+        },
+      ],
+      status: OrderStatus.EN_PROGRESO,
+      total: 3500,
+      createdAt: new Date().toISOString(),
+      dueDate: new Date().toISOString(),
+    };
+    store.orders.push(order);
+    const review = productionJob(PrintJobStatus.EN_REVISION);
+    review.orderId = order.id;
+    review.quantity = 1;
+    const done = productionJob(PrintJobStatus.TERMINADO);
+    done.id = 'job-done';
+    done.orderId = order.id;
+    store.printJobs.push(review, done);
+    const prepare = productionJob(PrintJobStatus.EN_REVISION);
+    prepare.id = 'job-prep';
+    prepare.orderId = order.id;
+    prepare.orderItemIndex = -1;
+    prepare.taskType = TaskType.PREPARE_ORDER;
+    store.printJobs.push(prepare);
+
+    service.syncOrderTasks(order);
+    service.blockTasksForDepletedSupply(supply);
+
+    expect(review.status).toBe(PrintJobStatus.EN_REVISION);
+    expect(review.blockedReason).toBeUndefined();
+    expect(done.status).toBe(PrintJobStatus.TERMINADO);
+  });
+
+  it('al revisar el stock en 0 bloquea Por hacer con la leyenda de faltante', () => {
+    store.products[0] = {
+      ...store.products[0],
+      supplies: [{ id: 'line-1', supplyId: 'sup-pol', quantity: 1 }],
+    } as Product3D;
+    store.supplies.push({
+      id: 'sup-pol',
+      name: 'Polímero',
+      category: SupplyCategory.GENERAL,
+      unit: 'unidad',
+      quantity: 0,
+      minStock: 0,
+      unitPrice: 800,
+      priceFromSettings: false,
+      updatedAt: new Date().toISOString(),
+    });
+    const job = productionJob(PrintJobStatus.POR_HACER);
+    store.printJobs.push(job);
+
+    expect(service.blockTasksMissingStock()).toBe(true);
     expect(job.status).toBe(PrintJobStatus.BLOQUEADO);
     expect(job.blockedReason).toBe('Insumos insuficientes');
   });

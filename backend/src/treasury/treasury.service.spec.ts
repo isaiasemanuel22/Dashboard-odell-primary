@@ -25,7 +25,10 @@ describe('TreasuryService', () => {
   let service: TreasuryService;
   let storeChange: jest.Mocked<Pick<StoreChangeService, 'recordChange'>>;
   let suppliesService: jest.Mocked<
-    Pick<SuppliesService, 'recordPurchase' | 'notifySupplyAvailability'>
+    Pick<
+      SuppliesService,
+      'recordPurchase' | 'notifySupplyAvailability' | 'noteStockChange'
+    >
   >;
 
   beforeEach(() => {
@@ -78,6 +81,7 @@ describe('TreasuryService', () => {
         },
       ),
       notifySupplyAvailability: jest.fn(),
+      noteStockChange: jest.fn(),
     };
 
     storeChange = {

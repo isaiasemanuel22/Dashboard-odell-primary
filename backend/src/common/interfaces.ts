@@ -681,12 +681,38 @@ export interface PrintJob {
   blockedReason?: string;
   responsibleUserId?: string;
   suppliesAvailableNotifiedAt?: string;
+  /** Reemplazos de material para esta tarea. No cambian el producto. */
+  supplyReplacements?: SupplyReplacement[];
+}
+
+export interface SupplyReplacement {
+  requirementKey: string;
+  supplyId: string;
+}
+
+export interface SupplyShortageLine {
+  key: string;
+  label: string;
+  category: SupplyCategory;
+}
+
+export interface SupplyReplacementCandidate {
+  id: string;
+  name: string;
+  category: SupplyCategory;
+  detail: string;
+}
+
+export interface SupplyShortageReport {
+  missing: SupplyShortageLine[];
+  candidates: SupplyReplacementCandidate[];
 }
 
 export interface UpdatePrintJobDto {
   status?: PrintJobStatus;
   active?: boolean;
   responsibleUserId?: string;
+  supplyReplacements?: SupplyReplacement[];
 }
 
 /** Quién intenta mover una tarea. `userId` es el uid de Firebase. */

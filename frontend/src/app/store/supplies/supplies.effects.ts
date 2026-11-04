@@ -5,6 +5,7 @@ import { Store } from '@ngrx/store';
 import { catchError, filter, map, of, switchMap, withLatestFrom } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { Supply } from '../../core/models';
+import { PrintJobsService } from '../../core/services/print-jobs.service';
 import { SuppliesActions } from './supplies.actions';
 import { selectSuppliesLoaded } from './supplies.selectors';
 
@@ -13,6 +14,36 @@ export class SuppliesEffects {
   private readonly actions$ = inject(Actions);
   private readonly http = inject(HttpClient);
   private readonly store = inject(Store);
+  private readonly printJobs = inject(PrintJobsService);
+
+  /** Al cargar el store, las tareas de Por hacer y En progreso que necesitan un insumo en 0 pasan a bloqueadas. */
+  readonly blockTasksOnSupplyLoad$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(SuppliesActions.loadSuccess),
+        switchMap(() =>
+          this.printJobs.blockTasksMissingSupplies().pipe(
+            catchError(() => of(null)),
+          ),
+        ),
+      ),
+    { dispatch: false },
+  );
+
+  /** Al guardar un insumo en 0, se bloquean las tareas que lo necesitan. */
+  readonly blockTasksOnSupplyEmpty$ = createEffect(
+    () =>
+      this.actions$.pipe(
+        ofType(SuppliesActions.upsertSupply),
+        filter(({ supply }) => Number(supply.quantity) <= 0),
+        switchMap(() =>
+          this.printJobs.blockTasksMissingSupplies().pipe(
+            catchError(() => of(null)),
+          ),
+        ),
+      ),
+    { dispatch: false },
+  );
 
   readonly load$ = createEffect(() =>
     this.actions$.pipe(

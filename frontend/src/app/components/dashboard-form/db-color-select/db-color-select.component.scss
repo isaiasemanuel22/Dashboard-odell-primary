@@ -37,6 +37,7 @@
   border-radius: 12px;
   background: #fff;
   box-shadow: 0 12px 32px rgb(15 42 58 / 16%);
+  overflow: visible;
 }
 
 .db-color-select__search {
@@ -102,6 +103,7 @@
   display: flex;
   flex-wrap: wrap;
   gap: 0.35rem;
+  overflow: visible;
 
   &--grid {
     display: grid;
@@ -110,6 +112,7 @@
 }
 
 .db-color-select__dot {
+  position: relative;
   display: grid;
   place-items: center;
   width: 1.35rem;
@@ -119,6 +122,25 @@
   border-radius: 999px;
   background: transparent;
   cursor: pointer;
+
+  &:hover::after,
+  &:focus-visible::after {
+    content: attr(data-name);
+    position: absolute;
+    z-index: 6;
+    bottom: calc(100% + 0.35rem);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 0.2rem 0.45rem;
+    border-radius: 6px;
+    background: #0f2a3a;
+    color: #fff;
+    font-size: 0.72rem;
+    font-weight: 600;
+    line-height: 1.2;
+    white-space: nowrap;
+    pointer-events: none;
+  }
 
   span {
     width: 0.95rem;

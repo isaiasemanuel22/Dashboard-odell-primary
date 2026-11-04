@@ -14,7 +14,14 @@ import {
 } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
-import { OrderStatus, PrintJob, PrintJobStatus, ServiceType, TaskKind } from '../../core/models';
+import {
+  OrderStatus,
+  PrintJob,
+  PrintJobStatus,
+  ServiceType,
+  SupplyReplacementChoice,
+  TaskKind,
+} from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
 import { PrintJobsService } from '../../core/services/print-jobs.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
@@ -464,6 +471,40 @@ export class PrintJobsComponent implements OnInit {
     this.persistMove(job, targetStatus, true, fromBacklog);
   }
 
+  private offerSupplyReplacement(
+    job: PrintJob,
+    status: PrintJobStatus,
+    active: boolean,
+    fromBacklog: boolean,
+  ): void {
+    this.printJobsService.getSupplyShortages(job.id).subscribe({
+      next: (report) => {
+        if (!report.missing.length) {
+          this.showMoveError('Los insumos requeridos todavía no están disponibles');
+          return;
+        }
+        this.formDialogs.openSupplyReplacement(report).subscribe((choices) => {
+          if (!choices?.length) return;
+          this.persistMove(job, status, active, fromBacklog, choices);
+        });
+      },
+      error: () => {
+        this.showMoveError('No se pudo cargar los insumos faltantes');
+      },
+    });
+  }
+
+  private showMoveError(message: string): void {
+    this.formDialogs
+      .openConfirm({
+        title: 'No se pudo mover la tarea',
+        message,
+        confirmLabel: 'Entendido',
+        alertOnly: true,
+      })
+      .subscribe();
+  }
+
   private confirmReopenFinished(
     job: PrintJob,
     targetStatus: PrintJobStatus,
@@ -531,6 +572,7 @@ export class PrintJobsComponent implements OnInit {
     status: PrintJobStatus,
     active: boolean,
     fromBacklog: boolean,
+    replacements?: SupplyReplacementChoice[],
   ): void {
     const previous = { ...job };
     job.active = active;
@@ -539,7 +581,11 @@ export class PrintJobsComponent implements OnInit {
     this.updating = true;
     this.cdr.markForCheck();
     this.printJobsService
-      .updatePrintJob(job.id, { status, active })
+      .updatePrintJob(job.id, {
+        status,
+        active,
+        ...(replacements ? { supplyReplacements: replacements } : {}),
+      })
       .subscribe({
         next: (updated) => {
           this.orderStatusByOrderId[job.orderId] = updated.orderStatus;
@@ -550,15 +596,17 @@ export class PrintJobsComponent implements OnInit {
         error: (err) => {
           this.updating = false;
           this.cdr.markForCheck();
-          this.formDialogs
-            .openConfirm({
-              title: 'No se pudo mover la tarea',
-              message: extractApiErrorMessage(err, 'No se pudo mover la tarea'),
-              confirmLabel: 'Entendido',
-              alertOnly: true,
-            })
-            .subscribe();
+          const message = extractApiErrorMessage(err, 'No se pudo mover la tarea');
           this.revertMove(job, previous, fromBacklog, active);
+          Object.assign(job, previous);
+          if (
+            !replacements &&
+            message.includes('insumos requeridos todavía no están disponibles')
+          ) {
+            this.offerSupplyReplacement(job, status, active, fromBacklog);
+            return;
+          }
+          this.showMoveError(message);
         },
       });
   }

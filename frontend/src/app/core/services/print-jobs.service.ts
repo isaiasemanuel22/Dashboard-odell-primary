@@ -7,6 +7,7 @@ import {
   PrintJob,
   PrintJobsBoard,
   PrintJobUpdateResult,
+  SupplyShortageReport,
   UpdatePrintJobPayload,
 } from '../models';
 
@@ -15,6 +16,13 @@ export class PrintJobsService {
   private readonly baseUrl = `${environment.apiUrl}/print-jobs`;
 
   constructor(private readonly http: HttpClient) {}
+
+  blockTasksMissingSupplies(): Observable<{ blocked: boolean }> {
+    return this.http.post<{ blocked: boolean }>(
+      `${this.baseUrl}/reconcile-missing-supplies`,
+      {},
+    );
+  }
 
   getBoard(): Observable<PrintJobsBoard> {
     return this.http.get<PrintJobsBoard>(`${this.baseUrl}/board`).pipe(
@@ -37,6 +45,12 @@ export class PrintJobsService {
         params: { orderId },
       })
       .pipe(map((jobs) => normalizePrintJobs(jobs)));
+  }
+
+  getSupplyShortages(id: string): Observable<SupplyShortageReport> {
+    return this.http.get<SupplyShortageReport>(
+      `${this.baseUrl}/${id}/supply-shortages`,
+    );
   }
 
   getPrintJob(id: string): Observable<PrintJob> {

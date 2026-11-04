@@ -42,6 +42,16 @@ export class UpdatePrintJobStatusDto {
   status!: PrintJobStatus;
 }
 
+export class SupplyReplacementDto {
+  @IsString()
+  @IsNotEmpty()
+  requirementKey!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  supplyId!: string;
+}
+
 export class UpdatePrintJobDto {
   @IsOptional()
   @IsEnum(PrintJobStatus)
@@ -54,6 +64,12 @@ export class UpdatePrintJobDto {
   @IsOptional()
   @IsString()
   responsibleUserId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => SupplyReplacementDto)
+  supplyReplacements?: SupplyReplacementDto[];
 }
 
 export class OrderDeliveryLineDto {

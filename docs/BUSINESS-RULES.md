@@ -445,10 +445,27 @@ material compatible que el producto requiere.
 
 Cuando una reposición vuelve a cubrir lo que faltaba, el sistema notifica la
 disponibilidad pero no desbloquea la tarea automáticamente. La mueve el
-responsable de la tarea o un usuario con rol administrador (§12.2). Si los
-insumos de esa producción siguen faltando, el paso a `EN PROGRESO` se
-rechaza por falta de insumos, aunque quien mueve sea el responsable o un
-administrador.
+responsable de la tarea o un usuario con rol administrador (§12.2).
+
+Si al moverla todavía faltan filamento o resina, la pantalla lista cada
+material que no alcanza y pregunta si se quiere reemplazar. El reemplazo se
+elige de los insumos con stock de la misma categoría (`fdm` o `resina`).
+Cada faltante se marca con un reemplazo. Cuando todos tienen uno y ese
+insumo cubre la cantidad, la tarea sigue al estado elegido. El reemplazo
+vale solo para esa tarea: no cambia el producto del catálogo ni el precio
+acordado del pedido, y no descuenta stock. Si falta algún reemplazo, o el
+elegido no alcanza, la tarea sigue bloqueada.
+
+Mientras el stock de un insumo esté en 0, las tareas que lo necesitan y
+están en `POR HACER` o `EN PROGRESO` pasan a `BLOQUEADA` con el motivo
+«Insumos insuficientes». Vale tanto si el stock acaba de llegar a 0 como
+si la tarea ya estaba en una de esas dos columnas. Una tarea lo necesita
+cuando el producto o la línea lo lista, cuando es el material de filamento
+o resina que esa tarea usa y ya no queda otro con stock que cubra la
+cantidad, o cuando es el reemplazo elegido para esa tarea y tampoco
+alcanza. Las tareas en `EN REVISIÓN`, las terminadas y las canceladas no
+se analizan: siguen en su columna aunque falte el insumo. Volver a cargar
+stock no desbloquea: solo avisa, igual que cualquier otra reposición.
 
 ### 9.2 Marca
 
@@ -460,6 +477,10 @@ tipos de material que ofrecen, y una misma marca puede ofrecer más de un
 tipo. FilAr, PlastAr y Ecofila son de filamento. Anycubic, Creality y
 Hellbot son de resina. Hellbot también vende filamento, así que figura en
 los dos tipos.
+
+El color de un insumo se elige con el mismo selector de colores del resto
+del sistema: pastilla, nombre y catálogo. En la grilla de colores, al pasar
+el mouse sobre uno se ve el nombre completo.
 
 En un insumo la marca es opcional. El polímero puede llevar la marca
 NostiAr. El aluminio de los chops y, por ahora, las remeras de estampado
@@ -701,7 +722,9 @@ Si faltan materiales o insumos necesarios para fabricar un producto, el
 pedido puede confirmarse y debe mostrar una alerta. La tarea de producción
 queda `BLOQUEADA` hasta que exista disponibilidad suficiente. Filamento y
 resina son materiales. El insumo es lo que se agrega al armar el producto
-(§9.1).
+(§9.1). Si después el stock de uno de esos insumos pasa a 0, se bloquean solo las
+tareas en `POR HACER` o `EN PROGRESO` que lo necesitan. Las que están en
+`EN REVISIÓN` o terminadas no se analizan. Reponer no las desbloquea solo.
 
 ### 12.4 Preparación del pedido
 
@@ -1675,9 +1698,14 @@ Comportamiento implementado relevante:
 - Pedido **cancelado** → tareas abiertas pasan a canceladas; terminadas se
   conservan.
 - Tarea **bloqueada** por falta de insumos: notificación al reponer stock,
-  pero **no se desbloquea sola**. La mueven el responsable de la tarea o un
-  administrador (§12.2). Si los insumos siguen faltando, no pasa a
-  `EN PROGRESO`.
+  pero **no se desbloquea sola**. La mueven el responsable o un
+  administrador (§12.2). Si sigue faltando material, se puede reemplazar
+  cada faltante por un insumo con stock de la misma categoría; el cambio
+  vale solo para esa tarea (§9.1).
+- Si un insumo **está en stock 0**, se bloquean las tareas en **Por hacer**
+  o **En progreso** que lo necesitan, con el motivo «Insumos insuficientes».
+  Pasa al cargar la app (cuando el store trae los insumos) y al guardar un
+  stock en 0. Las que están en revisión o terminadas no se analizan.
 - El formulario de pedido elige **Responsable** entre los usuarios
   existentes. Por defecto es quien está cargando el pedido, y ese usuario
   queda en las tareas.

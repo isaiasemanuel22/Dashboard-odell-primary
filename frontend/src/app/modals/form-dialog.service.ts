@@ -19,6 +19,7 @@ import { BreakpointService } from '../core/services/breakpoint.service';
 import { formDialogConfig } from './form-dialog.config';
 import { ModalSize } from './modal-size';
 import type { ConfirmDialogData } from './confirm-dialog.component';
+import type { SupplyReplacementChoice, SupplyShortageReport } from '../core/models';
 import type { OrderFormDialogData } from './order-form-dialog.component';
 import type { QuoteDocumentExportDialogData } from './quote-document-export-dialog.component';
 import type { CalendarEventDialogData } from './calendar-event-dialog.component';
@@ -267,6 +268,26 @@ export class FormDialogService {
           this.open(ResetDatabaseDialogComponent, {}, 'sm', {
             ariaLabel: 'Resetear base de datos',
           }),
+      ),
+    );
+  }
+
+  openSupplyReplacement(
+    data: SupplyShortageReport,
+  ): Observable<SupplyReplacementChoice[] | undefined> {
+    return from(import('./supply-replacement-dialog.component')).pipe(
+      switchMap(
+        ({
+          SupplyReplacementDialogComponent,
+        }): Observable<SupplyReplacementChoice[] | undefined> => {
+          const base = this.baseConfig('md');
+          const ref = this.dialog.open(SupplyReplacementDialogComponent, {
+            ...base,
+            ariaLabel: 'Insumos insuficientes',
+            data,
+          });
+          return ref.closed as Observable<SupplyReplacementChoice[] | undefined>;
+        },
       ),
     );
   }

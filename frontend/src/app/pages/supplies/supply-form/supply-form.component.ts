@@ -20,7 +20,6 @@ import {
   DbSelectOption,
 } from '@general-components';
 import {
-  ColorConfig,
   FilamentPriceConfig,
   FilamentType,
   FilamentTypeConfig,
@@ -73,7 +72,6 @@ export class SupplyFormComponent implements OnInit, OnChanges {
   resinPrices: ResinPriceConfig[] = [];
   filamentTypes: FilamentTypeConfig[] = [];
   resinTypes: ResinTypeConfig[] = [];
-  colorCatalog: ColorConfig[] = [];
   settingsLoading = true;
 
   name = '';
@@ -181,22 +179,11 @@ export class SupplyFormComponent implements OnInit, OnChanges {
     );
   }
 
-  get colorOptions(): DbSelectOption[] {
-    return this.colorCatalog.map((color) => ({
-      value: color.id,
-      label: color.name,
-    }));
-  }
-
   get unitOptions(): DbSelectOption[] {
     return supplyUnitOptions(this.unit).map((option) => ({
       value: option.value,
       label: option.label,
     }));
-  }
-
-  get selectedColorHex(): string | undefined {
-    return this.colorCatalog.find((color) => color.id === this.colorId)?.hex;
   }
 
   onCategoryChange(): void {
@@ -285,7 +272,6 @@ export class SupplyFormComponent implements OnInit, OnChanges {
         this.resinPrices = settings.resinPrices ?? [];
         this.filamentTypes = settings.filamentTypes ?? [];
         this.resinTypes = settings.resinTypes ?? [];
-        this.colorCatalog = settings.colors ?? [];
         this.settingsLoading = false;
         this.applyConfiguredPrice();
       },

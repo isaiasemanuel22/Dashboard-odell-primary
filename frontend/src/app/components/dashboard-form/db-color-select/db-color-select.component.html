@@ -72,7 +72,7 @@
         <p class="db-color-select__group">Con stock</p>
         <div class="db-color-select__swatches">
           @for (opt of stockOptions; track opt.value) {
-            <button type="button" class="db-color-select__dot" [class.is-active]="isSelected(opt.value)" [attr.aria-label]="opt.label" (click)="pick(opt.value)">
+            <button type="button" class="db-color-select__dot" [class.is-active]="isSelected(opt.value)" [attr.aria-label]="opt.label" [attr.data-name]="opt.label" (click)="pick(opt.value)">
               <span [style.background-color]="opt.hex"></span>
             </button>
           }
@@ -83,7 +83,7 @@
         <p class="db-color-select__group">Catálogo</p>
         <div class="db-color-select__swatches db-color-select__swatches--grid">
           @for (opt of catalogOptions; track opt.value) {
-            <button type="button" class="db-color-select__dot" [class.is-active]="isSelected(opt.value)" [attr.aria-label]="opt.label" (click)="pick(opt.value)">
+            <button type="button" class="db-color-select__dot" [class.is-active]="isSelected(opt.value)" [attr.aria-label]="opt.label" [attr.data-name]="opt.label" (click)="pick(opt.value)">
               <span [style.background-color]="opt.hex"></span>
             </button>
           }

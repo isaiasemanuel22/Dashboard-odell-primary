@@ -950,7 +950,7 @@ export class TreasuryService {
       price !== undefined &&
       Math.round(price) !== Math.round(Number(supply.unitPrice));
 
-    this.supplies.save({
+    const saved = this.supplies.save({
       ...supply,
       quantity: nextQuantity < 1e-6 ? 0 : nextQuantity,
       ...(unitPriceChanged
@@ -962,6 +962,7 @@ export class TreasuryService {
         : {}),
       updatedAt: new Date().toISOString(),
     });
+    this.suppliesService.noteStockChange(Number(supply.quantity), saved);
   }
 
   private replaceRecord(

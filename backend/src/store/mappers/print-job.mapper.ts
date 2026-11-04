@@ -1,4 +1,20 @@
-import { PrintJob } from '../../common/interfaces';
+import { PrintJob, SupplyReplacement } from '../../common/interfaces';
+
+function parseSupplyReplacements(raw?: string | null): SupplyReplacement[] | undefined {
+  if (!raw?.trim()) return undefined;
+  try {
+    const parsed = JSON.parse(raw) as SupplyReplacement[];
+    if (!Array.isArray(parsed)) return undefined;
+    return parsed.filter(
+      (item) =>
+        item &&
+        typeof item.requirementKey === 'string' &&
+        typeof item.supplyId === 'string',
+    );
+  } catch {
+    return undefined;
+  }
+}
 
 export function mapPrintJobFromDb(row: {
   id: string;
@@ -22,6 +38,7 @@ export function mapPrintJobFromDb(row: {
   blockedReason?: string | null;
   responsibleUserId?: string | null;
   suppliesAvailableNotifiedAt?: Date | null;
+  supplyReplacements?: string | null;
 }): PrintJob {
   return {
     id: row.id,
@@ -45,6 +62,7 @@ export function mapPrintJobFromDb(row: {
     blockedReason: row.blockedReason ?? undefined,
     responsibleUserId: row.responsibleUserId ?? undefined,
     suppliesAvailableNotifiedAt: row.suppliesAvailableNotifiedAt?.toISOString(),
+    supplyReplacements: parseSupplyReplacements(row.supplyReplacements),
   };
 }
 
@@ -72,6 +90,9 @@ export function mapPrintJobToDb(job: PrintJob) {
     responsibleUserId: job.responsibleUserId ?? null,
     suppliesAvailableNotifiedAt: job.suppliesAvailableNotifiedAt
       ? new Date(job.suppliesAvailableNotifiedAt)
+      : null,
+    supplyReplacements: job.supplyReplacements?.length
+      ? JSON.stringify(job.supplyReplacements)
       : null,
   };
 }

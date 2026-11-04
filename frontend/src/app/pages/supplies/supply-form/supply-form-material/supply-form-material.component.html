@@ -49,21 +49,15 @@
 }
 
 @if (showColorField) {
-  <div class="color-field">
-    @if (selectedColorHex) {
-      <span
-        class="color-swatch"
-        [style.background-color]="selectedColorHex"
-      ></span>
-    }
-    <db-select
-      label="Color"
-      [ngModel]="colorId"
-      (ngModelChange)="colorIdChange.emit($event)"
-      name="colorId"
-      [required]="true"
-      placeholder="Seleccionar color..."
-      [options]="colorOptions"
-    />
-  </div>
+  <db-color-select
+    label="Color"
+    appearance="popover"
+    [ngModel]="colorId"
+    (ngModelChange)="colorIdChange.emit($event)"
+    name="colorId"
+    [required]="true"
+    [filamentType]="colorFilamentType"
+    [resinType]="colorResinType"
+    [supplyCategory]="supplyCategory"
+  />
 }

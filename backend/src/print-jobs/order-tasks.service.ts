@@ -13,15 +13,20 @@ import {
   TaskType,
 } from '../common/enums';
 import {
+  EstampadoSupplyLine,
   Order,
   OrderItem,
   OrderAlert,
   PrintJob,
   PrintJobActor,
+  Product3D,
   Supply,
+  SupplyReplacement,
+  SupplyShortageReport,
 } from '../common/interfaces';
-import { isIndistintoColor } from '../common/color.util';
+import { findColorById, isIndistintoColor } from '../common/color.util';
 import { appendOrderStatusHistory } from '../orders/order-status-history.util';
+import { StoreChangeService } from '../store/store-change.service';
 import { StoreService } from '../store/store.service';
 import { isAreaService } from '../common/service-type.util';
 import { isDesignPrintConfigured } from '../orders/design-print.util';
@@ -37,12 +42,44 @@ import {
   productionTaskName as buildProductionTaskName,
 } from './order-task-estimate';
 
+interface MaterialRequirement {
+  key: string;
+  category: SupplyCategory;
+  label: string;
+  requiredUnits: number;
+  coveredNaturally: boolean;
+}
+
 @Injectable()
 export class OrderTasksService implements OnModuleInit {
-  constructor(private readonly store: StoreService) {}
+  constructor(
+    private readonly store: StoreService,
+    private readonly storeChange?: StoreChangeService,
+  ) {}
 
   onModuleInit(): void {
+    const before = this.workFingerprint();
     this.syncAll();
+    if (this.storeChange && before !== this.workFingerprint()) {
+      this.storeChange.recordChange({
+        collections: ['printJobs', 'orders'],
+        realtime: {
+          scopes: ['print-jobs', 'orders', 'dashboard'],
+          action: 'update',
+          entity: 'print-job',
+        },
+      });
+    }
+  }
+
+  private workFingerprint(): string {
+    const jobs = this.store.printJobs
+      .map((job) => `${job.id}:${job.status}:${job.blockedReason ?? ''}`)
+      .join('|');
+    const orders = this.store.orders
+      .map((order) => `${order.id}:${order.status}`)
+      .join('|');
+    return `${jobs}#${orders}`;
   }
 
   syncAll(): void {
@@ -214,6 +251,53 @@ export class OrderTasksService implements OnModuleInit {
         job.suppliesAvailableNotifiedAt = now;
       }
     }
+  }
+
+  /**
+   * Revisa los insumos que ya están en 0 y bloquea las tareas de Por hacer
+   * y En progreso que los necesitan. La leyenda queda en «Insumos insuficientes».
+   */
+  blockTasksMissingStock(): boolean {
+    let changed = false;
+    for (const supply of this.store.supplies) {
+      if (this.blockTasksForDepletedSupply(supply)) changed = true;
+    }
+    if (changed && this.storeChange) {
+      this.storeChange.recordChange({
+        collections: ['printJobs', 'orders'],
+        realtime: {
+          scopes: ['print-jobs', 'orders', 'dashboard'],
+          action: 'update',
+          entity: 'print-job',
+        },
+      });
+    }
+    return changed;
+  }
+
+  /**
+   * El stock de este insumo quedó en 0. Las tareas de Por hacer y En progreso
+   * que lo necesitan pasan a bloqueadas. No desbloquea nada: reponer solo notifica.
+   */
+  blockTasksForDepletedSupply(supply: Supply): boolean {
+    if (Number(supply.quantity) > 1e-9) return false;
+
+    const orderIds = new Set<string>();
+    let changed = false;
+    for (const job of this.store.printJobs) {
+      if (!this.isOpenSupplyTask(job)) continue;
+      if (!this.taskNeedsDepletedSupply(job, supply)) continue;
+      job.status = PrintJobStatus.BLOQUEADO;
+      job.blockedReason = 'Insumos insuficientes';
+      job.suppliesAvailableNotifiedAt = undefined;
+      orderIds.add(job.orderId);
+      changed = true;
+    }
+
+    for (const orderId of orderIds) {
+      this.syncOrderStatusFromTasks(orderId);
+    }
+    return changed;
   }
 
   releaseReservations(order: Order): void {
@@ -462,7 +546,11 @@ export class OrderTasksService implements OnModuleInit {
       this.updateTaskMetadata(existing, order, item, itemIndex, taskType);
       if (taskType === TaskType.PRODUCTION) {
         existing.productName = this.productionTaskName(item);
-        if (item.productId && !this.hasProductionSupplies(existing)) {
+        if (
+          item.productId &&
+          this.analyzesSupplyStock(existing) &&
+          !this.hasProductionSupplies(existing)
+        ) {
           existing.status = PrintJobStatus.BLOQUEADO;
           existing.blockedReason = 'Insumos insuficientes';
         } else if (
@@ -639,44 +727,336 @@ export class OrderTasksService implements OnModuleInit {
     );
   }
 
-  private hasProductionSupplies(job: PrintJob): boolean {
-    if (!job.productId) return true;
+  describeSupplyShortages(job: PrintJob): SupplyShortageReport {
+    const requirements = this.materialRequirements(job);
+    const missing = requirements.filter((item) => !item.coveredNaturally);
+    const categories = new Set(missing.map((item) => item.category));
+    const candidates = this.store.supplies
+      .filter(
+        (supply) => categories.has(supply.category) && supply.quantity > 0,
+      )
+      .map((supply) => ({
+        id: supply.id,
+        name: supply.name,
+        category: supply.category,
+        detail: this.supplyStockLabel(supply),
+      }));
+    return {
+      missing: missing.map((item) => ({
+        key: item.key,
+        label: item.label,
+        category: item.category,
+      })),
+      candidates,
+    };
+  }
+
+  /**
+   * Guarda los reemplazos de esta tarea. Cada faltante natural tiene que
+   * quedar cubierto por un insumo de la misma categoría con stock suficiente.
+   */
+  applySupplyReplacements(
+    job: PrintJob,
+    replacements: SupplyReplacement[],
+  ): void {
+    const requirements = this.materialRequirements(job);
+    const byKey = new Map(requirements.map((item) => [item.key, item]));
+    const next: SupplyReplacement[] = [];
+
+    for (const item of replacements) {
+      const requirement = byKey.get(item.requirementKey);
+      if (!requirement) {
+        throw new BadRequestException(
+          'El insumo a reemplazar no corresponde a esta tarea',
+        );
+      }
+      const supply = this.store.getSupplyById(item.supplyId);
+      if (!supply || supply.category !== requirement.category) {
+        throw new BadRequestException(
+          'El reemplazo tiene que ser un insumo de la misma categoría',
+        );
+      }
+      if (this.stockUnits(supply) < requirement.requiredUnits) {
+        throw new BadRequestException(
+          `${supply.name} no alcanza para reemplazar ${requirement.label}`,
+        );
+      }
+      next.push({
+        requirementKey: requirement.key,
+        supplyId: supply.id,
+      });
+    }
+
+    const pending = requirements.filter(
+      (item) => !item.coveredNaturally && !next.some((row) => row.requirementKey === item.key),
+    );
+    if (pending.length) {
+      throw new BadRequestException(
+        'Falta reemplazar todos los insumos',
+      );
+    }
+
+    job.supplyReplacements = next.length ? next : undefined;
+  }
+
+  /** Solo Por hacer y En progreso se revisan por falta de insumos. */
+  private analyzesSupplyStock(job: PrintJob): boolean {
+    return (
+      job.status === PrintJobStatus.POR_HACER ||
+      job.status === PrintJobStatus.EN_PROCESO
+    );
+  }
+
+  private isOpenSupplyTask(job: PrintJob): boolean {
+    if (job.archived) return false;
+    if (
+      job.taskType !== TaskType.PRODUCTION &&
+      job.taskType !== TaskType.INTERNAL
+    ) {
+      return false;
+    }
+    return this.analyzesSupplyStock(job);
+  }
+
+  private taskNeedsDepletedSupply(job: PrintJob, supply: Supply): boolean {
+    const tied =
+      this.catalogLinesNeedSupply(job, supply.id) ||
+      this.replacementPointsAt(job, supply.id) ||
+      this.materialMatchesSupply(job, supply);
+    return tied && !this.hasProductionSupplies(job);
+  }
+
+  private catalogLinesNeedSupply(job: PrintJob, supplyId: string): boolean {
+    return this.listedSupplyLines(job).some(
+      (line) => line.supplyId === supplyId && Number(line.quantity) > 0,
+    );
+  }
+
+  private replacementPointsAt(job: PrintJob, supplyId: string): boolean {
+    return !!job.supplyReplacements?.some((item) => item.supplyId === supplyId);
+  }
+
+  private materialMatchesSupply(job: PrintJob, supply: Supply): boolean {
+    if (!job.productId) return false;
     const product = this.store.getProductById(job.productId);
     if (!product) return false;
+
+    if (
+      supply.category === SupplyCategory.FDM &&
+      product.type === ProductType.FDM
+    ) {
+      const lines = product.filaments?.length
+        ? product.filaments
+        : product.filamentType
+          ? [{ filamentType: product.filamentType, colorId: undefined }]
+          : [];
+      return lines.some(
+        (line) =>
+          line.filamentType === supply.filamentType &&
+          this.supplyMatchesColor(supply, line.colorId),
+      );
+    }
+
+    if (
+      supply.category === SupplyCategory.RESINA &&
+      product.type === ProductType.RESINA
+    ) {
+      const resin = product as Product3D;
+      return (
+        !!resin.resinType &&
+        resin.resinType === supply.resinType &&
+        this.supplyMatchesColor(supply, resin.colorId)
+      );
+    }
+
+    return false;
+  }
+
+  private listedSupplyLines(job: PrintJob): EstampadoSupplyLine[] {
+    const lines: EstampadoSupplyLine[] = [];
+    if (job.productId) {
+      const product = this.store.getProductById(job.productId);
+      if (product && 'supplies' in product && product.supplies?.length) {
+        lines.push(...product.supplies);
+      }
+    }
+    const item = this.orderItemOf(job);
+    if (item?.estampadoSupplies?.length) {
+      lines.push(...item.estampadoSupplies);
+    }
+    return lines;
+  }
+
+  private orderItemOf(job: PrintJob): OrderItem | undefined {
+    if (job.orderItemIndex < 0) return undefined;
+    return this.store.getOrderById(job.orderId)?.items[job.orderItemIndex];
+  }
+
+  private hasProductionSupplies(job: PrintJob): boolean {
+    if (job.productId && !this.store.getProductById(job.productId)) return false;
+    return this.materialRequirements(job).every((item) =>
+      this.requirementCovered(job, item),
+    );
+  }
+
+  private materialRequirements(job: PrintJob): MaterialRequirement[] {
+    return [
+      ...this.processMaterialRequirements(job),
+      ...this.catalogSupplyRequirements(job),
+    ];
+  }
+
+  private catalogSupplyRequirements(job: PrintJob): MaterialRequirement[] {
+    const quantity = Math.max(job.quantity ?? 1, 1);
+    const requiredBySupply = new Map<string, number>();
+    for (const line of this.listedSupplyLines(job)) {
+      const lineQuantity = Number(line.quantity);
+      if (!(lineQuantity > 0) || !line.supplyId) continue;
+      requiredBySupply.set(
+        line.supplyId,
+        (requiredBySupply.get(line.supplyId) ?? 0) + lineQuantity * quantity,
+      );
+    }
+
+    const requirements: MaterialRequirement[] = [];
+    for (const [supplyId, requiredUnits] of requiredBySupply) {
+      const supply = this.store.getSupplyById(supplyId);
+      requirements.push({
+        key: `supply:${supplyId}`,
+        category: supply?.category ?? SupplyCategory.GENERAL,
+        label: supply
+          ? this.materialLabel(
+              supply.name,
+              supply.colorId,
+              `${requiredUnits} ${supply.unit}`,
+            )
+          : 'Insumo',
+        requiredUnits,
+        coveredNaturally: !!supply && this.stockUnits(supply) >= requiredUnits,
+      });
+    }
+    return requirements;
+  }
+
+  private processMaterialRequirements(job: PrintJob): MaterialRequirement[] {
+    if (!job.productId) return [];
+    const product = this.store.getProductById(job.productId);
+    if (!product) return [];
     const quantity = Math.max(job.quantity ?? 1, 1);
 
     if (product.type === ProductType.FDM) {
       const lines = product.filaments?.length
         ? product.filaments
         : product.filamentType
-          ? [{ filamentType: product.filamentType, grams: product.grams }]
+          ? [{ filamentType: product.filamentType, grams: product.grams, colorId: undefined }]
           : [];
-      return lines.every((line) => {
-        const availableGrams = this.store.supplies
-          .filter(
-            (supply) =>
-              supply.category === SupplyCategory.FDM &&
-              supply.filamentType === line.filamentType &&
-              this.supplyMatchesColor(supply, line.colorId),
-          )
-          .reduce((sum, supply) => sum + supply.quantity * 1000, 0);
-        return availableGrams >= line.grams * quantity;
+      return lines.map((line, index) => {
+        const requiredUnits = Math.max(line.grams || 0, 0) * quantity;
+        const coveredNaturally =
+          this.matchingStock(SupplyCategory.FDM, (supply) =>
+            supply.filamentType === line.filamentType &&
+            this.supplyMatchesColor(supply, line.colorId),
+          ) >= requiredUnits;
+        return {
+          key: `fdm:${index}`,
+          category: SupplyCategory.FDM,
+          label: this.materialLabel(
+            String(line.filamentType ?? 'Filamento'),
+            line.colorId,
+            `${requiredUnits} g`,
+          ),
+          requiredUnits,
+          coveredNaturally,
+        };
       });
     }
 
     if (product.type === ProductType.RESINA && product.resinType) {
-      const availableMl = this.store.supplies
-        .filter(
-          (supply) =>
-            supply.category === SupplyCategory.RESINA &&
-            supply.resinType === product.resinType &&
-            this.supplyMatchesColor(supply, product.colorId),
-        )
-        .reduce((sum, supply) => sum + supply.quantity * 1000, 0);
-      return availableMl >= product.grams * quantity;
+      const requiredUnits = Math.max(product.grams || 0, 0) * quantity;
+      const resin = product as Product3D;
+      const coveredNaturally =
+        this.matchingStock(SupplyCategory.RESINA, (supply) =>
+          supply.resinType === resin.resinType &&
+          this.supplyMatchesColor(supply, resin.colorId),
+        ) >= requiredUnits;
+      return [
+        {
+          key: 'resina',
+          category: SupplyCategory.RESINA,
+          label: this.materialLabel(
+            String(resin.resinType),
+            resin.colorId,
+            `${requiredUnits} ml`,
+          ),
+          requiredUnits,
+          coveredNaturally,
+        },
+      ];
     }
 
-    return true;
+    return [];
+  }
+
+  private requirementCovered(
+    job: PrintJob,
+    requirement: MaterialRequirement,
+  ): boolean {
+    const replacement = job.supplyReplacements?.find(
+      (item) => item.requirementKey === requirement.key,
+    );
+    if (!replacement) return requirement.coveredNaturally;
+    const supply = this.store.getSupplyById(replacement.supplyId);
+    return (
+      !!supply &&
+      supply.category === requirement.category &&
+      this.stockUnits(supply) >= requirement.requiredUnits
+    );
+  }
+
+  private matchingStock(
+    category: SupplyCategory,
+    matches: (supply: Supply) => boolean,
+  ): number {
+    return this.store.supplies
+      .filter((supply) => supply.category === category && matches(supply))
+      .reduce((sum, supply) => sum + this.stockUnits(supply), 0);
+  }
+
+  /** kg y L se comparan en g / ml. */
+  private stockUnits(supply: Supply): number {
+    if (
+      supply.category === SupplyCategory.FDM ||
+      supply.category === SupplyCategory.RESINA
+    ) {
+      return supply.quantity * 1000;
+    }
+    return supply.quantity;
+  }
+
+  private materialLabel(
+    material: string,
+    colorId: string | undefined,
+    amount: string,
+  ): string {
+    const color = findColorById(
+      this.store.generalSettings?.colors ?? [],
+      colorId,
+    );
+    return [material, color?.name, amount].filter(Boolean).join(' · ');
+  }
+
+  private supplyStockLabel(supply: Supply): string {
+    const color = findColorById(
+      this.store.generalSettings?.colors ?? [],
+      supply.colorId,
+    );
+    const amount =
+      supply.category === SupplyCategory.FDM
+        ? `${supply.quantity} kg`
+        : supply.category === SupplyCategory.RESINA
+          ? `${supply.quantity} L`
+          : `${supply.quantity} ${supply.unit}`;
+    return [supply.brand, color?.name, amount].filter(Boolean).join(' · ');
   }
 
   private supplyMatchesColor(supply: Supply, colorId?: string): boolean {

@@ -949,9 +949,33 @@ export interface PrintJob {
   blockedReason?: string;
 }
 
+export interface SupplyShortageLine {
+  key: string;
+  label: string;
+  category: string;
+}
+
+export interface SupplyReplacementCandidate {
+  id: string;
+  name: string;
+  category: string;
+  detail: string;
+}
+
+export interface SupplyShortageReport {
+  missing: SupplyShortageLine[];
+  candidates: SupplyReplacementCandidate[];
+}
+
+export interface SupplyReplacementChoice {
+  requirementKey: string;
+  supplyId: string;
+}
+
 export interface UpdatePrintJobPayload {
   status?: PrintJobStatus;
   active?: boolean;
+  supplyReplacements?: SupplyReplacementChoice[];
 }
 
 export interface PrintJobUpdateResult extends PrintJob {
