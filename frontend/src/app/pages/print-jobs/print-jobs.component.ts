@@ -15,6 +15,7 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
+  CurrentUserResponse,
   OrderStatus,
   PrintJob,
   PrintJobStatus,
@@ -24,6 +25,7 @@ import {
 } from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
 import { PrintJobsService } from '../../core/services/print-jobs.service';
+import { UserAccessService } from '../../core/services/user-access.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import {
@@ -44,6 +46,7 @@ import {
   WorkBoardColumnConfig,
 } from '../../shared/constants/labels';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
+import { designatedArea } from '../../shared/utils/service-type.util';
 import { formatOrderMobileDeliveryLabel } from '../../shared/utils/order.helpers';
 import { FormDialogService } from '../../modals/public-api';
 import {
@@ -85,6 +88,7 @@ export interface MobileJobAction {
 })
 export class PrintJobsComponent implements OnInit {
   private readonly printJobsService = inject(PrintJobsService);
+  private readonly userAccess = inject(UserAccessService);
   private readonly catalogSync = inject(RealtimeCatalogSyncService);
   private readonly realtime = inject(RealtimeService);
   private readonly formDialogs = inject(FormDialogService);
@@ -207,6 +211,10 @@ export class PrintJobsComponent implements OnInit {
 
   isPrepareOrder(job: PrintJob): boolean {
     return job.taskKind === TaskKind.PREPARE_ORDER;
+  }
+
+  jobArea(job: PrintJob): ServiceType | null {
+    return designatedArea(job.type);
   }
 
   isJobBlocked(job: PrintJob): boolean {
@@ -388,19 +396,46 @@ export class PrintJobsComponent implements OnInit {
   }
 
   onNewTaskClick(): void {
+    const open = (uid: string): void => {
+      this.userAccess.listOrderResponsibles().subscribe({
+        next: (responsibles) => this.openIndependentTask(responsibles, uid),
+        error: () => this.openIndependentTask([], uid),
+      });
+    };
+    const cachedUid = sessionFirebaseUid(this.userAccess.peekCurrentUser());
+    if (cachedUid) {
+      open(cachedUid);
+      return;
+    }
+    this.userAccess.loadCurrentUser().subscribe({
+      next: (profile) => open(sessionFirebaseUid(profile)),
+      error: () => open(''),
+    });
+  }
+
+  private openIndependentTask(
+    responsibles: { firebaseUid: string; displayName: string; id: string; active: boolean }[],
+    defaultResponsibleId: string,
+  ): void {
     this.formDialogs
-      .openConfirm({
-        title: 'Nueva tarea',
-        message:
-          'Las tareas se generan al confirmar pedidos. ¿Querés ir a Pedidos para crear uno?',
-        confirmLabel: 'Ir a pedidos',
-        cancelLabel: 'Cerrar',
-        confirmVariant: 'primary',
-      })
-      .subscribe((confirmed) => {
-        if (confirmed) {
-          window.location.assign('/pedidos');
-        }
+      .openIndependentTask({ responsibles, defaultResponsibleId })
+      .subscribe((result) => {
+        if (!result) return;
+        this.updating = true;
+        this.cdr.markForCheck();
+        this.printJobsService.createIndependent(result).subscribe({
+          next: () => {
+            this.updating = false;
+            this.loadJobs();
+          },
+          error: (err: unknown) => {
+            this.updating = false;
+            this.error = extractApiErrorMessage(
+              err as { error?: { message?: string | string[] } },
+            );
+            this.cdr.markForCheck();
+          },
+        });
       });
   }
 
@@ -650,7 +685,8 @@ export class PrintJobsComponent implements OnInit {
     if (this.areaFilter) {
       list = list.filter(
         (job) =>
-          job.taskKind !== TaskKind.PREPARE_ORDER && job.type === this.areaFilter,
+          job.taskKind !== TaskKind.PREPARE_ORDER &&
+          designatedArea(job.type) === this.areaFilter,
       );
     }
 
@@ -689,6 +725,7 @@ export class PrintJobsComponent implements OnInit {
   private buildCustomerChips(jobs: PrintJob[]): PrintJobCustomerChip[] {
     const byInitial = new Map<string, string>();
     for (const job of jobs) {
+      if (!job.customerName?.trim()) continue;
       const initial = this.customerInitial(job.customerName);
       if (!byInitial.has(initial)) {
         byInitial.set(initial, job.customerName);
@@ -721,4 +758,9 @@ export class PrintJobsComponent implements OnInit {
   private sortByPriority(jobs: PrintJob[]): PrintJob[] {
     return [...jobs].sort((a, b) => b.priority - a.priority);
   }
+}
+
+function sessionFirebaseUid(profile: CurrentUserResponse | null): string {
+  if (!profile || !('firebaseUid' in profile)) return '';
+  return profile.firebaseUid ?? '';
 }

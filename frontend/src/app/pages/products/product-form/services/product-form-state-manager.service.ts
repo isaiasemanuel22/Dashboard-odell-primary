@@ -39,6 +39,7 @@ import {
 export interface ProductFormState {
   type: ProductType;
   name: string;
+  description: string;
   sizeWidthCm: number;
   sizeLengthCm: number;
   sizeHeightCm: number;
@@ -76,6 +77,7 @@ export interface ProductFormState {
 export type ProductFormGroup = FormGroup<{
   type: FormControl<ProductType>;
   name: FormControl<string>;
+  description: FormControl<string>;
   published: FormControl<boolean>;
   includesPieces: FormControl<boolean>;
   finishedStock: FormControl<number>;
@@ -120,6 +122,7 @@ export class ProductFormStateManagerService {
     return {
       type: ProductType.FDM,
       name: '',
+      description: '',
       sizeWidthCm: 0,
       sizeLengthCm: 0,
       sizeHeightCm: 0,
@@ -162,6 +165,7 @@ export class ProductFormStateManagerService {
         nonNullable: true,
         validators: [Validators.required],
       }),
+      description: new FormControl(state.description, { nonNullable: true }),
       published: new FormControl(state.published, { nonNullable: true }),
       includesPieces: new FormControl(state.includesPieces, {
         nonNullable: true,
@@ -214,6 +218,7 @@ export class ProductFormStateManagerService {
       {
         type: state.type,
         name: state.name,
+        description: state.description,
         published: state.published,
         includesPieces: state.includesPieces,
         finishedStock: state.finishedStock,
@@ -257,6 +262,7 @@ export class ProductFormStateManagerService {
 
     state.type = product.type;
     state.name = product.name;
+    state.description = product.description ?? '';
     this.applySizeFieldsFromString(state, product.size);
     state.cost = product.cost;
     // Conservar el precio de catálogo al editar (p. ej. solo stock).

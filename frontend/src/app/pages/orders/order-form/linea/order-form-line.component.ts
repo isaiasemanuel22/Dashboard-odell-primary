@@ -491,8 +491,8 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   get priceHintWarn(): boolean {
-    if (isDesignService(this.line.serviceType)) {
-      return this.serviceRate <= 0 || this.isUnitPriceBelowCost;
+    if (isDesignService(this.line.serviceType) && this.designRateZeroWithoutPrice) {
+      return true;
     }
     return this.isUnitPriceBelowCost;
   }
@@ -532,13 +532,22 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   get designPriceHint(): string {
-    if (this.serviceRate <= 0) {
+    if (this.designRateZeroWithoutPrice) {
       const rateLabel = isGraphicDesignService(this.line.serviceType)
         ? 'Tarifa de diseño'
         : 'Tarifa de modelado';
       return `${rateLabel} en $ 0: el sugerido no se calcula`;
     }
     return this.unitPriceAnnotation();
+  }
+
+  /**
+   * La tarifa por hora está en 0 y el precio unitario no está cargado:
+   * el sugerido no se puede calcular. Si el precio ya vino tipeado o del
+   * costo en precio fijo, el aviso no aplica.
+   */
+  private get designRateZeroWithoutPrice(): boolean {
+    return this.serviceRate <= 0 && !(this.editableUnitPrice > 0);
   }
 
   get suggestedUnitPriceHint(): string {
@@ -1386,7 +1395,9 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   private designServiceCost(): number {
-    if (this.chargeModeFor() === 'fixed') return 0;
+    if (this.chargeModeFor() === 'fixed') {
+      return Math.max(0, Math.round(Number(this.line.unitCost) || 0));
+    }
     const hours = Math.max(0, Number(this.line.budgetedHours) || 0);
     return Math.round(this.serviceRate * hours);
   }

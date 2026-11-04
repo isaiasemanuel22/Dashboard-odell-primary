@@ -70,6 +70,7 @@ model Customer {
 model Product {
   id                String   @id @db.VarChar(64)
   name              String   @db.VarChar(255)
+  description       String?  @db.Text
   images            Json
   updatedAt         DateTime @map("updated_at")
   price             Float

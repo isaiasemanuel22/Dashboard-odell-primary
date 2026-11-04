@@ -147,6 +147,7 @@ export class ProductFormFacade {
     return {
       type: v.type,
       name: v.name,
+      description: v.description,
       published: v.published,
       includesPieces: v.includesPieces,
       finishedStock: v.finishedStock,
@@ -158,6 +159,9 @@ export class ProductFormFacade {
     const patch: Partial<ProductFormBasicFieldsValue> = {};
     if (current.type !== value.type) patch.type = value.type;
     if (current.name !== value.name) patch.name = value.name;
+    if (current.description !== value.description) {
+      patch.description = value.description;
+    }
     if (current.published !== value.published) patch.published = value.published;
     if (current.includesPieces !== value.includesPieces) {
       patch.includesPieces = value.includesPieces;
@@ -348,6 +352,7 @@ export class ProductFormFacade {
     return this.payloadBuilder.buildCreatePayload({
       type: v.type,
       name: v.name,
+      description: v.description,
       isCombo: v.type === ProductType.COMBO,
       is3D: isProductType3D(v.type),
       isFdm: v.type === ProductType.FDM,

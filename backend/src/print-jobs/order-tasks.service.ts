@@ -378,8 +378,9 @@ export class OrderTasksService implements OnModuleInit {
     return status === OrderStatus.ENTREGADO || status === OrderStatus.CANCELADO;
   }
 
-  /** Pedidos entregados no tienen tareas en la cola de trabajo. */
+  /** Pedidos entregados no tienen tareas en la cola de trabajo. Una tarea interna no tiene pedido. */
   isVisibleInQueue(orderId: string): boolean {
+    if (!orderId) return true;
     const order = this.store.orders.find((item) => item.id === orderId);
     return !!order && order.status !== OrderStatus.ENTREGADO;
   }

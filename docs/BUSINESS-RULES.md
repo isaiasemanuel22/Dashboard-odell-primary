@@ -270,7 +270,7 @@ línea cuando el pedido cotiza impresión 3D):
   sugerido.
 - **Fecha del presupuesto.** Es informativa: se muestra como texto (fecha de
   emisión y validez a +15 días). No es un campo editable.
-- **Descripción.** Límite de 1.000 caracteres.
+- **Descripción.** Opcional. Límite de 1.000 caracteres. En el pedido va arriba del listado de productos. El producto de catálogo también tiene una descripción opcional.
 - **Concepto.** En líneas de impresión 3D y estampado, el campo Concepto
   muestra el nombre del producto de catálogo (o el texto manual). Al reabrir
   un presupuesto debe verse ese valor, no quedar vacío.
@@ -543,7 +543,9 @@ Todo pedido requiere un cliente asociado. El cliente tiene un tipo:
   precio de lista no la alcanza, se cobra precio de lista.
 - Quien vende puede elegir `Lista` o `Mayorista` en cada pedido o
   presupuesto; al elegir un revendedor se propone `Mayorista`.
-- El cliente puede guardar CUIT (opcional) y cómo llegó (origen).
+- El cliente puede guardar CUIT (opcional) y cómo llegó (origen). El correo también es opcional; si se carga, tiene que ser un email válido.
+- La descripción del pedido es opcional y va arriba del listado de productos.
+- En Diseño gráfico y en Modelado, la cotización por precio fijo carga el costo del diseño. El precio de venta sale de ese costo más el margen del área, salvo que el precio unitario se haya editado a mano.
 
 El pedido contiene ítems de
 productos y servicios, sus cantidades y los ítems de servicio agregados
@@ -696,6 +698,7 @@ dependencias estén en estado `TERMINADO`.
 
 Cada tarea pertenece a un área y solo puede ser vista o modificada por
 usuarios cuyos roles otorguen la acción correspondiente para esa área.
+La tarea interna puede crearse sin área (§12.3).
 
 Mover una tarea —cambiarla de estado, esté bloqueada o no— lo pueden hacer
 dos personas: un usuario con rol administrador, y el responsable actual de
@@ -715,8 +718,12 @@ el responsable es quien carga el pedido.
 ### 12.3 Tareas internas
 
 Odell puede crear tareas internas sin pedido asociado, por ejemplo producir
-unidades para stock. Estas tareas utilizan el mismo flujo de estados, pero
-no modifican el stock automáticamente.
+unidades para stock. En la página de tareas, «Nueva tarea» pide nombre,
+fecha límite y responsable. El área es opcional: se puede crear la tarea
+sin área designada. Queda en Por hacer. Sin área no se le asigna máquina
+ni se muestra un badge de área. En el tablero, el filtro de todas las áreas
+las incluye; un filtro de un área concreta no. Estas tareas utilizan el
+mismo flujo de estados, pero no modifican el stock automáticamente.
 
 Si faltan materiales o insumos necesarios para fabricar un producto, el
 pedido puede confirmarse y debe mostrar una alerta. La tarea de producción

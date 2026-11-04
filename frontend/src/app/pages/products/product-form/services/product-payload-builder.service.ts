@@ -17,6 +17,7 @@ import { formatEstampadoSizeFromPrints, formatPrintDimensionsCm } from '../../..
 export interface ProductPayloadInput {
   type: ProductType;
   name: string;
+  description: string;
   isCombo: boolean;
   is3D: boolean;
   isFdm: boolean;
@@ -96,6 +97,7 @@ export class ProductPayloadBuilderService {
     const usesPieceAssembly = this.usesPieceAssembly(input);
     return {
       name: input.name.trim(),
+      description: input.description.trim(),
       type: input.type,
       size: this.buildProductSize(
         input.type,

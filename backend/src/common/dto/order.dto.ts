@@ -72,6 +72,37 @@ export class UpdatePrintJobDto {
   supplyReplacements?: SupplyReplacementDto[];
 }
 
+export class CreateIndependentTaskDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(180)
+  productName!: string;
+
+  /** Vacío u omitido: la tarea interna no tiene área. */
+  @IsOptional()
+  @IsIn([
+    '',
+    ServiceType.IMPRESION_3D,
+    ServiceType.DISENO_GRAFICO,
+    ServiceType.MODELADO,
+    ServiceType.ESTAMPADO,
+  ])
+  type?: ServiceType | '';
+
+  @IsOptional()
+  @IsString()
+  dueDate?: string;
+
+  @IsOptional()
+  @IsString()
+  responsibleUserId?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  estimatedHours?: number;
+}
+
 export class OrderDeliveryLineDto {
   @IsNumber()
   @Min(0)

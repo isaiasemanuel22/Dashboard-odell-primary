@@ -7,6 +7,7 @@ import {
   IsString,
   MaxLength,
   Min,
+  ValidateIf,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 import { CustomerSource, CustomerType } from '../enums';
@@ -16,8 +17,10 @@ export class CreateCustomerDto {
   @IsNotEmpty()
   name!: string;
 
+  @IsOptional()
+  @ValidateIf((_, value) => typeof value === 'string' && value.trim() !== '')
   @IsEmail()
-  email!: string;
+  email?: string;
 
   @IsString()
   @IsNotEmpty()

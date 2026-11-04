@@ -40,6 +40,16 @@
         (ngModelChange)="onFieldChange()"
       />
     </div>
+    <db-textarea
+      label="Descripción"
+      name="description"
+      [(ngModel)]="description"
+      [ngModelOptions]="{ standalone: true }"
+      placeholder="Detalle del producto, materiales visibles, medidas útiles…"
+      [rows]="3"
+      [maxLength]="2000"
+      (ngModelChange)="onFieldChange()"
+    />
   </section>
 
   <ng-content />

@@ -1,9 +1,13 @@
 @if (variant === 'board') {
   <article [class]="'job-card job-card--board ' + priorityClass">
     <header class="job-card__top">
-      <a [routerLink]="['/pedidos', job.orderId]" class="job-card__id">
-        #{{ job.orderId }}
-      </a>
+      @if (job.orderId) {
+        <a [routerLink]="['/pedidos', job.orderId]" class="job-card__id">
+          #{{ job.orderId }}
+        </a>
+      } @else {
+        <span class="job-card__id">Interna</span>
+      }
       <span class="job-card__priority-badge" [class]="priorityClass">
         <span class="job-card__priority-icon" aria-hidden="true">⚑</span>
         {{ priorityLabel }}
@@ -11,21 +15,29 @@
     </header>
 
     <h3 class="job-card__title">
-      <a
-        [routerLink]="['/pedidos', job.orderId]"
-        class="job-card__title-link"
-      >
-        {{ job.productName }}
-      </a>
+      @if (job.orderId) {
+        <a
+          [routerLink]="['/pedidos', job.orderId]"
+          class="job-card__title-link"
+        >
+          {{ job.productName }}
+        </a>
+      } @else {
+        <span class="job-card__title-link">{{ job.productName }}</span>
+      }
     </h3>
 
-    <div class="job-card__tag-row">
-      @if (isPrepareOrder) {
-        <span class="job-card__area">Ventas</span>
-      } @else {
-        <db-service-badge [type]="job.type" />
-      }
-    </div>
+    @if (isPrepareOrder || area) {
+      <div class="job-card__tag-row">
+        @if (isPrepareOrder) {
+          <span class="job-card__area">Ventas</span>
+        } @else {
+          @if (area; as areaType) {
+            <db-service-badge [type]="areaType" />
+          }
+        }
+      </div>
+    }
 
     @if (job.status === 'bloqueado') {
       <p class="job-card__blocked" role="status">
@@ -34,12 +46,14 @@
       </p>
     }
 
-    <footer class="job-card__footer">
-      <span
-        class="job-card__avatar"
-        [title]="job.customerName"
-      >{{ customerInitial }}</span>
-    </footer>
+    @if (job.customerName) {
+      <footer class="job-card__footer">
+        <span
+          class="job-card__avatar"
+          [title]="job.customerName"
+        >{{ customerInitial }}</span>
+      </footer>
+    }
   </article>
 } @else {
   <article
@@ -49,17 +63,25 @@
       @if (isPrepareOrder) {
         <span class="job-card__area">Ventas</span>
       } @else {
-        <db-service-badge [type]="job.type" />
+        @if (area; as areaType) {
+          <db-service-badge [type]="areaType" />
+        }
       }
       <span class="priority-pill">{{ priorityLabel }}</span>
     </div>
     <span class="task-kind">{{ taskKindLabels[job.taskKind] }}</span>
     <h3>
-      <a [routerLink]="['/pedidos', job.orderId]" class="job-order-link">
-        {{ job.productName }}
-      </a>
+      @if (job.orderId) {
+        <a [routerLink]="['/pedidos', job.orderId]" class="job-order-link">
+          {{ job.productName }}
+        </a>
+      } @else {
+        <span>{{ job.productName }}</span>
+      }
     </h3>
-    <p class="customer">{{ job.customerName }}</p>
+    @if (job.customerName) {
+      <p class="customer">{{ job.customerName }}</p>
+    }
     @if (orderStatus) {
       <p class="order-status-line">
         Pedido:
@@ -70,7 +92,9 @@
       </p>
     }
     <div class="job-meta">
-      <span>{{ job.machine }}</span>
+      @if (job.machine) {
+        <span>{{ job.machine }}</span>
+      }
       <span>{{ job.estimatedHours }}h est.</span>
     </div>
     @if (job.status === 'bloqueado') {
@@ -78,7 +102,7 @@
         {{ job.blockedReason || 'Tarea bloqueada por una condición operativa.' }}
       </p>
     }
-    @if (compact) {
+    @if (compact && job.orderId) {
       <a [routerLink]="['/pedidos', job.orderId]" class="job-order-link job-order-link--meta">
         Ver pedido
       </a>

@@ -121,7 +121,6 @@ export class CustomerFormComponent implements OnInit, OnChanges {
     return (
       !this.loading &&
       !!this.name.trim() &&
-      !!this.email.trim() &&
       !!this.phone.trim() &&
       isValidCustomerEmail(this.email.trim()) &&
       isValidCustomerPhone(this.phone.trim())
@@ -212,7 +211,7 @@ export class CustomerFormComponent implements OnInit, OnChanges {
   private resetForm(): void {
     if (this.customer) {
       this.name = this.customer.name;
-      this.email = this.customer.email;
+      this.email = this.customer.email ?? '';
       this.phone = this.customer.phone;
       this.company = this.customer.company ?? '';
       this.type = this.customer.type ?? CustomerType.PARTICULAR;
@@ -240,6 +239,7 @@ export class CustomerFormComponent implements OnInit, OnChanges {
 }
 
 export function isValidCustomerEmail(email: string): boolean {
+  if (!email.trim()) return true;
   return EMAIL_PATTERN.test(email);
 }
 

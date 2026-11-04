@@ -59,7 +59,8 @@
             class="cola-client-chip"
             [class]="'cola-client-chip--tone-' + chip.tone"
             [class.cola-client-chip--active]="customerFilter === chip.initial"
-            [title]="chip.name"
+            [attr.data-name]="chip.name"
+            [attr.aria-label]="chip.name"
             (click)="customerFilterToggle.emit(chip.initial)"
           >
             {{ chip.initial }}

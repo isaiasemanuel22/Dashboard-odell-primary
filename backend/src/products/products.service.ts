@@ -188,6 +188,7 @@ export class ProductsService {
     const base = {
       id: this.store.nextId('prod', this.store.products),
       name: data.name.trim(),
+      description: data.description?.trim() || undefined,
       images: normalizeProductImages(data.images ?? []),
       attachments: normalizeProductAttachments(data.attachments ?? []),
       updatedAt: now,
@@ -408,6 +409,10 @@ export class ProductsService {
       ...existing,
       ...data,
       name: data.name?.trim() ?? existing.name,
+      description:
+        data.description !== undefined
+          ? data.description.trim() || undefined
+          : existing.description,
       size: data.size?.trim() ?? existing.size,
       price: pricing.price,
       cost: pricing.cost,

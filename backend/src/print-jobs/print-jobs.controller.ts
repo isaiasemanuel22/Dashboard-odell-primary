@@ -9,7 +9,11 @@ import {
   Req,
 } from '@nestjs/common';
 import type { Request } from 'express';
-import { UpdatePrintJobDto, UpdatePrintJobStatusDto } from '../common/dto';
+import {
+  CreateIndependentTaskDto,
+  UpdatePrintJobDto,
+  UpdatePrintJobStatusDto,
+} from '../common/dto';
 import { PrintJobActor } from '../common/interfaces';
 import { ADMIN_ROLE_ID } from '../users/user-access.bootstrap';
 import { PrintJobsService } from './print-jobs.service';
@@ -26,6 +30,17 @@ export class PrintJobsController {
   @Post('reconcile-missing-supplies')
   reconcileMissingSupplies() {
     return { blocked: this.printJobsService.blockMissingSupplies() };
+  }
+
+  @Post()
+  createIndependent(
+    @Body() dto: CreateIndependentTaskDto,
+    @Req() request: Request,
+  ) {
+    return this.printJobsService.createIndependent(
+      dto,
+      this.actorFromRequest(request),
+    );
   }
 
   @Get()

@@ -316,6 +316,8 @@ export interface ProductComponent {
 export interface ProductBase {
   id: string;
   name: string;
+  /** Texto libre del catálogo. No es obligatorio. */
+  description?: string;
   images: string[];
   attachments: ProductAttachment[];
   updatedAt: string;
@@ -428,6 +430,7 @@ export type Product = Product3D | ProductEstampado | ProductCombo;
 export interface Customer {
   id: string;
   name: string;
+  /** Vacío si el cliente no dejó correo. */
   email: string;
   phone: string;
   company?: string;
@@ -665,7 +668,8 @@ export interface PrintJob {
   customerName: string;
   productName: string;
   productId?: string;
-  type: ServiceType;
+  /** `''` cuando la tarea interna no tiene área designada. */
+  type: ServiceType | '';
   taskType?: TaskType;
   quantity?: number;
   status: PrintJobStatus;
@@ -1067,6 +1071,7 @@ export interface TreasuryOverview {
 /** Payload de creación/actualización alineado con el DTO HTTP. */
 export type CreateProductDto = {
   name: string;
+  description?: string;
   type: ProductType;
   images?: string[];
   attachments?: ProductAttachment[];

@@ -19,6 +19,7 @@ import { normalizeProductAttachments } from '../../products/product-attachment.u
 export function mapProductFromDb(row: {
   id: string;
   name: string;
+  description?: string | null;
   images: Prisma.JsonValue;
   updatedAt: Date;
   price: number;
@@ -56,6 +57,7 @@ export function mapProductFromDb(row: {
   const base = {
     id: row.id,
     name: row.name,
+    description: row.description?.trim() || undefined,
     images: normalizeProductImages(fromJson<string[]>(row.images) ?? []),
     attachments: normalizeProductAttachments(fromJson(row.attachments ?? [])),
     updatedAt: row.updatedAt.toISOString(),
@@ -151,6 +153,7 @@ export function mapProductToDb(product: Product) {
   return {
     id: product.id,
     name: product.name,
+    description: product.description?.trim() || null,
     images: toInputJson(product.images),
     attachments: toInputJson(product.attachments ?? []),
     updatedAt: new Date(product.updatedAt),

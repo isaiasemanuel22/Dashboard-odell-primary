@@ -19,6 +19,10 @@ import { BreakpointService } from '../core/services/breakpoint.service';
 import { formDialogConfig } from './form-dialog.config';
 import { ModalSize } from './modal-size';
 import type { ConfirmDialogData } from './confirm-dialog.component';
+import type {
+  IndependentTaskDialogData,
+  IndependentTaskDialogResult,
+} from './independent-task-dialog.component';
 import type { SupplyReplacementChoice, SupplyShortageReport } from '../core/models';
 import type { OrderFormDialogData } from './order-form-dialog.component';
 import type { QuoteDocumentExportDialogData } from './quote-document-export-dialog.component';
@@ -268,6 +272,28 @@ export class FormDialogService {
           this.open(ResetDatabaseDialogComponent, {}, 'sm', {
             ariaLabel: 'Resetear base de datos',
           }),
+      ),
+    );
+  }
+
+  openIndependentTask(
+    data: IndependentTaskDialogData,
+  ): Observable<IndependentTaskDialogResult | undefined> {
+    return from(import('./independent-task-dialog.component')).pipe(
+      switchMap(
+        ({
+          IndependentTaskDialogComponent,
+        }): Observable<IndependentTaskDialogResult | undefined> => {
+          const base = this.baseConfig('md');
+          const ref = this.dialog.open(IndependentTaskDialogComponent, {
+            ...base,
+            ariaLabel: 'Nueva tarea',
+            data,
+          });
+          return ref.closed as Observable<
+            IndependentTaskDialogResult | undefined
+          >;
+        },
       ),
     );
   }

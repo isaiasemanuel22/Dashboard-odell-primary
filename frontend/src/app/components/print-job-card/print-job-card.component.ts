@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, Input } from '@angular/core';
 import { RouterLink } from '@angular/router';
-import { OrderStatus, PrintJob, TaskKind } from '../../core/models';
+import { OrderStatus, PrintJob, ServiceType, TaskKind } from '../../core/models';
 import {
   OrderStatusLabelPipe,
   PrintJobStatusLabelPipe,
@@ -12,6 +12,7 @@ import {
 import { DbServiceBadgeComponent } from '../db-service-badge/db-service-badge.component';
 import { DbStatusBadgeComponent } from '../db-status-badge/db-status-badge.component';
 import { TASK_KIND_LABELS } from '../../shared/constants/labels';
+import { designatedArea } from '../../shared/utils/service-type.util';
 
 export type PrintJobCardVariant = 'default' | 'board';
 
@@ -47,6 +48,11 @@ export class PrintJobCardComponent {
 
   get isPrepareOrder(): boolean {
     return this.job.taskKind === TaskKind.PREPARE_ORDER;
+  }
+
+  /** Null cuando la tarea no tiene área: no se inventa un badge. */
+  get area(): ServiceType | null {
+    return designatedArea(this.job.type);
   }
 
   get customerInitial(): string {

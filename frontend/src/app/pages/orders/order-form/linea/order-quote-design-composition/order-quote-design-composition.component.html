@@ -59,6 +59,16 @@
             <p class="design-detail__rate-hint">Cargala en Ajustes · Valores generales</p>
           </div>
         </div>
+      } @else {
+        <db-input
+          label="Costo del diseño"
+          type="number"
+          [ngModel]="line.unitCost ?? 0"
+          (ngModelChange)="onFixedDesignCostChange($event)"
+          [name]="'fixed-cost-' + lineIndex"
+          [min]="0"
+          [step]="1"
+        />
       }
   
       @if (isGraphic) {

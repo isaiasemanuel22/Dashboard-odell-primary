@@ -10,12 +10,17 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ProductType } from '../../../../core/models';
-import { DbCheckboxComponent, DbInputComponent } from '@dashboard-form';
+import {
+  DbCheckboxComponent,
+  DbInputComponent,
+  DbTextareaComponent,
+} from '@dashboard-form';
 import type { DbSelectOption } from '@dashboard-form';
 
 export interface ProductFormBasicFieldsValue {
   type: ProductType;
   name: string;
+  description: string;
   published: boolean;
   includesPieces: boolean;
   finishedStock: number;
@@ -24,7 +29,12 @@ export interface ProductFormBasicFieldsValue {
 @Component({
   selector: 'app-product-form-basic-fields',
   standalone: true,
-  imports: [FormsModule, DbCheckboxComponent, DbInputComponent],
+  imports: [
+    FormsModule,
+    DbCheckboxComponent,
+    DbInputComponent,
+    DbTextareaComponent,
+  ],
   templateUrl: './product-form-basic-fields.component.html',
   styleUrl: '../product-form.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -40,6 +50,7 @@ export class ProductFormBasicFieldsComponent implements OnInit {
 
   type: ProductType = ProductType.FDM;
   name = '';
+  description = '';
   published = true;
   includesPieces = false;
   finishedStock = 0;
@@ -55,6 +66,7 @@ export class ProductFormBasicFieldsComponent implements OnInit {
     if (!this.isSameValue(value, this.currentValue())) {
       this.type = value.type;
       this.name = value.name;
+      this.description = value.description ?? '';
       this.published = value.published;
       this.includesPieces = value.includesPieces;
       this.finishedStock = value.finishedStock;
@@ -126,6 +138,7 @@ export class ProductFormBasicFieldsComponent implements OnInit {
     return {
       type: this.type,
       name: this.name,
+      description: this.description,
       published: this.published,
       includesPieces: this.includesPieces,
       finishedStock: Math.max(0, Math.trunc(Number(this.finishedStock) || 0)),
@@ -143,6 +156,7 @@ export class ProductFormBasicFieldsComponent implements OnInit {
     return (
       a.type === b.type &&
       a.name === b.name &&
+      a.description === b.description &&
       a.published === b.published &&
       a.includesPieces === b.includesPieces
       && a.finishedStock === b.finishedStock

@@ -84,6 +84,9 @@
           }
         </div>
         <b class="pd-m__name">{{ product.name }}</b>
+        @if (product.description) {
+          <p class="m-hint">{{ product.description }}</p>
+        }
         <span class="m-hint">{{ mobileMetaLine }}</span>
       </section>
 
@@ -254,6 +257,9 @@
         <a routerLink="/productos" class="back-link">← Productos</a>
         <div class="title-row">
           <h2>{{ product.name }}</h2>
+          @if (product.description) {
+            <p>{{ product.description }}</p>
+          }
           <app-product-badges
             [type]="product.type"
             [published]="product.published"

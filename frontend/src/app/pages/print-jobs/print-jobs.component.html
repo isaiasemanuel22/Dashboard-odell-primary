@@ -118,7 +118,9 @@
             @if (isPrepareOrder(job)) {
               <span class="cola-m__area cola-m__area--ventas">Ventas</span>
             } @else {
-              <db-service-badge [type]="job.type" />
+              @if (jobArea(job); as area) {
+                <db-service-badge [type]="area" />
+              }
             }
             @if (jobDeliveryLabel(job); as delivery) {
               <span class="cola-m__meta">{{ delivery }}</span>

@@ -1,0 +1,29 @@
+---
+description: Cada tarea del usuario la resuelve un subagente; el chat principal no la implementa
+alwaysApply: true
+---
+
+# Delegar cada tarea
+
+Cuando el usuario mande una tarea —arreglar, implementar, cambiar, probar o desplegar— **no la resuelvas en el chat principal**. Buscá el subagente que corresponda, lanzalo con `Task` y, al terminar, resumí el resultado en español.
+
+## Qué agente
+
+- Rediseño desde mock o foto: `odell-redisenio` (regla aparte).
+- Corregir hallazgos de QA: `odell-correcciones`.
+- Probar la app: `odell-qa` o `odell-tester`.
+- QA visual contra un diseño: `odell-qa-visual`.
+- Desplegar: `odell-despliegue`.
+- Optimizar: `odell-optimizacion`.
+- Ubicar código: `explorador` o `buscador`.
+- Investigar antes de implementar: `investigador`.
+- Cambio mecánico ya especificado: `editor-mecanico`.
+- Tests o build: `verificador` o `ejecutor`.
+- Documentación web: `investigador-web`.
+- Cualquier otra implementación: `generalPurpose`.
+
+Pasale el pedido completo, lo ya hecho en el chat y las restricciones vigentes (sin commits salvo pedido explícito; no levantar el proyecto si el usuario lo prohibió).
+
+## Excepción
+
+Si el usuario pide explícitamente que lo haga el chat principal, hacelo acá.

@@ -163,6 +163,12 @@ export class OrderQuoteDesignCompositionComponent implements OnInit {
     this.emitChange();
   }
 
+  onFixedDesignCostChange(raw: number | string): void {
+    this.line.unitCost = Math.max(0, Math.round(Number(raw) || 0));
+    this.applyFixedDesignPrice();
+    this.emitChange();
+  }
+
   onWorkKindChange(value: string): void {
     this.line.workKind = value;
     this.emitChange();
@@ -202,23 +208,32 @@ export class OrderQuoteDesignCompositionComponent implements OnInit {
       this.applyDesignBudget();
     } else {
       this.line.unitCost = 0;
+      this.applyFixedDesignPrice();
     }
     this.emitChange();
   }
 
+  private applyFixedDesignPrice(): void {
+    if (this.line.unitPriceManual || !this.profitMargins) return;
+    const price = priceFromCostAndMargin(
+      Math.max(0, Math.round(Number(this.line.unitCost) || 0)),
+      getMarginForService(this.line.serviceType, this.profitMargins),
+    );
+    this.line.unitPrice = price;
+    this.line.designUnitPrice = price;
+  }
+
   private applyDesignBudget(): void {
-    if (!this.profitMargins) {
-      const hours = Math.max(0, Number(this.line.budgetedHours) || 0);
-      this.line.budgetedHours = hours;
-      this.line.unitCost =
-        this.chargeMode === 'fixed' ? 0 : Math.round(this.serviceRate * hours);
-      return;
-    }
     const hours = Math.max(0, Number(this.line.budgetedHours) || 0);
     this.line.budgetedHours = hours;
-    const cost =
-      this.chargeMode === 'fixed' ? 0 : Math.round(this.serviceRate * hours);
+    if (this.chargeMode === 'fixed') {
+      this.line.unitCost = Math.max(0, Math.round(Number(this.line.unitCost) || 0));
+      this.applyFixedDesignPrice();
+      return;
+    }
+    const cost = Math.round(this.serviceRate * hours);
     this.line.unitCost = cost;
+    if (!this.profitMargins) return;
     const price = priceFromCostAndMargin(
       cost,
       getMarginForService(this.line.serviceType, this.profitMargins),

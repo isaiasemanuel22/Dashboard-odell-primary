@@ -15,12 +15,22 @@ export function isGraphicDesignService(serviceType: ServiceType): boolean {
 
 /** Área de Odell. Insumo suelto y servicio de un tercero no lo son. */
 export function isAreaService(serviceType: ServiceType): boolean {
-  return (
+  return designatedArea(serviceType) !== null;
+}
+
+/** Área designada, o null si el valor está vacío o no es un área. */
+export function designatedArea(
+  serviceType: string | null | undefined,
+): ServiceType | null {
+  if (
     serviceType === ServiceType.IMPRESION_3D ||
     serviceType === ServiceType.ESTAMPADO ||
     serviceType === ServiceType.DISENO_GRAFICO ||
     serviceType === ServiceType.MODELADO
-  );
+  ) {
+    return serviceType;
+  }
+  return null;
 }
 
 export function isSupplyOrderLine(serviceType: ServiceType): boolean {

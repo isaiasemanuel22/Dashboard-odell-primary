@@ -46,7 +46,7 @@ export class CustomersService {
 
   create(data: {
     name: string;
-    email: string;
+    email?: string;
     phone: string;
     company?: string;
     type?: CustomerType;
@@ -55,16 +55,16 @@ export class CustomersService {
     source?: CustomerSource;
   }): Customer {
     const name = data.name?.trim();
-    const email = data.email?.trim();
+    const email = data.email?.trim() ?? '';
     const phone = data.phone?.trim();
-    if (!name || !email || !phone) {
-      throw new BadRequestException(
-        'Nombre, email y teléfono son obligatorios',
-      );
+    if (!name || !phone) {
+      throw new BadRequestException('Nombre y teléfono son obligatorios');
     }
-    assertValidEmail(email);
-    if (this.customers.emailExists(email)) {
-      throw new ConflictException('Ya existe un cliente con ese email');
+    if (email) {
+      assertValidEmail(email);
+      if (this.customers.emailExists(email)) {
+        throw new ConflictException('Ya existe un cliente con ese email');
+      }
     }
 
     const type = data.type ?? CustomerType.PARTICULAR;
@@ -98,7 +98,8 @@ export class CustomersService {
       ...current,
       ...data,
       name: data.name !== undefined ? data.name.trim() : current.name,
-      email: data.email !== undefined ? data.email.trim() : current.email,
+      email:
+        data.email !== undefined ? data.email.trim() : current.email,
       phone: data.phone !== undefined ? data.phone.trim() : current.phone,
       company:
         data.company !== undefined
@@ -111,14 +112,14 @@ export class CustomersService {
       source: data.source !== undefined ? data.source : current.source,
     };
 
-    if (!updated.name || !updated.email || !updated.phone) {
-      throw new BadRequestException(
-        'Nombre, email y teléfono son obligatorios',
-      );
+    if (!updated.name || !updated.phone) {
+      throw new BadRequestException('Nombre y teléfono son obligatorios');
     }
-    assertValidEmail(updated.email);
-    if (this.customers.emailExists(updated.email, id)) {
-      throw new ConflictException('Ya existe un cliente con ese email');
+    if (updated.email) {
+      assertValidEmail(updated.email);
+      if (this.customers.emailExists(updated.email, id)) {
+        throw new ConflictException('Ya existe un cliente con ese email');
+      }
     }
 
     return this.customers.save(updated);

@@ -1,5 +1,10 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import { OrderStatus, PrintJobStatus } from '../common/enums';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { OrderStatus, PrintJobStatus, ServiceType, TaskType } from '../common/enums';
+import { CreateIndependentTaskDto } from '../common/dto';
 import {
   PrintJob,
   PrintJobActor,
@@ -10,7 +15,9 @@ import {
   assertPrintJobStatus,
   assertPrintJobStatusTransition,
 } from '../common/validators/domain.validators';
+import { calcTaskPriority } from './order-task-estimate';
 import { OrderTasksService } from './order-tasks.service';
+import { StoreChangeService } from '../store/store-change.service';
 import { StoreService } from '../store/store.service';
 
 export interface PrintJobUpdateResult extends PrintJob {
@@ -22,6 +29,7 @@ export class PrintJobsService {
   constructor(
     private readonly store: StoreService,
     private readonly orderTasks: OrderTasksService,
+    private readonly storeChange?: StoreChangeService,
   ) {}
 
   findAll(): PrintJob[] {
@@ -154,4 +162,75 @@ export class PrintJobsService {
   ): PrintJobUpdateResult {
     return this.update(id, { status }, actor);
   }
+
+  /** Tarea interna, sin pedido. Terminarla no mueve stock. */
+  createIndependent(
+    dto: CreateIndependentTaskDto,
+    actor?: PrintJobActor,
+  ): PrintJob {
+    const productName = dto.productName?.trim();
+    if (!productName) {
+      throw new BadRequestException('La tarea necesita un nombre');
+    }
+    const dueDate = resolveDueDate(dto.dueDate);
+    const type = independentTaskType(dto.type);
+    const job: PrintJob = {
+      id: this.store.nextId('job', this.store.printJobs),
+      orderId: '',
+      orderItemIndex: -1,
+      customerName: '',
+      productName,
+      type,
+      taskType: TaskType.INTERNAL,
+      quantity: 1,
+      status: PrintJobStatus.POR_HACER,
+      active: true,
+      priority: calcTaskPriority(dueDate),
+      machine: machineForIndependentTask(type),
+      estimatedHours: Math.max(0, Number(dto.estimatedHours) || 1),
+      dueDate,
+      responsibleUserId:
+        dto.responsibleUserId?.trim() || actor?.userId || undefined,
+    };
+    this.store.printJobs.push(job);
+    this.storeChange?.recordChange({
+      collections: ['printJobs'],
+      realtime: {
+        scopes: ['print-jobs', 'dashboard'],
+        action: 'create',
+        entity: 'print-job',
+        id: job.id,
+      },
+    });
+    return job;
+  }
+}
+
+function resolveDueDate(value: string | undefined): string {
+  const trimmed = value?.trim();
+  if (trimmed && !Number.isNaN(new Date(trimmed).getTime())) {
+    return trimmed;
+  }
+  const due = new Date();
+  due.setDate(due.getDate() + 7);
+  return due.toISOString().slice(0, 10);
+}
+
+function independentTaskType(
+  type: string | null | undefined,
+): ServiceType | '' {
+  const value = type?.trim() ?? '';
+  if (value === ServiceType.MODELADO) return ServiceType.MODELADO;
+  if (value === ServiceType.DISENO_GRAFICO) return ServiceType.DISENO_GRAFICO;
+  if (value === ServiceType.ESTAMPADO) return ServiceType.ESTAMPADO;
+  if (value === ServiceType.IMPRESION_3D) return ServiceType.IMPRESION_3D;
+  return '';
+}
+
+function machineForIndependentTask(type: ServiceType | ''): string {
+  if (type === ServiceType.MODELADO) return 'Modelado 3D';
+  if (type === ServiceType.DISENO_GRAFICO) return 'Diseño gráfico';
+  if (type === ServiceType.ESTAMPADO) return 'Estampado';
+  if (type === ServiceType.IMPRESION_3D) return 'Impresión 3D';
+  return '';
 }

@@ -34,6 +34,16 @@ describe('CustomersService', () => {
   });
 
   describe('create / update — tipo, mínimo y CUIT', () => {
+    it('crea un cliente sin email', () => {
+      const { service } = setup();
+
+      const first = service.create({ name: 'Sin mail', phone: '111' });
+      const second = service.create({ name: 'Tampoco', phone: '222', email: '' });
+
+      expect(first.email).toBe('');
+      expect(second.email).toBe('');
+    });
+
     it('usa particular por defecto si no se envía type', () => {
       const { service } = setup();
 

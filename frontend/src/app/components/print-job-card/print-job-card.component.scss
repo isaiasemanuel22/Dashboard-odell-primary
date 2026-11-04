@@ -68,6 +68,10 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+
+  .priority-pill {
+    margin-left: auto;
+  }
 }
 
 .job-meta {

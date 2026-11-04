@@ -7,15 +7,33 @@ import {
   PrintJob,
   PrintJobsBoard,
   PrintJobUpdateResult,
+  ServiceType,
   SupplyShortageReport,
   UpdatePrintJobPayload,
 } from '../models';
+
+export interface CreateIndependentTaskPayload {
+  productName: string;
+  /** Vacío u omitido: la tarea queda sin área. */
+  type?: ServiceType | '';
+  dueDate?: string;
+  responsibleUserId?: string;
+  estimatedHours?: number;
+}
 
 @Injectable({ providedIn: 'root' })
 export class PrintJobsService {
   private readonly baseUrl = `${environment.apiUrl}/print-jobs`;
 
   constructor(private readonly http: HttpClient) {}
+
+  createIndependent(
+    payload: CreateIndependentTaskPayload,
+  ): Observable<PrintJob> {
+    return this.http
+      .post<PrintJob & { taskType?: string }>(this.baseUrl, payload)
+      .pipe(map((job) => normalizePrintJob(job)));
+  }
 
   blockTasksMissingSupplies(): Observable<{ blocked: boolean }> {
     return this.http.post<{ blocked: boolean }>(

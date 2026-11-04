@@ -495,6 +495,8 @@ export interface ProductAttachment {
 export interface ProductBase {
   id: string;
   name: string;
+  /** Texto libre del catálogo. No es obligatorio. */
+  description?: string;
   images: string[];
   attachments: ProductAttachment[];
   updatedAt: string;
@@ -615,6 +617,7 @@ export type UpdateProductPayload = Partial<CreateProductPayload>;
 export interface Customer {
   id: string;
   name: string;
+  /** Vacío si el cliente no tiene correo. */
   email: string;
   phone: string;
   company?: string;
@@ -632,7 +635,7 @@ export interface Customer {
 /** Payload alineado con CreateCustomerDto (type/origen opcionales al crear). */
 export type CreateCustomerPayload = {
   name: string;
-  email: string;
+  email?: string;
   phone: string;
   company?: string;
   type?: CustomerType;
@@ -936,7 +939,8 @@ export interface PrintJob {
   customerName: string;
   productName: string;
   productId?: string;
-  type: ServiceType;
+  /** `''` cuando la tarea interna no tiene área designada. */
+  type: ServiceType | '';
   taskKind: TaskKind;
   status: PrintJobStatus;
   active: boolean;

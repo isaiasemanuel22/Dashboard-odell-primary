@@ -33,6 +33,22 @@
             </div>
           </section>
 
+          <section class="order-m-sec quote-description-sec">
+            <h2 class="m-sec-t mobile-only">2 · Descripción</h2>
+            <div class="order-m-card quote-description-field">
+              <db-form-grid-full>
+                <db-rich-text-editor
+                  label="Descripción"
+                  [(ngModel)]="description"
+                  name="description"
+                  placeholder="Describí el pedido: qué se necesita, cantidades, referencias visuales..."
+                  [maxLength]="descriptionMaxLength"
+                  [uploadFn]="uploadDescriptionImage"
+                />
+              </db-form-grid-full>
+            </div>
+          </section>
+
           <section class="order-m-sec quote-lines-section">
             <header class="quote-lines-section__head quote-lines-section__head--row desktop-only">
               <h4 class="quote-lines-section__title">Productos</h4>
@@ -40,7 +56,7 @@
                 El descuento se resta del precio total del producto, no de la ganancia
               </p>
             </header>
-            <h2 class="m-sec-t mobile-only">2 · Productos</h2>
+            <h2 class="m-sec-t mobile-only">3 · Productos</h2>
 
             <div class="order-m-card order-m-card--lines">
               <div class="order-lines">
@@ -135,23 +151,13 @@
                   class="order-m-details__add mobile-only"
                   (click)="expandDetails()"
                 >
-                  + Agregar descripción o notas
+                  + Agregar notas
                 </button>
               }
               <div
                 class="order-m-details__fields"
                 [class.order-m-details__fields--collapsed]="!detailsExpanded"
               >
-                <db-form-grid-full>
-                  <db-rich-text-editor
-                    label="Descripción"
-                    [(ngModel)]="description"
-                    name="description"
-                    placeholder="Describí el pedido: qué se necesita, cantidades, referencias visuales..."
-                    [maxLength]="descriptionMaxLength"
-                    [uploadFn]="uploadDescriptionImage"
-                  />
-                </db-form-grid-full>
                 <db-form-grid-full>
                   <db-textarea
                     label="Notas internas"
@@ -236,7 +242,7 @@
           </section>
 
           <section class="order-m-sec quote-description-sec">
-            <h2 class="m-sec-t mobile-only">3 · Descripción para el cliente</h2>
+            <h2 class="m-sec-t mobile-only">2 · Descripción para el cliente</h2>
             <div class="order-m-card quote-description-field">
               <db-form-grid-full>
                 <db-rich-text-editor
@@ -258,7 +264,7 @@
                 El descuento se resta del precio total del producto, no de la ganancia
               </p>
             </header>
-            <h2 class="m-sec-t mobile-only">2 · Líneas</h2>
+            <h2 class="m-sec-t mobile-only">3 · Líneas</h2>
 
             <div class="order-m-card order-m-card--lines">
               <div class="order-lines">

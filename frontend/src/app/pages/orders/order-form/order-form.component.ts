@@ -1966,9 +1966,11 @@ export class OrderFormComponent implements OnChanges, OnInit {
     );
   }
 
-  /** Costo de diseño/modelado: horas × tarifa. Precio fijo → 0. */
+  /** Costo de diseño/modelado: horas × tarifa, o el costo cargado en precio fijo. */
   private designServiceCost(line: OrderLineDraft): number {
-    if (this.chargeModeFor(line) === 'fixed') return 0;
+    if (this.chargeModeFor(line) === 'fixed') {
+      return Math.max(0, Math.round(Number(line.unitCost) || 0));
+    }
     const hours = Math.max(0, Number(line.budgetedHours) || 0);
     return Math.round(this.serviceRate(line) * hours);
   }
