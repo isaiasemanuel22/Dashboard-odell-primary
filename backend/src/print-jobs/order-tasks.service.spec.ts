@@ -1,3 +1,4 @@
+import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import {
   CustomerType,
   OrderStatus,
@@ -13,6 +14,8 @@ import { INDISTINTO_COLOR_ID } from '../common/color.util';
 import { OrderTasksService } from './order-tasks.service';
 import { StoreService } from '../store/store.service';
 import { createEmptyState } from '../store/store.seed';
+
+const adminActor = { isAdmin: true };
 
 describe('OrderTasksService', () => {
   let store: StoreService;
@@ -115,7 +118,7 @@ describe('OrderTasksService', () => {
     const prepare = store.printJobs.find(
       (task) => task.taskType === TaskType.PREPARE_ORDER,
     )!;
-    service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO);
+    service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO, adminActor);
     prepare.status = PrintJobStatus.EN_PROCESO;
 
     expect(order.items[0].reservedQuantity).toBe(2);
@@ -167,7 +170,7 @@ describe('OrderTasksService', () => {
     const prepare = store.printJobs.find(
       (task) => task.taskType === TaskType.PREPARE_ORDER,
     )!;
-    service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO);
+    service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO, adminActor);
 
     expect(order.items[0].reservedQuantity).toBe(0);
     expect(
@@ -232,7 +235,7 @@ describe('OrderTasksService', () => {
       (task) =>
         task.orderId === first.id && task.taskType === TaskType.PREPARE_ORDER,
     )!;
-    service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO);
+    service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO, adminActor);
     prepare.status = PrintJobStatus.EN_PROCESO;
     service.syncOrderTasks(second);
 
@@ -380,7 +383,7 @@ describe('OrderTasksService', () => {
     const prepare = store.printJobs.find(
       (task) => task.taskType === TaskType.PREPARE_ORDER,
     )!;
-    service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO);
+    service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO, adminActor);
     prepare.status = PrintJobStatus.EN_PROCESO;
 
     const production = store.printJobs.find(
@@ -453,12 +456,145 @@ describe('OrderTasksService', () => {
     const prepare = store.printJobs.find(
       (task) => task.taskType === TaskType.PREPARE_ORDER,
     )!;
-    service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO);
+    service.beforeStatusChange(prepare, PrintJobStatus.EN_PROCESO, adminActor);
     prepare.status = PrintJobStatus.EN_PROCESO;
 
     expect(
       store.printJobs.find((task) => task.taskType === TaskType.PRODUCTION)
         ?.status,
     ).not.toBe(PrintJobStatus.BLOQUEADO);
+  });
+
+  function productionJob(
+    status: PrintJobStatus,
+    responsibleUserId = 'uid-responsable',
+  ) {
+    return {
+      id: 'job-move',
+      orderId: 'ord-move',
+      orderItemIndex: 0,
+      customerName: 'Cliente Test',
+      productName: 'Pieza',
+      productId: 'prod-1',
+      type: ServiceType.IMPRESION_3D,
+      taskType: TaskType.PRODUCTION,
+      status,
+      blockedReason:
+        status === PrintJobStatus.BLOQUEADO
+          ? 'Insumos insuficientes'
+          : undefined,
+      active: false,
+      priority: 1,
+      machine: 'FDM',
+      estimatedHours: 1,
+      dueDate: new Date().toISOString(),
+      quantity: 1,
+      responsibleUserId,
+    };
+  }
+
+  it('copia el responsable del pedido a las tareas abiertas', () => {
+    const order: Order = {
+      id: 'ord-resp',
+      customerId: 'cust-1',
+      customerName: 'Cliente Test',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity: 1,
+          unitPrice: 1000,
+        },
+      ],
+      status: OrderStatus.PENDIENTE,
+      total: 1000,
+      createdAt: new Date().toISOString(),
+      dueDate: new Date().toISOString(),
+      responsibleUserId: 'uid-a',
+    };
+    store.orders.push(order);
+    service.syncOrderTasks(order);
+
+    const prepare = store.printJobs.find(
+      (task) => task.taskType === TaskType.PREPARE_ORDER,
+    )!;
+    expect(prepare.responsibleUserId).toBe('uid-a');
+    prepare.status = PrintJobStatus.TERMINADO;
+
+    store.printJobs.push({
+      id: 'job-abierta',
+      orderId: order.id,
+      orderItemIndex: 5,
+      customerName: order.customerName,
+      productName: 'Pieza',
+      type: ServiceType.IMPRESION_3D,
+      taskType: TaskType.PRODUCTION,
+      status: PrintJobStatus.POR_HACER,
+      active: false,
+      priority: 1,
+      machine: 'FDM',
+      estimatedHours: 1,
+      dueDate: order.dueDate,
+      responsibleUserId: 'uid-viejo',
+    });
+
+    order.responsibleUserId = 'uid-b';
+    service.syncOrderTasks(order);
+
+    expect(prepare.responsibleUserId).toBe('uid-a');
+    expect(
+      store.printJobs.find((job) => job.id === 'job-abierta')?.responsibleUserId,
+    ).toBe('uid-b');
+  });
+
+  it('un administrador mueve una tarea bloqueada', () => {
+    const job = productionJob(PrintJobStatus.BLOQUEADO);
+    service.beforeStatusChange(job, PrintJobStatus.EN_PROCESO, adminActor);
+    expect(job.blockedReason).toBeUndefined();
+  });
+
+  it('el responsable mueve su tarea', () => {
+    const job = productionJob(PrintJobStatus.BLOQUEADO, 'uid-responsable');
+    service.beforeStatusChange(job, PrintJobStatus.POR_HACER, {
+      userId: 'uid-responsable',
+    });
+    expect(job.blockedReason).toBeUndefined();
+  });
+
+  it('un tercero no mueve ni una tarea desbloqueada', () => {
+    const job = productionJob(PrintJobStatus.POR_HACER, 'uid-responsable');
+    expect(() =>
+      service.beforeStatusChange(job, PrintJobStatus.EN_PROCESO, {
+        userId: 'uid-otro',
+      }),
+    ).toThrow(ForbiddenException);
+    expect(job.status).toBe(PrintJobStatus.POR_HACER);
+  });
+
+  it('sin insumos no pasa a en progreso aunque mueva el responsable o un admin', () => {
+    store.products[0] = {
+      ...store.products[0],
+      filaments: [
+        {
+          id: 'ff-1',
+          filamentType: FilamentType.PLA,
+          grams: 50,
+        },
+      ],
+    } as Product3D;
+    const job = productionJob(PrintJobStatus.BLOQUEADO);
+
+    expect(() =>
+      service.beforeStatusChange(job, PrintJobStatus.EN_PROCESO, adminActor),
+    ).toThrow(BadRequestException);
+    expect(() =>
+      service.beforeStatusChange(job, PrintJobStatus.EN_PROCESO, {
+        userId: 'uid-responsable',
+      }),
+    ).toThrow(BadRequestException);
+    expect(job.status).toBe(PrintJobStatus.BLOQUEADO);
+    expect(job.blockedReason).toBe('Insumos insuficientes');
   });
 });

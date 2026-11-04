@@ -194,7 +194,7 @@ export class QuotesService {
     return this.quotes.save(updated);
   }
 
-  updateStatus(id: string, status: QuoteStatus): Quote {
+  updateStatus(id: string, status: QuoteStatus, actorUserId?: string): Quote {
     const quote = this.findOne(id);
     if (quote.status === status) {
       return quote;
@@ -218,7 +218,7 @@ export class QuotesService {
     quote.status = status;
     this.quotes.save(quote);
     if (status === QuoteStatus.ACEPTADO && !quote.orderId) {
-      this.createOrderFromQuote(quote.id);
+      this.createOrderFromQuote(quote.id, actorUserId);
     }
     return this.findOne(id);
   }
@@ -237,7 +237,7 @@ export class QuotesService {
     }
   }
 
-  createOrderFromQuote(id: string): Order {
+  createOrderFromQuote(id: string, actorUserId?: string): Order {
     const quote = this.findOne(id);
 
     if (quote.status !== QuoteStatus.ACEPTADO) {
@@ -270,6 +270,7 @@ export class QuotesService {
         discountAmount: quote.discountAmount,
         description: quote.description,
         dueDate: this.defaultOrderDueDate(),
+        responsibleUserId: actorUserId?.trim() || undefined,
       },
       {
         keepQuotedPrices: { wholesaleApplied: quote.wholesaleApplied === true },

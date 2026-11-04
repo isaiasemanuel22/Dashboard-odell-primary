@@ -745,6 +745,8 @@ export interface Order {
   wholesaleApplied?: boolean;
   /** Canal de venta (opcional). */
   salesChannel?: SalesChannel;
+  /** uid de Firebase de quien puede mover las tareas de este pedido. */
+  responsibleUserId?: string;
   discountPercent?: number;
   discountAmount?: number;
   description?: string;

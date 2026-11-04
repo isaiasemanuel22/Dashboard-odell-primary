@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { OrderStatus, PrintJobStatus } from '../common/enums';
 import {
   PrintJob,
+  PrintJobActor,
   PrintJobsBoard,
   UpdatePrintJobDto,
 } from '../common/interfaces';
@@ -62,14 +63,14 @@ export class PrintJobsService {
   update(
     id: string,
     dto: UpdatePrintJobDto,
-    actorUserId?: string,
+    actor?: PrintJobActor,
   ): PrintJobUpdateResult {
     const job = this.findOne(id);
 
     if (dto.status !== undefined) {
       assertPrintJobStatus(dto.status);
       assertPrintJobStatusTransition(job.status, dto.status);
-      this.orderTasks.beforeStatusChange(job, dto.status, actorUserId);
+      this.orderTasks.beforeStatusChange(job, dto.status, actor);
       job.status = dto.status;
       if (dto.status !== PrintJobStatus.POR_HACER) {
         job.active = true;
@@ -89,10 +90,27 @@ export class PrintJobsService {
     }
 
     if (dto.responsibleUserId !== undefined) {
-      job.responsibleUserId = dto.responsibleUserId.trim() || undefined;
+      const nextResponsible = dto.responsibleUserId.trim() || undefined;
+      if (nextResponsible !== job.responsibleUserId) {
+        this.orderTasks.assertActorCanMove(job, actor);
+      }
+      job.responsibleUserId = nextResponsible;
     }
 
     if (dto.active !== undefined) {
+      const resetsToTodo =
+        dto.status === undefined &&
+        !dto.active &&
+        job.status !== PrintJobStatus.TERMINADO &&
+        job.status !== PrintJobStatus.CANCELADO &&
+        job.status !== PrintJobStatus.BLOQUEADO;
+      if (resetsToTodo) {
+        this.orderTasks.beforeStatusChange(
+          job,
+          PrintJobStatus.POR_HACER,
+          actor,
+        );
+      }
       job.active = dto.active;
       if (
         !dto.active &&
@@ -119,8 +137,8 @@ export class PrintJobsService {
   updateStatus(
     id: string,
     status: PrintJobStatus,
-    actorUserId?: string,
+    actor?: PrintJobActor,
   ): PrintJobUpdateResult {
-    return this.update(id, { status }, actorUserId);
+    return this.update(id, { status }, actor);
   }
 }

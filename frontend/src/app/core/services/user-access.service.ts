@@ -42,6 +42,14 @@ export interface UpdateAppUserPayload {
   roleIds?: string[];
 }
 
+/** Usuarios activos con uid de Firebase, para el responsable del pedido. */
+export interface OrderResponsibleOption {
+  id: string;
+  displayName: string;
+  firebaseUid: string;
+  active: boolean;
+}
+
 @Injectable({ providedIn: 'root' })
 export class UserAccessService {
   private readonly baseUrl = `${environment.apiUrl}/user-access`;
@@ -97,6 +105,12 @@ export class UserAccessService {
 
   listUsers(): Observable<AppUser[]> {
     return this.http.get<AppUser[]>(`${this.baseUrl}/users`);
+  }
+
+  listOrderResponsibles(): Observable<OrderResponsibleOption[]> {
+    return this.http.get<OrderResponsibleOption[]>(
+      `${this.baseUrl}/order-responsibles`,
+    );
   }
 
   createUser(data: CreateAppUserPayload): Observable<AppUser> {

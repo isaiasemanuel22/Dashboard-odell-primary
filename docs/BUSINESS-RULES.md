@@ -444,8 +444,11 @@ Para determinar la disponibilidad de FDM o resina, se suma la cantidad del
 material compatible que el producto requiere.
 
 Cuando una reposición vuelve a cubrir lo que faltaba, el sistema notifica la
-disponibilidad pero no desbloquea la tarea automáticamente. Únicamente el
-responsable actual de la tarea puede desbloquearla.
+disponibilidad pero no desbloquea la tarea automáticamente. La mueve el
+responsable de la tarea o un usuario con rol administrador (§12.2). Si los
+insumos de esa producción siguen faltando, el paso a `EN PROGRESO` se
+rechaza por falta de insumos, aunque quien mueve sea el responsable o un
+administrador.
 
 ### 9.2 Marca
 
@@ -673,10 +676,20 @@ dependencias estén en estado `TERMINADO`.
 Cada tarea pertenece a un área y solo puede ser vista o modificada por
 usuarios cuyos roles otorguen la acción correspondiente para esa área.
 
-Una tarea tiene un único responsable actual opcional. La asignación y la
-reasignación son manuales. Al transferirla, el responsable actual debe
-seleccionar al nuevo usuario. Solo se conserva el responsable actual, no el
-historial de responsables.
+Mover una tarea —cambiarla de estado, esté bloqueada o no— lo pueden hacer
+dos personas: un usuario con rol administrador, y el responsable actual de
+esa tarea. El resto no la mueve.
+
+El pedido tiene un responsable. En el formulario de pedido hay un campo
+**Responsable** con todos los usuarios existentes. Al abrir el formulario
+queda seleccionado el usuario que está cargando el pedido; se puede cambiar
+antes de guardar. Ese responsable se copia a cada tarea del pedido al
+crearla o al sincronizarla. Si el pedido cambia de responsable, las tareas
+abiertas pasan a ese usuario. No se guarda historial de responsables: solo
+el actual.
+
+El presupuesto no lleva este campo. Al convertir un presupuesto en pedido,
+el responsable es quien carga el pedido.
 
 ### 12.3 Tareas internas
 
@@ -1661,8 +1674,13 @@ Comportamiento implementado relevante:
 - Pedido **entregado** → tareas archivadas (salen del tablero activo).
 - Pedido **cancelado** → tareas abiertas pasan a canceladas; terminadas se
   conservan.
-- Tarea **bloqueada** por falta de insumos: notificación al repone stock,
-  pero **no se desbloquea sola**; el responsable debe avanzarla.
+- Tarea **bloqueada** por falta de insumos: notificación al reponer stock,
+  pero **no se desbloquea sola**. La mueven el responsable de la tarea o un
+  administrador (§12.2). Si los insumos siguen faltando, no pasa a
+  `EN PROGRESO`.
+- El formulario de pedido elige **Responsable** entre los usuarios
+  existentes. Por defecto es quien está cargando el pedido, y ese usuario
+  queda en las tareas.
 - El estado del pedido se **recalcula** a partir de tareas y entregas
   (prioridad de entregado / parcial / progreso según tareas).
 

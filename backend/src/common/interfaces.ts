@@ -542,6 +542,8 @@ export interface Order {
   wholesaleApplied?: boolean;
   /** Canal de venta (opcional). */
   salesChannel?: SalesChannel;
+  /** uid de Firebase de quien puede mover las tareas de este pedido. */
+  responsibleUserId?: string;
   discountPercent?: number;
   discountAmount?: number;
   description?: string;
@@ -685,6 +687,12 @@ export interface UpdatePrintJobDto {
   status?: PrintJobStatus;
   active?: boolean;
   responsibleUserId?: string;
+}
+
+/** Quién intenta mover una tarea. `userId` es el uid de Firebase. */
+export interface PrintJobActor {
+  userId?: string;
+  isAdmin?: boolean;
 }
 
 export interface RetailSaleItem {
@@ -1102,6 +1110,14 @@ export interface UserPermissionOverrideEntry {
   action: import('./enums').PermissionAction;
   areaId: string | null;
   granted: boolean;
+}
+
+/** Listado chico para elegir responsable. Sin overrides ni secretos. */
+export interface OrderResponsibleOption {
+  id: string;
+  displayName: string;
+  firebaseUid: string;
+  active: boolean;
 }
 
 export interface AppUser {

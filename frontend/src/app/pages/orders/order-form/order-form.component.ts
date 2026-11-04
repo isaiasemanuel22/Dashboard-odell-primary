@@ -1,4 +1,5 @@
 import {
+  ChangeDetectorRef,
   Component,
   EventEmitter,
   HostListener,
@@ -26,6 +27,7 @@ import {
   Supply,
   GeneralSettings,
   ImpresoWithCost,
+  CurrentUserResponse,
   Order,
   OrderLineDraft,
   PaymentMethod,
@@ -40,6 +42,7 @@ import {
   WholesaleDiscountSettings,
 } from '../../../core/models';
 import { SettingsService, SuppliesService } from '../../../core/services/settings.service';
+import { UserAccessService } from '../../../core/services/user-access.service';
 import { ImpresosService } from '../../../core/services/impresos.service';
 import {
   ProductCostCalculationService,
@@ -214,6 +217,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
   private readonly impresosService = inject(ImpresosService);
   private readonly costCalculator = inject(ProductCostCalculationService);
   private readonly suppliesService = inject(SuppliesService);
+  private readonly userAccess = inject(UserAccessService);
+  private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly paperTypeOptions = paperTypeOptions();
@@ -264,6 +269,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   priceType: PriceType = PriceType.LISTA;
   salesChannel: SalesChannel | null = null;
+  /** uid de Firebase del responsable. Solo pedidos. */
+  responsibleUserId = '';
+  responsibleOptions: DbSelectOption[] = [];
+  responsibleError = '';
+  private sessionFirebaseUid = '';
+  private responsibleManual = false;
   /** El usuario eligió tipo de precio a mano; no pisar al cambiar cliente. */
   private priceTypeManual = false;
 
@@ -354,6 +365,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     const missing: string[] = [];
 
     if (!this.customerId.trim()) missing.push('cliente');
+    if (!this.responsibleUserId.trim()) missing.push('responsable');
     if (!this.dueDate) {
       missing.push('fecha de entrega');
     } else if (this.dueDateError) {
@@ -449,6 +461,21 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (!this.isResellerCustomer) return '';
     const percent = this.wholesaleDiscount.percent;
     return `Revendedor · −${percent}%`;
+  }
+
+  get responsibleSelectOptions(): DbSelectOption[] {
+    if (
+      this.responsibleUserId &&
+      !this.responsibleOptions.some(
+        (option) => option.value === this.responsibleUserId,
+      )
+    ) {
+      return [
+        { value: this.responsibleUserId, label: 'Responsable guardado' },
+        ...this.responsibleOptions,
+      ];
+    }
+    return this.responsibleOptions;
   }
 
   get salesChannelOptions(): DbSelectOption[] {
@@ -1097,6 +1124,9 @@ export class OrderFormComponent implements OnChanges, OnInit {
         preserveCost: this.isEditing,
       });
     });
+    if (!this.isQuoteForm) {
+      this.loadResponsibleChoices();
+    }
     if (this.isQuoteForm) {
       // Todos los insumos: alcohol de lavado (Ajustes) + estampado.
       this.suppliesService
@@ -1227,6 +1257,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
     } else {
       this.discountClampHint = '';
     }
+  }
+
+  onResponsibleUserIdChange(value: string): void {
+    this.responsibleUserId = value;
+    this.responsibleManual = true;
+    this.responsibleError = value.trim() ? '' : 'Elegí un responsable';
   }
 
   onCustomerIdChange(customerId: string): void {
@@ -1411,6 +1447,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       dueDate: toOrderDueDate(this.dueDate),
       priceType: this.priceType,
       salesChannel: this.salesChannel,
+      responsibleUserId: this.responsibleUserId.trim(),
     } satisfies CreateOrderPayload);
   }
 
@@ -1532,8 +1569,67 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return 'Elegí un cliente para crear el presupuesto (Enviado). El borrador puede guardarse sin cliente.';
   }
 
+  private loadResponsibleChoices(): void {
+    this.rememberSessionUid(this.userAccess.peekCurrentUser());
+    this.applyDefaultResponsible();
+
+    this.userAccess
+      .loadCurrentUser()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (profile) => {
+          this.rememberSessionUid(profile);
+          this.applyDefaultResponsible();
+          this.cdr.markForCheck();
+        },
+        error: () => this.cdr.markForCheck(),
+      });
+
+    this.userAccess
+      .listOrderResponsibles()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (users) => {
+          this.responsibleOptions = users.map((user) => ({
+            value: user.firebaseUid,
+            label: user.displayName,
+          }));
+          if (this.responsibleError.startsWith('No se pudo cargar')) {
+            this.responsibleError = '';
+          }
+          this.applyDefaultResponsible();
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.responsibleError = 'No se pudo cargar la lista de responsables';
+          this.cdr.markForCheck();
+        },
+      });
+  }
+
+  private rememberSessionUid(profile: CurrentUserResponse | null): void {
+    if (!profile || !('firebaseUid' in profile) || !profile.firebaseUid) return;
+    this.sessionFirebaseUid = profile.firebaseUid;
+  }
+
+  private applyDefaultResponsible(): void {
+    if (this.isQuoteForm || this.responsibleManual) return;
+    if (this.order?.responsibleUserId) {
+      this.responsibleUserId = this.order.responsibleUserId;
+      return;
+    }
+    if (!this.responsibleUserId && this.sessionFirebaseUid) {
+      this.responsibleUserId = this.sessionFirebaseUid;
+    }
+  }
+
   private resetForm(): void {
     this.priceTypeManual = false;
+    this.responsibleManual = false;
+    this.responsibleError = '';
+    this.responsibleUserId = this.isQuoteForm
+      ? ''
+      : (this.order?.responsibleUserId ?? this.sessionFirebaseUid);
     this.depositAmountTouched = false;
     this.depositAmountInput = null;
     this.depositFeeInput = null;

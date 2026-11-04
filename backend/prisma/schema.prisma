@@ -148,6 +148,8 @@ model Order {
   priceType    String   @default("lista") @map("price_type") @db.VarChar(16)
   wholesaleApplied Boolean @default(false) @map("wholesale_applied")
   salesChannel String?  @map("sales_channel") @db.VarChar(32)
+  /** uid de Firebase del responsable. Es el mismo valor que se copia a las tareas. */
+  responsibleUserId String? @map("responsible_user_id") @db.VarChar(128)
   discountPercent Float @default(0) @map("discount_percent")
   discountAmount  Float @default(0) @map("discount_amount")
   description  String?  @db.Text

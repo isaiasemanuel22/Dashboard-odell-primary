@@ -1,4 +1,5 @@
 import {
+  BadRequestException,
   Body,
   Controller,
   Delete,
@@ -52,6 +53,9 @@ export class OrdersController {
 
   @Post()
   create(@Body() data: CreateOrderDto) {
+    if (!data.responsibleUserId?.trim()) {
+      throw new BadRequestException('El responsable es obligatorio');
+    }
     return this.ordersService.create(data);
   }
 

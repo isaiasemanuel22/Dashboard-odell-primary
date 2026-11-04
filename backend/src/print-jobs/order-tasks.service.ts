@@ -17,6 +17,7 @@ import {
   OrderItem,
   OrderAlert,
   PrintJob,
+  PrintJobActor,
   Supply,
 } from '../common/interfaces';
 import { isIndistintoColor } from '../common/color.util';
@@ -93,6 +94,7 @@ export class OrderTasksService implements OnModuleInit {
     }
 
     this.cancelStaleTasks(order);
+    this.assignOpenTasksResponsible(order);
     this.syncOrderStatusFromTasks(order.id);
   }
 
@@ -136,27 +138,18 @@ export class OrderTasksService implements OnModuleInit {
   beforeStatusChange(
     job: PrintJob,
     next: PrintJobStatus,
-    actorUserId?: string,
+    actor?: PrintJobActor,
   ): void {
+    if (next !== job.status) {
+      this.assertActorCanMove(job, actor);
+    }
+
     if (
       job.status === PrintJobStatus.BLOQUEADO &&
       next !== PrintJobStatus.BLOQUEADO &&
       job.taskType === TaskType.PRODUCTION
     ) {
-      if (!actorUserId || !job.responsibleUserId) {
-        throw new ForbiddenException(
-          'La tarea bloqueada requiere responsable e identidad autenticada',
-        );
-      }
-      if (actorUserId !== job.responsibleUserId) {
-        throw new ForbiddenException(
-          'Solo el responsable actual puede desbloquear la tarea',
-        );
-      }
-      if (
-        job.taskType === TaskType.PRODUCTION &&
-        !this.hasProductionSupplies(job)
-      ) {
+      if (!this.hasProductionSupplies(job)) {
         throw new BadRequestException(
           'Los insumos requeridos todavía no están disponibles',
         );
@@ -440,6 +433,7 @@ export class OrderTasksService implements OnModuleInit {
       machine: 'Ventas',
       estimatedHours: 1,
       dueDate: order.dueDate,
+      responsibleUserId: order.responsibleUserId?.trim() || undefined,
     });
   }
 
@@ -748,7 +742,36 @@ export class OrderTasksService implements OnModuleInit {
       machine: this.defaultMachine(item, taskType),
       estimatedHours: this.estimateHours(item, taskType),
       dueDate: order.dueDate,
+      responsibleUserId: order.responsibleUserId?.trim() || undefined,
     };
+  }
+
+  /**
+   * El pedido es la fuente del responsable. Solo se pisa en tareas abiertas:
+   * terminadas y canceladas conservan el que tenían. Sin responsable en el
+   * pedido no se borra el de la tarea (pedidos viejos).
+   */
+  private assignOpenTasksResponsible(order: Order): void {
+    const responsibleUserId = order.responsibleUserId?.trim();
+    if (!responsibleUserId) return;
+
+    for (const job of this.getTasksForOrder(order.id)) {
+      if (
+        job.status === PrintJobStatus.TERMINADO ||
+        job.status === PrintJobStatus.CANCELADO
+      ) {
+        continue;
+      }
+      job.responsibleUserId = responsibleUserId;
+    }
+  }
+
+  assertActorCanMove(job: PrintJob, actor?: PrintJobActor): void {
+    if (actor?.isAdmin) return;
+    if (actor?.userId && actor.userId === job.responsibleUserId) return;
+    throw new ForbiddenException(
+      'Solo el responsable de la tarea o un administrador puede cambiar su estado',
+    );
   }
 
   private productionTaskName(item: OrderItem, quantity?: number): string {

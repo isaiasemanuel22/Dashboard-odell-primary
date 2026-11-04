@@ -2,6 +2,7 @@ import {
   Body,
   Controller,
   Delete,
+  ForbiddenException,
   Get,
   Param,
   Patch,
@@ -108,6 +109,12 @@ export class UserAccessController {
     return { deleted: true };
   }
 
+  @Get('order-responsibles')
+  async listOrderResponsibles(@Req() request: Request) {
+    await this.requireAuthenticated(request);
+    return this.userAccess.listOrderResponsibles();
+  }
+
   @Get('users')
   async listUsers(@Req() request: Request) {
     await this.requirePermission(request, PermissionAction.MANAGE_USERS);
@@ -141,6 +148,13 @@ export class UserAccessController {
     await this.requirePermission(request, PermissionAction.MANAGE_USERS);
     await this.userAccess.removeUser(id);
     return { deleted: true };
+  }
+
+  private async requireAuthenticated(request: Request): Promise<void> {
+    const profile = await this.userAccess.resolveCurrentUser(request.user);
+    if (profile) return;
+    if (!this.config.requireAuth) return;
+    throw new ForbiddenException('Autenticación requerida');
   }
 
   private async requirePermission(

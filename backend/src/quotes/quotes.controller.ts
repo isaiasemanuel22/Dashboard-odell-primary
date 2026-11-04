@@ -6,7 +6,9 @@ import {
   Param,
   Patch,
   Post,
+  Req,
 } from '@nestjs/common';
+import type { Request } from 'express';
 import {
   CreateQuoteDto,
   UpdateQuoteDto,
@@ -34,13 +36,17 @@ export class QuotesController {
   }
 
   @Post(':id/order')
-  createOrder(@Param('id') id: string) {
-    return this.quotesService.createOrderFromQuote(id);
+  createOrder(@Param('id') id: string, @Req() request: Request) {
+    return this.quotesService.createOrderFromQuote(id, request.user?.uid);
   }
 
   @Patch(':id/status')
-  updateStatus(@Param('id') id: string, @Body() body: UpdateQuoteStatusDto) {
-    return this.quotesService.updateStatus(id, body.status);
+  updateStatus(
+    @Param('id') id: string,
+    @Body() body: UpdateQuoteStatusDto,
+    @Req() request: Request,
+  ) {
+    return this.quotesService.updateStatus(id, body.status, request.user?.uid);
   }
 
   @Patch(':id')

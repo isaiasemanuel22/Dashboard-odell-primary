@@ -230,6 +230,7 @@ export class OrdersService {
       description: this.normalizeDescription(data.description),
       notes: data.notes?.trim() || undefined,
       dueDate: data.dueDate.trim(),
+      responsibleUserId: data.responsibleUserId?.trim() || undefined,
       statusHistory: [],
       priceHistory: [],
       deliveryHistory: [],
@@ -291,6 +292,13 @@ export class OrdersService {
         ? this.normalizeServices(items)
         : current.services;
 
+    if (
+      data.responsibleUserId !== undefined &&
+      !data.responsibleUserId.trim()
+    ) {
+      throw new BadRequestException('El responsable es obligatorio');
+    }
+
     if (data.dueDate !== undefined && !data.dueDate.trim()) {
       throw new BadRequestException('La fecha de entrega es obligatoria');
     }
@@ -341,6 +349,10 @@ export class OrdersService {
         data.notes !== undefined
           ? data.notes.trim() || undefined
           : current.notes,
+      responsibleUserId:
+        data.responsibleUserId !== undefined
+          ? data.responsibleUserId.trim()
+          : current.responsibleUserId,
       dueDate:
         data.dueDate !== undefined ? data.dueDate.trim() : current.dueDate,
       statusHistory: current.statusHistory ?? [],

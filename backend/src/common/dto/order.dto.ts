@@ -301,6 +301,11 @@ export class CreateOrderDto {
   @IsNumber()
   @Min(0)
   discountAmount?: number;
+
+  /** uid de Firebase del responsable del pedido. */
+  @IsOptional()
+  @IsString()
+  responsibleUserId?: string;
 }
 
 export class UpdateOrderDto extends PartialType(CreateOrderDto) {}

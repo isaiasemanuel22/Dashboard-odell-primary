@@ -23,6 +23,7 @@ import {
   AppRole,
   AppUser,
   CurrentUserProfile,
+  OrderResponsibleOption,
   RolePermissionEntry,
   UserPermissionOverrideEntry,
   WorkArea,
@@ -295,6 +296,36 @@ export class UserAccessService {
 
     await this.db().appRole.delete({ where: { id } });
     this.invalidateAccessCache();
+  }
+
+  /**
+   * Usuarios que pueden quedar como responsable de un pedido.
+   * Sin firebaseUid no se ofrecen: el actor al mover es el uid de Firebase
+   * y no habría contra quién comparar.
+   */
+  async listOrderResponsibles(): Promise<OrderResponsibleOption[]> {
+    const rows = await this.db().appUser.findMany({
+      where: { active: true, firebaseUid: { not: null } },
+      select: {
+        id: true,
+        displayName: true,
+        firebaseUid: true,
+        active: true,
+      },
+      orderBy: { displayName: 'asc' },
+    });
+    return rows.flatMap((row) => {
+      const firebaseUid = row.firebaseUid?.trim();
+      if (!firebaseUid) return [];
+      return [
+        {
+          id: row.id,
+          displayName: row.displayName,
+          firebaseUid,
+          active: row.active,
+        },
+      ];
+    });
   }
 
   async listUsers(): Promise<AppUser[]> {

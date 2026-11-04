@@ -163,6 +163,7 @@ export function mapOrderFromDb(row: {
   priceType?: string | null;
   wholesaleApplied?: boolean | null;
   salesChannel?: string | null;
+  responsibleUserId?: string | null;
   discountPercent?: number;
   discountAmount?: number;
   description: string | null;
@@ -200,6 +201,7 @@ export function mapOrderFromDb(row: {
     priceType: normalizePriceType(row.priceType),
     wholesaleApplied: row.wholesaleApplied === true,
     salesChannel: normalizeSalesChannel(row.salesChannel),
+    responsibleUserId: row.responsibleUserId?.trim() || undefined,
     discountPercent: row.discountPercent ?? 0,
     discountAmount: row.discountAmount ?? 0,
     description: row.description ?? undefined,
@@ -226,6 +228,7 @@ function mapOrderScalarsToDb(order: Order) {
     priceType: normalizePriceType(order.priceType),
     wholesaleApplied: order.wholesaleApplied === true,
     salesChannel: order.salesChannel ?? null,
+    responsibleUserId: order.responsibleUserId ?? null,
     discountPercent: order.discountPercent ?? 0,
     discountAmount: order.discountAmount ?? 0,
     description: order.description ?? null,

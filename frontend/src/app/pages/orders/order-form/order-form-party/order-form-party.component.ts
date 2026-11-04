@@ -53,6 +53,9 @@ export class OrderFormPartyComponent {
   @Input() resellerPillLabel = '';
   @Input() salesChannel: string | null = null;
   @Input() salesChannelOptions: DbSelectOption[] = [];
+  @Input() responsibleUserId = '';
+  @Input() responsibleOptions: DbSelectOption[] = [];
+  @Input() responsibleError = '';
   @Input() priceType: PriceType = PriceType.LISTA;
   @Input() priceTypeOptions: DbSegmentOption<PriceType>[] = [];
   @Input() wholesaleMinimumNotice: WholesaleMinimumNotice = null;
@@ -61,6 +64,7 @@ export class OrderFormPartyComponent {
   @Output() dueDateChange = new EventEmitter<string>();
   @Output() newCustomer = new EventEmitter<void>();
   @Output() salesChannelChange = new EventEmitter<string | null>();
+  @Output() responsibleUserIdChange = new EventEmitter<string>();
   @Output() priceTypeChange = new EventEmitter<PriceType>();
 
   readonly PriceType = PriceType;

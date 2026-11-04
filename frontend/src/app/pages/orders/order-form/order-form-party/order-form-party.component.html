@@ -55,6 +55,21 @@
   </div>
 
   @if (variant === 'order') {
+    <div class="quote-channel-field">
+      <db-select
+        label="Responsable"
+        [ngModel]="responsibleUserId"
+        (ngModelChange)="responsibleUserIdChange.emit($event)"
+        name="responsibleUserId"
+        placeholder="Seleccionar responsable"
+        [required]="true"
+        [options]="responsibleOptions"
+        [error]="responsibleError"
+      />
+    </div>
+  }
+
+  @if (variant === 'order') {
     <div class="quote-date-field">
       <db-input
         label="Fecha de entrega"

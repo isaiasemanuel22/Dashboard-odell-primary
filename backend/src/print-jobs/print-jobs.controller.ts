@@ -9,6 +9,8 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import { UpdatePrintJobDto, UpdatePrintJobStatusDto } from '../common/dto';
+import { PrintJobActor } from '../common/interfaces';
+import { ADMIN_ROLE_ID } from '../users/user-access.bootstrap';
 import { PrintJobsService } from './print-jobs.service';
 
 @Controller('print-jobs')
@@ -39,7 +41,7 @@ export class PrintJobsController {
     @Body() dto: UpdatePrintJobDto,
     @Req() request: Request,
   ) {
-    return this.printJobsService.update(id, dto, request.user?.uid);
+    return this.printJobsService.update(id, dto, this.actorFromRequest(request));
   }
 
   @Patch(':id/status')
@@ -51,7 +53,18 @@ export class PrintJobsController {
     return this.printJobsService.updateStatus(
       id,
       body.status,
-      request.user?.uid,
+      this.actorFromRequest(request),
     );
+  }
+
+  /** Admin: rol role-admin o el mismo criterio que CurrentUserProfile.isAdmin. */
+  private actorFromRequest(request: Request): PrintJobActor {
+    const profile = request.appUser;
+    return {
+      userId: request.user?.uid,
+      isAdmin:
+        !!profile &&
+        (profile.isAdmin || profile.roleIds.includes(ADMIN_ROLE_ID)),
+    };
   }
 }
