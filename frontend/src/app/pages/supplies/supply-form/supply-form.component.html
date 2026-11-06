@@ -85,20 +85,22 @@
       <db-form-error>{{ error || configError }}</db-form-error>
     }
 
-    <db-form-footer>
-      <db-button
-        label="Cancelar"
-        variant="cancel"
-        format="soft"
-        (clicked)="cancel.emit()"
-      />
-      <db-button
-        [label]="loading ? 'Guardando...' : (supply ? 'Guardar' : 'Crear insumo')"
-        variant="primary"
-        format="solid"
-        buttonType="submit"
-        [disabled]="loading"
-      />
-    </db-form-footer>
+    @if (!hideFooter) {
+      <db-form-footer>
+        <db-button
+          label="Cancelar"
+          variant="cancel"
+          format="soft"
+          (clicked)="cancel.emit()"
+        />
+        <db-button
+          [label]="loading ? 'Guardando...' : (supply ? 'Guardar' : 'Crear insumo')"
+          variant="primary"
+          format="solid"
+          buttonType="submit"
+          [disabled]="loading"
+        />
+      </db-form-footer>
+    }
   </form>
 </db-form>

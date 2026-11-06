@@ -1,9 +1,10 @@
 @if (settings) {
   @if (isMobile()) {
-    <div class="st-m">
-      <db-mobile-bar title="Ganancias" backLink="/ajustes" />
-
-      <div class="m-body m-has-dock">
+    <db-mobile-settings-page
+      title="Ganancias"
+      [dockActions]="mobileDockActions"
+      (dockAction)="onMobileDockAction($event)"
+    >
         @if (marginsMessage) {
           <p class="st-m__msg">{{ marginsMessage }}</p>
         }
@@ -36,18 +37,13 @@
 
         <h2 class="m-sec-t">Descuento por mayor</h2>
         <div class="m-card">
-          <div class="m-ln">
-            <b>Activo</b>
-            <button
-              type="button"
-              class="m-sw"
-              [class.m-sw--on]="wholesale.enabled"
-              role="switch"
-              [attr.aria-checked]="wholesale.enabled"
-              aria-label="Descuento por mayor activo"
-              (click)="setWholesaleEnabled(!wholesale.enabled)"
-            ></button>
-          </div>
+          <db-mobile-toggle-row
+            label="Activo"
+            variant="line"
+            [checked]="wholesale.enabled"
+            ariaLabel="Descuento por mayor activo"
+            (toggled)="setWholesaleEnabled($event)"
+          />
           <div class="m-ln">
             <span>Descuento sobre la lista</span>
             <input
@@ -106,13 +102,7 @@
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><path d="M12 3l9 16H3zM12 10v4M12 17h.01" /></svg>
           Con −{{ wholesale.percent }} %, cualquier área con margen menor a {{ breakEvenMarginPercent }} % vende a pérdida por mayor.
         </div>
-      </div>
-
-      <db-mobile-dock
-        [actions]="mobileDockActions"
-        (action)="onMobileDockAction($event)"
-      />
-    </div>
+    </db-mobile-settings-page>
   } @else {
     <section class="settings-card">
       @if (marginsMessage) {
@@ -347,10 +337,9 @@
   }
 } @else {
   @if (isMobile()) {
-    <db-mobile-bar title="Ganancias" backLink="/ajustes" />
-    <div class="m-body">
+    <db-mobile-settings-page title="Ganancias">
       <db-state-message [loading]="true" loadingMessage="Cargando márgenes..." />
-    </div>
+    </db-mobile-settings-page>
   } @else {
     <db-state-message [loading]="true" loadingMessage="Cargando márgenes..." />
   }

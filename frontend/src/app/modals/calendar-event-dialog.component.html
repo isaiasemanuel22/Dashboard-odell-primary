@@ -183,29 +183,10 @@
     </div>
   </div>
 
-  <!-- Mobile footer: un primario; Cancelar = X del shell -->
-  <div class="cal-dialog__footer cal-dialog__footer--m mobile-only">
-    @if (isEdit) {
-      <db-button
-        label="Eliminar"
-        variant="delete"
-        format="soft"
-        [disabled]="loading"
-        (clicked)="remove()"
-      />
-    }
-    <db-button
-      [label]="
-        loading
-          ? 'Guardando…'
-          : kind === CalendarEntryKind.REMINDER
-            ? 'Guardar recordatorio'
-            : 'Guardar evento'
-      "
-      variant="primary"
-      format="solid"
-      [disabled]="loading"
-      (clicked)="save()"
+  <div class="mobile-only">
+    <db-mobile-dock
+      [actions]="mobileDockActions"
+      (action)="onMobileDockAction($event)"
     />
   </div>
 </app-form-dialog-shell>

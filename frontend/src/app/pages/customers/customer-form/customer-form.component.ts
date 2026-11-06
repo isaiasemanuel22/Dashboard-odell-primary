@@ -62,6 +62,8 @@ export class CustomerFormComponent implements OnInit, OnChanges {
   @Input() customer: Customer | null = null;
   @Input() loading = false;
   @Input() error = '';
+  /** En mobile el pie vive en `db-mobile-form-shell` / dock. */
+  @Input() hideFooter = false;
   @Output() save = new EventEmitter<CreateCustomerPayload>();
   @Output() cancel = new EventEmitter<void>();
 

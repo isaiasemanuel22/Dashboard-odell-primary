@@ -79,49 +79,17 @@
           @for (movement of group.movements; track movement.id) {
             @let kind = movementKind(movement);
             @let rowActions = visibleActions(movement);
-            <button
-              type="button"
-              class="m-row wallet-movements-m__row"
+            <db-mobile-movement-row
+              [title]="movement.concept"
+              [detail]="mobileDetail(movement)"
+              [kind]="kind"
+              [icon]="movementIcon(movement)"
+              [amount]="movementAmountLabel(movement)"
+              [feeLabel]="movementFeeLabel(movement)"
+              [voided]="movement.voided"
               [disabled]="rowActions.length === 0"
-              (click)="openSheet(movement)"
-            >
-              <span
-                class="wallet-movements-m__icon"
-                [class.wallet-movements-m__icon--in]="kind === 'income'"
-                [class.wallet-movements-m__icon--out]="kind === 'expense'"
-                [class.wallet-movements-m__icon--xfer]="kind === 'transfer'"
-                aria-hidden="true"
-                >{{ movementIcon(movement) }}</span
-              >
-              <span class="m-row__text">
-                <b [class.wallet-movements-m__title--voided]="movement.voided">{{
-                  movement.concept
-                }}</b>
-                <span>{{ mobileDetail(movement) }}</span>
-              </span>
-              <span class="wallet-movements-m__end">
-                @if (movement.voided) {
-                  <span class="wallet-movements-m__amt wallet-movements-m__amt--void"
-                    >Anulado</span
-                  >
-                } @else {
-                  <span
-                    class="wallet-movements-m__amt"
-                    [class.wallet-movements-m__amt--in]="kind === 'income'"
-                    [class.wallet-movements-m__amt--out]="kind === 'expense'"
-                  >
-                    @if (kind === 'expense') {
-                      −{{ (movement.amount < 0 ? -movement.amount : movement.amount) | currencyArs }}
-                    } @else {
-                      {{ movement.amount | currencyArs }}
-                    }
-                  </span>
-                }
-                @if (!movement.voided && movement.fee > 0) {
-                  <small>Comisión −{{ movement.fee | currencyArs }}</small>
-                }
-              </span>
-            </button>
+              (pressed)="openSheet(movement)"
+            />
           }
         </div>
       </div>

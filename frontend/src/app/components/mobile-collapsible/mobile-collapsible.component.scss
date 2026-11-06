@@ -1,0 +1,60 @@
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+}
+
+.m-collapsible {
+  background: mobile.$m-surface;
+  border: 1px solid mobile.$m-border;
+  border-radius: 14px;
+  overflow: hidden;
+  scroll-margin-top: 72px;
+}
+
+.m-collapsible__btn {
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 14px;
+  border: 0;
+  background: mobile.$m-surface;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+.m-collapsible__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: mobile.$m-text;
+  flex: none;
+}
+
+.m-collapsible__summary {
+  margin-left: auto;
+  font-size: 12px;
+  color: #5b7083;
+  text-align: right;
+  min-width: 0;
+}
+
+.m-collapsible__chev {
+  flex: none;
+  display: block;
+  transition: transform 0.15s ease;
+
+  &--open {
+    transform: rotate(90deg);
+  }
+}
+
+.m-collapsible__body {
+  padding: 12px 14px 14px;
+  border-top: 1px solid #e3ecf2;
+}

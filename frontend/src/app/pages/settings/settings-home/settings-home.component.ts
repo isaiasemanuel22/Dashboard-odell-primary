@@ -6,20 +6,25 @@ import {
   inject,
 } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
-import { Router, RouterLink } from '@angular/router';
+import { Router } from '@angular/router';
 import { map } from 'rxjs';
 import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { UserAccessService } from '../../../core/services/user-access.service';
 import { ImpresosService } from '../../../core/services/impresos.service';
 import { FormDialogService } from '../../../modals/public-api';
-import { MobileBarComponent } from '@general-components';
+import {
+  MobileBarComponent,
+  MobileNavListComponent,
+  type MobileNavGroup,
+  type MobileNavItem,
+} from '@general-components';
 import { CurrentUserProfile, GeneralSettings } from '../../../core/models';
 
 @Component({
   selector: 'app-settings-home',
   standalone: true,
-  imports: [RouterLink, MobileBarComponent],
+  imports: [MobileBarComponent, MobileNavListComponent],
   templateUrl: './settings-home.component.html',
   styleUrl: './settings-home.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -102,6 +107,71 @@ export class SettingsHomeComponent implements OnInit {
     return `${n} ${noun} · solo administradores`;
   });
 
+  readonly navGroups = computed((): MobileNavGroup[] => [
+    {
+      title: 'Costos y precios',
+      items: [
+        {
+          label: 'Valores generales',
+          hint: 'Mano de obra, luz, margen de error, equipos',
+          link: '/ajustes/valores-generales',
+        },
+        {
+          label: 'Filamento',
+          hint: this.filamentSummary(),
+          link: '/ajustes/filamento',
+        },
+        {
+          label: 'Resina',
+          hint: this.resinSummary(),
+          link: '/ajustes/resina',
+        },
+        {
+          label: 'Impresos',
+          hint: this.impresosSummary(),
+          link: '/ajustes/impresos',
+        },
+        {
+          label: 'Ganancias',
+          hint: this.gainsSummary(),
+          link: '/ajustes/ganancias',
+        },
+      ],
+    },
+    {
+      title: 'Catálogos',
+      items: [
+        {
+          label: 'Colores',
+          hint: this.colorsSummary(),
+          link: '/ajustes/colores',
+        },
+      ],
+    },
+    {
+      title: 'Equipo',
+      items: [
+        {
+          label: 'Usuarios, roles y áreas',
+          hint: this.usersSummary(),
+          link: '/ajustes/usuarios',
+        },
+      ],
+    },
+    {
+      title: 'Zona de cuidado',
+      items: [
+        {
+          id: 'reset-db',
+          label: 'Resetear base de datos',
+          hint: 'Solo administrador · pide un código',
+          danger: true,
+          action: this.isAdmin(),
+        },
+      ],
+    },
+  ]);
+
   ngOnInit(): void {
     if (!this.breakpoint.isMobile()) {
       void this.router.navigateByUrl('/ajustes/valores-generales', {
@@ -114,5 +184,11 @@ export class SettingsHomeComponent implements OnInit {
 
   openResetModal(): void {
     this.formDialogs.openResetDatabase().subscribe();
+  }
+
+  onNavAction(item: MobileNavItem): void {
+    if (item.id === 'reset-db' && this.isAdmin()) {
+      this.openResetModal();
+    }
   }
 }

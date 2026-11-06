@@ -191,31 +191,33 @@
       <db-form-error>{{ error || clientError || facade.imageUploadError }}</db-form-error>
     }
 
-    <footer class="product-create__footer">
-      @if (missingFields.length) {
-        <p>Faltan: {{ missingFields.join(', ') }}</p>
-      } @else if (facade.usesPieceAssembly && facade.components.length) {
-        <p class="footer-stock-hint">
-          Stock terminado sugerido: {{ suggestedFinishedStock }} (lo que alcanzan las piezas)
-        </p>
-      } @else {
-        <span></span>
-      }
-      <div class="product-create__actions" data-discard-safe>
-        <db-button
-          label="Cancelar"
-          variant="secondary"
-          format="solid"
-          (clicked)="cancel.emit()"
-        />
-        <db-button
-          [label]="facade.savingImages || facade.savingAttachments ? 'Subiendo archivos...' : (loading ? 'Guardando...' : (product ? 'Guardar cambios' : 'Crear producto'))"
-          variant="primary"
-          format="solid"
-          buttonType="submit"
-          [disabled]="loading || facade.savingImages || facade.savingAttachments || !facade.form.controls.name.value.trim() || facade.categoryIds.length < 1"
-        />
-      </div>
-    </footer>
+    @if (!hideFooter) {
+      <footer class="product-create__footer">
+        @if (missingFields.length) {
+          <p>Faltan: {{ missingFields.join(', ') }}</p>
+        } @else if (facade.usesPieceAssembly && facade.components.length) {
+          <p class="footer-stock-hint">
+            Stock terminado sugerido: {{ suggestedFinishedStock }} (lo que alcanzan las piezas)
+          </p>
+        } @else {
+          <span></span>
+        }
+        <div class="product-create__actions" data-discard-safe>
+          <db-button
+            label="Cancelar"
+            variant="secondary"
+            format="solid"
+            (clicked)="cancel.emit()"
+          />
+          <db-button
+            [label]="facade.savingImages || facade.savingAttachments ? 'Subiendo archivos...' : (loading ? 'Guardando...' : (product ? 'Guardar cambios' : 'Crear producto'))"
+            variant="primary"
+            format="solid"
+            buttonType="submit"
+            [disabled]="loading || facade.savingImages || facade.savingAttachments || !facade.form.controls.name.value.trim() || facade.categoryIds.length < 1"
+          />
+        </div>
+      </footer>
+    }
   </form>
 </db-form>

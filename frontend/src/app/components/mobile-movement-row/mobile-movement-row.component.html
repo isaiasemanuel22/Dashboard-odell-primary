@@ -1,0 +1,41 @@
+<button
+  type="button"
+  class="m-row m-movement-row"
+  [disabled]="disabled()"
+  (click)="onPress()"
+>
+  <span
+    class="m-movement-row__icon"
+    [class.m-movement-row__icon--in]="kind() === 'income'"
+    [class.m-movement-row__icon--out]="kind() === 'expense'"
+    [class.m-movement-row__icon--xfer]="kind() === 'transfer'"
+    aria-hidden="true"
+    >{{ icon() }}</span
+  >
+  <span class="m-row__text">
+    <b [class.m-movement-row__title--voided]="voided()">{{ title() }}</b>
+    @if (detail()) {
+      <span>{{ detail() }}</span>
+    }
+  </span>
+  <span class="m-movement-row__end">
+    @if (voided()) {
+      <span class="m-movement-row__amt m-movement-row__amt--void">Anulado</span>
+    } @else if (amount()) {
+      <span
+        class="m-movement-row__amt"
+        [class.m-movement-row__amt--in]="kind() === 'income'"
+        [class.m-movement-row__amt--out]="kind() === 'expense'"
+      >
+        @if (kind() === 'expense') {
+          −{{ amount() }}
+        } @else {
+          {{ amount() }}
+        }
+      </span>
+    }
+    @if (!voided() && feeLabel()) {
+      <small>{{ feeLabel() }}</small>
+    }
+  </span>
+</button>

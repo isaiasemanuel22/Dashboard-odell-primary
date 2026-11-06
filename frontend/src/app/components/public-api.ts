@@ -20,6 +20,36 @@ export { MobileBannerComponent } from './mobile-banner/mobile-banner.component';
 export { MobileFormShellComponent } from './mobile-form-shell/mobile-form-shell.component';
 export { MobileFormStepComponent } from './mobile-form-step/mobile-form-step.component';
 export { MobileStepperComponent } from './mobile-stepper/mobile-stepper.component';
+export { MobileSettingsPageComponent } from './mobile-settings-page/mobile-settings-page.component';
+export { MobileCatalogRowComponent } from './mobile-catalog-row/mobile-catalog-row.component';
+export { MobileFieldGroupComponent } from './mobile-field-group/mobile-field-group.component';
+export {
+  MobileContactCardComponent,
+  type MobileContactPill,
+} from './mobile-contact-card/mobile-contact-card.component';
+export {
+  MobileTotalsComponent,
+  type MobileTotalRow,
+} from './mobile-totals/mobile-totals.component';
+export { MobileCollapsibleComponent } from './mobile-collapsible/mobile-collapsible.component';
+export {
+  MobileKpiGridComponent,
+  type MobileKpiItem,
+} from './mobile-kpi-grid/mobile-kpi-grid.component';
+export {
+  MobilePeriodPickerComponent,
+  type MobilePeriodOption,
+} from './mobile-period-picker/mobile-period-picker.component';
+export {
+  MobileMovementRowComponent,
+  type MobileMovementKind,
+} from './mobile-movement-row/mobile-movement-row.component';
+export {
+  MobileNavListComponent,
+  type MobileNavGroup,
+  type MobileNavItem,
+} from './mobile-nav-list/mobile-nav-list.component';
+export { MobileToggleRowComponent } from './mobile-toggle-row/mobile-toggle-row.component';
 export { NavIconComponent } from './nav-icon/nav-icon.component';
 export * from './db-data-table';
 export * from './db-row-menu';

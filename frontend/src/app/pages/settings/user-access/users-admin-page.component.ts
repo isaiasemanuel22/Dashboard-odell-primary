@@ -21,6 +21,7 @@ import {
   OdlActionEvent,
   OdlColumn,
   OdlRowAction,
+  MobileCatalogRowComponent,
 } from '@general-components';
 import { FormModalComponent } from '../../../modals/form-modal/form-modal.component';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
@@ -33,6 +34,7 @@ import { SettingsUsersMobileShellComponent } from './settings-users-mobile-shell
   selector: 'app-users-admin-page',
   standalone: true,
   imports: [
+    MobileCatalogRowComponent,
     FormsModule,
     DbAreaChipComponent,
     DbButtonComponent,

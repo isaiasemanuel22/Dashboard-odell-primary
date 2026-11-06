@@ -1,0 +1,50 @@
+<div class="m-period-picker">
+  @if (caption()) {
+    <p class="m-period-picker__caption">{{ caption() }}</p>
+  }
+
+  @if (mode() === 'segments') {
+    <div class="m-period-picker__segments" role="group" [attr.aria-label]="ariaLabel()">
+      @for (opt of options(); track opt.value) {
+        <button
+          type="button"
+          class="m-period-picker__seg"
+          [class.m-period-picker__seg--on]="value() === opt.value"
+          (click)="onSelect(opt)"
+        >
+          {{ opt.label }}
+        </button>
+      }
+    </div>
+  } @else {
+    <div class="m-period-picker__month" role="group" [attr.aria-label]="ariaLabel()">
+      <button type="button" class="m-ib" aria-label="Anterior" (click)="onPrev()">
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M15 6l-6 6 6 6" />
+        </svg>
+      </button>
+      <b>{{ monthLabel() }}</b>
+      <button type="button" class="m-ib" aria-label="Siguiente" (click)="onNext()">
+        <svg
+          viewBox="0 0 24 24"
+          width="20"
+          height="20"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          aria-hidden="true"
+        >
+          <path d="M9 6l6 6-6 6" />
+        </svg>
+      </button>
+    </div>
+  }
+</div>

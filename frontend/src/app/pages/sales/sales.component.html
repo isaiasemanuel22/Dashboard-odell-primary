@@ -11,45 +11,13 @@
   </db-mobile-bar>
 
   <div class="m-tools">
-    <div class="sales-m__month">
-      <button
-        type="button"
-        class="m-ib"
-        aria-label="Mes anterior"
-        (click)="shiftMonth(-1)"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          width="20"
-          height="20"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          aria-hidden="true"
-        >
-          <path d="M15 6l-6 6 6 6" />
-        </svg>
-      </button>
-      <b>{{ monthLabelDisplay }}</b>
-      <button
-        type="button"
-        class="m-ib"
-        aria-label="Mes siguiente"
-        (click)="shiftMonth(1)"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          width="20"
-          height="20"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          aria-hidden="true"
-        >
-          <path d="M9 6l6 6-6 6" />
-        </svg>
-      </button>
-    </div>
+    <db-mobile-period-picker
+      mode="month"
+      [monthLabel]="monthLabelDisplay"
+      ariaLabel="Mes"
+      (prev)="shiftMonth(-1)"
+      (next)="shiftMonth(1)"
+    />
   </div>
 
   <div class="m-body sales-m__body">
@@ -72,26 +40,10 @@
         <p class="sales-m__state">Cargando ventas...</p>
       </div>
     } @else if (stats) {
-      <div class="m-kpis" aria-label="Resumen del mes">
-        <div class="m-kpi">
-          <span class="m-lbl">Vendido</span>
-          <span class="sales-m__kv">{{ stats.monthlyRevenue | currencyArs }}</span>
-          <span class="sales-m__ks">{{ salesCountLabel }}</span>
-        </div>
-        <div class="m-kpi">
-          <span class="m-lbl">Ganancia</span>
-          <span
-            class="sales-m__kv"
-            [class.sales-m__kv--pos]="stats.monthlyProfit >= 0"
-            [class.sales-m__kv--neg]="stats.monthlyProfit < 0"
-          >
-            {{ stats.monthlyProfit | currencyArs }}
-          </span>
-          <span class="sales-m__ks"
-            >Costo {{ stats.monthlyCost | currencyArs }}</span
-          >
-        </div>
-      </div>
+      <db-mobile-kpi-grid
+        ariaLabel="Resumen del mes"
+        [items]="mobileKpiItems"
+      />
 
       @if (mobileAreas.length) {
         <h2 class="m-sec-t">Por área</h2>

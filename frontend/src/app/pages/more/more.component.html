@@ -25,21 +25,13 @@
     </section>
 
     <section class="m-card m-card--flush">
-      <div class="m-row">
-        <div class="m-row__text">
-          <b>Sincronizar en tiempo real</b>
-          <span>Actualiza las pantallas abiertas</span>
-        </div>
-        <button
-          type="button"
-          class="m-sw"
-          [class.m-sw--on]="realtimeSyncEnabled()"
-          role="switch"
-          [attr.aria-checked]="realtimeSyncEnabled()"
-          aria-label="Sincronizar en tiempo real"
-          (click)="toggleRealtimeSync()"
-        ></button>
-      </div>
+      <db-mobile-toggle-row
+        label="Sincronizar en tiempo real"
+        hint="Actualiza las pantallas abiertas"
+        [checked]="realtimeSyncEnabled()"
+        ariaLabel="Sincronizar en tiempo real"
+        (toggled)="toggleRealtimeSync()"
+      />
       @if (authEnabled) {
         <button type="button" class="m-row more__logout" (click)="logout()">
           Cerrar sesión

@@ -1,0 +1,39 @@
+<section
+  class="m-kpis m-kpi-grid"
+  [style.--m-kpi-cols]="cols()"
+  [attr.aria-label]="ariaLabel()"
+>
+  @for (item of items(); track item.label + item.value) {
+    @if (item.link) {
+      <a
+        class="m-kpi m-kpi-grid__link"
+        [routerLink]="item.link"
+        [fragment]="item.fragment || undefined"
+      >
+        <span class="m-lbl">{{ item.label }}</span>
+        <strong
+          class="m-big"
+          [class.m-kpi-grid__val--pos]="item.tone === 'success'"
+          [class.m-kpi-grid__val--neg]="item.tone === 'danger'"
+          >{{ item.value }}</strong
+        >
+        @if (item.hint) {
+          <span class="m-hint">{{ item.hint }}</span>
+        }
+      </a>
+    } @else {
+      <article class="m-kpi">
+        <span class="m-lbl">{{ item.label }}</span>
+        <strong
+          class="m-big"
+          [class.m-kpi-grid__val--pos]="item.tone === 'success'"
+          [class.m-kpi-grid__val--neg]="item.tone === 'danger'"
+          >{{ item.value }}</strong
+        >
+        @if (item.hint) {
+          <span class="m-hint">{{ item.hint }}</span>
+        }
+      </article>
+    }
+  }
+</section>

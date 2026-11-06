@@ -17,12 +17,15 @@ import {
   DbStateMessageComponent,
   DbButtonComponent,
   MobileBarComponent,
+  MobileKpiGridComponent,
+  MobilePeriodPickerComponent,
   OdlActionEvent,
   OdlColumn,
   OdlFilter,
   OdlRowAction,
   SalesStatsGridComponent,
   serviceTag,
+  type MobileKpiItem,
 } from '@general-components';
 import {
   AreaServiceType,
@@ -51,12 +54,15 @@ const SALE_AREAS: AreaServiceType[] = [
     DbStateMessageComponent,
     DbButtonComponent,
     MobileBarComponent,
+    MobileKpiGridComponent,
+    MobilePeriodPickerComponent,
     SalesStatsGridComponent,
     CurrencyArsPipe,
     ...DB_DATA_TABLE,
   ],
   templateUrl: './sales.component.html',
   styleUrl: './sales.component.scss',
+  providers: [CurrencyArsPipe],
 })
 export class SalesComponent implements OnInit {
   private readonly salesService = inject(SalesService);
@@ -66,6 +72,7 @@ export class SalesComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly router = inject(Router);
   private readonly breakpoint = inject(BreakpointService);
+  private readonly currencyArs = inject(CurrencyArsPipe);
 
   loading = true;
   loadError = false;
@@ -92,6 +99,28 @@ export class SalesComponent implements OnInit {
 
   get salesCountLabel(): string {
     return pluralize(this.entries.length, 'venta', 'ventas');
+  }
+
+  get mobileKpiItems(): MobileKpiItem[] {
+    if (!this.stats) return [];
+    return [
+      {
+        label: 'Vendido',
+        value: this.currencyArs.transform(this.stats.monthlyRevenue),
+        hint: this.salesCountLabel,
+      },
+      {
+        label: 'Ganancia',
+        value: this.currencyArs.transform(this.stats.monthlyProfit),
+        hint: `Costo ${this.currencyArs.transform(this.stats.monthlyCost)}`,
+        tone:
+          this.stats.monthlyProfit >= 0
+            ? 'success'
+            : this.stats.monthlyProfit < 0
+              ? 'danger'
+              : 'default',
+      },
+    ];
   }
 
   get mobileAreas(): AreaProfitBalance[] {

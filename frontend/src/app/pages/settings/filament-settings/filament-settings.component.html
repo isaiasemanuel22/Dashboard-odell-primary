@@ -1,24 +1,22 @@
 @if (settings) {
   @if (isMobile()) {
-    <div class="st-m">
-      <db-mobile-bar title="Filamento" backLink="/ajustes">
-        <button
-          type="button"
-          class="m-ib"
-          aria-label="Agregar precio"
-          (click)="mobileTab = 'precios'; focusCreate()"
-        >
-          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
-        </button>
-      </db-mobile-bar>
+    <db-mobile-settings-page title="Filamento">
+      <button
+        barAction
+        type="button"
+        class="m-ib"
+        aria-label="Agregar precio"
+        (click)="mobileTab = 'precios'; focusCreate()"
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+      </button>
 
-      <div class="st-m__tabs" role="tablist" aria-label="Sección">
+      <div tabs class="st-m__tabs" role="tablist" aria-label="Sección">
         <button type="button" class="st-m__tab" [class.st-m__tab--on]="mobileTab === 'precios'" role="tab" [attr.aria-selected]="mobileTab === 'precios'" (click)="mobileTab = 'precios'">Precios</button>
         <button type="button" class="st-m__tab" [class.st-m__tab--on]="mobileTab === 'tipos'" role="tab" [attr.aria-selected]="mobileTab === 'tipos'" (click)="mobileTab = 'tipos'">Tipos</button>
         <button type="button" class="st-m__tab" [class.st-m__tab--on]="mobileTab === 'marcas'" role="tab" [attr.aria-selected]="mobileTab === 'marcas'" (click)="mobileTab = 'marcas'">Marcas</button>
       </div>
 
-      <div class="m-body">
         @if (message) {
           <p class="st-m__msg">{{ message }}</p>
         }
@@ -30,13 +28,12 @@
             <h2 class="m-sec-t">{{ group.label }} · promedio {{ group.average | currencyArs }} / kg</h2>
             <div class="m-card m-card--flush">
               @for (item of group.items; track item.id) {
-                <button type="button" class="m-row" (click)="startEdit(item)">
-                  <div class="m-row__text">
-                    <b>{{ item.brand }}</b>
-                    <span>Precio por kg</span>
-                  </div>
-                  <div class="st-m__end">{{ item.pricePerKg | currencyArs }}</div>
-                </button>
+                <db-mobile-catalog-row
+                  [title]="item.brand"
+                  subtitle="Precio por kg"
+                  [value]="item.pricePerKg | currencyArs"
+                  (pressed)="startEdit(item)"
+                />
               }
             </div>
           } @empty {
@@ -49,12 +46,10 @@
             <h2 class="m-sec-t">{{ editingId ? 'Editar precio' : 'Nuevo precio' }}</h2>
             <div class="m-card">
               @if (editingId) {
-                <div class="st-m__field">
-                  <label for="fm-brand">Marca</label>
+                <db-mobile-field-group label="Marca" labelFor="fm-brand">
                   <input id="fm-brand" class="st-m__inp" [(ngModel)]="editForm.brand" name="mEditBrand" />
-                </div>
-                <div class="st-m__field">
-                  <label for="fm-type">Tipo</label>
+                </db-mobile-field-group>
+                <db-mobile-field-group label="Tipo" labelFor="fm-type">
                   <db-autocomplete
                     [(ngModel)]="editForm.materialType"
                     name="mEditType"
@@ -62,22 +57,19 @@
                     [options]="filamentTypeOptions"
                     (optionCreated)="onFilamentTypeCreated($event)"
                   />
-                </div>
-                <div class="st-m__field">
-                  <label for="fm-price">Precio / kg ($)</label>
+                </db-mobile-field-group>
+                <db-mobile-field-group label="Precio / kg" labelFor="fm-price" prefix="$">
                   <input id="fm-price" class="st-m__inp" type="number" min="0" [(ngModel)]="editForm.pricePerKg" name="mEditPrice" />
-                </div>
+                </db-mobile-field-group>
                 <div class="st-m__opts">
                   <button type="button" class="st-m__opt" (click)="cancelEdit(); showMobileCreate = false">Cancelar</button>
                   <button type="button" class="st-m__opt st-m__opt--on" (click)="saveEdit()">Guardar</button>
                 </div>
               } @else {
-                <div class="st-m__field">
-                  <label for="fm-new-brand">Marca</label>
+                <db-mobile-field-group label="Marca" labelFor="fm-new-brand">
                   <input id="fm-new-brand" class="st-m__inp" [(ngModel)]="newFilament.brand" name="mNewBrand" />
-                </div>
-                <div class="st-m__field">
-                  <label for="fm-new-type">Tipo</label>
+                </db-mobile-field-group>
+                <db-mobile-field-group label="Tipo" labelFor="fm-new-type">
                   <db-autocomplete
                     [(ngModel)]="newFilament.materialType"
                     name="mNewType"
@@ -85,11 +77,10 @@
                     [options]="filamentTypeOptions"
                     (optionCreated)="onFilamentTypeCreated($event)"
                   />
-                </div>
-                <div class="st-m__field">
-                  <label for="fm-new-price">Precio / kg ($)</label>
+                </db-mobile-field-group>
+                <db-mobile-field-group label="Precio / kg" labelFor="fm-new-price" prefix="$">
                   <input id="fm-new-price" class="st-m__inp" type="number" min="0" [(ngModel)]="newFilament.pricePerKg" name="mNewPrice" />
-                </div>
+                </db-mobile-field-group>
                 <div class="st-m__opts">
                   <button type="button" class="st-m__opt" (click)="showMobileCreate = false">Cancelar</button>
                   <button type="button" class="st-m__opt st-m__opt--on" (click)="addFilamentPrice(); showMobileCreate = false">Agregar</button>
@@ -102,19 +93,17 @@
         @if (mobileTab === 'tipos') {
           <div class="m-card m-card--flush">
             @for (type of settings.filamentTypes; track type.id) {
-              <div class="m-row">
-                <div class="m-row__text">
-                  <b>{{ type.name }}</b>
-                  <span>{{ typePriceCount(type.id) }} precios</span>
-                </div>
-              </div>
+              <db-mobile-catalog-row
+                [title]="type.name"
+                [subtitle]="typePriceCount(type.id) + ' precios'"
+                [interactive]="false"
+              />
             } @empty {
-              <div class="m-row">
-                <div class="m-row__text">
-                  <b>Sin tipos</b>
-                  <span>Se crean al agregar un precio</span>
-                </div>
-              </div>
+              <db-mobile-catalog-row
+                title="Sin tipos"
+                subtitle="Se crean al agregar un precio"
+                [interactive]="false"
+              />
             }
           </div>
         }
@@ -122,24 +111,21 @@
         @if (mobileTab === 'marcas') {
           <div class="m-card m-card--flush">
             @for (brand of brandList; track brand) {
-              <div class="m-row">
-                <div class="m-row__text">
-                  <b>{{ brand }}</b>
-                  <span>{{ brandPriceCount(brand) }} precios</span>
-                </div>
-              </div>
+              <db-mobile-catalog-row
+                [title]="brand"
+                [subtitle]="brandPriceCount(brand) + ' precios'"
+                [interactive]="false"
+              />
             } @empty {
-              <div class="m-row">
-                <div class="m-row__text">
-                  <b>Sin marcas</b>
-                  <span>Se listan desde los precios</span>
-                </div>
-              </div>
+              <db-mobile-catalog-row
+                title="Sin marcas"
+                subtitle="Se listan desde los precios"
+                [interactive]="false"
+              />
             }
           </div>
         }
-      </div>
-    </div>
+    </db-mobile-settings-page>
   } @else {
     <div class="material-page">
       @if (message) {
@@ -267,10 +253,9 @@
   }
 } @else {
   @if (isMobile()) {
-    <db-mobile-bar title="Filamento" backLink="/ajustes" />
-    <div class="m-body">
+    <db-mobile-settings-page title="Filamento">
       <db-state-message [loading]="true" loadingMessage="Cargando configuración..." />
-    </div>
+    </db-mobile-settings-page>
   } @else {
     <db-state-message [loading]="true" loadingMessage="Cargando configuración..." />
   }

@@ -1,0 +1,16 @@
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.m-nav-list__chev {
+  color: #9aafbf;
+  flex: none;
+}
+
+.m-nav-list__danger {
+  color: #b91c1c;
+}

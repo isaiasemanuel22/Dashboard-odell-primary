@@ -1,0 +1,70 @@
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.m-field-group__control {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  min-width: 0;
+
+  &--affix {
+    border: 1px solid mobile.$m-border-input;
+    border-radius: mobile.$m-radius-sm;
+    background: mobile.$m-surface;
+    overflow: hidden;
+
+    :deep(input),
+    :deep(.st-m__inp),
+    :deep(.m-field-group__input) {
+      border: 0 !important;
+      border-radius: 0 !important;
+      background: transparent !important;
+      min-height: 48px;
+      flex: 1;
+      min-width: 0;
+      width: 100%;
+      box-sizing: border-box;
+      padding: 0 12px;
+      font-family: inherit;
+      font-size: 15px;
+      color: mobile.$m-text;
+    }
+  }
+
+  &:not(.m-field-group__control--affix) {
+    :deep(input),
+    :deep(.st-m__inp),
+    :deep(.m-field-group__input) {
+      min-height: 48px;
+      border: 1px solid mobile.$m-border-input;
+      border-radius: mobile.$m-radius-sm;
+      padding: 0 12px;
+      font-family: inherit;
+      font-size: 15px;
+      color: mobile.$m-text;
+      background: mobile.$m-surface;
+      box-sizing: border-box;
+      width: 100%;
+    }
+  }
+}
+
+.m-field-group__affix {
+  flex: none;
+  padding: 0 0 0 12px;
+  font-size: 15px;
+  font-weight: 600;
+  color: mobile.$m-text-secondary;
+
+  &--end {
+    padding: 0 12px 0 0;
+  }
+}
+
+.m-field-group__hint--danger {
+  color: #b91c1c;
+}

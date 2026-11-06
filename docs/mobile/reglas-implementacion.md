@@ -20,9 +20,20 @@ específico.
 
 - `db-mobile-bar` (`components/mobile-bar`): barra superior con título,
   `backLink`, `showMenu` y slot de acciones (`m-ib` 44×44).
+- `db-mobile-dock` (`components/mobile-dock`): barra fija de acciones abajo.
+- `db-mobile-sheet` + `db-mobile-chip-group`: hojas inferiores y chips.
+- `db-mobile-list-toolbar`, `db-mobile-card-link`, `db-mobile-banner`: listas.
+- `db-mobile-form-shell`, `db-mobile-form-step`, `db-mobile-stepper`: formularios
+  a pantalla completa (pies de cliente/insumo/producto/evento vía shell o dock).
+- `db-mobile-settings-page`, `db-mobile-catalog-row`, `db-mobile-field-group`:
+  subpantallas de ajustes (G1/G2).
+- `db-mobile-contact-card`, `db-mobile-totals`, `db-mobile-collapsible`: detalles.
+- `db-mobile-kpi-grid`, `db-mobile-period-picker`, `db-mobile-movement-row`: paneles.
+- `db-mobile-nav-list`, `db-mobile-toggle-row`: índices (Ajustes, Más).
 - Clases `m-*` en `shared/styles/_mobile-kit.scss`: `m-body`, `m-card`,
   `m-card--flush`, `m-row`, `m-kpis`, `m-kpi`, `m-sec-t`, `m-pill` (+ variantes),
-  `m-tools`, `m-search`, `m-fbtn`, `m-chips`, `m-chip`, `m-chip--on`, `m-ib`.
+  `m-tools`, `m-search`, `m-fbtn`, `m-chips`, `m-chip`, `m-chip--on`, `m-ib`,
+  `m-field`, `m-fl`, `m-sw`, `m-has-dock`, `m-sheet*`.
 - Tokens en `shared/styles/_mobile.scss` (`mobile.$m-*`) y mixins
   `mobile.mobile-only` / `mobile.desktop-only`.
 - Clases `.mobile-only` / `.desktop-only`: `.mobile-only` solo oculta en

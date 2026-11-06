@@ -3,6 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   OnInit,
+  ViewChild,
   inject,
 } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
@@ -16,6 +17,7 @@ import { CustomerCatalogService } from '../core/services/customer-catalog.servic
 import { CustomersService } from '../core/services/customers.service';
 import { FormDialogShellComponent } from './form-dialog-shell/form-dialog-shell.component';
 import { MobileFormShellComponent } from '../components/mobile-form-shell/mobile-form-shell.component';
+import type { MobileDockAction } from '../components/mobile-dock/mobile-dock.component';
 import { extractApiErrorMessage } from '../shared/utils/api-error';
 import { CustomerFormComponent } from '../pages/customers/customer-form/customer-form.component';
 
@@ -40,15 +42,19 @@ export interface CustomerFormDialogData {
       @if (isMobile()) {
         <db-mobile-form-shell
           [title]="customer ? 'Editar cliente' : 'Nuevo cliente'"
+          [dockActions]="mobileDockActions"
           (close)="cancel()"
+          (dockAction)="onMobileDockAction($event)"
         >
           @if (savedNotice) {
             <p class="customer-saved" role="status">{{ savedNotice }}</p>
           }
           <app-customer-form
+            #customerForm
             [customer]="customer"
             [loading]="loading"
             [error]="error"
+            [hideFooter]="true"
             (save)="save($event)"
             (cancel)="cancel()"
           />
@@ -84,6 +90,8 @@ export class CustomerFormDialogComponent implements OnInit {
   private readonly dialogRef = inject(DialogRef<Customer>);
   private readonly data = inject<CustomerFormDialogData>(DIALOG_DATA);
 
+  @ViewChild('customerForm') private customerForm?: CustomerFormComponent;
+
   readonly isMobile = this.breakpoint.isMobile;
 
   customer: Customer | null = null;
@@ -91,9 +99,32 @@ export class CustomerFormDialogComponent implements OnInit {
   error = '';
   savedNotice = '';
 
+  get mobileDockActions(): MobileDockAction[] {
+    const form = this.customerForm;
+    return [
+      {
+        id: 'save',
+        label: this.loading
+          ? 'Guardando...'
+          : this.customer
+            ? 'Guardar'
+            : 'Crear cliente',
+        kind: 'primary',
+        disabled: this.loading || !(form?.canSubmit ?? false),
+        loading: this.loading,
+      },
+    ];
+  }
+
   ngOnInit(): void {
     this.customer = this.data.customer;
     this.resetState();
+  }
+
+  onMobileDockAction(id: string): void {
+    if (id === 'save') {
+      this.customerForm?.onSubmit();
+    }
   }
 
   save(data: CreateCustomerPayload): void {

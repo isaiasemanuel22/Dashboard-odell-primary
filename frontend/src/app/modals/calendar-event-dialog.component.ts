@@ -31,6 +31,8 @@ import {
   DbTextareaComponent,
   DbSegmentedControlComponent,
   DbSegmentOption,
+  MobileDockComponent,
+  type MobileDockAction,
 } from '@general-components';
 import { FormDialogShellComponent } from './form-dialog-shell/form-dialog-shell.component';
 import { FormDialogService } from './form-dialog.service';
@@ -58,6 +60,7 @@ const WEEKDAY_LABELS = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
     DbTextareaComponent,
     DbCheckboxComponent,
     DbSegmentedControlComponent,
+    MobileDockComponent,
     CalendarEventWeekdaysComponent,
   ],
   templateUrl: './calendar-event-dialog.component.html',
@@ -146,6 +149,40 @@ export class CalendarEventDialogComponent implements OnInit {
       .map((d) => WEEKDAY_LABELS[d - 1])
       .join(' y ');
     return `Se repite ${names} hasta que lo pares`;
+  }
+
+  get mobileDockActions(): MobileDockAction[] {
+    const actions: MobileDockAction[] = [];
+    if (this.isEdit) {
+      actions.push({
+        id: 'delete',
+        label: 'Eliminar',
+        kind: 'secondary',
+        disabled: this.loading,
+      });
+    }
+    actions.push({
+      id: 'save',
+      label: this.loading
+        ? 'Guardando…'
+        : this.kind === CalendarEntryKind.REMINDER
+          ? 'Guardar recordatorio'
+          : 'Guardar evento',
+      kind: 'primary',
+      disabled: this.loading,
+      loading: this.loading,
+    });
+    return actions;
+  }
+
+  onMobileDockAction(id: string): void {
+    if (id === 'delete') {
+      this.remove();
+      return;
+    }
+    if (id === 'save') {
+      this.save();
+    }
   }
 
   /** Etiquetas cortas de repetir para las píldoras mobile. */

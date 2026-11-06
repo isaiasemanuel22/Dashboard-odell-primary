@@ -36,15 +36,13 @@ import {
   DbCheckboxGroupComponent,
   DbInputComponent,
   DbStateMessageComponent,
-  MobileBarComponent,
+  MobileSettingsPageComponent,
+  MobileToggleRowComponent,
   DB_DATA_TABLE,
   OdlColumn,
   serviceTag,
 } from '@general-components';
-import {
-  MobileDockAction,
-  MobileDockComponent,
-} from '../../../components/mobile-dock/mobile-dock.component';
+import { MobileDockAction } from '../../../components/mobile-dock/mobile-dock.component';
 
 interface MarginField {
   service: ServiceType;
@@ -64,8 +62,8 @@ interface MarginField {
     DbCheckboxComponent,
     DbCheckboxGroupComponent,
     DbInputComponent,
-    MobileBarComponent,
-    MobileDockComponent,
+    MobileSettingsPageComponent,
+    MobileToggleRowComponent,
     ...DB_DATA_TABLE,
   ],
   templateUrl: './profit-settings.component.html',

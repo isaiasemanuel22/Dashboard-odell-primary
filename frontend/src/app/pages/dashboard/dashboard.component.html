@@ -30,58 +30,18 @@
       </db-mobile-bar>
 
       <div class="m-body">
-        <p class="dash-m__period-label">{{ periodLabel() }}</p>
-        <div class="dash-m__period" role="group" aria-label="Período">
-          @for (opt of periodOptions; track opt.value) {
-            <button
-              type="button"
-              class="dash-m__period-btn"
-              [class.dash-m__period-btn--on]="period === opt.value"
-              (click)="setPeriod(opt.value)"
-            >
-              {{ opt.label }}
-            </button>
-          }
-        </div>
+        <db-mobile-period-picker
+          mode="segments"
+          [caption]="periodLabel()"
+          [options]="periodOptions"
+          [value]="period"
+          (valueChange)="setPeriod($event)"
+        />
 
-        <section class="m-kpis" aria-label="Indicadores">
-          <article class="m-kpi">
-            <span class="m-lbl">Vendido</span>
-            <strong class="m-big">{{ profit.sold | currencyArs }}</strong>
-            <span class="m-hint dash-m__kpi-hint"
-              >Pedidos entregados + mostrador</span
-            >
-          </article>
-          <article class="m-kpi">
-            <span class="m-lbl">Cobrado</span>
-            <strong class="m-big dash-m__pos">{{
-              profit.collected | currencyArs
-            }}</strong>
-            <span class="m-hint dash-m__kpi-hint"
-              >Entró a tus cuentas {{ periodHintWord() }}</span
-            >
-          </article>
-          <article class="m-kpi">
-            <span class="m-lbl">Ganancia neta</span>
-            <strong class="m-big">{{ profit.netProfit | currencyArs }}</strong>
-            <span class="m-hint dash-m__kpi-hint">{{
-              netProfitHint(profit.fees)
-            }}</span>
-          </article>
-          <a
-            class="m-kpi dash-m__kpi-link"
-            routerLink="/dashboard"
-            fragment="por-cobrar-m"
-          >
-            <span class="m-lbl">Por cobrar</span>
-            <strong class="m-big dash-m__neg">{{
-              profit.receivable | currencyArs
-            }}</strong>
-            <span class="m-hint dash-m__kpi-hint">{{
-              receivableHint(profit.receivableOrders)
-            }}</span>
-          </a>
-        </section>
+        <db-mobile-kpi-grid
+          ariaLabel="Indicadores"
+          [items]="mobileMainKpis(profit)"
+        />
 
         <h2 class="m-sec-t">Para hoy</h2>
         <div class="m-card m-card--flush" aria-label="Para hoy">

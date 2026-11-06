@@ -74,50 +74,19 @@
     </db-mobile-bar>
 
     <div class="m-body cd-m__body m-has-dock">
-      <section class="m-card cd-m__hero" aria-label="Resumen del cliente">
-        <span class="cd-m__av" aria-hidden="true">{{ customerInitials }}</span>
-        <b class="cd-m__name">{{ customer.name }}</b>
-        <div class="cd-m__pills">
-          <span class="m-pill m-pill--b">{{ typePillLabel }}</span>
-          @if (sourcePillLabel) {
-            <span class="m-pill">{{ sourcePillLabel }}</span>
-          }
-        </div>
-      </section>
+      <db-mobile-contact-card
+        [name]="customer.name"
+        [initials]="customerInitials"
+        [pills]="mobileContactPills"
+        [whatsappHref]="showContactActions ? whatsappHref : null"
+        [telHref]="showContactActions ? telHref : null"
+        [centered]="true"
+      />
 
-      @if (showContactActions) {
-        <div class="cd-m__contact">
-          @if (whatsappHref; as wa) {
-            <a
-              class="cd-m__contact-btn"
-              [href]="wa"
-              target="_blank"
-              rel="noopener noreferrer"
-              >WhatsApp</a
-            >
-          }
-          @if (telHref; as tel) {
-            <a class="cd-m__contact-btn" [href]="tel">Llamar</a>
-          }
-        </div>
-      }
-
-      <div class="m-kpis">
-        <div class="m-kpi">
-          <span class="m-lbl">Comprado</span>
-          <span class="cd-m__kv">{{ totalSpent | currencyArs }}</span>
-          <span class="cd-m__ks">{{ purchasedKpiSub }}</span>
-        </div>
-        <div class="m-kpi">
-          <span class="m-lbl">Saldo</span>
-          <span
-            class="cd-m__kv"
-            [class.cd-m__kv--neg]="balanceAmount > 0"
-            >{{ balanceAmount | currencyArs }}</span
-          >
-          <span class="cd-m__ks">{{ balanceKpiSub }}</span>
-        </div>
-      </div>
+      <db-mobile-kpi-grid
+        [items]="mobileKpiItems"
+        ariaLabel="Resumen del cliente"
+      />
 
       <h2 class="m-sec-t">Datos</h2>
       <div class="m-card m-card--flush">

@@ -1,0 +1,22 @@
+<div class="m-settings-page">
+  <db-mobile-bar [title]="title" [backLink]="backLink">
+    <ng-content select="[barAction]" />
+  </db-mobile-bar>
+
+  <ng-content select="[tabs]" />
+  <ng-content select="[tools]" />
+
+  <div class="m-body" [class.m-has-dock]="showDock">
+    <ng-content />
+  </div>
+
+  @if (showDock) {
+    <db-mobile-dock
+      [actions]="dockActions!"
+      [secondaryFixed]="dockSecondaryFixed"
+      (action)="onDockAction($event)"
+    >
+      <ng-content select="[dockHint]" />
+    </db-mobile-dock>
+  }
+</div>

@@ -17,7 +17,8 @@ import {
   DbPillGroupComponent,
   DbRowMenuComponent,
   DbStateMessageComponent,
-  MobileBarComponent,
+  MobileFieldGroupComponent,
+  MobileSettingsPageComponent,
 } from '@general-components';
 
 type ColorFamily =
@@ -39,8 +40,8 @@ type ColorFamily =
     DbPillGroupComponent,
     DbRowMenuComponent,
     DbStateMessageComponent,
-    MobileBarComponent,
-  ],
+    MobileSettingsPageComponent,
+    MobileFieldGroupComponent,],
   templateUrl: './color-settings.component.html',
   styleUrl: './color-settings.component.scss',
 })

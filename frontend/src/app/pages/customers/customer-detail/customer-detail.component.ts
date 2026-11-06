@@ -23,10 +23,14 @@ import {
   DbButtonComponent,
   DbStateMessageComponent,
   MobileBarComponent,
+  MobileContactCardComponent,
   MobileDockComponent,
+  MobileKpiGridComponent,
   MobileSheetComponent,
   OrdersTableComponent,
+  type MobileContactPill,
   type MobileDockAction,
+  type MobileKpiItem,
 } from '@general-components';
 import { FormDialogService } from '../../../modals/public-api';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
@@ -61,9 +65,12 @@ import { normalizeWholesaleDiscount } from '../../../shared/utils/wholesale-exam
     DbStateMessageComponent,
     OrdersTableComponent,
     MobileBarComponent,
+    MobileContactCardComponent,
+    MobileKpiGridComponent,
     MobileDockComponent,
     MobileSheetComponent,
   ],
+  providers: [CurrencyArsPipe],
   templateUrl: './customer-detail.component.html',
   styleUrl: './customer-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -77,6 +84,7 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   private readonly formDialogs = inject(FormDialogService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly currencyArs = inject(CurrencyArsPipe);
 
   customer: Customer | null = null;
   orders: Order[] = [];
@@ -215,6 +223,32 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
 
   get showContactActions(): boolean {
     return !!(this.whatsappHref || this.telHref);
+  }
+
+  get mobileContactPills(): MobileContactPill[] {
+    const pills: MobileContactPill[] = [
+      { label: this.typePillLabel, className: 'm-pill--b' },
+    ];
+    if (this.sourcePillLabel) {
+      pills.push({ label: this.sourcePillLabel });
+    }
+    return pills;
+  }
+
+  get mobileKpiItems(): MobileKpiItem[] {
+    return [
+      {
+        label: 'Comprado',
+        value: this.currencyArs.transform(this.totalSpent),
+        hint: this.purchasedKpiSub,
+      },
+      {
+        label: 'Saldo',
+        value: this.currencyArs.transform(this.balanceAmount),
+        hint: this.balanceKpiSub,
+        tone: this.balanceAmount > 0 ? 'danger' : 'default',
+      },
+    ];
   }
 
   loadCustomer(id: string): void {

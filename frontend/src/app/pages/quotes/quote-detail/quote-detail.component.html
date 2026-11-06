@@ -120,34 +120,10 @@
         }
       </section>
 
-      <section class="m-card" aria-label="Totales">
-        <div class="m-ln">
-          <span>Subtotal a lista</span>
-          <span class="qd-m__num">{{ quoteSubtotal | currencyArs }}</span>
-        </div>
-        @if (quoteDiscount > 0) {
-          <div class="m-ln">
-            <span>{{ discountLabel }}</span>
-            <span class="qd-m__num qd-m__num--neg">−{{ quoteDiscount | currencyArs }}</span>
-          </div>
-        }
-        <div class="m-ln qd-m__total-row">
-          <b>Total</b>
-          <span class="m-big qd-m__total">{{ quote.total | currencyArs }}</span>
-        </div>
-        <div class="m-ln">
-          <span class="m-hint">Seña sugerida {{ depositPercent }} %</span>
-          <span class="qd-m__num">{{ depositAmount | currencyArs }}</span>
-        </div>
-        <div class="m-ln">
-          <span class="m-hint">Ganancia estimada</span>
-          <span
-            class="qd-m__num"
-            [class.qd-m__num--pos]="estimatedProfit >= 0"
-            [class.qd-m__num--neg]="estimatedProfit < 0"
-          >{{ estimatedProfit | currencyArs }}</span>
-        </div>
-      </section>
+      <db-mobile-totals
+        ariaLabel="Totales"
+        [rows]="mobileTotalRows"
+      />
 
       <h2 class="m-sec-t">Descripción</h2>
       <section class="m-card">

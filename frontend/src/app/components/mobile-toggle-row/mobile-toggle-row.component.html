@@ -1,0 +1,25 @@
+<div
+  class="m-toggle-row"
+  [class.m-row]="variant() === 'row'"
+  [class.m-ln]="variant() === 'line'"
+>
+  @if (variant() === 'row') {
+    <div class="m-row__text">
+      <b>{{ label() }}</b>
+      @if (hint()) {
+        <span>{{ hint() }}</span>
+      }
+    </div>
+  } @else {
+    <b>{{ label() }}</b>
+  }
+  <button
+    type="button"
+    class="m-sw"
+    [class.m-sw--on]="checked()"
+    role="switch"
+    [attr.aria-checked]="checked()"
+    [attr.aria-label]="ariaLabel() || label()"
+    (click)="onToggle()"
+  ></button>
+</div>

@@ -24,16 +24,14 @@ import {
   DbInputComponent,
   DbPillGroupComponent,
   DbStateMessageComponent,
-  MobileBarComponent,
+  MobileCatalogRowComponent,
+  MobileSettingsPageComponent,
   DB_DATA_TABLE,
   OdlActionEvent,
   OdlColumn,
   OdlRowAction,
 } from '@general-components';
-import {
-  MobileDockAction,
-  MobileDockComponent,
-} from '../../../components/mobile-dock/mobile-dock.component';
+import { MobileDockAction } from '../../../components/mobile-dock/mobile-dock.component';
 
 interface PaperSheetGroup {
   key: keyof GeneralSettings['paperReferenceSheets'];
@@ -49,11 +47,10 @@ interface PaperSheetGroup {
     DbInputComponent,
     DbPillGroupComponent,
     DbStateMessageComponent,
-    MobileBarComponent,
-    MobileDockComponent,
-    CurrencyArsPipe,
+            CurrencyArsPipe,
     ...DB_DATA_TABLE,
-  ],
+    MobileSettingsPageComponent,
+    MobileCatalogRowComponent,],
   templateUrl: './impresos-settings.component.html',
   styleUrl: './impresos-settings.component.scss',
 })

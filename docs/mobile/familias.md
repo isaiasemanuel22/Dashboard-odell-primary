@@ -212,45 +212,47 @@ b) **Si cambiás X, tocá**
 
 ### B · Detalles con barra fija (Pedido, Presupuesto, Cliente, Producto)
 
-a) **Extraer**
+a) **Extraer** — hecho (extracción 6)
 - ~~`db-mobile-dock`~~ → ya en `components/mobile-dock` (+ `m-has-dock`).
 - ~~Menús ⋯ / hojas de acción~~ → `db-mobile-sheet` (`components/mobile-sheet`) +
   `m-sheet-action` en `_mobile-kit.scss` (pedido, presupuesto, cliente, producto,
   productos, billetera).
-- `db-mobile-contact-card` (cliente con avatar + WhatsApp/Llamar): repetido en
-  order-detail, quote-detail y customer-detail.
-- `db-mobile-totals` (Total/Pagado/Saldo o Subtotal/Descuento/Total): order-detail,
-  quote-detail, order-form resumen, sale-form.
-- `db-mobile-collapsible` (sección con título, contador y chevron): Tareas/Entregas/Historial.
+- ~~`db-mobile-contact-card`~~ → `components/mobile-contact-card` (customer-detail;
+  order-detail solo acciones con `showIdentity=false`).
+- ~~`db-mobile-totals`~~ → `components/mobile-totals` (order-detail cols + quote-detail rows).
+- ~~`db-mobile-collapsible`~~ → `components/mobile-collapsible` (Pagos/Tareas/Entregas/Historial
+  en order-detail).
 
 b) **Si cambiás X, tocá**
 - Botones fijos o su altura: `components/mobile-dock` (+ clase `m-has-dock` en `_mobile-kit.scss`).
 - Ruta con dock sin menú inferior: `layout/layout.component.ts` (`shouldHideBottomNav`).
 - Menú ⋯ / hoja de acciones: `components/mobile-sheet` (+ `m-sheet*` / `m-sheet-action`
   en `_mobile-kit.scss`) y el HTML del detalle o lista que la abre.
-- Tarjeta de cliente/contacto: `mobile-contact-card` (hoy order-detail, quote-detail, customer-detail).
-- Totales: `mobile-totals` + `shared/utils` (saldos).
+- Tarjeta de contacto: `components/mobile-contact-card` (customer-detail, order-detail).
+- Totales: `components/mobile-totals` + `shared/utils` (saldos); consumidores en
+  `pages/orders/order-detail`, `pages/quotes/quote-detail`.
+- Secciones plegables: `components/mobile-collapsible` + `order-detail`.
 
 ### C · Formularios a pantalla completa (Nuevo pedido, presupuesto, cliente, producto, insumo, evento, venta)
 
-a) **Extraer**
+a) **Extraer** — hecho (extracción 4; `select-field` saltado)
 - ~~`db-mobile-form-shell`~~ → ya en `components/mobile-form-shell` (barra X/título/acción,
-  cuerpo, pie opcional con `db-mobile-dock`). Migrado en order/quote/customer/product
-  dialogs y sale-form (ruta `/ventas/nueva`). Pies de customer/supply/product/event
-  siguen en `db-form-footer` local.
+  cuerpo, pie opcional con `db-mobile-dock`). Migrado en order/quote/customer/product/supply
+  dialogs y sale-form; evento usa `db-mobile-dock` en el pie mobile.
 - ~~`db-mobile-form-step`~~ → ya en `components/mobile-form-step` (order-form, quote-form,
   sale-form).
 - ~~`db-mobile-stepper`~~ → ya en `components/mobile-stepper` (order-form-line, sale-form,
   order-detail-deliveries). Segmentado mobile: variante en `db-segmented-control` (size lg),
   no chip-group.
-- `db-mobile-select-field` (label + `▾` + hoja de opciones): cliente, canal, cuenta, categoría, color, marca.
+- `db-mobile-select-field`: **saltado** — no hay patrón repetido de label+▾+hoja; se usan
+  `db-select` / `db-autocomplete`.
 - Estilos de campo (`m-fl`, `m-field`, `m-field-error`, labels/inputs 48px): en `_mobile-kit.scss`.
 
 b) **Si cambiás X, tocá**
 - Encabezado/pie del form: `components/mobile-form-shell` (+ `components/mobile-dock`);
   dialogs `order-form-dialog`, `quote-form-dialog`, `customer-form-dialog`,
-  `product-form-dialog`; `pages/sales/sale-form` y `sale-create`. Order/quote dock sigue
-  en el form; customer/supply/product/event footers aún locales.
+  `product-form-dialog`, `supply-form-dialog`, `calendar-event-dialog`;
+  `pages/sales/sale-form`. Forms con `hideFooter` en mobile: customer/supply/product.
 - Apertura a pantalla completa: `modals` (`form-dialog-panel--order-fullscreen`) y `shared/styles/_modal.scss`.
 - Stepper: `components/mobile-stepper` + `order-form/linea`, `sale-form`, `order-detail-deliveries`.
 - Secciones numeradas: `components/mobile-form-step` + `order-form`, `sale-form`.
@@ -278,41 +280,44 @@ b) **Si cambiás X, tocá**
 
 ### E · Paneles (Dashboard, Ventas, Billetera)
 
-a) **Extraer**
-- `db-mobile-kpi-grid` (inputs `items: {label,value,hint,tone}[]`, `cols`): hoy `m-kpis/m-kpi`
-  (19 líneas en 5 archivos) más variantes locales de dashboard y ventas.
-- `db-mobile-period-picker` (Mes/Trimestre/Año o mes con flechas): Dashboard, Ventas, Calendario.
-- `db-mobile-alert-card` (ícono, texto, link): Dashboard "Para hoy" y banners de A.
-- `db-mobile-movement-row` (+/−/⇄, monto, comisión, anulado): Billetera y operaciones de Ventas.
+a) **Extraer** — hecho parcial (extracción 7)
+- ~~`db-mobile-kpi-grid`~~ → `components/mobile-kpi-grid` (Dashboard, Ventas, customer-detail).
+- ~~`db-mobile-period-picker`~~ → `components/mobile-period-picker` (Dashboard segmentos,
+  Ventas mes con flechas). Calendario **no** migrado (navegación de semana distinta).
+- `db-mobile-alert-card`: pendiente (sigue markup local / `db-mobile-banner` en A).
+- ~~`db-mobile-movement-row`~~ → `components/mobile-movement-row` (wallet-movements).
 
 b) **Si cambiás X, tocá**
-- KPIs: `mobile-kpi-grid` y `_mobile-kit.scss`; datos en `pages/dashboard`, `pages/sales`, `pages/wallet`.
-- Selector de período: `mobile-period-picker` + los tres componentes de página.
-- Movimientos: `pages/wallet/components/wallet-movements` y `pages/sales`.
+- KPIs: `components/mobile-kpi-grid` + `_mobile-kit.scss` (`m-kpis`); datos en
+  `pages/dashboard`, `pages/sales`, `pages/customers/customer-detail`.
+- Selector de período: `components/mobile-period-picker` + `pages/dashboard`, `pages/sales`.
+- Movimientos: `components/mobile-movement-row` + `pages/wallet/components/wallet-movements`.
 
 ### F · Índices (Ajustes, Más)
 
-a) **Extraer**
-- `db-mobile-nav-list` (grupos `{title, items:{icon,label,hint,link}[]}`): `settings-home` y
-  `pages/more` hacen lo mismo con `m-row`; `st-m` tiene su propio estilo.
-- `db-mobile-toggle-row` (con `role="switch"`, `m-sw` ya existe): Más (sincronizar), Ganancias, Usuarios.
+a) **Extraer** — hecho (extracción 8)
+- ~~`db-mobile-nav-list`~~ → `components/mobile-nav-list` (`settings-home`). Más sigue con
+  tiles propios (no es el mismo patrón de filas).
+- ~~`db-mobile-toggle-row`~~ → `components/mobile-toggle-row` (Más sincronizar; Ganancias
+  Activo con `variant="line"`).
 
-b) **Si cambiás X, tocá**: `mobile-nav-list`; `pages/settings/settings-home`, `pages/more`; ítems de menú en sus `.ts`.
+b) **Si cambiás X, tocá**: `components/mobile-nav-list` + `pages/settings/settings-home`;
+`components/mobile-toggle-row` + `pages/more`, `pages/settings/profit-settings`.
 
 ### G1 / G2 · Subpantallas de ajustes
 
-a) **Extraer**
-- `db-mobile-settings-page` (barra con volver + cuerpo + dock opcional): hoy cada página de
-  ajustes repite `st-m` + barra; el dock ya es `db-mobile-dock` en general-values,
-  profit-settings e impresos-settings. Resto (filament, resin, colors, users) en
-  `_settings-mobile.scss` + `settings-users-mobile-shell`.
-- `db-mobile-field-group` (label + input con prefijo `$`/sufijo unidad): general-values, profit-settings.
-- `db-mobile-catalog-row` (swatch/ícono, título, subtítulo, valor, acciones): filamento, resina, impresos, colores, usuarios.
-- Filamento y resina ya comparten `material-price-settings.scss`; sumarlos al mismo componente de fila.
+a) **Extraer** — hecho (extracción 5)
+- ~~`db-mobile-settings-page`~~ → `components/mobile-settings-page` (barra + slots
+  `[barAction]`/`[tabs]`/`[tools]` + cuerpo + dock opcional). Consumido por
+  general-values, profit, filament, resin, impresos, colors y `settings-users-mobile-shell`.
+- ~~`db-mobile-field-group`~~ → `components/mobile-field-group` (general-values, filament,
+  resin, colors; prefijo `$` / sufijo `%`).
+- ~~`db-mobile-catalog-row`~~ → `components/mobile-catalog-row` (filament, resin, impresos,
+  usuarios; colores conserva grilla `st-m__sw`).
 
-b) **Si cambiás X, tocá**: pie fijo → `components/mobile-dock` (+ `m-has-dock`); resto en
-`pages/settings/_settings-mobile.scss`, `material-price-settings.scss`,
-`settings-users-mobile-shell.*`, y el HTML de la página específica.
+b) **Si cambiás X, tocá**: shell → `components/mobile-settings-page`; filas →
+`components/mobile-catalog-row`; campos → `components/mobile-field-group`; tabs/hints
+locales aún en `pages/settings/_settings-mobile.scss` y `material-price-settings.scss`.
 
 ## Orden recomendado de extracción (mayor a menor ahorro)
 
@@ -321,11 +326,11 @@ b) **Si cambiás X, tocá**: pie fijo → `components/mobile-dock` (+ `m-has-doc
 | 1 | ~~`db-mobile-dock`~~ (hecho) | B, C, G | `components/mobile-dock` | — | Hecho |
 | 2 | ~~`db-mobile-sheet` + `chip-group`~~ (hecho) | D (también B) | `components/mobile-sheet`, `mobile-chip-group` | — | Hecho |
 | 3 | ~~`db-mobile-list-toolbar` + `MobileListStateService`~~ (hecho) | A | `mobile-list-toolbar`, `mobile-list-state.service` | — | Hecho |
-| 4 | ~~`db-mobile-form-shell` + `step` + `stepper` + segmented~~ (hecho; falta `select-field`) | C | `mobile-form-shell`, `mobile-form-step`, `mobile-stepper` | — | Hecho (parcial: pies customer/supply/event y select-field pendientes) |
-| 5 | `db-mobile-settings-page` + `catalog-row` + `field-group` | G1/G2 | 8 páginas + shell | ~150 | Bajo |
-| 6 | `db-mobile-contact-card` + `totals` + `collapsible` | B | 3–4 detalles | ~130 | Bajo |
-| 7 | `db-mobile-kpi-grid` + `period-picker` + `movement-row` | E | 3 paneles | ~100 | Bajo |
-| 8 | `db-mobile-nav-list` + `toggle-row` | F | 2 pantallas | ~60 | Bajo |
+| 4 | ~~`db-mobile-form-shell` + `step` + `stepper` + segmented~~ (hecho; `select-field` saltado) | C | `mobile-form-shell`, `mobile-form-step`, `mobile-stepper` | — | Hecho (pies customer/supply/product/event migrados; select-field sin repetición real) |
+| 5 | ~~`db-mobile-settings-page` + `catalog-row` + `field-group`~~ (hecho) | G1/G2 | `mobile-settings-page`, `mobile-catalog-row`, `mobile-field-group` | ~150 | Hecho |
+| 6 | ~~`db-mobile-contact-card` + `totals` + `collapsible`~~ (hecho) | B | `mobile-contact-card`, `mobile-totals`, `mobile-collapsible` | ~130 | Hecho |
+| 7 | ~~`db-mobile-kpi-grid` + `period-picker` + `movement-row`~~ (hecho; alert-card y calendario pendientes) | E | `mobile-kpi-grid`, `mobile-period-picker`, `mobile-movement-row` | ~100 | Hecho |
+| 8 | ~~`db-mobile-nav-list` + `toggle-row`~~ (hecho) | F | `mobile-nav-list`, `mobile-toggle-row` | ~60 | Hecho |
 | 9 | ~~`db-mobile-card-link` + `banner`~~ (hecho) | A | `mobile-card-link`, `mobile-banner` | — | Hecho |
 
 Total estimado: **~1.500 líneas** (de ~7.700 de SCSS de páginas más sus templates). Reglas:

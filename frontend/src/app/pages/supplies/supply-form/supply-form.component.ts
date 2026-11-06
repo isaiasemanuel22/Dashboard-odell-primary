@@ -63,6 +63,8 @@ export class SupplyFormComponent implements OnInit, OnChanges {
   @Input() defaultCategory?: SupplyCategory;
   @Input() loading = false;
   @Input() error = '';
+  /** En mobile el pie vive en `db-mobile-form-shell` / dock. */
+  @Input() hideFooter = false;
   @Output() save = new EventEmitter<Partial<Supply>>();
   @Output() cancel = new EventEmitter<void>();
 

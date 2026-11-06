@@ -1,0 +1,51 @@
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+}
+
+.m-totals__cols {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  text-align: center;
+}
+
+.m-totals__col {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.m-totals__val {
+  font-size: 16px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: mobile.$m-text;
+
+  &--pos {
+    color: #15803d;
+  }
+
+  &--neg {
+    color: #b91c1c;
+  }
+}
+
+.m-totals__num {
+  font-variant-numeric: tabular-nums;
+  color: mobile.$m-text;
+
+  &--neg {
+    color: #b91c1c;
+  }
+
+  &--pos {
+    color: #15803d;
+  }
+
+  &--muted {
+    color: mobile.$m-text-secondary;
+  }
+}

@@ -24,25 +24,24 @@
     } @else {
       <div class="m-card m-card--flush">
         @for (user of visibleUsers; track user.id) {
-          <button type="button" class="m-row" (click)="openEdit(user)">
-            <span class="st-m__av" aria-hidden="true">{{ initials(user.displayName) }}</span>
-            <div class="m-row__text">
-              <b>{{ user.displayName }}</b>
-              <span>{{ userMobileSubtitle(user) }}</span>
-            </div>
+          <db-mobile-catalog-row
+            [title]="user.displayName"
+            [subtitle]="userMobileSubtitle(user)"
+            [initials]="initials(user.displayName)"
+            (pressed)="openEdit(user)"
+          >
             @if (isAdminUser(user)) {
               <span class="m-pill m-pill--b">Admin</span>
             } @else {
               <span class="m-pill" [class.m-pill--ok]="user.active">{{ user.active ? 'Activo' : 'Inactivo' }}</span>
             }
-          </button>
+          </db-mobile-catalog-row>
         } @empty {
-          <div class="m-row">
-            <div class="m-row__text">
-              <b>Sin usuarios</b>
-              <span>Dá de alta el primero</span>
-            </div>
-          </div>
+          <db-mobile-catalog-row
+            title="Sin usuarios"
+            subtitle="Dá de alta el primero"
+            [interactive]="false"
+          />
         }
       </div>
     }

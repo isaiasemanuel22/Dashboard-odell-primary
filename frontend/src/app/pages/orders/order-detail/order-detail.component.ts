@@ -42,10 +42,14 @@ import {
   DbStatusBadgeComponent,
   DB_DATA_TABLE,
   MobileBarComponent,
+  MobileCollapsibleComponent,
+  MobileContactCardComponent,
   MobileDockComponent,
   MobileSheetComponent,
+  MobileTotalsComponent,
   OdlColumn,
   type MobileDockAction,
+  type MobileTotalRow,
 } from '@general-components';
 import { FormDialogService } from '../../../modals/public-api';
 import { SettingsFacade } from '../../../store/settings/settings.facade';
@@ -116,6 +120,9 @@ type MobileAccordionKey = 'payments' | 'tasks' | 'deliveries' | 'history';
     DbStatusBadgeComponent,
     DbServiceBadgesComponent,
     MobileBarComponent,
+    MobileCollapsibleComponent,
+    MobileContactCardComponent,
+    MobileTotalsComponent,
     MobileDockComponent,
     MobileSheetComponent,
     ...DB_DATA_TABLE,
@@ -126,6 +133,7 @@ type MobileAccordionKey = 'payments' | 'tasks' | 'deliveries' | 'history';
   templateUrl: './order-detail.component.html',
   styleUrl: './order-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [CurrencyArsPipe],
 })
 export class OrderDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
@@ -140,6 +148,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   private readonly breakpoint = inject(BreakpointService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly currencyArs = inject(CurrencyArsPipe);
 
   @ViewChild('paymentSheet')
   private paymentSheet?: OrderDetailPaymentsComponent;
@@ -362,6 +371,26 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
         ? `${customer.name} (${customer.company})`
         : customer.name,
     }));
+  }
+
+  get mobileMoneyRows(): MobileTotalRow[] {
+    if (!this.order) return [];
+    return [
+      {
+        label: 'Total',
+        value: this.currencyArs.transform(this.order.total),
+      },
+      {
+        label: 'Pagado',
+        value: this.currencyArs.transform(this.paidAmount),
+        tone: 'success',
+      },
+      {
+        label: 'Saldo',
+        value: this.currencyArs.transform(this.balanceAmount),
+        tone: this.balanceAmount > 0 ? 'danger' : 'success',
+      },
+    ];
   }
 
   get paidAmount(): number {
@@ -597,10 +626,13 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   }
 
   toggleAccordion(key: MobileAccordionKey): void {
+    this.setAccordionOpen(key, !this.isAccordionOpen(key));
+  }
+
+  setAccordionOpen(key: MobileAccordionKey, open: boolean): void {
     // Uno abierto por vez: el detalle no se vuelve interminable.
-    const wasOpen = this.mobileOpenAccordions.has(key);
     this.mobileOpenAccordions.clear();
-    if (!wasOpen) this.mobileOpenAccordions.add(key);
+    if (open) this.mobileOpenAccordions.add(key);
     this.cdr.markForCheck();
   }
 

@@ -19,6 +19,7 @@ import { BreakpointService } from '../../core/services/breakpoint.service';
 import { ProductsService } from '../../core/services/products.service';
 import { FormDialogShellComponent } from '../form-dialog-shell/form-dialog-shell.component';
 import { MobileFormShellComponent } from '../../components/mobile-form-shell/mobile-form-shell.component';
+import type { MobileDockAction } from '../../components/mobile-dock/mobile-dock.component';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { ProductFormComponent } from '../../pages/products/product-form/product-form.component';
 import { FormDialogService } from '../form-dialog.service';
@@ -43,11 +44,17 @@ export interface ProductFormDialogData {
       (close)="cancel()"
     >
       @if (isMobile()) {
-        <db-mobile-form-shell [title]="dialogTitle" (close)="cancel()">
+        <db-mobile-form-shell
+          [title]="dialogTitle"
+          [dockActions]="mobileDockActions"
+          (close)="cancel()"
+          (dockAction)="onMobileDockAction($event)"
+        >
           <app-product-form
             [product]="product"
             [loading]="loading"
             [error]="error"
+            [hideFooter]="true"
             (save)="save($event)"
             (cancel)="cancel()"
           />
@@ -92,6 +99,38 @@ export class ProductFormDialogComponent implements OnInit {
     return this.isMobile()
       ? ''
       : 'El precio se calcula solo a medida que cargás material y tiempos';
+  }
+
+  get mobileDockActions(): MobileDockAction[] {
+    const form = this.form;
+    const facade = form?.facade;
+    const savingFiles = !!(
+      facade?.savingImages || facade?.savingAttachments
+    );
+    const canSave =
+      !!facade?.form.controls.name.value.trim() &&
+      (facade?.categoryIds.length ?? 0) >= 1;
+    return [
+      {
+        id: 'save',
+        label: savingFiles
+          ? 'Subiendo archivos...'
+          : this.loading
+            ? 'Guardando...'
+            : this.product
+              ? 'Guardar cambios'
+              : 'Crear producto',
+        kind: 'primary',
+        disabled: this.loading || savingFiles || !canSave,
+        loading: this.loading || savingFiles,
+      },
+    ];
+  }
+
+  onMobileDockAction(id: string): void {
+    if (id === 'save') {
+      void this.form?.onSubmit();
+    }
   }
 
   ngOnInit(): void {

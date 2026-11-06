@@ -17,6 +17,7 @@ import { UserAccessService } from '../../core/services/user-access.service';
 import { CurrentUserProfile, Supply } from '../../core/models';
 import {
   MobileBarComponent,
+  MobileToggleRowComponent,
   NavIconComponent,
 } from '@general-components';
 import { SuppliesFacade } from '../../store/supplies/supplies.facade';
@@ -31,7 +32,12 @@ interface MoreTile {
 @Component({
   selector: 'app-more',
   standalone: true,
-  imports: [RouterLink, MobileBarComponent, NavIconComponent],
+  imports: [
+    RouterLink,
+    MobileBarComponent,
+    MobileToggleRowComponent,
+    NavIconComponent,
+  ],
   templateUrl: './more.component.html',
   styleUrl: './more.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

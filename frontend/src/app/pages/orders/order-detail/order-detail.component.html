@@ -116,16 +116,11 @@
             />
           </div>
         } @else if (order.customerId && (whatsappHref || telHref)) {
-          <div class="od-m__contact">
-            @if (whatsappHref; as wa) {
-              <a class="od-m__contact-btn" [href]="wa" target="_blank" rel="noopener noreferrer"
-                >WhatsApp</a
-              >
-            }
-            @if (telHref; as tel) {
-              <a class="od-m__contact-btn" [href]="tel">Llamar</a>
-            }
-          </div>
+          <db-mobile-contact-card
+            [whatsappHref]="whatsappHref"
+            [telHref]="telHref"
+            [showIdentity]="false"
+          />
         }
       </section>
 
@@ -187,28 +182,11 @@
         </section>
       }
 
-      <section class="m-card od-m__money" aria-label="Dinero del pedido">
-        <div class="od-m__money-cols">
-          <div class="od-m__money-col">
-            <span class="m-lbl">Total</span>
-            <strong class="od-m__money-val">{{ order.total | currencyArs }}</strong>
-          </div>
-          <div class="od-m__money-col">
-            <span class="m-lbl">Pagado</span>
-            <strong class="od-m__money-val od-m__money-val--pos">{{
-              paidAmount | currencyArs
-            }}</strong>
-          </div>
-          <div class="od-m__money-col">
-            <span class="m-lbl">Saldo</span>
-            <strong
-              class="od-m__money-val"
-              [class.od-m__money-val--neg]="balanceAmount > 0"
-              [class.od-m__money-val--pos]="balanceAmount <= 0"
-              >{{ balanceAmount | currencyArs }}</strong
-            >
-          </div>
-        </div>
+      <db-mobile-totals
+        layout="cols"
+        ariaLabel="Dinero del pedido"
+        [rows]="mobileMoneyRows"
+      >
         <div
           class="od-m__track"
           role="progressbar"
@@ -222,7 +200,7 @@
         @if (depositSummary; as depositLine) {
           <p class="m-hint od-m__deposit">{{ depositLine }}</p>
         }
-      </section>
+      </db-mobile-totals>
 
       <h2 class="m-sec-t">Productos</h2>
       <section class="m-card m-card--flush od-m__products" aria-label="Productos del pedido">
@@ -271,69 +249,29 @@
         }
       </section>
 
-      <div class="od-m__acc" id="od-m-acc-payments">
-        <button
-          type="button"
-          class="od-m__acc-btn"
-          [attr.aria-expanded]="isAccordionOpen('payments')"
-          (click)="toggleAccordion('payments')"
-        >
-          <strong class="od-m__acc-title">Pagos</strong>
-          <span class="od-m__acc-summary">Pagado {{ paidPercentLabel }}</span>
-          <svg
-            class="od-m__chev"
-            [class.od-m__chev--open]="isAccordionOpen('payments')"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#9AAFBF"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <path d="M9 6l6 6-6 6" />
-          </svg>
-        </button>
-        <div
-          class="od-m__acc-body"
-          [class.od-m__acc-body--open]="isAccordionOpen('payments')"
-          [hidden]="!isAccordionOpen('payments')"
-        >
-          @if (isMobile()) {
-            <app-order-detail-payments
-              presentation="summary"
-              [order]="order"
-              (orderChange)="onPaymentRegistered($event)"
-            />
-          }
-        </div>
-      </div>
+      <db-mobile-collapsible
+        panelId="od-m-acc-payments"
+        title="Pagos"
+        [summary]="'Pagado ' + paidPercentLabel"
+        [open]="isAccordionOpen('payments')"
+        (toggled)="setAccordionOpen('payments', $event)"
+      >
+        @if (isMobile()) {
+          <app-order-detail-payments
+            presentation="summary"
+            [order]="order"
+            (orderChange)="onPaymentRegistered($event)"
+          />
+        }
+      </db-mobile-collapsible>
 
-      <div class="od-m__acc" id="od-m-acc-tasks">
-        <button
-          type="button"
-          class="od-m__acc-btn"
-          [attr.aria-expanded]="isAccordionOpen('tasks')"
-          (click)="toggleAccordion('tasks')"
-        >
-          <strong class="od-m__acc-title">Tareas</strong>
-          <span class="od-m__acc-summary">{{ tasksAccordionSummary }}</span>
-          <svg
-            class="od-m__chev"
-            [class.od-m__chev--open]="isAccordionOpen('tasks')"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#9AAFBF"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <path d="M9 6l6 6-6 6" />
-          </svg>
-        </button>
-        @if (isAccordionOpen('tasks')) {
-          <div class="od-m__acc-body">
+      <db-mobile-collapsible
+        panelId="od-m-acc-tasks"
+        title="Tareas"
+        [summary]="tasksAccordionSummary"
+        [open]="isAccordionOpen('tasks')"
+        (toggled)="setAccordionOpen('tasks', $event)"
+      >
             @if (tasks.length) {
               <ul class="od-m__tasks">
                 @for (task of tasks; track task.id) {
@@ -357,86 +295,40 @@
             } @else {
               <p class="od-m__empty">No hay tareas generadas para este pedido.</p>
             }
-          </div>
+      </db-mobile-collapsible>
+
+      <db-mobile-collapsible
+        panelId="od-m-acc-deliveries"
+        title="Entregas"
+        [summary]="deliveriesAccordionSummary"
+        [open]="isAccordionOpen('deliveries')"
+        (toggled)="setAccordionOpen('deliveries', $event)"
+      >
+        @if (isMobile()) {
+          <app-order-detail-deliveries
+            presentation="summary"
+            [order]="order"
+            [tasks]="tasks"
+            [deliveries]="deliveries"
+            (delivered)="onDeliveryRegistered()"
+          />
         }
-      </div>
+      </db-mobile-collapsible>
 
-      <div class="od-m__acc" id="od-m-acc-deliveries">
-        <button
-          type="button"
-          class="od-m__acc-btn"
-          [attr.aria-expanded]="isAccordionOpen('deliveries')"
-          (click)="toggleAccordion('deliveries')"
-        >
-          <strong class="od-m__acc-title">Entregas</strong>
-          <span class="od-m__acc-summary">{{ deliveriesAccordionSummary }}</span>
-          <svg
-            class="od-m__chev"
-            [class.od-m__chev--open]="isAccordionOpen('deliveries')"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#9AAFBF"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <path d="M9 6l6 6-6 6" />
-          </svg>
-        </button>
-        <div
-          class="od-m__acc-body"
-          [class.od-m__acc-body--open]="isAccordionOpen('deliveries')"
-          [hidden]="!isAccordionOpen('deliveries')"
-        >
-          @if (isMobile()) {
-            <app-order-detail-deliveries
-              presentation="summary"
-              [order]="order"
-              [tasks]="tasks"
-              [deliveries]="deliveries"
-              (delivered)="onDeliveryRegistered()"
-            />
-          }
-        </div>
-      </div>
-
-      <div class="od-m__acc" id="od-m-acc-history">
-        <button
-          type="button"
-          class="od-m__acc-btn"
-          [attr.aria-expanded]="isAccordionOpen('history')"
-          (click)="toggleAccordion('history')"
-        >
-          <strong class="od-m__acc-title">Historial</strong>
-          <span class="od-m__acc-summary">{{ historyAccordionSummary }}</span>
-          <svg
-            class="od-m__chev"
-            [class.od-m__chev--open]="isAccordionOpen('history')"
-            width="18"
-            height="18"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#9AAFBF"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <path d="M9 6l6 6-6 6" />
-          </svg>
-        </button>
-        <div
-          class="od-m__acc-body"
-          [class.od-m__acc-body--open]="isAccordionOpen('history')"
-          [hidden]="!isAccordionOpen('history')"
-        >
-          @if (isMobile()) {
-            <app-order-detail-history
-              [statusHistory]="statusHistory"
-              [priceHistory]="priceHistory"
-            />
-          }
-        </div>
-      </div>
+      <db-mobile-collapsible
+        panelId="od-m-acc-history"
+        title="Historial"
+        [summary]="historyAccordionSummary"
+        [open]="isAccordionOpen('history')"
+        (toggled)="setAccordionOpen('history', $event)"
+      >
+        @if (isMobile()) {
+          <app-order-detail-history
+            [statusHistory]="statusHistory"
+            [priceHistory]="priceHistory"
+          />
+        }
+      </db-mobile-collapsible>
 
       @if (order.description) {
         <h2 class="m-sec-t">Descripción</h2>

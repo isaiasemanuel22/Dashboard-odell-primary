@@ -71,6 +71,8 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   @Input() product: Product | null = null;
   @Input() loading = false;
   @Input() error = '';
+  /** En mobile el pie vive en `db-mobile-form-shell` / dock. */
+  @Input() hideFooter = false;
   clientError = '';
   @Output() save = new EventEmitter<CreateProductPayload | UpdateProductPayload>();
   @Output() cancel = new EventEmitter<void>();

@@ -104,35 +104,37 @@
       <db-form-error>{{ error }}</db-form-error>
     }
 
-    <db-form-footer class="customer-form__footer">
-      <p class="customer-form__note">
-        @if (isRevendedor) {
-          En pedidos va a aparecer con la etiqueta Revendedor
-        } @else {
-          Lo vas a poder elegir en pedidos y presupuestos
-        }
-      </p>
-      <div class="customer-form__actions">
-        <db-button
-          label="Cancelar"
-          variant="secondary"
-          format="solid"
-          (clicked)="cancel.emit()"
-        />
-        <db-button
-          [label]="
-            loading
-              ? 'Guardando...'
-              : isEditing
-                ? 'Guardar'
-                : 'Crear cliente'
-          "
-          variant="primary"
-          format="solid"
-          buttonType="submit"
-          [disabled]="!canSubmit"
-        />
-      </div>
-    </db-form-footer>
+    @if (!hideFooter) {
+      <db-form-footer class="customer-form__footer">
+        <p class="customer-form__note">
+          @if (isRevendedor) {
+            En pedidos va a aparecer con la etiqueta Revendedor
+          } @else {
+            Lo vas a poder elegir en pedidos y presupuestos
+          }
+        </p>
+        <div class="customer-form__actions">
+          <db-button
+            label="Cancelar"
+            variant="secondary"
+            format="solid"
+            (clicked)="cancel.emit()"
+          />
+          <db-button
+            [label]="
+              loading
+                ? 'Guardando...'
+                : isEditing
+                  ? 'Guardar'
+                  : 'Crear cliente'
+            "
+            variant="primary"
+            format="solid"
+            buttonType="submit"
+            [disabled]="!canSubmit"
+          />
+        </div>
+      </db-form-footer>
+    }
   </form>
 </db-form>

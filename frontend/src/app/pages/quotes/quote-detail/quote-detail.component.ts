@@ -26,7 +26,9 @@ import {
   MobileBarComponent,
   MobileDockComponent,
   MobileSheetComponent,
+  MobileTotalsComponent,
   type MobileDockAction,
+  type MobileTotalRow,
 } from '@general-components';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import {
@@ -71,11 +73,13 @@ import { QuoteDetailLinesComponent } from './quote-detail-lines/quote-detail-lin
     MobileBarComponent,
     MobileDockComponent,
     MobileSheetComponent,
+    MobileTotalsComponent,
     QuoteDetailLinesComponent,
   ],
   templateUrl: './quote-detail.component.html',
   styleUrl: './quote-detail.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [CurrencyArsPipe],
 })
 export class QuoteDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
@@ -85,6 +89,7 @@ export class QuoteDetailComponent implements OnInit {
   private readonly realtime = inject(RealtimeService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly currencyArs = inject(CurrencyArsPipe);
 
   quote: Quote | null = null;
   loading = true;
@@ -205,6 +210,42 @@ export class QuoteDetailComponent implements OnInit {
 
   get estimatedProfit(): number {
     return this.quote ? quoteEstimatedProfit(this.quote) : 0;
+  }
+
+  get mobileTotalRows(): MobileTotalRow[] {
+    if (!this.quote) return [];
+    const rows: MobileTotalRow[] = [
+      {
+        label: 'Subtotal a lista',
+        value: this.currencyArs.transform(this.quoteSubtotal),
+      },
+    ];
+    if (this.quoteDiscount > 0) {
+      rows.push({
+        label: this.discountLabel,
+        value: `−${this.currencyArs.transform(this.quoteDiscount)}`,
+        tone: 'danger',
+      });
+    }
+    rows.push(
+      {
+        label: 'Total',
+        value: this.currencyArs.transform(this.quote.total),
+        tone: 'emphasis',
+        strong: true,
+      },
+      {
+        label: `Seña sugerida ${this.depositPercent} %`,
+        value: this.currencyArs.transform(this.depositAmount),
+        tone: 'muted',
+      },
+      {
+        label: 'Ganancia estimada',
+        value: this.currencyArs.transform(this.estimatedProfit),
+        tone: this.estimatedProfit >= 0 ? 'success' : 'danger',
+      },
+    );
+    return rows;
   }
 
   /** Exportar siempre; CTA primario según desktop. */

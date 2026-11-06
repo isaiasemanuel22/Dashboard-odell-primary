@@ -26,16 +26,15 @@ import {
   DbPillGroupComponent,
   DbSelectOption,
   DbStateMessageComponent,
-  MobileBarComponent,
+  MobileSettingsPageComponent,
+  MobileFieldGroupComponent,
+  MobileCatalogRowComponent,
   DB_DATA_TABLE,
   OdlActionEvent,
   OdlColumn,
   OdlRowAction,
 } from '@general-components';
-import {
-  MobileDockAction,
-  MobileDockComponent,
-} from '../../../components/mobile-dock/mobile-dock.component';
+import { MobileDockAction } from '../../../components/mobile-dock/mobile-dock.component';
 import { productTypeOptions } from '../../../shared/utils/select-options';
 import { GeneralValuesProfileEditorComponent } from './general-values-profile-editor/general-values-profile-editor.component';
 
@@ -50,8 +49,9 @@ import { GeneralValuesProfileEditorComponent } from './general-values-profile-ed
     DbButtonComponent,
     DbPillGroupComponent,
     DbStateMessageComponent,
-    MobileBarComponent,
-    MobileDockComponent,
+    MobileSettingsPageComponent,
+    MobileFieldGroupComponent,
+    MobileCatalogRowComponent,
     ...DB_DATA_TABLE,
     GeneralValuesProfileEditorComponent,
   ],

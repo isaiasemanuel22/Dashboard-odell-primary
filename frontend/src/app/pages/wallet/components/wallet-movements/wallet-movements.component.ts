@@ -23,7 +23,10 @@ import {
   OdlFilter,
   OdlRowAction,
 } from '../../../../components/db-data-table';
-import { MobileSheetComponent } from '@general-components';
+import {
+  MobileMovementRowComponent,
+  MobileSheetComponent,
+} from '@general-components';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import { formatCurrencyArs } from '../../../../shared/utils/currency-ars.util';
 import {
@@ -46,7 +49,12 @@ export interface WalletDayGroup {
 @Component({
   selector: 'app-wallet-movements',
   standalone: true,
-  imports: [...DB_DATA_TABLE, CurrencyArsPipe, MobileSheetComponent],
+  imports: [
+    ...DB_DATA_TABLE,
+    CurrencyArsPipe,
+    MobileSheetComponent,
+    MobileMovementRowComponent,
+  ],
   templateUrl: './wallet-movements.component.html',
   styleUrl: './wallet-movements.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -238,6 +246,18 @@ export class WalletMovementsComponent implements OnChanges, OnDestroy {
     if (kind === 'transfer') return '⇄';
     if (kind === 'expense') return '−';
     return '+';
+  }
+
+  /** Monto absoluto formateado; el componente suma el − en egresos. */
+  movementAmountLabel(movement: TreasuryMovement): string {
+    const amount =
+      movement.amount < 0 ? -movement.amount : movement.amount;
+    return formatCurrencyArs(amount);
+  }
+
+  movementFeeLabel(movement: TreasuryMovement): string | null {
+    if (movement.voided || !(movement.fee > 0)) return null;
+    return `Comisión −${formatCurrencyArs(movement.fee)}`;
   }
 
   visibleActions(movement: TreasuryMovement): OdlRowAction<TreasuryMovement>[] {

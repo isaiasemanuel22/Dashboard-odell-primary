@@ -1,0 +1,42 @@
+@if (showIdentity()) {
+  <section
+    class="m-contact-card"
+    [class.m-card]="card()"
+    [class.m-contact-card--centered]="centered()"
+    [attr.aria-label]="name() ? 'Contacto de ' + name() : 'Contacto'"
+  >
+    @if (initials(); as av) {
+      <span class="m-contact-card__av" aria-hidden="true">{{ av }}</span>
+    }
+    @if (name()) {
+      <b class="m-contact-card__name">{{ name() }}</b>
+    }
+    @if (pills().length) {
+      <div class="m-contact-card__pills">
+        @for (pill of pills(); track pill.label) {
+          <span [class]="'m-pill' + (pill.className ? ' ' + pill.className : '')">{{
+            pill.label
+          }}</span>
+        }
+      </div>
+    }
+    <ng-content />
+  </section>
+}
+
+@if (showActions) {
+  <div class="m-contact-card__actions">
+    @if (whatsappHref(); as wa) {
+      <a
+        class="m-contact-card__btn"
+        [href]="wa"
+        target="_blank"
+        rel="noopener noreferrer"
+        >WhatsApp</a
+      >
+    }
+    @if (telHref(); as tel) {
+      <a class="m-contact-card__btn" [href]="tel">Llamar</a>
+    }
+  </div>
+}

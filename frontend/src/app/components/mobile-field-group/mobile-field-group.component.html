@@ -1,0 +1,30 @@
+<div class="m-field m-field-group">
+  @if (label()) {
+    @if (labelFor()) {
+      <label class="m-fl" [attr.for]="labelFor()">{{ label() }}</label>
+    } @else {
+      <span class="m-fl">{{ label() }}</span>
+    }
+  }
+  <div
+    class="m-field-group__control"
+    [class.m-field-group__control--affix]="!!prefix() || !!suffix()"
+  >
+    @if (prefix()) {
+      <span class="m-field-group__affix" aria-hidden="true">{{ prefix() }}</span>
+    }
+    <ng-content />
+    @if (suffix()) {
+      <span class="m-field-group__affix m-field-group__affix--end" aria-hidden="true">{{
+        suffix()
+      }}</span>
+    }
+  </div>
+  @if (hint()) {
+    <span
+      class="m-hint"
+      [class.m-field-group__hint--danger]="hintTone() === 'danger'"
+      >{{ hint() }}</span
+    >
+  }
+</div>

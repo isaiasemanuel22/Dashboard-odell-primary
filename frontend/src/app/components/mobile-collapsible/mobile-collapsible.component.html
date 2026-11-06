@@ -1,0 +1,31 @@
+<div class="m-collapsible" [attr.id]="panelId() || null">
+  <button
+    type="button"
+    class="m-collapsible__btn"
+    [attr.aria-expanded]="open()"
+    (click)="onToggle()"
+  >
+    <strong class="m-collapsible__title">{{ title() }}</strong>
+    @if (summary()) {
+      <span class="m-collapsible__summary">{{ summary() }}</span>
+    }
+    <svg
+      class="m-collapsible__chev"
+      [class.m-collapsible__chev--open]="open()"
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="#9AAFBF"
+      stroke-width="2"
+      aria-hidden="true"
+    >
+      <path d="M9 6l6 6-6 6" />
+    </svg>
+  </button>
+  @if (open()) {
+    <div class="m-collapsible__body">
+      <ng-content />
+    </div>
+  }
+</div>

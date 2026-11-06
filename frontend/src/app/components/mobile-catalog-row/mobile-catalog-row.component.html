@@ -1,0 +1,64 @@
+@if (interactive()) {
+  <button
+    type="button"
+    class="m-row m-catalog-row"
+    [disabled]="disabled()"
+    (click)="onPress()"
+  >
+    @if (swatch(); as color) {
+      <span
+        class="m-catalog-row__swatch"
+        [style.background]="color"
+        aria-hidden="true"
+      ></span>
+    } @else if (initials()) {
+      <span class="m-catalog-row__av" aria-hidden="true">{{ initials() }}</span>
+    }
+    <div class="m-row__text">
+      <b>{{ title() }}</b>
+      @if (subtitle()) {
+        <span>{{ subtitle() }}</span>
+      }
+    </div>
+    @if (value() || valueHint()) {
+      <div class="m-catalog-row__end">
+        @if (value()) {
+          {{ value() }}
+        }
+        @if (valueHint()) {
+          <small>{{ valueHint() }}</small>
+        }
+      </div>
+    }
+    <ng-content />
+  </button>
+} @else {
+  <div class="m-row m-catalog-row">
+    @if (swatch(); as color) {
+      <span
+        class="m-catalog-row__swatch"
+        [style.background]="color"
+        aria-hidden="true"
+      ></span>
+    } @else if (initials()) {
+      <span class="m-catalog-row__av" aria-hidden="true">{{ initials() }}</span>
+    }
+    <div class="m-row__text">
+      <b>{{ title() }}</b>
+      @if (subtitle()) {
+        <span>{{ subtitle() }}</span>
+      }
+    </div>
+    @if (value() || valueHint()) {
+      <div class="m-catalog-row__end">
+        @if (value()) {
+          {{ value() }}
+        }
+        @if (valueHint()) {
+          <small>{{ valueHint() }}</small>
+        }
+      </div>
+    }
+    <ng-content />
+  </div>
+}

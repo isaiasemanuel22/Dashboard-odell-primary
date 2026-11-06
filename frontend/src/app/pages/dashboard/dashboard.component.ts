@@ -17,6 +17,7 @@ import {
   DashboardLowStockItem,
   DashboardMarginAlert,
   DashboardPeriod,
+  DashboardProfitability,
   DashboardProfitabilityChannel,
   DashboardProfitabilityRankingItem,
   DashboardRankBy,
@@ -55,6 +56,8 @@ import {
   DashboardMonthlyTrendsComponent,
   DashboardNotificationsComponent,
   MobileBarComponent,
+  MobileKpiGridComponent,
+  MobilePeriodPickerComponent,
   OdlActionEvent,
   OdlColumn,
   OdlRowAction,
@@ -62,6 +65,7 @@ import {
   isOrderOverdue,
   orderStatusBadge,
   serviceTag,
+  type MobileKpiItem,
 } from '@general-components';
 import {
   DashboardAttentionComponent,
@@ -101,6 +105,8 @@ const DEBT_RECENT_DAYS = 15;
     DashboardMonthlyTrendsComponent,
     DashboardNotificationsComponent,
     MobileBarComponent,
+    MobilePeriodPickerComponent,
+    MobileKpiGridComponent,
     DashboardAttentionComponent,
     DashboardChannelsComponent,
     DashboardMarginAlertsComponent,
@@ -111,6 +117,7 @@ const DEBT_RECENT_DAYS = 15;
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [CurrencyArsPipe],
 })
 export class DashboardComponent implements OnInit {
   private readonly dashboard = inject(DashboardService);
@@ -122,6 +129,7 @@ export class DashboardComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly currencyArs = inject(CurrencyArsPipe);
   private readonly refresh$ = new BehaviorSubject<void>(undefined);
 
   loadError = false;
@@ -235,6 +243,35 @@ export class DashboardComponent implements OnInit {
   }
 
   /** Etiqueta corta del período (mobile): «Noviembre 2026», «T4 2026», etc. */
+  mobileMainKpis(profit: DashboardProfitability): MobileKpiItem[] {
+    return [
+      {
+        label: 'Vendido',
+        value: this.currencyArs.transform(profit.sold),
+        hint: 'Pedidos entregados + mostrador',
+      },
+      {
+        label: 'Cobrado',
+        value: this.currencyArs.transform(profit.collected),
+        hint: `Entró a tus cuentas ${this.periodHintWord()}`,
+        tone: 'success',
+      },
+      {
+        label: 'Ganancia neta',
+        value: this.currencyArs.transform(profit.netProfit),
+        hint: this.netProfitHint(profit.fees),
+      },
+      {
+        label: 'Por cobrar',
+        value: this.currencyArs.transform(profit.receivable),
+        hint: this.receivableHint(profit.receivableOrders),
+        tone: 'danger',
+        link: '/dashboard',
+        fragment: 'por-cobrar-m',
+      },
+    ];
+  }
+
   periodLabel(): string {
     return this.periodHeading();
   }

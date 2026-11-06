@@ -1,0 +1,57 @@
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+}
+
+.m-period-picker__caption {
+  margin: 0 0 8px;
+  font-size: 12px;
+  color: mobile.$m-text-secondary;
+}
+
+.m-period-picker__segments {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  border: 1px solid mobile.$m-border-input;
+  border-radius: mobile.$m-radius-sm;
+  overflow: hidden;
+  background: mobile.$m-surface;
+}
+
+.m-period-picker__seg {
+  border: 0;
+  border-left: 1px solid mobile.$m-border-input;
+  background: mobile.$m-surface;
+  min-height: 40px;
+  padding: 0 6px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: mobile.$m-text-label;
+  cursor: pointer;
+
+  &:first-child {
+    border-left: 0;
+  }
+
+  &--on {
+    background: mobile.$m-primary;
+    color: #fff;
+  }
+}
+
+.m-period-picker__month {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+
+  b {
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    flex: 1;
+    min-width: 0;
+  }
+}

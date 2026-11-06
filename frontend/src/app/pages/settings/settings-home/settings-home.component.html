@@ -1,85 +1,10 @@
-<div class="mobile-only st-m">
+<div class="mobile-only">
   <db-mobile-bar title="Ajustes" backLink="/mas" />
 
   <div class="m-body">
-    <h2 class="m-sec-t">Costos y precios</h2>
-    <div class="m-card m-card--flush">
-      <a class="m-row" routerLink="/ajustes/valores-generales">
-        <div class="m-row__text">
-          <b>Valores generales</b>
-          <span>Mano de obra, luz, margen de error, equipos</span>
-        </div>
-        <svg class="st-m__chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-      </a>
-      <a class="m-row" routerLink="/ajustes/filamento">
-        <div class="m-row__text">
-          <b>Filamento</b>
-          <span>{{ filamentSummary() }}</span>
-        </div>
-        <svg class="st-m__chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-      </a>
-      <a class="m-row" routerLink="/ajustes/resina">
-        <div class="m-row__text">
-          <b>Resina</b>
-          <span>{{ resinSummary() }}</span>
-        </div>
-        <svg class="st-m__chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-      </a>
-      <a class="m-row" routerLink="/ajustes/impresos">
-        <div class="m-row__text">
-          <b>Impresos</b>
-          <span>{{ impresosSummary() }}</span>
-        </div>
-        <svg class="st-m__chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-      </a>
-      <a class="m-row" routerLink="/ajustes/ganancias">
-        <div class="m-row__text">
-          <b>Ganancias</b>
-          <span>{{ gainsSummary() }}</span>
-        </div>
-        <svg class="st-m__chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-      </a>
-    </div>
-
-    <h2 class="m-sec-t">Catálogos</h2>
-    <div class="m-card m-card--flush">
-      <a class="m-row" routerLink="/ajustes/colores">
-        <div class="m-row__text">
-          <b>Colores</b>
-          <span>{{ colorsSummary() }}</span>
-        </div>
-        <svg class="st-m__chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-      </a>
-    </div>
-
-    <h2 class="m-sec-t">Equipo</h2>
-    <div class="m-card m-card--flush">
-      <a class="m-row" routerLink="/ajustes/usuarios">
-        <div class="m-row__text">
-          <b>Usuarios, roles y áreas</b>
-          <span>{{ usersSummary() }}</span>
-        </div>
-        <svg class="st-m__chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-      </a>
-    </div>
-
-    <h2 class="m-sec-t">Zona de cuidado</h2>
-    <div class="m-card m-card--flush">
-      @if (isAdmin()) {
-        <button type="button" class="m-row" (click)="openResetModal()">
-          <div class="m-row__text">
-            <b class="st-m__neg">Resetear base de datos</b>
-            <span>Solo administrador · pide un código</span>
-          </div>
-        </button>
-      } @else {
-        <div class="m-row">
-          <div class="m-row__text">
-            <b class="st-m__neg">Resetear base de datos</b>
-            <span>Solo administrador · pide un código</span>
-          </div>
-        </div>
-      }
-    </div>
+    <db-mobile-nav-list
+      [groups]="navGroups()"
+      (action)="onNavAction($event)"
+    />
   </div>
 </div>

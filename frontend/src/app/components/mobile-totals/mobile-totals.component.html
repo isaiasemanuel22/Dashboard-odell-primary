@@ -1,0 +1,48 @@
+<section
+  class="m-card m-totals"
+  [class.m-totals--cols]="layout() === 'cols'"
+  [attr.aria-label]="ariaLabel()"
+>
+  @if (layout() === 'cols') {
+    <div class="m-totals__cols">
+      @for (row of rows(); track row.label) {
+        <div class="m-totals__col">
+          <span class="m-lbl">{{ row.label }}</span>
+          <strong
+            class="m-totals__val"
+            [class.m-totals__val--pos]="row.tone === 'success'"
+            [class.m-totals__val--neg]="row.tone === 'danger'"
+            >{{ row.value }}</strong
+          >
+        </div>
+      }
+    </div>
+  } @else {
+    @for (row of rows(); track row.label + row.value) {
+      <div
+        class="m-ln"
+        [class.m-totals__row--emphasis]="row.tone === 'emphasis' || row.strong"
+      >
+        @if (row.strong || row.tone === 'emphasis') {
+          <b>{{ row.label }}</b>
+        } @else {
+          <span [class.m-hint]="row.tone === 'muted'">{{ row.label }}</span>
+        }
+        <span
+          class="m-totals__num"
+          [class.m-big]="row.tone === 'emphasis' || row.strong"
+          [class.m-totals__num--neg]="row.tone === 'danger'"
+          [class.m-totals__num--pos]="row.tone === 'success'"
+          [class.m-totals__num--muted]="row.tone === 'muted'"
+        >
+          @if (row.strong || row.tone === 'emphasis') {
+            <b>{{ row.value }}</b>
+          } @else {
+            {{ row.value }}
+          }
+        </span>
+      </div>
+    }
+  }
+  <ng-content />
+</section>

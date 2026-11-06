@@ -1,9 +1,10 @@
 @if (settings) {
   @if (isMobile()) {
-    <div class="st-m">
-      <db-mobile-bar title="Valores generales" backLink="/ajustes" />
-
-      <div class="m-body m-has-dock">
+    <db-mobile-settings-page
+      title="Valores generales"
+      [dockActions]="mobileDockActions"
+      (dockAction)="onMobileDockAction($event)"
+    >
         @if (message) {
           <p class="st-m__msg">{{ message }}</p>
         }
@@ -11,8 +12,7 @@
         <h2 class="m-sec-t">Tarifas por hora</h2>
         <div class="m-card">
           <div class="st-m__two">
-            <div class="st-m__field">
-              <label for="m-labor">Mano de obra</label>
+            <db-mobile-field-group label="Mano de obra" labelFor="m-labor" prefix="$">
               <input
                 id="m-labor"
                 class="st-m__inp"
@@ -22,9 +22,8 @@
                 [(ngModel)]="settings.laborCostPerHour"
                 name="mLabor"
               />
-            </div>
-            <div class="st-m__field">
-              <label for="m-modeling">Modelado 3D</label>
+            </db-mobile-field-group>
+            <db-mobile-field-group label="Modelado 3D" labelFor="m-modeling" prefix="$">
               <input
                 id="m-modeling"
                 class="st-m__inp"
@@ -34,10 +33,15 @@
                 [(ngModel)]="settings.modelingRatePerHour"
                 name="mModeling"
               />
-            </div>
+            </db-mobile-field-group>
           </div>
-          <div class="st-m__field">
-            <label for="m-design">Diseño gráfico</label>
+          <db-mobile-field-group
+            label="Diseño gráfico"
+            labelFor="m-design"
+            prefix="$"
+            [hint]="!settings.graphicDesignRatePerHour ? 'En $ 0, las líneas de diseño salen sin costo' : null"
+            [hintTone]="!settings.graphicDesignRatePerHour ? 'danger' : 'default'"
+          >
             <input
               id="m-design"
               class="st-m__inp"
@@ -47,17 +51,13 @@
               [(ngModel)]="settings.graphicDesignRatePerHour"
               name="mDesign"
             />
-            @if (!settings.graphicDesignRatePerHour) {
-              <span class="st-m__hint st-m__hint--neg">En $ 0, las líneas de diseño salen sin costo</span>
-            }
-          </div>
+          </db-mobile-field-group>
         </div>
 
         <h2 class="m-sec-t">Energía y error</h2>
         <div class="m-card">
           <div class="st-m__two">
-            <div class="st-m__field">
-              <label for="m-kwh">Luz por kWh</label>
+            <db-mobile-field-group label="Luz por kWh" labelFor="m-kwh" prefix="$">
               <input
                 id="m-kwh"
                 class="st-m__inp"
@@ -68,9 +68,8 @@
                 [(ngModel)]="settings.electricityCostPerKwh"
                 name="mKwh"
               />
-            </div>
-            <div class="st-m__field">
-              <label for="m-err">Margen de error (%)</label>
+            </db-mobile-field-group>
+            <db-mobile-field-group label="Margen de error" labelFor="m-err" suffix="%">
               <input
                 id="m-err"
                 class="st-m__inp"
@@ -81,7 +80,7 @@
                 [(ngModel)]="settings.errorMarginPercent"
                 name="mErr"
               />
-            </div>
+            </db-mobile-field-group>
           </div>
           <span class="st-m__hint">El margen de error se suma sobre material, energía y máquina.</span>
         </div>
@@ -89,20 +88,19 @@
         <h2 class="m-sec-t">Equipos</h2>
         <div class="m-card m-card--flush">
           @for (profile of settings.machineProfiles; track profile.id) {
-            <button type="button" class="m-row" (click)="selectProfile(profile.id)">
-              <div class="m-row__text">
-                <b>{{ profile.name.trim() || 'Nuevo equipo' }}</b>
-                <span>{{ machineRowCaption(profile) }}</span>
-              </div>
+            <db-mobile-catalog-row
+              [title]="profile.name.trim() || 'Nuevo equipo'"
+              [subtitle]="machineRowCaption(profile)"
+              (pressed)="selectProfile(profile.id)"
+            >
               <svg class="st-m__chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
-            </button>
+            </db-mobile-catalog-row>
           } @empty {
-            <div class="m-row">
-              <div class="m-row__text">
-                <b>Sin equipos</b>
-                <span>Agregá el primero</span>
-              </div>
-            </div>
+            <db-mobile-catalog-row
+              title="Sin equipos"
+              subtitle="Agregá el primero"
+              [interactive]="false"
+            />
           }
         </div>
 
@@ -119,13 +117,7 @@
             (save)="saveMachineProfiles()"
           />
         }
-      </div>
-
-      <db-mobile-dock
-        [actions]="mobileDockActions"
-        (action)="onMobileDockAction($event)"
-      />
-    </div>
+    </db-mobile-settings-page>
   } @else {
     <db-form>
       <div class="values-page">
@@ -277,10 +269,9 @@
   }
 } @else {
   @if (isMobile()) {
-    <db-mobile-bar title="Valores generales" backLink="/ajustes" />
-    <div class="m-body">
+    <db-mobile-settings-page title="Valores generales">
       <db-state-message [loading]="true" loadingMessage="Cargando configuración..." />
-    </div>
+    </db-mobile-settings-page>
   } @else {
     <db-state-message [loading]="true" loadingMessage="Cargando configuración..." />
   }
