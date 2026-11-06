@@ -19,6 +19,7 @@ import { BreakpointService } from '../../core/services/breakpoint.service';
 import { ProductsService } from '../../core/services/products.service';
 import { FormDialogShellComponent } from '../form-dialog-shell/form-dialog-shell.component';
 import { MobileFormShellComponent } from '../../components/mobile-form-shell/mobile-form-shell.component';
+import { confirmMobileFormDiscard } from '../../components/mobile-form-shell/confirm-mobile-form-discard';
 import type { MobileDockAction } from '../../components/mobile-dock/mobile-dock.component';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { ProductFormComponent } from '../../pages/products/product-form/product-form.component';
@@ -48,7 +49,9 @@ export interface ProductFormDialogData {
           [title]="dialogTitle"
           [dockActions]="mobileDockActions"
           [dockSecondaryFixed]="true"
-          (close)="cancel()"
+          discardEntityLabel="el producto"
+          [isDirty]="!!form?.hasUnsavedChanges()"
+          (close)="forceClose()"
           (dockAction)="onMobileDockAction($event)"
         >
           <app-product-form
@@ -82,7 +85,9 @@ export class ProductFormDialogComponent implements OnInit {
   private readonly data = inject<ProductFormDialogData>(DIALOG_DATA);
   private readonly breakpoint = inject(BreakpointService);
 
-  @ViewChild(ProductFormComponent) private form?: ProductFormComponent;
+  @ViewChild(ProductFormComponent) form?: ProductFormComponent;
+  @ViewChild(MobileFormShellComponent)
+  private mobileShell?: MobileFormShellComponent;
 
   readonly isMobile = this.breakpoint.isMobile;
 
@@ -185,32 +190,28 @@ export class ProductFormDialogComponent implements OnInit {
     });
   }
 
+  forceClose(): void {
+    if (this.closing) return;
+    this.closing = true;
+    this.dialogRef.close();
+  }
+
   cancel(): void {
     if (this.closing || this.confirmingDiscard) return;
 
-    const discard = (): void => {
-      this.closing = true;
-      this.dialogRef.close();
-    };
-
-    if (!this.form?.hasUnsavedChanges()) {
-      discard();
+    if (this.isMobile() && this.mobileShell) {
+      this.mobileShell.requestClose();
       return;
     }
 
     this.confirmingDiscard = true;
-    this.formDialogs
-      .openConfirm({
-        title: 'Descartar cambios',
-        message: 'Hay cambios sin guardar. ¿Descartar el producto y cerrar?',
-        confirmLabel: 'Descartar',
-        cancelLabel: 'Seguir editando',
-        confirmVariant: 'delete',
-      })
-      .subscribe((confirmed) => {
-        this.confirmingDiscard = false;
-        if (confirmed) discard();
-      });
+    confirmMobileFormDiscard(this.formDialogs, {
+      hasChanges: !!this.form?.hasUnsavedChanges(),
+      entityLabel: 'el producto',
+    }).subscribe((confirmed) => {
+      this.confirmingDiscard = false;
+      if (confirmed) this.forceClose();
+    });
   }
 
   private resetState(): void {

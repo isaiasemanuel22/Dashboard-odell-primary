@@ -30,7 +30,8 @@
   cursor: pointer;
   padding: 0;
 
-  &:disabled {
+  &:disabled,
+  &[aria-disabled='true'] {
     opacity: 0.5;
     cursor: not-allowed;
   }

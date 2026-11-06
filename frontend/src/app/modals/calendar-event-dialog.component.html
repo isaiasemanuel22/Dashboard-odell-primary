@@ -195,6 +195,10 @@
     <db-mobile-dock
       [actions]="mobileDockActions"
       (action)="onMobileDockAction($event)"
-    />
+    >
+      @if (!canSave && submitMissingLabel) {
+        <p dockHint role="status">{{ submitMissingLabel }}</p>
+      }
+    </db-mobile-dock>
   </div>
 </app-form-dialog-shell>

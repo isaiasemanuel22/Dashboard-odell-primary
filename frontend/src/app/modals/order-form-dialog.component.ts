@@ -25,6 +25,7 @@ import { OrdersService } from '../core/services/orders.service';
 import { ProductCatalogService } from '../core/services/product-catalog.service';
 import { FormDialogShellComponent } from './form-dialog-shell/form-dialog-shell.component';
 import { MobileFormShellComponent } from '../components/mobile-form-shell/mobile-form-shell.component';
+import { confirmMobileFormDiscard } from '../components/mobile-form-shell/confirm-mobile-form-discard';
 import { extractApiErrorMessage } from '../shared/utils/api-error';
 import {
   OrderFormComponent,
@@ -59,7 +60,12 @@ export interface OrderFormDialogData {
       (close)="cancel()"
     >
       @if (isMobile()) {
-        <db-mobile-form-shell [title]="dialogTitle" (close)="cancel()">
+        <db-mobile-form-shell
+          [title]="dialogTitle"
+          discardEntityLabel="el pedido"
+          [isDirty]="!!form?.hasUnsavedChanges()"
+          (close)="forceClose()"
+        >
           <app-order-form
             [order]="order"
             [presetQuote]="presetQuote"
@@ -106,7 +112,9 @@ export class OrderFormDialogComponent implements OnInit, AfterViewInit {
   private readonly dialogRef = inject(DialogRef<Order>);
   private readonly data = inject<OrderFormDialogData>(DIALOG_DATA);
 
-  @ViewChild(OrderFormComponent) private form?: OrderFormComponent;
+  @ViewChild(OrderFormComponent) form?: OrderFormComponent;
+  @ViewChild(MobileFormShellComponent)
+  private mobileShell?: MobileFormShellComponent;
 
   readonly isMobile = this.breakpoint.isMobile;
 
@@ -203,32 +211,28 @@ export class OrderFormDialogComponent implements OnInit, AfterViewInit {
     });
   }
 
+  forceClose(): void {
+    if (this.closing) return;
+    this.closing = true;
+    this.dialogRef.close();
+  }
+
   cancel(): void {
     if (this.closing || this.confirmingDiscard) return;
 
-    const discard = (): void => {
-      this.closing = true;
-      this.dialogRef.close();
-    };
-
-    if (!this.form?.hasUnsavedChanges()) {
-      discard();
+    if (this.isMobile() && this.mobileShell) {
+      this.mobileShell.requestClose();
       return;
     }
 
     this.confirmingDiscard = true;
-    this.formDialogs
-      .openConfirm({
-        title: 'Descartar cambios',
-        message: 'Hay cambios sin guardar. ¿Descartar el pedido y cerrar?',
-        confirmLabel: 'Descartar',
-        cancelLabel: 'Seguir editando',
-        confirmVariant: 'delete',
-      })
-      .subscribe((confirmed) => {
-        this.confirmingDiscard = false;
-        if (confirmed) discard();
-      });
+    confirmMobileFormDiscard(this.formDialogs, {
+      hasChanges: !!this.form?.hasUnsavedChanges(),
+      entityLabel: 'el pedido',
+    }).subscribe((confirmed) => {
+      this.confirmingDiscard = false;
+      if (confirmed) this.forceClose();
+    });
   }
 
   onCustomerCreated(customer: Customer): void {

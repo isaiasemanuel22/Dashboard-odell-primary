@@ -24,6 +24,7 @@ import { ProductCatalogService } from '../core/services/product-catalog.service'
 import { QuotesService } from '../core/services/quotes.service';
 import { FormDialogShellComponent } from './form-dialog-shell/form-dialog-shell.component';
 import { MobileFormShellComponent } from '../components/mobile-form-shell/mobile-form-shell.component';
+import { confirmMobileFormDiscard } from '../components/mobile-form-shell/confirm-mobile-form-discard';
 import { extractApiErrorMessage } from '../shared/utils/api-error';
 import {
   OrderFormComponent,
@@ -56,7 +57,9 @@ export interface QuoteFormDialogData {
           [title]="dialogTitle"
           headerActionLabel="Guardar borrador"
           [headerActionDisabled]="loading || !canSaveDraft"
-          (close)="cancel()"
+          discardEntityLabel="el presupuesto"
+          [isDirty]="!!form?.hasUnsavedChanges()"
+          (close)="forceClose()"
           (headerAction)="saveDraft()"
         >
           <app-order-form
@@ -105,7 +108,9 @@ export class QuoteFormDialogComponent implements OnInit, AfterViewInit {
     optional: true,
   });
 
-  @ViewChild(OrderFormComponent) private form?: OrderFormComponent;
+  @ViewChild(OrderFormComponent) form?: OrderFormComponent;
+  @ViewChild(MobileFormShellComponent)
+  private mobileShell?: MobileFormShellComponent;
 
   readonly isMobile = this.breakpoint.isMobile;
 
@@ -195,33 +200,28 @@ export class QuoteFormDialogComponent implements OnInit, AfterViewInit {
     });
   }
 
+  forceClose(): void {
+    if (this.closing) return;
+    this.closing = true;
+    this.dialogRef.close();
+  }
+
   cancel(): void {
     if (this.closing || this.confirmingDiscard) return;
 
-    const discard = (): void => {
-      this.closing = true;
-      this.dialogRef.close();
-    };
-
-    if (!this.form?.hasUnsavedChanges()) {
-      discard();
+    if (this.isMobile() && this.mobileShell) {
+      this.mobileShell.requestClose();
       return;
     }
 
     this.confirmingDiscard = true;
-    this.formDialogs
-      .openConfirm({
-        title: 'Descartar cambios',
-        message:
-          'Hay cambios sin guardar. ¿Descartar el presupuesto y cerrar?',
-        confirmLabel: 'Descartar',
-        cancelLabel: 'Seguir editando',
-        confirmVariant: 'delete',
-      })
-      .subscribe((confirmed) => {
-        this.confirmingDiscard = false;
-        if (confirmed) discard();
-      });
+    confirmMobileFormDiscard(this.formDialogs, {
+      hasChanges: !!this.form?.hasUnsavedChanges(),
+      entityLabel: 'el presupuesto',
+    }).subscribe((confirmed) => {
+      this.confirmingDiscard = false;
+      if (confirmed) this.forceClose();
+    });
   }
 
   onCustomerCreated(customer: Customer): void {

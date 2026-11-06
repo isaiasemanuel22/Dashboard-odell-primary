@@ -9,10 +9,12 @@ import {
   inject,
 } from '@angular/core';
 import { LayoutUiService } from '../../layout/layout-ui.service';
+import { FormDialogService } from '../../modals/form-dialog.service';
 import {
   MobileDockAction,
   MobileDockComponent,
 } from '../mobile-dock/mobile-dock.component';
+import { confirmMobileFormDiscard } from './confirm-mobile-form-discard';
 
 @Component({
   selector: 'db-mobile-form-shell',
@@ -24,7 +26,9 @@ import {
 })
 export class MobileFormShellComponent implements OnInit, OnDestroy {
   private readonly layoutUi = inject(LayoutUiService);
+  private readonly formDialogs = inject(FormDialogService);
   private pageBarRegistered = false;
+  private confirmingDiscard = false;
 
   @Input() title = '';
   /** Si es false, solo cuerpo (+ dock); útil dentro de un modal que ya tiene título. */
@@ -36,6 +40,12 @@ export class MobileFormShellComponent implements OnInit, OnDestroy {
   /** Si hay acciones, renderiza `db-mobile-dock` al pie. */
   @Input() dockActions: MobileDockAction[] | null = null;
   @Input() dockSecondaryFixed = false;
+  /**
+   * Si hay label, la X confirma descarte cuando `isDirty` (misma lógica que
+   * pedido/presupuesto/cliente).
+   */
+  @Input() discardEntityLabel: string | null = null;
+  @Input() isDirty = false;
 
   @Output() readonly close = new EventEmitter<void>();
   @Output() readonly headerAction = new EventEmitter<void>();
@@ -58,8 +68,27 @@ export class MobileFormShellComponent implements OnInit, OnDestroy {
     return !!this.dockActions?.length;
   }
 
+  /** Cierre con confirmación unificada (también usable desde el dialog padre). */
+  requestClose(): void {
+    this.onClose();
+  }
+
   onClose(): void {
-    this.close.emit();
+    if (this.confirmingDiscard) return;
+
+    if (!this.discardEntityLabel) {
+      this.close.emit();
+      return;
+    }
+
+    this.confirmingDiscard = true;
+    confirmMobileFormDiscard(this.formDialogs, {
+      hasChanges: this.isDirty,
+      entityLabel: this.discardEntityLabel,
+    }).subscribe((confirmed) => {
+      this.confirmingDiscard = false;
+      if (confirmed) this.close.emit();
+    });
   }
 
   onHeaderAction(): void {

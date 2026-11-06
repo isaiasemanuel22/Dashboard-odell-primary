@@ -92,3 +92,14 @@
 .m-dock__hint:empty {
   display: none;
 }
+
+.m-dock__hint {
+  :where(p, [dockHint]) {
+    margin: 0;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 500;
+    color: #92400e;
+    width: 100%;
+  }
+}

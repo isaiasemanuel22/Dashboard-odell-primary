@@ -505,11 +505,18 @@ export class ProductsComponent implements OnInit, OnDestroy {
         this.marginAlerts = alerts;
         this.belowMarginIds = new Set(alerts.map((alert) => alert.productId));
         this.cdr.markForCheck();
+        // Los banners cambian la altura después del catálogo: reaplicar scroll.
+        if (!this.loading) {
+          this.listPersistence.onListReady();
+        }
       },
       error: () => {
         this.marginAlerts = [];
         this.belowMarginIds = new Set();
         this.cdr.markForCheck();
+        if (!this.loading) {
+          this.listPersistence.onListReady();
+        }
       },
     });
   }

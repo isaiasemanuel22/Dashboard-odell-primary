@@ -11,7 +11,8 @@
   <button
     type="button"
     [attr.aria-label]="incrementAriaLabel"
-    [disabled]="!canIncrement"
+    [disabled]="disabled"
+    [attr.aria-disabled]="atMax ? true : null"
     (click)="increment()"
   >
     +

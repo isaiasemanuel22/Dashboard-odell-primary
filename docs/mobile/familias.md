@@ -13,7 +13,7 @@ formularios se abren desde la pantalla indicada.
 | Menú inferior global | Pedidos, Más, Billetera | 5 ítems, activo resaltado, se oculta con overlay (`pushOverlay`) y en rutas de `shouldHideBottomNav` |
 | Barra fija de acciones | PedidoDetalle | Fija abajo, sin tapar contenido (padding del cuerpo), menú inferior oculto |
 | Hoja inferior (`FormDialogService`) | RegistrarPago | Manija, radio 20, pie fijo, cierre por fondo y botón, scroll interno, teclado |
-| Formulario a pantalla completa | NuevoPedido | Encabezado con cerrar, secciones numeradas, pie fijo, sin menú inferior |
+| Formulario a pantalla completa | NuevoPedido | Encabezado con cerrar (confirmación de descarte unificada si hay cambios), secciones numeradas, pie fijo con «Falta: …» en el dock, sin menú inferior |
 | Chips (`m-chip`, `m-chip--on`) | Pedidos | Scroll horizontal, contador, estado activo |
 | Tarjetas (`m-card`, `m-row`, `m-pill`) | Pedidos y Ajustes | Radio, sombra/borde, pills de estado y colores |
 | Buscador / `m-fbtn` | Pedidos | Alto 44, ícono, filtro con contador |
@@ -138,7 +138,7 @@ Representativa: **Filamento**.
 |---|---|---|---|
 | Filamento (rep.) | /ajustes/filamento | MobAjustesMateriales | Pestañas Precios/Tipos/Marcas; promedio por tipo; precio por marca con fecha; editar y agregar |
 | Resina | /ajustes/resina | (usa MobAjustesMateriales) | Mismo layout con precios por litro y textos de resina |
-| Impresos | /ajustes/impresos | MobAjustesImpresos | Agrupado por tipo (DTF/Sublimación/Vinilo); costo por cm² calculado; alta/edición |
+| Impresos | /ajustes/impresos | MobAjustesImpresos | Pliegos de referencia (tamaño/costo) + lista de impresos; costo por cm²; alta/edición |
 | Colores | /ajustes/colores | MobAjustesColores | Muestra de color, hex, "N insumos"; borrar bloqueado si lo usa un insumo; editar/agregar |
 | Usuarios | /ajustes/usuarios | MobAjustesUsuarios | Pestañas Usuarios/Roles/Áreas (rutas hijas); avatar iniciales; pills Admin/Activa/Inactivo; hoja de edición (switch "Puede entrar", rol, áreas); Guardar cambios |
 
@@ -149,7 +149,7 @@ Nota: Resina no tiene artboard propio; se verifica contra el de Filamento.
 | Pantalla | Ruta | Artboard | Lista de chequeo propia |
 |---|---|---|---|
 | Login | /login | MobLogin | Logo y título; "Continuar con Google"; separador "o con email"; email/contraseña; Ingresar; mensaje de acceso denegado; sin barra ni menú inferior; teclado no tapa el botón |
-| Calendario | /calendario | MobCalendario | Barra con "Hoy" y flechas de semana; tira de días con selección y puntos; tabs Agenda/Semana/Mes; agenda por día (atrasadas, eventos con hora, entregas, "Sin entregas ni eventos"); botón "Evento" en el menú inferior abre Nuevo evento; cambio de semana y mes |
+| Calendario | /calendario | MobCalendario | En mobile (390 px): tabs **Agenda** y **Mes** (Semana no entra a ese ancho; la tira de días / flechas cubren el salto semanal). Agenda por día (atrasadas, eventos con hora, entregas, "Sin entregas ni eventos"); botón "Evento" abre Nuevo evento; cambio de mes |
 
 ## Orden de QA propuesto
 

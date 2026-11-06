@@ -145,14 +145,30 @@ export class CustomerFormComponent implements OnInit, OnChanges {
     return this.phoneReadyForWhatsApp ? PHONE_HINT_READY : PHONE_HINT_DEFAULT;
   }
 
+  get submitMissing(): string[] {
+    const missing: string[] = [];
+    if (!this.name.trim()) missing.push('nombre');
+    if (!this.phone.trim()) missing.push('teléfono');
+    else if (!isValidCustomerPhone(this.phone.trim())) {
+      missing.push('un teléfono válido');
+    }
+    if (!this.email.trim()) missing.push('email');
+    else if (!isValidCustomerEmail(this.email.trim())) {
+      missing.push('un email válido');
+    }
+    return missing;
+  }
+
+  get submitMissingLabel(): string {
+    const items = this.submitMissing;
+    if (!items.length) return '';
+    return items.length === 1
+      ? `Falta: ${items[0]}`
+      : `Faltan: ${items.join(', ')}`;
+  }
+
   get canSubmit(): boolean {
-    return (
-      !this.loading &&
-      !!this.name.trim() &&
-      !!this.phone.trim() &&
-      isValidCustomerEmail(this.email.trim()) &&
-      isValidCustomerPhone(this.phone.trim())
-    );
+    return !this.loading && this.submitMissing.length === 0;
   }
 
   /** Vista `$ 50.000` (mismo formateo que currencyArs). El modelo sigue numérico. */

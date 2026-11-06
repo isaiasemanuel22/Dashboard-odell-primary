@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  HostListener,
   OnInit,
   inject,
 } from '@angular/core';
@@ -38,6 +39,7 @@ import { FormDialogShellComponent } from './form-dialog-shell/form-dialog-shell.
 import { FormDialogService } from './form-dialog.service';
 import { CalendarEventWeekdaysComponent } from './calendar-event-weekdays/calendar-event-weekdays.component';
 import { extractApiErrorMessage } from '../shared/utils/api-error';
+import { confirmMobileFormDiscard } from '../components/mobile-form-shell/confirm-mobile-form-discard';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
 
@@ -108,6 +110,9 @@ export class CalendarEventDialogComponent implements OnInit {
 
   loading = false;
   error = '';
+  private closing = false;
+  private confirmingDiscard = false;
+  private initialSnapshot = '';
 
   repeatOptions: DbSelectOption[] = [
     { value: CalendarRepeat.NONE, label: 'No se repite' },
@@ -152,7 +157,22 @@ export class CalendarEventDialogComponent implements OnInit {
   }
 
   get canSave(): boolean {
-    return !!this.title.trim() && !this.loading;
+    return !!this.title.trim() && !!this.date && !this.loading;
+  }
+
+  get submitMissing(): string[] {
+    const missing: string[] = [];
+    if (!this.title.trim()) missing.push('título');
+    if (!this.date) missing.push('fecha');
+    return missing;
+  }
+
+  get submitMissingLabel(): string {
+    const items = this.submitMissing;
+    if (!items.length) return '';
+    return items.length === 1
+      ? `Falta: ${items[0]}`
+      : `Faltan: ${items.join(', ')}`;
   }
 
   get mobileDockActions(): MobileDockAction[] {
@@ -209,6 +229,16 @@ export class CalendarEventDialogComponent implements OnInit {
     this.repeat = value as CalendarRepeat;
   }
 
+  @HostListener('input')
+  @HostListener('change')
+  onFormEdit(): void {
+    this.cdr.markForCheck();
+  }
+
+  hasUnsavedChanges(): boolean {
+    return this.snapshotNow() !== this.initialSnapshot;
+  }
+
   ngOnInit(): void {
     const entry = this.data.entry;
     if (entry) {
@@ -232,6 +262,7 @@ export class CalendarEventDialogComponent implements OnInit {
         this.notify = CalendarNotify.ONE_DAY;
       }
     }
+    this.initialSnapshot = this.snapshotNow();
 
     forkJoin({
       orders: this.ordersService.getOrders().pipe(catchError(() => of([] as Order[]))),
@@ -268,7 +299,21 @@ export class CalendarEventDialogComponent implements OnInit {
   }
 
   cancel(): void {
-    this.dialogRef.close(undefined);
+    if (this.closing || this.confirmingDiscard) return;
+
+    this.confirmingDiscard = true;
+    confirmMobileFormDiscard(this.formDialogs, {
+      hasChanges: this.hasUnsavedChanges(),
+      entityLabel:
+        this.kind === CalendarEntryKind.REMINDER
+          ? 'el recordatorio'
+          : 'el evento',
+    }).subscribe((confirmed) => {
+      this.confirmingDiscard = false;
+      if (!confirmed) return;
+      this.closing = true;
+      this.dialogRef.close(undefined);
+    });
   }
 
   remove(): void {
@@ -336,6 +381,22 @@ export class CalendarEventDialogComponent implements OnInit {
         this.error = extractApiErrorMessage(err, 'No se pudo guardar');
         this.cdr.markForCheck();
       },
+    });
+  }
+
+  private snapshotNow(): string {
+    return JSON.stringify({
+      kind: this.kind,
+      title: this.title,
+      date: this.date,
+      startTime: this.startTime,
+      endTime: this.endTime,
+      allDay: this.allDay,
+      repeat: this.repeat,
+      weekdays: this.weekdays,
+      notify: this.notify,
+      linkKey: this.linkKey,
+      notes: this.notes,
     });
   }
 

@@ -25,6 +25,8 @@ export class MobileStepperComponent {
   @Input() incrementAriaLabel = 'Sumar uno';
 
   @Output() readonly valueChange = new EventEmitter<number>();
+  /** Se emite al intentar sumar estando en el máximo (p. ej. sin stock). */
+  @Output() readonly maxReached = new EventEmitter<void>();
 
   get canDecrement(): boolean {
     return !this.disabled && this.value > this.min;
@@ -36,12 +38,21 @@ export class MobileStepperComponent {
     return this.value < this.max;
   }
 
+  get atMax(): boolean {
+    return this.max != null && this.value >= this.max;
+  }
+
   decrement(): void {
     if (!this.canDecrement) return;
     this.valueChange.emit(this.clamp(this.value - this.step));
   }
 
   increment(): void {
+    if (this.disabled) return;
+    if (this.atMax) {
+      this.maxReached.emit();
+      return;
+    }
     if (!this.canIncrement) return;
     this.valueChange.emit(this.clamp(this.value + this.step));
   }

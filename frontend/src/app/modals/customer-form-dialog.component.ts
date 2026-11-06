@@ -3,6 +3,7 @@ import {
   ChangeDetectorRef,
   Component,
   DestroyRef,
+  HostListener,
   OnInit,
   ViewChild,
   inject,
@@ -20,6 +21,7 @@ import { CustomerCatalogService } from '../core/services/customer-catalog.servic
 import { CustomersService } from '../core/services/customers.service';
 import { FormDialogShellComponent } from './form-dialog-shell/form-dialog-shell.component';
 import { MobileFormShellComponent } from '../components/mobile-form-shell/mobile-form-shell.component';
+import { confirmMobileFormDiscard } from '../components/mobile-form-shell/confirm-mobile-form-discard';
 import type { MobileDockAction } from '../components/mobile-dock/mobile-dock.component';
 import { extractApiErrorMessage } from '../shared/utils/api-error';
 import { CustomerFormComponent } from '../pages/customers/customer-form/customer-form.component';
@@ -48,7 +50,9 @@ export interface CustomerFormDialogData {
           [title]="customer ? 'Editar cliente' : 'Nuevo cliente'"
           [dockActions]="mobileDockActions"
           [dockSecondaryFixed]="true"
-          (close)="cancel()"
+          discardEntityLabel="el cliente"
+          [isDirty]="!!customerForm?.hasUnsavedChanges()"
+          (close)="forceClose()"
           (dockAction)="onMobileDockAction($event)"
         >
           @if (savedNotice) {
@@ -63,6 +67,13 @@ export interface CustomerFormDialogData {
             (save)="save($event)"
             (cancel)="cancel()"
           />
+          @if (
+            customerForm &&
+            !customerForm.canSubmit &&
+            customerForm.submitMissingLabel
+          ) {
+            <p dockHint role="status">{{ customerForm.submitMissingLabel }}</p>
+          }
         </db-mobile-form-shell>
       } @else {
         @if (savedNotice) {
@@ -97,7 +108,9 @@ export class CustomerFormDialogComponent implements OnInit {
   private readonly dialogRef = inject(DialogRef<Customer>);
   private readonly data = inject<CustomerFormDialogData>(DIALOG_DATA);
 
-  @ViewChild('customerForm') private customerForm?: CustomerFormComponent;
+  @ViewChild('customerForm') customerForm?: CustomerFormComponent;
+  @ViewChild(MobileFormShellComponent)
+  private mobileShell?: MobileFormShellComponent;
 
   readonly isMobile = this.breakpoint.isMobile;
 
@@ -129,6 +142,12 @@ export class CustomerFormDialogComponent implements OnInit {
         loading: this.loading,
       },
     ];
+  }
+
+  @HostListener('input')
+  @HostListener('change')
+  onFormEdit(): void {
+    this.cdr.markForCheck();
   }
 
   ngOnInit(): void {
@@ -191,32 +210,28 @@ export class CustomerFormDialogComponent implements OnInit {
     });
   }
 
+  forceClose(): void {
+    if (this.closing) return;
+    this.closing = true;
+    this.dialogRef.close();
+  }
+
   cancel(): void {
     if (this.closing || this.confirmingDiscard) return;
 
-    const discard = (): void => {
-      this.closing = true;
-      this.dialogRef.close();
-    };
-
-    if (!this.customerForm?.hasUnsavedChanges()) {
-      discard();
+    if (this.isMobile() && this.mobileShell) {
+      this.mobileShell.requestClose();
       return;
     }
 
     this.confirmingDiscard = true;
-    this.formDialogs
-      .openConfirm({
-        title: 'Descartar cambios',
-        message: 'Hay cambios sin guardar. ¿Descartar el cliente y cerrar?',
-        confirmLabel: 'Descartar',
-        cancelLabel: 'Seguir editando',
-        confirmVariant: 'delete',
-      })
-      .subscribe((confirmed) => {
-        this.confirmingDiscard = false;
-        if (confirmed) discard();
-      });
+    confirmMobileFormDiscard(this.formDialogs, {
+      hasChanges: !!this.customerForm?.hasUnsavedChanges(),
+      entityLabel: 'el cliente',
+    }).subscribe((confirmed) => {
+      this.confirmingDiscard = false;
+      if (confirmed) this.forceClose();
+    });
   }
 
   private resetState(): void {

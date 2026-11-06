@@ -128,3 +128,23 @@ Observaciones del 2026-11-02, a resolver al migrar cada pantalla:
 | Pantalla | Fallo | Encontrado | Estado |
 |----------|-------|------------|--------|
 | Nuevo pedido (desktop y mobile) | Los botones de medio de pago cortan el texto («ransferenc», «lercado Pag») | 2026-11-02 · QA visual | Resuelto 2026-11-02 · nuevo pedido |
+
+## Ronda final (2026-11-06) · QA por familias y pruebas funcionales
+
+Guía: `docs/mobile/familias.md`. QA visual en 4 rondas (piezas compartidas + A, B + D, C, E + F + G + únicas) y prueba funcional en 2 partes; correcciones en los commits `d121eb2`, `7f0ea85`, `cce73a8`, `be391c4`, `eb50974` y el de la parte 2.
+
+| # | Caso | Pasos | Esperado | Último resultado |
+|---|------|-------|----------|------------------|
+| F1 | Enter no envía | En un formulario completo y válido (cliente, pedido), Enter en un campo de texto | No guarda ni cierra; solo guarda el botón (Ctrl/Cmd+Enter envía) | ✅ 2026-11-06 |
+| F2 | Listas hasta el final | Bajar hasta el último ítem en Presupuestos y Clientes | El último ítem se ve completo sobre el menú inferior | ✅ 2026-11-06 |
+| F3 | Refresco tras crear | Crear con «+» estando en la lista | Aparece sin recargar | ✅ presupuesto 2026-11-06 · ⏸ pedido |
+| F4 | Volver al origen | Cola → Detalle → volver | Vuelve a la Cola en la misma pestaña | ✅ 2026-11-06 |
+| F5 | Atajos de pago | Registrar pago: Todo el saldo / 50 % / Otro monto | Completan saldo, mitad y vacían el campo | ✅ 2026-11-06 |
+| F6 | Formularios nuevos | Crear presupuesto, cliente, insumo y evento QA | Faltantes, Enter, descartar con la X y aparición en su lista | ✅ crear · ❌→corregido descartar en insumo y evento |
+| F7 | Venta de mostrador | 1 unidad en efectivo | Stock −1; aparece en Ventas, Billetera y Dashboard | ✅ 2026-11-06 |
+| F8 | Ajustes sin guardar | Abrir editores y cerrar | No cambia nada; color en uso sin «Eliminar» | ✅ 2026-11-06 |
+| F9 | Calendario | Semana, Agenda/Mes, evento QA en su día | Se ve en Agenda y en Mes | ✅ 2026-11-06 |
+
+Datos QA creados en la ronda final: ord-16 «QA-movil final» (seña $261), pago $10 en ord-15, quo-14 «QA-presu movil» (borrador), cliente «QA-cliente movil», insumo «QA-insumo movil», evento «QA-evento movil», venta de mostrador de 1 × QA-Revalid FDM ($700).
+
+Por definir con el usuario: avisar al salir de Ajustes con cambios sin guardar; venta que supera el stock (hoy el stepper se limita al stock).

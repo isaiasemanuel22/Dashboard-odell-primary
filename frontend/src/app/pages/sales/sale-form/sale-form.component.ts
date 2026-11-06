@@ -62,6 +62,7 @@ import {
   MobileChipOption,
 } from '../../../components/mobile-chip-group/mobile-chip-group.component';
 import { MobileFormShellComponent } from '../../../components/mobile-form-shell/mobile-form-shell.component';
+import { confirmMobileFormDiscard } from '../../../components/mobile-form-shell/confirm-mobile-form-discard';
 import { MobileFormStepComponent } from '../../../components/mobile-form-step/mobile-form-step.component';
 import { MobileStepperComponent } from '../../../components/mobile-stepper/mobile-stepper.component';
 import { FormDialogService } from '../../../modals/form-dialog.service';
@@ -241,6 +242,19 @@ export class SaleFormComponent implements OnChanges {
     return `No se puede cerrar la venta: ${names.join(', ')} no tiene stock suficiente. Creá un pedido para producirlo.`;
   }
 
+  /** Texto corto en el pie del dock cuando Cobrar está deshabilitado. */
+  get closeSaleDockHint(): string | null {
+    if (this.loading || this.canCloseSale) return null;
+    if (!this.cart.length) return 'Falta: productos en el carrito';
+    if (this.closeSaleBlockReason) {
+      return 'No hay stock suficiente para cobrar';
+    }
+    return null;
+  }
+
+  stockLimitNotice = '';
+  private stockNoticeTimer: ReturnType<typeof setTimeout> | null = null;
+
   get canCloseSale(): boolean {
     return (
       !this.loading &&
@@ -309,23 +323,23 @@ export class SaleFormComponent implements OnChanges {
 
   requestCancel(): void {
     if (this.confirmingDiscard) return;
-    if (!this.hasUnsavedChanges()) {
-      this.cancel.emit();
-      return;
-    }
     this.confirmingDiscard = true;
-    this.formDialogs
-      .openConfirm({
-        title: 'Descartar cambios',
-        message: 'Hay datos cargados. ¿Descartar la venta y cerrar?',
-        confirmLabel: 'Descartar',
-        cancelLabel: 'Seguir editando',
-        confirmVariant: 'delete',
-      })
-      .subscribe((confirmed) => {
-        this.confirmingDiscard = false;
-        if (confirmed) this.cancel.emit();
-      });
+    confirmMobileFormDiscard(this.formDialogs, {
+      hasChanges: this.hasUnsavedChanges(),
+      entityLabel: 'la venta',
+    }).subscribe((confirmed) => {
+      this.confirmingDiscard = false;
+      if (confirmed) this.cancel.emit();
+    });
+  }
+
+  onStockMaxReached(): void {
+    this.stockLimitNotice = 'No hay más stock';
+    if (this.stockNoticeTimer) clearTimeout(this.stockNoticeTimer);
+    this.stockNoticeTimer = setTimeout(() => {
+      this.stockLimitNotice = '';
+      this.stockNoticeTimer = null;
+    }, 2200);
   }
 
   onProductChange(): void {

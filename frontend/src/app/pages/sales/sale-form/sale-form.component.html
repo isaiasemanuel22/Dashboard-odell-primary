@@ -3,7 +3,9 @@
     [title]="mobileTitle || ''"
     [showHeader]="!!mobileTitle"
     [dockActions]="mobileDockActions"
-    (close)="requestCancel()"
+    discardEntityLabel="la venta"
+    [isDirty]="hasUnsavedChanges()"
+    (close)="cancel.emit()"
     (dockAction)="onMobileDockAction($event)"
   >
   <div class="sale-m">
@@ -79,10 +81,15 @@
               <db-mobile-stepper
                 [value]="line.quantity"
                 [min]="0"
+                [max]="availableStock(line.productId)"
                 [ariaLabel]="'Cantidad de ' + line.productName"
                 (valueChange)="updateLineQuantity(line, $event)"
+                (maxReached)="onStockMaxReached()"
               />
             </div>
+          }
+          @if (stockLimitNotice) {
+            <p class="sale-m__stock-limit" role="status">{{ stockLimitNotice }}</p>
           }
       } @else {
           <p class="sale-m__empty-cart">
@@ -204,6 +211,9 @@
       }
     </div>
   </div>
+    @if (closeSaleDockHint) {
+      <p dockHint role="status">{{ closeSaleDockHint }}</p>
+    }
   </db-mobile-form-shell>
 } @else {
   <db-form [class.sale-form--mobile]="useCardLayout">

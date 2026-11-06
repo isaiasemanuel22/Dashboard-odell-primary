@@ -125,14 +125,18 @@ export function injectMobileListPersistence<T extends MobileListScrollState>(
     persist,
 
     onListReady() {
-      const y = pendingScrollY;
+      // Releer el guardado: Productos llama otra vez cuando llegan banners
+      // después del catálogo, y el primer ciclo ya pudo “terminar”.
+      const y =
+        pendingScrollY ?? stateService.read<T>(key)?.scrollY ?? null;
       if (y == null || y <= 0) return;
+      pendingScrollY = y;
       cancelRestore?.();
-      // No liberar pending hasta llegar (o timeout): varias emisiones
-      // (catálogo/combineLatest) pueden llamar onListReady antes del paint.
-      cancelRestore = restoreScrollWhenTallEnough(y, () => {
-        pendingScrollY = null;
+      cancelRestore = restoreScrollWhenTallEnough(y, (reason) => {
         cancelRestore = null;
+        if (reason === 'user') {
+          pendingScrollY = null;
+        }
       });
     },
   };
@@ -140,36 +144,91 @@ export function injectMobileListPersistence<T extends MobileListScrollState>(
 
 /**
  * Restaura scrollY reintentando por frame hasta que la página sea lo bastante
- * alta (lista ya con datos) o pasen ~2 s. Cancela solo si el usuario scrollea
- * de verdad (ignora el scroll de chips / layout en la ventana post-programático).
+ * alta (lista ya con datos) o pasen ~2 s. Después, si la altura del documento
+ * sigue cambiando (~1,5 s: banners, imágenes), reaplica la posición mientras
+ * el usuario no haya scrolleado.
  */
 function restoreScrollWhenTallEnough(
   targetY: number,
-  onDone?: () => void,
+  onDone?: (reason: 'done' | 'user') => void,
 ): () => void {
   const maxMs = 2000;
+  const settleWatchMs = 1500;
   const settleMs = 120;
   const start = performance.now();
   let cancelled = false;
   let ignoreUntil = 0;
   let rafId = 0;
+  let watchId = 0;
+  let lastHeight = 0;
+  let reachedAt: number | null = null;
+  let resizeObserver: ResizeObserver | null = null;
+  let finishReason: 'done' | 'user' = 'done';
 
   const cleanup = (): void => {
     window.removeEventListener('scroll', onUserScroll);
     if (rafId) cancelAnimationFrame(rafId);
+    if (watchId) window.clearTimeout(watchId);
     rafId = 0;
+    watchId = 0;
+    resizeObserver?.disconnect();
+    resizeObserver = null;
   };
 
   const finish = (): void => {
     cleanup();
-    onDone?.();
+    onDone?.(finishReason);
   };
 
   const onUserScroll = (): void => {
     if (cancelled) return;
     if (performance.now() < ignoreUntil) return;
     cancelled = true;
+    finishReason = 'user';
     finish();
+  };
+
+  const applyScroll = (): void => {
+    const maxScroll = Math.max(
+      0,
+      document.documentElement.scrollHeight - window.innerHeight,
+    );
+    ignoreUntil = performance.now() + settleMs;
+    window.scrollTo(0, Math.min(targetY, maxScroll));
+    lastHeight = document.documentElement.scrollHeight;
+  };
+
+  const startHeightWatch = (): void => {
+    reachedAt = performance.now();
+    const reapplyIfGrown = (): void => {
+      if (cancelled || reachedAt == null) return;
+      if (performance.now() - reachedAt >= settleWatchMs) {
+        finish();
+        return;
+      }
+      const height = document.documentElement.scrollHeight;
+      if (height !== lastHeight) {
+        applyScroll();
+      }
+    };
+
+    if (typeof ResizeObserver !== 'undefined') {
+      resizeObserver = new ResizeObserver(() => reapplyIfGrown());
+      resizeObserver.observe(document.documentElement);
+      resizeObserver.observe(document.body);
+    }
+
+    const poll = (): void => {
+      if (cancelled || reachedAt == null) return;
+      reapplyIfGrown();
+      if (cancelled || reachedAt == null) return;
+      if (performance.now() - reachedAt >= settleWatchMs) {
+        finish();
+        return;
+      }
+      watchId = window.setTimeout(poll, 100);
+    };
+    watchId = window.setTimeout(poll, 100);
   };
 
   window.addEventListener('scroll', onUserScroll, { passive: true });
@@ -185,21 +244,14 @@ function restoreScrollWhenTallEnough(
     const canReach = maxScroll >= targetY - 1;
     const timedOut = elapsed >= maxMs;
 
-    ignoreUntil = performance.now() + settleMs;
-    window.scrollTo(0, Math.min(targetY, maxScroll));
+    applyScroll();
 
     if (canReach || timedOut) {
       // Un frame más por si el chip-row u otra pintura mueven el scroll.
-      ignoreUntil = performance.now() + settleMs;
       rafId = requestAnimationFrame(() => {
         if (cancelled) return;
-        ignoreUntil = performance.now() + settleMs;
-        const max = Math.max(
-          0,
-          document.documentElement.scrollHeight - window.innerHeight,
-        );
-        window.scrollTo(0, Math.min(targetY, max));
-        finish();
+        applyScroll();
+        startHeightWatch();
       });
       return;
     }

@@ -1,6 +1,7 @@
 import {
   Component,
   EventEmitter,
+  HostListener,
   Input,
   OnChanges,
   OnInit,
@@ -90,6 +91,53 @@ export class SupplyFormComponent implements OnInit, OnChanges {
   supplier = '';
   priceEditable = true;
   configError = '';
+  private userEdited = false;
+
+  hasUnsavedChanges(): boolean {
+    return this.userEdited;
+  }
+
+  @HostListener('input')
+  @HostListener('change')
+  onFormFieldEdit(): void {
+    this.userEdited = true;
+  }
+
+  @HostListener('click', ['$event'])
+  onFormClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+    if (target.closest('[data-discard-safe]')) return;
+    if (
+      target.closest(
+        'button, [role="button"], input, select, textarea, .db-seg__btn',
+      )
+    ) {
+      this.userEdited = true;
+    }
+  }
+
+  get submitMissing(): string[] {
+    const missing: string[] = [];
+    if (!this.name.trim()) missing.push('nombre');
+    if ((this.isFilament || this.isResin) && !this.brand.trim()) {
+      missing.push('marca');
+    }
+    if (this.showColorField && !this.colorId) missing.push('color');
+    return missing;
+  }
+
+  get submitMissingLabel(): string {
+    const items = this.submitMissing;
+    if (!items.length) return '';
+    return items.length === 1
+      ? `Falta: ${items[0]}`
+      : `Faltan: ${items.join(', ')}`;
+  }
+
+  get canSubmit(): boolean {
+    return !this.loading && this.submitMissing.length === 0;
+  }
 
   get filamentTypeOptions(): DbSelectOption[] {
     return buildFilamentTypeOptions(
@@ -338,6 +386,7 @@ export class SupplyFormComponent implements OnInit, OnChanges {
   }
 
   private resetForm(): void {
+    this.userEdited = false;
     if (this.supply) {
       this.name = this.supply.name;
       this.category = this.supply.category;

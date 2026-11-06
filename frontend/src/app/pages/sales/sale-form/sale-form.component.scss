@@ -82,6 +82,13 @@
     color: mobile.$m-text-secondary;
   }
 
+  .sale-m__stock-limit {
+    margin: 8px 12px 0;
+    font-size: 12px;
+    font-weight: 600;
+    color: #92400e;
+  }
+
   .sale-m__suggest-empty,
   .sale-m__picker-error,
   .sale-m__empty-cart {
