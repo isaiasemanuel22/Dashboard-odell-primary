@@ -142,12 +142,19 @@
 
         <span class="order-resumen__label" id="deposit-method-label">Medio de pago</span>
         <db-segmented-control
-          class="order-resumen__seg"
+          class="order-resumen__seg desktop-only"
           size="lg"
           [options]="depositMethodOptions"
           [value]="depositMethod"
           ariaLabel="Medio de pago"
           (valueChange)="depositMethodChange.emit($event)"
+        />
+        <db-mobile-chip-group
+          class="order-resumen__pay-chips mobile-only"
+          [options]="depositChipOptions"
+          [value]="depositMethod"
+          ariaLabel="Medio de pago"
+          (valueChange)="onDepositChipChange($event)"
         />
 
         <db-select

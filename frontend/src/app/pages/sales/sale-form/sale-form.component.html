@@ -3,7 +3,7 @@
     [title]="mobileTitle || ''"
     [showHeader]="!!mobileTitle"
     [dockActions]="mobileDockActions"
-    (close)="cancel.emit()"
+    (close)="requestCancel()"
     (dockAction)="onMobileDockAction($event)"
   >
   <div class="sale-m">
@@ -112,12 +112,12 @@
       <db-mobile-form-step title="Cobro" cardClass="sale-m__cobro">
         <div class="m-field">
           <span class="m-fl">Medio de pago</span>
-          <db-segmented-control
-            size="lg"
-            [options]="paymentMethodOptions"
+          <db-mobile-chip-group
+            class="sale-m__pay-chips"
+            [options]="paymentChipOptions"
             [value]="method"
             ariaLabel="Medio de pago"
-            (valueChange)="onMethodChange($event)"
+            (valueChange)="onPaymentChipChange($event)"
           />
         </div>
 

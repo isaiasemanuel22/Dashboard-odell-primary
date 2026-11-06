@@ -8,6 +8,10 @@ form {
   gap: 1.5rem;
 }
 
+.customer-form__card {
+  display: contents;
+}
+
 .customer-form ::ng-deep .db-form-hint {
   color: $color-text-muted;
   font-size: 0.75rem;
@@ -162,10 +166,38 @@ form {
     box-sizing: border-box;
   }
 
+  .customer-form__card {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+    padding: 14px;
+    background: #fff;
+    border: 1px solid mobile.$m-border;
+    border-radius: 14px;
+    box-sizing: border-box;
+  }
+
   .customer-form ::ng-deep .db-form-grid {
     display: flex;
     flex-direction: column;
     gap: 14px;
+  }
+
+  .customer-form ::ng-deep .db-form-field,
+  .customer-form ::ng-deep .db-input,
+  .customer-form ::ng-deep .db-select,
+  .customer-form ::ng-deep db-segmented-control,
+  .customer-form ::ng-deep .db-seg {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .customer-form ::ng-deep .db-form-field:has(.db-form-error) input.db-input,
+  .customer-form ::ng-deep .db-form-field:has(.db-form-error) select.db-select,
+  .customer-form ::ng-deep input.db-input.ng-invalid.ng-touched,
+  .customer-form ::ng-deep select.db-select.ng-invalid.ng-touched {
+    border-color: #dc2626;
   }
 
   .customer-form__type-label {
@@ -175,7 +207,8 @@ form {
   }
 
   .customer-form__wholesale {
-    background: #f4f8fb;
+    background: #fff;
+    border: 1px solid mobile.$m-border;
     border-radius: 14px;
     padding: 14px;
   }

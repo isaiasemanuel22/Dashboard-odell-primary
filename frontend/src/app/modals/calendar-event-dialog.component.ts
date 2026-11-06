@@ -81,14 +81,14 @@ export class CalendarEventDialogComponent implements OnInit {
     {
       value: CalendarEntryKind.EVENT,
       label: 'Evento',
-      activeClass: 'on-ev',
     },
     {
       value: CalendarEntryKind.REMINDER,
       label: 'Recordatorio',
-      activeClass: 'on-rec',
     },
   ];
+
+  titleError = '';
 
   readonly weekdayLabels = WEEKDAY_LABELS;
   readonly CalendarRepeat = CalendarRepeat;
@@ -151,6 +151,10 @@ export class CalendarEventDialogComponent implements OnInit {
     return `Se repite ${names} hasta que lo pares`;
   }
 
+  get canSave(): boolean {
+    return !!this.title.trim() && !this.loading;
+  }
+
   get mobileDockActions(): MobileDockAction[] {
     const actions: MobileDockAction[] = [];
     if (this.isEdit) {
@@ -169,7 +173,7 @@ export class CalendarEventDialogComponent implements OnInit {
           ? 'Guardar recordatorio'
           : 'Guardar evento',
       kind: 'primary',
-      disabled: this.loading,
+      disabled: !this.canSave,
       loading: this.loading,
     });
     return actions;
@@ -300,6 +304,7 @@ export class CalendarEventDialogComponent implements OnInit {
   }
 
   save(): void {
+    this.titleError = this.title.trim() ? '' : 'Escribí un título';
     if (!this.title.trim() || !this.date) {
       this.error = 'Completá título y fecha.';
       this.cdr.markForCheck();

@@ -143,3 +143,29 @@
   line-height: 1.4;
 }
 
+.price-mode {
+  display: block;
+  width: 100%;
+  margin-bottom: 0.25rem;
+}
+
+.price-stale {
+  margin: 0;
+  padding: 0.65rem 0.75rem;
+  border-radius: 10px;
+  border: 1px solid #fcd34d;
+  background: #fffbeb;
+  color: #92400e;
+  font-size: 0.75rem;
+  line-height: 1.4;
+}
+
+.unit-price__box input.unit-price__control {
+  border: 0 !important;
+  border-radius: 0;
+  box-shadow: none !important;
+  padding: 0;
+  min-height: 0;
+  outline: none;
+}
+

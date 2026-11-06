@@ -17,7 +17,13 @@
       (valueChange)="kind = $event"
     />
 
-    <db-input label="Título *" [(ngModel)]="title" name="title" />
+    <db-input
+      label="Título *"
+      [(ngModel)]="title"
+      name="title"
+      [error]="titleError"
+      (ngModelChange)="titleError = ''"
+    />
 
     <!-- Desktop: fecha + horas + checkbox -->
     <div class="cal-dialog__row desktop-only">
@@ -124,7 +130,7 @@
       />
     }
 
-    <div class="cal-dialog__row cal-dialog__row--2">
+    <div class="cal-dialog__row cal-dialog__row--2 cal-dialog__row--aligned">
       <db-select
         label="Avisarme"
         [options]="notifyOptions"
@@ -136,9 +142,11 @@
         [options]="linkOptions"
         [(ngModel)]="linkKey"
         name="link"
-        hint="Aparece en el detalle del pedido o cliente"
       />
     </div>
+    <p class="cal-dialog__link-hint">
+      Aparece en el detalle del pedido o cliente
+    </p>
 
     <db-textarea
       label="Notas"
@@ -177,7 +185,7 @@
         [label]="loading ? 'Guardando…' : isEdit ? 'Guardar' : kind === CalendarEntryKind.REMINDER ? 'Crear recordatorio' : 'Crear evento'"
         variant="primary"
         format="solid"
-        [disabled]="loading"
+        [disabled]="!canSave"
         (clicked)="save()"
       />
     </div>

@@ -1,6 +1,7 @@
 import {
   Component,
   EventEmitter,
+  HostListener,
   Input,
   OnChanges,
   OnInit,
@@ -94,9 +95,34 @@ export class CustomerFormComponent implements OnInit, OnChanges {
   emailError = '';
   phoneError = '';
   wholesaleDiscountPercent = 0;
+  private userEdited = false;
 
   get isEditing(): boolean {
     return this.customer !== null;
+  }
+
+  hasUnsavedChanges(): boolean {
+    return this.userEdited;
+  }
+
+  @HostListener('input')
+  @HostListener('change')
+  onFormFieldEdit(): void {
+    this.userEdited = true;
+  }
+
+  @HostListener('click', ['$event'])
+  onFormClick(event: MouseEvent): void {
+    const target = event.target as HTMLElement | null;
+    if (!target) return;
+    if (target.closest('[data-discard-safe]')) return;
+    if (
+      target.closest(
+        'button, [role="button"], input, select, textarea, .db-seg__btn',
+      )
+    ) {
+      this.userEdited = true;
+    }
   }
 
   get isRevendedor(): boolean {
@@ -237,6 +263,7 @@ export class CustomerFormComponent implements OnInit, OnChanges {
     }
     this.emailError = '';
     this.phoneError = '';
+    this.userEdited = false;
   }
 }
 

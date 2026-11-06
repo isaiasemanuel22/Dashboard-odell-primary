@@ -145,6 +145,26 @@
     gap: 14px;
   }
 
+  .sale-m__pay-chips {
+    display: block;
+
+    ::ng-deep .m-chip-group {
+      flex-wrap: wrap;
+    }
+
+    ::ng-deep .m-chip-group__chip {
+      white-space: nowrap;
+      flex: 1 1 auto;
+      justify-content: center;
+    }
+  }
+
+  .m-tools .m-search {
+    width: 100%;
+    flex: none;
+    height: 44px;
+  }
+
   .sale-m__account {
     align-items: center;
 

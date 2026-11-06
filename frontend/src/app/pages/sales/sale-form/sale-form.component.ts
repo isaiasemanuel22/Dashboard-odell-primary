@@ -57,9 +57,14 @@ import {
 } from '../../../shared/utils/v1-labels.util';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import { MobileDockAction } from '../../../components/mobile-dock/mobile-dock.component';
+import {
+  MobileChipGroupComponent,
+  MobileChipOption,
+} from '../../../components/mobile-chip-group/mobile-chip-group.component';
 import { MobileFormShellComponent } from '../../../components/mobile-form-shell/mobile-form-shell.component';
 import { MobileFormStepComponent } from '../../../components/mobile-form-step/mobile-form-step.component';
 import { MobileStepperComponent } from '../../../components/mobile-stepper/mobile-stepper.component';
+import { FormDialogService } from '../../../modals/form-dialog.service';
 
 let cartLineKey = 0;
 
@@ -84,6 +89,7 @@ let cartLineKey = 0;
     MobileFormShellComponent,
     MobileFormStepComponent,
     MobileStepperComponent,
+    MobileChipGroupComponent,
   ],
   templateUrl: './sale-form.component.html',
   styleUrl: './sale-form.component.scss',
@@ -91,8 +97,10 @@ let cartLineKey = 0;
 export class SaleFormComponent implements OnChanges {
   private readonly breakpoint = inject(BreakpointService);
   private readonly saleCart = inject(SaleCartService);
+  private readonly formDialogs = inject(FormDialogService);
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
+  private confirmingDiscard = false;
 
   @Input() sale: RetailSale | null = null;
   @Input() products: Product[] = [];
@@ -133,6 +141,9 @@ export class SaleFormComponent implements OnChanges {
   ];
 
   readonly paymentMethodOptions: DbSegmentOption<PaymentMethod>[] =
+    labelsToSelectOptions(PAYMENT_METHOD_LABELS);
+
+  readonly paymentChipOptions: MobileChipOption<PaymentMethod>[] =
     labelsToSelectOptions(PAYMENT_METHOD_LABELS);
 
   readonly accountOptions: DbSelectOption[] =
@@ -285,6 +296,36 @@ export class SaleFormComponent implements OnChanges {
   onMethodChange(method: PaymentMethod): void {
     this.method = method;
     this.account = defaultAccountForMethod(method);
+  }
+
+  onPaymentChipChange(method: PaymentMethod | null): void {
+    if (method == null) return;
+    this.onMethodChange(method);
+  }
+
+  hasUnsavedChanges(): boolean {
+    return this.cart.length > 0 || !!this.notes.trim() || this.discountMode !== 'none';
+  }
+
+  requestCancel(): void {
+    if (this.confirmingDiscard) return;
+    if (!this.hasUnsavedChanges()) {
+      this.cancel.emit();
+      return;
+    }
+    this.confirmingDiscard = true;
+    this.formDialogs
+      .openConfirm({
+        title: 'Descartar cambios',
+        message: 'Hay datos cargados. ¿Descartar la venta y cerrar?',
+        confirmLabel: 'Descartar',
+        cancelLabel: 'Seguir editando',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        this.confirmingDiscard = false;
+        if (confirmed) this.cancel.emit();
+      });
   }
 
   onProductChange(): void {

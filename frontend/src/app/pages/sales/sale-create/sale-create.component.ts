@@ -105,6 +105,11 @@ export class SaleCreateComponent implements OnInit {
     void this.router.navigate(['/ventas']);
   }
 
+  /** El form mobile confirma descarte antes de emitir cancel. */
+  onFormCancel(): void {
+    this.cancel();
+  }
+
   private loadProducts(): void {
     this.productsService.getProducts(undefined, { all: true }).subscribe({
       next: (products) => {

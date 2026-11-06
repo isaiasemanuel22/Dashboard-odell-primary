@@ -1,41 +1,43 @@
 @if (isFilament) {
-  <db-select
-    label="Tipo de filamento"
-    [ngModel]="filamentType"
-    (ngModelChange)="filamentTypeChange.emit($event)"
-    name="filamentType"
-    [options]="filamentTypeOptions"
-  />
-
-  <db-select
-    label="Marca (desde Ajustes)"
-    [ngModel]="brand"
-    (ngModelChange)="brandChange.emit($event)"
-    name="brand"
-    [required]="true"
-    placeholder="Seleccionar marca..."
-    [options]="filamentBrandOptions"
-  />
+  <db-form-grid>
+    <db-select
+      label="Tipo de filamento"
+      [ngModel]="filamentType"
+      (ngModelChange)="filamentTypeChange.emit($event)"
+      name="filamentType"
+      [options]="filamentTypeOptions"
+    />
+    <db-select
+      label="Marca (desde Ajustes)"
+      [ngModel]="brand"
+      (ngModelChange)="brandChange.emit($event)"
+      name="brand"
+      [required]="true"
+      placeholder="Seleccionar marca..."
+      [options]="filamentBrandOptions"
+    />
+  </db-form-grid>
 }
 
 @if (isResin) {
-  <db-select
-    label="Tipo de resina"
-    [ngModel]="resinType"
-    (ngModelChange)="resinTypeChange.emit($event)"
-    name="resinType"
-    [options]="resinTypeOptions"
-  />
-
-  <db-select
-    label="Marca (desde Ajustes)"
-    [ngModel]="brand"
-    (ngModelChange)="brandChange.emit($event)"
-    name="brand"
-    [required]="true"
-    placeholder="Seleccionar marca..."
-    [options]="resinBrandOptions"
-  />
+  <db-form-grid>
+    <db-select
+      label="Tipo de resina"
+      [ngModel]="resinType"
+      (ngModelChange)="resinTypeChange.emit($event)"
+      name="resinType"
+      [options]="resinTypeOptions"
+    />
+    <db-select
+      label="Marca (desde Ajustes)"
+      [ngModel]="brand"
+      (ngModelChange)="brandChange.emit($event)"
+      name="brand"
+      [required]="true"
+      placeholder="Seleccionar marca..."
+      [options]="resinBrandOptions"
+    />
+  </db-form-grid>
 }
 
 @if (!isFilament && !isResin) {

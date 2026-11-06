@@ -194,13 +194,19 @@
       }
     }
 
-    .quote-channel-field {
+    .quote-responsible-field {
       order: 3;
+      grid-column: 1 / -1;
+      min-width: 0;
+    }
+
+    .quote-channel-field {
+      order: 4;
       min-width: 0;
     }
 
     .quote-date-field {
-      order: 4;
+      order: 5;
       min-width: 0;
     }
 

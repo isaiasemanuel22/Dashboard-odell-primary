@@ -121,16 +121,25 @@
 
     > span {
       position: absolute;
-      right: 0.7rem;
-      bottom: 0.6rem;
+      right: 0.75rem;
+      top: 50%;
+      transform: translateY(-50%);
+      margin-top: 0.55rem; // mitad del label ≈ alinear al input
       color: $color-text-muted;
       font-size: 0.8125rem;
+      line-height: 1;
       pointer-events: none;
+      z-index: 1;
     }
 
     ::ng-deep .db-input {
-      padding-right: 1.6rem;
+      padding-right: 2rem;
       text-align: right;
+    }
+
+    // Evitar doble anillo: el input dentro no suma borde/sombra encima del campo.
+    ::ng-deep input.db-input:focus {
+      box-shadow: 0 0 0 3px $color-primary-focus;
     }
   }
 
@@ -486,6 +495,25 @@
 
       .quote-description-sec {
         order: 3;
+      }
+    }
+
+    .order-layout__main {
+      // Mobile: 1 Cliente → 2 Productos → Descripción/Detalles → 3 Seña (sidebar).
+      > :first-child {
+        order: 1;
+      }
+
+      .order-m-products {
+        order: 2;
+      }
+
+      .order-m-desc {
+        order: 3;
+      }
+
+      .order-m-details {
+        order: 4;
       }
     }
 

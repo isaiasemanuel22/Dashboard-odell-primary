@@ -1,7 +1,8 @@
 @use '../../../../shared/styles/mobile' as mobile;
 
 @include mobile.mobile-only {
-  :host-context(.order-form) {
+  :host-context(.order-form),
+  :host-context(.quote-form) {
     .order-line {
       background: transparent;
       border: 0;
@@ -16,6 +17,13 @@
 
     .order-line__service-row .remove-line {
       display: none;
+    }
+
+    .service-pill--active {
+      background: mobile.$m-primary !important;
+      border-color: mobile.$m-primary !important;
+      color: #fff !important;
+      box-shadow: none !important;
     }
 
     .order-line__m-head {
@@ -143,6 +151,13 @@
       display: none;
     }
 
+    // Con la fila plegable mobile, no repetir el título de la composición.
+    .order-line__composition:not(.order-line__composition--collapsed) {
+      ::ng-deep .cost-composition__head {
+        display: none;
+      }
+    }
+
     .order-line__pricing {
       display: none;
     }
@@ -169,16 +184,43 @@
 
     ::ng-deep .cost-table__suffix > span {
       right: 0.85rem;
-      bottom: 0.85rem;
+      top: auto;
+      bottom: 0.95rem;
+      transform: none;
+      margin-top: 0;
     }
 
     ::ng-deep .cost-table__suffix .db-input,
     ::ng-deep .cost-table__suffix input.db-input {
-      padding-right: 2.25rem;
+      padding-right: 2.35rem;
     }
 
     ::ng-deep .dynamic-list > db-button .db-button {
       min-height: 44px;
+    }
+  }
+
+  // En presupuesto, un solo título (m-head) y sin repetir el pill del servicio.
+  :host-context(.quote-form) {
+    .order-line__service-row {
+      .order-line__line-label {
+        display: none;
+      }
+
+      .remove-line {
+        display: none;
+      }
+    }
+
+    .order-line__m-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .order-line__m-head .m-pill {
+      display: none;
     }
   }
 }

@@ -58,6 +58,23 @@
     box-shadow: 0 0 0 3px $color-primary-focus;
   }
 
+  // Inputs “desnudos” dentro de cajas con focus-within (precio unitario, seña, etc.).
+  &.unit-price__control,
+  &.order-line__money-control,
+  &.order-resumen__money-control {
+    border: 0;
+    border-radius: 0;
+    padding: 0;
+    box-shadow: none;
+    min-height: 0;
+    background: transparent;
+
+    &:focus {
+      border: 0;
+      box-shadow: none;
+    }
+  }
+
   &[readonly] {
     background: #f8fafc;
     color: $color-text-muted;

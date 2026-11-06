@@ -1,11 +1,30 @@
 @use '../../../shared/styles/mobile' as mobile;
 
+:host {
+  display: block;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
 @include mobile.mobile-only {
   :host {
     display: block;
   }
 
+  form {
+    gap: 14px;
+    padding: 4px 0 0;
+  }
+
   :host ::ng-deep {
+    .db-form-grid {
+      gap: 14px 10px;
+    }
+
     .db-input,
     select.db-select,
     .db-form-field input,

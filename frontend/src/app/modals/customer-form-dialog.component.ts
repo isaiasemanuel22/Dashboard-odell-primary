@@ -2,11 +2,14 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   OnInit,
   ViewChild,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
+import { filter } from 'rxjs';
 import {
   CreateCustomerPayload,
   Customer,
@@ -20,6 +23,7 @@ import { MobileFormShellComponent } from '../components/mobile-form-shell/mobile
 import type { MobileDockAction } from '../components/mobile-dock/mobile-dock.component';
 import { extractApiErrorMessage } from '../shared/utils/api-error';
 import { CustomerFormComponent } from '../pages/customers/customer-form/customer-form.component';
+import { FormDialogService } from './form-dialog.service';
 
 export interface CustomerFormDialogData {
   customer: Customer | null;
@@ -43,6 +47,7 @@ export interface CustomerFormDialogData {
         <db-mobile-form-shell
           [title]="customer ? 'Editar cliente' : 'Nuevo cliente'"
           [dockActions]="mobileDockActions"
+          [dockSecondaryFixed]="true"
           (close)="cancel()"
           (dockAction)="onMobileDockAction($event)"
         >
@@ -85,8 +90,10 @@ export interface CustomerFormDialogData {
 export class CustomerFormDialogComponent implements OnInit {
   private readonly customersService = inject(CustomersService);
   private readonly customerCatalog = inject(CustomerCatalogService);
+  private readonly formDialogs = inject(FormDialogService);
   private readonly breakpoint = inject(BreakpointService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly dialogRef = inject(DialogRef<Customer>);
   private readonly data = inject<CustomerFormDialogData>(DIALOG_DATA);
 
@@ -98,10 +105,18 @@ export class CustomerFormDialogComponent implements OnInit {
   loading = false;
   error = '';
   savedNotice = '';
+  private closing = false;
+  private confirmingDiscard = false;
 
   get mobileDockActions(): MobileDockAction[] {
     const form = this.customerForm;
     return [
+      {
+        id: 'cancel',
+        label: 'Cancelar',
+        kind: 'secondary',
+        disabled: this.loading,
+      },
       {
         id: 'save',
         label: this.loading
@@ -119,9 +134,26 @@ export class CustomerFormDialogComponent implements OnInit {
   ngOnInit(): void {
     this.customer = this.data.customer;
     this.resetState();
+    this.dialogRef.disableClose = true;
+    this.dialogRef.backdropClick
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.cancel());
+    this.dialogRef.keydownEvents
+      .pipe(
+        filter((event) => event.key === 'Escape'),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((event) => {
+        event.preventDefault();
+        this.cancel();
+      });
   }
 
   onMobileDockAction(id: string): void {
+    if (id === 'cancel') {
+      this.cancel();
+      return;
+    }
     if (id === 'save') {
       this.customerForm?.onSubmit();
     }
@@ -160,7 +192,31 @@ export class CustomerFormDialogComponent implements OnInit {
   }
 
   cancel(): void {
-    this.dialogRef.close();
+    if (this.closing || this.confirmingDiscard) return;
+
+    const discard = (): void => {
+      this.closing = true;
+      this.dialogRef.close();
+    };
+
+    if (!this.customerForm?.hasUnsavedChanges()) {
+      discard();
+      return;
+    }
+
+    this.confirmingDiscard = true;
+    this.formDialogs
+      .openConfirm({
+        title: 'Descartar cambios',
+        message: 'Hay cambios sin guardar. ¿Descartar el cliente y cerrar?',
+        confirmLabel: 'Descartar',
+        cancelLabel: 'Seguir editando',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        this.confirmingDiscard = false;
+        if (confirmed) discard();
+      });
   }
 
   private resetState(): void {

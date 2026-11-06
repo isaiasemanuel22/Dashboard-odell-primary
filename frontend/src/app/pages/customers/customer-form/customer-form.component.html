@@ -1,23 +1,73 @@
 <db-form class="customer-form">
   <form (ngSubmit)="onSubmit()">
-    <db-input
-      label="Nombre"
-      [(ngModel)]="name"
-      name="name"
-      placeholder="Ej.: María González"
-      autocomplete="name"
-      [required]="true"
-    />
+    <div class="customer-form__card">
+      <db-input
+        label="Nombre"
+        [(ngModel)]="name"
+        name="name"
+        placeholder="Ej.: María González"
+        autocomplete="name"
+        [required]="true"
+      />
 
-    <div class="customer-form__type">
-      <span class="customer-form__type-label" id="customer-type-label">
-        Tipo de cliente
-      </span>
-      <db-segmented-control
-        [options]="typeOptions"
-        [value]="type"
-        ariaLabel="Tipo de cliente"
-        (valueChange)="onTypeChange($event)"
+      <div class="customer-form__type">
+        <span class="customer-form__type-label" id="customer-type-label">
+          Tipo de cliente
+        </span>
+        <db-segmented-control
+          [options]="typeOptions"
+          [value]="type"
+          size="lg"
+          ariaLabel="Tipo de cliente"
+          (valueChange)="onTypeChange($event)"
+        />
+      </div>
+
+      <db-form-grid>
+        <div class="customer-form__email" (focusout)="onEmailBlur()">
+          <db-input
+            label="Email"
+            type="email"
+            [(ngModel)]="email"
+            name="email"
+            placeholder="cliente@empresa.com"
+            hint="Opcional"
+            [error]="emailError"
+          />
+        </div>
+
+        <div
+          class="customer-form__phone"
+          [class.customer-form__phone--ready]="phoneReadyForWhatsApp"
+        >
+          <db-input
+            label="Teléfono"
+            [(ngModel)]="phone"
+            name="phone"
+            placeholder="+54 223 123-4567"
+            autocomplete="tel"
+            [hint]="phoneHint"
+            [required]="true"
+            [error]="phoneError"
+          />
+        </div>
+      </db-form-grid>
+
+      <db-input
+        label="Empresa"
+        [(ngModel)]="company"
+        name="company"
+        placeholder="Opcional · Ej.: Café Aurora"
+        hint="Nombre de fantasía o razón social, si aplica"
+      />
+
+      <db-select
+        label="¿Cómo llegó?"
+        [(ngModel)]="source"
+        name="source"
+        [options]="sourceOptions"
+        placeholder="Elegí un canal"
+        hint="Se usa para medir qué canal te trae clientes"
       />
     </div>
 
@@ -53,53 +103,6 @@
       </section>
     }
 
-    <db-form-grid>
-      <div class="customer-form__email" (focusout)="onEmailBlur()">
-        <db-input
-          label="Email"
-          type="email"
-          [(ngModel)]="email"
-          name="email"
-          placeholder="cliente@empresa.com"
-          hint="Opcional"
-          [error]="emailError"
-        />
-      </div>
-
-      <div
-        class="customer-form__phone"
-        [class.customer-form__phone--ready]="phoneReadyForWhatsApp"
-      >
-        <db-input
-          label="Teléfono"
-          [(ngModel)]="phone"
-          name="phone"
-          placeholder="+54 223 123-4567"
-          autocomplete="tel"
-          [hint]="phoneHint"
-          [required]="true"
-          [error]="phoneError"
-        />
-      </div>
-    </db-form-grid>
-
-    <db-input
-      label="Empresa"
-      [(ngModel)]="company"
-      name="company"
-      placeholder="Opcional · Ej.: Café Aurora"
-      hint="Nombre de fantasía o razón social, si aplica"
-    />
-
-    <db-select
-      label="¿Cómo llegó?"
-      [(ngModel)]="source"
-      name="source"
-      [options]="sourceOptions"
-      placeholder="Elegí un canal"
-      hint="Se usa para medir qué canal te trae clientes"
-    />
-
     @if (error) {
       <db-form-error>{{ error }}</db-form-error>
     }
@@ -113,7 +116,7 @@
             Lo vas a poder elegir en pedidos y presupuestos
           }
         </p>
-        <div class="customer-form__actions">
+        <div class="customer-form__actions" data-discard-safe>
           <db-button
             label="Cancelar"
             variant="secondary"

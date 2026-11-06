@@ -16,6 +16,7 @@ import {
   DbTextareaComponent,
 } from '@dashboard-form';
 import type { DbSelectOption } from '@dashboard-form';
+import { MobileToggleRowComponent } from '../../../../components/mobile-toggle-row/mobile-toggle-row.component';
 
 export interface ProductFormBasicFieldsValue {
   type: ProductType;
@@ -34,6 +35,7 @@ export interface ProductFormBasicFieldsValue {
     DbCheckboxComponent,
     DbInputComponent,
     DbTextareaComponent,
+    MobileToggleRowComponent,
   ],
   templateUrl: './product-form-basic-fields.component.html',
   styleUrl: '../product-form.component.scss',

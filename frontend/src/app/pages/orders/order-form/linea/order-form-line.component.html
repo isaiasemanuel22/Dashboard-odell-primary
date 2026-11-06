@@ -351,34 +351,19 @@
         [attr.aria-expanded]="costCompositionExpanded"
         (click)="toggleCostComposition()"
       >
-        @if (isCostCompositionReady) {
-          <span>
-            @if (variant === 'quote') {
-              Cotización · {{ unitCostFormatted }} c/u
-            } @else {
-              Composición del costo · {{ unitCostFormatted }} c/u
-            }
-            @if (lineMarginPercent != null) {
-              · margen {{ lineMarginPercent }} %
-            }
-          </span>
-        } @else {
-          <span>
-            @if (variant === 'quote') {
-              Completá la cotización
-            } @else {
-              Completá la composición del costo
-            }
-          </span>
-        }
-        <span class="order-line__cost-fold-chevron" aria-hidden="true">▾</span>
+        <span>{{ costFoldLabel }}</span>
+        <span class="order-line__cost-fold-chevron" aria-hidden="true">
+          {{ costCompositionExpanded ? '▾' : '▸' }}
+        </span>
       </button>
     }
 
     <div
       class="order-line__composition"
       [class.order-line__composition--collapsed]="
-        variant === 'order' && hasCostComposition && !costCompositionExpanded
+        (variant === 'order' || variant === 'quote') &&
+        hasCostComposition &&
+        !costCompositionExpanded
       "
     >
       @if (showFdm()) {

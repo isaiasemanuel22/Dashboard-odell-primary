@@ -1,6 +1,17 @@
 <aside class="price-card">
-  <h4>Precio</h4>
+  <h4 class="desktop-only">Precio</h4>
+  <db-segmented-control
+    class="price-mode"
+    size="lg"
+    [options]="priceModeOptions"
+    [value]="priceMode"
+    ariaLabel="Cómo se fija el precio"
+    (valueChange)="onPriceModeChange($event)"
+  />
   @if (vm$ | async; as vm) {
+    @if (stalePriceNotice(vm.price); as notice) {
+      <p class="price-stale" role="status">{{ notice }}</p>
+    }
     @if (vm.calculating) {
       <p class="price-note">Calculando costo...</p>
     }

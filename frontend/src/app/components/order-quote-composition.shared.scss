@@ -168,15 +168,18 @@
 
     > span {
       position: absolute;
-      right: 0.7rem;
-      bottom: 0.6rem;
+      right: 0.75rem;
+      bottom: 0.7rem;
       color: $color-text-muted;
       font-size: 0.8125rem;
+      line-height: 1;
       pointer-events: none;
+      z-index: 1;
     }
 
-    ::ng-deep .db-input {
-      padding-right: 1.6rem;
+    ::ng-deep .db-input,
+    ::ng-deep input.db-input {
+      padding-right: 2rem;
       text-align: right;
     }
   }
@@ -291,7 +294,15 @@
   }
 
   .cost-table__suffix > span {
+    right: 0.75rem;
+    top: auto;
     bottom: 0.7rem;
+    transform: none;
+    margin-top: 0;
+  }
+
+  .cost-table__suffix ::ng-deep input.db-input {
+    padding-right: 2rem;
   }
 }
 

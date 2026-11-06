@@ -13,6 +13,10 @@ import {
   DbSegmentOption,
   DbSelectOption,
 } from '@general-components';
+import {
+  MobileChipGroupComponent,
+  MobileChipOption,
+} from '../../../../components/mobile-chip-group/mobile-chip-group.component';
 import { PaymentMethod } from '../../../../core/models';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import { DiscountMode } from '../../../../shared/utils/discount.util';
@@ -29,6 +33,7 @@ export type OrderFormDepositMode = 'editable' | 'info' | 'none';
     DbInputComponent,
     DbSelectComponent,
     DbSegmentedControlComponent,
+    MobileChipGroupComponent,
     OrderFormDiscountComponent,
   ],
   templateUrl: './order-form-order-summary.component.html',
@@ -109,6 +114,13 @@ export class OrderFormOrderSummaryComponent {
     return Math.round(Number(this.depositAmount) || 0) === Math.round(Number(this.depositSuggested) || 0);
   }
 
+  get depositChipOptions(): MobileChipOption<PaymentMethod>[] {
+    return this.depositMethodOptions.map((opt) => ({
+      value: opt.value,
+      label: opt.label,
+    }));
+  }
+
   onDepositAmountDisplayChange(raw: string): void {
     const digits = String(raw ?? '').replace(/\D/g, '');
     if (!digits) {
@@ -116,5 +128,10 @@ export class OrderFormOrderSummaryComponent {
       return;
     }
     this.depositAmountChange.emit(Math.round(Number(digits)));
+  }
+
+  onDepositChipChange(value: PaymentMethod | null): void {
+    if (value == null) return;
+    this.depositMethodChange.emit(value);
   }
 }

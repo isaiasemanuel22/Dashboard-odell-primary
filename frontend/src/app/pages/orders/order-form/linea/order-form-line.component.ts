@@ -66,7 +66,9 @@ import {
 import {
   createEmptyFdmFilamentLine,
   normalizeFdmFilaments,
+  totalFdmFilamentGrams,
 } from '../../../../shared/utils/fdm.helpers';
+import { filamentTypeDisplayLabel } from '../../../../shared/utils/filament-type.util';
 import { calculateMachineOverhead } from '../../../../shared/utils/machine-profile.util';
 import {
   calculateLinePriceTotal,
@@ -455,6 +457,61 @@ export class OrderFormLineComponent implements OnInit {
       return this.plainAmount(cost);
     }
     return this.money(cost);
+  }
+
+  /** Texto de la fila plegable mobile (pedido / presupuesto). */
+  get costFoldLabel(): string {
+    if (!this.isCostCompositionReady) {
+      return this.variant === 'quote'
+        ? 'Completá la cotización'
+        : 'Completá la composición del costo';
+    }
+    if (this.variant === 'quote') {
+      const bits = this.quoteCostFoldBits;
+      if (bits.length) {
+        return `Cotización: ${bits.join(' · ')}`;
+      }
+      return `Cotización · ${this.unitCostFormatted} c/u`;
+    }
+    let label = `Composición del costo · ${this.unitCostFormatted} c/u`;
+    if (this.lineMarginPercent != null) {
+      label += ` · margen ${this.lineMarginPercent} %`;
+    }
+    return label;
+  }
+
+  private get quoteCostFoldBits(): string[] {
+    const bits: string[] = [];
+    if (isImpresion3DLine(this.line.serviceType)) {
+      const grams = this.line.filaments?.length
+        ? totalFdmFilamentGrams(this.line.filaments)
+        : Number(this.line.grams) || 0;
+      if (grams > 0) {
+        bits.push(
+          isResinQuoteLine(this.line, this.product ?? undefined)
+            ? `${this.formatNumber(grams)} ml`
+            : `${this.formatNumber(grams)} g`,
+        );
+      }
+      const hours = Number(this.line.printTimeHours) || 0;
+      if (hours > 0) bits.push(`${this.formatNumber(hours)} h`);
+      const type = this.line.filamentType || this.line.filaments?.[0]?.filamentType;
+      if (type) bits.push(filamentTypeDisplayLabel(String(type)));
+      return bits;
+    }
+    if (isEstampadoLine(this.line.serviceType)) {
+      const prints = this.line.estampadoPrints?.length ?? 0;
+      if (prints > 0) bits.push(`${prints} impreso${prints === 1 ? '' : 's'}`);
+      const hours = Number(this.line.budgetedHours) || 0;
+      if (hours > 0) bits.push(`${this.formatNumber(hours)} h`);
+      return bits;
+    }
+    if (isDesignService(this.line.serviceType)) {
+      const hours = Number(this.line.budgetedHours) || 0;
+      if (hours > 0) bits.push(`${this.formatNumber(hours)} h`);
+      return bits;
+    }
+    return bits;
   }
 
   get unitCostHint(): string {

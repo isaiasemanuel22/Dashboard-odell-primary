@@ -253,7 +253,12 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     const hours = Number(this.facade.form.controls.printTimeHours.value) || 0;
     const parts: string[] = [];
     if (grams > 0) parts.push(`${grams} g`);
-    if (hours > 0) parts.push(`${hours} h`);
+    if (hours > 0) {
+      const hoursLabel = new Intl.NumberFormat('es-AR', {
+        maximumFractionDigits: 2,
+      }).format(hours);
+      parts.push(`${hoursLabel} h`);
+    }
     return parts.join(' · ') || 'Sin datos';
   }
 

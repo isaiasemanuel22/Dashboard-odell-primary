@@ -47,6 +47,7 @@ export interface ProductFormDialogData {
         <db-mobile-form-shell
           [title]="dialogTitle"
           [dockActions]="mobileDockActions"
+          [dockSecondaryFixed]="true"
           (close)="cancel()"
           (dockAction)="onMobileDockAction($event)"
         >
@@ -112,13 +113,19 @@ export class ProductFormDialogComponent implements OnInit {
       (facade?.categoryIds.length ?? 0) >= 1;
     return [
       {
+        id: 'cancel',
+        label: 'Cancelar',
+        kind: 'secondary',
+        disabled: this.loading || savingFiles,
+      },
+      {
         id: 'save',
         label: savingFiles
           ? 'Subiendo archivos...'
           : this.loading
             ? 'Guardando...'
             : this.product
-              ? 'Guardar cambios'
+              ? 'Guardar'
               : 'Crear producto',
         kind: 'primary',
         disabled: this.loading || savingFiles || !canSave,
@@ -128,6 +135,10 @@ export class ProductFormDialogComponent implements OnInit {
   }
 
   onMobileDockAction(id: string): void {
+    if (id === 'cancel') {
+      this.cancel();
+      return;
+    }
     if (id === 'save') {
       void this.form?.onSubmit();
     }

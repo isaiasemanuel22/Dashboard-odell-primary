@@ -37,7 +37,9 @@ export interface SupplyFormDialogData {
       @if (isMobile()) {
         <db-mobile-form-shell
           [title]="supply ? 'Editar insumo' : 'Nuevo insumo'"
+          [showHeader]="false"
           [dockActions]="mobileDockActions"
+          [dockSecondaryFixed]="true"
           (close)="cancel()"
           (dockAction)="onMobileDockAction($event)"
         >
@@ -85,6 +87,12 @@ export class SupplyFormDialogComponent implements OnInit {
   get mobileDockActions(): MobileDockAction[] {
     return [
       {
+        id: 'cancel',
+        label: 'Cancelar',
+        kind: 'secondary',
+        disabled: this.loading,
+      },
+      {
         id: 'save',
         label: this.loading
           ? 'Guardando...'
@@ -104,6 +112,10 @@ export class SupplyFormDialogComponent implements OnInit {
   }
 
   onMobileDockAction(id: string): void {
+    if (id === 'cancel') {
+      this.cancel();
+      return;
+    }
     if (id === 'save') {
       this.supplyForm?.onSubmit();
     }

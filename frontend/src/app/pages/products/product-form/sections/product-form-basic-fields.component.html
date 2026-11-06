@@ -18,7 +18,7 @@
   }
 
   <section class="form-block">
-    <h4>Datos del producto</h4>
+    <h4 class="desktop-only">Datos del producto</h4>
     <div class="data-row">
       <db-input
         label="Nombre"
@@ -55,7 +55,7 @@
   <ng-content />
 
   @if (showIncludesPiecesCheckbox) {
-    <div class="product-flags">
+    <div class="product-flags desktop-only">
       <div class="flag">
         <db-checkbox
           label="Publicado en catálogo"
@@ -77,6 +77,20 @@
         />
         <small>Se arma con otros productos del catálogo</small>
       </div>
+    </div>
+    <div class="product-flags product-flags--mobile mobile-only">
+      <db-mobile-toggle-row
+        label="Publicado en el catálogo"
+        hint="Desactivalo para piezas de uso interno"
+        [checked]="published"
+        (toggled)="published = $event; onFieldChange()"
+      />
+      <db-mobile-toggle-row
+        label="Incluye piezas"
+        hint="Se arma con otros productos del catálogo"
+        [checked]="includesPieces"
+        (toggled)="onIncludesPiecesChange($event)"
+      />
     </div>
   }
 </div>

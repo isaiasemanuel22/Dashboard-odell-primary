@@ -22,6 +22,17 @@
   &--2 {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
   }
+
+  &--aligned {
+    align-items: start;
+  }
+}
+
+.cal-dialog__link-hint {
+  margin: -6px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.35;
+  color: $color-text-muted;
 }
 
 .cal-dialog__info {

@@ -9,6 +9,10 @@ import {
 import { FormsModule } from '@angular/forms';
 import { AsyncPipe } from '@angular/common';
 import { Subject, takeUntil } from 'rxjs';
+import {
+  DbSegmentedControlComponent,
+  DbSegmentOption,
+} from '../../../../components/db-segmented-control/db-segmented-control.component';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import {
   GeneralSettings,
@@ -28,10 +32,17 @@ import { ProductFormPricingFacade } from '../store/product-form-pricing/product-
 import { ProductFormFacade } from '../product-form.facade';
 import { ProductFormPricingService } from '../product-form-pricing.service';
 
+type PriceMode = 'calculated' | 'fixed';
+
 @Component({
   selector: 'app-product-form-pricing-section',
   standalone: true,
-  imports: [FormsModule, AsyncPipe, CurrencyArsPipe],
+  imports: [
+    FormsModule,
+    AsyncPipe,
+    CurrencyArsPipe,
+    DbSegmentedControlComponent,
+  ],
   templateUrl: './product-form-pricing-section.component.html',
   styleUrl: './product-form-pricing-section.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -49,6 +60,11 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   @Input({ required: true }) form!: ProductFormGroup;
 
   readonly vm$ = this.pricingStore.vm$;
+
+  readonly priceModeOptions: DbSegmentOption<PriceMode>[] = [
+    { value: 'calculated', label: 'Calculado' },
+    { value: 'fixed', label: 'Precio fijo' },
+  ];
 
   ngOnInit(): void {
     const stored = Number(this.form.controls.suggestedPrice.value) || 0;
@@ -130,6 +146,36 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
 
   get priceManual(): boolean {
     return this.pricing.manualUnitPrice != null && this.pricing.manualUnitPrice > 0;
+  }
+
+  get priceMode(): PriceMode {
+    return this.priceManual ? 'fixed' : 'calculated';
+  }
+
+  onPriceModeChange(mode: PriceMode): void {
+    if (mode === 'calculated') {
+      this.resetUnitPrice();
+      return;
+    }
+    const calculated = Math.round(Number(this.pricing.computedPrice) || 0);
+    const current = this.priceManual
+      ? Math.round(Number(this.pricing.manualUnitPrice) || 0)
+      : calculated;
+    const amount = current > 0 ? current : calculated;
+    if (amount > 0) {
+      this.pricing.applyManualUnitPrice(amount);
+    }
+    this.cdr.markForCheck();
+  }
+
+  stalePriceNotice(displayedPrice: number): string | null {
+    if (this.priceManual) return null;
+    const catalog = Math.round(Number(this.facade.product?.price) || 0);
+    const next = Math.round(
+      Number(this.pricing.computedPrice) || Number(displayedPrice) || 0,
+    );
+    if (!(catalog > 0) || !(next > 0) || catalog === next) return null;
+    return `Hoy se vende a ${this.money(catalog)}: el precio quedó desactualizado. Al guardar pasa a ${this.money(next)}.`;
   }
 
   unitPriceDisplay(calculatedPrice: number): string {

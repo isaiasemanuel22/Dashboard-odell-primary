@@ -10,6 +10,7 @@ import {
   DbColorSelectComponent,
   DbSelectComponent,
   DbInputComponent,
+  DbFormGridComponent,
   DbSelectOption,
 } from '@general-components';
 import { FilamentType, ResinType, SupplyCategory } from '../../../../core/models';
@@ -17,7 +18,13 @@ import { FilamentType, ResinType, SupplyCategory } from '../../../../core/models
 @Component({
   selector: 'app-supply-form-material',
   standalone: true,
-  imports: [FormsModule, DbSelectComponent, DbInputComponent, DbColorSelectComponent],
+  imports: [
+    FormsModule,
+    DbSelectComponent,
+    DbInputComponent,
+    DbFormGridComponent,
+    DbColorSelectComponent,
+  ],
   templateUrl: './supply-form-material.component.html',
   styleUrl: './supply-form-material.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

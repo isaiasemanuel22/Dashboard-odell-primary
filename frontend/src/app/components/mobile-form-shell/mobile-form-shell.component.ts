@@ -3,8 +3,12 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnDestroy,
+  OnInit,
   Output,
+  inject,
 } from '@angular/core';
+import { LayoutUiService } from '../../layout/layout-ui.service';
 import {
   MobileDockAction,
   MobileDockComponent,
@@ -18,7 +22,10 @@ import {
   styleUrl: './mobile-form-shell.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class MobileFormShellComponent {
+export class MobileFormShellComponent implements OnInit, OnDestroy {
+  private readonly layoutUi = inject(LayoutUiService);
+  private pageBarRegistered = false;
+
   @Input() title = '';
   /** Si es false, solo cuerpo (+ dock); útil dentro de un modal que ya tiene título. */
   @Input() showHeader = true;
@@ -33,6 +40,19 @@ export class MobileFormShellComponent {
   @Output() readonly close = new EventEmitter<void>();
   @Output() readonly headerAction = new EventEmitter<void>();
   @Output() readonly dockAction = new EventEmitter<string>();
+
+  ngOnInit(): void {
+    if (this.showHeader) {
+      this.layoutUi.registerPageBar();
+      this.pageBarRegistered = true;
+    }
+  }
+
+  ngOnDestroy(): void {
+    if (this.pageBarRegistered) {
+      this.layoutUi.unregisterPageBar();
+    }
+  }
 
   get showDock(): boolean {
     return !!this.dockActions?.length;
