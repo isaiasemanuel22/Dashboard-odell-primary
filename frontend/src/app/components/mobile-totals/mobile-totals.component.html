@@ -26,7 +26,9 @@
         @if (row.strong || row.tone === 'emphasis') {
           <b>{{ row.label }}</b>
         } @else {
-          <span [class.m-hint]="row.tone === 'muted'">{{ row.label }}</span>
+          <span [class.m-hint]="row.labelHint || row.tone === 'muted'">{{
+            row.label
+          }}</span>
         }
         <span
           class="m-totals__num"

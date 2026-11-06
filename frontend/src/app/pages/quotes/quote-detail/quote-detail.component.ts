@@ -44,6 +44,7 @@ import {
   calculateOrderSubtotal,
   isDesignService,
 } from '../../../shared/utils/order.helpers';
+import { isThirdPartyService } from '../../../shared/utils/service-type.util';
 import { resolveLinePrintUnitPrice } from '../../../shared/utils/design-print.util';
 import { DEPOSIT_FACTOR } from '../../../shared/utils/quote-document.util';
 import { salesChannelLabel } from '../../../shared/utils/v1-labels.util';
@@ -237,15 +238,31 @@ export class QuoteDetailComponent implements OnInit {
       {
         label: `Seña sugerida ${this.depositPercent} %`,
         value: this.currencyArs.transform(this.depositAmount),
-        tone: 'muted',
+        labelHint: true,
       },
       {
         label: 'Ganancia estimada',
-        value: this.currencyArs.transform(this.estimatedProfit),
-        tone: this.estimatedProfit >= 0 ? 'success' : 'danger',
+        value: this.quoteHasLoadedCost
+          ? this.currencyArs.transform(this.estimatedProfit)
+          : 'Sin costo cargado',
+        labelHint: true,
+        tone: this.quoteHasLoadedCost
+          ? this.estimatedProfit >= 0
+            ? 'success'
+            : 'danger'
+          : 'default',
       },
     );
     return rows;
+  }
+
+  /** Hay al menos una línea propia con unitCost > 0. */
+  get quoteHasLoadedCost(): boolean {
+    if (!this.quote) return false;
+    return this.quote.items.some((item) => {
+      if (isThirdPartyService(item.serviceType)) return false;
+      return (Number(item.unitCost) || 0) > 0;
+    });
   }
 
   /** Exportar siempre; CTA primario según desktop. */

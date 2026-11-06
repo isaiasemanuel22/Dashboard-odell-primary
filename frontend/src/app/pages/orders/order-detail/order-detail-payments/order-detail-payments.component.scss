@@ -68,6 +68,15 @@
     color: mobile.$m-text-label;
   }
 
+  .od-pay-sheet__shortcuts {
+    display: flex;
+    justify-content: center;
+
+    ::ng-deep .m-chip-group {
+      justify-content: center;
+    }
+  }
+
   .od-pay-sheet__method {
     display: flex;
     flex-direction: column;

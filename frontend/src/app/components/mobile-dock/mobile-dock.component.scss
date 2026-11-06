@@ -42,16 +42,17 @@
 }
 
 .m-dock__btn {
-  min-height: 52px;
+  min-height: 48px;
   border-radius: 14px;
   font-family: inherit;
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 700;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   border: 0;
-  padding: 0 16px;
+  padding: 0 10px;
+  white-space: nowrap;
   cursor: pointer;
   box-sizing: border-box;
   text-decoration: none;

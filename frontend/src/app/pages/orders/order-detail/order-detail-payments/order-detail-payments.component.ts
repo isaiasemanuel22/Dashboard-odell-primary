@@ -22,7 +22,9 @@ import {
   DbInputComponent,
   DbSegmentedControlComponent,
   DbSelectComponent,
+  MobileAmountInputComponent,
   MobileChipGroupComponent,
+  MobileToggleRowComponent,
   type DbSegmentOption,
   type DbSelectOption,
   type MobileChipOption,
@@ -41,6 +43,9 @@ import {
 import { labelsToSelectOptions } from '../../../../shared/utils/select-options';
 import { defaultAccountForMethod } from '../../../../shared/utils/treasury-account.util';
 import { orderBalanceAmount, orderPaidAmount } from '../../../../shared/utils/order.helpers';
+import { formatCurrencyArs } from '../../../../shared/utils/currency-ars.util';
+
+type AmountShortcut = 'full' | 'half' | 'other';
 
 @Component({
   selector: 'app-order-detail-payments',
@@ -52,7 +57,9 @@ import { orderBalanceAmount, orderPaidAmount } from '../../../../shared/utils/or
     DbButtonComponent,
     DbSelectComponent,
     DbSegmentedControlComponent,
+    MobileAmountInputComponent,
     MobileChipGroupComponent,
+    MobileToggleRowComponent,
     CurrencyArsPipe,
     DateShortPipe,
   ],
@@ -78,6 +85,13 @@ export class OrderDetailPaymentsComponent {
   paymentFee: number | null = null;
   paymentLoading = false;
   paymentError = '';
+  amountShortcut: AmountShortcut | null = 'full';
+
+  readonly amountChipOptions: MobileChipOption<AmountShortcut>[] = [
+    { value: 'full', label: 'Todo el saldo' },
+    { value: 'half', label: '50 %' },
+    { value: 'other', label: 'Otro monto' },
+  ];
 
   readonly methodOptions: DbSegmentOption<PaymentMethod>[] =
     labelsToSelectOptions(PAYMENT_METHOD_LABELS);
@@ -119,16 +133,12 @@ export class OrderDetailPaymentsComponent {
     if (this.paymentLoading) return 'Registrando...';
     const amount = Number(this.paymentAmount);
     if (!Number.isFinite(amount) || amount <= 0) return 'Registrar pago';
-    const formatted = new Intl.NumberFormat('es-AR', {
-      style: 'currency',
-      currency: 'ARS',
-      maximumFractionDigits: 0,
-    }).format(amount);
-    return `Registrar ${formatted}`;
+    return `Registrar ${formatCurrencyArs(amount)}`;
   }
 
   preparePayment(amount: number, options?: { scroll?: boolean }): void {
     this.paymentAmount = amount;
+    this.syncShortcutFromAmount();
     this.paymentError = '';
     this.cdr.markForCheck();
     if (options?.scroll === false) return;
@@ -147,6 +157,46 @@ export class OrderDetailPaymentsComponent {
     if (method == null) return;
     this.onMethodChange(method);
     this.cdr.markForCheck();
+  }
+
+  onAmountShortcutChange(shortcut: AmountShortcut | null): void {
+    if (shortcut == null) return;
+    this.amountShortcut = shortcut;
+    if (shortcut === 'full') {
+      this.paymentAmount = Math.round(this.balanceAmount);
+    } else if (shortcut === 'half') {
+      this.paymentAmount = Math.round(this.balanceAmount / 2);
+    }
+    this.cdr.markForCheck();
+  }
+
+  onAmountShortcutSynced(): void {
+    this.syncShortcutFromAmount();
+    this.cdr.markForCheck();
+  }
+
+  onDepositToggle(checked: boolean): void {
+    this.paymentDeposit = checked;
+    this.cdr.markForCheck();
+  }
+
+  private syncShortcutFromAmount(): void {
+    const amount = Number(this.paymentAmount);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      this.amountShortcut = 'other';
+      return;
+    }
+    const balance = Math.round(this.balanceAmount);
+    const half = Math.round(this.balanceAmount / 2);
+    if (Math.round(amount) === balance) {
+      this.amountShortcut = 'full';
+      return;
+    }
+    if (Math.round(amount) === half) {
+      this.amountShortcut = 'half';
+      return;
+    }
+    this.amountShortcut = 'other';
   }
 
   registerPayment(): void {

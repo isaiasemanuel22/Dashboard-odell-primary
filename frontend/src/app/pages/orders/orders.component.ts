@@ -209,6 +209,18 @@ export class OrdersComponent implements OnInit {
     return this.orders.filter((order) => !isClosedOrder(order.status)).length;
   }
 
+  /** «2 de 6 abiertos» cuando hay filtros/búsqueda; si no, «N abiertos». */
+  get openOrdersBarLabel(): string {
+    const totalOpen = this.openOrdersCount;
+    if (!this.hasActiveMobileSearchOrFilters) {
+      return `${totalOpen} abiertos`;
+    }
+    const visibleOpen = this.mobileFilteredOrders.filter(
+      (order) => !isClosedOrder(order.status),
+    ).length;
+    return `${visibleOpen} de ${totalOpen} abiertos`;
+  }
+
   get mobileSheetFilterCount(): number {
     return countOrderMobileSheetFilters(this.mobileSheetFilters);
   }

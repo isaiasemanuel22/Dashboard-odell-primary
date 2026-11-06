@@ -43,6 +43,7 @@ import {
   orderIsOverdue,
   pluralize,
 } from '../../../shared/utils/order.helpers';
+import { formatPhoneArDisplay } from '../../../shared/utils/phone-ar.util';
 import {
   CurrencyArsPipe,
   DateShortPipe,
@@ -168,14 +169,11 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
     return month ? `desde ${month}` : '';
   }
 
-  get purchasedKpiSub(): string {
-    const ordersPart = pluralize(
-      this.purchasedOrdersCount,
-      'pedido',
-      'pedidos',
-    );
-    const since = this.purchasedSinceLabel;
-    return since ? `${ordersPart} · ${since}` : ordersPart;
+  get purchasedKpiValue(): string {
+    const money = this.currencyArs.transform(this.totalSpent);
+    const count = this.purchasedOrdersCount;
+    if (count <= 0) return money;
+    return `${money} · ${count} entregados`;
   }
 
   get balanceKpiSub(): string {
@@ -212,6 +210,10 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
     return digits ? `tel:${digits}` : null;
   }
 
+  get phoneDisplay(): string {
+    return formatPhoneArDisplay(this.customer?.phone) || (this.customer?.phone ?? '');
+  }
+
   get customerInitials(): string {
     return (this.customer?.name ?? '')
       .split(/\s+/)
@@ -239,8 +241,8 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
     return [
       {
         label: 'Comprado',
-        value: this.currencyArs.transform(this.totalSpent),
-        hint: this.purchasedKpiSub,
+        value: this.purchasedKpiValue,
+        hint: this.purchasedSinceLabel || null,
       },
       {
         label: 'Saldo',

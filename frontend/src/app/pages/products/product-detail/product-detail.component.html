@@ -121,73 +121,20 @@
         </div>
       </div>
 
-      @if (product3d; as printed) {
+      @if (product3d && mobileCostCompositionRows.length) {
         <h2 class="m-sec-t">Composición del costo</h2>
         <div class="m-card m-card--flush">
-          @if (!hasComponents && printed.filaments?.length) {
-            @for (line of printed.filaments; track line.id) {
-              <div class="m-row">
-                <div class="m-row__text">
-                  <b>Filamento {{ line.filamentType | filamentTypeLabel }} · {{ line.grams }} g</b>
-                  <span>{{ colorLabel(line.colorId) }}</span>
-                </div>
-              </div>
-            }
-          } @else if (!hasComponents && (grams > 0 || printed.filamentType)) {
-            <div class="m-row">
+          @for (row of mobileCostCompositionRows; track row.title) {
+            <div class="m-row pd-m__cost-row">
               <div class="m-row__text">
-                <b>
-                  @if (printed.filamentType) {
-                    Filamento {{ printed.filamentType | filamentTypeLabel }} · {{ grams }} g
-                  } @else if (printed.resinType) {
-                    Resina {{ printed.resinType | resinTypeLabel }} · {{ grams }} g
-                  } @else {
-                    Material · {{ grams }} g
-                  }
-                </b>
-                @if (printed.brand) {
-                  <span>{{ printed.brand }}</span>
+                <b>{{ row.title }}</b>
+                @if (row.detail) {
+                  <span>{{ row.detail }}</span>
                 }
               </div>
-            </div>
-          }
-          @if (printHours > 0) {
-            <div class="m-row">
-              <div class="m-row__text">
-                <b>Impresión · {{ printHours }} h</b>
-                <span>{{ product.type | productTypeLabel }}</span>
-              </div>
-            </div>
-          }
-          @if (workHours > 0) {
-            <div class="m-row">
-              <div class="m-row__text">
-                <b>Mano de obra · {{ workHours }} h</b>
-              </div>
-            </div>
-          }
-          @if (printed.washMinutes) {
-            <div class="m-row">
-              <div class="m-row__text">
-                <b>Lavado · {{ printed.washMinutes }} min</b>
-              </div>
-            </div>
-          }
-          @if (printed.cureMinutes) {
-            <div class="m-row">
-              <div class="m-row__text">
-                <b>Curado · {{ printed.cureMinutes }} min</b>
-              </div>
-            </div>
-          }
-          @if (hasComponents) {
-            <div class="m-row">
-              <div class="m-row__text">
-                <b>Piezas incluidas · {{ resolvedComponents.length }}</b>
-                @if (product.assemblyTimeHours > 0) {
-                  <span>Armado {{ product.assemblyTimeHours }} h</span>
-                }
-              </div>
+              @if (row.amount != null) {
+                <span class="pd-m__cost-end">{{ row.amount | currencyArs }}</span>
+              }
             </div>
           }
         </div>

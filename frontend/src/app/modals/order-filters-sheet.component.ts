@@ -9,6 +9,7 @@ import { Order, OrderStatus, ServiceType } from '../core/models';
 import {
   ORDER_STATUS_LABELS,
   SERVICE_TYPE_LABELS,
+  type AreaServiceType,
 } from '../shared/constants/labels';
 import {
   DbButtonComponent,
@@ -46,9 +47,18 @@ export class OrderFiltersSheetComponent {
     Object.entries(ORDER_STATUS_LABELS) as [OrderStatus, string][]
   ).map(([value, label]) => ({ value, label }));
 
-  readonly serviceOptions = (
-    Object.entries(SERVICE_TYPE_LABELS) as [ServiceType, string][]
-  ).map(([value, label]) => ({ value, label }));
+  /** Orden del artboard mobile (no cambia SERVICE_TYPE_LABELS de desktop). */
+  readonly serviceOptions: { value: AreaServiceType; label: string }[] = (
+    [
+      ServiceType.IMPRESION_3D,
+      ServiceType.ESTAMPADO,
+      ServiceType.DISENO_GRAFICO,
+      ServiceType.MODELADO,
+    ] as AreaServiceType[]
+  ).map((value) => ({
+    value,
+    label: SERVICE_TYPE_LABELS[value],
+  }));
 
   readonly deliveryOptions: {
     value: OrderDeliveryWindowFilter;

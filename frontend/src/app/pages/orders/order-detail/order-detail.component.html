@@ -1,19 +1,39 @@
 @if (loading) {
   <db-skeleton variant="detail" />
-} @else {
-  <db-state-message
-    [loading]="false"
-    [empty]="notFound || !order"
-    emptyMessage="Pedido no encontrado."
-  >
-    <db-button
-      emptyActions
-      label="Volver a pedidos"
-      variant="secondary"
-      format="soft"
-      routerLink="/pedidos"
-    />
-  </db-state-message>
+} @else if (notFound || !order) {
+  <div class="mobile-only od-m od-m--missing">
+    <db-mobile-bar title="Pedido" backLink="/pedidos" />
+    <div class="m-body">
+      <db-state-message
+        [loading]="false"
+        [empty]="true"
+        emptyMessage="Pedido no encontrado."
+      >
+        <db-button
+          emptyActions
+          label="Volver a pedidos"
+          variant="secondary"
+          format="soft"
+          routerLink="/pedidos"
+        />
+      </db-state-message>
+    </div>
+  </div>
+  <div class="desktop-only">
+    <db-state-message
+      [loading]="false"
+      [empty]="true"
+      emptyMessage="Pedido no encontrado."
+    >
+      <db-button
+        emptyActions
+        label="Volver a pedidos"
+        variant="secondary"
+        format="soft"
+        routerLink="/pedidos"
+      />
+    </db-state-message>
+  </div>
 }
 
 @if (!loading && order && !notFound) {
@@ -373,9 +393,6 @@
           {{ statusLoading ? 'Cancelando...' : 'Cancelar pedido' }}
         </button>
       }
-      <button type="button" class="m-sheet-action" (click)="closeMobileActions()">
-        Cerrar
-      </button>
     </db-mobile-sheet>
 
     <db-mobile-sheet

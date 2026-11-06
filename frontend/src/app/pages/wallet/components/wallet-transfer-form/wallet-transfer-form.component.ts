@@ -3,12 +3,16 @@ import {
   ChangeDetectorRef,
   Component,
   EventEmitter,
+  Input,
   Output,
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
-import { TreasuryAccount } from '../../../../core/models';
+import {
+  TreasuryAccount,
+  TreasuryAccountBalance,
+} from '../../../../core/models';
 import { TreasuryService } from '../../../../core/services/treasury.service';
 import {
   DbButtonComponent,
@@ -16,12 +20,16 @@ import {
   DbInputComponent,
   DbSelectComponent,
   FormModalComponent,
+  MobileAmountInputComponent,
 } from '@general-components';
 import type { DbSelectOption } from '@dashboard-form/db-select/db-select.types';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import { extractApiErrorMessage } from '../../../../shared/utils/api-error';
 import { labelsToSelectOptions } from '../../../../shared/utils/select-options';
 import { TREASURY_ACCOUNT_LABELS } from '../../../../shared/utils/v1-labels.util';
+import { formatCurrencyArs } from '../../../../shared/utils/currency-ars.util';
+import { formatMobileDateLabel } from '../../../../shared/utils/mobile-date-label.util';
+import { BreakpointService } from '../../../../core/services/breakpoint.service';
 
 @Component({
   selector: 'app-wallet-transfer-form',
@@ -34,6 +42,7 @@ import { TREASURY_ACCOUNT_LABELS } from '../../../../shared/utils/v1-labels.util
     DbSelectComponent,
     DbFormGridComponent,
     FormModalComponent,
+    MobileAmountInputComponent,
   ],
   templateUrl: './wallet-transfer-form.component.html',
   styleUrl: '../wallet-form.scss',
@@ -42,7 +51,9 @@ import { TREASURY_ACCOUNT_LABELS } from '../../../../shared/utils/v1-labels.util
 export class WalletTransferFormComponent {
   private readonly treasuryService = inject(TreasuryService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly breakpoint = inject(BreakpointService);
 
+  @Input() accountBalances: TreasuryAccountBalance[] = [];
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<void>();
 
@@ -56,6 +67,23 @@ export class WalletTransferFormComponent {
   transferDate = WalletTransferFormComponent.todayInputValue();
   saving = false;
   formError = '';
+
+  get mobileDateLabel(): string {
+    return formatMobileDateLabel(this.transferDate);
+  }
+
+  get submitLabel(): string {
+    if (this.saving) return 'Guardando...';
+    if (!this.breakpoint.isMobile()) return 'Transferir';
+    const amount = Math.round(Number(this.amount) || 0);
+    if (amount <= 0) return 'Transferir';
+    return `Transferir ${formatCurrencyArs(amount)}`;
+  }
+
+  accountBalance(account: TreasuryAccount): number {
+    const entry = this.accountBalances.find((item) => item.account === account);
+    return entry?.balance ?? 0;
+  }
 
   onAmountChange(): void {
     this.amount = Math.max(0, Math.round(Number(this.amount) || 0));

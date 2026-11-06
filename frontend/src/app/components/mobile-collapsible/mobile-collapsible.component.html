@@ -1,8 +1,10 @@
-<div class="m-collapsible" [attr.id]="panelId() || null">
+<div class="m-collapsible">
   <button
     type="button"
     class="m-collapsible__btn"
     [attr.aria-expanded]="open()"
+    [attr.aria-controls]="contentId"
+    [attr.aria-label]="buttonAriaLabel"
     (click)="onToggle()"
   >
     <strong class="m-collapsible__title">{{ title() }}</strong>
@@ -24,7 +26,7 @@
     </svg>
   </button>
   @if (open()) {
-    <div class="m-collapsible__body">
+    <div class="m-collapsible__body" [attr.id]="contentId" role="region">
       <ng-content />
     </div>
   }

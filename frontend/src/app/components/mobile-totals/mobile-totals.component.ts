@@ -9,6 +9,8 @@ export interface MobileTotalRow {
   value: string;
   /** 'muted' | 'danger' | 'success' | 'emphasis' (total destacado) */
   tone?: 'default' | 'muted' | 'danger' | 'success' | 'emphasis';
+  /** Etiqueta en 12px secundario (hint), sin forzar el tono del valor. */
+  labelHint?: boolean;
   strong?: boolean;
 }
 

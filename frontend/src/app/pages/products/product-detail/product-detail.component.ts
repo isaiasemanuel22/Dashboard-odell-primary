@@ -15,10 +15,14 @@ import { catchError, map, of, switchMap } from 'rxjs';
 import {
   Category,
   ColorConfig,
+  CostBreakdown,
+  FilamentType,
+  GeneralSettings,
   Product,
   Product3D,
   ProductAttachment,
   ProductStockOverview,
+  ResinType,
   ServiceProfitMargins,
   WholesaleDiscountSettings,
   isProduct3D,
@@ -27,6 +31,7 @@ import { RealtimeEvent } from '../../../core/models/realtime.model';
 import { CategoryCatalogService } from '../../../core/services/category-catalog.service';
 import { MediaUploadService } from '../../../core/services/media-upload.service';
 import { ProductCatalogService } from '../../../core/services/product-catalog.service';
+import { ProductCostCalculationService } from '../../../core/services/product-cost-calculation.service';
 import { ProductsService } from '../../../core/services/products.service';
 import { RealtimeCatalogSyncService } from '../../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
@@ -75,10 +80,22 @@ import {
 import {
   CurrencyArsPipe,
   DateShortPipe,
-  FilamentTypeLabelPipe,
   ProductTypeLabelPipe,
-  ResinTypeLabelPipe,
 } from '../../../shared/pipes/labels.pipe';
+import {
+  FILAMENT_TYPE_LABELS,
+  PRODUCT_TYPE_LABELS,
+  RESIN_TYPE_LABELS,
+} from '../../../shared/constants/labels';
+import { resolveFilamentPricePerKg, resolveResinPricePerLiter } from '../../../shared/utils/material-type-price.util';
+import { formatCurrencyArs } from '../../../shared/utils/currency-ars.util';
+import { resolveFdmFilaments } from '../../../shared/utils/fdm.helpers';
+
+export interface MobileCostCompositionRow {
+  title: string;
+  detail: string | null;
+  amount: number | null;
+}
 
 @Component({
   selector: 'app-product-detail',
@@ -88,9 +105,7 @@ import {
     RouterLink,
     CurrencyArsPipe,
     DateShortPipe,
-    FilamentTypeLabelPipe,
     ProductTypeLabelPipe,
-    ResinTypeLabelPipe,
     DbButtonComponent,
     DbAttachmentUploadComponent,
     DbSkeletonComponent,
@@ -121,9 +136,11 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   private readonly formDialogs = inject(FormDialogService);
   private readonly mediaUpload = inject(MediaUploadService);
   private readonly settingsService = inject(SettingsService);
+  private readonly costCalculation = inject(ProductCostCalculationService);
   private readonly saleCart = inject(SaleCartService);
   product: Product | null = null;
   colorCatalog: ColorConfig[] = [];
+  generalSettings: GeneralSettings | null = null;
   profitMargins: ServiceProfitMargins = { ...DEFAULT_PROFIT_MARGINS };
   wholesaleDiscount: WholesaleDiscountSettings = {
     ...DEFAULT_WHOLESALE_DISCOUNT,
@@ -158,6 +175,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
       next: (settings) => {
+        this.generalSettings = settings;
         this.colorCatalog = settings.colors ?? [];
         this.profitMargins = normalizeProfitMargins(settings.profitMargins);
         this.wholesaleDiscount = normalizeWholesaleDiscount(
@@ -278,9 +296,164 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       this.displayCost,
     );
     const target = this.targetMarginPercent;
+    const nbsp = '\u00a0';
     const marginPart =
-      margin == null ? 'Sin margen' : `Margen ${margin} %`;
-    return `${marginPart} · objetivo ${target} %`;
+      margin == null ? 'Sin margen' : `Margen ${margin}${nbsp}%`;
+    return `${marginPart} · objetivo ${target}${nbsp}%`;
+  }
+
+  /** Filas de composición mobile con montos del mismo cálculo de costo de la app. */
+  get mobileCostCompositionRows(): MobileCostCompositionRow[] {
+    const printed = this.product3d;
+    const settings = this.generalSettings;
+    if (!printed || !settings) return [];
+
+    const breakdown = this.mobileCostBreakdown;
+    const rows: MobileCostCompositionRow[] = [];
+
+    if (!this.hasComponents) {
+      const filaments = resolveFdmFilaments(printed);
+      if (filaments.length) {
+        for (const line of filaments) {
+          const grams = Number(line.grams) || 0;
+          const pricePerKg = resolveFilamentPricePerKg(
+            settings,
+            line.filamentType,
+          );
+          const amount =
+            pricePerKg == null
+              ? null
+              : Math.round((grams / 1000) * pricePerKg);
+          rows.push({
+            title: `Filamento ${FILAMENT_TYPE_LABELS[line.filamentType as FilamentType] ?? String(line.filamentType).toUpperCase()} · ${grams} g`,
+            detail:
+              pricePerKg == null
+                ? this.colorLabel(line.colorId)
+                : `${formatCurrencyArs(pricePerKg)} / kg`,
+            amount,
+          });
+        }
+      } else if (this.grams > 0 || printed.filamentType || printed.resinType) {
+        if (printed.resinType) {
+          const pricePerL = resolveResinPricePerLiter(
+            settings,
+            printed.resinType,
+          );
+          const amount =
+            pricePerL == null
+              ? breakdown?.materialCost ?? null
+              : Math.round((this.grams / 1000) * pricePerL);
+          rows.push({
+            title: `Resina ${RESIN_TYPE_LABELS[printed.resinType as ResinType] ?? printed.resinType} · ${this.grams} g`,
+            detail:
+              pricePerL == null
+                ? printed.brand || null
+                : `${formatCurrencyArs(pricePerL)} / L`,
+            amount,
+          });
+        } else {
+          const pricePerKg = resolveFilamentPricePerKg(
+            settings,
+            printed.filamentType,
+          );
+          const amount =
+            pricePerKg == null
+              ? breakdown?.materialCost ?? null
+              : Math.round((this.grams / 1000) * pricePerKg);
+          rows.push({
+            title: printed.filamentType
+              ? `Filamento ${FILAMENT_TYPE_LABELS[printed.filamentType as FilamentType] ?? String(printed.filamentType).toUpperCase()} · ${this.grams} g`
+              : `Material · ${this.grams} g`,
+            detail:
+              pricePerKg == null
+                ? printed.brand || null
+                : `${formatCurrencyArs(pricePerKg)} / kg`,
+            amount,
+          });
+        }
+      }
+    }
+
+    if (this.printHours > 0) {
+      const printAmount =
+        breakdown != null
+          ? Math.round(breakdown.energyCost + breakdown.machineCost)
+          : null;
+      rows.push({
+        title: `Impresión · ${this.printHours} h`,
+        detail: PRODUCT_TYPE_LABELS[printed.type] ?? printed.type,
+        amount: printAmount,
+      });
+    }
+
+    if (this.workHours > 0) {
+      const rate = Number(settings.laborCostPerHour) || 0;
+      rows.push({
+        title: `Mano de obra · ${this.workHours} h`,
+        detail: rate > 0 ? `${formatCurrencyArs(rate)} / h` : null,
+        amount: breakdown?.laborCost ?? (rate > 0 ? Math.round(this.workHours * rate) : null),
+      });
+    }
+
+    if (printed.washMinutes) {
+      rows.push({
+        title: `Lavado · ${printed.washMinutes} min`,
+        detail: null,
+        amount: null,
+      });
+    }
+
+    if (printed.cureMinutes) {
+      rows.push({
+        title: `Curado · ${printed.cureMinutes} min`,
+        detail: null,
+        amount: null,
+      });
+    }
+
+    if (this.hasComponents) {
+      rows.push({
+        title: `Piezas incluidas · ${this.resolvedComponents.length}`,
+        detail:
+          this.product && this.product.assemblyTimeHours > 0
+            ? `Armado ${this.product.assemblyTimeHours} h`
+            : null,
+        amount: breakdown?.materialCost ?? null,
+      });
+    }
+
+    const errorPercent = Number(settings.errorMarginPercent) || 0;
+    if (errorPercent > 0 || (breakdown?.errorMarginCost ?? 0) > 0) {
+      rows.push({
+        title: `Margen de error · ${errorPercent} %`,
+        detail: 'Sobre material y máquina',
+        amount: breakdown?.errorMarginCost ?? null,
+      });
+    }
+
+    return rows;
+  }
+
+  private get mobileCostBreakdown(): CostBreakdown | null {
+    const printed = this.product3d;
+    const settings = this.generalSettings;
+    // Combo/piezas: sin recalcular costos de componentes acá.
+    if (!printed || !settings || this.hasComponents) return null;
+    return this.costCalculation.calculateCost(
+      {
+        type: printed.type,
+        grams: this.grams,
+        printTimeHours: this.printHours,
+        workTimeHours: this.workHours,
+        brand: printed.brand,
+        filamentType: printed.filamentType,
+        filaments: printed.filaments,
+        resinType: printed.resinType,
+        washMinutes: printed.washMinutes,
+        cureMinutes: printed.cureMinutes,
+      },
+      { settings },
+    );
   }
 
   colorLabel(colorId?: string): string {

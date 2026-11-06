@@ -7,6 +7,7 @@ export {
   type MobileDockAction,
 } from './mobile-dock/mobile-dock.component';
 export { MobileSheetComponent } from './mobile-sheet/mobile-sheet.component';
+export { MobileAmountInputComponent } from './mobile-amount-input/mobile-amount-input.component';
 export {
   MobileChipGroupComponent,
   type MobileChipOption,

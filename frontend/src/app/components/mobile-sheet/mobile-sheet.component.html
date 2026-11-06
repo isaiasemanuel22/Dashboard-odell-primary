@@ -50,6 +50,15 @@
 
     <div class="m-sheet-body">
       <ng-content />
+      @if (showDefaultActionsClose) {
+        <button
+          type="button"
+          class="m-sheet-action"
+          (click)="onCloseClick()"
+        >
+          Cerrar
+        </button>
+      }
     </div>
 
     @if (showFoot) {

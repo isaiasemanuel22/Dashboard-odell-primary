@@ -377,9 +377,16 @@
 
   .od-m__status-row {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     align-items: center;
     gap: 6px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .od-m__summary > .m-ln {
+    align-items: flex-start;
+    gap: 8px;
     min-width: 0;
   }
 
@@ -388,6 +395,10 @@
     color: mobile.$m-text-secondary;
     text-align: right;
     min-width: 0;
+    flex: 0 1 auto;
+    max-width: 48%;
+    overflow: hidden;
+    text-overflow: ellipsis;
     white-space: nowrap;
   }
 

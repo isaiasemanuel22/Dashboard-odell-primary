@@ -455,8 +455,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   get wholesalePill(): string | null {
     if (!this.order?.wholesaleApplied) return null;
     const percent = this.wholesaleDiscountPercent();
-    if (percent == null || percent <= 0) return 'Mayorista';
-    return `Mayorista · −${percent}%`;
+    if (percent == null || percent <= 0) return 'Revendedor';
+    return `Revendedor · −${percent}%`;
   }
 
   get assignedCustomerPhone(): string | null {

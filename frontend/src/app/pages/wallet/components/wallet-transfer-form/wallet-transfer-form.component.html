@@ -1,6 +1,6 @@
 <app-form-modal title="Transferir entre cuentas" size="md" (close)="closed.emit()">
   <form class="wallet-form form" (ngSubmit)="submitTransfer()" novalidate>
-    <section class="wallet-form__section">
+    <section class="wallet-form__section desktop-only">
       <div class="wallet-form__section-head">
         <h4>Movimiento interno</h4>
         <p>Pasá saldo de una cuenta a otra. No cambia el disponible total.</p>
@@ -51,6 +51,73 @@
       </div>
     </section>
 
+    <section class="wallet-form__section mobile-only wallet-form-m">
+      <db-mobile-amount-input
+        label="Monto"
+        name="transferAmountMobile"
+        [(ngModel)]="amount"
+        (amountChange)="onAmountChange()"
+      />
+
+      <div class="wallet-form-m__two">
+        <div class="wallet-form-m__field">
+          <db-select
+            label="Desde"
+            [(ngModel)]="fromAccount"
+            name="transferFromMobile"
+            [options]="accountOptions"
+            [required]="true"
+          />
+          <span class="wallet-form-m__hint">Saldo {{ accountBalance(fromAccount) | currencyArs }}</span>
+        </div>
+        <div class="wallet-form-m__field">
+          <db-select
+            label="Hacia"
+            [(ngModel)]="toAccount"
+            name="transferToMobile"
+            [options]="accountOptions"
+            [required]="true"
+          />
+          <span class="wallet-form-m__hint">Saldo {{ accountBalance(toAccount) | currencyArs }}</span>
+        </div>
+      </div>
+
+      <div class="wallet-form-m__date">
+        <span class="wallet-form-m__fl">Fecha</span>
+        <div class="wallet-form-m__date-wrap">
+          <span class="wallet-form-m__date-label" aria-hidden="true"
+            >{{ mobileDateLabel }} <span>▾</span></span
+          >
+          <input
+            class="wallet-form-m__date-input"
+            type="date"
+            [(ngModel)]="transferDate"
+            name="transferDateMobile"
+            [required]="true"
+            [max]="maxTransferDate"
+            [attr.aria-label]="'Fecha: ' + mobileDateLabel"
+          />
+        </div>
+      </div>
+
+      <div class="wallet-form-m__note" role="note">
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 8v5M12 16h.01" />
+        </svg>
+        <span>El disponible total no cambia: solo mueve plata entre cuentas.</span>
+      </div>
+    </section>
+
     @if (formError) {
       <p class="wallet-form__error" role="alert">{{ formError }}</p>
     }
@@ -64,7 +131,7 @@
         (clicked)="closed.emit()"
       />
       <db-button
-        [label]="saving ? 'Guardando...' : 'Transferir'"
+        [label]="submitLabel"
         variant="primary"
         format="solid"
         buttonType="submit"

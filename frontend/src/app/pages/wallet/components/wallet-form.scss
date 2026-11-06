@@ -20,11 +20,15 @@
     gap: 14px;
   }
 
+  .wallet-form__section-head {
+    display: none;
+  }
+
   .wallet-form__footer {
     margin-top: auto;
     margin-left: -16px;
     margin-right: -16px;
-    padding: 12px 16px calc(20px + env(safe-area-inset-bottom, 0px));
+    padding: 12px 16px calc(12px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid mobile.$m-border;
     position: sticky;
     bottom: 0;
@@ -43,6 +47,22 @@
     db-button:has(.db-button--cancel) {
       display: none;
     }
+
+    ::ng-deep .db-button--solid.db-button--primary {
+      min-height: 52px;
+      width: 100%;
+      background: mobile.$m-primary;
+      border: none;
+      color: #fff;
+      white-space: nowrap;
+      font-size: 14px;
+      padding: 0 10px;
+
+      &:hover:not(:disabled) {
+        background: mobile.$m-primary-dark;
+        opacity: 1;
+      }
+    }
   }
 
   input.db-input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not([type='file']):not([type='range']):not([type='color']),
@@ -54,6 +74,98 @@
 
   .wallet-segment__btn {
     min-height: 44px;
+  }
+
+  .wallet-form-m {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .wallet-form-m--top {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .wallet-form-m__two {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .wallet-form-m__field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .wallet-form-m__hint {
+    font-size: 12px;
+    color: mobile.$m-text-secondary;
+  }
+
+  .wallet-form-m__fl {
+    font-size: 13px;
+    font-weight: 500;
+    color: mobile.$m-text-label;
+  }
+
+  .wallet-form-m__date {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .wallet-form-m__date-wrap {
+    position: relative;
+    min-height: 48px;
+  }
+
+  .wallet-form-m__date-label {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 0 12px;
+    border: 1px solid mobile.$m-border-input;
+    border-radius: 12px;
+    background: #fff;
+    color: mobile.$m-text;
+    font-size: 15px;
+    pointer-events: none;
+  }
+
+  .wallet-form-m__date-input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    border: 0;
+    background: transparent;
+  }
+
+  .wallet-form-m__note {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    padding: 12px 14px;
+    border-radius: 14px;
+    background: #f4f8fb;
+    border: 1px solid #e3ecf2;
+    font-size: 13px;
+    color: #33495a;
+
+    svg {
+      flex: none;
+      margin-top: 1px;
+    }
   }
 }
 

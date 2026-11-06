@@ -6,6 +6,8 @@ import {
   output,
 } from '@angular/core';
 
+let mobileCollapsibleSeq = 0;
+
 /**
  * Sección plegable mobile: título, resumen a la derecha, chevron,
  * aria-expanded. El cuerpo va por proyección.
@@ -24,6 +26,17 @@ export class MobileCollapsibleComponent {
   readonly panelId = input<string | null>(null);
 
   readonly toggled = output<boolean>();
+
+  private readonly autoContentId = `db-mobile-collapsible-${++mobileCollapsibleSeq}`;
+
+  protected get contentId(): string {
+    return this.panelId() || this.autoContentId;
+  }
+
+  protected get buttonAriaLabel(): string {
+    const summary = this.summary()?.trim();
+    return summary ? `${this.title()}, ${summary}` : this.title();
+  }
 
   protected onToggle(): void {
     const next = !this.open();

@@ -5,7 +5,7 @@
 >
   <form class="wallet-form form" (ngSubmit)="submitExpense()" novalidate>
     <section class="wallet-form__section">
-      <db-form-grid>
+      <db-form-grid class="desktop-only">
         <db-input
           label="Fecha"
           type="date"
@@ -23,6 +23,36 @@
           [required]="true"
         />
       </db-form-grid>
+
+      <div class="mobile-only wallet-form-m wallet-form-m--top">
+        <div class="wallet-form-m__date">
+          <span class="wallet-form-m__fl">Fecha</span>
+          <div class="wallet-form-m__date-wrap">
+            <span class="wallet-form-m__date-label" aria-hidden="true"
+              >{{ mobileDateLabel }} <span>▾</span></span
+            >
+            <input
+              class="wallet-form-m__date-input"
+              type="date"
+              [(ngModel)]="expenseDate"
+              name="expenseDateMobile"
+              [required]="true"
+              [max]="maxExpenseDate"
+              [attr.aria-label]="'Fecha: ' + mobileDateLabel"
+            />
+          </div>
+        </div>
+        <div class="wallet-form-m__field">
+          <db-select
+            label="Cuenta"
+            [(ngModel)]="account"
+            name="accountMobile"
+            [options]="accountOptions"
+            [required]="true"
+          />
+          <span class="wallet-form-m__hint">Saldo {{ accountBalance(account) | currencyArs }}</span>
+        </div>
+      </div>
 
       @if (!isPersonMovementForm && !isEdit) {
         <label class="wallet-toggle">
@@ -66,6 +96,7 @@
           </db-form-grid-full>
 
           <db-input
+            class="desktop-only"
             label="Monto"
             type="number"
             min="0"
@@ -76,11 +107,36 @@
             [required]="true"
             (ngModelChange)="onSimpleAmountChange()"
           />
+          <db-form-grid-full class="mobile-only">
+            <db-mobile-amount-input
+              label="Monto"
+              name="personAmountMobile"
+              [(ngModel)]="amount"
+              (amountChange)="onSimpleAmountChange()"
+            />
+          </db-form-grid-full>
         </db-form-grid>
 
-        <div class="wallet-summary wallet-summary--expense">
+        <div class="wallet-summary wallet-summary--expense desktop-only">
           <span class="wallet-summary__label">{{ personSummaryLabel }}</span>
           <strong class="wallet-summary__amount">{{ amount | currencyArs }}</strong>
+        </div>
+
+        <div class="mobile-only wallet-form-m__note" role="note">
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v5M12 16h.01" />
+          </svg>
+          <span>{{ personHelp }}</span>
         </div>
       </section>
     } @else if (!isSupplyPurchase) {
@@ -126,6 +182,7 @@
           </db-form-grid-full>
 
           <db-input
+            class="desktop-only"
             label="Monto"
             type="number"
             min="0"
@@ -136,10 +193,18 @@
             [required]="true"
             (ngModelChange)="onSimpleAmountChange()"
           />
+          <db-form-grid-full class="mobile-only">
+            <db-mobile-amount-input
+              label="Monto"
+              name="amountMobile"
+              [(ngModel)]="amount"
+              (amountChange)="onSimpleAmountChange()"
+            />
+          </db-form-grid-full>
         </db-form-grid>
 
         <div
-          class="wallet-summary"
+          class="wallet-summary desktop-only"
           [class.wallet-summary--income]="isIncomeMovement"
           [class.wallet-summary--expense]="!isIncomeMovement"
         >
@@ -177,17 +242,7 @@
         (clicked)="closed.emit()"
       />
       <db-button
-        [label]="
-          saving
-            ? 'Guardando...'
-            : isEdit
-              ? 'Guardar cambios'
-              : mode === 'payment'
-                ? 'Registrar pago'
-                : mode === 'loan'
-                  ? 'Registrar préstamo'
-                  : 'Guardar registro'
-        "
+        [label]="submitLabel"
         variant="primary"
         format="solid"
         buttonType="submit"

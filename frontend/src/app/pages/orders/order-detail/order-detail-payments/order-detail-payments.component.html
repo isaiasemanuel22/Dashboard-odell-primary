@@ -5,14 +5,21 @@
       <b class="od-pay-sheet__num">{{ balanceAmount | currencyArs }}</b>
     </div>
 
-    <db-input
+    <db-mobile-amount-input
       label="Monto"
-      type="number"
-      [(ngModel)]="paymentAmount"
       name="paymentAmountSheet"
-      [min]="0.01"
-      [step]="0.01"
+      [(ngModel)]="paymentAmount"
+      (amountChange)="onAmountShortcutSynced()"
     />
+
+    <div class="od-pay-sheet__shortcuts">
+      <db-mobile-chip-group
+        [options]="amountChipOptions"
+        [value]="amountShortcut"
+        ariaLabel="Atajos de monto"
+        (valueChange)="onAmountShortcutChange($event)"
+      />
+    </div>
 
     <div class="od-pay-sheet__method">
       <span class="od-pay-sheet__label" id="payment-method-sheet-label">Medio de pago</span>
@@ -49,10 +56,11 @@
       </div>
     }
 
-    <db-checkbox
+    <db-mobile-toggle-row
       label="Es una seña"
-      name="paymentDepositSheet"
-      [(ngModel)]="paymentDeposit"
+      variant="line"
+      [checked]="paymentDeposit"
+      (toggled)="onDepositToggle($event)"
     />
 
     @if (paymentError) {

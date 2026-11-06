@@ -1,0 +1,18 @@
+<label class="m-amount" [attr.for]="name">
+  <span class="m-amount__label">{{ label }}</span>
+  <input
+    #amountInput
+    class="m-amount__input"
+    [id]="name"
+    [name]="name"
+    type="text"
+    inputmode="numeric"
+    autocomplete="off"
+    [disabled]="disabled"
+    [attr.aria-label]="ariaLabel || label"
+    [value]="displayValue"
+    (focus)="onFocus()"
+    (blur)="onBlur()"
+    (input)="onInput($any($event.target).value)"
+  />
+</label>

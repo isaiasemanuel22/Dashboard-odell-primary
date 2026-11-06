@@ -16,6 +16,7 @@ import {
 } from '../core/models';
 import type { CalendarEntry } from '../core/models';
 import { BreakpointService } from '../core/services/breakpoint.service';
+import { LayoutUiService } from '../layout/layout-ui.service';
 import { formDialogConfig } from './form-dialog.config';
 import { ModalSize } from './modal-size';
 import type { ConfirmDialogData } from './confirm-dialog.component';
@@ -39,6 +40,7 @@ export class FormDialogService {
   private readonly dialog = inject(Dialog);
   private readonly overlay = inject(Overlay);
   private readonly breakpoint = inject(BreakpointService);
+  private readonly layoutUi = inject(LayoutUiService);
   /** Evita apilar varios modales de presupuesto por clicks/teclas repetidas. */
   private quoteDialogLocked = false;
 
@@ -398,6 +400,9 @@ export class FormDialogService {
   ): Observable<TResult | undefined> {
     const base = this.baseConfig(size);
     const isMobile = this.breakpoint.isMobile();
+    if (isMobile) {
+      this.layoutUi.pushOverlay();
+    }
     const ref = this.dialog.open(component, {
       ...base,
       panelClass: [...base.panelClass, ...(overrides.panelClass ?? [])],
@@ -405,6 +410,12 @@ export class FormDialogService {
       ariaLabel: overrides.ariaLabel,
       data,
     });
-    return ref.closed as Observable<TResult | undefined>;
+    return (ref.closed as Observable<TResult | undefined>).pipe(
+      finalize(() => {
+        if (isMobile) {
+          this.layoutUi.popOverlay();
+        }
+      }),
+    );
   }
 }

@@ -36,6 +36,11 @@ export class MobileSheetComponent implements OnChanges, OnDestroy {
   @Input() secondaryLabel?: string;
   /** aria-label del diálogo cuando no hay título visible. */
   @Input() ariaLabel?: string;
+  /**
+   * En menús de acciones (sin título) agrega «Cerrar» al final.
+   * Pedido/presupuesto ya lo tenían a mano; cliente/producto lo reciben acá.
+   */
+  @Input() showActionsClose = true;
 
   @Output() readonly closed = new EventEmitter<void>();
   @Output() readonly primary = new EventEmitter<void>();
@@ -54,6 +59,15 @@ export class MobileSheetComponent implements OnChanges, OnDestroy {
 
   get showFoot(): boolean {
     return !!this.primaryLabel || !!this.secondaryLabel;
+  }
+
+  /** Menú ⋯ / acciones: sin cabezal de título. */
+  get isActionsMenu(): boolean {
+    return !this.showHead;
+  }
+
+  get showDefaultActionsClose(): boolean {
+    return this.isActionsMenu && this.showActionsClose;
   }
 
   get dockActions(): MobileDockAction[] {

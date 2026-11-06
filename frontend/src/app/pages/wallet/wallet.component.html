@@ -177,9 +177,6 @@
     <button type="button" class="m-sheet-action" (click)="chooseLoan()">
       Prestar
     </button>
-    <button type="button" class="m-sheet-action" (click)="closePayLoanSheet()">
-      Cerrar
-    </button>
   </db-mobile-sheet>
 </div>
 
@@ -264,6 +261,7 @@
     [expense]="editingExpense"
     [startAsPurchase]="purchasePreset"
     [supplies]="supplies"
+    [accountBalances]="overview?.accounts ?? []"
     [nameSuggestions]="overview?.recordNameSuggestions ?? []"
     [recipientSuggestions]="overview?.recipientNameSuggestions ?? []"
     (closed)="closeForm()"
@@ -273,6 +271,7 @@
 
 @if (showTransferForm) {
   <app-wallet-transfer-form
+    [accountBalances]="overview?.accounts ?? []"
     (closed)="closeTransferForm()"
     (saved)="onTransferSaved()"
   />

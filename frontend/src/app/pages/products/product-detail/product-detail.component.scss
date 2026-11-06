@@ -180,11 +180,24 @@
   .pd-m__ks {
     font-size: 11px;
     color: mobile.$m-text-secondary;
+    white-space: nowrap;
   }
 
   .pd-m__num {
     font-variant-numeric: tabular-nums;
     font-weight: 700;
+  }
+
+  .pd-m__cost-row {
+    cursor: default;
+  }
+
+  .pd-m__cost-end {
+    flex: none;
+    font-size: 14px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: mobile.$m-text;
   }
 
 }

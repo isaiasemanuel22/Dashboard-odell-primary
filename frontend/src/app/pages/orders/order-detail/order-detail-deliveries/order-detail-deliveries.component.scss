@@ -87,6 +87,26 @@
     color: #7a4a06;
   }
 
+  .od-del-sheet__charge {
+    display: block;
+    width: 100%;
+
+    ::ng-deep .db-button {
+      width: 100%;
+      min-height: 48px;
+      background: #fff;
+      border: 1px solid mobile.$m-border-input;
+      color: mobile.$m-text;
+      box-shadow: none;
+
+      &:hover:not(:disabled) {
+        background: #fff;
+        border-color: mobile.$m-border-input;
+        opacity: 1;
+      }
+    }
+  }
+
   .od-del-sheet__foot {
     margin-top: auto;
     margin-left: -16px;

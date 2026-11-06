@@ -13,6 +13,7 @@ import { Observable, finalize } from 'rxjs';
 import {
   Supply,
   TreasuryAccount,
+  TreasuryAccountBalance,
   TreasuryExpense,
   TreasuryExpenseCategory,
   TreasuryMovementDirection,
@@ -28,6 +29,7 @@ import {
   DbInputComponent,
   DbSelectComponent,
   FormModalComponent,
+  MobileAmountInputComponent,
 } from '@general-components';
 import type { DbAutocompleteOption } from '@dashboard-form/db-autocomplete/db-autocomplete.types';
 import type { DbSelectOption } from '@dashboard-form/db-select/db-select.types';
@@ -36,6 +38,9 @@ import { extractApiErrorMessage } from '../../../../shared/utils/api-error';
 import { FormDialogService } from '../../../../modals/form-dialog.service';
 import { labelsToSelectOptions } from '../../../../shared/utils/select-options';
 import { TREASURY_ACCOUNT_LABELS } from '../../../../shared/utils/v1-labels.util';
+import { formatCurrencyArs } from '../../../../shared/utils/currency-ars.util';
+import { formatMobileDateLabel } from '../../../../shared/utils/mobile-date-label.util';
+import { BreakpointService } from '../../../../core/services/breakpoint.service';
 import {
   WalletRecordSuppliesComponent,
   WalletSupplyLine,
@@ -56,6 +61,7 @@ export type WalletFormMode = 'general' | 'payment' | 'loan';
     DbFormGridFullComponent,
     DbAutocompleteComponent,
     FormModalComponent,
+    MobileAmountInputComponent,
     WalletRecordSuppliesComponent,
   ],
   templateUrl: './wallet-record-form.component.html',
@@ -67,11 +73,13 @@ export class WalletRecordFormComponent implements OnInit {
   private readonly suppliesService = inject(SuppliesService);
   private readonly formDialogs = inject(FormDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly breakpoint = inject(BreakpointService);
 
   @Input() mode: WalletFormMode = 'general';
   @Input() expense: TreasuryExpense | null = null;
   @Input() startAsPurchase = false;
   @Input() supplies: Supply[] = [];
+  @Input() accountBalances: TreasuryAccountBalance[] = [];
   @Input() nameSuggestions: string[] = [];
   @Input() recipientSuggestions: string[] = [];
   @Output() closed = new EventEmitter<void>();
@@ -184,6 +192,34 @@ export class WalletRecordFormComponent implements OnInit {
 
   get recipientOptions(): DbAutocompleteOption[] {
     return this.recipientSuggestions.map((name) => ({ value: name, label: name }));
+  }
+
+  get mobileDateLabel(): string {
+    return formatMobileDateLabel(this.expenseDate);
+  }
+
+  get submitLabel(): string {
+    if (this.saving) return 'Guardando...';
+    if (this.isEdit) return 'Guardar cambios';
+    const base =
+      this.mode === 'payment'
+        ? 'Registrar pago'
+        : this.mode === 'loan'
+          ? 'Registrar préstamo'
+          : 'Guardar registro';
+    if (!this.breakpoint.isMobile()) return base;
+    const amount = this.isSupplyPurchase
+      ? this.computedSupplyTotal
+      : Math.round(Number(this.amount) || 0);
+    if (amount <= 0) return this.mode === 'payment' || this.mode === 'loan' ? base : 'Guardar';
+    if (this.mode === 'payment') return `Registrar pago ${formatCurrencyArs(amount)}`;
+    if (this.mode === 'loan') return `Registrar préstamo ${formatCurrencyArs(amount)}`;
+    return `Guardar ${formatCurrencyArs(amount)}`;
+  }
+
+  accountBalance(account: TreasuryAccount): number {
+    const entry = this.accountBalances.find((item) => item.account === account);
+    return entry?.balance ?? 0;
   }
 
   onSupplyPurchaseToggle(): void {
