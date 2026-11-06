@@ -27,9 +27,13 @@
     placeholder="Cliente o n.º"
     searchAriaLabel="Buscar presupuestos"
     chipsAriaLabel="Estado"
+    [showFilter]="true"
+    [filterCount]="mobileSheetFilterCount"
+    [filterLabel]="filtersButtonLabel"
     [chips]="mobileToolbarChips"
     [(chip)]="mobileChip"
     (chipChange)="onMobileChipChange($event)"
+    (filterClick)="openMobileFilters()"
   />
 
   @if (loading) {

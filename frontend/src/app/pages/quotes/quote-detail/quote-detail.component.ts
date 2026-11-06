@@ -131,6 +131,14 @@ export class QuoteDetailComponent implements OnInit {
     return this.quote ? isQuoteEditable(this.quote.status) : false;
   }
 
+  /**
+   * Misma transición que desktop vía «Guardar borrador» del formulario
+   * (updateQuote con status BORRADOR) cuando el presupuesto está Enviado.
+   */
+  get canReturnToDraft(): boolean {
+    return this.quote?.status === QuoteStatus.ENVIADO;
+  }
+
   get canGenerateOrder(): boolean {
     return this.quote
       ? canGenerateOrderFromQuote(this.quote.status) && !this.quote.orderId
@@ -526,6 +534,11 @@ export class QuoteDetailComponent implements OnInit {
   onMobileEdit(): void {
     this.closeMobileActions();
     this.openEdit();
+  }
+
+  onMobileReturnToDraft(): void {
+    this.closeMobileActions();
+    this.updateStatus(QuoteStatus.BORRADOR);
   }
 
   onMobileCancelStatus(): void {

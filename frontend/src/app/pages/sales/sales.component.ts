@@ -39,6 +39,12 @@ import { downloadSalesReportPdf } from '../../shared/utils/sales-report.util';
 import { salesChannelLabel } from '../../shared/utils/v1-labels.util';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 import { ProductsService } from '../../core/services/products.service';
+import {
+  SaleMobileSheetFilters,
+  countSaleMobileSheetFilters,
+  emptySaleMobileSheetFilters,
+  matchesSaleSheetFilters,
+} from '../../modals/sale-filters-sheet.component';
 
 const SALE_AREAS: AreaServiceType[] = [
   ServiceType.IMPRESION_3D,
@@ -79,6 +85,7 @@ export class SalesComponent implements OnInit {
   reportMessage = '';
   stats: SalesStats | null = null;
   entries: SaleEntry[] = [];
+  mobileSheetFilters: SaleMobileSheetFilters = emptySaleMobileSheetFilters();
   private viewMonth = new Date();
 
   get monthLabel(): string {
@@ -98,7 +105,39 @@ export class SalesComponent implements OnInit {
   }
 
   get salesCountLabel(): string {
-    return pluralize(this.entries.length, 'venta', 'ventas');
+    return pluralize(this.mobileFilteredEntries.length, 'venta', 'ventas');
+  }
+
+  /** Lista mobile con los mismos predicados que filters/areaFilters desktop. */
+  get mobileFilteredEntries(): SaleEntry[] {
+    return this.entries.filter((entry) =>
+      matchesSaleSheetFilters(entry, this.mobileSheetFilters),
+    );
+  }
+
+  get mobileSheetFilterCount(): number {
+    return countSaleMobileSheetFilters(this.mobileSheetFilters);
+  }
+
+  get filtersButtonLabel(): string {
+    const n = this.mobileSheetFilterCount;
+    return n > 0 ? `Filtros (${n})` : 'Filtros';
+  }
+
+  openMobileFilters(): void {
+    this.formDialogs
+      .openSaleFilters({
+        filters: this.mobileSheetFilters,
+        entries: this.entries,
+      })
+      .subscribe((next) => {
+        if (!next) return;
+        this.mobileSheetFilters = next;
+      });
+  }
+
+  clearMobileFilters(): void {
+    this.mobileSheetFilters = emptySaleMobileSheetFilters();
   }
 
   get mobileKpiItems(): MobileKpiItem[] {

@@ -53,6 +53,31 @@ export function quoteIncludesService(quote: Quote, service: ServiceType): boolea
   return quote.services.includes(service);
 }
 
+/** Filtros de la hoja mobile de Presupuestos (área = servicio). */
+export type QuoteMobileServiceFilter = ServiceType | 'all';
+
+export interface QuoteMobileSheetFilters {
+  service: QuoteMobileServiceFilter;
+}
+
+export function emptyQuoteMobileSheetFilters(): QuoteMobileSheetFilters {
+  return { service: 'all' };
+}
+
+export function countQuoteMobileSheetFilters(
+  filters: QuoteMobileSheetFilters,
+): number {
+  return filters.service === 'all' ? 0 : 1;
+}
+
+export function matchesQuoteMobileSheetFilters(
+  quote: Quote,
+  filters: QuoteMobileSheetFilters,
+): boolean {
+  if (filters.service === 'all') return true;
+  return quoteIncludesService(quote, filters.service);
+}
+
 /** Validez del presupuesto: quotedAt + 15 días (misma regla que el formulario). */
 export function formatQuoteValidityLabel(quotedAt?: string | Date | null): string {
   const base = new Date(quotedAt ?? Date.now());

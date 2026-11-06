@@ -34,6 +34,12 @@ import type {
   ProductFiltersSheetData,
   ProductMobileSheetFilters,
 } from './product-filters-sheet.component';
+import type { QuoteFiltersSheetData } from './quote-filters-sheet.component';
+import type { QuoteMobileSheetFilters } from '../shared/utils/quote.helpers';
+import type {
+  SaleFiltersSheetData,
+  SaleMobileSheetFilters,
+} from './sale-filters-sheet.component';
 
 @Injectable({ providedIn: 'root' })
 export class FormDialogService {
@@ -365,6 +371,42 @@ export class FormDialogService {
             data,
             'md',
             { ariaLabel: 'Tipo y categoría' },
+          ),
+      ),
+    );
+  }
+
+  openQuoteFilters(
+    data: QuoteFiltersSheetData,
+  ): Observable<QuoteMobileSheetFilters | undefined> {
+    return from(import('./quote-filters-sheet.component')).pipe(
+      switchMap(
+        ({
+          QuoteFiltersSheetComponent,
+        }): Observable<QuoteMobileSheetFilters | undefined> =>
+          this.open<QuoteFiltersSheetData, QuoteMobileSheetFilters>(
+            QuoteFiltersSheetComponent,
+            data,
+            'md',
+            { ariaLabel: 'Filtrar presupuestos' },
+          ),
+      ),
+    );
+  }
+
+  openSaleFilters(
+    data: SaleFiltersSheetData,
+  ): Observable<SaleMobileSheetFilters | undefined> {
+    return from(import('./sale-filters-sheet.component')).pipe(
+      switchMap(
+        ({
+          SaleFiltersSheetComponent,
+        }): Observable<SaleMobileSheetFilters | undefined> =>
+          this.open<SaleFiltersSheetData, SaleMobileSheetFilters>(
+            SaleFiltersSheetComponent,
+            data,
+            'md',
+            { ariaLabel: 'Filtrar ventas' },
           ),
       ),
     );

@@ -17,6 +17,7 @@ import { ProductsService } from '../../../core/services/products.service';
 import { SalesService } from '../../../core/services/sales.service';
 import { SaleCartService } from '../../../core/services/sale-cart.service';
 import { SaleFormComponent } from '../sale-form/sale-form.component';
+import { FormDialogService } from '../../../modals/form-dialog.service';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import { productStockOverview } from '../../../shared/utils/stock.helpers';
 
@@ -34,6 +35,7 @@ export class SaleCreateComponent implements OnInit {
   private readonly salesService = inject(SalesService);
   private readonly productsService = inject(ProductsService);
   private readonly saleCart = inject(SaleCartService);
+  private readonly formDialogs = inject(FormDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
 
   sale: RetailSale | null = null;
@@ -108,6 +110,39 @@ export class SaleCreateComponent implements OnInit {
   /** El form mobile confirma descarte antes de emitir cancel. */
   onFormCancel(): void {
     this.cancel();
+  }
+
+  /** Misma confirmación y servicio que `SalesComponent.deleteSale`. */
+  deleteSale(): void {
+    if (!this.sale) return;
+    const sale = this.sale;
+    this.formDialogs
+      .openConfirm({
+        title: 'Eliminar venta',
+        message: `¿Eliminar la venta ${sale.id}?`,
+        confirmLabel: 'Eliminar',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.loading = true;
+        this.error = '';
+        this.cdr.markForCheck();
+        this.salesService.deleteRetailSale(sale.id).subscribe({
+          next: () => {
+            this.loading = false;
+            void this.router.navigate(['/ventas']);
+          },
+          error: (err) => {
+            this.loading = false;
+            this.error = extractApiErrorMessage(
+              err,
+              'No se pudo eliminar la venta',
+            );
+            this.cdr.markForCheck();
+          },
+        });
+      });
   }
 
   private loadProducts(): void {

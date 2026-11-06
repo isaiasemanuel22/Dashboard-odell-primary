@@ -1,0 +1,51 @@
+<div class="modal modal--md sale-filters-sheet">
+  <header class="modal__header sale-filters-sheet__header">
+    <div class="modal__heading">
+      <h3>Filtrar ventas</h3>
+    </div>
+    <button
+      type="button"
+      class="sale-filters-sheet__clear"
+      (click)="clearAll()"
+    >
+      Limpiar
+    </button>
+  </header>
+
+  <div class="modal__body sale-filters-sheet__body">
+    <section class="sale-filters-sheet__group" aria-label="Tipo">
+      <h4 class="m-sec-t">Tipo</h4>
+      <db-mobile-chip-group
+        [options]="sourceOptions"
+        [value]="draft.source"
+        ariaLabel="Tipo de venta"
+        (valueChange)="onSourceChange($event)"
+      />
+    </section>
+
+    <section class="sale-filters-sheet__group" aria-label="Área">
+      <h4 class="m-sec-t">Área</h4>
+      <db-mobile-chip-group
+        [options]="areaOptions"
+        [value]="draft.area"
+        ariaLabel="Área"
+        (valueChange)="onAreaChange($event)"
+      />
+    </section>
+  </div>
+
+  <div class="confirm-actions sale-filters-sheet__foot">
+    <db-button
+      label="Cancelar"
+      variant="secondary"
+      format="solid"
+      (clicked)="cancel()"
+    />
+    <db-button
+      [label]="applyLabel"
+      variant="primary"
+      format="solid"
+      (clicked)="apply()"
+    />
+  </div>
+</div>

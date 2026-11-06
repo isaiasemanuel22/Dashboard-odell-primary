@@ -11,13 +11,36 @@
   </db-mobile-bar>
 
   <div class="m-tools">
-    <db-mobile-period-picker
-      mode="month"
-      [monthLabel]="monthLabelDisplay"
-      ariaLabel="Mes"
-      (prev)="shiftMonth(-1)"
-      (next)="shiftMonth(1)"
-    />
+    <div class="sales-m__tools-row">
+      <db-mobile-period-picker
+        mode="month"
+        [monthLabel]="monthLabelDisplay"
+        ariaLabel="Mes"
+        (prev)="shiftMonth(-1)"
+        (next)="shiftMonth(1)"
+      />
+      <button
+        type="button"
+        class="m-fbtn"
+        [class.sales-m__fbtn--on]="mobileSheetFilterCount > 0"
+        [attr.aria-label]="filtersButtonLabel"
+        (click)="openMobileFilters()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="16"
+          height="16"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M4 6h16M7 12h10M10 18h4" />
+        </svg>
+        {{ filtersButtonLabel }}
+      </button>
+    </div>
   </div>
 
   <div class="m-body sales-m__body">
@@ -79,9 +102,21 @@
             (clicked)="openCreateSale()"
           />
         </div>
+      } @else if (!mobileFilteredEntries.length) {
+        <div class="m-card">
+          <p class="sales-m__state">
+            No hay ventas con estos filtros en {{ monthName }}.
+          </p>
+          <db-button
+            label="Limpiar filtros"
+            variant="secondary"
+            format="soft"
+            (clicked)="clearMobileFilters()"
+          />
+        </div>
       } @else {
         <div class="m-card m-card--flush">
-          @for (entry of entries; track entry.id) {
+          @for (entry of mobileFilteredEntries; track entry.id) {
             <button
               type="button"
               class="m-row"

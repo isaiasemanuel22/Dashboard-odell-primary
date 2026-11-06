@@ -1,0 +1,41 @@
+<div class="modal modal--md quote-filters-sheet">
+  <header class="modal__header quote-filters-sheet__header">
+    <div class="modal__heading">
+      <h3>Filtrar presupuestos</h3>
+    </div>
+    <button
+      type="button"
+      class="quote-filters-sheet__clear"
+      (click)="clearAll()"
+    >
+      Limpiar
+    </button>
+  </header>
+
+  <div class="modal__body quote-filters-sheet__body">
+    <section class="quote-filters-sheet__group" aria-label="Área">
+      <h4 class="m-sec-t">Área</h4>
+      <db-mobile-chip-group
+        [options]="serviceOptions"
+        [value]="draft.service"
+        ariaLabel="Área"
+        (valueChange)="onServiceChange($event)"
+      />
+    </section>
+  </div>
+
+  <div class="confirm-actions quote-filters-sheet__foot">
+    <db-button
+      label="Cancelar"
+      variant="secondary"
+      format="solid"
+      (clicked)="cancel()"
+    />
+    <db-button
+      [label]="applyLabel"
+      variant="primary"
+      format="solid"
+      (clicked)="apply()"
+    />
+  </div>
+</div>

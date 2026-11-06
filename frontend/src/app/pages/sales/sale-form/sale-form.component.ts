@@ -1,6 +1,7 @@
 import {
   Component,
   EventEmitter,
+  HostListener,
   Injector,
   Input,
   OnChanges,
@@ -65,6 +66,7 @@ import { MobileFormShellComponent } from '../../../components/mobile-form-shell/
 import { confirmMobileFormDiscard } from '../../../components/mobile-form-shell/confirm-mobile-form-discard';
 import { MobileFormStepComponent } from '../../../components/mobile-form-step/mobile-form-step.component';
 import { MobileStepperComponent } from '../../../components/mobile-stepper/mobile-stepper.component';
+import { MobileSheetComponent } from '../../../components/mobile-sheet/mobile-sheet.component';
 import { FormDialogService } from '../../../modals/form-dialog.service';
 
 let cartLineKey = 0;
@@ -91,6 +93,7 @@ let cartLineKey = 0;
     MobileFormStepComponent,
     MobileStepperComponent,
     MobileChipGroupComponent,
+    MobileSheetComponent,
   ],
   templateUrl: './sale-form.component.html',
   styleUrl: './sale-form.component.scss',
@@ -114,6 +117,8 @@ export class SaleFormComponent implements OnChanges {
   @Input() mobileTitle: string | null = null;
   @Output() save = new EventEmitter<CreateRetailSalePayload>();
   @Output() cancel = new EventEmitter<void>();
+  /** Pedido de eliminar venta (solo edición); el padre confirma y llama al servicio. */
+  @Output() deleteRequest = new EventEmitter<void>();
 
   productId = '';
   pickQuantity = 1;
@@ -128,6 +133,7 @@ export class SaleFormComponent implements OnChanges {
   account: TreasuryAccount = defaultAccountForMethod(PaymentMethod.EFECTIVO);
   /** Valor `YYYY-MM-DD` para el input date mobile. */
   soldAtLocal = '';
+  mobileActionsOpen = false;
 
   readonly discountModeOptions: DbSelectOption[] = [
     { value: 'none', label: 'Sin descuento' },
@@ -281,20 +287,70 @@ export class SaleFormComponent implements OnChanges {
   }
 
   get mobileDockActions(): MobileDockAction[] {
-    return [
-      {
-        id: 'close',
-        label: this.mobilePrimaryLabel,
-        kind: 'primary',
-        disabled: !this.canCloseSale,
-      },
-    ];
+    const actions: MobileDockAction[] = [];
+    // Modal (sin barra ⋯): misma acción «Crear pedido» que el pie desktop.
+    if (!this.mobileTitle && this.showMobileCreateOrderAction) {
+      actions.push({
+        id: 'order',
+        label: 'Crear pedido',
+        kind: 'secondary',
+        disabled: !this.hasCartItems,
+      });
+    }
+    actions.push({
+      id: 'close',
+      label: this.mobilePrimaryLabel,
+      kind: 'primary',
+      disabled: !this.canCloseSale,
+    });
+    return actions;
+  }
+
+  /** Menú ⋯ en ruta mobile (nueva/editar); no en modal embebido. */
+  get showMobileActionsMenu(): boolean {
+    return this.showMobileSaleUi && !!this.mobileTitle;
+  }
+
+  get showMobileCreateOrderAction(): boolean {
+    return !this.isEditing;
+  }
+
+  get showMobileDeleteAction(): boolean {
+    return this.isEditing;
   }
 
   onMobileDockAction(id: string): void {
+    if (id === 'order') {
+      this.createOrder();
+      return;
+    }
     if (id === 'close') {
       this.closeSale();
     }
+  }
+
+  openMobileActions(): void {
+    this.mobileActionsOpen = true;
+  }
+
+  closeMobileActions(): void {
+    if (!this.mobileActionsOpen) return;
+    this.mobileActionsOpen = false;
+  }
+
+  onMobileCreateOrder(): void {
+    this.closeMobileActions();
+    this.createOrder();
+  }
+
+  onMobileDelete(): void {
+    this.closeMobileActions();
+    this.deleteRequest.emit();
+  }
+
+  @HostListener('document:keydown.escape')
+  onEscapeKey(): void {
+    this.closeMobileActions();
   }
 
   ngOnChanges(changes: SimpleChanges): void {

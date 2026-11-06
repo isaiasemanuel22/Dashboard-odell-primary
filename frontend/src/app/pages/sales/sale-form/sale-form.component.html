@@ -8,6 +8,28 @@
     (close)="cancel.emit()"
     (dockAction)="onMobileDockAction($event)"
   >
+  @if (showMobileActionsMenu) {
+    <button
+      shellHeaderActions
+      type="button"
+      class="m-ib"
+      aria-label="Más acciones"
+      (click)="openMobileActions()"
+    >
+      <svg
+        width="22"
+        height="22"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.4"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M5 12h.01M12 12h.01M19 12h.01" />
+      </svg>
+    </button>
+  }
   <div class="sale-m">
     <div class="m-tools">
       <label class="m-search">
@@ -214,6 +236,32 @@
     @if (closeSaleDockHint) {
       <p dockHint role="status">{{ closeSaleDockHint }}</p>
     }
+
+    <db-mobile-sheet
+      [open]="mobileActionsOpen"
+      ariaLabel="Más acciones"
+      (closed)="closeMobileActions()"
+    >
+      @if (showMobileCreateOrderAction) {
+        <button
+          type="button"
+          class="m-sheet-action"
+          [disabled]="!hasCartItems"
+          (click)="onMobileCreateOrder()"
+        >
+          Crear pedido
+        </button>
+      }
+      @if (showMobileDeleteAction) {
+        <button
+          type="button"
+          class="m-sheet-action m-sheet-action--danger"
+          (click)="onMobileDelete()"
+        >
+          Eliminar venta
+        </button>
+      }
+    </db-mobile-sheet>
   </db-mobile-form-shell>
 } @else {
   <db-form [class.sale-form--mobile]="useCardLayout">

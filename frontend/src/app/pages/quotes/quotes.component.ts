@@ -43,7 +43,11 @@ import {
 } from '../../shared/utils/create-from-query.util';
 import {
   QuoteMobileChip,
+  QuoteMobileSheetFilters,
+  countQuoteMobileSheetFilters,
+  emptyQuoteMobileSheetFilters,
   matchesQuoteMobileChip,
+  matchesQuoteMobileSheetFilters,
   matchesQuoteStatusFilter,
   quoteIncludesService,
   quoteMobileChips,
@@ -53,6 +57,7 @@ import {
 
 interface QuotesMobileListState {
   chip: QuoteMobileChip;
+  sheetFilters: QuoteMobileSheetFilters;
   search: string;
   scrollY: number;
 }
@@ -90,6 +95,7 @@ export class QuotesComponent implements OnInit {
   loading = true;
   search = '';
   mobileChip: QuoteMobileChip = 'abiertos';
+  mobileSheetFilters: QuoteMobileSheetFilters = emptyQuoteMobileSheetFilters();
   /** Evita reabrir el modal si el botón recibe clicks/teclas repetidas. */
   private quoteDialogBusy = false;
 
@@ -143,10 +149,13 @@ export class QuotesComponent implements OnInit {
   ngOnInit(): void {
     this.listPersistence.connect(() => ({
       chip: this.mobileChip,
+      sheetFilters: this.mobileSheetFilters,
       search: this.search,
     }));
     this.listPersistence.restore((saved) => {
       this.mobileChip = saved.chip;
+      this.mobileSheetFilters =
+        saved.sheetFilters ?? emptyQuoteMobileSheetFilters();
       this.search = saved.search;
     });
 
@@ -209,18 +218,56 @@ export class QuotesComponent implements OnInit {
     const term = this.search.trim().toLowerCase();
     return this.quotes.filter((quote) => {
       if (!matchesQuoteMobileChip(quote.status, this.mobileChip)) return false;
+      if (!matchesQuoteMobileSheetFilters(quote, this.mobileSheetFilters)) {
+        return false;
+      }
       if (!term) return true;
       return this.searchText(quote).toLowerCase().includes(term);
     });
   }
 
-  /** Base de contadores: solo búsqueda (sin chip). */
+  /** Base de contadores: búsqueda + filtros de hoja (sin chip). */
   private get mobileCountBase(): Quote[] {
     const term = this.search.trim().toLowerCase();
-    if (!term) return this.quotes;
-    return this.quotes.filter((quote) =>
-      this.searchText(quote).toLowerCase().includes(term),
-    );
+    return this.quotes.filter((quote) => {
+      if (!matchesQuoteMobileSheetFilters(quote, this.mobileSheetFilters)) {
+        return false;
+      }
+      if (!term) return true;
+      return this.searchText(quote).toLowerCase().includes(term);
+    });
+  }
+
+  /** Lista para el contador en vivo de la hoja (chip + búsqueda, sin área). */
+  private get mobileQuotesForSheet(): Quote[] {
+    const term = this.search.trim().toLowerCase();
+    return this.quotes.filter((quote) => {
+      if (!matchesQuoteMobileChip(quote.status, this.mobileChip)) return false;
+      if (!term) return true;
+      return this.searchText(quote).toLowerCase().includes(term);
+    });
+  }
+
+  get mobileSheetFilterCount(): number {
+    return countQuoteMobileSheetFilters(this.mobileSheetFilters);
+  }
+
+  get filtersButtonLabel(): string {
+    const n = this.mobileSheetFilterCount;
+    return n > 0 ? `Filtros (${n})` : 'Filtros';
+  }
+
+  openMobileFilters(): void {
+    this.formDialogs
+      .openQuoteFilters({
+        filters: this.mobileSheetFilters,
+        quotes: this.mobileQuotesForSheet,
+      })
+      .subscribe((next) => {
+        if (!next) return;
+        this.mobileSheetFilters = next;
+        this.cdr.markForCheck();
+      });
   }
 
   get mobileChipCounts(): Record<QuoteMobileChip, number> {

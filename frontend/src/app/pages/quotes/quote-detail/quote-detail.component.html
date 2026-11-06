@@ -152,6 +152,16 @@
           Editar
         </button>
       }
+      @if (canReturnToDraft) {
+        <button
+          type="button"
+          class="m-sheet-action"
+          [disabled]="statusLoading"
+          (click)="onMobileReturnToDraft()"
+        >
+          Volver a borrador
+        </button>
+      }
       @if (editable && quote.status !== QuoteStatus.CANCELADO) {
         <button
           type="button"
