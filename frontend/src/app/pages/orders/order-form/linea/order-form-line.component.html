@@ -185,11 +185,14 @@
       </div>
 
       <div class="order-line__m-qty-price mobile-only">
-        <div class="order-line__stepper" role="group" aria-label="Cantidad">
-          <button type="button" (click)="adjustQuantity(-1)" aria-label="Restar cantidad">−</button>
-          <span>{{ line.quantity }}</span>
-          <button type="button" (click)="adjustQuantity(1)" aria-label="Sumar cantidad">+</button>
-        </div>
+        <db-mobile-stepper
+          [value]="line.quantity"
+          [min]="1"
+          ariaLabel="Cantidad"
+          decrementAriaLabel="Restar cantidad"
+          incrementAriaLabel="Sumar cantidad"
+          (valueChange)="setQuantity($event)"
+        />
         <div class="order-line__m-price-main">
           @if (showWholesaleColumns && editableUnitPrice > 0) {
             <span class="order-line__m-list">
@@ -290,11 +293,14 @@
       </div>
 
       <div class="order-line__m-qty-price mobile-only">
-        <div class="order-line__stepper" role="group" aria-label="Cantidad">
-          <button type="button" (click)="adjustQuantity(-1)" aria-label="Restar cantidad">−</button>
-          <span>{{ line.quantity }}</span>
-          <button type="button" (click)="adjustQuantity(1)" aria-label="Sumar cantidad">+</button>
-        </div>
+        <db-mobile-stepper
+          [value]="line.quantity"
+          [min]="1"
+          ariaLabel="Cantidad"
+          decrementAriaLabel="Restar cantidad"
+          incrementAriaLabel="Sumar cantidad"
+          (valueChange)="setQuantity($event)"
+        />
         <div class="order-line__m-price-main">
           @if (showWholesaleColumns && editableUnitPrice > 0) {
             <span class="order-line__m-list">

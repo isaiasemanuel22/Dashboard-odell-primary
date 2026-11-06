@@ -489,26 +489,6 @@
       }
     }
 
-    .order-m-sec {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .order-m-card {
-      background: mobile.$m-surface;
-      border: 1px solid mobile.$m-border;
-      border-radius: mobile.$m-radius-md;
-      padding: 14px;
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .order-m-card--lines {
-      gap: 12px;
-    }
-
     .order-lines {
       gap: 16px;
     }
@@ -573,20 +553,6 @@
       width: 100%;
     }
 
-    ::ng-deep .db-form-field__label,
-    ::ng-deep .db-form-field label {
-      font-size: 13px;
-      font-weight: 500;
-      color: mobile.$m-text-label;
-    }
-
-    ::ng-deep input.db-input:not([type='checkbox']):not([type='radio']),
-    ::ng-deep select.db-select,
-    ::ng-deep .db-select {
-      min-height: 48px;
-      border-radius: mobile.$m-radius-sm;
-      border-color: mobile.$m-border-input;
-    }
   }
 }
 
@@ -595,13 +561,5 @@
     display: flex;
     flex-direction: column;
     gap: 1.1rem;
-  }
-
-  .order-m-card {
-    display: contents;
-  }
-
-  .order-m-sec {
-    display: contents;
   }
 }

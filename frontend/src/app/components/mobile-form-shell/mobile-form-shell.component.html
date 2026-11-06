@@ -1,0 +1,52 @@
+<div class="m-form-shell" [class.m-form-shell--has-dock]="showDock">
+  @if (showHeader) {
+    <header class="m-form-shell__bar">
+      <button
+        type="button"
+        class="m-ib"
+        [attr.aria-label]="closeAriaLabel"
+        (click)="onClose()"
+      >
+        <svg
+          width="22"
+          height="22"
+          viewBox="0 0 24 24"
+          fill="none"
+          aria-hidden="true"
+        >
+          <path
+            d="M6 6l12 12M18 6L6 18"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+          />
+        </svg>
+      </button>
+      <h2 class="m-form-shell__title">{{ title }}</h2>
+      @if (headerActionLabel) {
+        <button
+          type="button"
+          class="m-ib txt"
+          [disabled]="headerActionDisabled"
+          (click)="onHeaderAction()"
+        >
+          {{ headerActionLabel }}
+        </button>
+      }
+    </header>
+  }
+
+  <div class="m-form-shell__body" [class.m-has-dock]="showDock">
+    <ng-content />
+  </div>
+
+  @if (showDock) {
+    <db-mobile-dock
+      [actions]="dockActions!"
+      [secondaryFixed]="dockSecondaryFixed"
+      (action)="onDockAction($event)"
+    >
+      <ng-content select="[dockHint]" />
+    </db-mobile-dock>
+  }
+</div>

@@ -1,0 +1,43 @@
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: contents;
+}
+
+.m-form-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.m-form-shell__bar {
+  flex: none;
+  height: 56px;
+  background: #fff;
+  border-bottom: 1px solid mobile.$m-border;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 8px;
+  box-sizing: border-box;
+  position: sticky;
+  top: 0;
+  z-index: 3;
+}
+
+.m-form-shell__title {
+  margin: 0;
+  font-size: 17px;
+  font-weight: 700;
+  color: mobile.$m-text;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.m-form-shell__body {
+  flex: 1 1 auto;
+  min-height: 0;
+}

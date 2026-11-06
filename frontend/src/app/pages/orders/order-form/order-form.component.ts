@@ -189,6 +189,7 @@ import {
   MobileDockAction,
   MobileDockComponent,
 } from '../../../components/mobile-dock/mobile-dock.component';
+import { MobileFormStepComponent } from '../../../components/mobile-form-step/mobile-form-step.component';
 
 export type OrderFormVariant = 'order' | 'quote';
 
@@ -211,6 +212,7 @@ export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
     OrderFormPartyComponent,
     OrderFormOrderSummaryComponent,
     MobileDockComponent,
+    MobileFormStepComponent,
   ],
   templateUrl: './order-form.component.html',
   styleUrl: './order-form.component.scss',

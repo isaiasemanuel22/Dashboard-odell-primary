@@ -1,0 +1,34 @@
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: contents;
+}
+
+@include mobile.mobile-only {
+  :host {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .m-form-step__card {
+    background: mobile.$m-surface;
+    border: 1px solid mobile.$m-border;
+    border-radius: mobile.$m-radius-md;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+
+    &--flush {
+      padding: 0;
+      gap: 0;
+    }
+  }
+}
+
+@include mobile.desktop-only {
+  .m-form-step__card {
+    display: contents;
+  }
+}

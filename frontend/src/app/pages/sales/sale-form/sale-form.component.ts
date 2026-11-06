@@ -56,10 +56,10 @@ import {
   TREASURY_ACCOUNT_LABELS,
 } from '../../../shared/utils/v1-labels.util';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
-import {
-  MobileDockAction,
-  MobileDockComponent,
-} from '../../../components/mobile-dock/mobile-dock.component';
+import { MobileDockAction } from '../../../components/mobile-dock/mobile-dock.component';
+import { MobileFormShellComponent } from '../../../components/mobile-form-shell/mobile-form-shell.component';
+import { MobileFormStepComponent } from '../../../components/mobile-form-step/mobile-form-step.component';
+import { MobileStepperComponent } from '../../../components/mobile-stepper/mobile-stepper.component';
 
 let cartLineKey = 0;
 
@@ -81,7 +81,9 @@ let cartLineKey = 0;
     DbSegmentedControlComponent,
     SaleFormCartComponent,
     CurrencyArsPipe,
-    MobileDockComponent,
+    MobileFormShellComponent,
+    MobileFormStepComponent,
+    MobileStepperComponent,
   ],
   templateUrl: './sale-form.component.html',
   styleUrl: './sale-form.component.scss',
@@ -99,6 +101,8 @@ export class SaleFormComponent implements OnChanges {
   @Input() error = '';
   /** `auto` usa cards en mobile; `mobile` fuerza cards; `desktop` fuerza tabla. */
   @Input() layout: 'auto' | 'mobile' | 'desktop' = 'auto';
+  /** Título de la barra mobile en ruta `/ventas/nueva`. Null = sin barra (modal). */
+  @Input() mobileTitle: string | null = null;
   @Output() save = new EventEmitter<CreateRetailSalePayload>();
   @Output() cancel = new EventEmitter<void>();
 

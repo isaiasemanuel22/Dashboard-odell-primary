@@ -22,29 +22,14 @@
                 }
               </span>
             </div>
-            <div
-              class="od-del-sheet__step"
-              role="group"
-              [attr.aria-label]="'Cantidad a entregar de ' + item.productName"
-            >
-              <button
-                type="button"
-                aria-label="Restar uno"
-                [disabled]="max <= 0 || (deliveryDraft[itemIndex] || 0) <= 0"
-                (click)="stepDelivery(itemIndex, -1)"
-              >
-                −
-              </button>
-              <span>{{ deliveryDraft[itemIndex] || 0 }}</span>
-              <button
-                type="button"
-                aria-label="Sumar uno"
-                [disabled]="max <= 0 || (deliveryDraft[itemIndex] || 0) >= max"
-                (click)="stepDelivery(itemIndex, 1)"
-              >
-                +
-              </button>
-            </div>
+            <db-mobile-stepper
+              [value]="deliveryDraft[itemIndex] || 0"
+              [min]="0"
+              [max]="max"
+              [disabled]="max <= 0"
+              [ariaLabel]="'Cantidad a entregar de ' + item.productName"
+              (valueChange)="setDeliveryQuantity(itemIndex, $event)"
+            />
           </div>
         }
       }

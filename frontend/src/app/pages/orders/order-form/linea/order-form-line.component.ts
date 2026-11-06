@@ -27,6 +27,7 @@ import { OrderQuote3dCompositionComponent } from './order-quote-3d-composition/o
 import { OrderQuoteDesignCompositionComponent } from './order-quote-design-composition/order-quote-design-composition.component';
 import { OrderQuoteEstampadoCompositionComponent } from './order-quote-estampado-composition/order-quote-estampado-composition.component';
 import { OrderLinePricingComponent } from './order-line-pricing/order-line-pricing.component';
+import { MobileStepperComponent } from '../../../../components/mobile-stepper/mobile-stepper.component';
 import {
   CostBreakdown,
   FdmFilamentLine,
@@ -137,9 +138,13 @@ export type OrderFormLineVariant = 'quote' | 'order';
     OrderQuoteEstampadoCompositionComponent,
     OrderQuoteDesignCompositionComponent,
     OrderLinePricingComponent,
+    MobileStepperComponent,
   ],
   templateUrl: './order-form-line.component.html',
-  styleUrl: './order-form-line.component.scss',
+  styleUrls: [
+    './order-form-line.component.scss',
+    './order-form-line.mobile.scss',
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class OrderFormLineComponent implements OnInit {
@@ -270,6 +275,11 @@ export class OrderFormLineComponent implements OnInit {
   adjustQuantity(delta: number): void {
     const next = Math.max(1, Math.round(Number(this.line.quantity) || 1) + delta);
     this.line.quantity = next;
+    this.onQuantityChange();
+  }
+
+  setQuantity(value: number): void {
+    this.line.quantity = Math.max(1, Math.round(Number(value) || 1));
     this.onQuantityChange();
   }
 

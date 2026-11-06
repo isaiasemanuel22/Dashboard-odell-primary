@@ -20,7 +20,11 @@ import {
   TaskKind,
 } from '../../../../core/models';
 import { OrdersService } from '../../../../core/services/orders.service';
-import { DbButtonComponent, DbInputComponent } from '@general-components';
+import {
+  DbButtonComponent,
+  DbInputComponent,
+  MobileStepperComponent,
+} from '@general-components';
 import { extractApiErrorMessage } from '../../../../shared/utils/api-error';
 import {
   CurrencyArsPipe,
@@ -38,6 +42,7 @@ import {
     FormsModule,
     DbInputComponent,
     DbButtonComponent,
+    MobileStepperComponent,
     DateTimePipe,
     CurrencyArsPipe,
   ],
@@ -124,7 +129,17 @@ export class OrderDetailDeliveriesComponent implements OnChanges {
     if (!item) return;
     const max = this.itemDeliverableMax(item, itemIndex);
     const current = Math.trunc(Number(this.deliveryDraft[itemIndex]) || 0);
-    this.deliveryDraft[itemIndex] = Math.min(max, Math.max(0, current + delta));
+    this.setDeliveryQuantity(itemIndex, current + delta);
+  }
+
+  setDeliveryQuantity(itemIndex: number, quantity: number): void {
+    const item = this.order.items[itemIndex];
+    if (!item) return;
+    const max = this.itemDeliverableMax(item, itemIndex);
+    this.deliveryDraft[itemIndex] = Math.min(
+      max,
+      Math.max(0, Math.trunc(Number(quantity) || 0)),
+    );
     this.cdr.markForCheck();
   }
 

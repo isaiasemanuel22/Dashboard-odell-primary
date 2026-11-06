@@ -24,6 +24,7 @@ import { CustomerCatalogService } from '../core/services/customer-catalog.servic
 import { OrdersService } from '../core/services/orders.service';
 import { ProductCatalogService } from '../core/services/product-catalog.service';
 import { FormDialogShellComponent } from './form-dialog-shell/form-dialog-shell.component';
+import { MobileFormShellComponent } from '../components/mobile-form-shell/mobile-form-shell.component';
 import { extractApiErrorMessage } from '../shared/utils/api-error';
 import {
   OrderFormComponent,
@@ -44,7 +45,11 @@ export interface OrderFormDialogData {
 
 @Component({
   standalone: true,
-  imports: [FormDialogShellComponent, OrderFormComponent],
+  imports: [
+    FormDialogShellComponent,
+    MobileFormShellComponent,
+    OrderFormComponent,
+  ],
   template: `
     <app-form-dialog-shell
       [title]="dialogTitle"
@@ -54,45 +59,38 @@ export interface OrderFormDialogData {
       (close)="cancel()"
     >
       @if (isMobile()) {
-        <header class="order-dialog-m-bar">
-          <button
-            type="button"
-            class="m-ib"
-            aria-label="Cerrar sin guardar"
-            (click)="cancel()"
-          >
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M6 6l12 12M18 6L6 18"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              />
-            </svg>
-          </button>
-          <h2 class="order-dialog-m-bar__title">{{ dialogTitle }}</h2>
-        </header>
+        <db-mobile-form-shell [title]="dialogTitle" (close)="cancel()">
+          <app-order-form
+            [order]="order"
+            [presetQuote]="presetQuote"
+            [customers]="customers"
+            [products]="products"
+            [presetCustomerId]="presetCustomerId"
+            [presetCartLines]="presetCartLines"
+            [loading]="loading"
+            [error]="error"
+            (save)="save($event)"
+            (cancel)="cancel()"
+            (customerCreated)="onCustomerCreated($event)"
+            (uiMetaChange)="onFormUiMeta()"
+          />
+        </db-mobile-form-shell>
+      } @else {
+        <app-order-form
+          [order]="order"
+          [presetQuote]="presetQuote"
+          [customers]="customers"
+          [products]="products"
+          [presetCustomerId]="presetCustomerId"
+          [presetCartLines]="presetCartLines"
+          [loading]="loading"
+          [error]="error"
+          (save)="save($event)"
+          (cancel)="cancel()"
+          (customerCreated)="onCustomerCreated($event)"
+          (uiMetaChange)="onFormUiMeta()"
+        />
       }
-      <app-order-form
-        [order]="order"
-        [presetQuote]="presetQuote"
-        [customers]="customers"
-        [products]="products"
-        [presetCustomerId]="presetCustomerId"
-        [presetCartLines]="presetCartLines"
-        [loading]="loading"
-        [error]="error"
-        (save)="save($event)"
-        (cancel)="cancel()"
-        (customerCreated)="onCustomerCreated($event)"
-        (uiMetaChange)="onFormUiMeta()"
-      />
     </app-form-dialog-shell>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

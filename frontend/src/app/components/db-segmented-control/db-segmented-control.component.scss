@@ -1,4 +1,5 @@
 @use '../../shared/styles/variables' as *;
+@use '../../shared/styles/mobile' as mobile;
 
 .db-seg {
   display: inline-flex;
@@ -6,6 +7,39 @@
   border-radius: 10px;
   overflow: hidden;
   background: $color-surface;
+}
+
+@include mobile.mobile-only {
+  :host {
+    display: block;
+    width: 100%;
+  }
+
+  .db-seg.db-seg--lg {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: minmax(0, 1fr);
+    width: 100%;
+    border-radius: mobile.$m-radius-sm;
+    border-color: mobile.$m-border-input;
+  }
+
+  .db-seg.db-seg--lg .db-seg__btn {
+    min-height: 44px;
+    height: auto;
+    padding: 0 6px;
+    font-size: 13px;
+    color: mobile.$m-text-label;
+    background: mobile.$m-surface;
+    border-right-color: mobile.$m-border-input;
+
+    // on-ev / on-rec (calendario) conservan sus colores propios.
+    &.is-on:not(.on-ev):not(.on-rec) {
+      background: mobile.$m-primary;
+      color: #fff;
+      font-weight: 700;
+    }
+  }
 }
 
 .db-seg__btn {

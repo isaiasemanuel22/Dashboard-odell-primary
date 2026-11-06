@@ -1,4 +1,11 @@
 @if (showMobileSaleUi) {
+  <db-mobile-form-shell
+    [title]="mobileTitle || ''"
+    [showHeader]="!!mobileTitle"
+    [dockActions]="mobileDockActions"
+    (close)="cancel.emit()"
+    (dockAction)="onMobileDockAction($event)"
+  >
   <div class="sale-m">
     <div class="m-tools">
       <label class="m-search">
@@ -51,9 +58,8 @@
     </div>
 
     <div class="m-body sale-m__body m-has-dock">
-      <h2 class="m-sec-t">{{ cartSectionTitle }}</h2>
+      <db-mobile-form-step [title]="cartSectionTitle" [flush]="!!cart.length">
       @if (cart.length) {
-        <div class="m-card m-card--flush">
           @for (line of cart; track line.key) {
             <div class="m-row sale-m__line">
               <span class="sale-m__thumb" aria-hidden="true">
@@ -70,38 +76,21 @@
                   {{ availableStock(line.productId) }}</span
                 >
               </div>
-              <div
-                class="sale-m__step"
-                role="group"
-                [attr.aria-label]="'Cantidad de ' + line.productName"
-              >
-                <button
-                  type="button"
-                  aria-label="Restar uno"
-                  (click)="bumpQuantity(line, -1)"
-                >
-                  −
-                </button>
-                <span>{{ line.quantity }}</span>
-                <button
-                  type="button"
-                  aria-label="Sumar uno"
-                  (click)="bumpQuantity(line, 1)"
-                >
-                  +
-                </button>
-              </div>
+              <db-mobile-stepper
+                [value]="line.quantity"
+                [min]="0"
+                [ariaLabel]="'Cantidad de ' + line.productName"
+                (valueChange)="updateLineQuantity(line, $event)"
+              />
             </div>
           }
-        </div>
       } @else {
-        <div class="m-card">
           <p class="sale-m__empty-cart">
             Todavía no hay productos en el carrito. Buscá arriba o
             <a routerLink="/productos">agregá desde Productos</a>.
           </p>
-        </div>
       }
+      </db-mobile-form-step>
 
       <div class="sale-m__note">
         <svg
@@ -120,12 +109,10 @@
         El stock se descuenta al guardar y vuelve si borrás la venta.
       </div>
 
-      <h2 class="m-sec-t">Cobro</h2>
-      <div class="m-card sale-m__cobro">
-        <div class="sale-m__field">
-          <span class="sale-m__fl">Medio de pago</span>
+      <db-mobile-form-step title="Cobro" cardClass="sale-m__cobro">
+        <div class="m-field">
+          <span class="m-fl">Medio de pago</span>
           <db-segmented-control
-            class="sale-m__seg"
             size="lg"
             [options]="paymentMethodOptions"
             [value]="method"
@@ -144,10 +131,9 @@
           />
         </div>
 
-        <div class="sale-m__field">
-          <span class="sale-m__fl">Descuento</span>
+        <div class="m-field">
+          <span class="m-fl">Descuento</span>
           <db-segmented-control
-            class="sale-m__seg"
             size="lg"
             [options]="discountSegmentOptions"
             [value]="discountMode"
@@ -191,7 +177,7 @@
           placeholder="Opcional"
           [rows]="2"
         />
-      </div>
+      </db-mobile-form-step>
 
       <div class="m-card">
         <div class="m-ln">
@@ -217,12 +203,8 @@
         <p class="sale-form__stock-hint">{{ closeSaleBlockReason }}</p>
       }
     </div>
-
-    <db-mobile-dock
-      [actions]="mobileDockActions"
-      (action)="onMobileDockAction($event)"
-    />
   </div>
+  </db-mobile-form-shell>
 } @else {
   <db-form [class.sale-form--mobile]="useCardLayout">
     <db-fieldset legend="Carrito">

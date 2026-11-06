@@ -55,9 +55,37 @@
     color: mobile.$m-text-secondary;
   }
 
+  /* Label de campo en formularios mobile (alto 48 + ayuda/error). */
+  .m-fl {
+    font-size: 13px;
+    font-weight: 500;
+    color: mobile.$m-text-label;
+  }
+
+  .m-field {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+  }
+
   .m-hint {
     font-size: 12px;
     color: mobile.$m-text-secondary;
+  }
+
+  .m-field-error {
+    margin: 0;
+    font-size: 12px;
+    font-weight: 500;
+    color: #b91c1c;
+  }
+
+  .db-form-field__label,
+  .db-form-field label {
+    font-size: 13px;
+    font-weight: 500;
+    color: mobile.$m-text-label;
   }
 
   .m-big {
@@ -446,8 +474,10 @@
   input.db-input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not([type='file']):not([type='range']):not([type='color']),
   select.db-select,
   .db-select {
-    min-height: 44px;
+    min-height: 48px;
     box-sizing: border-box;
+    border-radius: mobile.$m-radius-sm;
+    border-color: mobile.$m-border-input;
   }
 
   // Checkbox / radio nativos: control 22×22 y label clickeable ≥44px.

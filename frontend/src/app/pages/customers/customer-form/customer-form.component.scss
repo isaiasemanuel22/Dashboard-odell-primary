@@ -168,16 +168,6 @@ form {
     gap: 14px;
   }
 
-  .customer-form ::ng-deep input.db-input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not([type='file']):not([type='range']):not([type='color']),
-  .customer-form ::ng-deep select.db-select,
-  .customer-form ::ng-deep .db-select {
-    min-height: 48px;
-    height: 48px;
-    font-size: 15px;
-    border-color: mobile.$m-border-input;
-    border-radius: 12px;
-  }
-
   .customer-form__type-label {
     font-size: 13px;
     font-weight: 500;

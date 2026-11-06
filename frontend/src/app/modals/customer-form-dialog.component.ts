@@ -15,6 +15,7 @@ import { BreakpointService } from '../core/services/breakpoint.service';
 import { CustomerCatalogService } from '../core/services/customer-catalog.service';
 import { CustomersService } from '../core/services/customers.service';
 import { FormDialogShellComponent } from './form-dialog-shell/form-dialog-shell.component';
+import { MobileFormShellComponent } from '../components/mobile-form-shell/mobile-form-shell.component';
 import { extractApiErrorMessage } from '../shared/utils/api-error';
 import { CustomerFormComponent } from '../pages/customers/customer-form/customer-form.component';
 
@@ -24,7 +25,11 @@ export interface CustomerFormDialogData {
 
 @Component({
   standalone: true,
-  imports: [FormDialogShellComponent, CustomerFormComponent],
+  imports: [
+    FormDialogShellComponent,
+    MobileFormShellComponent,
+    CustomerFormComponent,
+  ],
   template: `
     <app-form-dialog-shell
       [title]="customer ? 'Editar cliente' : 'Nuevo cliente'"
@@ -33,43 +38,33 @@ export interface CustomerFormDialogData {
       (close)="cancel()"
     >
       @if (isMobile()) {
-        <header class="order-dialog-m-bar">
-          <button
-            type="button"
-            class="m-ib"
-            aria-label="Cerrar sin guardar"
-            (click)="cancel()"
-          >
-            <svg
-              width="22"
-              height="22"
-              viewBox="0 0 24 24"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M6 6l12 12M18 6L6 18"
-                stroke="currentColor"
-                stroke-width="2"
-                stroke-linecap="round"
-              />
-            </svg>
-          </button>
-          <h2 class="order-dialog-m-bar__title">
-            {{ customer ? 'Editar cliente' : 'Nuevo cliente' }}
-          </h2>
-        </header>
+        <db-mobile-form-shell
+          [title]="customer ? 'Editar cliente' : 'Nuevo cliente'"
+          (close)="cancel()"
+        >
+          @if (savedNotice) {
+            <p class="customer-saved" role="status">{{ savedNotice }}</p>
+          }
+          <app-customer-form
+            [customer]="customer"
+            [loading]="loading"
+            [error]="error"
+            (save)="save($event)"
+            (cancel)="cancel()"
+          />
+        </db-mobile-form-shell>
+      } @else {
+        @if (savedNotice) {
+          <p class="customer-saved" role="status">{{ savedNotice }}</p>
+        }
+        <app-customer-form
+          [customer]="customer"
+          [loading]="loading"
+          [error]="error"
+          (save)="save($event)"
+          (cancel)="cancel()"
+        />
       }
-      @if (savedNotice) {
-        <p class="customer-saved" role="status">{{ savedNotice }}</p>
-      }
-      <app-customer-form
-        [customer]="customer"
-        [loading]="loading"
-        [error]="error"
-        (save)="save($event)"
-        (cancel)="cancel()"
-      />
     </app-form-dialog-shell>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -75,39 +75,6 @@
     }
   }
 
-  .od-del-sheet__step {
-    display: inline-flex;
-    align-items: center;
-    border: 1px solid mobile.$m-border-input;
-    border-radius: mobile.$m-radius-sm;
-    overflow: hidden;
-    flex: none;
-
-    button {
-      width: 44px;
-      height: 44px;
-      border: 0;
-      background: #f4f8fb;
-      font-family: inherit;
-      font-size: 18px;
-      font-weight: 700;
-      color: mobile.$m-text;
-      cursor: pointer;
-
-      &:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
-      }
-    }
-
-    span {
-      min-width: 44px;
-      text-align: center;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-    }
-  }
-
   .od-del-sheet__note {
     display: flex;
     gap: 10px;

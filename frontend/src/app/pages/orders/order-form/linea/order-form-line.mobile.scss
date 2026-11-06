@@ -1,0 +1,185 @@
+@use '../../../../shared/styles/mobile' as mobile;
+
+@include mobile.mobile-only {
+  :host-context(.order-form) {
+    .order-line {
+      background: transparent;
+      border: 0;
+      border-radius: 0;
+      padding: 0;
+      gap: 12px;
+    }
+
+    .order-line__line-label {
+      display: none;
+    }
+
+    .order-line__service-row .remove-line {
+      display: none;
+    }
+
+    .order-line__m-head {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .order-line__m-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: mobile.$m-text;
+      line-height: 1.3;
+      min-width: 0;
+    }
+
+    .order-line__m-remove {
+      width: 44px;
+      height: 44px;
+      flex: none;
+      border: 0;
+      border-radius: mobile.$m-radius-sm;
+      background: transparent;
+      color: #b91c1c;
+      font-size: 18px;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+    }
+
+    .order-line__product-row {
+      grid-template-columns: 1fr;
+      gap: 12px;
+    }
+
+    .order-line__qty-field {
+      display: none;
+    }
+
+    .order-line__m-qty-price {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .order-line__m-price-main {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .order-line__m-list {
+      font-size: 12px;
+      color: mobile.$m-text-secondary;
+      display: inline-flex;
+      gap: 4px;
+      align-items: center;
+
+      s {
+        color: mobile.$m-text-secondary;
+      }
+    }
+
+    .order-line__m-unit {
+      font-size: 18px;
+      font-weight: 700;
+      color: mobile.$m-text;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .order-line__m-subtotal {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      font-size: 12px;
+      color: mobile.$m-text-secondary;
+
+      strong {
+        font-size: 15px;
+        font-weight: 700;
+        color: mobile.$m-text;
+        font-variant-numeric: tabular-nums;
+      }
+    }
+
+    .order-line__cost-fold {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      width: 100%;
+      margin: 0;
+      padding: 12px 0 0;
+      border: 0;
+      border-top: 1px dashed mobile.$m-border-input;
+      background: transparent;
+      text-align: left;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: 500;
+      color: mobile.$m-text-label;
+      cursor: pointer;
+      box-sizing: border-box;
+
+      &--warn {
+        color: #92400e;
+      }
+    }
+
+    .order-line__cost-fold-chevron {
+      flex: none;
+      color: #9aafbf;
+      font-size: 14px;
+    }
+
+    .order-line__composition--collapsed {
+      display: none;
+    }
+
+    .order-line__pricing {
+      display: none;
+    }
+
+    // Composición: meta en hasta 2 líneas; filas y «+ Agregar…» ≥44px.
+    ::ng-deep .cost-composition__summary {
+      min-height: 44px;
+      align-items: start;
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    ::ng-deep .cost-composition__summary-meta {
+      white-space: normal;
+      overflow: visible;
+      text-overflow: unset;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 2;
+      line-clamp: 2;
+      overflow: hidden;
+      line-height: 1.3;
+    }
+
+    ::ng-deep .cost-table__suffix > span {
+      right: 0.85rem;
+      bottom: 0.85rem;
+    }
+
+    ::ng-deep .cost-table__suffix .db-input,
+    ::ng-deep .cost-table__suffix input.db-input {
+      padding-right: 2.25rem;
+    }
+
+    ::ng-deep .dynamic-list > db-button .db-button {
+      min-height: 44px;
+    }
+  }
+}
+

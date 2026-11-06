@@ -1,0 +1,12 @@
+@if (title) {
+  <h2 class="m-sec-t mobile-only">{{ title }}</h2>
+}
+<div
+  [class]="
+    'm-form-step__card' +
+    (flush ? ' m-form-step__card--flush' : '') +
+    (cardClass ? ' ' + cardClass : '')
+  "
+>
+  <ng-content />
+</div>

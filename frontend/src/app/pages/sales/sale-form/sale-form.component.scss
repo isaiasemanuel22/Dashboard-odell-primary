@@ -125,36 +125,6 @@
     }
   }
 
-  .sale-m__step {
-    display: inline-flex;
-    align-items: center;
-    border: 1px solid mobile.$m-border-input;
-    border-radius: mobile.$m-radius-sm;
-    overflow: hidden;
-    flex: none;
-
-    button {
-      width: 44px;
-      height: 44px;
-      border: 0;
-      background: #f4f8fb;
-      font-family: inherit;
-      font-size: 18px;
-      font-weight: 700;
-      color: mobile.$m-text;
-      cursor: pointer;
-      padding: 0;
-    }
-
-    span {
-      min-width: 44px;
-      text-align: center;
-      font-weight: 700;
-      font-variant-numeric: tabular-nums;
-      font-size: 14px;
-    }
-  }
-
   .sale-m__note {
     display: flex;
     gap: 10px;
@@ -175,19 +145,6 @@
     gap: 14px;
   }
 
-  .sale-m__field {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    min-width: 0;
-  }
-
-  .sale-m__fl {
-    font-size: 13px;
-    font-weight: 500;
-    color: mobile.$m-text-label;
-  }
-
   .sale-m__account {
     align-items: center;
 
@@ -198,38 +155,6 @@
 
     ::ng-deep .db-form-field__label {
       display: none;
-    }
-  }
-
-  .sale-m__seg {
-    display: block;
-    width: 100%;
-
-    ::ng-deep .db-seg,
-    ::ng-deep .db-seg.db-seg--lg {
-      display: grid;
-      grid-auto-flow: column;
-      grid-auto-columns: minmax(0, 1fr);
-      width: 100%;
-      border-radius: mobile.$m-radius-sm;
-      border-color: mobile.$m-border-input;
-    }
-
-    ::ng-deep .db-seg.db-seg--lg .db-seg__btn,
-    ::ng-deep .db-seg__btn {
-      min-height: 44px;
-      height: auto;
-      padding: 0 6px;
-      font-size: 13px;
-      color: mobile.$m-text-label;
-      background: mobile.$m-surface;
-      border-right-color: mobile.$m-border-input;
-
-      &.is-on {
-        background: mobile.$m-primary;
-        color: #fff;
-        font-weight: 700;
-      }
     }
   }
 

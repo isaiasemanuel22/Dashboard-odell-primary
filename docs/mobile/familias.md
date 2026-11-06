@@ -234,20 +234,27 @@ b) **Si cambiás X, tocá**
 ### C · Formularios a pantalla completa (Nuevo pedido, presupuesto, cliente, producto, insumo, evento, venta)
 
 a) **Extraer**
-- `db-mobile-form-shell` (`components/mobile-form-shell`): inputs `title`, `subtitle`,
-  `submitLabel`, `submitDisabled`, `loading`; slots cuerpo y pie; usa `db-mobile-dock`.
-  Hoy cada form arma encabezado + pie por su cuenta (`wallet-form__footer`,
-  `form-footer` de customer, supply, category, impreso; order/sale ya usan `db-mobile-dock`).
-- `db-mobile-step` (sección numerada "1 · Cliente"): order-form, quote-form, sale-form.
-- `db-mobile-segmented` y `db-mobile-stepper` (−/+): repetidos en order-form (productos),
-  quote-form (líneas), sale-form (carrito), order-delivery sheet.
+- ~~`db-mobile-form-shell`~~ → ya en `components/mobile-form-shell` (barra X/título/acción,
+  cuerpo, pie opcional con `db-mobile-dock`). Migrado en order/quote/customer/product
+  dialogs y sale-form (ruta `/ventas/nueva`). Pies de customer/supply/product/event
+  siguen en `db-form-footer` local.
+- ~~`db-mobile-form-step`~~ → ya en `components/mobile-form-step` (order-form, quote-form,
+  sale-form).
+- ~~`db-mobile-stepper`~~ → ya en `components/mobile-stepper` (order-form-line, sale-form,
+  order-detail-deliveries). Segmentado mobile: variante en `db-segmented-control` (size lg),
+  no chip-group.
 - `db-mobile-select-field` (label + `▾` + hoja de opciones): cliente, canal, cuenta, categoría, color, marca.
-- Estilos de campo (`m-lbl`, `m-hint`, error inline): unificar en `_mobile-kit.scss`.
+- Estilos de campo (`m-fl`, `m-field`, `m-field-error`, labels/inputs 48px): en `_mobile-kit.scss`.
 
 b) **Si cambiás X, tocá**
-- Encabezado/pie del form: `mobile-form-shell` (hoy `order-form`, `sale-form`, `customer-form`, `supply-form`, `product-form`, `quote-form`, `event` y `modals`); el pie fijo ya usa `components/mobile-dock` en order-form y sale-form.
+- Encabezado/pie del form: `components/mobile-form-shell` (+ `components/mobile-dock`);
+  dialogs `order-form-dialog`, `quote-form-dialog`, `customer-form-dialog`,
+  `product-form-dialog`; `pages/sales/sale-form` y `sale-create`. Order/quote dock sigue
+  en el form; customer/supply/product/event footers aún locales.
 - Apertura a pantalla completa: `modals` (`form-dialog-panel--order-fullscreen`) y `shared/styles/_modal.scss`.
-- Stepper o segmentado: componentes nuevos + order-form-products, quote lines, sale-form-cart.
+- Stepper: `components/mobile-stepper` + `order-form/linea`, `sale-form`, `order-detail-deliveries`.
+- Secciones numeradas: `components/mobile-form-step` + `order-form`, `sale-form`.
+- Segmentado mobile: `components/db-segmented-control` (estilos lg en mobile).
 
 ### D · Hojas inferiores (Registrar pago, Entregar, Filtros, Movimiento de billetera)
 
@@ -314,7 +321,7 @@ b) **Si cambiás X, tocá**: pie fijo → `components/mobile-dock` (+ `m-has-doc
 | 1 | ~~`db-mobile-dock`~~ (hecho) | B, C, G | `components/mobile-dock` | — | Hecho |
 | 2 | ~~`db-mobile-sheet` + `chip-group`~~ (hecho) | D (también B) | `components/mobile-sheet`, `mobile-chip-group` | — | Hecho |
 | 3 | ~~`db-mobile-list-toolbar` + `MobileListStateService`~~ (hecho) | A | `mobile-list-toolbar`, `mobile-list-state.service` | — | Hecho |
-| 4 | `db-mobile-form-shell` + `step` + `stepper` + `segmented` + `select-field` | C | 7 formularios | ~220 | Alto (formularios grandes, validaciones) |
+| 4 | ~~`db-mobile-form-shell` + `step` + `stepper` + segmented~~ (hecho; falta `select-field`) | C | `mobile-form-shell`, `mobile-form-step`, `mobile-stepper` | — | Hecho (parcial: pies customer/supply/event y select-field pendientes) |
 | 5 | `db-mobile-settings-page` + `catalog-row` + `field-group` | G1/G2 | 8 páginas + shell | ~150 | Bajo |
 | 6 | `db-mobile-contact-card` + `totals` + `collapsible` | B | 3–4 detalles | ~130 | Bajo |
 | 7 | `db-mobile-kpi-grid` + `period-picker` + `movement-row` | E | 3 paneles | ~100 | Bajo |

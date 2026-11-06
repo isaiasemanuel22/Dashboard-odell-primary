@@ -1,0 +1,19 @@
+<div class="m-stepper" role="group" [attr.aria-label]="ariaLabel">
+  <button
+    type="button"
+    [attr.aria-label]="decrementAriaLabel"
+    [disabled]="!canDecrement"
+    (click)="decrement()"
+  >
+    −
+  </button>
+  <span>{{ value }}</span>
+  <button
+    type="button"
+    [attr.aria-label]="incrementAriaLabel"
+    [disabled]="!canIncrement"
+    (click)="increment()"
+  >
+    +
+  </button>
+</div>
