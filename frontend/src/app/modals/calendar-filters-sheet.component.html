@@ -1,0 +1,41 @@
+<div class="modal modal--md calendar-filters-sheet">
+  <header class="modal__header calendar-filters-sheet__header">
+    <div class="modal__heading">
+      <h3>Filtrar calendario</h3>
+    </div>
+    <button
+      type="button"
+      class="calendar-filters-sheet__clear"
+      (click)="clearAll()"
+    >
+      Limpiar
+    </button>
+  </header>
+
+  <div class="modal__body calendar-filters-sheet__body">
+    <section class="calendar-filters-sheet__group" aria-label="Tipo">
+      <h4 class="m-sec-t">Tipo</h4>
+      <db-mobile-chip-group
+        [options]="typeOptions"
+        [value]="draft"
+        ariaLabel="Tipo de evento"
+        (valueChange)="onTypeChange($event)"
+      />
+    </section>
+  </div>
+
+  <div class="confirm-actions calendar-filters-sheet__foot">
+    <db-button
+      label="Cancelar"
+      variant="secondary"
+      format="solid"
+      (clicked)="cancel()"
+    />
+    <db-button
+      [label]="applyLabel"
+      variant="primary"
+      format="solid"
+      (clicked)="apply()"
+    />
+  </div>
+</div>

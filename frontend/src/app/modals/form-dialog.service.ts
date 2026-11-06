@@ -40,6 +40,14 @@ import type {
   SaleFiltersSheetData,
   SaleMobileSheetFilters,
 } from './sale-filters-sheet.component';
+import type {
+  CalendarFiltersSheetData,
+  CalendarMobileFilter,
+} from './calendar-filters-sheet.component';
+import type {
+  PrintJobFiltersSheetData,
+  PrintJobMobileSheetFilters,
+} from './print-job-filters-sheet.component';
 
 @Injectable({ providedIn: 'root' })
 export class FormDialogService {
@@ -407,6 +415,42 @@ export class FormDialogService {
             data,
             'md',
             { ariaLabel: 'Filtrar ventas' },
+          ),
+      ),
+    );
+  }
+
+  openCalendarFilters(
+    data: CalendarFiltersSheetData,
+  ): Observable<CalendarMobileFilter | undefined> {
+    return from(import('./calendar-filters-sheet.component')).pipe(
+      switchMap(
+        ({
+          CalendarFiltersSheetComponent,
+        }): Observable<CalendarMobileFilter | undefined> =>
+          this.open<CalendarFiltersSheetData, CalendarMobileFilter>(
+            CalendarFiltersSheetComponent,
+            data,
+            'md',
+            { ariaLabel: 'Filtrar calendario' },
+          ),
+      ),
+    );
+  }
+
+  openPrintJobFilters(
+    data: PrintJobFiltersSheetData,
+  ): Observable<PrintJobMobileSheetFilters | undefined> {
+    return from(import('./print-job-filters-sheet.component')).pipe(
+      switchMap(
+        ({
+          PrintJobFiltersSheetComponent,
+        }): Observable<PrintJobMobileSheetFilters | undefined> =>
+          this.open<PrintJobFiltersSheetData, PrintJobMobileSheetFilters>(
+            PrintJobFiltersSheetComponent,
+            data,
+            'md',
+            { ariaLabel: 'Filtrar cola' },
           ),
       ),
     );

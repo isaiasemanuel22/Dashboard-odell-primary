@@ -99,7 +99,7 @@
 
   .cal-m__seg {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     border: 1px solid mobile.$m-border-input;
     border-radius: mobile.$m-radius-sm;
     overflow: hidden;
@@ -125,6 +125,16 @@
         font-weight: 700;
       }
     }
+  }
+
+  .cal-m__empty--muted {
+    color: #9aafbf;
+  }
+
+  .cal-m__fbtn--on {
+    border-color: mobile.$m-primary !important;
+    background: mobile.$m-primary-pale !important;
+    color: mobile.$m-primary-dark !important;
   }
 
   .cal-m__body {

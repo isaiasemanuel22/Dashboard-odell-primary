@@ -9,6 +9,7 @@ import {
   ViewChild,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import {
   CdkDragDrop,
   DragDropModule,
@@ -18,7 +19,6 @@ import {
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import {
-  CurrentUserResponse,
   OrderStatus,
   PrintJob,
   PrintJobStatus,
@@ -27,12 +27,13 @@ import {
   TaskKind,
 } from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
+import { DataChangedService } from '../../core/services/data-changed.service';
 import {
   MOBILE_LIST_KEYS,
   injectMobileListPersistence,
 } from '../../core/services/mobile-list-state.service';
 import { PrintJobsService } from '../../core/services/print-jobs.service';
-import { UserAccessService } from '../../core/services/user-access.service';
+import { IndependentTaskFlowService } from '../../core/services/independent-task-flow.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import {
@@ -41,6 +42,7 @@ import {
   DbButtonComponent,
   MobileBarComponent,
   MobileListToolbarComponent,
+  MobileSheetComponent,
   type MobileListToolbarChip,
   PrintJobCardComponent,
 } from '@general-components';
@@ -58,6 +60,7 @@ import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { designatedArea } from '../../shared/utils/service-type.util';
 import { formatOrderMobileDeliveryLabel } from '../../shared/utils/order.helpers';
 import { FormDialogService } from '../../modals/public-api';
+import { countPrintJobMobileFilters } from '../../modals/print-job-filters-sheet.component';
 import {
   PrintJobCustomerChip,
   PrintJobsToolbarComponent,
@@ -68,7 +71,7 @@ import {
 } from '../../shared/utils/priority.helpers';
 import { todayYmd } from '../../shared/utils/calendar-grid.util';
 
-export type MobileJobActionKind = 'add' | 'move' | 'detail';
+export type MobileJobActionKind = 'add' | 'move' | 'detail' | 'block' | 'unblock';
 
 export interface MobileJobAction {
   label: string;
@@ -81,6 +84,7 @@ interface PrintJobsMobileListState {
   searchQuery: string;
   mobileSearchOpen: boolean;
   areaFilter: ServiceType | null;
+  customerFilter: string | null;
   mobileTabStatus: PrintJobStatus;
   scrollY: number;
 }
@@ -96,6 +100,7 @@ interface PrintJobsMobileListState {
     DbButtonComponent,
     MobileBarComponent,
     MobileListToolbarComponent,
+    MobileSheetComponent,
     PrintJobCardComponent,
     PrintJobsToolbarComponent,
   ],
@@ -105,10 +110,11 @@ interface PrintJobsMobileListState {
 })
 export class PrintJobsComponent implements OnInit, AfterViewChecked {
   private readonly printJobsService = inject(PrintJobsService);
-  private readonly userAccess = inject(UserAccessService);
+  private readonly independentTaskFlow = inject(IndependentTaskFlowService);
   private readonly catalogSync = inject(RealtimeCatalogSyncService);
   private readonly realtime = inject(RealtimeService);
   private readonly formDialogs = inject(FormDialogService);
+  private readonly dataChanged = inject(DataChangedService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
@@ -116,6 +122,9 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
     injectMobileListPersistence<PrintJobsMobileListState>(
       MOBILE_LIST_KEYS.printJobs,
     );
+
+  /** Hoja de acciones mobile de una tarea. */
+  mobileActionsJob: PrintJob | null = null;
 
   @ViewChild('mobileTabsRow') private mobileTabsRow?: ElementRef<HTMLElement>;
   private pendingTabScroll = false;
@@ -158,23 +167,125 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
       searchQuery: this.searchQuery,
       mobileSearchOpen: this.mobileSearchOpen,
       areaFilter: this.areaFilter,
+      customerFilter: this.customerFilter,
       mobileTabStatus: this.mobileTabStatus,
     }));
     this.listPersistence.restore((saved) => {
       this.searchQuery = saved.searchQuery;
       this.mobileSearchOpen = saved.mobileSearchOpen;
       this.areaFilter = saved.areaFilter;
+      this.customerFilter = saved.customerFilter ?? null;
       this.mobileTabStatus = saved.mobileTabStatus;
       this.pendingTabScroll = true;
     });
 
     this.loadJobs();
+    this.dataChanged
+      .on('print-jobs')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadJobs());
     this.realtime.bindSmartReload(
       this.destroyRef,
       ['print-jobs', 'orders'],
       (event) => this.handleRealtime(event),
       { skip: () => this.updating },
     );
+  }
+
+  get mobileCustomerFilterCount(): number {
+    return countPrintJobMobileFilters(this.customerFilter);
+  }
+
+  openMobileCustomerFilters(): void {
+    const jobsForCount = this.jobsForCustomerFilterCount();
+    const customers = this.customerChips.map((chip) => ({
+      initial: chip.initial,
+      name: chip.name,
+      count: jobsForCount.filter(
+        (job) => this.customerInitial(job.customerName) === chip.initial,
+      ).length,
+    }));
+    this.formDialogs
+      .openPrintJobFilters({
+        customerFilter: this.customerFilter,
+        customers,
+        totalCount: jobsForCount.length,
+      })
+      .subscribe((next) => {
+        if (!next) return;
+        this.customerFilter = next.customerFilter;
+        this.rebuildBoard();
+      });
+  }
+
+  /** Misma base que desktop: búsqueda + área, sin filtro de cliente. */
+  private jobsForCustomerFilterCount(): PrintJob[] {
+    let list = this.allJobs;
+    const query = this.searchQuery.trim().toLowerCase();
+    if (query) {
+      list = list.filter(
+        (job) =>
+          job.productName.toLowerCase().includes(query) ||
+          job.orderId.toLowerCase().includes(query) ||
+          job.customerName.toLowerCase().includes(query),
+      );
+    }
+    if (this.areaFilter) {
+      list = list.filter(
+        (job) =>
+          job.taskKind !== TaskKind.PREPARE_ORDER &&
+          designatedArea(job.type) === this.areaFilter,
+      );
+    }
+    return list;
+  }
+
+  openMobileJobActions(job: PrintJob): void {
+    this.mobileActionsJob = job;
+    this.cdr.markForCheck();
+  }
+
+  closeMobileJobActions(): void {
+    if (!this.mobileActionsJob) return;
+    this.mobileActionsJob = null;
+    this.cdr.markForCheck();
+  }
+
+  get mobileSheetActions(): MobileJobAction[] {
+    const job = this.mobileActionsJob;
+    if (!job) return [];
+    return this.mobileSheetActionsFor(job);
+  }
+
+  /**
+   * Acciones de la hoja: las mismas de la tarjeta + Bloquear / Desbloquear
+   * (transiciones que desktop hace arrastrando a/desde la columna Bloqueado).
+   */
+  private mobileSheetActionsFor(job: PrintJob): MobileJobAction[] {
+    const base = this.mobileActions(job);
+    const extra: MobileJobAction[] = [];
+    if (this.isJobBlocked(job)) {
+      if (!base.some((a) => a.kind === 'move' || a.kind === 'unblock')) {
+        extra.push({
+          label: 'Desbloquear',
+          primary: false,
+          kind: 'unblock',
+          targetStatus: PrintJobStatus.EN_PROCESO,
+        });
+      }
+    } else if (
+      job.status !== PrintJobStatus.TERMINADO &&
+      job.status !== PrintJobStatus.CANCELADO
+    ) {
+      // Desktop: arrastrar a la columna Bloqueado (incluye desde el backlog).
+      extra.push({
+        label: 'Mover a Bloqueado',
+        primary: false,
+        kind: 'block',
+        targetStatus: PrintJobStatus.BLOQUEADO,
+      });
+    }
+    return [...base, ...extra];
   }
 
   get mobileAreaChips(): MobileListToolbarChip[] {
@@ -431,6 +542,7 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
 
   runMobileAction(job: PrintJob, action: MobileJobAction): void {
     if (this.updating) return;
+    this.closeMobileJobActions();
     if (action.kind === 'detail') {
       void this.router.navigate(['/pedidos', job.orderId]);
       return;
@@ -439,7 +551,12 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
       this.addToBoard(job);
       return;
     }
-    if (action.kind === 'move' && action.targetStatus) {
+    if (
+      (action.kind === 'move' ||
+        action.kind === 'block' ||
+        action.kind === 'unblock') &&
+      action.targetStatus
+    ) {
       this.moveJobToStatus(job, action.targetStatus);
     }
   }
@@ -467,48 +584,26 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
   }
 
   onNewTaskClick(): void {
-    const open = (uid: string): void => {
-      this.userAccess.listOrderResponsibles().subscribe({
-        next: (responsibles) => this.openIndependentTask(responsibles, uid),
-        error: () => this.openIndependentTask([], uid),
+    this.independentTaskFlow.pick().subscribe((result) => {
+      if (!result) return;
+      this.updating = true;
+      this.cdr.markForCheck();
+      this.printJobsService.createIndependent(result).subscribe({
+        next: () => {
+          this.updating = false;
+          this.loadJobs();
+        },
+        error: (err: unknown) => {
+          this.updating = false;
+          this.error = extractApiErrorMessage(
+            err as { error?: { message?: string | string[] } },
+          );
+          this.cdr.markForCheck();
+        },
       });
-    };
-    const cachedUid = sessionFirebaseUid(this.userAccess.peekCurrentUser());
-    if (cachedUid) {
-      open(cachedUid);
-      return;
-    }
-    this.userAccess.loadCurrentUser().subscribe({
-      next: (profile) => open(sessionFirebaseUid(profile)),
-      error: () => open(''),
     });
   }
 
-  private openIndependentTask(
-    responsibles: { firebaseUid: string; displayName: string; id: string; active: boolean }[],
-    defaultResponsibleId: string,
-  ): void {
-    this.formDialogs
-      .openIndependentTask({ responsibles, defaultResponsibleId })
-      .subscribe((result) => {
-        if (!result) return;
-        this.updating = true;
-        this.cdr.markForCheck();
-        this.printJobsService.createIndependent(result).subscribe({
-          next: () => {
-            this.updating = false;
-            this.loadJobs();
-          },
-          error: (err: unknown) => {
-            this.updating = false;
-            this.error = extractApiErrorMessage(
-              err as { error?: { message?: string | string[] } },
-            );
-            this.cdr.markForCheck();
-          },
-        });
-      });
-  }
 
   loadJobs(): void {
     this.loading = true;
@@ -873,9 +968,4 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
   private sortByPriority(jobs: PrintJob[]): PrintJob[] {
     return [...jobs].sort((a, b) => b.priority - a.priority);
   }
-}
-
-function sessionFirebaseUid(profile: CurrentUserResponse | null): string {
-  if (!profile || !('firebaseUid' in profile)) return '';
-  return profile.firebaseUid ?? '';
 }

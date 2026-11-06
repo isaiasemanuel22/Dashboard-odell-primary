@@ -149,7 +149,7 @@ Nota: Resina no tiene artboard propio; se verifica contra el de Filamento.
 | Pantalla | Ruta | Artboard | Lista de chequeo propia |
 |---|---|---|---|
 | Login | /login | MobLogin | Logo y título; "Continuar con Google"; separador "o con email"; email/contraseña; Ingresar; mensaje de acceso denegado; sin barra ni menú inferior; teclado no tapa el botón |
-| Calendario | /calendario | MobCalendario | En mobile (390 px): tabs **Agenda** y **Mes** (Semana no entra a ese ancho; la tira de días / flechas cubren el salto semanal). Agenda por día (atrasadas, eventos con hora, entregas, "Sin entregas ni eventos"); botón "Evento" abre Nuevo evento; cambio de mes |
+| Calendario | /calendario | MobCalendario | En mobile (390 px): tabs **Agenda**, **Semana** (lista vertical de 7 días, sin grilla; vacíos «Sin eventos»; flechas ‹ › y «Hoy») y **Mes**. Agenda por día (tira de días, atrasadas, eventos con hora, entregas, "Sin entregas ni eventos"); hoja de filtros por tipo; botón "Evento" abre Nuevo evento; cambio de mes |
 
 ## Orden de QA propuesto
 

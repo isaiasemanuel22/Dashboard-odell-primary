@@ -42,12 +42,13 @@ import {
   weekRangeContaining,
 } from '../../shared/utils/calendar-grid.util';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
+import { countCalendarMobileFilters } from '../../modals/calendar-filters-sheet.component';
 import { CalendarSideComponent } from './calendar-side/calendar-side.component';
 
 type CalendarView = 'month' | 'week' | 'list';
 type CalendarFilter = 'todos' | CalendarFeedType;
-/** Mobile: Agenda (lista) y Mes compacto. Semana desktop no entra en 390px. */
-type MobileCalendarView = 'agenda' | 'month';
+/** Mobile: Agenda, Semana en lista vertical y Mes. */
+type MobileCalendarView = 'agenda' | 'week' | 'month';
 
 const TYPE_COLORS: Record<CalendarFeedType | 'todos', string> = {
   todos: '#5B7083',
@@ -230,9 +231,39 @@ export class CalendarComponent implements OnInit {
     this.mobileView = view;
     if (view === 'month') {
       this.cursorMonth = startOfMonth(this.mobileSelectedDay);
+    } else if (view === 'week') {
+      // Misma ancla que desktop Semana: día de la semana visible.
+      this.cursorMonth = this.mobileSelectedDay;
     }
     this.rebuildViews();
     this.cdr.markForCheck();
+  }
+
+  get mobileFilterCount(): number {
+    return countCalendarMobileFilters(this.filter);
+  }
+
+  openMobileFilters(): void {
+    const counts = this.mobileFilterCounts();
+    this.formDialogs
+      .openCalendarFilters({
+        filter: this.filter,
+        itemCountByType: counts,
+      })
+      .subscribe((next) => {
+        if (next == null) return;
+        this.setFilter(next);
+      });
+  }
+
+  private mobileFilterCounts(): Record<CalendarFilter, number> {
+    const items = this.allItems;
+    return {
+      todos: items.length,
+      delivery: items.filter((item) => item.type === 'delivery').length,
+      event: items.filter((item) => item.type === 'event').length,
+      reminder: items.filter((item) => item.type === 'reminder').length,
+    };
   }
 
   prevMobileWeek(): void {

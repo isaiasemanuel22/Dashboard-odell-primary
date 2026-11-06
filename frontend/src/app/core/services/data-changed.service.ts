@@ -8,7 +8,8 @@ export type DataChangedScope =
   | 'quotes'
   | 'customers'
   | 'products'
-  | 'supplies';
+  | 'supplies'
+  | 'print-jobs';
 
 export interface DataChangedEvent {
   scope: DataChangedScope;

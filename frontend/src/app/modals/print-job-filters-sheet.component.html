@@ -1,0 +1,46 @@
+<div class="modal modal--md print-job-filters-sheet">
+  <header class="modal__header print-job-filters-sheet__header">
+    <div class="modal__heading">
+      <h3>Filtrar cola</h3>
+    </div>
+    <button
+      type="button"
+      class="print-job-filters-sheet__clear"
+      (click)="clearAll()"
+    >
+      Limpiar
+    </button>
+  </header>
+
+  <div class="modal__body print-job-filters-sheet__body">
+    <section class="print-job-filters-sheet__group" aria-label="Cliente">
+      <h4 class="m-sec-t">Cliente</h4>
+      @if (customerOptions.length) {
+        <db-mobile-chip-group
+          [options]="customerOptions"
+          [value]="draft"
+          [clearable]="true"
+          ariaLabel="Cliente"
+          (valueChange)="onCustomerChange($event)"
+        />
+      } @else {
+        <p class="print-job-filters-sheet__empty">No hay clientes en la cola</p>
+      }
+    </section>
+  </div>
+
+  <div class="confirm-actions print-job-filters-sheet__foot">
+    <db-button
+      label="Cancelar"
+      variant="secondary"
+      format="solid"
+      (clicked)="cancel()"
+    />
+    <db-button
+      [label]="applyLabel"
+      variant="primary"
+      format="solid"
+      (clicked)="apply()"
+    />
+  </div>
+</div>

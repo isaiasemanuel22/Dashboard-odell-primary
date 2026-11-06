@@ -33,6 +33,18 @@
           <path d="M20 20l-3.5-3.5" />
         </svg>
       </button>
+      <button
+        type="button"
+        class="m-fbtn"
+        [class.cola-m__fbtn--on]="mobileCustomerFilterCount > 0"
+        aria-label="Filtrar por cliente"
+        (click)="openMobileCustomerFilters()"
+      >
+        Cliente
+        @if (mobileCustomerFilterCount > 0) {
+          <span aria-hidden="true">{{ mobileCustomerFilterCount }}</span>
+        }
+      </button>
     </db-mobile-bar>
 
     @if (mobileSearchOpen) {
@@ -89,11 +101,31 @@
             <span class="cola-m__oid"
               >{{ job.orderId }} · {{ job.customerName }}</span
             >
-            <span
-              class="cola-m__pr"
-              [class.cola-m__pr--urgent]="jobPriorityUrgent(job)"
-              >{{ jobPriorityBadge(job) }}</span
-            >
+            <div class="cola-m__ln-end">
+              <span
+                class="cola-m__pr"
+                [class.cola-m__pr--urgent]="jobPriorityUrgent(job)"
+                >{{ jobPriorityBadge(job) }}</span
+              >
+              <button
+                type="button"
+                class="m-ib cola-m__more"
+                aria-label="Más acciones de la tarea"
+                (click)="openMobileJobActions(job)"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  width="18"
+                  height="18"
+                  fill="currentColor"
+                  aria-hidden="true"
+                >
+                  <circle cx="5" cy="12" r="1.6" />
+                  <circle cx="12" cy="12" r="1.6" />
+                  <circle cx="19" cy="12" r="1.6" />
+                </svg>
+              </button>
+            </div>
           </div>
           <div class="cola-m__tt">{{ jobTitle(job) }}</div>
           @if (jobDetailLine(job); as detail) {
@@ -133,6 +165,25 @@
         </div>
       }
     </div>
+
+    <db-mobile-sheet
+      [open]="!!mobileActionsJob"
+      ariaLabel="Acciones de la tarea"
+      (closed)="closeMobileJobActions()"
+    >
+      @if (mobileActionsJob; as job) {
+        @for (action of mobileSheetActions; track action.label) {
+          <button
+            type="button"
+            class="m-sheet-action"
+            [disabled]="updating"
+            (click)="runMobileAction(job, action)"
+          >
+            {{ action.label }}
+          </button>
+        }
+      }
+    </db-mobile-sheet>
   </div>
 
   <div class="desktop-only">

@@ -100,7 +100,9 @@
                   ? 'Nuevo presupuesto'
                   : fabOpensCustomer
                     ? 'Nuevo cliente'
-                    : 'Nuevo pedido'
+                    : fabOpensTask
+                      ? 'Nueva tarea'
+                      : 'Nuevo pedido'
             "
             (click)="onFabClick()"
           >

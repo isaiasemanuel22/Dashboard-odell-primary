@@ -11,8 +11,11 @@ import { SuppliesFacade } from '../store/supplies/supplies.facade';
 import { DbButtonComponent } from '../components/db-button/db-button.component';
 import { NavIconComponent } from '../components/nav-icon/nav-icon.component';
 import { DataChangedService } from '../core/services/data-changed.service';
+import { PrintJobsService } from '../core/services/print-jobs.service';
+import { IndependentTaskFlowService } from '../core/services/independent-task-flow.service';
 import { FormDialogService } from '../modals/form-dialog.service';
 import { LayoutUiService } from './layout-ui.service';
+import { extractApiErrorMessage } from '../shared/utils/api-error';
 
 interface NavItem {
   label: string;
@@ -49,16 +52,19 @@ export class LayoutComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly formDialogs = inject(FormDialogService);
   private readonly dataChanged = inject(DataChangedService);
+  private readonly printJobsService = inject(PrintJobsService);
+  private readonly independentTaskFlow = inject(IndependentTaskFlowService);
   readonly layoutUi = inject(LayoutUiService);
 
   readonly user$ = this.auth.currentUser$;
   readonly authEnabled = this.auth.enabled;
 
   hideBottomNav = false;
-  /** En `/ventas` el FAB abre venta de mostrador; en `/presupuestos`, nuevo presupuesto; en `/clientes`, nuevo cliente. */
+  /** En `/ventas` el FAB abre venta de mostrador; en `/presupuestos`, nuevo presupuesto; en `/clientes`, nuevo cliente; en `/cola`, nueva tarea. */
   fabOpensCounterSale = false;
   fabOpensQuote = false;
   fabOpensCustomer = false;
+  fabOpensTask = false;
 
   readonly navItems: NavItem[] = [
     { label: 'Dashboard', route: '/dashboard', icon: 'dashboard', exact: true },
@@ -151,6 +157,7 @@ export class LayoutComponent implements OnInit {
     this.fabOpensCounterSale = path === '/ventas';
     this.fabOpensQuote = path === '/presupuestos';
     this.fabOpensCustomer = path === '/clientes';
+    this.fabOpensTask = path === '/cola';
   }
 
   private shouldHideBottomNav(path: string): boolean {
@@ -180,6 +187,10 @@ export class LayoutComponent implements OnInit {
       this.openNewCustomer();
       return;
     }
+    if (this.fabOpensTask) {
+      this.openNewTask();
+      return;
+    }
     this.openNewOrder();
   }
 
@@ -204,6 +215,27 @@ export class LayoutComponent implements OnInit {
       if (!saved) return;
       this.dataChanged.emit('customers');
       void this.router.navigateByUrl(`/clientes/${saved.id}`);
+    });
+  }
+
+  /** Misma alta que «+ Nueva tarea» de la cola. */
+  openNewTask(): void {
+    this.independentTaskFlow.pick().subscribe((result) => {
+      if (!result) return;
+      this.printJobsService.createIndependent(result).subscribe({
+        next: () => {
+          this.dataChanged.emit('print-jobs');
+          void this.router.navigateByUrl('/cola');
+        },
+        error: (err: unknown) => {
+          alert(
+            extractApiErrorMessage(
+              err as { error?: { message?: string | string[] } },
+              'No se pudo crear la tarea',
+            ),
+          );
+        },
+      });
     });
   }
 

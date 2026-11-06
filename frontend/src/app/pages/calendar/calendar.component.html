@@ -8,6 +8,18 @@
     >
       Hoy
     </button>
+    <button
+      type="button"
+      class="m-fbtn"
+      [class.cal-m__fbtn--on]="mobileFilterCount > 0"
+      aria-label="Filtros del calendario"
+      (click)="openMobileFilters()"
+    >
+      Filtros
+      @if (mobileFilterCount > 0) {
+        <span aria-hidden="true">{{ mobileFilterCount }}</span>
+      }
+    </button>
   </db-mobile-bar>
 
   @if (error) {
@@ -15,7 +27,7 @@
   }
 
   <div class="cal-m__week">
-    @if (mobileView === 'agenda') {
+    @if (mobileView === 'agenda' || mobileView === 'week') {
       <div class="cal-m__wh">
         <button
           type="button"
@@ -55,25 +67,27 @@
           </svg>
         </button>
       </div>
-      <div class="cal-m__days" role="group" aria-label="Días de la semana">
-        @for (day of mobileWeekDays; track day.date) {
-          <button
-            type="button"
-            class="cal-m__d"
-            [class.cal-m__d--on]="day.selected"
-            (click)="selectMobileDay(day.date)"
-          >
-            {{ day.shortName }}
-            <b>{{ day.dayNumber }}</b>
-            <i
-              [style.background]="
-                day.selected ? '#fff' : day.dotColor || 'transparent'
-              "
-              [class.cal-m__dot--empty]="!day.dotColor"
-            ></i>
-          </button>
-        }
-      </div>
+      @if (mobileView === 'agenda') {
+        <div class="cal-m__days" role="group" aria-label="Días de la semana">
+          @for (day of mobileWeekDays; track day.date) {
+            <button
+              type="button"
+              class="cal-m__d"
+              [class.cal-m__d--on]="day.selected"
+              (click)="selectMobileDay(day.date)"
+            >
+              {{ day.shortName }}
+              <b>{{ day.dayNumber }}</b>
+              <i
+                [style.background]="
+                  day.selected ? '#fff' : day.dotColor || 'transparent'
+                "
+                [class.cal-m__dot--empty]="!day.dotColor"
+              ></i>
+            </button>
+          }
+        </div>
+      }
     } @else {
       <div class="cal-m__wh">
         <button
@@ -126,6 +140,13 @@
       </button>
       <button
         type="button"
+        [class.on]="mobileView === 'week'"
+        (click)="setMobileView('week')"
+      >
+        Semana
+      </button>
+      <button
+        type="button"
         [class.on]="mobileView === 'month'"
         (click)="setMobileView('month')"
       >
@@ -136,11 +157,11 @@
 
   @if (loading) {
     <p class="cal-m__loading">Cargando calendario…</p>
-  } @else if (mobileView === 'agenda') {
+  } @else if (mobileView === 'agenda' || mobileView === 'week') {
     <div class="cal-m__body">
       @for (day of mobileAgendaDays; track day.date) {
         <div class="cal-m__dh">{{ day.header }}</div>
-        @if (day.isToday && mobileOverdueSummary; as overdue) {
+        @if (mobileView === 'agenda' && day.isToday && mobileOverdueSummary; as overdue) {
           <button
             type="button"
             class="cal-m__ev"
@@ -174,8 +195,20 @@
             </div>
           </button>
         } @empty {
-          @if (!(day.isToday && mobileOverdueSummary)) {
-            <div class="cal-m__empty">Sin entregas ni eventos</div>
+          @if (
+            mobileView === 'week' ||
+            !(day.isToday && mobileOverdueSummary)
+          ) {
+            <div
+              class="cal-m__empty"
+              [class.cal-m__empty--muted]="mobileView === 'week'"
+            >
+              {{
+                mobileView === 'week'
+                  ? 'Sin eventos'
+                  : 'Sin entregas ni eventos'
+              }}
+            </div>
           }
         }
       }
