@@ -48,9 +48,7 @@
               order.status | orderStatusLabel
             }}</span>
             @if (isOrderOverdue) {
-              <span class="m-pill m-pill--d"
-                >Atrasado {{ overdueDays }} días</span
-              >
+              <span class="m-pill m-pill--d">{{ overdueLabel }}</span>
             }
           </div>
           <span class="od-m__meta"

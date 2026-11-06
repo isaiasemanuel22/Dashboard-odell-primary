@@ -28,6 +28,7 @@ import { FormDialogService } from '../../modals/public-api';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { resolveColorLabel } from '../../shared/utils/color.helpers';
 import { supplyCategoryFilters } from '../../shared/utils/list-filters';
+import { abbreviateSupplyUnit } from '../../shared/utils/supply-unit.util';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 import { SuppliesFacade } from '../../store/supplies/supplies.facade';
 
@@ -207,6 +208,15 @@ export class SuppliesComponent implements OnInit {
     });
   }
 
+  /** Lista mobile: stock bajo / 0 primero; desktop conserva el orden del filtro. */
+  get mobileFilteredSupplies(): Supply[] {
+    return this.filteredSupplies.slice().sort((a, b) => {
+      const aLow = a.quantity <= a.minStock || a.quantity <= 0 ? 0 : 1;
+      const bLow = b.quantity <= b.minStock || b.quantity <= 0 ? 0 : 1;
+      return aLow - bLow;
+    });
+  }
+
   onMobileChipChange(chipId: string): void {
     this.setMobileChip(chipId as MobileChip);
   }
@@ -235,20 +245,21 @@ export class SuppliesComponent implements OnInit {
     const formatted = Number.isInteger(qty)
       ? String(qty)
       : qty.toLocaleString('es-AR', { maximumFractionDigits: 2 });
-    return `${formatted} ${supply.unit}`;
+    return `${formatted} ${abbreviateSupplyUnit(supply.unit)}`;
   }
 
   mobileRowMeta(supply: Supply): string {
     const category = SUPPLY_CATEGORY_LABELS[supply.category] ?? supply.category;
+    const unit = abbreviateSupplyUnit(supply.unit);
     if (this.isLowStock(supply)) {
       const min = Number(supply.minStock) || 0;
       const minLabel = Number.isInteger(min)
         ? String(min)
         : min.toLocaleString('es-AR', { maximumFractionDigits: 2 });
-      return `${category} · mínimo ${minLabel}`;
+      return `${category} · mínimo ${minLabel} ${unit}`;
     }
     if (supply.unitPrice > 0) {
-      return `${category} · ${this.currency.transform(supply.unitPrice)} / ${supply.unit}`;
+      return `${category} · ${this.currency.transform(supply.unitPrice)} / ${unit}`;
     }
     return category;
   }

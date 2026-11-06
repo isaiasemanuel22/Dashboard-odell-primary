@@ -113,7 +113,7 @@ export function formatQuoteMobileContextHint(quote: Quote): string {
   if (quote.orderId) {
     return `Pedido ${quote.orderId} generado`;
   }
-  if (!quote.customerId) {
+  if (!quote.customerId && quote.status === QuoteStatus.BORRADOR) {
     return 'Falta cliente para enviarlo';
   }
 

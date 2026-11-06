@@ -38,8 +38,26 @@ export class MobileCardLinkComponent {
   /** Clase pill opcional (ej. m-pill m-pill--b). */
   readonly pillClass = input<string | null>(null);
   readonly pillLabel = input<string | null>(null);
+  /**
+   * Nombre accesible del enlace/botón. Si falta, se arma con título,
+   * subtítulo, pill y trailing.
+   */
+  readonly ariaLabel = input<string | null>(null);
 
   readonly pressed = output<void>();
+
+  protected resolvedAriaLabel(): string {
+    const custom = this.ariaLabel()?.trim();
+    if (custom) return custom;
+    const parts = [this.title()];
+    const sub = this.subtitle()?.trim();
+    if (sub) parts.push(sub);
+    const pill = this.pillLabel()?.trim();
+    if (pill) parts.push(pill);
+    const trailing = this.trailing()?.trim();
+    if (trailing) parts.push(trailing);
+    return parts.join(', ');
+  }
 
   protected onPress(): void {
     this.pressed.emit();

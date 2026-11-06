@@ -423,6 +423,11 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     return orderOverdueDays(this.order.dueDate, this.order.status);
   }
 
+  get overdueLabel(): string {
+    const days = this.overdueDays;
+    return days > 0 ? `Atrasado ${pluralize(days, 'día', 'días')}` : '';
+  }
+
   get mobileCreatedLabel(): string {
     return this.order ? `Creado ${this.formatDayMonth(this.order.createdAt)}` : '';
   }

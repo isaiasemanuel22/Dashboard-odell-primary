@@ -1,23 +1,28 @@
 @if (link(); as route) {
-  <a class="m-row mcl" [routerLink]="route">
+  <a
+    class="m-row mcl"
+    [routerLink]="route"
+    [attr.aria-label]="resolvedAriaLabel()"
+  >
     @if (imageUrl(); as src) {
       <img class="mcl__av mcl__av--img" [src]="src" [alt]="imageAlt()" />
     } @else if (initials()) {
       <span class="mcl__av" aria-hidden="true">{{ initials() }}</span>
     }
-    <div class="m-row__text">
+    <div class="m-row__text" aria-hidden="true">
       <b>{{ title() }}</b>
       @if (subtitle(); as sub) {
         <span>{{ sub }}</span>
       }
     </div>
     @if (pillLabel(); as pill) {
-      <span [class]="pillClass() || 'm-pill'">{{ pill }}</span>
+      <span [class]="pillClass() || 'm-pill'" aria-hidden="true">{{ pill }}</span>
     }
     @if (trailing(); as value) {
       <div
         class="mcl__end"
         [class.mcl__end--danger]="trailingTone() === 'danger'"
+        aria-hidden="true"
       >
         {{ value }}
         @if (trailingHint(); as hint) {
@@ -40,25 +45,31 @@
     }
   </a>
 } @else {
-  <button type="button" class="m-row mcl" (click)="onPress()">
+  <button
+    type="button"
+    class="m-row mcl"
+    [attr.aria-label]="resolvedAriaLabel()"
+    (click)="onPress()"
+  >
     @if (imageUrl(); as src) {
       <img class="mcl__av mcl__av--img" [src]="src" [alt]="imageAlt()" />
     } @else if (initials()) {
       <span class="mcl__av" aria-hidden="true">{{ initials() }}</span>
     }
-    <div class="m-row__text">
+    <div class="m-row__text" aria-hidden="true">
       <b>{{ title() }}</b>
       @if (subtitle(); as sub) {
         <span>{{ sub }}</span>
       }
     </div>
     @if (pillLabel(); as pill) {
-      <span [class]="pillClass() || 'm-pill'">{{ pill }}</span>
+      <span [class]="pillClass() || 'm-pill'" aria-hidden="true">{{ pill }}</span>
     }
     @if (trailing(); as value) {
       <div
         class="mcl__end"
         [class.mcl__end--danger]="trailingTone() === 'danger'"
+        aria-hidden="true"
       >
         {{ value }}
         @if (trailingHint(); as hint) {

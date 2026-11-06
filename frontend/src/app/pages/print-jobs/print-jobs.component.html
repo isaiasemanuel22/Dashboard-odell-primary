@@ -45,7 +45,12 @@
       />
     }
 
-    <div class="cola-m__tabs" role="tablist" aria-label="Estado de las tareas">
+    <div
+      #mobileTabsRow
+      class="cola-m__tabs"
+      role="tablist"
+      aria-label="Estado de las tareas"
+    >
       @for (column of visibleColumns; track column.status) {
         <button
           type="button"
@@ -95,12 +100,8 @@
             <div class="cola-m__meta">{{ detail }}</div>
           }
           <div class="cola-m__ln">
-            @if (isPrepareOrder(job)) {
-              <span class="cola-m__area cola-m__area--ventas">Ventas</span>
-            } @else {
-              @if (jobArea(job); as area) {
-                <db-service-badge [type]="area" />
-              }
+            @if (jobAreaLabel(job); as areaLabel) {
+              <span class="m-area">{{ areaLabel }}</span>
             }
             @if (jobDeliveryLabel(job); as delivery) {
               <span class="cola-m__meta">{{ delivery }}</span>

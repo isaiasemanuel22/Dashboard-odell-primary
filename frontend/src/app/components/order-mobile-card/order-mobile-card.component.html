@@ -2,11 +2,12 @@
   class="omc"
   [class.omc--overdue]="overdue()"
   [routerLink]="['/pedidos', order().id]"
+  [attr.aria-label]="accessibleName()"
 >
   <div class="omc__row">
     <span class="omc__meta">{{ summaryMeta() }}</span>
     @if (overdue()) {
-      <span class="m-pill m-pill--d">Atrasado {{ overdueDays() }} días</span>
+      <span class="m-pill m-pill--d">{{ overdueLabel() }}</span>
     } @else {
       <span [class]="statusPillClass()">{{ statusLabel() }}</span>
     }
@@ -22,7 +23,7 @@
   @if (areaLabels().length) {
     <div class="omc__areas">
       @for (label of areaLabels(); track label) {
-        <span class="omc__area">{{ label }}</span>
+        <span class="m-area">{{ label }}</span>
       }
     </div>
   }

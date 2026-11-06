@@ -1,4 +1,4 @@
-<a class="pmc" [routerLink]="detailLink()">
+<a class="pmc" [routerLink]="detailLink()" [attr.aria-label]="accessibleName()">
   @if (imageUrl(); as src) {
     <img
       class="pmc__thumb"
@@ -61,7 +61,7 @@
           [class.pmc__margin-pct--ok]="meetsTargetMargin()"
           [class.pmc__margin-pct--low]="!meetsTargetMargin()"
         >
-          {{ markup }}{{ thinSpace }}%
+          {{ markupLabel() }}
         </strong>
       </div>
     }

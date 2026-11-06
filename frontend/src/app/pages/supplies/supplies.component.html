@@ -44,7 +44,7 @@
 
     @if (loading) {
       <db-skeleton variant="cards" [count]="4" />
-    } @else if (filteredSupplies.length === 0) {
+    } @else if (mobileFilteredSupplies.length === 0) {
       <div class="m-card">
         <p>{{ emptyMessage }}</p>
         <db-button
@@ -56,7 +56,7 @@
       </div>
     } @else {
       <div class="m-card m-card--flush">
-        @for (supply of filteredSupplies; track supply.id) {
+        @for (supply of mobileFilteredSupplies; track supply.id) {
           <button
             type="button"
             class="m-row supplies-m__row"

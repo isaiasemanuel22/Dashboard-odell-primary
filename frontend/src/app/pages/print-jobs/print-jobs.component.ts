@@ -1,9 +1,12 @@
 import {
+  AfterViewChecked,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   DestroyRef,
+  ElementRef,
   OnInit,
+  ViewChild,
   inject,
 } from '@angular/core';
 import {
@@ -36,7 +39,6 @@ import {
   DbSkeletonComponent,
   DbStateMessageComponent,
   DbButtonComponent,
-  DbServiceBadgeComponent,
   MobileBarComponent,
   MobileListToolbarComponent,
   type MobileListToolbarChip,
@@ -50,6 +52,7 @@ import {
   WORK_BOARD_CANCELLED_COLUMN,
   WORK_BOARD_COLUMNS,
   WorkBoardColumnConfig,
+  serviceTypeLabel,
 } from '../../shared/constants/labels';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { designatedArea } from '../../shared/utils/service-type.util';
@@ -91,7 +94,6 @@ interface PrintJobsMobileListState {
     DbSkeletonComponent,
     DbStateMessageComponent,
     DbButtonComponent,
-    DbServiceBadgeComponent,
     MobileBarComponent,
     MobileListToolbarComponent,
     PrintJobCardComponent,
@@ -101,7 +103,7 @@ interface PrintJobsMobileListState {
   styleUrl: './print-jobs.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class PrintJobsComponent implements OnInit {
+export class PrintJobsComponent implements OnInit, AfterViewChecked {
   private readonly printJobsService = inject(PrintJobsService);
   private readonly userAccess = inject(UserAccessService);
   private readonly catalogSync = inject(RealtimeCatalogSyncService);
@@ -114,6 +116,9 @@ export class PrintJobsComponent implements OnInit {
     injectMobileListPersistence<PrintJobsMobileListState>(
       MOBILE_LIST_KEYS.printJobs,
     );
+
+  @ViewChild('mobileTabsRow') private mobileTabsRow?: ElementRef<HTMLElement>;
+  private pendingTabScroll = false;
 
   readonly primaryColumns = WORK_BOARD_COLUMNS;
   readonly cancelledColumn = WORK_BOARD_CANCELLED_COLUMN;
@@ -160,6 +165,7 @@ export class PrintJobsComponent implements OnInit {
       this.mobileSearchOpen = saved.mobileSearchOpen;
       this.areaFilter = saved.areaFilter;
       this.mobileTabStatus = saved.mobileTabStatus;
+      this.pendingTabScroll = true;
     });
 
     this.loadJobs();
@@ -230,7 +236,23 @@ export class PrintJobsComponent implements OnInit {
 
   setMobileTab(status: PrintJobStatus): void {
     this.mobileTabStatus = status;
+    this.pendingTabScroll = true;
     this.cdr.markForCheck();
+  }
+
+  ngAfterViewChecked(): void {
+    if (!this.pendingTabScroll) return;
+    this.pendingTabScroll = false;
+    this.scrollActiveTabIntoView();
+  }
+
+  private scrollActiveTabIntoView(): void {
+    const row = this.mobileTabsRow?.nativeElement;
+    if (!row) return;
+    const active = row.querySelector(
+      '.cola-m__tab--on',
+    ) as HTMLElement | null;
+    active?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
   }
 
   toggleMobileSearch(): void {
@@ -339,9 +361,10 @@ export class PrintJobsComponent implements OnInit {
     };
 
     if (this.isBacklogJob(job)) {
+      // Siempre: secundario Detalle a la izquierda, principal a la derecha.
       return [
-        { label: 'Agregar al tablero', primary: true, kind: 'add' },
         detail,
+        { label: 'Agregar al tablero', primary: true, kind: 'add' },
       ];
     }
 
@@ -380,13 +403,14 @@ export class PrintJobsComponent implements OnInit {
           },
         ];
       case PrintJobStatus.BLOQUEADO:
+        // Misma fila Detalle | principal; el primario no dice «Empezar».
         return [
           detail,
           {
             label:
               job.taskKind === TaskKind.PREPARE_ORDER
                 ? 'Iniciar preparación'
-                : 'Empezar',
+                : 'Desbloquear',
             primary: true,
             kind: 'move',
             targetStatus: PrintJobStatus.EN_PROCESO,
@@ -395,6 +419,14 @@ export class PrintJobsComponent implements OnInit {
       default:
         return [detail];
     }
+  }
+
+  /** Etiqueta de área para píldora mobile sin borde (misma clase que pedidos). */
+  jobAreaLabel(job: PrintJob): string {
+    if (this.isPrepareOrder(job)) return 'Ventas';
+    const area = this.jobArea(job);
+    if (!area) return '';
+    return serviceTypeLabel(area);
   }
 
   runMobileAction(job: PrintJob, action: MobileJobAction): void {
@@ -490,6 +522,7 @@ export class PrintJobsComponent implements OnInit {
         this.customerChips = this.buildCustomerChips(jobs);
         this.rebuildBoard();
         this.loading = false;
+        this.pendingTabScroll = true;
         this.cdr.markForCheck();
         this.listPersistence.onListReady();
       },

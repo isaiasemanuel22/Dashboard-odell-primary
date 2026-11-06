@@ -43,6 +43,8 @@ import {
 export class ProductMobileCardComponent {
   /** Espacio fino tipográfico antes del % (solo tarjeta mobile). */
   protected readonly thinSpace = '\u2009';
+  /** Menos tipográfico U+2212 para márgenes negativos. */
+  protected readonly minusSign = '\u2212';
 
   readonly product = input.required<Product>();
   readonly categories = input.required<Category[]>();
@@ -104,6 +106,28 @@ export class ProductMobileCardComponent {
   protected readonly markupPercent = computed(() =>
     markupPercentOnCostRounded(this.listPrice(), this.product().cost),
   );
+
+  /** «−28 %» / «45 %» con menos tipográfico si es negativo. */
+  protected readonly markupLabel = computed(() => {
+    const markup = this.markupPercent();
+    if (markup == null) return '';
+    const abs = Math.abs(markup);
+    const prefix = markup < 0 ? this.minusSign : '';
+    return `${prefix}${abs}${this.thinSpace}%`;
+  });
+
+  protected readonly accessibleName = computed(() => {
+    const product = this.product();
+    const list = new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(this.listPrice());
+    const margin = this.markupLabel();
+    const parts = [product.name, this.subtitle(), `lista ${list}`];
+    if (margin) parts.push(`margen ${margin}`);
+    return parts.join(', ');
+  });
 
   protected readonly targetMarginPercent = computed(() => {
     const margins = this.profitMargins();

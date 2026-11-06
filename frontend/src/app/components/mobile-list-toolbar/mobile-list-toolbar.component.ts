@@ -53,9 +53,18 @@ export class MobileListToolbarComponent {
       const activeId = this.chip();
       // Dependencia: re-scrollea cuando cambia el chip por código o por toque.
       void activeId;
-      void this.chips();
+      void this.visibleChips();
       requestAnimationFrame(() => this.scrollActiveChipIntoView());
     });
+  }
+
+  /**
+   * Oculta chips con contador 0, salvo «Todos»/«Abiertos» y el activo.
+   * Criterio único para todas las listas.
+   */
+  protected visibleChips(): MobileListToolbarChip[] {
+    const activeId = this.chip();
+    return this.chips().filter((item) => shouldShowToolbarChip(item, activeId));
   }
 
   protected onSearchInput(value: string): void {
@@ -82,4 +91,16 @@ export class MobileListToolbarComponent {
     const active = row.querySelector('.m-chip--on') as HTMLElement | null;
     active?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
   }
+}
+
+/** Chips permanentes aunque el contador sea 0. */
+const ALWAYS_VISIBLE_CHIP_IDS = new Set(['all', 'todos', 'abiertos']);
+
+export function shouldShowToolbarChip(
+  item: MobileListToolbarChip,
+  activeId: string,
+): boolean {
+  if (item.count == null || item.count > 0) return true;
+  if (item.id === activeId) return true;
+  return ALWAYS_VISIBLE_CHIP_IDS.has(item.id.toLowerCase());
 }

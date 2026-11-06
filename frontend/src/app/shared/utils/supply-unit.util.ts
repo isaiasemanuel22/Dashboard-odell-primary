@@ -38,6 +38,14 @@ export function supplyUnitOptions(current?: string): SupplyUnitOption[] {
   }));
 }
 
+/** Etiqueta corta para listas mobile: «u.» / «kg» / «ml». */
+export function abbreviateSupplyUnit(unit: string | null | undefined): string {
+  const raw = (unit ?? '').trim();
+  if (!raw) return 'u.';
+  if (/^unidad(es)?$/i.test(raw)) return 'u.';
+  return raw;
+}
+
 export function computeSupplyPurchaseDelta(
   amountSpent: number,
   quantity: number,

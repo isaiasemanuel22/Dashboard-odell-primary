@@ -60,14 +60,14 @@
       <ng-content select="[listToolbarExtra]" />
     </div>
 
-    @if (chips().length) {
+    @if (visibleChips().length) {
       <div
         #chipsRow
         class="m-chips"
         role="group"
         [attr.aria-label]="chipsAriaLabel()"
       >
-        @for (item of chips(); track item.id) {
+        @for (item of visibleChips(); track item.id) {
           <button
             type="button"
             class="m-chip"
@@ -84,14 +84,14 @@
       </div>
     }
   </div>
-} @else if (chips().length) {
+} @else if (visibleChips().length) {
   <div
     #chipsRow
     class="m-chips"
     role="group"
     [attr.aria-label]="chipsAriaLabel()"
   >
-    @for (item of chips(); track item.id) {
+    @for (item of visibleChips(); track item.id) {
       <button
         type="button"
         class="m-chip"

@@ -51,6 +51,16 @@ export class QuoteMobileCardComponent {
   protected readonly contextHint = computed(() =>
     formatQuoteMobileContextHint(this.quote()),
   );
+
+  protected readonly accessibleName = computed(() => {
+    const quote = this.quote();
+    const total = new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(Number(quote.total) || 0);
+    return `${quote.id}, ${this.customerLabel()}, ${this.statusLabel()}, ${total}`;
+  });
 }
 
 function wholesalePercentFromItems(quote: Quote): number | null {

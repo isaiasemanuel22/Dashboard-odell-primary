@@ -1,4 +1,8 @@
-<a class="qmc" [routerLink]="['/presupuestos', quote().id]">
+<a
+  class="qmc"
+  [routerLink]="['/presupuestos', quote().id]"
+  [attr.aria-label]="accessibleName()"
+>
   <div class="qmc__row">
     <span class="qmc__meta">{{ metaLabel() }}</span>
     <span [class]="statusPillClass()">{{ statusLabel() }}</span>

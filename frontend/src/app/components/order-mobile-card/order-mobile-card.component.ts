@@ -15,6 +15,7 @@ import {
   orderIsOverdue,
   orderOverdueDays,
   orderPaidAmount,
+  pluralize,
 } from '../../shared/utils/order.helpers';
 import { normalizeServiceType } from '../../shared/utils/service-type.util';
 
@@ -42,6 +43,24 @@ export class OrderMobileCardComponent {
   protected readonly overdueDays = computed(() => {
     const order = this.order();
     return orderOverdueDays(order.dueDate, order.status);
+  });
+
+  protected readonly overdueLabel = computed(() => {
+    const days = this.overdueDays();
+    return days > 0 ? `Atrasado ${pluralize(days, 'día', 'días')}` : '';
+  });
+
+  protected readonly accessibleName = computed(() => {
+    const order = this.order();
+    const status = this.overdue()
+      ? this.overdueLabel()
+      : this.statusLabel();
+    const total = new Intl.NumberFormat('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      maximumFractionDigits: 0,
+    }).format(Number(order.total) || 0);
+    return `${order.id}, ${order.customerName}, ${status}, ${total}`;
   });
 
   protected readonly summaryMeta = computed(() => {

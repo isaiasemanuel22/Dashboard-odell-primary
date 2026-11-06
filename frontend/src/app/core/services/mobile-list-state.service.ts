@@ -75,6 +75,12 @@ export function injectMobileListPersistence<T extends MobileListScrollState>(
   let getSnapshot: (() => Omit<T, 'scrollY'>) | null = null;
   let pendingScrollY: number | null = null;
   let connected = false;
+  let cancelRestore: (() => void) | null = null;
+
+  destroyRef.onDestroy(() => {
+    cancelRestore?.();
+    cancelRestore = null;
+  });
 
   const persist = (options: { keepScroll?: boolean } = {}): void => {
     if (!breakpoint.isMobile() || !getSnapshot) return;
@@ -122,10 +128,65 @@ export function injectMobileListPersistence<T extends MobileListScrollState>(
       const y = pendingScrollY;
       if (y == null || y <= 0) return;
       pendingScrollY = null;
-      requestAnimationFrame(() => {
-        window.scrollTo(0, y);
-      });
+      cancelRestore?.();
+      cancelRestore = restoreScrollWhenTallEnough(y);
     },
+  };
+}
+
+/**
+ * Restaura scrollY reintentando por frame hasta que la página sea lo bastante
+ * alta (lista ya con datos) o pasen ~1,5 s. Cancela si el usuario scrollea.
+ */
+function restoreScrollWhenTallEnough(targetY: number): () => void {
+  const maxMs = 1500;
+  const start = performance.now();
+  let cancelled = false;
+  let programmatic = false;
+  let rafId = 0;
+
+  const onUserScroll = (): void => {
+    if (programmatic || cancelled) return;
+    cancelled = true;
+    cleanup();
+  };
+
+  const cleanup = (): void => {
+    window.removeEventListener('scroll', onUserScroll);
+    if (rafId) cancelAnimationFrame(rafId);
+    rafId = 0;
+  };
+
+  window.addEventListener('scroll', onUserScroll, { passive: true });
+
+  const tick = (): void => {
+    if (cancelled) return;
+
+    const maxScroll = Math.max(
+      0,
+      document.documentElement.scrollHeight - window.innerHeight,
+    );
+    const elapsed = performance.now() - start;
+    const canReach = maxScroll >= targetY;
+    const timedOut = elapsed >= maxMs;
+
+    programmatic = true;
+    window.scrollTo(0, Math.min(targetY, maxScroll));
+    programmatic = false;
+
+    if (canReach || timedOut) {
+      cleanup();
+      return;
+    }
+
+    rafId = requestAnimationFrame(tick);
+  };
+
+  rafId = requestAnimationFrame(tick);
+
+  return () => {
+    cancelled = true;
+    cleanup();
   };
 }
 
