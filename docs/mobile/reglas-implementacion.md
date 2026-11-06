@@ -57,6 +57,25 @@ específico.
 - Accesibilidad: botones reales, `aria-label` en botones de ícono, toques
   ≥44 px, `role="switch"` + `aria-checked` en interruptores.
 
+## No duplicar: modularizar
+
+- Antes de escribir markup o estilos mobile, buscá si ya existe un componente
+  `db-mobile-*` en `frontend/src/app/components/` o una clase `m-*` en
+  `_mobile-kit.scss` que lo resuelva. Si existe, usalo; no copies su markup.
+- Si un patrón aparece en 2 pantallas o más (barra fija de acciones, hoja
+  inferior, buscador + chips, tarjeta de lista, totales, sección plegable,
+  stepper, segmentado, fila de catálogo…), va a un componente compartido en
+  `components/mobile-*` (standalone, `OnPush`, inputs/outputs tipados, estilos
+  propios) y las pantallas lo consumen. Nada de clases con prefijo de página
+  (`od-m__dock`, `qd-m__dock`…) que repitan lo mismo con otro nombre.
+- La lógica repetida (estado de listas al volver, `pushOverlay/popOverlay`,
+  formateos) va a un servicio o helper genérico, no copiada por pantalla.
+- Guía de qué extraer y dónde se repite hoy: `docs/mobile/familias.md`
+  (parte 2). Al terminar una extracción, actualizá la sección «Si cambiás X,
+  tocá» de esa familia.
+- Al reemplazar código por un componente compartido, el resultado visual y el
+  comportamiento tienen que quedar idénticos, y desktop no cambia.
+
 ## CSS
 
 - Nunca `font: <peso> <tamaño> inherit;` (es inválido y el navegador descarta
