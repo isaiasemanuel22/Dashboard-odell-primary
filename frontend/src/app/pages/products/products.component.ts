@@ -45,6 +45,7 @@ import {
   DbPillOption,
   ProductCardComponent,
   MobileBarComponent,
+  MobileSheetComponent,
 } from '@general-components';
 import { ProductMobileCardComponent } from '../../components/product-mobile-card/product-mobile-card.component';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
@@ -93,6 +94,7 @@ interface MobileListChip {
     ProductsBulkPriceComponent,
     ProductsSupplyPriceChangesComponent,
     MobileBarComponent,
+    MobileSheetComponent,
   ],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss',
@@ -236,14 +238,12 @@ export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
   openMobileMore(): void {
     if (this.mobileMoreOpen) return;
     this.mobileMoreOpen = true;
-    this.layoutUi.pushOverlay();
     this.cdr.markForCheck();
   }
 
   closeMobileMore(): void {
     if (!this.mobileMoreOpen) return;
     this.mobileMoreOpen = false;
-    this.layoutUi.popOverlay();
     this.cdr.markForCheck();
   }
 
@@ -278,10 +278,7 @@ export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private closeAllMobileSheets(): void {
-    if (this.mobileMoreOpen) {
-      this.mobileMoreOpen = false;
-      this.layoutUi.popOverlay();
-    }
+    this.mobileMoreOpen = false;
     if (this.mobileBulkOpen) {
       this.mobileBulkOpen = false;
       this.layoutUi.popOverlay();

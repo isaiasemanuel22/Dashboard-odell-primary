@@ -1,0 +1,37 @@
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: contents;
+}
+
+.m-sheet-sub {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 500;
+  color: mobile.$m-text-secondary;
+}
+
+.m-sheet-head__text {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.m-sheet--has-dock .m-sheet-body {
+  padding-bottom: 8px;
+}
+
+.m-sheet--actions .m-sheet-body {
+  padding-top: 8px;
+  gap: 8px;
+}
+
+.m-sheet-foot {
+  padding: 0;
+  border-top: 0;
+
+  db-mobile-dock {
+    display: block;
+  }
+}

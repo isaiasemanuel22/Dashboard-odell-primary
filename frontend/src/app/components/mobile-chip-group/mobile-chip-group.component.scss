@@ -1,0 +1,39 @@
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+}
+
+.m-chip-group {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.m-chip-group__chip {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid mobile.$m-border-input;
+  background: mobile.$m-surface;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: mobile.$m-text-label;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-sizing: border-box;
+
+  &--on {
+    background: mobile.$m-primary-pale;
+    border-color: mobile.$m-primary;
+    color: mobile.$m-primary-dark;
+    font-weight: 700;
+  }
+}
+
+.m-chip-group__count {
+  font-variant-numeric: tabular-nums;
+}

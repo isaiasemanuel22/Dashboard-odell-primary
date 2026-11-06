@@ -33,7 +33,6 @@ import { CustomerCatalogService } from '../../../core/services/customer-catalog.
 import { RealtimeCatalogSyncService } from '../../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
 import { BreakpointService } from '../../../core/services/breakpoint.service';
-import { LayoutUiService } from '../../../layout/layout-ui.service';
 import {
   DbButtonComponent,
   DbSelectComponent,
@@ -43,12 +42,11 @@ import {
   DbStatusBadgeComponent,
   DB_DATA_TABLE,
   MobileBarComponent,
-  OdlColumn,
-} from '@general-components';
-import {
-  MobileDockAction,
   MobileDockComponent,
-} from '../../../components/mobile-dock/mobile-dock.component';
+  MobileSheetComponent,
+  OdlColumn,
+  type MobileDockAction,
+} from '@general-components';
 import { FormDialogService } from '../../../modals/public-api';
 import { SettingsFacade } from '../../../store/settings/settings.facade';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
@@ -119,6 +117,7 @@ type MobileAccordionKey = 'payments' | 'tasks' | 'deliveries' | 'history';
     DbServiceBadgesComponent,
     MobileBarComponent,
     MobileDockComponent,
+    MobileSheetComponent,
     ...DB_DATA_TABLE,
     OrderDetailHistoryComponent,
     OrderDetailPaymentsComponent,
@@ -139,7 +138,6 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   private readonly customerCatalog = inject(CustomerCatalogService);
   private readonly settingsFacade = inject(SettingsFacade);
   private readonly breakpoint = inject(BreakpointService);
-  private readonly layoutUi = inject(LayoutUiService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
 
@@ -638,14 +636,12 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   closePaymentSheet(): void {
     if (!this.mobilePaymentSheetOpen) return;
     this.mobilePaymentSheetOpen = false;
-    this.layoutUi.popOverlay();
     this.cdr.markForCheck();
   }
 
   closeDeliverySheet(): void {
     if (!this.mobileDeliverySheetOpen) return;
     this.mobileDeliverySheetOpen = false;
-    this.layoutUi.popOverlay();
     this.cdr.markForCheck();
   }
 
@@ -655,10 +651,9 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.mobilePaymentSheetOpen) this.layoutUi.popOverlay();
-    if (this.mobileDeliverySheetOpen) this.layoutUi.popOverlay();
     this.mobilePaymentSheetOpen = false;
     this.mobileDeliverySheetOpen = false;
+    this.mobileActionsOpen = false;
   }
 
   openAssignCustomer(): void {
@@ -972,10 +967,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
   private openPaymentSheet(amount?: number): void {
     this.closeDeliverySheet();
-    if (!this.mobilePaymentSheetOpen) {
-      this.mobilePaymentSheetOpen = true;
-      this.layoutUi.pushOverlay();
-    }
+    this.mobilePaymentSheetOpen = true;
     this.cdr.markForCheck();
     setTimeout(() => {
       const balance = amount ?? this.balanceAmount;
@@ -988,10 +980,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
   private openDeliverySheet(): void {
     this.closePaymentSheet();
-    if (!this.mobileDeliverySheetOpen) {
-      this.mobileDeliverySheetOpen = true;
-      this.layoutUi.pushOverlay();
-    }
+    this.mobileDeliverySheetOpen = true;
     this.cdr.markForCheck();
     setTimeout(() => {
       this.deliverySheet?.prepareDelivery();

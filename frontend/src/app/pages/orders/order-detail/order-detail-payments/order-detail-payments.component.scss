@@ -26,9 +26,8 @@
     padding-top: 0.75rem;
   }
 
-  // Efectivo / Transferencia / Mercado Pago: toque ≥44px.
-  .order-payments__method ::ng-deep .db-seg__btn,
-  .od-pay-sheet__method ::ng-deep .db-seg__btn {
+  // Efectivo / Transferencia / Mercado Pago: toque ≥44px (desktop segmentado).
+  .order-payments__method ::ng-deep .db-seg__btn {
     min-height: 44px;
     height: 44px;
   }

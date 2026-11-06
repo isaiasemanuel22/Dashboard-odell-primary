@@ -6,7 +6,10 @@ import {
 } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { Category, Product, ProductType } from '../core/models';
-import { DbButtonComponent } from '@general-components';
+import {
+  DbButtonComponent,
+  MobileChipGroupComponent,
+} from '@general-components';
 
 export type ProductSheetTypeFilter = ProductType | 'all';
 
@@ -25,7 +28,7 @@ export interface ProductFiltersSheetData {
 
 @Component({
   standalone: true,
-  imports: [DbButtonComponent],
+  imports: [DbButtonComponent, MobileChipGroupComponent],
   templateUrl: './product-filters-sheet.component.html',
   styleUrl: './product-filters-sheet.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -65,7 +68,8 @@ export class ProductFiltersSheetComponent {
     return n === 1 ? 'Ver 1 producto' : `Ver ${n} productos`;
   }
 
-  setType(value: ProductSheetTypeFilter): void {
+  onTypeChange(value: ProductSheetTypeFilter | null): void {
+    if (value == null) return;
     this.draft = { ...this.draft, typeFilter: value };
     if (
       this.draft.categoryFilter !== 'all' &&
@@ -76,7 +80,8 @@ export class ProductFiltersSheetComponent {
     this.cdr.markForCheck();
   }
 
-  setCategory(value: string): void {
+  onCategoryChange(value: string | null): void {
+    if (value == null) return;
     this.draft = { ...this.draft, categoryFilter: value };
     this.cdr.markForCheck();
   }

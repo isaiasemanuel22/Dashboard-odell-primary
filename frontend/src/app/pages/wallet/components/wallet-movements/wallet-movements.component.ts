@@ -23,8 +23,9 @@ import {
   OdlFilter,
   OdlRowAction,
 } from '../../../../components/db-data-table';
-import { LayoutUiService } from '../../../../layout/layout-ui.service';
+import { MobileSheetComponent } from '@general-components';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
+import { formatCurrencyArs } from '../../../../shared/utils/currency-ars.util';
 import {
   paymentMethodLabel,
   treasuryAccountLabel,
@@ -45,7 +46,7 @@ export interface WalletDayGroup {
 @Component({
   selector: 'app-wallet-movements',
   standalone: true,
-  imports: [...DB_DATA_TABLE, CurrencyArsPipe],
+  imports: [...DB_DATA_TABLE, CurrencyArsPipe, MobileSheetComponent],
   templateUrl: './wallet-movements.component.html',
   styleUrl: './wallet-movements.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -54,7 +55,6 @@ export class WalletMovementsComponent implements OnChanges, OnDestroy {
   private static readonly MOBILE_PAGE_SIZE = 20;
 
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly layoutUi = inject(LayoutUiService);
 
   @Input() movements: TreasuryMovement[] = [];
   @Input() expenses: TreasuryExpense[] = [];
@@ -161,10 +161,7 @@ export class WalletMovementsComponent implements OnChanges, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.sheetMovement) {
-      this.layoutUi.popOverlay();
-      this.sheetMovement = null;
-    }
+    this.sheetMovement = null;
   }
 
   get sortedMovements(): TreasuryMovement[] {
@@ -257,17 +254,25 @@ export class WalletMovementsComponent implements OnChanges, OnDestroy {
 
   openSheet(movement: TreasuryMovement): void {
     if (!this.visibleActions(movement).length) return;
-    const wasOpen = this.sheetMovement != null;
     this.sheetMovement = movement;
-    if (!wasOpen) this.layoutUi.pushOverlay();
     this.cdr.markForCheck();
   }
 
   closeSheet(): void {
     if (!this.sheetMovement) return;
     this.sheetMovement = null;
-    this.layoutUi.popOverlay();
     this.cdr.markForCheck();
+  }
+
+  sheetSubtitle(movement: TreasuryMovement): string {
+    const date = this.sheetDate(movement);
+    if (movement.voided) return `Anulado · ${date}`;
+    const absolute =
+      movement.amount < 0 ? -movement.amount : movement.amount;
+    const formatted = formatCurrencyArs(absolute);
+    const signed =
+      this.movementKind(movement) === 'expense' ? `−${formatted}` : formatted;
+    return `${signed} · ${date}`;
   }
 
   runSheetAction(actionId: string): void {

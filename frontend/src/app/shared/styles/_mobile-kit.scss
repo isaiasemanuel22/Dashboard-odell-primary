@@ -401,6 +401,42 @@
     }
   }
 
+  .m-sheet-sub {
+    margin: 2px 0 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: mobile.$m-text-secondary;
+  }
+
+  /* Acciones de menú ⋯ dentro de hoja (Editar, Eliminar, Cerrar…). */
+  .m-sheet-action {
+    min-height: 52px;
+    border-radius: 14px;
+    border: 1px solid mobile.$m-border-input;
+    background: #fff;
+    color: mobile.$m-text;
+    font-family: inherit;
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 16px;
+    box-sizing: border-box;
+
+    &--danger {
+      border-color: #f3b4b4;
+      color: #b91c1c;
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
   // Toques ≥44px: botones de acción (no chips, íconos, filtros, links ni bare).
   .db-button:not(.db-button--chip):not(.db-button--icon):not(.db-button--filter):not(.db-button--bare):not(.db-button--inline):not(.db-button--link):not(.db-button--overlay) {
     min-height: 44px;

@@ -138,66 +138,32 @@
     }
   }
 
-  @if (sheetMovement; as movement) {
-    <div class="wallet-movements-m__scrim" (click)="closeSheet()"></div>
-    <div
-      class="wallet-movements-m__sheet"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="wallet-movements-sheet-title"
-    >
-      <div class="wallet-movements-m__grab" aria-hidden="true"></div>
-      <header class="wallet-movements-m__sheet-head">
-        <div class="wallet-movements-m__sheet-meta">
-          <h2
-            id="wallet-movements-sheet-title"
-            class="wallet-movements-m__sheet-title"
-          >
-            {{ movement.concept }}
-          </h2>
-          <p class="wallet-movements-m__sheet-sub">
-            @if (movement.voided) {
-              Anulado
-            } @else if (movementKind(movement) === 'expense') {
-              −{{
-                (movement.amount < 0 ? -movement.amount : movement.amount)
-                  | currencyArs
-              }}
-            } @else {
-              {{ movement.amount | currencyArs }}
-            }
-            · {{ sheetDate(movement) }}
-          </p>
-        </div>
+  <db-mobile-sheet
+    [open]="!!sheetMovement"
+    [title]="sheetMovement?.concept || ''"
+    [subtitle]="sheetMovement ? sheetSubtitle(sheetMovement) : ''"
+    (closed)="closeSheet()"
+  >
+    @if (sheetMovement; as movement) {
+      @for (item of visibleActions(movement); track item.id) {
         <button
           type="button"
-          class="wallet-movements-m__sheet-close"
-          (click)="closeSheet()"
+          class="m-sheet-action"
+          [class.m-sheet-action--danger]="item.danger"
+          (click)="runSheetAction(item.id)"
         >
-          Cerrar
+          {{ item.label }}
         </button>
-      </header>
-      <div class="wallet-movements-m__sheet-body">
-        @for (item of visibleActions(movement); track item.id) {
-          <button
-            type="button"
-            class="wallet-movements-m__sheet-btn"
-            [class.wallet-movements-m__sheet-btn--danger]="item.danger"
-            (click)="runSheetAction(item.id)"
-          >
-            {{ item.label }}
-          </button>
-        }
-        @if (movement.orderId) {
-          <p class="wallet-movements-m__sheet-sub">
-            Este movimiento sale de un pedido: se corrige o anula desde el pedido.
-          </p>
-        } @else if (movement.source === 'retail_sale') {
-          <p class="wallet-movements-m__sheet-sub">
-            Este movimiento sale de una venta: se corrige desde la venta.
-          </p>
-        }
-      </div>
-    </div>
-  }
+      }
+      @if (movement.orderId) {
+        <p class="m-sheet-sub">
+          Este movimiento sale de un pedido: se corrige o anula desde el pedido.
+        </p>
+      } @else if (movement.source === 'retail_sale') {
+        <p class="m-sheet-sub">
+          Este movimiento sale de una venta: se corrige desde la venta.
+        </p>
+      }
+    }
+  </db-mobile-sheet>
 </div>

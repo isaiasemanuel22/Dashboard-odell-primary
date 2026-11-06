@@ -217,17 +217,20 @@ b) **Si cambiás X, tocá**
 
 a) **Extraer**
 - ~~`db-mobile-dock`~~ → ya en `components/mobile-dock` (+ `m-has-dock`).
+- ~~Menús ⋯ / hojas de acción~~ → `db-mobile-sheet` (`components/mobile-sheet`) +
+  `m-sheet-action` en `_mobile-kit.scss` (pedido, presupuesto, cliente, producto,
+  productos, billetera).
 - `db-mobile-contact-card` (cliente con avatar + WhatsApp/Llamar): repetido en
   order-detail, quote-detail y customer-detail.
 - `db-mobile-totals` (Total/Pagado/Saldo o Subtotal/Descuento/Total): order-detail,
   quote-detail, order-form resumen, sale-form.
 - `db-mobile-collapsible` (sección con título, contador y chevron): Tareas/Entregas/Historial.
-- Mismo `m-sheet` para menús de acciones: `pushOverlay` está copiado en 7 archivos; extraer
-  `db-mobile-action-sheet` que lo llame solo.
 
 b) **Si cambiás X, tocá**
 - Botones fijos o su altura: `components/mobile-dock` (+ clase `m-has-dock` en `_mobile-kit.scss`).
 - Ruta con dock sin menú inferior: `layout/layout.component.ts` (`shouldHideBottomNav`).
+- Menú ⋯ / hoja de acciones: `components/mobile-sheet` (+ `m-sheet*` / `m-sheet-action`
+  en `_mobile-kit.scss`) y el HTML del detalle o lista que la abre.
 - Tarjeta de cliente/contacto: `mobile-contact-card` (hoy order-detail, quote-detail, customer-detail).
 - Totales: `mobile-totals` + `shared/utils` (saldos).
 
@@ -252,20 +255,22 @@ b) **Si cambiás X, tocá**
 ### D · Hojas inferiores (Registrar pago, Entregar, Filtros, Movimiento de billetera)
 
 a) **Extraer**
-- `db-mobile-sheet` (`components/mobile-sheet`): inputs `title`, `open`, `primaryLabel`,
-  `primaryDisabled`; outputs `closed`, `primary`; llama `pushOverlay/popOverlay` solo
-  (también en `ngOnDestroy`). Hoy `m-sheet*` existe solo como CSS y cada hoja arma
-  markup y overlay a mano: `order-filters-sheet`, `product-filters-sheet`,
-  `od-pay-sheet`, `od-del-sheet`, wallet-movements, wallet-record/transfer/repayment/void
-  (`wallet-form__footer`).
-- `db-mobile-chip-group` (selección única o múltiple, con contador): Filtros, medio de pago,
-  Registrar pago (50 %, todo el saldo), tipo de movimiento.
+- ~~`db-mobile-sheet`~~ → ya en `components/mobile-sheet` (+ `m-sheet*` / `m-sheet-action`).
+  Overlay (`pushOverlay`/`popOverlay`) solo ahí (y pantallas fullscreen / form-modal
+  que aún no migraron: paneles de productos, `claimFormOverlay` de billetera).
+- ~~`db-mobile-chip-group`~~ → ya en `components/mobile-chip-group` (filtros de pedidos
+  y productos, medio de pago en hoja de pago).
 - `db-mobile-summary-row` (etiqueta + valor): neto, comisión, saldo.
+- Atajos de monto / tipo de movimiento aún locales donde aplique.
 
 b) **Si cambiás X, tocá**
-- Look de la hoja (manija, radio, pie): `mobile-sheet` + `_mobile-kit.scss` (`m-sheet*`) + `shared/styles/_modal.scss`.
-- Overlay y menú inferior: `layout/layout-ui.service.ts` (`pushOverlay/popOverlay`).
-- Cada hoja: `modals/*-filters-sheet*`, `order-detail-payments`, `order-detail-deliveries`, `wallet/components/*-form`.
+- Look de la hoja (manija, radio, pie): `components/mobile-sheet` + `_mobile-kit.scss`
+  (`m-sheet*`) + `shared/styles/_modal.scss` (FormDialogService).
+- Chips de opción en hojas: `components/mobile-chip-group`.
+- Overlay y menú inferior: `layout/layout-ui.service.ts` vía `mobile-sheet` (excepciones:
+  `products` paneles fullscreen, `wallet` form-modal).
+- Cada hoja: `modals/*-filters-sheet*`, `order-detail-payments`, `order-detail-deliveries`,
+  `wallet/components/*-form`, detalles con menú ⋯.
 
 ### E · Paneles (Dashboard, Ventas, Billetera)
 
@@ -310,7 +315,7 @@ b) **Si cambiás X, tocá**: pie fijo → `components/mobile-dock` (+ `m-has-doc
 | # | Extracción | Familias | Dónde se repite hoy | Líneas a eliminar (est.) | Riesgo |
 |---|---|---|---|---|---|
 | 1 | ~~`db-mobile-dock`~~ (hecho) | B, C, G | `components/mobile-dock` | — | Hecho |
-| 2 | `db-mobile-sheet` + `chip-group` | D (también B) | ~10 hojas, `pushOverlay` en 7 archivos | ~250 | Medio (foco, teclado, overlay) |
+| 2 | ~~`db-mobile-sheet` + `chip-group`~~ (hecho) | D (también B) | `components/mobile-sheet`, `mobile-chip-group` | — | Hecho |
 | 3 | `db-mobile-list-toolbar` + `MobileListStateService<T>` | A | 6 listas, 4 servicios | ~70 HTML + ~100 estado + ~80 TS = **~250** | Medio (persistencia de filtros) |
 | 4 | `db-mobile-form-shell` + `step` + `stepper` + `segmented` + `select-field` | C | 7 formularios | ~220 | Alto (formularios grandes, validaciones) |
 | 5 | `db-mobile-settings-page` + `catalog-row` + `field-group` | G1/G2 | 8 páginas + shell | ~150 | Bajo |

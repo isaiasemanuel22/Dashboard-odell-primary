@@ -166,46 +166,39 @@
       />
     }
 
-    @if (mobileActionsOpen) {
-      <div class="qd-m__sheet-scrim" (click)="closeMobileActions()"></div>
-      <div
-        class="qd-m__sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Más acciones"
-      >
-        <div class="qd-m__sheet-grab" aria-hidden="true"></div>
-        <div class="qd-m__sheet-body">
-          @if (editable) {
-            <button type="button" class="qd-m__sheet-action" (click)="onMobileEdit()">
-              Editar
-            </button>
-          }
-          @if (editable && quote.status !== QuoteStatus.CANCELADO) {
-            <button
-              type="button"
-              class="qd-m__sheet-action"
-              [disabled]="statusLoading"
-              (click)="onMobileCancelStatus()"
-            >
-              Cancelar presupuesto
-            </button>
-          }
-          @if (quote.status !== QuoteStatus.ACEPTADO) {
-            <button
-              type="button"
-              class="qd-m__sheet-action qd-m__sheet-action--danger"
-              (click)="onMobileDelete()"
-            >
-              Eliminar
-            </button>
-          }
-          <button type="button" class="qd-m__sheet-action" (click)="closeMobileActions()">
-            Cerrar
-          </button>
-        </div>
-      </div>
-    }
+    <db-mobile-sheet
+      [open]="mobileActionsOpen"
+      ariaLabel="Más acciones"
+      (closed)="closeMobileActions()"
+    >
+      @if (editable) {
+        <button type="button" class="m-sheet-action" (click)="onMobileEdit()">
+          Editar
+        </button>
+      }
+      @if (editable && quote.status !== QuoteStatus.CANCELADO) {
+        <button
+          type="button"
+          class="m-sheet-action"
+          [disabled]="statusLoading"
+          (click)="onMobileCancelStatus()"
+        >
+          Cancelar presupuesto
+        </button>
+      }
+      @if (quote.status !== QuoteStatus.ACEPTADO) {
+        <button
+          type="button"
+          class="m-sheet-action m-sheet-action--danger"
+          (click)="onMobileDelete()"
+        >
+          Eliminar
+        </button>
+      }
+      <button type="button" class="m-sheet-action" (click)="closeMobileActions()">
+        Cerrar
+      </button>
+    </db-mobile-sheet>
   </div>
 
   <div class="desktop-only">

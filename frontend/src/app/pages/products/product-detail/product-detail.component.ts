@@ -32,7 +32,6 @@ import { RealtimeCatalogSyncService } from '../../../core/services/realtime-cata
 import { RealtimeService } from '../../../core/services/realtime.service';
 import { SaleCartService } from '../../../core/services/sale-cart.service';
 import { SettingsService } from '../../../core/services/settings.service';
-import { LayoutUiService } from '../../../layout/layout-ui.service';
 import { productStockOverview } from '../../../shared/utils/stock.helpers';
 import { ProductDetailProductionComponent } from './product-detail-production/product-detail-production.component';
 import {
@@ -42,15 +41,14 @@ import {
   DbSkeletonComponent,
   DbStateMessageComponent,
   MobileBarComponent,
+  MobileDockComponent,
+  MobileSheetComponent,
   ProductBadgesComponent,
   ProductComponentsTableComponent,
   ProductImageCarouselComponent,
   ProductPricingComponent,
+  type MobileDockAction,
 } from '@general-components';
-import {
-  MobileDockAction,
-  MobileDockComponent,
-} from '../../../components/mobile-dock/mobile-dock.component';
 import { normalizeProductAttachments } from '../../../shared/utils/product-attachment.helpers';
 import { FormDialogService } from '../../../modals/public-api';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
@@ -99,6 +97,7 @@ import {
     DbStateMessageComponent,
     MobileBarComponent,
     MobileDockComponent,
+    MobileSheetComponent,
     ProductBadgesComponent,
     ProductImageCarouselComponent,
     ProductPricingComponent,
@@ -123,7 +122,6 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   private readonly mediaUpload = inject(MediaUploadService);
   private readonly settingsService = inject(SettingsService);
   private readonly saleCart = inject(SaleCartService);
-  private readonly layoutUi = inject(LayoutUiService);
   product: Product | null = null;
   colorCatalog: ColorConfig[] = [];
   profitMargins: ServiceProfitMargins = { ...DEFAULT_PROFIT_MARGINS };
@@ -296,14 +294,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   openMobileActions(): void {
     if (this.mobileActionsOpen) return;
     this.mobileActionsOpen = true;
-    this.layoutUi.pushOverlay();
     this.cdr.markForCheck();
   }
 
   closeMobileActions(): void {
     if (!this.mobileActionsOpen) return;
     this.mobileActionsOpen = false;
-    this.layoutUi.popOverlay();
     this.cdr.markForCheck();
   }
 

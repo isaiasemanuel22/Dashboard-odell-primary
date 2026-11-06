@@ -24,11 +24,10 @@ import {
   DbStateMessageComponent,
   DbStatusBadgeComponent,
   MobileBarComponent,
-} from '@general-components';
-import {
-  MobileDockAction,
   MobileDockComponent,
-} from '../../../components/mobile-dock/mobile-dock.component';
+  MobileSheetComponent,
+  type MobileDockAction,
+} from '@general-components';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import {
   canGenerateOrderFromQuote,
@@ -71,6 +70,7 @@ import { QuoteDetailLinesComponent } from './quote-detail-lines/quote-detail-lin
     DbServiceBadgesComponent,
     MobileBarComponent,
     MobileDockComponent,
+    MobileSheetComponent,
     QuoteDetailLinesComponent,
   ],
   templateUrl: './quote-detail.component.html',

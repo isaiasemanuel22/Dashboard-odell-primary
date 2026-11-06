@@ -22,8 +22,10 @@ import {
   DbInputComponent,
   DbSegmentedControlComponent,
   DbSelectComponent,
-  DbSegmentOption,
-  DbSelectOption,
+  MobileChipGroupComponent,
+  type DbSegmentOption,
+  type DbSelectOption,
+  type MobileChipOption,
 } from '@general-components';
 import { extractApiErrorMessage } from '../../../../shared/utils/api-error';
 import {
@@ -50,6 +52,7 @@ import { orderBalanceAmount, orderPaidAmount } from '../../../../shared/utils/or
     DbButtonComponent,
     DbSelectComponent,
     DbSegmentedControlComponent,
+    MobileChipGroupComponent,
     CurrencyArsPipe,
     DateShortPipe,
   ],
@@ -78,6 +81,11 @@ export class OrderDetailPaymentsComponent {
 
   readonly methodOptions: DbSegmentOption<PaymentMethod>[] =
     labelsToSelectOptions(PAYMENT_METHOD_LABELS);
+  readonly methodChipOptions: MobileChipOption<PaymentMethod>[] =
+    this.methodOptions.map((opt) => ({
+      value: opt.value,
+      label: opt.label,
+    }));
   readonly accountOptions: DbSelectOption[] =
     labelsToSelectOptions(TREASURY_ACCOUNT_LABELS);
 
@@ -133,6 +141,12 @@ export class OrderDetailPaymentsComponent {
   onMethodChange(method: PaymentMethod): void {
     this.paymentMethod = method;
     this.paymentAccount = defaultAccountForMethod(method);
+  }
+
+  onMethodChipChange(method: PaymentMethod | null): void {
+    if (method == null) return;
+    this.onMethodChange(method);
+    this.cdr.markForCheck();
   }
 
   registerPayment(): void {

@@ -15,36 +15,22 @@
   <div class="modal__body product-filters-sheet__body">
     <section class="product-filters-sheet__group" aria-label="Tipo">
       <h4 class="m-sec-t">Tipo</h4>
-      <div class="product-filters-sheet__opts">
-        @for (opt of typeFilters; track opt.value) {
-          <button
-            type="button"
-            class="product-filters-sheet__opt"
-            [class.product-filters-sheet__opt--on]="draft.typeFilter === opt.value"
-            [attr.aria-pressed]="draft.typeFilter === opt.value"
-            (click)="setType(opt.value)"
-          >
-            {{ opt.label }}
-          </button>
-        }
-      </div>
+      <db-mobile-chip-group
+        [options]="typeFilters"
+        [value]="draft.typeFilter"
+        ariaLabel="Tipo"
+        (valueChange)="onTypeChange($event)"
+      />
     </section>
 
     <section class="product-filters-sheet__group" aria-label="Categoría">
       <h4 class="m-sec-t">Categoría</h4>
-      <div class="product-filters-sheet__opts">
-        @for (opt of categoryOptions; track opt.value) {
-          <button
-            type="button"
-            class="product-filters-sheet__opt"
-            [class.product-filters-sheet__opt--on]="draft.categoryFilter === opt.value"
-            [attr.aria-pressed]="draft.categoryFilter === opt.value"
-            (click)="setCategory(opt.value)"
-          >
-            {{ opt.label }}
-          </button>
-        }
-      </div>
+      <db-mobile-chip-group
+        [options]="categoryOptions"
+        [value]="draft.categoryFilter"
+        ariaLabel="Categoría"
+        (valueChange)="onCategoryChange($event)"
+      />
     </section>
   </div>
 

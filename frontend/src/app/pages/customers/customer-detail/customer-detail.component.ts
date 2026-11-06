@@ -17,19 +17,17 @@ import {
   OrderStatus,
 } from '../../../core/models';
 import { CustomersService } from '../../../core/services/customers.service';
-import { LayoutUiService } from '../../../layout/layout-ui.service';
 import { OrdersService } from '../../../core/services/orders.service';
 import { SettingsFacade } from '../../../store/settings/settings.facade';
 import {
   DbButtonComponent,
   DbStateMessageComponent,
   MobileBarComponent,
-  OrdersTableComponent,
-} from '@general-components';
-import {
-  MobileDockAction,
   MobileDockComponent,
-} from '../../../components/mobile-dock/mobile-dock.component';
+  MobileSheetComponent,
+  OrdersTableComponent,
+  type MobileDockAction,
+} from '@general-components';
 import { FormDialogService } from '../../../modals/public-api';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import {
@@ -64,6 +62,7 @@ import { normalizeWholesaleDiscount } from '../../../shared/utils/wholesale-exam
     OrdersTableComponent,
     MobileBarComponent,
     MobileDockComponent,
+    MobileSheetComponent,
   ],
   templateUrl: './customer-detail.component.html',
   styleUrl: './customer-detail.component.scss',
@@ -78,7 +77,6 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   private readonly formDialogs = inject(FormDialogService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly layoutUi = inject(LayoutUiService);
 
   customer: Customer | null = null;
   orders: Order[] = [];
@@ -333,14 +331,12 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   openMobileActions(): void {
     if (this.mobileActionsOpen) return;
     this.mobileActionsOpen = true;
-    this.layoutUi.pushOverlay();
     this.cdr.markForCheck();
   }
 
   closeMobileActions(): void {
     if (!this.mobileActionsOpen) return;
     this.mobileActionsOpen = false;
-    this.layoutUi.popOverlay();
     this.cdr.markForCheck();
   }
 

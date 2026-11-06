@@ -463,128 +463,59 @@
       />
     }
 
-    @if (mobileActionsOpen) {
-      <div class="od-m__sheet-scrim" (click)="closeMobileActions()"></div>
-      <div
-        class="od-m__sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Más acciones"
-      >
-        <div class="od-m__sheet-grab" aria-hidden="true"></div>
-        <div class="od-m__sheet-body">
-          @if (canEditOrder) {
-            <button type="button" class="od-m__sheet-action" (click)="onMobileEdit()">
-              Editar
-            </button>
-          }
-          @if (order.status !== 'cancelado') {
-            <button
-              type="button"
-              class="od-m__sheet-action od-m__sheet-action--danger"
-              [disabled]="statusLoading"
-              (click)="onMobileCancel()"
-            >
-              {{ statusLoading ? 'Cancelando...' : 'Cancelar pedido' }}
-            </button>
-          }
-          <button type="button" class="od-m__sheet-action" (click)="closeMobileActions()">
-            Cerrar
-          </button>
-        </div>
-      </div>
-    }
+    <db-mobile-sheet
+      [open]="mobileActionsOpen"
+      ariaLabel="Más acciones"
+      (closed)="closeMobileActions()"
+    >
+      @if (canEditOrder) {
+        <button type="button" class="m-sheet-action" (click)="onMobileEdit()">
+          Editar
+        </button>
+      }
+      @if (order.status !== 'cancelado') {
+        <button
+          type="button"
+          class="m-sheet-action m-sheet-action--danger"
+          [disabled]="statusLoading"
+          (click)="onMobileCancel()"
+        >
+          {{ statusLoading ? 'Cancelando...' : 'Cancelar pedido' }}
+        </button>
+      }
+      <button type="button" class="m-sheet-action" (click)="closeMobileActions()">
+        Cerrar
+      </button>
+    </db-mobile-sheet>
 
-    @if (mobilePaymentSheetOpen) {
-      <div class="m-sheet-scrim" (click)="closePaymentSheet()"></div>
-      <div
-        class="m-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="od-pay-sheet-title"
-      >
-        <div class="m-sheet-grab" aria-hidden="true"></div>
-        <div class="m-sheet-head">
-          <h2 id="od-pay-sheet-title" class="m-sheet-title">
-            Registrar pago · {{ order.id }}
-          </h2>
-          <button
-            type="button"
-            class="m-ib"
-            aria-label="Cerrar"
-            (click)="closePaymentSheet()"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              aria-hidden="true"
-            >
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-          </button>
-        </div>
-        <div class="m-sheet-body">
-          <app-order-detail-payments
-            #paymentSheet
-            presentation="sheet"
-            [order]="order"
-            (orderChange)="onPaymentRegistered($event)"
-          />
-        </div>
-      </div>
-    }
+    <db-mobile-sheet
+      [open]="mobilePaymentSheetOpen"
+      [title]="'Registrar pago · ' + order.id"
+      (closed)="closePaymentSheet()"
+    >
+      <app-order-detail-payments
+        #paymentSheet
+        presentation="sheet"
+        [order]="order"
+        (orderChange)="onPaymentRegistered($event)"
+      />
+    </db-mobile-sheet>
 
-    @if (mobileDeliverySheetOpen) {
-      <div class="m-sheet-scrim" (click)="closeDeliverySheet()"></div>
-      <div
-        class="m-sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="od-del-sheet-title"
-      >
-        <div class="m-sheet-grab" aria-hidden="true"></div>
-        <div class="m-sheet-head">
-          <h2 id="od-del-sheet-title" class="m-sheet-title">
-            Entregar · {{ order.id }}
-          </h2>
-          <button
-            type="button"
-            class="m-ib"
-            aria-label="Cerrar"
-            (click)="closeDeliverySheet()"
-          >
-            <svg
-              viewBox="0 0 24 24"
-              width="20"
-              height="20"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              aria-hidden="true"
-            >
-              <path d="M6 6l12 12M18 6L6 18" />
-            </svg>
-          </button>
-        </div>
-        <div class="m-sheet-body">
-          <app-order-detail-deliveries
-            #deliverySheet
-            presentation="sheet"
-            [order]="order"
-            [tasks]="tasks"
-            [deliveries]="deliveries"
-            (delivered)="onDeliveryRegistered()"
-            (chargeBefore)="onChargeBeforeDelivery()"
-          />
-        </div>
-      </div>
-    }
+    <db-mobile-sheet
+      [open]="mobileDeliverySheetOpen"
+      [title]="'Entregar · ' + order.id"
+      (closed)="closeDeliverySheet()"
+    >
+      <app-order-detail-deliveries
+        #deliverySheet
+        presentation="sheet"
+        [order]="order"
+        [tasks]="tasks"
+        [deliveries]="deliveries"
+        (delivered)="onDeliveryRegistered()"
+        (chargeBefore)="onChargeBeforeDelivery()"
+      />
+    </db-mobile-sheet>
   </div>
 
   <div class="desktop-only">

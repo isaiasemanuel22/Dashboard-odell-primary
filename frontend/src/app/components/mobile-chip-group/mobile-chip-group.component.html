@@ -1,0 +1,20 @@
+<div
+  class="m-chip-group"
+  role="group"
+  [attr.aria-label]="ariaLabel || null"
+>
+  @for (opt of options; track opt.value) {
+    <button
+      type="button"
+      class="m-chip-group__chip"
+      [class.m-chip-group__chip--on]="isOn(opt.value)"
+      [attr.aria-pressed]="isOn(opt.value)"
+      (click)="onToggle(opt.value)"
+    >
+      <span>{{ opt.label }}</span>
+      @if (opt.count != null) {
+        <span class="m-chip-group__count">{{ opt.count }}</span>
+      }
+    </button>
+  }
+</div>

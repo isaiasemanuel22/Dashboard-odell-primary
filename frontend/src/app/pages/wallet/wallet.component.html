@@ -166,40 +166,21 @@
     }
   </div>
 
-  @if (payLoanSheetOpen) {
-    <div class="wallet-m__scrim" (click)="closePayLoanSheet()"></div>
-    <div
-      class="wallet-m__sheet"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Pagar o prestar"
-    >
-      <div class="wallet-m__grab" aria-hidden="true"></div>
-      <div class="wallet-m__sheet-body">
-        <button
-          type="button"
-          class="wallet-m__sheet-btn"
-          (click)="choosePayment()"
-        >
-          Pagar
-        </button>
-        <button
-          type="button"
-          class="wallet-m__sheet-btn"
-          (click)="chooseLoan()"
-        >
-          Prestar
-        </button>
-        <button
-          type="button"
-          class="wallet-m__sheet-btn"
-          (click)="closePayLoanSheet()"
-        >
-          Cerrar
-        </button>
-      </div>
-    </div>
-  }
+  <db-mobile-sheet
+    [open]="payLoanSheetOpen"
+    ariaLabel="Pagar o prestar"
+    (closed)="closePayLoanSheet()"
+  >
+    <button type="button" class="m-sheet-action" (click)="choosePayment()">
+      Pagar
+    </button>
+    <button type="button" class="m-sheet-action" (click)="chooseLoan()">
+      Prestar
+    </button>
+    <button type="button" class="m-sheet-action" (click)="closePayLoanSheet()">
+      Cerrar
+    </button>
+  </db-mobile-sheet>
 </div>
 
 <div class="desktop-only">

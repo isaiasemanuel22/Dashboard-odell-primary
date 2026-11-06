@@ -10,7 +10,10 @@ import {
   ORDER_STATUS_LABELS,
   SERVICE_TYPE_LABELS,
 } from '../shared/constants/labels';
-import { DbButtonComponent } from '@general-components';
+import {
+  DbButtonComponent,
+  MobileChipGroupComponent,
+} from '@general-components';
 import {
   OrderDeliveryWindowFilter,
   OrderMobileSheetFilters,
@@ -26,7 +29,7 @@ export interface OrderFiltersSheetData {
 
 @Component({
   standalone: true,
-  imports: [DbButtonComponent],
+  imports: [DbButtonComponent, MobileChipGroupComponent],
   templateUrl: './order-filters-sheet.component.html',
   styleUrl: './order-filters-sheet.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -67,35 +70,18 @@ export class OrderFiltersSheetComponent {
     return n === 1 ? 'Ver 1 pedido' : `Ver ${n} pedidos`;
   }
 
-  isStatusOn(status: OrderStatus): boolean {
-    return this.draft.statuses.includes(status);
-  }
-
-  isServiceOn(service: ServiceType): boolean {
-    return this.draft.services.includes(service);
-  }
-
-  toggleStatus(status: OrderStatus): void {
-    this.draft = {
-      ...this.draft,
-      statuses: toggleInList(this.draft.statuses, status),
-    };
+  onStatusesChange(statuses: OrderStatus[]): void {
+    this.draft = { ...this.draft, statuses: [...statuses] };
     this.cdr.markForCheck();
   }
 
-  toggleService(service: ServiceType): void {
-    this.draft = {
-      ...this.draft,
-      services: toggleInList(this.draft.services, service),
-    };
+  onServicesChange(services: ServiceType[]): void {
+    this.draft = { ...this.draft, services: [...services] };
     this.cdr.markForCheck();
   }
 
-  toggleDelivery(value: OrderDeliveryWindowFilter): void {
-    this.draft = {
-      ...this.draft,
-      delivery: this.draft.delivery === value ? null : value,
-    };
+  onDeliveryChange(value: OrderDeliveryWindowFilter | null): void {
+    this.draft = { ...this.draft, delivery: value };
     this.cdr.markForCheck();
   }
 
@@ -119,12 +105,6 @@ export class OrderFiltersSheetComponent {
   cancel(): void {
     this.dialogRef.close(undefined);
   }
-}
-
-function toggleInList<T>(list: T[], value: T): T[] {
-  return list.includes(value)
-    ? list.filter((item) => item !== value)
-    : [...list, value];
 }
 
 function cloneFilters(

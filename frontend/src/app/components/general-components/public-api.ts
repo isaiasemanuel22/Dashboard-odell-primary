@@ -8,6 +8,11 @@ export {
   MobileDockComponent,
   type MobileDockAction,
 } from '../mobile-dock/mobile-dock.component';
+export { MobileSheetComponent } from '../mobile-sheet/mobile-sheet.component';
+export {
+  MobileChipGroupComponent,
+  type MobileChipOption,
+} from '../mobile-chip-group/mobile-chip-group.component';
 export { NavIconComponent } from '../nav-icon/nav-icon.component';
 export {
   GENERAL_COMPONENTS,

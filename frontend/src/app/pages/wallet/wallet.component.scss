@@ -94,49 +94,4 @@
     padding: 0;
   }
 
-  .wallet-m__scrim {
-    position: fixed;
-    inset: 0;
-    z-index: 130;
-    background: rgba(15, 42, 58, 0.45);
-  }
-
-  .wallet-m__sheet {
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 131;
-    background: #fff;
-    border-radius: 20px 20px 0 0;
-    box-shadow: 0 -12px 32px rgba(15, 42, 58, 0.2);
-    padding-bottom: env(safe-area-inset-bottom, 0px);
-  }
-
-  .wallet-m__grab {
-    width: 40px;
-    height: 4px;
-    border-radius: 999px;
-    background: mobile.$m-border-input;
-    margin: 10px auto 2px;
-  }
-
-  .wallet-m__sheet-body {
-    display: flex;
-    flex-direction: column;
-    padding: 8px 16px 16px;
-    gap: 8px;
-  }
-
-  .wallet-m__sheet-btn {
-    min-height: 52px;
-    border-radius: 14px;
-    border: 1px solid mobile.$m-border-input;
-    background: #fff;
-    color: mobile.$m-text;
-    font-family: inherit;
-    font-size: 15px;
-    font-weight: 700;
-    cursor: pointer;
-  }
 }

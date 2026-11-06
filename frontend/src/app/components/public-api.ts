@@ -2,6 +2,15 @@ export * from './dashboard-form/public-api';
 export * from './db-button';
 export { DbIconTrashComponent } from './db-icon-trash/db-icon-trash.component';
 export { MobileBarComponent } from './mobile-bar/mobile-bar.component';
+export {
+  MobileDockComponent,
+  type MobileDockAction,
+} from './mobile-dock/mobile-dock.component';
+export { MobileSheetComponent } from './mobile-sheet/mobile-sheet.component';
+export {
+  MobileChipGroupComponent,
+  type MobileChipOption,
+} from './mobile-chip-group/mobile-chip-group.component';
 export { NavIconComponent } from './nav-icon/nav-icon.component';
 export * from './db-data-table';
 export * from './db-row-menu';

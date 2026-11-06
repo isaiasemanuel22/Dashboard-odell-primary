@@ -15,53 +15,35 @@
   <div class="modal__body order-filters-sheet__body">
     <section class="order-filters-sheet__group" aria-label="Estado">
       <h4 class="m-sec-t">Estado</h4>
-      <div class="order-filters-sheet__opts">
-        @for (opt of statusOptions; track opt.value) {
-          <button
-            type="button"
-            class="order-filters-sheet__opt"
-            [class.order-filters-sheet__opt--on]="isStatusOn(opt.value)"
-            [attr.aria-pressed]="isStatusOn(opt.value)"
-            (click)="toggleStatus(opt.value)"
-          >
-            {{ opt.label }}
-          </button>
-        }
-      </div>
+      <db-mobile-chip-group
+        [options]="statusOptions"
+        [multiple]="true"
+        [values]="draft.statuses"
+        ariaLabel="Estado"
+        (valuesChange)="onStatusesChange($event)"
+      />
     </section>
 
     <section class="order-filters-sheet__group" aria-label="Área">
       <h4 class="m-sec-t">Área</h4>
-      <div class="order-filters-sheet__opts">
-        @for (opt of serviceOptions; track opt.value) {
-          <button
-            type="button"
-            class="order-filters-sheet__opt"
-            [class.order-filters-sheet__opt--on]="isServiceOn(opt.value)"
-            [attr.aria-pressed]="isServiceOn(opt.value)"
-            (click)="toggleService(opt.value)"
-          >
-            {{ opt.label }}
-          </button>
-        }
-      </div>
+      <db-mobile-chip-group
+        [options]="serviceOptions"
+        [multiple]="true"
+        [values]="draft.services"
+        ariaLabel="Área"
+        (valuesChange)="onServicesChange($event)"
+      />
     </section>
 
     <section class="order-filters-sheet__group" aria-label="Entrega">
       <h4 class="m-sec-t">Entrega</h4>
-      <div class="order-filters-sheet__opts">
-        @for (opt of deliveryOptions; track opt.value) {
-          <button
-            type="button"
-            class="order-filters-sheet__opt"
-            [class.order-filters-sheet__opt--on]="draft.delivery === opt.value"
-            [attr.aria-pressed]="draft.delivery === opt.value"
-            (click)="toggleDelivery(opt.value)"
-          >
-            {{ opt.label }}
-          </button>
-        }
-      </div>
+      <db-mobile-chip-group
+        [options]="deliveryOptions"
+        [value]="draft.delivery"
+        [clearable]="true"
+        ariaLabel="Entrega"
+        (valueChange)="onDeliveryChange($event)"
+      />
     </section>
 
     <div class="order-filters-sheet__switch-row">

@@ -16,11 +16,11 @@
 
     <div class="od-pay-sheet__method">
       <span class="od-pay-sheet__label" id="payment-method-sheet-label">Medio de pago</span>
-      <db-segmented-control
-        [options]="methodOptions"
+      <db-mobile-chip-group
+        [options]="methodChipOptions"
         [value]="paymentMethod"
         ariaLabel="Medio de pago"
-        (valueChange)="onMethodChange($event)"
+        (valueChange)="onMethodChipChange($event)"
       />
     </div>
 

@@ -43,31 +43,7 @@
   margin-bottom: 14px;
 }
 
-.product-filters-sheet__opts {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
 
-.product-filters-sheet__opt {
-  min-height: 40px;
-  padding: 0 14px;
-  border-radius: 999px;
-  border: 1px solid mobile.$m-border-input;
-  background: mobile.$m-surface;
-  font-family: inherit;
-  font-size: 13px;
-  font-weight: 500;
-  color: mobile.$m-text-label;
-  cursor: pointer;
-
-  &--on {
-    background: mobile.$m-primary-pale;
-    border-color: mobile.$m-primary;
-    color: mobile.$m-primary-dark;
-    font-weight: 700;
-  }
-}
 
 .product-filters-sheet__foot {
   margin-top: auto;

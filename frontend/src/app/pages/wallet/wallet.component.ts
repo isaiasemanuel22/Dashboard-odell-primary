@@ -32,6 +32,7 @@ import {
   DbButtonComponent,
   DbStateMessageComponent,
   MobileBarComponent,
+  MobileSheetComponent,
 } from '@general-components';
 import { WalletDebtorsComponent } from './components/wallet-debtors/wallet-debtors.component';
 import {
@@ -55,6 +56,7 @@ import { WalletVoidFormComponent } from './components/wallet-void-form/wallet-vo
     DbButtonComponent,
     DbStateMessageComponent,
     MobileBarComponent,
+    MobileSheetComponent,
     WalletMetricsComponent,
     WalletMovementsComponent,
     WalletDebtorsComponent,
@@ -165,10 +167,7 @@ export class WalletComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-    if (this.payLoanSheetOpen) {
-      this.layoutUi.popOverlay();
-      this.payLoanSheetOpen = false;
-    }
+    this.payLoanSheetOpen = false;
     this.releaseFormOverlay();
   }
 
@@ -199,14 +198,12 @@ export class WalletComponent implements OnInit, OnDestroy {
   openPayLoanSheet(): void {
     if (this.payLoanSheetOpen) return;
     this.payLoanSheetOpen = true;
-    this.layoutUi.pushOverlay();
     this.cdr.markForCheck();
   }
 
   closePayLoanSheet(): void {
     if (!this.payLoanSheetOpen) return;
     this.payLoanSheetOpen = false;
-    this.layoutUi.popOverlay();
     this.cdr.markForCheck();
   }
 

@@ -13,6 +13,15 @@
   }
 }
 
+:host.m-dock--embedded {
+  display: block;
+  position: static;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  z-index: auto;
+}
+
 .m-dock {
   background: #fff;
   border-top: 1px solid mobile.$m-border;

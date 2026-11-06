@@ -212,34 +212,27 @@
       (action)="onMobileDockAction($event)"
     />
 
-    @if (mobileActionsOpen) {
-      <div class="pd-m__sheet-scrim" (click)="closeMobileActions()"></div>
-      <div
-        class="pd-m__sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Más acciones"
+    <db-mobile-sheet
+      [open]="mobileActionsOpen"
+      ariaLabel="Más acciones"
+      (closed)="closeMobileActions()"
+    >
+      <button
+        type="button"
+        class="m-sheet-action"
+        [disabled]="publishLoading"
+        (click)="closeMobileActions(); togglePublished()"
       >
-        <div class="pd-m__sheet-grab" aria-hidden="true"></div>
-        <div class="pd-m__sheet-body">
-          <button
-            type="button"
-            class="pd-m__sheet-action"
-            [disabled]="publishLoading"
-            (click)="closeMobileActions(); togglePublished()"
-          >
-            {{ publishActionLabel }}
-          </button>
-          <button
-            type="button"
-            class="pd-m__sheet-action pd-m__sheet-action--danger"
-            (click)="closeMobileActions(); deleteProduct()"
-          >
-            Eliminar
-          </button>
-        </div>
-      </div>
-    }
+        {{ publishActionLabel }}
+      </button>
+      <button
+        type="button"
+        class="m-sheet-action m-sheet-action--danger"
+        (click)="closeMobileActions(); deleteProduct()"
+      >
+        Eliminar
+      </button>
+    </db-mobile-sheet>
 
     @if (cartNotice) {
       <p class="pd-m__notice" role="status">{{ cartNotice }}</p>

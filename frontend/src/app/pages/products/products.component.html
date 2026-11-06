@@ -154,42 +154,35 @@
     }
   </div>
 
-  @if (mobileMoreOpen) {
-    <div class="products-m__sheet-scrim" (click)="closeMobileMore()"></div>
-    <div
-      class="products-m__sheet"
-      role="dialog"
-      aria-modal="true"
-      aria-label="Más acciones"
+  <db-mobile-sheet
+    [open]="mobileMoreOpen"
+    ariaLabel="Más acciones"
+    (closed)="closeMobileMore()"
+  >
+    <button
+      type="button"
+      class="m-sheet-action"
+      (click)="openMobileBulkPrice()"
     >
-      <div class="products-m__sheet-grab" aria-hidden="true"></div>
-      <div class="products-m__sheet-body">
-        <button
-          type="button"
-          class="products-m__sheet-action"
-          (click)="openMobileBulkPrice()"
-        >
-          Actualizar precios en bloque
-        </button>
-        <button
-          type="button"
-          class="products-m__sheet-action"
-          (click)="openMobileSupplyChanges()"
-        >
-          Cambios de precio de insumos
-        </button>
-        @if (cartItemCount > 0) {
-          <a
-            class="products-m__sheet-action"
-            routerLink="/ventas/nueva"
-            (click)="closeMobileMore()"
-          >
-            Carrito ({{ cartItemCount }})
-          </a>
-        }
-      </div>
-    </div>
-  }
+      Actualizar precios en bloque
+    </button>
+    <button
+      type="button"
+      class="m-sheet-action"
+      (click)="openMobileSupplyChanges()"
+    >
+      Cambios de precio de insumos
+    </button>
+    @if (cartItemCount > 0) {
+      <a
+        class="m-sheet-action"
+        routerLink="/ventas/nueva"
+        (click)="closeMobileMore()"
+      >
+        Carrito ({{ cartItemCount }})
+      </a>
+    }
+  </db-mobile-sheet>
 
   @if (mobileBulkOpen) {
     <div class="products-m__sheet-scrim" (click)="closeMobileBulkPrice()"></div>

@@ -193,33 +193,22 @@
       (action)="onMobileDockAction($event)"
     />
 
-    @if (mobileActionsOpen) {
-      <div class="cd-m__sheet-scrim" (click)="closeMobileActions()"></div>
-      <div
-        class="cd-m__sheet"
-        role="dialog"
-        aria-modal="true"
-        aria-label="Más acciones"
+    <db-mobile-sheet
+      [open]="mobileActionsOpen"
+      ariaLabel="Más acciones"
+      (closed)="closeMobileActions()"
+    >
+      <button type="button" class="m-sheet-action" (click)="addSale()">
+        Agregar venta
+      </button>
+      <button
+        type="button"
+        class="m-sheet-action m-sheet-action--danger"
+        (click)="deleteCustomer()"
       >
-        <div class="cd-m__sheet-grab" aria-hidden="true"></div>
-        <div class="cd-m__sheet-body">
-          <button
-            type="button"
-            class="cd-m__sheet-action"
-            (click)="addSale()"
-          >
-            Agregar venta
-          </button>
-          <button
-            type="button"
-            class="cd-m__sheet-action cd-m__sheet-action--danger"
-            (click)="deleteCustomer()"
-          >
-            Eliminar
-          </button>
-        </div>
-      </div>
-    }
+        Eliminar
+      </button>
+    </db-mobile-sheet>
   </div>
 
   <div class="desktop-only">

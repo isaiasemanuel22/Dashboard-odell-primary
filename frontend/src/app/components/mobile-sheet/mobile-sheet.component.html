@@ -1,0 +1,65 @@
+@if (open) {
+  <div class="m-sheet-scrim" (click)="onScrimClick()"></div>
+  <div
+    #sheetPanel
+    class="m-sheet"
+    [class.m-sheet--has-dock]="showFoot"
+    [class.m-sheet--actions]="!showHead"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-label]="dialogLabel"
+    [attr.aria-labelledby]="title ? 'db-mobile-sheet-title' : null"
+    tabindex="-1"
+  >
+    <div class="m-sheet-grab" aria-hidden="true"></div>
+
+    <ng-content select="[sheetHeader]" />
+
+    @if (showHead) {
+      <div class="m-sheet-head">
+        <div class="m-sheet-head__text">
+          @if (title) {
+            <h2 id="db-mobile-sheet-title" class="m-sheet-title">{{ title }}</h2>
+          }
+          @if (subtitle) {
+            <p class="m-sheet-sub">{{ subtitle }}</p>
+          }
+        </div>
+        <button
+          #closeBtn
+          type="button"
+          class="m-ib"
+          aria-label="Cerrar"
+          (click)="onCloseClick()"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M6 6l12 12M18 6L6 18" />
+          </svg>
+        </button>
+      </div>
+    }
+
+    <div class="m-sheet-body">
+      <ng-content />
+    </div>
+
+    @if (showFoot) {
+      <div class="m-sheet-foot">
+        <db-mobile-dock
+          [embedded]="true"
+          [actions]="dockActions"
+          (action)="onDockAction($event)"
+        />
+      </div>
+    }
+  </div>
+}
