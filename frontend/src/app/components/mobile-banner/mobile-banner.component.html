@@ -1,0 +1,36 @@
+<div
+  class="m-banner"
+  [class.m-banner--warn]="tone() === 'warn'"
+  [class.m-banner--info]="tone() === 'info'"
+  role="status"
+>
+  @if (showIcon()) {
+    <svg
+      class="m-banner__icon"
+      viewBox="0 0 24 24"
+      width="18"
+      height="18"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      aria-hidden="true"
+    >
+      <path d="M12 3l9 16H3zM12 10v4M12 17h.01" />
+    </svg>
+  }
+  <div class="m-banner__text">
+    @if (title(); as heading) {
+      <strong>{{ heading }}</strong>
+    }
+    @if (text(); as body) {
+      <span>{{ body }}</span>
+    }
+    <ng-content />
+  </div>
+  @if (actionLabel(); as label) {
+    <button type="button" class="m-banner__btn" (click)="onAction()">
+      {{ label }}
+    </button>
+  }
+</div>

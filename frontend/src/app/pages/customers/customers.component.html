@@ -21,42 +21,16 @@
     </button>
   </db-mobile-bar>
 
-  <div class="m-tools">
-    <label class="m-search">
-      <svg
-        viewBox="0 0 24 24"
-        width="18"
-        height="18"
-        fill="none"
-        stroke="#5B7083"
-        stroke-width="2"
-        aria-hidden="true"
-      >
-        <circle cx="11" cy="11" r="7" />
-        <path d="M20 20l-3.5-3.5" />
-      </svg>
-      <input
-        type="search"
-        placeholder="Nombre, email o teléfono"
-        aria-label="Buscar clientes"
-        [(ngModel)]="search"
-        (ngModelChange)="onSearchChange()"
-      />
-    </label>
-    <div class="m-chips" role="group" aria-label="Tipo de cliente">
-      @for (chip of mobileListChips; track chip.value) {
-        <button
-          type="button"
-          class="m-chip"
-          [class.m-chip--on]="mobileChip === chip.value"
-          (click)="setMobileChip(chip.value)"
-        >
-          {{ chip.label }}
-          <span class="customers-m__chip-n">{{ chip.count }}</span>
-        </button>
-      }
-    </div>
-  </div>
+  <db-mobile-list-toolbar
+    [(search)]="search"
+    (searchChange)="onSearchChange()"
+    placeholder="Nombre, email o teléfono"
+    searchAriaLabel="Buscar clientes"
+    chipsAriaLabel="Tipo de cliente"
+    [chips]="mobileToolbarChips"
+    [(chip)]="mobileChip"
+    (chipChange)="onMobileChipChange($event)"
+  />
 
   <div class="m-body customers-m__list">
     @if (loading) {
@@ -74,37 +48,25 @@
     } @else {
       <div class="m-card m-card--flush">
         @for (customer of filteredMobileCustomers; track customer.id) {
-          <a
-            class="m-row customers-m__row"
-            [routerLink]="['/clientes', customer.id]"
-          >
-            <span class="customers-m__av" aria-hidden="true">{{
-              customerInitials(customer)
-            }}</span>
-            <div class="m-row__text">
-              <b>{{ customer.name }}</b>
-              <span>{{ customerSubtitle(customer) }}</span>
-            </div>
-            @if (customerBalance(customer) > 0) {
-              <div class="customers-m__end customers-m__end--neg">
-                {{ customerBalance(customer) | currencyArs }}
-                <small>saldo</small>
-              </div>
-            } @else {
-              <svg
-                class="customers-m__chev"
-                viewBox="0 0 24 24"
-                width="18"
-                height="18"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="2"
-                aria-hidden="true"
-              >
-                <path d="M9 6l6 6-6 6" />
-              </svg>
-            }
-          </a>
+          @if (customerBalance(customer) > 0) {
+            <db-mobile-card-link
+              [link]="['/clientes', customer.id]"
+              [title]="customer.name"
+              [subtitle]="customerSubtitle(customer)"
+              [initials]="customerInitials(customer)"
+              [trailing]="customerBalance(customer) | currencyArs"
+              trailingHint="saldo"
+              trailingTone="danger"
+            />
+          } @else {
+            <db-mobile-card-link
+              [link]="['/clientes', customer.id]"
+              [title]="customer.name"
+              [subtitle]="customerSubtitle(customer)"
+              [initials]="customerInitials(customer)"
+              [showChevron]="true"
+            />
+          }
         }
       </div>
     }

@@ -1,0 +1,59 @@
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+}
+
+.m-banner {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  font-size: 13px;
+  line-height: 1.35;
+
+  &--warn {
+    background: #fff8eb;
+    border: 1px solid #f5d9a8;
+    color: #7a4a06;
+  }
+
+  &--info {
+    background: mobile.$m-primary-pale;
+    border: 1px solid mobile.$m-primary;
+    color: mobile.$m-primary-dark;
+  }
+}
+
+.m-banner__icon {
+  flex: none;
+  align-self: flex-start;
+  margin-top: 1px;
+}
+
+.m-banner__text {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+
+  strong {
+    font-weight: 700;
+  }
+}
+
+.m-banner__btn {
+  flex: none;
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 10px;
+  border: 1px solid #d9a548;
+  background: #fff;
+  color: #7a4a06;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}

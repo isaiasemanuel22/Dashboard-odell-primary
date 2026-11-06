@@ -1,0 +1,10 @@
+Leé primero docs/mobile/reglas-implementacion.md (en especial «No duplicar: modularizar») y docs/mobile/familias.md (parte 2, familia A y puntos 3 y 9 del orden de extracción). Ya existen db-mobile-dock, db-mobile-sheet y db-mobile-chip-group: usalos.
+
+Tarea: extracción 3 · listas mobile (familia A: Pedidos, Presupuestos, Clientes, Productos, Insumos, Cola).
+
+1. `components/mobile-list-toolbar/`: el bloque `m-tools` + buscador (`m-search`, con su ✕ de 44px) + botón de filtros opcional (`m-fbtn` con contador y estado resaltado) + fila de chips con contador (reusá db-mobile-chip-group o sus estilos), con slot para un botón extra. Inputs/outputs tipados (search como model, chips `{id,label,count}[]`, chip activo como model, filterCount, placeholder, output filterClick). Que haga scroll al chip activo cuando cambia por código.
+2. `MobileListStateService` genérico en `core/services/mobile-list-state.service.ts` (por clave de lista: guarda y lee un objeto de estado + scrollY), más un helper/directiva que haga el patrón completo: guardar en NavigationStart, no pisar el scroll en ngOnDestroy, restaurar el scroll cuando la lista terminó de cargar. Reemplazá los 4 servicios actuales (orders, products, customers, quotes) y la lógica copiada en sus componentes; sumalo también a Insumos y Cola si les sirve.
+3. `components/mobile-card-link/` (si el patrón de tarjeta se repite de verdad: avatar/iniciales o imagen, título, subtítulo, pill y monto a la derecha) y `components/mobile-banner/` (aviso con ícono, texto y acción opcional: precios desactualizados, stock bajo, etc.). Usalos donde el markup sea igual; si una tarjeta es muy específica (pedido, producto) dejá su componente propio pero que use las piezas compartidas.
+4. Mismo resultado visual y comportamiento; desktop sin cambios. Actualizá «Si cambiás X, tocá» de la familia A en docs/mobile/familias.md.
+
+Criterio: el de reglas-implementacion.md; además no deben quedar servicios `*-mobile-state.service.ts` por página ni el bloque m-tools/m-search/m-chips copiado en los templates de las listas. Respondé con archivos tocados, líneas eliminadas aproximadas y diferencias.

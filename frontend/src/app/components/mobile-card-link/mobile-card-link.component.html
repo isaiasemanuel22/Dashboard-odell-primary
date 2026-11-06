@@ -1,0 +1,83 @@
+@if (link(); as route) {
+  <a class="m-row mcl" [routerLink]="route">
+    @if (imageUrl(); as src) {
+      <img class="mcl__av mcl__av--img" [src]="src" [alt]="imageAlt()" />
+    } @else if (initials()) {
+      <span class="mcl__av" aria-hidden="true">{{ initials() }}</span>
+    }
+    <div class="m-row__text">
+      <b>{{ title() }}</b>
+      @if (subtitle(); as sub) {
+        <span>{{ sub }}</span>
+      }
+    </div>
+    @if (pillLabel(); as pill) {
+      <span [class]="pillClass() || 'm-pill'">{{ pill }}</span>
+    }
+    @if (trailing(); as value) {
+      <div
+        class="mcl__end"
+        [class.mcl__end--danger]="trailingTone() === 'danger'"
+      >
+        {{ value }}
+        @if (trailingHint(); as hint) {
+          <small>{{ hint }}</small>
+        }
+      </div>
+    } @else if (showChevron()) {
+      <svg
+        class="mcl__chev"
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <path d="M9 6l6 6-6 6" />
+      </svg>
+    }
+  </a>
+} @else {
+  <button type="button" class="m-row mcl" (click)="onPress()">
+    @if (imageUrl(); as src) {
+      <img class="mcl__av mcl__av--img" [src]="src" [alt]="imageAlt()" />
+    } @else if (initials()) {
+      <span class="mcl__av" aria-hidden="true">{{ initials() }}</span>
+    }
+    <div class="m-row__text">
+      <b>{{ title() }}</b>
+      @if (subtitle(); as sub) {
+        <span>{{ sub }}</span>
+      }
+    </div>
+    @if (pillLabel(); as pill) {
+      <span [class]="pillClass() || 'm-pill'">{{ pill }}</span>
+    }
+    @if (trailing(); as value) {
+      <div
+        class="mcl__end"
+        [class.mcl__end--danger]="trailingTone() === 'danger'"
+      >
+        {{ value }}
+        @if (trailingHint(); as hint) {
+          <small>{{ hint }}</small>
+        }
+      </div>
+    } @else if (showChevron()) {
+      <svg
+        class="mcl__chev"
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <path d="M9 6l6 6-6 6" />
+      </svg>
+    }
+  </button>
+}

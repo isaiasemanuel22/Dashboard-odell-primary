@@ -1,21 +1,20 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   DestroyRef,
-  ElementRef,
-  OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, NavigationStart, Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
-import { filter } from 'rxjs/operators';
 import { Customer, CustomerType, Order } from '../../core/models';
 import { BreakpointService } from '../../core/services/breakpoint.service';
+import {
+  MOBILE_LIST_KEYS,
+  injectMobileListPersistence,
+} from '../../core/services/mobile-list-state.service';
 import { CustomerCatalogService } from '../../core/services/customer-catalog.service';
 import { CustomersService } from '../../core/services/customers.service';
 import { OrdersService } from '../../core/services/orders.service';
@@ -28,6 +27,9 @@ import {
   DbButtonComponent,
   DbSkeletonComponent,
   MobileBarComponent,
+  MobileCardLinkComponent,
+  MobileListToolbarComponent,
+  type MobileListToolbarChip,
   OdlActionEvent,
   OdlBadge,
   OdlColumn,
@@ -50,15 +52,17 @@ import {
   CUSTOMER_TYPE_LABELS,
 } from '../../shared/utils/v1-labels.util';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
-import {
-  CustomersMobileChip,
-  CustomersMobileStateService,
-} from './customers-mobile-state.service';
 
-interface MobileListChip {
-  value: CustomersMobileChip;
-  label: string;
-  count: number;
+export type CustomersMobileChip =
+  | 'all'
+  | 'revendedor'
+  | 'empresa'
+  | 'con_saldo';
+
+interface CustomersMobileListState {
+  chip: CustomersMobileChip;
+  search: string;
+  scrollY: number;
 }
 
 interface CustomerOrderStats {
@@ -71,10 +75,11 @@ interface CustomerOrderStats {
   standalone: true,
   imports: [
     FormsModule,
-    RouterLink,
     DbButtonComponent,
     DbSkeletonComponent,
     MobileBarComponent,
+    MobileListToolbarComponent,
+    MobileCardLinkComponent,
     CurrencyArsPipe,
     ...DB_DATA_TABLE,
   ],
@@ -82,7 +87,7 @@ interface CustomerOrderStats {
   styleUrl: './customers.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class CustomersComponent implements OnInit, AfterViewInit, OnDestroy {
+export class CustomersComponent implements OnInit {
   private readonly customersService = inject(CustomersService);
   private readonly customerCatalog = inject(CustomerCatalogService);
   private readonly ordersService = inject(OrdersService);
@@ -94,8 +99,10 @@ export class CustomersComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly breakpoint = inject(BreakpointService);
-  private readonly host = inject(ElementRef<HTMLElement>);
-  private readonly mobileState = inject(CustomersMobileStateService);
+  private readonly listPersistence =
+    injectMobileListPersistence<CustomersMobileListState>(
+      MOBILE_LIST_KEYS.customers,
+    );
 
   customers: Customer[] = [];
   loading = true;
@@ -103,8 +110,6 @@ export class CustomersComponent implements OnInit, AfterViewInit, OnDestroy {
   mobileChip: CustomersMobileChip = 'all';
 
   private orderStatsByCustomer = new Map<string, CustomerOrderStats>();
-  private pendingScrollY: number | null = null;
-  private scrollActiveChipOnInit = false;
 
   readonly kindFilters: OdlFilter<Customer>[] = [
     { id: 'all', label: 'Todos' },
@@ -152,7 +157,15 @@ export class CustomersComponent implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   ngOnInit(): void {
-    this.restoreMobileState();
+    this.listPersistence.connect(() => ({
+      chip: this.mobileChip,
+      search: this.search,
+    }));
+    this.listPersistence.restore((saved) => {
+      this.mobileChip = saved.chip;
+      this.search = saved.search;
+    });
+
     this.loadCustomers();
     this.realtime.bindSmartReload(this.destroyRef, 'customers', (event) => {
       this.catalogSync.handleEvent(event);
@@ -162,28 +175,10 @@ export class CustomersComponent implements OnInit, AfterViewInit, OnDestroy {
       if (this.breakpoint.isMobile()) this.loadOrderStats();
     });
 
-    this.router.events
-      .pipe(
-        filter(
-          (event): event is NavigationStart => event instanceof NavigationStart,
-        ),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe(() => this.persistMobileState());
-
     if (shouldOpenCreateFromQuery(this.route)) {
       this.openCreateCustomer();
       clearCreateQuery(this.router);
     }
-  }
-
-  ngAfterViewInit(): void {
-    if (!this.scrollActiveChipOnInit) return;
-    requestAnimationFrame(() => this.scrollActiveMobileChipIntoView());
-  }
-
-  ngOnDestroy(): void {
-    this.persistMobileState({ keepScroll: true });
   }
 
   get revendedorCount(): number {
@@ -192,13 +187,13 @@ export class CustomersComponent implements OnInit, AfterViewInit, OnDestroy {
     ).length;
   }
 
-  get mobileListChips(): MobileListChip[] {
+  get mobileToolbarChips(): MobileListToolbarChip[] {
     const counts = this.mobileChipCounts;
     return [
-      { value: 'all', label: 'Todos', count: counts.all },
-      { value: 'revendedor', label: 'Revendedores', count: counts.revendedor },
-      { value: 'empresa', label: 'Empresas', count: counts.empresa },
-      { value: 'con_saldo', label: 'Con saldo', count: counts.con_saldo },
+      { id: 'all', label: 'Todos', count: counts.all },
+      { id: 'revendedor', label: 'Revendedores', count: counts.revendedor },
+      { id: 'empresa', label: 'Empresas', count: counts.empresa },
+      { id: 'con_saldo', label: 'Con saldo', count: counts.con_saldo },
     ];
   }
 
@@ -264,7 +259,7 @@ export class CustomersComponent implements OnInit, AfterViewInit, OnDestroy {
         this.orderStatsByCustomer = buildOrderStats(orders);
         this.loading = false;
         this.cdr.markForCheck();
-        this.restoreScrollIfNeeded();
+        this.listPersistence.onListReady();
       },
       error: () => {
         this.loading = false;
@@ -331,14 +326,14 @@ export class CustomersComponent implements OnInit, AfterViewInit, OnDestroy {
       });
   }
 
-  setMobileChip(chip: CustomersMobileChip): void {
-    this.mobileChip = chip;
-    this.persistMobileState();
+  onMobileChipChange(chipId: string): void {
+    this.mobileChip = chipId as CustomersMobileChip;
+    this.listPersistence.persist();
     this.cdr.markForCheck();
   }
 
   onSearchChange(): void {
-    this.persistMobileState();
+    this.listPersistence.persist();
   }
 
   customerInitials(customer: Customer): string {
@@ -381,44 +376,6 @@ export class CustomersComponent implements OnInit, AfterViewInit, OnDestroy {
     }
   }
 
-  private restoreMobileState(): void {
-    const saved = this.mobileState.read();
-    if (!saved) return;
-    this.mobileChip = saved.chip;
-    this.search = saved.search;
-    if (saved.scrollY > 0) {
-      this.pendingScrollY = saved.scrollY;
-    }
-    this.scrollActiveChipOnInit = true;
-  }
-
-  private persistMobileState(options: { keepScroll?: boolean } = {}): void {
-    if (!this.breakpoint.isMobile()) return;
-    const scrollY = options.keepScroll
-      ? (this.mobileState.read()?.scrollY ?? 0)
-      : window.scrollY;
-    this.mobileState.save({
-      chip: this.mobileChip,
-      search: this.search,
-      scrollY,
-    });
-  }
-
-  private restoreScrollIfNeeded(): void {
-    const y = this.pendingScrollY;
-    if (y == null || y <= 0) return;
-    this.pendingScrollY = null;
-    requestAnimationFrame(() => {
-      window.scrollTo(0, y);
-    });
-  }
-
-  private scrollActiveMobileChipIntoView(): void {
-    const chip = this.host.nativeElement.querySelector(
-      '.m-chip.m-chip--on',
-    ) as HTMLElement | null;
-    chip?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
-  }
 }
 
 function customerTypeBadge(

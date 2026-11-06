@@ -35,24 +35,6 @@
   padding-right: 8px;
 }
 
-.orders-m__tools-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.orders-m__fbtn--on {
-  border-color: mobile.$m-primary !important;
-  background: mobile.$m-primary-pale !important;
-  color: mobile.$m-primary-dark !important;
-}
-
-.orders-m__chip-n {
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  opacity: 0.75;
-}
-
 .orders-m__list {
   display: flex;
   flex-direction: column;

@@ -1,21 +1,20 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   DestroyRef,
-  ElementRef,
-  OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
-import { filter } from 'rxjs/operators';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Order, OrderStatus, ServiceType } from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
 import { BreakpointService } from '../../core/services/breakpoint.service';
+import {
+  MOBILE_LIST_KEYS,
+  injectMobileListPersistence,
+} from '../../core/services/mobile-list-state.service';
 import { OrdersService } from '../../core/services/orders.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../core/services/realtime.service';
@@ -27,6 +26,8 @@ import {
   DbButtonComponent,
   OrderCardComponent,
   MobileBarComponent,
+  MobileListToolbarComponent,
+  type MobileListToolbarChip,
   isOrderOverdue,
 } from '@general-components';
 import { OrderMobileCardComponent } from '../../components/order-mobile-card/order-mobile-card.component';
@@ -50,7 +51,13 @@ import {
   orderServiceFilters,
   orderStatusFilters,
 } from '../../shared/utils/order.helpers';
-import { OrdersMobileStateService } from './orders-mobile-state.service';
+
+interface OrdersMobileListState {
+  chip: OrderMobileChip;
+  sheetFilters: OrderMobileSheetFilters;
+  search: string;
+  scrollY: number;
+}
 
 @Component({
   selector: 'app-orders',
@@ -62,13 +69,14 @@ import { OrdersMobileStateService } from './orders-mobile-state.service';
     DbButtonComponent,
     OrderCardComponent,
     MobileBarComponent,
+    MobileListToolbarComponent,
     OrderMobileCardComponent,
   ],
   templateUrl: './orders.component.html',
   styleUrl: './orders.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class OrdersComponent implements OnInit, AfterViewInit, OnDestroy {
+export class OrdersComponent implements OnInit {
   private readonly ordersService = inject(OrdersService);
   private readonly catalogSync = inject(RealtimeCatalogSyncService);
   private readonly realtime = inject(RealtimeService);
@@ -78,8 +86,8 @@ export class OrdersComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly breakpoint = inject(BreakpointService);
-  private readonly host = inject(ElementRef<HTMLElement>);
-  private readonly mobileState = inject(OrdersMobileStateService);
+  private readonly listPersistence =
+    injectMobileListPersistence<OrdersMobileListState>(MOBILE_LIST_KEYS.orders);
 
   orders: Order[] = [];
   loading = true;
@@ -93,11 +101,6 @@ export class OrdersComponent implements OnInit, AfterViewInit, OnDestroy {
   mobileChip: OrderMobileChip = 'abiertos';
   mobileSheetFilters: OrderMobileSheetFilters = emptyOrderMobileSheetFilters();
 
-  /** Scroll del chip activo al entrar con ?estado= / ?filtro=. */
-  private scrollActiveChipOnInit = false;
-  /** Scroll de la lista al volver del detalle (mobile). */
-  private pendingScrollY: number | null = null;
-
   readonly statusFilters = orderStatusFilters();
   readonly serviceFilters = orderServiceFilters();
 
@@ -110,9 +113,19 @@ export class OrdersComponent implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   ngOnInit(): void {
+    this.listPersistence.connect(() => ({
+      chip: this.mobileChip,
+      sheetFilters: this.mobileSheetFilters,
+      search: this.search,
+    }));
+
     const queryApplied = this.applyMobileQueryParams();
     if (!queryApplied) {
-      this.restoreMobileState();
+      this.listPersistence.restore((saved) => {
+        this.mobileChip = saved.chip;
+        this.mobileSheetFilters = saved.sheetFilters;
+        this.search = saved.search;
+      });
     }
 
     this.loadOrders();
@@ -122,29 +135,10 @@ export class OrdersComponent implements OnInit, AfterViewInit, OnDestroy {
       (event) => this.handleRealtime(event),
     );
 
-    this.router.events
-      .pipe(
-        filter((event): event is NavigationStart => event instanceof NavigationStart),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe(() => this.persistMobileState());
-
     if (shouldOpenCreateFromQuery(this.route)) {
       this.openCreateOrder();
       clearCreateQuery(this.router);
     }
-  }
-
-  ngAfterViewInit(): void {
-    if (!this.scrollActiveChipOnInit) return;
-    // Dejar que el layout mobile pinte los chips antes de scrollear.
-    requestAnimationFrame(() => this.scrollActiveMobileChipIntoView());
-  }
-
-  ngOnDestroy(): void {
-    // Sin scroll: al destruirse la página ya está arriba y pisaría el guardado
-    // en NavigationStart.
-    this.persistMobileState({ keepScroll: true });
   }
 
   private applyMobileQueryParams(): boolean {
@@ -152,7 +146,6 @@ export class OrdersComponent implements OnInit, AfterViewInit, OnDestroy {
       this.overdueOnly = true;
       this.statusFilter = 'abiertos';
       this.mobileChip = 'atrasados';
-      this.scrollActiveChipOnInit = true;
       return true;
     }
 
@@ -167,51 +160,10 @@ export class OrdersComponent implements OnInit, AfterViewInit, OnDestroy {
         ...emptyOrderMobileSheetFilters(),
         statuses: [estado as OrderStatus],
       };
-      this.scrollActiveChipOnInit = true;
       return true;
     }
 
     return false;
-  }
-
-  private restoreMobileState(): void {
-    const saved = this.mobileState.read();
-    if (!saved) return;
-    this.mobileChip = saved.chip;
-    this.mobileSheetFilters = saved.sheetFilters;
-    this.search = saved.search;
-    if (saved.scrollY > 0) {
-      this.pendingScrollY = saved.scrollY;
-    }
-  }
-
-  private persistMobileState(options: { keepScroll?: boolean } = {}): void {
-    if (!this.breakpoint.isMobile()) return;
-    const scrollY = options.keepScroll
-      ? (this.mobileState.read()?.scrollY ?? 0)
-      : window.scrollY;
-    this.mobileState.save({
-      chip: this.mobileChip,
-      sheetFilters: this.mobileSheetFilters,
-      search: this.search,
-      scrollY,
-    });
-  }
-
-  private restoreScrollIfNeeded(): void {
-    const y = this.pendingScrollY;
-    if (y == null || y <= 0) return;
-    this.pendingScrollY = null;
-    requestAnimationFrame(() => {
-      window.scrollTo(0, y);
-    });
-  }
-
-  private scrollActiveMobileChipIntoView(): void {
-    const chip = this.host.nativeElement.querySelector(
-      '.m-chip.m-chip--on',
-    ) as HTMLElement | null;
-    chip?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
   }
 
   get filteredOrders(): Order[] {
@@ -331,7 +283,21 @@ export class OrdersComponent implements OnInit, AfterViewInit, OnDestroy {
     return counts;
   }
 
+  get mobileToolbarChips(): MobileListToolbarChip[] {
+    const counts = this.mobileChipCounts;
+    return this.mobileChips.map((chip) => ({
+      id: chip.value,
+      label: chip.label,
+      count: chip.value === 'todos' ? undefined : counts[chip.value],
+    }));
+  }
+
   onSearchChange(): void {
+    this.cdr.markForCheck();
+  }
+
+  onMobileChipChange(chipId: string): void {
+    this.mobileChip = chipId as OrderMobileChip;
     this.cdr.markForCheck();
   }
 
@@ -346,11 +312,6 @@ export class OrdersComponent implements OnInit, AfterViewInit, OnDestroy {
   setServiceFilter(filter: OrderServiceFilter): void {
     this.serviceFilter = filter;
     this.loadOrders();
-  }
-
-  setMobileChip(chip: OrderMobileChip): void {
-    this.mobileChip = chip;
-    this.cdr.markForCheck();
   }
 
   openMobileFilters(): void {
@@ -389,7 +350,7 @@ export class OrdersComponent implements OnInit, AfterViewInit, OnDestroy {
         this.orders = orders;
         this.loading = false;
         this.cdr.markForCheck();
-        this.restoreScrollIfNeeded();
+        this.listPersistence.onListReady();
       },
       error: () => {
         this.loading = false;

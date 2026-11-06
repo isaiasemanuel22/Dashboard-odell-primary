@@ -3,13 +3,20 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router } from '@angular/router';
 import { ColorConfig, ResinType, Supply, SupplyCategory } from '../../core/models';
+import {
+  MOBILE_LIST_KEYS,
+  injectMobileListPersistence,
+} from '../../core/services/mobile-list-state.service';
 import { SuppliesService, SettingsService } from '../../core/services/settings.service';
 import {
   DbButtonComponent,
   DbPillGroupComponent,
   DbSkeletonComponent,
   DbStateMessageComponent,
+  MobileBannerComponent,
   MobileBarComponent,
+  MobileListToolbarComponent,
+  type MobileListToolbarChip,
   SuppliesTableComponent,
 } from '@general-components';
 import {
@@ -28,6 +35,13 @@ type CategoryFilter = SupplyCategory | 'all';
 type StockFilter = 'all' | 'ok' | 'low';
 type MobileChip = 'all' | 'low' | SupplyCategory;
 
+interface SuppliesMobileListState {
+  search: string;
+  categoryFilter: CategoryFilter;
+  stockFilter: StockFilter;
+  scrollY: number;
+}
+
 @Component({
   selector: 'app-supplies',
   standalone: true,
@@ -38,6 +52,8 @@ type MobileChip = 'all' | 'low' | SupplyCategory;
     DbPillGroupComponent,
     DbSkeletonComponent,
     MobileBarComponent,
+    MobileBannerComponent,
+    MobileListToolbarComponent,
     SuppliesTableComponent,
   ],
   templateUrl: './supplies.component.html',
@@ -52,6 +68,10 @@ export class SuppliesComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly currency = new CurrencyArsPipe();
+  private readonly listPersistence =
+    injectMobileListPersistence<SuppliesMobileListState>(
+      MOBILE_LIST_KEYS.supplies,
+    );
 
   supplies: Supply[] = [];
   colorCatalog: ColorConfig[] = [];
@@ -72,10 +92,18 @@ export class SuppliesComponent implements OnInit {
     );
   }
 
-  get mobileCategoryChips(): { value: SupplyCategory; label: string }[] {
-    return (Object.keys(SUPPLY_CATEGORY_LABELS) as SupplyCategory[]).map(
-      (value) => ({ value, label: SUPPLY_CATEGORY_LABELS[value] }),
-    );
+  get mobileToolbarChips(): MobileListToolbarChip[] {
+    const categories = (
+      Object.keys(SUPPLY_CATEGORY_LABELS) as SupplyCategory[]
+    ).map((value) => ({
+      id: value,
+      label: SUPPLY_CATEGORY_LABELS[value],
+    }));
+    return [
+      { id: 'all', label: 'Todos', count: this.supplies.length },
+      { id: 'low', label: 'Stock bajo', count: this.lowStockCount },
+      ...categories,
+    ];
   }
 
   get mobileChip(): MobileChip {
@@ -92,17 +120,34 @@ export class SuppliesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.listPersistence.connect(() => ({
+      search: this.search,
+      categoryFilter: this.categoryFilter,
+      stockFilter: this.stockFilter,
+    }));
+
     const filtro = this.route.snapshot.queryParamMap.get('filtro');
     const stock = this.route.snapshot.queryParamMap.get('stock');
-    if (filtro === 'stock_bajo' || stock === 'low') {
+    const queryApplied = filtro === 'stock_bajo' || stock === 'low';
+    if (queryApplied) {
       this.stockFilter = 'low';
+    } else {
+      this.listPersistence.restore((saved) => {
+        this.search = saved.search;
+        this.categoryFilter = saved.categoryFilter;
+        this.stockFilter = saved.stockFilter;
+      });
     }
+
     this.loadColorCatalog();
 
     this.suppliesFacade.loading$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((loading) => {
         this.loading = loading;
+        if (!loading) {
+          this.listPersistence.onListReady();
+        }
       });
 
     this.suppliesService
@@ -160,6 +205,10 @@ export class SuppliesComponent implements OnInit {
         (this.stockFilter === 'ok' && !low);
       return matchesSearch && matchesCategory && matchesStock;
     });
+  }
+
+  onMobileChipChange(chipId: string): void {
+    this.setMobileChip(chipId as MobileChip);
   }
 
   setMobileChip(chip: MobileChip): void {

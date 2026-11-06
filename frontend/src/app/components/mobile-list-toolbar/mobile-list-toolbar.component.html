@@ -1,0 +1,109 @@
+@if (showSearch() || showFilter()) {
+  <div class="m-tools">
+    <div class="m-list-toolbar__row">
+      @if (showSearch()) {
+        <label class="m-search">
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="#5B7083"
+            stroke-width="2"
+            aria-hidden="true"
+          >
+            <circle cx="11" cy="11" r="7" />
+            <path d="M20 20l-3.5-3.5" />
+          </svg>
+          <input
+            type="search"
+            [placeholder]="placeholder()"
+            [attr.aria-label]="searchAriaLabel() || placeholder()"
+            [ngModel]="search()"
+            (ngModelChange)="onSearchInput($event)"
+          />
+          @if (search()) {
+            <button
+              type="button"
+              class="m-list-toolbar__clear"
+              aria-label="Borrar búsqueda"
+              (click)="clearSearch($event)"
+            >
+              ✕
+            </button>
+          }
+        </label>
+      }
+      @if (showFilter()) {
+        <button
+          type="button"
+          class="m-fbtn"
+          [class.m-list-toolbar__fbtn--on]="filterCount() > 0"
+          [attr.aria-label]="filterAriaLabel() || filterLabel()"
+          (click)="onFilterClick()"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            width="16"
+            height="16"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <path d="M4 6h16M7 12h10M10 18h4" />
+          </svg>
+          {{ filterLabel() }}
+        </button>
+      }
+      <ng-content select="[listToolbarExtra]" />
+    </div>
+
+    @if (chips().length) {
+      <div
+        #chipsRow
+        class="m-chips"
+        role="group"
+        [attr.aria-label]="chipsAriaLabel()"
+      >
+        @for (item of chips(); track item.id) {
+          <button
+            type="button"
+            class="m-chip"
+            [class.m-chip--on]="chip() === item.id"
+            [attr.aria-pressed]="chip() === item.id"
+            (click)="onChipClick(item.id)"
+          >
+            {{ item.label }}
+            @if (item.count != null) {
+              <span class="m-list-toolbar__chip-n">{{ item.count }}</span>
+            }
+          </button>
+        }
+      </div>
+    }
+  </div>
+} @else if (chips().length) {
+  <div
+    #chipsRow
+    class="m-chips"
+    role="group"
+    [attr.aria-label]="chipsAriaLabel()"
+  >
+    @for (item of chips(); track item.id) {
+      <button
+        type="button"
+        class="m-chip"
+        [class.m-chip--on]="chip() === item.id"
+        [attr.aria-pressed]="chip() === item.id"
+        (click)="onChipClick(item.id)"
+      >
+        {{ item.label }}
+        @if (item.count != null) {
+          <span class="m-list-toolbar__chip-n">{{ item.count }}</span>
+        }
+      </button>
+    }
+  </div>
+}

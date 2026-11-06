@@ -3,66 +3,19 @@
     <span class="orders-m__open">{{ openOrdersCount }} abiertos</span>
   </db-mobile-bar>
 
-  <div class="m-tools">
-    <div class="orders-m__tools-row">
-      <label class="m-search">
-        <svg
-          viewBox="0 0 24 24"
-          width="18"
-          height="18"
-          fill="none"
-          stroke="#5B7083"
-          stroke-width="2"
-          aria-hidden="true"
-        >
-          <circle cx="11" cy="11" r="7" />
-          <path d="M20 20l-3.5-3.5" />
-        </svg>
-        <input
-          type="search"
-          placeholder="Cliente, producto o n.º"
-          aria-label="Buscar pedidos"
-          [(ngModel)]="search"
-          (ngModelChange)="onSearchChange()"
-        />
-      </label>
-      <button
-        type="button"
-        class="m-fbtn"
-        [class.orders-m__fbtn--on]="mobileSheetFilterCount > 0"
-        (click)="openMobileFilters()"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          width="16"
-          height="16"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          aria-hidden="true"
-        >
-          <path d="M4 6h16M7 12h10M10 18h4" />
-        </svg>
-        {{ filtersButtonLabel }}
-      </button>
-    </div>
-    <div class="m-chips" role="group" aria-label="Filtro rápido">
-      @for (chip of mobileChips; track chip.value) {
-        <button
-          type="button"
-          class="m-chip"
-          [class.m-chip--on]="mobileChip === chip.value"
-          (click)="setMobileChip(chip.value)"
-        >
-          {{ chip.label }}
-          @if (chip.value !== 'todos') {
-            <span class="orders-m__chip-n">{{ mobileChipCounts[chip.value] }}</span>
-          }
-        </button>
-      }
-    </div>
-  </div>
+  <db-mobile-list-toolbar
+    [(search)]="search"
+    (searchChange)="onSearchChange()"
+    placeholder="Cliente, producto o n.º"
+    searchAriaLabel="Buscar pedidos"
+    [showFilter]="true"
+    [filterCount]="mobileSheetFilterCount"
+    [filterLabel]="filtersButtonLabel"
+    [chips]="mobileToolbarChips"
+    [(chip)]="mobileChip"
+    (chipChange)="onMobileChipChange($event)"
+    (filterClick)="openMobileFilters()"
+  />
 
   @if (loading) {
     <div class="orders-m__list">

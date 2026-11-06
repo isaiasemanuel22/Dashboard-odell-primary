@@ -3,12 +3,6 @@
 
 @include screen.prefixed-screen('quotes');
 
-.quotes-m__chip-n {
-  font-size: 11px;
-  font-variant-numeric: tabular-nums;
-  opacity: 0.75;
-}
-
 .quotes-m__list {
   display: flex;
   flex-direction: column;

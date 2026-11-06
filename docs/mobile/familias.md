@@ -192,24 +192,21 @@ Componente compartido: `components/mobile-dock` (`db-mobile-dock`) + clase
 
 ### A · Listas (Pedidos, Presupuestos, Clientes, Productos, Insumos, Cola)
 
-a) **Extraer**
-- `db-mobile-list-toolbar` (`components/mobile-list-toolbar`): inputs `search` (model),
-  `placeholder`, `filterCount`, `chips` (`{id,label,count}[]`), `chip` (model),
-  output `filterClick`; slot para botón extra (ej. "Tipo y categoría"). Hoy el bloque
-  `m-tools` + `m-search` + `m-fbtn` + `m-chips` se repite en 6 `*.component.html`
-  (orders, quotes, customers, products, supplies, print-jobs; 3 matches c/u).
-- `MobileListStateService<T>` genérico (`core/services`): `save/read` con `scrollY`.
-  Hoy 4 servicios (orders 47, products 38, customers 31, quotes 26 = 142 líneas) y la
-  lógica de restaurar/guardar scroll en 4 componentes.
-- `db-mobile-card-link` (tarjeta clickable con avatar/iniciales, título, subtítulo, pill, monto):
-  hoy cada lista reescribe su tarjeta con `m-card`/`m-row`/`m-pill` (86 usos de `m-card`).
-- `db-mobile-banner` (aviso con ícono + acción): Insumos (stock bajo), Productos (precios
-  desactualizados), Ajustes G1 (pérdida), Presupuesto/Nuevo (nota).
+a) **Extraer** — hecho (extracción 3 + 9)
+- ~~`db-mobile-list-toolbar`~~ → `components/mobile-list-toolbar` (`db-mobile-list-toolbar`).
+- ~~`MobileListStateService`~~ → `core/services/mobile-list-state.service.ts` +
+  `injectMobileListPersistence` (Pedidos, Presupuestos, Clientes, Productos, Insumos, Cola).
+- ~~`db-mobile-card-link`~~ → `components/mobile-card-link` (Clientes; pedidos/productos/presupuestos
+  siguen con tarjeta propia; insumos conserva fila con barra de stock).
+- ~~`db-mobile-banner`~~ → `components/mobile-banner` (Productos e Insumos; G1/forms pendientes).
 
 b) **Si cambiás X, tocá**
-- Buscador, chips o botón de filtros: el nuevo `mobile-list-toolbar` + `_mobile-kit.scss`
-  (`m-search`, `m-chip`, `m-fbtn`, `m-tools`) y hoy los 6 `pages/{orders,quotes,customers,products,supplies,print-jobs}/*.component.html`.
-- Estado al volver: `*-mobile-state.service.ts` y el `*.component.ts` de cada lista.
+- Buscador, chips o botón de filtros: `components/mobile-list-toolbar` + `_mobile-kit.scss`
+  (`m-search`, `m-chip`, `m-fbtn`, `m-tools`); consumidores en
+  `pages/{orders,quotes,customers,products,supplies,print-jobs}`.
+- Estado al volver: `core/services/mobile-list-state.service.ts` y el `*.component.ts` de cada lista.
+- Tarjeta fila (avatar/monto/chevron): `components/mobile-card-link`.
+- Banner de aviso: `components/mobile-banner`.
 - Pill/color de estado: `_mobile-kit.scss` (`m-pill*`) y helpers de `shared/utils`.
 - Menú inferior / barra: `components/mobile-bar`, `layout/layout.component.ts`.
 
@@ -316,13 +313,13 @@ b) **Si cambiás X, tocá**: pie fijo → `components/mobile-dock` (+ `m-has-doc
 |---|---|---|---|---|---|
 | 1 | ~~`db-mobile-dock`~~ (hecho) | B, C, G | `components/mobile-dock` | — | Hecho |
 | 2 | ~~`db-mobile-sheet` + `chip-group`~~ (hecho) | D (también B) | `components/mobile-sheet`, `mobile-chip-group` | — | Hecho |
-| 3 | `db-mobile-list-toolbar` + `MobileListStateService<T>` | A | 6 listas, 4 servicios | ~70 HTML + ~100 estado + ~80 TS = **~250** | Medio (persistencia de filtros) |
+| 3 | ~~`db-mobile-list-toolbar` + `MobileListStateService`~~ (hecho) | A | `mobile-list-toolbar`, `mobile-list-state.service` | — | Hecho |
 | 4 | `db-mobile-form-shell` + `step` + `stepper` + `segmented` + `select-field` | C | 7 formularios | ~220 | Alto (formularios grandes, validaciones) |
 | 5 | `db-mobile-settings-page` + `catalog-row` + `field-group` | G1/G2 | 8 páginas + shell | ~150 | Bajo |
 | 6 | `db-mobile-contact-card` + `totals` + `collapsible` | B | 3–4 detalles | ~130 | Bajo |
 | 7 | `db-mobile-kpi-grid` + `period-picker` + `movement-row` | E | 3 paneles | ~100 | Bajo |
 | 8 | `db-mobile-nav-list` + `toggle-row` | F | 2 pantallas | ~60 | Bajo |
-| 9 | `db-mobile-card-link` + `banner` | A | 6 listas, 4 banners | ~90 | Bajo |
+| 9 | ~~`db-mobile-card-link` + `banner`~~ (hecho) | A | `mobile-card-link`, `mobile-banner` | — | Hecho |
 
 Total estimado: **~1.500 líneas** (de ~7.700 de SCSS de páginas más sus templates). Reglas:
 extraer **después** del QA mobile si se quiere no mover pantallas ya aprobadas, o por

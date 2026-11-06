@@ -3,17 +3,17 @@ import {
   ChangeDetectorRef,
   Component,
   DestroyRef,
-  OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
-import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute, NavigationStart, Router } from '@angular/router';
-import { filter } from 'rxjs';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Quote, QuoteStatus, ServiceType } from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
-import { BreakpointService } from '../../core/services/breakpoint.service';
+import {
+  MOBILE_LIST_KEYS,
+  injectMobileListPersistence,
+} from '../../core/services/mobile-list-state.service';
 import { QuotesService } from '../../core/services/quotes.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { removeById, upsertById } from '../../core/utils/replace-in-store';
@@ -23,6 +23,8 @@ import {
   DbButtonComponent,
   DbSkeletonComponent,
   MobileBarComponent,
+  MobileListToolbarComponent,
+  type MobileListToolbarChip,
   OdlActionEvent,
   OdlColumn,
   OdlFilter,
@@ -46,7 +48,12 @@ import {
   quoteServiceFilters,
   quoteStatusFilters,
 } from '../../shared/utils/quote.helpers';
-import { QuotesMobileStateService } from './quotes-mobile-state.service';
+
+interface QuotesMobileListState {
+  chip: QuoteMobileChip;
+  search: string;
+  scrollY: number;
+}
 
 @Component({
   selector: 'app-quotes',
@@ -56,6 +63,7 @@ import { QuotesMobileStateService } from './quotes-mobile-state.service';
     DbButtonComponent,
     DbSkeletonComponent,
     MobileBarComponent,
+    MobileListToolbarComponent,
     QuoteCardComponent,
     QuoteMobileCardComponent,
     ...DB_DATA_TABLE,
@@ -64,7 +72,7 @@ import { QuotesMobileStateService } from './quotes-mobile-state.service';
   styleUrl: './quotes.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class QuotesComponent implements OnInit, OnDestroy {
+export class QuotesComponent implements OnInit {
   private readonly quotesService = inject(QuotesService);
   private readonly realtime = inject(RealtimeService);
   private readonly formDialogs = inject(FormDialogService);
@@ -72,8 +80,8 @@ export class QuotesComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
-  private readonly breakpoint = inject(BreakpointService);
-  private readonly mobileState = inject(QuotesMobileStateService);
+  private readonly listPersistence =
+    injectMobileListPersistence<QuotesMobileListState>(MOBILE_LIST_KEYS.quotes);
 
   quotes: Quote[] = [];
   loading = true;
@@ -81,7 +89,6 @@ export class QuotesComponent implements OnInit, OnDestroy {
   mobileChip: QuoteMobileChip = 'abiertos';
   /** Evita reabrir el modal si el botón recibe clicks/teclas repetidas. */
   private quoteDialogBusy = false;
-  private pendingScrollY: number | null = null;
 
   readonly mobileChips = quoteMobileChips();
 
@@ -131,7 +138,15 @@ export class QuotesComponent implements OnInit, OnDestroy {
   ];
 
   ngOnInit(): void {
-    this.restoreMobileState();
+    this.listPersistence.connect(() => ({
+      chip: this.mobileChip,
+      search: this.search,
+    }));
+    this.listPersistence.restore((saved) => {
+      this.mobileChip = saved.chip;
+      this.search = saved.search;
+    });
+
     this.loadQuotes();
     this.realtime.bindSmartReload(
       this.destroyRef,
@@ -139,21 +154,10 @@ export class QuotesComponent implements OnInit, OnDestroy {
       (event) => this.handleRealtime(event),
     );
 
-    this.router.events
-      .pipe(
-        filter((event): event is NavigationStart => event instanceof NavigationStart),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe(() => this.persistMobileState());
-
     if (shouldOpenCreateFromQuery(this.route)) {
       this.openCreateQuote();
       clearCreateQuery(this.router);
     }
-  }
-
-  ngOnDestroy(): void {
-    this.persistMobileState({ keepScroll: true });
   }
 
   onAction(event: OdlActionEvent<Quote>): void {
@@ -176,12 +180,23 @@ export class QuotesComponent implements OnInit, OnDestroy {
         this.quotes = this.sortByQuotedAtDesc(quotes);
         this.loading = false;
         this.cdr.markForCheck();
-        this.restoreScrollIfNeeded();
+        this.listPersistence.onListReady();
       },
       error: () => {
         this.loading = false;
         this.cdr.markForCheck();
       },
+    });
+  }
+
+  get mobileToolbarChips(): MobileListToolbarChip[] {
+    return this.mobileChips.map((chip) => {
+      const n = this.chipCount(chip.value);
+      return {
+        id: chip.value,
+        label: chip.label,
+        count: n ?? undefined,
+      };
     });
   }
 
@@ -223,8 +238,8 @@ export class QuotesComponent implements OnInit, OnDestroy {
     return 'No hay presupuestos en este estado.';
   }
 
-  setMobileChip(chip: QuoteMobileChip): void {
-    this.mobileChip = chip;
+  onMobileChipChange(chipId: string): void {
+    this.mobileChip = chipId as QuoteMobileChip;
     this.cdr.markForCheck();
   }
 
@@ -317,37 +332,6 @@ export class QuotesComponent implements OnInit, OnDestroy {
           },
         });
       });
-  }
-
-  private restoreMobileState(): void {
-    const saved = this.mobileState.read();
-    if (!saved) return;
-    this.mobileChip = saved.chip;
-    this.search = saved.search;
-    if (saved.scrollY > 0) {
-      this.pendingScrollY = saved.scrollY;
-    }
-  }
-
-  private persistMobileState(options: { keepScroll?: boolean } = {}): void {
-    if (!this.breakpoint.isMobile()) return;
-    const scrollY = options.keepScroll
-      ? (this.mobileState.read()?.scrollY ?? 0)
-      : window.scrollY;
-    this.mobileState.save({
-      chip: this.mobileChip,
-      search: this.search,
-      scrollY,
-    });
-  }
-
-  private restoreScrollIfNeeded(): void {
-    const y = this.pendingScrollY;
-    if (y == null || y <= 0) return;
-    this.pendingScrollY = null;
-    requestAnimationFrame(() => {
-      window.scrollTo(0, y);
-    });
   }
 
   private handleRealtime(event: RealtimeEvent): void {

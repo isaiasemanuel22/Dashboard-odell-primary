@@ -24,6 +24,10 @@ import {
   TaskKind,
 } from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
+import {
+  MOBILE_LIST_KEYS,
+  injectMobileListPersistence,
+} from '../../core/services/mobile-list-state.service';
 import { PrintJobsService } from '../../core/services/print-jobs.service';
 import { UserAccessService } from '../../core/services/user-access.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
@@ -34,6 +38,8 @@ import {
   DbButtonComponent,
   DbServiceBadgeComponent,
   MobileBarComponent,
+  MobileListToolbarComponent,
+  type MobileListToolbarChip,
   PrintJobCardComponent,
 } from '@general-components';
 import {
@@ -68,6 +74,14 @@ export interface MobileJobAction {
   targetStatus?: PrintJobStatus;
 }
 
+interface PrintJobsMobileListState {
+  searchQuery: string;
+  mobileSearchOpen: boolean;
+  areaFilter: ServiceType | null;
+  mobileTabStatus: PrintJobStatus;
+  scrollY: number;
+}
+
 @Component({
   selector: 'app-print-jobs',
   standalone: true,
@@ -79,6 +93,7 @@ export interface MobileJobAction {
     DbButtonComponent,
     DbServiceBadgeComponent,
     MobileBarComponent,
+    MobileListToolbarComponent,
     PrintJobCardComponent,
     PrintJobsToolbarComponent,
   ],
@@ -95,6 +110,10 @@ export class PrintJobsComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
+  private readonly listPersistence =
+    injectMobileListPersistence<PrintJobsMobileListState>(
+      MOBILE_LIST_KEYS.printJobs,
+    );
 
   readonly primaryColumns = WORK_BOARD_COLUMNS;
   readonly cancelledColumn = WORK_BOARD_CANCELLED_COLUMN;
@@ -130,6 +149,19 @@ export class PrintJobsComponent implements OnInit {
   connectedLists: string[] = [];
 
   ngOnInit(): void {
+    this.listPersistence.connect(() => ({
+      searchQuery: this.searchQuery,
+      mobileSearchOpen: this.mobileSearchOpen,
+      areaFilter: this.areaFilter,
+      mobileTabStatus: this.mobileTabStatus,
+    }));
+    this.listPersistence.restore((saved) => {
+      this.searchQuery = saved.searchQuery;
+      this.mobileSearchOpen = saved.mobileSearchOpen;
+      this.areaFilter = saved.areaFilter;
+      this.mobileTabStatus = saved.mobileTabStatus;
+    });
+
     this.loadJobs();
     this.realtime.bindSmartReload(
       this.destroyRef,
@@ -137,6 +169,21 @@ export class PrintJobsComponent implements OnInit {
       (event) => this.handleRealtime(event),
       { skip: () => this.updating },
     );
+  }
+
+  get mobileAreaChips(): MobileListToolbarChip[] {
+    return this.areaFilters.map((filter) => ({
+      id: filter.value ?? 'all',
+      label: filter.label,
+    }));
+  }
+
+  get mobileAreaChipId(): string {
+    return this.areaFilter ?? 'all';
+  }
+
+  onAreaChipChange(chipId: string): void {
+    this.setAreaFilter(chipId === 'all' ? null : (chipId as ServiceType));
   }
 
   get visibleColumns(): WorkBoardColumnConfig[] {
@@ -444,6 +491,7 @@ export class PrintJobsComponent implements OnInit {
         this.rebuildBoard();
         this.loading = false;
         this.cdr.markForCheck();
+        this.listPersistence.onListReady();
       },
       error: (err) => {
         this.loading = false;

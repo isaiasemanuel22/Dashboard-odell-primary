@@ -40,89 +40,37 @@
     </button>
   </db-mobile-bar>
 
-  <div class="m-tools">
-    <div class="products-m__tools-row">
-      <label class="m-search">
-        <svg
-          viewBox="0 0 24 24"
-          width="18"
-          height="18"
-          fill="none"
-          stroke="#5B7083"
-          stroke-width="2"
-          aria-hidden="true"
-        >
-          <circle cx="11" cy="11" r="7" />
-          <path d="M20 20l-3.5-3.5" />
-        </svg>
-        <input
-          type="search"
-          placeholder="Buscar producto"
-          aria-label="Buscar producto"
-          [(ngModel)]="search"
-          (ngModelChange)="onSearchChange()"
-        />
-      </label>
-      <button
-        type="button"
-        class="m-fbtn"
-        [class.products-m__fbtn--on]="mobileSheetFilterCount > 0"
-        (click)="openMobileFilters()"
-      >
-        <svg
-          viewBox="0 0 24 24"
-          width="16"
-          height="16"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          aria-hidden="true"
-        >
-          <path d="M4 6h16M7 12h10M10 18h4" />
-        </svg>
-        {{ filtersButtonLabel }}
-      </button>
-    </div>
-    <div class="m-chips" role="group" aria-label="Filtro rápido">
-      @for (chip of mobileListChips; track chip.value) {
-        <button
-          type="button"
-          class="m-chip"
-          [class.m-chip--on]="listFilter === chip.value"
-          (click)="setListFilter(chip.value)"
-        >
-          {{ chip.label }}
-          <span class="products-m__chip-n">{{ chip.count }}</span>
-        </button>
-      }
-    </div>
-  </div>
+  <db-mobile-list-toolbar
+    [(search)]="search"
+    (searchChange)="onSearchChange()"
+    placeholder="Buscar producto"
+    searchAriaLabel="Buscar producto"
+    [showFilter]="true"
+    [filterCount]="mobileSheetFilterCount"
+    [filterLabel]="filtersButtonLabel"
+    [chips]="mobileToolbarChips"
+    [(chip)]="listFilter"
+    (chipChange)="onMobileChipChange($event)"
+    (filterClick)="openMobileFilters()"
+  />
 
   <div class="products-m__list">
     @if (mobileOutdatedPriceAlerts.length > 0) {
-      <div class="products-m__alert" role="status">
-        <div class="products-m__alert-text">
-          <strong>{{ mobileOutdatedPriceAlertTitle }}</strong>
-          <span>respecto de su costo actual</span>
-        </div>
-        <button
-          type="button"
-          class="products-m__alert-btn"
-          (click)="recalculateOutdatedPrices()"
-        >
-          Recalcular
-        </button>
-      </div>
+      <db-mobile-banner
+        [title]="mobileOutdatedPriceAlertTitle"
+        text="respecto de su costo actual"
+        actionLabel="Recalcular"
+        [showIcon]="false"
+        (action)="recalculateOutdatedPrices()"
+      />
     }
 
     @if (mobileFixedPriceMarginAlerts.length > 0) {
-      <div class="products-m__alert" role="status">
-        <div class="products-m__alert-text">
-          <strong>{{ mobileFixedPriceMarginAlertTitle }}</strong>
-          <span>quedaron bajo el margen</span>
-        </div>
-      </div>
+      <db-mobile-banner
+        [title]="mobileFixedPriceMarginAlertTitle"
+        text="quedaron bajo el margen"
+        [showIcon]="false"
+      />
     }
 
     @if (cartNotice) {

@@ -36,29 +36,13 @@
     </db-mobile-bar>
 
     @if (mobileSearchOpen) {
-      <div class="m-tools">
-        <label class="m-search">
-          <svg
-            viewBox="0 0 24 24"
-            width="18"
-            height="18"
-            fill="none"
-            stroke="#5B7083"
-            stroke-width="2"
-            aria-hidden="true"
-          >
-            <circle cx="11" cy="11" r="7" />
-            <path d="M20 20l-3.5-3.5" />
-          </svg>
-          <input
-            type="search"
-            placeholder="Pedido, cliente o tarea"
-            aria-label="Buscar tarea"
-            [(ngModel)]="searchQuery"
-            (ngModelChange)="onSearchChange()"
-          />
-        </label>
-      </div>
+      <db-mobile-list-toolbar
+        [(search)]="searchQuery"
+        (searchChange)="onSearchChange()"
+        placeholder="Pedido, cliente o tarea"
+        searchAriaLabel="Buscar tarea"
+        [chips]="[]"
+      />
     }
 
     <div class="cola-m__tabs" role="tablist" aria-label="Estado de las tareas">
@@ -77,18 +61,14 @@
       }
     </div>
 
-    <div class="m-chips cola-m__chips" role="group" aria-label="Área">
-      @for (filter of areaFilters; track filter.label) {
-        <button
-          type="button"
-          class="m-chip"
-          [class.m-chip--on]="areaFilter === filter.value"
-          (click)="setAreaFilter(filter.value)"
-        >
-          {{ filter.label }}
-        </button>
-      }
-    </div>
+    <db-mobile-list-toolbar
+      class="cola-m__chips"
+      [showSearch]="false"
+      chipsAriaLabel="Área"
+      [chips]="mobileAreaChips"
+      [chip]="mobileAreaChipId"
+      (chipChange)="onAreaChipChange($event)"
+    />
 
     @if (statusNotice) {
       <p class="cola-m__notice" role="status">{{ statusNotice }}</p>

@@ -1,24 +1,16 @@
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
   DestroyRef,
-  ElementRef,
   OnDestroy,
   OnInit,
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import {
-  ActivatedRoute,
-  NavigationStart,
-  Router,
-  RouterLink,
-} from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { combineLatest } from 'rxjs';
-import { filter } from 'rxjs/operators';
 import {
   Category,
   Product,
@@ -30,6 +22,10 @@ import {
 } from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
 import { BreakpointService } from '../../core/services/breakpoint.service';
+import {
+  MOBILE_LIST_KEYS,
+  injectMobileListPersistence,
+} from '../../core/services/mobile-list-state.service';
 import { CategoryCatalogService } from '../../core/services/category-catalog.service';
 import { ProductsService } from '../../core/services/products.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
@@ -45,6 +41,9 @@ import {
   DbPillOption,
   ProductCardComponent,
   MobileBarComponent,
+  MobileBannerComponent,
+  MobileListToolbarComponent,
+  type MobileListToolbarChip,
   MobileSheetComponent,
 } from '@general-components';
 import { ProductMobileCardComponent } from '../../components/product-mobile-card/product-mobile-card.component';
@@ -68,15 +67,16 @@ import { LayoutUiService } from '../../layout/layout-ui.service';
 import { ProductsBulkPriceComponent } from './products-bulk-price/products-bulk-price.component';
 import { ProductsSupplyPriceChangesComponent } from './products-supply-price-changes/products-supply-price-changes.component';
 import { ProductsToolbarComponent } from './products-toolbar/products-toolbar.component';
-import { ProductsMobileStateService } from './products-mobile-state.service';
 
 type TypeFilter = ProductType | 'all';
 type ListFilter = 'all' | 'below_margin' | 'fixed_price' | 'in_stock';
 
-interface MobileListChip {
-  value: ListFilter;
-  label: string;
-  count: number;
+interface ProductsMobileListState {
+  listFilter: ListFilter;
+  typeFilter: TypeFilter;
+  categoryFilter: string;
+  search: string;
+  scrollY: number;
 }
 
 @Component({
@@ -94,13 +94,15 @@ interface MobileListChip {
     ProductsBulkPriceComponent,
     ProductsSupplyPriceChangesComponent,
     MobileBarComponent,
+    MobileBannerComponent,
+    MobileListToolbarComponent,
     MobileSheetComponent,
   ],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
+export class ProductsComponent implements OnInit, OnDestroy {
   private readonly catalog = inject(CatalogFacade);
   private readonly productsService = inject(ProductsService);
   private readonly suppliesService = inject(SuppliesService);
@@ -115,8 +117,10 @@ export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
   private readonly formDialogs = inject(FormDialogService);
   private readonly saleCart = inject(SaleCartService);
   private readonly breakpoint = inject(BreakpointService);
-  private readonly host = inject(ElementRef<HTMLElement>);
-  private readonly mobileState = inject(ProductsMobileStateService);
+  private readonly listPersistence =
+    injectMobileListPersistence<ProductsMobileListState>(
+      MOBILE_LIST_KEYS.products,
+    );
   private readonly layoutUi = inject(LayoutUiService);
   private readonly currency = new CurrencyArsPipe();
 
@@ -144,8 +148,6 @@ export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
     normalizeWholesaleDiscount(null);
 
   private belowMarginIds = new Set<string>();
-  private scrollActiveChipOnInit = false;
-  private pendingScrollY: number | null = null;
 
   readonly ProductType = ProductType;
   readonly typeFilters: { value: TypeFilter; label: string }[] = [
@@ -156,9 +158,21 @@ export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
   ];
 
   ngOnInit(): void {
+    this.listPersistence.connect(() => ({
+      listFilter: this.listFilter,
+      typeFilter: this.typeFilter,
+      categoryFilter: this.categoryFilter,
+      search: this.search,
+    }));
+
     const queryApplied = this.applyMobileQueryParams();
     if (!queryApplied) {
-      this.restoreMobileState();
+      this.listPersistence.restore((saved) => {
+        this.listFilter = saved.listFilter;
+        this.typeFilter = saved.typeFilter;
+        this.categoryFilter = saved.categoryFilter;
+        this.search = saved.search;
+      });
     }
 
     this.catalog.load();
@@ -178,7 +192,7 @@ export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
         this.allProducts = allProducts;
         this.cdr.markForCheck();
         if (!loading) {
-          this.restoreScrollIfNeeded();
+          this.listPersistence.onListReady();
         }
       });
 
@@ -208,30 +222,13 @@ export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
       this.handleRealtime(event),
     );
 
-    this.router.events
-      .pipe(
-        filter(
-          (event): event is NavigationStart => event instanceof NavigationStart,
-        ),
-        takeUntilDestroyed(this.destroyRef),
-      )
-      .subscribe(() => this.persistMobileState());
-
     if (shouldOpenCreateFromQuery(this.route)) {
       this.openCreateProduct();
       clearCreateQuery(this.router);
     }
   }
 
-  ngAfterViewInit(): void {
-    if (!this.scrollActiveChipOnInit) return;
-    requestAnimationFrame(() => this.scrollActiveMobileChipIntoView());
-  }
-
   ngOnDestroy(): void {
-    // Sin scroll: al destruirse la página ya está arriba y pisaría el guardado
-    // en NavigationStart.
-    this.persistMobileState({ keepScroll: true });
     this.closeAllMobileSheets();
   }
 
@@ -317,35 +314,35 @@ export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
    * (lo que se vería al tocar ese chip). Se ocultan los de contador 0,
    * salvo «Todos» y el chip activo.
    */
-  get mobileListChips(): MobileListChip[] {
+  get mobileToolbarChips(): MobileListToolbarChip[] {
     const base = this.productsMatchingSearchTypeCategory;
-    const chips: MobileListChip[] = [
+    const chips: MobileListToolbarChip[] = [
       {
-        value: 'all',
+        id: 'all',
         label: 'Todos',
         count: base.filter((p) => p.published !== false).length,
       },
       {
-        value: 'below_margin',
+        id: 'below_margin',
         label: 'Bajo margen',
         count: base.filter((p) => this.belowMarginIds.has(p.id)).length,
       },
       {
-        value: 'fixed_price',
+        id: 'fixed_price',
         label: 'Precio fijo',
         count: base.filter((p) => hasFixedCatalogPrice(p)).length,
       },
       {
-        value: 'in_stock',
+        id: 'in_stock',
         label: 'Con stock',
         count: base.filter((p) => productPhysicalStock(p) > 0).length,
       },
     ];
     return chips.filter(
       (chip) =>
-        chip.value === 'all' ||
-        chip.count > 0 ||
-        this.listFilter === chip.value,
+        chip.id === 'all' ||
+        (chip.count ?? 0) > 0 ||
+        this.listFilter === chip.id,
     );
   }
 
@@ -549,6 +546,10 @@ export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  onMobileChipChange(chipId: string): void {
+    this.setListFilter(chipId);
+  }
+
   openMobileFilters(): void {
     this.formDialogs
       .openProductFilters({
@@ -689,7 +690,6 @@ export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
       filtro === 'in_stock'
     ) {
       this.listFilter = filtro;
-      this.scrollActiveChipOnInit = true;
       return true;
     }
     return false;
@@ -698,48 +698,6 @@ export class ProductsComponent implements OnInit, AfterViewInit, OnDestroy {
   /** Para la tarjeta mobile: mismo conjunto que el chip «Bajo margen». */
   isBelowMargin(product: Product): boolean {
     return this.belowMarginIds.has(product.id);
-  }
-
-  private restoreMobileState(): void {
-    const saved = this.mobileState.read();
-    if (!saved) return;
-    this.listFilter = saved.listFilter;
-    this.typeFilter = saved.typeFilter;
-    this.categoryFilter = saved.categoryFilter;
-    this.search = saved.search;
-    if (saved.scrollY > 0) {
-      this.pendingScrollY = saved.scrollY;
-    }
-  }
-
-  private persistMobileState(options: { keepScroll?: boolean } = {}): void {
-    if (!this.breakpoint.isMobile()) return;
-    const scrollY = options.keepScroll
-      ? (this.mobileState.read()?.scrollY ?? 0)
-      : window.scrollY;
-    this.mobileState.save({
-      listFilter: this.listFilter,
-      typeFilter: this.typeFilter,
-      categoryFilter: this.categoryFilter,
-      search: this.search,
-      scrollY,
-    });
-  }
-
-  private restoreScrollIfNeeded(): void {
-    const y = this.pendingScrollY;
-    if (y == null || y <= 0) return;
-    this.pendingScrollY = null;
-    requestAnimationFrame(() => {
-      window.scrollTo(0, y);
-    });
-  }
-
-  private scrollActiveMobileChipIntoView(): void {
-    const chip = this.host.nativeElement.querySelector(
-      '.m-chip.m-chip--on',
-    ) as HTMLElement | null;
-    chip?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
   }
 
   private matchesSearchTypeCategory(product: Product): boolean {

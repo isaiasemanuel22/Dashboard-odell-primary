@@ -1,0 +1,53 @@
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: contents;
+}
+
+.mcl__av {
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  background: #e0f0f8;
+  color: #0b5f86;
+  font-weight: 700;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  object-fit: cover;
+
+  &--img {
+    padding: 0;
+  }
+}
+
+.mcl__end {
+  text-align: right;
+  font-weight: 700;
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  flex: none;
+  color: mobile.$m-text;
+
+  small {
+    display: block;
+    font-size: 11px;
+    font-weight: 400;
+    color: mobile.$m-text-secondary;
+  }
+
+  &--danger {
+    color: #b91c1c;
+
+    small {
+      color: inherit;
+    }
+  }
+}
+
+.mcl__chev {
+  flex: none;
+  color: mobile.$m-text-secondary;
+}

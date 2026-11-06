@@ -35,8 +35,9 @@ específico.
   `ngOnDestroy`), para que el menú inferior no las tape.
 - Pantallas con barra fija de acciones abajo: ocultar el menú inferior global
   agregando la ruta a `shouldHideBottomNav` en `layout/layout.component.ts`.
-- Estado de listas al volver del detalle (filtros, búsqueda, scroll): servicio
-  en memoria como `OrdersMobileStateService` / `ProductsMobileStateService`.
+- Estado de listas al volver del detalle (filtros, búsqueda, scroll):
+  `MobileListStateService` + `injectMobileListPersistence` en
+  `core/services/mobile-list-state.service.ts`.
 
 ## Estrategia por pantalla
 
