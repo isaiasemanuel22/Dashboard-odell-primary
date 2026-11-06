@@ -180,7 +180,11 @@
   .pd-m__ks {
     font-size: 11px;
     color: mobile.$m-text-secondary;
-    white-space: nowrap;
+    min-width: 0;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+    padding-right: 2px;
   }
 
   .pd-m__num {

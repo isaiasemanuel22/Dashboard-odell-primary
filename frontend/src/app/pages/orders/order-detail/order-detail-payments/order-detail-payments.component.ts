@@ -6,6 +6,7 @@ import {
   EventEmitter,
   Input,
   Output,
+  ViewChild,
   inject,
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -72,6 +73,9 @@ export class OrderDetailPaymentsComponent {
   private readonly ordersService = inject(OrdersService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
+
+  @ViewChild(MobileAmountInputComponent)
+  private readonly amountInput?: MobileAmountInputComponent;
 
   /** full = panel desktop; summary = historial mobile; sheet = hoja inferior. */
   @Input() presentation: 'full' | 'summary' | 'sheet' = 'full';
@@ -166,6 +170,11 @@ export class OrderDetailPaymentsComponent {
       this.paymentAmount = Math.round(this.balanceAmount);
     } else if (shortcut === 'half') {
       this.paymentAmount = Math.round(this.balanceAmount / 2);
+    } else if (shortcut === 'other') {
+      this.paymentAmount = null;
+      this.cdr.markForCheck();
+      queueMicrotask(() => this.amountInput?.focus());
+      return;
     }
     this.cdr.markForCheck();
   }

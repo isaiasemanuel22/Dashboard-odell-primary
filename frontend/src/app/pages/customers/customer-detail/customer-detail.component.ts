@@ -405,6 +405,13 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
       .replace(/^Vencía\s+/i, 'vencía ');
     return delivery ? `${status} · ${delivery}` : status;
   }
+
+  /** Saldo pendiente del pedido, o null si no hay. */
+  orderRowBalance(order: Order): number | null {
+    if (!orderHasPendingBalance(order)) return null;
+    const balance = orderBalanceAmount(order);
+    return balance > 0 ? balance : null;
+  }
 }
 
 function normalizeWhatsAppPhone(phone: string): string {

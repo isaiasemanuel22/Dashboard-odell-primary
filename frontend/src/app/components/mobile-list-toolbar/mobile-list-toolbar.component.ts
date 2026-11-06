@@ -85,11 +85,23 @@ export class MobileListToolbarComponent {
     this.filterClick.emit();
   }
 
+  /**
+   * Solo desplaza la fila de chips en horizontal.
+   * No usar scrollIntoView: mueve la página y cancela la restauración de scroll.
+   */
   private scrollActiveChipIntoView(): void {
     const row = this.chipsEl()?.nativeElement;
     if (!row) return;
     const active = row.querySelector('.m-chip--on') as HTMLElement | null;
-    active?.scrollIntoView({ inline: 'nearest', block: 'nearest' });
+    if (!active) return;
+    const rowRect = row.getBoundingClientRect();
+    const chipRect = active.getBoundingClientRect();
+    const pad = 12;
+    if (chipRect.left < rowRect.left + pad) {
+      row.scrollLeft -= rowRect.left + pad - chipRect.left;
+    } else if (chipRect.right > rowRect.right - pad) {
+      row.scrollLeft += chipRect.right - (rowRect.right - pad);
+    }
   }
 }
 

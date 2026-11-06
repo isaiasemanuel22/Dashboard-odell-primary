@@ -69,7 +69,6 @@
   flex-direction: column;
   gap: 10px;
   padding: 12px 16px;
-  padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
 }
 
 .products-m__notice {

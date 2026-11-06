@@ -10,6 +10,7 @@ import { StoreBootstrapService } from '../store/store-bootstrap.service';
 import { SuppliesFacade } from '../store/supplies/supplies.facade';
 import { DbButtonComponent } from '../components/db-button/db-button.component';
 import { NavIconComponent } from '../components/nav-icon/nav-icon.component';
+import { DataChangedService } from '../core/services/data-changed.service';
 import { FormDialogService } from '../modals/form-dialog.service';
 import { LayoutUiService } from './layout-ui.service';
 
@@ -47,6 +48,7 @@ export class LayoutComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
   private readonly formDialogs = inject(FormDialogService);
+  private readonly dataChanged = inject(DataChangedService);
   readonly layoutUi = inject(LayoutUiService);
 
   readonly user$ = this.auth.currentUser$;
@@ -184,6 +186,7 @@ export class LayoutComponent implements OnInit {
   openNewOrder(): void {
     this.formDialogs.openOrder().subscribe((saved) => {
       if (!saved) return;
+      this.dataChanged.emit('orders');
       void this.router.navigateByUrl('/pedidos');
     });
   }
@@ -191,6 +194,7 @@ export class LayoutComponent implements OnInit {
   openNewQuote(): void {
     this.formDialogs.openQuote().subscribe((saved) => {
       if (!saved) return;
+      this.dataChanged.emit('quotes');
       void this.router.navigateByUrl('/presupuestos');
     });
   }
@@ -198,6 +202,7 @@ export class LayoutComponent implements OnInit {
   openNewCustomer(): void {
     this.formDialogs.openCustomer().subscribe((saved) => {
       if (!saved) return;
+      this.dataChanged.emit('customers');
       void this.router.navigateByUrl(`/clientes/${saved.id}`);
     });
   }

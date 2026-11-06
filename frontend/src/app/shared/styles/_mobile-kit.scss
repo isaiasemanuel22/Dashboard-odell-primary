@@ -350,13 +350,12 @@
 
   .m-body {
     padding: 14px 16px;
-    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
     gap: 12px;
   }
 
-  /* Padding del cuerpo cuando hay `db-mobile-dock` fijo abajo. */
+  /* Padding del cuerpo cuando hay `db-mobile-dock` fijo abajo (sin menú inferior). */
   .m-has-dock {
     padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
   }

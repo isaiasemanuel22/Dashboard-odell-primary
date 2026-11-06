@@ -189,7 +189,10 @@
 
   .layout-main {
     margin-left: 0;
-    padding-bottom: mobile.$mobile-bottom-nav-height;
+    /* Único clearance del menú inferior: alto + 24px + safe-area. */
+    padding-bottom: calc(
+      #{mobile.$mobile-bottom-nav-height} + 24px + env(safe-area-inset-bottom, 0px)
+    );
   }
 
   .mobile-header {

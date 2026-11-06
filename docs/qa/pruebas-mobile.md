@@ -64,7 +64,7 @@ commit.
 | DP4 | Productos | Comparar con el detalle en desktop | Unidades × precio (lista tachada si hay otro aplicado), subtotal y «Preparar: N de M · Entregado: K» coinciden; margen sobre costo cuando el producto tiene costo | ✅ 2026-11-02 · detalle (desktop no muestra margen: sin contraste) |
 | DP5 | Acordeones | Abrir y cerrar Pagos, Tareas, Entregas e Historial | Abren y cierran, uno por vez; el resumen de la derecha coincide con el contenido | ✅ 2026-11-02 · detalle (uno por vez se agregó después) |
 | DP6 | Registrar pago | En ord-14, «Registrar pago» y cargar $10 en efectivo | Abre Pagos con el saldo precargado; al registrar, Pagado y Saldo se actualizan | ✅ 2026-11-02 · detalle (pago QA de $10 en ord-14) |
-| DP7 | Entregar | En ord-13, «Entregar» (sin confirmar) | Abre Entregas, baja al formulario, cierra Pagos; si no hay nada listo, lo explica | ✅ 2026-11-02 · detalle (el aviso se agregó después) |
+| DP7 | Entregar | En ord-13, «Entregar» (sin confirmar) | «Entregar ahora» abre una hoja: si hay unidades listas, el formulario de entrega; si no hay nada listo, aviso explicando por qué no se puede entregar | ✅ 2026-11-02 · detalle (hoja + aviso sin unidades listas) |
 | DP8 | Sin cliente y alertas | ord-10 | «Sin cliente» + «Asignar cliente» (con Cancelar); varias alertas en «Atención (N)» con «Ver todas» | ✅ 2026-11-02 · detalle (Cancelar se agregó después) |
 | DP9 | Toques | Recorrer botones y casillas | Todo cómodo de tocar (≥44 px) | ✅ 2026-11-02 · detalle |
 
@@ -121,6 +121,7 @@ Observaciones del 2026-11-02, a resolver al migrar cada pantalla:
 - Nuevo pedido: el primer producto aparece desplegado con 0 g y Crear pedido queda deshabilitado sin decir por qué.
 - Las pantallas viejas siguen con ☰ y menú lateral además del menú inferior: es transitorio, hasta que se migren.
 - Una vez, un toque inmediato en un acceso de «Más» no respondió; al repetirlo funcionó. No se pudo reproducir.
+- Cola: «Agregar al tablero» pasa la tarea de backlog al tablero dentro de Por hacer; no cambia de pestaña.
 
 ## Fallos abiertos
 

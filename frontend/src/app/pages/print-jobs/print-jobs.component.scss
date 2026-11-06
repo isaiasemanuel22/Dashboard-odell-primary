@@ -77,7 +77,6 @@
 
   .cola-m__list {
     padding: 8px 16px;
-    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
     display: flex;
     flex-direction: column;
     gap: 10px;

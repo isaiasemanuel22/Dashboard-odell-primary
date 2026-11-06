@@ -93,16 +93,29 @@ export class SuppliesComponent implements OnInit {
     );
   }
 
+  /** Base de contadores: solo búsqueda (sin chip de categoría/stock). */
+  private get mobileCountBase(): Supply[] {
+    const term = this.search.trim().toLowerCase();
+    if (!term) return this.supplies;
+    return this.supplies.filter((s) => this.supplySearchText(s).includes(term));
+  }
+
   get mobileToolbarChips(): MobileListToolbarChip[] {
+    const base = this.mobileCountBase;
     const categories = (
       Object.keys(SUPPLY_CATEGORY_LABELS) as SupplyCategory[]
     ).map((value) => ({
       id: value,
       label: SUPPLY_CATEGORY_LABELS[value],
+      count: base.filter((s) => s.category === value).length,
     }));
     return [
-      { id: 'all', label: 'Todos', count: this.supplies.length },
-      { id: 'low', label: 'Stock bajo', count: this.lowStockCount },
+      { id: 'all', label: 'Todos', count: base.length },
+      {
+        id: 'low',
+        label: 'Stock bajo',
+        count: base.filter((s) => s.quantity <= s.minStock).length,
+      },
       ...categories,
     ];
   }
@@ -259,7 +272,11 @@ export class SuppliesComponent implements OnInit {
       return `${category} · mínimo ${minLabel} ${unit}`;
     }
     if (supply.unitPrice > 0) {
-      return `${category} · ${this.currency.transform(supply.unitPrice)} / ${unit}`;
+      const price = `${this.currency.transform(supply.unitPrice)}/${unit}`;
+      const source = supply.priceFromSettings
+        ? 'precio del insumo · lista Ajustes'
+        : 'precio del insumo';
+      return `${category} · ${price} · ${source}`;
     }
     return category;
   }

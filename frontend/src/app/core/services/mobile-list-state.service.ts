@@ -127,34 +127,49 @@ export function injectMobileListPersistence<T extends MobileListScrollState>(
     onListReady() {
       const y = pendingScrollY;
       if (y == null || y <= 0) return;
-      pendingScrollY = null;
       cancelRestore?.();
-      cancelRestore = restoreScrollWhenTallEnough(y);
+      // No liberar pending hasta llegar (o timeout): varias emisiones
+      // (catálogo/combineLatest) pueden llamar onListReady antes del paint.
+      cancelRestore = restoreScrollWhenTallEnough(y, () => {
+        pendingScrollY = null;
+        cancelRestore = null;
+      });
     },
   };
 }
 
 /**
  * Restaura scrollY reintentando por frame hasta que la página sea lo bastante
- * alta (lista ya con datos) o pasen ~1,5 s. Cancela si el usuario scrollea.
+ * alta (lista ya con datos) o pasen ~2 s. Cancela solo si el usuario scrollea
+ * de verdad (ignora el scroll de chips / layout en la ventana post-programático).
  */
-function restoreScrollWhenTallEnough(targetY: number): () => void {
-  const maxMs = 1500;
+function restoreScrollWhenTallEnough(
+  targetY: number,
+  onDone?: () => void,
+): () => void {
+  const maxMs = 2000;
+  const settleMs = 120;
   const start = performance.now();
   let cancelled = false;
-  let programmatic = false;
+  let ignoreUntil = 0;
   let rafId = 0;
-
-  const onUserScroll = (): void => {
-    if (programmatic || cancelled) return;
-    cancelled = true;
-    cleanup();
-  };
 
   const cleanup = (): void => {
     window.removeEventListener('scroll', onUserScroll);
     if (rafId) cancelAnimationFrame(rafId);
     rafId = 0;
+  };
+
+  const finish = (): void => {
+    cleanup();
+    onDone?.();
+  };
+
+  const onUserScroll = (): void => {
+    if (cancelled) return;
+    if (performance.now() < ignoreUntil) return;
+    cancelled = true;
+    finish();
   };
 
   window.addEventListener('scroll', onUserScroll, { passive: true });
@@ -167,15 +182,25 @@ function restoreScrollWhenTallEnough(targetY: number): () => void {
       document.documentElement.scrollHeight - window.innerHeight,
     );
     const elapsed = performance.now() - start;
-    const canReach = maxScroll >= targetY;
+    const canReach = maxScroll >= targetY - 1;
     const timedOut = elapsed >= maxMs;
 
-    programmatic = true;
+    ignoreUntil = performance.now() + settleMs;
     window.scrollTo(0, Math.min(targetY, maxScroll));
-    programmatic = false;
 
     if (canReach || timedOut) {
-      cleanup();
+      // Un frame más por si el chip-row u otra pintura mueven el scroll.
+      ignoreUntil = performance.now() + settleMs;
+      rafId = requestAnimationFrame(() => {
+        if (cancelled) return;
+        ignoreUntil = performance.now() + settleMs;
+        const max = Math.max(
+          0,
+          document.documentElement.scrollHeight - window.innerHeight,
+        );
+        window.scrollTo(0, Math.min(targetY, max));
+        finish();
+      });
       return;
     }
 

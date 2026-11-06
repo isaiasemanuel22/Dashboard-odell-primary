@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
 import { Customer, CustomerType, Order } from '../../core/models';
 import { BreakpointService } from '../../core/services/breakpoint.service';
+import { DataChangedService } from '../../core/services/data-changed.service';
 import {
   MOBILE_LIST_KEYS,
   injectMobileListPersistence,
@@ -20,6 +21,7 @@ import { CustomersService } from '../../core/services/customers.service';
 import { OrdersService } from '../../core/services/orders.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../core/services/realtime.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { removeById, upsertById } from '../../core/utils/replace-in-store';
 import { FormDialogService } from '../../modals/public-api';
 import {
@@ -99,6 +101,7 @@ export class CustomersComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly breakpoint = inject(BreakpointService);
+  private readonly dataChanged = inject(DataChangedService);
   private readonly listPersistence =
     injectMobileListPersistence<CustomersMobileListState>(
       MOBILE_LIST_KEYS.customers,
@@ -167,6 +170,10 @@ export class CustomersComponent implements OnInit {
     });
 
     this.loadCustomers();
+    this.dataChanged
+      .on('customers')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadCustomers());
     this.realtime.bindSmartReload(this.destroyRef, 'customers', (event) => {
       this.catalogSync.handleEvent(event);
       this.loadCustomers();
@@ -197,14 +204,33 @@ export class CustomersComponent implements OnInit {
     ];
   }
 
+  /** Base de contadores: solo búsqueda (sin chip). */
+  private get mobileCountBase(): Customer[] {
+    const term = this.search.trim().toLowerCase();
+    if (!term) return this.customers;
+    return this.customers.filter((customer) => {
+      const haystack = [
+        customer.name,
+        customer.email,
+        customer.phone,
+        customer.company,
+      ]
+        .filter(Boolean)
+        .join(' ')
+        .toLowerCase();
+      return haystack.includes(term);
+    });
+  }
+
   get mobileChipCounts(): Record<CustomersMobileChip, number> {
+    const base = this.mobileCountBase;
     const counts: Record<CustomersMobileChip, number> = {
-      all: this.customers.length,
+      all: base.length,
       revendedor: 0,
       empresa: 0,
       con_saldo: 0,
     };
-    for (const customer of this.customers) {
+    for (const customer of base) {
       if (customer.type === CustomerType.REVENDEDOR) counts.revendedor += 1;
       if (customer.type === CustomerType.EMPRESA) counts.empresa += 1;
       if ((this.orderStatsByCustomer.get(customer.id)?.balance ?? 0) > 0) {

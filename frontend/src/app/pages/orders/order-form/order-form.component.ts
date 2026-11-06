@@ -1496,7 +1496,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   /** True tras interacción del usuario; ignora defaults/sync al abrir. */
   private userEdited = false;
 
-  /** True si el usuario tocó el form y se perderían cambios al cerrar. */
+  /** True si el usuario cambió un valor respecto del estado inicial. */
   hasUnsavedChanges(): boolean {
     return this.userEdited;
   }
@@ -1507,14 +1507,19 @@ export class OrderFormComponent implements OnChanges, OnInit {
     this.userEdited = true;
   }
 
+  /**
+   * Solo marca dirty en controles que cambian valor (chips/segmentos),
+   * no en stepper, Enter ni botones de navegación del form.
+   */
   @HostListener('click', ['$event'])
   onFormClick(event: MouseEvent): void {
     const target = event.target as HTMLElement | null;
     if (!target) return;
     if (target.closest('[data-discard-safe]')) return;
+    if (target.closest('db-mobile-stepper, .m-stepper, [data-stepper]')) return;
     if (
       target.closest(
-        'button, [role="button"], input, select, textarea, .discount-segment, .quote-chip, .quote-charge__segment',
+        '.discount-segment, .quote-chip, .quote-charge__segment, input[type="checkbox"], input[type="radio"]',
       )
     ) {
       this.userEdited = true;
@@ -1760,6 +1765,11 @@ export class OrderFormComponent implements OnChanges, OnInit {
     });
     this.clampDiscountFields();
     this.syncDetailsExpanded();
+    this.userEdited = false;
+    // Init/async (Enter en campos, sync de líneas) no debe pedir descartar.
+    queueMicrotask(() => {
+      this.userEdited = false;
+    });
   }
 
   /**

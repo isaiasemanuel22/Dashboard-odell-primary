@@ -212,11 +212,25 @@
 
   .cd-m__row-end {
     flex: none;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 1px;
     text-align: right;
     font-weight: 700;
     font-size: 14px;
     font-variant-numeric: tabular-nums;
     color: mobile.$m-text;
+  }
+
+  .cd-m__row-bal {
+    color: #b91c1c;
+  }
+
+  .cd-m__row-total {
+    font-size: 12px;
+    font-weight: 500;
+    color: mobile.$m-text-secondary;
   }
 
 }

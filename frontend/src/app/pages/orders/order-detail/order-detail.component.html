@@ -71,12 +71,14 @@
               <span class="m-pill m-pill--d">{{ overdueLabel }}</span>
             }
           </div>
-          <span class="od-m__meta"
-            >{{ mobileCreatedLabel }} ·
-            <span [class.od-m__meta--late]="isOrderOverdue">{{
-              mobileDeliveryLabel
-            }}</span></span
-          >
+          <span class="od-m__meta">
+            <span class="od-m__meta-line">{{ mobileCreatedLabel }}</span>
+            <span
+              class="od-m__meta-line"
+              [class.od-m__meta--late]="isOrderOverdue"
+              >{{ mobileDeliveryLabel }}</span
+            >
+          </span>
         </div>
 
         @if (order.customerId) {

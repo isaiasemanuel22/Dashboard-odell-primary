@@ -6,10 +6,6 @@
 }
 
 @include mobile.mobile-only {
-  .supplies-m__body {
-    padding-bottom: calc(96px + env(safe-area-inset-bottom, 0px));
-  }
-
   .supplies-m__row {
     width: 100%;
     border: 0;

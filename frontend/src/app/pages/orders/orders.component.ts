@@ -11,6 +11,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { Order, OrderStatus, ServiceType } from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
 import { BreakpointService } from '../../core/services/breakpoint.service';
+import { DataChangedService } from '../../core/services/data-changed.service';
 import {
   MOBILE_LIST_KEYS,
   injectMobileListPersistence,
@@ -18,6 +19,7 @@ import {
 import { OrdersService } from '../../core/services/orders.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../core/services/realtime.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { removeById } from '../../core/utils/replace-in-store';
 import { FormDialogService } from '../../modals/public-api';
 import {
@@ -86,6 +88,7 @@ export class OrdersComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly breakpoint = inject(BreakpointService);
+  private readonly dataChanged = inject(DataChangedService);
   private readonly listPersistence =
     injectMobileListPersistence<OrdersMobileListState>(MOBILE_LIST_KEYS.orders);
 
@@ -129,6 +132,10 @@ export class OrdersComponent implements OnInit {
     }
 
     this.loadOrders();
+    this.dataChanged
+      .on('orders')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadOrders());
     this.realtime.bindSmartReload(
       this.destroyRef,
       ['orders', 'customers', 'products'],
@@ -276,15 +283,37 @@ export class OrdersComponent implements OnInit {
     return this.orders.length ? 'Nuevo pedido' : 'Crear primer pedido';
   }
 
+  /** Base de contadores: búsqueda + filtros de hoja (sin chip). */
+  private get mobileCountBase(): Order[] {
+    const term = this.search.trim().toLowerCase();
+    return this.orders.filter((order) => {
+      if (!matchesOrderMobileSheetFilters(order, this.mobileSheetFilters)) {
+        return false;
+      }
+      if (!term) return true;
+      return [
+        order.id,
+        order.customerName,
+        plainTextFromHtml(order.description),
+        order.notes ?? '',
+        ...order.items.map((item) => item.productName),
+      ]
+        .join(' ')
+        .toLowerCase()
+        .includes(term);
+    });
+  }
+
   get mobileChipCounts(): Record<OrderMobileChip, number> {
+    const base = this.mobileCountBase;
     const counts: Record<OrderMobileChip, number> = {
       abiertos: 0,
       atrasados: 0,
       para_entregar: 0,
       con_saldo: 0,
-      todos: this.orders.length,
+      todos: base.length,
     };
-    for (const order of this.orders) {
+    for (const order of base) {
       if (!isClosedOrder(order.status)) counts.abiertos += 1;
       if (matchesOrderMobileChip(order, 'atrasados')) counts.atrasados += 1;
       if (matchesOrderMobileChip(order, 'para_entregar')) {
@@ -300,7 +329,7 @@ export class OrdersComponent implements OnInit {
     return this.mobileChips.map((chip) => ({
       id: chip.value,
       label: chip.label,
-      count: chip.value === 'todos' ? undefined : counts[chip.value],
+      count: counts[chip.value],
     }));
   }
 

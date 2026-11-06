@@ -65,12 +65,6 @@
     }
   }
 
-  .sales-m__body {
-    padding-bottom: calc(
-      96px + mobile.$mobile-bottom-nav-height + env(safe-area-inset-bottom, 0px)
-    );
-  }
-
   .sales-m__state {
     margin: 0;
     color: mobile.$m-text-secondary;

@@ -8,6 +8,7 @@ import {
   Output,
   inject,
 } from '@angular/core';
+import { Location } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { LayoutUiService } from '../../layout/layout-ui.service';
 
@@ -21,6 +22,7 @@ import { LayoutUiService } from '../../layout/layout-ui.service';
 })
 export class MobileBarComponent implements OnInit, OnDestroy {
   private readonly layoutUi = inject(LayoutUiService);
+  private readonly location = inject(Location);
 
   @Input({ required: true }) title = '';
   @Input() backLink?: string | any[];
@@ -43,5 +45,21 @@ export class MobileBarComponent implements OnInit, OnDestroy {
 
   onClose(): void {
     this.close.emit();
+  }
+
+  /**
+   * Si hay historial interno de la app, vuelve atrás (Cola → detalle → origen).
+   * Si se entró directo (sin historial útil), usa `backLink` como fallback.
+   */
+  onBack(event: Event): void {
+    if (!this.canUseHistoryBack()) return;
+    event.preventDefault();
+    this.location.back();
+  }
+
+  private canUseHistoryBack(): boolean {
+    if (typeof window === 'undefined') return false;
+    // history.length > 1: hay algo a lo que volver dentro de la sesión.
+    return window.history.length > 1;
   }
 }

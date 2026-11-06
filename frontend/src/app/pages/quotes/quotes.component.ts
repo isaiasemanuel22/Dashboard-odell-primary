@@ -10,12 +10,14 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Quote, QuoteStatus, ServiceType } from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
+import { DataChangedService } from '../../core/services/data-changed.service';
 import {
   MOBILE_LIST_KEYS,
   injectMobileListPersistence,
 } from '../../core/services/mobile-list-state.service';
 import { QuotesService } from '../../core/services/quotes.service';
 import { RealtimeService } from '../../core/services/realtime.service';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { removeById, upsertById } from '../../core/utils/replace-in-store';
 import { FormDialogService } from '../../modals/public-api';
 import {
@@ -80,6 +82,7 @@ export class QuotesComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly dataChanged = inject(DataChangedService);
   private readonly listPersistence =
     injectMobileListPersistence<QuotesMobileListState>(MOBILE_LIST_KEYS.quotes);
 
@@ -148,6 +151,10 @@ export class QuotesComponent implements OnInit {
     });
 
     this.loadQuotes();
+    this.dataChanged
+      .on('quotes')
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.loadQuotes());
     this.realtime.bindSmartReload(
       this.destroyRef,
       ['dashboard', 'quotes'],
@@ -190,14 +197,12 @@ export class QuotesComponent implements OnInit {
   }
 
   get mobileToolbarChips(): MobileListToolbarChip[] {
-    return this.mobileChips.map((chip) => {
-      const n = this.chipCount(chip.value);
-      return {
-        id: chip.value,
-        label: chip.label,
-        count: n ?? undefined,
-      };
-    });
+    const counts = this.mobileChipCounts;
+    return this.mobileChips.map((chip) => ({
+      id: chip.value,
+      label: chip.label,
+      count: counts[chip.value],
+    }));
   }
 
   get mobileFilteredQuotes(): Quote[] {
@@ -207,6 +212,15 @@ export class QuotesComponent implements OnInit {
       if (!term) return true;
       return this.searchText(quote).toLowerCase().includes(term);
     });
+  }
+
+  /** Base de contadores: solo búsqueda (sin chip). */
+  private get mobileCountBase(): Quote[] {
+    const term = this.search.trim().toLowerCase();
+    if (!term) return this.quotes;
+    return this.quotes.filter((quote) =>
+      this.searchText(quote).toLowerCase().includes(term),
+    );
   }
 
   get mobileChipCounts(): Record<QuoteMobileChip, number> {
@@ -219,7 +233,7 @@ export class QuotesComponent implements OnInit {
       [QuoteStatus.CANCELADO]: 0,
     } as Record<QuoteMobileChip, number>;
 
-    for (const quote of this.quotes) {
+    for (const quote of this.mobileCountBase) {
       if (matchesQuoteMobileChip(quote.status, 'abiertos')) {
         counts.abiertos += 1;
       }
@@ -245,14 +259,6 @@ export class QuotesComponent implements OnInit {
 
   onSearchChange(): void {
     this.cdr.markForCheck();
-  }
-
-  chipCount(chip: QuoteMobileChip): number | null {
-    if (chip === QuoteStatus.ACEPTADO || chip === QuoteStatus.RECHAZADO || chip === QuoteStatus.CANCELADO) {
-      const n = this.mobileChipCounts[chip];
-      return n > 0 ? n : null;
-    }
-    return this.mobileChipCounts[chip];
   }
 
   openCreateQuote(): void {

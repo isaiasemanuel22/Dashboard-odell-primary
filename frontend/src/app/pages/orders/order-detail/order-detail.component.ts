@@ -437,7 +437,10 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     return formatOrderMobileDeliveryLabel(
       this.order.dueDate,
       this.isOrderOverdue,
-    ).replace(/^Entrega\b/, 'entrega');
+    )
+      .replace(/^Entrega\b/, 'Vence')
+      .replace(/^entrega\b/, 'Vence')
+      .replace(/^Vencía\b/, 'Vencía');
   }
 
   /** «<1 %» cuando hay algo pagado pero el redondeo daría 0. */

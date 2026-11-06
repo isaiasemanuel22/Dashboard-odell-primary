@@ -150,7 +150,14 @@
                 <b>{{ orderRowTitle(order) }}</b>
                 <span>{{ orderRowMeta(order) }}</span>
               </div>
-              <div class="cd-m__row-end">{{ order.total | currencyArs }}</div>
+              <div class="cd-m__row-end">
+                @if (orderRowBalance(order); as balance) {
+                  <span class="cd-m__row-bal">saldo {{ balance | currencyArs }}</span>
+                  <span class="cd-m__row-total">{{ order.total | currencyArs }}</span>
+                } @else {
+                  {{ order.total | currencyArs }}
+                }
+              </div>
             </a>
           }
         }

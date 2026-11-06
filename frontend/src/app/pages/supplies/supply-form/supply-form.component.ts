@@ -114,7 +114,8 @@ export class SupplyFormComponent implements OnInit, OnChanges {
       .filter((entry) => entry.materialType === this.filamentType)
       .map((entry) => ({
         value: entry.brand,
-        label: `${entry.brand} — ${this.formatArs(entry.pricePerKg)}/kg`,
+        // Lista de Ajustes es referencia; el precio del insumo va en el campo de abajo.
+        label: `${entry.brand} · lista Ajustes ${this.formatArs(entry.pricePerKg)}/kg`,
       }));
   }
 
@@ -123,7 +124,7 @@ export class SupplyFormComponent implements OnInit, OnChanges {
       .filter((entry) => entry.resinType === this.resinType)
       .map((entry) => ({
         value: entry.brand,
-        label: `${entry.brand} — ${this.formatArs(entry.pricePerLiter)}/L`,
+        label: `${entry.brand} · lista Ajustes ${this.formatArs(entry.pricePerLiter)}/L`,
       }));
   }
 
@@ -136,25 +137,22 @@ export class SupplyFormComponent implements OnInit, OnChanges {
 
   get priceHint(): string {
     if (this.settingsLoading) return 'Cargando listas de precios...';
-    if (this.isFilament && this.priceFromSettings) {
-      return 'Precio desde Ajustes → Filamentos. Para cambiarlo, editá la lista de precios por marca.';
+    if (this.isFilament || this.isResin) {
+      if (this.priceFromSettings) {
+        return 'Precio del insumo (lista de Ajustes). Si comprás a otro valor, deja de usar Ajustes.';
+      }
+      if (this.supply) {
+        return 'Precio del insumo (queda de la última compra o carga manual; la lista de Ajustes es solo referencia en la marca).';
+      }
+      if (this.isFilament && !this.filamentBrandOptions.length) {
+        return 'No hay marcas cargadas para este tipo. Agregalas en Ajustes → Filamentos.';
+      }
+      if (this.isResin && !this.resinBrandOptions.length) {
+        return 'No hay marcas cargadas para este tipo. Agregalas en Ajustes → Resinas.';
+      }
+      return 'Elegí marca: se completa con el precio de lista de Ajustes.';
     }
-    if (this.isFilament && !this.filamentBrandOptions.length) {
-      return 'No hay marcas cargadas para este tipo. Agregalas en Ajustes → Filamentos.';
-    }
-    if (this.isFilament) {
-      return 'Elegí marca y tipo desde la lista configurada en Ajustes.';
-    }
-    if (this.isResin && this.priceFromSettings) {
-      return 'Precio desde Ajustes → Resinas. Para cambiarlo, editá la lista de precios por marca.';
-    }
-    if (this.isResin && !this.resinBrandOptions.length) {
-      return 'No hay marcas cargadas para este tipo. Agregalas en Ajustes → Resinas.';
-    }
-    if (this.isResin) {
-      return 'Elegí marca y tipo desde la lista configurada en Ajustes.';
-    }
-    return 'Precio manual — independiente de marca';
+    return 'Precio del insumo — manual, independiente de marca';
   }
 
   ngOnInit(): void {
@@ -194,16 +192,16 @@ export class SupplyFormComponent implements OnInit, OnChanges {
 
   onFilamentTypeChange(): void {
     this.brand = '';
-    this.applyConfiguredPrice();
+    this.applyConfiguredPrice({ fromUserBrandChange: true });
   }
 
   onResinTypeChange(): void {
     this.brand = '';
-    this.applyConfiguredPrice();
+    this.applyConfiguredPrice({ fromUserBrandChange: true });
   }
 
   onBrandChange(): void {
-    this.applyConfiguredPrice();
+    this.applyConfiguredPrice({ fromUserBrandChange: true });
   }
 
   onMaterialBrandChange(value: string): void {
@@ -275,7 +273,12 @@ export class SupplyFormComponent implements OnInit, OnChanges {
         this.filamentTypes = settings.filamentTypes ?? [];
         this.resinTypes = settings.resinTypes ?? [];
         this.settingsLoading = false;
-        this.applyConfiguredPrice();
+        // Al editar, no pisar el precio guardado del insumo con la lista de Ajustes.
+        if (!this.supply) {
+          this.applyConfiguredPrice({ fromUserBrandChange: true });
+        } else {
+          this.syncPriceEditable();
+        }
       },
       error: () => {
         this.settingsLoading = false;
@@ -283,8 +286,16 @@ export class SupplyFormComponent implements OnInit, OnChanges {
     });
   }
 
-  private applyConfiguredPrice(): void {
+  /**
+   * Aplica el precio de lista de Ajustes.
+   * Solo al crear o cuando el usuario cambia marca/tipo — no al abrir un insumo
+   * existente (el unitPrice guardado puede venir de una compra).
+   */
+  private applyConfiguredPrice(
+    options: { fromUserBrandChange?: boolean } = {},
+  ): void {
     this.configError = '';
+    const allowOverwrite = options.fromUserBrandChange === true || !this.supply;
 
     if (this.isFilament) {
       const match = this.filamentPrices.find(
@@ -293,10 +304,12 @@ export class SupplyFormComponent implements OnInit, OnChanges {
           entry.brand.toLowerCase() === this.brand.trim().toLowerCase(),
       );
       if (match) {
-        this.unitPrice = match.pricePerKg;
+        if (allowOverwrite) {
+          this.unitPrice = match.pricePerKg;
+          this.priceFromSettings = true;
+        }
         this.unit = 'kg';
-        this.priceFromSettings = true;
-      } else {
+      } else if (allowOverwrite) {
         this.unitPrice = 0;
         this.priceFromSettings = false;
       }
@@ -311,10 +324,12 @@ export class SupplyFormComponent implements OnInit, OnChanges {
           entry.brand.toLowerCase() === this.brand.trim().toLowerCase(),
       );
       if (match) {
-        this.unitPrice = match.pricePerLiter;
+        if (allowOverwrite) {
+          this.unitPrice = match.pricePerLiter;
+          this.priceFromSettings = true;
+        }
         this.unit = 'L';
-        this.priceFromSettings = true;
-      } else {
+      } else if (allowOverwrite) {
         this.unitPrice = 0;
         this.priceFromSettings = false;
       }
@@ -336,7 +351,7 @@ export class SupplyFormComponent implements OnInit, OnChanges {
       this.priceFromSettings = this.supply.priceFromSettings;
       this.supplier = this.supply.supplier ?? '';
       this.colorId = this.supply.colorId ?? '';
-      this.applyConfiguredPrice();
+      this.syncPriceEditable();
     } else {
       this.name = '';
       this.category = this.defaultCategory ?? SupplyCategory.FDM;
