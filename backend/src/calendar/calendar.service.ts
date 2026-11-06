@@ -160,7 +160,7 @@ export class CalendarService {
         type: 'delivery',
         date: due,
         title: `Entrega ${order.id}`,
-        subtitle: `${order.customerName || 'Sin cliente'} · ${qty} piezas`,
+        subtitle: `${order.customerName || 'Sin cliente'} · ${qty === 1 ? '1 pieza' : `${qty} piezas`}`,
         late,
         orderId: order.id,
         linkType: CalendarLinkType.ORDER,

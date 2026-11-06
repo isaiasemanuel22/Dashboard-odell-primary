@@ -19,10 +19,14 @@
 
     :deep(input),
     :deep(.st-m__inp),
-    :deep(.m-field-group__input) {
+    :deep(.m-field-group__input),
+    :deep(db-autocomplete input),
+    :deep(.db-autocomplete input) {
       border: 0 !important;
       border-radius: 0 !important;
       background: transparent !important;
+      box-shadow: none !important;
+      outline: none;
       min-height: 48px;
       flex: 1;
       min-width: 0;

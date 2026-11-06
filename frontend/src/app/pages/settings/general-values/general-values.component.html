@@ -107,15 +107,28 @@
         <button type="button" class="st-m__add" (click)="addMachineProfile()">+ Agregar equipo</button>
 
         @if (selectedProfile; as profile) {
-          <app-general-values-profile-editor
-            [profile]="profile"
-            [roleOptions]="roleOptions"
-            [productTypeOptions]="productTypeSelectOptions"
-            [supplyOptions]="supplyOptions"
-            [saving]="savingProfiles"
-            (cancelEdit)="closeProfileEditor()"
-            (save)="saveMachineProfiles()"
-          />
+          <db-mobile-sheet
+            [open]="true"
+            [title]="profile.name.trim() || 'Nuevo equipo'"
+            [primaryLabel]="savingProfiles ? 'Guardando…' : 'Guardar equipo'"
+            [primaryDisabled]="savingProfiles"
+            secondaryLabel="Cancelar"
+            (closed)="closeProfileEditor()"
+            (primary)="saveMachineProfiles()"
+            (secondary)="closeProfileEditor()"
+          >
+            <app-general-values-profile-editor
+              [profile]="profile"
+              [roleOptions]="roleOptions"
+              [productTypeOptions]="productTypeSelectOptions"
+              [supplyOptions]="supplyOptions"
+              [saving]="savingProfiles"
+              [sheetMode]="true"
+              (cancelEdit)="closeProfileEditor()"
+              (save)="saveMachineProfiles()"
+              (remove)="removeMachineProfile(profile.id)"
+            />
+          </db-mobile-sheet>
         }
     </db-mobile-settings-page>
   } @else {

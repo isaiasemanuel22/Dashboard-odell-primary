@@ -289,3 +289,50 @@ app-user-access-nav {
   color: #b91c1c;
   font-size: 0.9rem;
 }
+
+.users-m-form {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+
+  .st-m__inp {
+    min-height: 48px;
+    border: 1px solid #c9d8e3;
+    border-radius: 12px;
+    padding: 0 12px;
+    font-family: inherit;
+    font-size: 15px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .m-fl {
+    font-size: 13px;
+    font-weight: 500;
+    color: #33495a;
+  }
+
+  .m-field {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+.users-m-form__advanced {
+  border: 1px solid #e3ecf2;
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: #f4f8fb;
+
+  summary {
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 600;
+    color: #5b7083;
+  }
+
+  db-mobile-field-group {
+    margin-top: 10px;
+  }
+}

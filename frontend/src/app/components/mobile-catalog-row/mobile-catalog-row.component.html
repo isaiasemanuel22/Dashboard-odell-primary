@@ -2,6 +2,7 @@
   <button
     type="button"
     class="m-row m-catalog-row"
+    [attr.aria-label]="title()"
     [disabled]="disabled()"
     (click)="onPress()"
   >
@@ -33,7 +34,7 @@
     <ng-content />
   </button>
 } @else {
-  <div class="m-row m-catalog-row">
+  <div class="m-row m-catalog-row" [attr.aria-label]="title()">
     @if (swatch(); as color) {
       <span
         class="m-catalog-row__swatch"

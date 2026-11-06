@@ -60,9 +60,9 @@
                   aria-hidden="true"
                 ></span>
                 <span class="m-row__text">
-                  <b>{{ item.title }}</b>
+                  <b>{{ capitalizeAttention(item.title) }}</b>
                   @if (item.detail) {
-                    <span>{{ item.detail }}</span>
+                    <span>{{ capitalizeAttention(item.detail) }}</span>
                   }
                 </span>
                 <svg
@@ -184,7 +184,11 @@
               }
             </ul>
           } @else {
-            <p class="dash-m__channels-empty">Sin ventas en este período.</p>
+            <div class="m-row dash-m__empty-row">
+              <span class="m-row__text">
+                <b>Sin ventas en este período</b>
+              </span>
+            </div>
           }
           <a
             class="dash-m__channels-link"

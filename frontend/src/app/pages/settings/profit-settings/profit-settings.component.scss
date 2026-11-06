@@ -1,5 +1,6 @@
 @use '../../../shared/styles/variables' as *;
 @use '../../../shared/styles/screen' as screen;
+@use '../../../shared/styles/mobile' as mobile;
 @use '../settings-mobile' as st;
 
 @include st.settings-mobile;
@@ -251,4 +252,22 @@ db-data-table {
   display: flex;
   justify-content: flex-end;
   margin-top: 1rem;
+}
+
+@include mobile.mobile-only {
+  .profit-m__margin-row,
+  .profit-m__discount-row {
+    align-items: center;
+  }
+
+  .profit-m__pct {
+    flex: none;
+    width: 96px;
+  }
+
+  .profit-m__discount-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: mobile.$m-text;
+  }
 }

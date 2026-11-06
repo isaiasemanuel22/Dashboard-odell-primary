@@ -266,11 +266,23 @@ export class CalendarComponent implements OnInit {
   selectMobileDay(date: string): void {
     this.mobileSelectedDay = date;
     this.cursorMonth = startOfMonth(date);
-    if (this.mobileView === 'month') {
-      this.mobileView = 'agenda';
-    }
     this.rebuildViews();
     this.cdr.markForCheck();
+  }
+
+  get mobileSelectedDayItems(): CalendarFeedItem[] {
+    const day = this.mobileAgendaDays.find(
+      (entry) => entry.date === this.mobileSelectedDay,
+    );
+    if (day) return day.items;
+    const cell = this.mobileMonthCells.find(
+      (entry) => entry.date === this.mobileSelectedDay,
+    );
+    return cell?.items ?? [];
+  }
+
+  get mobileSelectedDayHeader(): string {
+    return this.mobileDayHeader(this.mobileSelectedDay, todayYmd());
   }
 
   itemBarColor(item: CalendarFeedItem): string {

@@ -15,22 +15,29 @@
         <h2 class="m-sec-t">Margen sobre el costo</h2>
         <div class="m-card m-card--flush">
           @for (field of marginFields; track field.service) {
-            <div class="m-row">
+            <div class="m-row profit-m__margin-row">
               <div class="m-row__text">
                 <b>{{ field.label }}</b>
                 <span>{{ mobileMarginHint(field.service) }}</span>
               </div>
-              <input
-                class="st-m__inp st-m__inp--pct"
-                type="number"
-                inputmode="numeric"
-                min="0"
-                max="999"
-                [ngModel]="marginValue(field.service)"
-                (ngModelChange)="setMargin(field.service, $event)"
-                [name]="'m-margin-' + field.service"
-                [attr.aria-label]="'Margen de ' + field.label"
-              />
+              <db-mobile-field-group
+                class="profit-m__pct"
+                [labelFor]="'m-margin-' + field.service"
+                suffix="%"
+              >
+                <input
+                  [id]="'m-margin-' + field.service"
+                  class="st-m__inp st-m__inp--pct"
+                  type="number"
+                  inputmode="numeric"
+                  min="0"
+                  max="999"
+                  [ngModel]="marginValue(field.service)"
+                  (ngModelChange)="setMargin(field.service, $event)"
+                  [name]="'m-margin-' + field.service"
+                  [attr.aria-label]="'Margen de ' + field.label"
+                />
+              </db-mobile-field-group>
             </div>
           }
         </div>
@@ -44,19 +51,26 @@
             ariaLabel="Descuento por mayor activo"
             (toggled)="setWholesaleEnabled($event)"
           />
-          <div class="m-ln">
-            <span>Descuento sobre la lista</span>
-            <input
-              class="st-m__inp st-m__inp--pct"
-              type="number"
-              inputmode="numeric"
-              min="0"
-              max="99"
-              [ngModel]="wholesale.percent"
-              (ngModelChange)="setWholesalePercent($event)"
-              name="mWholesalePercent"
-              aria-label="Descuento por mayor"
-            />
+          <div class="m-ln profit-m__discount-row">
+            <span class="profit-m__discount-label">Descuento sobre la lista</span>
+            <db-mobile-field-group
+              class="profit-m__pct"
+              labelFor="mWholesalePercent"
+              suffix="%"
+            >
+              <input
+                id="mWholesalePercent"
+                class="st-m__inp st-m__inp--pct"
+                type="number"
+                inputmode="numeric"
+                min="0"
+                max="99"
+                [ngModel]="wholesale.percent"
+                (ngModelChange)="setWholesalePercent($event)"
+                name="mWholesalePercent"
+                aria-label="Descuento por mayor"
+              />
+            </db-mobile-field-group>
           </div>
           <div class="st-m__field">
             <span class="st-m__fl">Se aplica a</span>

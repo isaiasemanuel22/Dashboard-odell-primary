@@ -1,4 +1,5 @@
 @use 'variables' as *;
+@use 'mobile' as mobile;
 
 .db-button {
   display: inline-flex;
@@ -91,6 +92,15 @@
 
   &:hover:not(:disabled) {
     opacity: 0.9;
+  }
+
+  @include mobile.mobile-only {
+    background: mobile.$m-primary;
+
+    &:hover:not(:disabled) {
+      background: mobile.$m-primary-dark;
+      opacity: 1;
+    }
   }
 }
 

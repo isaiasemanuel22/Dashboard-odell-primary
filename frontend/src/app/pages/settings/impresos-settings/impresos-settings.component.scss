@@ -1,8 +1,22 @@
 @use '../../../shared/styles/variables' as *;
 @use '../../../shared/styles/screen' as screen;
+@use '../../../shared/styles/mobile' as mobile;
 @use '../settings-mobile' as st;
 
 @include st.settings-mobile;
+
+@include mobile.mobile-only {
+  .impresos-m__sheet {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px 0;
+
+    & + & {
+      border-top: 1px solid mobile.$m-border;
+    }
+  }
+}
 
 .impresos-page {
   display: flex;

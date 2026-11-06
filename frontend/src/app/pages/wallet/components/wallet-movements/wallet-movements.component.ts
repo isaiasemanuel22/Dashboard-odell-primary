@@ -221,7 +221,18 @@ export class WalletMovementsComponent implements OnChanges, OnDestroy {
     return movement.detail?.trim() || null;
   }
 
+  mobileTitle(movement: TreasuryMovement): string {
+    if (this.isTransfer(movement)) {
+      const route = movement.detail?.trim() || 'Transferencia';
+      return `${route} · Entre cuentas`;
+    }
+    return movement.concept;
+  }
+
   mobileDetail(movement: TreasuryMovement): string {
+    if (this.isTransfer(movement)) {
+      return movement.voided ? this.voidMeta(movement) : '';
+    }
     const parts = [
       this.accountLabel(movement.account),
       this.methodLabel(movement),
@@ -304,7 +315,7 @@ export class WalletMovementsComponent implements OnChanges, OnDestroy {
 
   private mobileFilteredMovements(): TreasuryMovement[] {
     const query = this.mobileSearch.trim().toLocaleLowerCase('es');
-    return this.sortedMovements.filter((movement) => {
+    const filtered = this.sortedMovements.filter((movement) => {
       if (this.mobileAccountFilter !== 'all') {
         const account = movement.account ?? TreasuryAccount.CAJA;
         if (account !== this.mobileAccountFilter) return false;
@@ -312,6 +323,42 @@ export class WalletMovementsComponent implements OnChanges, OnDestroy {
       if (!query) return true;
       return this.searchText(movement).toLocaleLowerCase('es').includes(query);
     });
+    return this.collapseTransferPairs(filtered);
+  }
+
+  /**
+   * Una transferencia genera 2 movimientos (una punta por cuenta).
+   * En mobile se muestran como una sola fila emparejada por referenceId del registro.
+   */
+  private collapseTransferPairs(
+    movements: TreasuryMovement[],
+  ): TreasuryMovement[] {
+    const seenRefs = new Set<string>();
+    const result: TreasuryMovement[] = [];
+
+    for (const movement of movements) {
+      if (!this.isTransfer(movement)) {
+        result.push(movement);
+        continue;
+      }
+      const ref = this.expenseFor(movement)?.referenceId;
+      if (!ref) {
+        result.push(movement);
+        continue;
+      }
+      if (seenRefs.has(ref)) continue;
+      seenRefs.add(ref);
+
+      const pair = movements.filter((item) => {
+        if (!this.isTransfer(item)) return false;
+        return this.expenseFor(item)?.referenceId === ref;
+      });
+      const preferred =
+        pair.find((item) => item.amount < 0) ?? pair[0] ?? movement;
+      result.push(preferred);
+    }
+
+    return result;
   }
 
   private isTransfer(movement: TreasuryMovement): boolean {

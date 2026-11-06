@@ -410,6 +410,10 @@ export class DashboardComponent implements OnInit {
   }
 
   productionHint(stats: DashboardStats): string {
+    const orders =
+      stats.inProductionOrders === 1
+        ? '1 pedido'
+        : `${stats.inProductionOrders} pedidos`;
     const printing =
       stats.activePrintJobs === 1
         ? '1 imprimiendo'
@@ -418,7 +422,24 @@ export class DashboardComponent implements OnInit {
       stats.queuedPrintJobs === 1
         ? '1 en cola'
         : `${stats.queuedPrintJobs} en cola`;
-    return `${printing} · ${queued}`;
+    return `${orders} · ${printing} · ${queued}`;
+  }
+
+  /** Lista de ids coherente con el total («ord-10, ord-11 y 1 más»). */
+  private formatIdList(ids: string[], total: number): string {
+    const unique = [...new Set(ids.filter(Boolean))];
+    if (!unique.length) return '';
+    const shown = unique.slice(0, 2);
+    const rest = Math.max(total, unique.length) - shown.length;
+    if (rest > 0) return `${shown.join(', ')} y ${rest} más`;
+    if (shown.length === 1) return shown[0];
+    return shown.join(' y ');
+  }
+
+  capitalizeAttention(text: string): string {
+    const value = text.trim();
+    if (!value) return value;
+    return value.charAt(0).toLocaleUpperCase('es') + value.slice(1);
   }
 
   lowStockHint(count: number): string {
@@ -467,14 +488,10 @@ export class DashboardComponent implements OnInit {
       const overdueNotes = stats.notifications.filter(
         (note) => note.kind === 'order' && /atrasado/i.test(note.title),
       );
-      const detail = overdueNotes
-        .slice(0, 2)
-        .map((note) => {
-          const match = note.title.match(/Pedido\s+(\S+)/i);
-          const id = match?.[1] ?? note.title;
-          return id;
-        })
-        .join(' y ');
+      const ids = overdueNotes.map((note) => {
+        const match = note.title.match(/Pedido\s+(\S+)/i);
+        return match?.[1] ?? note.title;
+      });
       items.push({
         id: 'overdue',
         tone: 'danger',
@@ -482,7 +499,7 @@ export class DashboardComponent implements OnInit {
           stats.overdueOrders === 1
             ? '1 pedido atrasado'
             : `${stats.overdueOrders} pedidos atrasados`,
-        detail,
+        detail: this.formatIdList(ids, stats.overdueOrders),
         actionLabel: 'Ver pedidos',
         route: '/pedidos',
         queryParams: { filtro: 'atrasados' },
@@ -509,25 +526,23 @@ export class DashboardComponent implements OnInit {
 
     const lowStockItems = stats.lowStockItems ?? [];
     if (lowStockItems.length > 0) {
-      const first = lowStockItems[0];
+      const count = lowStockItems.length;
       items.push({
         id: 'stock',
         tone: 'warn',
-        title: `Pedí ${this.lowStockNamesLabel(lowStockItems)}`,
-        detail: this.formatLowStockRemaining(first),
+        title: count === 1 ? 'Reponer 1 insumo' : `Reponer ${count} insumos`,
+        detail: this.lowStockNamesLabel(lowStockItems),
         actionLabel: 'Ver insumos',
         route: '/insumos',
         queryParams: { filtro: 'stock_bajo' },
       });
     } else if (stats.lowStockMaterials > 0) {
+      const count = stats.lowStockMaterials;
       items.push({
         id: 'stock',
         tone: 'warn',
-        title:
-          stats.lowStockMaterials === 1
-            ? '1 insumo con stock bajo'
-            : `${stats.lowStockMaterials} insumos con stock bajo`,
-        detail: this.lowStockHint(stats.lowStockMaterials),
+        title: count === 1 ? 'Reponer 1 insumo' : `Reponer ${count} insumos`,
+        detail: this.lowStockHint(count),
         actionLabel: 'Ver insumos',
         route: '/insumos',
         queryParams: { filtro: 'stock_bajo' },

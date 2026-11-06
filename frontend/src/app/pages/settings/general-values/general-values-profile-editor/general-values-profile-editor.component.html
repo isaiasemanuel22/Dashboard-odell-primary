@@ -1,8 +1,10 @@
-<article class="profile-editor">
-  <header>
-    <h4>Editar equipo · {{ profile.name.trim() || 'Nuevo equipo' }}</h4>
-    <span>Se abre desde ··· Editar</span>
-  </header>
+<article class="profile-editor" [class.profile-editor--sheet]="sheetMode">
+  @if (!sheetMode) {
+    <header>
+      <h4>Editar equipo · {{ profile.name.trim() || 'Nuevo equipo' }}</h4>
+      <span>Se abre desde ··· Editar</span>
+    </header>
+  }
   <db-form-grid>
     <db-input
       label="Equipo"
@@ -69,14 +71,25 @@
     <p class="field-hint">Si queda en 0 o vacío, se usan 10</p>
   }
 
-  <div class="editor-actions">
-    <button type="button" class="editor-cancel" (click)="cancelEdit.emit()">Cancelar</button>
-    <db-button
-      [label]="saving ? 'Guardando...' : 'Guardar equipo'"
-      variant="primary"
-      format="solid"
-      [disabled]="saving"
-      (clicked)="save.emit()"
-    />
-  </div>
+  @if (sheetMode) {
+    <div class="editor-actions editor-actions--sheet">
+      <db-button
+        label="Quitar equipo"
+        variant="delete"
+        format="soft"
+        (clicked)="remove.emit()"
+      />
+    </div>
+  } @else {
+    <div class="editor-actions">
+      <button type="button" class="editor-cancel" (click)="cancelEdit.emit()">Cancelar</button>
+      <db-button
+        [label]="saving ? 'Guardando...' : 'Guardar equipo'"
+        variant="primary"
+        format="solid"
+        [disabled]="saving"
+        (clicked)="save.emit()"
+      />
+    </div>
+  }
 </article>

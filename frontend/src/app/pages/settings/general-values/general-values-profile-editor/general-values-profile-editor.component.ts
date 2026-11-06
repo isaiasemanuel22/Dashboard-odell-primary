@@ -29,9 +29,12 @@ export class GeneralValuesProfileEditorComponent {
   @Input() productTypeOptions: DbSelectOption[] = [];
   @Input() supplyOptions: DbSelectOption[] = [];
   @Input() saving = false;
+  /** En hoja mobile: sin tip «Se abre desde…» y con «Quitar equipo». */
+  @Input() sheetMode = false;
 
   @Output() cancelEdit = new EventEmitter<void>();
   @Output() save = new EventEmitter<void>();
+  @Output() remove = new EventEmitter<void>();
 
   get isWash(): boolean {
     return this.profile.role === MachineProfileRole.WASH;

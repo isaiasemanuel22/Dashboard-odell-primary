@@ -88,18 +88,18 @@ export class MoreComponent implements OnInit {
   readonly roleLabel = computed(() => {
     const roles = this.profile()?.roles ?? [];
     if (roles.length === 0) return '';
+    const isAdmin = roles.some((role) =>
+      /admin/i.test(role.name ?? ''),
+    );
+    if (isAdmin) return 'Administrador';
     return roles.map((role) => role.name).filter(Boolean).join(', ');
   });
 
   readonly secondaryLine = computed(() => {
     const role = this.roleLabel();
     const email = this.email();
-    if (this.hasDisplayName()) {
-      if (role && email) return `${role} · ${email}`;
-      return role || email;
-    }
-    // Sin nombre: el email ya está en negrita; no lo repetimos.
-    return role;
+    if (role && email) return `${role} · ${email}`;
+    return role || email;
   });
 
   readonly initials = computed(() => {

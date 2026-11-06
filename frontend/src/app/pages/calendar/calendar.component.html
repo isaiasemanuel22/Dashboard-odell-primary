@@ -210,6 +210,30 @@
         }
       </div>
     </div>
+    <div class="cal-m__body cal-m__body--month-day">
+      <div class="cal-m__dh">{{ mobileSelectedDayHeader }}</div>
+      @for (item of mobileSelectedDayItems; track item.id) {
+        <button
+          type="button"
+          class="cal-m__ev"
+          (click)="onItemClick(item)"
+        >
+          @if (itemTimeLabel(item); as time) {
+            <span class="cal-m__time">{{ time }}</span>
+          }
+          <span
+            class="cal-m__bar"
+            [style.background]="itemBarColor(item)"
+          ></span>
+          <div class="cal-m__t">
+            <b [class.cal-m__late]="item.late">{{ item.title }}</b>
+            <span>{{ item.subtitle || itemTypeLabel(item) }}</span>
+          </div>
+        </button>
+      } @empty {
+        <div class="cal-m__empty">Sin entregas ni eventos</div>
+      }
+    </div>
   }
 
   <button

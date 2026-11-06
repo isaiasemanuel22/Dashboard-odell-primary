@@ -102,7 +102,7 @@
               [(ngModel)]="email"
               autocomplete="username"
               [disabled]="loading"
-              [required]="true"
+              [required]="false"
               placeholder="vos@ejemplo.com"
             />
             <db-input
@@ -112,7 +112,7 @@
               [(ngModel)]="password"
               autocomplete="current-password"
               [disabled]="loading"
-              [required]="true"
+              [required]="false"
             />
 
             @if (error) {

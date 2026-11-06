@@ -30,8 +30,7 @@
               @for (item of group.items; track item.id) {
                 <db-mobile-catalog-row
                   [title]="item.brand"
-                  subtitle="Precio por litro"
-                  [value]="item.pricePerLiter | currencyArs"
+                  [value]="(item.pricePerLiter | currencyArs) + ' / L'"
                   (pressed)="startEdit(item)"
                 />
               }
@@ -42,10 +41,17 @@
             </div>
           }
 
-          @if (editingId || showMobileCreate) {
-            <h2 class="m-sec-t">{{ editingId ? 'Editar precio' : 'Nuevo precio' }}</h2>
-            <div class="m-card">
-              @if (editingId) {
+          <db-mobile-sheet
+            [open]="!!editingId || showMobileCreate"
+            [title]="editingId ? 'Editar precio' : 'Nuevo precio'"
+            [primaryLabel]="editingId ? 'Guardar' : 'Agregar'"
+            secondaryLabel="Cancelar"
+            (closed)="cancelEdit(); showMobileCreate = false"
+            (secondary)="cancelEdit(); showMobileCreate = false"
+            (primary)="onMobileSheetPrimary()"
+          >
+            @if (editingId) {
+              <div class="st-m__two">
                 <db-mobile-field-group label="Marca" labelFor="rm-brand">
                   <input id="rm-brand" class="st-m__inp" [(ngModel)]="editForm.brand" name="mEditResinBrand" />
                 </db-mobile-field-group>
@@ -58,14 +64,12 @@
                     (optionCreated)="onResinTypeCreated($event)"
                   />
                 </db-mobile-field-group>
-                <db-mobile-field-group label="Precio / L" labelFor="rm-price" prefix="$">
-                  <input id="rm-price" class="st-m__inp" type="number" min="0" [(ngModel)]="editForm.pricePerLiter" name="mEditResinPrice" />
-                </db-mobile-field-group>
-                <div class="st-m__opts">
-                  <button type="button" class="st-m__opt" (click)="cancelEdit(); showMobileCreate = false">Cancelar</button>
-                  <button type="button" class="st-m__opt st-m__opt--on" (click)="saveEdit()">Guardar</button>
-                </div>
-              } @else {
+              </div>
+              <db-mobile-field-group label="Precio / L" labelFor="rm-price" prefix="$">
+                <input id="rm-price" class="st-m__inp" type="number" min="0" [(ngModel)]="editForm.pricePerLiter" name="mEditResinPrice" />
+              </db-mobile-field-group>
+            } @else {
+              <div class="st-m__two">
                 <db-mobile-field-group label="Marca" labelFor="rm-new-brand">
                   <input id="rm-new-brand" class="st-m__inp" [(ngModel)]="newResin.brand" name="mNewResinBrand" />
                 </db-mobile-field-group>
@@ -78,16 +82,12 @@
                     (optionCreated)="onResinTypeCreated($event)"
                   />
                 </db-mobile-field-group>
-                <db-mobile-field-group label="Precio / L" labelFor="rm-new-price" prefix="$">
-                  <input id="rm-new-price" class="st-m__inp" type="number" min="0" [(ngModel)]="newResin.pricePerLiter" name="mNewResinPrice" />
-                </db-mobile-field-group>
-                <div class="st-m__opts">
-                  <button type="button" class="st-m__opt" (click)="showMobileCreate = false">Cancelar</button>
-                  <button type="button" class="st-m__opt st-m__opt--on" (click)="addResinPrice(); showMobileCreate = false">Agregar</button>
-                </div>
-              }
-            </div>
-          }
+              </div>
+              <db-mobile-field-group label="Precio / L" labelFor="rm-new-price" prefix="$">
+                <input id="rm-new-price" class="st-m__inp" type="number" min="0" [(ngModel)]="newResin.pricePerLiter" name="mNewResinPrice" />
+              </db-mobile-field-group>
+            }
+          </db-mobile-sheet>
         }
 
         @if (mobileTab === 'tipos') {
@@ -95,7 +95,7 @@
             @for (type of settings.resinTypes; track type.id) {
               <db-mobile-catalog-row
                 [title]="type.name"
-                [subtitle]="typePriceCount(type.id) + ' precios'"
+                [subtitle]="priceCountLabel(typePriceCount(type.id))"
                 [interactive]="false"
               />
             } @empty {
@@ -113,7 +113,7 @@
             @for (brand of brandList; track brand) {
               <db-mobile-catalog-row
                 [title]="brand"
-                [subtitle]="brandPriceCount(brand) + ' precios'"
+                [subtitle]="priceCountLabel(brandPriceCount(brand))"
                 [interactive]="false"
               />
             } @empty {

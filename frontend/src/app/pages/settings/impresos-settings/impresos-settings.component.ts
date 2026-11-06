@@ -26,6 +26,7 @@ import {
   DbStateMessageComponent,
   MobileCatalogRowComponent,
   MobileSettingsPageComponent,
+  MobileFieldGroupComponent,
   DB_DATA_TABLE,
   OdlActionEvent,
   OdlColumn,
@@ -50,7 +51,9 @@ interface PaperSheetGroup {
             CurrencyArsPipe,
     ...DB_DATA_TABLE,
     MobileSettingsPageComponent,
-    MobileCatalogRowComponent,],
+    MobileCatalogRowComponent,
+    MobileFieldGroupComponent,
+  ],
   templateUrl: './impresos-settings.component.html',
   styleUrl: './impresos-settings.component.scss',
 })
@@ -238,6 +241,14 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
       item.widthCm,
       item.lengthCm && item.lengthCm > 0 ? item.lengthCm : item.heightCm,
     );
+  }
+
+  /** Vista con coma decimal rioplatense («29,7 cm»). */
+  formatCm(value: number): string {
+    const n = Number(value) || 0;
+    return `${new Intl.NumberFormat('es-AR', {
+      maximumFractionDigits: 2,
+    }).format(n)} cm`;
   }
 
   get mobileImpresoGroups(): { type: PaperType; label: string; items: ImpresoWithCost[] }[] {

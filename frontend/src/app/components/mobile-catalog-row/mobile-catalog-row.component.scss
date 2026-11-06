@@ -7,12 +7,19 @@
 .m-catalog-row {
   width: 100%;
   text-align: left;
-  font: inherit;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: inherit;
   color: inherit;
   cursor: pointer;
   background: transparent;
   border: 0;
+  border-radius: 0;
   box-sizing: border-box;
+
+  & + .m-catalog-row {
+    border-top: 1px solid mobile.$m-border;
+  }
 
   &:disabled {
     cursor: default;

@@ -47,9 +47,13 @@
     <span class="wallet-metrics-m__hero-lbl"
       >Disponible total · {{ periodLabel }}</span
     >
-    <strong class="wallet-metrics-m__hero-val">{{
-      overview.availableBalance | currencyArs
-    }}</strong>
+    <strong class="wallet-metrics-m__hero-val">
+      @if (overview.availableBalance < 0) {
+        −{{ (-overview.availableBalance) | currencyArs }}
+      } @else {
+        {{ overview.availableBalance | currencyArs }}
+      }
+    </strong>
     @if (overview.availableBalance < 0) {
       <span class="wallet-metrics-m__hero-warn">saldo negativo</span>
     }

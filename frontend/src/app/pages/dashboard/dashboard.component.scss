@@ -528,6 +528,10 @@
     text-decoration: none;
     color: inherit;
     cursor: pointer;
+
+    .m-lbl {
+      white-space: nowrap;
+    }
   }
 
   .dash-m__kpi-hint {

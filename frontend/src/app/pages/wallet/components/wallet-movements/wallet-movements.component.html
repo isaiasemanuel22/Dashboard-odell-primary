@@ -80,7 +80,7 @@
             @let kind = movementKind(movement);
             @let rowActions = visibleActions(movement);
             <db-mobile-movement-row
-              [title]="movement.concept"
+              [title]="mobileTitle(movement)"
               [detail]="mobileDetail(movement)"
               [kind]="kind"
               [icon]="movementIcon(movement)"

@@ -28,6 +28,7 @@ import {
   MobileFieldGroupComponent,
   MobileCatalogRowComponent,
   MobileSettingsPageComponent,
+  MobileSheetComponent,
   DB_DATA_TABLE,
   OdlActionEvent,
   OdlColumn,
@@ -56,7 +57,9 @@ interface ResinPriceGroup {
     ...DB_DATA_TABLE,
     MobileSettingsPageComponent,
     MobileCatalogRowComponent,
-    MobileFieldGroupComponent,],
+    MobileFieldGroupComponent,
+    MobileSheetComponent,
+  ],
   templateUrl: './resin-settings.component.html',
   styleUrl: '../material-price-settings.scss',
 })
@@ -191,6 +194,19 @@ export class ResinSettingsComponent implements OnInit, OnDestroy {
     return (this.settings?.resinPrices ?? []).filter(
       (item) => item.brand.trim() === brand,
     ).length;
+  }
+
+  priceCountLabel(count: number): string {
+    return count === 1 ? '1 precio' : `${count} precios`;
+  }
+
+  onMobileSheetPrimary(): void {
+    if (this.editingId) {
+      this.saveEdit();
+      return;
+    }
+    this.addResinPrice();
+    this.showMobileCreate = false;
   }
 
   focusCreate(): void {

@@ -17,24 +17,16 @@
         }
         <span class="st-m__hint">{{ settings.colors.length }} colores · tocá uno para editarlo. Los que usa algún insumo no se pueden borrar.</span>
 
-        @if (showMobileCreate) {
-          <div class="m-card">
-            <db-mobile-field-group label="Nombre" labelFor="m-color-name">
-              <input id="m-color-name" class="st-m__inp" [(ngModel)]="newColor.name" name="mNewColorName" />
-            </db-mobile-field-group>
-            <db-mobile-field-group label="HEX" labelFor="m-color-hex">
-              <input id="m-color-hex" class="st-m__inp" [(ngModel)]="newColor.hex" name="mNewColorHex" />
-            </db-mobile-field-group>
-            <span class="st-m__dot" [style.background-color]="previewHex"></span>
-            <div class="st-m__opts">
-              <button type="button" class="st-m__opt" (click)="showMobileCreate = false">Cancelar</button>
-              <button type="button" class="st-m__opt st-m__opt--on" (click)="addColor(); showMobileCreate = false">Agregar</button>
-            </div>
-          </div>
-        }
-
-        @if (editingId) {
-          <div class="m-card">
+        <db-mobile-sheet
+          [open]="showMobileCreate || !!editingId"
+          [title]="editingId ? 'Editar color' : 'Nuevo color'"
+          [primaryLabel]="editingId ? 'Guardar' : 'Agregar'"
+          secondaryLabel="Cancelar"
+          (closed)="cancelMobileEditor()"
+          (secondary)="cancelMobileEditor()"
+          (primary)="onMobileSheetPrimary()"
+        >
+          @if (editingId) {
             <db-mobile-field-group label="Nombre" labelFor="m-edit-color-name">
               <input id="m-edit-color-name" class="st-m__inp" [(ngModel)]="editForm.name" name="mEditColorName" />
             </db-mobile-field-group>
@@ -42,13 +34,28 @@
               <input id="m-edit-color-hex" class="st-m__inp" [(ngModel)]="editForm.hex" name="mEditColorHex" />
             </db-mobile-field-group>
             <span class="st-m__dot" [style.background-color]="editForm.hex"></span>
-            <div class="st-m__opts">
-              <button type="button" class="st-m__opt" (click)="cancelEdit()">Cancelar</button>
-              <button type="button" class="st-m__opt st-m__opt--on" (click)="saveEdit()">Guardar</button>
-              <button type="button" class="st-m__opt" (click)="deleteColor(editingId!)">Eliminar</button>
-            </div>
-          </div>
-        }
+            <button
+              type="button"
+              class="st-m__opt"
+              [disabled]="colorInUseCount(editingId) > 0"
+              [attr.aria-disabled]="colorInUseCount(editingId) > 0"
+              (click)="deleteColor(editingId!)"
+            >
+              Eliminar
+            </button>
+            @if (colorInUseCount(editingId) > 0) {
+              <span class="st-m__hint">{{ colorInUseHint(editingId) }}</span>
+            }
+          } @else {
+            <db-mobile-field-group label="Nombre" labelFor="m-color-name">
+              <input id="m-color-name" class="st-m__inp" [(ngModel)]="newColor.name" name="mNewColorName" />
+            </db-mobile-field-group>
+            <db-mobile-field-group label="HEX" labelFor="m-color-hex">
+              <input id="m-color-hex" class="st-m__inp" [(ngModel)]="newColor.hex" name="mNewColorHex" />
+            </db-mobile-field-group>
+            <span class="st-m__dot" [style.background-color]="previewHex"></span>
+          }
+        </db-mobile-sheet>
 
         <div class="st-m__colors">
           @for (item of visibleColors; track item.id) {

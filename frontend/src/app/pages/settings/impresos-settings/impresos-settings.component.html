@@ -14,38 +14,64 @@
         <span class="st-m__hint">Papeles y films para estampado. El costo por cm² sale del precio de la hoja o del rollo.</span>
 
         <h2 class="m-sec-t">Pliegos de referencia</h2>
+        <span class="st-m__hint">Tamaño y precio del pliego que comprás; el costo de cada impreso sale de acá.</span>
         <div class="m-card">
           @for (group of paperSheetGroups; track group.key) {
-            <div class="st-m__field">
-              <span class="st-m__fl">{{ group.label }} · {{ pricePerSqm(group.key) | currencyArs }} / m²</span>
-              <div class="st-m__two">
-                <input
-                  class="st-m__inp"
-                  type="number"
-                  min="0.1"
-                  step="0.1"
-                  [(ngModel)]="settings.paperReferenceSheets[group.key].widthCm"
-                  [name]="'m-sheet-w-' + group.key"
-                  [attr.aria-label]="'Ancho cm ' + group.label"
-                />
-                <input
-                  class="st-m__inp"
-                  type="number"
-                  min="0.1"
-                  step="0.1"
-                  [(ngModel)]="settings.paperReferenceSheets[group.key].lengthCm"
-                  [name]="'m-sheet-l-' + group.key"
-                  [attr.aria-label]="'Alto cm ' + group.label"
-                />
+            <div class="impresos-m__sheet">
+              <div class="m-ln">
+                <b>{{ group.label }}</b>
+                <span class="st-m__hint">{{ pricePerSqm(group.key) | currencyArs }} / m²</span>
               </div>
-              <input
-                class="st-m__inp"
-                type="number"
-                min="0"
-                [(ngModel)]="settings.paperReferenceSheets[group.key].price"
-                [name]="'m-sheet-p-' + group.key"
-                [attr.aria-label]="'Precio pliego ' + group.label"
-              />
+              <span class="st-m__hint">
+                {{ formatCm(settings.paperReferenceSheets[group.key].widthCm) }} ×
+                {{ formatCm(settings.paperReferenceSheets[group.key].lengthCm) }}
+              </span>
+              <div class="st-m__two">
+                <db-mobile-field-group
+                  label="Ancho"
+                  [labelFor]="'m-sheet-w-' + group.key"
+                  suffix="cm"
+                >
+                  <input
+                    [id]="'m-sheet-w-' + group.key"
+                    class="st-m__inp"
+                    type="number"
+                    min="0.1"
+                    step="0.1"
+                    [(ngModel)]="settings.paperReferenceSheets[group.key].widthCm"
+                    [name]="'m-sheet-w-' + group.key"
+                  />
+                </db-mobile-field-group>
+                <db-mobile-field-group
+                  label="Alto"
+                  [labelFor]="'m-sheet-l-' + group.key"
+                  suffix="cm"
+                >
+                  <input
+                    [id]="'m-sheet-l-' + group.key"
+                    class="st-m__inp"
+                    type="number"
+                    min="0.1"
+                    step="0.1"
+                    [(ngModel)]="settings.paperReferenceSheets[group.key].lengthCm"
+                    [name]="'m-sheet-l-' + group.key"
+                  />
+                </db-mobile-field-group>
+              </div>
+              <db-mobile-field-group
+                label="Costo del pliego"
+                [labelFor]="'m-sheet-p-' + group.key"
+                prefix="$"
+              >
+                <input
+                  [id]="'m-sheet-p-' + group.key"
+                  class="st-m__inp"
+                  type="number"
+                  min="0"
+                  [(ngModel)]="settings.paperReferenceSheets[group.key].price"
+                  [name]="'m-sheet-p-' + group.key"
+                />
+              </db-mobile-field-group>
             </div>
           }
         </div>

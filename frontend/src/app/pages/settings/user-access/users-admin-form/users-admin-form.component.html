@@ -2,41 +2,110 @@
   <div class="error-banner">{{ error }}</div>
 }
 
-<div class="form-grid">
-  <db-input label="Nombre" name="userName" [(ngModel)]="form.displayName" />
-  <db-input label="Email" type="email" name="userEmail" [(ngModel)]="form.email" />
-  <db-input
-    label="Firebase UID (opcional)"
-    name="userFirebase"
-    [(ngModel)]="form.firebaseUid"
-  />
-  <db-checkbox label="Usuario activo" name="userActive" [(ngModel)]="form.active" />
-  <div class="form-field">
-    <label>Roles</label>
-    @for (role of roles; track role.id) {
-      <db-checkbox
-        [label]="role.name"
-        [name]="'role-' + role.id"
-        [ngModel]="form.roleIds.includes(role.id)"
-        (ngModelChange)="roleToggle.emit({ roleId: role.id, checked: $event })"
+@if (isMobile()) {
+  <div class="users-m-form">
+    <db-mobile-field-group label="Nombre" labelFor="m-user-name">
+      <input
+        id="m-user-name"
+        class="st-m__inp"
+        name="userName"
+        [(ngModel)]="form.displayName"
       />
-    }
-  </div>
-</div>
+    </db-mobile-field-group>
+    <db-mobile-field-group label="Email" labelFor="m-user-email">
+      <input
+        id="m-user-email"
+        class="st-m__inp"
+        type="email"
+        name="userEmail"
+        [(ngModel)]="form.email"
+      />
+    </db-mobile-field-group>
 
-<div class="form-actions">
-  <db-button
-    label="Cancelar"
-    variant="secondary"
-    format="soft"
-    [disabled]="saving"
-    (clicked)="cancelEdit.emit()"
-  />
-  <db-button
-    [label]="saving ? 'Guardando…' : 'Guardar'"
-    variant="primary"
-    format="solid"
-    [disabled]="saving"
-    (clicked)="save.emit()"
-  />
-</div>
+    <db-mobile-toggle-row
+      label="Puede entrar a la app"
+      [checked]="form.active"
+      ariaLabel="Puede entrar a la app"
+      (toggled)="form.active = $event"
+    />
+
+    <div class="m-field">
+      <span class="m-fl">Rol</span>
+      <db-mobile-chip-group
+        [options]="roleChipOptions"
+        [multiple]="true"
+        [values]="form.roleIds"
+        ariaLabel="Roles"
+        (valuesChange)="onRoleChipsChange($event)"
+      />
+    </div>
+
+    <details class="users-m-form__advanced">
+      <summary>Avanzado</summary>
+      <db-mobile-field-group label="Firebase UID" labelFor="m-user-firebase">
+        <input
+          id="m-user-firebase"
+          class="st-m__inp"
+          name="userFirebase"
+          [(ngModel)]="form.firebaseUid"
+        />
+      </db-mobile-field-group>
+    </details>
+
+    <div class="form-actions">
+      <db-button
+        label="Cancelar"
+        variant="secondary"
+        format="soft"
+        [disabled]="saving"
+        (clicked)="cancelEdit.emit()"
+      />
+      <db-button
+        [label]="saving ? 'Guardando…' : 'Guardar cambios'"
+        variant="primary"
+        format="solid"
+        [disabled]="saving"
+        (clicked)="save.emit()"
+      />
+    </div>
+  </div>
+} @else {
+  <div class="form-grid">
+    <db-input label="Nombre" name="userName" [(ngModel)]="form.displayName" />
+    <db-input label="Email" type="email" name="userEmail" [(ngModel)]="form.email" />
+    <db-input
+      label="Firebase UID (opcional)"
+      name="userFirebase"
+      [(ngModel)]="form.firebaseUid"
+    />
+    <db-checkbox label="Usuario activo" name="userActive" [(ngModel)]="form.active" />
+    <div class="form-field">
+      <label>Roles</label>
+      @for (role of roles; track role.id) {
+        <db-checkbox
+          [label]="role.name"
+          [name]="'role-' + role.id"
+          [ngModel]="form.roleIds.includes(role.id)"
+          (ngModelChange)="roleToggle.emit({ roleId: role.id, checked: $event })"
+        />
+      }
+    </div>
+  </div>
+
+  <div class="form-actions">
+    <db-button
+      label="Cancelar"
+      variant="secondary"
+      format="soft"
+      [disabled]="saving"
+      (clicked)="cancelEdit.emit()"
+    />
+    <db-button
+      [label]="saving ? 'Guardando…' : 'Guardar'"
+      variant="primary"
+      format="solid"
+      [disabled]="saving"
+      (clicked)="save.emit()"
+    />
+  </div>
+}

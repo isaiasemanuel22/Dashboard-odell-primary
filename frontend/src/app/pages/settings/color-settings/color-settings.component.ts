@@ -19,7 +19,9 @@ import {
   DbStateMessageComponent,
   MobileFieldGroupComponent,
   MobileSettingsPageComponent,
+  MobileSheetComponent,
 } from '@general-components';
+import { FormDialogService } from '../../../modals/form-dialog.service';
 
 type ColorFamily =
   | 'all'
@@ -41,7 +43,9 @@ type ColorFamily =
     DbRowMenuComponent,
     DbStateMessageComponent,
     MobileSettingsPageComponent,
-    MobileFieldGroupComponent,],
+    MobileFieldGroupComponent,
+    MobileSheetComponent,
+  ],
   templateUrl: './color-settings.component.html',
   styleUrl: './color-settings.component.scss',
 })
@@ -49,6 +53,7 @@ export class ColorSettingsComponent implements OnInit, OnDestroy {
   private readonly settingsService = inject(SettingsService);
   private readonly suppliesService = inject(SuppliesService);
   private readonly breakpoint = inject(BreakpointService);
+  private readonly formDialogs = inject(FormDialogService);
   private readonly destroyRef = inject(DestroyRef);
   private settingsSub?: Subscription;
 
@@ -120,12 +125,36 @@ export class ColorSettingsComponent implements OnInit, OnDestroy {
   }
 
   colorMeta(item: ColorConfig): string {
-    const count = this.supplies.filter((supply) => supply.colorId === item.id).length;
+    const count = this.colorInUseCount(item.id);
     if (count > 0) {
       const noun = count === 1 ? 'insumo' : 'insumos';
       return `${item.hex} · ${count} ${noun}`;
     }
     return item.hex;
+  }
+
+  colorInUseCount(colorId: string): number {
+    return this.supplies.filter((supply) => supply.colorId === colorId).length;
+  }
+
+  colorInUseHint(colorId: string): string {
+    const count = this.colorInUseCount(colorId);
+    const noun = count === 1 ? 'insumo' : 'insumos';
+    return `En uso por ${count} ${noun}`;
+  }
+
+  cancelMobileEditor(): void {
+    this.cancelEdit();
+    this.showMobileCreate = false;
+  }
+
+  onMobileSheetPrimary(): void {
+    if (this.editingId) {
+      this.saveEdit();
+      return;
+    }
+    this.addColor();
+    this.showMobileCreate = false;
   }
 
   toggleMenu(id: string): void {
@@ -168,16 +197,37 @@ export class ColorSettingsComponent implements OnInit, OnDestroy {
 
   deleteColor(id: string): void {
     this.openMenuId = null;
+    if (this.colorInUseCount(id) > 0) return;
+
+    const runDelete = () => {
+      this.settingsService.deleteColor(id).subscribe({
+        next: () => {
+          this.message = 'Color eliminado.';
+          this.cancelMobileEditor();
+        },
+        error: () => {
+          this.message =
+            'No se pudo eliminar: el color está asignado a uno o más insumos.';
+        },
+      });
+    };
+
+    if (this.isMobile()) {
+      this.formDialogs
+        .openConfirm({
+          title: 'Eliminar color',
+          message: '¿Eliminar este color del catálogo?',
+          confirmLabel: 'Eliminar',
+          confirmVariant: 'delete',
+        })
+        .subscribe((ok) => {
+          if (ok) runDelete();
+        });
+      return;
+    }
+
     if (!confirm('¿Eliminar este color del catálogo?')) return;
-    this.settingsService.deleteColor(id).subscribe({
-      next: () => {
-        this.message = 'Color eliminado.';
-      },
-      error: () => {
-        this.message =
-          'No se pudo eliminar: el color está asignado a uno o más insumos.';
-      },
-    });
+    runDelete();
   }
 
   private comparePaletteOrder(a: ColorConfig, b: ColorConfig): number {
