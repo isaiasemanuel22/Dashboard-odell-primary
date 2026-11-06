@@ -56,6 +56,10 @@ import {
   TREASURY_ACCOUNT_LABELS,
 } from '../../../shared/utils/v1-labels.util';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
+import {
+  MobileDockAction,
+  MobileDockComponent,
+} from '../../../components/mobile-dock/mobile-dock.component';
 
 let cartLineKey = 0;
 
@@ -77,6 +81,7 @@ let cartLineKey = 0;
     DbSegmentedControlComponent,
     SaleFormCartComponent,
     CurrencyArsPipe,
+    MobileDockComponent,
   ],
   templateUrl: './sale-form.component.html',
   styleUrl: './sale-form.component.scss',
@@ -244,6 +249,23 @@ export class SaleFormComponent implements OnChanges {
     if (this.loading) return 'Guardando...';
     if (this.isEditing) return 'Guardar cambios';
     return `Cobrar ${this.formatPrice(this.cartTotal)}`;
+  }
+
+  get mobileDockActions(): MobileDockAction[] {
+    return [
+      {
+        id: 'close',
+        label: this.mobilePrimaryLabel,
+        kind: 'primary',
+        disabled: !this.canCloseSale,
+      },
+    ];
+  }
+
+  onMobileDockAction(id: string): void {
+    if (id === 'close') {
+      this.closeSale();
+    }
   }
 
   ngOnChanges(changes: SimpleChanges): void {

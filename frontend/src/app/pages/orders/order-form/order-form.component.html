@@ -388,20 +388,18 @@
     }
 
     @if (isQuoteForm) {
-      <db-form-footer class="quote-form__footer">
-        <p class="quote-form__note desktop-only">
+      <db-form-footer class="quote-form__footer desktop-only">
+        <p class="quote-form__note">
           Se guarda como Borrador · al aceptarlo se convierte en pedido
         </p>
         <div class="quote-form__actions" data-discard-safe>
           <db-button
-            class="desktop-only"
             label="Cancelar"
             variant="secondary"
             format="solid"
             (clicked)="cancel.emit()"
           />
           <db-button
-            class="desktop-only"
             label="Guardar borrador"
             variant="secondary"
             format="solid"
@@ -409,70 +407,66 @@
             (clicked)="onSubmit(true)"
           />
           <db-button
-            class="desktop-only"
             [label]="submitLabel"
             variant="primary"
             format="solid"
             buttonType="submit"
             [disabled]="loading || !canSubmit(false)"
           />
-          <db-button
-            class="mobile-only order-form__dock-submit"
-            [label]="submitLabelMobile"
-            variant="primary"
-            format="solid"
-            buttonType="submit"
-            [disabled]="loading || !canSubmit(false)"
-          />
         </div>
-        @if (!canSubmit(false) && submitMissingLabel) {
-          <p class="order-form__missing mobile-only" role="status">{{ submitMissingLabel }}</p>
-        } @else if (quoteNeedsCustomerHint) {
-          <p class="quote-form__warning desktop-only">{{ quoteNeedsCustomerHint }}</p>
+        @if (quoteNeedsCustomerHint) {
+          <p class="quote-form__warning">{{ quoteNeedsCustomerHint }}</p>
         }
       </db-form-footer>
+      <db-mobile-dock
+        [actions]="mobileDockActions"
+        (action)="onMobileDockAction($event)"
+      >
+        @if (!canSubmit(false) && submitMissingLabel) {
+          <p dockHint class="order-form__missing" role="status">
+            {{ submitMissingLabel }}
+          </p>
+        }
+      </db-mobile-dock>
     } @else {
-      <db-form-footer class="order-form__footer">
+      <db-form-footer class="order-form__footer desktop-only">
         @if (!isEditing) {
-          <p class="order-form__note desktop-only">
+          <p class="order-form__note">
             Se crea en estado Pendiente · la seña queda vinculada al pedido
           </p>
         } @else {
-          <span class="order-form__note-spacer desktop-only"></span>
+          <span class="order-form__note-spacer"></span>
         }
         <div class="order-form__actions" data-discard-safe>
           <db-button
-            class="desktop-only"
             label="Cancelar"
             variant="secondary"
             format="solid"
             (clicked)="cancel.emit()"
           />
           <db-button
-            class="desktop-only"
             [label]="submitLabel"
             variant="primary"
             format="solid"
             buttonType="submit"
             [disabled]="loading || !canSubmit()"
           />
-          <db-button
-            class="mobile-only order-form__dock-submit"
-            [label]="submitLabelMobile"
-            variant="primary"
-            format="solid"
-            buttonType="submit"
-            [disabled]="loading || !canSubmit()"
-          />
         </div>
+      </db-form-footer>
+      <db-mobile-dock
+        [actions]="mobileDockActions"
+        (action)="onMobileDockAction($event)"
+      >
         @if (!canSubmit() && submitMissingLabel) {
-          <p class="order-form__missing mobile-only" role="status">{{ submitMissingLabel }}</p>
+          <p dockHint class="order-form__missing" role="status">
+            {{ submitMissingLabel }}
+          </p>
         } @else if (!isEditing) {
-          <p class="order-form__note order-form__note--dock mobile-only">
+          <p dockHint class="order-form__note order-form__note--dock">
             Se crea en estado Pendiente · la seña queda vinculada al pedido
           </p>
         }
-      </db-form-footer>
+      </db-mobile-dock>
     }
   </form>
 </db-form>

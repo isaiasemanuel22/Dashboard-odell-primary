@@ -1,13 +1,13 @@
 @if (settings) {
   @if (isMobile()) {
-    <div class="st-m st-m--dock">
+    <div class="st-m">
       <db-mobile-bar title="Impresos" backLink="/ajustes">
         <button type="button" class="m-ib" aria-label="Agregar impreso" (click)="openCreate()">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
         </button>
       </db-mobile-bar>
 
-      <div class="m-body">
+      <div class="m-body m-has-dock">
         @if (message) {
           <p class="st-m__msg">{{ message }}</p>
         }
@@ -76,16 +76,10 @@
         }
       </div>
 
-      <div class="st-m__dock">
-        <button
-          type="button"
-          class="st-m__dock-btn"
-          [disabled]="savingPaper"
-          (click)="savePaperPrices()"
-        >
-          {{ savingPaper ? 'Guardando…' : 'Guardar pliegos' }}
-        </button>
-      </div>
+      <db-mobile-dock
+        [actions]="mobileDockActions"
+        (action)="onMobileDockAction($event)"
+      />
     </div>
   } @else {
     <div class="impresos-page">

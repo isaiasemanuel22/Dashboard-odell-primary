@@ -26,7 +26,7 @@
 }
 
 @if (!loading && quote && !notFound) {
-  <div class="mobile-only qd-m" [class.qd-m--dock]="showMobileDock">
+  <div class="mobile-only qd-m">
     <db-mobile-bar [title]="quote.id" backLink="/presupuestos">
       <button
         type="button"
@@ -49,7 +49,7 @@
       </button>
     </db-mobile-bar>
 
-    <div class="m-body qd-m__body">
+    <div class="m-body qd-m__body" [class.m-has-dock]="showMobileDock">
       <section class="m-card" aria-label="Resumen del presupuesto">
         <div class="m-ln">
           <span [class]="statusPillClass">{{ quote.status | quoteStatusLabel }}</span>
@@ -160,32 +160,10 @@
     </div>
 
     @if (showMobileDock) {
-      <div class="qd-m__dock">
-        <button
-          type="button"
-          class="qd-m__dock-btn qd-m__dock-btn--sec"
-          (click)="generateDocument()"
-        >
-          Exportar PDF
-        </button>
-        @if (quote.orderId) {
-          <a
-            class="qd-m__dock-btn qd-m__dock-btn--pri"
-            [routerLink]="['/pedidos', quote.orderId]"
-          >
-            Ver pedido
-          </a>
-        } @else if (showMobileAccept) {
-          <button
-            type="button"
-            class="qd-m__dock-btn qd-m__dock-btn--pri"
-            [disabled]="generatingOrder || statusLoading"
-            (click)="onMobileAccept()"
-          >
-            {{ mobileAcceptLabel }}
-          </button>
-        }
-      </div>
+      <db-mobile-dock
+        [actions]="mobileDockActions"
+        (action)="onMobileDockAction($event)"
+      />
     }
 
     @if (mobileActionsOpen) {

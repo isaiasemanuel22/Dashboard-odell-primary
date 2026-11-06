@@ -353,7 +353,7 @@
   .cdk-overlay-pane.form-dialog-panel .modal__footer:has(> db-button:nth-child(3)),
   .cdk-overlay-pane.form-dialog-panel .db-form-footer:has(> db-button:nth-child(3)),
   .cdk-overlay-pane.form-dialog-panel .quote-form__actions:has(> db-button:nth-child(3)),
-  .cdk-overlay-pane.form-dialog-panel .order-form__actions:has(> db-button:nth-child(3)):not(:has(.order-form__dock-submit)) {
+  .cdk-overlay-pane.form-dialog-panel .order-form__actions:has(> db-button:nth-child(3)) {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 10px;

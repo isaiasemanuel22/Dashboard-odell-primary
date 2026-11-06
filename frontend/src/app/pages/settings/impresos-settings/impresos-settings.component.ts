@@ -30,6 +30,10 @@ import {
   OdlColumn,
   OdlRowAction,
 } from '@general-components';
+import {
+  MobileDockAction,
+  MobileDockComponent,
+} from '../../../components/mobile-dock/mobile-dock.component';
 
 interface PaperSheetGroup {
   key: keyof GeneralSettings['paperReferenceSheets'];
@@ -46,6 +50,7 @@ interface PaperSheetGroup {
     DbPillGroupComponent,
     DbStateMessageComponent,
     MobileBarComponent,
+    MobileDockComponent,
     CurrencyArsPipe,
     ...DB_DATA_TABLE,
   ],
@@ -126,6 +131,23 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
         this.loadingImpresos = false;
       },
     });
+  }
+
+  get mobileDockActions(): MobileDockAction[] {
+    return [
+      {
+        id: 'save',
+        label: this.savingPaper ? 'Guardando…' : 'Guardar pliegos',
+        kind: 'primary',
+        disabled: this.savingPaper,
+      },
+    ];
+  }
+
+  onMobileDockAction(id: string): void {
+    if (id === 'save') {
+      this.savePaperPrices();
+    }
   }
 
   savePaperPrices(): void {

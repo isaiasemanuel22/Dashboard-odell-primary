@@ -32,6 +32,10 @@ import {
   OdlColumn,
   OdlRowAction,
 } from '@general-components';
+import {
+  MobileDockAction,
+  MobileDockComponent,
+} from '../../../components/mobile-dock/mobile-dock.component';
 import { productTypeOptions } from '../../../shared/utils/select-options';
 import { GeneralValuesProfileEditorComponent } from './general-values-profile-editor/general-values-profile-editor.component';
 
@@ -47,6 +51,7 @@ import { GeneralValuesProfileEditorComponent } from './general-values-profile-ed
     DbPillGroupComponent,
     DbStateMessageComponent,
     MobileBarComponent,
+    MobileDockComponent,
     ...DB_DATA_TABLE,
     GeneralValuesProfileEditorComponent,
   ],
@@ -191,6 +196,25 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
     const ml = profile.consumptionMl ? `${profile.consumptionMl} ml por baño` : '';
     const uses = `${profile.washBathUses || 10} usos`;
     return [supply.name, ml, uses].filter(Boolean).join(' · ');
+  }
+
+  get mobileDockActions(): MobileDockAction[] {
+    return [
+      {
+        id: 'save',
+        label: this.saving
+          ? 'Guardando…'
+          : 'Guardar y recalcular precios',
+        kind: 'primary',
+        disabled: this.saving,
+      },
+    ];
+  }
+
+  onMobileDockAction(id: string): void {
+    if (id === 'save') {
+      this.saveGeneral();
+    }
   }
 
   saveGeneral(): void {

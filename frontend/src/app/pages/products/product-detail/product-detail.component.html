@@ -41,7 +41,7 @@
 }
 
 @if (!loading && product && !notFound) {
-  <div class="mobile-only pd-m pd-m--dock">
+  <div class="mobile-only pd-m">
     <db-mobile-bar title="Producto" backLink="/productos">
       <button type="button" class="m-ib txt" (click)="openEdit()">Editar</button>
       <button
@@ -73,7 +73,7 @@
       />
     </div>
 
-    <div class="m-body pd-m__body">
+    <div class="m-body pd-m__body m-has-dock">
       <section class="m-card" aria-label="Resumen del producto">
         <div class="m-ln pd-m__pills">
           <span class="m-pill m-pill--b">{{ product.type | productTypeLabel }}</span>
@@ -207,15 +207,10 @@
       }
     </div>
 
-    <div class="pd-m__dock">
-      <button
-        type="button"
-        class="pd-m__dock-btn pd-m__dock-btn--pri"
-        (click)="sellProduct()"
-      >
-        Vender
-      </button>
-    </div>
+    <db-mobile-dock
+      [actions]="mobileDockActions"
+      (action)="onMobileDockAction($event)"
+    />
 
     @if (mobileActionsOpen) {
       <div class="pd-m__sheet-scrim" (click)="closeMobileActions()"></div>

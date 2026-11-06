@@ -556,52 +556,6 @@
       padding: 0;
     }
 
-    .order-form__footer,
-    .quote-form__footer {
-      margin: 0;
-      position: sticky;
-      bottom: 0;
-      z-index: 5;
-    }
-
-    .order-form__footer ::ng-deep .db-form-footer,
-    .quote-form__footer ::ng-deep .db-form-footer {
-      flex-direction: column;
-      align-items: stretch;
-      gap: 8px;
-      padding: 12px 16px 20px;
-      margin: 0;
-      border-radius: 0;
-      border-top: 1px solid mobile.$m-border;
-      background: #fff;
-    }
-
-    .order-form__actions,
-    .quote-form__actions {
-      width: 100%;
-      margin: 0;
-    }
-
-    .order-form__actions ::ng-deep db-button.order-form__dock-submit,
-    .order-form__actions ::ng-deep .order-form__dock-submit,
-    .quote-form__actions ::ng-deep db-button.order-form__dock-submit,
-    .quote-form__actions ::ng-deep .order-form__dock-submit {
-      display: block;
-      width: 100%;
-    }
-
-    .order-form__actions ::ng-deep .order-form__dock-submit .db-button,
-    .order-form__footer ::ng-deep .order-form__dock-submit .db-button,
-    .quote-form__actions ::ng-deep .order-form__dock-submit .db-button,
-    .quote-form__footer ::ng-deep .order-form__dock-submit .db-button {
-      width: 100%;
-      min-height: 54px;
-      height: 54px;
-      border-radius: mobile.$m-radius-md;
-      font-size: 15px;
-      font-weight: 700;
-    }
-
     .order-form__note--dock {
       margin: 0;
       text-align: center;

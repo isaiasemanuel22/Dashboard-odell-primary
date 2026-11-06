@@ -41,6 +41,10 @@ import {
   OdlColumn,
   serviceTag,
 } from '@general-components';
+import {
+  MobileDockAction,
+  MobileDockComponent,
+} from '../../../components/mobile-dock/mobile-dock.component';
 
 interface MarginField {
   service: ServiceType;
@@ -61,6 +65,7 @@ interface MarginField {
     DbCheckboxGroupComponent,
     DbInputComponent,
     MobileBarComponent,
+    MobileDockComponent,
     ...DB_DATA_TABLE,
   ],
   templateUrl: './profit-settings.component.html',
@@ -273,6 +278,24 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
       maximumFractionDigits: 0,
     }).format(price);
     return `Costo $ 1.000 → precio ${money}`;
+  }
+
+  get mobileDockActions(): MobileDockAction[] {
+    const saving = this.savingMargins || this.savingDiscount;
+    return [
+      {
+        id: 'save',
+        label: saving ? 'Guardando…' : 'Guardar',
+        kind: 'primary',
+        disabled: saving,
+      },
+    ];
+  }
+
+  onMobileDockAction(id: string): void {
+    if (id === 'save') {
+      this.saveAllMobile();
+    }
   }
 
   saveAllMobile(): void {

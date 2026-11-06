@@ -50,7 +50,7 @@
       }
     </div>
 
-    <div class="m-body sale-m__body">
+    <div class="m-body sale-m__body m-has-dock">
       <h2 class="m-sec-t">{{ cartSectionTitle }}</h2>
       @if (cart.length) {
         <div class="m-card m-card--flush">
@@ -218,16 +218,10 @@
       }
     </div>
 
-    <div class="sale-m__dock">
-      <db-button
-        [label]="mobilePrimaryLabel"
-        variant="primary"
-        format="solid"
-        [block]="true"
-        [disabled]="!canCloseSale"
-        (clicked)="closeSale()"
-      />
-    </div>
+    <db-mobile-dock
+      [actions]="mobileDockActions"
+      (action)="onMobileDockAction($event)"
+    />
   </div>
 } @else {
   <db-form [class.sale-form--mobile]="useCardLayout">

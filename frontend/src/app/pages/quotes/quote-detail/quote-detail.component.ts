@@ -25,6 +25,10 @@ import {
   DbStatusBadgeComponent,
   MobileBarComponent,
 } from '@general-components';
+import {
+  MobileDockAction,
+  MobileDockComponent,
+} from '../../../components/mobile-dock/mobile-dock.component';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import {
   canGenerateOrderFromQuote,
@@ -66,6 +70,7 @@ import { QuoteDetailLinesComponent } from './quote-detail-lines/quote-detail-lin
     DbStatusBadgeComponent,
     DbServiceBadgesComponent,
     MobileBarComponent,
+    MobileDockComponent,
     QuoteDetailLinesComponent,
   ],
   templateUrl: './quote-detail.component.html',
@@ -216,6 +221,38 @@ export class QuoteDetailComponent implements OnInit {
   get mobileAcceptLabel(): string {
     if (this.canGenerateOrder) return 'Aceptar y crear pedido';
     return 'Aceptar y crear pedido';
+  }
+
+  get mobileDockActions(): MobileDockAction[] {
+    if (!this.quote) return [];
+    const actions: MobileDockAction[] = [
+      { id: 'pdf', label: 'Exportar PDF', kind: 'secondary' },
+    ];
+    if (this.quote.orderId) {
+      actions.push({ id: 'view-order', label: 'Ver pedido', kind: 'primary' });
+    } else if (this.showMobileAccept) {
+      actions.push({
+        id: 'accept',
+        label: this.mobileAcceptLabel,
+        kind: 'primary',
+        disabled: this.generatingOrder || this.statusLoading,
+      });
+    }
+    return actions;
+  }
+
+  onMobileDockAction(id: string): void {
+    if (id === 'pdf') {
+      this.generateDocument();
+      return;
+    }
+    if (id === 'view-order' && this.quote?.orderId) {
+      void this.router.navigate(['/pedidos', this.quote.orderId]);
+      return;
+    }
+    if (id === 'accept') {
+      this.onMobileAccept();
+    }
   }
 
   /** Opciones del selector de estado (actual + transiciones, sin cancelado). */

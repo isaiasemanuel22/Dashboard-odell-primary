@@ -47,6 +47,10 @@ import {
   ProductImageCarouselComponent,
   ProductPricingComponent,
 } from '@general-components';
+import {
+  MobileDockAction,
+  MobileDockComponent,
+} from '../../../components/mobile-dock/mobile-dock.component';
 import { normalizeProductAttachments } from '../../../shared/utils/product-attachment.helpers';
 import { FormDialogService } from '../../../modals/public-api';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
@@ -94,6 +98,7 @@ import {
     DbSkeletonComponent,
     DbStateMessageComponent,
     MobileBarComponent,
+    MobileDockComponent,
     ProductBadgesComponent,
     ProductImageCarouselComponent,
     ProductPricingComponent,
@@ -300,6 +305,16 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.mobileActionsOpen = false;
     this.layoutUi.popOverlay();
     this.cdr.markForCheck();
+  }
+
+  readonly mobileDockActions: MobileDockAction[] = [
+    { id: 'sell', label: 'Vender', kind: 'primary' },
+  ];
+
+  onMobileDockAction(id: string): void {
+    if (id === 'sell') {
+      this.sellProduct();
+    }
   }
 
   sellProduct(): void {

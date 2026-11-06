@@ -45,6 +45,10 @@ import {
   MobileBarComponent,
   OdlColumn,
 } from '@general-components';
+import {
+  MobileDockAction,
+  MobileDockComponent,
+} from '../../../components/mobile-dock/mobile-dock.component';
 import { FormDialogService } from '../../../modals/public-api';
 import { SettingsFacade } from '../../../store/settings/settings.facade';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
@@ -114,6 +118,7 @@ type MobileAccordionKey = 'payments' | 'tasks' | 'deliveries' | 'history';
     DbStatusBadgeComponent,
     DbServiceBadgesComponent,
     MobileBarComponent,
+    MobileDockComponent,
     ...DB_DATA_TABLE,
     OrderDetailHistoryComponent,
     OrderDetailPaymentsComponent,
@@ -501,6 +506,35 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
   get showMobileDock(): boolean {
     return this.showMobileRegisterPayment || this.showMobileDeliver;
+  }
+
+  get mobileDockActions(): MobileDockAction[] {
+    const actions: MobileDockAction[] = [];
+    if (this.showMobileRegisterPayment) {
+      actions.push({
+        id: 'pay',
+        label: 'Registrar pago',
+        kind: 'secondary',
+      });
+    }
+    if (this.showMobileDeliver) {
+      actions.push({
+        id: 'deliver',
+        label: 'Entregar',
+        kind: 'primary',
+      });
+    }
+    return actions;
+  }
+
+  onMobileDockAction(id: string): void {
+    if (id === 'pay') {
+      this.openMobilePaymentsFromDock();
+      return;
+    }
+    if (id === 'deliver') {
+      this.openMobileDeliveriesFromDock();
+    }
   }
 
   ngOnInit(): void {

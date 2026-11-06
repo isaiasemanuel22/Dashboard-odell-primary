@@ -49,7 +49,7 @@
 }
 
 @if (!loading && customer && !notFound) {
-  <div class="mobile-only cd-m cd-m--dock">
+  <div class="mobile-only cd-m">
     <db-mobile-bar title="Cliente" backLink="/clientes">
       <button type="button" class="m-ib txt" (click)="openEdit()">Editar</button>
       <button
@@ -73,7 +73,7 @@
       </button>
     </db-mobile-bar>
 
-    <div class="m-body cd-m__body">
+    <div class="m-body cd-m__body m-has-dock">
       <section class="m-card cd-m__hero" aria-label="Resumen del cliente">
         <span class="cd-m__av" aria-hidden="true">{{ customerInitials }}</span>
         <b class="cd-m__name">{{ customer.name }}</b>
@@ -188,22 +188,10 @@
       </div>
     </div>
 
-    <div class="cd-m__dock">
-      <button
-        type="button"
-        class="cd-m__dock-btn cd-m__dock-btn--sec"
-        (click)="addQuote()"
-      >
-        Presupuesto
-      </button>
-      <button
-        type="button"
-        class="cd-m__dock-btn cd-m__dock-btn--pri"
-        (click)="addOrder()"
-      >
-        Nuevo pedido
-      </button>
-    </div>
+    <db-mobile-dock
+      [actions]="mobileDockActions"
+      (action)="onMobileDockAction($event)"
+    />
 
     @if (mobileActionsOpen) {
       <div class="cd-m__sheet-scrim" (click)="closeMobileActions()"></div>

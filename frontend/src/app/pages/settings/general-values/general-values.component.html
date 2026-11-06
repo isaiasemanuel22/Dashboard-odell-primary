@@ -1,9 +1,9 @@
 @if (settings) {
   @if (isMobile()) {
-    <div class="st-m st-m--dock">
+    <div class="st-m">
       <db-mobile-bar title="Valores generales" backLink="/ajustes" />
 
-      <div class="m-body">
+      <div class="m-body m-has-dock">
         @if (message) {
           <p class="st-m__msg">{{ message }}</p>
         }
@@ -121,16 +121,10 @@
         }
       </div>
 
-      <div class="st-m__dock">
-        <button
-          type="button"
-          class="st-m__dock-btn"
-          [disabled]="saving"
-          (click)="saveGeneral()"
-        >
-          {{ saving ? 'Guardando…' : 'Guardar y recalcular precios' }}
-        </button>
-      </div>
+      <db-mobile-dock
+        [actions]="mobileDockActions"
+        (action)="onMobileDockAction($event)"
+      />
     </div>
   } @else {
     <db-form>

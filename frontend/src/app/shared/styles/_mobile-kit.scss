@@ -316,6 +316,15 @@
     gap: 12px;
   }
 
+  /* Padding del cuerpo cuando hay `db-mobile-dock` fijo abajo. */
+  .m-has-dock {
+    padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+  }
+
+  .m-body.m-has-dock {
+    padding-bottom: calc(120px + env(safe-area-inset-bottom, 0px));
+  }
+
   /* Hojas inferiores propias de página (manija + título + cuerpo + pie fijo). */
   .m-sheet-scrim {
     position: fixed;

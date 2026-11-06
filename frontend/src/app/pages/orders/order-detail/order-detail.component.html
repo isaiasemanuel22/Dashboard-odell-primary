@@ -17,7 +17,7 @@
 }
 
 @if (!loading && order && !notFound) {
-  <div class="mobile-only od-m" [class.od-m--dock]="showMobileDock">
+  <div class="mobile-only od-m">
     <db-mobile-bar [title]="order.id" backLink="/pedidos">
       <button
         type="button"
@@ -40,7 +40,7 @@
       </button>
     </db-mobile-bar>
 
-    <div class="m-body od-m__body">
+    <div class="m-body od-m__body" [class.m-has-dock]="showMobileDock">
       <section class="m-card od-m__summary" aria-label="Resumen del pedido">
         <div class="m-ln">
           <div class="od-m__status-row">
@@ -457,26 +457,10 @@
     </div>
 
     @if (showMobileDock) {
-      <div class="od-m__dock">
-        @if (showMobileRegisterPayment) {
-          <button
-            type="button"
-            class="od-m__dock-btn od-m__dock-btn--sec"
-            (click)="openMobilePaymentsFromDock()"
-          >
-            Registrar pago
-          </button>
-        }
-        @if (showMobileDeliver) {
-          <button
-            type="button"
-            class="od-m__dock-btn od-m__dock-btn--pri"
-            (click)="openMobileDeliveriesFromDock()"
-          >
-            Entregar
-          </button>
-        }
-      </div>
+      <db-mobile-dock
+        [actions]="mobileDockActions"
+        (action)="onMobileDockAction($event)"
+      />
     }
 
     @if (mobileActionsOpen) {

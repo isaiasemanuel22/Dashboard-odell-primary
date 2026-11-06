@@ -182,13 +182,11 @@ estimaciones). Ya existe en `_mobile-kit.scss` (427 líneas): `m-ib`, `m-card`,
 16, `m-chip` en 10, `m-search`/`m-tools` en 10, `m-fbtn` en 3. Lo que NO está
 compartido (se copia por página con prefijo propio) es lo que conviene extraer.
 
-## Hallazgo transversal: barra fija ("dock") copiada 7 veces
+## Hallazgo transversal: barra fija ("dock") — extraída
 
-Clases `od-m__dock`, `qd-m__dock`, `cd-m__dock`, `pd-m__dock`, `sale-m__dock`,
-`order-form__dock-submit`, `st-m__dock` (+ `-btn`, `--sec`, `--pri`), cada una con
-su SCSS: sale-form 12, order-detail 39, customer-detail 39, product-detail 38,
-quote-detail 45, order-form 52 y `_settings-mobile.scss` (~94 con otras cosas).
-Mismo markup en 9 templates. Es la extracción de mayor ahorro.
+Componente compartido: `components/mobile-dock` (`db-mobile-dock`) + clase
+`m-has-dock` en `_mobile-kit.scss`. Usado en detalles (B), formularios order/sale
+(C) y subpantallas de ajustes con Guardar (G).
 
 ## Por familia
 
@@ -218,9 +216,7 @@ b) **Si cambiás X, tocá**
 ### B · Detalles con barra fija (Pedido, Presupuesto, Cliente, Producto)
 
 a) **Extraer**
-- `db-mobile-dock` (`components/mobile-dock`): input `actions` (`{label, kind:'pri'|'sec', disabled, loading}[]`)
-  u `<ng-content>`; output `action`. Reemplaza las 6 variantes de dock (arriba). Maneja
-  safe-area, sombra, ocultar menú inferior (`LayoutUiService`).
+- ~~`db-mobile-dock`~~ → ya en `components/mobile-dock` (+ `m-has-dock`).
 - `db-mobile-contact-card` (cliente con avatar + WhatsApp/Llamar): repetido en
   order-detail, quote-detail y customer-detail.
 - `db-mobile-totals` (Total/Pagado/Saldo o Subtotal/Descuento/Total): order-detail,
@@ -230,7 +226,7 @@ a) **Extraer**
   `db-mobile-action-sheet` que lo llame solo.
 
 b) **Si cambiás X, tocá**
-- Botones fijos o su altura: `mobile-dock` (hoy `od/qd/cd/pd-m__dock` en cada `*.component.scss` y `html`).
+- Botones fijos o su altura: `components/mobile-dock` (+ clase `m-has-dock` en `_mobile-kit.scss`).
 - Ruta con dock sin menú inferior: `layout/layout.component.ts` (`shouldHideBottomNav`).
 - Tarjeta de cliente/contacto: `mobile-contact-card` (hoy order-detail, quote-detail, customer-detail).
 - Totales: `mobile-totals` + `shared/utils` (saldos).
@@ -240,8 +236,8 @@ b) **Si cambiás X, tocá**
 a) **Extraer**
 - `db-mobile-form-shell` (`components/mobile-form-shell`): inputs `title`, `subtitle`,
   `submitLabel`, `submitDisabled`, `loading`; slots cuerpo y pie; usa `db-mobile-dock`.
-  Hoy cada form arma encabezado + pie por su cuenta (`order-form__dock-submit`,
-  `sale-m__dock`, `wallet-form__footer`, `form-footer` de customer, supply, category, impreso).
+  Hoy cada form arma encabezado + pie por su cuenta (`wallet-form__footer`,
+  `form-footer` de customer, supply, category, impreso; order/sale ya usan `db-mobile-dock`).
 - `db-mobile-step` (sección numerada "1 · Cliente"): order-form, quote-form, sale-form.
 - `db-mobile-segmented` y `db-mobile-stepper` (−/+): repetidos en order-form (productos),
   quote-form (líneas), sale-form (carrito), order-delivery sheet.
@@ -249,7 +245,7 @@ a) **Extraer**
 - Estilos de campo (`m-lbl`, `m-hint`, error inline): unificar en `_mobile-kit.scss`.
 
 b) **Si cambiás X, tocá**
-- Encabezado/pie del form: `mobile-form-shell` (hoy `order-form`, `sale-form`, `customer-form`, `supply-form`, `product-form`, `quote-form`, `event` y `modals`).
+- Encabezado/pie del form: `mobile-form-shell` (hoy `order-form`, `sale-form`, `customer-form`, `supply-form`, `product-form`, `quote-form`, `event` y `modals`); el pie fijo ya usa `components/mobile-dock` en order-form y sale-form.
 - Apertura a pantalla completa: `modals` (`form-dialog-panel--order-fullscreen`) y `shared/styles/_modal.scss`.
 - Stepper o segmentado: componentes nuevos + order-form-products, quote lines, sale-form-cart.
 
@@ -298,21 +294,22 @@ b) **Si cambiás X, tocá**: `mobile-nav-list`; `pages/settings/settings-home`, 
 
 a) **Extraer**
 - `db-mobile-settings-page` (barra con volver + cuerpo + dock opcional): hoy cada página de
-  ajustes repite `st-m st-m--dock` + `st-m__dock` (general-values, profit-settings,
-  impresos-settings, filament, resin, colors, users). Todo vive en `_settings-mobile.scss`
-  (~94 líneas) + `settings-users-mobile-shell`.
+  ajustes repite `st-m` + barra; el dock ya es `db-mobile-dock` en general-values,
+  profit-settings e impresos-settings. Resto (filament, resin, colors, users) en
+  `_settings-mobile.scss` + `settings-users-mobile-shell`.
 - `db-mobile-field-group` (label + input con prefijo `$`/sufijo unidad): general-values, profit-settings.
 - `db-mobile-catalog-row` (swatch/ícono, título, subtítulo, valor, acciones): filamento, resina, impresos, colores, usuarios.
 - Filamento y resina ya comparten `material-price-settings.scss`; sumarlos al mismo componente de fila.
 
-b) **Si cambiás X, tocá**: `pages/settings/_settings-mobile.scss`, `material-price-settings.scss`,
+b) **Si cambiás X, tocá**: pie fijo → `components/mobile-dock` (+ `m-has-dock`); resto en
+`pages/settings/_settings-mobile.scss`, `material-price-settings.scss`,
 `settings-users-mobile-shell.*`, y el HTML de la página específica.
 
 ## Orden recomendado de extracción (mayor a menor ahorro)
 
 | # | Extracción | Familias | Dónde se repite hoy | Líneas a eliminar (est.) | Riesgo |
 |---|---|---|---|---|---|
-| 1 | `db-mobile-dock` | B, C, G | 9 templates + 7 SCSS | ~250 SCSS + ~60 HTML = **~310** | Bajo (visual idéntico entre pantallas) |
+| 1 | ~~`db-mobile-dock`~~ (hecho) | B, C, G | `components/mobile-dock` | — | Hecho |
 | 2 | `db-mobile-sheet` + `chip-group` | D (también B) | ~10 hojas, `pushOverlay` en 7 archivos | ~250 | Medio (foco, teclado, overlay) |
 | 3 | `db-mobile-list-toolbar` + `MobileListStateService<T>` | A | 6 listas, 4 servicios | ~70 HTML + ~100 estado + ~80 TS = **~250** | Medio (persistencia de filtros) |
 | 4 | `db-mobile-form-shell` + `step` + `stepper` + `segmented` + `select-field` | C | 7 formularios | ~220 | Alto (formularios grandes, validaciones) |

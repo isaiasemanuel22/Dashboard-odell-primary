@@ -26,6 +26,10 @@ import {
   MobileBarComponent,
   OrdersTableComponent,
 } from '@general-components';
+import {
+  MobileDockAction,
+  MobileDockComponent,
+} from '../../../components/mobile-dock/mobile-dock.component';
 import { FormDialogService } from '../../../modals/public-api';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import {
@@ -59,6 +63,7 @@ import { normalizeWholesaleDiscount } from '../../../shared/utils/wholesale-exam
     DbStateMessageComponent,
     OrdersTableComponent,
     MobileBarComponent,
+    MobileDockComponent,
   ],
   templateUrl: './customer-detail.component.html',
   styleUrl: './customer-detail.component.scss',
@@ -250,6 +255,21 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       }
     });
+  }
+
+  readonly mobileDockActions: MobileDockAction[] = [
+    { id: 'quote', label: 'Presupuesto', kind: 'secondary' },
+    { id: 'order', label: 'Nuevo pedido', kind: 'primary' },
+  ];
+
+  onMobileDockAction(id: string): void {
+    if (id === 'quote') {
+      this.addQuote();
+      return;
+    }
+    if (id === 'order') {
+      this.addOrder();
+    }
   }
 
   addOrder(): void {

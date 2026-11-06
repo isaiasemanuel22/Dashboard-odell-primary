@@ -1,0 +1,22 @@
+<div class="m-dock" role="toolbar">
+  <div class="m-dock__actions">
+    @for (item of actions; track item.id) {
+      <button
+        type="button"
+        class="m-dock__btn"
+        [class.m-dock__btn--primary]="item.kind === 'primary'"
+        [class.m-dock__btn--secondary]="item.kind === 'secondary'"
+        [disabled]="item.disabled || item.loading"
+        [attr.aria-label]="item.ariaLabel || null"
+        [attr.aria-busy]="item.loading ? true : null"
+        (click)="onAction(item)"
+      >
+        {{ item.label }}
+      </button>
+    }
+    <ng-content />
+  </div>
+  <div class="m-dock__hint">
+    <ng-content select="[dockHint]" />
+  </div>
+</div>

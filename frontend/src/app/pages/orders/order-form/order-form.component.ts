@@ -185,6 +185,10 @@ import { OrderFormLineComponent } from './linea/order-form-line.component';
 import { OrderFormPartyComponent } from './order-form-party/order-form-party.component';
 import { OrderFormOrderSummaryComponent } from './order-form-order-summary/order-form-order-summary.component';
 import type { WholesaleMinimumNotice } from './order-form-party/order-form-party.component';
+import {
+  MobileDockAction,
+  MobileDockComponent,
+} from '../../../components/mobile-dock/mobile-dock.component';
 
 export type OrderFormVariant = 'order' | 'quote';
 
@@ -206,6 +210,7 @@ export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
     OrderFormLineComponent,
     OrderFormPartyComponent,
     OrderFormOrderSummaryComponent,
+    MobileDockComponent,
   ],
   templateUrl: './order-form.component.html',
   styleUrl: './order-form.component.scss',
@@ -352,6 +357,24 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (this.isEditing) return `Guardar cambios · ${totalLabel}`;
     if (this.presetQuote) return `Generar pedido · ${totalLabel}`;
     return `Crear pedido · ${totalLabel}`;
+  }
+
+  get mobileDockActions(): MobileDockAction[] {
+    const asDraft = false;
+    return [
+      {
+        id: 'submit',
+        label: this.submitLabelMobile,
+        kind: 'primary',
+        disabled: this.loading || !this.canSubmit(asDraft),
+      },
+    ];
+  }
+
+  onMobileDockAction(id: string): void {
+    if (id === 'submit') {
+      this.onSubmit(false);
+    }
   }
 
   /**
