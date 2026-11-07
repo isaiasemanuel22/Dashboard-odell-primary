@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/auth/auth.guard';
 import { LayoutComponent } from './layout/layout.component';
+import { settingsUnsavedChangesGuard } from './pages/settings/settings-unsaved-changes';
 
 export const routes: Routes = [
   {
@@ -174,6 +175,7 @@ export const routes: Routes = [
           },
           {
             path: 'valores-generales',
+            canDeactivate: [settingsUnsavedChangesGuard],
             loadComponent: () =>
               import('./pages/settings/general-values/general-values.component').then(
                 (m) => m.GeneralValuesComponent,
@@ -202,6 +204,7 @@ export const routes: Routes = [
           },
           {
             path: 'impresos',
+            canDeactivate: [settingsUnsavedChangesGuard],
             loadComponent: () =>
               import('./pages/settings/impresos-settings/impresos-settings.component').then(
                 (m) => m.ImpresosSettingsComponent,
@@ -209,6 +212,7 @@ export const routes: Routes = [
           },
           {
             path: 'ganancias',
+            canDeactivate: [settingsUnsavedChangesGuard],
             loadComponent: () =>
               import('./pages/settings/profit-settings/profit-settings.component').then(
                 (m) => m.ProfitSettingsComponent,

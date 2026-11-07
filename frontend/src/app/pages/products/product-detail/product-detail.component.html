@@ -140,18 +140,29 @@
         </div>
       }
 
-      @if (attachments.length) {
-        <h2 class="m-sec-t">Archivos</h2>
-        <div class="m-card m-card--flush">
-          @for (file of attachments; track file.id || file.url) {
-            <div class="m-row">
-              <div class="m-row__text">
-                <b>{{ file.name || 'Archivo' }}</b>
-              </div>
-            </div>
-          }
-        </div>
-      }
+      <db-mobile-collapsible
+        title="Archivos adjuntos"
+        [summary]="
+          attachments.length
+            ? attachments.length +
+              (attachments.length === 1 ? ' archivo' : ' archivos')
+            : 'Ninguno'
+        "
+        [open]="attachments.length > 0"
+      >
+        <p class="m-hint pd-m__attach-hint">
+          Planos, STL, PDF u otros archivos de referencia. Los cambios se
+          guardan al subir o quitar un archivo.
+        </p>
+        <db-attachment-upload
+          [ngModel]="attachments"
+          (attachmentsChange)="onAttachmentsChange($event)"
+          name="productAttachmentsMobile"
+          [uploadFn]="uploadProductAttachment"
+          [disabled]="attachmentsSaving"
+          [error]="attachmentsError"
+        />
+      </db-mobile-collapsible>
     </div>
 
     <db-mobile-dock

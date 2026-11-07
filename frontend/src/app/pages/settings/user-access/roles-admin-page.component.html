@@ -102,7 +102,7 @@
       <db-textarea label="Descripción" name="roleDescription" [(ngModel)]="form.description" />
     </div>
 
-    <div class="permission-grid">
+    <div class="permission-grid desktop-only">
       <section class="permission-grid__section">
         <h4>Permisos por área</h4>
         <table class="permission-grid__table">
@@ -144,6 +144,37 @@
           />
         }
       </section>
+    </div>
+
+    <div class="roles-m-perms mobile-only">
+      <h2 class="m-sec-t">Permisos por área</h2>
+      @for (area of areas; track area.id) {
+        <h3 class="roles-m-perms__area">{{ area.name }}</h3>
+        <div class="m-card m-card--flush">
+          @for (action of workActions; track action) {
+            <db-mobile-toggle-row
+              [label]="actionLabels[action]"
+              [checked]="hasWorkPermission(area.id, action)"
+              (toggled)="toggleWorkPermission(area.id, action, $event)"
+            />
+          }
+        </div>
+      } @empty {
+        <div class="m-card">
+          <p class="m-hint">No hay áreas de trabajo activas.</p>
+        </div>
+      }
+
+      <h2 class="m-sec-t">Administración</h2>
+      <div class="m-card m-card--flush">
+        @for (action of adminActions; track action) {
+          <db-mobile-toggle-row
+            [label]="actionLabels[action]"
+            [checked]="hasAdminPermission(action)"
+            (toggled)="toggleAdminPermission(action, $event)"
+          />
+        }
+      </div>
     </div>
 
     <div class="form-actions">

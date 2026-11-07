@@ -260,10 +260,12 @@
     [mode]="formMode"
     [expense]="editingExpense"
     [startAsPurchase]="purchasePreset"
+    [mobileKind]="movementKind"
     [supplies]="supplies"
     [accountBalances]="overview?.accounts ?? []"
     [nameSuggestions]="overview?.recordNameSuggestions ?? []"
     [recipientSuggestions]="overview?.recipientNameSuggestions ?? []"
+    (mobileKindChange)="onMovementKindChange($event)"
     (closed)="closeForm()"
     (saved)="onFormSaved()"
   />
@@ -272,6 +274,8 @@
 @if (showTransferForm) {
   <app-wallet-transfer-form
     [accountBalances]="overview?.accounts ?? []"
+    [mobileKind]="movementKind"
+    (mobileKindChange)="onMovementKindChange($event)"
     (closed)="closeTransferForm()"
     (saved)="onTransferSaved()"
   />

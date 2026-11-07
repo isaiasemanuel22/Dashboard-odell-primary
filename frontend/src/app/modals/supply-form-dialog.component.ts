@@ -10,6 +10,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
+import { Router } from '@angular/router';
 import { filter } from 'rxjs';
 import { Supply, SupplyCategory } from '../core/models';
 import { SuppliesService } from '../core/services/settings.service';
@@ -61,6 +62,26 @@ export interface SupplyFormDialogData {
             (save)="save($event)"
             (cancel)="cancel()"
           />
+          @if (supply) {
+            <div class="supply-form-dialog-m-actions">
+              <button
+                type="button"
+                class="m-sheet-action"
+                [disabled]="loading || deleting"
+                (click)="openPurchase()"
+              >
+                Registrar compra
+              </button>
+              <button
+                type="button"
+                class="m-sheet-action m-sheet-action--danger"
+                [disabled]="loading || deleting"
+                (click)="deleteSupply()"
+              >
+                Eliminar
+              </button>
+            </div>
+          }
           @if (supplyForm && !supplyForm.canSubmit && supplyForm.submitMissingLabel) {
             <p dockHint role="status">{{ supplyForm.submitMissingLabel }}</p>
           }
@@ -77,15 +98,26 @@ export interface SupplyFormDialogData {
       }
     </app-form-dialog-shell>
   `,
+  styles: [
+    `
+      .supply-form-dialog-m-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+        margin: 8px 0 12px;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SupplyFormDialogComponent implements OnInit {
   private readonly suppliesService = inject(SuppliesService);
   private readonly breakpoint = inject(BreakpointService);
   private readonly formDialogs = inject(FormDialogService);
+  private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
-  private readonly dialogRef = inject(DialogRef<Supply>);
+  private readonly dialogRef = inject(DialogRef<Supply | { deleted: true }>);
   private readonly data = inject<SupplyFormDialogData>(DIALOG_DATA);
 
   @ViewChild('supplyForm') supplyForm?: SupplyFormComponent;
@@ -97,6 +129,7 @@ export class SupplyFormDialogComponent implements OnInit {
   supply: Supply | null = null;
   defaultCategory?: SupplyCategory;
   loading = false;
+  deleting = false;
   error = '';
   private closing = false;
   private confirmingDiscard = false;
@@ -156,6 +189,54 @@ export class SupplyFormDialogComponent implements OnInit {
     if (id === 'save') {
       this.supplyForm?.onSubmit();
     }
+  }
+
+  /** Misma navegación que «Registrar compra» en la lista desktop de insumos. */
+  openPurchase(): void {
+    if (!this.supply || this.closing) return;
+    this.closing = true;
+    this.dialogRef.close();
+    void this.router.navigate(['/billetera'], { queryParams: { compra: '1' } });
+  }
+
+  /** Misma confirmación y servicio (NgRx) que `SuppliesComponent.deleteSupply`. */
+  deleteSupply(): void {
+    if (!this.supply || this.deleting || this.closing) return;
+    const supply = this.supply;
+    this.formDialogs
+      .openConfirm({
+        title: 'Eliminar insumo',
+        message: `¿Eliminar "${supply.name}"?`,
+        confirmLabel: 'Eliminar',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.deleting = true;
+        this.cdr.markForCheck();
+        this.suppliesService.deleteSupply(supply.id).subscribe({
+          next: () => {
+            this.deleting = false;
+            this.closing = true;
+            this.dialogRef.close({ deleted: true });
+          },
+          error: (err) => {
+            this.deleting = false;
+            this.cdr.markForCheck();
+            this.formDialogs
+              .openConfirm({
+                title: 'No se pudo eliminar',
+                message: extractApiErrorMessage(
+                  err,
+                  'No se pudo eliminar el insumo',
+                ),
+                confirmLabel: 'Entendido',
+                alertOnly: true,
+              })
+              .subscribe();
+          },
+        });
+      });
   }
 
   save(data: Partial<Supply>): void {

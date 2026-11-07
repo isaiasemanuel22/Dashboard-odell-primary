@@ -4,6 +4,18 @@
   (close)="closed.emit()"
 >
   <form class="wallet-form form" (ngSubmit)="submitExpense()" novalidate>
+    @if (showMobileKindChips) {
+      <div class="mobile-only wallet-form-m__kinds">
+        <db-mobile-chip-group
+          [options]="mobileKindOptions"
+          [value]="mobileKind"
+          [clearable]="false"
+          ariaLabel="Tipo de movimiento"
+          (valueChange)="onMobileKindChange($event)"
+        />
+      </div>
+    }
+
     <section class="wallet-form__section">
       <db-form-grid class="desktop-only">
         <db-input
@@ -55,7 +67,7 @@
       </div>
 
       @if (!isPersonMovementForm && !isEdit) {
-        <label class="wallet-toggle">
+        <label class="wallet-toggle desktop-only">
           <input
             type="checkbox"
             class="wallet-toggle__input"
@@ -147,7 +159,11 @@
         </div>
 
         @if (!isUnlinkedSupplyPurchase) {
-          <div class="wallet-segment" role="radiogroup" aria-label="Tipo de movimiento">
+          <div
+            class="wallet-segment desktop-only"
+            role="radiogroup"
+            aria-label="Tipo de movimiento"
+          >
             <button
               type="button"
               class="wallet-segment__btn"

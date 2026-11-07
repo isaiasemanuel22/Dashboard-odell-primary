@@ -4,8 +4,10 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnChanges,
   OnInit,
   Output,
+  SimpleChanges,
   inject,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
@@ -30,6 +32,7 @@ import {
   DbSelectComponent,
   FormModalComponent,
   MobileAmountInputComponent,
+  MobileChipGroupComponent,
 } from '@general-components';
 import type { DbAutocompleteOption } from '@dashboard-form/db-autocomplete/db-autocomplete.types';
 import type { DbSelectOption } from '@dashboard-form/db-select/db-select.types';
@@ -41,6 +44,10 @@ import { TREASURY_ACCOUNT_LABELS } from '../../../../shared/utils/v1-labels.util
 import { formatCurrencyArs } from '../../../../shared/utils/currency-ars.util';
 import { formatMobileDateLabel } from '../../../../shared/utils/mobile-date-label.util';
 import { BreakpointService } from '../../../../core/services/breakpoint.service';
+import {
+  WALLET_MOVEMENT_KIND_OPTIONS,
+  type WalletMovementKind,
+} from '../../wallet-movement-kind';
 import {
   WalletRecordSuppliesComponent,
   WalletSupplyLine,
@@ -62,13 +69,14 @@ export type WalletFormMode = 'general' | 'payment' | 'loan';
     DbAutocompleteComponent,
     FormModalComponent,
     MobileAmountInputComponent,
+    MobileChipGroupComponent,
     WalletRecordSuppliesComponent,
   ],
   templateUrl: './wallet-record-form.component.html',
   styleUrl: '../wallet-form.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class WalletRecordFormComponent implements OnInit {
+export class WalletRecordFormComponent implements OnInit, OnChanges {
   private readonly treasuryService = inject(TreasuryService);
   private readonly suppliesService = inject(SuppliesService);
   private readonly formDialogs = inject(FormDialogService);
@@ -78,14 +86,18 @@ export class WalletRecordFormComponent implements OnInit {
   @Input() mode: WalletFormMode = 'general';
   @Input() expense: TreasuryExpense | null = null;
   @Input() startAsPurchase = false;
+  /** Pestaña unificada mobile (Ingreso / Egreso / Compra / Transferir). */
+  @Input() mobileKind: WalletMovementKind = 'expense';
   @Input() supplies: Supply[] = [];
   @Input() accountBalances: TreasuryAccountBalance[] = [];
   @Input() nameSuggestions: string[] = [];
   @Input() recipientSuggestions: string[] = [];
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<void>();
+  @Output() mobileKindChange = new EventEmitter<WalletMovementKind>();
 
   readonly movementDirections = TreasuryMovementDirection;
+  readonly mobileKindOptions = WALLET_MOVEMENT_KIND_OPTIONS;
   readonly maxExpenseDate = WalletRecordFormComponent.todayInputValue();
   readonly accountOptions: DbSelectOption[] =
     labelsToSelectOptions(TREASURY_ACCOUNT_LABELS);
@@ -108,10 +120,55 @@ export class WalletRecordFormComponent implements OnInit {
       return;
     }
     if (this.startAsPurchase) this.isSupplyPurchase = true;
+    // Solo el alta general mobile usa las pestañas; desktop y pago/préstamo quedan como estaban.
+    if (this.showMobileKindChips) this.applyMobileKind(this.mobileKind);
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (!changes['mobileKind'] || changes['mobileKind'].firstChange) return;
+    if (!this.showMobileKindChips || this.isPersonMovementForm) return;
+    const kind = changes['mobileKind'].currentValue as WalletMovementKind;
+    if (kind === 'transfer') return;
+    this.applyMobileKind(kind);
+    this.cdr.markForCheck();
   }
 
   get isEdit(): boolean {
     return !!this.expense;
+  }
+
+  /** Chips unificados solo en alta general mobile (no pago/préstamo/edición). */
+  get showMobileKindChips(): boolean {
+    return (
+      this.breakpoint.isMobile() &&
+      this.mode === 'general' &&
+      !this.isEdit &&
+      !this.isUnlinkedSupplyPurchase
+    );
+  }
+
+  onMobileKindChange(kind: WalletMovementKind | null): void {
+    if (!kind || kind === this.mobileKind) return;
+    this.mobileKindChange.emit(kind);
+    if (kind === 'transfer') return;
+    this.applyMobileKind(kind);
+    this.cdr.markForCheck();
+  }
+
+  private applyMobileKind(kind: WalletMovementKind): void {
+    if (kind === 'transfer') return;
+    this.isSupplyPurchase = kind === 'purchase';
+    this.movementDirection =
+      kind === 'income'
+        ? TreasuryMovementDirection.INCOME
+        : TreasuryMovementDirection.EXPENSE;
+    if (this.isSupplyPurchase) {
+      this.name = '';
+    } else {
+      this.supplyLines = [];
+      this.selectedSupplyId = '';
+    }
+    this.syncAmount();
   }
 
   get isRepayment(): boolean {
@@ -141,7 +198,7 @@ export class WalletRecordFormComponent implements OnInit {
       case 'loan':
         return 'Prestar';
       default:
-        return 'Agregar registro';
+        return this.showMobileKindChips ? 'Nuevo movimiento' : 'Agregar registro';
     }
   }
 

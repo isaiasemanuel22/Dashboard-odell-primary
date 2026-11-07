@@ -336,3 +336,20 @@ app-user-access-nav {
     margin-top: 10px;
   }
 }
+
+.roles-m-perms {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+
+  .m-sec-t {
+    margin-top: 8px;
+  }
+
+  .roles-m-perms__area {
+    margin: 10px 0 6px;
+    font-size: 13px;
+    font-weight: 600;
+    color: #5b7083;
+  }
+}

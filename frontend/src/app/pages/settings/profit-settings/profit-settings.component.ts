@@ -44,6 +44,10 @@ import {
   serviceTag,
 } from '@general-components';
 import { MobileDockAction } from '../../../components/mobile-dock/mobile-dock.component';
+import {
+  SettingsUnsavedChanges,
+  settingsSnapshot,
+} from '../settings-unsaved-changes';
 
 interface MarginField {
   service: ServiceType;
@@ -71,7 +75,9 @@ interface MarginField {
   templateUrl: './profit-settings.component.html',
   styleUrl: './profit-settings.component.scss',
 })
-export class ProfitSettingsComponent implements OnInit, OnDestroy {
+export class ProfitSettingsComponent
+  implements OnInit, OnDestroy, SettingsUnsavedChanges
+{
   private readonly settingsService = inject(SettingsService);
   private readonly breakpoint = inject(BreakpointService);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -84,6 +90,7 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
   savingDiscount = false;
   marginsMessage = '';
   discountMessage = '';
+  private savedSnapshot = '';
 
   readonly exampleCost = WHOLESALE_EXAMPLE_COST;
 
@@ -162,6 +169,7 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
             settings.wholesaleDiscount,
           ),
         };
+        this.captureBaseline();
         this.cdr.markForCheck();
       });
     this.settingsService.getGeneralSettings(false).subscribe();
@@ -169,6 +177,25 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.settingsSub?.unsubscribe();
+  }
+
+  hasUnsavedChanges(): boolean {
+    if (!this.settings) return false;
+    return this.currentSnapshot() !== this.savedSnapshot;
+  }
+
+  private captureBaseline(): void {
+    this.savedSnapshot = this.currentSnapshot();
+  }
+
+  private currentSnapshot(): string {
+    if (!this.settings) return '';
+    return settingsSnapshot({
+      profitMargins: normalizeProfitMargins(this.settings.profitMargins),
+      wholesaleDiscount: normalizeWholesaleDiscount(
+        this.settings.wholesaleDiscount,
+      ),
+    });
   }
 
   get wholesale(): WholesaleDiscountSettings {
@@ -329,6 +356,7 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
           };
         }
         this.savingMargins = false;
+        this.captureBaseline();
         this.marginsMessage = 'Márgenes guardados correctamente';
         this.cdr.markForCheck();
       },
@@ -367,6 +395,7 @@ export class ProfitSettingsComponent implements OnInit, OnDestroy {
           };
         }
         this.savingDiscount = false;
+        this.captureBaseline();
         this.discountMessage = 'Descuento por mayor guardado correctamente';
         this.cdr.markForCheck();
       },

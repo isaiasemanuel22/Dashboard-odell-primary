@@ -37,6 +37,10 @@ import {
 } from '@general-components';
 import { MobileDockAction } from '../../../components/mobile-dock/mobile-dock.component';
 import { productTypeOptions } from '../../../shared/utils/select-options';
+import {
+  SettingsUnsavedChanges,
+  settingsSnapshot,
+} from '../settings-unsaved-changes';
 import { GeneralValuesProfileEditorComponent } from './general-values-profile-editor/general-values-profile-editor.component';
 
 @Component({
@@ -60,7 +64,9 @@ import { GeneralValuesProfileEditorComponent } from './general-values-profile-ed
   templateUrl: './general-values.component.html',
   styleUrl: './general-values.component.scss',
 })
-export class GeneralValuesComponent implements OnInit, OnDestroy {
+export class GeneralValuesComponent
+  implements OnInit, OnDestroy, SettingsUnsavedChanges
+{
   readonly profileActions: OdlRowAction<MachineProfile>[] = [
     { id: 'editar', label: 'Editar' },
     { id: 'eliminar', label: 'Eliminar', danger: true },
@@ -103,6 +109,7 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
   profileTypeFilter: 'all' | ProductType = 'all';
   selectedProfileId: string | null = null;
   openMenuId: string | null = null;
+  private savedCoreSnapshot = '';
 
   readonly profileFilters: { value: 'all' | ProductType; label: string }[] = [
     { value: 'all', label: 'Todos' },
@@ -138,6 +145,7 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
       if (!settings || this.saving || this.savingProfiles) return;
       this.settings = structuredClone(settings);
       this.settings.errorMarginPercent ??= 0;
+      this.captureCoreBaseline();
     });
     this.settingsService.getGeneralSettings(false).subscribe();
     this.suppliesService
@@ -146,6 +154,27 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
       .subscribe((items) => {
         this.supplies = items;
       });
+  }
+
+  hasUnsavedChanges(): boolean {
+    if (!this.settings) return false;
+    if (this.selectedProfileId) return true;
+    return this.coreSnapshot() !== this.savedCoreSnapshot;
+  }
+
+  private captureCoreBaseline(): void {
+    this.savedCoreSnapshot = this.coreSnapshot();
+  }
+
+  private coreSnapshot(): string {
+    if (!this.settings) return '';
+    return settingsSnapshot({
+      electricityCostPerKwh: this.settings.electricityCostPerKwh,
+      laborCostPerHour: this.settings.laborCostPerHour,
+      modelingRatePerHour: this.settings.modelingRatePerHour,
+      graphicDesignRatePerHour: this.settings.graphicDesignRatePerHour,
+      errorMarginPercent: this.settings.errorMarginPercent,
+    });
   }
 
   ngOnDestroy(): void {
@@ -240,6 +269,7 @@ export class GeneralValuesComponent implements OnInit, OnDestroy {
             };
           }
           this.saving = false;
+          this.captureCoreBaseline();
           this.message = 'Valores guardados correctamente';
         },
         error: () => {

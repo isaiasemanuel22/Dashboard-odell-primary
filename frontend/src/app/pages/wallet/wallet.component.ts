@@ -47,6 +47,7 @@ import {
 import { WalletRepaymentFormComponent } from './components/wallet-repayment-form/wallet-repayment-form.component';
 import { WalletTransferFormComponent } from './components/wallet-transfer-form/wallet-transfer-form.component';
 import { WalletVoidFormComponent } from './components/wallet-void-form/wallet-void-form.component';
+import type { WalletMovementKind } from './wallet-movement-kind';
 
 @Component({
   selector: 'app-wallet',
@@ -95,6 +96,8 @@ export class WalletComponent implements OnInit, OnDestroy {
   editingExpense: TreasuryExpense | null = null;
   voidingExpense: TreasuryExpense | null = null;
   purchasePreset = false;
+  /** Pestaña unificada mobile del registro (Ingreso/Egreso/Compra/Transferir). */
+  movementKind: WalletMovementKind = 'expense';
   repaymentDebtor: TreasuryDebtorBalance | null = null;
 
   showMobileSearch = false;
@@ -220,6 +223,8 @@ export class WalletComponent implements OnInit, OnDestroy {
   openForm(): void {
     this.editingExpense = null;
     this.formMode = 'general';
+    this.movementKind = this.purchasePreset ? 'purchase' : 'expense';
+    this.showTransferForm = false;
     this.showForm = true;
     this.claimFormOverlay();
     this.cdr.markForCheck();
@@ -228,6 +233,7 @@ export class WalletComponent implements OnInit, OnDestroy {
   openPaymentForm(): void {
     this.editingExpense = null;
     this.formMode = 'payment';
+    this.showTransferForm = false;
     this.showForm = true;
     this.claimFormOverlay();
     this.cdr.markForCheck();
@@ -236,14 +242,34 @@ export class WalletComponent implements OnInit, OnDestroy {
   openLoanForm(): void {
     this.editingExpense = null;
     this.formMode = 'loan';
+    this.showTransferForm = false;
     this.showForm = true;
     this.claimFormOverlay();
     this.cdr.markForCheck();
   }
 
   openTransferForm(): void {
+    this.editingExpense = null;
+    this.formMode = 'general';
+    this.purchasePreset = false;
+    this.movementKind = 'transfer';
+    this.showForm = false;
     this.showTransferForm = true;
     this.claimFormOverlay();
+    this.cdr.markForCheck();
+  }
+
+  onMovementKindChange(kind: WalletMovementKind): void {
+    if (this.movementKind === kind) return;
+    this.movementKind = kind;
+    this.purchasePreset = kind === 'purchase';
+    if (kind === 'transfer') {
+      this.showForm = false;
+      this.showTransferForm = true;
+    } else {
+      this.showTransferForm = false;
+      this.showForm = true;
+    }
     this.cdr.markForCheck();
   }
 

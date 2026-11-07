@@ -21,6 +21,7 @@ import {
   DbSelectComponent,
   FormModalComponent,
   MobileAmountInputComponent,
+  MobileChipGroupComponent,
 } from '@general-components';
 import type { DbSelectOption } from '@dashboard-form/db-select/db-select.types';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
@@ -30,6 +31,10 @@ import { TREASURY_ACCOUNT_LABELS } from '../../../../shared/utils/v1-labels.util
 import { formatCurrencyArs } from '../../../../shared/utils/currency-ars.util';
 import { formatMobileDateLabel } from '../../../../shared/utils/mobile-date-label.util';
 import { BreakpointService } from '../../../../core/services/breakpoint.service';
+import {
+  WALLET_MOVEMENT_KIND_OPTIONS,
+  type WalletMovementKind,
+} from '../../wallet-movement-kind';
 
 @Component({
   selector: 'app-wallet-transfer-form',
@@ -43,6 +48,7 @@ import { BreakpointService } from '../../../../core/services/breakpoint.service'
     DbFormGridComponent,
     FormModalComponent,
     MobileAmountInputComponent,
+    MobileChipGroupComponent,
   ],
   templateUrl: './wallet-transfer-form.component.html',
   styleUrl: '../wallet-form.scss',
@@ -54,10 +60,13 @@ export class WalletTransferFormComponent {
   private readonly breakpoint = inject(BreakpointService);
 
   @Input() accountBalances: TreasuryAccountBalance[] = [];
+  @Input() mobileKind: WalletMovementKind = 'transfer';
   @Output() closed = new EventEmitter<void>();
   @Output() saved = new EventEmitter<void>();
+  @Output() mobileKindChange = new EventEmitter<WalletMovementKind>();
 
   readonly maxTransferDate = WalletTransferFormComponent.todayInputValue();
+  readonly mobileKindOptions = WALLET_MOVEMENT_KIND_OPTIONS;
   readonly accountOptions: DbSelectOption[] =
     labelsToSelectOptions(TREASURY_ACCOUNT_LABELS);
 
@@ -70,6 +79,19 @@ export class WalletTransferFormComponent {
 
   get mobileDateLabel(): string {
     return formatMobileDateLabel(this.transferDate);
+  }
+
+  get showMobileKindChips(): boolean {
+    return this.breakpoint.isMobile();
+  }
+
+  get formTitle(): string {
+    return this.showMobileKindChips ? 'Nuevo movimiento' : 'Transferir entre cuentas';
+  }
+
+  onMobileKindChange(kind: WalletMovementKind | null): void {
+    if (!kind || kind === this.mobileKind) return;
+    this.mobileKindChange.emit(kind);
   }
 
   get submitLabel(): string {

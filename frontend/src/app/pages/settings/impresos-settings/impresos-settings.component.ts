@@ -33,6 +33,10 @@ import {
   OdlRowAction,
 } from '@general-components';
 import { MobileDockAction } from '../../../components/mobile-dock/mobile-dock.component';
+import {
+  SettingsUnsavedChanges,
+  settingsSnapshot,
+} from '../settings-unsaved-changes';
 
 interface PaperSheetGroup {
   key: keyof GeneralSettings['paperReferenceSheets'];
@@ -57,7 +61,9 @@ interface PaperSheetGroup {
   templateUrl: './impresos-settings.component.html',
   styleUrl: './impresos-settings.component.scss',
 })
-export class ImpresosSettingsComponent implements OnInit, OnDestroy {
+export class ImpresosSettingsComponent
+  implements OnInit, OnDestroy, SettingsUnsavedChanges
+{
   private readonly settingsService = inject(SettingsService);
   private readonly impresosService = inject(ImpresosService);
   private readonly formDialogs = inject(FormDialogService);
@@ -73,6 +79,7 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
   message = '';
   search = '';
   techniqueFilter: PaperType | 'all' = 'all';
+  private savedPaperSnapshot = '';
   readonly impresoActions: OdlRowAction<ImpresoWithCost>[] = [
     { id: 'editar', label: 'Editar' },
     { id: 'eliminar', label: 'Eliminar', danger: true },
@@ -111,6 +118,7 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
     this.settingsSub = this.settingsService.watchGeneralSettings().subscribe((settings) => {
       if (!settings || this.savingPaper) return;
       this.settings = structuredClone(settings);
+      this.capturePaperBaseline();
     });
     this.settingsService.getGeneralSettings(false).subscribe();
     this.loadImpresos();
@@ -118,6 +126,20 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.settingsSub?.unsubscribe();
+  }
+
+  hasUnsavedChanges(): boolean {
+    if (!this.settings) return false;
+    return (
+      settingsSnapshot(this.settings.paperReferenceSheets) !==
+      this.savedPaperSnapshot
+    );
+  }
+
+  private capturePaperBaseline(): void {
+    this.savedPaperSnapshot = settingsSnapshot(
+      this.settings?.paperReferenceSheets ?? null,
+    );
   }
 
   loadImpresos(): void {
@@ -165,6 +187,7 @@ export class ImpresosSettingsComponent implements OnInit, OnDestroy {
             };
           }
           this.savingPaper = false;
+          this.capturePaperBaseline();
           this.message = 'Pliegos de referencia guardados';
           this.loadImpresos();
         },

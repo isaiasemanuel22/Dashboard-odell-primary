@@ -1,5 +1,17 @@
-<app-form-modal title="Transferir entre cuentas" size="md" (close)="closed.emit()">
+<app-form-modal [title]="formTitle" size="md" (close)="closed.emit()">
   <form class="wallet-form form" (ngSubmit)="submitTransfer()" novalidate>
+    @if (showMobileKindChips) {
+      <div class="mobile-only wallet-form-m__kinds">
+        <db-mobile-chip-group
+          [options]="mobileKindOptions"
+          [value]="mobileKind"
+          [clearable]="false"
+          ariaLabel="Tipo de movimiento"
+          (valueChange)="onMobileKindChange($event)"
+        />
+      </div>
+    }
+
     <section class="wallet-form__section desktop-only">
       <div class="wallet-form__section-head">
         <h4>Movimiento interno</h4>
