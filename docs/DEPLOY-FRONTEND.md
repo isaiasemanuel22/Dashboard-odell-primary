@@ -1,88 +1,75 @@
-# Deploy del frontend (Firebase Hosting)
+# Deploy del frontend (Netlify)
 
-El frontend Angular se publica en **Firebase Hosting** del proyecto `dashboard-odell-2`.
+El frontend Angular vive en **Netlify** y se publica solo cada vez que se pushea `main` a GitHub. No hace falta correr ningún comando para publicar.
 
-URL esperada tras el deploy: `https://dashboard-odell-2.web.app`
+URL pública: `https://<sitio>.netlify.app` (el nombre real no está en el repo; se ve en el panel de Netlify).
 
-## Requisitos
+## Cómo se publica
 
-- Node.js 22.12+
-- Cuenta con acceso al proyecto Firebase `dashboard-odell-2`
-- Firebase CLI (se instala con el `npm install` de la raíz del repo)
+1. Pusheás (o mergeás) a `main` en GitHub.
+2. Netlify detecta el commit, compila y publica.
+3. La configuración sale de `netlify.toml` (raíz del repo), no del panel.
 
-## 1. Instalar dependencias (una vez)
+## Configuración (`netlify.toml`)
 
-Desde la raíz del repo:
+| Clave | Valor |
+|-------|-------|
+| Base directory | `frontend` |
+| Build command | `npm ci && npm run build:prod` |
+| Publish directory | `dist/frontend/browser` (relativo a `base`) |
+| Node | `22` (`NODE_VERSION`) |
+| Redirect SPA | `/*` → `/index.html` (status 200) |
+| Cache | `index.html` sin cache; `*.js` y `*.css` con `immutable` a 1 año |
+
+## URL de la API en el build
+
+`npm run build:prod` corre `scripts/prepare-env.mjs production`, que genera `environment.prod.ts` leyendo la variable **`API_URL`**.
+
+Hoy `API_URL` está definida en `netlify.toml` (`[build.environment]`):
+
+```
+API_URL=https://odell-dashboard-api-bf200c02a0c9.herokuapp.com/api
+```
+
+Para cambiarla sin tocar el repo, definila en Netlify: Site settings → Environment variables → `API_URL`. Qué valor tiene prioridad si está en los dos lugares: a confirmar (según la documentación de Netlify, normalmente gana `netlify.toml`).
+
+## CORS del backend
+
+El backend (Heroku) solo acepta orígenes listados en `CORS_ORIGINS`. Tiene que incluir el dominio de Netlify, separado por comas:
 
 ```bash
-npm install
-cd frontend && npm install
+heroku config:set CORS_ORIGINS=https://<sitio>.netlify.app,http://localhost:4200
 ```
 
-## 2. Login en Firebase (una vez por máquina)
+(Si se usa dominio propio, agregarlo también.) Formato exacto del separador: ver `backend/src/config/env.validation.ts`.
+
+## Verificar
+
+1. Panel de Netlify → Deploys: buscar el commit pusheado y confirmar que el estado sea "Published".
+2. Abrir `https://<sitio>.netlify.app` y hacer login con Google (Firebase Auth).
+3. En DevTools → Network, revisar que las peticiones vayan a `https://odell-dashboard-api-bf200c02a0c9.herokuapp.com/api`.
+
+## Deploy manual (excepcional)
+
+Los scripts del repo publican con Netlify CLI, sin pasar por GitHub. Requieren `npx netlify-cli login` y el sitio vinculado:
 
 ```bash
-npx firebase login
+npm run frontend:deploy          # producción
+npm run frontend:deploy:preview  # URL de preview
 ```
 
-## 3. URL del backend en producción
+Lo normal es no usarlos: pushear `main` alcanza.
 
-El build de producción necesita saber dónde está el API. Pasá la variable **`API_URL`** al compilar:
+## Firebase Hosting (no se usa)
 
-```bash
-export API_URL=https://TU-SERVIDOR:3000/api
-```
+El proyecto `dashboard-odell-2` quedó sin contenido en Hosting (da 404). `firebase.json` y `.firebaserc` son restos del esquema anterior y no se usan para publicar.
 
-Si no la definís, queda `http://localhost:3000/api` (solo útil para pruebas locales del build).
-
-Cuando el backend tenga URL pública, agregá ese origen en `backend/.env`:
-
-```env
-CORS_ORIGINS=https://dashboard-odell-2.web.app,http://localhost:4200
-```
-
-## 4. Deploy
-
-### Opción A — desde la raíz
-
-```bash
-export API_URL=https://TU-SERVIDOR:3000/api
-npm run frontend:deploy
-```
-
-### Opción B — desde `frontend/`
-
-```bash
-cd frontend
-export API_URL=https://TU-SERVIDOR:3000/api
-npm run deploy
-```
-
-### Preview temporal (7 días)
-
-```bash
-npm run frontend:deploy:preview
-```
-
-Genera una URL tipo `https://dashboard-odell-2--preview-xxxxx.web.app`.
-
-## 5. Verificar
-
-1. Abrí `https://dashboard-odell-2.web.app`
-2. Login con Google (Firebase Auth)
-3. Revisá en DevTools → Network que las peticiones vayan a tu `API_URL`
+Esto no afecta a **Firebase Storage** ni a **Firebase Auth** del mismo proyecto: siguen en uso (archivos subidos, login). Ver `docs/FIREBASE.md`.
 
 ## Archivos relevantes
 
 | Archivo | Rol |
 |---------|-----|
-| `firebase.json` | Hosting: carpeta `frontend/dist/frontend/browser`, SPA rewrite |
-| `.firebaserc` | Proyecto Firebase |
-| `frontend/scripts/prepare-prod-env.mjs` | Genera `environment.prod.ts` con `API_URL` |
+| `netlify.toml` | Build, publish, redirects, headers y `API_URL` |
+| `frontend/scripts/prepare-env.mjs` | Genera los `environment*.ts` con `API_URL` |
 | `frontend/angular.json` | `fileReplacements` → environment de producción |
-
-## Notas
-
-- Solo se despliega el **frontend**. El backend sigue corriendo aparte (otro servidor, otra máquina, etc.).
-- Las imágenes usan Firebase Storage desde el navegador vía backend (`POST /api/upload`).
-- Para dominio propio: Firebase Console → Hosting → Add custom domain.
