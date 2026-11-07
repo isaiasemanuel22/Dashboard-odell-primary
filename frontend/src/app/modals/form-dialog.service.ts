@@ -334,7 +334,14 @@ export class FormDialogService {
     );
   }
 
-  openConfirm(data: ConfirmDialogData): Observable<boolean> {
+  /**
+   * `keepOnNavigation`: para confirmaciones que abre un guard al volver con el
+   * historial; si no, el diálogo se cierra con esa misma navegación.
+   */
+  openConfirm(
+    data: ConfirmDialogData,
+    options: { keepOnNavigation?: boolean } = {},
+  ): Observable<boolean> {
     return from(import('./confirm-dialog.component')).pipe(
       switchMap(({ ConfirmDialogComponent }): Observable<boolean> => {
         const base = this.baseConfig('sm');
@@ -342,6 +349,7 @@ export class FormDialogService {
           ...base,
           ariaLabel: data.title,
           data,
+          ...(options.keepOnNavigation ? { closeOnNavigation: false } : {}),
         });
         return ref.closed as Observable<boolean>;
       }),

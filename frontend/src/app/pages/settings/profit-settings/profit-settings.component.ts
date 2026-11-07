@@ -45,8 +45,8 @@ import {
 } from '@general-components';
 import { MobileDockAction } from '../../../components/mobile-dock/mobile-dock.component';
 import {
+  SettingsEditBaseline,
   SettingsUnsavedChanges,
-  settingsSnapshot,
 } from '../settings-unsaved-changes';
 
 interface MarginField {
@@ -90,7 +90,7 @@ export class ProfitSettingsComponent
   savingDiscount = false;
   marginsMessage = '';
   discountMessage = '';
-  private savedSnapshot = '';
+  private readonly editBaseline = new SettingsEditBaseline();
 
   readonly exampleCost = WHOLESALE_EXAMPLE_COST;
 
@@ -162,6 +162,8 @@ export class ProfitSettingsComponent
       .watchGeneralSettings()
       .subscribe((settings) => {
         if (!settings || this.savingMargins || this.savingDiscount) return;
+        // No pisar ediciones locales ni resetear el baseline si hay cambios.
+        if (this.hasUnsavedChanges()) return;
         this.settings = {
           ...structuredClone(settings),
           profitMargins: normalizeProfitMargins(settings.profitMargins),
@@ -181,21 +183,21 @@ export class ProfitSettingsComponent
 
   hasUnsavedChanges(): boolean {
     if (!this.settings) return false;
-    return this.currentSnapshot() !== this.savedSnapshot;
+    return this.editBaseline.isDirty(this.editState());
   }
 
   private captureBaseline(): void {
-    this.savedSnapshot = this.currentSnapshot();
+    this.editBaseline.capture(this.editState());
   }
 
-  private currentSnapshot(): string {
-    if (!this.settings) return '';
-    return settingsSnapshot({
+  private editState(): unknown {
+    if (!this.settings) return null;
+    return {
       profitMargins: normalizeProfitMargins(this.settings.profitMargins),
       wholesaleDiscount: normalizeWholesaleDiscount(
         this.settings.wholesaleDiscount,
       ),
-    });
+    };
   }
 
   get wholesale(): WholesaleDiscountSettings {
@@ -257,6 +259,7 @@ export class ProfitSettingsComponent
         [service]: Number.isFinite(parsed) ? parsed : 0,
       },
     };
+    this.cdr.markForCheck();
   }
 
   examplePrice(cost: number, margin: number): number {
@@ -422,5 +425,6 @@ export class ProfitSettingsComponent
           : [...current.serviceTypes],
       },
     };
+    this.cdr.markForCheck();
   }
 }

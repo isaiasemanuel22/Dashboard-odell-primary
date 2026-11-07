@@ -9,6 +9,8 @@ export interface ConfirmMobileFormDiscardOptions {
    * «el pedido», «los cambios».
    */
   entityLabel: string;
+  /** La pide un guard de ruta: no cerrarla con la navegación en curso. */
+  fromRouteGuard?: boolean;
 }
 
 /**
@@ -29,5 +31,5 @@ export function confirmMobileFormDiscard(
     confirmLabel: 'Descartar',
     cancelLabel: 'Seguir editando',
     confirmVariant: 'delete',
-  });
+  }, { keepOnNavigation: options.fromRouteGuard });
 }

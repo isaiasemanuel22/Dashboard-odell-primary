@@ -148,3 +148,30 @@ Guía: `docs/mobile/familias.md`. QA visual en 4 rondas (piezas compartidas + A,
 Datos QA creados en la ronda final: ord-16 «QA-movil final» (seña $261), pago $10 en ord-15, quo-14 «QA-presu movil» (borrador), cliente «QA-cliente movil», insumo «QA-insumo movil», evento «QA-evento movil», venta de mostrador de 1 × QA-Revalid FDM ($700).
 
 Por definir con el usuario: avisar al salir de Ajustes con cambios sin guardar; venta que supera el stock (hoy el stepper se limita al stock).
+
+## Paridad con desktop (2026-11-07)
+
+Funciones de desktop agregadas a mobile en `e3dcf79`, `fac55ca` y `55f212a`; correcciones de esta prueba en el commit siguiente.
+
+| # | Caso | Pasos | Esperado | Último resultado |
+|---|------|-------|----------|------------------|
+| P1 | Presupuesto a Borrador | Presupuesto Enviado → «⋯» → Volver a borrador | Pasa a Borrador | ✅ 2026-11-07 |
+| P2 | Filtro por área en Presupuestos | Filtros → Área | Lista, botón «Ver N» y contador del filtro responden | ✅ 2026-11-07 |
+| P3 | Filtros de Ventas | Filtros → Tipo / Área | Filtra; vacío con «Limpiar filtros» | ✅ 2026-11-07 |
+| P4 | Crear pedido desde venta | Nueva venta con carrito → «⋯» → Crear pedido | Nuevo pedido con los productos precargados (solo al armar la venta, igual que desktop) | ✅ 2026-11-07 |
+| P5 | Eliminar venta | Venta QA → «⋯» → Eliminar venta | Confirma, sale de la lista y devuelve el stock | ✅ 2026-11-07 |
+| P6 | Calendario Semana y filtros | Agenda / Semana / Mes; ‹ › y Hoy; Filtros → Tipo | Semana en lista de 7 días; filtra por tipo | ✅ 2026-11-07 |
+| P7 | Cola: filtro y Nueva tarea | Filtro por cliente; «+» en /cola → Nueva tarea | Filtra; la tarea aparece sin recargar | ✅ 2026-11-07 |
+| P8 | Cola: mover a Bloqueado | «⋯» de una tarea propia → Mover a Bloqueado → volver a En proceso | Cambia de columna (solo responsable o admin, §12.2) | ⏸ probar con un administrador |
+| P9 | Insumo: compra y eliminar | Hoja del insumo → Registrar compra / Eliminar | Compra abre Billetera en la pestaña Compra; Eliminar se alcanza sobre el dock, confirma y lo quita | ❌→✅ 2026-11-07 |
+| P10 | Adjuntos de producto | Detalle → Archivos adjuntos | Se ve y se abre | ✅ 2026-11-07 |
+| P11 | Billetera, hoja única | Nuevo movimiento → Ingreso / Egreso / Compra / Transferir | Campos correctos en cada pestaña, nada mezclado | ✅ 2026-11-07 |
+| P12 | Roles | Ajustes → Roles → permisos por área | Interruptores responden; cerrar sin guardar no cambia nada | ✅ 2026-11-07 |
+| P13 | Ajustes sin guardar | Valores generales y Ganancias: cambiar sin guardar y tocar «‹», entrando por link directo y desde Ajustes | Pregunta «Descartar cambios»; Seguir editando conserva el valor y la URL; sin cambios vuelve sin preguntar | ❌→✅ 2026-11-07 |
+| P14 | Editar venta con la última unidad | Editar una venta guardada que se llevó la última unidad | Muestra el stock contando las unidades de la propia venta y deja guardar | ❌→corregido (sin volver a probar) |
+
+Causas corregidas: el «‹» usaba `history.back` aunque se hubiera entrado por link directo y salía de la app sin pasar por el guard (ahora solo vuelve con el historial si la navegación anterior es de la app); la confirmación del guard se cerraba con la propia navegación (`keepOnNavigation`); el contenido del `db-mobile-form-shell` no scrolleaba por encima del dock.
+
+Datos QA: quo-15 «QA-paridad» (Borrador), tarea «QA-tarea paridad» (Por hacer, sin responsable); se borraron la venta sale-11 y el insumo «QA-insumo movil».
+
+Para revisar (confuso, igual que desktop): tarjetas de resumen de Ventas que no siguen los filtros; confirmación de eliminar venta con el código interno; tarea nueva sin responsable por defecto; «Aceptar y crear pedido» visible en Borrador.

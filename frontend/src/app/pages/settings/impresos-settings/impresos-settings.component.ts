@@ -34,8 +34,8 @@ import {
 } from '@general-components';
 import { MobileDockAction } from '../../../components/mobile-dock/mobile-dock.component';
 import {
+  SettingsEditBaseline,
   SettingsUnsavedChanges,
-  settingsSnapshot,
 } from '../settings-unsaved-changes';
 
 interface PaperSheetGroup {
@@ -79,7 +79,7 @@ export class ImpresosSettingsComponent
   message = '';
   search = '';
   techniqueFilter: PaperType | 'all' = 'all';
-  private savedPaperSnapshot = '';
+  private readonly paperBaseline = new SettingsEditBaseline();
   readonly impresoActions: OdlRowAction<ImpresoWithCost>[] = [
     { id: 'editar', label: 'Editar' },
     { id: 'eliminar', label: 'Eliminar', danger: true },
@@ -117,6 +117,7 @@ export class ImpresosSettingsComponent
   ngOnInit(): void {
     this.settingsSub = this.settingsService.watchGeneralSettings().subscribe((settings) => {
       if (!settings || this.savingPaper) return;
+      if (this.hasUnsavedChanges()) return;
       this.settings = structuredClone(settings);
       this.capturePaperBaseline();
     });
@@ -130,16 +131,11 @@ export class ImpresosSettingsComponent
 
   hasUnsavedChanges(): boolean {
     if (!this.settings) return false;
-    return (
-      settingsSnapshot(this.settings.paperReferenceSheets) !==
-      this.savedPaperSnapshot
-    );
+    return this.paperBaseline.isDirty(this.settings.paperReferenceSheets);
   }
 
   private capturePaperBaseline(): void {
-    this.savedPaperSnapshot = settingsSnapshot(
-      this.settings?.paperReferenceSheets ?? null,
-    );
+    this.paperBaseline.capture(this.settings?.paperReferenceSheets ?? null);
   }
 
   loadImpresos(): void {

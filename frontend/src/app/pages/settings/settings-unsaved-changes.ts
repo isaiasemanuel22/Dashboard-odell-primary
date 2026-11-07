@@ -29,10 +29,28 @@ export const settingsUnsavedChangesGuard: CanDeactivateFn<
   return confirmMobileFormDiscard(inject(FormDialogService), {
     hasChanges: true,
     entityLabel: 'los cambios',
+    fromRouteGuard: true,
   });
 };
 
 /** Serializa un valor para comparar estado guardado vs edición. */
 export function settingsSnapshot(value: unknown): string {
   return JSON.stringify(value ?? null);
+}
+
+/**
+ * Baseline de edición para pantallas de ajustes.
+ * Sirve para no pisar cambios locales cuando el store re-emite la misma
+ * configuración (p. ej. tras ensureLoaded / realtime).
+ */
+export class SettingsEditBaseline {
+  private savedSnapshot = '';
+
+  capture(value: unknown): void {
+    this.savedSnapshot = settingsSnapshot(value);
+  }
+
+  isDirty(value: unknown): boolean {
+    return settingsSnapshot(value) !== this.savedSnapshot;
+  }
 }

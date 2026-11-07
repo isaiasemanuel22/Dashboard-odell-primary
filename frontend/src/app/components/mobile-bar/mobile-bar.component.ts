@@ -9,7 +9,7 @@ import {
   inject,
 } from '@angular/core';
 import { Location } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { LayoutUiService } from '../../layout/layout-ui.service';
 
 @Component({
@@ -23,6 +23,7 @@ import { LayoutUiService } from '../../layout/layout-ui.service';
 export class MobileBarComponent implements OnInit, OnDestroy {
   private readonly layoutUi = inject(LayoutUiService);
   private readonly location = inject(Location);
+  private readonly router = inject(Router);
 
   @Input({ required: true }) title = '';
   @Input() backLink?: string | any[];
@@ -58,8 +59,8 @@ export class MobileBarComponent implements OnInit, OnDestroy {
   }
 
   private canUseHistoryBack(): boolean {
-    if (typeof window === 'undefined') return false;
-    // history.length > 1: hay algo a lo que volver dentro de la sesión.
-    return window.history.length > 1;
+    // Solo si la entrada anterior es de la app: si se entró por link directo,
+    // `history.back` saldría del documento y los guards (cambios sin guardar) no correrían.
+    return !!this.router.lastSuccessfulNavigation?.previousNavigation;
   }
 }

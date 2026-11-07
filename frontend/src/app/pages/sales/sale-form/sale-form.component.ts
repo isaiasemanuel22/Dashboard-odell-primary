@@ -47,7 +47,12 @@ import {
   discountPayloadFromMode,
 } from '../../../shared/utils/discount.util';
 import { calculateCatalogLinesCost } from '../../../shared/utils/product.helpers';
-import { productStockOverview, canCloseRetailSale } from '../../../shared/utils/stock.helpers';
+import {
+  availableStockForSaleEdit,
+  canCloseRetailSale,
+  productStockOverview,
+  quantityCommittedInSale,
+} from '../../../shared/utils/stock.helpers';
 import { labelsToSelectOptions } from '../../../shared/utils/select-options';
 import { defaultAccountForMethod } from '../../../shared/utils/treasury-account.util';
 import { resolveMediaUrl } from '../../../shared/utils/media-url.util';
@@ -553,10 +558,14 @@ export class SaleFormComponent implements OnChanges {
   availableStock(productId: string): number {
     const product = this.products.find((item) => item.id === productId);
     const overview = this.stockByProductId[productId];
-    if (product) {
-      return productStockOverview(product, overview, this.products).available;
-    }
-    return Math.max(0, Math.trunc(Number(overview?.available) || 0));
+    const current = product
+      ? productStockOverview(product, overview, this.products).available
+      : Math.max(0, Math.trunc(Number(overview?.available) || 0));
+    // Al editar, devolver las unidades que esta venta ya descontó.
+    return availableStockForSaleEdit(
+      current,
+      quantityCommittedInSale(this.sale, productId),
+    );
   }
 
   private resolveSoldAtPayload(): string | undefined {

@@ -1,13 +1,21 @@
 @use '../../shared/styles/mobile' as mobile;
 
+/* Participa del flex del modal/página: con `contents` el cuerpo no scrolleaba
+   y el dock fijo tapaba «Eliminar» / acciones al final. */
 :host {
-  display: contents;
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
 }
 
 .m-form-shell {
   display: flex;
   flex-direction: column;
+  flex: 1 1 auto;
   min-height: 0;
+  max-height: 100%;
 }
 
 .m-form-shell__bar {
@@ -40,4 +48,12 @@
 .m-form-shell__body {
   flex: 1 1 auto;
   min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Hueco para el dock fijo (botón ~48 + paddings + hint) + safe-area. */
+.m-form-shell__body.m-has-dock {
+  padding-bottom: calc(140px + env(safe-area-inset-bottom, 0px));
 }

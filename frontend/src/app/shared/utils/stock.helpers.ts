@@ -123,3 +123,32 @@ export function canCloseRetailSale(
     )
   );
 }
+
+/** Cantidad de un producto ya descontada por una venta guardada. */
+export function quantityCommittedInSale(
+  sale:
+    | { items: Array<{ productId?: string | null; quantity: number }> }
+    | null
+    | undefined,
+  productId: string,
+): number {
+  if (!sale?.items?.length || !productId) return 0;
+  return sale.items.reduce((sum, item) => {
+    if (item.productId !== productId) return sum;
+    return sum + Math.max(0, Math.trunc(Number(item.quantity) || 0));
+  }, 0);
+}
+
+/**
+ * Stock usable al editar una venta: disponible actual + lo que esa venta
+ * ya tenía (esas unidades siguen «en» la venta hasta guardar o cancelar).
+ */
+export function availableStockForSaleEdit(
+  currentAvailable: number,
+  quantityAlreadyInSale: number,
+): number {
+  return (
+    Math.max(0, Math.trunc(Number(currentAvailable) || 0)) +
+    Math.max(0, Math.trunc(Number(quantityAlreadyInSale) || 0))
+  );
+}

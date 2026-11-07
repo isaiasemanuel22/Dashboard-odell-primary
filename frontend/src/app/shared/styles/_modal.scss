@@ -234,6 +234,14 @@
     flex-direction: column;
   }
 
+  .cdk-overlay-pane.form-dialog-panel .modal__body > db-mobile-form-shell {
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+    display: flex;
+    flex-direction: column;
+  }
+
   .cdk-overlay-pane.form-dialog-panel .modal__body .db-form,
   .cdk-overlay-pane.form-dialog-panel .modal__body form {
     flex: 1 1 auto;
