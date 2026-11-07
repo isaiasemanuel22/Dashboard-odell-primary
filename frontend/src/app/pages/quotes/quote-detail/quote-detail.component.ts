@@ -393,6 +393,16 @@ export class QuoteDetailComponent implements OnInit {
     this.formDialogs.openQuoteDocumentExport(this.quote).subscribe();
   }
 
+  generateComparativeDocument(): void {
+    if (!this.quote) return;
+    this.formDialogs.openQuoteDocumentExport(this.quote, true).subscribe();
+  }
+
+  onMobileComparative(): void {
+    this.closeMobileActions();
+    this.generateComparativeDocument();
+  }
+
   generateOrder(): void {
     if (!this.quote || !this.canGenerateOrder || this.generatingOrder) return;
 

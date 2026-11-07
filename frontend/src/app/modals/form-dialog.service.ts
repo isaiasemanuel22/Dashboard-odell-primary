@@ -166,7 +166,10 @@ export class FormDialogService {
     );
   }
 
-  openQuoteDocumentExport(quote: Quote): Observable<void | undefined> {
+  openQuoteDocumentExport(
+    quote: Quote,
+    comparative = false,
+  ): Observable<void | undefined> {
     return from(import('./quote-document-export-dialog.component')).pipe(
       switchMap(
         ({
@@ -174,9 +177,13 @@ export class FormDialogService {
         }): Observable<void | undefined> =>
           this.open<QuoteDocumentExportDialogData, void>(
             QuoteDocumentExportDialogComponent,
-            { quote },
+            { quote, comparative },
             'sm',
-            { ariaLabel: 'Generar presupuesto' },
+            {
+              ariaLabel: comparative
+                ? 'Generar presupuesto comparativo'
+                : 'Generar presupuesto',
+            },
           ),
       ),
     );

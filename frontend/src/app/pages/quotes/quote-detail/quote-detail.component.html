@@ -147,6 +147,9 @@
       ariaLabel="Más acciones"
       (closed)="closeMobileActions()"
     >
+      <button type="button" class="m-sheet-action" (click)="onMobileComparative()">
+        Generar presupuesto comparativo
+      </button>
       @if (editable) {
         <button type="button" class="m-sheet-action" (click)="onMobileEdit()">
           Editar
@@ -206,6 +209,12 @@
           variant="secondary"
           format="soft"
           (clicked)="generateDocument()"
+        />
+        <db-button
+          label="Generar presupuesto comparativo"
+          variant="secondary"
+          format="soft"
+          (clicked)="generateComparativeDocument()"
         />
         @if (quote.orderId) {
           <db-button

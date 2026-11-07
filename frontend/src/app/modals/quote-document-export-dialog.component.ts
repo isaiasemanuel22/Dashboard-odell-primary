@@ -21,13 +21,17 @@ import { DbButtonComponent } from '@general-components';
 import { FormDialogShellComponent } from './form-dialog-shell/form-dialog-shell.component';
 import {
   QuoteDocumentFormat,
+  QuoteDocumentVariant,
   buildQuoteDocumentInput,
   exportQuoteDocument,
+  isWholesaleQuote,
 } from '../shared/utils/quote-document.util';
 import { normalizeWholesaleDiscount } from '../shared/utils/wholesale-example.util';
 
 export interface QuoteDocumentExportDialogData {
   quote: Quote;
+  /** Comparativa lista vs. por mayor; si no, el diseño sigue el tipo de precio. */
+  comparative?: boolean;
 }
 
 @Component({
@@ -35,13 +39,12 @@ export interface QuoteDocumentExportDialogData {
   imports: [FormDialogShellComponent, DbButtonComponent],
   template: `
     <app-form-dialog-shell
-      title="Generar presupuesto"
+      [title]="title"
       size="sm"
       (close)="close()"
     >
       <p class="quote-export__message">
-        Elegí el formato para descargar el documento con los datos del
-        presupuesto y del cliente.
+        {{ message }}
       </p>
 
       @if (error) {
@@ -109,6 +112,24 @@ export class QuoteDocumentExportDialogComponent implements OnInit {
   private readonly productsService = inject(ProductsService);
   private readonly settingsService = inject(SettingsService);
   private readonly cdr = inject(ChangeDetectorRef);
+
+  readonly variant: QuoteDocumentVariant = this.data.comparative
+    ? 'comparativo'
+    : isWholesaleQuote(this.data.quote)
+      ? 'mayorista'
+      : 'lista';
+
+  readonly title =
+    this.variant === 'comparativo'
+      ? 'Generar presupuesto comparativo'
+      : 'Generar presupuesto';
+
+  readonly message =
+    this.variant === 'comparativo'
+      ? 'El documento muestra el precio de lista y el precio por mayor lado a lado. Elegí el formato para descargarlo.'
+      : this.variant === 'mayorista'
+        ? 'El documento sale con el diseño mayorista (precio de lista y precio de revendedor). Elegí el formato para descargarlo.'
+        : 'Elegí el formato para descargar el documento con los datos del presupuesto y del cliente.';
 
   ready = false;
   exporting: QuoteDocumentFormat | null = null;
@@ -192,7 +213,7 @@ export class QuoteDocumentExportDialogComponent implements OnInit {
         this.productsById,
         this.wholesaleDiscount,
       );
-      await exportQuoteDocument(doc, format);
+      await exportQuoteDocument(doc, this.variant, format);
       this.dialogRef.close();
     } catch (err) {
       console.error(err);
