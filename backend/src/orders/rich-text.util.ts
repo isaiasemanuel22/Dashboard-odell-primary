@@ -80,7 +80,9 @@ function sanitizeAttributes(tag: string, attrsRaw: string): string {
 
   while ((match = attrPattern.exec(attrsRaw)) !== null) {
     const name = match[1].toLowerCase();
-    const value = match[3] ?? match[4] ?? match[5] ?? '';
+    const rawValue = match[3] ?? match[4] ?? match[5] ?? '';
+    // Decode first so scheme checks see the real URL and re-escape stays idempotent.
+    const value = decodeHtmlEntities(rawValue);
 
     if (tag === 'a' && name === 'href') {
       if (/^https?:\/\//i.test(value) || /^mailto:/i.test(value)) {
@@ -100,6 +102,49 @@ function sanitizeAttributes(tag: string, attrsRaw: string): string {
   }
 
   return attrs.join(' ');
+}
+
+const NAMED_HTML_ENTITIES: Record<string, string> = {
+  amp: '&',
+  quot: '"',
+  apos: "'",
+  lt: '<',
+  gt: '>',
+};
+
+/** Decodes &amp; &quot; &#39; &lt; &gt; and numeric entities; repeats to repair &amp;amp;. */
+function decodeHtmlEntities(value: string): string {
+  let current = value;
+  const maxIterations = 8;
+
+  for (let i = 0; i < maxIterations; i++) {
+    const next = current.replace(
+      /&(?:#x([0-9a-fA-F]+)|#(\d+)|([a-zA-Z]+));/g,
+      (full, hex: string | undefined, dec: string | undefined, name: string | undefined) => {
+        if (hex !== undefined) {
+          const code = Number.parseInt(hex, 16);
+          return Number.isFinite(code) && code >= 0 && code <= 0x10ffff
+            ? String.fromCodePoint(code)
+            : full;
+        }
+        if (dec !== undefined) {
+          const code = Number.parseInt(dec, 10);
+          return Number.isFinite(code) && code >= 0 && code <= 0x10ffff
+            ? String.fromCodePoint(code)
+            : full;
+        }
+        if (name !== undefined) {
+          const mapped = NAMED_HTML_ENTITIES[name.toLowerCase()];
+          return mapped !== undefined ? mapped : full;
+        }
+        return full;
+      },
+    );
+    if (next === current) break;
+    current = next;
+  }
+
+  return current;
 }
 
 function escapeAttribute(value: string): string {
