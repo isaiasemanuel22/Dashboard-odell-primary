@@ -1,0 +1,479 @@
+<div class="pl" [class.pl--mobile]="mobile" [class.pl--updating]="updating">
+  @if (!queue.printers.length) {
+    <div class="pl-empty" role="status">
+      <p>
+        Todavía no hay impresoras en la cola. Activá «Mostrar en la cola de impresoras»
+        en
+        <a routerLink="/ajustes/valores-generales">Ajustes › Perfiles de máquina</a>.
+      </p>
+    </div>
+  } @else {
+    @if (estimate; as est) {
+      <div class="pl-note" role="status">
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <rect x="4" y="5" width="16" height="15" rx="2"></rect>
+          <path d="M4 10h16M8 3v4M16 3v4"></path>
+        </svg>
+        <span>
+          <b>Un pedido nuevo de 4 h hoy se entregaría el {{ formatYmdWeekdayDdMm(est.date) }}.</b>
+          La fecha se calcula con la cola real de las impresoras y su jornada.
+        </span>
+      </div>
+    } @else if (estimateUnavailable) {
+      <div class="pl-note" role="status">
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <rect x="4" y="5" width="16" height="15" rx="2"></rect>
+          <path d="M4 10h16M8 3v4M16 3v4"></path>
+        </svg>
+        <span>
+          No se pudo calcular la fecha de entrega con la cola actual.
+        </span>
+      </div>
+    }
+
+    <div class="pl-lanes" cdkDropListGroup>
+      @for (lane of queue.printers; track trackLane($index, lane)) {
+        <section class="pl-lane" [attr.aria-label]="lane.profile.name">
+          <header class="pl-lane__head">
+            <div class="pl-lane__titles">
+              <span class="pl-lane__name">{{ lane.profile.name }}</span>
+              <span class="pl-lane__ams">{{ amsSubtitle(lane) }}</span>
+            </div>
+            @switch (laneStatus(lane)) {
+              @case ('printing') {
+                <span class="pl-pill pl-pill--ok">
+                  <span class="pl-pill__dot" aria-hidden="true"></span>
+                  Imprimiendo
+                </span>
+              }
+              @case ('queued') {
+                <span class="pl-pill pl-pill--warn">En cola</span>
+              }
+              @default {
+                <span class="pl-pill">Libre</span>
+              }
+            }
+          </header>
+
+          <div class="pl-lane__load">
+            <div class="pl-lane__busy">
+              <span class="pl-lbl">Ocupada hasta</span>
+              <span class="pl-strong">{{ formatBusyUntilLabel(lane.busyUntil) }}</span>
+            </div>
+            <div class="pl-track" aria-hidden="true">
+              <div class="pl-track__fill" [style.width.%]="loadPctWidth(lane)"></div>
+            </div>
+            <span class="pl-lane__hours"
+              >{{ formatDecimalHours(lane.queuedHours) }} h en cola</span
+            >
+          </div>
+
+          <div
+            class="pl-lane__list"
+            cdkDropList
+            [id]="laneListId(lane.profile.id)"
+            [cdkDropListData]="lane.jobs"
+            [cdkDropListDisabled]="mobile || updating"
+            (cdkDropListDropped)="onDrop($event, lane.profile.id)"
+          >
+            @for (job of lane.jobs; track trackJob($index, job)) {
+              <article
+                class="pl-task"
+                [class.pl-task--now]="isInProgress(job) && !isBlocked(job)"
+                [class.pl-task--blk]="isBlocked(job)"
+                cdkDrag
+                [cdkDragData]="job"
+                [cdkDragDisabled]="!canMoveJob(job) || mobile || updating"
+              >
+                <button
+                  type="button"
+                  class="pl-task__hit"
+                  cdkDragHandle
+                  (click)="onCardClick(job)"
+                >
+                  @if (isBlocked(job)) {
+                    <div class="pl-task__row">
+                      <span class="pl-lock">
+                        <svg
+                          viewBox="0 0 24 24"
+                          width="12"
+                          height="12"
+                          fill="none"
+                          stroke="currentColor"
+                          stroke-width="2.4"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          aria-hidden="true"
+                        >
+                          <rect x="5" y="11" width="14" height="9" rx="2"></rect>
+                          <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
+                        </svg>
+                        Bloqueada
+                      </span>
+                    </div>
+                  } @else {
+                    @if (scheduleLabel(job); as sched) {
+                      <div class="pl-task__row">
+                        <span class="pl-time">{{ sched }}</span>
+                        @if (isInProgress(job)) {
+                          @if (formatProgressPct(job.schedule?.progress); as pct) {
+                            <span class="pl-pill pl-pill--blue">{{ pct }}</span>
+                          }
+                        }
+                      </div>
+                    }
+                  }
+
+                  <span class="pl-task__title">{{ jobTitle(job) }}</span>
+                  <div class="pl-task__row">
+                    <span class="pl-sec">{{ jobMetaLine(job) }}</span>
+                    @if (job.colors.length) {
+                      <span class="pl-swatches" aria-hidden="true">
+                        @for (color of job.colors; track color.id) {
+                          <span
+                            class="pl-sw"
+                            [style.background-color]="color.hex"
+                          ></span>
+                        }
+                      </span>
+                    }
+                  </div>
+
+                  @if (deliveryLine(job); as delivery) {
+                    @if (delivery.text) {
+                      <div
+                        class="pl-sec"
+                        [class.pl-sec--late]="delivery.kind === 'late'"
+                        [class.pl-sec--overdue]="delivery.kind === 'overdue'"
+                      >
+                        {{ delivery.text }}
+                      </div>
+                    }
+                  }
+                </button>
+
+                @if (isBlocked(job)) {
+                  <p class="pl-blk-m">{{ job.blockedReason || 'Esperando condición operativa' }}</p>
+                  <db-button
+                    label="Reemplazar insumo"
+                    variant="secondary"
+                    format="soft"
+                    extraClass="pl-replace pl-btn-sm"
+                    [disabled]="updating"
+                    (clicked)="replaceSupply.emit({ job })"
+                  />
+                }
+
+                @if (canMoveJob(job)) {
+                  @if (mobile) {
+                    <button
+                      type="button"
+                      class="pl-more"
+                      aria-label="Más acciones de asignación"
+                      [disabled]="updating"
+                      (click)="openMoveSheet(job)"
+                    >
+                      ···
+                    </button>
+                  } @else {
+                    <div class="pl-task__actions">
+                      <button
+                        type="button"
+                        class="pl-mini pl-btn-sm"
+                        [disabled]="updating"
+                        (click)="moveUp(job, lane)"
+                      >
+                        Subir
+                      </button>
+                      <button
+                        type="button"
+                        class="pl-mini pl-btn-sm"
+                        [disabled]="updating"
+                        (click)="moveDown(job, lane)"
+                      >
+                        Bajar
+                      </button>
+                      @for (other of otherPrinters(lane.profile.id); track other.profile.id) {
+                        <button
+                          type="button"
+                          class="pl-mini pl-btn-sm"
+                          [disabled]="updating"
+                          (click)="assignTo(job, other.profile.id)"
+                        >
+                          Mover a {{ other.profile.name }}
+                        </button>
+                      }
+                      <button
+                        type="button"
+                        class="pl-mini pl-btn-sm"
+                        [disabled]="updating"
+                        (click)="assignTo(job, null)"
+                      >
+                        Quitar de la impresora
+                      </button>
+                    </div>
+                  }
+                }
+              </article>
+            } @empty {
+              <p class="pl-lane__empty">{{ laneEmptyMessage(lane) }}</p>
+            }
+          </div>
+        </section>
+      }
+
+      <section class="pl-lane pl-lane--unassigned" aria-label="Sin asignar">
+        <header class="pl-lane__head">
+          <span class="pl-lane__name">Sin asignar</span>
+          <span class="pl-pill pl-pill--warn">{{ queue.unassigned.length }}</span>
+        </header>
+        <p class="pl-lane__hint">
+          @if (mobile) {
+            Tocá «Asignar» para elegir la impresora, o dejá que Odell elija la que termina antes.
+          } @else {
+            Arrastrá a una impresora o dejá que Odell elija la que termina antes.
+          }
+        </p>
+
+        <div
+          class="pl-lane__list"
+          cdkDropList
+          [id]="unassignedListId"
+          [cdkDropListData]="queue.unassigned"
+          [cdkDropListDisabled]="mobile || updating"
+          (cdkDropListDropped)="onDrop($event, null)"
+        >
+          @for (job of queue.unassigned; track trackJob($index, job)) {
+            <article
+              class="pl-task"
+              cdkDrag
+              [cdkDragData]="job"
+              [cdkDragDisabled]="!canMoveJob(job) || mobile || updating"
+            >
+              <button
+                type="button"
+                class="pl-task__hit"
+                cdkDragHandle
+                (click)="onCardClick(job)"
+              >
+                <span class="pl-task__title">{{ jobTitle(job) }}</span>
+                <div class="pl-task__row">
+                  <span class="pl-sec">{{ unassignedMeta(job) }}</span>
+                  @if (job.colors.length) {
+                    <span class="pl-swatches" aria-hidden="true">
+                      @for (color of job.colors; track color.id) {
+                        <span
+                          class="pl-sw"
+                          [style.background-color]="color.hex"
+                        ></span>
+                      }
+                    </span>
+                  }
+                </div>
+              </button>
+
+              @if (canMoveJob(job)) {
+                @if (mobile) {
+                  <db-button
+                    label="Asignar"
+                    variant="secondary"
+                    format="soft"
+                    [disabled]="updating"
+                    (clicked)="openAssignSheet(job)"
+                  />
+                } @else {
+                  <div class="pl-task__actions pl-task__actions--assign">
+                    @for (lane of queue.printers; track lane.profile.id) {
+                      <button
+                        type="button"
+                        class="pl-mini pl-btn-sm"
+                        [disabled]="updating"
+                        (click)="assignTo(job, lane.profile.id)"
+                      >
+                        {{ lane.profile.name }}
+                      </button>
+                    }
+                    <button
+                      type="button"
+                      class="pl-mini pl-mini--primary pl-btn-sm"
+                      [disabled]="updating"
+                      (click)="assignTo(job, 'auto')"
+                    >
+                      Auto
+                    </button>
+                  </div>
+                }
+              }
+            </article>
+          } @empty {
+            <p class="pl-lane__empty">Nada sin asignar</p>
+          }
+        </div>
+
+        @if (queue.otherAreas.length) {
+          <div class="pl-other">
+            <span class="pl-lbl">Otras áreas · {{ otherAreasTaskCount }}&nbsp;tareas</span>
+            @for (row of queue.otherAreas; track row.area) {
+              <div class="pl-other__row">
+                <div class="pl-other__bar">
+                  <span class="pl-other__title">{{ otherAreaTitle(row) }}</span>
+                  @if (isPrepareOrderArea(row.area)) {
+                    <span class="pl-pill pl-pill--ok">Preparar pedido</span>
+                  } @else {
+                    <db-area-chip
+                      [label]="otherAreaLabel(row.area)"
+                      [area]="otherAreaChipKey(row.area)"
+                    />
+                  }
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </section>
+    </div>
+
+    @if (capacity; as cap) {
+      <section class="pl-capacity" aria-label="Capacidad de la semana">
+        <h3 class="pl-capacity__title">Capacidad de la semana</h3>
+        <div class="pl-capacity__scroll">
+          <table class="pl-capacity__table">
+            <thead>
+              <tr>
+                <th>Impresora</th>
+                @for (day of cap.days; track day) {
+                  <th>{{ formatCapacityDayHeader(day) }}</th>
+                }
+                <th class="pl-capacity__free">Libre</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (row of cap.printers; track row.printerId) {
+                <tr>
+                  <td>{{ row.name }}</td>
+                  @for (day of cap.days; track day; let i = $index) {
+                    <td>
+                      @if (capacityCell(row, i); as cell) {
+                        @switch (cell.kind) {
+                          @case ('empty') {
+                            <span class="pl-pill pl-pill--muted">—</span>
+                          }
+                          @case ('full') {
+                            <span class="pl-pill pl-pill--danger">Llena</span>
+                          }
+                          @case ('warn') {
+                            <span class="pl-pill pl-pill--warn">{{ cell.text }}</span>
+                          }
+                          @default {
+                            <span class="pl-pill pl-pill--muted">{{ cell.text }}</span>
+                          }
+                        }
+                      }
+                    </td>
+                  }
+                  <td class="pl-capacity__free pl-capacity__free--strong">
+                    {{ formatDecimalHours(row.freeHours) }} h
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <p class="pl-capacity__note">
+          Jornada de impresión configurable en cada Perfil de máquina (Ajustes ›
+          Perfiles de máquina).
+        </p>
+      </section>
+    }
+  }
+</div>
+
+<db-mobile-sheet
+  [open]="!!assignSheetJob"
+  ariaLabel="Asignar impresora"
+  (closed)="closeSheets()"
+>
+  @if (assignSheetJob; as job) {
+    @for (lane of queue.printers; track lane.profile.id) {
+      <button
+        type="button"
+        class="m-sheet-action"
+        [disabled]="updating"
+        (click)="assignTo(job, lane.profile.id)"
+      >
+        {{ lane.profile.name }}
+      </button>
+    }
+    <button
+      type="button"
+      class="m-sheet-action"
+      [disabled]="updating"
+      (click)="assignTo(job, 'auto')"
+    >
+      Auto (la que termina antes)
+    </button>
+  }
+</db-mobile-sheet>
+
+<db-mobile-sheet
+  [open]="!!moveSheetJob"
+  ariaLabel="Acciones de impresora"
+  (closed)="closeSheets()"
+>
+  @if (moveSheetJob; as job) {
+    @if (laneForJob(job); as lane) {
+      <button
+        type="button"
+        class="m-sheet-action"
+        [disabled]="updating"
+        (click)="moveUp(job, lane); closeSheets()"
+      >
+        Subir
+      </button>
+      <button
+        type="button"
+        class="m-sheet-action"
+        [disabled]="updating"
+        (click)="moveDown(job, lane); closeSheets()"
+      >
+        Bajar
+      </button>
+      @for (other of otherPrinters(lane.profile.id); track other.profile.id) {
+        <button
+          type="button"
+          class="m-sheet-action"
+          [disabled]="updating"
+          (click)="assignTo(job, other.profile.id)"
+        >
+          Mover a {{ other.profile.name }}
+        </button>
+      }
+      <button
+        type="button"
+        class="m-sheet-action"
+        [disabled]="updating"
+        (click)="assignTo(job, null)"
+      >
+        Quitar de la impresora
+      </button>
+    }
+  }
+</db-mobile-sheet>

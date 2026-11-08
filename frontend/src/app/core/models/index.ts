@@ -318,6 +318,20 @@ export interface MachineProfile {
   consumptionMl?: number;
   /** Piezas que se lavan con el mismo baño antes de cambiar el insumo. */
   washBathUses?: number;
+  /** Solo role=print: aparece en la cola de impresoras. */
+  queueEnabled?: boolean;
+  /** Solo role=print: horas de jornada (default 16). */
+  workHoursPerDay?: number;
+  /** Solo role=print: 0=dom..6=sáb (default lun–sáb). */
+  workWeekdays?: number[];
+  /** Solo role=print: inicio de jornada "HH:mm" (default "08:00"). */
+  workStartHour?: string;
+  /** Solo role=print: tipo de AMS (ej. "AMS lite"). */
+  amsType?: string;
+  /** Solo role=print: hasta 4 ids de ColorConfig; null = ranura vacía. */
+  amsSlots?: (string | null)[];
+  /** Solo role=print: perfil usado para costear productos de ese productType. */
+  costBase?: boolean;
 }
 
 export interface GeneralSettings {
@@ -951,6 +965,82 @@ export interface PrintJob {
   startedAt?: string;
   completedAt?: string;
   blockedReason?: string;
+  responsibleUserId?: string;
+  /** Id de MachineProfile (role=print, queueEnabled). null/ausente = sin asignar. */
+  printerId?: string | null;
+  /** Orden manual dentro de la cola de esa impresora (0..n-1). */
+  queuePosition?: number | null;
+}
+
+export interface PrinterQueueColorSlot {
+  id: string;
+  name: string;
+  hex: string;
+}
+
+export interface PrinterQueueProfile {
+  id: string;
+  name: string;
+  amsType: string | null;
+  amsSlots: (PrinterQueueColorSlot | null)[];
+  workHoursPerDay: number;
+  workWeekdays: number[];
+  workStartHour: string;
+}
+
+export interface PrinterJobSchedule {
+  jobId: string;
+  start: string | null;
+  end: string | null;
+  progress: number | null;
+  blocked: boolean;
+  readyDate: string | null;
+  late: boolean;
+  overdue: boolean;
+}
+
+export type PrinterQueueJob = PrintJob & {
+  colors: ColorConfig[];
+  schedule?: PrinterJobSchedule | null;
+};
+
+export interface PrinterQueueLane {
+  profile: PrinterQueueProfile;
+  busyUntil: string | null;
+  queuedHours: number;
+  printing: boolean;
+  loadPct: number;
+  jobs: PrinterQueueJob[];
+}
+
+export interface PrinterQueueOtherArea {
+  area: string;
+  count: number;
+  hours: number;
+}
+
+export interface PrinterQueueResponse {
+  printers: PrinterQueueLane[];
+  unassigned: PrinterQueueJob[];
+  otherAreas: PrinterQueueOtherArea[];
+}
+
+export interface DeliveryEstimate {
+  date: string;
+  printerId: string;
+}
+
+export interface PrinterCapacityRow {
+  printerId: string;
+  name: string;
+  hoursByDay: number[];
+  full: boolean[];
+  freeHours: number;
+}
+
+export interface PrinterCapacity {
+  days: string[];
+  printers: PrinterCapacityRow[];
 }
 
 export interface SupplyShortageLine {

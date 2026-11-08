@@ -318,6 +318,11 @@ export class PrinterQueueService {
     if (taskType !== TaskType.PRODUCTION && taskType !== TaskType.INTERNAL) {
       return false;
     }
+    // Interna sin producto: el type impresion_3d marca el área del tablero
+    // (ej. «Sacar correo…»), no un trabajo FDM para una impresora.
+    if (taskType === TaskType.INTERNAL && !job.productId) {
+      return false;
+    }
     if (!QUEUE_STATUSES.has(job.status)) return false;
     if (this.isDesignPrintJob(job)) return false;
     if (!this.isFdmJob(job)) return false;
@@ -529,10 +534,7 @@ export class PrinterQueueService {
       }
       if (this.isEligibleForPrinterQueue(job)) continue;
 
-      const area =
-        job.taskType === TaskType.PREPARE_ORDER
-          ? TaskType.PREPARE_ORDER
-          : job.type || '';
+      const area = this.otherAreaKey(job);
       const entry = map.get(area) ?? { count: 0, hours: 0 };
       entry.count += 1;
       entry.hours += Math.max(0, Number(job.estimatedHours) || 0);
@@ -541,6 +543,39 @@ export class PrinterQueueService {
     return [...map.entries()]
       .map(([area, value]) => ({ area, ...value }))
       .sort((a, b) => a.area.localeCompare(b.area, 'es'));
+  }
+
+  /** Clave estable para agrupar «Otras áreas» (el frontend rotula en español). */
+  private otherAreaKey(job: PrintJob): string {
+    if (job.taskType === TaskType.PREPARE_ORDER) {
+      return TaskType.PREPARE_ORDER;
+    }
+    if (job.taskType === TaskType.INTERNAL) return '';
+    if (this.isDesignPrintJob(job)) {
+      return 'impresion_diseno';
+    }
+    if (job.type === ServiceType.IMPRESION_3D && this.isResinJob(job)) {
+      return 'impresion_3d_resina';
+    }
+    return job.type || '';
+  }
+
+  private isResinJob(job: PrintJob): boolean {
+    if (!job.productId) {
+      if (!job.orderId || job.orderItemIndex < 0) return false;
+      const order = this.store.getOrderById(job.orderId);
+      const item = order?.items[job.orderItemIndex];
+      if (!item) return false;
+      return (
+        item.printProcess === 'resina' ||
+        !!item.resinType ||
+        (!!item.productId &&
+          this.store.products.find((p) => p.id === item.productId)?.type ===
+            ProductType.RESINA)
+      );
+    }
+    const product = this.store.products.find((p) => p.id === job.productId);
+    return product?.type === ProductType.RESINA;
   }
 }
 

@@ -28,7 +28,10 @@ import {
 import { SuppliesService } from '../../core/services/settings.service';
 import { DbInputComponent } from '../dashboard-form/db-input/db-input.component';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
-import { getMachineProfilesForProductType } from '../../shared/utils/machine-profile.util';
+import {
+  getMachineProfilesForProductType,
+  selectPrintProfileForCost,
+} from '../../shared/utils/machine-profile.util';
 import {
   isFdmQuoteConfigured,
   isResinQuoteLine,
@@ -131,6 +134,9 @@ export class OrderQuotePrintComponent implements OnInit {
 
   private machineProfile(productType: ProductType, role: MachineProfileRole) {
     if (!this.generalSettings) return undefined;
+    if (role === MachineProfileRole.PRINT) {
+      return selectPrintProfileForCost(this.generalSettings, productType);
+    }
     return getMachineProfilesForProductType(
       this.generalSettings,
       productType,

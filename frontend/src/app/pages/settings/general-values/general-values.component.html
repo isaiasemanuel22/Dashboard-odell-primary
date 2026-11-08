@@ -93,6 +93,15 @@
               [subtitle]="machineRowCaption(profile)"
               (pressed)="selectProfile(profile.id)"
             >
+              @if (profileQueueBadges(profile); as badges) {
+                @if (badges.length) {
+                  <span class="mp-badges" aria-label="Marcas del equipo">
+                    @for (badge of badges; track badge.label) {
+                      <span class="mp-badge" [class]="'mp-badge--' + badge.tone">{{ badge.label }}</span>
+                    }
+                  </span>
+                }
+              }
               <svg class="st-m__chev" viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 6l6 6-6 6" /></svg>
             </db-mobile-catalog-row>
           } @empty {
@@ -122,11 +131,13 @@
               [roleOptions]="roleOptions"
               [productTypeOptions]="productTypeSelectOptions"
               [supplyOptions]="supplyOptions"
+              [colors]="settings.colors"
               [saving]="savingProfiles"
               [sheetMode]="true"
               (cancelEdit)="closeProfileEditor()"
               (save)="saveMachineProfiles()"
               (remove)="removeMachineProfile(profile.id)"
+              (costBaseChange)="onCostBaseChange(profile, $event)"
             />
           </db-mobile-sheet>
         }
@@ -260,7 +271,19 @@
               [clientSide]="false"
               emptyText="No hay equipos para este tipo de producto."
               (action)="onProfileAction($event)"
-            />
+            >
+              <ng-template odlCell="name" let-profile>
+                <span class="mp-name-cell">
+                  <span class="mp-name">{{ profile.name.trim() || 'Nuevo equipo' }}</span>
+                  @for (badge of profileQueueBadges(profile); track badge.label) {
+                    <span class="mp-badge" [class]="'mp-badge--' + badge.tone">{{ badge.label }}</span>
+                  }
+                </span>
+                @if (supplyCaption(profile); as sec) {
+                  <span class="mp-name-sec">{{ sec }}</span>
+                }
+              </ng-template>
+            </db-data-table>
           } @else {
             <p class="empty-group">No hay equipos para este tipo de producto.</p>
           }
@@ -271,9 +294,11 @@
               [roleOptions]="roleOptions"
               [productTypeOptions]="productTypeSelectOptions"
               [supplyOptions]="supplyOptions"
+              [colors]="settings.colors"
               [saving]="savingProfiles"
               (cancelEdit)="closeProfileEditor()"
               (save)="saveMachineProfiles()"
+              (costBaseChange)="onCostBaseChange(profile, $event)"
             />
           }
         </section>

@@ -102,12 +102,16 @@
 }
 
 .job-card--board {
-  padding: 0.85rem 0.9rem 0.75rem;
-  border: 1px solid $color-border;
+  padding: 0.75rem;
+  border: 1px solid #e3ecf2;
   border-left: none;
-  border-radius: $radius-md;
-  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  border-radius: 12px;
+  box-shadow: 0 1px 2px rgba(15, 42, 58, 0.06);
+  background: #fff;
   cursor: grab;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
 
   &:active {
     cursor: grabbing;
@@ -118,17 +122,17 @@
     align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
-    margin-bottom: 0.45rem;
+    margin-bottom: 0;
   }
 
   .job-card__id {
-    font-size: 0.72rem;
-    font-weight: 600;
-    color: $color-text-muted;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #0e7aab;
     text-decoration: none;
 
     &:hover {
-      color: $color-brand-deep;
+      color: #0b5f86;
       text-decoration: underline;
     }
   }
@@ -137,34 +141,39 @@
     display: inline-flex;
     align-items: center;
     gap: 0.2rem;
-    font-size: 0.68rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    color: $color-text-muted;
+    border-radius: 8px;
+    padding: 0.1rem 0.5rem;
+    color: #4a6072;
+    background: #eef4f8;
 
     &.priority-high {
-      color: #dc2626;
+      color: #b91c1c;
+      background: #fdecec;
     }
 
     &.priority-medium {
-      color: #d97706;
+      color: #92400e;
+      background: #fef3e2;
     }
 
     &.priority-normal {
-      color: $color-brand-deep;
+      color: #4a6072;
+      background: #eef4f8;
     }
   }
 
   .job-card__priority-icon {
-    font-size: 0.75rem;
-    line-height: 1;
+    display: none;
   }
 
   .job-card__title {
-    margin: 0 0 0.55rem;
-    font-size: 0.9rem;
+    margin: 0;
+    font-size: 0.875rem;
     font-weight: 700;
-    line-height: 1.35;
-    color: $color-text;
+    line-height: 1.3;
+    color: #0f2a3a;
   }
 
   .job-card__title-link {
@@ -172,53 +181,98 @@
     text-decoration: none;
 
     &:hover {
-      color: $color-primary;
+      color: #0e7aab;
     }
   }
 
-  .job-card__tag-row {
-    margin-bottom: 0.55rem;
+  .job-card__meta-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  .job-card__due {
+    font-size: 0.75rem;
+    color: #4a6072;
+    margin-left: auto;
+
+    &--late {
+      color: #b91c1c;
+      font-weight: 700;
+    }
   }
 
   .job-card__blocked {
-    display: flex;
-    align-items: flex-start;
-    gap: 0.35rem;
-    margin: 0 0 0.65rem;
-    padding: 0.5rem 0.55rem;
-    border-radius: $radius-sm;
-    background: #ffedd5;
-    border: 1px solid #fdba74;
-    color: #9a3412;
-    font-size: 0.72rem;
-    font-weight: 600;
+    margin: 0;
+    padding: 0.4rem 0.5rem;
+    border-radius: 8px;
+    background: #fdecec;
+    border: 0;
+    color: #b91c1c;
+    font-size: 0.75rem;
+    font-weight: 500;
     line-height: 1.35;
-  }
-
-  .job-card__blocked-icon {
-    flex-shrink: 0;
-    line-height: 1.2;
   }
 
   .job-card__footer {
     display: flex;
-    justify-content: flex-end;
-    margin-top: 0.15rem;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0;
   }
 
   .job-card__avatar {
-    width: 1.75rem;
-    height: 1.75rem;
+    width: 1.625rem;
+    height: 1.625rem;
     border-radius: 50%;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
-    color: $color-brand-deep;
-    background: $color-primary-bg;
-    border: 1px solid $color-border;
+    color: #0b5f86;
+    background: #dcebf4;
+    border: 0;
+    flex: none;
   }
+
+  .job-card__step {
+    font-size: 0.75rem;
+    color: #4a6072;
+    text-align: right;
+  }
+}
+
+:host ::ng-deep .job-card__replace {
+  align-self: flex-start;
+  border-color: #b91c1c !important;
+  color: #b91c1c !important;
+  background: #fff !important;
+}
+
+:host ::ng-deep .job-card__replace--sm {
+  min-height: 2rem;
+  padding: 0.25rem 0.65rem !important;
+  font-size: 0.75rem !important;
+}
+
+:host ::ng-deep .job-card__add {
+  align-self: stretch;
+  min-height: 2.25rem;
+  height: 2.25rem;
+  border-radius: 10px !important;
+  border: 1px solid #c9d6df !important;
+  background: #fff !important;
+  color: #0b5f86 !important;
+  font-size: 0.8125rem;
+  white-space: nowrap;
+  padding-inline: 0.5rem !important;
+  font-weight: 500;
+  padding: 0 0.5rem;
+  white-space: nowrap;
 }
 
 .job-card__area {

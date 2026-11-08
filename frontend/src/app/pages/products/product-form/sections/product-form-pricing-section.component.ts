@@ -16,11 +16,10 @@ import {
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import {
   GeneralSettings,
-  MachineProfileRole,
   ProductType,
 } from '../../../../core/models';
 import { SettingsFacade } from '../../../../store/settings/settings.facade';
-import { getMachineProfilesForProductType } from '../../../../shared/utils/machine-profile.util';
+import { selectPrintProfileForCost } from '../../../../shared/utils/machine-profile.util';
 import { totalFdmFilamentGrams } from '../../../../shared/utils/fdm.helpers';
 import {
   getMarginForProductType,
@@ -237,11 +236,10 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
 
   private printProfile() {
     if (!this.settings) return null;
-    const printers = getMachineProfilesForProductType(
+    return selectPrintProfileForCost(
       this.settings,
       this.form.controls.type.value,
-    ).filter((profile) => profile.role === MachineProfileRole.PRINT);
-    return printers.length === 1 ? printers[0] : null;
+    ) ?? null;
   }
 
   private money(value: number): string {

@@ -2,9 +2,19 @@
   <div class="cola-header__intro">
     <h2>Cola de trabajo</h2>
     <p class="cola-header__stats">
-      <span>{{ tasksOnBoardCount }} tareas en el tablero</span>
-      <span class="cola-header__dot" aria-hidden="true">·</span>
-      <span>{{ backlogCount }} por agregar</span>
+      @if (viewMode === 'printer') {
+        <span>{{ tasksOnBoardCount }} tareas</span>
+        <span class="cola-header__dot" aria-hidden="true">·</span>
+        <span>{{ queuedPrintHoursLabel }} h de impresión en cola</span>
+        <span class="cola-header__dot" aria-hidden="true">·</span>
+        <span>{{ unassignedCount }} sin asignar</span>
+        <span class="cola-header__dot" aria-hidden="true">·</span>
+        <span>{{ backlogCount }} por agregar</span>
+      } @else {
+        <span>{{ tasksOnBoardCount }} tareas en el tablero</span>
+        <span class="cola-header__dot" aria-hidden="true">·</span>
+        <span>{{ backlogCount }} por agregar</span>
+      }
       @if (blockedCount) {
         <span class="cola-header__dot" aria-hidden="true">·</span>
         <span class="cola-header__blocked">{{ blockedCount }} bloqueadas</span>
@@ -14,7 +24,19 @@
 
   <div class="cola-header__actions">
     <label class="cola-search">
-      <span class="cola-search__icon" aria-hidden="true">🔍</span>
+      <svg
+        class="cola-search__icon"
+        viewBox="0 0 24 24"
+        width="16"
+        height="16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="7"></circle>
+        <path d="M20 20l-3.5-3.5"></path>
+      </svg>
       <input
         type="search"
         class="cola-search__input"
@@ -23,10 +45,17 @@
         (ngModelChange)="searchQueryChange.emit($event)"
       />
     </label>
+    <db-segmented-control
+      class="cola-header__seg"
+      ariaLabel="Vista de la cola"
+      [options]="viewOptions"
+      [value]="viewMode"
+      (valueChange)="viewModeChange.emit($event)"
+    />
     <db-button
       label="+ Nueva tarea"
       variant="primary"
-      format="inline"
+      format="solid"
       (clicked)="newTask.emit()"
     />
   </div>
@@ -51,7 +80,7 @@
 
   @if (customerChips.length) {
     <div class="cola-filters__clients">
-      <span class="cola-filters__label">Clientes</span>
+      <span class="cola-filters__label">Cliente</span>
       <div class="cola-filters__avatars" role="group" aria-label="Filtrar por cliente">
         @for (chip of customerChips; track chip.initial) {
           <button

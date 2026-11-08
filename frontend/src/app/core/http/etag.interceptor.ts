@@ -23,6 +23,12 @@ function invalidateCacheForMutation(url: string): void {
       continue;
     }
 
+    // PATCH/POST /print-jobs/:id debe invalidar /print-jobs/board (ETag).
+    if (url.includes('/print-jobs') && key.includes('/print-jobs')) {
+      responseCache.delete(key);
+      continue;
+    }
+
     for (const segment of CACHEABLE_SEGMENTS) {
       if (url.includes(segment) && key.includes(segment)) {
         responseCache.delete(key);

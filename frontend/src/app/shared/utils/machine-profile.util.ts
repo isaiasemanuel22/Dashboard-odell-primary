@@ -160,14 +160,65 @@ export function resolveWashBathUses(value?: number | null): number {
   return uses;
 }
 
+const DEFAULT_WORK_HOURS_PER_DAY = 16;
+const DEFAULT_WORK_WEEKDAYS = [1, 2, 3, 4, 5, 6];
+const DEFAULT_WORK_START_HOUR = '08:00';
+
+function normalizeWorkWeekdays(value?: number[]): number[] {
+  if (!Array.isArray(value) || !value.length) return [...DEFAULT_WORK_WEEKDAYS];
+  const unique = [
+    ...new Set(
+      value
+        .map((day) => Number(day))
+        .filter((day) => Number.isInteger(day) && day >= 0 && day <= 6),
+    ),
+  ];
+  return unique.length ? unique : [...DEFAULT_WORK_WEEKDAYS];
+}
+
+function normalizeWorkStartHour(value?: string): string {
+  if (typeof value === 'string' && /^\d{2}:\d{2}$/.test(value.trim())) {
+    return value.trim();
+  }
+  return DEFAULT_WORK_START_HOUR;
+}
+
+function normalizeAmsSlots(value?: (string | null)[]): (string | null)[] {
+  const slots = Array.isArray(value) ? value.slice(0, 4) : [];
+  while (slots.length < 4) slots.push(null);
+  return slots.map((slot) => (slot ? String(slot) : null));
+}
+
+function costBaseKey(profile: MachineProfile): string {
+  return `${profile.productType ?? '*'}`;
+}
+
+/** Deja un solo costBase=true por productType entre perfiles print. */
+export function enforceSingleCostBase(
+  profiles: MachineProfile[],
+): MachineProfile[] {
+  const claimed = new Set<string>();
+  return profiles.map((profile) => {
+    if (profile.role !== MachineProfileRole.PRINT || !profile.costBase) {
+      return profile.costBase ? { ...profile, costBase: false } : profile;
+    }
+    const key = costBaseKey(profile);
+    if (claimed.has(key)) {
+      return { ...profile, costBase: false };
+    }
+    claimed.add(key);
+    return profile;
+  });
+}
+
 export function normalizeMachineProfiles(
   profiles: StoredMachineProfile[],
 ): MachineProfile[] {
-  return profiles
+  const normalized = profiles
     .filter((profile) => profile.name?.trim())
     .map((profile) => {
       const productType = resolveProfileProductType(profile);
-      return {
+      const base: MachineProfile = {
         id: profile.id,
         name: profile.name.trim(),
         role: profile.role,
@@ -186,7 +237,39 @@ export function normalizeMachineProfiles(
             ? Number(profile.washBathUses)
             : undefined,
       };
+
+      if (profile.role !== MachineProfileRole.PRINT) {
+        return base;
+      }
+
+      const workHours = Number(profile.workHoursPerDay);
+      return {
+        ...base,
+        queueEnabled: !!profile.queueEnabled,
+        workHoursPerDay:
+          Number.isFinite(workHours) && workHours >= 1 && workHours <= 24
+            ? workHours
+            : DEFAULT_WORK_HOURS_PER_DAY,
+        workWeekdays: normalizeWorkWeekdays(profile.workWeekdays),
+        workStartHour: normalizeWorkStartHour(profile.workStartHour),
+        amsType: profile.amsType?.trim() || undefined,
+        amsSlots: normalizeAmsSlots(profile.amsSlots),
+        costBase: !!profile.costBase,
+      };
     });
+
+  return enforceSingleCostBase(normalized);
+}
+
+/** Perfil print usado para costear: costBase o el primero del productType. */
+export function selectPrintProfileForCost(
+  settings: GeneralSettings,
+  productType: ProductType,
+): MachineProfile | undefined {
+  const prints = getMachineProfilesForProductType(settings, productType).filter(
+    (profile) => profile.role === MachineProfileRole.PRINT,
+  );
+  return prints.find((profile) => profile.costBase) ?? prints[0];
 }
 
 export function ensureMachineProfiles(
@@ -245,7 +328,12 @@ export function calculateMachineOverhead(
   productType: ProductType,
   context: MachineTimeContext,
 ): { energyCost: number; machineCost: number } {
-  const profiles = getMachineProfilesForProductType(settings, productType);
+  const all = getMachineProfilesForProductType(settings, productType);
+  const printForCost = selectPrintProfileForCost(settings, productType);
+  const profiles = all.filter((profile) => {
+    if (profile.role !== MachineProfileRole.PRINT) return true;
+    return printForCost ? profile.id === printForCost.id : false;
+  });
   const costPerKwh = settings.electricityCostPerKwh;
 
   let energyCost = 0;
@@ -270,9 +358,15 @@ export function calculateMachineOverheadForRole(
   context: MachineTimeContext,
   role: MachineProfileRole,
 ): { energyCost: number; machineCost: number; total: number } {
-  const profiles = getMachineProfilesForProductType(settings, productType).filter(
-    (profile) => profile.role === role,
-  );
+  const profiles =
+    role === MachineProfileRole.PRINT
+      ? (() => {
+          const selected = selectPrintProfileForCost(settings, productType);
+          return selected ? [selected] : [];
+        })()
+      : getMachineProfilesForProductType(settings, productType).filter(
+          (profile) => profile.role === role,
+        );
   const costPerKwh = settings.electricityCostPerKwh;
 
   let energyCost = 0;

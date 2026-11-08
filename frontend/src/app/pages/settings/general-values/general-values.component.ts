@@ -76,7 +76,7 @@ export class GeneralValuesComponent
     {
       key: 'name',
       header: 'Equipo',
-      type: 'primary',
+      type: 'custom',
       value: (profile) => profile.name.trim() || 'Nuevo equipo',
       secondary: (profile) => this.supplyCaption(profile),
     },
@@ -85,6 +85,17 @@ export class GeneralValuesComponent
     { key: 'watts', header: 'Consumo', value: (profile) => `${profile.watts} W` },
     { key: 'costPerHour', header: 'Costo máquina', type: 'money', secondary: () => '/ h' },
   ];
+
+  profileQueueBadges(profile: MachineProfile): { label: string; tone: string }[] {
+    const badges: { label: string; tone: string }[] = [];
+    if (profile.queueEnabled) {
+      badges.push({ label: 'En cola', tone: 'info' });
+    }
+    if (profile.costBase) {
+      badges.push({ label: 'Costos', tone: 'ok' });
+    }
+    return badges;
+  }
 
   onProfileAction(event: OdlActionEvent<MachineProfile>): void {
     if (event.actionId === 'editar') this.selectProfile(event.row.id);
@@ -210,6 +221,15 @@ export class GeneralValuesComponent
   selectProfile(id: string): void {
     this.openMenuId = null;
     this.selectedProfileId = id;
+    if (!this.isMobile()) {
+      Promise.resolve().then(() => {
+        requestAnimationFrame(() => {
+          document
+            .getElementById('machine-profile-editor')
+            ?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        });
+      });
+    }
   }
 
   closeProfileEditor(): void {
@@ -330,11 +350,25 @@ export class GeneralValuesComponent
         ) {
           this.selectedProfileId = null;
         }
+        this.scrollToSettingsMessage();
       },
       error: () => {
         this.savingProfiles = false;
         this.message = 'Error al guardar perfiles';
+        this.scrollToSettingsMessage();
       },
+    });
+  }
+
+  /** Lleva al aviso de confirmación de Ajustes (mismo patrón que el resto). */
+  private scrollToSettingsMessage(): void {
+    if (this.isMobile()) return;
+    Promise.resolve().then(() => {
+      requestAnimationFrame(() => {
+        document
+          .querySelector('.values-page > .message')
+          ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
     });
   }
 
@@ -410,6 +444,27 @@ export class GeneralValuesComponent
     return id.startsWith('tmp-mp-');
   }
 
+  onCostBaseChange(profile: MachineProfile, enabled: boolean): void {
+    if (!this.settings) return;
+    this.settings = {
+      ...this.settings,
+      machineProfiles: this.settings.machineProfiles.map((item) => {
+        if (item.id === profile.id) {
+          return { ...item, costBase: enabled };
+        }
+        if (
+          enabled &&
+          item.role === MachineProfileRole.PRINT &&
+          item.productType === profile.productType &&
+          item.costBase
+        ) {
+          return { ...item, costBase: false };
+        }
+        return item;
+      }),
+    };
+  }
+
   private toMachineProfilePayload(
     profile: MachineProfile,
   ): Omit<MachineProfile, 'id'> {
@@ -422,6 +477,13 @@ export class GeneralValuesComponent
       washSupplyId: profile.washSupplyId,
       consumptionMl: profile.consumptionMl,
       washBathUses: profile.washBathUses,
+      queueEnabled: profile.queueEnabled,
+      workHoursPerDay: profile.workHoursPerDay,
+      workWeekdays: profile.workWeekdays,
+      workStartHour: profile.workStartHour,
+      amsType: profile.amsType,
+      amsSlots: profile.amsSlots,
+      costBase: profile.costBase,
     };
   }
 }

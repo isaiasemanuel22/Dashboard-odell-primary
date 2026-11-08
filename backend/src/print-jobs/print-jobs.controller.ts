@@ -18,7 +18,8 @@ import {
   UpdatePrintJobStatusDto,
 } from '../common/dto';
 import { PrintJobActor } from '../common/interfaces';
-import { ADMIN_ROLE_ID } from '../users/user-access.bootstrap';
+import { AppConfigService } from '../config/app-config.service';
+import { actorFromRequest } from './print-job-actor.util';
 import { PrintJobsService } from './print-jobs.service';
 import { PrinterQueueService } from './printer-queue.service';
 
@@ -27,6 +28,7 @@ export class PrintJobsController {
   constructor(
     private readonly printJobsService: PrintJobsService,
     private readonly printerQueueService: PrinterQueueService,
+    private readonly config: AppConfigService,
   ) {}
 
   @Get('board')
@@ -124,12 +126,6 @@ export class PrintJobsController {
 
   /** Admin: rol role-admin o el mismo criterio que CurrentUserProfile.isAdmin. */
   private actorFromRequest(request: Request): PrintJobActor {
-    const profile = request.appUser;
-    return {
-      userId: request.user?.uid,
-      isAdmin:
-        !!profile &&
-        (profile.isAdmin || profile.roleIds.includes(ADMIN_ROLE_ID)),
-    };
+    return actorFromRequest(request, this.config.requireAuth);
   }
 }

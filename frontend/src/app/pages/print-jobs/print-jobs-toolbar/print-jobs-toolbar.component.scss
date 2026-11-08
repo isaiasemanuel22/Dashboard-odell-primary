@@ -10,13 +10,16 @@
 
   h2 {
     margin: 0 0 0.35rem;
+    font-size: 1.35rem;
+    font-weight: 700;
+    color: #0f2a3a;
   }
 }
 
 .cola-header__stats {
   margin: 0;
   font-size: 0.82rem;
-  color: $color-text-muted;
+  color: #4a6072;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -24,12 +27,12 @@
 }
 
 .cola-header__dot {
-  color: $color-text-subtle;
+  color: #9fb3c2;
 }
 
 .cola-header__blocked {
-  color: #c2410c;
-  font-weight: 600;
+  color: #b91c1c;
+  font-weight: 700;
 }
 
 .cola-header__actions {
@@ -37,8 +40,12 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.65rem;
-  flex: 1 1 280px;
+  flex: 1 1 320px;
   justify-content: flex-end;
+}
+
+.cola-header__seg {
+  flex: none;
 }
 
 .cola-search {
@@ -49,14 +56,14 @@
   max-width: 320px;
   min-height: 2.5rem;
   padding: 0 0.85rem;
-  background: $color-surface;
-  border: 1px solid $color-border-input;
-  border-radius: $radius-pill;
+  background: #fff;
+  border: 1px solid #c9d6df;
+  border-radius: 999px;
 }
 
 .cola-search__icon {
-  font-size: 0.9rem;
-  opacity: 0.7;
+  flex: none;
+  color: #5b7083;
 }
 
 .cola-search__input {
@@ -72,7 +79,7 @@
   }
 
   &::placeholder {
-    color: $color-text-subtle;
+    color: #9fb3c2;
   }
 }
 
@@ -96,7 +103,7 @@
 .cola-filters__label {
   font-size: 0.75rem;
   font-weight: 600;
-  color: $color-text-muted;
+  color: #5b7083;
 }
 
 .cola-filters__pills {
@@ -106,18 +113,19 @@
 }
 
 .cola-pill {
-  border: 1px solid $color-border-input;
-  background: $color-surface;
-  color: $color-text-label;
-  border-radius: $radius-pill;
+  border: 1px solid #c9d6df;
+  background: #fff;
+  color: #33495a;
+  border-radius: 999px;
   padding: 0.35rem 0.85rem;
+  font-family: inherit;
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
 
   &--active {
-    background: #334155;
-    border-color: #334155;
+    background: #0e7aab;
+    border-color: #0e7aab;
     color: #fff;
   }
 }
@@ -135,6 +143,9 @@
   height: 2rem;
   border-radius: 50%;
   border: 2px solid transparent;
+  background: #dcebf4;
+  color: #0b5f86;
+  font-family: inherit;
   font-size: 0.75rem;
   font-weight: 700;
   cursor: pointer;
@@ -163,29 +174,19 @@
     pointer-events: none;
   }
 
-  &--tone-0 {
-    background: #dbeafe;
-    color: #1d4ed8;
-  }
-
-  &--tone-1 {
-    background: #ede9fe;
-    color: #6d28d9;
-  }
-
-  &--tone-2 {
-    background: #ffedd5;
-    color: #c2410c;
-  }
-
+  &--tone-0,
+  &--tone-1,
+  &--tone-2,
   &--tone-3 {
-    background: #dcfce7;
-    color: #15803d;
+    background: #dcebf4;
+    color: #0b5f86;
   }
 
   &--active {
-    border-color: $color-text;
-    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
+    border-color: #0e7aab;
+    background: #0e7aab;
+    color: #fff;
+    box-shadow: none;
   }
 }
 
@@ -193,9 +194,37 @@
   margin: 0 0 1rem;
   padding: 0.65rem 0.85rem;
   font-size: 0.875rem;
-  color: $color-brand-deep;
-  background: $color-primary-bg;
-  border: 1px solid $color-border;
-  border-radius: $radius-sm;
+  color: #0b5f86;
+  background: #e0f0f8;
+  border: 1px solid #c9d6df;
+  border-radius: 10px;
 }
 
+@media (min-width: 768px) {
+  .cola-header {
+    flex-wrap: nowrap;
+  }
+
+  .cola-header__intro {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+
+  .cola-header__stats {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    min-width: 0;
+  }
+
+  .cola-header__dot {
+    margin: 0 0.35rem;
+  }
+
+  .cola-header__actions {
+    flex: 0 0 auto;
+    flex-shrink: 0;
+    flex-wrap: nowrap;
+  }
+}

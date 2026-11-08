@@ -193,7 +193,7 @@ describe('PrinterQueueService', () => {
       orderItemIndex: -1,
       customerName: '',
       type: ServiceType.IMPRESION_3D,
-      taskType: TaskType.INTERNAL,
+      taskType: TaskType.PRODUCTION,
       status: PrintJobStatus.POR_HACER,
       active: true,
       priority: 1,
@@ -235,7 +235,52 @@ describe('PrinterQueueService', () => {
     expect(queue.printers[0].jobs.map((j) => j.id)).toEqual(['j1']);
     expect(queue.unassigned.map((j) => j.id)).toEqual(['j2']);
     expect(queue.otherAreas.some((a) => a.count >= 1)).toBe(true);
+    expect(queue.otherAreas.some((a) => a.area === 'impresion_3d_resina')).toBe(
+      true,
+    );
     expect(queue.printers[0].queuedHours).toBe(2);
+  });
+
+  it('excluye internas sin producto aunque type sea impresion_3d', () => {
+    const { store, service } = setup();
+    const correo = pushJob(store, {
+      id: 'j-correo',
+      productName: 'Sacar correo obligatorio de los clientes',
+      type: ServiceType.IMPRESION_3D,
+      taskType: TaskType.INTERNAL,
+      estimatedHours: 4,
+    });
+    const fdm = pushJob(store, {
+      id: 'j-fdm',
+      productName: 'Pieza FDM',
+      productId: 'prod-fdm',
+      estimatedHours: 2,
+    });
+    const blocked = pushJob(store, {
+      id: 'j-blocked',
+      productName: 'Bloqueada por insumo',
+      productId: 'prod-fdm',
+      status: PrintJobStatus.BLOQUEADO,
+      estimatedHours: 3,
+    });
+
+    expect(service.isEligibleForPrinterQueue(correo)).toBe(false);
+    expect(service.isEligibleForPrinterQueue(fdm)).toBe(true);
+    expect(service.isEligibleForPrinterQueue(blocked)).toBe(true);
+
+    const queue = service.getPrinterQueue(new Date('2026-03-06T13:00:00.000Z'));
+    expect(queue.unassigned.map((j) => j.id).sort()).toEqual([
+      'j-blocked',
+      'j-fdm',
+    ]);
+    expect(
+      queue.otherAreas.some(
+        (a) => a.area === '' && a.count >= 1,
+      ),
+    ).toBe(true);
+    expect(
+      queue.otherAreas.some((a) => a.area === ServiceType.IMPRESION_3D),
+    ).toBe(false);
   });
 
   it('auto asigna a la impresora con menor busyUntil', () => {

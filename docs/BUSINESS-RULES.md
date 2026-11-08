@@ -1733,9 +1733,9 @@ perfil con jornada propia.
 
 **Qué entra**
 
-- `type === impresion_3d`, producto FDM (por `productId` → `Product.type`;
-  sin producto, p. ej. internas, cuenta como FDM).
-- `taskType` PRODUCTION o INTERNAL.
+- `type === impresion_3d`, producto FDM (por `productId` → `Product.type`).
+- `taskType` PRODUCTION o INTERNAL (esta última solo con producto).
+- Las tareas internas no entran a la cola de impresoras (aunque su área sea Impresión 3D): se muestran en Otras áreas como Interna. Solo entran tareas de producción de pedidos con producto o línea FDM.
 - Excluye impresión de diseño en papel (`isDesignPrintConfigured`).
 - No archivadas, activas en el tablero (`active`), visibles en cola.
 - Estados: `por_hacer`, `en_proceso`, `bloqueado`.

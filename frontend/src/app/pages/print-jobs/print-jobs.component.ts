@@ -17,11 +17,15 @@ import {
   transferArrayItem,
 } from '@angular/cdk/drag-drop';
 import { FormsModule } from '@angular/forms';
-import { Router } from '@angular/router';
+import { NavigationEnd, Router } from '@angular/router';
 import {
+  DeliveryEstimate,
   OrderStatus,
   PrintJob,
   PrintJobStatus,
+  PrinterCapacity,
+  PrinterQueueJob,
+  PrinterQueueResponse,
   ServiceType,
   SupplyReplacementChoice,
   TaskKind,
@@ -36,16 +40,28 @@ import { PrintJobsService } from '../../core/services/print-jobs.service';
 import { IndependentTaskFlowService } from '../../core/services/independent-task-flow.service';
 import { RealtimeCatalogSyncService } from '../../core/services/realtime-catalog-sync.service';
 import { RealtimeService } from '../../core/services/realtime.service';
+import { UserAccessService } from '../../core/services/user-access.service';
 import {
   DbSkeletonComponent,
   DbStateMessageComponent,
   DbButtonComponent,
+  DbSegmentedControlComponent,
+  DbSegmentOption,
   MobileBarComponent,
   MobileListToolbarComponent,
   MobileSheetComponent,
   type MobileListToolbarChip,
   PrintJobCardComponent,
 } from '@general-components';
+import {
+  PrinterAssignEvent,
+  PrinterLanesComponent,
+} from './components/printer-lanes/printer-lanes.component';
+import {
+  PrintJobCustomerChip,
+  PrintJobsToolbarComponent,
+  PrintJobsViewMode,
+} from './print-jobs-toolbar/print-jobs-toolbar.component';
 import {
   ORDER_STATUS_LABELS,
   PRINT_JOB_STATUS_LABELS,
@@ -62,14 +78,15 @@ import { formatOrderMobileDeliveryLabel } from '../../shared/utils/order.helpers
 import { FormDialogService } from '../../modals/public-api';
 import { countPrintJobMobileFilters } from '../../modals/print-job-filters-sheet.component';
 import {
-  PrintJobCustomerChip,
-  PrintJobsToolbarComponent,
-} from './print-jobs-toolbar/print-jobs-toolbar.component';
-import {
   priorityTierClass,
   PRIORITY_TIER_LABELS,
 } from '../../shared/utils/priority.helpers';
 import { todayYmd } from '../../shared/utils/calendar-grid.util';
+import { nameInitials } from '../../shared/utils/name-initials.util';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
+
+const VIEW_MODE_STORAGE_KEY = 'odell.print-jobs.view-mode';
 
 export type MobileJobActionKind = 'add' | 'move' | 'detail' | 'block' | 'unblock';
 
@@ -98,11 +115,13 @@ interface PrintJobsMobileListState {
     DbSkeletonComponent,
     DbStateMessageComponent,
     DbButtonComponent,
+    DbSegmentedControlComponent,
     MobileBarComponent,
     MobileListToolbarComponent,
     MobileSheetComponent,
     PrintJobCardComponent,
     PrintJobsToolbarComponent,
+    PrinterLanesComponent,
   ],
   templateUrl: './print-jobs.component.html',
   styleUrl: './print-jobs.component.scss',
@@ -115,6 +134,7 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
   private readonly realtime = inject(RealtimeService);
   private readonly formDialogs = inject(FormDialogService);
   private readonly dataChanged = inject(DataChangedService);
+  private readonly userAccess = inject(UserAccessService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly router = inject(Router);
@@ -162,6 +182,21 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
   backlogJobs: PrintJob[] = [];
   connectedLists: string[] = [];
 
+  viewMode: PrintJobsViewMode = this.readStoredViewMode();
+  readonly viewOptions: DbSegmentOption<PrintJobsViewMode>[] = [
+    { value: 'status', label: 'Por estado' },
+    { value: 'printer', label: 'Por impresora' },
+  ];
+
+  printerQueue: PrinterQueueResponse | null = null;
+  filteredPrinterQueue: PrinterQueueResponse | null = null;
+  deliveryEstimate: DeliveryEstimate | null = null;
+  estimateUnavailable = false;
+  printerCapacity: PrinterCapacity | null = null;
+  printerQueueLoading = false;
+  /** Mutaciones en «Por estado» dejan la cola por impresora desactualizada. */
+  private printerQueueStale = true;
+
   ngOnInit(): void {
     this.listPersistence.connect(() => ({
       searchQuery: this.searchQuery,
@@ -180,16 +215,217 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
     });
 
     this.loadJobs();
+    if (this.viewMode === 'printer') {
+      this.loadPrinterQueue();
+    }
     this.dataChanged
       .on('print-jobs')
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe(() => this.loadJobs());
+      .subscribe(() => {
+        this.markPrinterQueueStale();
+        this.loadJobs();
+        if (this.viewMode === 'printer') {
+          this.loadPrinterQueue();
+        }
+      });
     this.realtime.bindSmartReload(
       this.destroyRef,
-      ['print-jobs', 'orders'],
+      ['print-jobs', 'orders', 'settings'],
       (event) => this.handleRealtime(event),
-      { skip: () => this.updating },
+      // En «Por impresora» no tragar eventos durante updating: la cola debe refrescarse.
+      { skip: () => this.updating && this.viewMode !== 'printer' },
     );
+    this.router.events
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((event) => {
+        if (!(event instanceof NavigationEnd)) return;
+        if (!event.urlAfterRedirects.includes('/cola')) return;
+        if (this.viewMode === 'printer') {
+          this.loadPrinterQueue();
+        }
+      });
+  }
+
+  /** Misma regla que el tablero: admin o responsable (el backend valida). */
+  canMovePrinterJob(job: PrintJob): boolean {
+    const profile = this.userAccess.peekCurrentUser();
+    if (!profile) return false;
+    // Auth deshabilitada en local: /me responde { authenticated: false }.
+    if ('authenticated' in profile && profile.authenticated === false) {
+      return true;
+    }
+    if (!('isAdmin' in profile)) return false;
+    if (profile.isAdmin) return true;
+    return !!profile.firebaseUid && profile.firebaseUid === job.responsibleUserId;
+  }
+
+  readonly canMovePrinterJobFn = (job: PrintJob): boolean =>
+    this.canMovePrinterJob(job);
+
+  setViewMode(mode: PrintJobsViewMode): void {
+    if (this.viewMode === mode) return;
+    this.viewMode = mode;
+    this.persistViewMode(mode);
+    if (mode === 'printer') {
+      // Siempre recargar al entrar (sin reutilizar datos de la visita anterior).
+      this.loadPrinterQueue();
+    }
+    this.cdr.markForCheck();
+  }
+
+  loadPrinterQueue(): void {
+    // No limpiar printerQueue/filtered: mantener UI y scroll hasta datos nuevos.
+    this.printerQueueLoading = true;
+    this.estimateUnavailable = false;
+    this.cdr.markForCheck();
+
+    forkJoin({
+      queue: this.printJobsService.getPrinterQueue(),
+      estimate: this.printJobsService.getDeliveryEstimate(4).pipe(
+        catchError(() => of(null)),
+      ),
+      capacity: this.printJobsService.getCapacity(1).pipe(
+        catchError(() => of(null)),
+      ),
+    }).subscribe({
+      next: ({ queue, estimate, capacity }) => {
+        this.printerQueue = queue;
+        this.deliveryEstimate = estimate;
+        this.estimateUnavailable = !estimate && queue.printers.length > 0;
+        this.printerCapacity = capacity;
+        this.applyPrinterFilters();
+        this.printerQueueLoading = false;
+        this.printerQueueStale = false;
+        this.cdr.markForCheck();
+      },
+      error: (err: unknown) => {
+        this.printerQueueLoading = false;
+        this.error = extractApiErrorMessage(
+          err as { error?: { message?: string | string[] } },
+          'No se pudo cargar la cola por impresora',
+        );
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private markPrinterQueueStale(): void {
+    this.printerQueueStale = true;
+  }
+
+  retryLoad(): void {
+    this.loadJobs();
+    if (this.viewMode === 'printer') {
+      this.loadPrinterQueue();
+    }
+  }
+
+  onPrinterAssign(event: PrinterAssignEvent): void {
+    if (this.updating) return;
+    this.updating = true;
+    this.cdr.markForCheck();
+    this.printJobsService
+      .assignPrinter(event.jobId, event.printerId, event.position)
+      .subscribe({
+        next: () => {
+          this.updating = false;
+          this.loadPrinterQueue();
+          this.loadJobs({ silent: true });
+        },
+        error: (err: unknown) => {
+          this.updating = false;
+          this.cdr.markForCheck();
+          this.showMoveError(
+            extractApiErrorMessage(
+              err as { error?: { message?: string | string[] } },
+              'No se pudo asignar la impresora',
+            ),
+          );
+          this.loadPrinterQueue();
+        },
+      });
+  }
+
+  onPrinterDetail(job: PrintJob): void {
+    if (!job.orderId) return;
+    void this.router.navigate(['/pedidos', job.orderId]);
+  }
+
+  onReplaceSupply(job: PrintJob): void {
+    this.printJobsService.getSupplyShortages(job.id).subscribe({
+      next: (report) => {
+        if (!report.missing.length) {
+          this.showMoveError('No hay insumos faltantes para reemplazar');
+          return;
+        }
+        this.formDialogs.openSupplyReplacement(report).subscribe((choices) => {
+          if (!choices?.length) return;
+          this.persistMove(job, job.status, job.active, false, choices);
+        });
+      },
+      error: () => {
+        this.showMoveError('No se pudo cargar los insumos faltantes');
+      },
+    });
+  }
+
+  private applyPrinterFilters(): void {
+    if (!this.printerQueue) {
+      this.filteredPrinterQueue = null;
+      return;
+    }
+    const match = (job: PrintJob): boolean => this.jobMatchesFilters(job);
+    this.filteredPrinterQueue = {
+      printers: this.printerQueue.printers.map((lane) => ({
+        ...lane,
+        jobs: lane.jobs.filter(match) as PrinterQueueJob[],
+      })),
+      unassigned: this.printerQueue.unassigned.filter(match) as PrinterQueueJob[],
+      otherAreas: this.printerQueue.otherAreas,
+    };
+  }
+
+  private jobMatchesFilters(job: PrintJob): boolean {
+    const query = this.searchQuery.trim().toLowerCase();
+    if (query) {
+      const hit =
+        job.productName.toLowerCase().includes(query) ||
+        job.orderId.toLowerCase().includes(query) ||
+        job.customerName.toLowerCase().includes(query);
+      if (!hit) return false;
+    }
+    if (this.areaFilter) {
+      if (
+        job.taskKind === TaskKind.PREPARE_ORDER ||
+        designatedArea(job.type) !== this.areaFilter
+      ) {
+        return false;
+      }
+    }
+    if (this.customerFilter) {
+      if (nameInitials(job.customerName) !== this.customerFilter) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  private readStoredViewMode(): PrintJobsViewMode {
+    try {
+      const raw = localStorage.getItem(VIEW_MODE_STORAGE_KEY);
+      if (raw === 'printer' || raw === 'status') return raw;
+    } catch {
+      /* ignore */
+    }
+    return 'status';
+  }
+
+  private persistViewMode(mode: PrintJobsViewMode): void {
+    try {
+      localStorage.setItem(VIEW_MODE_STORAGE_KEY, mode);
+    } catch {
+      /* ignore */
+    }
   }
 
   get mobileCustomerFilterCount(): number {
@@ -202,7 +438,7 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
       initial: chip.initial,
       name: chip.name,
       count: jobsForCount.filter(
-        (job) => this.customerInitial(job.customerName) === chip.initial,
+        (job) => nameInitials(job.customerName) === chip.initial,
       ).length,
     }));
     this.formDialogs
@@ -329,6 +565,18 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
     return this.boardColumns[PrintJobStatus.BLOQUEADO].length;
   }
 
+  /** Suma de horas en cola de todas las impresoras (vista «Por impresora»). */
+  get printerQueuedHours(): number {
+    const queue = this.filteredPrinterQueue ?? this.printerQueue;
+    if (!queue) return 0;
+    return queue.printers.reduce((sum, lane) => sum + (lane.queuedHours || 0), 0);
+  }
+
+  get printerUnassignedCount(): number {
+    const queue = this.filteredPrinterQueue ?? this.printerQueue;
+    return queue?.unassigned.length ?? 0;
+  }
+
   columnTaskCount(status: PrintJobStatus): number {
     const onBoard = this.boardColumns[status].length;
     if (status === PrintJobStatus.POR_HACER) {
@@ -374,15 +622,18 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
   setAreaFilter(value: ServiceType | null): void {
     this.areaFilter = value;
     this.rebuildBoard();
+    this.applyPrinterFilters();
   }
 
   toggleCustomerFilter(initial: string): void {
     this.customerFilter = this.customerFilter === initial ? null : initial;
     this.rebuildBoard();
+    this.applyPrinterFilters();
   }
 
   onSearchChange(): void {
     this.rebuildBoard();
+    this.applyPrinterFilters();
   }
 
   isBacklogJob(job: PrintJob): boolean {
@@ -457,10 +708,7 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
   }
 
   customerInitials(name: string): string {
-    const parts = (name ?? '').trim().split(/\s+/).filter(Boolean);
-    if (!parts.length) return '?';
-    if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-    return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+    return nameInitials(name);
   }
 
   /** Acciones mobile que reemplazan el drag & drop + «Agregar al tablero» + detalle. */
@@ -587,11 +835,15 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
     this.independentTaskFlow.pick().subscribe((result) => {
       if (!result) return;
       this.updating = true;
+      this.markPrinterQueueStale();
       this.cdr.markForCheck();
       this.printJobsService.createIndependent(result).subscribe({
         next: () => {
           this.updating = false;
-          this.loadJobs();
+          this.loadJobs({ silent: true });
+          if (this.viewMode === 'printer') {
+            this.loadPrinterQueue();
+          }
         },
         error: (err: unknown) => {
           this.updating = false;
@@ -605,8 +857,12 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
   }
 
 
-  loadJobs(): void {
-    this.loading = true;
+  loadJobs(options?: { silent?: boolean }): void {
+    // silent: no reemplazar la página por skeleton (evita salto de scroll en «Por impresora»).
+    const silent = options?.silent === true || this.allJobs.length > 0;
+    if (!silent) {
+      this.loading = true;
+    }
     this.error = '';
     this.cdr.markForCheck();
 
@@ -617,7 +873,9 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
         this.customerChips = this.buildCustomerChips(jobs);
         this.rebuildBoard();
         this.loading = false;
-        this.pendingTabScroll = true;
+        if (!silent && this.viewMode === 'status') {
+          this.pendingTabScroll = true;
+        }
         this.cdr.markForCheck();
         this.listPersistence.onListReady();
       },
@@ -809,7 +1067,18 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
 
   private handleRealtime(event: RealtimeEvent): void {
     this.catalogSync.handleEvent(event);
-    this.loadJobs();
+    if (event.scope === 'settings') {
+      this.markPrinterQueueStale();
+      if (this.viewMode === 'printer') {
+        this.loadPrinterQueue();
+      }
+      return;
+    }
+    this.markPrinterQueueStale();
+    this.loadJobs({ silent: true });
+    if (this.viewMode === 'printer') {
+      this.loadPrinterQueue();
+    }
   }
 
   private persistMove(
@@ -824,6 +1093,7 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
     job.status = status;
 
     this.updating = true;
+    this.markPrinterQueueStale();
     this.cdr.markForCheck();
     this.printJobsService
       .updatePrintJob(job.id, {
@@ -836,7 +1106,10 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
           this.orderStatusByOrderId[job.orderId] = updated.orderStatus;
           this.statusNotice = `Pedido ${job.orderId} → ${ORDER_STATUS_LABELS[updated.orderStatus]}`;
           this.updating = false;
-          this.loadJobs();
+          this.loadJobs({ silent: true });
+          if (this.viewMode === 'printer') {
+            this.loadPrinterQueue();
+          }
         },
         error: (err) => {
           this.updating = false;
@@ -902,7 +1175,7 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
 
     if (this.customerFilter) {
       list = list.filter(
-        (job) => this.customerInitial(job.customerName) === this.customerFilter,
+        (job) => nameInitials(job.customerName) === this.customerFilter,
       );
     }
 
@@ -936,7 +1209,7 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
     const byInitial = new Map<string, string>();
     for (const job of jobs) {
       if (!job.customerName?.trim()) continue;
-      const initial = this.customerInitial(job.customerName);
+      const initial = nameInitials(job.customerName);
       if (!byInitial.has(initial)) {
         byInitial.set(initial, job.customerName);
       }
@@ -946,12 +1219,6 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
       name,
       tone: index % 4,
     }));
-  }
-
-  private customerInitial(name: string): string {
-    const trimmed = name?.trim();
-    if (!trimmed) return '?';
-    return trimmed.charAt(0).toUpperCase();
   }
 
   private emptyBoard(): Record<PrintJobStatus, PrintJob[]> {

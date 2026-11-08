@@ -15,6 +15,8 @@
     h4 {
       margin: 0;
       font-size: $font-body;
+      font-weight: 700;
+      color: $color-text;
     }
 
     span {
@@ -74,3 +76,101 @@
   cursor: pointer;
 }
 
+.queue-section {
+  margin-top: 1rem;
+  padding-top: 0.9rem;
+  border-top: 1px solid $color-divider;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* Mismo estilo que el h4 del header del editor. */
+.queue-section__title {
+  margin: 0;
+  font-size: $font-body;
+  font-weight: 700;
+  color: $color-text;
+}
+
+/* Mismo estilo de subtítulo (meta, sin uppercase agresivo). */
+.queue-section__subtitle {
+  margin: 0.25rem 0 0;
+  font-size: $font-meta;
+  font-weight: 600;
+  color: $color-text-muted;
+}
+
+.weekday-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.weekday-chip {
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  border: 1px solid $color-border-input;
+  background: $color-surface;
+  color: $color-text-label;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+
+  &--on {
+    background: #0e7aab;
+    border-color: #0e7aab;
+    color: #fff;
+  }
+}
+
+.field-hint--left {
+  text-align: left;
+}
+
+.queue-toggle {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+:host ::ng-deep .queue-toggle .db-checkbox {
+  font-size: 0.875rem;
+  color: $color-text-label;
+}
+
+.ams-slot-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.ams-slot-field__label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: $color-text-label;
+}
+
+.ams-slot__swatch {
+  width: 0.875rem;
+  height: 0.875rem;
+  border-radius: 999px;
+  border: 1px solid $color-border;
+  flex: none;
+
+  &--empty {
+    background: repeating-linear-gradient(
+      -45deg,
+      #f1f5f9,
+      #f1f5f9 3px,
+      #e2e8f0 3px,
+      #e2e8f0 6px
+    );
+  }
+}

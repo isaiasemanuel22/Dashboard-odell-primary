@@ -27,32 +27,61 @@
       }
     </h3>
 
-    @if (isPrepareOrder || area) {
-      <div class="job-card__tag-row">
-        @if (isPrepareOrder) {
-          <span class="job-card__area">Ventas</span>
-        } @else {
-          @if (area; as areaType) {
-            <db-service-badge [type]="areaType" />
-          }
-        }
-      </div>
-    }
-
     @if (job.status === 'bloqueado') {
       <p class="job-card__blocked" role="status">
-        <span class="job-card__blocked-icon" aria-hidden="true">🕐</span>
         {{ job.blockedReason || 'Esperando condición operativa.' }}
       </p>
+      @if (showReplaceSupply) {
+        <db-button
+          label="Reemplazar insumo"
+          variant="secondary"
+          format="soft"
+          extraClass="job-card__replace job-card__replace--sm"
+          (clicked)="replaceSupply.emit(job)"
+        />
+      }
     }
 
-    @if (job.customerName) {
-      <footer class="job-card__footer">
+    <div class="job-card__meta-row">
+      @if (isPrepareOrder) {
+        <span class="job-card__area">Ventas</span>
+      } @else if (area) {
+        <db-service-badge [type]="area" />
+      }
+      @if (dueLabel; as due) {
         <span
-          class="job-card__avatar"
-          [title]="job.customerName"
-        >{{ customerInitial }}</span>
+          class="job-card__due"
+          [class.job-card__due--late]="due.overdue"
+        >{{ due.text }}</span>
+      }
+    </div>
+
+    @if (job.customerName || stepLabel) {
+      <footer class="job-card__footer">
+        @if (job.customerName) {
+          <span
+            class="job-card__avatar"
+            [title]="job.customerName"
+          >{{ customerInitials }}</span>
+        } @else {
+          <span></span>
+        }
+        @if (stepLabel) {
+          <span class="job-card__step">{{ stepLabel }}</span>
+        }
       </footer>
+    }
+
+    @if (showAddToBoard) {
+      <db-button
+        label="+ Agregar al tablero"
+        variant="secondary"
+        format="soft"
+        [block]="true"
+        [disabled]="addDisabled"
+        extraClass="job-card__add"
+        (clicked)="addToBoard.emit(job)"
+      />
     }
   </article>
 } @else {

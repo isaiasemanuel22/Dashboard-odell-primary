@@ -1,4 +1,8 @@
-<article class="profile-editor" [class.profile-editor--sheet]="sheetMode">
+<article
+  class="profile-editor"
+  [class.profile-editor--sheet]="sheetMode"
+  id="machine-profile-editor"
+>
   @if (!sheetMode) {
     <header>
       <h4>Editar equipo · {{ profile.name.trim() || 'Nuevo equipo' }}</h4>
@@ -69,6 +73,118 @@
       />
     </div>
     <p class="field-hint">Si queda en 0 o vacío, se usan 10</p>
+  }
+
+  @if (showPrintQueue) {
+    <section class="queue-section" aria-label="Cola de impresión">
+      <h4 class="queue-section__title">Cola de impresión</h4>
+
+      <div class="queue-toggle desktop-only">
+        <db-checkbox
+          label="Mostrar en la cola de impresoras"
+          [name]="'mpQueue' + profile.id"
+          [ngModel]="!!profile.queueEnabled"
+          (ngModelChange)="setQueueEnabled($event)"
+        />
+      </div>
+      <div class="mobile-only">
+        <db-mobile-toggle-row
+          label="Mostrar en la cola de impresoras"
+          [checked]="!!profile.queueEnabled"
+          (toggled)="setQueueEnabled($event)"
+        />
+      </div>
+
+      <h5 class="queue-section__subtitle">Jornada de impresión</h5>
+      <db-form-grid>
+        <db-input
+          label="Horas por día"
+          type="number"
+          [(ngModel)]="profile.workHoursPerDay"
+          [name]="'mpWorkHours' + profile.id"
+          [min]="1"
+          [max]="24"
+          [step]="1"
+        />
+        <db-input
+          label="Hora de inicio"
+          type="time"
+          [(ngModel)]="profile.workStartHour"
+          [name]="'mpWorkStart' + profile.id"
+        />
+      </db-form-grid>
+
+      <div class="weekday-row" role="group" aria-label="Días de jornada">
+        @for (chip of weekdayChips; track chip.value) {
+          <button
+            type="button"
+            class="weekday-chip"
+            [class.weekday-chip--on]="isWeekdayOn(chip.value)"
+            (click)="toggleWeekday(chip.value)"
+          >
+            {{ chip.label }}
+          </button>
+        }
+      </div>
+      <p class="field-hint field-hint--left">
+        La jornada se usa para calcular las fechas de la cola por impresora.
+      </p>
+
+      <h5 class="queue-section__subtitle">AMS</h5>
+      <db-form-grid>
+        <db-input
+          label="Tipo de AMS"
+          [(ngModel)]="profile.amsType"
+          [name]="'mpAmsType' + profile.id"
+          placeholder="AMS lite"
+        />
+        @for (slot of amsSlots; track $index; let i = $index) {
+          <div class="ams-slot-field">
+            <div class="ams-slot-field__label">
+              @if (slotHex(i); as hex) {
+                <span
+                  class="ams-slot__swatch"
+                  [style.background-color]="hex"
+                  aria-hidden="true"
+                ></span>
+              } @else {
+                <span
+                  class="ams-slot__swatch ams-slot__swatch--empty"
+                  aria-hidden="true"
+                ></span>
+              }
+              <span>Ranura {{ i + 1 }}</span>
+            </div>
+            <db-select
+              [ngModel]="slotValue(i)"
+              (ngModelChange)="setSlot(i, $event)"
+              [name]="'mpAmsSlot' + profile.id + '_' + i"
+              [options]="amsSlotOptions"
+            />
+          </div>
+        }
+      </db-form-grid>
+
+      <div class="queue-toggle desktop-only">
+        <db-checkbox
+          label="Usar para calcular costos"
+          [name]="'mpCostBase' + profile.id"
+          [ngModel]="!!profile.costBase"
+          (ngModelChange)="setCostBase($event)"
+        />
+        <small class="field-hint field-hint--left"
+          >Solo un equipo de impresión por tipo de producto</small
+        >
+      </div>
+      <div class="mobile-only">
+        <db-mobile-toggle-row
+          label="Usar para calcular costos"
+          hint="Solo un equipo de impresión por tipo de producto"
+          [checked]="!!profile.costBase"
+          (toggled)="setCostBase($event)"
+        />
+      </div>
+    </section>
   }
 
   @if (sheetMode) {
