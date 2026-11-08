@@ -21,6 +21,7 @@
       [ngModel]="value"
       (ngModelChange)="onModelChange($event)"
       (onBlur)="onBlur()"
+      (onEditorCreated)="onEditorCreated($event)"
     />
     <p
       class="rich-text__count"
