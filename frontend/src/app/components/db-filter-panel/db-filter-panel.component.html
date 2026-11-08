@@ -1,0 +1,68 @@
+<button
+  #trigger
+  type="button"
+  class="fp-trigger"
+  [class.fp-trigger--active]="activeCount() > 0"
+  cdkOverlayOrigin
+  #origin="cdkOverlayOrigin"
+  aria-haspopup="dialog"
+  [attr.aria-expanded]="open()"
+  [attr.aria-label]="activeCount() > 0 ? ariaLabel() + ', ' + activeCount() + ' activos' : ariaLabel()"
+  (click)="toggle()"
+>
+  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <path d="M4 5h16l-6 8v6l-4-2v-4z"></path>
+  </svg>
+  Filtros
+  @if (activeCount() > 0) {
+    <span class="fp-count" aria-hidden="true">{{ activeCount() }}</span>
+  }
+</button>
+
+<ng-template
+  cdkConnectedOverlay
+  [cdkConnectedOverlayOrigin]="origin"
+  [cdkConnectedOverlayOpen]="open()"
+  [cdkConnectedOverlayPositions]="positions"
+  [cdkConnectedOverlayPush]="true"
+  (overlayOutsideClick)="onOutside($event, trigger)"
+  (overlayKeydown)="onKeydown($event)"
+  (detach)="close()"
+>
+  <div
+    class="fp-panel"
+    role="dialog"
+    [attr.aria-labelledby]="uid + '-title'"
+    cdkTrapFocus
+    [cdkTrapFocusAutoCapture]="true"
+  >
+    <div class="fp-section fp-head">
+      <h2 class="fp-title" [id]="uid + '-title'">{{ title() }}</h2>
+      <button type="button" class="fp-clear" (click)="clear()">Limpiar</button>
+    </div>
+
+    @for (group of shownGroups(); track group.id) {
+      <div class="fp-section">
+        <span class="fp-group-title" [id]="uid + '-' + group.id">{{ group.title }}</span>
+        <div class="fp-chips" role="group" [attr.aria-labelledby]="uid + '-' + group.id">
+          @for (option of group.options; track option.value) {
+            <button
+              type="button"
+              class="fp-chip"
+              [class.fp-chip--on]="draft()[group.id] === option.value"
+              [attr.aria-pressed]="draft()[group.id] === option.value"
+              (click)="select(group.id, option.value)"
+            >
+              {{ option.label }}
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+    <div class="fp-foot">
+      <db-button label="Cancelar" variant="secondary" format="solid" (clicked)="close()" />
+      <db-button [label]="applyLabel()" variant="primary" format="solid" (clicked)="submit()" />
+    </div>
+  </div>
+</ng-template>

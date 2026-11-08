@@ -1,7 +1,17 @@
 <!-- Barra de filtros: chips de estado + buscador, y debajo chips de área -->
 @if (hasToolbar()) {
   <div class="odl-toolbar">
-    @if (filters().length) {
+    @if (usesPanel()) {
+      <db-filter-panel
+        [title]="filterPanelTitle()!"
+        [groups]="panelGroups()"
+        [values]="panelValues()"
+        [countFn]="panelCount"
+        [entityOne]="panelEntityOne()"
+        [entityMany]="panelEntityMany()"
+        (apply)="applyPanel($event)"
+      />
+    } @else if (filters().length) {
       <db-pill-group
         [options]="filterOptions()"
         [value]="activeFilter()"
@@ -25,7 +35,7 @@
     }
   </div>
 
-  @if (areaFilters().length) {
+  @if (areaFilters().length && !usesPanel()) {
     <db-pill-group
       class="odl-area-pills"
       [options]="areaOptions()"

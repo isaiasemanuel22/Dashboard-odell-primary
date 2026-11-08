@@ -548,6 +548,37 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /** Cuántos productos darían estos filtros de desktop (con la búsqueda actual). */
+  readonly desktopFilterCount = (draft: Record<string, string>): number =>
+    this.products.filter(
+      (p) =>
+        this.matchesListFilter(p, (draft['list'] ?? 'all') as ListFilter) &&
+        this.matchesSearchTypeCategory(
+          p,
+          (draft['type'] ?? 'all') as TypeFilter,
+          draft['category'] ?? 'all',
+        ),
+    ).length;
+
+  /** Categorías disponibles para un tipo de producto elegido en el panel. */
+  readonly categoryOptionsForType = (
+    type: string,
+  ): { value: string; label: string }[] => [
+    { value: 'all', label: 'Todas' },
+    ...this.categories
+      .filter(
+        (c) => type === 'all' || c.productTypes.includes(type as ProductType),
+      )
+      .map((c) => ({ value: c.id, label: c.name })),
+  ];
+
+  applyDesktopFilters(values: Record<string, string>): void {
+    this.listFilter = (values['list'] ?? 'all') as ListFilter;
+    this.typeFilter = (values['type'] ?? 'all') as TypeFilter;
+    this.categoryFilter = values['category'] ?? 'all';
+    this.cdr.markForCheck();
+  }
+
   setListFilter(filter: ListFilter | string): void {
     this.listFilter = filter as ListFilter;
     this.cdr.markForCheck();
@@ -707,7 +738,11 @@ export class ProductsComponent implements OnInit, OnDestroy {
     return this.belowMarginIds.has(product.id);
   }
 
-  private matchesSearchTypeCategory(product: Product): boolean {
+  private matchesSearchTypeCategory(
+    product: Product,
+    typeFilter: TypeFilter = this.typeFilter,
+    categoryFilter: string = this.categoryFilter,
+  ): boolean {
     const query = this.search.trim().toLowerCase();
     const matchesSearch =
       !query ||
@@ -715,16 +750,17 @@ export class ProductsComponent implements OnInit, OnDestroy {
       resolveCategoryNamesText(product.categoryIds, this.categories)
         .toLowerCase()
         .includes(query);
-    const matchesType =
-      this.typeFilter === 'all' || product.type === this.typeFilter;
+    const matchesType = typeFilter === 'all' || product.type === typeFilter;
     const matchesCategory =
-      this.categoryFilter === 'all' ||
-      product.categoryIds.includes(this.categoryFilter);
+      categoryFilter === 'all' || product.categoryIds.includes(categoryFilter);
     return matchesSearch && matchesType && matchesCategory;
   }
 
-  private matchesListFilter(product: Product): boolean {
-    switch (this.listFilter) {
+  private matchesListFilter(
+    product: Product,
+    listFilter: ListFilter = this.listFilter,
+  ): boolean {
+    switch (listFilter) {
       case 'below_margin':
         return this.belowMarginIds.has(product.id);
       case 'fixed_price':

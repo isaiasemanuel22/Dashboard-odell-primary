@@ -35,11 +35,16 @@
 </header>
 
 <div class="list-toolbar">
-  <db-pill-group
-    [options]="listFilters"
-    [value]="listFilter"
-    ariaLabel="Filtrar productos"
-    (valueChange)="listFilterChange.emit($event)"
+  <db-filter-panel
+    title="Filtrar productos"
+    ariaLabel="Filtros de productos"
+    [groups]="panelGroups"
+    [groupsFor]="groupsFor"
+    [values]="panelValues"
+    [countFn]="filterCountFn"
+    entityOne="producto"
+    entityMany="productos"
+    (apply)="filtersApply.emit($event)"
   />
   <label class="list-search">
     <span aria-hidden="true">⌕</span>
@@ -52,23 +57,3 @@
     />
   </label>
 </div>
-
-<db-pill-group
-  class="list-areas"
-  [options]="typeFilters"
-  [value]="typeFilter"
-  label="Tipo"
-  size="sm"
-  ariaLabel="Filtrar por tipo"
-  (valueChange)="typeFilterChange.emit($event)"
-/>
-
-<db-pill-group
-  class="list-areas"
-  [options]="categoryFilterOptions"
-  [value]="categoryFilter"
-  label="Categoría"
-  size="sm"
-  ariaLabel="Filtrar por categoría"
-  (valueChange)="categoryFilterChange.emit($event)"
-/>

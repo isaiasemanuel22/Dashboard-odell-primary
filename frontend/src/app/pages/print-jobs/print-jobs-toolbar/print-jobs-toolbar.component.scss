@@ -28,7 +28,7 @@
 }
 
 .cola-header__blocked {
-  color: #c2410c;
+  color: $color-area-print;
   font-weight: 600;
 }
 
@@ -55,8 +55,8 @@
 }
 
 .cola-search__icon {
-  font-size: 0.9rem;
-  opacity: 0.7;
+  flex: none;
+  color: $color-text-muted;
 }
 
 .cola-search__input {
@@ -73,119 +73,6 @@
 
   &::placeholder {
     color: $color-text-subtle;
-  }
-}
-
-.cola-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem 1.25rem;
-  margin-bottom: 1rem;
-}
-
-.cola-filters__areas,
-.cola-filters__clients {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.65rem;
-}
-
-.cola-filters__label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: $color-text-muted;
-}
-
-.cola-filters__pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.cola-pill {
-  border: 1px solid $color-border-input;
-  background: $color-surface;
-  color: $color-text-label;
-  border-radius: $radius-pill;
-  padding: 0.35rem 0.85rem;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-
-  &--active {
-    background: #334155;
-    border-color: #334155;
-    color: #fff;
-  }
-}
-
-.cola-filters__avatars {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  overflow: visible;
-}
-
-.cola-client-chip {
-  position: relative;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  font-size: 0.75rem;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:hover,
-  &:focus-visible {
-    z-index: 2;
-  }
-
-  &:hover::after,
-  &:focus-visible::after {
-    content: attr(data-name);
-    position: absolute;
-    z-index: 6;
-    bottom: calc(100% + 0.35rem);
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 0.2rem 0.45rem;
-    border-radius: 6px;
-    background: #0f2a3a;
-    color: #fff;
-    font-size: 0.72rem;
-    font-weight: 600;
-    line-height: 1.2;
-    white-space: nowrap;
-    pointer-events: none;
-  }
-
-  &--tone-0 {
-    background: #dbeafe;
-    color: #1d4ed8;
-  }
-
-  &--tone-1 {
-    background: #ede9fe;
-    color: #6d28d9;
-  }
-
-  &--tone-2 {
-    background: #ffedd5;
-    color: #c2410c;
-  }
-
-  &--tone-3 {
-    background: #dcfce7;
-    color: #15803d;
-  }
-
-  &--active {
-    border-color: $color-text;
-    box-shadow: 0 0 0 2px rgba(15, 23, 42, 0.12);
   }
 }
 

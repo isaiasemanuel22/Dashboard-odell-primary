@@ -21,8 +21,9 @@ import {
   DbCalendarAgendaRow,
   DbCalendarDayCell,
   DbCalendarMonthComponent,
-  DbPillGroupComponent,
-  DbPillOption,
+  DbFilterPanelComponent,
+  type FilterPanelGroup,
+  type FilterPanelValues,
   DbSegmentOption,
   DbSegmentedControlComponent,
   MobileBarComponent,
@@ -102,7 +103,7 @@ export interface MobileAgendaDay {
     DbButtonComponent,
     DbCalendarMonthComponent,
     DbCalendarAgendaComponent,
-    DbPillGroupComponent,
+    DbFilterPanelComponent,
     DbSegmentedControlComponent,
     CalendarSideComponent,
     MobileBarComponent,
@@ -129,12 +130,21 @@ export class CalendarComponent implements OnInit {
     { value: 'list', label: 'Lista' },
   ];
 
-  readonly filterOptions: DbPillOption<CalendarFilter>[] = [
-    { value: 'todos', label: 'Todos', color: TYPE_COLORS.todos },
-    { value: 'delivery', label: 'Entregas', color: TYPE_COLORS.delivery },
-    { value: 'event', label: 'Eventos', color: TYPE_COLORS.event },
-    { value: 'reminder', label: 'Recordatorios', color: TYPE_COLORS.reminder },
+  readonly filterGroups: FilterPanelGroup[] = [
+    {
+      id: 'type',
+      title: 'Tipo',
+      options: [
+        { value: 'todos', label: 'Todos' },
+        { value: 'delivery', label: 'Entregas' },
+        { value: 'event', label: 'Eventos' },
+        { value: 'reminder', label: 'Recordatorios' },
+      ],
+    },
   ];
+
+  readonly filterCountFn = (draft: FilterPanelValues): number =>
+    this.mobileFilterCounts()[(draft['type'] ?? 'todos') as CalendarFilter] ?? 0;
 
   view: CalendarView = 'month';
   filter: CalendarFilter = 'todos';
