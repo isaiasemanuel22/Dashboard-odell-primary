@@ -43,6 +43,36 @@ export class UpdateStatusDto {
 export class UpdatePrintJobStatusDto {
   @IsEnum(PrintJobStatus)
   status!: PrintJobStatus;
+
+  /** Obligatorio al pasar a BLOQUEADO (máx 255). */
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  blockedReason?: string;
+}
+
+export class RegisterPrintJobFailureDto {
+  @IsInt()
+  @Min(1)
+  @Max(1000)
+  pieces!: number;
+
+  @IsNumber()
+  @Min(0)
+  @Max(100000)
+  grams!: number;
+
+  @IsNumber()
+  @Min(0)
+  @Max(1000)
+  hours!: number;
+
+  @IsIn(['despegue', 'enredo', 'corte_luz', 'atasco', 'otro'])
+  reason!: 'despegue' | 'enredo' | 'corte_luz' | 'atasco' | 'otro';
+
+  @IsOptional()
+  @IsBoolean()
+  reprint?: boolean;
 }
 
 export class SupplyReplacementDto {
@@ -73,6 +103,27 @@ export class UpdatePrintJobDto {
   @ValidateNested({ each: true })
   @Type(() => SupplyReplacementDto)
   supplyReplacements?: SupplyReplacementDto[];
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(2000)
+  notes?: string;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(1000)
+  actualHours?: number | null;
+
+  @IsOptional()
+  @IsIn(['alta', 'normal'])
+  priority?: 'alta' | 'normal';
+
+  /** Obligatorio al pasar a BLOQUEADO (máx 255). */
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  blockedReason?: string;
 }
 
 export class AssignPrintJobPrinterDto {

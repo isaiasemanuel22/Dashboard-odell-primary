@@ -28,6 +28,7 @@ import {
   buildPrinterSchedule,
   countWorkdaysAhead,
   fromArLocal,
+  printerWorkConfig,
   scheduleWorkHours,
   weekdaysMonSat,
   workHoursBetween,
@@ -439,11 +440,7 @@ export class PrinterQueueService {
   }
 
   private workConfig(profile: MachineProfile): PrinterWorkConfig {
-    return {
-      workHoursPerDay: profile.workHoursPerDay ?? 16,
-      workWeekdays: profile.workWeekdays ?? [1, 2, 3, 4, 5, 6],
-      workStartHour: profile.workStartHour ?? '08:00',
-    };
+    return printerWorkConfig(profile);
   }
 
   private serializeProfile(profile: MachineProfile) {

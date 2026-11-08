@@ -14,6 +14,7 @@ import {
   CreateIndependentTaskDto,
   PrinterCapacityQueryDto,
   PrinterQueueHoursQueryDto,
+  RegisterPrintJobFailureDto,
   UpdatePrintJobDto,
   UpdatePrintJobStatusDto,
 } from '../common/dto';
@@ -51,6 +52,12 @@ export class PrintJobsController {
     return this.printerQueueService.getCapacity(query.weekOffset);
   }
 
+  /** Debe ir antes de @Get(':id'). */
+  @Get('failure-stats')
+  failureStats() {
+    return this.printJobsService.failureStats();
+  }
+
   @Post('reconcile-missing-supplies')
   reconcileMissingSupplies() {
     return { blocked: this.printJobsService.blockMissingSupplies() };
@@ -78,6 +85,24 @@ export class PrintJobsController {
   @Get(':id/supply-shortages')
   supplyShortages(@Param('id') id: string) {
     return this.printJobsService.supplyShortages(id);
+  }
+
+  @Get(':id/consumption')
+  consumption(@Param('id') id: string) {
+    return this.printJobsService.describeConsumption(id);
+  }
+
+  @Post(':id/failures')
+  registerFailure(
+    @Param('id') id: string,
+    @Body() dto: RegisterPrintJobFailureDto,
+    @Req() request: Request,
+  ) {
+    return this.printJobsService.registerFailure(
+      id,
+      dto,
+      this.actorFromRequest(request),
+    );
   }
 
   @Patch(':id/assignment')
@@ -121,6 +146,7 @@ export class PrintJobsController {
       id,
       body.status,
       this.actorFromRequest(request),
+      body.blockedReason,
     );
   }
 

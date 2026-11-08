@@ -12,6 +12,8 @@ import {
   CostBreakdown,
   GeneralSettings,
   ImpresoCostPreview,
+  PrintJob,
+  Product3D,
   ProductComponent,
   ProductPricingInput,
   ProductPricingResult,
@@ -32,7 +34,10 @@ import {
 } from '../orders/order-fdm-quote.util';
 import {
   calculateMachineOverhead,
+  ensureMachineProfiles,
   getMachineProfilesForProductType,
+  profileHourlyCost,
+  selectPrintProfileForCost,
 } from './machine-profile.util';
 import { normalizeProfitMargins } from './profit-margins.util';
 import {
@@ -48,6 +53,7 @@ import {
 } from '../products/fdm-product.util';
 import { normalizeProductComponents } from '../products/product-component.util';
 import {
+  calcFilamentCost,
   calculateErrorMarginCost as errorMarginCost,
   calculateMaterialCost as materialCost,
   paperPricePerSqm,
@@ -56,6 +62,60 @@ import {
 @Injectable()
 export class CostCalculatorService {
   constructor(private readonly store: StoreService) {}
+
+  /**
+   * Costo de una falla: material + luz + máquina (sin mano de obra ni margen
+   * de error). El filamento sigue el mismo origen que materialRequirements.
+   */
+  calculateFailureCost(job: PrintJob, grams: number, hours: number): number {
+    const settings = this.store.generalSettings;
+    const filamentType = this.resolveFailureFilamentType(job);
+    const material = Math.round(
+      calcFilamentCost(filamentType, Number(grams) || 0, settings),
+    );
+
+    const productType = this.resolveFailureProductType(job);
+    const profiles = ensureMachineProfiles(settings);
+    const assigned = job.printerId
+      ? profiles.find((profile) => profile.id === job.printerId)
+      : undefined;
+    const profile =
+      assigned ?? selectPrintProfileForCost(settings, productType);
+    if (!profile) {
+      return material;
+    }
+
+    const overhead = profileHourlyCost(settings, profile, Number(hours) || 0);
+    return Math.round(material + overhead.energyCost + overhead.machineCost);
+  }
+
+  private resolveFailureFilamentType(job: PrintJob): FilamentType | undefined {
+    if (job.productId) {
+      const product = this.store.getProductById(job.productId) as
+        Product3D | undefined;
+      if (product?.filaments?.length) {
+        return product.filaments[0].filamentType;
+      }
+      if (product?.filamentType) return product.filamentType;
+    }
+    if (job.orderItemIndex >= 0 && job.orderId) {
+      const item = this.store.getOrderById(job.orderId)?.items[
+        job.orderItemIndex
+      ];
+      if (item?.filaments?.length) return item.filaments[0].filamentType;
+      if (item?.filamentType) return item.filamentType;
+    }
+    return undefined;
+  }
+
+  private resolveFailureProductType(job: PrintJob): ProductType {
+    if (job.productId) {
+      const product = this.store.getProductById(job.productId);
+      if (product?.type === ProductType.RESINA) return ProductType.RESINA;
+      if (product?.type === ProductType.FDM) return ProductType.FDM;
+    }
+    return ProductType.FDM;
+  }
 
   calculateCost(dto: CalculateCostDto): CostBreakdown {
     const settings = this.store.generalSettings;
@@ -743,9 +803,7 @@ export class CostCalculatorService {
     return paperCost;
   }
 
-  private supplyValue(
-    lines: CalculateCostDto['estampadoSupplies'],
-  ): number {
+  private supplyValue(lines: CalculateCostDto['estampadoSupplies']): number {
     return supplyLinesValue(lines, (supplyId) => {
       const supply = this.store.getSupplyById(supplyId);
       return supply ? Number(supply.unitPrice) || 0 : 0;

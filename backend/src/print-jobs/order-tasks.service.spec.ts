@@ -545,7 +545,8 @@ describe('OrderTasksService', () => {
 
     expect(prepare.responsibleUserId).toBe('uid-a');
     expect(
-      store.printJobs.find((job) => job.id === 'job-abierta')?.responsibleUserId,
+      store.printJobs.find((job) => job.id === 'job-abierta')
+        ?.responsibleUserId,
     ).toBe('uid-b');
   });
 
@@ -601,9 +602,7 @@ describe('OrderTasksService', () => {
   it('reemplaza el faltante por un insumo de la misma categoría y deja mover la tarea', () => {
     store.products[0] = {
       ...store.products[0],
-      filaments: [
-        { id: 'ff-1', filamentType: FilamentType.PLA, grams: 50 },
-      ],
+      filaments: [{ id: 'ff-1', filamentType: FilamentType.PLA, grams: 50 }],
     } as Product3D;
     store.supplies.push({
       id: 'sup-petg',
@@ -631,9 +630,7 @@ describe('OrderTasksService', () => {
   it('no acepta un reemplazo de otra categoría', () => {
     store.products[0] = {
       ...store.products[0],
-      filaments: [
-        { id: 'ff-1', filamentType: FilamentType.PLA, grams: 50 },
-      ],
+      filaments: [{ id: 'ff-1', filamentType: FilamentType.PLA, grams: 50 }],
     } as Product3D;
     store.supplies.push({
       id: 'sup-polimero',
@@ -891,5 +888,183 @@ describe('OrderTasksService', () => {
     expect(service.blockTasksMissingStock()).toBe(true);
     expect(job.status).toBe(PrintJobStatus.BLOQUEADO);
     expect(job.blockedReason).toBe('Insumos insuficientes');
+  });
+
+  it('bloqueo manual exige motivo; desbloqueo sin insumos si el motivo no es de insumos', () => {
+    const job = productionJob(PrintJobStatus.POR_HACER);
+    expect(() =>
+      service.beforeStatusChange(job, PrintJobStatus.BLOQUEADO, adminActor),
+    ).toThrow(BadRequestException);
+
+    service.beforeStatusChange(job, PrintJobStatus.BLOQUEADO, adminActor, {
+      blockedReason: 'Esperando pieza del cliente',
+    });
+    job.status = PrintJobStatus.BLOQUEADO;
+
+    store.products[0] = {
+      ...store.products[0],
+      filamentType: FilamentType.PLA,
+      grams: 50,
+    } as Product3D;
+    store.supplies.length = 0;
+
+    expect(() =>
+      service.beforeStatusChange(job, PrintJobStatus.EN_PROCESO, adminActor),
+    ).not.toThrow();
+  });
+
+  it('no pisa responsable manual al sincronizar el pedido', () => {
+    const order: Order = {
+      id: 'ord-manual-resp',
+      customerId: 'cust-1',
+      customerName: 'Cliente Test',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity: 1,
+          unitPrice: 1000,
+        },
+      ],
+      status: OrderStatus.PENDIENTE,
+      total: 1000,
+      createdAt: new Date().toISOString(),
+      dueDate: new Date().toISOString(),
+      responsibleUserId: 'uid-pedido',
+    };
+    store.orders.push(order);
+    const job = productionJob(PrintJobStatus.POR_HACER, 'uid-fijado');
+    job.orderId = order.id;
+    job.responsibleManual = true;
+    store.printJobs.push(job);
+
+    service.syncOrderTasks(order);
+    expect(job.responsibleUserId).toBe('uid-fijado');
+  });
+
+  it('reimpresión abierta: sync no la cancela ni la pisa; cancelar pedido sí la cancela', () => {
+    store.products[0].stock = 0;
+    const order: Order = {
+      id: 'ord-reprint',
+      customerId: 'cust-1',
+      customerName: 'Cliente Test',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity: 2,
+          unitPrice: 1000,
+          producedQuantity: 2,
+          productionRequiredQuantity: 2,
+          reservedQuantity: 0,
+          deliveredQuantity: 0,
+        },
+      ],
+      status: OrderStatus.EN_PROGRESO,
+      total: 2000,
+      createdAt: new Date().toISOString(),
+      dueDate: new Date().toISOString(),
+      responsibleUserId: 'uid-1',
+    };
+    store.orders.push(order);
+
+    const original: PrintJob = {
+      id: 'job-orig',
+      orderId: order.id,
+      orderItemIndex: 0,
+      customerName: order.customerName,
+      productName: 'Hacer 2 Pieza',
+      productId: 'prod-1',
+      type: ServiceType.IMPRESION_3D,
+      taskType: TaskType.PRODUCTION,
+      status: PrintJobStatus.TERMINADO,
+      active: false,
+      priority: 1,
+      machine: 'Impresora FDM',
+      estimatedHours: 4,
+      dueDate: order.dueDate,
+      quantity: 2,
+      printerId: 'mp-a1',
+      queuePosition: 0,
+      completedAt: new Date().toISOString(),
+    };
+    store.printJobs.push(original);
+
+    const reprint = service.createReprint(original, 1);
+    expect(reprint.reprintOfJobId).toBe(original.id);
+    expect(reprint.quantity).toBe(1);
+    expect(reprint.estimatedHours).toBe(2);
+    expect(reprint.queuePosition).toBe(1);
+    expect(reprint.status).toBe(PrintJobStatus.POR_HACER);
+
+    const nameBefore = reprint.productName;
+    const qtyBefore = reprint.quantity;
+    order.items[0].productionRequiredQuantity = 0;
+    service.syncOrderTasks(order);
+
+    expect(reprint.status).toBe(PrintJobStatus.POR_HACER);
+    expect(reprint.productName).toBe(nameBefore);
+    expect(reprint.quantity).toBe(qtyBefore);
+
+    service.syncOrderStatusFromTasks(order.id);
+    expect(order.status).not.toBe(OrderStatus.TERMINADO);
+
+    order.status = OrderStatus.CANCELADO;
+    service.syncOrderTasks(order);
+    expect(reprint.status).toBe(PrintJobStatus.CANCELADO);
+  });
+
+  it('descuento de stock al terminar: g/kg, sin doble descuento, aviso si no alcanza', () => {
+    store.products[0] = {
+      ...store.products[0],
+      filamentType: FilamentType.PLA,
+      grams: 100,
+    } as Product3D;
+    store.supplies.push({
+      id: 'sup-pla',
+      name: 'PLA negro',
+      category: SupplyCategory.FDM,
+      unit: 'kg',
+      quantity: 0.05,
+      minStock: 0,
+      unitPrice: 10000,
+      priceFromSettings: false,
+      filamentType: FilamentType.PLA,
+      updatedAt: new Date().toISOString(),
+    });
+
+    const job = productionJob(PrintJobStatus.EN_PROCESO);
+    job.startedAt = new Date(Date.now() - 3600_000).toISOString();
+    job.failures = [
+      {
+        id: 'f1',
+        at: new Date().toISOString(),
+        pieces: 1,
+        grams: 20,
+        hours: 0.5,
+        reason: 'despegue',
+        cost: 10,
+      },
+    ];
+    store.printJobs.push(job);
+
+    job.status = PrintJobStatus.TERMINADO;
+    job.completedAt = new Date().toISOString();
+    const warnings = service.afterStatusChange(job);
+
+    expect(job.consumedAt).toBeTruthy();
+    expect(job.actualHours).toBeDefined();
+    // 100 g + 20 g fallas = 0.12 kg; stock 0.05 → 0 + aviso
+    expect(store.supplies[0].quantity).toBe(0);
+    expect(warnings.length).toBeGreaterThan(0);
+
+    const qtyAfter = store.supplies[0].quantity;
+    const warnings2 = service.afterStatusChange(job);
+    expect(warnings2).toEqual([]);
+    expect(store.supplies[0].quantity).toBe(qtyAfter);
   });
 });

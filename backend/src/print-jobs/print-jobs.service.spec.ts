@@ -64,6 +64,76 @@ describe('PrintJobsService.createIndependent', () => {
     return new PrintJobsService(store, new OrderTasksService(store));
   }
 
+  it('prioridad alta fija override 3; normal limpia el override', () => {
+    const store = new StoreService();
+    store.applyState(createEmptyState());
+    const orderTasks = new OrderTasksService(store);
+    const svc = new PrintJobsService(store, orderTasks);
+    const job = svc.createIndependent({ productName: 'Tarea' });
+    const farDue = new Date();
+    farDue.setDate(farDue.getDate() + 30);
+    job.dueDate = farDue.toISOString();
+    job.priority = 1;
+
+    const alta = svc.update(job.id, { priority: 'alta' }, { isAdmin: true });
+    expect(alta.priorityOverride).toBe(3);
+    expect(alta.priority).toBe(3);
+
+    const normal = svc.update(
+      job.id,
+      { priority: 'normal' },
+      { isAdmin: true },
+    );
+    expect(normal.priorityOverride).toBeNull();
+    expect(normal.priority).toBeLessThan(3);
+  });
+
+  it('failure-stats agrega piezas e incluye archivadas', () => {
+    const store = new StoreService();
+    store.applyState(createEmptyState());
+    store.generalSettings.errorMarginPercent = 8;
+    const svc = new PrintJobsService(store, new OrderTasksService(store));
+    const completedAt = new Date().toISOString();
+    store.printJobs.push({
+      id: 'j1',
+      orderId: 'o1',
+      orderItemIndex: 0,
+      customerName: 'C',
+      productName: 'P',
+      type: ServiceType.IMPRESION_3D,
+      taskType: TaskType.PRODUCTION,
+      status: PrintJobStatus.TERMINADO,
+      active: false,
+      archived: true,
+      priority: 1,
+      machine: '',
+      estimatedHours: 1,
+      dueDate: completedAt,
+      quantity: 10,
+      completedAt,
+      failures: [
+        {
+          id: 'f1',
+          at: completedAt,
+          pieces: 2,
+          grams: 30,
+          hours: 1,
+          reason: 'despegue',
+          cost: 50,
+        },
+      ],
+    });
+
+    const stats = svc.failureStats();
+    expect(stats.prints).toBe(10);
+    expect(stats.failed).toBe(2);
+    expect(stats.failedPercent).toBeCloseTo(16.7, 1);
+    expect(stats.lostGrams).toBe(30);
+    expect(stats.lostCost).toBe(50);
+    expect(stats.errorMarginPercent).toBe(8);
+    expect(stats.suggestedPercent).toBeNull();
+  });
+
   it('guarda la tarea sin área ni máquina cuando el área viene vacía', () => {
     const job = service().createIndependent({
       productName: 'Llaveros para stock',
@@ -273,14 +343,10 @@ describe('PrinterQueueService', () => {
       'j-blocked',
       'j-fdm',
     ]);
-    expect(
-      queue.otherAreas.some(
-        (a) => a.area === '' && a.count >= 1,
-      ),
-    ).toBe(true);
-    expect(
-      queue.otherAreas.some((a) => a.area === ServiceType.IMPRESION_3D),
-    ).toBe(false);
+    expect(queue.otherAreas.some((a) => a.area === '' && a.count >= 1)).toBe(
+      true,
+    );
+    expect(queue.otherAreas.some((a) => a.area === 'impresion_3d')).toBe(false);
   });
 
   it('auto asigna a la impresora con menor busyUntil', () => {

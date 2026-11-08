@@ -710,11 +710,52 @@ El pedido tiene un responsable. En el formulario de pedido hay un campo
 queda seleccionado el usuario que está cargando el pedido; se puede cambiar
 antes de guardar. Ese responsable se copia a cada tarea del pedido al
 crearla o al sincronizarla. Si el pedido cambia de responsable, las tareas
-abiertas pasan a ese usuario. No se guarda historial de responsables: solo
-el actual.
+abiertas pasan a ese usuario, **salvo** las que tienen el responsable fijado
+a mano en la tarea (`responsibleManual`): esas conservan el suyo. No se
+guarda historial de responsables: solo el actual.
+
+En local, si la app no exige autenticación, también se pueden elegir como
+responsable usuarios activos sin Firebase (`local:<id>`).
 
 El presupuesto no lleva este campo. Al convertir un presupuesto en pedido,
 el responsable es quien carga el pedido.
+
+**Prioridad de la tarea.** La prioridad efectiva se calcula por fecha de
+entrega (`calcTaskPriority`). Se puede forzar a **Alta** a mano
+(`priorityOverride = 3`); **Normal** limpia el override y vuelve a la
+calculada (que igual puede ser alta si la entrega está cerca).
+
+**Notas y horas reales.** La tarea admite notas (hasta 2000) y horas reales
+(`actualHours`). Al pasar a `TERMINADO`, si las horas reales están vacías y
+hay `startedAt`, se calculan: con impresora de cola, horas de jornada entre
+inicio y fin; si no, horas corridas. Redondeo a 1 decimal.
+
+**Bloqueo manual.** Pasar a `BLOQUEADO` exige un motivo no vacío (máx 255).
+El motivo canónico por insumos es «Insumos insuficientes». Al salir de
+`BLOQUEADO`, solo se exigen insumos disponibles si el motivo era ese; un
+bloqueo manual por otro motivo se puede desbloquear sin chequear stock.
+La notificación al reponer stock solo aplica a tareas bloqueadas por
+insumos.
+
+**Fallas y reimpresión.** Se pueden registrar fallas
+(`pieces`, `grams`, `hours`, motivo) con costo = material + luz + máquina
+(sin mano de obra ni margen de error). No descuentan stock en el momento.
+Si se pide reimpresión, se crea una tarea nueva (producción o interna) con
+las piezas falladas, misma impresora/entrega/responsable, en la cola justo
+después de la original. El sync del pedido no la trata como la tarea de la
+línea, pero sí la cancela/archiva con el pedido y el pedido no termina
+mientras la reimpresión esté abierta.
+
+**Consumo al terminar.** Al pasar a `TERMINADO` se descuenta una sola vez
+el material requerido más lo perdido en fallas (`consumedAt`). Si el stock
+no alcanza, se deja en 0 y la respuesta incluye avisos. **No se repone**
+al reabrir la tarea. Después del descuento se reevalúan bloqueos por stock
+en 0.
+
+**Estadística de fallas (30 días).** Piezas impresas terminadas (producción
+3D) vs piezas falladas; porcentaje, gramos y costo perdidos; margen de
+error configurado y sugerido (`Math.round` del porcentaje) solo si hay al
+menos 20 piezas en la muestra.
 
 ### 12.3 Tareas internas
 
@@ -1709,16 +1750,22 @@ Comportamiento implementado relevante:
   pero **no se desbloquea sola**. La mueven el responsable o un
   administrador (§12.2). Si sigue faltando material, se puede reemplazar
   cada faltante por un insumo con stock de la misma categoría; el cambio
-  vale solo para esa tarea (§9.1).
+  vale solo para esa tarea (§9.1). Bloqueo manual exige motivo; al salir,
+  el chequeo de insumos solo aplica si el motivo era «Insumos insuficientes».
 - Si un insumo **está en stock 0**, se bloquean las tareas en **Por hacer**
   o **En progreso** que lo necesitan, con el motivo «Insumos insuficientes».
   Pasa al cargar la app (cuando el store trae los insumos) y al guardar un
   stock en 0. Las que están en revisión o terminadas no se analizan.
 - El formulario de pedido elige **Responsable** entre los usuarios
   existentes. Por defecto es quien está cargando el pedido, y ese usuario
-  queda en las tareas.
+  queda en las tareas. Si se fija el responsable en la tarea, el sync del
+  pedido ya no lo pisa.
+- Prioridad manual Alta / Normal; notas; horas reales (auto al terminar);
+  registro de fallas + reimpresión; descuento de insumos al terminar
+  (requerido + fallas, una sola vez, sin reposición al reabrir).
 - El estado del pedido se **recalcula** a partir de tareas y entregas
-  (prioridad de entregado / parcial / progreso según tareas).
+  (prioridad de entregado / parcial / progreso según tareas). Incluye
+  reimpresiones abiertas: el pedido no pasa a terminado hasta cerrarlas.
 
 La reserva de stock al preparar pedido, entregas parciales y cantidades
 (`reservedQuantity`, `deliveredQuantity`, etc.) están implementadas en
@@ -1778,7 +1825,12 @@ perfil con jornada propia.
   `costBase=true` por productType.
 
 Endpoints: `GET /print-jobs/printer-queue`, `GET /print-jobs/delivery-estimate`,
-`GET /print-jobs/capacity`, `PATCH /print-jobs/:id/assignment`.
+`GET /print-jobs/capacity`, `PATCH /print-jobs/:id/assignment`,
+`GET /print-jobs/failure-stats`, `GET /print-jobs/:id/consumption`,
+`POST /print-jobs/:id/failures`.
+
+Una reimpresión por falla se inserta en la cola de la misma impresora
+**justo después** de la tarea original (misma entrega y responsable).
 
 ---
 

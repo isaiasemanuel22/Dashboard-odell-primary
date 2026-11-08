@@ -19,13 +19,15 @@ import {
   OrderAlert,
   PrintJob,
   PrintJobActor,
-  Product3D,
+  PrintJobConsumptionLine,
+  PrintJobFailure,
   Supply,
   SupplyReplacement,
   SupplyShortageReport,
 } from '../common/interfaces';
 import { findColorById, isIndistintoColor } from '../common/color.util';
 import { appendOrderStatusHistory } from '../orders/order-status-history.util';
+import { ensureMachineProfiles } from '../settings/machine-profile.util';
 import { StoreChangeService } from '../store/store-change.service';
 import { StoreService } from '../store/store.service';
 import { isAreaService } from '../common/service-type.util';
@@ -36,11 +38,13 @@ import {
 } from '../orders/order-fdm-quote.util';
 import { buildProductStockOverview } from '../products/product-stock.util';
 import {
-  calcTaskPriority,
+  effectiveTaskPriority,
   defaultTaskMachine,
   estimateTaskHours,
   productionTaskName as buildProductionTaskName,
 } from './order-task-estimate';
+import { BLOCKED_REASON_SUPPLIES } from './print-job-failures.util';
+import { printerWorkConfig, workHoursBetween } from './printer-schedule.util';
 
 interface MaterialRequirement {
   key: string;
@@ -176,9 +180,25 @@ export class OrderTasksService implements OnModuleInit {
     job: PrintJob,
     next: PrintJobStatus,
     actor?: PrintJobActor,
+    options?: { blockedReason?: string },
   ): void {
     if (next !== job.status) {
       this.assertActorCanMove(job, actor);
+    }
+
+    if (
+      next === PrintJobStatus.BLOQUEADO &&
+      job.status !== PrintJobStatus.BLOQUEADO
+    ) {
+      const reason = options?.blockedReason?.trim() || '';
+      if (!reason) {
+        throw new BadRequestException('Indicá el motivo del bloqueo');
+      }
+      if (reason.length > 255) {
+        throw new BadRequestException('Indicá el motivo del bloqueo');
+      }
+      job.blockedReason = reason;
+      job.suppliesAvailableNotifiedAt = undefined;
     }
 
     if (
@@ -186,7 +206,10 @@ export class OrderTasksService implements OnModuleInit {
       next !== PrintJobStatus.BLOQUEADO &&
       job.taskType === TaskType.PRODUCTION
     ) {
-      if (!this.hasProductionSupplies(job)) {
+      if (
+        job.blockedReason === BLOCKED_REASON_SUPPLIES &&
+        !this.hasProductionSupplies(job)
+      ) {
         throw new BadRequestException(
           'Los insumos requeridos todavía no están disponibles',
         );
@@ -221,7 +244,13 @@ export class OrderTasksService implements OnModuleInit {
     }
   }
 
-  afterStatusChange(job: PrintJob): void {
+  afterStatusChange(job: PrintJob): string[] {
+    const stockWarnings: string[] = [];
+    if (job.status === PrintJobStatus.TERMINADO) {
+      this.fillActualHoursIfEmpty(job);
+      stockWarnings.push(...this.consumeStockOnce(job));
+    }
+
     if (
       job.taskType === TaskType.PRODUCTION &&
       job.status === PrintJobStatus.TERMINADO &&
@@ -237,6 +266,7 @@ export class OrderTasksService implements OnModuleInit {
       }
     }
     this.syncOrderStatusFromTasks(job.orderId);
+    return stockWarnings;
   }
 
   notifySupplyAvailability(): void {
@@ -245,6 +275,7 @@ export class OrderTasksService implements OnModuleInit {
       if (
         job.taskType === TaskType.PRODUCTION &&
         job.status === PrintJobStatus.BLOQUEADO &&
+        job.blockedReason === BLOCKED_REASON_SUPPLIES &&
         !job.suppliesAvailableNotifiedAt &&
         this.hasProductionSupplies(job)
       ) {
@@ -288,7 +319,7 @@ export class OrderTasksService implements OnModuleInit {
       if (!this.isOpenSupplyTask(job)) continue;
       if (!this.taskNeedsDepletedSupply(job, supply)) continue;
       job.status = PrintJobStatus.BLOQUEADO;
-      job.blockedReason = 'Insumos insuficientes';
+      job.blockedReason = BLOCKED_REASON_SUPPLIES;
       job.suppliesAvailableNotifiedAt = undefined;
       orderIds.add(job.orderId);
       changed = true;
@@ -532,7 +563,8 @@ export class OrderTasksService implements OnModuleInit {
       (job) =>
         job.orderId === order.id &&
         job.orderItemIndex === itemIndex &&
-        job.taskType === taskType,
+        job.taskType === taskType &&
+        !job.reprintOfJobId,
     );
     if (existing) {
       if (existing.status === PrintJobStatus.CANCELADO) {
@@ -553,10 +585,10 @@ export class OrderTasksService implements OnModuleInit {
           !this.hasProductionSupplies(existing)
         ) {
           existing.status = PrintJobStatus.BLOQUEADO;
-          existing.blockedReason = 'Insumos insuficientes';
+          existing.blockedReason = BLOCKED_REASON_SUPPLIES;
         } else if (
           existing.status === PrintJobStatus.BLOQUEADO &&
-          existing.blockedReason === 'Insumos insuficientes'
+          existing.blockedReason === BLOCKED_REASON_SUPPLIES
         ) {
           existing.status = PrintJobStatus.POR_HACER;
           existing.blockedReason = undefined;
@@ -583,7 +615,7 @@ export class OrderTasksService implements OnModuleInit {
       !this.hasProductionSupplies(task)
     ) {
       task.status = PrintJobStatus.BLOQUEADO;
-      task.blockedReason = 'Insumos insuficientes';
+      task.blockedReason = BLOCKED_REASON_SUPPLIES;
     }
     this.store.printJobs.push(task);
     return task;
@@ -679,6 +711,7 @@ export class OrderTasksService implements OnModuleInit {
         candidate.orderId === orderId &&
         candidate.orderItemIndex === itemIndex &&
         candidate.taskType === TaskType.PRODUCTION &&
+        !candidate.reprintOfJobId &&
         candidate.status !== PrintJobStatus.TERMINADO &&
         candidate.status !== PrintJobStatus.CANCELADO,
     );
@@ -789,12 +822,12 @@ export class OrderTasksService implements OnModuleInit {
     }
 
     const pending = requirements.filter(
-      (item) => !item.coveredNaturally && !next.some((row) => row.requirementKey === item.key),
+      (item) =>
+        !item.coveredNaturally &&
+        !next.some((row) => row.requirementKey === item.key),
     );
     if (pending.length) {
-      throw new BadRequestException(
-        'Falta reemplazar todos los insumos',
-      );
+      throw new BadRequestException('Falta reemplazar todos los insumos');
     }
 
     job.supplyReplacements = next.length ? next : undefined;
@@ -862,7 +895,7 @@ export class OrderTasksService implements OnModuleInit {
       supply.category === SupplyCategory.RESINA &&
       product.type === ProductType.RESINA
     ) {
-      const resin = product as Product3D;
+      const resin = product;
       return (
         !!resin.resinType &&
         resin.resinType === supply.resinType &&
@@ -894,7 +927,8 @@ export class OrderTasksService implements OnModuleInit {
   }
 
   private hasProductionSupplies(job: PrintJob): boolean {
-    if (job.productId && !this.store.getProductById(job.productId)) return false;
+    if (job.productId && !this.store.getProductById(job.productId))
+      return false;
     return this.materialRequirements(job).every((item) =>
       this.requirementCovered(job, item),
     );
@@ -949,14 +983,22 @@ export class OrderTasksService implements OnModuleInit {
       const lines = product.filaments?.length
         ? product.filaments
         : product.filamentType
-          ? [{ filamentType: product.filamentType, grams: product.grams, colorId: undefined }]
+          ? [
+              {
+                filamentType: product.filamentType,
+                grams: product.grams,
+                colorId: undefined,
+              },
+            ]
           : [];
       return lines.map((line, index) => {
         const requiredUnits = Math.max(line.grams || 0, 0) * quantity;
         const coveredNaturally =
-          this.matchingStock(SupplyCategory.FDM, (supply) =>
-            supply.filamentType === line.filamentType &&
-            this.supplyMatchesColor(supply, line.colorId),
+          this.matchingStock(
+            SupplyCategory.FDM,
+            (supply) =>
+              supply.filamentType === line.filamentType &&
+              this.supplyMatchesColor(supply, line.colorId),
           ) >= requiredUnits;
         return {
           key: `fdm:${index}`,
@@ -974,11 +1016,13 @@ export class OrderTasksService implements OnModuleInit {
 
     if (product.type === ProductType.RESINA && product.resinType) {
       const requiredUnits = Math.max(product.grams || 0, 0) * quantity;
-      const resin = product as Product3D;
+      const resin = product;
       const coveredNaturally =
-        this.matchingStock(SupplyCategory.RESINA, (supply) =>
-          supply.resinType === resin.resinType &&
-          this.supplyMatchesColor(supply, resin.colorId),
+        this.matchingStock(
+          SupplyCategory.RESINA,
+          (supply) =>
+            supply.resinType === resin.resinType &&
+            this.supplyMatchesColor(supply, resin.colorId),
         ) >= requiredUnits;
       return [
         {
@@ -1089,7 +1133,10 @@ export class OrderTasksService implements OnModuleInit {
     item: OrderItem,
   ): PrintJob | undefined {
     const byIndex = this.store.printJobs.find(
-      (job) => job.orderId === orderId && job.orderItemIndex === itemIndex,
+      (job) =>
+        job.orderId === orderId &&
+        job.orderItemIndex === itemIndex &&
+        !job.reprintOfJobId,
     );
     if (byIndex) return byIndex;
 
@@ -1097,6 +1144,7 @@ export class OrderTasksService implements OnModuleInit {
       (job) =>
         job.orderId === orderId &&
         job.orderItemIndex === undefined &&
+        !job.reprintOfJobId &&
         job.type === item.serviceType &&
         job.productName === item.productName &&
         (item.productId ? job.productId === item.productId : !job.productId),
@@ -1124,13 +1172,14 @@ export class OrderTasksService implements OnModuleInit {
       estimatedHours: this.estimateHours(item, taskType),
       dueDate: order.dueDate,
       responsibleUserId: order.responsibleUserId?.trim() || undefined,
+      responsibleManual: false,
     };
   }
 
   /**
-   * El pedido es la fuente del responsable. Solo se pisa en tareas abiertas:
-   * terminadas y canceladas conservan el que tenían. Sin responsable en el
-   * pedido no se borra el de la tarea (pedidos viejos).
+   * El pedido es la fuente del responsable. Solo se pisa en tareas abiertas
+   * sin responsibleManual. Terminadas y canceladas conservan el que tenían.
+   * Sin responsable en el pedido no se borra el de la tarea (pedidos viejos).
    */
   private assignOpenTasksResponsible(order: Order): void {
     const responsibleUserId = order.responsibleUserId?.trim();
@@ -1143,6 +1192,7 @@ export class OrderTasksService implements OnModuleInit {
       ) {
         continue;
       }
+      if (job.responsibleManual) continue;
       job.responsibleUserId = responsibleUserId;
     }
   }
@@ -1153,6 +1203,281 @@ export class OrderTasksService implements OnModuleInit {
     throw new ForbiddenException(
       'Solo el responsable de la tarea o un administrador puede cambiar su estado',
     );
+  }
+
+  /** Líneas de consumo previstas: material requerido + gramos perdidos en fallas. */
+  describeConsumption(job: PrintJob): PrintJobConsumptionLine[] {
+    const lines: PrintJobConsumptionLine[] = [];
+    const requirements = this.materialRequirements(job);
+
+    for (const requirement of requirements) {
+      const supply = this.resolveSupplyForRequirement(job, requirement);
+      const quantity = this.toSupplyQuantity(supply, requirement.requiredUnits);
+      const unit = supply?.unit ?? this.defaultUnitForRequirement(requirement);
+      const remaining =
+        supply != null ? Math.max(0, Number(supply.quantity) - quantity) : null;
+      lines.push({
+        supplyId: supply?.id ?? null,
+        name: requirement.label,
+        quantity,
+        unit,
+        remaining,
+        kind: 'material',
+      });
+    }
+
+    const failedGrams = (job.failures ?? []).reduce(
+      (sum, entry) => sum + (Number(entry.grams) || 0),
+      0,
+    );
+    if (failedGrams > 0) {
+      const filamentReq = requirements.find(
+        (item) =>
+          item.category === SupplyCategory.FDM ||
+          item.category === SupplyCategory.RESINA,
+      );
+      const supply = filamentReq
+        ? this.resolveSupplyForRequirement(job, filamentReq)
+        : null;
+      const quantity = this.toSupplyQuantity(supply, failedGrams);
+      lines.push({
+        supplyId: supply?.id ?? null,
+        name: 'Más lo perdido en fallas',
+        quantity,
+        unit: supply?.unit ?? 'g',
+        remaining:
+          supply != null
+            ? Math.max(0, Number(supply.quantity) - quantity)
+            : null,
+        kind: 'failure',
+      });
+    }
+
+    return lines;
+  }
+
+  /**
+   * Descuenta insumos al terminar, una sola vez. No se repone al reabrir.
+   * Si el stock no alcanza, deja 0 y agrega un aviso.
+   */
+  consumeStockOnce(job: PrintJob): string[] {
+    if (job.consumedAt) return [];
+    if (job.status !== PrintJobStatus.TERMINADO) return [];
+
+    const warnings: string[] = [];
+    const lines = this.describeConsumption(job);
+    const depleted: Supply[] = [];
+
+    for (const line of lines) {
+      if (!line.supplyId || !(line.quantity > 0)) continue;
+      const supply = this.store.getSupplyById(line.supplyId);
+      if (!supply) continue;
+      const previous = Number(supply.quantity);
+      if (previous + 1e-9 < line.quantity) {
+        warnings.push(
+          `${supply.name}: se descontó hasta 0 (faltaban ${line.quantity - previous} ${line.unit})`,
+        );
+      }
+      supply.quantity = Math.max(0, previous - line.quantity);
+      supply.updatedAt = new Date().toISOString();
+      if (previous > 1e-9 && supply.quantity <= 1e-9) {
+        depleted.push(supply);
+      }
+    }
+
+    job.consumedAt = new Date().toISOString();
+
+    for (const supply of depleted) {
+      this.blockTasksForDepletedSupply(supply);
+    }
+    this.blockTasksMissingStock();
+
+    if (lines.some((line) => line.supplyId) && this.storeChange) {
+      this.storeChange.recordChange({
+        collections: ['supplies', 'printJobs'],
+        realtime: {
+          scopes: ['supplies', 'print-jobs', 'orders', 'dashboard'],
+          action: 'update',
+          entity: 'print-job',
+          id: job.id,
+        },
+      });
+    }
+
+    return warnings;
+  }
+
+  fillActualHoursIfEmpty(job: PrintJob): void {
+    if (job.actualHours != null && Number.isFinite(Number(job.actualHours))) {
+      return;
+    }
+    if (!job.startedAt || !job.completedAt) return;
+
+    const started = new Date(job.startedAt);
+    const completed = new Date(job.completedAt);
+    if (Number.isNaN(started.getTime()) || Number.isNaN(completed.getTime())) {
+      return;
+    }
+
+    let hours: number;
+    const profile = job.printerId
+      ? ensureMachineProfiles(this.store.generalSettings).find(
+          (item) => item.id === job.printerId,
+        )
+      : undefined;
+    if (profile?.queueEnabled) {
+      hours = workHoursBetween(started, completed, printerWorkConfig(profile));
+    } else {
+      hours = (completed.getTime() - started.getTime()) / (1000 * 60 * 60);
+    }
+    job.actualHours = Math.round(Math.max(0, hours) * 10) / 10;
+  }
+
+  /**
+   * Reimpresión por falla: misma impresora/entrega/responsable, cola justo
+   * después de la original. No es la tarea canónica de la línea (reprintOfJobId).
+   */
+  createReprint(original: PrintJob, pieces: number): PrintJob {
+    const qty = Math.max(1, Math.round(Number(pieces) || 1));
+    const originalQty = Math.max(1, Number(original.quantity) || 1);
+    const estimatedHours = Math.max(
+      1,
+      Math.ceil((Number(original.estimatedHours) || 1) / originalQty) * qty,
+    );
+
+    const baseName = this.reprintProductLabel(original);
+    const isInternal =
+      original.taskType === TaskType.INTERNAL || !original.orderId;
+
+    const reprint: PrintJob = {
+      id: this.store.nextId('job', this.store.printJobs),
+      orderId: isInternal ? '' : original.orderId,
+      orderItemIndex: isInternal ? -1 : original.orderItemIndex,
+      customerName: original.customerName,
+      productName: `Reimprimir ${qty} ${baseName}`,
+      productId: original.productId,
+      type: original.type,
+      taskType: isInternal ? TaskType.INTERNAL : TaskType.PRODUCTION,
+      quantity: qty,
+      status: PrintJobStatus.POR_HACER,
+      active: true,
+      priority: this.calcPriority(original.dueDate, original.priorityOverride),
+      priorityOverride: original.priorityOverride ?? null,
+      machine: original.machine,
+      estimatedHours,
+      dueDate: original.dueDate,
+      responsibleUserId: original.responsibleUserId,
+      responsibleManual: !!original.responsibleManual,
+      printerId: original.printerId ?? null,
+      reprintOfJobId: original.id,
+      archived: false,
+    };
+
+    this.insertReprintInQueue(original, reprint);
+    this.store.printJobs.push(reprint);
+    return reprint;
+  }
+
+  appendFailure(job: PrintJob, entry: PrintJobFailure): void {
+    job.failures = [...(job.failures ?? []), entry];
+  }
+
+  private reprintProductLabel(original: PrintJob): string {
+    if (original.orderItemIndex >= 0 && original.orderId) {
+      const item = this.store.getOrderById(original.orderId)?.items[
+        original.orderItemIndex
+      ];
+      if (item) return item.productName;
+    }
+    return (
+      original.productName.replace(/^Hacer\s+\d+\s+/i, '').trim() ||
+      original.productName
+    );
+  }
+
+  private insertReprintInQueue(original: PrintJob, reprint: PrintJob): void {
+    if (!original.printerId) {
+      reprint.queuePosition = null;
+      return;
+    }
+    const printerId = original.printerId;
+    const originalPos =
+      original.queuePosition != null && Number.isFinite(original.queuePosition)
+        ? Number(original.queuePosition)
+        : this.store.printJobs
+            .filter((job) => job.printerId === printerId)
+            .reduce((max, job) => Math.max(max, job.queuePosition ?? -1), -1);
+
+    reprint.queuePosition = originalPos + 1;
+    for (const job of this.store.printJobs) {
+      if (job.printerId !== printerId) continue;
+      if (job.id === original.id) continue;
+      if ((job.queuePosition ?? -1) > originalPos) {
+        job.queuePosition = (job.queuePosition ?? 0) + 1;
+      }
+    }
+  }
+
+  private resolveSupplyForRequirement(
+    job: PrintJob,
+    requirement: MaterialRequirement,
+  ): Supply | null {
+    const replacement = job.supplyReplacements?.find(
+      (item) => item.requirementKey === requirement.key,
+    );
+    if (replacement) {
+      return this.store.getSupplyById(replacement.supplyId) ?? null;
+    }
+
+    if (requirement.key.startsWith('supply:')) {
+      const supplyId = requirement.key.slice('supply:'.length);
+      return this.store.getSupplyById(supplyId) ?? null;
+    }
+
+    const matches = this.store.supplies.filter((supply) => {
+      if (supply.category !== requirement.category) return false;
+      if (requirement.category === SupplyCategory.FDM) {
+        return this.materialMatchesSupply(
+          { ...job, supplyReplacements: undefined },
+          supply,
+        );
+      }
+      if (requirement.category === SupplyCategory.RESINA) {
+        return this.materialMatchesSupply(
+          { ...job, supplyReplacements: undefined },
+          supply,
+        );
+      }
+      return false;
+    });
+
+    if (!matches.length) return null;
+    return matches.reduce((best, supply) =>
+      this.stockUnits(supply) > this.stockUnits(best) ? supply : best,
+    );
+  }
+
+  /** Convierte unidades internas (g/ml) a la unidad del supply (kg/L). */
+  private toSupplyQuantity(
+    supply: Supply | null | undefined,
+    requiredUnits: number,
+  ): number {
+    if (!supply) return requiredUnits;
+    if (
+      supply.category === SupplyCategory.FDM ||
+      supply.category === SupplyCategory.RESINA
+    ) {
+      if (supply.unit === 'kg' || supply.unit === 'L') {
+        return requiredUnits / 1000;
+      }
+    }
+    return requiredUnits;
+  }
+
+  private defaultUnitForRequirement(requirement: MaterialRequirement): string {
+    if (requirement.category === SupplyCategory.FDM) return 'g';
+    if (requirement.category === SupplyCategory.RESINA) return 'ml';
+    return 'u';
   }
 
   private productionTaskName(item: OrderItem, quantity?: number): string {
@@ -1175,7 +1500,8 @@ export class OrderTasksService implements OnModuleInit {
     job.productId = item.productId;
     job.type = item.serviceType;
     job.dueDate = order.dueDate;
-    job.priority = this.calcPriority(order.dueDate);
+    // Las reimpresiones no llegan acá (ensureItemTask las excluye).
+    job.priority = this.calcPriority(order.dueDate, job.priorityOverride);
     job.machine = this.defaultMachine(item, taskType);
     job.estimatedHours = this.estimateHours(item, taskType);
   }
@@ -1190,8 +1516,11 @@ export class OrderTasksService implements OnModuleInit {
     });
   }
 
-  private calcPriority(dueDate: string): number {
-    return calcTaskPriority(dueDate);
+  private calcPriority(
+    dueDate: string,
+    priorityOverride?: number | null,
+  ): number {
+    return effectiveTaskPriority(dueDate, priorityOverride);
   }
 
   private defaultMachine(

@@ -300,12 +300,16 @@ export class UserAccessService {
 
   /**
    * Usuarios que pueden quedar como responsable de un pedido.
-   * Sin firebaseUid no se ofrecen: el actor al mover es el uid de Firebase
-   * y no habría contra quién comparar.
+   * Con auth: solo quienes tienen firebaseUid (el actor al mover es ese uid).
+   * Sin auth (local): también usuarios activos sin firebaseUid, con id
+   * `local:<id>` para que el frontend pueda elegirlos y mostrar el nombre.
    */
   async listOrderResponsibles(): Promise<OrderResponsibleOption[]> {
+    const requireAuth = !!this.config?.requireAuth;
     const rows = await this.db().appUser.findMany({
-      where: { active: true, firebaseUid: { not: null } },
+      where: requireAuth
+        ? { active: true, firebaseUid: { not: null } }
+        : { active: true },
       select: {
         id: true,
         displayName: true,
@@ -316,12 +320,22 @@ export class UserAccessService {
     });
     return rows.flatMap((row) => {
       const firebaseUid = row.firebaseUid?.trim();
-      if (!firebaseUid) return [];
+      if (firebaseUid) {
+        return [
+          {
+            id: row.id,
+            displayName: row.displayName,
+            firebaseUid,
+            active: row.active,
+          },
+        ];
+      }
+      if (requireAuth) return [];
       return [
         {
           id: row.id,
           displayName: row.displayName,
-          firebaseUid,
+          firebaseUid: `local:${row.id}`,
           active: row.active,
         },
       ];

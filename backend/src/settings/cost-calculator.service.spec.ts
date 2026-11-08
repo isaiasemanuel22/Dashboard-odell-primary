@@ -379,9 +379,7 @@ describe('CostCalculatorService', () => {
     const base = service.calculateProductPricing(baseInput);
     const withSupply = service.calculateProductPricing({
       ...baseInput,
-      estampadoSupplies: [
-        { id: 'l1', supplyId: 'sup-polimero', quantity: 1 },
-      ],
+      estampadoSupplies: [{ id: 'l1', supplyId: 'sup-polimero', quantity: 1 }],
     });
 
     expect(base.cost).toBe(1000);
@@ -414,9 +412,7 @@ describe('CostCalculatorService', () => {
       brand: 'Test',
       filamentType: 'pla' as never,
       suggestedPrice: 2000,
-      estampadoSupplies: [
-        { id: 'l1', supplyId: 'sup-polimero', quantity: 1 },
-      ],
+      estampadoSupplies: [{ id: 'l1', supplyId: 'sup-polimero', quantity: 1 }],
     });
 
     expect(result.cost).toBe(1800);
@@ -454,5 +450,53 @@ describe('CostCalculatorService', () => {
     });
 
     expect(result.materialCost).toBe(65);
+  });
+
+  it('calculateFailureCost suma material + luz + máquina sin mano de obra ni margen', () => {
+    store.products.push({
+      id: 'prod-fail',
+      name: 'Pieza',
+      images: [],
+      attachments: [],
+      updatedAt: new Date().toISOString(),
+      price: 1000,
+      cost: 500,
+      profit: 500,
+      categoryIds: [],
+      type: ProductType.FDM,
+      size: '10cm',
+      published: true,
+      components: [],
+      assemblyTimeHours: 0,
+      includesPieces: false,
+      grams: 50,
+      printTimeHours: 1,
+      workTimeHours: 0,
+      stock: 0,
+      filamentType: 'pla' as never,
+    });
+
+    const cost = service.calculateFailureCost(
+      {
+        id: 'job-1',
+        orderId: '',
+        orderItemIndex: -1,
+        customerName: '',
+        productName: 'Pieza',
+        productId: 'prod-fail',
+        type: 'impresion_3d' as never,
+        status: 'por_hacer' as never,
+        active: true,
+        priority: 1,
+        machine: '',
+        estimatedHours: 1,
+        dueDate: new Date().toISOString(),
+      },
+      100,
+      1,
+    );
+
+    // material 0.1 kg × 10000 = 1000; FDM default 120W/1000*1*100 + 150*1
+    expect(cost).toBe(1000 + 12 + 150);
   });
 });

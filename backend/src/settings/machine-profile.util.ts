@@ -354,6 +354,20 @@ export function resolveMachineHours(
   }
 }
 
+/** Costo horario de un perfil: luz (kWh) + máquina, sin mano de obra. */
+export function profileHourlyCost(
+  settings: GeneralSettings,
+  profile: MachineProfile,
+  hours: number,
+): { energyCost: number; machineCost: number } {
+  const h = Math.max(Number(hours) || 0, 0);
+  const costPerKwh = Number(settings.electricityCostPerKwh) || 0;
+  return {
+    energyCost: (profile.watts / 1000) * h * costPerKwh,
+    machineCost: profile.costPerHour * h,
+  };
+}
+
 export function calculateMachineOverhead(
   settings: GeneralSettings,
   productType: ProductType,
@@ -365,15 +379,15 @@ export function calculateMachineOverhead(
     if (profile.role !== MachineProfileRole.PRINT) return true;
     return printForCost ? profile.id === printForCost.id : false;
   });
-  const costPerKwh = settings.electricityCostPerKwh;
 
   let energyCost = 0;
   let machineCost = 0;
 
   for (const profile of profiles) {
     const hours = resolveMachineHours(profile, context);
-    energyCost += (profile.watts / 1000) * hours * costPerKwh;
-    machineCost += profile.costPerHour * hours;
+    const part = profileHourlyCost(settings, profile, hours);
+    energyCost += part.energyCost;
+    machineCost += part.machineCost;
   }
 
   return {

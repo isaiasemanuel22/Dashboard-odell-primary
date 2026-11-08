@@ -9,6 +9,19 @@ export interface PrinterWorkConfig {
   workStartHour: string;
 }
 
+/** Jornada de un perfil print; misma regla que usaba printer-queue.service. */
+export function printerWorkConfig(profile: {
+  workHoursPerDay?: number;
+  workWeekdays?: number[];
+  workStartHour?: string;
+}): PrinterWorkConfig {
+  return {
+    workHoursPerDay: profile.workHoursPerDay ?? 16,
+    workWeekdays: profile.workWeekdays ?? [1, 2, 3, 4, 5, 6],
+    workStartHour: profile.workStartHour ?? '08:00',
+  };
+}
+
 export interface ScheduleJobInput {
   jobId: string;
   status: PrintJobStatus;

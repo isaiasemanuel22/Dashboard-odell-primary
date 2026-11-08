@@ -11,6 +11,7 @@ import {
   createDefaultMachineProfiles,
   getMachineProfilesForProductType,
   normalizeMachineProfiles,
+  profileHourlyCost,
   resolveMachineHours,
   resolveWashBathUses,
   selectPrintProfileForCost,
@@ -76,6 +77,15 @@ describe('machine-profile.util', () => {
     )!;
     const hours = resolveMachineHours(profile, { printTimeHours: 2 });
     expect(hours).toBe(2);
+  });
+
+  it('profileHourlyCost suma luz y máquina sin redondear', () => {
+    const profile = settings.machineProfiles.find(
+      (p) => p.productType === ProductType.FDM,
+    )!;
+    const part = profileHourlyCost(settings, profile, 2);
+    expect(part.energyCost).toBe((120 / 1000) * 2 * 100);
+    expect(part.machineCost).toBe(150 * 2);
   });
 
   it('aplica perfil universal a cualquier tipo', () => {

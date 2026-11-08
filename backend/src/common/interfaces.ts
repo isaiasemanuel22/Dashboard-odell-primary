@@ -674,6 +674,26 @@ export interface ReferenceData {
   products: Product[];
 }
 
+export interface PrintJobFailure {
+  id: string;
+  at: string;
+  userId?: string;
+  pieces: number;
+  grams: number;
+  hours: number;
+  reason: 'despegue' | 'enredo' | 'corte_luz' | 'atasco' | 'otro';
+  cost: number;
+}
+
+export interface PrintJobConsumptionLine {
+  supplyId: string | null;
+  name: string;
+  quantity: number;
+  unit: string;
+  remaining: number | null;
+  kind: 'material' | 'failure';
+}
+
 export interface PrintJob {
   id: string;
   orderId: string;
@@ -705,6 +725,17 @@ export interface PrintJob {
   printerId?: string | null;
   /** Orden manual dentro de la cola de esa impresora (0..n-1). */
   queuePosition?: number | null;
+  notes?: string;
+  actualHours?: number | null;
+  /** Si está seteado, `priority` = este valor; si no, se calcula por dueDate. */
+  priorityOverride?: number | null;
+  /** Si true, el sync del pedido no pisa responsibleUserId. */
+  responsibleManual?: boolean;
+  failures?: PrintJobFailure[];
+  /** Id de la tarea original si esta es una reimpresión por falla. */
+  reprintOfJobId?: string | null;
+  /** Momento en que se descontó stock al terminar (una sola vez). */
+  consumedAt?: string | null;
 }
 
 export interface SupplyReplacement {
@@ -735,6 +766,10 @@ export interface UpdatePrintJobDto {
   active?: boolean;
   responsibleUserId?: string;
   supplyReplacements?: SupplyReplacement[];
+  notes?: string;
+  actualHours?: number | null;
+  priority?: 'alta' | 'normal';
+  blockedReason?: string;
 }
 
 /** Quién intenta mover una tarea. `userId` es el uid de Firebase. */

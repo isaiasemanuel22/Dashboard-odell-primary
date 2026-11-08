@@ -1,4 +1,9 @@
-import { PrintJob, SupplyReplacement } from '../../common/interfaces';
+import {
+  PrintJob,
+  PrintJobFailure,
+  SupplyReplacement,
+} from '../../common/interfaces';
+import { parseFailures } from '../../print-jobs/print-job-failures.util';
 
 function parseSupplyReplacements(
   raw?: string | null,
@@ -43,7 +48,15 @@ export function mapPrintJobFromDb(row: {
   supplyReplacements?: string | null;
   printerId?: string | null;
   queuePosition?: number | null;
+  notes?: string | null;
+  actualHours?: number | null;
+  priorityOverride?: number | null;
+  responsibleManual?: boolean | null;
+  failures?: string | null;
+  reprintOfJobId?: string | null;
+  consumedAt?: Date | null;
 }): PrintJob {
+  const failures = parseFailures(row.failures) as PrintJobFailure[];
   return {
     id: row.id,
     orderId: row.orderId,
@@ -69,6 +82,13 @@ export function mapPrintJobFromDb(row: {
     supplyReplacements: parseSupplyReplacements(row.supplyReplacements),
     printerId: row.printerId ?? null,
     queuePosition: row.queuePosition ?? null,
+    notes: row.notes ?? undefined,
+    actualHours: row.actualHours ?? null,
+    priorityOverride: row.priorityOverride ?? null,
+    responsibleManual: row.responsibleManual ?? false,
+    failures: failures.length ? failures : undefined,
+    reprintOfJobId: row.reprintOfJobId ?? null,
+    consumedAt: row.consumedAt?.toISOString() ?? null,
   };
 }
 
@@ -102,5 +122,12 @@ export function mapPrintJobToDb(job: PrintJob) {
       : null,
     printerId: job.printerId ?? null,
     queuePosition: job.queuePosition ?? null,
+    notes: job.notes ?? null,
+    actualHours: job.actualHours ?? null,
+    priorityOverride: job.priorityOverride ?? null,
+    responsibleManual: job.responsibleManual ?? false,
+    failures: job.failures?.length ? JSON.stringify(job.failures) : null,
+    reprintOfJobId: job.reprintOfJobId ?? null,
+    consumedAt: job.consumedAt ? new Date(job.consumedAt) : null,
   };
 }

@@ -323,6 +323,13 @@ model PrintJob {
   supplyReplacements String? @map("supply_replacements") @db.Text
   printerId      String?   @map("printer_id") @db.VarChar(64)
   queuePosition  Int?      @map("queue_position")
+  notes               String?   @db.Text
+  actualHours         Float?    @map("actual_hours")
+  priorityOverride    Int?      @map("priority_override")
+  responsibleManual   Boolean   @default(false) @map("responsible_manual")
+  failures            String?   @db.Text
+  reprintOfJobId      String?   @map("reprint_of_job_id") @db.VarChar(64)
+  consumedAt          DateTime? @map("consumed_at")
 
   @@index([orderId])
   @@map("print_jobs")

@@ -25,6 +25,23 @@ export function calcTaskPriority(dueDate: string): number {
   return 1;
 }
 
+/** Prioridad efectiva: override manual («alta» = 3) o cálculo por fecha. */
+export function effectiveTaskPriority(
+  dueDate: string,
+  priorityOverride?: number | null,
+): number {
+  return priorityOverride ?? calcTaskPriority(dueDate);
+}
+
+/** `alta` fija override 3; `normal` limpia el override (vuelve a la calculada). */
+export function priorityOverrideFromDto(
+  priority: 'alta' | 'normal' | undefined,
+): number | null | undefined {
+  if (priority === undefined) return undefined;
+  if (priority === 'alta') return 3;
+  return null;
+}
+
 export function defaultTaskMachine(
   item: OrderItem,
   taskType: TaskType = TaskType.SERVICE,

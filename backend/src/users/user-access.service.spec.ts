@@ -237,3 +237,70 @@ describe('UserAccessService administrador por ADMIN_EMAIL', () => {
     expect(internals.findUserByEmail).not.toHaveBeenCalled();
   });
 });
+
+describe('UserAccessService.listOrderResponsibles', () => {
+  const rows = [
+    {
+      id: 'u-fb',
+      displayName: 'Con Firebase',
+      firebaseUid: 'fb-1',
+      active: true,
+    },
+    {
+      id: 'u-local',
+      displayName: 'Solo local',
+      firebaseUid: null,
+      active: true,
+    },
+  ];
+
+  function buildService(requireAuth: boolean) {
+    const findMany = jest.fn().mockResolvedValue(rows);
+    const prismaService = {
+      isConfigured: () => true,
+      prisma: { appUser: { findMany } },
+    } as unknown as PrismaService;
+    const bootstrap = {
+      syncDefaults: jest.fn(),
+    } as unknown as UserAccessBootstrapService;
+    const config = { requireAuth } as AppConfigService;
+    return {
+      findMany,
+      service: new UserAccessService(prismaService, bootstrap, config),
+    };
+  }
+
+  it('sin auth incluye usuarios locales con id local:<id>', async () => {
+    const { service, findMany } = buildService(false);
+    const result = await service.listOrderResponsibles();
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { active: true } }),
+    );
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'u-fb',
+          firebaseUid: 'fb-1',
+        }),
+        expect.objectContaining({
+          id: 'u-local',
+          firebaseUid: 'local:u-local',
+          displayName: 'Solo local',
+        }),
+      ]),
+    );
+  });
+
+  it('con auth solo usuarios con firebaseUid', async () => {
+    const { service, findMany } = buildService(true);
+    findMany.mockResolvedValue([rows[0]]);
+    const result = await service.listOrderResponsibles();
+    expect(findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { active: true, firebaseUid: { not: null } },
+      }),
+    );
+    expect(result).toHaveLength(1);
+    expect(result[0].firebaseUid).toBe('fb-1');
+  });
+});
