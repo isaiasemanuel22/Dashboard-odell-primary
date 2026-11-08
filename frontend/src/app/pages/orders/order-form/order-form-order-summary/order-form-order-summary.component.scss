@@ -181,7 +181,7 @@
 
     ::ng-deep .db-seg {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(min-content, 1fr));
       width: 100%;
       // Evita que overflow:hidden del control recorte la primera letra.
       overflow: visible;
@@ -193,9 +193,8 @@
       height: auto;
       min-height: 2.5rem;
       padding: 0.4rem 0.35rem;
-      font-size: 0.75rem;
-      white-space: normal;
-      overflow-wrap: anywhere;
+      font-size: 13px;
+      white-space: nowrap;
       line-height: 1.2;
       text-align: center;
       overflow: visible;

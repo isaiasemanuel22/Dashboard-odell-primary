@@ -1,5 +1,13 @@
 
 @use '../../../shared/styles/variables' as *;
+@use '../../../shared/styles/mobile' as mobile;
+
+// Mismo gap entre campos que el resto de los formularios.
+.category-form {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
 
 // Grupo de campos sin el borde nativo del fieldset (RdPatrones §1).
 .category-form__group {
@@ -21,4 +29,32 @@
   margin: 0.5rem 0 0;
   font-size: 0.8rem;
   color: $color-text-muted;
+}
+
+@include mobile.mobile-only {
+  // Una opción por fila de 44 px, casilla de 20 px (MobRdCategoria).
+  .category-form__group ::ng-deep .db-checkbox-group {
+    flex-direction: column;
+    flex-wrap: nowrap;
+    gap: 0;
+  }
+
+  .category-form__group ::ng-deep db-checkbox {
+    display: flex;
+    width: 100%;
+  }
+
+  .category-form__group ::ng-deep .db-checkbox {
+    width: 100%;
+    min-height: 44px;
+    gap: 12px;
+    font-size: 15px;
+  }
+
+  .category-form__group ::ng-deep .db-checkbox__input {
+    width: 20px;
+    height: 20px;
+    flex: none;
+    margin: 0;
+  }
 }

@@ -203,6 +203,29 @@
   background: mobile.$m-bg;
 }
 
+.piece-picker__fullscreen {
+  // `.modal label` / `.modal input` (globales) apilan la lupa y duplican el borde:
+  // una sola caja con la lupa a la izquierda (como .m-search del resto de mobile).
+  .m-tools label.m-search.m-search.m-search {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+    font-size: 14px;
+  }
+
+  .m-tools label.m-search.m-search input[type='search'] {
+    flex: 1;
+    min-width: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    outline: none;
+    background: transparent;
+    font-size: 14px;
+  }
+}
+
 .piece-picker__fullscreen-body {
   flex: 1;
   min-height: 0;

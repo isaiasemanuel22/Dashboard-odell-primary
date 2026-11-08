@@ -18,6 +18,7 @@ import {
   DbInputComponent,
   DbSelectComponent,
   DbButtonComponent,
+  DbSegmentedControlComponent,
   DbSelectOption,
 } from '@general-components';
 import {
@@ -25,6 +26,7 @@ import {
   ImpresoWithCost,
   PaperType,
 } from '../../../../core/models';
+import { BreakpointService } from '../../../../core/services/breakpoint.service';
 import { ImpresosService } from '../../../../core/services/impresos.service';
 import {
   formatPrintDimensionsCm,
@@ -50,6 +52,7 @@ const PAPER_TYPE_OPTIONS: DbSelectOption[] = [
     DbFormErrorComponent,
     DbFormFooterComponent,
     DbButtonComponent,
+    DbSegmentedControlComponent,
     CurrencyArsPipe,
   ],
   templateUrl: './impreso-form.component.html',
@@ -58,6 +61,7 @@ const PAPER_TYPE_OPTIONS: DbSelectOption[] = [
 export class ImpresoFormComponent implements OnChanges, OnDestroy {
   private readonly impresosService = inject(ImpresosService);
   private readonly cdr = inject(ChangeDetectorRef);
+  readonly isMobile = inject(BreakpointService).isMobile;
 
   @Input() impreso: ImpresoWithCost | null = null;
   @Input() loading = false;
@@ -87,6 +91,11 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
 
   get dimensionsLabel(): string {
     return formatPrintDimensionsCm(this.widthCm, this.lengthCm);
+  }
+
+  onPaperTypeChange(value: string): void {
+    this.paperType = value as PaperType;
+    this.onDimensionsChange();
   }
 
   onDimensionsChange(): void {

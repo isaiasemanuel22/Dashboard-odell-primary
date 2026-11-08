@@ -508,6 +508,49 @@
     box-sizing: border-box;
   }
 
+  // Pie de 3 botones en una sola fila (Cancelar | secundario | primario), p. ej. exportar presupuesto.
+  .cdk-overlay-pane.form-dialog-panel .modal__footer.modal__footer--bar:has(> db-button.footer-row) {
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 8px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .modal__footer.modal__footer--bar:has(> db-button.footer-row) > db-button.footer-row.footer-row {
+    display: block;
+    flex: 1 1 0;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    order: 0;
+    grid-column: auto;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .modal__footer.modal__footer--bar:has(> db-button.footer-row) > db-button.footer-row.footer-row--cancel {
+    flex: 0 0 100px;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .modal__footer.modal__footer--bar:has(> db-button.footer-row) > db-button.footer-row.footer-row .db-button {
+    width: 100%;
+    padding: 0 6px;
+    font-size: 14px;
+    white-space: nowrap;
+  }
+
+  // Cancelar neutro (no celeste) y el secundario con borde de marca.
+  .cdk-overlay-pane.form-dialog-panel .modal__footer.modal__footer--bar > db-button.footer-row--cancel .db-button {
+    background: mobile.$m-surface;
+    border: 1px solid mobile.$m-border-input;
+    color: mobile.$m-text-label;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .modal__footer.modal__footer--bar > db-button.footer-row--outline .db-button {
+    background: mobile.$m-surface;
+    border: 1px solid mobile.$m-primary;
+    color: mobile.$m-primary-dark;
+  }
+
   /* Pedido: pantalla completa (sin hoja ni manija). */
   .cdk-overlay-pane.form-dialog-panel.form-dialog-panel--order-fullscreen {
     top: 0 !important;

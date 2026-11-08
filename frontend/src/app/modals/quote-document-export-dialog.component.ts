@@ -54,6 +54,7 @@ export interface QuoteDocumentExportDialogData {
 
       <db-button
         modalFooter
+        class="footer-row footer-row--cancel"
         label="Cancelar"
         variant="secondary"
         format="soft"
@@ -62,6 +63,7 @@ export interface QuoteDocumentExportDialogData {
       />
       <db-button
         modalFooter
+        class="footer-row footer-row--outline"
         [label]="exporting === 'png' ? 'Generando…' : 'Descargar PNG'"
         variant="primary-outline"
         format="soft"
@@ -70,6 +72,7 @@ export interface QuoteDocumentExportDialogData {
       />
       <db-button
         modalFooter
+        class="footer-row"
         [label]="exporting === 'pdf' ? 'Generando…' : 'Descargar PDF'"
         variant="primary"
         format="solid"

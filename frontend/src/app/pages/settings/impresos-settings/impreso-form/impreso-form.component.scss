@@ -1,4 +1,5 @@
 @use '../../../../shared/styles/variables' as *;
+@use '../../../../shared/styles/mobile' as mobile;
 
 .cost-preview {
   display: flex;
@@ -26,4 +27,24 @@ form {
   display: flex;
   flex-direction: column;
   gap: 18px;
+}
+
+.impreso-form__paper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.impreso-form__paper-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: $color-text-label;
+}
+
+@include mobile.mobile-only {
+  // Ancho y Largo lado a lado.
+  db-form-grid.impreso-form__dims {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
 }

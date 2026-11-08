@@ -49,6 +49,18 @@ const AREAS: ServiceType[] = [
     DbSelectComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  styles: `
+    @media (max-width: 768px) {
+      db-form {
+        gap: 14px;
+      }
+
+      db-form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+    }
+  `,
   template: `
     <app-form-dialog-shell
       title="Nueva tarea"

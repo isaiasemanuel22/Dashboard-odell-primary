@@ -22,6 +22,16 @@
 
   .wallet-form__section-head {
     display: none;
+
+    &--debtor {
+      display: block;
+    }
+  }
+
+  // Fecha y Cuenta en 2 columnas (devolución).
+  db-form-grid.wallet-form__grid-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 
   .wallet-form__footer {
@@ -46,6 +56,29 @@
     db-button:has(.db-button--secondary),
     db-button:has(.db-button--cancel) {
       display: none;
+    }
+
+    // Confirmaciones (anular movimiento, devolución): Cancelar visible a la izquierda.
+    &--keep-cancel {
+      db-button:has(.db-button--secondary),
+      db-button:has(.db-button--cancel) {
+        display: block;
+        flex: none;
+        min-width: 120px;
+      }
+
+      ::ng-deep db-button:has(.db-button--secondary) .db-button,
+      ::ng-deep db-button:has(.db-button--cancel) .db-button {
+        width: 100%;
+        min-height: 52px;
+        white-space: nowrap;
+      }
+
+      db-button:has(.db-button--primary),
+      db-button:has(.db-button--delete) {
+        flex: 1;
+        min-width: 0;
+      }
     }
 
     ::ng-deep .db-button--solid.db-button--primary {
