@@ -47,6 +47,7 @@
   .category-form__group ::ng-deep .db-checkbox {
     width: 100%;
     min-height: 44px;
+    align-items: center;
     gap: 12px;
     font-size: 15px;
   }
@@ -56,5 +57,15 @@
     height: 20px;
     flex: none;
     margin: 0;
+  }
+}
+
+@include mobile.mobile-only {
+  .category-form__group ::ng-deep .db-checkbox > label,
+  .category-form__group ::ng-deep .db-checkbox__label {
+    display: inline-flex;
+    align-items: center;
+    margin: 0;
+    line-height: 1.3;
   }
 }

@@ -199,9 +199,9 @@
     gap: 12px;
     align-items: end;
 
-    // Monto | Medio (2 columnas) / Seña | Cuenta | Comisión / botón.
+    // Fila 1: Monto | Medio | Seña. Fila 2: Cuenta | Comisión | botón.
     .order-payments__method {
-      grid-column: span 2;
+      min-width: 0;
     }
 
     .order-payments__method ::ng-deep .db-seg {
@@ -212,6 +212,7 @@
     .order-payments__method ::ng-deep .db-seg__btn {
       flex: 1;
       height: 40px;
+      font-size: 13px;
       white-space: nowrap;
     }
 
@@ -227,8 +228,8 @@
     }
 
     ::ng-deep .db-seg__btn {
-      padding-left: 0.4rem;
-      padding-right: 0.4rem;
+      padding-left: 0.25rem;
+      padding-right: 0.25rem;
       white-space: nowrap;
     }
   }

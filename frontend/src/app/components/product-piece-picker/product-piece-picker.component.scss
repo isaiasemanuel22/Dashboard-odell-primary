@@ -210,6 +210,11 @@
     flex-direction: row;
     align-items: center;
     gap: 8px;
+    height: 44px;
+    min-height: 44px;
+    padding: 0 12px;
+    border-radius: 12px;
+    box-sizing: border-box;
     font-size: 14px;
   }
 
@@ -257,5 +262,12 @@
 
   db-button {
     display: block;
+  }
+
+  // «+ Crear pieza nueva»: secundario con fondo blanco.
+  ::ng-deep .db-button.db-button--soft.db-button--secondary {
+    background: mobile.$m-surface;
+    border: 1px solid mobile.$m-border-input;
+    color: mobile.$m-text;
   }
 }
