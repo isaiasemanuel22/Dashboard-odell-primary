@@ -13,6 +13,7 @@ export type ModalSize = 'sm' | 'md' | 'ml' | 'lg';
 })
 export class FormModalComponent {
   @Input() title = '';
+  @Input() subtitle = '';
   @Input() size: ModalSize = 'md';
   @Input() stickyHeader = false;
   /** Pie gris a ancho completo, como RdPatrones §1/§2. */

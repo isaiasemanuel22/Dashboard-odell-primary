@@ -33,7 +33,6 @@ import {
   DbButtonComponent,
   DbInputComponent,
   DbPillGroupComponent,
-  DbSegmentedControlComponent,
   DbSelectComponent,
   DbSelectOption,
   DbSkeletonComponent,
@@ -47,7 +46,6 @@ import {
   type OdlActionEvent,
   type OdlColumn,
   type OdlRowAction,
-  type DbSegmentOption,
   type DbPillOption,
 } from '@general-components';
 import {
@@ -62,6 +60,8 @@ import { resolveColorLabel } from '../../shared/utils/color.helpers';
 import { supplyCategoryFilters } from '../../shared/utils/list-filters';
 import {
   abbreviateSupplyUnit,
+  formatLeadTimeBusinessDays,
+  formatSupplyGrams,
   formatSupplyQuantity,
 } from '../../shared/utils/supply-unit.util';
 import { formatOpenedAgo } from '../../shared/utils/relative-day.util';
@@ -97,6 +97,8 @@ interface SpoolRowView {
   filamentLabel: string;
   locationLabel: string;
   openedLabel: string;
+  remainingAmountLabel: string;
+  remainingOfLabel: string;
   remainingLabel: string;
   remainingPct: number;
   remainingDanger: boolean;
@@ -110,7 +112,6 @@ interface SpoolRowView {
     DbStateMessageComponent,
     DbButtonComponent,
     DbPillGroupComponent,
-    DbSegmentedControlComponent,
     DbSkeletonComponent,
     DbSelectComponent,
     DbInputComponent,
@@ -156,7 +157,7 @@ export class SuppliesComponent implements OnInit {
   activeTab: SuppliesPageTab = 'insumos';
   statusNotice = '';
 
-  readonly tabOptions: DbSegmentOption<SuppliesPageTab>[] = [
+  readonly tabOptions: { value: SuppliesPageTab; label: string }[] = [
     { value: 'insumos', label: 'Insumos' },
     { value: 'bobinas', label: 'Bobinas abiertas' },
     { value: 'reposicion', label: 'Reposición' },
@@ -216,21 +217,20 @@ export class SuppliesComponent implements OnInit {
       key: 'covers',
       header: 'Alcanza para',
       align: 'end',
-      value: (row) =>
-        row.insufficientData
-          ? 'Sin datos suficientes'
-          : formatCoversDays(row.coversDays),
     },
     {
       key: 'supplier',
       header: 'Proveedor · demora',
       value: (row) =>
         row.supplier
-          ? `${row.supplier.name} · ${row.supplier.leadTimeBusinessDays} días hábiles`
+          ? `${row.supplier.name} · ${formatLeadTimeBusinessDays(row.supplier.leadTimeBusinessDays)}`
           : 'Sin proveedor',
     },
     { key: 'orderBy', header: 'Pedir antes del' },
   ];
+
+  readonly spoolActionsAriaLabel = (row: SpoolRowView): string =>
+    `Acciones de la bobina ${row.spool.code}`;
 
   // Dialogs / sheets
   spoolDialog: null | 'open' | 'move' | 'adjust' | 'order' = null;
@@ -362,6 +362,8 @@ export class SuppliesComponent implements OnInit {
             : 0;
         const remainingDanger =
           remainingPct < 20 || (Number(spool.remainingGrams) < 150 && remainingPct < 50);
+        const remainingAmountLabel = formatSupplyGrams(spool.remainingGrams);
+        const remainingOfLabel = `de ${formatSupplyGrams(spool.initialGrams)}`;
         return {
           spool,
           supply,
@@ -370,7 +372,9 @@ export class SuppliesComponent implements OnInit {
           filamentLabel,
           locationLabel: this.formatSpoolLocation(spool, printerById),
           openedLabel: formatOpenedAgo(spool.openedAt),
-          remainingLabel: `${Math.round(spool.remainingGrams)} g de ${Math.round(spool.initialGrams)} g`,
+          remainingAmountLabel,
+          remainingOfLabel,
+          remainingLabel: `${remainingAmountLabel} ${remainingOfLabel}`,
           remainingPct: Math.max(0, Math.min(100, remainingPct)),
           remainingDanger,
         };
@@ -382,17 +386,55 @@ export class SuppliesComponent implements OnInit {
     return this.supplies
       .filter((s) => s.category === SupplyCategory.FDM)
       .filter((s) => this.closedGrams(s) > 1)
-      .map((s) => {
-        const closedG = this.closedGrams(s);
-        const openG = this.openRemainingGrams(s.id);
-        const closedQty = this.gramsToSupplyQuantity(s, closedG);
-        const closedLabel = formatSupplyQuantity(closedQty, s.unit);
-        const openLabel = `${Math.round(openG)} g`;
-        return {
-          value: s.id,
-          label: `${s.name} · cerrado ${closedLabel} · en bobinas abiertas: ${openLabel}`,
-        };
-      });
+      .map((s) => ({
+        value: s.id,
+        label: s.name,
+      }));
+  }
+
+  get openSupplyHint(): string {
+    const supply = this.supplies.find((s) => s.id === this.openSupplyId);
+    if (!supply) return '';
+    const closedQty = this.gramsToSupplyQuantity(supply, this.closedGrams(supply));
+    const closedLabel = formatSupplyQuantity(closedQty, supply.unit);
+    const openLabel = formatSupplyGrams(this.openRemainingGrams(supply.id));
+    return `cerrado ${closedLabel} · en bobinas abiertas: ${openLabel}`;
+  }
+
+  get spoolDialogTitle(): string {
+    if (this.spoolDialog === 'open') return 'Abrir bobina';
+    if (this.spoolDialog === 'move') {
+      return this.selectedSpool
+        ? `Mover bobina ${this.selectedSpool.code}`
+        : 'Mover bobina';
+    }
+    if (this.spoolDialog === 'adjust') {
+      return this.selectedSpool
+        ? `Ajustar peso de ${this.selectedSpool.code}`
+        : 'Ajustar peso';
+    }
+    if (this.spoolDialog === 'order') return 'Armar pedido al proveedor';
+    return '';
+  }
+
+  get spoolDialogSubtitle(): string {
+    if (this.spoolDialog !== 'move' && this.spoolDialog !== 'adjust') {
+      return '';
+    }
+    const supplyId = this.selectedSpool?.supplyId;
+    if (!supplyId) return '';
+    return this.supplies.find((s) => s.id === supplyId)?.name ?? '';
+  }
+
+  coversLabel(row: ReorderRow): string {
+    return row.insufficientData
+      ? 'Sin datos suficientes'
+      : formatCoversDays(row.coversDays);
+  }
+
+  formatSupplierLead(row: ReorderRow): string {
+    if (!row.supplier) return '';
+    return `${row.supplier.name} · ${formatLeadTimeBusinessDays(row.supplier.leadTimeBusinessDays)}`;
   }
 
   get printerOptions(): DbSelectOption[] {
@@ -889,7 +931,7 @@ export class SuppliesComponent implements OnInit {
     if (alert.reason === 'out_of_stock') {
       const supplierBit =
         hasSupplier && lead != null
-          ? ` a ${supplier} (tarda ${lead} días hábiles)`
+          ? ` a ${supplier} (tarda ${formatLeadTimeBusinessDays(lead)})`
           : hasSupplier
             ? ` a ${supplier}`
             : '';
@@ -916,7 +958,7 @@ export class SuppliesComponent implements OnInit {
     if (day && coversDays != null && hasSupplier && lead != null) {
       return {
         title: `${alert.name}: pedilo antes del ${day}.`,
-        body: `Te quedan ${stockLabel} (unos ${coversDays} días al ritmo actual) y ${supplier} tarda ${lead} días hábiles.${assignHint}`.trim(),
+        body: `Te quedan ${stockLabel} (unos ${coversDays} días al ritmo actual) y ${supplier} tarda ${formatLeadTimeBusinessDays(lead)}.${assignHint}`.trim(),
       };
     }
     if (day && coversDays != null) {
@@ -936,7 +978,7 @@ export class SuppliesComponent implements OnInit {
   ): { title: string; body: string } {
     return {
       title: `Bobina ${alert.code} no alcanza`,
-      body: `para la próxima tarea de ${alert.printerName} (necesita ${Math.round(alert.needGrams)} g, quedan ${Math.round(alert.remainingGrams)} g). Prepará un repuesto.`,
+      body: `para la próxima tarea de ${alert.printerName} (necesita ${formatSupplyGrams(alert.needGrams)}, quedan ${formatSupplyGrams(alert.remainingGrams)}). Prepará un repuesto.`,
     };
   }
 

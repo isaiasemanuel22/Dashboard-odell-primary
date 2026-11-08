@@ -21,38 +21,94 @@
     </button>
   </db-mobile-bar>
 
-  <div class="supplies-m__tabs">
-    <db-segmented-control
-      [options]="tabOptions"
-      [value]="activeTab"
-      ariaLabel="Sección de insumos"
-      (valueChange)="setTab($event)"
-    />
+  <div
+    class="supplies-m__tabs chips"
+    role="tablist"
+    aria-label="Sección de insumos"
+  >
+    @for (tab of tabOptions; track tab.value) {
+      <button
+        type="button"
+        role="tab"
+        class="chip"
+        [class.chip-on]="activeTab === tab.value"
+        [attr.aria-selected]="activeTab === tab.value"
+        (click)="setTab(tab.value)"
+      >
+        {{ tab.label }}
+      </button>
+    }
   </div>
 
   <div class="m-body supplies-m__body">
     @if (urgentReorderAlerts.length || spoolShortAlerts.length || lowStockCount) {
       <div class="supplies-alerts supplies-alerts--m">
-        @for (alert of visibleReorderAlerts; track alert.supplyId) {
-          @let text = formatReorderAlert(alert);
-          <div class="note note-d note--compact">
-            <svg
-              viewBox="0 0 24 24"
-              width="16"
-              height="16"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              aria-hidden="true"
-            >
-              <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
-            </svg>
-            <span class="note__one-line"
-              ><b>{{ text.title }}</b> {{ text.body }}</span
-            >
-          </div>
-        }
+        <div class="supplies-alerts__grid">
+          @for (alert of visibleReorderAlerts; track alert.supplyId) {
+            @let text = formatReorderAlert(alert);
+            <div class="note note-d note--compact">
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
+              </svg>
+              <span class="note__one-line"
+                ><b>{{ text.title }}</b> {{ text.body }}</span
+              >
+            </div>
+          }
+          @for (alert of spoolShortAlerts; track alert.spoolId) {
+            @let text = formatSpoolShortAlert(alert);
+            <div class="note note-w note--compact">
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
+              </svg>
+              <span class="note__one-line"
+                ><b>{{ text.title }}</b> {{ text.body }}</span
+              >
+            </div>
+          }
+          @if (lowStockCount > 0) {
+            <div class="note note-w note--compact">
+              <svg
+                viewBox="0 0 24 24"
+                width="16"
+                height="16"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
+              </svg>
+              <span class="note__one-line">
+                <b
+                  >{{ lowStockCount }}
+                  {{ lowStockCount === 1 ? 'insumo' : 'insumos' }} con stock
+                  bajo.</b
+                >
+                Comprá desde Billetera para sumar stock y registrar el gasto.
+              </span>
+            </div>
+          }
+        </div>
         @if (!alertsExpanded && hiddenReorderAlertCount > 0) {
           <button
             type="button"
@@ -61,38 +117,6 @@
           >
             Ver {{ hiddenReorderAlertCount }} alertas más
           </button>
-        }
-        @for (alert of spoolShortAlerts; track alert.spoolId) {
-          @let text = formatSpoolShortAlert(alert);
-          <div class="note note-w note--compact">
-            <svg
-              viewBox="0 0 24 24"
-              width="16"
-              height="16"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="2"
-              stroke-linecap="round"
-              aria-hidden="true"
-            >
-              <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
-            </svg>
-            <span class="note__one-line"
-              ><b>{{ text.title }}</b> {{ text.body }}</span
-            >
-          </div>
-        }
-        @if (lowStockCount > 0) {
-          <div class="note note-w note--compact">
-            <span class="note__one-line">
-              <b
-                >{{ lowStockCount }}
-                {{ lowStockCount === 1 ? 'insumo' : 'insumos' }} con stock
-                bajo.</b
-              >
-              Comprá desde Billetera para sumar stock y registrar el gasto.
-            </span>
-          </div>
         }
       </div>
     }
@@ -189,10 +213,13 @@
                 <span>{{ row.locationLabel }}</span>
                 <span>Abierta {{ row.openedLabel }}</span>
                 <div class="supplies-m__bar-wrap">
-                  <span
-                    [class.supplies-m__end--neg]="row.remainingDanger"
-                    >{{ row.remainingLabel }}</span
+                  <div
+                    class="remain-cell__lbl"
+                    [class.remain-cell__lbl--neg]="row.remainingDanger"
                   >
+                    <span class="strong">{{ row.remainingAmountLabel }}</span>
+                    <span class="remain-cell__of">{{ row.remainingOfLabel }}</span>
+                  </div>
                   <div class="supplies-m__lvl supplies-m__lvl--wide">
                     <i
                       [style.width.%]="row.remainingPct"
@@ -206,7 +233,7 @@
               <button
                 type="button"
                 class="m-ib"
-                aria-label="Más acciones"
+                [attr.aria-label]="'Acciones de la bobina ' + row.spool.code"
                 (click)="mobileSpoolActions = row"
               >
                 ···
@@ -218,11 +245,18 @@
     }
 
     @if (activeTab === 'reposicion') {
+      <div class="supplies-m__reorder-head">
+        <h3 class="h2">Reposición sugerida</h3>
+        <p>
+          Según consumo de las últimas 4 semanas y la demora de cada proveedor
+        </p>
+      </div>
       <div class="supplies-m__actions">
         <db-button
           label="Armar pedido al proveedor"
           variant="primary-outline"
           format="solid"
+          extraClass="reorder-btn-sm"
           (clicked)="openOrderDraftDialog()"
         />
       </div>
@@ -246,15 +280,16 @@
                       : formatQty(row.weeklyConsumption, row.unit)
                   }}</span
                 >
+                <span
+                  [class.supplies-m__covers--urgent]="row.status === 'urgent'"
+                  >Alcanza para {{ coversLabel(row) }}</span
+                >
                 @if (row.supplier) {
-                  <span
-                    >{{ row.supplier.name }} ·
-                    {{ row.supplier.leadTimeBusinessDays }} días hábiles</span
-                  >
+                  <span>{{ formatSupplierLead(row) }}</span>
                 } @else {
                   <button
                     type="button"
-                    class="linkish"
+                    class="linkish supplies-m__sin-prov"
                     (click)="openReorderSupply(row.supplyId)"
                   >
                     Sin proveedor
@@ -326,85 +361,95 @@
     </div>
   </header>
 
-  <div class="supplies-tabs">
-    <db-segmented-control
-      [options]="tabOptions"
-      [value]="activeTab"
-      ariaLabel="Sección de insumos"
-      (valueChange)="setTab($event)"
-    />
+  <div class="supplies-tabs chips" role="tablist" aria-label="Sección de insumos">
+    @for (tab of tabOptions; track tab.value) {
+      <button
+        type="button"
+        role="tab"
+        class="chip"
+        [class.chip-on]="activeTab === tab.value"
+        [attr.aria-selected]="activeTab === tab.value"
+        (click)="setTab(tab.value)"
+      >
+        {{ tab.label }}
+      </button>
+    }
   </div>
 
   @if (statusNotice) {
     <p class="status-notice" role="status">{{ statusNotice }}</p>
   }
 
-  <section class="supplies-alerts" aria-label="Alertas">
-    @for (alert of visibleReorderAlerts; track alert.supplyId) {
-      @let text = formatReorderAlert(alert);
-      <div class="note note-d">
-        <svg
-          viewBox="0 0 24 24"
-          width="18"
-          height="18"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          aria-hidden="true"
-        >
-          <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
-        </svg>
-        <span><b>{{ text.title }}</b> {{ text.body }}</span>
+  @if (urgentReorderAlerts.length || spoolShortAlerts.length || lowStockCount) {
+    <section class="supplies-alerts" aria-label="Alertas">
+      <div class="supplies-alerts__grid">
+        @for (alert of visibleReorderAlerts; track alert.supplyId) {
+          @let text = formatReorderAlert(alert);
+          <div class="note note-d">
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
+            </svg>
+            <span><b>{{ text.title }}</b> {{ text.body }}</span>
+          </div>
+        }
+        @for (alert of spoolShortAlerts; track alert.spoolId) {
+          @let text = formatSpoolShortAlert(alert);
+          <div class="note note-w">
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
+            </svg>
+            <span><b>{{ text.title }}</b> {{ text.body }}</span>
+          </div>
+        }
+        @if (lowStockCount > 0) {
+          <div class="note note-w">
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
+            </svg>
+            <span>
+              <b
+                >{{ lowStockCount }}
+                {{ lowStockCount === 1 ? 'insumo' : 'insumos' }} con stock bajo.</b
+              >
+              Comprá desde Billetera para sumar stock y registrar el gasto.
+            </span>
+          </div>
+        }
       </div>
-    }
-    @if (!alertsExpanded && hiddenReorderAlertCount > 0) {
-      <button type="button" class="alerts-more" (click)="expandAlerts()">
-        Ver {{ hiddenReorderAlertCount }} alertas más
-      </button>
-    }
-    @for (alert of spoolShortAlerts; track alert.spoolId) {
-      @let text = formatSpoolShortAlert(alert);
-      <div class="note note-w">
-        <svg
-          viewBox="0 0 24 24"
-          width="18"
-          height="18"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          aria-hidden="true"
-        >
-          <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
-        </svg>
-        <span><b>{{ text.title }}</b> {{ text.body }}</span>
-      </div>
-    }
-    @if (lowStockCount > 0) {
-      <div class="note note-w">
-        <svg
-          viewBox="0 0 24 24"
-          width="18"
-          height="18"
-          fill="none"
-          stroke="currentColor"
-          stroke-width="2"
-          stroke-linecap="round"
-          aria-hidden="true"
-        >
-          <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
-        </svg>
-        <span>
-          <b
-            >{{ lowStockCount }}
-            {{ lowStockCount === 1 ? 'insumo' : 'insumos' }} con stock bajo.</b
-          >
-          Comprá desde Billetera para sumar stock y registrar el gasto.
-        </span>
-      </div>
-    }
-  </section>
+      @if (!alertsExpanded && hiddenReorderAlertCount > 0) {
+        <button type="button" class="alerts-more" (click)="expandAlerts()">
+          Ver {{ hiddenReorderAlertCount }} alertas más
+        </button>
+      }
+    </section>
+  }
 
   @if (activeTab === 'insumos') {
     <div class="list-toolbar">
@@ -483,6 +528,7 @@
         [rows]="spoolRows"
         [columns]="spoolColumns"
         [actions]="spoolActions"
+        [actionsAriaLabel]="spoolActionsAriaLabel"
         [clientSide]="false"
         emptyText="No hay bobinas abiertas."
         (action)="onSpoolAction($event)"
@@ -505,7 +551,8 @@
               class="remain-cell__lbl"
               [class.remain-cell__lbl--neg]="row.remainingDanger"
             >
-              {{ row.remainingLabel }}
+              <span class="strong">{{ row.remainingAmountLabel }}</span>
+              <span class="remain-cell__of">{{ row.remainingOfLabel }}</span>
             </div>
             <div class="remain-cell__track" aria-hidden="true">
               <i
@@ -525,7 +572,7 @@
     <section class="reorder-card">
       <div class="reorder-card__head">
         <div>
-          <h3>Reposición sugerida</h3>
+          <h3 class="h2">Reposición sugerida</h3>
           <p>
             Según consumo de las últimas 4 semanas y la demora de cada
             proveedor
@@ -535,6 +582,7 @@
           label="Armar pedido al proveedor"
           variant="primary-outline"
           format="solid"
+          extraClass="reorder-btn-sm"
           (clicked)="openOrderDraftDialog()"
         />
       </div>
@@ -551,14 +599,19 @@
           [rows]="reorderRows"
           [columns]="reorderColumns"
           [clientSide]="false"
+          minWidth="820px"
           emptyText="Todavía no hay consumo registrado para sugerir reposición."
         >
+          <ng-template odlCell="covers" let-row>
+            <span
+              [class.neg]="row.status === 'urgent'"
+              [class.strong]="row.status === 'urgent'"
+              >{{ coversLabel(row) }}</span
+            >
+          </ng-template>
           <ng-template odlCell="supplier" let-row>
             @if (row.supplier) {
-              <span
-                >{{ row.supplier.name }} ·
-                {{ row.supplier.leadTimeBusinessDays }} días hábiles</span
-              >
+              <span>{{ formatSupplierLead(row) }}</span>
             } @else {
               <button
                 type="button"
@@ -587,15 +640,8 @@
 
 @if (spoolDialog === 'open' || spoolDialog === 'move' || spoolDialog === 'adjust' || spoolDialog === 'order') {
   <app-form-modal
-    [title]="
-      spoolDialog === 'open'
-        ? 'Abrir bobina'
-        : spoolDialog === 'move'
-          ? 'Mover bobina'
-          : spoolDialog === 'adjust'
-            ? 'Ajustar peso'
-            : 'Armar pedido al proveedor'
-    "
+    [title]="spoolDialogTitle"
+    [subtitle]="spoolDialogSubtitle"
     size="md"
     (close)="closeSpoolDialog()"
   >
@@ -604,67 +650,77 @@
     }
 
     @if (spoolDialog === 'open' || spoolDialog === 'move') {
-      @if (spoolDialog === 'open') {
-        <db-select
-          label="Insumo"
-          [ngModel]="openSupplyId"
-          (ngModelChange)="onOpenSupplyChange($event)"
-          name="openSupplyId"
-          [options]="filamentSupplyOptions"
-        />
-        <db-input
-          label="Gramos"
-          type="number"
-          [(ngModel)]="openGrams"
-          name="openGrams"
-          [min]="1"
-          step="1"
-        />
-      }
+      <div class="dialog-fields">
+        @if (spoolDialog === 'open') {
+          <db-select
+            label="Insumo"
+            [ngModel]="openSupplyId"
+            (ngModelChange)="onOpenSupplyChange($event)"
+            name="openSupplyId"
+            [options]="filamentSupplyOptions"
+            [hint]="openSupplyHint"
+          />
+          <db-input
+            label="Gramos"
+            type="number"
+            [(ngModel)]="openGrams"
+            name="openGrams"
+            [min]="1"
+            step="1"
+          />
+        }
 
-      <div class="loc-kind" role="radiogroup" aria-label="Ubicación">
-        <label>
-          <input
-            type="radio"
-            name="locKind"
-            [checked]="locationKind === 'printer'"
-            (change)="locationKind = 'printer'"
+        <div class="loc-field">
+          <span class="loc-field__label" id="loc-kind-label">Ubicación</span>
+          <div
+            class="loc-kind"
+            role="radiogroup"
+            aria-labelledby="loc-kind-label"
+          >
+            <label class="loc-kind__opt">
+              <input
+                type="radio"
+                name="locKind"
+                [checked]="locationKind === 'printer'"
+                (change)="locationKind = 'printer'"
+              />
+              <span>Impresora</span>
+            </label>
+            <label class="loc-kind__opt">
+              <input
+                type="radio"
+                name="locKind"
+                [checked]="locationKind === 'shelf'"
+                (change)="locationKind = 'shelf'"
+              />
+              <span>Estante</span>
+            </label>
+          </div>
+        </div>
+
+        @if (locationKind === 'printer') {
+          <db-select
+            label="Impresora"
+            [(ngModel)]="locationPrinterId"
+            name="locationPrinterId"
+            [options]="printerOptions"
           />
-          Impresora
-        </label>
-        <label>
-          <input
-            type="radio"
-            name="locKind"
-            [checked]="locationKind === 'shelf'"
-            (change)="locationKind = 'shelf'"
+          <db-select
+            label="Ranura AMS"
+            [ngModel]="'' + locationSlot"
+            (ngModelChange)="locationSlot = +$event"
+            name="locationSlot"
+            [options]="slotOptions"
           />
-          Estante
-        </label>
+        } @else {
+          <db-input
+            label="Estante"
+            [(ngModel)]="locationShelf"
+            name="locationShelf"
+            placeholder="Bolsa con desecante"
+          />
+        }
       </div>
-
-      @if (locationKind === 'printer') {
-        <db-select
-          label="Impresora"
-          [(ngModel)]="locationPrinterId"
-          name="locationPrinterId"
-          [options]="printerOptions"
-        />
-        <db-select
-          label="Ranura AMS"
-          [ngModel]="'' + locationSlot"
-          (ngModelChange)="locationSlot = +$event"
-          name="locationSlot"
-          [options]="slotOptions"
-        />
-      } @else {
-        <db-input
-          label="Estante"
-          [(ngModel)]="locationShelf"
-          name="locationShelf"
-          placeholder="Bolsa con desecante"
-        />
-      }
 
       <div class="dialog-actions">
         <db-button
@@ -684,14 +740,16 @@
     }
 
     @if (spoolDialog === 'adjust') {
-      <db-input
-        label="Gramos reales"
-        type="number"
-        [(ngModel)]="adjustGrams"
-        name="adjustGrams"
-        [min]="0"
-        step="1"
-      />
+      <div class="dialog-fields">
+        <db-input
+          label="Gramos reales"
+          type="number"
+          [(ngModel)]="adjustGrams"
+          name="adjustGrams"
+          [min]="0"
+          step="1"
+        />
+      </div>
       <div class="dialog-actions">
         <db-button
           label="Cancelar"
@@ -710,29 +768,31 @@
     }
 
     @if (spoolDialog === 'order') {
-      <db-select
-        label="Proveedor"
-        [ngModel]="orderSupplierId"
-        (ngModelChange)="onOrderSupplierChange($event)"
-        name="orderSupplierId"
-        [options]="orderSupplierOptions"
-      />
-      @if (!orderDraftHasLines) {
-        <p class="draft-empty" role="status">
-          No hay insumos para pedir a este proveedor.
-        </p>
-      } @else {
-        <label class="draft-label">
-          Texto del pedido
-          <textarea
-            class="draft-area"
-            [ngModel]="orderDraftText"
-            name="orderDraftText"
-            rows="8"
-            readonly
-          ></textarea>
-        </label>
-      }
+      <div class="dialog-fields">
+        <db-select
+          label="Proveedor"
+          [ngModel]="orderSupplierId"
+          (ngModelChange)="onOrderSupplierChange($event)"
+          name="orderSupplierId"
+          [options]="orderSupplierOptions"
+        />
+        @if (!orderDraftHasLines) {
+          <p class="draft-empty" role="status">
+            No hay insumos para pedir a este proveedor.
+          </p>
+        } @else {
+          <label class="draft-label">
+            Texto del pedido
+            <textarea
+              class="draft-area"
+              [ngModel]="orderDraftText"
+              name="orderDraftText"
+              rows="8"
+              readonly
+            ></textarea>
+          </label>
+        }
+      </div>
       @if (orderCopyNotice) {
         <p class="draft-copy-ok" role="status">{{ orderCopyNotice }}</p>
       }

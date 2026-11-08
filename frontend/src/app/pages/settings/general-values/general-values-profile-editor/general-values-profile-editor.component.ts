@@ -33,6 +33,7 @@ import {
 } from '../../../../core/models';
 import { SpoolsService } from '../../../../core/services/spools.service';
 import { SuppliesService } from '../../../../core/services/supplies.service';
+import { formatSupplyGrams } from '../../../../shared/utils/supply-unit.util';
 
 const WEEKDAY_CHIPS: { value: number; label: string }[] = [
   { value: 1, label: 'L' },
@@ -211,7 +212,7 @@ export class GeneralValuesProfileEditorComponent
     if (slot.empty) return 'Vacía';
     const grams =
       slot.remainingGrams != null
-        ? `${Math.round(slot.remainingGrams)} g`
+        ? formatSupplyGrams(slot.remainingGrams)
         : '';
     const color = slot.colorName?.trim() || 'Sin color';
     const code = slot.code ?? '—';

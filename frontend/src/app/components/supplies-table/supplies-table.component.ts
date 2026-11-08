@@ -16,6 +16,7 @@ import {
   resolveColorLabel,
   supplyRequiresColor,
 } from '../../shared/utils/color.helpers';
+import { formatSupplyQuantity } from '../../shared/utils/supply-unit.util';
 import {
   DB_DATA_TABLE,
   OdlActionEvent,
@@ -118,10 +119,7 @@ export class SuppliesTableComponent {
   }
 
   private formatQuantity(supply: Supply): string {
-    const quantity = new Intl.NumberFormat('es-AR', {
-      maximumFractionDigits: 2,
-    }).format(supply.quantity);
-    return `${quantity} ${supply.unit}`;
+    return formatSupplyQuantity(supply.quantity, supply.unit);
   }
 
   private showColor(supply: Supply): boolean {

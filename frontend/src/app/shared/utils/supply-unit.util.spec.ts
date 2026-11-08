@@ -1,5 +1,7 @@
 import {
   computeSupplyPurchaseDelta,
+  formatLeadTimeBusinessDays,
+  formatSupplyGrams,
   formatSupplyQuantity,
 } from './supply-unit.util';
 
@@ -55,5 +57,21 @@ describe('formatSupplyQuantity', () => {
     expect(formatSupplyQuantity(0, 'unidad')).toBe('0 unidades');
     expect(formatSupplyQuantity(1, 'hoja')).toBe('1 hoja');
     expect(formatSupplyQuantity(3, 'hoja')).toBe('3 hojas');
+  });
+
+  it('usa punto de miles en gramos y cantidades', () => {
+    expect(formatSupplyQuantity(1000, 'g')).toBe('1.000 g');
+    expect(formatSupplyGrams(1000)).toBe('1.000 g');
+    expect(formatSupplyGrams(88)).toBe('88 g');
+  });
+});
+
+describe('formatLeadTimeBusinessDays', () => {
+  it('singulariza 1 día hábil', () => {
+    expect(formatLeadTimeBusinessDays(1)).toBe('1 día hábil');
+  });
+
+  it('pluraliza el resto', () => {
+    expect(formatLeadTimeBusinessDays(4)).toBe('4 días hábiles');
   });
 });

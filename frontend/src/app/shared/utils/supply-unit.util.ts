@@ -60,11 +60,26 @@ function roundSupplyAmount(value: number, digits = 2): number {
   return Math.round(value * factor) / factor;
 }
 
-function formatSupplyNumber(value: number): string {
+/** Número con separador de miles «.» y decimales con «,» (es-AR). */
+export function formatSupplyNumber(value: number): string {
   return value.toLocaleString('es-AR', {
     maximumFractionDigits: 2,
     minimumFractionDigits: 0,
+    useGrouping: true,
   });
+}
+
+/** Gramos enteros: «88 g», «1.000 g». */
+export function formatSupplyGrams(grams: number): string {
+  const amount = Number(grams);
+  if (!Number.isFinite(amount)) return '0 g';
+  return `${formatSupplyNumber(Math.round(amount))} g`;
+}
+
+/** Demora del proveedor: «1 día hábil» / «4 días hábiles». */
+export function formatLeadTimeBusinessDays(days: number): string {
+  const n = Math.max(0, Math.round(Number(days) || 0));
+  return n === 1 ? '1 día hábil' : `${n} días hábiles`;
 }
 
 /** Pluraliza unidades contables (unidad/hoja/rollo). */

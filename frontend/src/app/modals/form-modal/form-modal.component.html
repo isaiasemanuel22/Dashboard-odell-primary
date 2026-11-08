@@ -1,7 +1,12 @@
 <div class="modal-backdrop" (click)="close.emit()">
   <div [ngClass]="modalClass()" (click)="$event.stopPropagation()">
     <header [ngClass]="headerClass()">
-      <h3>{{ title }}</h3>
+      <div class="modal__heading">
+        <h3>{{ title }}</h3>
+        @if (subtitle) {
+          <p>{{ subtitle }}</p>
+        }
+      </div>
       <db-button
         label="✕"
         variant="secondary"

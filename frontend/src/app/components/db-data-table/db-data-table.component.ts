@@ -212,6 +212,8 @@ export class DbDataTableComponent<T> {
 
   // ── Comportamiento ────────────────────────────────────
   readonly actions = input<OdlRowAction<T>[]>([]);
+  /** aria-label del botón ··· por fila. */
+  readonly actionsAriaLabel = input<(row: T) => string>();
   readonly expandable = input(false);
   readonly clickableRows = input(false);
   readonly loading = input(false);
