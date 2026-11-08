@@ -1,4 +1,5 @@
 import {
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsEnum,
@@ -7,6 +8,7 @@ import {
   IsObject,
   IsOptional,
   IsString,
+  Matches,
   Max,
   Min,
 } from 'class-validator';
@@ -197,6 +199,41 @@ export class MachineProfileDto {
   @IsNumber()
   @Min(0)
   washBathUses?: number;
+
+  @IsOptional()
+  @IsBoolean()
+  queueEnabled?: boolean;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(24)
+  workHoursPerDay?: number;
+
+  @IsOptional()
+  @IsArray()
+  @IsNumber({}, { each: true })
+  @Min(0, { each: true })
+  @Max(6, { each: true })
+  workWeekdays?: number[];
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{2}:\d{2}$/)
+  workStartHour?: string;
+
+  @IsOptional()
+  @IsString()
+  amsType?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(4)
+  amsSlots?: (string | null)[];
+
+  @IsOptional()
+  @IsBoolean()
+  costBase?: boolean;
 }
 
 export class UpdateMachineProfileDto extends PartialType(MachineProfileDto) {}

@@ -7,10 +7,13 @@ import { GeneralSettings, Supply } from '../common/interfaces';
 import { normalizePaperReferenceSheets } from '../common/paper-cost.util';
 import {
   calcWashSupplyCost,
+  calculateMachineOverhead,
   createDefaultMachineProfiles,
   getMachineProfilesForProductType,
+  normalizeMachineProfiles,
   resolveMachineHours,
   resolveWashBathUses,
+  selectPrintProfileForCost,
 } from './machine-profile.util';
 
 describe('machine-profile.util', () => {
@@ -138,5 +141,119 @@ describe('machine-profile.util', () => {
       ProductType.RESINA,
     );
     expect(cost).toBe(80);
+  });
+
+  it('normaliza defaults de cola solo en role=print', () => {
+    const [print, wash] = normalizeMachineProfiles([
+      {
+        id: 'a1',
+        name: 'A1 #1',
+        role: MachineProfileRole.PRINT,
+        watts: 100,
+        costPerHour: 100,
+        productType: ProductType.FDM,
+        queueEnabled: true,
+      },
+      {
+        id: 'wash',
+        name: 'Lavadora',
+        role: MachineProfileRole.WASH,
+        watts: 80,
+        costPerHour: 80,
+        productType: ProductType.RESINA,
+        queueEnabled: true,
+        workHoursPerDay: 10,
+      },
+    ]);
+    expect(print.queueEnabled).toBe(true);
+    expect(print.workHoursPerDay).toBe(16);
+    expect(print.workWeekdays).toEqual([1, 2, 3, 4, 5, 6]);
+    expect(print.workStartHour).toBe('08:00');
+    expect(wash.queueEnabled).toBeUndefined();
+    expect(wash.workHoursPerDay).toBeUndefined();
+  });
+
+  it('deja un solo costBase=true por productType al normalizar', () => {
+    const normalized = normalizeMachineProfiles([
+      {
+        id: 'p1',
+        name: 'A1 #1',
+        role: MachineProfileRole.PRINT,
+        watts: 100,
+        costPerHour: 100,
+        productType: ProductType.FDM,
+        costBase: true,
+      },
+      {
+        id: 'p2',
+        name: 'A1 #2',
+        role: MachineProfileRole.PRINT,
+        watts: 120,
+        costPerHour: 200,
+        productType: ProductType.FDM,
+        costBase: true,
+      },
+    ]);
+    expect(normalized.filter((p) => p.costBase).map((p) => p.id)).toEqual([
+      'p1',
+    ]);
+  });
+
+  it('usa costBase para overhead de impresión con varios perfiles print', () => {
+    const multi = {
+      ...settings,
+      electricityCostPerKwh: 100,
+      machineProfiles: normalizeMachineProfiles([
+        {
+          id: 'cheap',
+          name: 'Barata',
+          role: MachineProfileRole.PRINT,
+          watts: 1000,
+          costPerHour: 100,
+          productType: ProductType.FDM,
+        },
+        {
+          id: 'base',
+          name: 'Base',
+          role: MachineProfileRole.PRINT,
+          watts: 1000,
+          costPerHour: 500,
+          productType: ProductType.FDM,
+          costBase: true,
+        },
+      ]),
+    };
+    expect(selectPrintProfileForCost(multi, ProductType.FDM)?.id).toBe('base');
+    const overhead = calculateMachineOverhead(multi, ProductType.FDM, {
+      printTimeHours: 1,
+    });
+    // 1 kW × 1 h × $100 + máquina $500
+    expect(overhead.energyCost).toBe(100);
+    expect(overhead.machineCost).toBe(500);
+  });
+
+  it('sin costBase usa el primer perfil print (comportamiento actual)', () => {
+    const multi = {
+      ...settings,
+      machineProfiles: normalizeMachineProfiles([
+        {
+          id: 'first',
+          name: 'Primera',
+          role: MachineProfileRole.PRINT,
+          watts: 1000,
+          costPerHour: 100,
+          productType: ProductType.FDM,
+        },
+        {
+          id: 'second',
+          name: 'Segunda',
+          role: MachineProfileRole.PRINT,
+          watts: 1000,
+          costPerHour: 999,
+          productType: ProductType.FDM,
+        },
+      ]),
+    };
+    expect(selectPrintProfileForCost(multi, ProductType.FDM)?.id).toBe('first');
   });
 });

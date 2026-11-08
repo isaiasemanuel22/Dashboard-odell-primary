@@ -3,12 +3,15 @@ import {
   IsBoolean,
   IsEnum,
   IsIn,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
   Min,
+  ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
@@ -70,6 +73,36 @@ export class UpdatePrintJobDto {
   @ValidateNested({ each: true })
   @Type(() => SupplyReplacementDto)
   supplyReplacements?: SupplyReplacementDto[];
+}
+
+export class AssignPrintJobPrinterDto {
+  /** Id de perfil, null para desasignar, o 'auto'. */
+  @ValidateIf((_, value) => value !== null)
+  @IsString()
+  printerId!: string | null;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  position?: number;
+}
+
+export class PrinterQueueHoursQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(200)
+  hours?: number;
+}
+
+export class PrinterCapacityQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(-52)
+  @Max(52)
+  weekOffset?: number;
 }
 
 export class CreateIndependentTaskDto {

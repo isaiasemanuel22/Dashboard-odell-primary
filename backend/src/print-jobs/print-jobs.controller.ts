@@ -10,21 +10,43 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 import {
+  AssignPrintJobPrinterDto,
   CreateIndependentTaskDto,
+  PrinterCapacityQueryDto,
+  PrinterQueueHoursQueryDto,
   UpdatePrintJobDto,
   UpdatePrintJobStatusDto,
 } from '../common/dto';
 import { PrintJobActor } from '../common/interfaces';
 import { ADMIN_ROLE_ID } from '../users/user-access.bootstrap';
 import { PrintJobsService } from './print-jobs.service';
+import { PrinterQueueService } from './printer-queue.service';
 
 @Controller('print-jobs')
 export class PrintJobsController {
-  constructor(private readonly printJobsService: PrintJobsService) {}
+  constructor(
+    private readonly printJobsService: PrintJobsService,
+    private readonly printerQueueService: PrinterQueueService,
+  ) {}
 
   @Get('board')
   getBoard() {
     return this.printJobsService.getBoard();
+  }
+
+  @Get('printer-queue')
+  getPrinterQueue() {
+    return this.printerQueueService.getPrinterQueue();
+  }
+
+  @Get('delivery-estimate')
+  deliveryEstimate(@Query() query: PrinterQueueHoursQueryDto) {
+    return this.printerQueueService.deliveryEstimate(query.hours);
+  }
+
+  @Get('capacity')
+  getCapacity(@Query() query: PrinterCapacityQueryDto) {
+    return this.printerQueueService.getCapacity(query.weekOffset);
   }
 
   @Post('reconcile-missing-supplies')
@@ -56,6 +78,19 @@ export class PrintJobsController {
     return this.printJobsService.supplyShortages(id);
   }
 
+  @Patch(':id/assignment')
+  assignPrinter(
+    @Param('id') id: string,
+    @Body() dto: AssignPrintJobPrinterDto,
+    @Req() request: Request,
+  ) {
+    return this.printerQueueService.assign(
+      id,
+      dto,
+      this.actorFromRequest(request),
+    );
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.printJobsService.findOne(id);
@@ -67,7 +102,11 @@ export class PrintJobsController {
     @Body() dto: UpdatePrintJobDto,
     @Req() request: Request,
   ) {
-    return this.printJobsService.update(id, dto, this.actorFromRequest(request));
+    return this.printJobsService.update(
+      id,
+      dto,
+      this.actorFromRequest(request),
+    );
   }
 
   @Patch(':id/status')

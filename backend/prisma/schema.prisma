@@ -321,6 +321,8 @@ model PrintJob {
   suppliesAvailableNotifiedAt DateTime? @map("supplies_available_notified_at")
   /** JSON: [{ requirementKey, supplyId }] de esta tarea. */
   supplyReplacements String? @map("supply_replacements") @db.Text
+  printerId      String?   @map("printer_id") @db.VarChar(64)
+  queuePosition  Int?      @map("queue_position")
 
   @@index([orderId])
   @@map("print_jobs")

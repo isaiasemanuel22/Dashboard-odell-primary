@@ -1724,6 +1724,62 @@ La reserva de stock al preparar pedido, entregas parciales y cantidades
 (`reservedQuantity`, `deliveredQuantity`, etc.) están implementadas en
 pedidos y tareas conforme a §9–§15.
 
+#### Cola por impresora
+
+Vista de producción que ordena las tareas FDM de impresión 3D por
+**perfil de máquina** (`MachineProfile` con `role=print`,
+`queueEnabled=true`, productType FDM). Cada impresora (ej. «A1 #1») es un
+perfil con jornada propia.
+
+**Qué entra**
+
+- `type === impresion_3d`, producto FDM (por `productId` → `Product.type`;
+  sin producto, p. ej. internas, cuenta como FDM).
+- `taskType` PRODUCTION o INTERNAL.
+- Excluye impresión de diseño en papel (`isDesignPrintConfigured`).
+- No archivadas, activas en el tablero (`active`), visibles en cola.
+- Estados: `por_hacer`, `en_proceso`, `bloqueado`.
+- `en_revision`, `terminado` y `cancelado` **no** están en la cola
+  (liberan la impresora). Resina y demás áreas van a «Otras áreas».
+
+**Asignación y orden**
+
+- `printerId` apunta a un perfil con `queueEnabled`. Si es null, o el
+  perfil ya no existe / no tiene cola → «sin asignar».
+- Orden **manual** (`queuePosition`). Dentro de cada impresora: primero
+  la `en_proceso` (si hay más de una, por `startedAt`); luego
+  `queuePosition` asc; desempate `dueDate` asc y `priority`.
+- Al asignar sin posición, la tarea va al final (`max+1`). Reordenar =
+  mover a una posición y renumerar `0..n-1`.
+- `printerId: 'auto'` elige la impresora con menor `busyUntil` (libre
+  gana; desempate por nombre).
+- Permisos: admin o responsable de la tarea (`assertActorCanMove`), igual
+  que al mover estado. No se reescribe el campo `machine` del PrintJob
+  (sigue sincronizándose desde el pedido).
+
+**Agenda / jornada**
+
+- Zona horaria America/Argentina/Buenos_Aires (UTC−3 fijo; sin DST).
+- Jornada: en `workWeekdays` (default lun–sáb), desde `workStartHour`
+  (default 08:00) durante `workHoursPerDay` (default 16; puede cruzar
+  medianoche). Fuera de esa ventana la impresora no consume horas.
+- Si una tarea no termina en lo que queda del día, **se parte**: usa el
+  resto de la jornada y sigue el próximo día laborable desde
+  `workStartHour`.
+- Duración = `estimatedHours` (horas enteras).
+- `en_proceso` con `startedAt`: horas trabajadas = horas de jornada entre
+  `startedAt` y ahora; `progress` y restante; el start mostrado es
+  `startedAt`.
+- Tareas **bloqueadas**: ocupan lugar en la cola con `blocked=true` pero
+  **no consumen** horas (sin start/end).
+- Feriados: se ignoran en esta fase.
+- Costeo de productos con varios perfiles print FDM: usa el marcado
+  `costBase`; si ninguno, el primero. Al guardar, solo uno queda con
+  `costBase=true` por productType.
+
+Endpoints: `GET /print-jobs/printer-queue`, `GET /print-jobs/delivery-estimate`,
+`GET /print-jobs/capacity`, `PATCH /print-jobs/:id/assignment`.
+
 ---
 
 ### 25.8 Retención de pedidos

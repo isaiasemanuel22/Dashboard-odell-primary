@@ -151,6 +151,20 @@ export interface MachineProfile {
   consumptionMl?: number;
   /** Cuántas piezas se lavan con el mismo baño antes de cambiar el insumo. */
   washBathUses?: number;
+  /** Solo role=print: aparece en la cola de impresoras. */
+  queueEnabled?: boolean;
+  /** Solo role=print: horas de jornada (default 16). */
+  workHoursPerDay?: number;
+  /** Solo role=print: 0=dom..6=sáb (default lun–sáb). */
+  workWeekdays?: number[];
+  /** Solo role=print: inicio de jornada "HH:mm" (default "08:00"). */
+  workStartHour?: string;
+  /** Solo role=print: tipo de AMS (ej. "AMS lite"). */
+  amsType?: string;
+  /** Solo role=print: hasta 4 ids de ColorConfig; null = ranura vacía. */
+  amsSlots?: (string | null)[];
+  /** Solo role=print: perfil usado para costear productos de ese productType. */
+  costBase?: boolean;
 }
 
 export interface GeneralSettings {
@@ -687,6 +701,10 @@ export interface PrintJob {
   suppliesAvailableNotifiedAt?: string;
   /** Reemplazos de material para esta tarea. No cambian el producto. */
   supplyReplacements?: SupplyReplacement[];
+  /** Id de MachineProfile (role=print, queueEnabled). null/ausente = sin asignar. */
+  printerId?: string | null;
+  /** Orden manual dentro de la cola de esa impresora (0..n-1). */
+  queuePosition?: number | null;
 }
 
 export interface SupplyReplacement {

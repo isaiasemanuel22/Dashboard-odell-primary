@@ -1,6 +1,8 @@
 import { PrintJob, SupplyReplacement } from '../../common/interfaces';
 
-function parseSupplyReplacements(raw?: string | null): SupplyReplacement[] | undefined {
+function parseSupplyReplacements(
+  raw?: string | null,
+): SupplyReplacement[] | undefined {
   if (!raw?.trim()) return undefined;
   try {
     const parsed = JSON.parse(raw) as SupplyReplacement[];
@@ -39,6 +41,8 @@ export function mapPrintJobFromDb(row: {
   responsibleUserId?: string | null;
   suppliesAvailableNotifiedAt?: Date | null;
   supplyReplacements?: string | null;
+  printerId?: string | null;
+  queuePosition?: number | null;
 }): PrintJob {
   return {
     id: row.id,
@@ -63,6 +67,8 @@ export function mapPrintJobFromDb(row: {
     responsibleUserId: row.responsibleUserId ?? undefined,
     suppliesAvailableNotifiedAt: row.suppliesAvailableNotifiedAt?.toISOString(),
     supplyReplacements: parseSupplyReplacements(row.supplyReplacements),
+    printerId: row.printerId ?? null,
+    queuePosition: row.queuePosition ?? null,
   };
 }
 
@@ -94,5 +100,7 @@ export function mapPrintJobToDb(job: PrintJob) {
     supplyReplacements: job.supplyReplacements?.length
       ? JSON.stringify(job.supplyReplacements)
       : null,
+    printerId: job.printerId ?? null,
+    queuePosition: job.queuePosition ?? null,
   };
 }
