@@ -126,6 +126,7 @@
       <app-calendar-event-weekdays
         [labels]="weekdayLabels"
         [selected]="weekdays"
+        [hint]="repeatHint"
         (toggleDay)="toggleWeekday($event)"
       />
     }
@@ -163,7 +164,7 @@
 
   <!-- Desktop footer -->
   <div class="cal-dialog__footer desktop-only">
-    <span class="cal-dialog__hint">{{ repeatHint }}</span>
+    <span class="cal-dialog__hint"></span>
     <div class="cal-dialog__actions">
       @if (isEdit) {
         <db-button
