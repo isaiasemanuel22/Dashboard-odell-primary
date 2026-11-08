@@ -5,12 +5,12 @@
 }
 
 .quote-resumen {
-  border-left: 1px solid #e3ecf2;
-  background: #f5f9fc;
+  border-left: 1px solid $color-divider;
+  background: $color-surface-inset;
 
   @media (max-width: 900px) {
     border-left: 0;
-    border-top: 1px solid #e3ecf2;
+    border-top: 1px solid $color-divider;
   }
 
   &__inner {
@@ -31,9 +31,9 @@
 
   &__card {
     padding: 0.75rem 0.85rem;
-    border: 1px solid #e3ecf2;
+    border: 1px solid $color-divider;
     border-radius: 0.6rem;
-    background: #fff;
+    background: $color-surface;
   }
 
   &__lines {
@@ -98,7 +98,7 @@
     justify-content: space-between;
     margin: 0.65rem 0 0;
     padding-top: 0.6rem;
-    border-top: 1px solid #e3ecf2;
+    border-top: 1px solid $color-divider;
     font-size: 0.75rem;
     color: $color-text-label;
 
@@ -174,7 +174,7 @@
     height: 0.4rem;
     overflow: hidden;
     border-radius: 999px;
-    background: #e3ecf2;
+    background: $color-divider;
   }
 
   &__bar-part {
@@ -192,9 +192,9 @@
     gap: 0.45rem;
     padding: 0.6rem 0.7rem;
     border-radius: 0.5rem;
-    background: #fff8e6;
-    border: 1px solid #f5d48a;
-    color: #9a3412;
+    background: $color-warning-bg;
+    border: 1px solid $color-warning-border;
+    color: $color-status-alert-text;
     font-size: 0.75rem;
     line-height: 1.35;
 
@@ -214,9 +214,9 @@
     width: 0.9rem;
     height: 0.9rem;
     margin-top: 0.05rem;
-    border: 1.5px solid #c2410c;
+    border: 1.5px solid $color-area-print;
     border-radius: 50%;
-    color: #c2410c;
+    color: $color-area-print;
     font-size: 0.6rem;
     font-weight: 700;
   }

@@ -17,11 +17,11 @@
     background: mobile.$m-surface;
     overflow: hidden;
 
-    :deep(input),
-    :deep(.st-m__inp),
-    :deep(.m-field-group__input),
-    :deep(db-autocomplete input),
-    :deep(.db-autocomplete input) {
+    ::ng-deep input,
+    ::ng-deep .st-m__inp,
+    ::ng-deep .m-field-group__input,
+    ::ng-deep db-autocomplete input,
+    ::ng-deep .db-autocomplete input {
       border: 0 !important;
       border-radius: 0 !important;
       background: transparent !important;
@@ -40,9 +40,9 @@
   }
 
   &:not(.m-field-group__control--affix) {
-    :deep(input),
-    :deep(.st-m__inp),
-    :deep(.m-field-group__input) {
+    ::ng-deep input,
+    ::ng-deep .st-m__inp,
+    ::ng-deep .m-field-group__input {
       min-height: 48px;
       border: 1px solid mobile.$m-border-input;
       border-radius: mobile.$m-radius-sm;

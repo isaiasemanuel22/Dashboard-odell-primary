@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell · Ajustes · Usuarios</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/4bd8029deedccb2d422bb325be90576b">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+</style>
+</helmet>
+<div class="app">
+<nav class="side" aria-label="Menú principal">
+<div class="brand"><div class="brand-mark" aria-hidden="true">O</div><div><div class="brand-name">Odell</div><div class="brand-sub">Dashboard</div></div></div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="10">
+<a href="{{item.href}}" class="{{item.cls}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.d}}"></path></svg>{{item.label}}</a>
+</sc-for>
+<div class="sb-foot"><span class="sb-mail">isaiasemanuelcalfin@gmail.com</span><button class="sb-out" type="button">Cerrar sesión</button></div>
+</nav>
+
+<main class="main">
+<div class="wrap">
+
+<header class="head">
+<div>
+<h1 class="h1">Ajustes</h1>
+<p class="sub">Configuración general del emprendimiento</p>
+</div>
+<div class="actions">
+<button class="btn btn-d" type="button">Resetear</button>
+</div>
+</header>
+
+<div style="display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start">
+<nav class="card subnav" style="flex: 1 1 200px" aria-label="Secciones de ajustes">
+<a href="AjustesGeneral.dc.html">Valores generales</a>
+<a href="AjustesCatalogos.dc.html">Filamento</a>
+<a href="#">Resina</a>
+<a href="AjustesColores.dc.html">Colores</a>
+<a href="AjustesImpresos.dc.html">Impresos</a>
+<a href="AjustesGanancias.dc.html">Ganancias</a>
+<a href="AjustesUsuarios.dc.html" class="on">Usuarios</a>
+</nav>
+
+<section style="flex: 999 1 560px; min-width: 0; display: flex; flex-direction: column; gap: 14px">
+<div class="head">
+<div>
+<h2 class="h2" style="font-size: 20px">Usuarios y permisos</h2>
+<p class="sub">Perfiles, roles y áreas de trabajo · 1 usuario activo</p>
+</div>
+<button class="btn btn-p" type="button">+ Nuevo usuario</button>
+</div>
+
+<div class="bar">
+<div class="chips">
+<button class="chip chip-on" type="button">Usuarios</button>
+<button class="chip" type="button">Roles</button>
+<button class="chip" type="button">Áreas</button>
+</div>
+<label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><input type="search" placeholder="Buscar por nombre o email" aria-label="Buscar usuarios"></label>
+</div>
+
+<div class="tbox">
+<table class="tbl" style="min-width: 560px">
+<thead><tr><th>Usuario</th><th>Roles</th><th>Áreas</th><th>Estado</th><th class="w0"></th></tr></thead>
+<tbody>
+<tr>
+<td><div style="display: flex; gap: 10px; align-items: center"><span class="av" aria-hidden="true">IC</span><div><span class="strong">Isaías Emanuel Calfin</span><span class="sec">isaiasemanuelcalfin@gmail.com</span></div></div></td>
+<td><span class="badge b-info">Administrador</span></td>
+<td><div style="display: flex; gap: 4px; flex-wrap: wrap"><span class="tag t3d">Impresión 3D</span><span class="tag tdg">Diseño gráfico</span><span class="tag tmod">Modelado</span><span class="tag test">Estampado</span></div></td>
+<td><span class="badge b-ok">Activo</span></td>
+<td><button class="more" type="button" aria-label="Acciones del usuario">···</button></td>
+</tr>
+</tbody>
+</table>
+</div>
+</section>
+</div>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":760}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const A = 'ajustes';
+    const NAV = [['dashboard','Dashboard','Main.dc.html','M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'],['billetera','Billetera','Billetera.dc.html','M3 7h18v13H3zM3 7l3-3h12l3 3M16 14h2'],['ventas','Ventas','Ventas.dc.html','M3 17l6-6 4 4 8-8M15 7h6v6'],['pedidos','Pedidos','#','M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8'],['presupuestos','Presupuestos','#','M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5'],['cola','Cola de trabajo','#','M4 5h4v14H4zM10 5h4v10h-4zM16 5h4v6h-4z'],['productos','Productos','Productos.dc.html','M3 12l9-9h7v7l-9 9zM15 9h.01'],['insumos','Insumos','Insumos.dc.html','M7 4h10v4H7zM6 8h12v12H6zM9 13h6'],['clientes','Clientes','Clientes.dc.html','M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-1a6 6 0 0 1 12 0v1M16 3.5a4 4 0 0 1 0 7.5M22 21v-1a6 6 0 0 0-4-5.6'],['ajustes','Ajustes','AjustesCatalogos.dc.html','M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M14 4v4M8 10v4M16 16v4']];
+    return { nav: NAV.map(([k, l, h, d]) => ({ label: l, href: h, d: d, cls: 'sb-item' + (k === A ? ' sb-on' : '') })) };
+  }
+}
+</script>
+</body>
+</html>

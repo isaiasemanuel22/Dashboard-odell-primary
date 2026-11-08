@@ -25,7 +25,8 @@ export interface ImpresoFormDialogData {
   template: `
     <app-form-dialog-shell
       [title]="impreso ? 'Editar impreso' : 'Nuevo impreso'"
-      size="md"
+      size="ml"
+      [footerBar]="true"
       (close)="cancel()"
     >
       <app-impreso-form

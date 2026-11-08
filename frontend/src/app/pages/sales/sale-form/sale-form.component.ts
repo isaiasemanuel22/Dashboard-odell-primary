@@ -169,6 +169,17 @@ export class SaleFormComponent implements OnChanges {
     return this.breakpoint.isMobile();
   }
 
+  /** Modal de escritorio (RdVentaMostrador); la ruta `/ventas/nueva` fuerza `layout="mobile"`. */
+  get showModalLayout(): boolean {
+    return !this.showMobileSaleUi && this.layout === 'auto';
+  }
+
+  readonly stockForFn = (productId: string): number =>
+    this.availableStock(productId);
+
+  readonly imageForFn = (line: SaleCartLine): string | null =>
+    this.lineImage(line);
+
   get cart(): SaleCartLine[] {
     return this.isEditing ? this.editCart : this.saleCart.getLines();
   }
@@ -572,6 +583,16 @@ export class SaleFormComponent implements OnChanges {
     if (this.showMobileSaleUi && this.soldAtLocal) {
       const date = new Date(`${this.soldAtLocal}T12:00:00`);
       if (!Number.isNaN(date.getTime())) return date.toISOString();
+    }
+    if (this.showModalLayout && this.soldAtLocal) {
+      // Solo se manda la fecha si la cambiaron: así se conserva la hora original.
+      const original = this.isEditing
+        ? this.toDateInputValue(this.sale!.soldAt)
+        : this.todayInputValue();
+      if (this.soldAtLocal !== original) {
+        const date = new Date(`${this.soldAtLocal}T12:00:00`);
+        if (!Number.isNaN(date.getTime())) return date.toISOString();
+      }
     }
     if (this.isEditing) return this.sale!.soldAt;
     return undefined;

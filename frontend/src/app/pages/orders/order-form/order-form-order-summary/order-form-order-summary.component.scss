@@ -6,12 +6,12 @@
 }
 
 .order-resumen {
-  border-left: 1px solid #e3ecf2;
-  background: #f7fafc;
+  border-left: 1px solid $color-divider;
+  background: $color-surface-inset;
 
   @media (max-width: 900px) {
     border-left: 0;
-    border-top: 1px solid #e3ecf2;
+    border-top: 1px solid $color-divider;
   }
 
   &__inner {
@@ -35,9 +35,9 @@
     flex-direction: column;
     gap: 0.5rem;
     padding: 0.875rem 1rem;
-    border: 1px solid #e3ecf2;
+    border: 1px solid $color-divider;
     border-radius: 0.65rem;
-    background: #fff;
+    background: $color-surface;
   }
 
   &__row {
@@ -47,7 +47,7 @@
     gap: 0.75rem;
     margin: 0;
     font-size: 0.8125rem;
-    color: #33495a;
+    color: $color-text-label;
 
     > span:first-child,
     > .order-resumen__stack {
@@ -57,7 +57,7 @@
 
     &--total {
       padding-top: 0.625rem;
-      border-top: 1px solid #e3ecf2;
+      border-top: 1px solid $color-divider;
       align-items: baseline;
 
       span:first-child {
@@ -68,7 +68,7 @@
 
     &--balance {
       padding-top: 0.5rem;
-      border-top: 1px solid #e3ecf2;
+      border-top: 1px solid $color-divider;
       align-items: baseline;
 
       span:first-child {
@@ -108,7 +108,7 @@
   }
 
   &__neg {
-    color: #b91c1c;
+    color: $color-danger-text;
     font-weight: 600;
   }
 
@@ -135,7 +135,7 @@
     padding: 0.55rem 0.75rem;
     border: 1px solid $color-border-input;
     border-radius: $radius-sm;
-    background: #fff;
+    background: $color-surface;
     box-sizing: border-box;
 
     &:focus-within {
@@ -181,7 +181,7 @@
 
     ::ng-deep .db-seg {
       display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
+      grid-template-columns: repeat(3, minmax(min-content, 1fr));
       width: 100%;
       // Evita que overflow:hidden del control recorte la primera letra.
       overflow: visible;
@@ -193,7 +193,7 @@
       height: auto;
       min-height: 2.5rem;
       padding: 0.4rem 0.35rem;
-      font-size: 0.75rem;
+      font-size: 13px;
       white-space: nowrap;
       line-height: 1.2;
       text-align: center;
@@ -217,8 +217,8 @@
     height: 1.25rem;
     padding: 0 0.5rem;
     border-radius: $radius-pill;
-    background: #e0f0f8;
-    color: #0b5f86;
+    background: $color-primary-bg;
+    color: $color-brand-deep;
     font-size: 0.6875rem;
     font-weight: 700;
     letter-spacing: 0.02em;
@@ -317,11 +317,11 @@
     }
 
     .order-resumen__neg {
-      color: #b91c1c;
+      color: $color-danger-text;
     }
 
     .order-resumen__pos {
-      color: #15803d;
+      color: $color-status-success-text;
     }
 
     .order-resumen__label {
@@ -368,21 +368,21 @@
         min-width: 0;
         min-height: 44px;
         height: auto;
-        border: 1px solid #c9d8e3;
-        border-right: 1px solid #c9d8e3;
+        border: 1px solid $color-border-input;
+        border-right: 1px solid $color-border-input;
         border-radius: 12px;
         padding: 8px 6px;
         font-size: 12px;
         font-weight: 500;
         color: mobile.$m-text-label;
-        background: #fff;
+        background: $color-surface;
         white-space: normal;
         line-height: 1.2;
 
         &.is-on {
-          background: #e0f0f8;
-          border-color: #0e7aab;
-          color: #0b5f86;
+          background: $color-primary-bg;
+          border-color: $color-brand-deep;
+          color: $color-brand-deep;
           font-weight: 700;
           box-shadow: none;
         }

@@ -81,10 +81,10 @@
     align-items: flex-start;
     padding: 12px 14px;
     border-radius: mobile.$m-radius-md;
-    background: #fff8eb;
-    border: 1px solid #f5d9a8;
+    background: $color-warning-bg;
+    border: 1px solid $color-warning-border;
     font-size: 13px;
-    color: #7a4a06;
+    color: $color-warning-text;
   }
 
   .od-del-sheet__charge {
@@ -94,13 +94,13 @@
     ::ng-deep .db-button {
       width: 100%;
       min-height: 48px;
-      background: #fff;
+      background: $color-surface;
       border: 1px solid mobile.$m-border-input;
       color: mobile.$m-text;
       box-shadow: none;
 
       &:hover:not(:disabled) {
-        background: #fff;
+        background: $color-surface;
         border-color: mobile.$m-border-input;
         opacity: 1;
       }
@@ -115,7 +115,7 @@
     border-top: 1px solid mobile.$m-border;
     position: sticky;
     bottom: 0;
-    background: #fff;
+    background: $color-surface;
 
     db-button {
       display: block;
@@ -141,13 +141,14 @@
   margin: 0;
   padding: 0;
   list-style: none;
+  font-size: 0.8125rem;
 
   li {
     display: flex;
     flex-wrap: wrap;
     gap: 0.4rem 1rem;
-    padding: 0.7rem;
-    border-radius: $radius-sm;
+    padding: 0.625rem 0.75rem;
+    border-radius: 10px;
     background: $color-surface-muted;
   }
 }

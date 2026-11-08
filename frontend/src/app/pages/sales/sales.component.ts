@@ -247,7 +247,13 @@ export class SalesComponent implements OnInit {
   }
 
   openCreateSale(): void {
-    void this.router.navigate(['/ventas/nueva']);
+    if (this.breakpoint.isMobile()) {
+      void this.router.navigate(['/ventas/nueva']);
+      return;
+    }
+    this.formDialogs.openSale().subscribe((saved) => {
+      if (saved) this.onSaleSaved();
+    });
   }
 
   openMobileEntry(entry: SaleEntry): void {

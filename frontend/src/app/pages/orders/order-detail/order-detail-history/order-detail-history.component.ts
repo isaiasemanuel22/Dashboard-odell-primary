@@ -27,7 +27,6 @@ import {
   templateUrl: './order-detail-history.component.html',
   styleUrl: './order-detail-history.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
-  host: { style: 'display: contents' },
 })
 export class OrderDetailHistoryComponent {
   @Input() statusHistory: OrderStatusHistoryEntry[] = [];

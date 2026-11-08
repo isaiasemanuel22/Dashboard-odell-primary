@@ -8,15 +8,28 @@
       [required]="true"
     />
 
-    <db-select
-      label="Tipo de papel"
-      [(ngModel)]="paperType"
-      name="paperType"
-      [options]="paperTypeOptions"
-      (ngModelChange)="onDimensionsChange()"
-    />
+    @if (isMobile()) {
+      <div class="impreso-form__paper">
+        <span class="impreso-form__paper-label" id="impreso-paper-label">Tipo de papel</span>
+        <db-segmented-control
+          size="lg"
+          ariaLabel="Tipo de papel"
+          [options]="paperTypeOptions"
+          [value]="paperType"
+          (valueChange)="onPaperTypeChange($event)"
+        />
+      </div>
+    } @else {
+      <db-select
+        label="Tipo de papel"
+        [(ngModel)]="paperType"
+        name="paperType"
+        [options]="paperTypeOptions"
+        (ngModelChange)="onDimensionsChange()"
+      />
+    }
 
-    <db-form-grid>
+    <db-form-grid class="impreso-form__dims">
       <db-input
         label="Ancho (cm)"
         type="number"

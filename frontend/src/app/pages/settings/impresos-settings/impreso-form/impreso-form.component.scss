@@ -1,21 +1,50 @@
+@use '../../../../shared/styles/variables' as *;
+@use '../../../../shared/styles/mobile' as mobile;
+
 .cost-preview {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding: 0.75rem;
-  background: #f8fafc;
-  border-radius: 8px;
-  border: 1px solid #e2e8f0;
-  font-size: 0.875rem;
-  color: #475569;
+  padding: 12px 14px;
+  background: $color-surface-muted;
+  border-radius: 10px;
+  font-size: 0.8125rem;
+  color: $color-text-label;
 
   strong {
-    color: #0f172a;
-    font-size: 1rem;
+    color: $color-text;
+    font-size: 0.9375rem;
   }
 
   small {
-    font-size: 0.75rem;
-    color: #64748b;
+    font-size: 0.6875rem;
+    color: $color-text-muted;
+  }
+}
+
+// Separación entre campos (RdImpreso).
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+.impreso-form__paper {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.impreso-form__paper-label {
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: $color-text-label;
+}
+
+@include mobile.mobile-only {
+  // Ancho y Largo lado a lado.
+  db-form-grid.impreso-form__dims {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
   }
 }

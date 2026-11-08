@@ -139,3 +139,4 @@ export {
   resolveOrderQuoteCureMinutes,
   resolveOrderQuoteWashMinutes,
 } from './order-quote-composition.util';
+export * from './db-filter-panel/db-filter-panel.component';

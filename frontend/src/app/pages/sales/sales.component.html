@@ -160,7 +160,7 @@
         label="+ Venta de mostrador"
         variant="primary"
         format="solid"
-        routerLink="/ventas/nueva"
+        (clicked)="openCreateSale()"
       />
     </div>
   </header>
@@ -202,6 +202,10 @@
         [actions]="actions"
         [filters]="sourceFilters"
         [areaFilters]="areaFilters"
+        filterPanelTitle="Filtrar ventas"
+        filterGroupLabel="Tipo"
+        panelEntityOne="venta"
+        panelEntityMany="ventas"
         searchPlaceholder="Buscar por ID, producto o cliente"
         [searchText]="searchText"
         [emptyText]="emptyText"

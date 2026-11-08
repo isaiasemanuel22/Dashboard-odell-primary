@@ -351,11 +351,15 @@
   </div>
 
   <div class="cal-filters">
-    <db-pill-group
-      [options]="filterOptions"
-      [value]="filter"
-      ariaLabel="Filtros"
-      (valueChange)="setFilter($event)"
+    <db-filter-panel
+      title="Filtrar calendario"
+      ariaLabel="Filtros del calendario"
+      [groups]="filterGroups"
+      [values]="{ type: filter }"
+      [countFn]="filterCountFn"
+      entityOne="ítem"
+      entityMany="ítems"
+      (apply)="setFilter($event['type'] === 'todos' ? 'todos' : $any($event['type']))"
     />
   </div>
 

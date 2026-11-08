@@ -2,7 +2,7 @@ import { NgClass } from '@angular/common';
 import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { DbButtonComponent } from '../../components/db-button/db-button.component';
 
-export type ModalSize = 'sm' | 'md' | 'lg';
+export type ModalSize = 'sm' | 'md' | 'ml' | 'lg';
 
 @Component({
   selector: 'app-form-modal',
@@ -15,6 +15,10 @@ export class FormModalComponent {
   @Input() title = '';
   @Input() size: ModalSize = 'md';
   @Input() stickyHeader = false;
+  /** Pie gris a ancho completo, como RdPatrones §1/§2. */
+  @Input() footerBar = false;
+  /** Confirmación: en desktop el título va dentro del cuerpo (app-confirm-lead). */
+  @Input() confirm = false;
   @Output() close = new EventEmitter<void>();
 
   modalClass(): Record<string, boolean> {
@@ -22,7 +26,10 @@ export class FormModalComponent {
       modal: true,
       'modal--sm': this.size === 'sm',
       'modal--md': this.size === 'md',
+      'modal--ml': this.size === 'ml',
       'modal--lg': this.size === 'lg',
+      'modal--bar': this.footerBar,
+      'modal--confirm': this.confirm,
     };
   }
 

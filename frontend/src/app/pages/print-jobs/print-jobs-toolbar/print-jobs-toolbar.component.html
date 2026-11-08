@@ -14,7 +14,7 @@
 
   <div class="cola-header__actions">
     <label class="cola-search">
-      <span class="cola-search__icon" aria-hidden="true">🔍</span>
+      <svg class="cola-search__icon" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg>
       <input
         type="search"
         class="cola-search__input"
@@ -23,6 +23,13 @@
         (ngModelChange)="searchQueryChange.emit($event)"
       />
     </label>
+    <db-filter-panel
+      title="Filtrar cola"
+      ariaLabel="Filtros de la cola"
+      [groups]="panelGroups"
+      [values]="panelValues"
+      (apply)="onPanelApply($event)"
+    />
     <db-button
       label="+ Nueva tarea"
       variant="primary"
@@ -31,45 +38,6 @@
     />
   </div>
 </header>
-
-<div class="cola-filters">
-  <div class="cola-filters__areas">
-    <span class="cola-filters__label">Área</span>
-    <div class="cola-filters__pills" role="group" aria-label="Filtrar por área">
-      @for (filter of areaFilters; track filter.label) {
-        <button
-          type="button"
-          class="cola-pill"
-          [class.cola-pill--active]="areaFilter === filter.value"
-          (click)="areaFilterChange.emit(filter.value)"
-        >
-          {{ filter.label }}
-        </button>
-      }
-    </div>
-  </div>
-
-  @if (customerChips.length) {
-    <div class="cola-filters__clients">
-      <span class="cola-filters__label">Clientes</span>
-      <div class="cola-filters__avatars" role="group" aria-label="Filtrar por cliente">
-        @for (chip of customerChips; track chip.initial) {
-          <button
-            type="button"
-            class="cola-client-chip"
-            [class]="'cola-client-chip--tone-' + chip.tone"
-            [class.cola-client-chip--active]="customerFilter === chip.initial"
-            [attr.data-name]="chip.name"
-            [attr.aria-label]="chip.name"
-            (click)="customerFilterToggle.emit(chip.initial)"
-          >
-            {{ chip.initial }}
-          </button>
-        }
-      </div>
-    </div>
-  }
-</div>
 
 @if (statusNotice) {
   <p class="status-notice">{{ statusNotice }}</p>

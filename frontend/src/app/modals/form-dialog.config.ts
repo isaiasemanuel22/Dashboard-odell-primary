@@ -7,8 +7,10 @@ export const FORM_DIALOG_PANEL_CLASS = 'form-dialog-panel';
 const SIZE_MAX_WIDTH: Record<ModalSize, string> = {
   sm: '420px',
   md: '480px',
+  ml: '560px',
   lg: '640px',
   xl: '1040px',
+  wide: '960px',
 };
 
 export function formDialogConfig(

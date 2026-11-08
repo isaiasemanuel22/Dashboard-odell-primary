@@ -10,6 +10,7 @@ import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from 
 export class CalendarEventWeekdaysComponent {
   @Input() labels: string[] = [];
   @Input() selected: number[] = [];
+  @Input() hint = '';
   @Output() toggleDay = new EventEmitter<number>();
 
   isOn(day: number): boolean {

@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell · Modales chicos</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/4bd8029deedccb2d422bb325be90576b">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+.pg{width:1440px;height:1200px;box-sizing:border-box;background:#3B4A55;padding:48px;font-family:Ubuntu,"Segoe UI",system-ui,sans-serif;color:#0F2A3A;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:40px 48px;align-content:start;align-items:start}
+.lbl{color:#E3ECF2;font-size:13px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;margin:0 0 12px}
+.modal{width:100%;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden}
+.mh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:20px 24px 16px;border-bottom:1px solid #E3ECF2}
+.mt{margin:0;font-size:20px;font-weight:700}
+.x{width:40px;height:40px;border-radius:10px;border:0;background:transparent;color:#5B7083;cursor:pointer;font:400 22px Ubuntu,sans-serif;flex:none}
+.x:hover{background:#EEF4F8}
+.mb{padding:20px 24px 24px;display:flex;flex-direction:column;gap:18px}
+.mf{display:flex;flex-wrap:wrap;gap:12px;justify-content:flex-end;align-items:center;padding:14px 24px;border-top:1px solid #E3ECF2;background:#F7FAFC}
+.req{color:#B91C1C}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.msg{margin:0;font-size:15px;line-height:1.5}
+.btn-o{background:#fff;color:#0B5F86;border-color:#0E7AAB}
+.deb{display:flex;flex-direction:column;gap:2px}
+.deb h3{margin:0;font-size:16px}
+.deb p{margin:0;font-size:14px;color:#4A6072}
+.sum{display:flex;justify-content:space-between;align-items:baseline;background:#E8F6EC;border-radius:10px;padding:12px 14px;font-size:14px;color:#166534}
+.sum strong{font-size:20px;font-variant-numeric:tabular-nums}
+.days{display:flex;gap:6px}
+.day{width:44px;height:44px;border-radius:10px;border:1px solid #C9D8E3;background:#fff;color:#334B5C;font:700 14px Ubuntu,sans-serif;cursor:pointer}
+.day-on{background:#0E7AAB;border-color:#0E7AAB;color:#fff}
+.hint{margin:0;font-size:13px;color:#4A6072}
+</style>
+</helmet>
+<div class="pg">
+
+<section>
+<p class="lbl">Tarea independiente</p>
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt-t">
+<div class="mh"><h2 id="mt-t" class="mt">Nueva tarea</h2><button class="x" type="button" aria-label="Cerrar">×</button></div>
+<div class="mb">
+<div class="field"><label for="mt-n">Nombre <span class="req">*</span></label><input id="mt-n" type="text" placeholder="Ej.: Producir 10 llaveros para stock" value="Producir 10 llaveros para stock"></div>
+<div class="field"><label for="mt-a">Área</label><select id="mt-a"><option>Sin área</option><option selected>Impresión 3D</option><option>Estampado</option><option>Diseño gráfico</option><option>Modelado</option></select></div>
+<div class="two">
+<div class="field"><label for="mt-d">Fecha límite</label><input id="mt-d" type="date" value="2026-11-14"></div>
+<div class="field"><label for="mt-h">Horas estimadas</label><input id="mt-h" type="number" min="0" step="0.5" value="1"></div>
+</div>
+<div class="field"><label for="mt-r">Responsable</label><select id="mt-r"><option>Isaías Calfin</option><option>Lucas Pereyra</option></select></div>
+</div>
+<div class="mf"><button class="btn btn-s" type="button">Cancelar</button><button class="btn btn-p" type="button">Crear tarea</button></div>
+</div>
+</section>
+
+<section>
+<p class="lbl">Exportar presupuesto</p>
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="ex-t" aria-describedby="ex-d" style="max-width: 480px">
+<div class="mh"><h2 id="ex-t" class="mt">Generar presupuesto</h2><button class="x" type="button" aria-label="Cerrar">×</button></div>
+<div class="mb"><p id="ex-d" class="msg">Elegí el formato para descargar el documento con los datos del presupuesto y del cliente.</p></div>
+<div class="mf"><button class="btn btn-s" type="button">Cancelar</button><button class="btn btn-o" type="button">Descargar PNG</button><button class="btn btn-p" type="button">Descargar PDF</button></div>
+</div>
+</section>
+
+<section>
+<p class="lbl">Pago de cuenta</p>
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="pc-t">
+<div class="mh"><h2 id="pc-t" class="mt">Registrar devolución</h2><button class="x" type="button" aria-label="Cerrar">×</button></div>
+<div class="mb">
+<div class="deb"><h3>María González</h3><p>Deuda pendiente: <strong>$ 18.000</strong></p></div>
+<div class="two">
+<div class="field"><label for="pc-f">Fecha <span class="req">*</span></label><input id="pc-f" type="date" value="2026-11-07"></div>
+<div class="field"><label for="pc-c">Cuenta <span class="req">*</span></label><select id="pc-c"><option>Caja efectivo</option><option>Mercado Pago</option><option>Banco</option></select></div>
+</div>
+<div class="field"><label for="pc-m">Monto a devolver <span class="req">*</span></label><input id="pc-m" type="number" min="1" step="1" placeholder="0" value="12400"></div>
+<div class="sum"><span>Ingreso a registrar</span><strong>$ 12.400</strong></div>
+</div>
+<div class="mf"><button class="btn btn-s" type="button">Cancelar</button><button class="btn btn-p" type="button">Registrar devolución</button></div>
+</div>
+</section>
+
+<section>
+<p class="lbl">Días de la semana (dentro de Nuevo evento, al repetir cada semana)</p>
+<div class="modal" role="group" aria-label="Repetir evento" style="max-width: 560px">
+<div class="mb">
+<div class="field"><label for="dw-r">Repetir</label><select id="dw-r"><option>Cada semana</option></select></div>
+<div class="field"><span style="font-size: 12px; font-weight: 500; color: #334B5C">Días de la semana</span>
+<div class="days" role="group" aria-label="Días de la semana">
+<button class="day day-on" type="button" aria-pressed="true">L</button><button class="day" type="button" aria-pressed="false">M</button><button class="day" type="button" aria-pressed="false">M</button><button class="day day-on" type="button" aria-pressed="true">J</button><button class="day" type="button" aria-pressed="false">V</button><button class="day" type="button" aria-pressed="false">S</button><button class="day" type="button" aria-pressed="false">D</button>
+</div></div>
+<p class="hint">Se repite L y J hasta que lo pares</p>
+</div>
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1200}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

@@ -64,6 +64,7 @@
                     [line]="line"
                     [lineIndex]="i"
                     variant="order"
+                    [showErrors]="submitAttempted"
                     [products]="products"
                     [serviceTypeOptions]="serviceTypeOptions"
                     [paperTypeOptions]="paperTypeOptions"
@@ -267,6 +268,7 @@
                     [line]="line"
                     [lineIndex]="i"
                     variant="quote"
+                    [showErrors]="submitAttempted"
                     [products]="products"
                     [serviceTypeOptions]="serviceTypeOptions"
                     [paperTypeOptions]="paperTypeOptions"
@@ -382,9 +384,15 @@
 
     @if (isQuoteForm) {
       <db-form-footer class="quote-form__footer desktop-only">
-        <p class="quote-form__note">
-          Se guarda como Borrador · al aceptarlo se convierte en pedido
-        </p>
+        @if (!canSubmit(false) && submitMissingLabel) {
+          <p class="quote-form__warning" role="status">{{ submitMissingLabel }}</p>
+        } @else if (!isEditing) {
+          <p class="quote-form__note">
+            «Crear presupuesto» lo deja Enviado · «Guardar borrador» lo deja Borrador
+          </p>
+        } @else {
+          <span class="order-form__note-spacer"></span>
+        }
         <div class="quote-form__actions" data-discard-safe>
           <db-button
             label="Cancelar"
@@ -423,7 +431,9 @@
       </db-mobile-dock>
     } @else {
       <db-form-footer class="order-form__footer desktop-only">
-        @if (!isEditing) {
+        @if (!canSubmit() && submitMissingLabel) {
+          <p class="order-form__warning" role="status">{{ submitMissingLabel }}</p>
+        } @else if (!isEditing) {
           <p class="order-form__note">
             Se crea en estado Pendiente · la seña queda vinculada al pedido
           </p>

@@ -47,6 +47,7 @@ export class OrderLinePricingComponent {
   @Input() closedPriceNote = '';
 
   @Output() unitPriceChange = new EventEmitter<number | string>();
+  @Output() unitPriceBlur = new EventEmitter<void>();
   @Output() resetPrice = new EventEmitter<void>();
 
   /** Miles con formato es-AR; el modelo emitido sigue siendo numérico. */

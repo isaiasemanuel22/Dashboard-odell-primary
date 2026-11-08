@@ -1,0 +1,38 @@
+<div class="confirm-lead" [class.confirm-lead--danger]="tone === 'danger'">
+  <div class="confirm-lead__row">
+    <span class="confirm-lead__icon" aria-hidden="true">
+      @if (tone === 'danger') {
+        <svg
+          viewBox="0 0 24 24"
+          width="22"
+          height="22"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+        >
+          <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13" />
+        </svg>
+      } @else {
+        <svg
+          viewBox="0 0 24 24"
+          width="22"
+          height="22"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+        >
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 11v5M12 8h.01" />
+        </svg>
+      }
+    </span>
+    <div class="confirm-lead__text">
+      <h2 class="confirm-lead__title">{{ title }}</h2>
+      <div class="confirm-lead__message"><ng-content /></div>
+    </div>
+  </div>
+  <div class="confirm-lead__fields"><ng-content select="[confirmFields]" /></div>
+</div>

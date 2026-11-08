@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell · Venta de mostrador</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/4bd8029deedccb2d422bb325be90576b">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+.ovl{width:1440px;height:900px;background:#3B4A55;display:flex;justify-content:center;align-items:flex-start;padding:48px 16px;box-sizing:border-box;font-family:Ubuntu,"Segoe UI",system-ui,sans-serif;color:#0F2A3A}
+.modal{width:100%;max-width:960px;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden}
+.mh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:20px 24px 16px;border-bottom:1px solid #E3ECF2}
+.mt{margin:0;font-size:20px;font-weight:700}
+.x{width:40px;height:40px;border-radius:10px;border:0;background:transparent;color:#5B7083;cursor:pointer;font:400 22px Ubuntu,sans-serif;flex:none}
+.x:hover{background:#EEF4F8}
+.cols{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr)}
+.left{padding:20px 24px;display:flex;flex-direction:column;gap:14px;border-right:1px solid #E3ECF2}
+.right{padding:20px 24px;display:flex;flex-direction:column;gap:16px;background:#F7FAFC}
+.st{margin:0;font-size:13px;font-weight:700;color:#4A6072;text-transform:uppercase;letter-spacing:.04em}
+.ln{display:grid;grid-template-columns:44px minmax(0,1fr) auto auto auto;gap:12px;align-items:center;padding:10px 0;border-bottom:1px solid #EEF4F8}
+.th{width:44px;height:44px;border-radius:10px;background:#EEF4F8;color:#5B7083;font-size:11px;display:flex;align-items:center;justify-content:center}
+.nm{font-size:14px;font-weight:700}
+.mu{font-size:12px;color:#4A6072}
+.step{display:flex;align-items:center;border:1px solid #C9D6DF;border-radius:10px;overflow:hidden}
+.step button{width:34px;height:34px;border:0;background:#fff;font:500 16px Ubuntu,sans-serif;color:#0B5F86;cursor:pointer}
+.step span{min-width:30px;text-align:center;font-weight:700;font-size:14px}
+.amt{font-weight:700;font-size:14px;min-width:80px;text-align:right;font-variant-numeric:tabular-nums}
+.rm{width:32px;height:32px;border:0;background:transparent;color:#5B7083;border-radius:8px;cursor:pointer}
+.rm:hover{background:#FDECEC;color:#B91C1C}
+.note{display:flex;gap:8px;align-items:center;font-size:13px;color:#4A6072;background:#EEF4F8;border-radius:10px;padding:8px 12px}
+.seg{display:flex;border:1px solid #C9D6DF;border-radius:10px;overflow:hidden;background:#fff}
+.seg button{flex:1;height:40px;border:0;background:#fff;font:500 14px Ubuntu,sans-serif;color:#4A6072;cursor:pointer}
+.seg button+button{border-left:1px solid #C9D6DF}
+.seg .on{background:#E6F2F8;color:#0B5F86}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.tot{display:flex;flex-direction:column;gap:6px;border-top:1px solid #E3ECF2;padding-top:12px}
+.tr{display:flex;justify-content:space-between;font-size:14px}
+.big{font-size:26px;font-weight:700;color:#0E7AAB;font-variant-numeric:tabular-nums}
+.mf{display:flex;gap:12px;justify-content:flex-end;align-items:center;padding:14px 24px;border-top:1px solid #E3ECF2;background:#fff}
+</style>
+</helmet>
+<div class="ovl">
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="vm-t">
+<div class="mh">
+<div><h2 id="vm-t" class="mt">Nueva venta en mostrador</h2><p class="sub">Productos publicados con stock · el stock se descuenta al cobrar</p></div>
+<button class="x" type="button" aria-label="Cerrar">×</button>
+</div>
+<div class="cols">
+<div class="left">
+<label class="search" style="width: 100%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><input type="search" placeholder="Buscar producto para agregar" aria-label="Buscar producto para agregar"></label>
+<h3 class="st">Carrito · 3 productos</h3>
+<div>
+<div class="ln"><span class="th" aria-hidden="true">Img</span><div><div class="nm">Llavero corporativo 3D</div><div class="mu">$ 1.032 c/u · quedan 18</div></div><div class="step" role="group" aria-label="Cantidad de llaveros"><button type="button" aria-label="Restar uno">−</button><span>2</span><button type="button" aria-label="Sumar uno">+</button></div><span class="amt">$ 2.064</span><button class="rm" type="button" aria-label="Quitar llavero">×</button></div>
+<div class="ln"><span class="th" aria-hidden="true">Img</span><div><div class="nm">Remera estampada DTF</div><div class="mu">$ 6.500 c/u · quedan 7</div></div><div class="step" role="group" aria-label="Cantidad de remeras"><button type="button" aria-label="Restar uno">−</button><span>1</span><button type="button" aria-label="Sumar uno">+</button></div><span class="amt">$ 6.500</span><button class="rm" type="button" aria-label="Quitar remera">×</button></div>
+<div class="ln"><span class="th" aria-hidden="true">Img</span><div><div class="nm">Taza personalizada</div><div class="mu">$ 3.836 c/u · quedan 9</div></div><div class="step" role="group" aria-label="Cantidad de tazas"><button type="button" aria-label="Restar uno">−</button><span>1</span><button type="button" aria-label="Sumar uno">+</button></div><span class="amt">$ 3.836</span><button class="rm" type="button" aria-label="Quitar taza">×</button></div>
+</div>
+<div class="note"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true" style="flex: none"><circle cx="12" cy="12" r="9"></circle><path d="M12 8v5M12 16h.01"></path></svg>Si borrás la venta, el stock vuelve.</div>
+</div>
+<div class="right">
+<h3 class="st">Cobro</h3>
+<div class="field"><span>Medio de pago</span><div class="seg" role="radiogroup" aria-label="Medio de pago"><button type="button" class="on" role="radio" aria-checked="true">Efectivo</button><button type="button" role="radio" aria-checked="false">Transferencia</button><button type="button" role="radio" aria-checked="false">Mercado Pago</button></div></div>
+<div class="field"><label for="vm-c">Entra a</label><select id="vm-c"><option>Caja efectivo</option></select></div>
+<div class="two">
+<div class="field"><span>Descuento</span><div class="seg" role="radiogroup" aria-label="Tipo de descuento"><button type="button" class="on" role="radio" aria-checked="true">Sin</button><button type="button" role="radio" aria-checked="false">%</button><button type="button" role="radio" aria-checked="false">$</button></div></div>
+<div class="field"><label for="vm-f">Fecha</label><input id="vm-f" type="text" value="07/11/2026"></div>
+</div>
+<div class="field"><label for="vm-n">Nota</label><input id="vm-n" type="text" placeholder="Opcional"></div>
+<div class="tot">
+<div class="tr"><span>Subtotal</span><span>$ 12.400</span></div>
+<div class="tr" style="align-items: baseline"><b>Total</b><span class="big">$ 12.400</span></div>
+</div>
+</div>
+</div>
+<div class="mf"><button class="btn btn-s" type="button">Cancelar</button><button class="btn btn-p" type="button">Cobrar $ 12.400</button></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

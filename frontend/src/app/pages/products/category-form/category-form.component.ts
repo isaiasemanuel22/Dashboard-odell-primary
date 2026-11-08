@@ -12,7 +12,6 @@ import { productTypeOptions } from '../../../shared/utils/select-options';
 import {
   DbCheckboxComponent,
   DbCheckboxGroupComponent,
-  DbFieldsetComponent,
   DbFormComponent,
   DbFormErrorComponent,
   DbFormFooterComponent,
@@ -27,7 +26,6 @@ import {
     FormsModule,
     DbFormComponent,
     DbInputComponent,
-    DbFieldsetComponent,
     DbCheckboxGroupComponent,
     DbCheckboxComponent,
     DbFormErrorComponent,

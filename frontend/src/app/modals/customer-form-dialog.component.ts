@@ -42,7 +42,8 @@ export interface CustomerFormDialogData {
     <app-form-dialog-shell
       [title]="customer ? 'Editar cliente' : 'Nuevo cliente'"
       [subtitle]="isMobile() ? '' : 'Los campos con * son obligatorios'"
-      size="md"
+      size="ml"
+      [footerBar]="true"
       (close)="cancel()"
     >
       @if (isMobile()) {
@@ -90,13 +91,7 @@ export interface CustomerFormDialogData {
     </app-form-dialog-shell>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
-  styles: `
-    .customer-saved {
-      margin: 0 0 0.75rem;
-      color: #166534;
-      font-weight: 600;
-    }
-  `,
+  styleUrl: './customer-form-dialog.component.scss',
 })
 export class CustomerFormDialogComponent implements OnInit {
   private readonly customersService = inject(CustomersService);

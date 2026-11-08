@@ -1,7 +1,11 @@
 import { ChangeDetectionStrategy, Component, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { DbButtonComponent } from '@general-components';
+import {
+  DbButtonComponent,
+  DbFormComponent,
+  DbFormGridComponent,
+} from '@general-components';
 import {
   DbInputComponent,
   DbSelectComponent,
@@ -39,69 +43,100 @@ const AREAS: ServiceType[] = [
     FormsModule,
     FormDialogShellComponent,
     DbButtonComponent,
+    DbFormComponent,
+    DbFormGridComponent,
     DbInputComponent,
     DbSelectComponent,
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
-  template: `
-    <app-form-dialog-shell title="Nueva tarea" size="md" (close)="cancel()">
-      <db-input
-        label="Nombre"
-        name="taskName"
-        [(ngModel)]="productName"
-        placeholder="Ej.: Producir 10 llaveros para stock"
-        [required]="true"
-      />
-      <db-select
-        label="Área"
-        name="taskArea"
-        [(ngModel)]="type"
-        [options]="areaOptions"
-      />
-      <db-input
-        label="Fecha límite"
-        type="date"
-        name="taskDue"
-        [(ngModel)]="dueDate"
-      />
-      <db-select
-        label="Responsable"
-        name="taskResponsible"
-        [(ngModel)]="responsibleUserId"
-        [options]="responsibleOptions"
-      />
-      <db-input
-        label="Horas estimadas"
-        type="number"
-        name="taskHours"
-        [(ngModel)]="estimatedHours"
-        [min]="0"
-        [step]="0.5"
-      />
-      <div class="task-actions">
-        <db-button
-          label="Cancelar"
-          variant="secondary"
-          format="soft"
-          (clicked)="cancel()"
-        />
-        <db-button
-          label="Crear tarea"
-          variant="primary"
-          format="solid"
-          [disabled]="!productName.trim()"
-          (clicked)="confirm()"
-        />
-      </div>
-    </app-form-dialog-shell>
-  `,
   styles: `
-    .task-actions {
+    /* El gap de .db-form no llega al host: se fija acá, igual que en el resto de modales. */
+    db-form {
       display: flex;
-      justify-content: flex-end;
-      gap: 0.75rem;
-      margin-top: 1rem;
+      flex-direction: column;
+      gap: 1.5rem;
     }
+
+    db-form-grid {
+      gap: 1.5rem 1rem;
+      align-items: start;
+    }
+
+    db-form ::ng-deep .db-form-field {
+      gap: 0.5rem;
+    }
+
+    @media (max-width: 768px) {
+      db-form {
+        gap: 14px;
+      }
+
+      db-form-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+    }
+  `,
+  template: `
+    <app-form-dialog-shell
+      title="Nueva tarea"
+      size="ml"
+      [footerBar]="true"
+      (close)="cancel()"
+    >
+      <db-form>
+        <db-input
+          label="Nombre"
+          name="taskName"
+          [(ngModel)]="productName"
+          placeholder="Ej.: Producir 10 llaveros para stock"
+          [required]="true"
+        />
+        <db-select
+          label="Área"
+          name="taskArea"
+          [(ngModel)]="type"
+          [options]="areaOptions"
+        />
+        <db-form-grid>
+          <db-input
+            label="Fecha límite"
+            type="date"
+            name="taskDue"
+            [(ngModel)]="dueDate"
+          />
+          <db-input
+            label="Horas estimadas"
+            type="number"
+            name="taskHours"
+            [(ngModel)]="estimatedHours"
+            [min]="0"
+            [step]="0.5"
+          />
+        </db-form-grid>
+        <db-select
+          label="Responsable"
+          name="taskResponsible"
+          [(ngModel)]="responsibleUserId"
+          [options]="responsibleOptions"
+        />
+      </db-form>
+      <db-button
+        modalFooter
+        label="Cancelar"
+        variant="secondary"
+        format="soft"
+        (clicked)="cancel()"
+      />
+      <db-button
+        modalFooter
+        label="Crear tarea"
+        variant="primary"
+        format="solid"
+        [disabled]="!productName.trim()"
+        (clicked)="confirm()"
+      />
+    </app-form-dialog-shell>
   `,
 })
 export class IndependentTaskDialogComponent {

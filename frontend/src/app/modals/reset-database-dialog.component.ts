@@ -9,11 +9,11 @@ import { FormsModule } from '@angular/forms';
 import { DialogRef } from '@angular/cdk/dialog';
 import {
   DbButtonComponent,
-  DbFormComponent,
   DbFormErrorComponent,
   DbInputComponent,
 } from '@general-components';
 import { SettingsService } from '../core/services/settings.service';
+import { ConfirmLeadComponent } from './confirm-lead/confirm-lead.component';
 import { FormDialogShellComponent } from './form-dialog-shell/form-dialog-shell.component';
 import { extractApiErrorMessage } from '../shared/utils/api-error';
 
@@ -22,7 +22,7 @@ import { extractApiErrorMessage } from '../shared/utils/api-error';
   imports: [
     FormsModule,
     FormDialogShellComponent,
-    DbFormComponent,
+    ConfirmLeadComponent,
     DbFormErrorComponent,
     DbInputComponent,
     DbButtonComponent,
@@ -31,62 +31,48 @@ import { extractApiErrorMessage } from '../shared/utils/api-error';
     <app-form-dialog-shell
       title="Resetear base de datos"
       size="sm"
+      [confirm]="true"
       (close)="cancel()"
     >
-      <db-form>
-        <p class="reset-hint">
+      <app-confirm-lead tone="danger" title="Resetear base de datos">
+        <p>
           Esta acción borra todos los registros: pedidos, productos, clientes,
-          ventas, insumos y el resto. La base quedará vacía. Ingresá el código de
-          confirmación.
+          ventas, insumos y el resto. La base quedará vacía. No se puede
+          deshacer. Ingresá el código de confirmación.
         </p>
-
-        <db-input
-          label="Código de confirmación"
-          [(ngModel)]="resetCode"
-          name="resetCode"
-          type="password"
-          autocomplete="off"
-          [required]="true"
-          placeholder="•••••"
-        />
-
-        @if (error()) {
-          <db-form-error>{{ error() }}</db-form-error>
-        }
-
-        <div class="reset-actions">
-          <db-button
-            label="Cancelar"
-            variant="secondary"
-            format="soft"
-            [disabled]="loading()"
-            (clicked)="cancel()"
+        <ng-container ngProjectAs="[confirmFields]">
+          <db-input
+            label="Código de confirmación"
+            [(ngModel)]="resetCode"
+            name="resetCode"
+            type="password"
+            autocomplete="off"
+            [required]="true"
+            placeholder="•••••"
           />
-          <db-button
-            label="Resetear"
-            variant="delete"
-            format="solid"
-            [disabled]="loading() || !resetCode.trim()"
-            (clicked)="confirmReset()"
-          />
-        </div>
-      </db-form>
+          @if (error()) {
+            <db-form-error>{{ error() }}</db-form-error>
+          }
+        </ng-container>
+      </app-confirm-lead>
+      <db-button
+        modalFooter
+        label="Cancelar"
+        variant="secondary"
+        format="soft"
+        [disabled]="loading()"
+        (clicked)="cancel()"
+      />
+      <db-button
+        modalFooter
+        label="Resetear"
+        variant="delete"
+        format="solid"
+        extraClass="db-button--danger-solid"
+        [disabled]="loading() || !resetCode.trim()"
+        (clicked)="confirmReset()"
+      />
     </app-form-dialog-shell>
-  `,
-  styles: `
-    .reset-hint {
-      margin: 0;
-      font-size: 0.9rem;
-      color: var(--color-text-muted, #64748b);
-      line-height: 1.5;
-    }
-
-    .reset-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.75rem;
-      margin-top: 0.5rem;
-    }
   `,
   changeDetection: ChangeDetectionStrategy.OnPush,
 })

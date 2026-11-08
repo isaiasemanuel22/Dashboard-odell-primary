@@ -16,6 +16,7 @@ import {
   SupplyReplacementChoice,
   SupplyShortageReport,
 } from '../core/models';
+import { ConfirmLeadComponent } from './confirm-lead/confirm-lead.component';
 import { FormDialogShellComponent } from './form-dialog-shell/form-dialog-shell.component';
 
 @Component({
@@ -23,6 +24,7 @@ import { FormDialogShellComponent } from './form-dialog-shell/form-dialog-shell.
   imports: [
     FormsModule,
     FormDialogShellComponent,
+    ConfirmLeadComponent,
     DbButtonComponent,
     DbAutocompleteComponent,
   ],
@@ -30,61 +32,48 @@ import { FormDialogShellComponent } from './form-dialog-shell/form-dialog-shell.
     <app-form-dialog-shell
       title="Insumos insuficientes"
       size="md"
+      [confirm]="true"
       (close)="cancel()"
     >
-      <ul class="shortage-list">
-        @for (line of data.missing; track line.key) {
-          <li>{{ line.label }}</li>
-        }
-      </ul>
-      <p class="shortage-ask">¿Le gustaría reemplazarlo?</p>
-      @for (line of data.missing; track line.key) {
-        <db-autocomplete
-          [label]="'Reemplaza: ' + line.label"
-          [name]="'reemplazo-' + line.key"
-          placeholder="Buscar insumo de la misma categoría"
-          [options]="optionsFor(line.category)"
-          [allowCreate]="false"
-          [ngModel]="labelFor(line.key)"
-          (optionSelected)="pick(line.key, $event)"
-        />
-      }
-      <div class="shortage-actions">
-        <db-button
-          label="Cancelar"
-          variant="secondary"
-          format="soft"
-          (clicked)="cancel()"
-        />
-        <db-button
-          label="Reemplazar y continuar"
-          variant="primary"
-          format="solid"
-          [disabled]="!canConfirm"
-          (clicked)="confirm()"
-        />
-      </div>
+      <app-confirm-lead tone="info" title="Insumos insuficientes">
+        <ul class="shortage-list">
+          @for (line of data.missing; track line.key) {
+            <li>{{ line.label }}</li>
+          }
+        </ul>
+        <p class="shortage-ask">¿Le gustaría reemplazarlo?</p>
+        <ng-container ngProjectAs="[confirmFields]">
+          @for (line of data.missing; track line.key) {
+            <db-autocomplete
+              [label]="'Reemplaza: ' + line.label"
+              [name]="'reemplazo-' + line.key"
+              placeholder="Buscar insumo de la misma categoría"
+              [options]="optionsFor(line.category)"
+              [allowCreate]="false"
+              [ngModel]="labelFor(line.key)"
+              (optionSelected)="pick(line.key, $event)"
+            />
+          }
+        </ng-container>
+      </app-confirm-lead>
+      <db-button
+        modalFooter
+        label="Cancelar"
+        variant="secondary"
+        format="soft"
+        (clicked)="cancel()"
+      />
+      <db-button
+        modalFooter
+        label="Reemplazar y continuar"
+        variant="primary"
+        format="solid"
+        [disabled]="!canConfirm"
+        (clicked)="confirm()"
+      />
     </app-form-dialog-shell>
   `,
-  styles: `
-    .shortage-list {
-      margin: 0 0 0.75rem;
-      padding-left: 1.1rem;
-      color: var(--color-text, #0f172a);
-    }
-
-    .shortage-ask {
-      margin: 0 0 1rem;
-      font-weight: 700;
-    }
-
-    .shortage-actions {
-      display: flex;
-      justify-content: flex-end;
-      gap: 0.75rem;
-      margin-top: 1.25rem;
-    }
-  `,
+  styleUrl: './supply-replacement-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SupplyReplacementDialogComponent {

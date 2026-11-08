@@ -15,6 +15,10 @@ export class FormDialogShellComponent {
   @Input() subtitle = '';
   @Input() size: ModalSize = 'md';
   @Input() stickyHeader = false;
+  /** Pie gris a ancho completo (RdPatrones §1): estiliza el db-form-footer del formulario. */
+  @Input() footerBar = false;
+  /** Confirmación (RdPatrones §2): sin cabecera en desktop, pie gris con `[modalFooter]`. */
+  @Input() confirm = false;
   @Output() close = new EventEmitter<void>();
 
   /** Resalta el * del subtítulo en rojo, como en los mocks de formularios. */
@@ -33,8 +37,12 @@ export class FormDialogShellComponent {
       modal: true,
       'modal--sm': this.size === 'sm',
       'modal--md': this.size === 'md',
+      'modal--ml': this.size === 'ml',
       'modal--lg': this.size === 'lg',
       'modal--xl': this.size === 'xl',
+      'modal--wide': this.size === 'wide',
+      'modal--bar': this.footerBar || this.confirm,
+      'modal--confirm': this.confirm,
     };
   }
 

@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell · Selector de piezas</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/4bd8029deedccb2d422bb325be90576b">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+.ovl{width:1440px;height:900px;background:#3B4A55;display:flex;justify-content:center;align-items:flex-start;padding:80px 16px;box-sizing:border-box;font-family:Ubuntu,"Segoe UI",system-ui,sans-serif;color:#0F2A3A}
+.modal{width:100%;max-width:560px;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden}
+.mh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:20px 24px 16px;border-bottom:1px solid #E3ECF2}
+.mt{margin:0;font-size:20px;font-weight:700}
+.x{width:40px;height:40px;border-radius:10px;border:0;background:transparent;color:#5B7083;cursor:pointer;font:400 22px Ubuntu,sans-serif;flex:none}
+.x:hover{background:#EEF4F8}
+.mb{padding:20px 24px;display:flex;flex-direction:column;gap:12px}
+.list{border:1px solid #DCE7EE;border-radius:12px;overflow:hidden;display:flex;flex-direction:column}
+.opt{display:grid;grid-template-columns:44px minmax(0,1fr) auto;gap:12px;align-items:center;padding:10px 12px;border:0;border-top:1px solid #EEF4F8;background:#fff;text-align:left;font-family:inherit;cursor:pointer;width:100%}
+.opt:first-child{border-top:0}
+.opt-on{background:#E6F2F8}
+.th{width:44px;height:44px;border-radius:10px;background:#EEF4F8;color:#5B7083;font-size:11px;display:flex;align-items:center;justify-content:center}
+.nm{font-size:14px;font-weight:700;display:block}
+.mu{font-size:12px;color:#4A6072;display:block;margin-top:2px}
+.foot{padding:10px 12px;border-top:1px solid #E3ECF2;background:#F7FAFC}
+</style>
+</helmet>
+<div class="ovl">
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="sp-t">
+<div class="mh">
+<div><h2 id="sp-t" class="mt">Agregar pieza</h2></div>
+<button class="x" type="button" aria-label="Cerrar">×</button>
+</div>
+<div class="mb">
+<label class="search" style="width: 100%"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><input type="search" placeholder="Buscar pieza para agregar..." aria-label="Buscar pieza para agregar" autocomplete="off"></label>
+<div class="list" role="listbox" aria-label="Piezas disponibles">
+<button class="opt opt-on" type="button" role="option" aria-selected="true"><span class="th" aria-hidden="true">Img</span><span><strong class="nm">Base redonda para llavero</strong><span class="mu">Llaveros · costo $ 310 · 24 en stock</span></span><span class="badge b-ok">Publicado</span></button>
+<button class="opt" type="button" role="option" aria-selected="false"><span class="th" aria-hidden="true">Img</span><span><strong class="nm">Argolla metálica</strong><span class="mu">Accesorios · costo $ 90 · 120 en stock</span></span><span class="badge b-neu">Interno</span></button>
+<button class="opt" type="button" role="option" aria-selected="false"><span class="th" aria-hidden="true">Img</span><span><strong class="nm">Tapa de organizador</strong><span class="mu">Organizadores · costo $ 540 · sin stock</span></span><span class="badge b-neu">Interno</span></button>
+<button class="opt" type="button" role="option" aria-selected="false"><span class="th" aria-hidden="true">Img</span><span><strong class="nm">Soporte de árbol de equilibrio</strong><span class="mu">Figuras · costo $ 1.280 · 3 en stock</span></span><span class="badge b-ok">Publicado</span></button>
+<div class="foot"><button class="btn btn-s" type="button">+ Crear pieza nueva</button></div>
+</div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

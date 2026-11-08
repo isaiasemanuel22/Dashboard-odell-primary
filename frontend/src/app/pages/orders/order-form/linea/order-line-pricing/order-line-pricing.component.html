@@ -32,6 +32,7 @@
         inputmode="numeric"
         [ngModel]="unitPriceDisplay"
         (ngModelChange)="onUnitPriceDisplayChange($event)"
+        (blur)="unitPriceBlur.emit()"
         [name]="'price-' + lineIndex"
         autocomplete="off"
         [attr.aria-label]="showWholesaleColumns ? 'Precio de lista' : 'Precio unitario'"

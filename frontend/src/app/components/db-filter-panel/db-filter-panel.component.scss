@@ -1,0 +1,145 @@
+@use '../../shared/styles/mobile' as m;
+@use '../../shared/styles/variables' as *;
+
+:host {
+  display: inline-flex;
+}
+
+.fp-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 14px;
+  border-radius: 10px;
+  border: 1px solid m.$m-border-input;
+  background: $color-surface;
+  color: m.$m-text;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    background: m.$m-bg;
+  }
+
+  &--active {
+    border-color: m.$m-primary;
+    background: m.$m-primary-pale;
+    color: m.$m-primary-dark;
+  }
+}
+
+.fp-count {
+  min-width: 20px;
+  padding: 1px 7px;
+  border-radius: 10px;
+  background: m.$m-primary;
+  color: $color-surface;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+}
+
+.fp-panel {
+  width: 360px;
+  max-width: calc(100vw - 24px);
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  border-radius: 14px;
+  background: $color-surface;
+  box-shadow: $shadow-modal;
+  color: m.$m-text;
+}
+
+.fp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 18px;
+  border-bottom: 1px solid m.$m-border;
+}
+
+.fp-head {
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.fp-title {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.fp-clear {
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid m.$m-border-input;
+  background: $color-surface;
+  color: m.$m-text;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    background: m.$m-bg;
+  }
+}
+
+.fp-group-title {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: m.$m-text-secondary;
+}
+
+.fp-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.fp-chip {
+  height: 34px;
+  padding: 0 14px;
+  border-radius: $radius-pill;
+  border: 1px solid m.$m-border-input;
+  background: $color-surface;
+  color: m.$m-text-label;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    background: m.$m-bg;
+  }
+
+  &--on {
+    border-color: m.$m-primary;
+    background: m.$m-primary-pale;
+    color: m.$m-primary-dark;
+  }
+}
+
+.fp-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 18px;
+  background: m.$m-bg;
+}
+
+.fp-trigger:focus-visible,
+.fp-clear:focus-visible,
+.fp-chip:focus-visible {
+  outline: 2px solid m.$m-primary;
+  outline-offset: 2px;
+}

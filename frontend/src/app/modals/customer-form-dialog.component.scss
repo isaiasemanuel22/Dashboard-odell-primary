@@ -1,0 +1,7 @@
+@use '../shared/styles/variables' as *;
+
+.customer-saved {
+  margin: 0 0 0.75rem;
+  color: $color-status-success-text;
+  font-weight: 600;
+}

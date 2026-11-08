@@ -82,9 +82,10 @@
       <div class="access-toolbar">
         <app-user-access-nav />
         <label class="list-search">
-          <span aria-hidden="true">⌕</span>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
           <input
             type="search"
+            aria-label="Buscar usuarios"
             placeholder="Buscar por nombre o email"
             [(ngModel)]="search"
             name="userSearch"

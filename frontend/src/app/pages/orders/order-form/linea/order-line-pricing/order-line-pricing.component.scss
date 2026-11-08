@@ -43,7 +43,7 @@
   padding: 0.85rem 0.95rem;
   border-top: 0;
   border-radius: 0.6rem;
-  background: #f5f9fc;
+  background: $color-surface-inset;
 
   .order-line__money-label {
     font-size: 0.75rem;
@@ -56,7 +56,7 @@
   }
 
   .order-line__money-value--muted {
-    background: #eef3f7;
+    background: $color-surface-subtle;
     color: $color-text-label;
 
     &.order-line__money-value--with-prefix::before {
@@ -69,7 +69,7 @@
   }
 
   .order-line__money-hint--warn {
-    color: #c2410c;
+    color: $color-area-print;
   }
 
   .order-line__subtotal {
@@ -136,19 +136,19 @@
   padding: 0.55rem 0.75rem;
   border: 1px solid $color-border-input;
   border-radius: $radius-sm;
-  background: #fff;
+  background: $color-surface;
   font-size: 0.9rem;
   color: $color-text;
   box-sizing: border-box;
 
   &--muted {
-    background: #f8fafc;
+    background: $color-surface-inset;
     color: $color-text-muted;
   }
 
   &--editable {
     cursor: text;
-    background: #fff;
+    background: $color-surface;
     align-self: stretch;
     width: 100%;
     height: 2.55rem;
@@ -237,12 +237,12 @@
 }
 
 .order-line__money-hint--warn {
-  color: #b91c1c;
+  color: $color-danger-text;
   font-weight: 600;
 }
 
 .order-line__money-hint--ok {
-  color: #15803d;
+  color: $color-status-success-text;
 }
 
 .order-line__lock {
@@ -251,8 +251,8 @@
   gap: 0.25rem;
   font-size: 0.6875rem;
   font-weight: 700;
-  color: #0b5f86;
-  background: #e0f0f8;
+  color: $color-brand-deep;
+  background: $color-primary-bg;
   border-radius: $radius-pill;
   padding: 0.125rem 0.5rem;
   width: fit-content;
@@ -261,7 +261,7 @@
 .order-line__money-value--strong {
   font-weight: 700;
   color: $color-text;
-  background: #fff;
+  background: $color-surface;
   white-space: nowrap;
 }
 
