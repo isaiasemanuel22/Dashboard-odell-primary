@@ -143,6 +143,10 @@ export class SuppliersService {
       unit: row.unit,
     }));
 
+    if (lines.length === 0) {
+      return { supplier, lines: [], text: '' };
+    }
+
     const body = lines
       .map((line) => `- ${line.name}: ${line.quantity} ${line.unit}`)
       .join('\n');

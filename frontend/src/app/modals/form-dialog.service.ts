@@ -12,6 +12,7 @@ import {
   ProductType,
   Quote,
   RetailSale,
+  Supplier,
   Supply,
   SupplyCategory,
   SupplyReplacementChoice,
@@ -273,6 +274,19 @@ export class FormDialogService {
         ({ SupplyFormDialogComponent }): Observable<Supply | undefined> =>
           this.open(SupplyFormDialogComponent, { supply, defaultCategory }, 'md', {
             ariaLabel: supply ? 'Editar insumo' : 'Nuevo insumo',
+          }),
+      ),
+    );
+  }
+
+  openSupplier(
+    supplier: Supplier | null = null,
+  ): Observable<Supplier | undefined> {
+    return from(import('./supplier-form-dialog.component')).pipe(
+      switchMap(
+        ({ SupplierFormDialogComponent }): Observable<Supplier | undefined> =>
+          this.open(SupplierFormDialogComponent, { supplier }, 'md', {
+            ariaLabel: supplier ? 'Editar proveedor' : 'Nuevo proveedor',
           }),
       ),
     );

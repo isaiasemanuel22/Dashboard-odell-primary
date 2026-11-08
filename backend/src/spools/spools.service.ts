@@ -1,7 +1,9 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { AdjustSpoolDto, MoveSpoolDto, OpenSpoolDto } from '../common/dto';
 import {
@@ -15,7 +17,10 @@ import { MachineProfileRole, PrintJobStatus } from '../common/enums';
 import { ensureMachineProfiles } from '../settings/machine-profile.util';
 import { StoreChangeService } from '../store/store-change.service';
 import { StoreService } from '../store/store.service';
-import { applyStockChangeGrams } from '../supplies/apply-stock-change.util';
+import {
+  applyStockChangeGrams,
+  roundRemainingGrams,
+} from '../supplies/apply-stock-change.util';
 import {
   formatOpenSpoolsLabel,
   resolveSpoolGrams,
@@ -31,6 +36,7 @@ export class SpoolsService {
     private readonly store: StoreService,
     private readonly storeChange: StoreChangeService,
     private readonly reorder: SuppliesReorderService,
+    @Inject(forwardRef(() => OrderTasksService))
     private readonly orderTasks: OrderTasksService,
   ) {}
 
@@ -85,12 +91,13 @@ export class SpoolsService {
     }
 
     const now = new Date().toISOString();
+    const roundedGrams = roundRemainingGrams(grams);
     const spool: Spool = {
       id: this.store.nextSpoolId(),
       code: this.store.nextSpoolCode(),
       supplyId: supply.id,
-      initialGrams: grams,
-      remainingGrams: grams,
+      initialGrams: roundedGrams,
+      remainingGrams: roundedGrams,
       location,
       openedAt: now,
       finishedAt: null,
@@ -136,10 +143,11 @@ export class SpoolsService {
     if (spool.finishedAt) {
       throw new BadRequestException('No se puede ajustar una bobina terminada');
     }
-    const next = Number(data.remainingGrams);
-    if (!Number.isFinite(next) || next < 0) {
+    const rawNext = Number(data.remainingGrams);
+    if (!Number.isFinite(rawNext) || rawNext < 0) {
       throw new BadRequestException('remainingGrams inválido');
     }
+    const next = roundRemainingGrams(rawNext);
     const previous = Number(spool.remainingGrams);
     const diffGrams = next - previous;
     spool.remainingGrams = next;
@@ -239,7 +247,7 @@ export class SpoolsService {
     for (const portion of result.spools) {
       const spool = this.store.getSpoolById(portion.spoolId);
       if (!spool) continue;
-      spool.remainingGrams = portion.remainingAfter;
+      spool.remainingGrams = roundRemainingGrams(portion.remainingAfter);
       spool.updatedAt = now;
       if (portion.remainingAfter <= 1e-9) {
         spool.remainingGrams = 0;
@@ -341,9 +349,12 @@ export class SpoolsService {
         name: r.name,
         orderBy: r.orderBy,
         coversDays: r.coversDays,
+        stock: r.stock,
+        unit: r.unit,
         stockLabel: `${r.stock} ${r.unit}`,
         supplierName: r.supplier?.name ?? null,
         leadTimeBusinessDays: r.supplier?.leadTimeBusinessDays ?? null,
+        reason: r.reason,
       }));
 
     return [...spoolShort, ...reorder];

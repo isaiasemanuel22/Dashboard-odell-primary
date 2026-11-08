@@ -15,6 +15,7 @@ import {
 } from './supply-units.util';
 
 export type ReorderStatus = 'urgent' | 'soon' | 'ok';
+export type ReorderReason = 'forecast' | 'out_of_stock' | 'below_min';
 
 export interface ReorderRow {
   supplyId: string;
@@ -30,6 +31,7 @@ export interface ReorderRow {
   } | null;
   orderBy: string | null;
   status: ReorderStatus;
+  reason: ReorderReason | null;
   suggestedQuantity: number;
   insufficientData: boolean;
 }
@@ -77,10 +79,18 @@ export class SuppliesReorderService {
       const weeklyConsumption = (consumedInWindow * 7) / 28;
       const daily = weeklyConsumption / 7;
       const stock = Number(supply.quantity) || 0;
-      const lowStock = stock <= Number(supply.minStock);
+      const minRaw = supply.minStock;
+      const minStock =
+        minRaw != null && Number.isFinite(Number(minRaw))
+          ? Number(minRaw)
+          : null;
+      const hasMin = minStock != null;
+      const outOfStock = stock <= 0;
+      const belowMin = !outOfStock && hasMin && stock <= (minStock as number);
       const hasConsumption = consumptionMoves.length > 0;
 
-      if (!hasConsumption && !lowStock && weeklyConsumption <= 0) {
+      // Sin consumo y por encima del mínimo: no listar en reposición.
+      if (!hasConsumption && !outOfStock && !belowMin) {
         continue;
       }
 
@@ -89,33 +99,75 @@ export class SuppliesReorderService {
         ? (now.getTime() - new Date(firstAt).getTime()) / (24 * 60 * 60 * 1000)
         : 0;
       const insufficientData =
-        inWindow.length === 0 || !firstAt || firstAgeDays < 7;
+        !hasConsumption ||
+        inWindow.length === 0 ||
+        !firstAt ||
+        firstAgeDays < 7;
 
-      const coversDays = daily > 1e-12 ? stock / daily : null;
+      const coversDays =
+        hasConsumption && daily > 1e-12 ? stock / daily : null;
 
-      const supplier = supply.supplierId
+      const supplierEntity = supply.supplierId
         ? (this.store.getSupplierById(supply.supplierId) ?? null)
         : null;
-      const lead = supplier?.leadTimeBusinessDays ?? 3;
-      const orderBy = computeOrderByDate(today, coversDays, lead);
+      const supplier = supplierEntity
+        ? {
+            id: supplierEntity.id,
+            name: supplierEntity.name,
+            leadTimeBusinessDays: supplierEntity.leadTimeBusinessDays,
+          }
+        : null;
+      const lead = supplier?.leadTimeBusinessDays ?? null;
 
+      let reason: ReorderReason | null = null;
       let status: ReorderStatus = 'ok';
-      if (orderBy) {
-        const urgentBy = addCalendarDaysToKey(today, 7);
-        if (orderBy <= urgentBy) status = 'urgent';
-        else if (calendarDaysBetween(today, orderBy) <= 30) status = 'soon';
-      } else if (lowStock || (coversDays != null && coversDays <= 7)) {
-        status = 'urgent';
-      }
-
-      const leadCalendar = businessDaysToCalendarDays(today, lead);
-      const cushionDays = leadCalendar + 14;
+      let orderBy: string | null = null;
       let suggested = 0;
-      if (daily > 1e-12) {
-        const need = daily * cushionDays - stock;
-        if (need > 1e-9) {
-          suggested = this.roundSuggested(supply, need);
+
+      if (outOfStock || belowMin) {
+        reason = outOfStock ? 'out_of_stock' : 'below_min';
+        status = 'urgent';
+        orderBy = today;
+        if (!hasConsumption) {
+          suggested = this.suggestedWithoutConsumption(supply, stock, minStock);
+        } else if (daily > 1e-12 && lead != null) {
+          suggested = this.suggestedFromForecast(supply, stock, daily, today, lead);
+          if (suggested <= 0) {
+            suggested = this.suggestedWithoutConsumption(
+              supply,
+              stock,
+              minStock,
+            );
+          }
+        } else {
+          suggested = this.suggestedWithoutConsumption(supply, stock, minStock);
         }
+      } else if (hasConsumption) {
+        reason = 'forecast';
+        orderBy =
+          lead != null ? computeOrderByDate(today, coversDays, lead) : null;
+        if (orderBy) {
+          const urgentBy = addCalendarDaysToKey(today, 7);
+          if (orderBy <= urgentBy) status = 'urgent';
+          else if (calendarDaysBetween(today, orderBy) <= 30) status = 'soon';
+        } else if (coversDays != null && coversDays <= 7) {
+          status = 'urgent';
+        }
+        if (daily > 1e-12 && lead != null) {
+          suggested = this.suggestedFromForecast(
+            supply,
+            stock,
+            daily,
+            today,
+            lead,
+          );
+        }
+      } else {
+        // Sin consumo y stock OK: no debería llegar (continue arriba).
+        reason = null;
+        status = 'ok';
+        orderBy = null;
+        suggested = 0;
       }
 
       rows.push({
@@ -125,15 +177,10 @@ export class SuppliesReorderService {
         stock,
         weeklyConsumption,
         coversDays,
-        supplier: supplier
-          ? {
-              id: supplier.id,
-              name: supplier.name,
-              leadTimeBusinessDays: supplier.leadTimeBusinessDays,
-            }
-          : null,
+        supplier,
         orderBy,
         status,
+        reason,
         suggestedQuantity: suggested,
         insufficientData,
       });
@@ -149,6 +196,52 @@ export class SuppliesReorderService {
       if (b.orderBy) return 1;
       return a.name.localeCompare(b.name, 'es');
     });
+  }
+
+  private suggestedFromForecast(
+    supply: {
+      category: SupplyCategory;
+      unit: string;
+      spoolGrams?: number | null;
+    },
+    stock: number,
+    daily: number,
+    today: string,
+    lead: number,
+  ): number {
+    const leadCalendar = businessDaysToCalendarDays(today, lead);
+    const cushionDays = leadCalendar + 14;
+    const need = daily * cushionDays - stock;
+    if (need <= 1e-9) return 0;
+    return this.roundSuggested(supply, need);
+  }
+
+  private suggestedWithoutConsumption(
+    supply: {
+      category: SupplyCategory;
+      unit: string;
+      spoolGrams?: number | null;
+    },
+    stock: number,
+    minStock: number | null,
+  ): number {
+    if (minStock != null) {
+      const need = Math.max(minStock - stock, 0);
+      if (need <= 1e-9) {
+        return supply.category === SupplyCategory.FDM
+          ? this.roundSuggested(supply, gramsToSupplyQuantity(supply, resolveSpoolGrams(supply)))
+          : 1;
+      }
+      return this.roundSuggested(supply, need);
+    }
+    // Sin mínimo: 1 bobina / 1 unidad.
+    if (supply.category === SupplyCategory.FDM) {
+      return this.roundSuggested(
+        supply,
+        gramsToSupplyQuantity(supply, resolveSpoolGrams(supply)),
+      );
+    }
+    return 1;
   }
 
   private roundSuggested(
@@ -169,13 +262,13 @@ export class SuppliesReorderService {
         unit: supply.unit,
         category: SupplyCategory.FDM,
       });
-      const multiples = Math.ceil(needGrams / spoolGrams - 1e-9);
-      const grams = Math.max(spoolGrams, multiples * spoolGrams);
+      const multiples = Math.max(1, Math.ceil(needGrams / spoolGrams - 1e-9));
+      const grams = multiples * spoolGrams;
       return gramsToSupplyQuantity(
         { unit: supply.unit, category: SupplyCategory.FDM },
         grams,
       );
     }
-    return Math.ceil(need - 1e-9);
+    return Math.max(1, Math.ceil(need - 1e-9));
   }
 }

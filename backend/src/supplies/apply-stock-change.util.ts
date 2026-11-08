@@ -18,6 +18,20 @@ export interface ApplyStockChangeMeta {
   at?: string;
 }
 
+/** Evita basura de punto flotante en stock (unidad del insumo). */
+export function roundSupplyQuantity(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  const rounded = Math.round(value * 1e6) / 1e6;
+  return Math.abs(rounded) < 1e-9 ? 0 : rounded;
+}
+
+/** Remanente de bobina a 0,1 g. */
+export function roundRemainingGrams(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  const rounded = Math.round(value * 10) / 10;
+  return Math.abs(rounded) < 1e-9 ? 0 : rounded;
+}
+
 /**
  * Cambia `supply.quantity` y registra un movimiento en el store.
  * `delta` está en la unidad del supply (puede ser negativo).
@@ -31,7 +45,8 @@ export function applyStockChange(
 ): SupplyMovement {
   const amount = Number(delta) || 0;
   const next = Number(supply.quantity) + amount;
-  supply.quantity = next < 1e-9 && next > -1e-9 ? 0 : Math.max(0, next);
+  const clamped = next < 1e-9 && next > -1e-9 ? 0 : Math.max(0, next);
+  supply.quantity = roundSupplyQuantity(clamped);
   supply.updatedAt = meta.at ?? new Date().toISOString();
 
   const grams =

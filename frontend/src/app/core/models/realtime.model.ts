@@ -22,6 +22,8 @@ export type RealtimeEntity =
   | 'print-job'
   | 'sale'
   | 'supply'
+  | 'supplier'
+  | 'spool'
   | 'settings'
   | 'calendar-entry';
 

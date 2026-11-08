@@ -146,6 +146,11 @@ export class SettingsHomeComponent implements OnInit {
           hint: this.colorsSummary(),
           link: '/ajustes/colores',
         },
+        {
+          label: 'Proveedores',
+          hint: 'Demora de entrega y contacto',
+          link: '/ajustes/proveedores',
+        },
       ],
     },
     {

@@ -268,7 +268,37 @@ export class TaskDetailDialogComponent implements OnInit {
 
   get showConsumptionCard(): boolean {
     if (this.job.consumedAt) return true;
+    if ((this.job.consumedSpools?.length ?? 0) > 0) return true;
     return this.consumption.length > 0;
+  }
+
+  get hasSpoolBreakdown(): boolean {
+    return this.consumption.some((line) => (line.spools?.length ?? 0) > 0);
+  }
+
+  get consumedSpoolRows(): {
+    name: string;
+    code: string;
+    grams: number;
+    colorHex: string | null;
+  }[] {
+    const bySpool = this.job.consumedSpools ?? [];
+    if (!bySpool.length) return [];
+    return bySpool.map((item) => {
+      const line = this.consumption.find((c) =>
+        c.spools?.some((s) => s.spoolId === item.spoolId),
+      );
+      return {
+        name: line?.name ?? 'Insumo',
+        code: item.code,
+        grams: item.grams,
+        colorHex: line?.colorHex ?? null,
+      };
+    });
+  }
+
+  roundGrams(value: number): number {
+    return Math.round(Number(value) || 0);
   }
 
   get consumptionTitle(): string {

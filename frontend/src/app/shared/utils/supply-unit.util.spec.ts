@@ -48,4 +48,12 @@ describe('formatSupplyQuantity', () => {
     expect(formatSupplyQuantity(20, 'g')).toBe('20 g');
     expect(formatSupplyQuantity(15.5, 'ml')).toBe('15,5 ml');
   });
+
+  it('pluraliza unidad y hoja', () => {
+    expect(formatSupplyQuantity(1, 'unidad')).toBe('1 unidad');
+    expect(formatSupplyQuantity(2, 'unidad')).toBe('2 unidades');
+    expect(formatSupplyQuantity(0, 'unidad')).toBe('0 unidades');
+    expect(formatSupplyQuantity(1, 'hoja')).toBe('1 hoja');
+    expect(formatSupplyQuantity(3, 'hoja')).toBe('3 hojas');
+  });
 });

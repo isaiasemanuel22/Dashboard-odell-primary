@@ -55,7 +55,20 @@
           <header class="pl-lane__head">
             <div class="pl-lane__titles">
               <span class="pl-lane__name">{{ lane.profile.name }}</span>
-              <span class="pl-lane__ams">{{ amsSubtitle(lane) }}</span>
+              <span class="pl-lane__ams"
+                >{{ amsSubtitle(lane) }}@if (amsSwatches(lane); as swatches) {
+                  @if (swatches.length) {
+                    <span class="pl-swatches pl-swatches--ams" aria-hidden="true">
+                      @for (sw of swatches; track sw.id) {
+                        <span
+                          class="pl-sw"
+                          [style.background-color]="sw.hex"
+                        ></span>
+                      }
+                    </span>
+                  }
+                }</span
+              >
             </div>
             @switch (laneStatus(lane)) {
               @case ('printing') {

@@ -67,6 +67,20 @@ function formatSupplyNumber(value: number): string {
   });
 }
 
+/** Pluraliza unidades contables (unidad/hoja/rollo). */
+export function pluralizeSupplyUnit(
+  unit: string,
+  quantity: number,
+): string {
+  const raw = unit.trim();
+  const abs = Math.abs(Number(quantity));
+  const isOne = Number.isFinite(abs) && Math.abs(abs - 1) < 1e-9;
+  if (/^unidad(es)?$/i.test(raw)) return isOne ? 'unidad' : 'unidades';
+  if (/^hoja(s)?$/i.test(raw)) return isOne ? 'hoja' : 'hojas';
+  if (/^rollo(s)?$/i.test(raw)) return isOne ? 'rollo' : 'rollos';
+  return raw;
+}
+
 /**
  * Cantidad legible en la unidad del insumo.
  * kg/L < 1 → g/ml; si no, hasta 2 decimales con coma (es-AR).
@@ -78,7 +92,7 @@ export function formatSupplyQuantity(
   const rawUnit = (unit ?? '').trim();
   const amount = Number(quantity);
   if (!Number.isFinite(amount)) {
-    return rawUnit ? `0 ${rawUnit}` : '0';
+    return rawUnit ? `0 ${pluralizeSupplyUnit(rawUnit, 0)}` : '0';
   }
 
   if (rawUnit === 'kg') {
@@ -103,12 +117,12 @@ export function formatSupplyQuantity(
     /^unidad(es)?$/i.test(rawUnit) ||
     rawUnit === 'g' ||
     rawUnit === 'ml' ||
-    rawUnit === 'hoja' ||
-    rawUnit === 'rollo';
+    /^hoja(s)?$/i.test(rawUnit) ||
+    /^rollo(s)?$/i.test(rawUnit);
   const rounded = isDiscrete
     ? Math.abs(amount - Math.round(amount)) < 1e-9
       ? Math.round(amount)
       : roundSupplyAmount(amount)
     : roundSupplyAmount(amount);
-  return `${formatSupplyNumber(rounded)} ${rawUnit}`;
+  return `${formatSupplyNumber(rounded)} ${pluralizeSupplyUnit(rawUnit, rounded)}`;
 }

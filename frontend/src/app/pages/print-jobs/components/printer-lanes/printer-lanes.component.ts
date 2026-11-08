@@ -126,12 +126,26 @@ export class PrinterLanesComponent {
   }
 
   amsSubtitle(lane: PrinterQueueLane): string {
-    const type = lane.profile.amsType?.trim() || 'AMS';
+    const type = (lane.profile.amsType ?? 'AMS').trim() || 'AMS';
     const names = (lane.profile.amsSlots ?? [])
-      .filter((slot): slot is NonNullable<typeof slot> => !!slot)
-      .map((slot) => slot.name);
-    if (!names.length) return type;
-    return `${type}: ${names.join(' · ')}`;
+      .filter((slot) => !!slot.spoolId)
+      .map((slot) => (slot.color?.name ?? '').trim())
+      .filter((name) => !!name);
+    if (!names.length) {
+      return `${type} sin bobinas cargadas`.trim();
+    }
+    return `${type}: ${names.join(' · ')}`.trim();
+  }
+
+  amsSwatches(
+    lane: PrinterQueueLane,
+  ): { id: string; hex: string }[] {
+    return (lane.profile.amsSlots ?? [])
+      .filter((slot) => !!slot.spoolId && !!slot.color?.hex)
+      .map((slot) => ({
+        id: slot.spoolId!,
+        hex: slot.color!.hex,
+      }));
   }
 
   jobTitle(job: PrintJob): string {

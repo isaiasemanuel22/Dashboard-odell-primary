@@ -75,11 +75,24 @@
       [required]="true"
     />
 
-    <db-input
+    <db-select
       label="Proveedor (opcional)"
-      [(ngModel)]="supplier"
-      name="supplier"
+      [ngModel]="supplierId"
+      (ngModelChange)="onSupplierChange($event)"
+      name="supplierId"
+      [options]="supplierOptions"
     />
+
+    @if (isFilament) {
+      <db-input
+        label="Peso por bobina (g)"
+        type="number"
+        [(ngModel)]="spoolGrams"
+        name="spoolGrams"
+        [min]="1"
+        step="1"
+      />
+    }
 
     @if (error || configError) {
       <db-form-error>{{ error || configError }}</db-form-error>

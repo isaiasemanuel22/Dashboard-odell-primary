@@ -3,9 +3,17 @@ import {
   Component,
   EventEmitter,
   Input,
+  OnChanges,
+  OnDestroy,
   Output,
+  SimpleChanges,
+  inject,
+  signal,
 } from '@angular/core';
+import { RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
+import { Subscription, forkJoin, of } from 'rxjs';
+import { catchError, take } from 'rxjs/operators';
 import {
   DbButtonComponent,
   DbCheckboxComponent,
@@ -20,7 +28,11 @@ import {
   MachineProfile,
   MachineProfileRole,
   ProductType,
+  Spool,
+  Supply,
 } from '../../../../core/models';
+import { SpoolsService } from '../../../../core/services/spools.service';
+import { SuppliesService } from '../../../../core/services/supplies.service';
 
 const WEEKDAY_CHIPS: { value: number; label: string }[] = [
   { value: 1, label: 'L' },
@@ -34,11 +46,21 @@ const WEEKDAY_CHIPS: { value: number; label: string }[] = [
 
 const DEFAULT_WORK_WEEKDAYS = [1, 2, 3, 4, 5, 6];
 
+export interface LiveAmsSlotView {
+  slot: number;
+  code: string | null;
+  colorName: string | null;
+  hex: string | null;
+  remainingGrams: number | null;
+  empty: boolean;
+}
+
 @Component({
   selector: 'app-general-values-profile-editor',
   standalone: true,
   imports: [
     FormsModule,
+    RouterLink,
     DbFormGridComponent,
     DbInputComponent,
     DbSelectComponent,
@@ -50,7 +72,13 @@ const DEFAULT_WORK_WEEKDAYS = [1, 2, 3, 4, 5, 6];
   styleUrl: './general-values-profile-editor.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class GeneralValuesProfileEditorComponent {
+export class GeneralValuesProfileEditorComponent
+  implements OnChanges, OnDestroy
+{
+  private readonly spoolsService = inject(SpoolsService);
+  private readonly suppliesService = inject(SuppliesService);
+  private slotsSub?: Subscription;
+
   @Input({ required: true }) profile!: MachineProfile;
   @Input() roleOptions: DbSelectOption[] = [];
   @Input() productTypeOptions: DbSelectOption[] = [];
@@ -67,6 +95,7 @@ export class GeneralValuesProfileEditorComponent {
   @Output() profileChange = new EventEmitter<MachineProfile>();
 
   readonly weekdayChips = WEEKDAY_CHIPS;
+  readonly liveAmsSlots = signal<LiveAmsSlotView[]>(this.emptySlots());
 
   get isWash(): boolean {
     return this.profile.role === MachineProfileRole.WASH;
@@ -83,18 +112,14 @@ export class GeneralValuesProfileEditorComponent {
     return this.profile.productType ?? '';
   }
 
-  get amsSlotOptions(): DbSelectOption[] {
-    return [
-      { value: '', label: 'Vacía' },
-      ...this.colors.map((color) => ({
-        value: color.id,
-        label: color.name,
-      })),
-    ];
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['profile'] || changes['colors']) {
+      this.reloadLiveAms();
+    }
   }
 
-  get amsSlots(): (string | null)[] {
-    return this.paddedAmsSlots(this.profile.amsSlots);
+  ngOnDestroy(): void {
+    this.slotsSub?.unsubscribe();
   }
 
   setName(name: string): void {
@@ -162,8 +187,6 @@ export class GeneralValuesProfileEditorComponent {
   }
 
   setCostBase(enabled: boolean): void {
-    // No mutar el perfil acá: puede venir congelado del store (NgRx).
-    // El padre reemplaza machineProfiles con copias (spread).
     this.costBaseChange.emit(enabled);
   }
 
@@ -184,22 +207,98 @@ export class GeneralValuesProfileEditorComponent {
     return (this.profile.workWeekdays ?? DEFAULT_WORK_WEEKDAYS).includes(day);
   }
 
-  slotValue(index: number): string {
-    return this.amsSlots[index] ?? '';
+  slotLabel(slot: LiveAmsSlotView): string {
+    if (slot.empty) return 'Vacía';
+    const grams =
+      slot.remainingGrams != null
+        ? `${Math.round(slot.remainingGrams)} g`
+        : '';
+    const color = slot.colorName?.trim() || 'Sin color';
+    const code = slot.code ?? '—';
+    return grams ? `${code} · ${color} · ${grams}` : `${code} · ${color}`;
   }
 
-  setSlot(index: number, value: string): void {
-    const slots = [...this.amsSlots];
-    slots[index] = value || null;
-    this.emitProfile(
-      this.withPrintQueueDefaults({ ...this.profile, amsSlots: slots }),
-    );
+  private reloadLiveAms(): void {
+    this.slotsSub?.unsubscribe();
+    if (!this.showPrintQueue || !this.profile?.id) {
+      this.liveAmsSlots.set(this.emptySlots());
+      return;
+    }
+    const printerId = this.profile.id;
+    this.slotsSub = forkJoin({
+      spools: this.spoolsService.list({ open: true, printerId }).pipe(
+        catchError(() => of([] as Spool[])),
+      ),
+      supplies: this.suppliesService.getSupplies().pipe(
+        take(1),
+        catchError(() => of([] as Supply[])),
+      ),
+    }).subscribe(({ spools, supplies }) => {
+      this.liveAmsSlots.set(
+        this.buildLiveSlots(printerId, spools, supplies, this.colors),
+      );
+    });
   }
 
-  slotHex(index: number): string | null {
-    const id = this.amsSlots[index];
-    if (!id) return null;
-    return this.colors.find((color) => color.id === id)?.hex ?? null;
+  private buildLiveSlots(
+    printerId: string,
+    spools: Spool[],
+    supplies: Supply[],
+    colors: ColorConfig[],
+  ): LiveAmsSlotView[] {
+    const supplyById = new Map(supplies.map((s) => [s.id, s]));
+    const bySlot = new Map<number, Spool>();
+    for (const spool of spools) {
+      if (spool.finishedAt) continue;
+      if (spool.location.kind !== 'printer') continue;
+      if (spool.location.printerId !== printerId) continue;
+      const slot = Number(spool.location.slot);
+      if (slot < 1 || slot > 4) continue;
+      const prev = bySlot.get(slot);
+      if (
+        !prev ||
+        Number(spool.remainingGrams) < Number(prev.remainingGrams)
+      ) {
+        bySlot.set(slot, spool);
+      }
+    }
+
+    return [1, 2, 3, 4].map((slot) => {
+      const spool = bySlot.get(slot);
+      if (!spool) {
+        return {
+          slot,
+          code: null,
+          colorName: null,
+          hex: null,
+          remainingGrams: null,
+          empty: true,
+        };
+      }
+      const supply = supplyById.get(spool.supplyId);
+      const color = supply?.colorId
+        ? (colors.find((c) => c.id === supply.colorId) ?? null)
+        : null;
+      return {
+        slot,
+        code: spool.code,
+        colorName: color?.name ?? null,
+        hex: color?.hex ?? null,
+        remainingGrams: Number(spool.remainingGrams),
+        empty: false,
+      };
+    });
+  }
+
+  private emptySlots(): LiveAmsSlotView[] {
+    return [1, 2, 3, 4].map((slot) => ({
+      slot,
+      code: null,
+      colorName: null,
+      hex: null,
+      remainingGrams: null,
+      empty: true,
+    }));
   }
 
   private emitProfile(next: MachineProfile): void {

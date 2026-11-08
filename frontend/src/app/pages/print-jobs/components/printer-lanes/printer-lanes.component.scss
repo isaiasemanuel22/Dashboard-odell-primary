@@ -309,6 +309,11 @@
 .pl-swatches {
   display: inline-flex;
   gap: 0.25rem;
+  vertical-align: middle;
+
+  &--ams {
+    margin-left: 0.35rem;
+  }
 }
 
 .pl-sw {

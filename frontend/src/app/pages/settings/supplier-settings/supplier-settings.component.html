@@ -1,0 +1,101 @@
+@if (isMobile()) {
+  <db-mobile-settings-page title="Proveedores">
+    <button
+      barAction
+      type="button"
+      class="m-ib"
+      aria-label="Nuevo proveedor"
+      (click)="openCreate()"
+    >
+      <svg
+        viewBox="0 0 24 24"
+        width="22"
+        height="22"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2.2"
+        stroke-linecap="round"
+        aria-hidden="true"
+      >
+        <path d="M12 5v14M5 12h14" />
+      </svg>
+    </button>
+
+    @if (message) {
+      <p class="st-m__msg">{{ message }}</p>
+    }
+
+    <span class="st-m__hint"
+      >Demora de entrega en días hábiles. Los insumos los usan para sugerir
+      reposición.</span
+    >
+
+    @if (loading) {
+      <div class="m-card"><p class="st-m__hint">Cargando…</p></div>
+    } @else {
+      <div class="m-card m-card--flush">
+        @for (supplier of suppliers; track supplier.id) {
+          <db-mobile-catalog-row
+            [title]="supplier.name"
+            [subtitle]="mobileSubtitle(supplier)"
+            (pressed)="openEdit(supplier)"
+          />
+        } @empty {
+          <p class="st-m__hint" style="padding: 12px">
+            Todavía no hay proveedores.
+          </p>
+        }
+      </div>
+    }
+  </db-mobile-settings-page>
+} @else {
+  <section class="settings-panel">
+    <div class="panel-head">
+      <div>
+        <h3>Proveedores</h3>
+        <p class="panel-sub">
+          Demora en días hábiles para sugerir reposición ·
+          {{ suppliers.length }}
+          {{ suppliers.length === 1 ? 'proveedor' : 'proveedores' }}
+        </p>
+      </div>
+      <db-button
+        label="+ Nuevo proveedor"
+        variant="primary"
+        format="solid"
+        (clicked)="openCreate()"
+      />
+    </div>
+
+    @if (message) {
+      <p class="status-notice" role="status">{{ message }}</p>
+    }
+
+    <db-state-message
+      [loading]="loading"
+      [empty]="!loading && suppliers.length === 0"
+      loadingMessage="Cargando proveedores..."
+      emptyMessage="Todavía no hay proveedores."
+    >
+      <db-button
+        emptyActions
+        label="+ Nuevo proveedor"
+        variant="primary"
+        format="solid"
+        (clicked)="openCreate()"
+      />
+    </db-state-message>
+
+    @if (!loading && suppliers.length) {
+      <db-data-table
+        label="Proveedores"
+        [rows]="suppliers"
+        [columns]="columns"
+        [actions]="actions"
+        [clientSide]="false"
+        emptyText="No hay proveedores."
+        (action)="onAction($event)"
+      />
+    }
+  </section>
+}

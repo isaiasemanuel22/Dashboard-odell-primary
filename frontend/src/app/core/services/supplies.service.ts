@@ -2,7 +2,13 @@ import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
-import { Supply, SupplyCategory, SupplyPriceChangeRow } from '../models';
+import {
+  ReorderCounts,
+  ReorderSummary,
+  Supply,
+  SupplyCategory,
+  SupplyPriceChangeRow,
+} from '../models';
 import { SuppliesFacade } from '../../store/supplies/supplies.facade';
 
 @Injectable({ providedIn: 'root' })
@@ -32,6 +38,14 @@ export class SuppliesService {
 
   getLowStock(): Observable<Supply[]> {
     return this.http.get<Supply[]>(`${this.baseUrl}/low-stock`);
+  }
+
+  getReorder(): Observable<ReorderSummary> {
+    return this.http.get<ReorderSummary>(`${this.baseUrl}/reorder`);
+  }
+
+  getReorderSummary(): Observable<ReorderCounts> {
+    return this.http.get<ReorderCounts>(`${this.baseUrl}/reorder/summary`);
   }
 
   /** Solo lectura; no pasa por el store NgRx de insumos. */

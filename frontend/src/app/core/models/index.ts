@@ -328,7 +328,10 @@ export interface MachineProfile {
   workStartHour?: string;
   /** Solo role=print: tipo de AMS (ej. "AMS lite"). */
   amsType?: string;
-  /** Solo role=print: hasta 4 ids de ColorConfig; null = ranura vacía. */
+  /**
+   * Legacy: ids de ColorConfig por ranura.
+   * La cola y la UI de AMS se alimentan de bobinas abiertas, no de este campo.
+   */
   amsSlots?: (string | null)[];
   /** Solo role=print: perfil usado para costear productos de ese productType. */
   costBase?: boolean;
@@ -402,11 +405,125 @@ export interface Supply {
   minStock: number;
   unitPrice: number;
   priceFromSettings: boolean;
+  /** Texto libre legacy; se mantiene sincronizado con el nombre del proveedor. */
   supplier?: string;
+  /** Id de la colección `suppliers`. */
+  supplierId?: string;
+  /** Peso por bobina en gramos (filamentos; default 1000 si null). */
+  spoolGrams?: number | null;
   colorId?: string;
   /** Historial del precio unitario (precio NUEVO en cada cambio). Máx. 50. */
   priceHistory?: SupplyPriceHistoryEntry[];
   updatedAt: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  /** Demora de entrega en días hábiles (lun–vie), 0..60. Default 3. */
+  leadTimeBusinessDays: number;
+  contact?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type SpoolLocation =
+  | { kind: 'printer'; printerId: string; slot: number }
+  | { kind: 'shelf'; text: string };
+
+export interface Spool {
+  id: string;
+  /** Código correlativo global, ej. B-01. Nunca se reutiliza. */
+  code: string;
+  supplyId: string;
+  initialGrams: number;
+  remainingGrams: number;
+  location: SpoolLocation;
+  openedAt: string;
+  finishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type ReorderStatus = 'urgent' | 'soon' | 'ok';
+export type ReorderReason = 'forecast' | 'out_of_stock' | 'below_min';
+
+export interface ReorderRow {
+  supplyId: string;
+  name: string;
+  unit: string;
+  stock: number;
+  weeklyConsumption: number;
+  coversDays: number | null;
+  supplier: {
+    id: string;
+    name: string;
+    leadTimeBusinessDays: number;
+  } | null;
+  orderBy: string | null;
+  status: ReorderStatus;
+  reason: ReorderReason | null;
+  suggestedQuantity: number;
+  insufficientData: boolean;
+}
+
+export interface ReorderSummary {
+  rows: ReorderRow[];
+  openSpools: number;
+  urgentCount: number;
+}
+
+export interface ReorderCounts {
+  openSpools: number;
+  urgentCount: number;
+  total: number;
+}
+
+export type SpoolAlert =
+  | {
+      kind: 'spool_short';
+      printerId: string;
+      printerName: string;
+      slot: number;
+      spoolId: string;
+      code: string;
+      needGrams: number;
+      remainingGrams: number;
+      jobId: string;
+      jobName: string;
+    }
+  | {
+      kind: 'reorder';
+      supplyId: string;
+      name: string;
+      orderBy: string | null;
+      coversDays: number | null;
+      stock?: number;
+      unit?: string;
+      stockLabel: string;
+      supplierName: string | null;
+      leadTimeBusinessDays: number | null;
+      reason?: ReorderReason | null;
+    };
+
+export interface SupplierOrderDraft {
+  supplier: Supplier;
+  lines: { name: string; quantity: number; unit: string }[];
+  text: string;
+}
+
+export interface ConsumedSpoolLine {
+  spoolId: string;
+  code: string;
+  grams: number;
+}
+
+export interface PrintJobConsumptionSpoolLine {
+  spoolId: string;
+  code: string;
+  grams: number;
+  remainingAfter: number;
 }
 
 /** Fila de GET /supplies/price-changes. */
@@ -968,6 +1085,8 @@ export interface PrintJobConsumptionLine {
   kind: 'material' | 'failure';
   colorId?: string | null;
   colorHex?: string | null;
+  /** Reparto previsto por bobina (dryRun de allocate). */
+  spools?: PrintJobConsumptionSpoolLine[];
 }
 
 export interface PrintJobFailureStats {
@@ -1018,19 +1137,31 @@ export interface PrintJob {
   reprintOfJobId?: string | null;
   /** Momento en que se descontó stock al terminar (una sola vez). */
   consumedAt?: string | null;
+  /** Bobinas de las que se descontó al terminar. */
+  consumedSpools?: ConsumedSpoolLine[];
 }
 
-export interface PrinterQueueColorSlot {
+/** Ranura AMS en la cola por impresora (derivada de bobinas abiertas). */
+export interface AmsSlot {
+  slot: number;
+  spoolId: string | null;
+  code: string | null;
+  color: { id: string; name: string; hex: string } | null;
+  remainingGrams: number | null;
+}
+
+/** @deprecated Usar AmsSlot; se mantiene por compat de imports. */
+export type PrinterQueueColorSlot = {
   id: string;
   name: string;
   hex: string;
-}
+};
 
 export interface PrinterQueueProfile {
   id: string;
   name: string;
   amsType: string | null;
-  amsSlots: (PrinterQueueColorSlot | null)[];
+  amsSlots: AmsSlot[];
   workHoursPerDay: number;
   workWeekdays: number[];
   workStartHour: string;

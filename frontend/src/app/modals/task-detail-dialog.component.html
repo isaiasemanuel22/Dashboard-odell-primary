@@ -218,7 +218,29 @@
           <section class="td__card">
             <h4>{{ consumptionTitle }}</h4>
             @if (job.consumedAt) {
-              @if (discountedConsumption.length) {
+              @if (consumedSpoolRows.length) {
+                <ul class="td__cons">
+                  @for (row of consumedSpoolRows; track row.code + row.grams) {
+                    <li>
+                      <span class="td__cons-text">
+                        <span class="td__cons-label">
+                          @if (row.colorHex) {
+                            <span
+                              class="td__swatch"
+                              [style.background]="row.colorHex"
+                              aria-hidden="true"
+                            ></span>
+                          }
+                          <span class="td__cons-name"
+                            >{{ row.name }} · bobina {{ row.code }}</span
+                          >
+                        </span>
+                      </span>
+                      <span class="td__cons-qty">−{{ roundGrams(row.grams) }} g</span>
+                    </li>
+                  }
+                </ul>
+              } @else if (discountedConsumption.length) {
                 <ul class="td__cons">
                   @for (line of discountedConsumption; track line.name + line.kind) {
                     <li>
@@ -277,6 +299,61 @@
                   }
                 </ul>
               }
+            } @else if (hasSpoolBreakdown) {
+              <ul class="td__cons">
+                @for (line of consumption; track line.name + line.kind) {
+                  @if (line.spools?.length) {
+                    @for (spool of line.spools!; track spool.spoolId) {
+                      <li>
+                        <span class="td__cons-text">
+                          <span class="td__cons-label">
+                            @if (line.colorHex) {
+                              <span
+                                class="td__swatch"
+                                [style.background]="line.colorHex"
+                                aria-hidden="true"
+                              ></span>
+                            }
+                            <span class="td__cons-name"
+                              >{{ line.name }} · bobina {{ spool.code }}</span
+                            >
+                          </span>
+                        </span>
+                        <span class="td__cons-qty"
+                          >−{{ roundGrams(spool.grams) }} g</span
+                        >
+                      </li>
+                      <li class="td__remain td__remain--inline">
+                        <span>Le quedan a {{ spool.code }}:</span>
+                        <span class="td__cons-qty"
+                          >{{ roundGrams(spool.remainingAfter) }} g</span
+                        >
+                      </li>
+                    }
+                  } @else {
+                    <li [class.td__cons-item--muted]="!line.supplyId">
+                      <span class="td__cons-text">
+                        <span class="td__cons-label">
+                          @if (line.colorHex) {
+                            <span
+                              class="td__swatch"
+                              [style.background]="line.colorHex"
+                              aria-hidden="true"
+                            ></span>
+                          }
+                          <span class="td__cons-name">{{ line.name }}</span>
+                        </span>
+                        @if (line.requirementLabel) {
+                          <span class="td__cons-sub">{{ line.requirementLabel }}</span>
+                        }
+                      </span>
+                      <span class="td__cons-qty"
+                        >−{{ formatSupplyQuantity(line.quantity, line.unit) }}</span
+                      >
+                    </li>
+                  }
+                }
+              </ul>
             } @else if (consumption.length) {
               <ul class="td__cons">
                 @for (line of consumption; track line.name + line.kind) {

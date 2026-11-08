@@ -196,6 +196,13 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'proveedores',
+            loadComponent: () =>
+              import('./pages/settings/supplier-settings/supplier-settings.component').then(
+                (m) => m.SupplierSettingsComponent,
+              ),
+          },
+          {
             path: 'resina',
             loadComponent: () =>
               import('./pages/settings/resin-settings/resin-settings.component').then(

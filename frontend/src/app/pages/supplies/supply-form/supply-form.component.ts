@@ -1,4 +1,5 @@
 import {
+  ChangeDetectorRef,
   Component,
   EventEmitter,
   HostListener,
@@ -27,10 +28,13 @@ import {
   ResinPriceConfig,
   ResinType,
   ResinTypeConfig,
+  Supplier,
   Supply,
   SupplyCategory,
 } from '../../../core/models';
 import { SettingsService } from '../../../core/services/settings.service';
+import { SuppliersService } from '../../../core/services/suppliers.service';
+import { FormDialogService } from '../../../modals/form-dialog.service';
 import { supplyCategoryOptions } from '../../../shared/utils/select-options';
 import { buildFilamentTypeOptions } from '../../../shared/utils/filament-type.util';
 import { buildResinTypeOptions } from '../../../shared/utils/resin-type.util';
@@ -39,6 +43,15 @@ import {
   supplyUnitOptions,
 } from '../../../shared/utils/supply-unit.util';
 import { SupplyFormMaterialComponent } from './supply-form-material/supply-form-material.component';
+
+const NEW_SUPPLIER_VALUE = '__new_supplier__';
+
+/** Hasta 3 decimales para el input de stock (evita 12.700000000000001). */
+export function roundStockInput(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  const rounded = Math.round(value * 1e3) / 1e3;
+  return Math.abs(rounded) < 1e-9 ? 0 : rounded;
+}
 
 @Component({
   selector: 'app-supply-form',
@@ -59,6 +72,9 @@ import { SupplyFormMaterialComponent } from './supply-form-material/supply-form-
 })
 export class SupplyFormComponent implements OnInit, OnChanges {
   private readonly settingsService = inject(SettingsService);
+  private readonly suppliersService = inject(SuppliersService);
+  private readonly formDialogs = inject(FormDialogService);
+  private readonly cdr = inject(ChangeDetectorRef);
 
   @Input() supply: Supply | null = null;
   @Input() defaultCategory?: SupplyCategory;
@@ -88,10 +104,23 @@ export class SupplyFormComponent implements OnInit, OnChanges {
   minStock = 0;
   unitPrice = 0;
   priceFromSettings = false;
-  supplier = '';
+  supplierId = '';
+  spoolGrams = 1000;
+  suppliers: Supplier[] = [];
   priceEditable = true;
   configError = '';
   private userEdited = false;
+
+  get supplierOptions(): DbSelectOption[] {
+    return [
+      { value: '', label: 'Sin proveedor' },
+      ...this.suppliers.map((supplier) => ({
+        value: supplier.id,
+        label: supplier.name,
+      })),
+      { value: NEW_SUPPLIER_VALUE, label: '+ Nuevo proveedor' },
+    ];
+  }
 
   hasUnsavedChanges(): boolean {
     return this.userEdited;
@@ -205,6 +234,57 @@ export class SupplyFormComponent implements OnInit, OnChanges {
 
   ngOnInit(): void {
     this.loadPriceLists();
+    this.loadSuppliers();
+  }
+
+  onSupplierChange(value: string): void {
+    if (value === NEW_SUPPLIER_VALUE) {
+      // El CVA del select ya dejó `__new_supplier__` en su value interno;
+      // NgModel no siempre reescribe si el padre “corrige” en el mismo tick.
+      const previousId = this.supplierId;
+      this.setSupplierId(previousId);
+      this.formDialogs.openSupplier(null).subscribe((created) => {
+        if (!created) {
+          this.setSupplierId(previousId);
+          return;
+        }
+        this.applyCreatedSupplier(created);
+      });
+      return;
+    }
+    this.supplierId = value;
+  }
+
+  /** Expone el flujo post-diálogo para el spec (lista local + id + CD). */
+  applyCreatedSupplier(created: Supplier): void {
+    const exists = this.suppliers.some((s) => s.id === created.id);
+    this.suppliers = exists
+      ? this.suppliers.map((s) => (s.id === created.id ? created : s))
+      : [...this.suppliers, created].sort((a, b) =>
+          a.name.localeCompare(b.name, 'es'),
+        );
+    this.setSupplierId(created.id);
+    this.userEdited = true;
+    // Refresco en background; no pisar la selección si la lista llega tarde.
+    this.suppliersService.list().subscribe({
+      next: (items) => {
+        this.suppliers = items;
+        if (!items.some((s) => s.id === created.id)) {
+          this.suppliers = [...items, created].sort((a, b) =>
+            a.name.localeCompare(b.name, 'es'),
+          );
+        }
+        this.setSupplierId(created.id);
+      },
+      error: () => {
+        /* ya quedó la lista local */
+      },
+    });
+  }
+
+  private setSupplierId(id: string): void {
+    this.supplierId = id;
+    this.cdr.detectChanges();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -295,11 +375,14 @@ export class SupplyFormComponent implements OnInit, OnChanges {
       minStock: Number(this.minStock),
       unitPrice: Number(this.unitPrice),
       priceFromSettings: this.priceFromSettings,
-      supplier: this.supplier.trim() || undefined,
+      supplierId: this.supplierId || undefined,
+      supplier: this.suppliers.find((s) => s.id === this.supplierId)?.name,
     };
     if (this.isFilament) {
       payload.filamentType = this.filamentType;
       payload.brand = this.brand.trim();
+      const grams = Math.trunc(Number(this.spoolGrams));
+      payload.spoolGrams = Number.isFinite(grams) && grams > 0 ? grams : 1000;
     } else if (this.isResin) {
       payload.resinType = this.resinType;
       payload.brand = this.brand.trim();
@@ -394,11 +477,12 @@ export class SupplyFormComponent implements OnInit, OnChanges {
       this.resinType = this.supply.resinType ?? ResinType.ESTANDAR;
       this.brand = this.supply.brand ?? '';
       this.unit = this.supply.unit;
-      this.quantity = this.supply.quantity;
-      this.minStock = this.supply.minStock;
+      this.quantity = roundStockInput(this.supply.quantity);
+      this.minStock = roundStockInput(this.supply.minStock);
       this.unitPrice = this.supply.unitPrice;
       this.priceFromSettings = this.supply.priceFromSettings;
-      this.supplier = this.supply.supplier ?? '';
+      this.supplierId = this.supply.supplierId ?? '';
+      this.spoolGrams = this.supply.spoolGrams ?? 1000;
       this.colorId = this.supply.colorId ?? '';
       this.syncPriceEditable();
     } else {
@@ -411,12 +495,21 @@ export class SupplyFormComponent implements OnInit, OnChanges {
       this.minStock = 0;
       this.unitPrice = 0;
       this.priceFromSettings = false;
-      this.supplier = '';
+      this.supplierId = '';
+      this.spoolGrams = 1000;
       this.colorId = '';
       this.configError = '';
       this.syncPriceEditable();
       this.setDefaultUnit();
     }
+  }
+
+  private loadSuppliers(): void {
+    this.suppliersService.list().subscribe({
+      next: (items) => {
+        this.suppliers = items;
+      },
+    });
   }
 
   private onCategoryFieldsChange(): void {

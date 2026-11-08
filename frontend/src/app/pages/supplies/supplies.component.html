@@ -21,81 +21,294 @@
     </button>
   </db-mobile-bar>
 
-  <db-mobile-list-toolbar
-    [(search)]="search"
-    placeholder="Buscar insumo"
-    searchAriaLabel="Buscar insumos"
-    chipsAriaLabel="Filtro de insumos"
-    [chips]="mobileToolbarChips"
-    [chip]="mobileChip"
-    (chipChange)="onMobileChipChange($event)"
-  />
+  <div class="supplies-m__tabs">
+    <db-segmented-control
+      [options]="tabOptions"
+      [value]="activeTab"
+      ariaLabel="Sección de insumos"
+      (valueChange)="setTab($event)"
+    />
+  </div>
 
   <div class="m-body supplies-m__body">
-    @if (lowStockCount > 0 && stockFilter === 'all' && categoryFilter === 'all') {
-      <db-mobile-banner
-        [text]="
-          lowStockCount +
-          (lowStockCount === 1 ? ' insumo' : ' insumos') +
-          ' con stock bajo. Comprá desde Billetera para sumar stock y registrar el gasto.'
-        "
-      />
-    }
-
-    @if (loading) {
-      <db-skeleton variant="cards" [count]="4" />
-    } @else if (mobileFilteredSupplies.length === 0) {
-      <div class="m-card">
-        <p>{{ emptyMessage }}</p>
-        <db-button
-          label="Nuevo insumo"
-          variant="primary"
-          format="solid"
-          (clicked)="openCreate()"
-        />
-      </div>
-    } @else {
-      <div class="m-card m-card--flush">
-        @for (supply of mobileFilteredSupplies; track supply.id) {
+    @if (urgentReorderAlerts.length || spoolShortAlerts.length || lowStockCount) {
+      <div class="supplies-alerts supplies-alerts--m">
+        @for (alert of visibleReorderAlerts; track alert.supplyId) {
+          @let text = formatReorderAlert(alert);
+          <div class="note note-d note--compact">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
+            </svg>
+            <span class="note__one-line"
+              ><b>{{ text.title }}</b> {{ text.body }}</span
+            >
+          </div>
+        }
+        @if (!alertsExpanded && hiddenReorderAlertCount > 0) {
           <button
             type="button"
-            class="m-row supplies-m__row"
-            (click)="openEdit(supply)"
+            class="alerts-more"
+            (click)="expandAlerts()"
           >
-            <div class="m-row__text">
-              <b>{{ supply.name }}</b>
-              <span>{{ mobileRowMeta(supply) }}</span>
-            </div>
-            <div
-              class="supplies-m__end"
-              [class.supplies-m__end--neg]="isLowStock(supply)"
-            >
-              {{ formatQuantity(supply) }}
-              <div class="supplies-m__lvl" aria-hidden="true">
-                <i
-                  [style.width.%]="stockLevelPercent(supply)"
-                  [style.background]="stockLevelColor(supply)"
-                ></i>
-              </div>
-            </div>
+            Ver {{ hiddenReorderAlertCount }} alertas más
           </button>
+        }
+        @for (alert of spoolShortAlerts; track alert.spoolId) {
+          @let text = formatSpoolShortAlert(alert);
+          <div class="note note-w note--compact">
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
+            </svg>
+            <span class="note__one-line"
+              ><b>{{ text.title }}</b> {{ text.body }}</span
+            >
+          </div>
+        }
+        @if (lowStockCount > 0) {
+          <div class="note note-w note--compact">
+            <span class="note__one-line">
+              <b
+                >{{ lowStockCount }}
+                {{ lowStockCount === 1 ? 'insumo' : 'insumos' }} con stock
+                bajo.</b
+              >
+              Comprá desde Billetera para sumar stock y registrar el gasto.
+            </span>
+          </div>
         }
       </div>
     }
+
+    @if (statusNotice) {
+      <p class="supplies-m__notice" role="status">{{ statusNotice }}</p>
+    }
+
+    @if (activeTab === 'insumos') {
+      <db-mobile-list-toolbar
+        [(search)]="search"
+        placeholder="Buscar insumo"
+        searchAriaLabel="Buscar insumos"
+        chipsAriaLabel="Filtro de insumos"
+        [chips]="mobileToolbarChips"
+        [chip]="mobileChip"
+        (chipChange)="onMobileChipChange($event)"
+      />
+
+      @if (loading) {
+        <db-skeleton variant="cards" [count]="4" />
+      } @else if (mobileFilteredSupplies.length === 0) {
+        <div class="m-card">
+          <p>{{ emptyMessage }}</p>
+          <db-button
+            label="Nuevo insumo"
+            variant="primary"
+            format="solid"
+            (clicked)="openCreate()"
+          />
+        </div>
+      } @else {
+        <div class="m-card m-card--flush">
+          @for (supply of mobileFilteredSupplies; track supply.id) {
+            <button
+              type="button"
+              class="m-row supplies-m__row"
+              (click)="openEdit(supply)"
+            >
+              <div class="m-row__text">
+                <b>{{ supply.name }}</b>
+                <span>{{ mobileRowMeta(supply) }}</span>
+              </div>
+              <div
+                class="supplies-m__end"
+                [class.supplies-m__end--neg]="isLowStock(supply)"
+              >
+                {{ formatQuantity(supply) }}
+                <div class="supplies-m__lvl" aria-hidden="true">
+                  <i
+                    [style.width.%]="stockLevelPercent(supply)"
+                    [style.background]="stockLevelColor(supply)"
+                  ></i>
+                </div>
+              </div>
+            </button>
+          }
+        </div>
+      }
+    }
+
+    @if (activeTab === 'bobinas') {
+      <div class="supplies-m__actions">
+        <db-button
+          label="+ Abrir bobina"
+          variant="primary"
+          format="solid"
+          (clicked)="openOpenSpoolDialog()"
+        />
+      </div>
+      @if (!spoolRows.length) {
+        <div class="m-card">
+          <p>
+            No hay bobinas abiertas. Abrí una para cargarla en una impresora o
+            dejarla en el estante.
+          </p>
+        </div>
+      } @else {
+        <div class="m-card m-card--flush">
+          @for (row of spoolRows; track row.spool.id) {
+            <div class="m-row supplies-m__spool">
+              <div class="m-row__text">
+                <b>{{ row.spool.code }}</b>
+                <span class="supplies-m__fila">
+                  @if (row.colorHex) {
+                    <span
+                      class="sw"
+                      [style.background]="row.colorHex"
+                      aria-hidden="true"
+                    ></span>
+                  }
+                  {{ row.filamentLabel }}
+                </span>
+                <span>{{ row.locationLabel }}</span>
+                <span>Abierta {{ row.openedLabel }}</span>
+                <div class="supplies-m__bar-wrap">
+                  <span
+                    [class.supplies-m__end--neg]="row.remainingDanger"
+                    >{{ row.remainingLabel }}</span
+                  >
+                  <div class="supplies-m__lvl supplies-m__lvl--wide">
+                    <i
+                      [style.width.%]="row.remainingPct"
+                      [style.background]="
+                        row.remainingDanger ? '#B91C1C' : '#0E7AAB'
+                      "
+                    ></i>
+                  </div>
+                </div>
+              </div>
+              <button
+                type="button"
+                class="m-ib"
+                aria-label="Más acciones"
+                (click)="mobileSpoolActions = row"
+              >
+                ···
+              </button>
+            </div>
+          }
+        </div>
+      }
+    }
+
+    @if (activeTab === 'reposicion') {
+      <div class="supplies-m__actions">
+        <db-button
+          label="Armar pedido al proveedor"
+          variant="primary-outline"
+          format="solid"
+          (clicked)="openOrderDraftDialog()"
+        />
+      </div>
+      @if (!reorderRows.length) {
+        <div class="m-card">
+          <p>Todavía no hay consumo registrado para sugerir reposición.</p>
+        </div>
+      } @else {
+        <div class="m-card m-card--flush">
+          @for (row of reorderRows; track row.supplyId) {
+            @let pill = reorderPill(row);
+            <div class="m-row supplies-m__reorder">
+              <div class="m-row__text">
+                <b>{{ row.name }}</b>
+                <span>Stock {{ formatQty(row.stock, row.unit) }}</span>
+                <span
+                  >Consumo
+                  {{
+                    row.insufficientData
+                      ? 'Sin datos suficientes'
+                      : formatQty(row.weeklyConsumption, row.unit)
+                  }}</span
+                >
+                @if (row.supplier) {
+                  <span
+                    >{{ row.supplier.name }} ·
+                    {{ row.supplier.leadTimeBusinessDays }} días hábiles</span
+                  >
+                } @else {
+                  <button
+                    type="button"
+                    class="linkish"
+                    (click)="openReorderSupply(row.supplyId)"
+                  >
+                    Sin proveedor
+                  </button>
+                }
+              </div>
+              <span
+                class="pill"
+                [class.p-d]="pill.tone === 'danger'"
+                [class.p-w]="pill.tone === 'warn'"
+                [class.p-ok]="pill.tone === 'ok'"
+                >{{ pill.label }}</span
+              >
+            </div>
+          }
+        </div>
+      }
+    }
   </div>
+
+  <db-mobile-sheet
+    [open]="!!mobileSpoolActions"
+    title="Más acciones"
+    secondaryLabel="Cerrar"
+    (closed)="mobileSpoolActions = null"
+    (secondary)="mobileSpoolActions = null"
+  >
+    @if (mobileSpoolActions; as row) {
+      <button type="button" class="sheet-action" (click)="openMoveDialog(row.spool)">
+        Mover…
+      </button>
+      <button
+        type="button"
+        class="sheet-action"
+        (click)="openAdjustDialog(row.spool)"
+      >
+        Ajustar peso…
+      </button>
+      <button
+        type="button"
+        class="sheet-action sheet-action--danger"
+        (click)="finishSpool(row.spool)"
+      >
+        Terminar bobina
+      </button>
+    }
+  </db-mobile-sheet>
 </div>
 
 <div class="desktop-only">
   <header class="page-header">
     <div>
       <h2>Insumos</h2>
-      <p>
-        Control de filamentos, resinas, tintas, textiles y más ·
-        {{ supplies.length }} {{ supplies.length === 1 ? 'insumo' : 'insumos' }}
-        @if (lowStockCount) {
-          · <span class="tone-danger">{{ lowStockCount }} con stock bajo</span>
-        }
-      </p>
+      <p>{{ headerSubtitle }}</p>
     </div>
     <div class="header-actions">
       <db-button
@@ -113,56 +326,431 @@
     </div>
   </header>
 
-  <div class="list-toolbar">
-    <db-pill-group
-      [options]="stockFilters"
-      [value]="stockFilter"
-      ariaLabel="Estado de stock"
-      (valueChange)="stockFilter = $event"
+  <div class="supplies-tabs">
+    <db-segmented-control
+      [options]="tabOptions"
+      [value]="activeTab"
+      ariaLabel="Sección de insumos"
+      (valueChange)="setTab($event)"
     />
-    <label class="list-search">
-      <span aria-hidden="true">⌕</span>
-      <input
-        type="search"
-        placeholder="Buscar por nombre, marca o material"
-        [(ngModel)]="search"
-      />
-    </label>
   </div>
 
-  <db-pill-group
-    class="list-areas"
-    [options]="categoryFilters"
-    [value]="categoryFilter"
-    label="Categoría"
-    size="sm"
-    ariaLabel="Filtrar por categoría"
-    (valueChange)="categoryFilter = $event"
-  />
+  @if (statusNotice) {
+    <p class="status-notice" role="status">{{ statusNotice }}</p>
+  }
 
-  <db-state-message
-    [loading]="loading"
-    [empty]="!loading && filteredSupplies.length === 0"
-    loadingMessage="Cargando insumos..."
-    [emptyMessage]="emptyMessage"
-  >
-    @if (!supplies.length) {
-      <db-button
-        emptyActions
-        label="Crear primer insumo"
-        variant="primary"
-        format="solid"
-        (clicked)="openCreate()"
+  <section class="supplies-alerts" aria-label="Alertas">
+    @for (alert of visibleReorderAlerts; track alert.supplyId) {
+      @let text = formatReorderAlert(alert);
+      <div class="note note-d">
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
+        </svg>
+        <span><b>{{ text.title }}</b> {{ text.body }}</span>
+      </div>
+    }
+    @if (!alertsExpanded && hiddenReorderAlertCount > 0) {
+      <button type="button" class="alerts-more" (click)="expandAlerts()">
+        Ver {{ hiddenReorderAlertCount }} alertas más
+      </button>
+    }
+    @for (alert of spoolShortAlerts; track alert.spoolId) {
+      @let text = formatSpoolShortAlert(alert);
+      <div class="note note-w">
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
+        </svg>
+        <span><b>{{ text.title }}</b> {{ text.body }}</span>
+      </div>
+    }
+    @if (lowStockCount > 0) {
+      <div class="note note-w">
+        <svg
+          viewBox="0 0 24 24"
+          width="18"
+          height="18"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
+        </svg>
+        <span>
+          <b
+            >{{ lowStockCount }}
+            {{ lowStockCount === 1 ? 'insumo' : 'insumos' }} con stock bajo.</b
+          >
+          Comprá desde Billetera para sumar stock y registrar el gasto.
+        </span>
+      </div>
+    }
+  </section>
+
+  @if (activeTab === 'insumos') {
+    <div class="list-toolbar">
+      <db-pill-group
+        [options]="stockFilters"
+        [value]="stockFilter"
+        ariaLabel="Estado de stock"
+        (valueChange)="stockFilter = $event"
+      />
+      <label class="list-search">
+        <span aria-hidden="true">⌕</span>
+        <input
+          type="search"
+          placeholder="Buscar por nombre, marca o material"
+          [(ngModel)]="search"
+        />
+      </label>
+    </div>
+
+    <db-pill-group
+      class="list-areas"
+      [options]="categoryFilters"
+      [value]="categoryFilter"
+      label="Categoría"
+      size="sm"
+      ariaLabel="Filtrar por categoría"
+      (valueChange)="categoryFilter = $event"
+    />
+
+    <db-state-message
+      [loading]="loading"
+      [empty]="!loading && filteredSupplies.length === 0"
+      loadingMessage="Cargando insumos..."
+      [emptyMessage]="emptyMessage"
+    >
+      @if (!supplies.length) {
+        <db-button
+          emptyActions
+          label="Crear primer insumo"
+          variant="primary"
+          format="solid"
+          (clicked)="openCreate()"
+        />
+      }
+    </db-state-message>
+
+    @if (!loading && filteredSupplies.length) {
+      <app-supplies-table
+        [supplies]="filteredSupplies"
+        [colorCatalog]="colorCatalog"
+        (edit)="openEdit($event)"
+        (delete)="deleteSupply($event)"
       />
     }
-  </db-state-message>
+  }
 
-  @if (!loading && filteredSupplies.length) {
-    <app-supplies-table
-      [supplies]="filteredSupplies"
-      [colorCatalog]="colorCatalog"
-      (edit)="openEdit($event)"
-      (delete)="deleteSupply($event)"
-    />
+  @if (activeTab === 'bobinas') {
+    <div class="panel-actions">
+      <db-button
+        label="+ Abrir bobina"
+        variant="primary"
+        format="solid"
+        (clicked)="openOpenSpoolDialog()"
+      />
+    </div>
+
+    @if (!spoolRows.length) {
+      <db-state-message
+        [loading]="false"
+        [empty]="true"
+        emptyMessage="No hay bobinas abiertas. Abrí una para cargarla en una impresora o dejarla en el estante."
+      />
+    } @else {
+      <db-data-table
+        label="Bobinas abiertas"
+        [rows]="spoolRows"
+        [columns]="spoolColumns"
+        [actions]="spoolActions"
+        [clientSide]="false"
+        emptyText="No hay bobinas abiertas."
+        (action)="onSpoolAction($event)"
+      >
+        <ng-template odlCell="filament" let-row>
+          <span class="fila-cell">
+            @if (row.colorHex) {
+              <span
+                class="sw"
+                [style.background]="row.colorHex"
+                aria-hidden="true"
+              ></span>
+            }
+            <span class="strong">{{ row.filamentLabel }}</span>
+          </span>
+        </ng-template>
+        <ng-template odlCell="remaining" let-row>
+          <div class="remain-cell">
+            <div
+              class="remain-cell__lbl"
+              [class.remain-cell__lbl--neg]="row.remainingDanger"
+            >
+              {{ row.remainingLabel }}
+            </div>
+            <div class="remain-cell__track" aria-hidden="true">
+              <i
+                [style.width.%]="row.remainingPct"
+                [style.background]="
+                  row.remainingDanger ? '#B91C1C' : '#0E7AAB'
+                "
+              ></i>
+            </div>
+          </div>
+        </ng-template>
+      </db-data-table>
+    }
+  }
+
+  @if (activeTab === 'reposicion') {
+    <section class="reorder-card">
+      <div class="reorder-card__head">
+        <div>
+          <h3>Reposición sugerida</h3>
+          <p>
+            Según consumo de las últimas 4 semanas y la demora de cada
+            proveedor
+          </p>
+        </div>
+        <db-button
+          label="Armar pedido al proveedor"
+          variant="primary-outline"
+          format="solid"
+          (clicked)="openOrderDraftDialog()"
+        />
+      </div>
+
+      @if (!reorderRows.length) {
+        <db-state-message
+          [loading]="false"
+          [empty]="true"
+          emptyMessage="Todavía no hay consumo registrado para sugerir reposición."
+        />
+      } @else {
+        <db-data-table
+          label="Reposición sugerida"
+          [rows]="reorderRows"
+          [columns]="reorderColumns"
+          [clientSide]="false"
+          emptyText="Todavía no hay consumo registrado para sugerir reposición."
+        >
+          <ng-template odlCell="supplier" let-row>
+            @if (row.supplier) {
+              <span
+                >{{ row.supplier.name }} ·
+                {{ row.supplier.leadTimeBusinessDays }} días hábiles</span
+              >
+            } @else {
+              <button
+                type="button"
+                class="linkish"
+                (click)="openReorderSupply(row.supplyId)"
+              >
+                Sin proveedor
+              </button>
+            }
+          </ng-template>
+          <ng-template odlCell="orderBy" let-row>
+            @let pill = reorderPill(row);
+            <span
+              class="pill"
+              [class.p-d]="pill.tone === 'danger'"
+              [class.p-w]="pill.tone === 'warn'"
+              [class.p-ok]="pill.tone === 'ok'"
+              >{{ pill.label }}</span
+            >
+          </ng-template>
+        </db-data-table>
+      }
+    </section>
   }
 </div>
+
+@if (spoolDialog === 'open' || spoolDialog === 'move' || spoolDialog === 'adjust' || spoolDialog === 'order') {
+  <app-form-modal
+    [title]="
+      spoolDialog === 'open'
+        ? 'Abrir bobina'
+        : spoolDialog === 'move'
+          ? 'Mover bobina'
+          : spoolDialog === 'adjust'
+            ? 'Ajustar peso'
+            : 'Armar pedido al proveedor'
+    "
+    size="md"
+    (close)="closeSpoolDialog()"
+  >
+    @if (spoolDialogError) {
+      <p class="dialog-error" role="alert">{{ spoolDialogError }}</p>
+    }
+
+    @if (spoolDialog === 'open' || spoolDialog === 'move') {
+      @if (spoolDialog === 'open') {
+        <db-select
+          label="Insumo"
+          [ngModel]="openSupplyId"
+          (ngModelChange)="onOpenSupplyChange($event)"
+          name="openSupplyId"
+          [options]="filamentSupplyOptions"
+        />
+        <db-input
+          label="Gramos"
+          type="number"
+          [(ngModel)]="openGrams"
+          name="openGrams"
+          [min]="1"
+          step="1"
+        />
+      }
+
+      <div class="loc-kind" role="radiogroup" aria-label="Ubicación">
+        <label>
+          <input
+            type="radio"
+            name="locKind"
+            [checked]="locationKind === 'printer'"
+            (change)="locationKind = 'printer'"
+          />
+          Impresora
+        </label>
+        <label>
+          <input
+            type="radio"
+            name="locKind"
+            [checked]="locationKind === 'shelf'"
+            (change)="locationKind = 'shelf'"
+          />
+          Estante
+        </label>
+      </div>
+
+      @if (locationKind === 'printer') {
+        <db-select
+          label="Impresora"
+          [(ngModel)]="locationPrinterId"
+          name="locationPrinterId"
+          [options]="printerOptions"
+        />
+        <db-select
+          label="Ranura AMS"
+          [ngModel]="'' + locationSlot"
+          (ngModelChange)="locationSlot = +$event"
+          name="locationSlot"
+          [options]="slotOptions"
+        />
+      } @else {
+        <db-input
+          label="Estante"
+          [(ngModel)]="locationShelf"
+          name="locationShelf"
+          placeholder="Bolsa con desecante"
+        />
+      }
+
+      <div class="dialog-actions">
+        <db-button
+          label="Cancelar"
+          variant="cancel"
+          format="soft"
+          (clicked)="closeSpoolDialog()"
+        />
+        <db-button
+          [label]="spoolDialogBusy ? 'Guardando...' : spoolDialog === 'open' ? 'Abrir' : 'Mover'"
+          variant="primary"
+          format="solid"
+          [disabled]="spoolDialogBusy"
+          (clicked)="spoolDialog === 'open' ? submitOpenSpool() : submitMoveSpool()"
+        />
+      </div>
+    }
+
+    @if (spoolDialog === 'adjust') {
+      <db-input
+        label="Gramos reales"
+        type="number"
+        [(ngModel)]="adjustGrams"
+        name="adjustGrams"
+        [min]="0"
+        step="1"
+      />
+      <div class="dialog-actions">
+        <db-button
+          label="Cancelar"
+          variant="cancel"
+          format="soft"
+          (clicked)="closeSpoolDialog()"
+        />
+        <db-button
+          [label]="spoolDialogBusy ? 'Guardando...' : 'Guardar'"
+          variant="primary"
+          format="solid"
+          [disabled]="spoolDialogBusy"
+          (clicked)="submitAdjustSpool()"
+        />
+      </div>
+    }
+
+    @if (spoolDialog === 'order') {
+      <db-select
+        label="Proveedor"
+        [ngModel]="orderSupplierId"
+        (ngModelChange)="onOrderSupplierChange($event)"
+        name="orderSupplierId"
+        [options]="orderSupplierOptions"
+      />
+      @if (!orderDraftHasLines) {
+        <p class="draft-empty" role="status">
+          No hay insumos para pedir a este proveedor.
+        </p>
+      } @else {
+        <label class="draft-label">
+          Texto del pedido
+          <textarea
+            class="draft-area"
+            [ngModel]="orderDraftText"
+            name="orderDraftText"
+            rows="8"
+            readonly
+          ></textarea>
+        </label>
+      }
+      @if (orderCopyNotice) {
+        <p class="draft-copy-ok" role="status">{{ orderCopyNotice }}</p>
+      }
+      <div class="dialog-actions">
+        <db-button
+          label="Cerrar"
+          variant="cancel"
+          format="soft"
+          (clicked)="closeSpoolDialog()"
+        />
+        <db-button
+          label="Copiar"
+          variant="primary"
+          format="solid"
+          [disabled]="!orderDraftHasLines"
+          (clicked)="copyOrderDraft()"
+        />
+      </div>
+    }
+  </app-form-modal>
+}

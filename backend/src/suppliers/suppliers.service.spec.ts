@@ -78,4 +78,62 @@ describe('SuppliersService', () => {
     expect(draft.lines.length).toBeGreaterThan(0);
     expect(draft.lines[0].name).toContain('PLA');
   });
+
+  it('devuelve lines vacías y text vacío si no hay sugerencias', () => {
+    const store = new StoreService();
+    store.applyState({
+      generalSettings: {} as never,
+      brands: [],
+      supplies: [
+        {
+          id: 'sup-1',
+          name: 'PLA',
+          category: SupplyCategory.FDM,
+          unit: 'kg',
+          quantity: 5,
+          minStock: 0.2,
+          unitPrice: 1,
+          priceFromSettings: false,
+          supplierId: 'suplr-1',
+          supplier: 'FilAr',
+          spoolGrams: 1000,
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      impresos: [],
+      categories: [],
+      products: [],
+      customers: [],
+      orders: [],
+      quotes: [],
+      printJobs: [],
+      retailSales: [],
+      treasuryExpenses: [],
+      calendarEntries: [],
+      suppliers: [
+        {
+          id: 'suplr-1',
+          name: 'FilAr',
+          leadTimeBusinessDays: 3,
+          createdAt: '2026-01-01T00:00:00.000Z',
+          updatedAt: '2026-01-01T00:00:00.000Z',
+        },
+      ],
+      spools: [],
+      supplyMovements: [],
+    });
+
+    const reorder = new SuppliesReorderService(store);
+    const service = new SuppliersService(
+      store,
+      { recordChange: jest.fn() } as never,
+      reorder,
+    );
+    const draft = service.orderDraft(
+      'suplr-1',
+      new Date('2026-11-09T12:00:00.000-03:00'),
+    );
+    expect(draft.lines).toEqual([]);
+    expect(draft.text).toBe('');
+  });
 });

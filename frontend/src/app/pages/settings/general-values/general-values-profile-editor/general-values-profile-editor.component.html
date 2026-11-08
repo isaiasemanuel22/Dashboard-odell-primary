@@ -147,13 +147,15 @@
           [name]="'mpAmsType' + profile.id"
           placeholder="AMS lite"
         />
-        @for (slot of amsSlots; track $index; let i = $index) {
-          <div class="ams-slot-field">
+      </db-form-grid>
+      <div class="ams-slots-ro" role="list" aria-label="Ranuras AMS">
+        @for (slot of liveAmsSlots(); track slot.slot) {
+          <div class="ams-slot-ro" role="listitem">
             <div class="ams-slot-field__label">
-              @if (slotHex(i); as hex) {
+              @if (slot.hex) {
                 <span
                   class="ams-slot__swatch"
-                  [style.background-color]="hex"
+                  [style.background-color]="slot.hex"
                   aria-hidden="true"
                 ></span>
               } @else {
@@ -162,17 +164,17 @@
                   aria-hidden="true"
                 ></span>
               }
-              <span>Ranura {{ i + 1 }}</span>
+              <span>Ranura {{ slot.slot }}</span>
             </div>
-            <db-select
-              [ngModel]="slotValue(i)"
-              (ngModelChange)="setSlot(i, $event)"
-              [name]="'mpAmsSlot' + profile.id + '_' + i"
-              [options]="amsSlotOptions"
-            />
+            <p class="ams-slot-ro__value">{{ slotLabel(slot) }}</p>
           </div>
         }
-      </db-form-grid>
+      </div>
+      <p class="field-hint field-hint--left">
+        <a routerLink="/insumos" [queryParams]="{ tab: 'bobinas' }"
+          >Cargar bobinas en Insumos › Bobinas abiertas</a
+        >
+      </p>
 
       <div class="queue-toggle desktop-only">
         <db-checkbox
