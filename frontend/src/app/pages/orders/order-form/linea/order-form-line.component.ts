@@ -165,7 +165,7 @@ export class OrderFormLineComponent implements OnInit {
   @Input() variant: OrderFormLineVariant = 'order';
   /** El padre intentó guardar: se muestran los errores aunque no se haya tocado el campo. */
   @Input() showErrors = false;
-  private unitPriceTouched = false;
+  unitPriceTouched = false;
   @Input() products: Product[] = [];
   @Input() serviceTypeOptions: Array<{ value: ServiceType; label: string }> = [];
   @Input() paperTypeOptions: DbSelectOption[] = [];

@@ -110,6 +110,9 @@
 
     @if (!hideFooter) {
       <db-form-footer class="customer-form__footer">
+        @if (!canSubmit && submitMissingLabel) {
+          <p class="customer-form__warning" role="status">{{ submitMissingLabel }}</p>
+        } @else {
         <p class="customer-form__note">
           @if (isRevendedor) {
             En pedidos va a aparecer con la etiqueta Revendedor
@@ -117,6 +120,7 @@
             Lo vas a poder elegir en pedidos y presupuestos
           }
         </p>
+        }
         <div class="customer-form__actions" data-discard-safe>
           <db-button
             label="Cancelar"

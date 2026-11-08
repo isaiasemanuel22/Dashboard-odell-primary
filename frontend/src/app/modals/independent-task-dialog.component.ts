@@ -50,6 +50,22 @@ const AREAS: ServiceType[] = [
   ],
   changeDetection: ChangeDetectionStrategy.OnPush,
   styles: `
+    /* El gap de .db-form no llega al host: se fija acá, igual que en el resto de modales. */
+    db-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    db-form-grid {
+      gap: 1.5rem 1rem;
+      align-items: start;
+    }
+
+    db-form ::ng-deep .db-form-field {
+      gap: 0.5rem;
+    }
+
     @media (max-width: 768px) {
       db-form {
         gap: 14px;

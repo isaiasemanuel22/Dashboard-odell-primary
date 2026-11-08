@@ -152,8 +152,8 @@ export class CustomerFormComponent implements OnInit, OnChanges {
     else if (!isValidCustomerPhone(this.phone.trim())) {
       missing.push('un teléfono válido');
     }
-    if (!this.email.trim()) missing.push('email');
-    else if (!isValidCustomerEmail(this.email.trim())) {
+    // El email es opcional (docs/BUSINESS-RULES.md): solo se valida si se carga.
+    if (!isValidCustomerEmail(this.email.trim())) {
       missing.push('un email válido');
     }
     return missing;

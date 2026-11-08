@@ -414,6 +414,16 @@
   flex-shrink: 0;
 }
 
+.order-form__warning {
+  margin: 0;
+  color: $color-warning-accent;
+  font-size: 0.75rem;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: left;
+  flex: 1 1 auto;
+}
+
 .order-form__note-spacer {
   flex: 1;
 }
