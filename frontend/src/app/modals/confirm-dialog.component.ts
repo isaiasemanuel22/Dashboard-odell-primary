@@ -46,6 +46,7 @@ export interface ConfirmDialogData {
         [label]="data.confirmLabel ?? 'Confirmar'"
         [variant]="tone === 'danger' ? 'delete' : (data.confirmVariant ?? 'primary')"
         format="solid"
+        [extraClass]="tone === 'danger' ? 'db-button--danger-solid' : ''"
         (clicked)="confirm()"
       />
     </app-form-dialog-shell>

@@ -20,3 +20,10 @@
     color: $color-text-muted;
   }
 }
+
+// Separación entre campos (RdImpreso).
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}

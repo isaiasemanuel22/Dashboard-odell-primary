@@ -30,7 +30,9 @@
 
   @if (isOpen && !isMobile()) {
     <div class="piece-picker__dropdown" role="listbox" aria-label="Piezas disponibles">
-      <ng-container [ngTemplateOutlet]="optionsTpl" />
+      <div class="piece-picker__list">
+        <ng-container [ngTemplateOutlet]="optionsTpl" />
+      </div>
       <div class="piece-picker__footer">
         <ng-container [ngTemplateOutlet]="createTpl" />
       </div>

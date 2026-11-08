@@ -194,7 +194,8 @@
       min-height: 2.5rem;
       padding: 0.4rem 0.35rem;
       font-size: 0.75rem;
-      white-space: nowrap;
+      white-space: normal;
+      overflow-wrap: anywhere;
       line-height: 1.2;
       text-align: center;
       overflow: visible;

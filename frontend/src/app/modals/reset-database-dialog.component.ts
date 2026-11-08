@@ -68,6 +68,7 @@ import { extractApiErrorMessage } from '../shared/utils/api-error';
         label="Resetear"
         variant="delete"
         format="solid"
+        extraClass="db-button--danger-solid"
         [disabled]="loading() || !resetCode.trim()"
         (clicked)="confirmReset()"
       />

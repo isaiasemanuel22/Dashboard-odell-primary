@@ -601,7 +601,7 @@
           />
         }
 
-        <section class="panel">
+        <section class="panel panel--order-lines">
           <div class="panel-header-row">
             <h3>Tareas del pedido</h3>
             <db-button
@@ -617,6 +617,7 @@
               [rows]="tasks"
               [columns]="taskColumns"
               [clientSide]="false"
+              minWidth="0"
             >
               <ng-template odlCell="status" let-task>
                 <db-status-badge
@@ -685,7 +686,8 @@
           <db-button
             [label]="statusLoading ? 'Cancelando...' : 'Cancelar pedido'"
             variant="delete"
-            format="soft"
+            format="solid"
+            extraClass="db-button--danger-solid"
             [disabled]="statusLoading"
             (clicked)="cancelOrder()"
           />

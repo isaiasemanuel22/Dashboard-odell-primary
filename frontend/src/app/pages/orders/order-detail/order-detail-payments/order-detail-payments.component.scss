@@ -193,8 +193,21 @@
     color: $color-text-muted;
   }
 
+  // Grilla de 3 columnas (RdPedidoDetalle): Monto | Medio | Seña / Cuenta | Comisión | botón.
   &__form {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    align-items: end;
+
+    > db-button {
+      justify-self: end;
+    }
+
+    ::ng-deep .db-seg__btn {
+      padding-left: 0.4rem;
+      padding-right: 0.4rem;
+      white-space: nowrap;
+    }
   }
 
   &__method {

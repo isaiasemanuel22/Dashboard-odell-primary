@@ -702,6 +702,14 @@ export class ProductsComponent implements OnInit, OnDestroy {
       });
   }
 
+  openCart(): void {
+    if (this.breakpoint.isMobile()) {
+      void this.router.navigateByUrl('/ventas/nueva');
+      return;
+    }
+    this.formDialogs.openSale().subscribe();
+  }
+
   addProductToCart(product: Product): void {
     const result = this.saleCart.addProduct(product, 1);
     this.showNotice(

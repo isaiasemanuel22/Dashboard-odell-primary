@@ -23,6 +23,38 @@
         />
       </div>
 
+      @if (isRevendedor) {
+        <section class="customer-form__wholesale" aria-labelledby="wholesale-title">
+          <div class="customer-form__wholesale-head">
+            <strong id="wholesale-title">Precio mayorista</strong>
+            <span class="customer-form__pill">{{ wholesaleDiscountLabel }}</span>
+          </div>
+          <p class="customer-form__wholesale-copy">
+            Se aplica solo en pedidos y presupuestos. El porcentaje se cambia en
+            Ajustes › Ganancias.
+          </p>
+          <db-form-grid>
+            <db-input
+              label="Compra mínima mayorista"
+              type="text"
+              [ngModel]="wholesaleMinimumDisplay"
+              (ngModelChange)="onWholesaleMinimumDisplayChange($event)"
+              name="wholesaleMinimum"
+              placeholder="Ej.: $ 50.000"
+              hint="Vacío = sin mínimo. Si el pedido no llega, se cobra precio de lista"
+              autocomplete="off"
+            />
+            <db-input
+              label="CUIT (opcional)"
+              [(ngModel)]="taxId"
+              name="taxId"
+              placeholder="30-12345678-9"
+              hint="Para facturar"
+            />
+          </db-form-grid>
+        </section>
+      }
+
       <db-form-grid>
         <div class="customer-form__email" (focusout)="onEmailBlur()">
           <db-input
@@ -71,37 +103,6 @@
       />
     </div>
 
-    @if (isRevendedor) {
-      <section class="customer-form__wholesale" aria-labelledby="wholesale-title">
-        <div class="customer-form__wholesale-head">
-          <strong id="wholesale-title">Precio mayorista</strong>
-          <span class="customer-form__pill">{{ wholesaleDiscountLabel }}</span>
-        </div>
-        <p class="customer-form__wholesale-copy">
-          Se aplica solo en pedidos y presupuestos. El porcentaje se cambia en
-          Ajustes › Ganancias.
-        </p>
-        <db-form-grid>
-          <db-input
-            label="Compra mínima mayorista"
-            type="text"
-            [ngModel]="wholesaleMinimumDisplay"
-            (ngModelChange)="onWholesaleMinimumDisplayChange($event)"
-            name="wholesaleMinimum"
-            placeholder="Ej.: $ 50.000"
-            hint="Vacío = sin mínimo. Si el pedido no llega, se cobra precio de lista"
-            autocomplete="off"
-          />
-          <db-input
-            label="CUIT (opcional)"
-            [(ngModel)]="taxId"
-            name="taxId"
-            placeholder="30-12345678-9"
-            hint="Para facturar"
-          />
-        </db-form-grid>
-      </section>
-    }
 
     @if (error) {
       <db-form-error>{{ error }}</db-form-error>

@@ -8,7 +8,8 @@
       [required]="true"
     />
 
-    <db-fieldset legend="Aplica a">
+    <fieldset class="category-form__group">
+      <legend class="category-form__legend">Aplica a</legend>
       <db-checkbox-group>
         @for (option of typeOptions; track option.value) {
           <db-checkbox
@@ -18,7 +19,8 @@
           />
         }
       </db-checkbox-group>
-    </db-fieldset>
+      <p class="category-form__hint">Sólo aparece al cargar productos de ese tipo</p>
+    </fieldset>
 
     @if (error) {
       <db-form-error>{{ error }}</db-form-error>

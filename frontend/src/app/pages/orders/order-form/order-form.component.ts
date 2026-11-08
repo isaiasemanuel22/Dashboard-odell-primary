@@ -1431,7 +1431,11 @@ export class OrderFormComponent implements OnChanges, OnInit {
     this.uiMetaChange.emit();
   }
 
+  /** Se intentó guardar al menos una vez: recién ahí se muestran los errores sin tocar. */
+  submitAttempted = false;
+
   onSubmit(asDraft = false): void {
+    this.submitAttempted = true;
     this.clampDiscountFields();
     if (!this.canSubmit(asDraft)) return;
     const validLines = this.lines.filter((line) => isLineValid(line));

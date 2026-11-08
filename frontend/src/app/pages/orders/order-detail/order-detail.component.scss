@@ -77,10 +77,11 @@
   min-width: 0;
   max-width: 100%;
 
-  ::ng-deep .odl-table {
+  // Doble clase: gana a la especificidad de `.odl-table th` del db-data-table.
+  &.panel--order-lines ::ng-deep .odl-table {
     th,
     td {
-      padding: 0.55rem 0.45rem;
+      padding: 0.55rem 0.3rem;
       font-size: 0.75rem;
     }
 
@@ -124,6 +125,14 @@
   flex-wrap: wrap;
   padding: 1rem 1.25rem;
   flex-direction: row;
+
+  // Gana a `.detail-layout ::ng-deep .panel` (columna).
+  .detail-layout &.panel {
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+  }
 }
 
 .detail-list {

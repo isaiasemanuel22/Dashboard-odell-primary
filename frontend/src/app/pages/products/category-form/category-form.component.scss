@@ -1,1 +1,24 @@
 
+@use '../../../shared/styles/variables' as *;
+
+// Grupo de campos sin el borde nativo del fieldset (RdPatrones §1).
+.category-form__group {
+  border: 0;
+  margin: 0;
+  padding: 0;
+  min-width: 0;
+}
+
+.category-form__legend {
+  padding: 0;
+  margin-bottom: 0.5rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: $color-text-label;
+}
+
+.category-form__hint {
+  margin: 0.5rem 0 0;
+  font-size: 0.8rem;
+  color: $color-text-muted;
+}

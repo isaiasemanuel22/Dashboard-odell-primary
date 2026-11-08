@@ -2,7 +2,7 @@
   #trigger
   type="button"
   class="fp-trigger"
-  [class.fp-trigger--active]="activeCount() > 0"
+  [class.fp-trigger--active]="activeCount() > 0 || open()"
   cdkOverlayOrigin
   #origin="cdkOverlayOrigin"
   aria-haspopup="dialog"

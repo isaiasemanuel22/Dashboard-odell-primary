@@ -11,7 +11,7 @@
       [label]="'Carrito (' + cartItemCount + ')'"
       variant="secondary"
       format="soft"
-      routerLink="/ventas/nueva"
+      (clicked)="openCart.emit()"
     />
     <db-button
       label="Actualizar precios"

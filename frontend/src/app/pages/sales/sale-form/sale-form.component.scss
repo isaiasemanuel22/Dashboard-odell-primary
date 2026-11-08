@@ -92,15 +92,26 @@
     flex: none;
   }
 
+  // Especificidad por encima de `.modal input:not(...)` de los estilos globales.
+  .sale-d & input[type='search']:not([hidden]),
   input {
     flex: 1;
     min-width: 0;
+    height: auto;
+    padding: 0;
     border: 0;
+    border-radius: 0;
     outline: 0;
+    box-shadow: none;
     background: transparent;
     font-family: inherit;
     font-size: 14px;
     color: $color-text;
+  }
+
+  .sale-d & input[type='search']:not([hidden]):focus {
+    border: 0;
+    box-shadow: none;
   }
 }
 

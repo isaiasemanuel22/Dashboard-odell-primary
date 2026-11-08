@@ -36,6 +36,7 @@ export class ProductsToolbarComponent {
   @Output() newCategory = new EventEmitter<void>();
   @Output() newProduct = new EventEmitter<void>();
   @Output() updatePrices = new EventEmitter<void>();
+  @Output() openCart = new EventEmitter<void>();
 
   get panelGroups(): FilterPanelGroup[] {
     return this.groupsFor({

@@ -250,7 +250,7 @@ export class FormDialogService {
           this.open(
             CategoryFormDialogComponent,
             { presetProductType },
-            'sm',
+            'md',
             { ariaLabel: 'Nueva categoría' },
           ),
       ),
@@ -279,7 +279,7 @@ export class FormDialogService {
         ({
           ImpresoFormDialogComponent,
         }): Observable<ImpresoWithCost | undefined> =>
-          this.open(ImpresoFormDialogComponent, { impreso }, 'md', {
+          this.open(ImpresoFormDialogComponent, { impreso }, 'ml', {
             ariaLabel: impreso ? 'Editar impreso' : 'Nuevo impreso',
           }),
       ),

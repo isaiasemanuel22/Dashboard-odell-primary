@@ -117,6 +117,21 @@
   }
 }
 
+// Peligro sólido (RdPatrones §2): rojo con texto blanco. Se suma a `delete`
+// con extraClass="db-button--danger-solid" cuando la acción es irreversible.
+.db-button--solid.db-button--delete.db-button--danger-solid {
+  border-color: $color-error;
+  background: $color-error;
+  color: #fff;
+
+  &:hover:not(:disabled) {
+    background: $color-error;
+    border-color: $color-error;
+    color: #fff;
+    opacity: 0.9;
+  }
+}
+
 .db-button--solid.db-button--primary-outline {
   @include action-solid-base;
   border: 1px solid $color-border;

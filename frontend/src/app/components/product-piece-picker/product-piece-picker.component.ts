@@ -145,7 +145,9 @@ export class ProductPiecePickerComponent implements OnDestroy {
       return;
     }
     if (event.key === 'Escape') {
+      // Cierra solo el desplegable: el modal no debe pedir «Descartar cambios».
       event.preventDefault();
+      event.stopPropagation();
       this.close();
     }
   }

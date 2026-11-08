@@ -163,6 +163,9 @@ export class OrderFormLineComponent implements OnInit {
   @Input({ required: true }) line!: OrderLineDraft;
   @Input({ required: true }) lineIndex!: number;
   @Input() variant: OrderFormLineVariant = 'order';
+  /** El padre intentó guardar: se muestran los errores aunque no se haya tocado el campo. */
+  @Input() showErrors = false;
+  private unitPriceTouched = false;
   @Input() products: Product[] = [];
   @Input() serviceTypeOptions: Array<{ value: ServiceType; label: string }> = [];
   @Input() paperTypeOptions: DbSelectOption[] = [];
@@ -418,6 +421,7 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   get unitPriceError(): string {
+    if (!this.showErrors && !this.unitPriceTouched) return '';
     if (isLineBlank(this.line)) return '';
     return orderLineUnitPriceError(this.line);
   }
@@ -891,6 +895,7 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   onEditableUnitPriceChange(raw: number | string): void {
+    this.unitPriceTouched = true;
     // El usuario edita precio de lista; limpiar listUnitPrice para no descontar 2 veces.
     this.line.listUnitPrice = undefined;
     if (this.isDesign()) {
