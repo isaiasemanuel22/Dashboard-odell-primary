@@ -31,6 +31,10 @@
   max-width: 480px;
 }
 
+.cdk-overlay-pane.form-dialog-panel--ml {
+  max-width: 560px;
+}
+
 .cdk-overlay-pane.form-dialog-panel.form-dialog-panel--customer {
   max-width: 600px !important;
 
@@ -82,6 +86,10 @@
 
   &--md {
     max-width: 480px;
+  }
+
+  &--ml {
+    max-width: 560px;
   }
 
   &--lg {
@@ -142,6 +150,73 @@
   flex-shrink: 0;
 }
 
+/* Cruz de cierre de los modales: 40 px, como RdPatrones §1. */
+.modal__header .db-button--icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex: none;
+  border-radius: 10px;
+  color: $color-text-muted;
+
+  &:hover:not(:disabled) {
+    background: $color-surface-subtle;
+  }
+}
+
+/* Pie gris a ancho completo (RdPatrones §1 y §2). Solo desktop: en mobile
+   el pie sigue siendo el de la hoja. */
+.modal__footer:empty {
+  display: none;
+}
+
+@include mobile.desktop-only {
+  .modal.modal--bar {
+    overflow: hidden;
+
+    &:not(.modal--confirm) > .modal__body {
+      padding-bottom: 0;
+    }
+
+    /* Pie dentro del formulario: se estira hasta los bordes del modal. */
+    .db-form-footer,
+    .wallet-form__footer {
+      margin: 0.25rem -1.5rem 0;
+      padding: 14px 1.5rem;
+      border-top: 1px solid $color-divider;
+      background: $color-surface-inset;
+    }
+
+    > .modal__footer--bar:not(:empty) {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 1.5rem;
+      border-top: 1px solid $color-divider;
+      background: $color-surface-inset;
+    }
+  }
+
+  .modal--confirm {
+    > .modal__header {
+      display: none;
+    }
+
+    > .modal__body {
+      padding: 1.5rem 1.5rem 1.25rem;
+    }
+
+    /* Si el pie vive dentro del formulario, compensa el padding de abajo. */
+    .wallet-form__footer {
+      margin-bottom: -1.25rem;
+    }
+  }
+}
+
 @include mobile.mobile-only {
   .form-dialog-backdrop {
     background: rgba(15, 42, 58, 0.45);
@@ -152,6 +227,7 @@
   .cdk-overlay-pane.form-dialog-panel.form-dialog-panel--quote,
   .cdk-overlay-pane.form-dialog-panel--sm,
   .cdk-overlay-pane.form-dialog-panel--md,
+  .cdk-overlay-pane.form-dialog-panel--ml,
   .cdk-overlay-pane.form-dialog-panel--lg,
   .cdk-overlay-pane.form-dialog-panel--xl {
     width: 100% !important;
@@ -176,6 +252,7 @@
   .cdk-overlay-pane.form-dialog-panel .modal,
   .cdk-overlay-pane.form-dialog-panel .modal--sm,
   .cdk-overlay-pane.form-dialog-panel .modal--md,
+  .cdk-overlay-pane.form-dialog-panel .modal--ml,
   .cdk-overlay-pane.form-dialog-panel .modal--lg,
   .cdk-overlay-pane.form-dialog-panel .modal--xl {
     max-width: 100%;
@@ -206,6 +283,10 @@
 
   .cdk-overlay-pane.form-dialog-panel .modal__header {
     flex: none;
+  }
+
+  .cdk-overlay-pane.form-dialog-panel .modal__footer:empty {
+    display: none;
   }
 
   /* El cuerpo scrollea; el pie queda fijo al final de la hoja. */

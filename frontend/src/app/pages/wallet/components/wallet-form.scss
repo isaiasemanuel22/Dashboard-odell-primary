@@ -63,6 +63,15 @@
         opacity: 1;
       }
     }
+
+    ::ng-deep .db-button--solid.db-button--delete {
+      min-height: 52px;
+      width: 100%;
+      border: none;
+      white-space: nowrap;
+      font-size: 14px;
+      padding: 0 10px;
+    }
   }
 
   input.db-input:not([type='checkbox']):not([type='radio']):not([type='hidden']):not([type='file']):not([type='range']):not([type='color']),
@@ -339,6 +348,41 @@
 .wallet-summary--supply {
   border-color: $color-primary;
   background: linear-gradient(135deg, rgba(99, 102, 241, 0.06) 0%, rgba(139, 92, 246, 0.04) 100%);
+}
+
+.wallet-summary--payback {
+  border: 0;
+  border-radius: 10px;
+  padding: 12px 14px;
+  background: $color-status-success-bg;
+
+  .wallet-summary__label {
+    font-size: 0.875rem;
+    font-weight: 400;
+    color: $color-status-success-text;
+  }
+
+  .wallet-summary__amount {
+    font-size: 1.25rem;
+    color: $color-status-success-text;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.wallet-form__section-head--debtor {
+  h4 {
+    font-size: 1rem;
+  }
+
+  p {
+    margin-top: 0.125rem;
+    font-size: 0.875rem;
+    color: $color-text-muted;
+
+    strong {
+      color: $color-text;
+    }
+  }
 }
 
 .wallet-summary__label {

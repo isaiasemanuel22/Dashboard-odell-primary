@@ -1,27 +1,26 @@
-<app-form-modal title="Anular registro" size="md" (close)="closed.emit()">
+<app-form-modal
+  title="Anular movimiento"
+  size="md"
+  [footerBar]="true"
+  [confirm]="true"
+  (close)="closed.emit()"
+>
   <form class="wallet-form form" (ngSubmit)="submitVoid()" novalidate>
-    <section class="wallet-form__section">
-      <div class="wallet-form__section-head">
-        <h4>{{ expense.name }}</h4>
-        <p>
-          Monto:
-          <strong>{{ expense.amount | currencyArs }}</strong>
-          · Anular no borra el historial: deja el movimiento tachado con el motivo.
-        </p>
-      </div>
-
-      <db-form-grid>
-        <db-form-grid-full>
-          <db-input
-            label="Motivo"
-            [(ngModel)]="reason"
-            name="voidReason"
-            [required]="true"
-            placeholder="Ej: cargado dos veces"
-          />
-        </db-form-grid-full>
-      </db-form-grid>
-    </section>
+    <app-confirm-lead tone="danger" title="¿Anular este movimiento?">
+      <p>
+        {{ expense.name }} · {{ expense.amount | currencyArs }}. Anular no
+        borra el historial: deja el movimiento tachado con el motivo.
+      </p>
+      <ng-container ngProjectAs="[confirmFields]">
+        <db-input
+          label="Motivo"
+          [(ngModel)]="reason"
+          name="voidReason"
+          [required]="true"
+          placeholder="Ej: cargado dos veces"
+        />
+      </ng-container>
+    </app-confirm-lead>
 
     @if (formError) {
       <p class="wallet-form__error" role="alert">{{ formError }}</p>
@@ -36,8 +35,8 @@
         (clicked)="closed.emit()"
       />
       <db-button
-        [label]="saving ? 'Anulando...' : 'Anular'"
-        variant="primary"
+        [label]="saving ? 'Anulando...' : 'Anular movimiento'"
+        variant="delete"
         format="solid"
         buttonType="submit"
         [disabled]="saving"

@@ -40,7 +40,8 @@ export interface QuoteDocumentExportDialogData {
   template: `
     <app-form-dialog-shell
       [title]="title"
-      size="sm"
+      size="md"
+      [footerBar]="true"
       (close)="close()"
     >
       <p class="quote-export__message">
@@ -51,58 +52,33 @@ export interface QuoteDocumentExportDialogData {
         <p class="quote-export__error" role="alert">{{ error }}</p>
       }
 
-      <div class="quote-export__actions">
-        <db-button
-          label="Cancelar"
-          variant="secondary"
-          format="soft"
-          [disabled]="!!exporting"
-          (clicked)="close()"
-        />
-        <db-button
-          [label]="exporting === 'png' ? 'Generando…' : 'Descargar PNG'"
-          variant="primary-outline"
-          format="soft"
-          [disabled]="!!exporting || !ready"
-          (clicked)="exportAs('png')"
-        />
-        <db-button
-          [label]="exporting === 'pdf' ? 'Generando…' : 'Descargar PDF'"
-          variant="primary"
-          format="solid"
-          [disabled]="!!exporting || !ready"
-          (clicked)="exportAs('pdf')"
-        />
-      </div>
+      <db-button
+        modalFooter
+        label="Cancelar"
+        variant="secondary"
+        format="soft"
+        [disabled]="!!exporting"
+        (clicked)="close()"
+      />
+      <db-button
+        modalFooter
+        [label]="exporting === 'png' ? 'Generando…' : 'Descargar PNG'"
+        variant="primary-outline"
+        format="soft"
+        [disabled]="!!exporting || !ready"
+        (clicked)="exportAs('png')"
+      />
+      <db-button
+        modalFooter
+        [label]="exporting === 'pdf' ? 'Generando…' : 'Descargar PDF'"
+        variant="primary"
+        format="solid"
+        [disabled]="!!exporting || !ready"
+        (clicked)="exportAs('pdf')"
+      />
     </app-form-dialog-shell>
   `,
-  styles: `
-    .quote-export__message {
-      margin: 0 0 1rem;
-      font-size: 0.95rem;
-      line-height: 1.5;
-      color: var(--color-text, #0f172a);
-    }
-
-    .quote-export__error {
-      margin: 0 0 1rem;
-      font-size: 0.875rem;
-      color: #b91c1c;
-    }
-
-    .quote-export__busy {
-      margin: 0.75rem 0 0;
-      font-size: 0.85rem;
-      color: var(--color-text-muted, #64748b);
-    }
-
-    .quote-export__actions {
-      display: flex;
-      justify-content: flex-end;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-    }
-  `,
+  styleUrl: './quote-document-export-dialog.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class QuoteDocumentExportDialogComponent implements OnInit {

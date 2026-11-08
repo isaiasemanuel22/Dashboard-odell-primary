@@ -1,7 +1,12 @@
-<app-form-modal title="Registrar devolución" size="md" (close)="closed.emit()">
+<app-form-modal
+  title="Registrar devolución"
+  size="ml"
+  [footerBar]="true"
+  (close)="closed.emit()"
+>
   <form class="wallet-form form" (ngSubmit)="submitRepayment()" novalidate>
     <section class="wallet-form__section">
-      <div class="wallet-form__section-head">
+      <div class="wallet-form__section-head wallet-form__section-head--debtor">
         <h4>{{ debtor.name }}</h4>
         <p>
           Deuda pendiente:
@@ -27,20 +32,22 @@
           [required]="true"
         />
 
-        <db-input
-          label="Monto a devolver"
-          type="number"
-          min="1"
-          step="1"
-          [(ngModel)]="repaymentAmount"
-          name="repaymentAmount"
-          placeholder="0"
-          [required]="true"
-          (ngModelChange)="onRepaymentAmountChange()"
-        />
+        <db-form-grid-full>
+          <db-input
+            label="Monto a devolver"
+            type="number"
+            min="1"
+            step="1"
+            [(ngModel)]="repaymentAmount"
+            name="repaymentAmount"
+            placeholder="0"
+            [required]="true"
+            (ngModelChange)="onRepaymentAmountChange()"
+          />
+        </db-form-grid-full>
       </db-form-grid>
 
-      <div class="wallet-summary wallet-summary--income">
+      <div class="wallet-summary wallet-summary--payback">
         <span class="wallet-summary__label">Ingreso a registrar</span>
         <strong class="wallet-summary__amount">
           {{ repaymentAmount | currencyArs }}
