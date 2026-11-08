@@ -42,6 +42,10 @@ import {
   settingsSnapshot,
 } from '../settings-unsaved-changes';
 import { GeneralValuesProfileEditorComponent } from './general-values-profile-editor/general-values-profile-editor.component';
+import {
+  mergeMachineProfilesPreservingDirty,
+  selectDirtyMachineProfilesForSave,
+} from './machine-profiles-dirty.util';
 
 @Component({
   selector: 'app-general-values',
@@ -121,6 +125,10 @@ export class GeneralValuesComponent
   selectedProfileId: string | null = null;
   openMenuId: string | null = null;
   private savedCoreSnapshot = '';
+  /** Perfiles tal como vinieron del store (última emisión). */
+  private profilesSnapshot: MachineProfile[] = [];
+  /** Ids con ediciones locales aún no guardadas. */
+  private dirtyProfileIds = new Set<string>();
 
   readonly profileFilters: { value: 'all' | ProductType; label: string }[] = [
     { value: 'all', label: 'Todos' },
@@ -154,8 +162,22 @@ export class GeneralValuesComponent
     this.realtimeSyncEnabled = this.realtime.isSyncEnabled();
     this.settingsSub = this.settingsService.watchGeneralSettings().subscribe((settings) => {
       if (!settings || this.saving || this.savingProfiles) return;
-      this.settings = structuredClone(settings);
-      this.settings.errorMarginPercent ??= 0;
+      const incoming = structuredClone(settings);
+      incoming.errorMarginPercent ??= 0;
+      this.profilesSnapshot = structuredClone(incoming.machineProfiles);
+
+      if (this.settings && this.dirtyProfileIds.size > 0) {
+        this.settings = {
+          ...incoming,
+          machineProfiles: mergeMachineProfilesPreservingDirty(
+            incoming.machineProfiles,
+            this.settings.machineProfiles,
+            this.dirtyProfileIds,
+          ),
+        };
+      } else {
+        this.settings = incoming;
+      }
       this.captureCoreBaseline();
     });
     this.settingsService.getGeneralSettings(false).subscribe();
@@ -169,6 +191,7 @@ export class GeneralValuesComponent
 
   hasUnsavedChanges(): boolean {
     if (!this.settings) return false;
+    if (this.dirtyProfileIds.size > 0) return true;
     if (this.selectedProfileId) return true;
     return this.coreSnapshot() !== this.savedCoreSnapshot;
   }
@@ -233,6 +256,7 @@ export class GeneralValuesComponent
   }
 
   closeProfileEditor(): void {
+    this.discardSelectedProfileEdits();
     this.selectedProfileId = null;
   }
 
@@ -310,11 +334,15 @@ export class GeneralValuesComponent
   saveMachineProfiles(): void {
     if (!this.settings) return;
 
-    const profiles = this.settings.machineProfiles.filter((profile) =>
-      profile.name.trim(),
+    const profiles = selectDirtyMachineProfilesForSave(
+      this.settings.machineProfiles,
+      this.dirtyProfileIds,
     );
     if (profiles.length === 0) {
-      this.message = 'Agregá al menos un perfil con nombre';
+      this.message =
+        this.dirtyProfileIds.size > 0
+          ? 'Agregá un nombre al perfil antes de guardar'
+          : 'No hay cambios de perfiles para guardar';
       return;
     }
 
@@ -332,21 +360,34 @@ export class GeneralValuesComponent
     forkJoin(requests).subscribe({
       next: (savedProfiles) => {
         if (this.settings) {
-          const savedIds = new Set(savedProfiles.map((profile) => profile.id));
-          const untouched = this.settings.machineProfiles.filter(
-            (profile) =>
-              !profile.name.trim() && !savedIds.has(profile.id),
-          );
+          let nextProfiles = [...this.settings.machineProfiles];
+          profiles.forEach((oldProfile, index) => {
+            const saved = savedProfiles[index];
+            const idx = nextProfiles.findIndex((p) => p.id === oldProfile.id);
+            if (idx >= 0) {
+              nextProfiles[idx] = saved;
+            }
+            this.dirtyProfileIds.delete(oldProfile.id);
+            if (this.selectedProfileId === oldProfile.id) {
+              this.selectedProfileId = saved.id;
+            }
+          });
           this.settings = {
             ...this.settings,
-            machineProfiles: [...savedProfiles, ...untouched],
+            machineProfiles: nextProfiles,
           };
+          // Snapshot = perfiles ya persistidos (sin dirty restantes).
+          this.profilesSnapshot = structuredClone(
+            nextProfiles.filter((p) => !this.dirtyProfileIds.has(p.id)),
+          );
         }
         this.savingProfiles = false;
         this.message = 'Perfiles de máquina guardados';
         if (
           this.selectedProfileId &&
-          !this.settings?.machineProfiles.some((profile) => profile.id === this.selectedProfileId)
+          !this.settings?.machineProfiles.some(
+            (profile) => profile.id === this.selectedProfileId,
+          )
         ) {
           this.selectedProfileId = null;
         }
@@ -374,17 +415,19 @@ export class GeneralValuesComponent
 
   addMachineProfile(): void {
     if (!this.settings) return;
+    const id = `tmp-mp-${Date.now()}`;
     this.settings.machineProfiles = [
       ...this.settings.machineProfiles,
       {
-        id: `tmp-mp-${Date.now()}`,
+        id,
         name: '',
         role: MachineProfileRole.PRINT,
         watts: 0,
         costPerHour: 0,
       },
     ];
-    this.selectedProfileId = this.settings.machineProfiles.at(-1)?.id ?? null;
+    this.dirtyProfileIds.add(id);
+    this.selectedProfileId = id;
   }
 
   removeMachineProfile(id: string): void {
@@ -392,6 +435,7 @@ export class GeneralValuesComponent
     if (!confirm('¿Eliminar este perfil de máquina?')) return;
 
     if (this.selectedProfileId === id) this.selectedProfileId = null;
+    this.dirtyProfileIds.delete(id);
     if (this.isTemporaryProfile(id)) {
       this.settings.machineProfiles = this.settings.machineProfiles.filter(
         (profile) => profile.id !== id,
@@ -403,6 +447,9 @@ export class GeneralValuesComponent
       next: () => {
         if (!this.settings) return;
         this.settings.machineProfiles = this.settings.machineProfiles.filter(
+          (profile) => profile.id !== id,
+        );
+        this.profilesSnapshot = this.profilesSnapshot.filter(
           (profile) => profile.id !== id,
         );
         if (this.selectedProfileId === id) this.selectedProfileId = null;
@@ -444,8 +491,20 @@ export class GeneralValuesComponent
     return id.startsWith('tmp-mp-');
   }
 
+  onProfileChange(updated: MachineProfile): void {
+    if (!this.settings) return;
+    this.dirtyProfileIds.add(updated.id);
+    this.settings = {
+      ...this.settings,
+      machineProfiles: this.settings.machineProfiles.map((item) =>
+        item.id === updated.id ? updated : item,
+      ),
+    };
+  }
+
   onCostBaseChange(profile: MachineProfile, enabled: boolean): void {
     if (!this.settings) return;
+    this.dirtyProfileIds.add(profile.id);
     this.settings = {
       ...this.settings,
       machineProfiles: this.settings.machineProfiles.map((item) => {
@@ -458,11 +517,37 @@ export class GeneralValuesComponent
           item.productType === profile.productType &&
           item.costBase
         ) {
+          this.dirtyProfileIds.add(item.id);
           return { ...item, costBase: false };
         }
         return item;
       }),
     };
+  }
+
+  /** Al cancelar: restaurar el perfil seleccionado desde el snapshot del store. */
+  private discardSelectedProfileEdits(): void {
+    if (!this.settings || !this.selectedProfileId) return;
+    const id = this.selectedProfileId;
+    if (!this.dirtyProfileIds.has(id)) return;
+
+    const snap = this.profilesSnapshot.find((profile) => profile.id === id);
+    if (snap) {
+      this.settings = {
+        ...this.settings,
+        machineProfiles: this.settings.machineProfiles.map((profile) =>
+          profile.id === id ? structuredClone(snap) : profile,
+        ),
+      };
+    } else {
+      this.settings = {
+        ...this.settings,
+        machineProfiles: this.settings.machineProfiles.filter(
+          (profile) => profile.id !== id,
+        ),
+      };
+    }
+    this.dirtyProfileIds.delete(id);
   }
 
   private toMachineProfilePayload(

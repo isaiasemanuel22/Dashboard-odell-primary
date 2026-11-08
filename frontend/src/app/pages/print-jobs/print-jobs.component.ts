@@ -72,10 +72,13 @@ import {
   WorkBoardColumnConfig,
   serviceTypeLabel,
 } from '../../shared/constants/labels';
+import { BLOCKED_REASON_SUPPLIES } from '../../shared/constants/print-job-failure.constants';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
+import { canMovePrintJob } from '../../shared/utils/can-move-print-job.util';
 import { designatedArea } from '../../shared/utils/service-type.util';
 import { formatOrderMobileDeliveryLabel } from '../../shared/utils/order.helpers';
 import { FormDialogService } from '../../modals/public-api';
+import type { TaskDetailDialogResult } from '../../modals/task-detail-dialog.component';
 import { countPrintJobMobileFilters } from '../../modals/print-job-filters-sheet.component';
 import {
   priorityTierClass,
@@ -248,19 +251,14 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
 
   /** Misma regla que el tablero: admin o responsable (el backend valida). */
   canMovePrinterJob(job: PrintJob): boolean {
-    const profile = this.userAccess.peekCurrentUser();
-    if (!profile) return false;
-    // Auth deshabilitada en local: /me responde { authenticated: false }.
-    if ('authenticated' in profile && profile.authenticated === false) {
-      return true;
-    }
-    if (!('isAdmin' in profile)) return false;
-    if (profile.isAdmin) return true;
-    return !!profile.firebaseUid && profile.firebaseUid === job.responsibleUserId;
+    return canMovePrintJob(job, this.userAccess.peekCurrentUser());
   }
 
   readonly canMovePrinterJobFn = (job: PrintJob): boolean =>
     this.canMovePrinterJob(job);
+
+  /** Evita abrir el detalle al soltar un arrastre en el tablero. */
+  private boardDragMoved = false;
 
   setViewMode(mode: PrintJobsViewMode): void {
     if (this.viewMode === mode) return;
@@ -347,8 +345,58 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
   }
 
   onPrinterDetail(job: PrintJob): void {
-    if (!job.orderId) return;
-    void this.router.navigate(['/pedidos', job.orderId]);
+    this.openTaskDetail(job);
+  }
+
+  onBoardDragStarted(): void {
+    this.boardDragMoved = false;
+  }
+
+  onBoardDragMoved(): void {
+    this.boardDragMoved = true;
+  }
+
+  onBoardCardClick(job: PrintJob, event: MouseEvent): void {
+    if (this.boardDragMoved) {
+      this.boardDragMoved = false;
+      return;
+    }
+    const target = event.target as HTMLElement | null;
+    if (target?.closest('a, button, db-button')) return;
+    this.openTaskDetail(job);
+  }
+
+  openTaskDetail(job: PrintJob): void {
+    this.formDialogs.openTaskDetail(job).subscribe((result) => {
+      this.handleTaskDetailResult(result);
+    });
+  }
+
+  private handleTaskDetailResult(
+    result: TaskDetailDialogResult | undefined,
+  ): void {
+    if (!result?.refreshed) return;
+    if (result.notice) {
+      this.statusNotice = result.notice;
+    }
+    this.loadJobs({ silent: true });
+    if (this.viewMode === 'printer') {
+      this.loadPrinterQueue();
+    }
+    this.showStockWarnings(result.stockWarnings);
+    this.cdr.markForCheck();
+  }
+
+  private showStockWarnings(warnings?: string[]): void {
+    if (!warnings?.length) return;
+    this.formDialogs
+      .openConfirm({
+        title: 'Aviso de stock',
+        message: warnings.join('\n'),
+        confirmLabel: 'Entendido',
+        alertOnly: true,
+      })
+      .subscribe();
   }
 
   onReplaceSupply(job: PrintJob): void {
@@ -652,6 +700,12 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
     return job.status === PrintJobStatus.BLOQUEADO;
   }
 
+  isSupplyBlocked(job: PrintJob): boolean {
+    return (
+      this.isJobBlocked(job) && job.blockedReason === BLOCKED_REASON_SUPPLIES
+    );
+  }
+
   isJobOverdue(job: PrintJob): boolean {
     if (
       job.status === PrintJobStatus.TERMINADO ||
@@ -792,7 +846,7 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
     if (this.updating) return;
     this.closeMobileJobActions();
     if (action.kind === 'detail') {
-      void this.router.navigate(['/pedidos', job.orderId]);
+      this.openTaskDetail(job);
       return;
     }
     if (action.kind === 'add') {
@@ -812,7 +866,7 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
   private moveJobToStatus(job: PrintJob, targetStatus: PrintJobStatus): void {
     if (job.status === targetStatus && job.active) return;
 
-    const apply = (): void => {
+    const apply = (opts?: { blockedReason?: string }): void => {
       const fromBacklog = this.isBacklogJob(job);
       if (fromBacklog) {
         this.backlogJobs = this.backlogJobs.filter((j) => j.id !== job.id);
@@ -825,7 +879,14 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
         ...this.boardColumns[targetStatus],
         { ...job, active: true, status: targetStatus },
       ]);
-      this.persistMove(job, targetStatus, true, fromBacklog);
+      this.persistMove(
+        job,
+        targetStatus,
+        true,
+        fromBacklog,
+        undefined,
+        opts?.blockedReason,
+      );
     };
 
     this.requestStatusMove(job, targetStatus, apply);
@@ -903,8 +964,8 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
     const job = event.previousContainer.data[event.previousIndex];
     const fromBacklog = event.previousContainer.id === this.backlogListId;
 
-    this.requestStatusMove(job, targetStatus, () => {
-      this.applyBoardMove(event, job, targetStatus, fromBacklog);
+    this.requestStatusMove(job, targetStatus, (opts) => {
+      this.applyBoardMove(event, job, targetStatus, fromBacklog, opts?.blockedReason);
     });
   }
 
@@ -913,6 +974,7 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
     job: PrintJob,
     targetStatus: PrintJobStatus,
     fromBacklog: boolean,
+    blockedReason?: string,
   ): void {
     transferArrayItem(
       event.previousContainer.data,
@@ -921,7 +983,14 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
       event.currentIndex,
     );
 
-    this.persistMove(job, targetStatus, true, fromBacklog);
+    this.persistMove(
+      job,
+      targetStatus,
+      true,
+      fromBacklog,
+      undefined,
+      blockedReason,
+    );
   }
 
   private offerSupplyReplacement(
@@ -960,18 +1029,29 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
 
   /**
    * Terminado y cancelado no salen de su columna sin confirmación.
-   * Si el usuario cierra el diálogo, no se toca el tablero ni se persiste.
+   * Bloqueado exige motivo. Si el usuario cancela, no se toca el tablero.
    */
   private requestStatusMove(
     job: PrintJob,
     targetStatus: PrintJobStatus,
-    apply: () => void,
+    apply: (opts?: { blockedReason?: string }) => void,
   ): void {
+    const continueMove = (): void => {
+      if (
+        targetStatus === PrintJobStatus.BLOQUEADO &&
+        job.status !== PrintJobStatus.BLOQUEADO
+      ) {
+        this.promptBlockedReason(apply);
+        return;
+      }
+      apply();
+    };
+
     if (
       job.status === PrintJobStatus.TERMINADO &&
       targetStatus !== PrintJobStatus.TERMINADO
     ) {
-      this.confirmReopenFinished(job, targetStatus, apply);
+      this.confirmReopenFinished(job, targetStatus, continueMove);
       return;
     }
 
@@ -979,11 +1059,32 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
       job.status === PrintJobStatus.CANCELADO &&
       targetStatus !== PrintJobStatus.CANCELADO
     ) {
-      this.confirmReturnToCirculation(job, targetStatus, apply);
+      this.confirmReturnToCirculation(job, targetStatus, continueMove);
       return;
     }
 
-    apply();
+    continueMove();
+  }
+
+  private promptBlockedReason(
+    apply: (opts?: { blockedReason?: string }) => void,
+  ): void {
+    this.formDialogs
+      .openPrompt({
+        title: 'Bloquear tarea',
+        message: 'Indicá el motivo del bloqueo.',
+        inputLabel: 'Motivo del bloqueo',
+        confirmLabel: 'Bloquear',
+        cancelLabel: 'Cancelar',
+        confirmVariant: 'delete',
+        required: true,
+        maxLength: 255,
+      })
+      .subscribe((reason) => {
+        const trimmed = reason?.trim();
+        if (!trimmed) return;
+        apply({ blockedReason: trimmed.slice(0, 255) });
+      });
   }
 
   private confirmReopenFinished(
@@ -1087,10 +1188,14 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
     active: boolean,
     fromBacklog: boolean,
     replacements?: SupplyReplacementChoice[],
+    blockedReason?: string,
   ): void {
     const previous = { ...job };
     job.active = active;
     job.status = status;
+    if (blockedReason) {
+      job.blockedReason = blockedReason;
+    }
 
     this.updating = true;
     this.markPrinterQueueStale();
@@ -1100,16 +1205,20 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
         status,
         active,
         ...(replacements ? { supplyReplacements: replacements } : {}),
+        ...(blockedReason ? { blockedReason } : {}),
       })
       .subscribe({
         next: (updated) => {
           this.orderStatusByOrderId[job.orderId] = updated.orderStatus;
-          this.statusNotice = `Pedido ${job.orderId} → ${ORDER_STATUS_LABELS[updated.orderStatus]}`;
+          this.statusNotice = job.orderId
+            ? `Pedido ${job.orderId} → ${ORDER_STATUS_LABELS[updated.orderStatus]}`
+            : 'Tarea actualizada';
           this.updating = false;
           this.loadJobs({ silent: true });
           if (this.viewMode === 'printer') {
             this.loadPrinterQueue();
           }
+          this.showStockWarnings(updated.stockWarnings);
         },
         error: (err) => {
           this.updating = false;

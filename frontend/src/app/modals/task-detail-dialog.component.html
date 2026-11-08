@@ -1,0 +1,336 @@
+<app-form-dialog-shell
+  [title]="shellTitle"
+  [subtitle]="shellSubtitle"
+  size="lg"
+  (close)="cancel()"
+>
+  <div class="td">
+    @if (taskKindLabel) {
+      <span class="td__kind">{{ taskKindLabel }}</span>
+    }
+
+    <div class="td__line">
+      @if (job.orderId) {
+        <button type="button" class="td__order" (click)="goToOrder()">
+          #{{ job.orderId }}
+        </button>
+      } @else {
+        <span class="td__order td__order--muted">Interna</span>
+      }
+      <span class="td__delivery">{{ deliveryLine }}</span>
+      <db-status-badge
+        [statusClass]="job.status"
+        [label]="job.status | printJobStatusLabel"
+      />
+    </div>
+
+    @if (isBlocked) {
+      <div class="td__blocked" role="status">
+        <div class="td__blocked-text">
+          Bloqueada
+          @if (job.blockedReason) {
+            <span>· {{ job.blockedReason }}</span>
+          }
+        </div>
+        @if (canEdit) {
+          @if (isSupplyBlock) {
+            <db-button
+              label="Reemplazar insumo"
+              variant="secondary"
+              format="soft"
+              [disabled]="saving"
+              (clicked)="onReplaceSupply()"
+            />
+          } @else {
+            <db-button
+              label="Desbloquear"
+              variant="secondary"
+              format="soft"
+              [disabled]="saving"
+              (clicked)="onUnblock()"
+            />
+          }
+        }
+      </div>
+    }
+
+    @if (error) {
+      <p class="td__error" role="alert">{{ error }}</p>
+    }
+    @if (successNotice) {
+      <p class="td__ok" role="status">{{ successNotice }}</p>
+    }
+
+    @if (loading) {
+      <p class="td__loading">Cargando detalle…</p>
+    } @else {
+      <div class="td__fields">
+        @if (showPrinterField) {
+          <db-select
+            label="Impresora"
+            name="taskPrinter"
+            [options]="printerOptions"
+            [(ngModel)]="printerId"
+            [disabled]="!canEdit || saving"
+          />
+        }
+        <db-select
+          label="Responsable"
+          name="taskResponsible"
+          [options]="responsibleOptions"
+          [(ngModel)]="responsibleUserId"
+          [disabled]="!canEdit || saving"
+        />
+        <db-select
+          label="Prioridad"
+          name="taskPriority"
+          [options]="priorityOptions"
+          [(ngModel)]="priority"
+          [disabled]="!canEdit || saving"
+        />
+        <db-input
+          label="Horas reales"
+          type="number"
+          name="taskActualHours"
+          [(ngModel)]="actualHours"
+          [min]="0"
+          [step]="0.1"
+          [hint]="estimatedHint"
+          [readonly]="!canEdit"
+          [disabled]="saving"
+        />
+      </div>
+
+      @if (showFailureSection) {
+        <section class="td__card td__card--failure">
+          <div class="td__card-head">
+            <h4>Registrar impresión fallida</h4>
+            <p class="td__aside">Calibrá tu margen de error con datos reales</p>
+          </div>
+          <div class="td__fail-grid">
+            <db-input
+              label="Piezas fallidas"
+              type="number"
+              name="failPieces"
+              [(ngModel)]="failurePieces"
+              [min]="1"
+              [step]="1"
+              [disabled]="saving"
+            />
+            <db-input
+              label="Gramos perdidos"
+              type="number"
+              name="failGrams"
+              [(ngModel)]="failureGrams"
+              [min]="0"
+              [step]="0.1"
+              [disabled]="saving"
+            />
+            <db-input
+              label="Horas perdidas"
+              type="number"
+              name="failHours"
+              [(ngModel)]="failureHours"
+              [min]="0"
+              [step]="0.1"
+              [disabled]="saving"
+            />
+            <db-select
+              label="Motivo"
+              name="failReason"
+              [options]="failureReasonOptions"
+              [(ngModel)]="failureReason"
+              [disabled]="saving"
+            />
+          </div>
+          <db-checkbox
+            name="failReprint"
+            [label]="reprintQueueLabel"
+            [(ngModel)]="failureReprint"
+            [disabled]="saving"
+          />
+          <div class="td__fail-actions">
+            <db-button
+              label="Registrar falla"
+              variant="secondary"
+              format="soft"
+              [disabled]="saving"
+              (clicked)="onRegisterFailure()"
+            />
+          </div>
+          @if (failures.length) {
+            <ul class="td__fail-list">
+              @for (entry of failures; track entry.id) {
+                <li>
+                  <span>{{ formatFailureDate(entry.at) }}</span>
+                  <span>{{ entry.pieces }} p · {{ formatDecimalHours(entry.grams) }} g</span>
+                  <span>{{ failureReasonLabel[entry.reason] }}</span>
+                  <span>{{ formatCurrencyArs(entry.cost) }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </section>
+      }
+
+      @if (showConsumptionCard || showFailureStats) {
+      <div
+        class="td__pair"
+        [class.td__pair--single]="!(showConsumptionCard && showFailureStats)"
+      >
+        @if (showConsumptionCard) {
+          <section class="td__card">
+            <h4>{{ consumptionTitle }}</h4>
+            @if (job.consumedAt) {
+              @if (discountedConsumption.length) {
+                <ul class="td__cons">
+                  @for (line of discountedConsumption; track line.name + line.kind) {
+                    <li>
+                      <span class="td__cons-text">
+                        <span class="td__cons-name">{{ line.name }}</span>
+                        @if (line.requirementLabel) {
+                          <span class="td__cons-sub">{{ line.requirementLabel }}</span>
+                        }
+                      </span>
+                      <span>−{{ formatSupplyQuantity(line.quantity, line.unit) }}</span>
+                    </li>
+                  }
+                </ul>
+                @if (mainMaterialRemaining; as rem) {
+                  <p class="td__remain">
+                    Le quedan a {{ rem.name }}:
+                    {{ formatSupplyQuantity(rem.remaining ?? 0, rem.unit) }}
+                  </p>
+                }
+              } @else {
+                <p class="td__empty">{{ consumptionEmptyMessage }}</p>
+              }
+              @if (unlinkedConsumption.length) {
+                <ul class="td__cons td__cons--muted">
+                  @for (line of unlinkedConsumption; track line.name + line.kind) {
+                    <li>
+                      <span class="td__cons-text">
+                        <span class="td__cons-name">{{ line.name }}</span>
+                      </span>
+                      <span>−{{ formatSupplyQuantity(line.quantity, line.unit) }}</span>
+                    </li>
+                  }
+                </ul>
+              }
+            } @else if (consumption.length) {
+              <ul class="td__cons">
+                @for (line of consumption; track line.name + line.kind) {
+                  <li [class.td__cons-item--muted]="!line.supplyId">
+                    <span class="td__cons-text">
+                      <span class="td__cons-name">{{ line.name }}</span>
+                      @if (line.requirementLabel) {
+                        <span class="td__cons-sub">{{ line.requirementLabel }}</span>
+                      }
+                    </span>
+                    <span>−{{ formatSupplyQuantity(line.quantity, line.unit) }}</span>
+                  </li>
+                }
+              </ul>
+              @if (mainMaterialRemaining; as rem) {
+                <p class="td__remain">
+                  Le quedan a {{ rem.name }}:
+                  {{ formatSupplyQuantity(rem.remaining ?? 0, rem.unit) }}
+                </p>
+              }
+            } @else {
+              <p class="td__empty">{{ consumptionEmptyMessage }}</p>
+            }
+          </section>
+        }
+
+        @if (showFailureStats) {
+          <section class="td__card">
+            <h4>Fallas de los últimos 30 días</h4>
+            @if (failureStats; as stats) {
+              <dl class="td__stats">
+                <div>
+                  <dt>Impresiones</dt>
+                  <dd>{{ stats.prints }}</dd>
+                </div>
+                <div>
+                  <dt>Fallidas</dt>
+                  <dd>
+                    {{ stats.failed }}
+                    @if (stats.failedPercent != null) {
+                      · {{ formatDecimalHours(stats.failedPercent) }}%
+                    }
+                  </dd>
+                </div>
+                <div>
+                  <dt>Material perdido</dt>
+                  <dd>
+                    {{ formatDecimalHours(stats.lostGrams) }} g ·
+                    {{ formatCurrencyArs(stats.lostCost) }}
+                  </dd>
+                </div>
+              </dl>
+              @if (showMarginSuggestion) {
+                <p class="td__suggest">
+                  Tu margen de error está en
+                  {{ formatDecimalHours(stats.errorMarginPercent) }}%. Sugerimos
+                  {{ formatDecimalHours(stats.suggestedPercent ?? 0) }}%.
+                  <button type="button" class="td__link" (click)="goToSettingsMargin()">
+                    Actualizar en Ajustes
+                  </button>
+                </p>
+              } @else if (stats.suggestedPercent == null) {
+                <p class="td__suggest td__suggest--muted">
+                  Todavía no hay suficientes impresiones para sugerir un margen.
+                </p>
+              }
+            } @else {
+              <p class="td__empty">No se pudieron cargar las estadísticas</p>
+            }
+          </section>
+        }
+      </div>
+      }
+
+      <db-textarea
+        label="Notas de la tarea"
+        name="taskNotes"
+        [(ngModel)]="notes"
+        [readonly]="!canEdit"
+        [disabled]="saving"
+      />
+    }
+
+    <div class="td__footer">
+      <div class="td__footer-left">
+        @if (showReturnToBlocked) {
+          <db-button
+            label="Devolver a Bloqueado"
+            variant="secondary"
+            format="soft"
+            extraClass="td__danger"
+            [disabled]="saving"
+            (clicked)="onReturnToBlocked()"
+          />
+        }
+      </div>
+      <div class="td__footer-right">
+        <db-button
+          label="Cancelar"
+          variant="secondary"
+          format="soft"
+          [disabled]="saving"
+          (clicked)="cancel()"
+        />
+        @if (canEdit) {
+          <db-button
+            label="Guardar"
+            variant="primary"
+            format="solid"
+            [disabled]="saving || loading"
+            (clicked)="onSave()"
+          />
+        }
+      </div>
+    </div>
+  </div>
+</app-form-dialog-shell>

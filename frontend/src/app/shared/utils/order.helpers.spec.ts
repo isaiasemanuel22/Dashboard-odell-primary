@@ -1,5 +1,6 @@
 import { ServiceType } from '../../core/models';
 import {
+  formatOrderMobileDeliveryLabel,
   isLineBlank,
   isLineValid,
   isValidLineQuantity,
@@ -7,6 +8,7 @@ import {
   lineUnitPriceError,
   lineValidationMessage,
   pluralize,
+  toDateInputValue,
 } from './order.helpers';
 import { discountValidationMessage } from './discount.util';
 import type { OrderLineDraft } from '../../core/models';
@@ -85,5 +87,21 @@ describe('B9 order line validations', () => {
     expect(pluralize(0, 'tarea', 'tareas')).toBe('0 tareas');
     expect(pluralize(1, 'tarea', 'tareas')).toBe('1 tarea');
     expect(pluralize(2, 'entrega', 'entregas')).toBe('2 entregas');
+  });
+});
+
+describe('due date calendar day', () => {
+  it('formatOrderMobileDeliveryLabel usa YYYY-MM-DD sin corrimiento de zona', () => {
+    const label = formatOrderMobileDeliveryLabel(
+      '2026-11-14T00:00:00.000Z',
+      false,
+    );
+    expect(label).toContain('14/11');
+    expect(label).not.toContain('13/11');
+  });
+
+  it('toDateInputValue toma el día del ISO sin convertir zona', () => {
+    expect(toDateInputValue('2026-11-14T00:00:00.000Z')).toBe('2026-11-14');
+    expect(toDateInputValue('2026-11-14T18:00:00.000Z')).toBe('2026-11-14');
   });
 });

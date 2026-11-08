@@ -137,6 +137,7 @@
               (cancelEdit)="closeProfileEditor()"
               (save)="saveMachineProfiles()"
               (remove)="removeMachineProfile(profile.id)"
+              (profileChange)="onProfileChange($event)"
               (costBaseChange)="onCostBaseChange(profile, $event)"
             />
           </db-mobile-sheet>
@@ -298,6 +299,7 @@
               [saving]="savingProfiles"
               (cancelEdit)="closeProfileEditor()"
               (save)="saveMachineProfiles()"
+              (profileChange)="onProfileChange($event)"
               (costBaseChange)="onCostBaseChange(profile, $event)"
             />
           }

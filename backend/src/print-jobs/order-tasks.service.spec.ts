@@ -1067,4 +1067,48 @@ describe('OrderTasksService', () => {
     expect(warnings2).toEqual([]);
     expect(store.supplies[0].quantity).toBe(qtyAfter);
   });
+
+  it('describeConsumption usa el nombre del insumo y etiqueta de requisito', () => {
+    store.products[0] = {
+      ...store.products[0],
+      filamentType: FilamentType.PLA,
+      grams: 20,
+      filaments: [{ id: 'ff-1', filamentType: FilamentType.PLA, grams: 20 }],
+    } as Product3D;
+    store.supplies.push({
+      id: 'sup-rojo',
+      name: 'QA-Filamento PLA Rojo edit',
+      category: SupplyCategory.FDM,
+      filamentType: FilamentType.PLA,
+      unit: 'kg',
+      quantity: 0.1,
+      minStock: 0,
+      unitPrice: 10000,
+      priceFromSettings: false,
+      updatedAt: new Date().toISOString(),
+    });
+    const job = productionJob(PrintJobStatus.POR_HACER);
+    job.failures = [
+      {
+        id: 'f1',
+        at: new Date().toISOString(),
+        pieces: 1,
+        grams: 5,
+        hours: 0.1,
+        reason: 'despegue',
+        cost: 1,
+      },
+    ];
+    store.printJobs.push(job);
+
+    const lines = service.describeConsumption(job);
+    const material = lines.find((line) => line.kind === 'material');
+    const failure = lines.find((line) => line.kind === 'failure');
+
+    expect(material?.name).toBe('QA-Filamento PLA Rojo edit');
+    expect(material?.requirementLabel).toMatch(/por unidad/i);
+    expect(material?.quantity).toBeCloseTo(0.02, 5);
+    expect(failure?.name).toBe('Más lo perdido en fallas');
+    expect(failure?.supplyId).toBe('sup-rojo');
+  });
 });

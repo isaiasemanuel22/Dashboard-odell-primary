@@ -3,9 +3,13 @@ import { StoreService } from '../store/store.service';
 import { StorePersistenceService } from '../store/store-persistence.service';
 import { StoreChangeService } from '../store/store-change.service';
 import { GeneralSettings } from '../common/interfaces';
-import { ServiceType } from '../common/enums';
+import { MachineProfileRole, ProductType, ServiceType } from '../common/enums';
 import { normalizePaperReferenceSheets } from '../common/paper-cost.util';
 import { DEFAULT_WHOLESALE_DISCOUNT } from './wholesale-discount.util';
+import {
+  mapSettingsFromDb,
+  mapSettingsToDb,
+} from '../store/mappers/settings.mapper';
 
 describe('SettingsService.patchGeneralSettings', () => {
   const baseSettings = (): GeneralSettings => ({
@@ -120,6 +124,80 @@ describe('SettingsService.patchGeneralSettings', () => {
     service.removeFilamentPrice(price.id);
     service.removeFilamentType(typed.id);
     expect(service.getGeneralSettings().filamentTypes).toHaveLength(0);
+  });
+
+  it('conserva campos nuevos de machine profile en PATCH y roundtrip DB', () => {
+    const service = createService(baseSettings());
+    const created = service.addMachineProfile({
+      name: 'A1 #1',
+      role: MachineProfileRole.PRINT,
+      watts: 120,
+      costPerHour: 150,
+      productType: ProductType.FDM,
+    });
+
+    const patched = service.updateMachineProfile(created.id, {
+      queueEnabled: true,
+      costBase: true,
+      workHoursPerDay: 14,
+      workWeekdays: [1, 2, 3, 4, 5],
+      workStartHour: '09:30',
+      amsType: 'AMS lite',
+      amsSlots: ['color-1', null, 'color-2', null],
+    });
+
+    expect(patched.queueEnabled).toBe(true);
+    expect(patched.costBase).toBe(true);
+    expect(patched.workHoursPerDay).toBe(14);
+    expect(patched.workWeekdays).toEqual([1, 2, 3, 4, 5]);
+    expect(patched.workStartHour).toBe('09:30');
+    expect(patched.amsType).toBe('AMS lite');
+    expect(patched.amsSlots).toEqual(['color-1', null, 'color-2', null]);
+
+    const fromGet = service
+      .getGeneralSettings()
+      .machineProfiles.find((profile) => profile.id === created.id);
+    expect(fromGet?.queueEnabled).toBe(true);
+    expect(fromGet?.costBase).toBe(true);
+    expect(fromGet?.workHoursPerDay).toBe(14);
+    expect(fromGet?.workWeekdays).toEqual([1, 2, 3, 4, 5]);
+    expect(fromGet?.workStartHour).toBe('09:30');
+    expect(fromGet?.amsType).toBe('AMS lite');
+    expect(fromGet?.amsSlots).toEqual(['color-1', null, 'color-2', null]);
+
+    const dbRow = mapSettingsToDb(service.getGeneralSettings());
+    const roundTrip = mapSettingsFromDb({
+      electricityCostPerKwh: dbRow.electricityCostPerKwh,
+      laborCostPerHour: dbRow.laborCostPerHour,
+      modelingRatePerHour: dbRow.modelingRatePerHour,
+      graphicDesignRatePerHour: dbRow.graphicDesignRatePerHour,
+      errorMarginPercent: dbRow.errorMarginPercent,
+      profitMargins: dbRow.profitMargins as never,
+      wholesaleDiscount: dbRow.wholesaleDiscount as never,
+      paperPricesPerSqm: dbRow.paperPricesPerSqm as never,
+      paperReferenceSheets: dbRow.paperReferenceSheets as never,
+      powerConsumptions: dbRow.powerConsumptions as never,
+      machineCosts: dbRow.machineCosts as never,
+      processProfiles: dbRow.processProfiles as never,
+      filamentPrices: dbRow.filamentPrices as never,
+      resinPrices: dbRow.resinPrices as never,
+      filamentTypeAverages: dbRow.filamentTypeAverages as never,
+      resinTypeAverages: dbRow.resinTypeAverages as never,
+      colors: dbRow.colors as never,
+      filamentTypes: dbRow.filamentTypes as never,
+      resinTypes: dbRow.resinTypes as never,
+    });
+
+    const fromDb = roundTrip.machineProfiles.find(
+      (profile) => profile.id === created.id,
+    );
+    expect(fromDb?.queueEnabled).toBe(true);
+    expect(fromDb?.costBase).toBe(true);
+    expect(fromDb?.workHoursPerDay).toBe(14);
+    expect(fromDb?.workWeekdays).toEqual([1, 2, 3, 4, 5]);
+    expect(fromDb?.workStartHour).toBe('09:30');
+    expect(fromDb?.amsType).toBe('AMS lite');
+    expect(fromDb?.amsSlots).toEqual(['color-1', null, 'color-2', null]);
   });
 });
 

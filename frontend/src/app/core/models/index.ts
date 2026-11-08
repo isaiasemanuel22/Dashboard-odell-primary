@@ -946,6 +946,38 @@ export interface OrderLineDraft {
   budgetedHours?: number;
 }
 
+export interface PrintJobFailure {
+  id: string;
+  at: string;
+  userId?: string;
+  pieces: number;
+  grams: number;
+  hours: number;
+  reason: 'despegue' | 'enredo' | 'corte_luz' | 'atasco' | 'otro';
+  cost: number;
+}
+
+export interface PrintJobConsumptionLine {
+  supplyId: string | null;
+  name: string;
+  /** Etiqueta del requisito (ej. «PLA · 20 g por unidad»), si aporta. */
+  requirementLabel?: string | null;
+  quantity: number;
+  unit: string;
+  remaining: number | null;
+  kind: 'material' | 'failure';
+}
+
+export interface PrintJobFailureStats {
+  prints: number;
+  failed: number;
+  failedPercent: number | null;
+  lostGrams: number;
+  lostCost: number;
+  errorMarginPercent: number;
+  suggestedPercent: number | null;
+}
+
 export interface PrintJob {
   id: string;
   orderId: string;
@@ -956,6 +988,7 @@ export interface PrintJob {
   /** `''` cuando la tarea interna no tiene área designada. */
   type: ServiceType | '';
   taskKind: TaskKind;
+  quantity?: number;
   status: PrintJobStatus;
   active: boolean;
   priority: number;
@@ -970,6 +1003,19 @@ export interface PrintJob {
   printerId?: string | null;
   /** Orden manual dentro de la cola de esa impresora (0..n-1). */
   queuePosition?: number | null;
+  notes?: string;
+  actualHours?: number | null;
+  /** Si está seteado, `priority` = este valor; si no, se calcula por dueDate. */
+  priorityOverride?: number | null;
+  /** Prioridad por dueDate sin override (API). */
+  calculatedPriority?: number;
+  /** Si true, el sync del pedido no pisa responsibleUserId. */
+  responsibleManual?: boolean;
+  failures?: PrintJobFailure[];
+  /** Id de la tarea original si esta es una reimpresión por falla. */
+  reprintOfJobId?: string | null;
+  /** Momento en que se descontó stock al terminar (una sola vez). */
+  consumedAt?: string | null;
 }
 
 export interface PrinterQueueColorSlot {
@@ -1070,10 +1116,29 @@ export interface UpdatePrintJobPayload {
   status?: PrintJobStatus;
   active?: boolean;
   supplyReplacements?: SupplyReplacementChoice[];
+  notes?: string | null;
+  actualHours?: number | null;
+  priority?: 'alta' | 'normal';
+  blockedReason?: string;
+  responsibleUserId?: string | null;
+}
+
+export interface RegisterPrintJobFailurePayload {
+  pieces: number;
+  grams: number;
+  hours: number;
+  reason: PrintJobFailure['reason'];
+  reprint?: boolean;
+}
+
+export interface PrintJobFailureResult {
+  job: PrintJob;
+  reprint?: PrintJob;
 }
 
 export interface PrintJobUpdateResult extends PrintJob {
   orderStatus: OrderStatus;
+  stockWarnings?: string[];
 }
 
 export interface OrderPriceNotice {

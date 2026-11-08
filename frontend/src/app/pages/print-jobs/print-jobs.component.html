@@ -107,9 +107,19 @@
             [class.cola-m__card--blk]="isJobBlocked(job)"
           >
             <div class="cola-m__ln">
-              <span class="cola-m__oid"
-                >{{ job.orderId }} · {{ job.customerName }}</span
-              >
+              <span class="cola-m__oid">
+                @if (job.orderId) {
+                  {{ job.orderId }}
+                  @if (job.customerName) {
+                    · {{ job.customerName }}
+                  }
+                } @else {
+                  Interna
+                  @if (job.customerName) {
+                    · {{ job.customerName }}
+                  }
+                }
+              </span>
               <div class="cola-m__ln-end">
                 <span
                   class="cola-m__pr"
@@ -136,7 +146,12 @@
                 </button>
               </div>
             </div>
-            <div class="cola-m__tt">{{ jobTitle(job) }}</div>
+            <div class="cola-m__tt">
+              {{ jobTitle(job) }}
+              @if (job.reprintOfJobId) {
+                <span class="cola-m__reprint">Reimpresión</span>
+              }
+            </div>
             @if (jobDetailLine(job); as detail) {
               <div class="cola-m__meta">{{ detail }}</div>
             }
@@ -284,13 +299,20 @@
                     (cdkDropListDropped)="dropOnBacklog($event)"
                   >
                     @for (job of backlogJobs; track job.id) {
-                      <div class="board-card board-card--backlog" cdkDrag [cdkDragData]="job">
+                      <div
+                        class="board-card board-card--backlog"
+                        cdkDrag
+                        [cdkDragData]="job"
+                        (cdkDragStarted)="onBoardDragStarted()"
+                        (cdkDragMoved)="onBoardDragMoved()"
+                        (click)="onBoardCardClick(job, $event)"
+                      >
                         <app-print-job-card
                           cdkDragHandle
                           [job]="job"
                           variant="board"
                           [orderStatus]="orderStatusByOrderId[job.orderId]"
-                          [showReplaceSupply]="isJobBlocked(job)"
+                          [showReplaceSupply]="isSupplyBlocked(job)"
                           [showAddToBoard]="true"
                           [addDisabled]="updating"
                           (replaceSupply)="onReplaceSupply($event)"
@@ -311,13 +333,20 @@
                 (cdkDropListDropped)="dropOnBoard($event, column.status)"
               >
                 @for (job of boardColumns[column.status]; track job.id) {
-                  <div class="board-card" cdkDrag [cdkDragData]="job">
+                  <div
+                    class="board-card"
+                    cdkDrag
+                    [cdkDragData]="job"
+                    (cdkDragStarted)="onBoardDragStarted()"
+                    (cdkDragMoved)="onBoardDragMoved()"
+                    (click)="onBoardCardClick(job, $event)"
+                  >
                     <app-print-job-card
                       cdkDragHandle
                       [job]="job"
                       variant="board"
                       [orderStatus]="orderStatusByOrderId[job.orderId]"
-                      [showReplaceSupply]="isJobBlocked(job)"
+                      [showReplaceSupply]="isSupplyBlocked(job)"
                       (replaceSupply)="onReplaceSupply($event)"
                     />
                   </div>

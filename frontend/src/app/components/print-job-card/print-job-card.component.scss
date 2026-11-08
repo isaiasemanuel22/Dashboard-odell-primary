@@ -125,16 +125,17 @@
     margin-bottom: 0;
   }
 
+  .job-card__top-end {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+  }
+
   .job-card__id {
     font-size: 0.75rem;
     font-weight: 700;
     color: #0e7aab;
     text-decoration: none;
-
-    &:hover {
-      color: #0b5f86;
-      text-decoration: underline;
-    }
   }
 
   .job-card__priority-badge {
@@ -273,6 +274,18 @@
   font-weight: 500;
   padding: 0 0.5rem;
   white-space: nowrap;
+}
+
+.job-card__reprint {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.1rem 0.45rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  color: #6b4f1d;
+  background: #f6edd8;
 }
 
 .job-card__area {

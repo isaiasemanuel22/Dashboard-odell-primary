@@ -2,29 +2,23 @@
   <article [class]="'job-card job-card--board ' + priorityClass">
     <header class="job-card__top">
       @if (job.orderId) {
-        <a [routerLink]="['/pedidos', job.orderId]" class="job-card__id">
-          #{{ job.orderId }}
-        </a>
+        <span class="job-card__id">#{{ job.orderId }}</span>
       } @else {
         <span class="job-card__id">Interna</span>
       }
-      <span class="job-card__priority-badge" [class]="priorityClass">
-        <span class="job-card__priority-icon" aria-hidden="true">⚑</span>
-        {{ priorityLabel }}
-      </span>
+      <div class="job-card__top-end">
+        @if (job.reprintOfJobId) {
+          <span class="job-card__reprint">Reimpresión</span>
+        }
+        <span class="job-card__priority-badge" [class]="priorityClass">
+          <span class="job-card__priority-icon" aria-hidden="true">⚑</span>
+          {{ priorityLabel }}
+        </span>
+      </div>
     </header>
 
     <h3 class="job-card__title">
-      @if (job.orderId) {
-        <a
-          [routerLink]="['/pedidos', job.orderId]"
-          class="job-card__title-link"
-        >
-          {{ job.productName }}
-        </a>
-      } @else {
-        <span class="job-card__title-link">{{ job.productName }}</span>
-      }
+      <span class="job-card__title-link">{{ job.productName }}</span>
     </h3>
 
     @if (job.status === 'bloqueado') {
@@ -95,6 +89,9 @@
         @if (area; as areaType) {
           <db-service-badge [type]="areaType" />
         }
+      }
+      @if (job.reprintOfJobId) {
+        <span class="job-card__reprint">Reimpresión</span>
       }
       <span class="priority-pill">{{ priorityLabel }}</span>
     </div>

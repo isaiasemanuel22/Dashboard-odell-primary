@@ -688,6 +688,8 @@ export interface PrintJobFailure {
 export interface PrintJobConsumptionLine {
   supplyId: string | null;
   name: string;
+  /** Etiqueta del requisito (ej. «PLA · 20 g por unidad»), si aporta. */
+  requirementLabel?: string | null;
   quantity: number;
   unit: string;
   remaining: number | null;
@@ -729,6 +731,8 @@ export interface PrintJob {
   actualHours?: number | null;
   /** Si está seteado, `priority` = este valor; si no, se calcula por dueDate. */
   priorityOverride?: number | null;
+  /** Prioridad por dueDate sin override (solo respuesta API). */
+  calculatedPriority?: number;
   /** Si true, el sync del pedido no pisa responsibleUserId. */
   responsibleManual?: boolean;
   failures?: PrintJobFailure[];
@@ -764,9 +768,9 @@ export interface SupplyShortageReport {
 export interface UpdatePrintJobDto {
   status?: PrintJobStatus;
   active?: boolean;
-  responsibleUserId?: string;
+  responsibleUserId?: string | null;
   supplyReplacements?: SupplyReplacement[];
-  notes?: string;
+  notes?: string | null;
   actualHours?: number | null;
   priority?: 'alta' | 'normal';
   blockedReason?: string;

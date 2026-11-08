@@ -120,7 +120,7 @@ export class PrintJobsController {
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.printJobsService.findOne(id);
+    return this.printJobsService.getOne(id);
   }
 
   @Patch(':id')

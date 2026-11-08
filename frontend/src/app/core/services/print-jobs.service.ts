@@ -9,10 +9,14 @@ import { environment } from '../../../environments/environment';
 import {
   DeliveryEstimate,
   PrintJob,
+  PrintJobConsumptionLine,
+  PrintJobFailureResult,
+  PrintJobFailureStats,
   PrinterCapacity,
   PrinterQueueResponse,
   PrintJobsBoard,
   PrintJobUpdateResult,
+  RegisterPrintJobFailurePayload,
   ServiceType,
   SupplyShortageReport,
   UpdatePrintJobPayload,
@@ -134,10 +138,47 @@ export class PrintJobsService {
     );
   }
 
+  getFailureStats(): Observable<PrintJobFailureStats> {
+    return this.http.get<PrintJobFailureStats>(`${this.baseUrl}/failure-stats`);
+  }
+
+  getConsumption(id: string): Observable<PrintJobConsumptionLine[]> {
+    return this.http.get<PrintJobConsumptionLine[]>(
+      `${this.baseUrl}/${id}/consumption`,
+    );
+  }
+
+  registerFailure(
+    id: string,
+    body: RegisterPrintJobFailurePayload,
+  ): Observable<PrintJobFailureResult> {
+    return this.http
+      .post<{
+        job: PrintJob & { taskType?: string };
+        reprint?: PrintJob & { taskType?: string };
+      }>(`${this.baseUrl}/${id}/failures`, body)
+      .pipe(
+        map((result) => ({
+          job: normalizePrintJob(result.job),
+          reprint: result.reprint
+            ? normalizePrintJob(result.reprint)
+            : undefined,
+        })),
+      );
+  }
+
   getPrintJob(id: string): Observable<PrintJob> {
     return this.http
       .get<PrintJob & { taskType?: string }>(`${this.baseUrl}/${id}`)
       .pipe(map((job) => normalizePrintJob(job)));
+  }
+
+  /** Alias explícito del brief fase 2 (mismo PATCH que updatePrintJob). */
+  updateJob(
+    id: string,
+    patch: UpdatePrintJobPayload,
+  ): Observable<PrintJobUpdateResult> {
+    return this.updatePrintJob(id, patch);
   }
 
   updatePrintJob(
@@ -154,6 +195,9 @@ export class PrintJobsService {
           (result): PrintJobUpdateResult => ({
             ...normalizePrintJob(result),
             orderStatus: result.orderStatus,
+            ...(result.stockWarnings?.length
+              ? { stockWarnings: result.stockWarnings }
+              : {}),
           }),
         ),
       );

@@ -12,16 +12,17 @@
   <db-form-grid>
     <db-input
       label="Equipo"
-      [(ngModel)]="profile.name"
+      [ngModel]="profile.name"
+      (ngModelChange)="setName($event)"
       [name]="'mpName' + profile.id"
       placeholder="Nombre del equipo"
     />
     <db-select
       label="Rol"
-      [(ngModel)]="profile.role"
+      [ngModel]="profile.role"
+      (ngModelChange)="onRoleChange($event)"
       [name]="'mpRole' + profile.id"
       [options]="roleOptions"
-      (ngModelChange)="onRoleChange()"
     />
     <db-select
       label="Tipo de producto"
@@ -33,14 +34,16 @@
     <db-input
       label="Consumo (W)"
       type="number"
-      [(ngModel)]="profile.watts"
+      [ngModel]="profile.watts"
+      (ngModelChange)="setWatts($event)"
       [name]="'mpWatts' + profile.id"
       [min]="0"
     />
     <db-input
       label="Costo máquina ($/h)"
       type="number"
-      [(ngModel)]="profile.costPerHour"
+      [ngModel]="profile.costPerHour"
+      (ngModelChange)="setCostPerHour($event)"
       [name]="'mpCost' + profile.id"
       [min]="0"
     />
@@ -50,14 +53,16 @@
     <div class="wash-grid">
       <db-select
         label="Insumo de lavado"
-        [(ngModel)]="profile.washSupplyId"
+        [ngModel]="profile.washSupplyId"
+        (ngModelChange)="setWashSupplyId($event)"
         [name]="'mpSupply' + profile.id"
         [options]="supplyOptions"
       />
       <db-input
         label="ml por baño"
         type="number"
-        [(ngModel)]="profile.consumptionMl"
+        [ngModel]="profile.consumptionMl"
+        (ngModelChange)="setConsumptionMl($event)"
         [name]="'mpConsumption' + profile.id"
         [min]="0"
         [step]="1"
@@ -65,7 +70,8 @@
       <db-input
         label="Usos por baño"
         type="number"
-        [(ngModel)]="profile.washBathUses"
+        [ngModel]="profile.washBathUses"
+        (ngModelChange)="setWashBathUses($event)"
         [name]="'mpBathUses' + profile.id"
         [min]="0"
         [step]="1"
@@ -100,7 +106,8 @@
         <db-input
           label="Horas por día"
           type="number"
-          [(ngModel)]="profile.workHoursPerDay"
+          [ngModel]="profile.workHoursPerDay"
+          (ngModelChange)="setWorkHoursPerDay($event)"
           [name]="'mpWorkHours' + profile.id"
           [min]="1"
           [max]="24"
@@ -109,7 +116,8 @@
         <db-input
           label="Hora de inicio"
           type="time"
-          [(ngModel)]="profile.workStartHour"
+          [ngModel]="profile.workStartHour"
+          (ngModelChange)="setWorkStartHour($event)"
           [name]="'mpWorkStart' + profile.id"
         />
       </db-form-grid>
@@ -134,7 +142,8 @@
       <db-form-grid>
         <db-input
           label="Tipo de AMS"
-          [(ngModel)]="profile.amsType"
+          [ngModel]="profile.amsType"
+          (ngModelChange)="setAmsType($event)"
           [name]="'mpAmsType' + profile.id"
           placeholder="AMS lite"
         />

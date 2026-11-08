@@ -857,10 +857,10 @@ function localCalendarDay(date: Date): string {
 }
 
 export function toDateInputValue(isoDate: string): string {
+  const day = isoDate.trim().slice(0, 10);
+  if (/^\d{4}-\d{2}-\d{2}$/.test(day)) return day;
   const parsed = new Date(isoDate);
-  if (Number.isNaN(parsed.getTime())) {
-    return isoDate.slice(0, 10);
-  }
+  if (Number.isNaN(parsed.getTime())) return day;
   return localCalendarDay(parsed);
 }
 
@@ -939,12 +939,13 @@ export function orderOverdueDays(
   return Math.max(1, Math.round((today.getTime() - due.getTime()) / 86_400_000));
 }
 
-/** «Entrega dom 8/11» o «Vencía 30/10» si está atrasado. */
+/** «Entrega dom 8/11» o «Vencía 30/10» si está atrasado. Usa YYYY-MM-DD sin zona. */
 export function formatOrderMobileDeliveryLabel(
   dueDate: string,
   overdue: boolean,
 ): string {
-  const date = new Date(dueDate);
+  const raw = dueDate.slice(0, 10);
+  const date = new Date(`${raw}T12:00:00`);
   if (Number.isNaN(date.getTime())) return '';
   const day = date.getDate();
   const month = date.getMonth() + 1;

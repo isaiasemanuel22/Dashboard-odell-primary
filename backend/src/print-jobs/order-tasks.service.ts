@@ -50,6 +50,8 @@ interface MaterialRequirement {
   key: string;
   category: SupplyCategory;
   label: string;
+  /** Texto secundario en consumo (ej. «PLA · 20 g por unidad»). */
+  detailLabel?: string;
   requiredUnits: number;
   coveredNaturally: boolean;
 }
@@ -1000,6 +1002,7 @@ export class OrderTasksService implements OnModuleInit {
               supply.filamentType === line.filamentType &&
               this.supplyMatchesColor(supply, line.colorId),
           ) >= requiredUnits;
+        const perUnitGrams = Math.max(line.grams || 0, 0);
         return {
           key: `fdm:${index}`,
           category: SupplyCategory.FDM,
@@ -1007,6 +1010,11 @@ export class OrderTasksService implements OnModuleInit {
             String(line.filamentType ?? 'Filamento'),
             line.colorId,
             `${requiredUnits} g`,
+          ),
+          detailLabel: this.materialLabel(
+            String(line.filamentType ?? 'Filamento'),
+            line.colorId,
+            `${perUnitGrams} g por unidad`,
           ),
           requiredUnits,
           coveredNaturally,
@@ -1017,6 +1025,7 @@ export class OrderTasksService implements OnModuleInit {
     if (product.type === ProductType.RESINA && product.resinType) {
       const requiredUnits = Math.max(product.grams || 0, 0) * quantity;
       const resin = product;
+      const perUnitMl = Math.max(product.grams || 0, 0);
       const coveredNaturally =
         this.matchingStock(
           SupplyCategory.RESINA,
@@ -1032,6 +1041,11 @@ export class OrderTasksService implements OnModuleInit {
             String(resin.resinType),
             resin.colorId,
             `${requiredUnits} ml`,
+          ),
+          detailLabel: this.materialLabel(
+            String(resin.resinType),
+            resin.colorId,
+            `${perUnitMl} ml por unidad`,
           ),
           requiredUnits,
           coveredNaturally,
@@ -1214,14 +1228,15 @@ export class OrderTasksService implements OnModuleInit {
       const supply = this.resolveSupplyForRequirement(job, requirement);
       const quantity = this.toSupplyQuantity(supply, requirement.requiredUnits);
       const unit = supply?.unit ?? this.defaultUnitForRequirement(requirement);
-      const remaining =
-        supply != null ? Math.max(0, Number(supply.quantity) - quantity) : null;
       lines.push({
         supplyId: supply?.id ?? null,
-        name: requirement.label,
+        name: supply?.name ?? requirement.label,
+        requirementLabel: supply
+          ? this.consumptionRequirementLabel(supply, requirement)
+          : null,
         quantity,
         unit,
-        remaining,
+        remaining: this.consumptionRemaining(job, supply, quantity),
         kind: 'material',
       });
     }
@@ -1242,18 +1257,50 @@ export class OrderTasksService implements OnModuleInit {
       const quantity = this.toSupplyQuantity(supply, failedGrams);
       lines.push({
         supplyId: supply?.id ?? null,
-        name: 'Más lo perdido en fallas',
+        name: supply
+          ? 'Más lo perdido en fallas'
+          : 'Perdido en fallas (sin insumo para descontar)',
+        requirementLabel: null,
         quantity,
         unit: supply?.unit ?? 'g',
-        remaining:
-          supply != null
-            ? Math.max(0, Number(supply.quantity) - quantity)
-            : null,
+        remaining: this.consumptionRemaining(job, supply, quantity),
         kind: 'failure',
       });
     }
 
     return lines;
+  }
+
+  private consumptionRequirementLabel(
+    supply: { name: string },
+    requirement: MaterialRequirement,
+  ): string | null {
+    const detail = (requirement.detailLabel ?? requirement.label)?.trim();
+    if (!detail || detail === supply.name) return null;
+    return detail;
+  }
+
+  /** Si ya se descontó, el stock actual es lo que queda; si no, stock − esta línea. */
+  private consumptionRemaining(
+    job: PrintJob,
+    supply: { quantity: number } | null | undefined,
+    quantity: number,
+  ): number | null {
+    if (supply == null) return null;
+    const stock = Number(supply.quantity);
+    if (!Number.isFinite(stock)) return null;
+    if (job.consumedAt) return Math.max(0, stock);
+    return Math.max(0, stock - quantity);
+  }
+
+  private formatStockWarningAmount(quantity: number, unit: string): string {
+    const amount = Number(quantity);
+    if (!Number.isFinite(amount)) return `0 ${unit}`.trim();
+    const rounded = Math.round(amount * 100) / 100;
+    const text = Number.isInteger(rounded)
+      ? String(rounded)
+      : rounded.toFixed(2).replace(/\.?0+$/, '');
+    return `${text} ${unit}`.trim();
   }
 
   /**
@@ -1274,8 +1321,12 @@ export class OrderTasksService implements OnModuleInit {
       if (!supply) continue;
       const previous = Number(supply.quantity);
       if (previous + 1e-9 < line.quantity) {
+        const missing = this.formatStockWarningAmount(
+          line.quantity - previous,
+          line.unit,
+        );
         warnings.push(
-          `${supply.name}: se descontó hasta 0 (faltaban ${line.quantity - previous} ${line.unit})`,
+          `${supply.name}: se descontó hasta 0 (faltaban ${missing})`,
         );
       }
       supply.quantity = Math.max(0, previous - line.quantity);

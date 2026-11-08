@@ -151,5 +151,8 @@ export class IndependentTaskDialogComponent {
 function defaultDueDate(): string {
   const due = new Date();
   due.setDate(due.getDate() + 7);
-  return due.toISOString().slice(0, 10);
+  const year = due.getFullYear();
+  const month = String(due.getMonth() + 1).padStart(2, '0');
+  const day = String(due.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
 }

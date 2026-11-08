@@ -28,6 +28,7 @@ import { CostCalculatorService } from '../settings/cost-calculator.service';
 import { StoreChangeService } from '../store/store-change.service';
 import { StoreService } from '../store/store.service';
 import {
+  calcTaskPriority,
   effectiveTaskPriority,
   priorityOverrideFromDto,
 } from './order-task-estimate';
@@ -70,7 +71,8 @@ export class PrintJobsService {
     return [...this.store.printJobs]
       .filter((job) => this.orderTasks.isVisibleInQueue(job.orderId))
       .filter((job) => !job.archived)
-      .sort((a, b) => b.priority - a.priority);
+      .sort((a, b) => b.priority - a.priority)
+      .map((job) => this.present(job));
   }
 
   getBoard(): PrintJobsBoard {
@@ -92,7 +94,8 @@ export class PrintJobsService {
   findByOrderId(orderId: string): PrintJob[] {
     return this.store.printJobs
       .filter((job) => job.orderId === orderId)
-      .sort((a, b) => a.orderItemIndex - b.orderItemIndex);
+      .sort((a, b) => a.orderItemIndex - b.orderItemIndex)
+      .map((job) => this.present(job));
   }
 
   supplyShortages(id: string) {
@@ -107,12 +110,25 @@ export class PrintJobsService {
     return this.orderTasks.blockTasksMissingStock();
   }
 
+  /** Referencia mutable del store (uso interno). */
   findOne(id: string): PrintJob {
     const job = this.store.getPrintJobById(id);
     if (!job) {
       throw new NotFoundException(`Trabajo ${id} no encontrado`);
     }
     return job;
+  }
+
+  /** Respuesta de API con prioridad calculada sin override. */
+  getOne(id: string): PrintJob {
+    return this.present(this.findOne(id));
+  }
+
+  private present(job: PrintJob): PrintJob {
+    return {
+      ...job,
+      calculatedPriority: calcTaskPriority(job.dueDate),
+    };
   }
 
   update(
@@ -127,11 +143,19 @@ export class PrintJobsService {
     }
 
     if (dto.notes !== undefined) {
-      job.notes = dto.notes.trim().slice(0, 2000) || undefined;
+      if (dto.notes === null) {
+        job.notes = undefined;
+      } else {
+        job.notes = dto.notes.trim().slice(0, 2000) || undefined;
+      }
     }
 
     if (dto.actualHours !== undefined) {
-      if (dto.actualHours === null) {
+      if (
+        dto.actualHours === null ||
+        (typeof dto.actualHours === 'string' &&
+          String(dto.actualHours).trim() === '')
+      ) {
         job.actualHours = null;
       } else {
         const hours = Number(dto.actualHours);
@@ -175,7 +199,8 @@ export class PrintJobsService {
     }
 
     if (dto.responsibleUserId !== undefined) {
-      const nextResponsible = dto.responsibleUserId.trim() || undefined;
+      const nextResponsible =
+        (dto.responsibleUserId ?? '').trim() || undefined;
       if (nextResponsible !== job.responsibleUserId) {
         this.orderTasks.assertActorCanMove(job, actor);
       }
@@ -225,7 +250,7 @@ export class PrintJobsService {
     });
 
     return {
-      ...job,
+      ...this.present(job),
       orderStatus: order?.status ?? OrderStatus.PENDIENTE,
       ...(stockWarnings.length ? { stockWarnings } : {}),
     };
@@ -298,7 +323,10 @@ export class PrintJobsService {
       },
     });
 
-    return { job, reprint };
+    return {
+      job: this.present(job),
+      reprint: reprint ? this.present(reprint) : undefined,
+    };
   }
 
   failureStats(): PrintJobFailureStats {
@@ -392,18 +420,25 @@ export class PrintJobsService {
         id: job.id,
       },
     });
-    return job;
+    return this.present(job);
   }
 }
 
+/** Misma convención que pedidos (`toOrderDueDate`): día calendario + T18:00Z. */
 function resolveDueDate(value: string | undefined): string {
   const trimmed = value?.trim();
-  if (trimmed && !Number.isNaN(new Date(trimmed).getTime())) {
-    return trimmed;
+  if (trimmed) {
+    const ymd = trimmed.slice(0, 10);
+    if (/^\d{4}-\d{2}-\d{2}$/.test(ymd)) {
+      return new Date(`${ymd}T18:00:00.000Z`).toISOString();
+    }
   }
   const due = new Date();
   due.setDate(due.getDate() + 7);
-  return due.toISOString().slice(0, 10);
+  const year = due.getFullYear();
+  const month = String(due.getMonth() + 1).padStart(2, '0');
+  const day = String(due.getDate()).padStart(2, '0');
+  return new Date(`${year}-${month}-${day}T18:00:00.000Z`).toISOString();
 }
 
 function independentTaskType(

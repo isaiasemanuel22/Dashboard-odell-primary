@@ -272,10 +272,25 @@
 }
 
 .pl-task__title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.35rem;
   font-size: 0.875rem;
   font-weight: 700;
   color: #0f2a3a;
   line-height: 1.3;
+}
+
+.pl-reprint {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.08rem 0.4rem;
+  border-radius: 999px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #6b4f1d;
+  background: #f6edd8;
 }
 
 .pl-task__row {

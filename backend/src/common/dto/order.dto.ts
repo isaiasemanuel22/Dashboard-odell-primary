@@ -95,8 +95,9 @@ export class UpdatePrintJobDto {
   active?: boolean;
 
   @IsOptional()
+  @ValidateIf((_, value) => value !== null)
   @IsString()
-  responsibleUserId?: string;
+  responsibleUserId?: string | null;
 
   @IsOptional()
   @IsArray()
@@ -105,11 +106,14 @@ export class UpdatePrintJobDto {
   supplyReplacements?: SupplyReplacementDto[];
 
   @IsOptional()
+  @ValidateIf((_, value) => value !== null)
   @IsString()
   @MaxLength(2000)
-  notes?: string;
+  notes?: string | null;
 
   @IsOptional()
+  @ValidateIf((_, value) => value !== null && value !== '')
+  @Type(() => Number)
   @IsNumber()
   @Min(0)
   @Max(1000)

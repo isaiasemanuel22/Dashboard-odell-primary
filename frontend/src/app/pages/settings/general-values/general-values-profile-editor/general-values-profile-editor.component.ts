@@ -32,6 +32,8 @@ const WEEKDAY_CHIPS: { value: number; label: string }[] = [
   { value: 0, label: 'D' },
 ];
 
+const DEFAULT_WORK_WEEKDAYS = [1, 2, 3, 4, 5, 6];
+
 @Component({
   selector: 'app-general-values-profile-editor',
   standalone: true,
@@ -62,6 +64,7 @@ export class GeneralValuesProfileEditorComponent {
   @Output() save = new EventEmitter<void>();
   @Output() remove = new EventEmitter<void>();
   @Output() costBaseChange = new EventEmitter<boolean>();
+  @Output() profileChange = new EventEmitter<MachineProfile>();
 
   readonly weekdayChips = WEEKDAY_CHIPS;
 
@@ -91,31 +94,71 @@ export class GeneralValuesProfileEditorComponent {
   }
 
   get amsSlots(): (string | null)[] {
-    const slots = this.profile.amsSlots ?? [null, null, null, null];
-    const padded = slots.slice(0, 4);
-    while (padded.length < 4) padded.push(null);
-    return padded;
+    return this.paddedAmsSlots(this.profile.amsSlots);
   }
 
-  onRoleChange(): void {
+  setName(name: string): void {
+    this.emitProfile({ ...this.profile, name });
+  }
+
+  setWatts(watts: number): void {
+    this.emitProfile({ ...this.profile, watts });
+  }
+
+  setCostPerHour(costPerHour: number): void {
+    this.emitProfile({ ...this.profile, costPerHour });
+  }
+
+  setWashSupplyId(washSupplyId: string): void {
+    this.emitProfile({ ...this.profile, washSupplyId });
+  }
+
+  setConsumptionMl(consumptionMl: number): void {
+    this.emitProfile({ ...this.profile, consumptionMl });
+  }
+
+  setWashBathUses(washBathUses: number): void {
+    this.emitProfile({ ...this.profile, washBathUses });
+  }
+
+  setWorkHoursPerDay(workHoursPerDay: number): void {
+    this.emitProfile(
+      this.withPrintQueueDefaults({ ...this.profile, workHoursPerDay }),
+    );
+  }
+
+  setWorkStartHour(workStartHour: string): void {
+    this.emitProfile(
+      this.withPrintQueueDefaults({ ...this.profile, workStartHour }),
+    );
+  }
+
+  setAmsType(amsType: string): void {
+    this.emitProfile(this.withPrintQueueDefaults({ ...this.profile, amsType }));
+  }
+
+  onRoleChange(role: MachineProfileRole): void {
+    let next: MachineProfile = { ...this.profile, role };
     if (
-      this.isWash &&
-      (this.profile.washBathUses === undefined ||
-        this.profile.washBathUses === null)
+      role === MachineProfileRole.WASH &&
+      (next.washBathUses === undefined || next.washBathUses === null)
     ) {
-      this.profile.washBathUses = 10;
+      next = { ...next, washBathUses: 10 };
     }
-    this.ensurePrintQueueDefaults();
+    this.emitProfile(this.withPrintQueueDefaults(next));
   }
 
   setProductType(value: string): void {
-    this.profile.productType = value ? (value as ProductType) : undefined;
-    this.ensurePrintQueueDefaults();
+    const productType = value ? (value as ProductType) : undefined;
+    this.emitProfile(
+      this.withPrintQueueDefaults({ ...this.profile, productType }),
+    );
   }
 
   setQueueEnabled(enabled: boolean): void {
-    this.ensurePrintQueueDefaults();
-    this.profile.queueEnabled = enabled;
+    this.emitProfile(
+      this.withPrintQueueDefaults({ ...this.profile, queueEnabled: enabled }),
+    );
   }
 
   setCostBase(enabled: boolean): void {
@@ -125,18 +168,20 @@ export class GeneralValuesProfileEditorComponent {
   }
 
   toggleWeekday(day: number): void {
-    this.ensurePrintQueueDefaults();
     const current = new Set(this.profile.workWeekdays ?? []);
     if (current.has(day)) {
       current.delete(day);
     } else {
       current.add(day);
     }
-    this.profile.workWeekdays = [...current].sort((a, b) => a - b);
+    const workWeekdays = [...current].sort((a, b) => a - b);
+    this.emitProfile(
+      this.withPrintQueueDefaults({ ...this.profile, workWeekdays }),
+    );
   }
 
   isWeekdayOn(day: number): boolean {
-    return (this.profile.workWeekdays ?? [1, 2, 3, 4, 5, 6]).includes(day);
+    return (this.profile.workWeekdays ?? DEFAULT_WORK_WEEKDAYS).includes(day);
   }
 
   slotValue(index: number): string {
@@ -144,10 +189,11 @@ export class GeneralValuesProfileEditorComponent {
   }
 
   setSlot(index: number, value: string): void {
-    this.ensurePrintQueueDefaults();
     const slots = [...this.amsSlots];
     slots[index] = value || null;
-    this.profile.amsSlots = slots;
+    this.emitProfile(
+      this.withPrintQueueDefaults({ ...this.profile, amsSlots: slots }),
+    );
   }
 
   slotHex(index: number): string | null {
@@ -156,19 +202,31 @@ export class GeneralValuesProfileEditorComponent {
     return this.colors.find((color) => color.id === id)?.hex ?? null;
   }
 
-  private ensurePrintQueueDefaults(): void {
-    if (!this.showPrintQueue) return;
-    if (this.profile.workHoursPerDay == null) {
-      this.profile.workHoursPerDay = 16;
-    }
-    if (!this.profile.workStartHour) {
-      this.profile.workStartHour = '08:00';
-    }
-    if (!this.profile.workWeekdays?.length) {
-      this.profile.workWeekdays = [1, 2, 3, 4, 5, 6];
-    }
-    if (!this.profile.amsSlots || this.profile.amsSlots.length < 4) {
-      this.profile.amsSlots = this.amsSlots;
-    }
+  private emitProfile(next: MachineProfile): void {
+    this.profileChange.emit(next);
+  }
+
+  private paddedAmsSlots(value?: (string | null)[]): (string | null)[] {
+    const slots = (value ?? [null, null, null, null]).slice(0, 4);
+    while (slots.length < 4) slots.push(null);
+    return slots;
+  }
+
+  private withPrintQueueDefaults(profile: MachineProfile): MachineProfile {
+    const showPrintQueue =
+      profile.role === MachineProfileRole.PRINT &&
+      profile.productType === ProductType.FDM;
+    if (!showPrintQueue) return profile;
+
+    return {
+      ...profile,
+      workHoursPerDay:
+        profile.workHoursPerDay == null ? 16 : profile.workHoursPerDay,
+      workStartHour: profile.workStartHour || '08:00',
+      workWeekdays: profile.workWeekdays?.length
+        ? profile.workWeekdays
+        : [...DEFAULT_WORK_WEEKDAYS],
+      amsSlots: this.paddedAmsSlots(profile.amsSlots),
+    };
   }
 }

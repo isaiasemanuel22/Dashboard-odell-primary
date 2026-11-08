@@ -1,3 +1,12 @@
+/** Misma regla que backend `calcTaskPriority(dueDate)`. */
+export function calcTaskPriority(dueDate: string): number {
+  const days =
+    (new Date(dueDate).getTime() - Date.now()) / (1000 * 60 * 60 * 24);
+  if (days <= 3) return 3;
+  if (days <= 7) return 2;
+  return 1;
+}
+
 /** Clase CSS según nivel de prioridad (0 = baja, 3+ = alta). */
 export function priorityTierClass(priority: number): string {
   if (priority >= 3) return 'priority-high';
@@ -12,3 +21,7 @@ export const PRIORITY_TIER_LABELS: Record<string, string> = {
   'priority-normal': 'Normal',
   'priority-low': 'Baja',
 };
+
+export function priorityTierLabel(priority: number): string {
+  return PRIORITY_TIER_LABELS[priorityTierClass(priority)] ?? 'Normal';
+}

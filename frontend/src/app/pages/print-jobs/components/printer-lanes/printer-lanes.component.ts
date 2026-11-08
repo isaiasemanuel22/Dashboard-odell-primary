@@ -31,6 +31,7 @@ import {
   TaskKind,
 } from '../../../../core/models';
 import { serviceTypeLabel } from '../../../../shared/constants/labels';
+import { BLOCKED_REASON_SUPPLIES } from '../../../../shared/constants/print-job-failure.constants';
 import { designatedArea } from '../../../../shared/utils/service-type.util';
 import {
   formatBusyUntilLabel,
@@ -162,6 +163,13 @@ export class PrinterLanesComponent {
 
   isBlocked(job: PrinterQueueJob): boolean {
     return job.status === PrintJobStatus.BLOQUEADO || !!job.schedule?.blocked;
+  }
+
+  isSupplyBlocked(job: PrinterQueueJob): boolean {
+    return (
+      job.status === PrintJobStatus.BLOQUEADO &&
+      job.blockedReason === BLOCKED_REASON_SUPPLIES
+    );
   }
 
   deliveryLine(job: PrinterQueueJob): {

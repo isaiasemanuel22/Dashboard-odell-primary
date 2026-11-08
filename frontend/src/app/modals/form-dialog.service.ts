@@ -7,12 +7,15 @@ import {
   Customer,
   ImpresoWithCost,
   Order,
+  PrintJob,
   Product,
   ProductType,
   Quote,
   RetailSale,
   Supply,
   SupplyCategory,
+  SupplyReplacementChoice,
+  SupplyShortageReport,
 } from '../core/models';
 import type { CalendarEntry } from '../core/models';
 import { BreakpointService } from '../core/services/breakpoint.service';
@@ -24,7 +27,11 @@ import type {
   IndependentTaskDialogData,
   IndependentTaskDialogResult,
 } from './independent-task-dialog.component';
-import type { SupplyReplacementChoice, SupplyShortageReport } from '../core/models';
+import type {
+  TaskDetailDialogData,
+  TaskDetailDialogResult,
+} from './task-detail-dialog.component';
+import type { PromptDialogData } from './prompt-dialog.component';
 import type { OrderFormDialogData } from './order-form-dialog.component';
 import type { QuoteDocumentExportDialogData } from './quote-document-export-dialog.component';
 import type { CalendarEventDialogData } from './calendar-event-dialog.component';
@@ -316,6 +323,43 @@ export class FormDialogService {
           return ref.closed as Observable<
             IndependentTaskDialogResult | undefined
           >;
+        },
+      ),
+    );
+  }
+
+  openTaskDetail(
+    job: PrintJob,
+  ): Observable<TaskDetailDialogResult | undefined> {
+    return from(import('./task-detail-dialog.component')).pipe(
+      switchMap(
+        ({
+          TaskDetailDialogComponent,
+        }): Observable<TaskDetailDialogResult | undefined> =>
+          this.open<TaskDetailDialogData, TaskDetailDialogResult>(
+            TaskDetailDialogComponent,
+            { job },
+            'lg',
+            {
+              ariaLabel: 'Detalle de tarea',
+              maxWidth: '860px',
+            },
+          ),
+      ),
+    );
+  }
+
+  openPrompt(data: PromptDialogData): Observable<string | undefined> {
+    return from(import('./prompt-dialog.component')).pipe(
+      switchMap(
+        ({ PromptDialogComponent }): Observable<string | undefined> => {
+          const base = this.baseConfig('sm');
+          const ref = this.dialog.open(PromptDialogComponent, {
+            ...base,
+            ariaLabel: data.title,
+            data,
+          });
+          return ref.closed as Observable<string | undefined>;
         },
       ),
     );

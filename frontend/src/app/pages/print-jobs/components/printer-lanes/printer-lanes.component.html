@@ -142,7 +142,12 @@
                     }
                   }
 
-                  <span class="pl-task__title">{{ jobTitle(job) }}</span>
+                  <span class="pl-task__title">
+                    {{ jobTitle(job) }}
+                    @if (job.reprintOfJobId) {
+                      <span class="pl-reprint">Reimpresión</span>
+                    }
+                  </span>
                   <div class="pl-task__row">
                     <span class="pl-sec">{{ jobMetaLine(job) }}</span>
                     @if (job.colors.length) {
@@ -172,14 +177,16 @@
 
                 @if (isBlocked(job)) {
                   <p class="pl-blk-m">{{ job.blockedReason || 'Esperando condición operativa' }}</p>
-                  <db-button
-                    label="Reemplazar insumo"
-                    variant="secondary"
-                    format="soft"
-                    extraClass="pl-replace pl-btn-sm"
-                    [disabled]="updating"
-                    (clicked)="replaceSupply.emit({ job })"
-                  />
+                  @if (isSupplyBlocked(job)) {
+                    <db-button
+                      label="Reemplazar insumo"
+                      variant="secondary"
+                      format="soft"
+                      extraClass="pl-replace pl-btn-sm"
+                      [disabled]="updating"
+                      (clicked)="replaceSupply.emit({ job })"
+                    />
+                  }
                 }
 
                 @if (canMoveJob(job)) {
@@ -274,9 +281,14 @@
                 cdkDragHandle
                 (click)="onCardClick(job)"
               >
-                <span class="pl-task__title">{{ jobTitle(job) }}</span>
-                <div class="pl-task__row">
-                  <span class="pl-sec">{{ unassignedMeta(job) }}</span>
+                <span class="pl-task__title">
+                  {{ jobTitle(job) }}
+                  @if (job.reprintOfJobId) {
+                    <span class="pl-reprint">Reimpresión</span>
+                  }
+                </span>
+                  <div class="pl-task__row">
+                    <span class="pl-sec">{{ unassignedMeta(job) }}</span>
                   @if (job.colors.length) {
                     <span class="pl-swatches" aria-hidden="true">
                       @for (color of job.colors; track color.id) {

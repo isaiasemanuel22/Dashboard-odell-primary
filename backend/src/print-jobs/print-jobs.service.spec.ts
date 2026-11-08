@@ -166,6 +166,15 @@ describe('PrintJobsService.createIndependent', () => {
     expect(job.machine).toBe('Estampado');
   });
 
+  it('guarda dueDate de internas con T18:00Z como los pedidos', () => {
+    const job = service().createIndependent({
+      productName: 'QA-tarea paridad',
+      dueDate: '2026-11-14',
+    });
+
+    expect(job.dueDate).toBe('2026-11-14T18:00:00.000Z');
+  });
+
   it('el DTO acepta área vacía u omitida y rechaza un área desconocida', async () => {
     const empty = await validate(
       plainToInstance(CreateIndependentTaskDto, {
