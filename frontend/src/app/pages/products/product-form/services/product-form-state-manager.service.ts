@@ -265,15 +265,12 @@ export class ProductFormStateManagerService {
     state.description = product.description ?? '';
     this.applySizeFieldsFromString(state, product.size);
     state.cost = product.cost;
-    // Conservar el precio de catálogo al editar (p. ej. solo stock).
-    // Si no hay precio manual guardado, se toma el precio actual como manual
-    // hasta que el usuario lo borre para volver al cálculo automático.
+    // Solo un precio fijo guardado queda como manual; si no, el precio se
+    // recalcula con el costo y el margen vigentes.
     state.suggestedPrice =
       product.suggestedPrice != null && Number(product.suggestedPrice) > 0
         ? Number(product.suggestedPrice)
-        : Number(product.price) > 0
-          ? Number(product.price)
-          : null;
+        : null;
     state.categoryIds = [...product.categoryIds];
 
     const sanitizedImages = sanitizePersistableProductImages(product.images);

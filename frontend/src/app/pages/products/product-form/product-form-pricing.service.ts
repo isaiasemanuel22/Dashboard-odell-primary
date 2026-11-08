@@ -106,10 +106,8 @@ export class ProductFormPricingService {
     this.costBreakdown = input.costBreakdown;
     this.computedPrice = input.computedPrice;
     this.appliedMarginPercent = input.appliedMarginPercent;
-    this.keepCatalogPrice = (input.computedPrice ?? 0) > 0;
-    if (this.keepCatalogPrice) {
-      this.publishCatalogPrice();
-    }
+    // El precio guardado solo se muestra hasta que termina el recálculo.
+    this.keepCatalogPrice = false;
   }
 
   clearPricingState(): void {
