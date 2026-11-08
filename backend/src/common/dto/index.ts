@@ -9,3 +9,5 @@ export * from './treasury.dto';
 export * from './calendar.dto';
 export * from './user-access.dto';
 export * from './dashboard.dto';
+export * from './supplier.dto';
+export * from './spool.dto';

@@ -233,11 +233,73 @@ export interface Supply {
   minStock: number;
   unitPrice: number;
   priceFromSettings: boolean;
+  /** Texto libre legacy; se mantiene sincronizado con el nombre del proveedor. */
   supplier?: string;
+  /** Id de la colección `suppliers`. */
+  supplierId?: string;
+  /** Peso por bobina en gramos (filamentos; default 1000 si null). */
+  spoolGrams?: number | null;
   colorId?: string;
   /** Historial del precio unitario (precio NUEVO en cada cambio). Máx. 50. */
   priceHistory?: SupplyPriceHistoryEntry[];
   updatedAt: string;
+}
+
+export interface Supplier {
+  id: string;
+  name: string;
+  /** Demora de entrega en días hábiles (lun–vie), 0..60. Default 3. */
+  leadTimeBusinessDays: number;
+  contact?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type SpoolLocation =
+  | { kind: 'printer'; printerId: string; slot: number }
+  | { kind: 'shelf'; text: string };
+
+export interface Spool {
+  id: string;
+  /** Código correlativo global, ej. B-01. Nunca se reutiliza. */
+  code: string;
+  supplyId: string;
+  initialGrams: number;
+  remainingGrams: number;
+  location: SpoolLocation;
+  openedAt: string;
+  finishedAt?: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type SupplyMovementReason =
+  | 'task'
+  | 'failure'
+  | 'purchase'
+  | 'purchase_revert'
+  | 'adjust'
+  | 'spool_finish';
+
+export interface SupplyMovement {
+  id: string;
+  supplyId: string;
+  /** Delta en la unidad del supply. */
+  delta: number;
+  /** Delta en gramos cuando aplica (filamento). */
+  grams?: number;
+  reason: SupplyMovementReason;
+  jobId?: string;
+  spoolId?: string;
+  at: string;
+  userId?: string;
+}
+
+export interface ConsumedSpoolLine {
+  spoolId: string;
+  code: string;
+  grams: number;
 }
 
 export interface CostBreakdown {
@@ -685,6 +747,13 @@ export interface PrintJobFailure {
   cost: number;
 }
 
+export interface PrintJobConsumptionSpoolLine {
+  spoolId: string;
+  code: string;
+  grams: number;
+  remainingAfter: number;
+}
+
 export interface PrintJobConsumptionLine {
   supplyId: string | null;
   name: string;
@@ -697,6 +766,8 @@ export interface PrintJobConsumptionLine {
   /** Color del insumo resuelto (catálogo), si aplica. */
   colorId?: string | null;
   colorHex?: string | null;
+  /** Reparto previsto por bobina (dryRun de allocate). */
+  spools?: PrintJobConsumptionSpoolLine[];
 }
 
 export interface PrintJob {
@@ -743,6 +814,8 @@ export interface PrintJob {
   reprintOfJobId?: string | null;
   /** Momento en que se descontó stock al terminar (una sola vez). */
   consumedAt?: string | null;
+  /** Bobinas de las que se descontó al terminar (JSON nullable). */
+  consumedSpools?: ConsumedSpoolLine[];
 }
 
 export interface SupplyReplacement {

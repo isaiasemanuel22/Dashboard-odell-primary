@@ -96,6 +96,7 @@ describe('TreasuryService', () => {
       storeChange as unknown as StoreChangeService,
       new OrderRepository(store),
       new RetailSaleRepository(store),
+      store,
     );
   });
 

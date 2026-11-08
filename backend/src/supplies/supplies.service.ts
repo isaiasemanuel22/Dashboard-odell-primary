@@ -1,7 +1,10 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
+  Optional,
+  forwardRef,
 } from '@nestjs/common';
 import { FilamentType, ResinType, SupplyCategory } from '../common/enums';
 import { Supply } from '../common/interfaces';
@@ -16,6 +19,8 @@ import { assignSupplyBrand } from '../store/brand-link.util';
 import { StoreService } from '../store/store.service';
 import { SupplyRepository } from '../store/repositories';
 import { OrderTasksService } from '../print-jobs/order-tasks.service';
+import { SpoolsService } from '../spools/spools.service';
+import { applyStockChange } from './apply-stock-change.util';
 import { countProductsUsingSupply } from './supply-affected-products.util';
 import {
   appendSupplyPriceHistory,
@@ -25,6 +30,8 @@ import {
   defaultSupplyUnit,
   normalizeSupplyCategory,
 } from './supply-category.util';
+import { syncSupplySupplierText } from './supplier-migration.util';
+import { SuppliesReorderService } from './supplies-reorder.service';
 
 export interface SupplyPriceChangeRow {
   supplyId: string;
@@ -45,6 +52,10 @@ export class SuppliesService {
     private readonly storeChange: StoreChangeService,
     private readonly orderTasks: OrderTasksService,
     private readonly pricingSync: PricingSyncService,
+    private readonly reorderService: SuppliesReorderService,
+    @Optional()
+    @Inject(forwardRef(() => SpoolsService))
+    private readonly spools?: SpoolsService,
   ) {}
 
   findAll(category?: SupplyCategory): Supply[] {
@@ -53,6 +64,10 @@ export class SuppliesService {
 
   findLowStock(): Supply[] {
     return this.supplies.findLowStock();
+  }
+
+  getReorder(now = new Date()) {
+    return this.reorderService.getReorder(now);
   }
 
   findOne(id: string): Supply {
@@ -111,12 +126,41 @@ export class SuppliesService {
         )
       : normalizeSupplyPriceHistory(existing.priceHistory);
 
+    const quantityChanged =
+      data.quantity !== undefined &&
+      Number(data.quantity) !== Number(existing.quantity);
+    if (quantityChanged) {
+      this.spools?.assertStockCoversOpenSpools(
+        existing,
+        Number(merged.quantity),
+      );
+    }
+
     const saved = this.supplies.save({
       ...merged,
       id: existing.id,
+      quantity: quantityChanged
+        ? Number(existing.quantity)
+        : Number(merged.quantity),
       priceHistory,
       updatedAt: new Date().toISOString(),
     });
+
+    if (quantityChanged) {
+      const delta = Number(merged.quantity) - Number(existing.quantity);
+      applyStockChange(this.store, saved, delta, 'adjust');
+      this.supplies.save(saved);
+      this.noteStockChange(Number(existing.quantity), saved);
+      this.storeChange.recordChange({
+        collections: ['supplies', 'supplyMovements'],
+        realtime: {
+          scopes: ['supplies', 'print-jobs', 'dashboard'],
+          action: 'update',
+          entity: 'supply',
+          id: saved.id,
+        },
+      });
+    }
 
     if (unitPriceChanged) {
       this.storeChange.recordChange({
@@ -128,13 +172,6 @@ export class SuppliesService {
         },
       });
       this.pricingSync.syncAllProductsAndOrders('supply_price');
-    }
-
-    if (
-      data.quantity !== undefined &&
-      Number(data.quantity) !== Number(existing.quantity)
-    ) {
-      this.noteStockChange(Number(existing.quantity), saved);
     }
 
     return saved;
@@ -182,7 +219,6 @@ export class SuppliesService {
     }
 
     const existing = this.findOne(supplyId);
-    const nextQuantity = Number(existing.quantity) + delta;
     const unitPrice =
       data.unitPrice !== undefined ? Number(data.unitPrice) : undefined;
     const unitPriceChanged =
@@ -193,17 +229,18 @@ export class SuppliesService {
       ? appendSupplyPriceHistory(existing.priceHistory, unitPrice)
       : normalizeSupplyPriceHistory(existing.priceHistory);
 
-    const saved = this.supplies.save({
-      ...existing,
-      quantity: nextQuantity,
-      ...(unitPriceChanged ? { unitPrice, priceFromSettings: false } : {}),
-      priceHistory,
-      updatedAt: new Date().toISOString(),
-    });
+    if (unitPriceChanged) {
+      existing.unitPrice = unitPrice!;
+      existing.priceFromSettings = false;
+    }
+    existing.priceHistory = priceHistory;
+
+    applyStockChange(this.store, existing, delta, 'purchase');
+    const saved = this.supplies.save(existing);
 
     if (persist) {
       this.storeChange.recordChange({
-        collections: ['supplies'],
+        collections: ['supplies', 'supplyMovements'],
         realtime: {
           scopes: ['supplies', 'print-jobs', 'dashboard'],
           action: 'update',
@@ -350,6 +387,25 @@ export class SuppliesService {
     data: Partial<Supply> & Pick<Supply, 'name'>,
   ): Omit<Supply, 'id' | 'updatedAt'> {
     const category = normalizeSupplyCategory(data.category);
+    let supplierId = data.supplierId?.trim() || undefined;
+    let supplierText = data.supplier?.trim() || undefined;
+
+    if (supplierId) {
+      const linked = this.store.getSupplierById(supplierId);
+      if (!linked) {
+        throw new BadRequestException(`Proveedor ${supplierId} no encontrado`);
+      }
+      supplierText = linked.name;
+    } else if (supplierText) {
+      const byName = this.store.suppliers.find(
+        (s) => s.name.trim().toLowerCase() === supplierText!.toLowerCase(),
+      );
+      if (byName) {
+        supplierId = byName.id;
+        supplierText = byName.name;
+      }
+    }
+
     const supply = {
       name: data.name.trim(),
       category,
@@ -362,11 +418,21 @@ export class SuppliesService {
       minStock: Number(data.minStock) || 0,
       unitPrice: Number(data.unitPrice) || 0,
       priceFromSettings: data.priceFromSettings === true,
-      supplier: data.supplier?.trim() || undefined,
+      supplier: supplierText,
+      supplierId,
+      spoolGrams:
+        data.spoolGrams !== undefined && data.spoolGrams !== null
+          ? Math.trunc(Number(data.spoolGrams)) || undefined
+          : data.spoolGrams === null
+            ? null
+            : undefined,
       colorId: data.colorId,
       priceHistory: normalizeSupplyPriceHistory(data.priceHistory),
     };
     assignSupplyBrand(this.store, supply as Supply);
+    if (supply.supplierId) {
+      syncSupplySupplierText(supply as Supply, this.store.suppliers);
+    }
     return supply;
   }
 }

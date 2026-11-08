@@ -19,6 +19,7 @@ import {
 } from '../common/interfaces';
 import { isDesignPrintConfigured } from '../orders/design-print.util';
 import { ensureMachineProfiles } from '../settings/machine-profile.util';
+import { printerSlotsApi } from '../spools/printer-slots.util';
 import { StoreChangeService } from '../store/store-change.service';
 import { StoreService } from '../store/store.service';
 import { OrderTasksService } from './order-tasks.service';
@@ -445,16 +446,18 @@ export class PrinterQueueService {
 
   private serializeProfile(profile: MachineProfile) {
     const colors = this.store.generalSettings.colors ?? [];
-    const slots = (profile.amsSlots ?? [null, null, null, null]).map((slot) => {
-      if (!slot) return null;
-      const color = findColorById(colors, slot);
-      return color ? { id: color.id, name: color.name, hex: color.hex } : null;
-    });
+    // AMS se deriva de bobinas abiertas (amsSlots del perfil queda sin uso).
+    const amsSlots = printerSlotsApi(
+      profile.id,
+      this.store.spools ?? [],
+      this.store.supplies ?? [],
+      colors,
+    );
     return {
       id: profile.id,
       name: profile.name,
       amsType: profile.amsType ?? null,
-      amsSlots: slots,
+      amsSlots,
       workHoursPerDay: profile.workHoursPerDay ?? 16,
       workWeekdays: profile.workWeekdays ?? [1, 2, 3, 4, 5, 6],
       workStartHour: profile.workStartHour ?? '08:00',

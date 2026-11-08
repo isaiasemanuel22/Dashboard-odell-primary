@@ -1,8 +1,11 @@
 import {
   BadRequestException,
   ForbiddenException,
+  Inject,
   Injectable,
   OnModuleInit,
+  Optional,
+  forwardRef,
 } from '@nestjs/common';
 import {
   OrderStatus,
@@ -13,6 +16,7 @@ import {
   TaskType,
 } from '../common/enums';
 import {
+  ConsumedSpoolLine,
   EstampadoSupplyLine,
   Order,
   OrderItem,
@@ -37,6 +41,9 @@ import {
   isFdmQuoteConfigured,
 } from '../orders/order-fdm-quote.util';
 import { buildProductStockOverview } from '../products/product-stock.util';
+import { SpoolsService } from '../spools/spools.service';
+import { applyStockChange } from '../supplies/apply-stock-change.util';
+import { supplyQuantityToGrams } from '../supplies/supply-units.util';
 import {
   effectiveTaskPriority,
   defaultTaskMachine,
@@ -61,6 +68,9 @@ export class OrderTasksService implements OnModuleInit {
   constructor(
     private readonly store: StoreService,
     private readonly storeChange?: StoreChangeService,
+    @Optional()
+    @Inject(forwardRef(() => SpoolsService))
+    private readonly spools?: SpoolsService,
   ) {}
 
   onModuleInit(): void {
@@ -1229,6 +1239,7 @@ export class OrderTasksService implements OnModuleInit {
       const quantity = this.toSupplyQuantity(supply, requirement.requiredUnits);
       const unit = supply?.unit ?? this.defaultUnitForRequirement(requirement);
       const color = this.consumptionColor(supply);
+      const spools = this.previewSpools(job, supply, requirement.requiredUnits);
       lines.push({
         supplyId: supply?.id ?? null,
         name: supply?.name ?? requirement.label,
@@ -1241,6 +1252,7 @@ export class OrderTasksService implements OnModuleInit {
         kind: 'material',
         colorId: color.colorId,
         colorHex: color.colorHex,
+        spools,
       });
     }
 
@@ -1259,6 +1271,7 @@ export class OrderTasksService implements OnModuleInit {
         : null;
       const quantity = this.toSupplyQuantity(supply, failedGrams);
       const color = this.consumptionColor(supply);
+      const spools = this.previewSpools(job, supply, failedGrams);
       lines.push({
         supplyId: supply?.id ?? null,
         name: supply
@@ -1271,10 +1284,33 @@ export class OrderTasksService implements OnModuleInit {
         kind: 'failure',
         colorId: color.colorId,
         colorHex: color.colorHex,
+        spools,
       });
     }
 
     return lines;
+  }
+
+  private previewSpools(
+    job: PrintJob,
+    supply: Supply | null | undefined,
+    grams: number,
+  ) {
+    if (!supply || !this.spools) return undefined;
+    if (
+      supply.category !== SupplyCategory.FDM &&
+      supply.category !== SupplyCategory.RESINA
+    ) {
+      return undefined;
+    }
+    const result = this.spools.allocate(supply, grams, job, { dryRun: true });
+    if (!result.spools.length) return undefined;
+    return result.spools.map((s) => ({
+      spoolId: s.spoolId,
+      code: s.code,
+      grams: s.grams,
+      remainingAfter: s.remainingAfter,
+    }));
   }
 
   private consumptionColor(supply: Supply | null | undefined): {
@@ -1327,6 +1363,7 @@ export class OrderTasksService implements OnModuleInit {
   /**
    * Descuenta insumos al terminar, una sola vez. No se repone al reabrir.
    * Si el stock no alcanza, deja 0 y agrega un aviso.
+   * Filamento: reparte por bobinas (impresora primero) vía SpoolsService.allocate.
    */
   consumeStockOnce(job: PrintJob): string[] {
     if (job.consumedAt) return [];
@@ -1335,29 +1372,63 @@ export class OrderTasksService implements OnModuleInit {
     const warnings: string[] = [];
     const lines = this.describeConsumption(job);
     const depleted: Supply[] = [];
+    const consumedSpools: ConsumedSpoolLine[] = [];
 
     for (const line of lines) {
       if (!line.supplyId || !(line.quantity > 0)) continue;
       const supply = this.store.getSupplyById(line.supplyId);
       if (!supply) continue;
       const previous = Number(supply.quantity);
-      if (previous + 1e-9 < line.quantity) {
-        const missing = this.formatStockWarningAmount(
-          line.quantity - previous,
-          line.unit,
-        );
-        warnings.push(
-          `${supply.name}: se descontó hasta 0 (faltaban ${missing})`,
-        );
+      const reason = line.kind === 'failure' ? 'failure' : 'task';
+
+      const isFilament =
+        supply.category === SupplyCategory.FDM ||
+        supply.category === SupplyCategory.RESINA;
+
+      if (isFilament && this.spools) {
+        const grams = supplyQuantityToGrams({
+          ...supply,
+          quantity: line.quantity,
+        });
+        const availableGrams = supplyQuantityToGrams(supply);
+        if (availableGrams + 1e-9 < grams) {
+          const missing = this.formatStockWarningAmount(
+            line.quantity - previous,
+            line.unit,
+          );
+          warnings.push(
+            `${supply.name}: se descontó hasta 0 (faltaban ${missing})`,
+          );
+        }
+        const takeGrams = Math.min(grams, availableGrams);
+        const alloc = this.spools.allocate(supply, takeGrams, job, {
+          dryRun: false,
+          reason,
+        });
+        consumedSpools.push(...alloc.consumed);
+      } else {
+        if (previous + 1e-9 < line.quantity) {
+          const missing = this.formatStockWarningAmount(
+            line.quantity - previous,
+            line.unit,
+          );
+          warnings.push(
+            `${supply.name}: se descontó hasta 0 (faltaban ${missing})`,
+          );
+        }
+        const delta = -Math.min(previous, line.quantity);
+        applyStockChange(this.store, supply, delta, reason, { jobId: job.id });
       }
-      supply.quantity = Math.max(0, previous - line.quantity);
-      supply.updatedAt = new Date().toISOString();
-      if (previous > 1e-9 && supply.quantity <= 1e-9) {
+
+      if (previous > 1e-9 && Number(supply.quantity) <= 1e-9) {
         depleted.push(supply);
       }
     }
 
     job.consumedAt = new Date().toISOString();
+    if (consumedSpools.length) {
+      job.consumedSpools = consumedSpools;
+    }
 
     for (const supply of depleted) {
       this.blockTasksForDepletedSupply(supply);
@@ -1366,7 +1437,7 @@ export class OrderTasksService implements OnModuleInit {
 
     if (lines.some((line) => line.supplyId) && this.storeChange) {
       this.storeChange.recordChange({
-        collections: ['supplies', 'printJobs'],
+        collections: ['supplies', 'printJobs', 'spools', 'supplyMovements'],
         realtime: {
           scopes: ['supplies', 'print-jobs', 'orders', 'dashboard'],
           action: 'update',

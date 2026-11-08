@@ -115,6 +115,9 @@ describe('ProductsService', () => {
       quotes: [],
       treasuryExpenses: [],
       calendarEntries: [],
+      suppliers: [],
+      spools: [],
+      supplyMovements: [],
     });
     for (const product of products) {
       store.indexProduct(product);

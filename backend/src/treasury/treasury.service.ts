@@ -27,9 +27,11 @@ import {
   TreasuryOverview,
 } from '../common/interfaces';
 import { SalesService } from '../sales/sales.service';
+import { applyStockChange } from '../supplies/apply-stock-change.util';
 import { SuppliesService } from '../supplies/supplies.service';
 import { appendSupplyPriceHistory } from '../supplies/supply-price-history.util';
 import { StoreChangeService } from '../store/store-change.service';
+import { StoreService } from '../store/store.service';
 import {
   OrderRepository,
   RetailSaleRepository,
@@ -67,6 +69,7 @@ export class TreasuryService {
     private readonly storeChange: StoreChangeService,
     private readonly orders: OrderRepository,
     private readonly retailSales: RetailSaleRepository,
+    private readonly store: StoreService,
   ) {}
 
   getOverview(): TreasuryOverview {
@@ -938,31 +941,33 @@ export class TreasuryService {
       throw new NotFoundException(`Insumo ${supplyId} no encontrado`);
     }
 
-    const nextQuantity = Number(supply.quantity) + Number(quantityDelta);
+    const delta = Number(quantityDelta);
+    const nextQuantity = Number(supply.quantity) + delta;
     if (nextQuantity < -1e-6) {
       throw new BadRequestException(
         'El stock del insumo no alcanza para revertir esta compra',
       );
     }
 
+    const previousQuantity = Number(supply.quantity);
     const price = unitPrice !== undefined ? Number(unitPrice) : undefined;
     const unitPriceChanged =
       price !== undefined &&
       Math.round(price) !== Math.round(Number(supply.unitPrice));
 
-    const saved = this.supplies.save({
-      ...supply,
-      quantity: nextQuantity < 1e-6 ? 0 : nextQuantity,
-      ...(unitPriceChanged
-        ? {
-            unitPrice: price,
-            priceFromSettings: false,
-            priceHistory: appendSupplyPriceHistory(supply.priceHistory, price),
-          }
-        : {}),
-      updatedAt: new Date().toISOString(),
-    });
-    this.suppliesService.noteStockChange(Number(supply.quantity), saved);
+    if (unitPriceChanged) {
+      supply.unitPrice = price!;
+      supply.priceFromSettings = false;
+      supply.priceHistory = appendSupplyPriceHistory(
+        supply.priceHistory,
+        price,
+      );
+    }
+
+    const reason = delta < 0 ? 'purchase_revert' : 'purchase';
+    applyStockChange(this.store, supply, delta, reason);
+    const saved = this.supplies.save(supply);
+    this.suppliesService.noteStockChange(previousQuantity, saved);
   }
 
   private replaceRecord(

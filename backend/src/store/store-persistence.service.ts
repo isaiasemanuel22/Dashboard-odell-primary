@@ -35,12 +35,19 @@ import {
   mapQuoteFromDb,
   mapRetailSaleFromDb,
   mapSettingsFromDb,
+  mapSpoolFromDb,
+  mapSpoolToDb,
+  mapSupplierFromDb,
+  mapSupplierToDb,
   mapSupplyFromDb,
+  mapSupplyMovementFromDb,
+  mapSupplyMovementToDb,
   mapSupplyToDb,
   mapTreasuryExpenseFromDb,
   mapTreasuryExpenseToDb,
 } from './mappers';
 import { adoptLegacyBrandNames } from './brand-link.util';
+import { adoptLegacySuppliers } from '../supplies/supplier-migration.util';
 import { createEmptyState, createSeedState } from './store.seed';
 import { StoreService } from './store.service';
 import { StoreState } from './store.state';
@@ -271,6 +278,39 @@ export class StorePersistenceService
     }
   }
 
+  private async loadSuppliers() {
+    try {
+      return await this.db.supplier.findMany();
+    } catch (error) {
+      this.logger.warn(
+        `No se pudieron cargar proveedores (${this.errorMessage(error)}).`,
+      );
+      return [];
+    }
+  }
+
+  private async loadSpools() {
+    try {
+      return await this.db.spool.findMany();
+    } catch (error) {
+      this.logger.warn(
+        `No se pudieron cargar bobinas (${this.errorMessage(error)}).`,
+      );
+      return [];
+    }
+  }
+
+  private async loadSupplyMovements() {
+    try {
+      return await this.db.supplyMovement.findMany();
+    } catch (error) {
+      this.logger.warn(
+        `No se pudieron cargar movimientos de stock (${this.errorMessage(error)}).`,
+      );
+      return [];
+    }
+  }
+
   private async loadState(): Promise<StoreState> {
     const [
       settingsRow,
@@ -286,6 +326,9 @@ export class StorePersistenceService
       retailSales,
       treasuryExpenses,
       calendarEntries,
+      suppliers,
+      spools,
+      supplyMovements,
     ] = await Promise.all([
       this.db.appSettings.findUnique({ where: { id: 1 } }),
       this.db.brand.findMany(),
@@ -306,6 +349,9 @@ export class StorePersistenceService
       }),
       this.loadTreasuryExpenses(),
       this.loadCalendarEntries(),
+      this.loadSuppliers(),
+      this.loadSpools(),
+      this.loadSupplyMovements(),
     ]);
 
     if (!settingsRow) {
@@ -332,8 +378,14 @@ export class StorePersistenceService
       calendarEntries: calendarEntries.map((row) =>
         mapCalendarEntryFromDb(row),
       ),
+      suppliers: suppliers.map((row) => mapSupplierFromDb(row)),
+      spools: spools.map((row) => mapSpoolFromDb(row)),
+      supplyMovements: supplyMovements.map((row) =>
+        mapSupplyMovementFromDb(row),
+      ),
     };
     adoptLegacyBrandNames(state);
+    adoptLegacySuppliers(state);
     return state;
   }
 
@@ -488,6 +540,72 @@ export class StorePersistenceService
         } catch (error) {
           this.logger.warn(
             `No se pudieron guardar entradas de calendario (${this.errorMessage(error)}).`,
+          );
+        }
+      }
+      if (dirty.has('suppliers')) {
+        try {
+          await this.syncCollection(
+            tx,
+            state.suppliers,
+            (ids) =>
+              tx.supplier.deleteMany({
+                where: { id: { notIn: ids } },
+              }),
+            (row) =>
+              tx.supplier.upsert({
+                where: { id: row.id },
+                create: mapSupplierToDb(row),
+                update: mapSupplierToDb(row),
+              }),
+          );
+        } catch (error) {
+          this.logger.warn(
+            `No se pudieron guardar proveedores (${this.errorMessage(error)}).`,
+          );
+        }
+      }
+      if (dirty.has('spools')) {
+        try {
+          await this.syncCollection(
+            tx,
+            state.spools,
+            (ids) =>
+              tx.spool.deleteMany({
+                where: { id: { notIn: ids } },
+              }),
+            (row) =>
+              tx.spool.upsert({
+                where: { id: row.id },
+                create: mapSpoolToDb(row),
+                update: mapSpoolToDb(row),
+              }),
+          );
+        } catch (error) {
+          this.logger.warn(
+            `No se pudieron guardar bobinas (${this.errorMessage(error)}).`,
+          );
+        }
+      }
+      if (dirty.has('supplyMovements')) {
+        try {
+          await this.syncCollection(
+            tx,
+            state.supplyMovements,
+            (ids) =>
+              tx.supplyMovement.deleteMany({
+                where: { id: { notIn: ids } },
+              }),
+            (row) =>
+              tx.supplyMovement.upsert({
+                where: { id: row.id },
+                create: mapSupplyMovementToDb(row),
+                update: mapSupplyMovementToDb(row),
+              }),
+          );
+        } catch (error) {
+          this.logger.warn(
+            `No se pudieron guardar movimientos de stock (${this.errorMessage(error)}).`,
           );
         }
       }

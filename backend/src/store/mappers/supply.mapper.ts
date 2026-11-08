@@ -16,6 +16,8 @@ export function mapSupplyFromDb(row: {
   unitPrice: number;
   priceFromSettings: boolean;
   supplier: string | null;
+  supplierId?: string | null;
+  spoolGrams?: number | null;
   colorId?: string | null;
   priceHistory?: unknown;
   updatedAt: Date;
@@ -33,6 +35,8 @@ export function mapSupplyFromDb(row: {
     unitPrice: row.unitPrice,
     priceFromSettings: row.priceFromSettings,
     supplier: row.supplier ?? undefined,
+    supplierId: row.supplierId ?? undefined,
+    spoolGrams: row.spoolGrams ?? null,
     colorId: row.colorId ?? undefined,
     priceHistory: normalizeSupplyPriceHistory(fromJson(row.priceHistory ?? [])),
     updatedAt: row.updatedAt.toISOString(),
@@ -53,6 +57,8 @@ export function mapSupplyToDb(supply: Supply) {
     unitPrice: supply.unitPrice,
     priceFromSettings: supply.priceFromSettings,
     supplier: supply.supplier ?? null,
+    supplierId: supply.supplierId ?? null,
+    spoolGrams: supply.spoolGrams ?? null,
     colorId: supply.colorId ?? null,
     priceHistory: toInputJson(
       normalizeSupplyPriceHistory(supply.priceHistory ?? []),

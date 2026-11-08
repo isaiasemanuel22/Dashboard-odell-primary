@@ -402,6 +402,9 @@ export function createRandomSeedState(): StoreState {
     }),
     treasuryExpenses: [],
     calendarEntries: [],
+    suppliers: [],
+    spools: [],
+    supplyMovements: [],
   };
 
   addExtraCustomers(state, run, state.customers.length + 1);

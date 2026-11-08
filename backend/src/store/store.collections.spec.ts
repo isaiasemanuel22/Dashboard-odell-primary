@@ -17,6 +17,16 @@ describe('store.collections', () => {
       'supplies',
       'products',
     ]);
+    expect(collectionsFromPath('/api/suppliers')).toEqual([
+      'suppliers',
+      'supplies',
+    ]);
+    expect(collectionsFromPath('/api/spools')).toEqual([
+      'spools',
+      'supplies',
+      'supplyMovements',
+      'printJobs',
+    ]);
   });
 
   it('incluye todas las colecciones como fallback', () => {

@@ -98,9 +98,35 @@ const PATH_RULES: PathRule[] = [
     },
   },
   {
-    matches: (path) => path.includes('/supplies'),
+    matches: (path) => path.includes('/suppliers'),
     meta: {
-      collections: ['supplies', 'brands', 'printJobs', 'treasuryExpenses'],
+      collections: ['suppliers', 'supplies'],
+      scopes: ['supplies', 'dashboard'],
+      entity: 'supplier',
+    },
+  },
+  {
+    matches: (path) => path.includes('/spools'),
+    meta: {
+      collections: ['spools', 'supplies', 'supplyMovements', 'printJobs'],
+      scopes: ['supplies', 'print-jobs', 'dashboard'],
+      entity: 'spool',
+    },
+  },
+  {
+    // `/suppliers` contiene el prefijo `/supplies`; excluirlo.
+    matches: (path) =>
+      path.includes('/supplies') && !path.includes('/suppliers'),
+    meta: {
+      collections: [
+        'supplies',
+        'brands',
+        'printJobs',
+        'treasuryExpenses',
+        'suppliers',
+        'spools',
+        'supplyMovements',
+      ],
       scopes: ['supplies', 'print-jobs', 'dashboard'],
       entity: 'supply',
     },

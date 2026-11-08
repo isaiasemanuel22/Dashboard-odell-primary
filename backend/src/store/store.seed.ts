@@ -20,6 +20,7 @@ import { StoreState } from './store.state';
 import { Product, Order } from '../common/interfaces';
 import { createDefaultMachineProfiles } from '../settings/machine-profile.util';
 import { ensureOrderStatusHistory } from '../orders/order-status-history.util';
+import { adoptLegacySuppliers } from '../supplies/supplier-migration.util';
 import { DEFAULT_COLOR_CATALOG } from './default-colors.seed';
 import { DEFAULT_FILAMENT_TYPE_CATALOG } from './default-filament-types.seed';
 import { DEFAULT_RESIN_TYPE_CATALOG } from './default-resin-types.seed';
@@ -88,6 +89,9 @@ export function createEmptyState(): StoreState {
     retailSales: [],
     treasuryExpenses: [],
     calendarEntries: [],
+    suppliers: [],
+    spools: [],
+    supplyMovements: [],
   };
 }
 
@@ -1073,7 +1077,11 @@ export function createSeedState(): StoreState {
         updatedAt: '2026-10-01T10:00:00.000Z',
       },
     ],
+    suppliers: [],
+    spools: [],
+    supplyMovements: [],
   };
   adoptLegacyBrandNames(state);
+  adoptLegacySuppliers(state);
   return state;
 }

@@ -11,7 +11,10 @@ export type StoreCollection =
   | 'printJobs'
   | 'retailSales'
   | 'treasuryExpenses'
-  | 'calendarEntries';
+  | 'calendarEntries'
+  | 'suppliers'
+  | 'spools'
+  | 'supplyMovements';
 
 export const ALL_STORE_COLLECTIONS: StoreCollection[] = [
   'settings',
@@ -27,4 +30,7 @@ export const ALL_STORE_COLLECTIONS: StoreCollection[] = [
   'retailSales',
   'treasuryExpenses',
   'calendarEntries',
+  'suppliers',
+  'spools',
+  'supplyMovements',
 ];

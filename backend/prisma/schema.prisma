@@ -120,11 +120,62 @@ model Supply {
   unitPrice         Float    @map("unit_price")
   priceFromSettings Boolean  @default(false) @map("price_from_settings")
   supplier          String?  @db.VarChar(255)
+  supplierId        String?  @map("supplier_id") @db.VarChar(64)
+  spoolGrams        Int?     @map("spool_grams")
   colorId           String?  @map("color_id") @db.VarChar(64)
   priceHistory      Json     @default("[]") @map("price_history")
   updatedAt         DateTime @map("updated_at")
 
+  @@index([supplierId])
   @@map("supplies")
+}
+
+model Supplier {
+  id                     String   @id @db.VarChar(64)
+  name                   String   @db.VarChar(255)
+  leadTimeBusinessDays   Int      @default(3) @map("lead_time_business_days")
+  contact                String?  @db.Text
+  notes                  String?  @db.Text
+  createdAt              DateTime @map("created_at")
+  updatedAt              DateTime @map("updated_at")
+
+  @@map("suppliers")
+}
+
+model Spool {
+  id              String    @id @db.VarChar(64)
+  code            String    @db.VarChar(32)
+  supplyId        String    @map("supply_id") @db.VarChar(64)
+  initialGrams    Float     @map("initial_grams")
+  remainingGrams  Float     @map("remaining_grams")
+  locationKind    String    @map("location_kind") @db.VarChar(16)
+  printerId       String?   @map("printer_id") @db.VarChar(64)
+  slot            Int?
+  shelfText       String?   @map("shelf_text") @db.VarChar(255)
+  openedAt        DateTime  @map("opened_at")
+  finishedAt      DateTime? @map("finished_at")
+  createdAt       DateTime  @map("created_at")
+  updatedAt       DateTime  @map("updated_at")
+
+  @@index([supplyId])
+  @@index([printerId])
+  @@map("spools")
+}
+
+model SupplyMovement {
+  id        String   @id @db.VarChar(64)
+  supplyId  String   @map("supply_id") @db.VarChar(64)
+  delta     Float
+  grams     Float?
+  reason    String   @db.VarChar(32)
+  jobId     String?  @map("job_id") @db.VarChar(64)
+  spoolId   String?  @map("spool_id") @db.VarChar(64)
+  at        DateTime
+  userId    String?  @map("user_id") @db.VarChar(128)
+
+  @@index([supplyId])
+  @@index([at])
+  @@map("supply_movements")
 }
 
 model Impreso {
@@ -330,6 +381,7 @@ model PrintJob {
   failures            String?   @db.Text
   reprintOfJobId      String?   @map("reprint_of_job_id") @db.VarChar(64)
   consumedAt          DateTime? @map("consumed_at")
+  consumedSpools      Json?     @map("consumed_spools")
 
   @@index([orderId])
   @@map("print_jobs")

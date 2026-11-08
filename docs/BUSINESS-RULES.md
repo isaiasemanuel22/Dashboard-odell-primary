@@ -1651,6 +1651,52 @@ Ajustes** (por tipo de material y marca). En ese caso:
 Un insumo está en stock bajo cuando `cantidad ≤ stock mínimo`. El Dashboard
 cuenta cuántos insumos cumplen esa condición.
 
+#### 25.5.4b Proveedores, bobinas, movimientos y reposición
+
+**Proveedores** (`/api/suppliers`): lista con `name` (único, case-insensitive),
+`leadTimeBusinessDays` (0..60, default 3), `contact` y `notes` opcionales.
+Cada insumo puede vincularse con `supplierId`; el texto libre `supplier` se
+mantiene sincronizado con el nombre del proveedor por compatibilidad. Al
+cargar el store, textos distintos de `Supply.supplier` sin `supplierId` se
+migran a proveedores (demora 3) de forma idempotente. No se borra un
+proveedor si hay insumos que lo usan.
+
+**Bobinas abiertas** (`/api/spools`): solo se registran bobinas abiertas; el
+resto del stock del insumo es «cerrado». Cada bobina tiene código correlativo
+global (`B-01`, `B-02`…, nunca se reutiliza), `supplyId`, gramos iniciales/
+remanentes y ubicación `{ kind: 'printer', printerId, slot 1..4 }` o
+`{ kind: 'shelf', text }`. Abrir valida que haya stock cerrado suficiente.
+Una ranura de impresora solo puede tener una bobina abierta. Ajustar
+(pesada real) registra movimiento `adjust` y mueve el stock del supply.
+Terminar (`POST /spools/:id/finish`) cierra la bobina; si quedaba remanente,
+se descuenta del supply como descarte (`adjust` negativo). No se puede bajar
+el stock del supply por debajo de lo que hay en bobinas abiertas.
+
+**AMS:** el color de cada ranura de impresora sale de la bobina abierta
+ubicada ahí (`supply.colorId`). Sin bobina, la ranura está vacía. El campo
+`amsSlots` del perfil queda sin uso operativo; la cola deriva las ranuras
+de las bobinas.
+
+**Movimientos de stock** (`supplyMovements`): todo cambio de
+`Supply.quantity` pasa por `applyStockChange` con reason
+`task` | `failure` | `purchase` | `purchase_revert` | `adjust` |
+`spool_finish`. Al terminar una tarea, el descuento de filamento reparte
+gramos por bobina (impresora primero, luego menor remanente); lo que no
+cubran bobinas sale del stock cerrado. Las fallas se registran aparte
+(`failure`). La tarea guarda `consumedSpools`.
+
+**Reposición sugerida** (`GET /supplies/reorder`): por insumo con consumo o
+stock bajo. `weeklyConsumption` = consumo `task`+`failure` de 28 días ×7/28.
+`coversDays` = stock / consumo diario. `orderBy` = hoy + coversDays − demora
+en días hábiles (lun–vie, TZ AR). Status: `urgent` (orderBy ≤ hoy+7),
+`soon` (≤ 30 días), `ok` («sin apuro»). `suggestedQuantity` = consumo diario
+× (demora hábil en corridos + 14 días de colchón) − stock, redondeado hacia
+arriba a múltiplos de `spoolGrams` si es filamento. `insufficientData` si no
+hay movimientos de consumo en 28 días o el primer consumo del insumo tiene
+menos de 7 días. `GET /suppliers/:id/order-draft` arma el texto copiable
+para pedir al proveedor. Alertas: `GET /spools/alerts` (bobina corta ante
+la próxima tarea + filas urgent de reposición).
+
 #### 25.5.5 Catálogo único
 
 La regla de negocio está en §9.1 y §9.2: filamento y resina son materiales.
@@ -1777,6 +1823,11 @@ Vista de producción que ordena las tareas FDM de impresión 3D por
 **perfil de máquina** (`MachineProfile` con `role=print`,
 `queueEnabled=true`, productType FDM). Cada impresora (ej. «A1 #1») es un
 perfil con jornada propia.
+
+**AMS / ranuras:** la respuesta de `GET /print-jobs/printer-queue` incluye
+por impresora las ranuras derivadas de bobinas abiertas
+(`{ slot, spoolId, code, color {id,name,hex}, remainingGrams }` ×4). El
+campo histórico `amsSlots` del perfil **no** es la fuente operativa.
 
 **Qué entra**
 

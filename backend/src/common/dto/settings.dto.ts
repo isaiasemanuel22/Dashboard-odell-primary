@@ -3,6 +3,7 @@ import {
   IsArray,
   IsBoolean,
   IsEnum,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsObject,
@@ -512,6 +513,15 @@ export class CreateSupplyDto {
   @IsOptional()
   @IsString()
   supplier?: string;
+
+  @IsOptional()
+  @IsString()
+  supplierId?: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  spoolGrams?: number;
 
   @IsOptional()
   @IsString()

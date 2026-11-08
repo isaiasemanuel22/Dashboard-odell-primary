@@ -11,7 +11,10 @@ import {
   Product,
   Quote,
   RetailSale,
+  Spool,
+  Supplier,
   Supply,
+  SupplyMovement,
   TreasuryExpense,
 } from '../common/interfaces';
 import { createSeedState } from './store.seed';
@@ -36,6 +39,9 @@ export class StoreService {
   retailSales: RetailSale[] = [];
   treasuryExpenses: TreasuryExpense[] = [];
   calendarEntries: CalendarEntry[] = [];
+  suppliers: Supplier[] = [];
+  spools: Spool[] = [];
+  supplyMovements: SupplyMovement[] = [];
 
   private categoryIndexLen = -1;
   private productIndexLen = -1;
@@ -71,6 +77,9 @@ export class StoreService {
     this.retailSales = state.retailSales;
     this.treasuryExpenses = state.treasuryExpenses;
     this.calendarEntries = state.calendarEntries ?? [];
+    this.suppliers = state.suppliers ?? [];
+    this.spools = state.spools ?? [];
+    this.supplyMovements = state.supplyMovements ?? [];
     this.invalidateIndexes();
   }
 
@@ -89,6 +98,9 @@ export class StoreService {
       retailSales: this.retailSales,
       treasuryExpenses: this.treasuryExpenses,
       calendarEntries: this.calendarEntries,
+      suppliers: this.suppliers,
+      spools: this.spools,
+      supplyMovements: this.supplyMovements,
     };
   }
 
@@ -312,6 +324,59 @@ export class StoreService {
 
   removeCalendarEntry(id: string): boolean {
     return removeFromCollection(this.calendarEntries, id);
+  }
+
+  nextSupplierId(): string {
+    return this.nextId('suplr', this.suppliers);
+  }
+
+  getSupplierById(id: string): Supplier | undefined {
+    return this.suppliers.find((entry) => entry.id === id);
+  }
+
+  replaceSupplier(supplier: Supplier): void {
+    replaceInCollection(this.suppliers, supplier.id, supplier);
+  }
+
+  removeSupplier(id: string): boolean {
+    return removeFromCollection(this.suppliers, id);
+  }
+
+  nextSpoolId(): string {
+    return this.nextId('spl', this.spools);
+  }
+
+  /** Código correlativo global B-01, B-02… nunca reutiliza números. */
+  nextSpoolCode(): string {
+    let max = 0;
+    for (const spool of this.spools) {
+      const match = /^B-(\d+)$/i.exec(spool.code.trim());
+      if (!match) continue;
+      const n = parseInt(match[1], 10);
+      if (!Number.isNaN(n) && n > max) max = n;
+    }
+    const next = max + 1;
+    return `B-${String(next).padStart(2, '0')}`;
+  }
+
+  getSpoolById(id: string): Spool | undefined {
+    return this.spools.find((entry) => entry.id === id);
+  }
+
+  replaceSpool(spool: Spool): void {
+    replaceInCollection(this.spools, spool.id, spool);
+  }
+
+  removeSpool(id: string): boolean {
+    return removeFromCollection(this.spools, id);
+  }
+
+  nextSupplyMovementId(): string {
+    return this.nextId('smv', this.supplyMovements);
+  }
+
+  getSupplyMovementById(id: string): SupplyMovement | undefined {
+    return this.supplyMovements.find((entry) => entry.id === id);
   }
 
   private invalidateIndexes(): void {

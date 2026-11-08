@@ -10,7 +10,10 @@ import {
   Product,
   Quote,
   RetailSale,
+  Spool,
+  Supplier,
   Supply,
+  SupplyMovement,
   TreasuryExpense,
 } from '../common/interfaces';
 
@@ -28,6 +31,9 @@ export interface StoreState {
   retailSales: RetailSale[];
   treasuryExpenses: TreasuryExpense[];
   calendarEntries: CalendarEntry[];
+  suppliers: Supplier[];
+  spools: Spool[];
+  supplyMovements: SupplyMovement[];
 }
 
 export type StoreCollectionKey = keyof Omit<StoreState, 'generalSettings'>;

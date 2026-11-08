@@ -36,6 +36,21 @@ export class SuppliesController {
     return this.suppliesService.getPriceChanges(parsed);
   }
 
+  @Get('reorder')
+  getReorder() {
+    return this.suppliesService.getReorder();
+  }
+
+  @Get('reorder/summary')
+  getReorderSummary() {
+    const full = this.suppliesService.getReorder();
+    return {
+      openSpools: full.openSpools,
+      urgentCount: full.urgentCount,
+      total: full.rows.length,
+    };
+  }
+
   @Post('default-price')
   getDefaultPrice(@Body() data: SupplyDefaultPriceDto) {
     return this.suppliesService.resolveDefaultPrice(data as never);

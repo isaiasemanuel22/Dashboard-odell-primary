@@ -1,8 +1,11 @@
+import { Prisma } from '@prisma/client';
 import {
+  ConsumedSpoolLine,
   PrintJob,
   PrintJobFailure,
   SupplyReplacement,
 } from '../../common/interfaces';
+import { fromJson, toInputJson } from '../../prisma/json.util';
 import { parseFailures } from '../../print-jobs/print-job-failures.util';
 
 function parseSupplyReplacements(
@@ -21,6 +24,20 @@ function parseSupplyReplacements(
   } catch {
     return undefined;
   }
+}
+
+function parseConsumedSpools(raw: unknown): ConsumedSpoolLine[] | undefined {
+  const parsed = fromJson(raw ?? null);
+  if (!Array.isArray(parsed)) return undefined;
+  const lines = parsed.filter(
+    (item): item is ConsumedSpoolLine =>
+      !!item &&
+      typeof item === 'object' &&
+      typeof (item as ConsumedSpoolLine).spoolId === 'string' &&
+      typeof (item as ConsumedSpoolLine).code === 'string' &&
+      typeof (item as ConsumedSpoolLine).grams === 'number',
+  );
+  return lines.length ? lines : undefined;
 }
 
 export function mapPrintJobFromDb(row: {
@@ -55,6 +72,7 @@ export function mapPrintJobFromDb(row: {
   failures?: string | null;
   reprintOfJobId?: string | null;
   consumedAt?: Date | null;
+  consumedSpools?: unknown;
 }): PrintJob {
   const failures = parseFailures(row.failures) as PrintJobFailure[];
   return {
@@ -89,6 +107,7 @@ export function mapPrintJobFromDb(row: {
     failures: failures.length ? failures : undefined,
     reprintOfJobId: row.reprintOfJobId ?? null,
     consumedAt: row.consumedAt?.toISOString() ?? null,
+    consumedSpools: parseConsumedSpools(row.consumedSpools),
   };
 }
 
@@ -129,5 +148,8 @@ export function mapPrintJobToDb(job: PrintJob) {
     failures: job.failures?.length ? JSON.stringify(job.failures) : null,
     reprintOfJobId: job.reprintOfJobId ?? null,
     consumedAt: job.consumedAt ? new Date(job.consumedAt) : null,
+    consumedSpools: job.consumedSpools?.length
+      ? toInputJson(job.consumedSpools)
+      : Prisma.DbNull,
   };
 }

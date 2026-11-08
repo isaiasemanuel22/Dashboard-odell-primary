@@ -15,6 +15,8 @@ import { SalesModule } from './sales/sales.module';
 import { SettingsModule } from './settings/settings.module';
 import { StoreModule } from './store/store.module';
 import { SuppliesModule } from './supplies/supplies.module';
+import { SuppliersModule } from './suppliers/suppliers.module';
+import { SpoolsModule } from './spools/spools.module';
 import { TreasuryModule } from './treasury/treasury.module';
 import { UploadModule } from './upload/upload.module';
 import { RealtimeModule } from './realtime/realtime.module';
@@ -39,6 +41,8 @@ import { UsersModule } from './users/users.module';
     CategoriesModule,
     SettingsModule,
     SuppliesModule,
+    SuppliersModule,
+    SpoolsModule,
     ImpresosModule,
     UploadModule,
     CustomersModule,

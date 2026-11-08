@@ -22,6 +22,8 @@ describe('SuppliesService', () => {
         blockTasksForDepletedSupply: jest.fn(() => false),
       } as never,
       { syncAllProductsAndOrders: jest.fn() } as never,
+      { getReorder: jest.fn(), computeRows: jest.fn(() => []) } as never,
+      undefined,
     );
   }
 
@@ -54,6 +56,9 @@ describe('SuppliesService', () => {
       quotes: [],
       treasuryExpenses: [],
       calendarEntries: [],
+      suppliers: [],
+      spools: [],
+      supplyMovements: [],
     });
     for (const supply of supplies) {
       store.indexSupply(supply);
@@ -205,6 +210,8 @@ describe('SuppliesService', () => {
       storeChange as never,
       orderTasks as never,
       { syncAllProductsAndOrders: jest.fn() } as never,
+      { getReorder: jest.fn(), computeRows: jest.fn(() => []) } as never,
+      undefined,
     );
 
     service.update('sup-1', { quantity: 0 });
