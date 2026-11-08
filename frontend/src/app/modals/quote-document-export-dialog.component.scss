@@ -1,0 +1,14 @@
+@use '../shared/styles/variables' as *;
+
+.quote-export__message {
+  margin: 0;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  color: $color-text;
+}
+
+.quote-export__error {
+  margin: 1rem 0 0;
+  font-size: 0.875rem;
+  color: $color-danger-text;
+}

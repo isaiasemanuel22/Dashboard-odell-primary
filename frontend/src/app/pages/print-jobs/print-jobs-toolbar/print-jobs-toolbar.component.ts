@@ -8,8 +8,11 @@ import {
 import { FormsModule } from '@angular/forms';
 import {
   DbButtonComponent,
+  DbFilterPanelComponent,
   DbSegmentedControlComponent,
   DbSegmentOption,
+  FilterPanelGroup,
+  FilterPanelValues,
 } from '@general-components';
 import { ServiceType } from '../../../core/models';
 
@@ -24,7 +27,7 @@ export type PrintJobsViewMode = 'status' | 'printer';
 @Component({
   selector: 'app-print-jobs-toolbar',
   standalone: true,
-  imports: [FormsModule, DbButtonComponent, DbSegmentedControlComponent],
+  imports: [FormsModule, DbButtonComponent, DbSegmentedControlComponent, DbFilterPanelComponent],
   templateUrl: './print-jobs-toolbar.component.html',
   styleUrl: './print-jobs-toolbar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -60,5 +63,47 @@ export class PrintJobsToolbarComponent {
       maximumFractionDigits: 1,
       minimumFractionDigits: 0,
     });
+  }
+
+  get panelGroups(): FilterPanelGroup[] {
+    const groups: FilterPanelGroup[] = [
+      {
+        id: 'area',
+        title: 'Área',
+        options: this.areaFilters.map((f) => ({ value: f.value ?? 'all', label: f.label })),
+      },
+    ];
+    if (this.customerChips.length) {
+      groups.push({
+        id: 'customer',
+        title: 'Cliente',
+        options: [
+          { value: 'all', label: 'Todos' },
+          ...this.customerChips.map((c) => ({ value: c.initial, label: c.name })),
+        ],
+      });
+    }
+    return groups;
+  }
+
+  get panelValues(): FilterPanelValues {
+    return {
+      area: this.areaFilter ?? 'all',
+      customer: this.customerFilter ?? 'all',
+    };
+  }
+
+  onPanelApply(values: FilterPanelValues): void {
+    const area = values['area'] === 'all' ? null : (values['area'] as ServiceType);
+    if (area !== this.areaFilter) {
+      this.areaFilterChange.emit(area);
+    }
+    if (this.customerChips.length) {
+      const customer = values['customer'] === 'all' ? null : values['customer'];
+      if (customer !== this.customerFilter) {
+        // El padre alterna: emitir el actual lo apaga; emitir otro lo cambia.
+        this.customerFilterToggle.emit(customer ?? (this.customerFilter as string));
+      }
+    }
   }
 }

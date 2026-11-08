@@ -239,7 +239,7 @@ export class FormDialogService {
     return from(import('./sale-form-dialog.component')).pipe(
       switchMap(
         ({ SaleFormDialogComponent }): Observable<RetailSale | undefined> =>
-          this.open(SaleFormDialogComponent, { sale }, 'lg', {
+          this.open(SaleFormDialogComponent, { sale }, 'wide', {
             ariaLabel: sale ? 'Editar venta' : 'Nueva venta en mostrador',
           }),
       ),
@@ -257,7 +257,7 @@ export class FormDialogService {
           this.open(
             CategoryFormDialogComponent,
             { presetProductType },
-            'sm',
+            'md',
             { ariaLabel: 'Nueva categoría' },
           ),
       ),
@@ -286,7 +286,7 @@ export class FormDialogService {
         ({
           ImpresoFormDialogComponent,
         }): Observable<ImpresoWithCost | undefined> =>
-          this.open(ImpresoFormDialogComponent, { impreso }, 'md', {
+          this.open(ImpresoFormDialogComponent, { impreso }, 'ml', {
             ariaLabel: impreso ? 'Editar impreso' : 'Nuevo impreso',
           }),
       ),

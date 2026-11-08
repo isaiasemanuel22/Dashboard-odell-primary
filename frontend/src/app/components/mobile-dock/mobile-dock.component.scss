@@ -103,3 +103,8 @@
     width: 100%;
   }
 }
+
+// Aviso («Falta: título») arriba de los botones, dentro del pie.
+:host.m-dock--hint-top .m-dock__hint {
+  order: -1;
+}

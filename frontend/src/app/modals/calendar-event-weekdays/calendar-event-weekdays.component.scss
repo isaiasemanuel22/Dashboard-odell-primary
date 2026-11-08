@@ -1,26 +1,57 @@
 @use '../../shared/styles/variables' as *;
 
-.cal-dialog__days {
+.cal-days {
   display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 8px;
 }
 
-.cal-dialog__day {
-  width: 40px;
-  height: 40px;
-  border-radius: 999px;
-  border: 1px solid $color-border-soft;
+.cal-days__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: $color-text-label;
+}
+
+.cal-days__row {
+  display: flex;
+  gap: 6px;
+}
+
+.cal-days__day {
+  flex: 1;
+  min-width: 0;
+  max-width: 44px;
+  height: 44px;
+  padding: 0;
+  border-radius: 10px;
+  border: 1px solid $color-border-input;
   background: $color-surface;
   font-family: inherit;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   color: $color-text-label;
   cursor: pointer;
 
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px $color-primary-focus;
+  }
+
   &.is-on {
     background: $color-brand-deep;
     border-color: $color-brand-deep;
-    color: #fff;
+    color: $color-surface;
   }
+}
+
+@media (max-width: 767px) {
+  .cal-days__day {
+    max-width: none;
+  }
+}
+
+.cal-days__hint {
+  margin: 0;
+  font-size: 13px;
+  color: $color-text-muted;
 }

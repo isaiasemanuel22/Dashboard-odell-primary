@@ -55,20 +55,20 @@
   border-top: 1px solid mobile.$m-border;
   display: flex;
   gap: 10px;
-  background: #fff;
+  background: mobile.$m-surface;
   box-sizing: border-box;
 
   ::ng-deep db-button:has(.db-button--secondary) .db-button,
   ::ng-deep .db-button--solid.db-button--secondary {
-    background: #fff;
-    border: 1px solid #c9d8e3;
-    color: #0f2a3a;
+    background: mobile.$m-surface;
+    border: 1px solid mobile.$m-border-input;
+    color: mobile.$m-text;
   }
 
   ::ng-deep db-button:has(.db-button--primary) .db-button,
   ::ng-deep .db-button--solid.db-button--primary {
-    background: #0e7aab;
+    background: mobile.$m-primary;
     border: none;
-    color: #fff;
+    color: mobile.$m-surface;
   }
 }

@@ -3,6 +3,13 @@
 
 :host {
   display: contents;
+
+  @include mobile.desktop-only {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    min-width: 0;
+  }
 }
 
 @include mobile.mobile-only {

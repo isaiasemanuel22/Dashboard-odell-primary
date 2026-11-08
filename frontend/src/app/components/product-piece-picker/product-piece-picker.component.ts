@@ -5,10 +5,12 @@ import {
   EventEmitter,
   HostListener,
   Input,
+  OnDestroy,
   Output,
   ViewChild,
   inject,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { Category, Product } from '../../core/models';
 import { PRODUCT_TYPE_LABELS } from '../../shared/constants/labels';
@@ -18,19 +20,27 @@ import {
 } from '../../shared/utils/product.helpers';
 import { productPhysicalStock } from '../../shared/utils/stock.helpers';
 import { FormDialogService } from '../../modals/public-api';
+import { BreakpointService } from '../../core/services/breakpoint.service';
+import { LayoutUiService } from '../../layout/layout-ui.service';
 import { DbButtonComponent } from '../db-button/db-button.component';
+import { MobileBarComponent } from '../mobile-bar/mobile-bar.component';
 
 @Component({
   selector: 'app-product-piece-picker',
   standalone: true,
-  imports: [FormsModule, DbButtonComponent],
+  imports: [FormsModule, NgTemplateOutlet, DbButtonComponent, MobileBarComponent],
   templateUrl: './product-piece-picker.component.html',
   styleUrl: './product-piece-picker.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class ProductPiecePickerComponent {
+export class ProductPiecePickerComponent implements OnDestroy {
   private readonly host = inject(ElementRef<HTMLElement>);
   private readonly formDialogs = inject(FormDialogService);
+  private readonly layoutUi = inject(LayoutUiService);
+  private readonly breakpoint = inject(BreakpointService);
+  private overlayPushed = false;
+
+  readonly isMobile = this.breakpoint.isMobile;
 
   @Input({ required: true }) products: Product[] = [];
   @Input() categories: Category[] = [];
@@ -42,6 +52,9 @@ export class ProductPiecePickerComponent {
   @Output() readonly pieceCreated = new EventEmitter<Product>();
 
   @ViewChild('inputRef') inputRef?: ElementRef<HTMLInputElement>;
+  @ViewChild('mobileInputRef') set mobileInputRef(ref: ElementRef<HTMLInputElement> | undefined) {
+    if (ref) setTimeout(() => ref.nativeElement.focus());
+  }
 
   query = '';
   isOpen = false;
@@ -80,14 +93,27 @@ export class ProductPiecePickerComponent {
 
   onFocus(): void {
     if (this.disabled) return;
+    this.open();
+  }
+
+  /** En mobile el campo es solo un disparador: abre la pantalla completa. */
+  onFieldClick(): void {
+    if (this.disabled || this.isOpen) return;
+    this.open();
+  }
+
+  private open(): void {
     this.isOpen = true;
     this.highlightedIndex = this.filtered.length ? 0 : -1;
+    if (this.isMobile() && !this.overlayPushed) {
+      this.overlayPushed = true;
+      this.layoutUi.pushOverlay();
+    }
   }
 
   onQueryChange(value: string): void {
     this.query = value;
-    this.isOpen = true;
-    this.highlightedIndex = this.filtered.length ? 0 : -1;
+    this.open();
   }
 
   onKeydown(event: KeyboardEvent): void {
@@ -119,7 +145,9 @@ export class ProductPiecePickerComponent {
       return;
     }
     if (event.key === 'Escape') {
+      // Cierra solo el desplegable: el modal no debe pedir «Descartar cambios».
       event.preventDefault();
+      event.stopPropagation();
       this.close();
     }
   }
@@ -145,14 +173,27 @@ export class ProductPiecePickerComponent {
 
   @HostListener('document:click', ['$event'])
   onDocumentClick(event: MouseEvent): void {
+    if (this.isMobile()) return;
     if (!this.host.nativeElement.contains(event.target as Node)) {
       this.close();
     }
   }
 
-  private close(): void {
+  close(): void {
     this.isOpen = false;
     this.highlightedIndex = -1;
+    this.releaseOverlay();
+    if (this.isMobile()) this.inputRef?.nativeElement.blur();
+  }
+
+  ngOnDestroy(): void {
+    this.releaseOverlay();
+  }
+
+  private releaseOverlay(): void {
+    if (!this.overlayPushed) return;
+    this.overlayPushed = false;
+    this.layoutUi.popOverlay();
   }
 
   private categoryLabel(product: Product): string {

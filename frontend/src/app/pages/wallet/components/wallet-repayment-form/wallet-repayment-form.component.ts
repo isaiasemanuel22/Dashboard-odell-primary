@@ -19,6 +19,7 @@ import { TreasuryService } from '../../../../core/services/treasury.service';
 import {
   DbButtonComponent,
   DbFormGridComponent,
+  DbFormGridFullComponent,
   DbInputComponent,
   DbSelectComponent,
   FormModalComponent,
@@ -39,6 +40,7 @@ import { TREASURY_ACCOUNT_LABELS } from '../../../../shared/utils/v1-labels.util
     DbInputComponent,
     DbSelectComponent,
     DbFormGridComponent,
+    DbFormGridFullComponent,
     FormModalComponent,
   ],
   templateUrl: './wallet-repayment-form.component.html',

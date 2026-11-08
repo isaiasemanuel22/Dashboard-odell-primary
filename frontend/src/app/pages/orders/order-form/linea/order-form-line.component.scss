@@ -22,9 +22,9 @@
 :host-context(.quote-form) .order-line--quote {
   gap: 0.85rem;
   padding: 0.85rem 1rem 1rem;
-  border-top-color: #e3ecf2;
-  border-right-color: #e3ecf2;
-  border-bottom-color: #e3ecf2;
+  border-top-color: $color-divider;
+  border-right-color: $color-divider;
+  border-bottom-color: $color-divider;
   border-left-width: 3px;
   border-radius: 0.6rem;
 }
@@ -51,10 +51,10 @@
   width: fit-content;
   max-width: 100%;
   margin-bottom: 0.55rem;
-  border: 1px solid #c9d9e4;
+  border: 1px solid $color-border-input;
   border-radius: 0.5rem;
   overflow: hidden;
-  background: #fff;
+  background: $color-surface;
   vertical-align: top;
 }
 
@@ -69,7 +69,7 @@
   font-family: inherit;
   cursor: pointer;
   line-height: 1.2;
-  border-right: 1px solid #c9d9e4;
+  border-right: 1px solid $color-border-input;
   white-space: nowrap;
 
   &:last-child {
@@ -78,7 +78,7 @@
 
   &--active {
     background: $color-brand-deep;
-    color: #fff;
+    color: $color-surface;
     font-weight: 600;
   }
 }
@@ -95,13 +95,13 @@
   width: 1.9rem;
   height: 1.9rem;
   padding: 0;
-  border: 1px solid #d7e3ea;
+  border: 1px solid $color-border-soft;
   border-radius: 0.45rem;
-  background: #fff;
+  background: $color-surface;
   cursor: pointer;
 
   &:hover {
-    border-color: #9fb6c6;
+    border-color: $color-text-subtle;
   }
 }
 
@@ -123,9 +123,9 @@
   width: 1.9rem;
   height: 1.9rem;
   margin: 0;
-  border: 1px solid #fecaca;
+  border: 1px solid $color-danger-border;
   border-radius: 0.45rem;
-  background: #fff;
+  background: $color-surface;
 }
 
 .order-line--collapsed {
@@ -166,7 +166,7 @@
 .service-badge {
   flex-shrink: 0;
   padding: 0.2rem 0.55rem;
-  border: 1px solid #d7e3ea;
+  border: 1px solid $color-border-soft;
   border-radius: 999px;
   font-size: 0.6875rem;
   font-weight: 700;
@@ -205,14 +205,14 @@
 
 :host-context(.quote-form) .service-pill {
   padding: 0.3rem 0.7rem;
-  border-color: #d0d5dd;
-  color: #3f4b59;
+  border-color: $color-border-soft;
+  color: $color-text-label;
   font-size: 0.75rem;
   font-weight: 600;
 
   &:hover {
-    border-color: #9aa8b8;
-    color: #243041;
+    border-color: $color-text-subtle;
+    color: $color-text;
   }
 }
 
@@ -234,8 +234,8 @@
   &--quote {
     gap: 0.85rem;
     padding: 1rem;
-    background: #fff;
-    border-color: #d7e3ea;
+    background: $color-surface;
+    border-color: $color-border-soft;
     border-radius: 0.65rem;
     border-left-width: 4px;
   }
@@ -407,7 +407,7 @@
     padding: 0.55rem 0.75rem;
     border: 1px solid $color-border-input;
     border-radius: $radius-sm;
-    background: #fff;
+    background: $color-surface;
     box-sizing: border-box;
 
     &:focus-within {
@@ -436,8 +436,8 @@
 
 .service-pill {
   appearance: none;
-  border: 1.5px solid #c9d9e4;
-  background: #fff;
+  border: 1.5px solid $color-border-input;
+  background: $color-surface;
   color: $color-text-label;
   border-radius: 999px;
   padding: 0.4rem 0.85rem;
@@ -455,7 +455,7 @@
   &--active {
     border-color: $color-brand;
     color: $color-brand-deep;
-    background: #fff;
+    background: $color-surface;
     box-shadow: inset 0 0 0 1px $color-brand;
     font-weight: 600;
   }
@@ -478,7 +478,7 @@
   .order-line--quote & {
     margin-bottom: 0;
     margin-top: 0.15rem;
-    color: #ef4444;
+    color: $color-error;
   }
 
   &--trash {
@@ -490,13 +490,13 @@
     padding: 0;
     border: none;
     background: transparent;
-    color: #ef4444;
+    color: $color-error;
     cursor: pointer;
     border-radius: $radius-sm;
 
     &:hover {
-      background: #fef2f2;
-      color: #dc2626;
+      background: $color-status-danger-bg;
+      color: $color-error;
     }
   }
 }

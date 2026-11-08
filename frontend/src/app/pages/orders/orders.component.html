@@ -57,18 +57,13 @@
   </header>
 
   <div class="orders-toolbar">
-    <div class="orders-pills" role="group" aria-label="Estado del pedido">
-      @for (filter of statusFilters; track filter.value) {
-        <button
-          type="button"
-          class="orders-pill"
-          [class.orders-pill--active]="statusFilter === filter.value"
-          (click)="setStatusFilter(filter.value)"
-        >
-          {{ filter.label }}
-        </button>
-      }
-    </div>
+    <db-filter-panel
+      title="Filtrar pedidos"
+      ariaLabel="Filtros de pedidos"
+      [groups]="desktopFilterGroups"
+      [values]="desktopFilterValues"
+      (apply)="applyDesktopFilters($event)"
+    />
     <label class="orders-search">
       <span aria-hidden="true">⌕</span>
       <input
@@ -78,21 +73,6 @@
         (ngModelChange)="onSearchChange()"
       />
     </label>
-  </div>
-
-  <div class="orders-areas">
-    <span>Área</span>
-    @for (filter of serviceFilters; track filter.value) {
-      <button
-        type="button"
-        class="orders-area-pill"
-        [class]="'orders-area-pill--' + filter.value"
-        [class.orders-area-pill--active]="serviceFilter === filter.value"
-        (click)="setServiceFilter(filter.value)"
-      >
-        {{ filter.label }}
-      </button>
-    }
   </div>
 
   @if (loading) {

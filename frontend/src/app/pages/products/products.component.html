@@ -225,18 +225,19 @@
     [cartItemCount]="cartItemCount"
     [listFilters]="listFilters"
     [listFilter]="listFilter"
-    (listFilterChange)="setListFilter($event)"
     [search]="search"
     (searchChange)="search = $event"
     [typeFilters]="typeFilters"
     [typeFilter]="typeFilter"
-    (typeFilterChange)="setTypeFilter($event)"
     [categoryFilterOptions]="categoryFilterOptions"
     [categoryFilter]="categoryFilter"
-    (categoryFilterChange)="categoryFilter = $event"
+    [categoryOptionsForType]="categoryOptionsForType"
+    [filterCountFn]="desktopFilterCount"
+    (filtersApply)="applyDesktopFilters($event)"
     (newCategory)="openCategoryForm()"
     (newProduct)="openCreateProduct()"
     (updatePrices)="scrollToBulkPrice()"
+    (openCart)="openCart()"
   />
 
   @if (outdatedPriceAlerts.length > 0) {

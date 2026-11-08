@@ -23,6 +23,11 @@ import {
 import { formatDateDayMonth } from '../../shared/utils/date-format.util';
 import { DbPillGroupComponent, DbPillOption } from '../db-pill-group/db-pill-group.component';
 import { DbAreaChipComponent } from '../db-area-chip/db-area-chip.component';
+import {
+  DbFilterPanelComponent,
+  FilterPanelGroup,
+  FilterPanelValues,
+} from '../db-filter-panel/db-filter-panel.component';
 import { orderIsOverdue } from '../../shared/utils/order.helpers';
 
 export type OdlTone = 'pending' | 'ok' | 'danger' | 'info' | 'neutral';
@@ -183,7 +188,7 @@ const NUMBER = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
 @Component({
   selector: 'db-data-table',
   standalone: true,
-  imports: [NgTemplateOutlet, DbPillGroupComponent, DbAreaChipComponent],
+  imports: [NgTemplateOutlet, DbPillGroupComponent, DbAreaChipComponent, DbFilterPanelComponent],
   templateUrl: './db-data-table.component.html',
   styleUrl: './db-data-table.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -217,6 +222,15 @@ export class DbDataTableComponent<T> {
   readonly filters = input<OdlFilter<T>[]>([]);
   readonly areaFilters = input<OdlFilter<T>[]>([]);
   readonly areaLabel = input('Área');
+  /**
+   * Con título, los filtros y el área se agrupan en un panel desplegable
+   * (botón «Filtros») en vez de chips sueltos. Solo con `clientSide`.
+   */
+  readonly filterPanelTitle = input<string | null>(null);
+  /** Título del grupo de `filters` dentro del panel. */
+  readonly filterGroupLabel = input('Estado');
+  readonly panelEntityOne = input('resultado');
+  readonly panelEntityMany = input('resultados');
   /** Si es null no se muestra el buscador. */
   readonly searchPlaceholder = input<string | null>(null);
   /** Texto donde busca cada fila. Por defecto, todos los valores de las columnas. */
@@ -261,6 +275,30 @@ export class DbDataTableComponent<T> {
     this.areaFilters().map((a) => ({ value: a.id, label: a.label })),
   );
 
+  readonly usesPanel = computed(
+    () => this.filterPanelTitle() !== null && (this.filters().length > 0 || this.areaFilters().length > 0),
+  );
+
+  readonly panelGroups = computed<FilterPanelGroup[]>(() => {
+    const groups: FilterPanelGroup[] = [];
+    if (this.filters().length) {
+      groups.push({ id: 'filter', title: this.filterGroupLabel(), options: this.filterOptions() });
+    }
+    if (this.areaFilters().length) {
+      groups.push({ id: 'area', title: this.areaLabel(), options: this.areaOptions() });
+    }
+    return groups;
+  });
+
+  readonly panelValues = computed<FilterPanelValues>(() => ({
+    filter: this.activeFilter() ?? '',
+    area: this.activeArea() ?? '',
+  }));
+
+  /** Cuántas filas darían estos filtros (con la búsqueda actual). */
+  readonly panelCount = (draft: FilterPanelValues): number =>
+    this.applyFilters(this.rows(), draft['filter'] ?? null, draft['area'] ?? null).length;
+
   readonly cellTemplates = computed(() => new Map(this.cellDefs().map((d) => [d.key(), d.template])));
 
   readonly hasToolbar = computed(
@@ -275,17 +313,7 @@ export class DbDataTableComponent<T> {
     let data = this.rows();
     if (!this.clientSide()) return data;
 
-    const f = this.filters().find((x) => x.id === this.activeFilter());
-    if (f?.predicate) data = data.filter(f.predicate);
-
-    const a = this.areaFilters().find((x) => x.id === this.activeArea());
-    if (a?.predicate) data = data.filter(a.predicate);
-
-    const q = normalize(this.search().trim());
-    if (q) {
-      const text = this.searchText() ?? ((row: T) => this.columns().map((c) => this.toText(c, row)).join(' '));
-      data = data.filter((row) => normalize(text(row)).includes(q));
-    }
+    data = this.applyFilters(data, this.activeFilter(), this.activeArea());
 
     const s = this.sort();
     if (s) {
@@ -298,6 +326,28 @@ export class DbDataTableComponent<T> {
     }
     return data;
   });
+
+  private applyFilters(data: T[], filterId: string | null, areaId: string | null): T[] {
+    const f = this.filters().find((x) => x.id === filterId);
+    if (f?.predicate) data = data.filter(f.predicate);
+
+    const a = this.areaFilters().find((x) => x.id === areaId);
+    if (a?.predicate) data = data.filter(a.predicate);
+
+    const q = normalize(this.search().trim());
+    if (q) {
+      const text = this.searchText() ?? ((row: T) => this.columns().map((c) => this.toText(c, row)).join(' '));
+      data = data.filter((row) => normalize(text(row)).includes(q));
+    }
+    return data;
+  }
+
+  applyPanel(values: FilterPanelValues): void {
+    if (values['filter']) this.filterSel.set(values['filter']);
+    if (values['area']) this.areaSel.set(values['area']);
+    this.resetPaging();
+    this.emitFilters();
+  }
 
   readonly visibleRows = computed(() => {
     const limit = this.shown() ?? this.pageSize();

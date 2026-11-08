@@ -576,24 +576,22 @@
               }
             </ng-template>
           </db-data-table>
-          <table class="data-table">
-            <tbody>
-              <tr>
-                <td><strong>Subtotal</strong></td>
-                <td><strong>{{ orderSubtotal | currencyArs }}</strong></td>
-              </tr>
-              @if (orderDiscount > 0) {
-                <tr class="order-discount-row">
-                  <td><strong>Descuento</strong></td>
-                  <td><strong>-{{ orderDiscount | currencyArs }}</strong></td>
-                </tr>
-              }
-              <tr>
-                <td><strong>Total</strong></td>
-                <td><strong>{{ order.total | currencyArs }}</strong></td>
-              </tr>
-            </tbody>
-          </table>
+          <dl class="order-totals">
+            <div>
+              <dt>Subtotal</dt>
+              <dd>{{ orderSubtotal | currencyArs }}</dd>
+            </div>
+            @if (orderDiscount > 0) {
+              <div class="order-totals__discount">
+                <dt>Descuento</dt>
+                <dd>-{{ orderDiscount | currencyArs }}</dd>
+              </div>
+            }
+            <div class="order-totals__total">
+              <dt>Total</dt>
+              <dd>{{ order.total | currencyArs }}</dd>
+            </div>
+          </dl>
         </section>
 
         @if (!isMobile()) {
@@ -603,7 +601,7 @@
           />
         }
 
-        <section class="panel">
+        <section class="panel panel--order-lines">
           <div class="panel-header-row">
             <h3>Tareas del pedido</h3>
             <db-button
@@ -619,6 +617,7 @@
               [rows]="tasks"
               [columns]="taskColumns"
               [clientSide]="false"
+              minWidth="0"
             >
               <ng-template odlCell="status" let-task>
                 <db-status-badge
@@ -687,7 +686,8 @@
           <db-button
             [label]="statusLoading ? 'Cancelando...' : 'Cancelar pedido'"
             variant="delete"
-            format="soft"
+            format="solid"
+            extraClass="db-button--danger-solid"
             [disabled]="statusLoading"
             (clicked)="cancelOrder()"
           />

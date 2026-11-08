@@ -63,7 +63,7 @@
 
 .cola-search__icon {
   flex: none;
-  color: #5b7083;
+  color: $color-text-muted;
 }
 
 .cola-search__input {
@@ -80,113 +80,6 @@
 
   &::placeholder {
     color: #9fb3c2;
-  }
-}
-
-.cola-filters {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem 1.25rem;
-  margin-bottom: 1rem;
-}
-
-.cola-filters__areas,
-.cola-filters__clients {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 0.5rem 0.65rem;
-}
-
-.cola-filters__label {
-  font-size: 0.75rem;
-  font-weight: 600;
-  color: #5b7083;
-}
-
-.cola-filters__pills {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.4rem;
-}
-
-.cola-pill {
-  border: 1px solid #c9d6df;
-  background: #fff;
-  color: #33495a;
-  border-radius: 999px;
-  padding: 0.35rem 0.85rem;
-  font-family: inherit;
-  font-size: 0.78rem;
-  font-weight: 600;
-  cursor: pointer;
-
-  &--active {
-    background: #0e7aab;
-    border-color: #0e7aab;
-    color: #fff;
-  }
-}
-
-.cola-filters__avatars {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  overflow: visible;
-}
-
-.cola-client-chip {
-  position: relative;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 50%;
-  border: 2px solid transparent;
-  background: #dcebf4;
-  color: #0b5f86;
-  font-family: inherit;
-  font-size: 0.75rem;
-  font-weight: 700;
-  cursor: pointer;
-
-  &:hover,
-  &:focus-visible {
-    z-index: 2;
-  }
-
-  &:hover::after,
-  &:focus-visible::after {
-    content: attr(data-name);
-    position: absolute;
-    z-index: 6;
-    bottom: calc(100% + 0.35rem);
-    left: 50%;
-    transform: translateX(-50%);
-    padding: 0.2rem 0.45rem;
-    border-radius: 6px;
-    background: #0f2a3a;
-    color: #fff;
-    font-size: 0.72rem;
-    font-weight: 600;
-    line-height: 1.2;
-    white-space: nowrap;
-    pointer-events: none;
-  }
-
-  &--tone-0,
-  &--tone-1,
-  &--tone-2,
-  &--tone-3 {
-    background: #dcebf4;
-    color: #0b5f86;
-  }
-
-  &--active {
-    border-color: #0e7aab;
-    background: #0e7aab;
-    color: #fff;
-    box-shadow: none;
   }
 }
 

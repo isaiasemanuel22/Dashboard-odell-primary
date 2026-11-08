@@ -481,6 +481,7 @@
       [unitCostHint]="unitCostHint"
       [unitPrice]="editableUnitPrice"
       (unitPriceChange)="onEditableUnitPriceChange($event)"
+      (unitPriceBlur)="unitPriceTouched = true"
       [unitPriceError]="unitPriceError"
       [priceHint]="priceHint"
       [priceHintWarn]="priceHintWarn"

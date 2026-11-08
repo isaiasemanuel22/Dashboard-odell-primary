@@ -26,6 +26,9 @@ import {
   DbSkeletonComponent,
   DbStateMessageComponent,
   DbButtonComponent,
+  DbFilterPanelComponent,
+  type FilterPanelGroup,
+  type FilterPanelValues,
   OrderCardComponent,
   MobileBarComponent,
   MobileListToolbarComponent,
@@ -69,6 +72,7 @@ interface OrdersMobileListState {
     DbSkeletonComponent,
     DbStateMessageComponent,
     DbButtonComponent,
+    DbFilterPanelComponent,
     OrderCardComponent,
     MobileBarComponent,
     MobileListToolbarComponent,
@@ -340,6 +344,30 @@ export class OrdersComponent implements OnInit {
   onMobileChipChange(chipId: string): void {
     this.mobileChip = chipId as OrderMobileChip;
     this.cdr.markForCheck();
+  }
+
+  get desktopFilterGroups(): FilterPanelGroup[] {
+    return [
+      { id: 'status', title: 'Estado', options: this.statusFilters },
+      { id: 'service', title: 'Área', options: this.serviceFilters },
+    ];
+  }
+
+  get desktopFilterValues(): FilterPanelValues {
+    return {
+      status: this.statusFilter,
+      service: this.serviceFilter,
+    };
+  }
+
+  applyDesktopFilters(values: FilterPanelValues): void {
+    const status = (values['status'] ?? 'abiertos') as OrderStatusFilter;
+    if (status !== this.statusFilter && this.overdueOnly) {
+      this.overdueOnly = false;
+    }
+    this.statusFilter = status;
+    this.serviceFilter = (values['service'] ?? 'all') as OrderServiceFilter;
+    this.loadOrders();
   }
 
   setStatusFilter(filter: OrderStatusFilter): void {

@@ -5,11 +5,11 @@
   display: inline-block;
   margin-bottom: 0.5rem;
   font-size: 0.875rem;
-  color: $color-text-muted;
+  color: $color-brand-deep;
   text-decoration: none;
 
   &:hover {
-    color: $color-primary;
+    color: $color-primary-dark;
   }
 }
 
@@ -36,7 +36,7 @@
 
 .detail-layout {
   display: grid;
-  grid-template-columns: minmax(200px, 240px) minmax(0, 1fr);
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
   gap: 1.25rem;
   align-items: start;
   min-width: 0;
@@ -55,14 +55,33 @@
   max-width: 100%;
 }
 
+// Tarjetas del detalle (desktop): borde suave y radio 12, como el artboard.
+// Incluye las de los subcomponentes de pagos, entregas e historial.
+@include mobile.desktop-only {
+  .detail-layout ::ng-deep .panel {
+    padding: 1.25rem;
+    border: 1px solid $color-border-soft;
+    border-radius: 12px;
+    box-shadow: none;
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+
+    > h3 {
+      margin: 0;
+    }
+  }
+}
+
 .panel--order-lines {
   min-width: 0;
   max-width: 100%;
 
-  ::ng-deep .odl-table {
+  // Doble clase: gana a la especificidad de `.odl-table th` del db-data-table.
+  &.panel--order-lines ::ng-deep .odl-table {
     th,
     td {
-      padding: 0.55rem 0.45rem;
+      padding: 0.55rem 0.3rem;
       font-size: 0.75rem;
     }
 
@@ -105,6 +124,15 @@
   gap: 0.75rem;
   flex-wrap: wrap;
   padding: 1rem 1.25rem;
+  flex-direction: row;
+
+  // Gana a `.detail-layout ::ng-deep .panel` (columna).
+  .detail-layout &.panel {
+    flex-direction: row;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+  }
 }
 
 .detail-list {
@@ -119,15 +147,14 @@
 
   dt {
     font-size: 0.75rem;
-    font-weight: 600;
+    font-weight: 500;
     color: $color-text-muted;
-    text-transform: uppercase;
-    letter-spacing: 0.03em;
   }
 
   dd {
     margin: 0;
-    font-size: 0.95rem;
+    font-size: 0.875rem;
+    font-weight: 500;
     color: $color-text;
   }
 }
@@ -153,7 +180,7 @@
   justify-content: space-between;
   gap: 0.75rem;
   flex-wrap: wrap;
-  margin-bottom: 1rem;
+  margin-bottom: 0;
 
   h3 {
     margin: 0;
@@ -209,11 +236,11 @@
 .price-notice {
   display: grid;
   gap: 0.75rem;
-  padding: 0.9rem 1rem;
-  border: 1px solid #f59e0b;
-  border-radius: $radius-sm;
-  background: $color-warning-bg;
-  color: $color-warning-text;
+  padding: 0.875rem 1rem;
+  border: 1px solid $color-border;
+  border-radius: 12px;
+  background: $color-primary-bg;
+  color: $color-brand-deep;
 
   p {
     margin: 0;
@@ -236,19 +263,19 @@
   gap: 0.5rem;
   padding: 0.8rem 1rem;
   border: 1px solid $color-border;
-  border-radius: $radius-sm;
+  border-radius: 12px;
   background: $color-primary-bg;
 
   &--warning {
-    border-color: #f59e0b;
+    border-color: $color-warning-accent;
     background: $color-warning-bg;
     color: $color-warning-text;
   }
 
   &--error {
     border-color: $color-error;
-    background: #fee2e2;
-    color: #991b1b;
+    background: $color-status-danger-bg;
+    color: $color-status-danger-text;
   }
 }
 
@@ -263,7 +290,7 @@
   align-items: baseline;
   justify-content: space-between;
   gap: 1rem;
-  margin-bottom: 0.75rem;
+  margin-bottom: 0;
 
   h3 {
     margin: 0;
@@ -272,16 +299,16 @@
 
 .description-panel__count {
   font-size: 0.75rem;
-  color: $color-text-subtle;
+  color: $color-text-muted;
 }
 
 .order-description {
-  min-height: 8rem;
-  padding: 1rem 1.1rem;
+  min-height: 0;
+  padding: 0;
   border-radius: $radius-sm;
-  background: $color-surface-muted;
-  border: 1px solid $color-border;
-  font-size: 0.95rem;
+  background: transparent;
+  border: 0;
+  font-size: 0.875rem;
   line-height: 1.6;
   color: $color-text;
   word-break: break-word;
@@ -346,7 +373,7 @@
   border: none;
   border-radius: $radius-pill;
   background: rgba(255, 255, 255, 0.15);
-  color: #fff;
+  color: $color-surface;
   font-size: 1.5rem;
   line-height: 1;
   cursor: pointer;
@@ -360,13 +387,39 @@
   }
 }
 
-.data-table tfoot td {
-  border-top: 2px solid $color-border;
+.order-totals {
+  align-self: flex-end;
+  width: min(100%, 300px);
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-size: 0.875rem;
+
+  > div {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    font-variant-numeric: tabular-nums;
+  }
+
+  dt,
+  dd {
+    margin: 0;
+  }
+
+  &__discount {
+    color: $color-error;
+  }
+
+  &__total {
+    padding-top: 0.5rem;
+    border-top: 1px solid $color-divider;
+    font-size: 1.125rem;
+    font-weight: 700;
+  }
 }
 
-.order-discount-row td {
-  color: $color-error;
-}
 
 @include mobile.mobile-only {
   .od-m {

@@ -1,0 +1,89 @@
+@use '../../shared/styles/variables' as *;
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+}
+
+.confirm-lead__row {
+  display: flex;
+  gap: 16px;
+  align-items: flex-start;
+}
+
+.confirm-lead__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: $color-primary-bg;
+  color: $color-primary-dark;
+}
+
+.confirm-lead--danger .confirm-lead__icon {
+  background: $color-status-danger-bg;
+  color: $color-danger-text;
+}
+
+.confirm-lead__text {
+  min-width: 0;
+  flex: 1;
+}
+
+.confirm-lead__title {
+  margin: 0 0 6px;
+  font-family: inherit;
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1.3;
+  color: $color-text;
+}
+
+.confirm-lead__message {
+  font-size: 14px;
+  line-height: 1.5;
+  color: $color-text-muted;
+
+  ::ng-deep p {
+    margin: 0;
+  }
+}
+
+.confirm-lead__fields {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin: 16px 0 0 60px;
+
+  &:empty {
+    display: none;
+  }
+}
+
+@include mobile.mobile-only {
+  .confirm-lead__row {
+    gap: 12px;
+  }
+
+  .confirm-lead__icon {
+    width: 40px;
+    height: 40px;
+    border-radius: 999px;
+  }
+
+  .confirm-lead__title {
+    display: none;
+  }
+
+  .confirm-lead__message {
+    font-size: 15px;
+    color: mobile.$m-text;
+  }
+
+  .confirm-lead__fields {
+    margin: 16px 0 0;
+  }
+}

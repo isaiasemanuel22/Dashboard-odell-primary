@@ -1,4 +1,77 @@
-@if (cart.length) {
+@if (modalLayout) {
+  @if (cart.length) {
+    <ul class="cart-lines">
+      @for (line of cart; track line.key) {
+        <li class="cart-line">
+          <span class="cart-line__thumb" aria-hidden="true">
+            @if (imageFor(line); as src) {
+              <img [src]="src" alt="" />
+            } @else {
+              Img
+            }
+          </span>
+          <div class="cart-line__text">
+            <b>{{ line.productName }}</b>
+            <span
+              >{{ line.unitPrice | currencyArs }} c/u · quedan
+              {{ stockFor(line.productId) }}</span
+            >
+          </div>
+          <div
+            class="cart-line__step"
+            role="group"
+            [attr.aria-label]="'Cantidad de ' + line.productName"
+          >
+            <button
+              type="button"
+              aria-label="Restar uno"
+              [disabled]="line.quantity <= 1"
+              (click)="quantityChange.emit({ line, quantity: line.quantity - 1 })"
+            >
+              −
+            </button>
+            <span>{{ line.quantity }}</span>
+            <button
+              type="button"
+              aria-label="Sumar uno"
+              [disabled]="line.quantity >= stockFor(line.productId)"
+              (click)="quantityChange.emit({ line, quantity: line.quantity + 1 })"
+            >
+              +
+            </button>
+          </div>
+          <span class="cart-line__amount">{{
+            line.quantity * line.unitPrice | currencyArs
+          }}</span>
+          <button
+            type="button"
+            class="cart-line__remove"
+            [attr.aria-label]="'Quitar ' + line.productName"
+            (click)="remove.emit(line.key)"
+          >
+            <svg
+              viewBox="0 0 24 24"
+              width="16"
+              height="16"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              stroke-linecap="round"
+              aria-hidden="true"
+            >
+              <path d="M6 6l12 12M18 6L6 18" />
+            </svg>
+          </button>
+        </li>
+      }
+    </ul>
+  } @else {
+    <p class="empty-cart">
+      Todavía no hay productos en el carrito. Buscá arriba o
+      <a routerLink="/productos">agregá desde Productos</a>.
+    </p>
+  }
+} @else if (cart.length) {
   @if (useCardLayout) {
     <div class="cart-cards">
       @for (line of cart; track line.key) {

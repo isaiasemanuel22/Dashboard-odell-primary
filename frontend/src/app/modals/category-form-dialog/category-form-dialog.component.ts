@@ -21,7 +21,13 @@ export interface CategoryFormDialogData {
   standalone: true,
   imports: [FormDialogShellComponent, CategoryFormComponent],
   template: `
-    <app-form-dialog-shell title="Nueva categoría" size="sm" (close)="cancel()">
+    <app-form-dialog-shell
+      title="Nueva categoría"
+      subtitle="Agrupa productos en el catálogo y en los filtros"
+      size="md"
+      [footerBar]="true"
+      (close)="cancel()"
+    >
       <app-category-form
         [loading]="loading"
         [error]="error"

@@ -32,8 +32,9 @@ app-user-access-nav {
 
   h3 {
     margin: 0;
-    font-size: $font-amount;
+    font-size: 1.25rem;
     font-weight: 700;
+    color: $color-text;
   }
 
   p {
@@ -58,6 +59,10 @@ app-user-access-nav {
 
 .list-search {
   @include screen.screen-search;
+
+  svg {
+    flex: none;
+  }
 }
 
 .user-cell {
@@ -82,7 +87,7 @@ app-user-access-nav {
   width: 2rem;
   height: 2rem;
   border-radius: 50%;
-  background: #e0f2fe;
+  background: $color-primary-bg;
   color: $color-brand-deep;
   font-size: $font-meta;
   font-weight: 700;
@@ -98,11 +103,11 @@ app-user-access-nav {
 .role-pill {
   display: inline-flex;
   align-items: center;
-  border: 1px solid #ddd6fe;
+  border: 1px solid $color-area-design-border;
   border-radius: $radius-pill;
   padding: 0.12rem 0.5rem;
-  color: #6d28d9;
-  background: #fff;
+  color: $color-area-design;
+  background: $color-surface;
   font-size: $font-meta;
   font-weight: 700;
 }
@@ -116,13 +121,13 @@ app-user-access-nav {
   font-weight: 700;
 
   &--active {
-    background: #ecfdf5;
-    color: #047857;
+    background: $color-status-success-bg;
+    color: $color-status-success-text;
   }
 
   &--inactive {
-    background: #fef2f2;
-    color: #b91c1c;
+    background: $color-status-danger-bg;
+    color: $color-danger-text;
   }
 }
 
@@ -176,18 +181,18 @@ app-user-access-nav {
 }
 
 .badge--system {
-  background: #eef2ff;
-  color: #4338ca;
+  background: $color-status-info-bg;
+  color: $color-status-info-text;
 }
 
 .badge--inactive {
-  background: #fef2f2;
-  color: #b91c1c;
+  background: $color-status-danger-bg;
+  color: $color-danger-text;
 }
 
 .badge--active {
-  background: #ecfdf5;
-  color: #047857;
+  background: $color-status-success-bg;
+  color: $color-status-success-text;
 }
 
 .permission-grid {
@@ -284,9 +289,9 @@ app-user-access-nav {
   margin-bottom: 1rem;
   padding: 0.75rem 0.9rem;
   border-radius: $radius-sm;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #b91c1c;
+  background: $color-status-danger-bg;
+  border: 1px solid $color-danger-border;
+  color: $color-danger-text;
   font-size: 0.9rem;
 }
 
@@ -297,7 +302,7 @@ app-user-access-nav {
 
   .st-m__inp {
     min-height: 48px;
-    border: 1px solid #c9d8e3;
+    border: 1px solid $color-border-input;
     border-radius: 12px;
     padding: 0 12px;
     font-family: inherit;
@@ -309,7 +314,7 @@ app-user-access-nav {
   .m-fl {
     font-size: 13px;
     font-weight: 500;
-    color: #33495a;
+    color: $color-text-label;
   }
 
   .m-field {
@@ -320,16 +325,16 @@ app-user-access-nav {
 }
 
 .users-m-form__advanced {
-  border: 1px solid #e3ecf2;
+  border: 1px solid $color-divider;
   border-radius: 12px;
   padding: 10px 12px;
-  background: #f4f8fb;
+  background: $color-surface-inset;
 
   summary {
     cursor: pointer;
     font-size: 13px;
     font-weight: 600;
-    color: #5b7083;
+    color: $color-text-muted;
   }
 
   db-mobile-field-group {
@@ -350,6 +355,6 @@ app-user-access-nav {
     margin: 10px 0 6px;
     font-size: 13px;
     font-weight: 600;
-    color: #5b7083;
+    color: $color-text-muted;
   }
 }

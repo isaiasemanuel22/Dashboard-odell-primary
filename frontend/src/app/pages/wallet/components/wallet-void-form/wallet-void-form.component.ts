@@ -13,11 +13,10 @@ import { TreasuryExpense } from '../../../../core/models';
 import { TreasuryService } from '../../../../core/services/treasury.service';
 import {
   DbButtonComponent,
-  DbFormGridComponent,
-  DbFormGridFullComponent,
   DbInputComponent,
   FormModalComponent,
 } from '@general-components';
+import { ConfirmLeadComponent } from '../../../../modals/confirm-lead/confirm-lead.component';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import { extractApiErrorMessage } from '../../../../shared/utils/api-error';
 
@@ -29,8 +28,7 @@ import { extractApiErrorMessage } from '../../../../shared/utils/api-error';
     CurrencyArsPipe,
     DbButtonComponent,
     DbInputComponent,
-    DbFormGridComponent,
-    DbFormGridFullComponent,
+    ConfirmLeadComponent,
     FormModalComponent,
   ],
   templateUrl: './wallet-void-form.component.html',
