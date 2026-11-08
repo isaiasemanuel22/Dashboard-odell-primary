@@ -10,6 +10,7 @@ const SIZE_MAX_WIDTH: Record<ModalSize, string> = {
   ml: '560px',
   lg: '640px',
   xl: '1040px',
+  wide: '960px',
 };
 
 export function formDialogConfig(

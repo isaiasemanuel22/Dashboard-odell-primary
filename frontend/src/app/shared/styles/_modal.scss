@@ -60,6 +60,10 @@
   max-width: 1040px;
 }
 
+.cdk-overlay-pane.form-dialog-panel--wide {
+  max-width: 960px;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;
@@ -94,6 +98,10 @@
 
   &--lg {
     max-width: 640px;
+  }
+
+  &--wide {
+    max-width: 960px;
   }
 
   &--xl {
@@ -189,6 +197,15 @@
       background: $color-surface-inset;
     }
 
+    /* Dos columnas a sangre (960): el cuerpo no tiene padding y el pie va pegado. */
+    &.modal--wide > .modal__body {
+      padding: 0;
+    }
+
+    &.modal--wide .db-form-footer {
+      margin: 0;
+    }
+
     > .modal__footer--bar:not(:empty) {
       display: flex;
       flex-wrap: wrap;
@@ -229,7 +246,8 @@
   .cdk-overlay-pane.form-dialog-panel--md,
   .cdk-overlay-pane.form-dialog-panel--ml,
   .cdk-overlay-pane.form-dialog-panel--lg,
-  .cdk-overlay-pane.form-dialog-panel--xl {
+  .cdk-overlay-pane.form-dialog-panel--xl,
+  .cdk-overlay-pane.form-dialog-panel--wide {
     width: 100% !important;
     max-width: 100% !important;
     max-height: 92vh !important;
@@ -254,7 +272,8 @@
   .cdk-overlay-pane.form-dialog-panel .modal--md,
   .cdk-overlay-pane.form-dialog-panel .modal--ml,
   .cdk-overlay-pane.form-dialog-panel .modal--lg,
-  .cdk-overlay-pane.form-dialog-panel .modal--xl {
+  .cdk-overlay-pane.form-dialog-panel .modal--xl,
+  .cdk-overlay-pane.form-dialog-panel .modal--wide {
     max-width: 100%;
     max-height: 92vh;
     height: 100%;

@@ -21,6 +21,11 @@ export class SaleFormCartComponent {
   @Input() profit = 0;
   @Input() hasDiscount = false;
 
+  /** Layout del modal desktop (RdVentaMostrador): líneas con stepper y subtotal. */
+  @Input() modalLayout = false;
+  @Input() stockFor: (productId: string) => number = () => 0;
+  @Input() imageFor: (line: SaleCartLine) => string | null = () => null;
+
   @Output() quantityChange = new EventEmitter<{ line: SaleCartLine; quantity: number }>();
   @Output() remove = new EventEmitter<string>();
 }

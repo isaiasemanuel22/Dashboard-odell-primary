@@ -31,7 +31,9 @@ export interface SaleFormDialogData {
   template: `
     <app-form-dialog-shell
       [title]="sale ? 'Editar venta' : 'Nueva venta en mostrador'"
-      size="lg"
+      subtitle="Productos publicados con stock · el stock se descuenta al cobrar"
+      size="wide"
+      [footerBar]="true"
       [stickyHeader]="true"
       (close)="cancel()"
     >

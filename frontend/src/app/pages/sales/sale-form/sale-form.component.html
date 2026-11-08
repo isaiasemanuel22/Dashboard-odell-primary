@@ -263,6 +263,216 @@
       }
     </db-mobile-sheet>
   </db-mobile-form-shell>
+} @else if (showModalLayout) {
+  <div class="sale-d">
+    <div class="sale-d__cols">
+      <section class="sale-d__left" aria-label="Carrito">
+        <div class="sale-d__search">
+          <label class="sale-d__search-box">
+            <svg
+              viewBox="0 0 24 24"
+              width="18"
+              height="18"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2"
+              aria-hidden="true"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="M20 20l-3.5-3.5" />
+            </svg>
+            <input
+              type="search"
+              placeholder="Buscar producto para agregar"
+              aria-label="Buscar producto para agregar"
+              [(ngModel)]="productSearch"
+              name="productSearchDesktop"
+              autocomplete="off"
+            />
+          </label>
+          @if (productSearch.trim() && searchableProducts.length) {
+            <ul class="sale-d__suggest" role="listbox" aria-label="Productos">
+              @for (product of searchableProducts; track product.id) {
+                <li>
+                  <button
+                    type="button"
+                    class="sale-d__suggest-item"
+                    role="option"
+                    (click)="addProductFromSearch(product)"
+                  >
+                    <span>{{ product.name }}</span>
+                    <span class="sale-d__suggest-meta"
+                      >{{ formatPrice(product.price) }} ·
+                      {{ availableStock(product.id) }} disp.</span
+                    >
+                  </button>
+                </li>
+              }
+            </ul>
+          } @else if (productSearch.trim() && !searchableProducts.length) {
+            <p class="sale-d__hint">No hay productos publicados con stock.</p>
+          }
+          @if (pickerError) {
+            <p class="sale-d__error">{{ pickerError }}</p>
+          }
+        </div>
+
+        <h4 class="sale-d__title">{{ cartSectionTitle }}</h4>
+        <app-sale-form-cart
+          [cart]="cart"
+          [modalLayout]="true"
+          [stockFor]="stockForFn"
+          [imageFor]="imageForFn"
+          (quantityChange)="updateLineQuantity($event.line, $event.quantity)"
+          (remove)="removeFromCart($event)"
+        />
+
+        <div class="sale-d__note">
+          <svg
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            aria-hidden="true"
+          >
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 8v5M12 16h.01" />
+          </svg>
+          Si borrás la venta, el stock vuelve.
+        </div>
+      </section>
+
+      <section class="sale-d__right" aria-label="Cobro">
+        <h4 class="sale-d__title">Cobro</h4>
+
+        <div class="sale-d__field">
+          <span class="sale-d__label">Medio de pago</span>
+          <db-segmented-control
+            class="sale-d__seg"
+            [options]="paymentMethodOptions"
+            [value]="method"
+            ariaLabel="Medio de pago"
+            (valueChange)="onMethodChange($event)"
+          />
+        </div>
+
+        <db-select
+          label="Entra a"
+          [(ngModel)]="account"
+          name="saleAccountDesktop"
+          [options]="accountOptions"
+        />
+
+        <div class="sale-d__two">
+          <div class="sale-d__field">
+            <span class="sale-d__label">Descuento</span>
+            <db-segmented-control
+              class="sale-d__seg"
+              [options]="discountSegmentOptions"
+              [value]="discountMode"
+              ariaLabel="Tipo de descuento"
+              (valueChange)="discountMode = $event"
+            />
+          </div>
+          <db-input
+            label="Fecha"
+            type="date"
+            [(ngModel)]="soldAtLocal"
+            name="soldAtDesktop"
+          />
+        </div>
+        @if (discountMode === 'percent') {
+          <db-input
+            label="Porcentaje (%)"
+            type="number"
+            [(ngModel)]="discountPercent"
+            name="discountPercentDesktop"
+            [min]="0"
+            [max]="100"
+            [step]="1"
+          />
+        }
+        @if (discountMode === 'amount') {
+          <db-input
+            label="Monto ($)"
+            type="number"
+            [(ngModel)]="discountAmount"
+            name="discountAmountDesktop"
+            [min]="0"
+            [step]="1"
+          />
+        }
+
+        <db-input
+          label="Nota"
+          [(ngModel)]="notes"
+          name="notesDesktop"
+          placeholder="Opcional"
+        />
+
+        <div class="sale-d__totals">
+          <div class="sale-d__tr">
+            <span>Subtotal</span>
+            <span class="sale-d__num">{{ cartSubtotal | currencyArs }}</span>
+          </div>
+          @if (cartDiscount > 0) {
+            <div class="sale-d__tr">
+              <span>Descuento</span>
+              <span class="sale-d__num">−{{ cartDiscount | currencyArs }}</span>
+            </div>
+          }
+          <div class="sale-d__tr sale-d__tr--total">
+            <b>Total</b>
+            <span class="sale-d__big">{{ cartTotal | currencyArs }}</span>
+          </div>
+          @if (hasDiscount) {
+            <div
+              class="sale-d__tr sale-d__tr--profit"
+              [class.sale-d__tr--loss]="cartProfit < 0"
+            >
+              <span>Ganancia</span>
+              <span class="sale-d__num">{{ cartProfit | currencyArs }}</span>
+            </div>
+          }
+        </div>
+
+        @if (error) {
+          <db-form-error>{{ error }}</db-form-error>
+        }
+        @if (closeSaleBlockReason) {
+          <p class="sale-form__stock-hint">{{ closeSaleBlockReason }}</p>
+        }
+      </section>
+    </div>
+
+    <db-form-footer>
+      <db-button
+        label="Cancelar"
+        variant="cancel"
+        format="soft"
+        (clicked)="cancelCart()"
+      />
+      @if (!isEditing) {
+        <db-button
+          label="Crear pedido"
+          variant="secondary"
+          format="soft"
+          [disabled]="!hasCartItems"
+          (clicked)="createOrder()"
+        />
+      }
+      <db-button
+        [label]="mobilePrimaryLabel"
+        variant="primary"
+        format="solid"
+        [disabled]="!canCloseSale"
+        (clicked)="closeSale()"
+      />
+    </db-form-footer>
+  </div>
 } @else {
   <db-form [class.sale-form--mobile]="useCardLayout">
     <db-fieldset legend="Carrito">

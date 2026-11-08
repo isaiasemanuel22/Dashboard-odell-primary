@@ -232,7 +232,7 @@ export class FormDialogService {
     return from(import('./sale-form-dialog.component')).pipe(
       switchMap(
         ({ SaleFormDialogComponent }): Observable<RetailSale | undefined> =>
-          this.open(SaleFormDialogComponent, { sale }, 'lg', {
+          this.open(SaleFormDialogComponent, { sale }, 'wide', {
             ariaLabel: sale ? 'Editar venta' : 'Nueva venta en mostrador',
           }),
       ),

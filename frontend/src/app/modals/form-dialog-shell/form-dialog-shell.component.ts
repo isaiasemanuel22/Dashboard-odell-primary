@@ -40,6 +40,7 @@ export class FormDialogShellComponent {
       'modal--ml': this.size === 'ml',
       'modal--lg': this.size === 'lg',
       'modal--xl': this.size === 'xl',
+      'modal--wide': this.size === 'wide',
       'modal--bar': this.footerBar || this.confirm,
       'modal--confirm': this.confirm,
     };
