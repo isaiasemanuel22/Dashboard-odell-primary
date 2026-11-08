@@ -82,14 +82,14 @@ export function formatSupplyQuantity(
   }
 
   if (rawUnit === 'kg') {
-    if (Math.abs(amount) > 0 && Math.abs(amount) < 1) {
+    if (Math.abs(amount) < 1) {
       return `${formatSupplyNumber(Math.round(amount * 1000))} g`;
     }
     return `${formatSupplyNumber(roundSupplyAmount(amount))} kg`;
   }
 
   if (rawUnit === 'L' || rawUnit === 'l') {
-    if (Math.abs(amount) > 0 && Math.abs(amount) < 1) {
+    if (Math.abs(amount) < 1) {
       return `${formatSupplyNumber(Math.round(amount * 1000))} ml`;
     }
     return `${formatSupplyNumber(roundSupplyAmount(amount))} L`;

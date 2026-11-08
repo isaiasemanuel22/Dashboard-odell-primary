@@ -694,6 +694,9 @@ export interface PrintJobConsumptionLine {
   unit: string;
   remaining: number | null;
   kind: 'material' | 'failure';
+  /** Color del insumo resuelto (catálogo), si aplica. */
+  colorId?: string | null;
+  colorHex?: string | null;
 }
 
 export interface PrintJob {

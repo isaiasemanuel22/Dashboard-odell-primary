@@ -20,6 +20,28 @@
   }
 }
 
+/* Footer fijo OPT-IN: solo cuando stickyFooter=true (p. ej. task-detail). */
+:host.form-dialog-shell--sticky-footer {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  max-height: 100%;
+
+  .modal {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .modal__body {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+  }
+}
+
 .modal__header {
   align-items: flex-start;
 }

@@ -148,6 +148,22 @@ export class PrintJobsService {
     );
   }
 
+  getFailureCost(
+    id: string,
+    grams: number,
+    hours: number,
+  ): Observable<{ cost: number }> {
+    return this.http.get<{ cost: number }>(
+      `${this.baseUrl}/${id}/failure-cost`,
+      {
+        params: {
+          grams: String(grams),
+          hours: String(hours),
+        },
+      },
+    );
+  }
+
   registerFailure(
     id: string,
     body: RegisterPrintJobFailurePayload,

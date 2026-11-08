@@ -8,8 +8,12 @@ import {
   ServiceType,
   TaskType,
 } from '../common/enums';
-import { CreateIndependentTaskDto } from '../common/dto';
+import {
+  CreateIndependentTaskDto,
+  PrintJobFailureCostQueryDto,
+} from '../common/dto';
 import { PrintJob } from '../common/interfaces';
+import { CostCalculatorService } from '../settings/cost-calculator.service';
 import { OrderTasksService } from './order-tasks.service';
 import { PrintJobsService } from './print-jobs.service';
 import { PrinterQueueService } from './printer-queue.service';
@@ -197,6 +201,81 @@ describe('PrintJobsService.createIndependent', () => {
     expect(empty).toHaveLength(0);
     expect(omitted).toHaveLength(0);
     expect(unknown.length).toBeGreaterThan(0);
+  });
+});
+
+describe('PrintJobsService.failureCost', () => {
+  it('reutiliza CostCalculatorService.calculateFailureCost', () => {
+    const store = new StoreService();
+    store.applyState(createEmptyState());
+    store.products.push({
+      id: 'prod-fail',
+      name: 'Pieza',
+      images: [],
+      attachments: [],
+      updatedAt: new Date().toISOString(),
+      price: 1000,
+      cost: 500,
+      profit: 500,
+      categoryIds: [],
+      type: ProductType.FDM,
+      size: '10cm',
+      published: true,
+      components: [],
+      assemblyTimeHours: 0,
+      includesPieces: false,
+      grams: 50,
+      printTimeHours: 1,
+      workTimeHours: 0,
+      stock: 0,
+      filamentType: 'pla' as never,
+    });
+    store.printJobs.push({
+      id: 'job-fail',
+      orderId: '',
+      orderItemIndex: -1,
+      customerName: '',
+      productName: 'Pieza',
+      productId: 'prod-fail',
+      type: ServiceType.IMPRESION_3D,
+      status: PrintJobStatus.POR_HACER,
+      active: true,
+      priority: 1,
+      machine: '',
+      estimatedHours: 1,
+      dueDate: new Date().toISOString(),
+    });
+
+    const calculator = new CostCalculatorService(store);
+    const svc = new PrintJobsService(
+      store,
+      new OrderTasksService(store),
+      undefined,
+      calculator,
+    );
+    const expected = calculator.calculateFailureCost(
+      store.printJobs[0],
+      100,
+      1,
+    );
+    expect(svc.failureCost('job-fail', 100, 1)).toEqual({ cost: expected });
+  });
+
+  it('valida el DTO de query grams/hours', async () => {
+    const ok = await validate(
+      plainToInstance(PrintJobFailureCostQueryDto, {
+        grams: 12.5,
+        hours: 0.5,
+      }),
+    );
+    const bad = await validate(
+      plainToInstance(PrintJobFailureCostQueryDto, {
+        grams: -1,
+        hours: 'x',
+      }),
+    );
+    expect(ok).toHaveLength(0);
+    expect(bad.length).toBeGreaterThan(0);
   });
 });
 

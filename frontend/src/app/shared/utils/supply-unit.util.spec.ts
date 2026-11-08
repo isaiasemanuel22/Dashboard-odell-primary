@@ -27,6 +27,10 @@ describe('formatSupplyQuantity', () => {
     expect(formatSupplyQuantity(0.08, 'kg')).toBe('80 g');
   });
 
+  it('muestra 0 kg como 0 g', () => {
+    expect(formatSupplyQuantity(0, 'kg')).toBe('0 g');
+  });
+
   it('muestra kg >= 1 con hasta 2 decimales', () => {
     expect(formatSupplyQuantity(1.25, 'kg')).toBe('1,25 kg');
     expect(formatSupplyQuantity(2, 'kg')).toBe('2 kg');
@@ -34,6 +38,10 @@ describe('formatSupplyQuantity', () => {
 
   it('pasa L < 1 a ml', () => {
     expect(formatSupplyQuantity(0.05, 'L')).toBe('50 ml');
+  });
+
+  it('muestra 0 L como 0 ml', () => {
+    expect(formatSupplyQuantity(0, 'L')).toBe('0 ml');
   });
 
   it('mantiene g/ml sin convertir', () => {

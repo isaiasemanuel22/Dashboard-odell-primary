@@ -2,11 +2,57 @@
   [title]="shellTitle"
   [subtitle]="shellSubtitle"
   size="lg"
+  [stickyFooter]="true"
   (close)="cancel()"
 >
   <div class="td">
-    @if (taskKindLabel) {
-      <span class="td__kind">{{ taskKindLabel }}</span>
+    @if (isBlocked) {
+      <div class="td__blocked" role="status">
+        <div class="td__blocked-main">
+          <span class="td__blocked-lock" aria-hidden="true">
+            <svg
+              viewBox="0 0 24 24"
+              width="14"
+              height="14"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="2.4"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            >
+              <rect x="5" y="11" width="14" height="9" rx="2"></rect>
+              <path d="M8 11V8a4 4 0 0 1 8 0v3"></path>
+            </svg>
+          </span>
+          <div class="td__blocked-text">
+            Bloqueada
+            @if (job.blockedReason) {
+              <span>· {{ job.blockedReason }}</span>
+            }
+          </div>
+        </div>
+        @if (canEdit) {
+          @if (isSupplyBlock) {
+            <db-button
+              label="Reemplazar insumo"
+              variant="secondary"
+              format="soft"
+              extraClass="td__blk-btn td__btn-sm"
+              [disabled]="saving"
+              (clicked)="onReplaceSupply()"
+            />
+          } @else {
+            <db-button
+              label="Desbloquear"
+              variant="secondary"
+              format="soft"
+              extraClass="td__blk-btn td__btn-sm"
+              [disabled]="saving"
+              (clicked)="onUnblock()"
+            />
+          }
+        }
+      </div>
     }
 
     <div class="td__line">
@@ -24,36 +70,6 @@
       />
     </div>
 
-    @if (isBlocked) {
-      <div class="td__blocked" role="status">
-        <div class="td__blocked-text">
-          Bloqueada
-          @if (job.blockedReason) {
-            <span>· {{ job.blockedReason }}</span>
-          }
-        </div>
-        @if (canEdit) {
-          @if (isSupplyBlock) {
-            <db-button
-              label="Reemplazar insumo"
-              variant="secondary"
-              format="soft"
-              [disabled]="saving"
-              (clicked)="onReplaceSupply()"
-            />
-          } @else {
-            <db-button
-              label="Desbloquear"
-              variant="secondary"
-              format="soft"
-              [disabled]="saving"
-              (clicked)="onUnblock()"
-            />
-          }
-        }
-      </div>
-    }
-
     @if (error) {
       <p class="td__error" role="alert">{{ error }}</p>
     }
@@ -62,7 +78,19 @@
     }
 
     @if (loading) {
-      <p class="td__loading">Cargando detalle…</p>
+      <div class="td__skeleton" aria-busy="true" aria-live="polite">
+        <div class="td__fields">
+          <div class="td__skel-field"></div>
+          <div class="td__skel-field"></div>
+          <div class="td__skel-field"></div>
+          <div class="td__skel-field"></div>
+        </div>
+        <div class="td__pair">
+          <div class="td__skel-card"></div>
+          <div class="td__skel-card"></div>
+        </div>
+        <div class="td__skel-notes"></div>
+      </div>
     } @else {
       <div class="td__fields">
         @if (showPrinterField) {
@@ -122,6 +150,7 @@
               type="number"
               name="failGrams"
               [(ngModel)]="failureGrams"
+              (ngModelChange)="onFailureCostInputChange()"
               [min]="0"
               [step]="0.1"
               [disabled]="saving"
@@ -131,6 +160,7 @@
               type="number"
               name="failHours"
               [(ngModel)]="failureHours"
+              (ngModelChange)="onFailureCostInputChange()"
               [min]="0"
               [step]="0.1"
               [disabled]="saving"
@@ -143,6 +173,12 @@
               [disabled]="saving"
             />
           </div>
+          @if (showLiveFailureCost) {
+            <div class="td__fail-cost" role="status">
+              <span>Costo de la falla</span>
+              <strong>{{ formatCurrencyArs(liveFailureCost ?? 0) }}</strong>
+            </div>
+          }
           <db-checkbox
             name="failReprint"
             [label]="reprintQueueLabel"
@@ -165,7 +201,7 @@
                   <span>{{ formatFailureDate(entry.at) }}</span>
                   <span>{{ entry.pieces }} p · {{ formatDecimalHours(entry.grams) }} g</span>
                   <span>{{ failureReasonLabel[entry.reason] }}</span>
-                  <span>{{ formatCurrencyArs(entry.cost) }}</span>
+                  <span class="td__fail-list-cost">{{ formatCurrencyArs(entry.cost) }}</span>
                 </li>
               }
             </ul>
@@ -187,20 +223,33 @@
                   @for (line of discountedConsumption; track line.name + line.kind) {
                     <li>
                       <span class="td__cons-text">
-                        <span class="td__cons-name">{{ line.name }}</span>
+                        <span class="td__cons-label">
+                          @if (line.colorHex) {
+                            <span
+                              class="td__swatch"
+                              [style.background]="line.colorHex"
+                              aria-hidden="true"
+                            ></span>
+                          }
+                          <span class="td__cons-name">{{ line.name }}</span>
+                        </span>
                         @if (line.requirementLabel) {
                           <span class="td__cons-sub">{{ line.requirementLabel }}</span>
                         }
                       </span>
-                      <span>−{{ formatSupplyQuantity(line.quantity, line.unit) }}</span>
+                      <span class="td__cons-qty"
+                        >−{{ formatSupplyQuantity(line.quantity, line.unit) }}</span
+                      >
                     </li>
                   }
                 </ul>
                 @if (mainMaterialRemaining; as rem) {
-                  <p class="td__remain">
-                    Le quedan a {{ rem.name }}:
-                    {{ formatSupplyQuantity(rem.remaining ?? 0, rem.unit) }}
-                  </p>
+                  <div class="td__remain">
+                    <span>Le quedan a {{ rem.name }}</span>
+                    <span class="td__cons-qty">{{
+                      formatSupplyQuantity(rem.remaining ?? 0, rem.unit)
+                    }}</span>
+                  </div>
                 }
               } @else {
                 <p class="td__empty">{{ consumptionEmptyMessage }}</p>
@@ -210,9 +259,20 @@
                   @for (line of unlinkedConsumption; track line.name + line.kind) {
                     <li>
                       <span class="td__cons-text">
-                        <span class="td__cons-name">{{ line.name }}</span>
+                        <span class="td__cons-label">
+                          @if (line.colorHex) {
+                            <span
+                              class="td__swatch"
+                              [style.background]="line.colorHex"
+                              aria-hidden="true"
+                            ></span>
+                          }
+                          <span class="td__cons-name">{{ line.name }}</span>
+                        </span>
                       </span>
-                      <span>−{{ formatSupplyQuantity(line.quantity, line.unit) }}</span>
+                      <span class="td__cons-qty"
+                        >−{{ formatSupplyQuantity(line.quantity, line.unit) }}</span
+                      >
                     </li>
                   }
                 </ul>
@@ -222,20 +282,33 @@
                 @for (line of consumption; track line.name + line.kind) {
                   <li [class.td__cons-item--muted]="!line.supplyId">
                     <span class="td__cons-text">
-                      <span class="td__cons-name">{{ line.name }}</span>
+                      <span class="td__cons-label">
+                        @if (line.colorHex) {
+                          <span
+                            class="td__swatch"
+                            [style.background]="line.colorHex"
+                            aria-hidden="true"
+                          ></span>
+                        }
+                        <span class="td__cons-name">{{ line.name }}</span>
+                      </span>
                       @if (line.requirementLabel) {
                         <span class="td__cons-sub">{{ line.requirementLabel }}</span>
                       }
                     </span>
-                    <span>−{{ formatSupplyQuantity(line.quantity, line.unit) }}</span>
+                    <span class="td__cons-qty"
+                      >−{{ formatSupplyQuantity(line.quantity, line.unit) }}</span
+                    >
                   </li>
                 }
               </ul>
               @if (mainMaterialRemaining; as rem) {
-                <p class="td__remain">
-                  Le quedan a {{ rem.name }}:
-                  {{ formatSupplyQuantity(rem.remaining ?? 0, rem.unit) }}
-                </p>
+                <div class="td__remain">
+                  <span>Le quedan a {{ rem.name }}</span>
+                  <span class="td__cons-qty">{{
+                    formatSupplyQuantity(rem.remaining ?? 0, rem.unit)
+                  }}</span>
+                </div>
               }
             } @else {
               <p class="td__empty">{{ consumptionEmptyMessage }}</p>
@@ -244,7 +317,7 @@
         }
 
         @if (showFailureStats) {
-          <section class="td__card">
+          <section class="td__card td__card--stats">
             <h4>Fallas de los últimos 30 días</h4>
             @if (failureStats; as stats) {
               <dl class="td__stats">
@@ -295,42 +368,52 @@
         label="Notas de la tarea"
         name="taskNotes"
         [(ngModel)]="notes"
+        [rows]="2"
         [readonly]="!canEdit"
         [disabled]="saving"
       />
     }
+  </div>
 
-    <div class="td__footer">
-      <div class="td__footer-left">
-        @if (showReturnToBlocked) {
-          <db-button
-            label="Devolver a Bloqueado"
-            variant="secondary"
-            format="soft"
-            extraClass="td__danger"
-            [disabled]="saving"
-            (clicked)="onReturnToBlocked()"
-          />
-        }
-      </div>
-      <div class="td__footer-right">
+  <div formDialogFooter class="modal__footer td__footer">
+    <div class="td__footer-left">
+      @if (showReturnToBlocked) {
         <db-button
-          label="Cancelar"
+          label="Devolver a Bloqueado"
+          variant="secondary"
+          format="soft"
+          extraClass="td__danger"
+          [disabled]="saving"
+          (clicked)="onReturnToBlocked()"
+        />
+      }
+      @if (showUnblockInFooter) {
+        <db-button
+          label="Desbloquear"
           variant="secondary"
           format="soft"
           [disabled]="saving"
-          (clicked)="cancel()"
+          (clicked)="onUnblock()"
         />
-        @if (canEdit) {
-          <db-button
-            label="Guardar"
-            variant="primary"
-            format="solid"
-            [disabled]="saving || loading"
-            (clicked)="onSave()"
-          />
-        }
-      </div>
+      }
+    </div>
+    <div class="td__footer-right">
+      <db-button
+        label="Cancelar"
+        variant="secondary"
+        format="soft"
+        [disabled]="saving"
+        (clicked)="cancel()"
+      />
+      @if (canEdit) {
+        <db-button
+          label="Guardar"
+          variant="primary"
+          format="solid"
+          [disabled]="saving || loading"
+          (clicked)="onSave()"
+        />
+      }
     </div>
   </div>
 </app-form-dialog-shell>

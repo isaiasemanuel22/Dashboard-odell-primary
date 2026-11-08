@@ -2,14 +2,16 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   OnInit,
   inject,
 } from '@angular/core';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { EMPTY, Subject, forkJoin, of } from 'rxjs';
+import { catchError, debounceTime, switchMap } from 'rxjs/operators';
 import {
   DbButtonComponent,
   DbStatusBadgeComponent,
@@ -95,6 +97,12 @@ export class TaskDetailDialogComponent implements OnInit {
   private readonly formDialogs = inject(FormDialogService);
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
+
+  private readonly failureCostInputs$ = new Subject<{
+    grams: number;
+    hours: number;
+  }>();
 
   job: PrintJob = this.data.job;
   canEdit = false;
@@ -117,6 +125,7 @@ export class TaskDetailDialogComponent implements OnInit {
   failureHours: number | null = null;
   failureReason: PrintJobFailure['reason'] = 'despegue';
   failureReprint = true;
+  liveFailureCost: number | null = null;
 
   consumption: PrintJobConsumptionLine[] = [];
   failureStats: PrintJobFailureStats | null = null;
@@ -137,7 +146,6 @@ export class TaskDetailDialogComponent implements OnInit {
   readonly formatDecimalHours = formatDecimalHours;
   readonly formatSupplyQuantity = formatSupplyQuantity;
   readonly failureReasonLabel = FAILURE_REASON_LABELS;
-  readonly taskKindLabels = TASK_KIND_LABELS;
 
   ngOnInit(): void {
     this.applyJob(this.data.job);
@@ -145,6 +153,7 @@ export class TaskDetailDialogComponent implements OnInit {
       this.job,
       this.userAccess.peekCurrentUser(),
     );
+    this.bindFailureCostPreview();
     this.loadAuxData();
   }
 
@@ -186,10 +195,6 @@ export class TaskDetailDialogComponent implements OnInit {
     return ` × ${formatDecimalHours(grams)} g = ${formatDecimalHours(total)} g`;
   }
 
-  get taskKindLabel(): string {
-    return this.taskKindLabels[this.job.taskKind] ?? '';
-  }
-
   get isPrint3dTask(): boolean {
     return isEligibleForPrinterQueue(this.job);
   }
@@ -208,6 +213,11 @@ export class TaskDetailDialogComponent implements OnInit {
 
   get showReturnToBlocked(): boolean {
     return this.canEdit && !this.isBlocked && !this.isClosed;
+  }
+
+  /** Bloqueo manual (no insumos): Desbloquear en el footer izquierdo. */
+  get showUnblockInFooter(): boolean {
+    return this.canEdit && this.isBlocked && !this.isSupplyBlock;
   }
 
   get isBlocked(): boolean {
@@ -311,11 +321,24 @@ export class TaskDetailDialogComponent implements OnInit {
     return stats.suggestedPercent !== stats.errorMarginPercent;
   }
 
+  get showLiveFailureCost(): boolean {
+    const grams = Number(this.failureGrams) || 0;
+    const hours = Number(this.failureHours) || 0;
+    return grams > 0 || hours > 0;
+  }
+
   get calculatedPriorityValue(): number {
     if (this.job.calculatedPriority != null) {
       return this.job.calculatedPriority;
     }
     return calcTaskPriority(this.job.dueDate);
+  }
+
+  onFailureCostInputChange(): void {
+    this.failureCostInputs$.next({
+      grams: Number(this.failureGrams) || 0,
+      hours: Number(this.failureHours) || 0,
+    });
   }
 
   cancel(): void {
@@ -454,6 +477,7 @@ export class TaskDetailDialogComponent implements OnInit {
           this.failurePieces = null;
           this.failureGrams = null;
           this.failureHours = null;
+          this.liveFailureCost = null;
           this.successNotice = 'Falla registrada';
           this.error = '';
           this.reloadDetail();
@@ -501,6 +525,28 @@ export class TaskDetailDialogComponent implements OnInit {
       hour: '2-digit',
       minute: '2-digit',
     });
+  }
+
+  private bindFailureCostPreview(): void {
+    this.failureCostInputs$
+      .pipe(
+        debounceTime(300),
+        switchMap(({ grams, hours }) => {
+          if (!(grams > 0 || hours > 0)) {
+            this.liveFailureCost = null;
+            this.cdr.markForCheck();
+            return EMPTY;
+          }
+          return this.printJobs.getFailureCost(this.job.id, grams, hours).pipe(
+            catchError(() => of({ cost: 0 })),
+          );
+        }),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe((result) => {
+        this.liveFailureCost = result.cost;
+        this.cdr.markForCheck();
+      });
   }
 
   private buildSavePatch(): UpdatePrintJobPayload {

@@ -106,6 +106,27 @@ export class PrintJobsService {
     return this.orderTasks.describeConsumption(this.findOne(id));
   }
 
+  /** Costo estimado de falla (material + luz + máquina) para gramos/horas dados. */
+  failureCost(
+    id: string,
+    grams: number,
+    hours: number,
+  ): { cost: number } {
+    const job = this.findOne(id);
+    const g = Number(grams);
+    const h = Number(hours);
+    if (!Number.isFinite(g) || g < 0 || g > 100000) {
+      throw new BadRequestException('Los gramos deben estar entre 0 y 100000');
+    }
+    if (!Number.isFinite(h) || h < 0 || h > 1000) {
+      throw new BadRequestException('Las horas deben estar entre 0 y 1000');
+    }
+    const cost = this.costCalculator
+      ? this.costCalculator.calculateFailureCost(job, g, h)
+      : 0;
+    return { cost };
+  }
+
   blockMissingSupplies(): boolean {
     return this.orderTasks.blockTasksMissingStock();
   }

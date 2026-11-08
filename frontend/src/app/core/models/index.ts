@@ -966,6 +966,8 @@ export interface PrintJobConsumptionLine {
   unit: string;
   remaining: number | null;
   kind: 'material' | 'failure';
+  colorId?: string | null;
+  colorHex?: string | null;
 }
 
 export interface PrintJobFailureStats {

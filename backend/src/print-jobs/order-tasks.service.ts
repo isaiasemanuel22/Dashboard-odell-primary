@@ -1228,6 +1228,7 @@ export class OrderTasksService implements OnModuleInit {
       const supply = this.resolveSupplyForRequirement(job, requirement);
       const quantity = this.toSupplyQuantity(supply, requirement.requiredUnits);
       const unit = supply?.unit ?? this.defaultUnitForRequirement(requirement);
+      const color = this.consumptionColor(supply);
       lines.push({
         supplyId: supply?.id ?? null,
         name: supply?.name ?? requirement.label,
@@ -1238,6 +1239,8 @@ export class OrderTasksService implements OnModuleInit {
         unit,
         remaining: this.consumptionRemaining(job, supply, quantity),
         kind: 'material',
+        colorId: color.colorId,
+        colorHex: color.colorHex,
       });
     }
 
@@ -1255,6 +1258,7 @@ export class OrderTasksService implements OnModuleInit {
         ? this.resolveSupplyForRequirement(job, filamentReq)
         : null;
       const quantity = this.toSupplyQuantity(supply, failedGrams);
+      const color = this.consumptionColor(supply);
       lines.push({
         supplyId: supply?.id ?? null,
         name: supply
@@ -1265,10 +1269,27 @@ export class OrderTasksService implements OnModuleInit {
         unit: supply?.unit ?? 'g',
         remaining: this.consumptionRemaining(job, supply, quantity),
         kind: 'failure',
+        colorId: color.colorId,
+        colorHex: color.colorHex,
       });
     }
 
     return lines;
+  }
+
+  private consumptionColor(supply: Supply | null | undefined): {
+    colorId: string | null;
+    colorHex: string | null;
+  } {
+    const colorId = supply?.colorId?.trim() || null;
+    if (!colorId || isIndistintoColor(colorId)) {
+      return { colorId: null, colorHex: null };
+    }
+    const color = findColorById(
+      this.store.generalSettings.colors ?? [],
+      colorId,
+    );
+    return { colorId, colorHex: color?.hex ?? null };
   }
 
   private consumptionRequirementLabel(

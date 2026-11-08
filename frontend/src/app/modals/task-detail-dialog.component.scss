@@ -1,21 +1,51 @@
+@use '../shared/styles/variables' as *;
+@use '../shared/styles/mobile' as mobile;
+
+/* Tokens locales cuando no hay equivalente exacto en variables. */
+$td-footer-border: #e3ecf2;
+$td-footer-bg: #f7fafc;
+$td-blocked-bg: #fdecec;
+$td-blocked-border: #f3b4b4;
+$td-fail-cost-bg: #fff5f5;
+$td-suggest-bg: #f4f8fb;
+$td-stats-bg: #f7fafc;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
 :host ::ng-deep .modal--lg {
   max-width: 860px;
+}
+
+:host ::ng-deep .modal {
+  display: flex;
+  flex-direction: column;
+  max-height: 90vh;
+}
+
+:host ::ng-deep .modal__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* «Estimado: X h» en gris (ayuda del sistema), no primario. */
+:host ::ng-deep .db-form-hint {
+  color: $color-text-muted;
 }
 
 .td {
   display: flex;
   flex-direction: column;
   gap: 1rem;
-}
-
-.td__kind {
-  align-self: flex-start;
-  padding: 0.2rem 0.55rem;
-  border-radius: 999px;
-  background: var(--color-surface-muted, #f1f5f9);
-  color: var(--color-text-muted, #64748b);
-  font-size: 0.75rem;
-  font-weight: 600;
+  flex: 1 1 auto;
+  min-height: 12rem;
 }
 
 .td__line {
@@ -29,7 +59,7 @@
   border: 0;
   background: none;
   padding: 0;
-  color: var(--color-primary, #0b7fb4);
+  color: var(--color-primary, #{$color-primary});
   font-weight: 700;
   font-size: 0.95rem;
   cursor: pointer;
@@ -39,12 +69,12 @@
   &--muted {
     cursor: default;
     text-decoration: none;
-    color: var(--color-text-muted, #64748b);
+    color: $color-text-muted;
   }
 }
 
 .td__delivery {
-  color: var(--color-text-muted, #64748b);
+  color: $color-text-muted;
   font-size: 0.9rem;
 }
 
@@ -56,41 +86,96 @@
   gap: 0.75rem;
   padding: 0.75rem 0.9rem;
   border-radius: 0.65rem;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  color: #991b1b;
+  background: $td-blocked-bg;
+  border: 1px solid $td-blocked-border;
+  color: $color-danger-text;
+}
+
+.td__blocked-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.45rem;
+  min-width: 0;
+}
+
+.td__blocked-lock {
+  display: inline-flex;
+  flex: none;
+  margin-top: 0.1rem;
+  color: $color-danger-text;
 }
 
 .td__blocked-text {
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+:host ::ng-deep .td__blk-btn {
+  border-color: $color-danger-text !important;
+  color: $color-danger-text !important;
+  background: #fff !important;
+}
+
+:host ::ng-deep .td__btn-sm.db-button,
+:host ::ng-deep .td__blk-btn.td__btn-sm {
+  min-height: 1.75rem;
+  padding: 0.2rem 0.65rem !important;
+  font-size: 0.72rem !important;
 }
 
 .td__error {
   margin: 0;
-  color: #b91c1c;
+  color: $color-danger-text;
   font-size: 0.9rem;
 }
 
 .td__ok {
   margin: 0;
-  color: #166534;
+  color: $color-status-success-text;
   font-size: 0.9rem;
 }
 
-.td__loading {
-  margin: 0;
-  color: var(--color-text-muted, #64748b);
+.td__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 18rem;
+}
+
+.td__skel-field,
+.td__skel-card,
+.td__skel-notes {
+  border-radius: 0.65rem;
+  background: linear-gradient(
+    90deg,
+    $color-surface-muted 0%,
+    $color-surface-subtle 50%,
+    $color-surface-muted 100%
+  );
+  background-size: 200% 100%;
+}
+
+.td__skel-field {
+  min-height: 4.25rem;
+}
+
+.td__skel-card {
+  min-height: 8.5rem;
+}
+
+.td__skel-notes {
+  min-height: 4.5rem;
 }
 
 .td__fields {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
   gap: 0.85rem 1rem;
 }
 
 .td__card {
-  border: 1px solid var(--color-border, #e2e8f0);
+  border: 1px solid var(--color-border, #{$color-border});
   border-radius: 0.75rem;
   padding: 0.9rem 1rem;
   background: var(--color-surface, #fff);
@@ -99,6 +184,10 @@
     margin: 0 0 0.75rem;
     font-size: 0.95rem;
     font-weight: 700;
+  }
+
+  &--stats {
+    background: $td-stats-bg;
   }
 }
 
@@ -117,15 +206,34 @@
 
 .td__aside {
   margin: 0;
-  color: var(--color-text-muted, #64748b);
+  color: $color-text-muted;
   font-size: 0.8rem;
 }
 
 .td__fail-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(110px, 1fr)) minmax(200px, 1.6fr);
   gap: 0.75rem 1rem;
   margin-bottom: 0.75rem;
+}
+
+.td__fail-cost {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  margin: 0 0 0.75rem;
+  padding: 0.55rem 0.75rem;
+  border-radius: 0.5rem;
+  background: $td-fail-cost-bg;
+  font-size: 0.88rem;
+  color: $color-text-label;
+
+  strong {
+    color: $color-danger-text;
+    font-weight: 700;
+    white-space: nowrap;
+  }
 }
 
 .td__fail-actions {
@@ -144,11 +252,19 @@
 
   li {
     display: grid;
-    grid-template-columns: 1.1fr 1fr 1.2fr auto;
+    grid-template-columns: 1.1fr 1fr minmax(0, 1.2fr) auto;
     gap: 0.5rem;
     font-size: 0.8rem;
-    color: var(--color-text-muted, #64748b);
+    color: $color-text-muted;
+    align-items: baseline;
   }
+}
+
+.td__fail-list-cost {
+  text-align: right;
+  white-space: nowrap;
+  width: auto;
+  flex-shrink: 0;
 }
 
 .td__pair {
@@ -179,7 +295,7 @@
 
   &--muted,
   &-item--muted {
-    color: var(--color-text-muted, #94a3b8);
+    color: $color-text-subtle;
   }
 
   &--muted {
@@ -194,20 +310,47 @@
   min-width: 0;
 }
 
+.td__cons-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.td__swatch {
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 1px solid $color-border-soft;
+  flex: none;
+}
+
 .td__cons-name {
   line-height: 1.3;
 }
 
 .td__cons-sub {
   font-size: 0.78rem;
-  color: var(--color-text-muted, #94a3b8);
+  color: $color-text-subtle;
   line-height: 1.3;
 }
 
+.td__cons-qty {
+  font-weight: 700;
+  white-space: nowrap;
+  flex: none;
+}
+
 .td__remain {
-  margin: 0.75rem 0 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0.65rem 0 0;
+  padding-top: 0.65rem;
+  border-top: 1px solid var(--color-border, #{$color-border});
   font-size: 0.85rem;
-  color: var(--color-text-muted, #64748b);
+  color: $color-text-muted;
 }
 
 .td__stats {
@@ -224,7 +367,7 @@
   }
 
   dt {
-    color: var(--color-text-muted, #64748b);
+    color: $color-text-muted;
   }
 
   dd {
@@ -235,11 +378,15 @@
 
 .td__suggest {
   margin: 0.75rem 0 0;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid $td-footer-border;
+  background: $td-suggest-bg;
   font-size: 0.85rem;
   line-height: 1.45;
 
   &--muted {
-    color: var(--color-text-muted, #64748b);
+    color: $color-text-muted;
   }
 }
 
@@ -247,7 +394,7 @@
   border: 0;
   background: none;
   padding: 0;
-  color: var(--color-primary, #0b7fb4);
+  color: var(--color-primary, #{$color-primary});
   font-weight: 600;
   cursor: pointer;
   text-decoration: underline;
@@ -256,18 +403,30 @@
 
 .td__empty {
   margin: 0;
-  color: var(--color-text-muted, #64748b);
+  color: $color-text-muted;
   font-size: 0.88rem;
 }
 
+:host ::ng-deep .db-textarea {
+  min-height: 2.75rem;
+}
+
+:host ::ng-deep .modal .modal__footer.td__footer,
+.td__footer.modal__footer,
 .td__footer {
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  margin-top: 0.25rem;
-  padding-top: 0.25rem;
+  flex: none;
+  flex-shrink: 0;
+  margin: 0;
+  padding: 14px 24px;
+  border-top: 1px solid $td-footer-border;
+  background: $td-footer-bg;
+  box-sizing: border-box;
+  position: static;
 }
 
 .td__footer-left,
@@ -277,19 +436,71 @@
   gap: 0.75rem;
 }
 
-:host ::ng-deep .td__danger.db-button,
-:host ::ng-deep .db-button.td__danger {
-  color: #b91c1c;
+.td__footer-right {
+  margin-left: auto;
 }
 
-@media (max-width: 720px) {
-  .td__fields,
-  .td__fail-grid,
+:host ::ng-deep .td__danger.db-button,
+:host ::ng-deep .db-button.td__danger {
+  color: $color-danger-text !important;
+  background: #fff !important;
+  border-color: $color-border-soft !important;
+}
+
+@include mobile.mobile-only {
+  /* Padding horizontal del título alineado con el cuerpo (1rem). */
+  :host ::ng-deep .modal__header {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  :host ::ng-deep .modal__body {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+
+  /* Margen inferior para que «Notas de la tarea» no quede pegado al footer. */
+  .td {
+    padding-bottom: 1.25rem;
+  }
+
+  .td__fail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  :host ::ng-deep .modal .modal__footer.td__footer,
+  .td__footer.modal__footer,
+  .td__footer {
+    padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid $td-footer-border;
+    background: $td-footer-bg;
+    position: static;
+  }
+
+  .td__footer-right {
+    flex: 1 1 auto;
+    justify-content: flex-end;
+  }
+
   .td__pair {
     grid-template-columns: 1fr;
   }
 
   .td__fail-list li {
-    grid-template-columns: 1fr 1fr;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 0.35rem 0.75rem;
+    overflow: hidden;
+  }
+
+  .td__fail-list-cost {
+    margin-left: auto;
+    text-align: right;
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+
+  .td__cons-qty {
+    white-space: nowrap;
   }
 }

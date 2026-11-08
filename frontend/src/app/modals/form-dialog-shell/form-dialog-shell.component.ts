@@ -1,5 +1,11 @@
 import { NgClass } from '@angular/common';
-import { Component, EventEmitter, Input, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  HostBinding,
+  Input,
+  Output,
+} from '@angular/core';
 import { DbButtonComponent } from '../../components/db-button/db-button.component';
 import { ModalSize } from '../modal-size';
 
@@ -15,7 +21,14 @@ export class FormDialogShellComponent {
   @Input() subtitle = '';
   @Input() size: ModalSize = 'md';
   @Input() stickyHeader = false;
+  /** Activa flex column + body scroll para dejar el slot formDialogFooter fijo. */
+  @Input() stickyFooter = false;
   @Output() close = new EventEmitter<void>();
+
+  @HostBinding('class.form-dialog-shell--sticky-footer')
+  get stickyFooterClass(): boolean {
+    return this.stickyFooter;
+  }
 
   /** Resalta el * del subtítulo en rojo, como en los mocks de formularios. */
   get subtitleWithRequiredMark(): string {

@@ -12,6 +12,7 @@ import type { Request } from 'express';
 import {
   AssignPrintJobPrinterDto,
   CreateIndependentTaskDto,
+  PrintJobFailureCostQueryDto,
   PrinterCapacityQueryDto,
   PrinterQueueHoursQueryDto,
   RegisterPrintJobFailureDto,
@@ -90,6 +91,15 @@ export class PrintJobsController {
   @Get(':id/consumption')
   consumption(@Param('id') id: string) {
     return this.printJobsService.describeConsumption(id);
+  }
+
+  /** Debe ir antes de @Get(':id'). */
+  @Get(':id/failure-cost')
+  failureCost(
+    @Param('id') id: string,
+    @Query() query: PrintJobFailureCostQueryDto,
+  ) {
+    return this.printJobsService.failureCost(id, query.grams, query.hours);
   }
 
   @Post(':id/failures')

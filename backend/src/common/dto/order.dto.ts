@@ -75,6 +75,21 @@ export class RegisterPrintJobFailureDto {
   reprint?: boolean;
 }
 
+/** Query de GET /print-jobs/:id/failure-cost. */
+export class PrintJobFailureCostQueryDto {
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(100000)
+  grams!: number;
+
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  @Max(1000)
+  hours!: number;
+}
+
 export class SupplyReplacementDto {
   @IsString()
   @IsNotEmpty()
