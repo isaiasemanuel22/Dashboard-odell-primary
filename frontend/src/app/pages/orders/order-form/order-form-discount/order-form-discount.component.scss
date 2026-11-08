@@ -29,10 +29,10 @@
 
 .discount-segments {
   display: inline-flex;
-  border: 1px solid #c9d9e4;
+  border: 1px solid $color-border-input;
   border-radius: 0.5rem;
   overflow: hidden;
-  background: #fff;
+  background: $color-surface;
 }
 
 .discount-segment {
@@ -46,7 +46,7 @@
   font-family: inherit;
   cursor: pointer;
   line-height: 1.2;
-  border-right: 1px solid #c9d9e4;
+  border-right: 1px solid $color-border-input;
 
   &:last-child {
     border-right: none;
@@ -54,7 +54,7 @@
 
   &--active {
     background: $color-brand-deep;
-    color: #fff;
+    color: $color-surface;
     font-weight: 600;
   }
 }
@@ -78,7 +78,7 @@
 
   ::ng-deep .db-input {
     min-height: 2.1rem;
-    background: #eef3f7;
+    background: $color-surface-subtle;
   }
 }
 

@@ -48,7 +48,8 @@ export interface QuoteFormDialogData {
     <app-form-dialog-shell
       [title]="dialogTitle"
       [subtitle]="dialogSubtitle"
-      size="xl"
+      size="wide"
+      [footerBar]="true"
       [stickyHeader]="true"
       (close)="cancel()"
     >

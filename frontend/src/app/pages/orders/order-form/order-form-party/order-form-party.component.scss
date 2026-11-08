@@ -55,8 +55,8 @@
     height: 1.25rem;
     padding: 0 0.625rem;
     border-radius: $radius-pill;
-    background: #e0f0f8;
-    color: #0b5f86;
+    background: $color-primary-bg;
+    color: $color-brand-deep;
     font-size: 0.75rem;
     font-weight: 500;
   }
@@ -92,11 +92,11 @@
   margin: 0;
   padding: 0.75rem 0.875rem;
   border-radius: 0.75rem;
-  border: 1px solid #e3ecf2;
-  background: #f4f8fb;
+  border: 1px solid $color-divider;
+  background: $color-surface-inset;
   font-size: 0.8125rem;
   line-height: 1.4;
-  color: #33495a;
+  color: $color-text-label;
 
   &__icon {
     flex: none;
@@ -104,15 +104,15 @@
   }
 
   &--ok {
-    background: #f0faf3;
-    border-color: #b7e1c3;
-    color: #14532d;
+    background: $color-status-success-bg;
+    border-color: rgba($color-success, 0.3);
+    color: $color-status-success-text;
   }
 
   &--warn {
-    background: #fff8eb;
-    border-color: #f5d9a8;
-    color: #7a4a06;
+    background: $color-warning-bg;
+    border-color: $color-warning-border;
+    color: $color-warning-text;
   }
 }
 
@@ -188,7 +188,7 @@
 
         &.is-on {
           background: mobile.$m-primary;
-          color: #fff;
+          color: $color-surface;
           font-weight: 700;
         }
       }
@@ -211,15 +211,15 @@
     }
 
     .wholesale-min-note--ok {
-      background: #f0faf3;
-      border-color: #b7e1c3;
-      color: #14532d;
+      background: $color-status-success-bg;
+      border-color: rgba($color-success, 0.3);
+      color: $color-status-success-text;
     }
 
     .wholesale-min-note--warn {
-      background: #fffbeb;
-      border-color: #fcd34d;
-      color: #92400e;
+      background: $color-warning-bg;
+      border-color: $color-warning-border;
+      color: $color-warning-text;
     }
 
     ::ng-deep .db-form-field__label,
@@ -274,7 +274,7 @@
   .quote-customer-field__label {
     font-size: 0.75rem;
     font-weight: 600;
-    color: #243848;
+    color: $color-text-label;
   }
 
   .quote-customer-field__new {

@@ -382,9 +382,13 @@
 
     @if (isQuoteForm) {
       <db-form-footer class="quote-form__footer desktop-only">
-        <p class="quote-form__note">
-          Se guarda como Borrador · al aceptarlo se convierte en pedido
-        </p>
+        @if (!canSubmit(false) && submitMissingLabel) {
+          <p class="quote-form__warning" role="status">{{ submitMissingLabel }}</p>
+        } @else {
+          <p class="quote-form__note">
+            Se guarda como Borrador · al aceptarlo se convierte en pedido
+          </p>
+        }
         <div class="quote-form__actions" data-discard-safe>
           <db-button
             label="Cancelar"
