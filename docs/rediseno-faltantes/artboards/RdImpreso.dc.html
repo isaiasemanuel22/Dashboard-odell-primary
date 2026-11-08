@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell · Nuevo impreso</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/4bd8029deedccb2d422bb325be90576b">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+.ovl{width:1440px;height:900px;background:#3B4A55;display:flex;justify-content:center;align-items:flex-start;padding:80px 16px;box-sizing:border-box;font-family:Ubuntu,"Segoe UI",system-ui,sans-serif;color:#0F2A3A}
+.modal{width:100%;max-width:560px;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden}
+.mh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:20px 24px 16px;border-bottom:1px solid #E3ECF2}
+.mt{margin:0;font-size:20px;font-weight:700}
+.x{width:40px;height:40px;border-radius:10px;border:0;background:transparent;color:#5B7083;cursor:pointer;font:400 22px Ubuntu,sans-serif;flex:none}
+.x:hover{background:#EEF4F8}
+.mb{padding:20px 24px 24px;display:flex;flex-direction:column;gap:18px}
+.mf{display:flex;flex-wrap:wrap;gap:12px;justify-content:flex-end;align-items:center;padding:14px 24px;border-top:1px solid #E3ECF2;background:#F7FAFC}
+.req{color:#B91C1C}
+.two{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.prev{display:flex;flex-direction:column;gap:4px;background:#F4F8FB;border-radius:10px;padding:12px 14px;font-size:13px;color:#334B5C}
+.prev strong{font-size:15px;color:#0F2A3A}
+.prev small{font-size:11px;color:#5B7083}
+</style>
+</helmet>
+<div class="ovl">
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="im-t">
+<div class="mh">
+<h2 id="im-t" class="mt">Nuevo impreso</h2>
+<button class="x" type="button" aria-label="Cerrar">×</button>
+</div>
+<div class="mb">
+<div class="field"><label for="im-n">Nombre <span class="req">*</span></label><input id="im-n" type="text" placeholder="Ej: Logo, Estampa 25×25" value="Estampa 25×25"></div>
+<div class="field"><label for="im-p">Tipo de papel</label><select id="im-p"><option>Sublimación</option><option selected>DTF</option><option>DTF UV</option></select></div>
+<div class="two">
+<div class="field"><label for="im-a">Ancho (cm) <span class="req">*</span></label><input id="im-a" type="number" min="0.1" step="0.1" value="25"></div>
+<div class="field"><label for="im-l">Largo (cm) <span class="req">*</span></label><input id="im-l" type="number" min="0.1" step="0.1" value="25"></div>
+</div>
+<div class="prev">
+<span>Tamaño: 25 × 25 cm</span>
+<strong>Costo estimado del papel: $ 1.500</strong>
+<small>Calculado con los precios por m² configurados arriba</small>
+</div>
+</div>
+<div class="mf"><button class="btn btn-s" type="button">Cancelar</button><button class="btn btn-p" type="button">Crear impreso</button></div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

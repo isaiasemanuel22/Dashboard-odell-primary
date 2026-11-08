@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell · Paneles de filtros</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/4bd8029deedccb2d422bb325be90576b">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+.pg{width:1440px;height:1000px;box-sizing:border-box;background:#3B4A55;padding:48px;font-family:Ubuntu,"Segoe UI",system-ui,sans-serif;color:#0F2A3A;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:36px 40px;align-content:start;align-items:start}
+.lbl{color:#E3ECF2;font-size:13px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;margin:0 0 12px}
+.mf{display:flex;flex-wrap:wrap;gap:12px;justify-content:flex-end;align-items:center;padding:14px 18px;background:#F7FAFC}
+.pop{width:100%;background:#fff;border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.28);overflow:hidden}
+.pgp{padding:14px 18px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid #E3ECF2}
+.pgt{font-size:12px;font-weight:700;color:#4A6072;text-transform:uppercase;letter-spacing:.04em}
+.trig{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:10px;border:1px solid #0E7AAB;background:#E6F2F8;color:#0B5F86;font:500 14px Ubuntu,sans-serif}
+.cnt{background:#0E7AAB;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px}
+.hd{flex-direction:row;justify-content:space-between;align-items:center}
+.hd h2{margin:0;font-size:16px}
+.vacio{margin:0;font-size:13px;color:#5B7083}
+</style>
+</helmet>
+<div class="pg">
+
+<section>
+<p class="lbl">Presupuestos</p>
+<div style="margin-bottom: 8px"><button class="trig" type="button" aria-expanded="true">Filtros <span class="cnt">1</span></button></div>
+<div class="pop" role="dialog" aria-labelledby="fq-t">
+<div class="pgp hd"><h2 id="fq-t">Filtrar presupuestos</h2><button class="btn btn-s btn-sm" type="button">Limpiar</button></div>
+<div class="pgp"><span class="pgt">Área</span><div class="chips"><button class="achip" type="button">Todas</button><button class="achip achip-on" type="button">Impresión 3D</button><button class="achip" type="button">Diseño gráfico</button><button class="achip" type="button">Modelado</button><button class="achip" type="button">Estampado</button></div></div>
+<div class="mf"><button class="btn btn-s" type="button">Cancelar</button><button class="btn btn-p" type="button">Ver 8 presupuestos</button></div>
+</div>
+</section>
+
+<section>
+<p class="lbl">Ventas</p>
+<div style="margin-bottom: 8px"><button class="trig" type="button" aria-expanded="true">Filtros <span class="cnt">2</span></button></div>
+<div class="pop" role="dialog" aria-labelledby="fv-t">
+<div class="pgp hd"><h2 id="fv-t">Filtrar ventas</h2><button class="btn btn-s btn-sm" type="button">Limpiar</button></div>
+<div class="pgp"><span class="pgt">Tipo</span><div class="chips"><button class="achip" type="button">Todas</button><button class="achip achip-on" type="button">Mostrador</button><button class="achip" type="button">Pedido</button></div></div>
+<div class="pgp"><span class="pgt">Área</span><div class="chips"><button class="achip" type="button">Todas</button><button class="achip" type="button">Impresión 3D</button><button class="achip" type="button">Diseño gráfico</button><button class="achip" type="button">Modelado</button><button class="achip achip-on" type="button">Estampado</button></div></div>
+<div class="mf"><button class="btn btn-s" type="button">Cancelar</button><button class="btn btn-p" type="button">Ver 14 ventas</button></div>
+</div>
+</section>
+
+<section>
+<p class="lbl">Productos</p>
+<div style="margin-bottom: 8px"><button class="trig" type="button" aria-expanded="true">Filtros <span class="cnt">2</span></button></div>
+<div class="pop" role="dialog" aria-labelledby="fp-t">
+<div class="pgp hd"><h2 id="fp-t">Tipo y categoría</h2><button class="btn btn-s btn-sm" type="button">Limpiar</button></div>
+<div class="pgp"><span class="pgt">Tipo</span><div class="chips"><button class="achip" type="button">Todos</button><button class="achip achip-on" type="button">FDM</button><button class="achip" type="button">Resina</button><button class="achip" type="button">Estampado</button></div></div>
+<div class="pgp"><span class="pgt">Categoría</span><div class="chips"><button class="achip" type="button">Todas</button><button class="achip achip-on" type="button">Llaveros</button><button class="achip" type="button">Figuras</button><button class="achip" type="button">Organizadores</button></div></div>
+<div class="mf"><button class="btn btn-s" type="button">Cancelar</button><button class="btn btn-p" type="button">Ver 9 productos</button></div>
+</div>
+</section>
+
+<section>
+<p class="lbl">Cola de trabajo</p>
+<div style="margin-bottom: 8px"><button class="trig" type="button" aria-expanded="true">Filtros <span class="cnt">1</span></button></div>
+<div class="pop" role="dialog" aria-labelledby="fc-t">
+<div class="pgp hd"><h2 id="fc-t">Filtrar cola</h2><button class="btn btn-s btn-sm" type="button">Limpiar</button></div>
+<div class="pgp"><span class="pgt">Cliente</span><div class="chips"><button class="achip achip-on" type="button">María González</button><button class="achip" type="button">Café Aurora</button><button class="achip" type="button">QA Revendedor</button><button class="achip" type="button">Lucas Pereyra</button></div></div>
+<div class="mf"><button class="btn btn-s" type="button">Cancelar</button><button class="btn btn-p" type="button">Ver 3 tareas</button></div>
+</div>
+</section>
+
+<section>
+<p class="lbl">Calendario</p>
+<div style="margin-bottom: 8px"><button class="trig" type="button" aria-expanded="true">Filtros <span class="cnt">1</span></button></div>
+<div class="pop" role="dialog" aria-labelledby="fk-t">
+<div class="pgp hd"><h2 id="fk-t">Filtrar calendario</h2><button class="btn btn-s btn-sm" type="button">Limpiar</button></div>
+<div class="pgp"><span class="pgt">Tipo</span><div class="chips"><button class="achip" type="button">Todos</button><button class="achip achip-on" type="button">Entregas</button><button class="achip" type="button">Eventos</button><button class="achip" type="button">Recordatorios</button></div></div>
+<div class="mf"><button class="btn btn-s" type="button">Cancelar</button><button class="btn btn-p" type="button">Ver 5 ítems</button></div>
+</div>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

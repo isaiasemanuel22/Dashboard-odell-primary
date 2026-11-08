@@ -1,0 +1,87 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell · Nuevo cliente revendedor</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/4bd8029deedccb2d422bb325be90576b">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+.new{display:inline-flex;align-items:center;height:20px;padding:0 8px;border-radius:999px;background:#E0F0F8;color:#0B5F86;font-size:11px;font-weight:700;letter-spacing:.02em;vertical-align:middle;white-space:nowrap}
+.note{display:flex;gap:10px;align-items:flex-start;padding:12px 14px;border-radius:12px;background:#F4F8FB;border:1px solid #E3ECF2;font-size:13px;color:#33495A}
+.note-w{background:#FFF8EB;border-color:#F5D9A8;color:#7A4A06}
+.note-d{background:#FFF5F5;border-color:#F3B4B4;color:#8A1C1C}
+.note-ok{background:#F0FAF3;border-color:#B7E1C3;color:#14532D}
+.seg{display:inline-flex;border:1px solid #C9D8E3;border-radius:10px;overflow:hidden}
+.seg button{border:0;background:#fff;padding:0 14px;min-height:40px;font:500 13px Ubuntu,sans-serif;color:#33495A;cursor:pointer}
+.seg button+button{border-left:1px solid #C9D8E3}
+.seg .on{background:#0E7AAB;color:#fff}
+.lbl{font-size:12px;color:#5B7083;font-weight:500}
+.big{font-size:22px;font-weight:700;color:#0F2A3A}
+.row{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:16px}
+.grid3{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px}
+.lock{display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:700;color:#0B5F86;background:#E0F0F8;border-radius:999px;padding:2px 8px}
+.pill{display:inline-flex;align-items:center;gap:6px;height:24px;padding:0 10px;border-radius:999px;font-size:12px;font-weight:500;background:#EEF4F8;color:#33495A}
+.p-ok{background:#DCFCE7;color:#166534}.p-w{background:#FEF3C7;color:#92400E}.p-d{background:#FEE2E2;color:#991B1B}.p-b{background:#E0F0F8;color:#0B5F86}.p-v{background:#F3E8FF;color:#6B21A8}
+.sw{width:14px;height:14px;border-radius:999px;border:1px solid #C9D8E3;display:inline-block;flex:none}
+.ovl{min-height:100vh;background:#3B4A55;display:flex;justify-content:center;align-items:flex-start;padding:48px 16px;box-sizing:border-box;font-family:Ubuntu,"Segoe UI",system-ui,sans-serif;color:#0F2A3A}
+.modal{width:100%;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden}
+.mh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:20px 24px 16px;border-bottom:1px solid #E3ECF2}
+.mt{margin:0;font-size:20px;font-weight:700}
+.x{width:40px;height:40px;border-radius:10px;border:0;background:transparent;color:#5B7083;cursor:pointer;font:400 22px Ubuntu,sans-serif;flex:none}
+.x:hover{background:#EEF4F8}
+.mb{padding:20px 24px 24px;display:flex;flex-direction:column;gap:18px}
+.mf{display:flex;flex-wrap:wrap;gap:12px;justify-content:space-between;align-items:center;padding:14px 24px;border-top:1px solid #E3ECF2;background:#F7FAFC}
+.req{color:#B91C1C}
+.sec-t{margin:0;font-size:14px;font-weight:700;color:#0F2A3A}
+
+</style>
+</helmet>
+<div class="ovl">
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-t" style="max-width: 600px">
+<div class="mh">
+<div><h2 id="m-t" class="mt">Nuevo cliente</h2><p class="sub">Los campos con <span class="req">*</span> son obligatorios</p></div>
+<button class="x" type="button" aria-label="Cerrar">×</button>
+</div>
+<div class="mb">
+<div class="field"><label for="c-n">Nombre <span class="req">*</span></label><input id="c-n" type="text" value="Emprendimientos Norte" autocomplete="name"></div>
+<div style="display: flex; flex-direction: column; gap: 8px">
+<span class="lbl">Tipo de cliente <span class="new">Nuevo</span></span>
+<div class="seg" role="group" aria-label="Tipo de cliente"><button type="button">Particular</button><button type="button">Empresa</button><button type="button" class="on">Revendedor</button></div>
+</div>
+<div class="card" style="padding: 14px 16px; display: flex; flex-direction: column; gap: 10px; background: #F4F8FB">
+<div class="bar"><span class="strong">Precio mayorista</span><span class="pill p-b">−20% sobre lista</span></div>
+<p class="sec" style="margin: 0">Se aplica solo en pedidos y presupuestos. El porcentaje se cambia en Ajustes › Ganancias.</p>
+<div class="grid2" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr))">
+<div class="field"><label for="c-min">Compra mínima mayorista</label><input id="c-min" type="text" value="$ 50.000"><small>Si el pedido no llega, se cobra precio de lista</small></div>
+<div class="field"><label for="c-cuit">CUIT (opcional)</label><input id="c-cuit" type="text" placeholder="30-12345678-9"><small>Para facturar</small></div>
+</div>
+</div>
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px">
+<div class="field"><label for="c-e">Email <span class="req">*</span></label><input id="c-e" type="email" value="contacto@empnorte" aria-invalid="true" aria-describedby="c-e-err" style="border-color: #B91C1C"><small id="c-e-err" style="color: #B91C1C">Revisá el email: falta el dominio (por ejemplo, .com)</small></div>
+<div class="field"><label for="c-p">Teléfono <span class="req">*</span></label><input id="c-p" type="tel" value="+54 351 555-0100" autocomplete="tel"><small style="color: #15803D">Listo para WhatsApp</small></div>
+</div>
+<div class="field"><label for="c-o">¿Cómo llegó? <span class="new">Nuevo</span></label><select id="c-o"><option>Instagram</option><option>WhatsApp</option><option>Tiendanube</option><option>Feria</option><option>Recomendación</option></select><small>Se usa para medir qué canal te trae clientes</small></div>
+</div>
+<div class="mf">
+<span class="sec" style="margin: 0">En pedidos va a aparecer con la etiqueta Revendedor</span>
+<div class="actions"><button class="btn btn-s" type="button">Cancelar</button><button class="btn btn-p" type="button">Crear cliente</button></div>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview": {"width": 1440, "height": 980}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>

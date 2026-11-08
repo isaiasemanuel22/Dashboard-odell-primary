@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell · Cola de trabajo</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/4bd8029deedccb2d422bb325be90576b">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+.board{display:grid;grid-template-columns:repeat(5,minmax(220px,1fr));gap:14px;overflow-x:auto;padding-bottom:8px;align-items:start}
+.col{background:#EEF4F8;border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:10px;min-height:520px}
+.colh{display:flex;justify-content:space-between;align-items:center;padding:2px 4px 4px}
+.colt{display:flex;align-items:center;gap:8px;font-size:14px;font-weight:700;margin:0}
+.dot{width:10px;height:10px;border-radius:50%}
+.d-todo{background:#5B7083}.d-doing{background:#0E7AAB}.d-rev{background:#B45309}.d-blk{background:#B91C1C}.d-done{background:#15803D}
+.n{background:#fff;border-radius:10px;padding:1px 9px;font-size:12px;font-weight:700;color:#4A6072}
+.zone{border:1px dashed #9FB3C2;border-radius:12px;padding:8px;display:flex;flex-direction:column;gap:8px}
+.zl{font-size:12px;color:#4A6072;font-weight:500;margin:0 2px}
+.jc{background:#fff;border-radius:12px;border:1px solid #E3ECF2;padding:12px;display:flex;flex-direction:column;gap:8px;box-shadow:0 1px 2px rgba(15,42,58,.06)}
+.jt{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.oid{font-size:12px;font-weight:700;color:#0E7AAB;text-decoration:none}
+.pr{font-size:11px;font-weight:700;border-radius:8px;padding:2px 8px}
+.p-high{background:#FDECEC;color:#B91C1C}.p-med{background:#FEF3E2;color:#92400E}.p-norm{background:#EEF4F8;color:#4A6072}
+.jn{margin:0;font-size:14px;font-weight:700;line-height:1.3}
+.jf{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.av{width:26px;height:26px;border-radius:50%;background:#DCEBF4;color:#0B5F86;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center}
+.due{font-size:12px;color:#4A6072}
+.late{color:#B91C1C;font-weight:700}
+.blk{margin:0;font-size:12px;color:#B91C1C;background:#FDECEC;border-radius:8px;padding:6px 8px;line-height:1.35}
+.addb{height:36px;border-radius:10px;border:1px solid #C9D6DF;background:#fff;color:#0B5F86;font:500 13px Ubuntu,sans-serif;cursor:pointer}
+.empty{border:1px dashed #C9D6DF;border-radius:12px;padding:18px 8px;text-align:center;color:#5B7083;font-size:13px}
+.avs{display:flex;gap:6px}
+.avb{width:32px;height:32px;border-radius:50%;border:2px solid transparent;background:#DCEBF4;color:#0B5F86;font:700 12px Ubuntu,sans-serif;cursor:pointer}
+.avb-on{border-color:#0E7AAB;background:#0E7AAB;color:#fff}
+</style>
+</helmet>
+<div class="app">
+<nav class="side" aria-label="Menú principal">
+<div class="brand"><div class="brand-mark" aria-hidden="true">O</div><div><div class="brand-name">Odell</div><div class="brand-sub">Dashboard</div></div></div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="10">
+<a href="{{item.href}}" class="{{item.cls}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.d}}"></path></svg>{{item.label}}</a>
+</sc-for>
+<div class="sb-foot"><span class="sb-mail">isaiasemanuelcalfin@gmail.com</span><button class="sb-out" type="button">Cerrar sesión</button></div>
+</nav>
+
+<main class="main">
+<div class="wrap" style="max-width: none">
+
+<header class="head">
+<div>
+<h1 class="h1">Cola de trabajo</h1>
+<p class="sub">9 tareas en el tablero · 2 por agregar · <b style="color: #B91C1C">1 bloqueada</b></p>
+</div>
+<div class="actions" style="align-items: center">
+<label class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7"></circle><path d="M20 20l-3.5-3.5"></path></svg><input type="search" placeholder="Buscar por pedido o tarea" aria-label="Buscar tareas"></label>
+<button class="btn btn-p" type="button">+ Nueva tarea</button>
+</div>
+</header>
+
+<div class="bar">
+<div class="chips"><span class="alabel">Área</span><button class="achip achip-on" type="button">Todas</button><button class="achip" type="button">FDM</button><button class="achip" type="button">Resina</button><button class="achip" type="button">Estampado</button><button class="achip" type="button">Ventas</button></div>
+<div class="chips" style="align-items: center"><span class="alabel">Cliente</span>
+<div class="avs" role="group" aria-label="Filtrar por cliente"><button class="avb avb-on" type="button" aria-label="María González" aria-pressed="true">MG</button><button class="avb" type="button" aria-label="Café Aurora" aria-pressed="false">CA</button><button class="avb" type="button" aria-label="QA Revendedor" aria-pressed="false">QR</button><button class="avb" type="button" aria-label="Lucas Pereyra" aria-pressed="false">LP</button></div>
+</div>
+</div>
+
+<section class="board" aria-label="Tablero de tareas">
+
+<div class="col">
+<div class="colh"><h2 class="colt"><span class="dot d-todo" aria-hidden="true"></span>Por hacer</h2><span class="n">3</span></div>
+<div class="zone">
+<p class="zl">Por agregar al tablero</p>
+<article class="jc"><div class="jt"><a class="oid" href="#">#ord-15</a><span class="pr p-norm">Normal</span></div><h3 class="jn">Remera estampada DTF ×6</h3><div class="jf"><span class="tag test">Estampado</span><span class="due">Entrega 14 nov</span></div><button class="addb" type="button">+ Agregar al tablero</button></article>
+<article class="jc"><div class="jt"><a class="oid" href="#">#ord-16</a><span class="pr p-norm">Normal</span></div><h3 class="jn">Miniatura resina</h3><div class="jf"><span class="tag t3d">Resina</span><span class="due">Entrega 18 nov</span></div><button class="addb" type="button">+ Agregar al tablero</button></article>
+</div>
+<article class="jc"><div class="jt"><a class="oid" href="#">#ord-13</a><span class="pr p-high">Alta</span></div><h3 class="jn">Árbol de equilibrio · 3 piezas</h3><div class="jf"><span class="tag t3d">FDM</span><span class="due late">Atrasado 2 días</span></div><div class="jf"><span class="av" title="María González">MG</span><span class="due">Imprimir</span></div></article>
+</div>
+
+<div class="col">
+<div class="colh"><h2 class="colt"><span class="dot d-doing" aria-hidden="true"></span>En proceso</h2><span class="n">3</span></div>
+<article class="jc"><div class="jt"><a class="oid" href="#">#ord-12</a><span class="pr p-med">Media</span></div><h3 class="jn">Llavero corporativo 3D ×40</h3><div class="jf"><span class="tag t3d">FDM</span><span class="due">Entrega 10 nov</span></div><div class="jf"><span class="av" title="Café Aurora">CA</span><span class="due">Imprimir · 16 h</span></div></article>
+<article class="jc"><div class="jt"><a class="oid" href="#">#ord-14</a><span class="pr p-norm">Normal</span></div><h3 class="jn">Taza Frozen ×2</h3><div class="jf"><span class="tag test">Estampado</span><span class="due">Entrega 12 nov</span></div><div class="jf"><span class="av" title="Lucas Pereyra">LP</span><span class="due">Estampar</span></div></article>
+<article class="jc"><div class="jt"><span class="oid" style="color: #4A6072">Interna</span><span class="pr p-norm">Normal</span></div><h3 class="jn">Calibrar cama A1</h3><div class="jf"><span class="tag t3d">FDM</span><span class="due">Sin fecha</span></div></article>
+</div>
+
+<div class="col">
+<div class="colh"><h2 class="colt"><span class="dot d-rev" aria-hidden="true"></span>En revisión</h2><span class="n">1</span></div>
+<article class="jc"><div class="jt"><a class="oid" href="#">#ord-11</a><span class="pr p-norm">Normal</span></div><h3 class="jn">Figura personalizada PLA</h3><div class="jf"><span class="tag t3d">FDM</span><span class="due">Entrega 9 nov</span></div><div class="jf"><span class="av" title="María González">MG</span><span class="due">Revisar terminación</span></div></article>
+</div>
+
+<div class="col">
+<div class="colh"><h2 class="colt"><span class="dot d-blk" aria-hidden="true"></span>Bloqueado</h2><span class="n">1</span></div>
+<article class="jc"><div class="jt"><a class="oid" href="#">#ord-10</a><span class="pr p-med">Media</span></div><h3 class="jn">Buzo con estampado vinílico</h3><p class="blk">Esperando el diseño aprobado por el cliente</p><div class="jf"><span class="tag test">Estampado</span><span class="av" title="QA Revendedor">QR</span></div></article>
+</div>
+
+<div class="col">
+<div class="colh"><h2 class="colt"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="#15803D" stroke-width="3" stroke-linecap="round" aria-hidden="true"><path d="M5 12l5 5 9-10"></path></svg>Terminado</h2><span class="n">2</span></div>
+<article class="jc" style="opacity: .8"><div class="jt"><a class="oid" href="#">#ord-9</a><span class="pr p-norm">Normal</span></div><h3 class="jn">Taza asa corazón</h3><div class="jf"><span class="tag test">Estampado</span><span class="due">Listo para entregar</span></div></article>
+<article class="jc" style="opacity: .8"><div class="jt"><a class="oid" href="#">#ord-8</a><span class="pr p-norm">Normal</span></div><h3 class="jn">Preparar pedido</h3><div class="jf"><span class="tag tres">Ventas</span><span class="due">Listo para entregar</span></div></article>
+</div>
+
+</section>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1000}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const A = 'cola';
+    const NAV = [['dashboard','Dashboard','Main.dc.html','M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'],['billetera','Billetera','Billetera.dc.html','M3 7h18v13H3zM3 7l3-3h12l3 3M16 14h2'],['ventas','Ventas','Ventas.dc.html','M3 17l6-6 4 4 8-8M15 7h6v6'],['pedidos','Pedidos','#','M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8'],['presupuestos','Presupuestos','#','M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5'],['cola','Cola de trabajo','RdCola.dc.html','M4 5h4v14H4zM10 5h4v10h-4zM16 5h4v6h-4z'],['productos','Productos','Productos.dc.html','M3 12l9-9h7v7l-9 9zM15 9h.01'],['insumos','Insumos','Insumos.dc.html','M7 4h10v4H7zM6 8h12v12H6zM9 13h6'],['clientes','Clientes','Clientes.dc.html','M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-1a6 6 0 0 1 12 0v1M16 3.5a4 4 0 0 1 0 7.5M22 21v-1a6 6 0 0 0-4-5.6'],['ajustes','Ajustes','AjustesCatalogos.dc.html','M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M14 4v4M8 10v4M16 16v4']];
+    return { nav: NAV.map(([k, l, h, d]) => ({ label: l, href: h, d: d, cls: 'sb-item' + (k === A ? ' sb-on' : '') })) };
+  }
+}
+</script>
+</body>
+</html>

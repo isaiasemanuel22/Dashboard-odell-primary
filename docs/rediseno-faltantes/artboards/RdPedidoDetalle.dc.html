@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell · Detalle de pedido</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/4bd8029deedccb2d422bb325be90576b">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+.back{font-size:13px;text-decoration:none;display:inline-block;margin-bottom:6px}
+.trow{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.lay{display:grid;grid-template-columns:minmax(260px,320px) minmax(0,1fr);gap:20px;align-items:start}
+.panel{background:#fff;border:1px solid #DCE7EE;border-radius:12px;padding:20px;display:flex;flex-direction:column;gap:14px}
+.panel h3{margin:0;font-size:16px;font-weight:700}
+.ph-row{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.main-col{display:flex;flex-direction:column;gap:16px;min-width:0}
+.dl{margin:0;display:flex;flex-direction:column;gap:12px}
+.dl div{display:flex;flex-direction:column;gap:2px}
+.dl dt{font-size:12px;color:#5B7083}
+.dl dd{margin:0;font-size:14px;font-weight:500}
+.dl.row{flex-direction:row;gap:32px;flex-wrap:wrap}
+.notice{background:#E6F2F8;border:1px solid #BCDCEC;border-radius:12px;padding:14px 16px;display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.notice p{margin:0;font-size:14px;color:#0B5F86}
+.al{border-radius:12px;padding:12px 16px;font-size:14px;display:flex;gap:8px;background:#FEF3E2;color:#92400E;border:1px solid #F5D9A8}
+.num{text-align:right;font-variant-numeric:tabular-nums}
+.tbl{min-width:0;font-size:12px}
+.tbl th,.tbl td{padding:10px 8px}
+.old{color:#5B7083;font-size:11px;display:block}
+.tot{align-self:flex-end;width:300px;display:flex;flex-direction:column;gap:6px;font-size:14px}
+.tot div{display:flex;justify-content:space-between}
+.tot .g{font-size:18px;font-weight:700;border-top:1px solid #E3ECF2;padding-top:8px}
+.pays{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;font-size:13px;color:#334B5C}
+.pays li{padding:10px 12px;background:#F4F8FB;border-radius:10px}
+.pays b{color:#0F2A3A}
+.form{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;align-items:end}
+.seg{display:flex;border:1px solid #C9D8E3;border-radius:10px;overflow:hidden}
+.seg button{flex:1;height:40px;border:0;background:#fff;font:500 13px Ubuntu,sans-serif;color:#4A6072;cursor:pointer}
+.seg button+button{border-left:1px solid #C9D8E3}
+.seg .on{background:#E6F2F8;color:#0B5F86}
+.chk{display:flex;align-items:center;gap:8px;font-size:14px;height:40px}
+.chk input{width:18px;height:18px}
+.hist{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:14px}
+.hist li{display:flex;gap:12px}
+.mk{width:10px;height:10px;border-radius:50%;background:#0E7AAB;margin-top:5px;flex:none}
+.hr{display:flex;gap:10px;font-size:12px;color:#5B7083}
+.ht{margin:2px 0 4px;font-size:14px}
+.cols2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.desc{font-size:14px;line-height:1.6;color:#334B5C}
+.cnt{font-size:12px;color:#5B7083}
+.empty{margin:0;font-size:13px;color:#5B7083}
+.acts{display:flex;gap:8px;justify-content:flex-end;grid-column:1 / -1}
+</style>
+</helmet>
+<div class="app">
+<nav class="side" aria-label="Menú principal">
+<div class="brand"><div class="brand-mark" aria-hidden="true">O</div><div><div class="brand-name">Odell</div><div class="brand-sub">Dashboard</div></div></div>
+<sc-for list="{{nav}}" as="item" hint-placeholder-count="10">
+<a href="{{item.href}}" class="{{item.cls}}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="{{item.d}}"></path></svg>{{item.label}}</a>
+</sc-for>
+<div class="sb-foot"><span class="sb-mail">isaiasemanuelcalfin@gmail.com</span><button class="sb-out" type="button">Cerrar sesión</button></div>
+</nav>
+
+<main class="main">
+<div class="wrap" style="max-width: none">
+
+<header class="head">
+<div>
+<a class="back" href="#">← Pedidos</a>
+<div class="trow"><h1 class="h1">Pedido #ord-12</h1><span class="badge b-info">En progreso</span></div>
+<p class="sub">Creado: 03/11/2026</p>
+</div>
+</header>
+
+<div class="lay">
+<section class="panel" aria-labelledby="cl-t">
+<div class="ph-row"><h3 id="cl-t">Cliente</h3></div>
+<dl class="dl">
+<div><dt>Nombre</dt><dd><a href="#">Café Aurora</a></dd></div>
+<div><dt>Servicios</dt><dd><span class="tag t3d">FDM</span> <span class="tag tdg">Diseño</span></dd></div>
+<div><dt>Entrega prevista</dt><dd>10/11/2026</dd></div>
+<div><dt>Notas</dt><dd>Retiran por el local, después de las 15 h.</dd></div>
+</dl>
+</section>
+
+<div class="main-col">
+
+<section class="notice" aria-label="Cambio de precio del producto">
+<p>El producto cambió de precio. El valor del pedido sigue igual hasta que lo actualices.</p>
+<div class="actions"><button class="btn btn-p" type="button">Actualizar valor</button><button class="btn btn-s" type="button">Dejarlo como estaba</button></div>
+</section>
+
+<section aria-label="Alertas operativas">
+<div class="al"><strong>Atención</strong><span>Faltan 6 unidades de «Filamento PLA Negro» para terminar la producción.</span></div>
+</section>
+
+<section class="panel" aria-labelledby="ln-t">
+<h3 id="ln-t">Líneas del pedido</h3>
+<div class="tbox" style="border: 0; border-radius: 10px">
+<table class="tbl">
+<thead><tr><th>Servicio</th><th>Concepto</th><th class="num">Cant.</th><th class="num">Stock</th><th class="num">A prod.</th><th class="num">Res.</th><th class="num">Hecho</th><th class="num">Ent.</th><th class="num">Pend.</th><th class="num">P. unit.</th><th class="num">Subtotal</th></tr></thead>
+<tbody>
+<tr><td>Impresión 3D</td><td><a href="#">Llavero corporativo 3D</a></td><td class="num">40</td><td class="num">10</td><td class="num">30</td><td class="num">0</td><td class="num">22</td><td class="num">0</td><td class="num">40</td><td class="num">$ 1.032</td><td class="num strong">$ 41.280</td></tr>
+<tr><td>Estampado</td><td><a href="#">Taza Frozen</a></td><td class="num">2</td><td class="num">2</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">2</td><td class="num">0</td><td class="num">$ 3.500<span class="old">Lista <s>$ 3.836</s></span></td><td class="num strong">$ 7.000</td></tr>
+<tr><td>Diseño</td><td>Diseño de logo para llaveros</td><td class="num">1</td><td class="num">0</td><td class="num">0</td><td class="num">0</td><td class="num">1</td><td class="num">0</td><td class="num">1</td><td class="num">$ 8.000</td><td class="num strong">$ 8.000</td></tr>
+</tbody>
+</table>
+</div>
+<div class="tot">
+<div><span>Subtotal</span><span>$ 56.280</span></div>
+<div class="neg"><span>Descuento</span><span>-$ 2.780</span></div>
+<div class="g"><span>Total</span><span>$ 53.500</span></div>
+</div>
+</section>
+
+<section class="panel" id="order-payments" aria-labelledby="pg-t">
+<h3 id="pg-t">Pagos</h3>
+<dl class="dl row">
+<div><dt>Importe pagado</dt><dd>$ 25.000</dd></div>
+<div><dt>Saldo</dt><dd>$ 28.500</dd></div>
+<div><dt>Estado de pago</dt><dd>Parcialmente pagado</dd></div>
+</dl>
+<ul class="pays">
+<li><b>$ 15.000</b> · seña · Transferencia · Banco · 03/11/2026</li>
+<li><b>$ 10.000</b> · Mercado Pago · Mercado Pago · comisión $ 420 · 05/11/2026</li>
+</ul>
+<div class="form">
+<div class="field"><label for="pd-m">Monto del pago</label><input id="pd-m" type="number" min="0.01" step="0.01"></div>
+<div class="field"><span style="font-size: 12px; font-weight: 500; color: #334B5C">Medio de pago</span><div class="seg" role="radiogroup" aria-label="Medio de pago"><button type="button" class="on" role="radio" aria-checked="true">Efectivo</button><button type="button" role="radio" aria-checked="false">Transferencia</button><button type="button" role="radio" aria-checked="false">Mercado Pago</button></div></div>
+<label class="chk"><input type="checkbox">Seña</label>
+<div class="field"><label for="pd-c">Entra a la cuenta</label><select id="pd-c"><option>Caja efectivo</option><option>Mercado Pago</option><option>Banco</option></select></div>
+<div class="field"><label for="pd-f">Comisión (opcional)</label><input id="pd-f" type="number" min="0" step="1" placeholder="0"></div>
+<div style="display: flex; justify-content: flex-end"><button class="btn btn-p" type="button">Registrar pago</button></div>
+</div>
+</section>
+
+<section class="panel" aria-labelledby="tk-t">
+<div class="ph-row"><h3 id="tk-t">Tareas del pedido</h3><a href="#">Ir al tablero</a></div>
+<div class="tbox" style="border: 0">
+<table class="tbl" style="font-size: 13px">
+<thead><tr><th>Tarea</th><th>Tipo</th><th>Estado</th><th>Ubicación</th><th>Entrega</th></tr></thead>
+<tbody>
+<tr><td class="strong">Llavero corporativo 3D ×40</td><td>Producción</td><td><span class="badge b-info">En proceso</span></td><td>Tablero</td><td>10/11/2026</td></tr>
+<tr><td class="strong">Diseño de logo para llaveros<span class="alert">Bloqueo: Esperando el diseño aprobado por el cliente</span></td><td>Servicio</td><td><span class="badge b-low">Bloqueado</span></td><td>Tablero</td><td>08/11/2026</td></tr>
+<tr><td class="strong">Preparar pedido</td><td>Preparar pedido</td><td><span class="badge b-pend">Por hacer</span></td><td>Pendiente</td><td>10/11/2026</td></tr>
+</tbody>
+</table>
+</div>
+</section>
+
+<section class="panel" aria-labelledby="es-t">
+<h3 id="es-t">Estado del pedido</h3>
+<p class="empty">El estado se calcula automáticamente desde las tareas y entregas.</p>
+</section>
+
+<section class="panel" id="order-deliveries" aria-labelledby="en-t">
+<h3 id="en-t">Entregas</h3>
+<div class="form" style="grid-template-columns: repeat(2, minmax(0, 1fr))">
+<div class="field"><label for="en-1">Llavero corporativo 3D (máx. 22)</label><input id="en-1" type="number" min="0" step="1"></div>
+<div class="field"><label for="en-2">Diseño de logo para llaveros (máx. 0)</label><input id="en-2" type="number" min="0" step="1"></div>
+<div class="acts"><button class="btn btn-p" type="button">Registrar entrega</button></div>
+</div>
+<ul class="pays">
+<li><b>05/11/2026 16:20</b> · 1 línea(s) · Retiró María en el local</li>
+</ul>
+</section>
+
+<div class="cols2">
+<section class="panel" aria-labelledby="hs-t">
+<h3 id="hs-t">Historial de estado</h3>
+<ol class="hist">
+<li><span class="mk" aria-hidden="true"></span><div><div class="hr"><time>05/11/2026 16:20</time><span>Cola de trabajo</span></div><p class="ht">Pendiente → En progreso</p><span class="badge b-info">En progreso</span></div></li>
+<li><span class="mk" aria-hidden="true"></span><div><div class="hr"><time>03/11/2026 10:05</time><span>Manual</span></div><p class="ht">Creación → Pendiente</p><span class="badge b-pend">Pendiente</span></div></li>
+</ol>
+</section>
+<section class="panel" aria-labelledby="hp-t">
+<h3 id="hp-t">Historial de precios</h3>
+<ol class="hist">
+<li><span class="mk" aria-hidden="true"></span><div><div class="hr"><time>06/11/2026 09:12</time><span>Precio de insumo</span></div><p class="ht">Llavero corporativo 3D: $ 1.032 → $ 1.110</p><p class="ht">Total pedido: $ 53.500 → $ 56.620</p></div></li>
+</ol>
+</section>
+</div>
+
+<section class="panel" aria-labelledby="ds-t">
+<div class="ph-row"><h3 id="ds-t">Descripción</h3><span class="cnt">118/1000</span></div>
+<div class="desc"><p style="margin: 0">Llaveros con el logo de Café Aurora en relieve, PLA negro con detalle en dorado. Entregar en bolsitas individuales.</p></div>
+</section>
+
+</div>
+
+<footer class="panel" style="grid-column: 1 / -1; flex-direction: row; justify-content: flex-end; gap: 8px">
+<button class="btn btn-p" type="button">Editar pedido</button>
+<button class="btn btn-d" type="button">Cancelar pedido</button>
+</footer>
+</div>
+
+</div>
+</main>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1100}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const A = 'pedidos';
+    const NAV = [['dashboard','Dashboard','Main.dc.html','M3 3h7v9H3zM14 3h7v5h-7zM14 12h7v9h-7zM3 16h7v5H3z'],['billetera','Billetera','Billetera.dc.html','M3 7h18v13H3zM3 7l3-3h12l3 3M16 14h2'],['ventas','Ventas','Ventas.dc.html','M3 17l6-6 4 4 8-8M15 7h6v6'],['pedidos','Pedidos','#','M3 8l9-5 9 5v8l-9 5-9-5zM3 8l9 5 9-5M12 13v8'],['presupuestos','Presupuestos','#','M6 3h9l4 4v14H6zM14 3v5h5M9 13h7M9 17h5'],['cola','Cola de trabajo','RdCola.dc.html','M4 5h4v14H4zM10 5h4v10h-4zM16 5h4v6h-4z'],['productos','Productos','Productos.dc.html','M3 12l9-9h7v7l-9 9zM15 9h.01'],['insumos','Insumos','Insumos.dc.html','M7 4h10v4H7zM6 8h12v12H6zM9 13h6'],['clientes','Clientes','Clientes.dc.html','M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8zM2 21v-1a6 6 0 0 1 12 0v1M16 3.5a4 4 0 0 1 0 7.5M22 21v-1a6 6 0 0 0-4-5.6'],['ajustes','Ajustes','AjustesCatalogos.dc.html','M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M14 4v4M8 10v4M16 16v4']];
+    return { nav: NAV.map(([k, l, h, d]) => ({ label: l, href: h, d: d, cls: 'sb-item' + (k === A ? ' sb-on' : '') })) };
+  }
+}
+</script>
+</body>
+</html>

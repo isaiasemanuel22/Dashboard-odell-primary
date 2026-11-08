@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<title>Odell · Patrones de modales y filtros</title>
+<script src="./support.js"></script>
+<link rel="stylesheet" href="/_blob/4bd8029deedccb2d422bb325be90576b">
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#0E7AAB}a:hover{color:#0B5F86}
+.pg{width:1440px;min-height:1180px;box-sizing:border-box;background:#3B4A55;padding:48px;font-family:Ubuntu,"Segoe UI",system-ui,sans-serif;color:#0F2A3A;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:40px;align-items:start}
+.lbl{color:#E3ECF2;font-size:13px;font-weight:500;letter-spacing:.04em;text-transform:uppercase;margin:0 0 12px}
+.modal{width:100%;background:#fff;border-radius:16px;box-shadow:0 24px 64px rgba(0,0,0,.3);display:flex;flex-direction:column;overflow:hidden}
+.mh{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;padding:20px 24px 16px;border-bottom:1px solid #E3ECF2}
+.mt{margin:0;font-size:20px;font-weight:700}
+.x{width:40px;height:40px;border-radius:10px;border:0;background:transparent;color:#5B7083;cursor:pointer;font:400 22px Ubuntu,sans-serif;flex:none}
+.x:hover{background:#EEF4F8}
+.mb{padding:20px 24px 24px;display:flex;flex-direction:column;gap:18px}
+.mf{display:flex;flex-wrap:wrap;gap:12px;justify-content:flex-end;align-items:center;padding:14px 24px;border-top:1px solid #E3ECF2;background:#F7FAFC}
+.req{color:#B91C1C}
+.cf{padding:24px;display:flex;gap:16px;align-items:flex-start}
+.ic{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;flex:none}
+.ic-w{background:#FDECEC;color:#B91C1C}
+.ic-i{background:#E6F2F8;color:#0E7AAB}
+.cft{margin:0 0 6px;font-size:18px;font-weight:700}
+.cfp{margin:0;color:#4A6072;font-size:14px;line-height:1.5}
+.btn-d{background:#B91C1C;color:#fff;border-color:#B91C1C}
+.btn-d:hover{background:#991B1B}
+.pop{width:100%;background:#fff;border-radius:14px;box-shadow:0 16px 40px rgba(0,0,0,.28);overflow:hidden}
+.pgp{padding:14px 18px;display:flex;flex-direction:column;gap:8px;border-bottom:1px solid #E3ECF2}
+.pgt{font-size:12px;font-weight:700;color:#4A6072;text-transform:uppercase;letter-spacing:.04em}
+.sw{width:40px;height:24px;border-radius:12px;background:#C9D6DF;position:relative;border:0;flex:none;cursor:pointer}
+.sw::after{content:"";position:absolute;top:3px;left:3px;width:18px;height:18px;border-radius:50%;background:#fff}
+.sw-on{background:#0E7AAB}.sw-on::after{left:19px}
+.trig{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 14px;border-radius:10px;border:1px solid #0E7AAB;background:#E6F2F8;color:#0B5F86;font:500 14px Ubuntu,sans-serif}
+.cnt{background:#0E7AAB;color:#fff;border-radius:10px;padding:1px 7px;font-size:12px}
+.seg{display:flex;border:1px solid #C9D6DF;border-radius:10px;overflow:hidden}
+.seg button{flex:1;height:40px;border:0;background:#fff;font:500 14px Ubuntu,sans-serif;color:#4A6072;cursor:pointer}
+.seg button+button{border-left:1px solid #C9D6DF}
+.seg .on{background:#E6F2F8;color:#0B5F86}
+</style>
+</helmet>
+<div class="pg">
+
+<section>
+<p class="lbl">1 · Modal de formulario chico (ej. Nueva categoría)</p>
+<div class="modal" role="dialog" aria-modal="true" aria-labelledby="pc-t">
+<div class="mh">
+<div><h2 id="pc-t" class="mt">Nueva categoría</h2><p class="sub">Agrupa productos en el catálogo y en los filtros</p></div>
+<button class="x" type="button" aria-label="Cerrar">×</button>
+</div>
+<div class="mb">
+<div class="field"><label for="pc-n">Nombre <span class="req">*</span></label><input id="pc-n" type="text" placeholder="Ej.: Llaveros"></div>
+<div class="field"><span>Tipo de producto</span><div class="seg" role="radiogroup" aria-label="Tipo de producto"><button type="button" class="on" role="radio" aria-checked="true">FDM</button><button type="button" role="radio" aria-checked="false">Resina</button><button type="button" role="radio" aria-checked="false">Estampado</button></div><small>Sólo aparece al cargar productos de ese tipo</small></div>
+</div>
+<div class="mf"><button class="btn btn-s" type="button">Cancelar</button><button class="btn btn-p" type="button">Crear categoría</button></div>
+</div>
+<p class="lbl" style="margin-top: 24px">Reglas</p>
+<ul style="margin: 0; padding-left: 18px; color: #E3ECF2; font-size: 14px; line-height: 1.7">
+<li>Encabezado: título 20 px + subtítulo, cruz a la derecha.</li>
+<li>Cuerpo con db-form / db-input; obligatorios con *.</li>
+<li>Pie gris claro: Cancelar (secundario) + acción con verbo.</li>
+<li>Anchos: 480 chico · 560 medio · 760 grande · 960 con columnas.</li>
+</ul>
+</section>
+
+<section>
+<p class="lbl">2 · Confirmación</p>
+<div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="cd-t" aria-describedby="cd-d">
+<div class="cf">
+<div class="ic ic-w" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13"></path></svg></div>
+<div><h2 id="cd-t" class="cft">¿Anular este movimiento?</h2><p id="cd-d" class="cfp">Transferencia de $ 12.000 de Caja efectivo a Mercado Pago. El saldo de las dos cuentas vuelve a como estaba. No se puede deshacer.</p></div>
+</div>
+<div class="field" style="padding: 0 24px 20px 84px"><label for="cd-m">Motivo</label><input id="cd-m" type="text" placeholder="Opcional"></div>
+<div class="mf"><button class="btn btn-s" type="button">Cancelar</button><button class="btn btn-d" type="button">Anular movimiento</button></div>
+</div>
+
+<div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="ci-t" style="margin-top: 24px">
+<div class="cf">
+<div class="ic ic-i" aria-hidden="true"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"></circle><path d="M12 11v5M12 8h.01"></path></svg></div>
+<div><h2 id="ci-t" class="cft">Reemplazar insumo</h2><p class="cfp">«Filamento PLA Negro» se usa en 6 productos. Elegí con qué lo reemplazás y recalculamos sus costos.</p></div>
+</div>
+<div class="mb" style="padding-top: 0; padding-left: 84px"><div class="field"><label for="ci-s">Nuevo insumo</label><select id="ci-s"><option>Filamento PLA Negro mate · $ 5.400/kg</option></select></div></div>
+<div class="mf"><button class="btn btn-s" type="button">Cancelar</button><button class="btn btn-p" type="button">Reemplazar en 6 productos</button></div>
+</div>
+<ul style="margin: 20px 0 0; padding-left: 18px; color: #E3ECF2; font-size: 14px; line-height: 1.7">
+<li>Ícono rojo + botón rojo sólo si borra o no se puede deshacer.</li>
+<li>El texto dice qué pasa con datos concretos, no «¿Estás seguro?».</li>
+</ul>
+</section>
+
+<section>
+<p class="lbl">3 · Filtros en desktop: panel desplegable</p>
+<div style="display: flex; gap: 8px; margin-bottom: 8px"><button class="trig" type="button" aria-expanded="true">Filtros <span class="cnt">3</span></button></div>
+<div class="pop" role="dialog" aria-labelledby="fp-t">
+<div class="pgp" style="flex-direction: row; justify-content: space-between; align-items: center"><h2 id="fp-t" style="margin: 0; font-size: 16px">Filtrar pedidos</h2><button class="btn btn-s btn-sm" type="button">Limpiar</button></div>
+<div class="pgp"><span class="pgt">Estado</span><div class="chips"><button class="achip achip-on" type="button">Pendiente</button><button class="achip achip-on" type="button">En progreso</button><button class="achip" type="button">Terminado</button><button class="achip" type="button">Entregado</button></div></div>
+<div class="pgp"><span class="pgt">Área</span><div class="chips"><button class="achip" type="button">FDM</button><button class="achip achip-on" type="button">Estampado</button><button class="achip" type="button">Resina</button></div></div>
+<div class="pgp"><span class="pgt">Entrega</span><div class="chips"><button class="achip" type="button">Atrasados</button><button class="achip" type="button">Esta semana</button><button class="achip" type="button">Sin fecha</button></div></div>
+<div class="pgp" style="flex-direction: row; justify-content: space-between; align-items: center"><span style="font-size: 14px">Solo con saldo pendiente</span><button class="sw" type="button" role="switch" aria-checked="false" aria-label="Solo con saldo pendiente"></button></div>
+<div class="mf" style="border-top: 0"><button class="btn btn-s" type="button">Cancelar</button><button class="btn btn-p" type="button">Ver 12 pedidos</button></div>
+</div>
+<ul style="margin: 20px 0 0; padding-left: 18px; color: #E3ECF2; font-size: 14px; line-height: 1.7">
+<li>Mismo contenido que la hoja mobile, con chips del sistema (achip).</li>
+<li>Se abre bajo el botón Filtros (360 px), no tapa la lista.</li>
+<li>El botón muestra cuántos filtros hay activos.</li>
+<li>Vale para pedidos, presupuestos, ventas, productos, cola y calendario.</li>
+</ul>
+</section>
+
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1440,"height":1180}}'>
+class Component extends DCLogic {
+  renderVals() { return {}; }
+}
+</script>
+</body>
+</html>
