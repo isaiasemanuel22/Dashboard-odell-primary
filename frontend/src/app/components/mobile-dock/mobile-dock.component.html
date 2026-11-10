@@ -1,4 +1,11 @@
 <div class="m-dock" role="toolbar">
+  <div class="m-dock__hint">
+    <ng-content select="[dockHint]" />
+  </div>
+  <!-- Sin dockHint / proyección intermedia: también arriba, nunca en la fila de botones. -->
+  <div class="m-dock__fallback">
+    <ng-content />
+  </div>
   <div class="m-dock__actions">
     @for (item of actions; track item.id) {
       <button
@@ -14,9 +21,5 @@
         {{ item.label }}
       </button>
     }
-    <ng-content />
-  </div>
-  <div class="m-dock__hint">
-    <ng-content select="[dockHint]" />
   </div>
 </div>

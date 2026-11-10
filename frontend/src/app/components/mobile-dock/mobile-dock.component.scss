@@ -38,6 +38,7 @@
 
 .m-dock__actions {
   display: flex;
+  align-items: center;
   gap: 10px;
 }
 
@@ -89,11 +90,13 @@
   flex: 1;
 }
 
-.m-dock__hint:empty {
+.m-dock__hint:empty,
+.m-dock__fallback:empty {
   display: none;
 }
 
-.m-dock__hint {
+.m-dock__hint,
+.m-dock__fallback {
   :where(p, [dockHint]) {
     margin: 0;
     text-align: center;
@@ -104,7 +107,7 @@
   }
 }
 
-// Aviso («Falta: título») arriba de los botones, dentro del pie.
+/* El hint ya va arriba en el DOM; la clase queda por compatibilidad. */
 :host.m-dock--hint-top .m-dock__hint {
   order: -1;
 }

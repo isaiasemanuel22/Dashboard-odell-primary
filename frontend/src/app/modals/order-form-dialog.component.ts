@@ -55,7 +55,7 @@ export interface OrderFormDialogData {
     <app-form-dialog-shell
       [title]="dialogTitle"
       [subtitle]="dialogSubtitle"
-      size="wide"
+      size="xl"
       [footerBar]="true"
       [stickyHeader]="true"
       (close)="cancel()"

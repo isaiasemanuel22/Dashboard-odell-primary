@@ -37,13 +37,14 @@
   gap: 0;
 }
 
+/* Misma tipografía/gap de etiqueta que pedido (14px/500, gap 0.45rem). */
 .quote-form ::ng-deep .db-form-field {
-  gap: 0.35rem;
+  gap: 0.45rem;
 }
 
 .quote-form ::ng-deep .db-form-field__label {
-  font-size: 0.75rem;
-  font-weight: 600;
+  font-size: 0.875rem;
+  font-weight: 500;
   color: $color-text-label;
 }
 
@@ -72,11 +73,56 @@
   display: flex;
   flex-direction: column;
   gap: 1.1rem;
+  /* Único padding desktop: 20/24/24, alineado al título del encabezado. */
   padding: 1.25rem 1.5rem 1.5rem;
 }
 
 .order-form .order-layout {
   margin-bottom: 0;
+}
+
+@include mobile.desktop-only {
+  :host {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+
+  .order-form,
+  .quote-form {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .order-form form,
+  .quote-form form {
+    flex: 1 1 auto;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .order-layout,
+  .quote-layout {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .order-layout__main,
+  .quote-layout__main {
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .order-form__footer,
+  .quote-form__footer {
+    flex: none;
+  }
 }
 
 

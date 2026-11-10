@@ -54,11 +54,14 @@ const AREAS: ServiceType[] = [
     db-form {
       display: flex;
       flex-direction: column;
-      gap: 1.5rem;
+      gap: 18px;
+      /* Aire entre el último campo (Responsable) y la banda del pie. */
+      padding-bottom: 24px;
+      box-sizing: border-box;
     }
 
     db-form-grid {
-      gap: 1.5rem 1rem;
+      gap: 18px 1rem;
       align-items: start;
     }
 
@@ -67,8 +70,20 @@ const AREAS: ServiceType[] = [
     }
 
     @media (max-width: 768px) {
+      /* Mismo gutter mobile que el cuerpo de los demás diálogos (16px). */
+      :host ::ng-deep .modal__header {
+        padding-left: 16px;
+        padding-right: 16px;
+      }
+
+      /* El body mobile viene en 16/16/0; aire inferior para el último campo. */
+      :host ::ng-deep .modal.modal--md.modal--bar > .modal__body {
+        padding-bottom: 24px;
+      }
+
       db-form {
         gap: 14px;
+        padding-bottom: 24px;
       }
 
       db-form-grid {
@@ -80,7 +95,7 @@ const AREAS: ServiceType[] = [
   template: `
     <app-form-dialog-shell
       title="Nueva tarea"
-      size="ml"
+      size="md"
       [footerBar]="true"
       (close)="cancel()"
     >

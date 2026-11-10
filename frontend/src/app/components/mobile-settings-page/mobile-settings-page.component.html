@@ -16,7 +16,7 @@
       [secondaryFixed]="dockSecondaryFixed"
       (action)="onDockAction($event)"
     >
-      <ng-content select="[dockHint]" />
+      <ng-content select="[dockHint]" ngProjectAs="[dockHint]" />
     </db-mobile-dock>
   }
 </div>

@@ -43,12 +43,12 @@
   }
 }
 
+/* Pedido / presupuesto: alineado al maxWidth del servicio (1120px). */
 .cdk-overlay-pane.form-dialog-panel.form-dialog-panel--quote {
-  max-width: 1240px !important;
+  max-width: 1120px !important;
 
-  .modal--lg,
   .modal--xl {
-    max-width: 1240px;
+    max-width: 1120px;
   }
 }
 
@@ -215,6 +215,36 @@
       padding: 14px 1.5rem;
       border-top: 1px solid $color-divider;
       background: $color-surface-inset;
+    }
+  }
+
+  /* Pedido/presupuesto 1120: pie a sangre (sin margen negativo ni franja bajo la banda). */
+  .cdk-overlay-pane.form-dialog-panel--quote .modal.modal--bar {
+    .db-form-footer,
+    .wallet-form__footer {
+      margin: 0;
+    }
+  }
+
+  .cdk-overlay-pane.form-dialog-panel--quote {
+    display: flex;
+    flex-direction: column;
+
+    > *,
+    app-form-dialog-shell {
+      display: flex;
+      flex-direction: column;
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: 100%;
+    }
+
+    .modal__body > app-order-form {
+      flex: 1 1 auto;
+      min-height: 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
     }
   }
 
@@ -581,7 +611,19 @@
       display: none;
     }
 
-    // `.modal` sube la especificidad sobre el padding de --quote (form-dialog-shell).
+    // El shell mobile contiene el form (y su db-form-footer): la regla genérica
+    // `*:has(db-form-footer) { flex-shrink: 0 }` lo dejaba crecer a todo el
+    // contenido y el sticky de la barra perdía recorrido. Debe encogerse y
+    // dejar que `.m-form-shell__body` sea el que scrollea.
+    .modal__body db-mobile-form-shell:has(db-form-footer),
+    .modal__body .m-form-shell:has(db-form-footer),
+    .modal__body .m-form-shell__body:has(db-form-footer) {
+      flex-shrink: 1;
+      min-height: 0;
+    }
+
+    // Cuerpo a sangre: gana al padding genérico mobile (16px) y al de --quote.
+    .modal.modal--xl > .modal__body,
     .modal .modal__body {
       padding: 0;
       background: mobile.$m-bg;

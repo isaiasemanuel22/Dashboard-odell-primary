@@ -71,6 +71,40 @@
   font-weight: 700;
 }
 
+/* Pedido/presupuesto: cuerpo a sangre en mobile (fullscreen) y desktop.
+   El padding lo pone el layout (main 20/24/24) o el shell mobile; no el body.
+   Importante: no usar .modal--xl aquí — subía la especificidad y ganaba al
+   override de --order-fullscreen en _modal (barra sticky flotaba con x24/y20). */
 :host-context(.form-dialog-panel--quote) .modal__body {
-  padding: 1.25rem 1.5rem 1.35rem;
+  padding: 0;
+}
+
+/* Desktop pedido/presupuesto: flex para main/aside y pie fijo a sangre. */
+@include mobile.desktop-only {
+  :host-context(.form-dialog-panel--quote) {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: 100%;
+
+    .modal {
+      flex: 1 1 auto;
+      min-height: 0;
+      max-height: 90vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .modal.modal--xl > .modal__body,
+    .modal__body {
+      padding: 0;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+    }
+  }
 }

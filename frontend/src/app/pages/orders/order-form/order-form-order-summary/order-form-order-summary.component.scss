@@ -7,7 +7,10 @@
 
 .order-resumen {
   border-left: 1px solid $color-divider;
-  background: $color-surface-inset;
+  /* V1ModalPedido: aside a sangre derecha, alto del cuerpo. */
+  background: #f7fafc;
+  min-height: 0;
+  overflow-y: auto;
 
   @media (max-width: 900px) {
     border-left: 0;
@@ -15,12 +18,15 @@
   }
 
   &__inner {
-    position: sticky;
-    top: 0;
     display: flex;
     flex-direction: column;
     gap: 0.875rem;
     padding: 1.25rem 1.5rem;
+    box-sizing: border-box;
+  }
+
+  @include mobile.desktop-only {
+    align-self: stretch;
   }
 
   &__title {

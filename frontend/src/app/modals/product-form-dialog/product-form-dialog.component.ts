@@ -62,7 +62,9 @@ export interface ProductFormDialogData {
             (save)="save($event)"
             (cancel)="cancel()"
           />
-          @if (form?.show3mfFooterHint) {
+          @if (missingLabel) {
+            <p dockHint role="status">{{ missingLabel }}</p>
+          } @else if (form?.show3mfFooterHint) {
             <p dockHint class="product-form-dialog__dock-hint">
               El .3mf queda adjunto al producto para reimprimir
             </p>
@@ -120,6 +122,15 @@ export class ProductFormDialogComponent implements OnInit {
     return this.isMobile()
       ? ''
       : 'El precio se calcula solo a medida que cargás material y tiempos';
+  }
+
+  /** Campos que faltan para crear: mismo aviso que el pie de escritorio. */
+  get missingLabel(): string {
+    const items = this.form?.missingFields ?? [];
+    if (!items.length) return '';
+    return items.length === 1
+      ? `Falta: ${items[0]}`
+      : `Faltan: ${items.join(', ')}`;
   }
 
   get mobileDockActions(): MobileDockAction[] {

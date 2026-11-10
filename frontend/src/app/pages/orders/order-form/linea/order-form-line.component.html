@@ -126,14 +126,6 @@
             [options]="[{ value: '', label: 'Presupuesto manual (sin catálogo)' }]"
             [disabled]="true"
           />
-          <db-input
-            label="Concepto"
-            [ngModel]="line.customName"
-            [name]="'design-' + lineIndex"
-            [placeholder]="line.serviceType === ServiceType.MODELADO ? 'Ej.: Modelado de pieza' : 'Ej.: Diseño de logo'"
-            (ngModelChange)="onConceptChange($event)"
-            [error]="conceptError"
-          />
         } @else if (isImpresion3D()) {
           <db-select
             label="Producto"
@@ -141,14 +133,6 @@
             [name]="'product-' + lineIndex"
             [options]="productOptions"
             (ngModelChange)="onProductChange($event)"
-          />
-          <db-input
-            label="Concepto"
-            [ngModel]="line.customName"
-            [name]="'fdm-concept-' + lineIndex"
-            placeholder="Ej.: Soporte para celular"
-            (ngModelChange)="onConceptChange($event)"
-            [error]="conceptError"
           />
         } @else {
           <db-select
@@ -159,16 +143,6 @@
             [options]="productOptions"
             (ngModelChange)="onProductChange($event)"
           />
-          @if (isEstampado()) {
-            <db-input
-              label="Concepto"
-              [ngModel]="line.customName"
-              [name]="'estampado-concept-' + lineIndex"
-              placeholder="Ej.: Remera con logo en pecho y manga"
-              (ngModelChange)="onConceptChange($event)"
-              [error]="conceptError"
-            />
-          }
         }
 
         <db-input
@@ -183,6 +157,39 @@
           [error]="quantityError"
         />
       </div>
+
+      @if (!isExtraLine && (isDesign() || isImpresion3D() || isEstampado())) {
+        <div class="order-line__concept-row">
+          @if (isDesign()) {
+            <db-input
+              label="Concepto"
+              [ngModel]="line.customName"
+              [name]="'design-' + lineIndex"
+              [placeholder]="line.serviceType === ServiceType.MODELADO ? 'Ej.: Modelado de pieza' : 'Ej.: Diseño de logo'"
+              (ngModelChange)="onConceptChange($event)"
+              [error]="conceptError"
+            />
+          } @else if (isImpresion3D()) {
+            <db-input
+              label="Concepto"
+              [ngModel]="line.customName"
+              [name]="'fdm-concept-' + lineIndex"
+              placeholder="Ej.: Soporte para celular"
+              (ngModelChange)="onConceptChange($event)"
+              [error]="conceptError"
+            />
+          } @else {
+            <db-input
+              label="Concepto"
+              [ngModel]="line.customName"
+              [name]="'estampado-concept-' + lineIndex"
+              placeholder="Ej.: Remera con logo en pecho y manga"
+              (ngModelChange)="onConceptChange($event)"
+              [error]="conceptError"
+            />
+          }
+        </div>
+      }
 
       <div class="order-line__m-qty-price mobile-only">
         <db-mobile-stepper

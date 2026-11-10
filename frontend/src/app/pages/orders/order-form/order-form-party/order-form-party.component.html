@@ -87,8 +87,12 @@
     </div>
   } @else {
     <div class="quote-date-field">
-      <span class="quote-date-field__label">Fecha del presupuesto</span>
-      <p class="quote-date-field__value">{{ quotedAtLabel }}</p>
+      <db-input
+        label="Fecha del presupuesto"
+        [ngModel]="quotedAtLabel"
+        name="quotedAt"
+        [readonly]="true"
+      />
       <p class="quote-date-field__validity">{{ quoteValidityLabel }}</p>
     </div>
   }
