@@ -87,5 +87,6 @@
     accept=".3mf,model/3mf,application/vnd.ms-package.3dmanufacturing-3dmodel+xml"
     hidden
     (change)="onFileInput($event)"
+    (cancel)="$event.stopPropagation()"
   />
 </section>

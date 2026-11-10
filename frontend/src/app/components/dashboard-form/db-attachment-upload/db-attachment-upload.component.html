@@ -57,6 +57,7 @@
         [multiple]="multiple"
         [disabled]="disabled || uploading"
         (change)="onFileInputChange($event)"
+        (cancel)="$event.stopPropagation()"
       />
     </label>
   }
