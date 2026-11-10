@@ -1,5 +1,6 @@
 @use '../../shared/styles/variables' as *;
 @use '../../shared/styles/mobile' as mobile;
+@use '../../shared/styles/screen' as screen;
 
 .tone-danger {
   color: $color-danger-text;
@@ -501,4 +502,17 @@
       color: $color-danger-text;
     }
   }
+}
+
+.list-toolbar {
+  @include screen.screen-toolbar;
+}
+
+.list-search {
+  @include screen.screen-search;
+}
+
+.list-areas {
+  display: block;
+  margin-bottom: 0.9rem;
 }
