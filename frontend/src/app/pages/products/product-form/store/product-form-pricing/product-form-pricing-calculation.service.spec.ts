@@ -20,4 +20,23 @@ describe('ProductFormPricingCalculationService', () => {
       service.calculate({ totalCost: 1000, profitMarginPercent: 100 }).price,
     ).toBe(2000);
   });
+
+  it('ignora la suma de piezas y usa costo x margen', () => {
+    const result = service.calculate({
+      totalCost: 14488,
+      profitMarginPercent: 200,
+      componentsPrice: 41601,
+    });
+    expect(result.price).toBe(43464);
+  });
+
+  it('el precio sugerido tiene prioridad sobre costo x margen', () => {
+    const result = service.calculate({
+      totalCost: 14488,
+      profitMarginPercent: 200,
+      suggestedPrice: 50000,
+      componentsPrice: 41601,
+    });
+    expect(result.price).toBe(50000);
+  });
 });

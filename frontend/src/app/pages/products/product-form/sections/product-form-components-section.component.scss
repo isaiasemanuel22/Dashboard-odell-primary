@@ -118,26 +118,3 @@
   font-size: 0.8125rem;
   font-weight: 500;
 }
-
-.price-savings {
-  display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-  padding: 0.75rem 0.8rem;
-  border-radius: 12px;
-  background: #e7f8ee;
-  border: 1px solid #c6ebd4;
-
-  div {
-    display: flex;
-    justify-content: space-between;
-    gap: 0.5rem;
-    font-size: 0.8125rem;
-  }
-}
-
-.price-savings__gain {
-  color: $color-success;
-  font-weight: 700;
-}
-

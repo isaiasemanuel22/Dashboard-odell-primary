@@ -30,7 +30,6 @@ export class ProductFormPricingCalculationService {
   ): ProductFormPricingCalculationResult {
     const totalCost = Math.max(0, Number(input.totalCost) || 0);
     const suggestedPrice = Number(input.suggestedPrice);
-    const componentsPrice = Number(input.componentsPrice) || 0;
     const catalogPrice = Number(input.catalogPrice);
 
     let price = 0;
@@ -39,8 +38,6 @@ export class ProductFormPricingCalculationService {
       price = suggestedPrice;
     } else if (Number.isFinite(catalogPrice) && catalogPrice > 0) {
       price = catalogPrice;
-    } else if (componentsPrice > 0) {
-      price = componentsPrice;
     } else if (totalCost > 0) {
       const supplyValue = Math.min(
         totalCost,

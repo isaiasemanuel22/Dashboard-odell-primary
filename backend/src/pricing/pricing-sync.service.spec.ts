@@ -119,8 +119,9 @@ describe('PricingSyncService', () => {
     service.syncAfterProductSave('piece-c', 355);
 
     const updated = store.getProductById('assembly-1');
-    expect(updated?.price).toBe(4694 + 12337 + 400 * 38);
-    expect(updated?.price).not.toBe(22190);
+    // Precio = costo total x margen del tipo (40 %), no la suma de las piezas.
+    expect(updated?.cost).toBe(6000);
+    expect(updated?.price).toBe(8400);
   });
 
   it('no pisa el precio manual de un ensamblado al cambiar una pieza', () => {
@@ -202,7 +203,8 @@ describe('PricingSyncService', () => {
     service.syncAfterProductSave('piece-a', 1000);
 
     const updated = store.getProductById('assembly-1');
-    expect(updated?.price).toBe(4000);
+    expect(updated?.cost).toBe(300);
+    expect(updated?.price).toBe(420);
     expect(updated?.profit).toBe(updated!.price - updated!.cost);
   });
 

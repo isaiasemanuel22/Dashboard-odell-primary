@@ -162,12 +162,12 @@ export class ProductFormPricingService {
     }
 
     if (usesFormPieceAssembly(form)) {
-      const partsPrice = componentsPriceTotal(
-        this.context.catalogProducts,
-        form,
-      );
-      if (partsPrice > 0) {
-        return partsPrice + supplyValue;
+      const assemblyCost = Math.max(0, Number(this.cost) || 0);
+      if (assemblyCost > 0) {
+        return (
+          priceFromCostAndMargin(assemblyCost, this.configuredProfitMargin) +
+          supplyValue
+        );
       }
       return supplyValue;
     }
@@ -206,6 +206,12 @@ export class ProductFormPricingService {
     );
   }
 
+  private assemblyPrice(totalCost: number): number | null {
+    return totalCost > 0
+      ? priceFromCostAndMargin(totalCost, this.configuredProfitMargin)
+      : null;
+  }
+
   applyPieceAssemblyTotals(): void {
     if (!this.context) return;
     const form = this.context.form;
@@ -220,7 +226,6 @@ export class ProductFormPricingService {
     }
 
     const partsCost = componentsCostTotal(this.context.catalogProducts, form);
-    const partsPrice = componentsPriceTotal(this.context.catalogProducts, form);
     const assemblyHours = Number(form.controls.assemblyTimeHours.value) || 0;
     const settings = this.settingsFacade.peekGeneralSettings();
     const laborCost =
@@ -229,7 +234,7 @@ export class ProductFormPricingService {
         : 0;
 
     this.cost = partsCost + laborCost;
-    this.computedPrice = partsPrice;
+    this.computedPrice = this.assemblyPrice(this.cost);
     this.costBreakdown = {
       materialCost: partsCost,
       energyCost: 0,
@@ -435,22 +440,16 @@ export class ProductFormPricingService {
               resolvedCost > 0
                 ? resolvedCost
                 : componentsCostTotal(this.context!.catalogProducts, form);
-            const partsPrice = componentsPriceTotal(
-              this.context!.catalogProducts,
-              form,
-            );
             this.computedPrice =
-              partsPrice > 0
-                ? partsPrice
+              this.cost > 0
+                ? priceFromCostAndMargin(
+                    this.cost,
+                    result.configuredMarginPercent ??
+                      this.configuredProfitMargin,
+                  )
                 : result.price > 0
                   ? result.price
-                  : this.cost > 0
-                    ? priceFromCostAndMargin(
-                        this.cost,
-                        result.configuredMarginPercent ??
-                          this.configuredProfitMargin,
-                      )
-                    : null;
+                  : null;
           } else {
             this.cost = resolvedCost;
             const suggested = Number(form.controls.suggestedPrice.value);
@@ -520,7 +519,6 @@ export class ProductFormPricingService {
 
     if (usesFormPieceAssembly(form)) {
       const partsCost = componentsCostTotal(this.context.catalogProducts, form);
-      const partsPrice = componentsPriceTotal(this.context.catalogProducts, form);
       const assemblyHours = Number(form.controls.assemblyTimeHours.value) || 0;
       const settings = this.settingsFacade.peekGeneralSettings();
       const laborCost =
@@ -528,7 +526,7 @@ export class ProductFormPricingService {
           ? Math.round(assemblyHours * settings.laborCostPerHour)
           : 0;
       this.cost = partsCost + laborCost;
-      this.computedPrice = partsPrice;
+      this.computedPrice = this.assemblyPrice(this.cost);
       this.costBreakdown = {
         materialCost: partsCost,
         energyCost: 0,

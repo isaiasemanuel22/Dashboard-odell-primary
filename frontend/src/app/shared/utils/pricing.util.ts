@@ -176,18 +176,12 @@ export function resolveProductPrice(
   },
   cost: number,
   margins: ServiceProfitMargins,
-  componentPricesTotal: number,
 ): number {
   if (
     input.suggestedPrice != null &&
     Number(input.suggestedPrice) > 0
   ) {
     return Number(input.suggestedPrice);
-  }
-
-  const hasComponents = (input.components ?? []).length > 0;
-  if (hasComponents && componentPricesTotal > 0) {
-    return componentPricesTotal;
   }
 
   const margin = getMarginForProductType(input.type, margins);

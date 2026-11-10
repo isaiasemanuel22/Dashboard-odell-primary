@@ -1,4 +1,5 @@
 import { ProductType, SupplyCategory } from '../common/enums';
+import type { Product, ProductPricingInput } from '../common/interfaces';
 import { CostCalculatorService } from './cost-calculator.service';
 import { StoreService } from '../store/store.service';
 import { createEmptyState } from '../store/store.seed';
@@ -321,6 +322,47 @@ describe('CostCalculatorService', () => {
     store.indexProduct(store.products[1]);
 
     expect(service.resolveProductUnitCost('combo-1')).toBe(2000);
+  });
+
+  it('el precio del combo es costo total x margen, o el precio sugerido', () => {
+    const piece = {
+      id: 'piece-1',
+      name: 'Pieza',
+      type: ProductType.FDM,
+      images: [],
+      attachments: [],
+      updatedAt: '2026-07-01T10:00:00.000Z',
+      price: 5000,
+      cost: 1000,
+      profit: 4000,
+      categoryIds: [],
+      size: '5 cm',
+      published: true,
+      includesPieces: false,
+      components: [],
+      assemblyTimeHours: 0,
+      grams: 0,
+      printTimeHours: 1,
+      workTimeHours: 0,
+    } as unknown as Product;
+    store.products.push(piece);
+    store.indexProduct(piece);
+
+    const input = {
+      type: ProductType.FDM,
+      components: [{ productId: 'piece-1', quantity: 2 }],
+      assemblyTimeHours: 0,
+    } as ProductPricingInput;
+    const margin = service.getMarginForProductType(ProductType.FDM);
+
+    const result = service.calculateProductPricing(input);
+    expect(result.cost).toBe(2000);
+    expect(result.price).toBe(service.priceFromCostAndMargin(2000, margin));
+    expect(result.price).not.toBe(10000);
+
+    expect(
+      service.calculateProductPricing({ ...input, suggestedPrice: 3333 }).price,
+    ).toBe(3333);
   });
 
   it('costo del combo usa el costo vigente de cada pieza, no el guardado', () => {

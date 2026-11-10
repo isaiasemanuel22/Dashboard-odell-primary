@@ -13,7 +13,6 @@ import { SettingsFacade } from '../../store/settings/settings.facade';
 import { ProductCostCalculationService } from './product-cost-calculation.service';
 import {
   sumComponentsCost,
-  sumComponentsPrice,
 } from '../../shared/utils/product.helpers';
 import { isEstampadoPrintValid } from '../../shared/utils/estampado.helpers';
 import { hasValidFdmFilamentInput } from '../../shared/utils/fdm.helpers';
@@ -53,16 +52,7 @@ export class ProductPricingService {
   ): ProductPricingResult {
     const margins = normalizeProfitMargins(settings.profitMargins);
     const margin = getMarginForProductType(input.type, margins);
-    const componentPricesTotal = sumComponentsPrice(
-      catalog,
-      input.components ?? [],
-    );
-    const price = resolveProductPrice(
-      input,
-      cost,
-      margins,
-      componentPricesTotal,
-    );
+    const price = resolveProductPrice(input, cost, margins);
 
     return {
       cost,

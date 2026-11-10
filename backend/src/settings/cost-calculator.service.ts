@@ -415,7 +415,6 @@ export class CostCalculatorService {
     cost = processCost + supplyValue;
     const processPrice = this.resolveProductPrice(
       input,
-      hasComponents,
       processCost,
       supplyValue <= 0,
     );
@@ -435,19 +434,11 @@ export class CostCalculatorService {
 
   resolveProductPrice(
     input: ProductPricingInput,
-    hasComponents = (input.components ?? []).length > 0,
     cost = Number(input.cost) || 0,
     allowStoredPrice = true,
   ): number {
     if (input.suggestedPrice != null && Number(input.suggestedPrice) > 0) {
       return Number(input.suggestedPrice);
-    }
-
-    if (hasComponents) {
-      const componentsPrice = this.sumComponentsPrice(input.components ?? []);
-      if (componentsPrice > 0) {
-        return componentsPrice;
-      }
     }
 
     const margin = this.getMarginForProductType(input.type);
