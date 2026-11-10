@@ -3,16 +3,37 @@
     class="order-line order-line--quote order-line--collapsed"
     [ngClass]="accentClass"
   >
+    <div class="order-line__m-head mobile-only">
+      <span class="order-line__m-num">Línea {{ lineIndex + 1 }}</span>
+      <span class="m-pill order-line__m-chip" [ngClass]="'order-line__m-chip--' + line.serviceType">{{ serviceLabel }}</span>
+      <button
+        type="button"
+        class="order-line__toggle"
+        aria-label="Expandir línea"
+        [attr.aria-expanded]="false"
+        (click)="toggleCollapsed()"
+      >
+        <span class="order-line__chevron order-line__chevron--down" aria-hidden="true"></span>
+      </button>
+      <button
+        type="button"
+        class="order-line__m-remove"
+        aria-label="Quitar línea"
+        (click)="remove.emit()"
+      >
+        ✕
+      </button>
+    </div>
     <button
       type="button"
-      class="order-line__toggle"
+      class="order-line__toggle desktop-only"
       aria-label="Expandir línea"
       [attr.aria-expanded]="false"
       (click)="toggleCollapsed()"
     >
       <span class="order-line__chevron order-line__chevron--down" aria-hidden="true"></span>
     </button>
-    <span class="service-badge" [ngClass]="'service-badge--' + line.serviceType">
+    <span class="service-badge desktop-only" [ngClass]="'service-badge--' + line.serviceType">
       {{ serviceLabel }}
     </span>
     <div class="order-line__collapsed-text">
@@ -85,8 +106,25 @@
 
     @if (variant === 'quote') {
       <div class="order-line__m-head mobile-only">
-        <strong class="order-line__m-title">{{ lineTitle }}</strong>
-        <span class="m-pill">{{ serviceLabel }}</span>
+        <span class="order-line__m-num">Línea {{ lineIndex + 1 }}</span>
+        <span class="m-pill order-line__m-chip" [ngClass]="'order-line__m-chip--' + line.serviceType">{{ serviceLabel }}</span>
+        <button
+          type="button"
+          class="order-line__toggle"
+          aria-label="Contraer línea"
+          [attr.aria-expanded]="true"
+          (click)="toggleCollapsed()"
+        >
+          <span class="order-line__chevron" aria-hidden="true"></span>
+        </button>
+        <button
+          type="button"
+          class="order-line__m-remove"
+          aria-label="Quitar línea"
+          (click)="remove.emit()"
+        >
+          ✕
+        </button>
       </div>
 
       <div class="order-line__product-row order-line__product-row--quote">
@@ -216,7 +254,8 @@
       </div>
     } @else {
       <div class="order-line__m-head mobile-only">
-        <strong class="order-line__m-title">{{ lineTitle }}</strong>
+        <span class="order-line__m-num">Línea {{ lineIndex + 1 }}</span>
+        <span class="m-pill order-line__m-chip" [ngClass]="'order-line__m-chip--' + line.serviceType">{{ serviceLabel }}</span>
         <button
           type="button"
           class="order-line__m-remove"

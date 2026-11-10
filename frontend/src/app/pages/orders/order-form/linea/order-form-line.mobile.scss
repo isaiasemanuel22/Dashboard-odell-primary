@@ -3,11 +3,17 @@
 @include mobile.mobile-only {
   :host-context(.order-form),
   :host-context(.quote-form) {
-    .order-line {
-      background: transparent;
-      border: 0;
-      border-radius: 0;
-      padding: 0;
+    // Cada línea es una sub-tarjeta propia dentro de la tarjeta del paso.
+    .order-line,
+    .order-line--quote {
+      background: mobile.$m-surface;
+      border: 1px solid mobile.$m-border !important;
+      border-radius: mobile.$m-radius-md;
+      padding: 12px;
+      gap: 12px;
+    }
+
+    .order-lines {
       gap: 12px;
     }
 
@@ -28,18 +34,60 @@
 
     .order-line__m-head {
       display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
+      align-items: center;
       gap: 8px;
+      margin: -4px -4px 0 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid mobile.$m-border;
     }
 
-    .order-line__m-title {
-      font-size: 15px;
+    .order-line__m-num {
+      font-size: 12px;
       font-weight: 700;
-      color: mobile.$m-text;
-      line-height: 1.3;
-      min-width: 0;
+      color: mobile.$m-text-secondary;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
     }
+
+    .order-line__m-chip {
+      margin-right: auto;
+    }
+
+    // El encabezado va primero; debajo, selector de servicio (solo productos).
+    .order-line__m-head {
+      order: -2;
+    }
+
+    .order-line__service-row {
+      order: -1;
+      display: none;
+    }
+
+    .order-line__service-row:has(.service-pills) {
+      display: flex;
+
+      .order-line__tools {
+        display: none;
+      }
+    }
+
+    .order-line--collapsed {
+      flex-direction: row !important;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px !important;
+      padding: 12px !important;
+    }
+
+    .order-line--collapsed .order-line__m-head {
+      flex: 0 0 100%;
+      box-sizing: border-box;
+    }
+
+    .order-line--collapsed .order-line__collapsed-text {
+      flex: 1;
+    }
+
 
     .order-line__m-remove {
       width: 44px;
@@ -174,12 +222,16 @@
       white-space: normal;
       overflow: visible;
       text-overflow: unset;
-      display: -webkit-box;
-      -webkit-box-orient: vertical;
-      -webkit-line-clamp: 2;
-      line-clamp: 2;
-      overflow: hidden;
+      display: block;
       line-height: 1.3;
+    }
+
+    ::ng-deep .design-detail {
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    ::ng-deep .design-detail__hours {
+      max-width: none;
     }
 
     ::ng-deep .cost-table__suffix > span {
@@ -212,16 +264,6 @@
       }
     }
 
-    .order-line__m-head {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: 8px;
-    }
-
-    .order-line__m-head .m-pill {
-      display: none;
-    }
   }
 }
 
