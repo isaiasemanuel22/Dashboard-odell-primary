@@ -36,8 +36,14 @@ const PATH_RULES: PathRule[] = [
   {
     matches: (path) => path.includes('/orders'),
     meta: {
-      collections: ['orders', 'printJobs', 'products'],
-      scopes: ['orders', 'print-jobs', 'dashboard', 'sales'],
+      collections: [
+        'orders',
+        'printJobs',
+        'products',
+        'supplies',
+        'supplyMovements',
+      ],
+      scopes: ['orders', 'print-jobs', 'dashboard', 'sales', 'supplies'],
       entity: 'order',
     },
   },

@@ -38,7 +38,8 @@
     @if (nothingReadyToDeliver) {
       <p class="empty-group">
         Todavía no hay unidades listas para entregar. Se habilita cuando la
-        producción avance o haya stock.
+        producción avance o haya stock. También podés marcar todo como
+        entregado.
       </p>
     }
 
@@ -72,6 +73,15 @@
         [disabled]="!canRegisterDelivery"
         (clicked)="registerDelivery()"
       />
+      @if (canMarkDelivered) {
+        <db-button
+          label="Entregado"
+          variant="secondary"
+          format="solid"
+          [disabled]="deliveryLoading"
+          (clicked)="confirmDeliverAll()"
+        />
+      }
     </div>
   </div>
 } @else {
@@ -94,19 +104,31 @@
         @if (nothingReadyToDeliver) {
           <p class="empty-group">
             Todavía no hay unidades listas para entregar. Se habilita cuando la
-            producción avance o haya stock.
+            producción avance o haya stock. También podés marcar todo como
+            entregado.
           </p>
         }
         @if (deliveryError) {
           <p class="order-payments__error" role="alert">{{ deliveryError }}</p>
         }
-        <db-button
-          [label]="deliveryLoading ? 'Registrando...' : 'Registrar entrega'"
-          variant="primary"
-          format="solid"
-          [disabled]="!canRegisterDelivery"
-          (clicked)="registerDelivery()"
-        />
+        <div class="delivery-form__actions">
+          <db-button
+            [label]="deliveryLoading ? 'Registrando...' : 'Registrar entrega'"
+            variant="primary"
+            format="solid"
+            [disabled]="!canRegisterDelivery"
+            (clicked)="registerDelivery()"
+          />
+          @if (canMarkDelivered) {
+            <db-button
+              label="Entregado"
+              variant="secondary"
+              format="solid"
+              [disabled]="deliveryLoading"
+              (clicked)="confirmDeliverAll()"
+            />
+          }
+        </div>
       </div>
     }
     @if (deliveries.length) {

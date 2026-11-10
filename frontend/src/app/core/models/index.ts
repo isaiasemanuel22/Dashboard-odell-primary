@@ -1140,6 +1140,7 @@ export interface PrintJob {
   quantity?: number;
   status: PrintJobStatus;
   active: boolean;
+  archived?: boolean;
   priority: number;
   machine: string;
   estimatedHours: number;

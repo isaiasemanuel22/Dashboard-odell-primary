@@ -16,7 +16,9 @@ import {
   Order,
   OrderDelivery,
   OrderItem,
+  OrderStatus,
   PrintJob,
+  PrintJobStatus,
   TaskKind,
 } from '../../../../core/models';
 import { OrdersService } from '../../../../core/services/orders.service';
@@ -25,6 +27,7 @@ import {
   DbInputComponent,
   MobileStepperComponent,
 } from '@general-components';
+import { FormDialogService } from '../../../../modals/public-api';
 import { extractApiErrorMessage } from '../../../../shared/utils/api-error';
 import {
   CurrencyArsPipe,
@@ -34,6 +37,7 @@ import {
   orderBalanceAmount,
   pluralize,
 } from '../../../../shared/utils/order.helpers';
+import { isAreaService } from '../../../../shared/utils/service-type.util';
 
 @Component({
   selector: 'app-order-detail-deliveries',
@@ -53,6 +57,7 @@ import {
 })
 export class OrderDetailDeliveriesComponent implements OnChanges {
   private readonly ordersService = inject(OrdersService);
+  private readonly formDialogs = inject(FormDialogService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -83,6 +88,24 @@ export class OrderDetailDeliveriesComponent implements OnChanges {
     return (
       !this.deliveryLoading &&
       this.deliveryDraft.some((quantity) => Number(quantity) > 0)
+    );
+  }
+
+  get canMarkDelivered(): boolean {
+    return (
+      !this.deliveryLoading &&
+      this.order.status !== OrderStatus.ENTREGADO &&
+      this.order.status !== OrderStatus.CANCELADO &&
+      this.order.items.some((item) => this.itemPending(item) > 0)
+    );
+  }
+
+  get hasOpenTasks(): boolean {
+    return this.tasks.some(
+      (task) =>
+        !task.archived &&
+        task.status !== PrintJobStatus.TERMINADO &&
+        task.status !== PrintJobStatus.CANCELADO,
     );
   }
 
@@ -158,6 +181,10 @@ export class OrderDetailDeliveriesComponent implements OnChanges {
         reserved + Math.max(produced - (item.deliveredFromProductionQuantity ?? 0), 0),
       );
     }
+    // Insumo / servicio de tercero: espejo de serviceDeliverableQuantity (§15).
+    if (!isAreaService(item.serviceType)) {
+      return pending;
+    }
     const serviceDone = this.tasks.some(
       (task) =>
         task.orderItemIndex === itemIndex &&
@@ -174,6 +201,53 @@ export class OrderDetailDeliveriesComponent implements OnChanges {
       return productionDone ? pending : 0;
     }
     return serviceDone ? pending : 0;
+  }
+
+  /** Confirmación + entrega forzada de todo lo pendiente (también usable desde el dock). */
+  confirmDeliverAll(): void {
+    if (!this.canMarkDelivered) return;
+    const openTasks = this.hasOpenTasks;
+    const message = openTasks
+      ? 'Se marcará todo como entregado, aunque haya tareas de producción sin terminar. Esas tareas se archivan.'
+      : 'Se marcará todo como entregado.';
+    this.formDialogs
+      .openConfirm({
+        title: '¿Marcar como entregado?',
+        message,
+        confirmLabel: 'Entregado',
+        cancelLabel: 'Cancelar',
+      })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.runDeliverAll();
+      });
+  }
+
+  private runDeliverAll(): void {
+    if (this.deliveryLoading) return;
+    this.deliveryLoading = true;
+    this.deliveryError = '';
+    this.cdr.markForCheck();
+    this.ordersService
+      .deliverAll(this.order.id)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: () => {
+          this.deliveryLoading = false;
+          this.deliveryError = '';
+          this.delivered.emit();
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.deliveryLoading = false;
+          this.deliveryError = extractApiErrorMessage(
+            err,
+            'No se pudo marcar el pedido como entregado',
+          );
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   registerDelivery(): void {

@@ -490,14 +490,28 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     return this.formatPaymentSummary(deposit);
   }
 
+  /**
+   * Tareas archivadas sin terminar (p. ej. al entregar todo con producción
+   * pendiente) ya no son trabajo vigente: no se muestran ni cuentan como bloqueadas.
+   */
+  get visibleTasks(): PrintJob[] {
+    return this.tasks.filter(
+      (task) =>
+        !task.archived ||
+        task.status === 'terminado' ||
+        task.status === 'cancelado',
+    );
+  }
+
   get blockedTasksCount(): number {
-    return this.tasks.filter((task) => task.status === 'bloqueado').length;
+    return this.visibleTasks.filter((task) => task.status === 'bloqueado').length;
   }
 
   get tasksAccordionSummary(): string {
-    if (!this.tasks.length) return 'Sin tareas';
+    const visible = this.visibleTasks;
+    if (!visible.length) return 'Sin tareas';
     const blocked = this.blockedTasksCount;
-    const tasksLabel = pluralize(this.tasks.length, 'tarea', 'tareas');
+    const tasksLabel = pluralize(visible.length, 'tarea', 'tareas');
     if (blocked > 0) {
       return `${tasksLabel} · ${pluralize(blocked, 'bloqueada', 'bloqueadas')}`;
     }
@@ -554,6 +568,11 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     }
     if (this.showMobileDeliver) {
       actions.push({
+        id: 'deliver-all',
+        label: 'Entregado',
+        kind: 'secondary',
+      });
+      actions.push({
         id: 'deliver',
         label: 'Entregar',
         kind: 'primary',
@@ -565,6 +584,10 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   onMobileDockAction(id: string): void {
     if (id === 'pay') {
       this.openMobilePaymentsFromDock();
+      return;
+    }
+    if (id === 'deliver-all') {
+      this.deliverySheet?.confirmDeliverAll();
       return;
     }
     if (id === 'deliver') {

@@ -91,6 +91,10 @@ export class OrdersService {
     );
   }
 
+  deliverAll(id: string): Observable<Order> {
+    return this.http.post<Order>(`${this.baseUrl}/orders/${id}/deliver-all`, {});
+  }
+
   deleteOrder(id: string): Observable<{ deleted: boolean }> {
     return this.http.delete<{ deleted: boolean }>(
       `${this.baseUrl}/orders/${id}`,

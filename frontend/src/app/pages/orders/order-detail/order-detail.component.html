@@ -292,9 +292,9 @@
         [open]="isAccordionOpen('tasks')"
         (toggled)="setAccordionOpen('tasks', $event)"
       >
-            @if (tasks.length) {
+            @if (visibleTasks.length) {
               <ul class="od-m__tasks">
-                @for (task of tasks; track task.id) {
+                @for (task of visibleTasks; track task.id) {
                   <li class="od-m__task">
                     <div class="od-m__task-main">
                       <strong>{{ task.productName }}</strong>
@@ -611,10 +611,10 @@
               routerLink="/cola"
             />
           </div>
-          @if (tasks.length) {
+          @if (visibleTasks.length) {
             <db-data-table
               label="Tareas del pedido"
-              [rows]="tasks"
+              [rows]="visibleTasks"
               [columns]="taskColumns"
               [clientSide]="false"
               minWidth="0"

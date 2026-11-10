@@ -280,7 +280,8 @@ export type SupplyMovementReason =
   | 'purchase'
   | 'purchase_revert'
   | 'adjust'
-  | 'spool_finish';
+  | 'spool_finish'
+  | 'delivery';
 
 export interface SupplyMovement {
   id: string;

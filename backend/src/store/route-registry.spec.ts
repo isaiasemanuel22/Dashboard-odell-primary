@@ -9,8 +9,14 @@ import {
 describe('route-registry', () => {
   it('resuelve colecciones y scopes por ruta', () => {
     expect(routeMutationMetaFromPath('/api/orders')).toEqual({
-      collections: ['orders', 'printJobs', 'products'],
-      scopes: ['orders', 'print-jobs', 'dashboard', 'sales'],
+      collections: [
+        'orders',
+        'printJobs',
+        'products',
+        'supplies',
+        'supplyMovements',
+      ],
+      scopes: ['orders', 'print-jobs', 'dashboard', 'sales', 'supplies'],
       entity: 'order',
     });
     expect(collectionsFromPath('/api/sales/retail')).toEqual([

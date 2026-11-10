@@ -108,6 +108,8 @@
   }
 
   .od-del-sheet__foot {
+    display: grid;
+    gap: 10px;
     margin-top: auto;
     margin-left: -16px;
     margin-right: -16px;
@@ -161,6 +163,14 @@
   margin-bottom: 1rem;
   padding-bottom: 1rem;
   border-bottom: 1px solid $color-border;
+}
+
+.delivery-form__actions {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
 }
 
 .order-payments__error {

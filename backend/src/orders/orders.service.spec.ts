@@ -3,9 +3,12 @@ import {
   OrderStatus,
   PaymentMethod,
   PriceType,
+  PrintJobStatus,
   ProductType,
   SalesChannel,
   ServiceType,
+  SupplyCategory,
+  TaskType,
   TreasuryAccount,
 } from '../common/enums';
 import { OrderTasksService } from '../print-jobs/order-tasks.service';
@@ -242,6 +245,148 @@ describe('OrdersService.getOverview', () => {
       OrderStatus.CANCELADO,
       OrderStatus.PENDIENTE,
     ]);
+  });
+
+  it('entrega insumo suelto vinculado y descuenta stock', () => {
+    store.supplies.push({
+      id: 'sup-polimero',
+      name: 'Polímero',
+      category: SupplyCategory.GENERAL,
+      unit: 'u',
+      quantity: 10,
+      minStock: 0,
+      unitPrice: 800,
+      priceFromSettings: false,
+      updatedAt: '2026-07-01T10:00:00.000Z',
+    });
+    const order = store.orders[0];
+    order.items = [
+      {
+        serviceType: ServiceType.INSUMO,
+        productName: 'Polímero',
+        quantity: 3,
+        unitPrice: 800,
+        unitCost: 800,
+        deliveredQuantity: 0,
+        estampadoSupplies: [
+          { id: 'l1', supplyId: 'sup-polimero', quantity: 3 },
+        ],
+      },
+    ];
+    order.total = 2400;
+
+    service.deliver(order.id, [{ orderItemIndex: 0, quantity: 3 }]);
+
+    expect(order.items[0].deliveredQuantity).toBe(3);
+    expect(order.status).toBe(OrderStatus.ENTREGADO);
+    expect(store.supplies[0].quantity).toBe(7);
+    expect(store.supplyMovements).toEqual([
+      expect.objectContaining({
+        supplyId: 'sup-polimero',
+        delta: -3,
+        reason: 'delivery',
+      }),
+    ]);
+  });
+
+  it('entrega insumo suelto sin vínculo sin tocar stock', () => {
+    store.supplies.push({
+      id: 'sup-otro',
+      name: 'Otro',
+      category: SupplyCategory.GENERAL,
+      unit: 'u',
+      quantity: 5,
+      minStock: 0,
+      unitPrice: 100,
+      priceFromSettings: false,
+      updatedAt: '2026-07-01T10:00:00.000Z',
+    });
+    const order = store.orders[0];
+    order.items = [
+      {
+        serviceType: ServiceType.INSUMO,
+        productName: 'Cinta texto libre',
+        quantity: 2,
+        unitPrice: 50,
+        unitCost: 50,
+        deliveredQuantity: 0,
+      },
+    ];
+    order.total = 100;
+
+    service.deliver(order.id, [{ orderItemIndex: 0, quantity: 2 }]);
+
+    expect(order.items[0].deliveredQuantity).toBe(2);
+    expect(order.status).toBe(OrderStatus.ENTREGADO);
+    expect(store.supplies[0].quantity).toBe(5);
+    expect(store.supplyMovements).toHaveLength(0);
+  });
+
+  it('deliverAll entrega todo aunque haya tarea sin terminar', () => {
+    const order = store.orders[0];
+    order.items = [
+      {
+        serviceType: ServiceType.IMPRESION_3D,
+        productId: 'prod-1',
+        productName: 'Pieza',
+        quantity: 2,
+        unitPrice: 100,
+        reservedQuantity: 0,
+        producedQuantity: 0,
+        deliveredQuantity: 0,
+        productionRequiredQuantity: 2,
+        deliveredFromProductionQuantity: 0,
+      },
+      {
+        serviceType: ServiceType.INSUMO,
+        productName: 'Polímero',
+        quantity: 1,
+        unitPrice: 800,
+        unitCost: 800,
+        deliveredQuantity: 0,
+        estampadoSupplies: [
+          { id: 'l1', supplyId: 'sup-polimero', quantity: 1 },
+        ],
+      },
+    ];
+    order.total = 1000;
+    store.supplies.push({
+      id: 'sup-polimero',
+      name: 'Polímero',
+      category: SupplyCategory.GENERAL,
+      unit: 'u',
+      quantity: 4,
+      minStock: 0,
+      unitPrice: 800,
+      priceFromSettings: false,
+      updatedAt: '2026-07-01T10:00:00.000Z',
+    });
+    store.printJobs.push({
+      id: 'job-open',
+      orderId: order.id,
+      orderItemIndex: 0,
+      customerName: order.customerName,
+      productName: 'Hacer 2 Pieza',
+      type: ServiceType.IMPRESION_3D,
+      taskType: TaskType.PRODUCTION,
+      quantity: 2,
+      status: PrintJobStatus.POR_HACER,
+      active: true,
+      archived: false,
+      priority: 1,
+      machine: 'FDM',
+      estimatedHours: 1,
+      dueDate: order.dueDate,
+    });
+
+    service.deliverAll(order.id);
+
+    expect(order.items[0].deliveredQuantity).toBe(2);
+    expect(order.items[1].deliveredQuantity).toBe(1);
+    expect(order.status).toBe(OrderStatus.ENTREGADO);
+    expect(store.printJobs[0].archived).toBe(true);
+    expect(store.supplies[0].quantity).toBe(3);
+    expect(order.deliveryHistory).toHaveLength(1);
   });
 });
 

@@ -86,6 +86,11 @@ export class OrdersController {
     return this.ordersService.deliver(id, body.items);
   }
 
+  @Post(':id/deliver-all')
+  deliverAll(@Param('id') id: string) {
+    return this.ordersService.deliverAll(id);
+  }
+
   @Delete(':id')
   remove(@Param('id') id: string) {
     this.ordersService.remove(id);

@@ -22,7 +22,8 @@ import {
   OrderOverview,
 } from '../common/interfaces';
 import { CreateOrderDto, UpdateOrderDto } from '../common/dto';
-import { isAreaService } from '../common/service-type.util';
+import { isAreaService, isSupplyOrderLine } from '../common/service-type.util';
+import { applyStockChange } from '../supplies/apply-stock-change.util';
 import {
   calculateTotalWithDiscount,
   normalizeDiscountFields,
@@ -461,6 +462,37 @@ export class OrdersService {
   }
 
   deliver(id: string, lines: OrderDeliveryLine[]): Order {
+    return this.applyDelivery(id, lines, { force: false });
+  }
+
+  /** Entrega forzada de todo lo pendiente; archiva tareas abiertas al pasar a ENTREGADO. */
+  deliverAll(id: string): Order {
+    const order = this.findOne(id);
+    if (order.status === OrderStatus.CANCELADO) {
+      throw new BadRequestException('No se puede entregar un pedido cancelado');
+    }
+    if (order.status === OrderStatus.ENTREGADO) {
+      throw new BadRequestException('El pedido ya está entregado');
+    }
+    const lines: OrderDeliveryLine[] = order.items
+      .map((item, orderItemIndex) => ({
+        orderItemIndex,
+        quantity: Math.max(item.quantity - (item.deliveredQuantity ?? 0), 0),
+      }))
+      .filter((line) => line.quantity > 0);
+    if (!lines.length) {
+      throw new BadRequestException(
+        'No hay cantidades pendientes para entregar',
+      );
+    }
+    return this.applyDelivery(id, lines, { force: true });
+  }
+
+  private applyDelivery(
+    id: string,
+    lines: OrderDeliveryLine[],
+    options: { force: boolean },
+  ): Order {
     const order = this.findOne(id);
     if (order.status === OrderStatus.CANCELADO) {
       throw new BadRequestException('No se puede entregar un pedido cancelado');
@@ -489,6 +521,13 @@ export class OrdersService {
         throw new BadRequestException('El ítem de entrega no existe');
       }
       const pending = item.quantity - (item.deliveredQuantity ?? 0);
+      if (line.quantity > pending) {
+        throw new BadRequestException(
+          `No hay cantidad disponible para entregar "${item.productName}"`,
+        );
+      }
+      if (options.force) continue;
+
       const available = item.productId
         ? (item.reservedQuantity ?? 0) +
           Math.max(
@@ -497,7 +536,7 @@ export class OrdersService {
             0,
           )
         : this.serviceDeliverableQuantity(order, item, line.orderItemIndex);
-      if (line.quantity > pending || line.quantity > available) {
+      if (line.quantity > available) {
         throw new BadRequestException(
           available <= 0 && !item.productId
             ? `No se puede entregar "${item.productName}": la tarea todavía no está terminada`
@@ -511,19 +550,28 @@ export class OrdersService {
       const fromStock = Math.min(line.quantity, item.reservedQuantity ?? 0);
       if (fromStock > 0 && item.productId) {
         const product = this.products.findById(item.productId);
-        if (!product || (product.stock ?? 0) < fromStock) {
-          throw new BadRequestException(
-            `Stock físico inconsistente para "${item.productName}"`,
-          );
+        if (!options.force) {
+          if (!product || (product.stock ?? 0) < fromStock) {
+            throw new BadRequestException(
+              `Stock físico inconsistente para "${item.productName}"`,
+            );
+          }
+          product.stock = (product.stock ?? 0) - fromStock;
+          this.products.save(product);
+        } else if (product) {
+          const take = Math.min(fromStock, product.stock ?? 0);
+          if (take > 0) {
+            product.stock = (product.stock ?? 0) - take;
+            this.products.save(product);
+          }
         }
-        product.stock = (product.stock ?? 0) - fromStock;
-        this.products.save(product);
         item.reservedQuantity = (item.reservedQuantity ?? 0) - fromStock;
       }
       item.deliveredFromProductionQuantity =
         (item.deliveredFromProductionQuantity ?? 0) +
         (line.quantity - fromStock);
       item.deliveredQuantity = (item.deliveredQuantity ?? 0) + line.quantity;
+      this.deductSupplyStockOnDelivery(item, line.quantity);
     }
 
     order.deliveryHistory ??= [];
@@ -534,6 +582,36 @@ export class OrdersService {
     });
     this.orderTasks.syncOrderStatusFromTasks(order.id);
     return this.orders.save(order);
+  }
+
+  /**
+   * Insumo suelto vinculado al inventario: descuenta al entregar.
+   * Texto libre o supply inexistente: solo marca entregado.
+   * Si el stock no alcanza, descuenta hasta 0 (no bloquea).
+   */
+  private deductSupplyStockOnDelivery(
+    item: OrderItem,
+    deliveredQty: number,
+  ): void {
+    if (!isSupplyOrderLine(item.serviceType) || !(deliveredQty > 0)) return;
+    const supplyLine = (item.estampadoSupplies ?? []).find(
+      (line) => !!line.supplyId?.trim() && Number(line.quantity) > 0,
+    );
+    if (!supplyLine?.supplyId) return;
+
+    const supply = this.store.getSupplyById(supplyLine.supplyId);
+    if (!supply) return;
+
+    const itemQty = Math.max(Number(item.quantity) || 0, 1);
+    const lineQty = Number(supplyLine.quantity) || 0;
+    const amount = deliveredQty * (lineQty / itemQty);
+    if (!(amount > 0)) return;
+
+    const available = Number(supply.quantity) || 0;
+    const take = Math.min(available, amount);
+    if (!(take > 0)) return;
+
+    applyStockChange(this.store, supply, -take, 'delivery');
   }
 
   private normalizeServices(items: OrderItem[]): ServiceType[] {

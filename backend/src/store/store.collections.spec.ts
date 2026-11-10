@@ -6,6 +6,8 @@ describe('store.collections', () => {
       'orders',
       'printJobs',
       'products',
+      'supplies',
+      'supplyMovements',
     ]);
     expect(collectionsFromPath('/api/sales/retail')).toEqual([
       'retailSales',
