@@ -117,7 +117,10 @@ export class ProductsService {
     );
   }
 
-  uploadAttachment(file: File): Observable<{
+  uploadAttachment(
+    file: File,
+    folder?: 'orders' | 'quotes',
+  ): Observable<{
     url: string;
     name: string;
     mimeType: string;
@@ -130,6 +133,9 @@ export class ProductsService {
       name: string;
       mimeType: string;
       size: number;
-    }>(`${this.baseUrl}/upload/attachment`, formData);
+    }>(
+      `${this.baseUrl}/upload/attachment${folder ? `?folder=${folder}` : ''}`,
+      formData,
+    );
   }
 }

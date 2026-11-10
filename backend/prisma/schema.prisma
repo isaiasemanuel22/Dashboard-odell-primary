@@ -211,6 +211,7 @@ model Order {
   discountPercent Float @default(0) @map("discount_percent")
   discountAmount  Float @default(0) @map("discount_amount")
   description  String?  @db.Text
+  attachments  Json     @default("[]") @map("attachments")
   notes        String?  @db.Text
   createdAt    DateTime @map("created_at")
   dueDate      DateTime @map("due_date")
@@ -293,6 +294,7 @@ model Quote {
   discountPercent Float    @default(0) @map("discount_percent")
   discountAmount  Float    @default(0) @map("discount_amount")
   description     String?  @db.Text
+  attachments     Json     @default("[]") @map("attachments")
   quotedAt        DateTime @map("quoted_at")
   createdAt       DateTime @map("created_at")
   orderId         String?  @map("order_id") @db.VarChar(64)

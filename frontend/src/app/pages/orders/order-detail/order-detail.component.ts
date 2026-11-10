@@ -98,6 +98,7 @@ import {
 import { OrderDetailHistoryComponent } from './order-detail-history/order-detail-history.component';
 import { OrderDetailPaymentsComponent } from './order-detail-payments/order-detail-payments.component';
 import { OrderDetailDeliveriesComponent } from './order-detail-deliveries/order-detail-deliveries.component';
+import { DocumentAttachmentsViewComponent } from '../../../components/document-attachments-view/document-attachments-view.component';
 
 type MobileAccordionKey = 'payments' | 'tasks' | 'deliveries' | 'history';
 
@@ -105,6 +106,7 @@ type MobileAccordionKey = 'payments' | 'tasks' | 'deliveries' | 'history';
   selector: 'app-order-detail',
   standalone: true,
   imports: [
+    DocumentAttachmentsViewComponent,
     FormsModule,
     RouterLink,
     DateShortPipe,

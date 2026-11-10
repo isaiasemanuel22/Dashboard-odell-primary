@@ -1,4 +1,5 @@
 import {
+  ArrayMaxSize,
   IsArray,
   IsBoolean,
   IsEnum,
@@ -32,7 +33,8 @@ import {
   EstampadoPrintSpec,
   EstampadoSupplyLine,
 } from '../interfaces';
-import { FdmFilamentLineDto } from './product.dto';
+import { FdmFilamentLineDto, ProductAttachmentDto } from './product.dto';
+import { MAX_DOCUMENT_ATTACHMENTS } from '../../products/product-attachment.util';
 import { ORDER_RICH_TEXT_HTML_MAX_LENGTH } from '../../orders/rich-text.util';
 
 export class UpdateStatusDto {
@@ -437,6 +439,13 @@ export class CreateOrderDto {
   @IsString()
   @MaxLength(ORDER_RICH_TEXT_HTML_MAX_LENGTH)
   description?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_DOCUMENT_ATTACHMENTS)
+  @ValidateNested({ each: true })
+  @Type(() => ProductAttachmentDto)
+  attachments?: ProductAttachmentDto[];
 
   @IsOptional()
   @IsString()

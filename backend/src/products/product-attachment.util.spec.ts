@@ -1,4 +1,7 @@
-import { normalizeProductAttachments } from './product-attachment.util';
+import {
+  normalizeProductAttachments,
+  sanitizeDocumentAttachments,
+} from './product-attachment.util';
 
 describe('product-attachment.util', () => {
   it('normaliza adjuntos .3mf a model/3mf con mime vacío u octet-stream', () => {
@@ -22,5 +25,27 @@ describe('product-attachment.util', () => {
     expect(attachments).toHaveLength(2);
     expect(attachments[0]?.mimeType).toBe('model/3mf');
     expect(attachments[1]?.mimeType).toBe('model/3mf');
+  });
+});
+
+describe('sanitizeDocumentAttachments', () => {
+  const att = (n: number) => ({
+    id: `att-${n}`,
+    name: `archivo-${n}.pdf`,
+    url: `https://example.com/${n}.pdf`,
+    mimeType: 'application/pdf',
+    size: 10,
+  });
+
+  it('acepta hasta 10 adjuntos y rechaza más', () => {
+    const ten = Array.from({ length: 10 }, (_, i) => att(i));
+    expect(sanitizeDocumentAttachments(ten)).toHaveLength(10);
+    expect(() => sanitizeDocumentAttachments([...ten, att(11)])).toThrow();
+  });
+
+  it('rechaza URLs no https', () => {
+    expect(() =>
+      sanitizeDocumentAttachments([{ ...att(1), url: 'http://x.com/a.pdf' }]),
+    ).toThrow();
   });
 });

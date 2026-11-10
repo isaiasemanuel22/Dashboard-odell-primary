@@ -133,6 +133,13 @@
           <span class="m-hint">Sin descripción</span>
         }
       </section>
+
+      @if (quote.attachments?.length) {
+        <h2 class="m-sec-t">Adjuntos</h2>
+        <section class="m-card">
+          <app-document-attachments-view [attachments]="quote.attachments" />
+        </section>
+      }
     </div>
 
     @if (showMobileDock) {
@@ -281,6 +288,13 @@
             }
           </div>
         </section>
+
+        @if (quote.attachments?.length) {
+          <section class="panel">
+            <h3>Adjuntos</h3>
+            <app-document-attachments-view [attachments]="quote.attachments" />
+          </section>
+        }
 
         <app-quote-detail-lines [quote]="quote" />
 

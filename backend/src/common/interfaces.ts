@@ -648,6 +648,8 @@ export interface Order {
   discountPercent?: number;
   discountAmount?: number;
   description?: string;
+  /** Archivos e imágenes de referencia (máx. 10). */
+  attachments?: ProductAttachment[];
   notes?: string;
   createdAt: string;
   dueDate: string;
@@ -696,6 +698,8 @@ export interface Quote {
   discountPercent?: number;
   discountAmount?: number;
   description?: string;
+  /** Archivos e imágenes de referencia (máx. 10). */
+  attachments?: ProductAttachment[];
   quotedAt: string;
   createdAt: string;
   orderId?: string;

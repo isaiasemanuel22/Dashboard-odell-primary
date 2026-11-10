@@ -2,6 +2,7 @@ import { Prisma } from '@prisma/client';
 import { FdmFilamentLine, Quote, QuoteItem } from '../../common/interfaces';
 import { PriceType, QuoteStatus, SalesChannel } from '../../common/enums';
 import { fromJson, toInputJson } from '../../prisma/json.util';
+import { normalizeProductAttachments } from '../../products/product-attachment.util';
 import { normalizeServiceType } from '../../common/service-type.util';
 import { normalizeFdmFilaments } from '../../products/fdm-product.util';
 import { persistedFdmLine } from '../brand-link.util';
@@ -137,6 +138,7 @@ export function mapQuoteFromDb(row: {
   discountPercent?: number;
   discountAmount?: number;
   description?: string | null;
+  attachments?: Prisma.JsonValue;
   quotedAt: Date;
   createdAt: Date;
   orderId?: string | null;
@@ -172,6 +174,7 @@ export function mapQuoteFromDb(row: {
     discountPercent: row.discountPercent ?? 0,
     discountAmount: row.discountAmount ?? 0,
     description: row.description ?? undefined,
+    attachments: normalizeProductAttachments(fromJson(row.attachments ?? [])),
     quotedAt: row.quotedAt.toISOString(),
     createdAt: row.createdAt.toISOString(),
     orderId: row.orderId ?? undefined,
@@ -191,6 +194,7 @@ function mapQuoteScalarsToDb(quote: Quote) {
     discountPercent: quote.discountPercent ?? 0,
     discountAmount: quote.discountAmount ?? 0,
     description: quote.description ?? null,
+    attachments: toInputJson(quote.attachments ?? []),
     quotedAt: new Date(quote.quotedAt),
     createdAt: new Date(quote.createdAt),
     orderId: quote.orderId ?? null,

@@ -1,4 +1,6 @@
 import {
+  ArrayMaxSize,
+  IsArray,
   IsNumber,
   IsOptional,
   IsString,
@@ -12,6 +14,8 @@ import { IsEnum } from 'class-validator';
 import { PriceType, QuoteStatus, SalesChannel } from '../enums';
 import { ORDER_RICH_TEXT_HTML_MAX_LENGTH } from '../../orders/rich-text.util';
 import { OrderItemDto } from './order.dto';
+import { MAX_DOCUMENT_ATTACHMENTS } from '../../products/product-attachment.util';
+import { ProductAttachmentDto } from './product.dto';
 
 export class CreateQuoteDto {
   @IsOptional()
@@ -45,6 +49,13 @@ export class CreateQuoteDto {
   @IsString()
   @MaxLength(ORDER_RICH_TEXT_HTML_MAX_LENGTH)
   description?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(MAX_DOCUMENT_ATTACHMENTS)
+  @ValidateNested({ each: true })
+  @Type(() => ProductAttachmentDto)
+  attachments?: ProductAttachmentDto[];
 
   /** Solo borrador | enviado al crear/guardar desde el formulario. */
   @IsOptional()

@@ -84,6 +84,7 @@ describe('order.mapper payments', () => {
       priceHistory: toDb.priceHistory as never,
       deliveryHistory: toDb.deliveryHistory as never,
       payments: toDb.payments as never,
+      attachments: toDb.attachments as never,
       items: fromDb.items.map((item) => ({
         serviceType: item.serviceType,
         productId: item.productId ?? null,
@@ -94,6 +95,36 @@ describe('order.mapper payments', () => {
     });
 
     expect(roundTrip.payments).toEqual(payments);
+  });
+
+  it('hace ida y vuelta de los adjuntos del pedido', () => {
+    const attachments = [
+      {
+        id: 'att-1',
+        name: 'referencia.png',
+        url: 'https://example.com/referencia.png',
+        mimeType: 'image/png',
+        size: 1234,
+      },
+    ];
+    const base = {
+      id: 'ord-a',
+      customerId: null,
+      customerName: 'Ana',
+      services: [ServiceType.IMPRESION_3D] as never,
+      status: OrderStatus.PENDIENTE,
+      total: 0,
+      description: null,
+      notes: null,
+      createdAt: new Date('2026-08-01T12:00:00.000Z'),
+      dueDate: new Date('2026-08-10T12:00:00.000Z'),
+      statusHistory: [] as never,
+      items: [],
+    };
+    const order = mapOrderFromDb({ ...base, attachments });
+    expect(order.attachments).toEqual(attachments);
+    expect(mapOrderToDbCreate(order).attachments).toEqual(attachments);
+    expect(mapOrderFromDb(base).attachments).toEqual([]);
   });
 
   it('mapea pagos ausentes a []', () => {

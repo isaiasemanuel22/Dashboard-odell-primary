@@ -8,6 +8,7 @@ import {
 } from '../../common/interfaces';
 import { ensureOrderStatusHistory } from '../../orders/order-status-history.util';
 import { fromJson, toInputJson } from '../../prisma/json.util';
+import { normalizeProductAttachments } from '../../products/product-attachment.util';
 import { normalizeServiceType } from '../../common/service-type.util';
 import { normalizeFdmFilaments } from '../../products/fdm-product.util';
 import { persistedFdmLine } from '../brand-link.util';
@@ -167,6 +168,7 @@ export function mapOrderFromDb(row: {
   discountPercent?: number;
   discountAmount?: number;
   description: string | null;
+  attachments?: Prisma.JsonValue;
   notes: string | null;
   createdAt: Date;
   dueDate: Date;
@@ -205,6 +207,7 @@ export function mapOrderFromDb(row: {
     discountPercent: row.discountPercent ?? 0,
     discountAmount: row.discountAmount ?? 0,
     description: row.description ?? undefined,
+    attachments: normalizeProductAttachments(fromJson(row.attachments ?? [])),
     notes: row.notes ?? undefined,
     createdAt: row.createdAt.toISOString(),
     dueDate: row.dueDate.toISOString(),
@@ -232,6 +235,7 @@ function mapOrderScalarsToDb(order: Order) {
     discountPercent: order.discountPercent ?? 0,
     discountAmount: order.discountAmount ?? 0,
     description: order.description ?? null,
+    attachments: toInputJson(order.attachments ?? []),
     notes: order.notes ?? null,
     createdAt: new Date(order.createdAt),
     dueDate: new Date(order.dueDate),

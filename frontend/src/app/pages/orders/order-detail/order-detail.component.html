@@ -360,6 +360,13 @@
         </section>
       }
 
+      @if (order.attachments?.length) {
+        <h2 class="m-sec-t">Adjuntos</h2>
+        <section class="m-card">
+          <app-document-attachments-view [attachments]="order.attachments" />
+        </section>
+      }
+
       @if (order.notes) {
         <h2 class="m-sec-t">Notas internas</h2>
         <section class="m-card od-m__notes">
@@ -671,6 +678,13 @@
             }
           </div>
         </section>
+
+        @if (order.attachments?.length) {
+          <section class="panel">
+            <h3>Adjuntos</h3>
+            <app-document-attachments-view [attachments]="order.attachments" />
+          </section>
+        }
       </div>
 
       <footer class="panel detail-actions">

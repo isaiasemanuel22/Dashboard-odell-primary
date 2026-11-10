@@ -96,6 +96,56 @@ describe('QuotesService producto nuevo', () => {
   });
 });
 
+describe('QuotesService adjuntos', () => {
+  it('presupuesto → pedido copia los adjuntos con las mismas URLs', () => {
+    const store = new StoreService();
+    const state = createEmptyState();
+    state.customers.push({
+      id: 'cust-1',
+      name: 'Cliente',
+      email: 'c@test.com',
+      phone: '123',
+      type: CustomerType.PARTICULAR,
+      createdAt: '2026-10-21T12:00:00.000Z',
+    });
+    const attachments = [
+      {
+        id: 'att-1',
+        name: 'logo.pdf',
+        url: 'https://example.com/logo.pdf',
+        mimeType: 'application/pdf',
+        size: 100,
+      },
+    ];
+    state.quotes.push({
+      id: 'qte-att',
+      customerId: 'cust-1',
+      customerName: 'Cliente',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productName: 'Mate',
+          quantity: 1,
+          unitPrice: 2500,
+          grams: 40,
+          printTimeHours: 2,
+          filamentType: FilamentType.PLA,
+        },
+      ],
+      status: QuoteStatus.ACEPTADO,
+      total: 2500,
+      attachments,
+      quotedAt: '2026-10-21T12:00:00.000Z',
+      createdAt: '2026-10-21T12:00:00.000Z',
+    });
+    store.applyState(state);
+
+    const order = buildQuotesService(store).createOrderFromQuote('qte-att');
+    expect(order.attachments).toEqual(attachments);
+  });
+});
+
 describe('QuotesService precio mayorista (§10)', () => {
   it('presupuesto aceptado → pedido conserva precios y canal', () => {
     const store = new StoreService();

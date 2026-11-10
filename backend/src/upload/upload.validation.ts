@@ -1,3 +1,4 @@
+import { BadRequestException } from '@nestjs/common';
 import { readFileSync } from 'fs';
 import { extname } from 'path';
 
@@ -108,4 +109,20 @@ export function validateUploadedAttachment(
 
   const mime = normalizeAttachmentMime(name, file.mimetype);
   return { ok: true, mime };
+}
+
+/** Carpetas permitidas para `POST /upload/attachment`. */
+export const ATTACHMENT_UPLOAD_FOLDERS = [
+  'products',
+  'orders',
+  'quotes',
+] as const;
+
+/** Lista blanca de carpeta; `products` por defecto. Lanza si no está permitida. */
+export function resolveAttachmentFolder(folder?: string): string {
+  const key = (folder ?? '').trim().toLowerCase() || 'products';
+  if (!(ATTACHMENT_UPLOAD_FOLDERS as readonly string[]).includes(key)) {
+    throw new BadRequestException('Carpeta de adjuntos no permitida');
+  }
+  return `${key}/attachments`;
 }

@@ -1,0 +1,29 @@
+@if (items.length) {
+  <ul class="doc-att">
+    @for (item of items; track item.id) {
+      <li class="doc-att__li">
+        <a
+          class="doc-att__item"
+          [class.doc-att__item--image]="isImage(item)"
+          [href]="item.url"
+          target="_blank"
+          rel="noopener noreferrer"
+          [title]="item.name"
+        >
+          @if (isImage(item)) {
+            <img class="doc-att__thumb" [src]="item.url" [alt]="item.name" loading="lazy" />
+          } @else {
+            <svg class="doc-att__icon" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 3.5h7l5 5V20a1.5 1.5 0 0 1-1.5 1.5h-10.5A1.5 1.5 0 0 1 5.5 20V5A1.5 1.5 0 0 1 7 3.5z" fill="none" stroke="currentColor" stroke-width="1.6" />
+              <path d="M14 3.5V9h5.5" fill="none" stroke="currentColor" stroke-width="1.6" />
+            </svg>
+          }
+          <span class="doc-att__text">
+            <span class="doc-att__name">{{ item.name }}</span>
+            <span class="doc-att__size">{{ size(item) }}</span>
+          </span>
+        </a>
+      </li>
+    }
+  </ul>
+}

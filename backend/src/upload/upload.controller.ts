@@ -3,6 +3,7 @@ import {
   Controller,
   Inject,
   Post,
+  Query,
   UploadedFile,
   UseInterceptors,
 } from '@nestjs/common';
@@ -14,6 +15,7 @@ import type { FileStorage } from './file-storage.interface';
 import { ensureUploadsDir } from './upload.paths';
 import {
   isAllowedImageExtension,
+  resolveAttachmentFolder,
   validateUploadedAttachment,
   validateUploadedImage,
 } from './upload.validation';
@@ -95,7 +97,11 @@ export class UploadController {
       limits: { fileSize: 25 * 1024 * 1024 },
     }),
   )
-  async uploadAttachment(@UploadedFile() file: Express.Multer.File) {
+  async uploadAttachment(
+    @UploadedFile() file: Express.Multer.File,
+    @Query('folder') folder?: string,
+  ) {
+    const attachmentFolder = resolveAttachmentFolder(folder);
     this.storage.ensureReady();
 
     if (!file) {
@@ -108,10 +114,7 @@ export class UploadController {
       throw new BadRequestException(validation.reason);
     }
 
-    const stored = await this.storage.saveUploadedFile(
-      file,
-      'products/attachments',
-    );
+    const stored = await this.storage.saveUploadedFile(file, attachmentFolder);
     return {
       url: stored.publicUrl,
       name: file.originalname.trim(),

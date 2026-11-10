@@ -2,8 +2,22 @@ import {
   detectImageMime,
   isAllowedImageExtension,
   isBlockedAttachmentExtension,
+  resolveAttachmentFolder,
   validateUploadedAttachment,
 } from './upload.validation';
+
+describe('resolveAttachmentFolder', () => {
+  it('usa products por defecto y acepta orders y quotes', () => {
+    expect(resolveAttachmentFolder()).toBe('products/attachments');
+    expect(resolveAttachmentFolder('orders')).toBe('orders/attachments');
+    expect(resolveAttachmentFolder(' Quotes ')).toBe('quotes/attachments');
+  });
+
+  it('rechaza carpetas fuera de la lista blanca', () => {
+    expect(() => resolveAttachmentFolder('../etc')).toThrow();
+    expect(() => resolveAttachmentFolder('users')).toThrow();
+  });
+});
 
 describe('upload.validation', () => {
   it('acepta extensiones permitidas', () => {

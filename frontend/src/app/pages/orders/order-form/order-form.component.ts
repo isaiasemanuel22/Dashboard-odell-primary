@@ -31,6 +31,7 @@ import {
   Order,
   OrderLineDraft,
   PaymentMethod,
+  ProductAttachment,
   PriceType,
   Product,
   Quote,
@@ -108,6 +109,7 @@ import { plainTextFromHtml, hasRichTextContent, sanitizeRichTextHtml } from '../
 import { MediaUploadService } from '../../../core/services/media-upload.service';
 import { DbFileUploadFn } from '../../../components/dashboard-form/db-file-upload/db-file-upload.types';
 import { firstValueFrom } from 'rxjs';
+import { DocumentAttachmentsComponent } from '../../../components/document-attachments/document-attachments.component';
 import {
   DiscountMode,
   DISCOUNT_PERCENT_MAX,
@@ -196,6 +198,7 @@ export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
   selector: 'app-order-form',
   standalone: true,
   imports: [
+    DocumentAttachmentsComponent,
     FormsModule,
     RouterLink,
     DbFormComponent,
@@ -256,6 +259,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   customerId = '';
   dueDate = defaultDueDate();
   description = '';
+  attachments: ProductAttachment[] = [];
   notes = '';
   lines: OrderLineDraft[] = [createEmptyLine(ServiceType.IMPRESION_3D)];
   discountMode: DiscountMode = 'none';
@@ -1456,6 +1460,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
         description: hasRichTextContent(this.description)
           ? sanitizeRichTextHtml(this.description)
           : '',
+        attachments: [...this.attachments],
         status: asDraft ? QuoteStatus.BORRADOR : QuoteStatus.ENVIADO,
         priceType: this.priceType,
         salesChannel: this.salesChannel,
@@ -1469,6 +1474,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       description: hasRichTextContent(this.description)
         ? sanitizeRichTextHtml(this.description)
         : undefined,
+      attachments: [...this.attachments],
       notes: this.notes.trim() || undefined,
       dueDate: toOrderDueDate(this.dueDate),
       priceType: this.priceType,
@@ -1628,6 +1634,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (this.isQuoteForm && this.quote) {
       this.customerId = this.quote.customerId ?? '';
       this.description = this.quote.description ?? '';
+      this.attachments = [...(this.quote.attachments ?? [])];
       this.notes = '';
       this.lines = this.quote.items.map((item) => lineFromQuoteItem(item));
       this.hydrateFdmColorSelectors(this.lines);
@@ -1648,6 +1655,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.customerId = this.presetQuote.customerId ?? '';
       this.dueDate = defaultDueDate();
       this.description = this.presetQuote.description ?? '';
+      this.attachments = [...(this.presetQuote.attachments ?? [])];
       this.notes = '';
       this.lines = this.presetQuote.items.map((item) => lineFromQuoteItem(item));
       this.hydrateFdmColorSelectors(this.lines);
@@ -1668,6 +1676,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.customerId = this.order.customerId ?? '';
       this.dueDate = toDateInputValue(this.order.dueDate);
       this.description = this.order.description ?? '';
+      this.attachments = [...(this.order.attachments ?? [])];
       this.notes = this.order.notes ?? '';
       this.lines = this.order.items.map((item) => lineFromOrderItem(item));
       this.hydrateFdmColorSelectors(this.lines);
@@ -1688,6 +1697,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.customerId = this.presetCustomerId;
       this.dueDate = defaultDueDate();
       this.description = '';
+      this.attachments = [];
       this.notes = '';
       this.lines = orderLinesFromSaleCart(this.presetCartLines, this.products);
       this.discountMode = 'none';
@@ -1701,6 +1711,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       this.customerId = this.presetCustomerId;
       this.dueDate = defaultDueDate();
       this.description = '';
+      this.attachments = [];
       this.notes = '';
       this.lines = [createEmptyLine(ServiceType.IMPRESION_3D)];
       this.discountMode = 'none';

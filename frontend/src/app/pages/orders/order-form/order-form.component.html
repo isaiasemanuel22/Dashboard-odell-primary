@@ -45,6 +45,13 @@
                   [uploadFn]="uploadDescriptionImage"
                 />
               </db-form-grid-full>
+              <db-form-grid-full>
+                <app-document-attachments
+                  folder="orders"
+                  [attachments]="attachments"
+                  (attachmentsChange)="attachments = $event"
+                />
+              </db-form-grid-full>
           </db-mobile-form-step>
 
           <db-mobile-form-step
@@ -247,6 +254,13 @@
                   placeholder="Describí el trabajo: qué necesita el cliente, referencias, alcances..."
                   [maxLength]="descriptionMaxLength"
                   [uploadFn]="uploadDescriptionImage"
+                />
+              </db-form-grid-full>
+              <db-form-grid-full>
+                <app-document-attachments
+                  folder="quotes"
+                  [attachments]="attachments"
+                  (attachmentsChange)="attachments = $event"
                 />
               </db-form-grid-full>
           </db-mobile-form-step>

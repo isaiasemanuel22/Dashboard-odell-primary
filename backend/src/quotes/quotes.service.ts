@@ -3,6 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
+import { sanitizeDocumentAttachments } from '../products/product-attachment.util';
 import {
   CustomerType,
   PriceType,
@@ -105,6 +106,7 @@ export class QuotesService {
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
       description: this.normalizeDescription(data.description),
+      attachments: sanitizeDocumentAttachments(data.attachments),
     };
 
     return this.quotes.create(quote);
@@ -188,6 +190,10 @@ export class QuotesService {
         data.description !== undefined
           ? this.normalizeDescription(data.description)
           : current.description,
+      attachments:
+        data.attachments !== undefined
+          ? sanitizeDocumentAttachments(data.attachments)
+          : (current.attachments ?? []),
       status,
     };
 
@@ -269,6 +275,9 @@ export class QuotesService {
         discountPercent: quote.discountPercent,
         discountAmount: quote.discountAmount,
         description: quote.description,
+        attachments: quote.attachments?.length
+          ? quote.attachments.map((item) => ({ ...item }))
+          : undefined,
         dueDate: this.defaultOrderDueDate(),
         responsibleUserId: actorUserId?.trim() || undefined,
       },

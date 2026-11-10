@@ -56,11 +56,13 @@ import {
   RichTextPipe,
 } from '../../../shared/pipes/labels.pipe';
 import { QuoteDetailLinesComponent } from './quote-detail-lines/quote-detail-lines.component';
+import { DocumentAttachmentsViewComponent } from '../../../components/document-attachments-view/document-attachments-view.component';
 
 @Component({
   selector: 'app-quote-detail',
   standalone: true,
   imports: [
+    DocumentAttachmentsViewComponent,
     RouterLink,
     DateShortPipe,
     QuoteStatusLabelPipe,

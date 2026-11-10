@@ -3,6 +3,9 @@ import { ProductAttachment } from '../common/interfaces';
 import { normalizeAttachmentMime } from '../upload/upload.validation';
 import { isPersistableProductImageUrl } from './product-image.util';
 
+/** Máximo de adjuntos por pedido o presupuesto. */
+export const MAX_DOCUMENT_ATTACHMENTS = 10;
+
 export function createProductAttachmentId(): string {
   return `att-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
@@ -36,6 +39,20 @@ export function validateProductAttachments(
       throw new BadRequestException('El tamaño del adjunto es inválido');
     }
   }
+}
+
+/** Valida y normaliza los adjuntos de un pedido o presupuesto (máx. 10). */
+export function sanitizeDocumentAttachments(
+  raw: ProductAttachment[] | undefined,
+): ProductAttachment[] {
+  if (!raw?.length) return [];
+  if (raw.length > MAX_DOCUMENT_ATTACHMENTS) {
+    throw new BadRequestException(
+      `Se permiten hasta ${MAX_DOCUMENT_ATTACHMENTS} adjuntos`,
+    );
+  }
+  validateProductAttachments(raw);
+  return normalizeProductAttachments(raw);
 }
 
 function normalizeOneProductAttachment(
