@@ -66,6 +66,41 @@ export function calcFilamentCost(
   return (grams / 1000) * pricePerKg;
 }
 
+/**
+ * Precio por kg promedio simple de las filas FDM (no ponderado por gramos).
+ * Sin filas: precio del filamentType del producto.
+ */
+export function averageFdmFilamentPricePerKg(
+  dto: Pick<CalculateCostDto, 'filaments' | 'filamentType' | 'grams' | 'brand'>,
+  settings: GeneralSettings,
+): number | null {
+  const filaments = resolveFdmFilaments(dto);
+  if (filaments.length) {
+    const prices = filaments
+      .map((line) => resolveFilamentPricePerKg(settings, line.filamentType))
+      .filter((price): price is number => price !== null);
+    if (!prices.length) return null;
+    return prices.reduce((sum, price) => sum + price, 0) / prices.length;
+  }
+  return resolveFilamentPricePerKg(settings, dto.filamentType);
+}
+
+/**
+ * Costo de purga AMS: purgeGrams/1000 × precio/kg promedio simple de filas.
+ * purgeGrams null/0 → 0.
+ */
+export function calcPurgeCost(
+  purgeGrams: number | null | undefined,
+  dto: Pick<CalculateCostDto, 'filaments' | 'filamentType' | 'grams' | 'brand'>,
+  settings: GeneralSettings,
+): number {
+  const grams = Math.max(0, Number(purgeGrams) || 0);
+  if (grams <= 0) return 0;
+  const pricePerKg = averageFdmFilamentPricePerKg(dto, settings);
+  if (pricePerKg === null) return 0;
+  return (grams / 1000) * pricePerKg;
+}
+
 export function calcResinCost(
   brand: string | undefined,
   resinType: ResinType | string | undefined,
@@ -107,6 +142,7 @@ export function calculateErrorMarginCost(
   energyCost: number,
   machineCost: number,
   settings: GeneralSettings,
+  purgeCost = 0,
 ): number {
   const percent = Math.min(
     Math.max(Number(settings.errorMarginPercent) || 0, 0),
@@ -115,6 +151,7 @@ export function calculateErrorMarginCost(
   if (percent === 0) {
     return 0;
   }
-  const base = materialCost + energyCost + machineCost;
+  const base =
+    materialCost + Math.max(0, Number(purgeCost) || 0) + energyCost + machineCost;
   return Math.round(base * (percent / 100));
 }

@@ -1,6 +1,9 @@
 import { FilamentType } from '../common/enums';
 import { GeneralSettings } from '../common/interfaces';
-import { calculateErrorMarginCost } from './cost-material.calc';
+import {
+  calcPurgeCost,
+  calculateErrorMarginCost,
+} from './cost-material.calc';
 import { averageFilamentPriceByType } from './material-type-price.util';
 
 /**
@@ -21,7 +24,7 @@ describe('paridad de costo con el cliente', () => {
     expect(averageFilamentPriceByType(settings, FilamentType.PETG)).toBeNull();
   });
 
-  it('redondea el margen de error sobre material, luz y máquina', () => {
+  it('redondea el margen de error sobre material, luz, máquina y purga', () => {
     const margin = (percent: number) =>
       calculateErrorMarginCost(100, 20, 30, {
         errorMarginPercent: percent,
@@ -43,5 +46,43 @@ describe('paridad de costo con el cliente', () => {
         errorMarginPercent: 33,
       } as GeneralSettings),
     ).toBe(3);
+    expect(
+      calculateErrorMarginCost(100, 20, 30, {
+        errorMarginPercent: 10,
+      } as GeneralSettings, 50),
+    ).toBe(20);
+  });
+
+  it('calcula purga AMS con promedio simple de precios por fila', () => {
+    const settings = {
+      filamentTypeAverages: {
+        [FilamentType.PLA]: 20000,
+        [FilamentType.PETG]: 14000,
+      },
+    } as GeneralSettings;
+
+    // 9 g × ((20000+14000)/2) / 1000 = 9 × 17 = 153
+    expect(
+      calcPurgeCost(
+        9,
+        {
+          filaments: [
+            { id: 'a', filamentType: FilamentType.PLA, grams: 30 },
+            { id: 'b', filamentType: FilamentType.PETG, grams: 70 },
+          ],
+        },
+        settings,
+      ),
+    ).toBe(153);
+
+    expect(calcPurgeCost(0, { filamentType: FilamentType.PLA }, settings)).toBe(
+      0,
+    );
+    expect(
+      calcPurgeCost(null, { filamentType: FilamentType.PLA }, settings),
+    ).toBe(0);
+    expect(
+      calcPurgeCost(10, { filamentType: FilamentType.PLA }, settings),
+    ).toBe(200);
   });
 });

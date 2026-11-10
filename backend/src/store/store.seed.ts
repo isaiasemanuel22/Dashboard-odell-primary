@@ -423,6 +423,22 @@ export function createSeedState(): StoreState {
       workTimeHours: 0.5,
       brand: 'FilAr',
       filamentType: FilamentType.PLA,
+      filaments: [
+        {
+          id: 'ff-seed-1a',
+          filamentType: FilamentType.PLA,
+          grams: 30,
+          brand: 'FilAr',
+        },
+        {
+          id: 'ff-seed-1b',
+          filamentType: FilamentType.PLA,
+          grams: 15,
+          brand: 'FilAr',
+        },
+      ],
+      purgeGrams: 9,
+      colorChanges: 14,
     },
     {
       id: 'prod-2',

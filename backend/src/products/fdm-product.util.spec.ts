@@ -1,6 +1,8 @@
 import { FilamentType } from '../common/enums';
-import { FdmFilamentLine, INDISTINTO_COLOR_ID } from '../common/interfaces';
+import { INDISTINTO_COLOR_ID } from '../common/color.util';
+import { FdmFilamentLine } from '../common/interfaces';
 import {
+  distributePurgeGrams,
   normalizeFdmFilaments,
   totalFdmFilamentGrams,
 } from './fdm-product.util';
@@ -28,5 +30,13 @@ describe('fdm-product.util', () => {
     expect(lines[0]?.grams).toBe(85);
     expect(lines[0]?.filamentType).toBe(FilamentType.PLA);
     expect(lines[0]?.id).toEqual(expect.any(String));
+  });
+
+  it('reparte la purga AMS en proporción a los gramos de cada fila', () => {
+    expect(
+      distributePurgeGrams([{ grams: 30 }, { grams: 70 }], 9),
+    ).toEqual([2.7, 6.3]);
+    expect(distributePurgeGrams([{ grams: 10 }], 0)).toEqual([0]);
+    expect(distributePurgeGrams([], 9)).toEqual([]);
   });
 });

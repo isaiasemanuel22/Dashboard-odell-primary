@@ -31,7 +31,10 @@ import {
 } from '../common/interfaces';
 import { findColorById, isIndistintoColor } from '../common/color.util';
 import { appendOrderStatusHistory } from '../orders/order-status-history.util';
-import { ensureMachineProfiles } from '../settings/machine-profile.util';
+import {
+  ensureMachineProfiles,
+  resolvePreferredPrinterId,
+} from '../settings/machine-profile.util';
 import { StoreChangeService } from '../store/store-change.service';
 import { StoreService } from '../store/store.service';
 import { isAreaService } from '../common/service-type.util';
@@ -40,6 +43,7 @@ import {
   isCustomFdmOrderLine,
   isFdmQuoteConfigured,
 } from '../orders/order-fdm-quote.util';
+import { distributePurgeGrams } from '../products/fdm-product.util';
 import { buildProductStockOverview } from '../products/product-stock.util';
 import { SpoolsService } from '../spools/spools.service';
 import { applyStockChange } from '../supplies/apply-stock-change.util';
@@ -629,6 +633,9 @@ export class OrderTasksService implements OnModuleInit {
       task.status = PrintJobStatus.BLOQUEADO;
       task.blockedReason = BLOCKED_REASON_SUPPLIES;
     }
+    if (taskType === TaskType.PRODUCTION) {
+      this.applyPreferredPrinter(task);
+    }
     this.store.printJobs.push(task);
     return task;
   }
@@ -1003,8 +1010,14 @@ export class OrderTasksService implements OnModuleInit {
               },
             ]
           : [];
+      const purgeShares = distributePurgeGrams(
+        lines,
+        Math.max(0, Number(product.purgeGrams) || 0),
+      );
       return lines.map((line, index) => {
-        const requiredUnits = Math.max(line.grams || 0, 0) * quantity;
+        const perUnitGrams =
+          Math.max(line.grams || 0, 0) + (purgeShares[index] ?? 0);
+        const requiredUnits = perUnitGrams * quantity;
         const coveredNaturally =
           this.matchingStock(
             SupplyCategory.FDM,
@@ -1012,7 +1025,6 @@ export class OrderTasksService implements OnModuleInit {
               supply.filamentType === line.filamentType &&
               this.supplyMatchesColor(supply, line.colorId),
           ) >= requiredUnits;
-        const perUnitGrams = Math.max(line.grams || 0, 0);
         return {
           key: `fdm:${index}`,
           category: SupplyCategory.FDM,
@@ -1198,6 +1210,23 @@ export class OrderTasksService implements OnModuleInit {
       responsibleUserId: order.responsibleUserId?.trim() || undefined,
       responsibleManual: false,
     };
+  }
+
+  /**
+   * Si el producto FDM tiene impresora preferida con cola, la asigna al crear
+   * la tarea. Si no está disponible, deja sin asignar (comportamiento actual).
+   */
+  private applyPreferredPrinter(job: PrintJob): void {
+    if (job.printerId) return;
+    if (!job.productId) return;
+    const product = this.store.getProductById(job.productId);
+    if (!product || product.type !== ProductType.FDM) return;
+    const preferred = resolvePreferredPrinterId(
+      product.preferredPrinterId,
+      this.store.generalSettings,
+    );
+    if (!preferred) return;
+    job.printerId = preferred;
   }
 
   /**

@@ -43,4 +43,22 @@ describe('upload.validation', () => {
       expect(result.mime).toBe('model/stl');
     }
   });
+
+  it('normaliza .3mf a model/3mf aunque el mime sea octet-stream o vacío', () => {
+    const octet = validateUploadedAttachment({
+      originalname: 'pieza.3mf',
+      mimetype: 'application/octet-stream',
+      size: 2048,
+    } as Express.Multer.File);
+    expect(octet.ok).toBe(true);
+    if (octet.ok) expect(octet.mime).toBe('model/3mf');
+
+    const empty = validateUploadedAttachment({
+      originalname: 'pieza.3mf',
+      mimetype: '',
+      size: 2048,
+    } as Express.Multer.File);
+    expect(empty.ok).toBe(true);
+    if (empty.ok) expect(empty.mime).toBe('model/3mf');
+  });
 });

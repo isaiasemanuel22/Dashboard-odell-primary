@@ -336,6 +336,32 @@ export function getMachineProfilesForProductType(
   );
 }
 
+/** Impresoras FDM con cola habilitada (mismo criterio que printer-queue). */
+export function fdmQueuePrinters(settings: GeneralSettings): MachineProfile[] {
+  return ensureMachineProfiles(settings).filter(
+    (profile) =>
+      profile.role === MachineProfileRole.PRINT &&
+      !!profile.queueEnabled &&
+      (profile.productType === undefined ||
+        profile.productType === ProductType.FDM),
+  );
+}
+
+/**
+ * Si el id apunta a una impresora FDM con cola, lo devuelve; si no, null
+ * («Cualquiera»). No rompe si la impresora fue borrada o deshabilitada.
+ */
+export function resolvePreferredPrinterId(
+  preferredPrinterId: string | null | undefined,
+  settings: GeneralSettings,
+): string | null {
+  const id = preferredPrinterId?.trim();
+  if (!id) return null;
+  return fdmQueuePrinters(settings).some((profile) => profile.id === id)
+    ? id
+    : null;
+}
+
 export function resolveMachineHours(
   profile: MachineProfile,
   context: MachineTimeContext,

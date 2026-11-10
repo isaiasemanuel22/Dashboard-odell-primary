@@ -81,6 +81,19 @@ export function isBlockedAttachmentExtension(filename: string): boolean {
   return BLOCKED_ATTACHMENT_EXTENSIONS.has(extension);
 }
 
+/** Normaliza MIME de adjuntos; .3mf → model/3mf aunque venga octet-stream o vacío. */
+export function normalizeAttachmentMime(
+  filename: string,
+  mimeType: string | null | undefined,
+): string {
+  const extension = extname(filename).toLowerCase();
+  if (extension === '.3mf') {
+    return 'model/3mf';
+  }
+  const mime = mimeType?.trim();
+  return mime || 'application/octet-stream';
+}
+
 export function validateUploadedAttachment(
   file: Express.Multer.File,
 ): { ok: true; mime: string } | { ok: false; reason: string } {
@@ -93,6 +106,6 @@ export function validateUploadedAttachment(
     return { ok: false, reason: 'Tipo de archivo no permitido' };
   }
 
-  const mime = file.mimetype?.trim() || 'application/octet-stream';
+  const mime = normalizeAttachmentMime(name, file.mimetype);
   return { ok: true, mime };
 }

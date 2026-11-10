@@ -52,6 +52,9 @@ export function mapProductFromDb(row: {
   attachments?: Prisma.JsonValue;
   stock?: number;
   colorId?: string | null;
+  purgeGrams?: number | null;
+  colorChanges?: number | null;
+  preferredPrinterId?: string | null;
 }): Product {
   const components = normalizeProductComponents(fromJson(row.components));
   const base = {
@@ -127,6 +130,18 @@ export function mapProductFromDb(row: {
     }),
     resinType: row.resinType as Product3D['resinType'],
     colorId: row.colorId ?? undefined,
+    purgeGrams:
+      row.type === (ProductType.FDM as string)
+        ? (row.purgeGrams ?? null)
+        : undefined,
+    colorChanges:
+      row.type === (ProductType.FDM as string)
+        ? (row.colorChanges ?? null)
+        : undefined,
+    preferredPrinterId:
+      row.type === (ProductType.FDM as string)
+        ? (row.preferredPrinterId ?? null)
+        : undefined,
     supplies: normalizeEstampadoSupplies(
       fromJson<Product3D['supplies']>(row.estampadoSupplies ?? []),
     ),
@@ -211,6 +226,18 @@ export function mapProductToDb(product: Product) {
     colorId:
       product3d?.type === ProductType.RESINA
         ? (product3d.colorId ?? null)
+        : null,
+    purgeGrams:
+      product3d?.type === ProductType.FDM
+        ? (product3d.purgeGrams ?? null)
+        : null,
+    colorChanges:
+      product3d?.type === ProductType.FDM
+        ? (product3d.colorChanges ?? null)
+        : null,
+    preferredPrinterId:
+      product3d?.type === ProductType.FDM
+        ? (product3d.preferredPrinterId?.trim() || null)
         : null,
   };
 }

@@ -39,10 +39,16 @@ import {
   normalizeEstampadoSupplies,
 } from './estampado-product.util';
 import {
+  normalizeColorChanges,
+  normalizePurgeGrams,
   resolveFdmFilaments,
   storedFdmFilaments,
   totalFdmFilamentGrams,
 } from './fdm-product.util';
+import {
+  fdmQueuePrinters,
+  resolvePreferredPrinterId,
+} from '../settings/machine-profile.util';
 import {
   priceForTargetMarkup,
   productMarkupPercent,
@@ -123,9 +129,22 @@ export class ProductsService {
 
   private withStockOverview(product: Product): Product {
     return {
-      ...withResolvedProductionMetrics(this.store, product),
+      ...this.withResolvedPreferredPrinter(
+        withResolvedProductionMetrics(this.store, product),
+      ),
       stockOverview: buildProductStockOverview(this.store, product.id),
     };
+  }
+
+  /** Impresora preferida inválida/borrada se lee como «Cualquiera» (null). */
+  private withResolvedPreferredPrinter(product: Product): Product {
+    if (product.type !== ProductType.FDM) return product;
+    const resolved = resolvePreferredPrinterId(
+      product.preferredPrinterId,
+      this.store.generalSettings,
+    );
+    if (resolved === (product.preferredPrinterId ?? null)) return product;
+    return { ...product, preferredPrinterId: resolved };
   }
 
   /** Costo de catálogo con la calculadora vigente. El precio de venta no se toca. */
@@ -151,13 +170,15 @@ export class ProductsService {
       throw new NotFoundException(`Producto ${id} no encontrado`);
     }
     return this.withCurrentCost(
-      withResolvedProductionMetrics(this.store, {
-        ...product,
-        components: normalizeProductComponents(
-          product.components,
-          this.store.products,
-        ),
-      }),
+      this.withResolvedPreferredPrinter(
+        withResolvedProductionMetrics(this.store, {
+          ...product,
+          components: normalizeProductComponents(
+            product.components,
+            this.store.products,
+          ),
+        }),
+      ),
     );
   }
 
@@ -270,6 +291,18 @@ export class ProductsService {
           dto.type === ProductType.RESINA && dto.cureMinutes !== undefined
             ? Number(dto.cureMinutes) || undefined
             : undefined,
+        purgeGrams:
+          dto.type === ProductType.FDM
+            ? normalizePurgeGrams(dto.purgeGrams)
+            : undefined,
+        colorChanges:
+          dto.type === ProductType.FDM
+            ? normalizeColorChanges(dto.colorChanges)
+            : undefined,
+        preferredPrinterId:
+          dto.type === ProductType.FDM
+            ? this.normalizePreferredPrinterId(dto.preferredPrinterId)
+            : undefined,
         supplies: normalizeEstampadoSupplies(
           dto.estampadoSupplies ?? dto.supplies,
         ),
@@ -351,6 +384,19 @@ export class ProductsService {
               'filaments' in data && data.filaments !== undefined
                 ? data.filaments
                 : (existing as Product3D).filaments,
+            purgeGrams:
+              'purgeGrams' in data && data.purgeGrams !== undefined
+                ? data.purgeGrams
+                : (existing as Product3D).purgeGrams,
+            colorChanges:
+              'colorChanges' in data && data.colorChanges !== undefined
+                ? data.colorChanges
+                : (existing as Product3D).colorChanges,
+            preferredPrinterId:
+              'preferredPrinterId' in data &&
+              data.preferredPrinterId !== undefined
+                ? data.preferredPrinterId
+                : (existing as Product3D).preferredPrinterId,
             resinType:
               'resinType' in data && data.resinType !== undefined
                 ? data.resinType
@@ -498,6 +544,20 @@ export class ProductsService {
         current.filaments = fdmFields.filaments;
         current.grams = fdmFields.grams;
         current.filamentType = fdmFields.filamentType;
+      }
+      if ('purgeGrams' in data && data.purgeGrams !== undefined) {
+        current.purgeGrams = normalizePurgeGrams(data.purgeGrams);
+      }
+      if ('colorChanges' in data && data.colorChanges !== undefined) {
+        current.colorChanges = normalizeColorChanges(data.colorChanges);
+      }
+      if (
+        'preferredPrinterId' in data &&
+        data.preferredPrinterId !== undefined
+      ) {
+        current.preferredPrinterId = this.normalizePreferredPrinterId(
+          data.preferredPrinterId,
+        );
       }
       if ('resinType' in data && data.resinType !== undefined) {
         current.resinType = data.resinType;
@@ -881,6 +941,32 @@ export class ProductsService {
       for (const line of filaments) {
         resolveProductColorId(colors, line.colorId);
       }
+      if (!isUpdate || incoming?.preferredPrinterId !== undefined) {
+        this.assertPreferredPrinter(
+          isUpdate ? incoming?.preferredPrinterId : data.preferredPrinterId,
+        );
+      }
+      const purgeIncoming = isUpdate ? incoming?.purgeGrams : data.purgeGrams;
+      if (
+        purgeIncoming !== undefined &&
+        purgeIncoming !== null &&
+        (Number(purgeIncoming) < 0 || !Number.isFinite(Number(purgeIncoming)))
+      ) {
+        throw new BadRequestException('La purga no puede ser negativa');
+      }
+      const colorIncoming = isUpdate
+        ? incoming?.colorChanges
+        : data.colorChanges;
+      if (
+        colorIncoming !== undefined &&
+        colorIncoming !== null &&
+        (!Number.isInteger(Number(colorIncoming)) ||
+          Number(colorIncoming) < 0)
+      ) {
+        throw new BadRequestException(
+          'Los cambios de color deben ser un entero mayor o igual a 0',
+        );
+      }
     }
     if (data.type === ProductType.RESINA && data.colorId !== undefined) {
       resolveProductColorId(colors, data.colorId);
@@ -896,6 +982,28 @@ export class ProductsService {
       for (const line of supplyLines) {
         resolveProductColorId(colors, line.colorId);
       }
+    }
+  }
+
+  private normalizePreferredPrinterId(
+    value: string | null | undefined,
+  ): string | null {
+    if (value === null || value === undefined) return null;
+    const trimmed = String(value).trim();
+    return trimmed || null;
+  }
+
+  private assertPreferredPrinter(
+    preferredPrinterId: string | null | undefined,
+  ): void {
+    if (preferredPrinterId === undefined) return;
+    const normalized = this.normalizePreferredPrinterId(preferredPrinterId);
+    if (!normalized) return;
+    const exists = fdmQueuePrinters(this.store.generalSettings).some(
+      (profile) => profile.id === normalized,
+    );
+    if (!exists) {
+      throw new BadRequestException('La impresora elegida no existe');
     }
   }
 

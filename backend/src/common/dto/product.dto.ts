@@ -4,6 +4,7 @@ import {
   IsBoolean,
   IsEnum,
   IsIn,
+  IsInt,
   IsNotEmpty,
   IsNumber,
   IsOptional,
@@ -173,6 +174,27 @@ export class CreateProductDto {
   @ValidateNested({ each: true })
   @Type(() => FdmFilamentLineDto)
   filaments?: FdmFilamentLineDto[];
+
+  /** Gramos de purga AMS por unidad (≥0, hasta 1 decimal). */
+  @IsOptional()
+  @IsNumber(
+    { maxDecimalPlaces: 1 },
+    { message: 'La purga debe ser un número con hasta 1 decimal' },
+  )
+  @Min(0, { message: 'La purga no puede ser negativa' })
+  purgeGrams?: number | null;
+
+  /** Cambios de color del modelo (entero ≥0). */
+  @IsOptional()
+  @IsInt({ message: 'Los cambios de color deben ser un entero' })
+  @Min(0, { message: 'Los cambios de color no pueden ser negativos' })
+  colorChanges?: number | null;
+
+  /** Impresora FDM preferida (id de perfil con cola). null = cualquiera. */
+  @IsOptional()
+  @ValidateIf((_, value) => value !== null)
+  @IsString({ message: 'La impresora preferida es inválida' })
+  preferredPrinterId?: string | null;
 
   @IsOptional()
   @IsString()

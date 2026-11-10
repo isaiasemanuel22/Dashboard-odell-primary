@@ -106,10 +106,26 @@ precio.
 La cantidad y el tipo de material son obligatorios, y de ahí sale el costo:
 
 - Filamento: gramos y tipo de filamento (PLA, PETG u otro del catálogo de
-  Ajustes).
+  Ajustes). Puede tener varias filas de filamento (multicolor / AMS).
 - Resina: mililitros (ml) y tipo de resina (del mismo estilo de catálogo
   editable en Ajustes, no una lista fija). El costo pasa esos ml a litros
   (ml ÷ 1000) y usa el precio por litro del tipo.
+
+**Purga AMS (FDM).** El producto puede guardar gramos de purga por unidad
+(`purgeGrams`) y cambios de color (`colorChanges`, informativo). La purga
+no suma a los gramos del producto (siguen siendo la suma de las filas), pero
+sí tiene costo propio (`purgeCost` = gramos/1000 × precio/kg promedio
+simple de las filas; sin filas, el del tipo del producto) y entra a la base
+del margen de error junto con material, energía y máquina. Al terminar una
+tarea, la purga se descuenta del stock repartida entre las filas en
+proporción a sus gramos.
+
+**Impresora preferida (FDM).** El producto puede indicar una impresora FDM
+con cola (`preferredPrinterId`). Al crear la tarea de impresión se asigna
+esa impresora si sigue habilitada; si no, se comporta como «Cualquiera»
+(asignación automática / sin preferencia). La asignación manual posterior
+sigue vigente. Si la impresora se borra o se deshabilita, al leer el
+producto se trata como sin preferencia (no rompe).
 
 A ese material se suman energía, máquina, mano de obra y el margen de error
 de Ajustes. Ese conjunto es el costo del proceso. Si con esos datos el costo

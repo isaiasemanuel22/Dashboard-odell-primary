@@ -18,7 +18,11 @@ import {
   PrintJobActor,
 } from '../common/interfaces';
 import { isDesignPrintConfigured } from '../orders/design-print.util';
-import { ensureMachineProfiles } from '../settings/machine-profile.util';
+import {
+  ensureMachineProfiles,
+  fdmQueuePrinters,
+  resolvePreferredPrinterId,
+} from '../settings/machine-profile.util';
 import { printerSlotsApi } from '../spools/printer-slots.util';
 import { StoreChangeService } from '../store/store-change.service';
 import { StoreService } from '../store/store.service';
@@ -248,7 +252,10 @@ export class PrinterQueueService {
 
     let printerId: string | null;
     if (dto.printerId === 'auto') {
-      printerId = this.pickAutoPrinter(new Date());
+      printerId = this.pickAutoPrinter(
+        new Date(),
+        this.preferredPrinterForJob(job),
+      );
       if (!printerId) {
         throw new BadRequestException(
           'No hay impresoras habilitadas en la cola',
@@ -338,15 +345,19 @@ export class PrinterQueueService {
   }
 
   private queuePrinters(): MachineProfile[] {
-    return ensureMachineProfiles(this.store.generalSettings)
-      .filter(
-        (profile) =>
-          profile.role === MachineProfileRole.PRINT &&
-          profile.queueEnabled &&
-          (profile.productType === undefined ||
-            profile.productType === ProductType.FDM),
-      )
-      .sort((a, b) => a.name.localeCompare(b.name, 'es'));
+    return fdmQueuePrinters(this.store.generalSettings).sort((a, b) =>
+      a.name.localeCompare(b.name, 'es'),
+    );
+  }
+
+  private preferredPrinterForJob(job: PrintJob): string | null {
+    if (!job.productId) return null;
+    const product = this.store.getProductById(job.productId);
+    if (!product || product.type !== ProductType.FDM) return null;
+    return resolvePreferredPrinterId(
+      product.preferredPrinterId,
+      this.store.generalSettings,
+    );
   }
 
   private requireQueuePrinter(id: string): MachineProfile {
@@ -404,9 +415,18 @@ export class PrinterQueueService {
     });
   }
 
-  private pickAutoPrinter(now: Date): string | null {
+  private pickAutoPrinter(
+    now: Date,
+    preferredPrinterId?: string | null,
+  ): string | null {
     const printers = this.queuePrinters();
     if (!printers.length) return null;
+    if (preferredPrinterId) {
+      const preferred = printers.find(
+        (profile) => profile.id === preferredPrinterId,
+      );
+      if (preferred) return preferred.id;
+    }
     const eligible = this.eligibleJobs();
     let best: { id: string; name: string; busyMs: number } | null = null;
 

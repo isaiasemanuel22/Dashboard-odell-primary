@@ -89,6 +89,47 @@ export function storedFdmFilaments(
   return filaments.filter((line) => Number(line.grams) > 0);
 }
 
+/** Redondea gramos de purga a 1 decimal; null/vacío → null. */
+export function normalizePurgeGrams(
+  value: number | null | undefined,
+): number | null {
+  if (value === null || value === undefined) return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return null;
+  if (n === 0) return 0;
+  return Math.round(n * 10) / 10;
+}
+
+export function normalizeColorChanges(
+  value: number | null | undefined,
+): number | null {
+  if (value === null || value === undefined) return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.trunc(n);
+}
+
+/**
+ * Reparte gramos de purga entre filas en proporción a sus gramos.
+ * Si el total de gramos es 0, reparte en partes iguales.
+ */
+export function distributePurgeGrams(
+  lines: Array<{ grams: number }>,
+  purgeGrams: number,
+): number[] {
+  const purge = Math.max(0, Number(purgeGrams) || 0);
+  if (!lines.length || purge <= 0) {
+    return lines.map(() => 0);
+  }
+  const weights = lines.map((line) => Math.max(0, Number(line.grams) || 0));
+  const total = weights.reduce((sum, grams) => sum + grams, 0);
+  if (total <= 0) {
+    const each = purge / lines.length;
+    return lines.map(() => each);
+  }
+  return weights.map((grams) => (purge * grams) / total);
+}
+
 function normalizeOneFdmFilamentLine(item: unknown): FdmFilamentLine | null {
   if (!item || typeof item !== 'object') return null;
 

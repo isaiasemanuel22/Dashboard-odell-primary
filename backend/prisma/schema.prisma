@@ -103,6 +103,12 @@ model Product {
   attachments           Json    @default("[]") @map("attachments")
   stock                 Int     @default(0)
   colorId               String? @map("color_id") @db.VarChar(64)
+  /** Gramos de purga AMS por unidad (FDM). */
+  purgeGrams            Float?  @map("purge_grams")
+  /** Cantidad de cambios de color del .3mf (informativo). */
+  colorChanges          Int?    @map("color_changes")
+  /** Impresora FDM preferida (id de MachineProfile con cola). */
+  preferredPrinterId    String? @map("preferred_printer_id") @db.VarChar(64)
 
   @@map("products")
 }

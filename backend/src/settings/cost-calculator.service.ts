@@ -54,6 +54,7 @@ import {
 import { normalizeProductComponents } from '../products/product-component.util';
 import {
   calcFilamentCost,
+  calcPurgeCost,
   calculateErrorMarginCost as errorMarginCost,
   calculateMaterialCost as materialCost,
   paperPricePerSqm,
@@ -128,6 +129,10 @@ export class CostCalculatorService {
         ? totalEstampadoPressMinutes(dto.estampadoPressCycles, dto.pressMinutes)
         : Number(dto.pressMinutes) || 0;
     const materialCost = this.calculateMaterialCost(dto, settings);
+    const purgeCost =
+      dto.type === ProductType.FDM
+        ? calcPurgeCost(dto.purgeGrams, dto, settings)
+        : 0;
     const overhead = calculateMachineOverhead(settings, dto.type, {
       printTimeHours,
       washMinutes: dto.washMinutes,
@@ -140,10 +145,12 @@ export class CostCalculatorService {
       overhead.energyCost,
       overhead.machineCost,
       settings,
+      purgeCost,
     );
 
     const totalCost = Math.round(
       materialCost +
+        purgeCost +
         overhead.energyCost +
         overhead.machineCost +
         errorMarginCost +
@@ -152,6 +159,7 @@ export class CostCalculatorService {
 
     return {
       materialCost: Math.round(materialCost),
+      purgeCost: Math.round(purgeCost),
       energyCost: overhead.energyCost,
       machineCost: overhead.machineCost,
       errorMarginCost,
@@ -290,6 +298,7 @@ export class CostCalculatorService {
     if (assemblyHours <= 0) {
       return {
         materialCost: partsCost,
+        purgeCost: 0,
         energyCost: 0,
         machineCost: 0,
         errorMarginCost: 0,
@@ -307,6 +316,7 @@ export class CostCalculatorService {
 
     return {
       materialCost: partsCost,
+      purgeCost: 0,
       energyCost: 0,
       machineCost: 0,
       errorMarginCost: 0,
@@ -704,6 +714,7 @@ export class CostCalculatorService {
     return {
       type: input.type,
       grams: input.grams,
+      purgeGrams: input.purgeGrams,
       printTimeHours: input.printTimeHours,
       workTimeHours: input.workTimeHours,
       washMinutes: input.washMinutes,
@@ -822,7 +833,14 @@ export class CostCalculatorService {
     energyCost: number,
     machineCost: number,
     settings: GeneralSettings,
+    purgeCost = 0,
   ): number {
-    return errorMarginCost(materialCost, energyCost, machineCost, settings);
+    return errorMarginCost(
+      materialCost,
+      energyCost,
+      machineCost,
+      settings,
+      purgeCost,
+    );
   }
 }

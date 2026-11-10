@@ -304,6 +304,8 @@ export interface ConsumedSpoolLine {
 
 export interface CostBreakdown {
   materialCost: number;
+  /** Costo de purga AMS (FDM). Separado del material; entra al margen de error. */
+  purgeCost?: number;
   energyCost: number;
   machineCost: number;
   errorMarginCost: number;
@@ -314,6 +316,8 @@ export interface CostBreakdown {
 export interface CalculateCostDto {
   type: ProductType;
   grams?: number;
+  /** Gramos de purga AMS por unidad (FDM). No suman a `grams`. */
+  purgeGrams?: number | null;
   printTimeHours?: number;
   workTimeHours?: number;
   washMinutes?: number;
@@ -345,6 +349,7 @@ export interface ProductPricingInput {
   price?: number;
   cost?: number;
   grams?: number;
+  purgeGrams?: number | null;
   printTimeHours?: number;
   workTimeHours?: number;
   washMinutes?: number;
@@ -429,6 +434,18 @@ export interface Product3D extends ProductBase {
   brand?: string;
   filamentType?: FilamentType;
   filaments?: FdmFilamentLine[];
+  /**
+   * Gramos de purga del AMS por unidad (FDM). No entran en `grams`
+   * (suma de filas) pero sí al costo y al consumo de stock.
+   */
+  purgeGrams?: number | null;
+  /** Cambios de color del modelo (informativo; suele venir del .3mf). */
+  colorChanges?: number | null;
+  /**
+   * Id de impresora FDM con cola preferida. Si la impresora ya no existe o
+   * no tiene cola, al leer se trata como «Cualquiera» (null).
+   */
+  preferredPrinterId?: string | null;
   resinType?: ResinType | string;
   colorId?: string;
   /** Insumos del producto. Mismo contrato que el estampado: supplyId + cantidad. */
@@ -1220,6 +1237,9 @@ export type CreateProductDto = {
   brand?: string;
   filamentType?: FilamentType;
   filaments?: FdmFilamentLine[];
+  purgeGrams?: number | null;
+  colorChanges?: number | null;
+  preferredPrinterId?: string | null;
   resinType?: ResinType | string;
   colorId?: string;
   washMinutes?: number;

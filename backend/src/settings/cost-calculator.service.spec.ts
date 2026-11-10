@@ -72,7 +72,42 @@ describe('CostCalculatorService', () => {
       filamentType: 'pla' as never,
     });
 
-    const base = result.materialCost + result.energyCost + result.machineCost;
+    const base =
+      result.materialCost +
+      (result.purgeCost ?? 0) +
+      result.energyCost +
+      result.machineCost;
+    expect(result.errorMarginCost).toBe(Math.round(base * 0.1));
+    expect(result.totalCost).toBe(
+      base + result.errorMarginCost + result.laborCost,
+    );
+  });
+
+  it('incluye purgeCost FDM en el desglose y en el margen de error', () => {
+    store.generalSettings.filamentTypeAverages = { pla: 20000, petg: 14000 };
+    store.generalSettings.errorMarginPercent = 10;
+
+    const result = service.calculateCost({
+      type: ProductType.FDM,
+      grams: 100,
+      purgeGrams: 9,
+      printTimeHours: 0,
+      workTimeHours: 0,
+      filaments: [
+        { id: 'a', filamentType: 'pla' as never, grams: 30 },
+        { id: 'b', filamentType: 'petg' as never, grams: 70 },
+      ],
+    });
+
+    // material: 30/1000*20000 + 70/1000*14000 = 600 + 980 = 1580
+    expect(result.materialCost).toBe(1580);
+    // purge: 9/1000 * ((20000+14000)/2) = 153
+    expect(result.purgeCost).toBe(153);
+    const base =
+      result.materialCost +
+      (result.purgeCost ?? 0) +
+      result.energyCost +
+      result.machineCost;
     expect(result.errorMarginCost).toBe(Math.round(base * 0.1));
     expect(result.totalCost).toBe(
       base + result.errorMarginCost + result.laborCost,

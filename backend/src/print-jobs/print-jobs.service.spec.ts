@@ -466,6 +466,36 @@ describe('PrinterQueueService', () => {
     expect(estimate.printerId).toBe('a1-2');
   });
 
+  it('auto respeta preferredPrinterId del producto aunque otra termine antes', () => {
+    const { store, service } = setup();
+    const product = store.getProductById('prod-fdm') as {
+      preferredPrinterId?: string | null;
+    };
+    product.preferredPrinterId = 'a1-1';
+
+    pushJob(store, {
+      id: 'busy',
+      productName: 'Ocupada',
+      printerId: 'a1-1',
+      queuePosition: 0,
+      estimatedHours: 8,
+    });
+    const free = pushJob(store, {
+      id: 'new-pref',
+      productName: 'Con preferida',
+      productId: 'prod-fdm',
+      estimatedHours: 2,
+      responsibleUserId: 'user-1',
+    });
+
+    const updated = service.assign(
+      free.id,
+      { printerId: 'auto' },
+      { userId: 'user-1' },
+    );
+    expect(updated.printerId).toBe('a1-1');
+  });
+
   it('rechaza asignación si el actor no es responsable ni admin', () => {
     const { store, service } = setup();
     pushJob(store, {

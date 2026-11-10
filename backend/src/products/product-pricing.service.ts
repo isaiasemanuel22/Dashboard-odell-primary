@@ -80,6 +80,8 @@ export class ProductPricingService {
       price: product.price,
       cost: product.cost,
       grams: product3d.grams,
+      purgeGrams:
+        product3d.type === ProductType.FDM ? product3d.purgeGrams : undefined,
       printTimeHours: product3d.printTimeHours,
       workTimeHours: product3d.workTimeHours,
       brand: product3d.brand,
@@ -118,6 +120,8 @@ export class ProductPricingService {
       price: merged.price,
       cost: merged.cost,
       grams: product3d?.grams,
+      purgeGrams:
+        merged.type === ProductType.FDM ? product3d?.purgeGrams : undefined,
       printTimeHours: product3d?.printTimeHours,
       workTimeHours: product3d?.workTimeHours ?? estampadoData?.workTimeHours,
       brand: product3d?.brand,

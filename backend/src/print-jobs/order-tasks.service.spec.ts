@@ -1068,6 +1068,57 @@ describe('OrderTasksService', () => {
     expect(store.supplies[0].quantity).toBe(qtyAfter);
   });
 
+  it('describeConsumption suma purga AMS repartida entre filas FDM', () => {
+    store.products[0] = {
+      ...store.products[0],
+      type: ProductType.FDM,
+      filamentType: FilamentType.PLA,
+      grams: 100,
+      purgeGrams: 9,
+      filaments: [
+        { id: 'ff-1', filamentType: FilamentType.PLA, grams: 30 },
+        { id: 'ff-2', filamentType: FilamentType.PETG, grams: 70 },
+      ],
+    } as Product3D;
+    store.supplies.push(
+      {
+        id: 'sup-pla',
+        name: 'PLA',
+        category: SupplyCategory.FDM,
+        filamentType: FilamentType.PLA,
+        unit: 'g',
+        quantity: 1000,
+        minStock: 0,
+        unitPrice: 20,
+        priceFromSettings: false,
+        updatedAt: new Date().toISOString(),
+      },
+      {
+        id: 'sup-petg',
+        name: 'PETG',
+        category: SupplyCategory.FDM,
+        filamentType: FilamentType.PETG,
+        unit: 'g',
+        quantity: 1000,
+        minStock: 0,
+        unitPrice: 14,
+        priceFromSettings: false,
+        updatedAt: new Date().toISOString(),
+      },
+    );
+    const job = productionJob(PrintJobStatus.POR_HACER);
+    job.quantity = 1;
+    store.printJobs.push(job);
+
+    const lines = service.describeConsumption(job);
+    const material = lines.filter((line) => line.kind === 'material');
+    // 30+2.7 y 70+6.3
+    expect(material.map((line) => line.quantity).sort((a, b) => a - b)).toEqual(
+      [32.7, 76.3],
+    );
+    expect(store.products[0].grams).toBe(100);
+  });
+
   it('describeConsumption usa el nombre del insumo y etiqueta de requisito', () => {
     store.products[0] = {
       ...store.products[0],

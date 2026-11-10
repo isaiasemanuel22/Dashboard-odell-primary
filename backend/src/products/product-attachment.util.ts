@@ -1,5 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { ProductAttachment } from '../common/interfaces';
+import { normalizeAttachmentMime } from '../upload/upload.validation';
 import { isPersistableProductImageUrl } from './product-image.util';
 
 export function createProductAttachmentId(): string {
@@ -50,10 +51,9 @@ function normalizeOneProductAttachment(
     typeof record.name === 'string' && record.name.trim()
       ? record.name.trim()
       : 'Archivo';
-  const mimeType =
-    typeof record.mimeType === 'string' && record.mimeType.trim()
-      ? record.mimeType.trim()
-      : 'application/octet-stream';
+  const rawMime =
+    typeof record.mimeType === 'string' ? record.mimeType : undefined;
+  const mimeType = normalizeAttachmentMime(name, rawMime);
   const size = Math.max(0, Number(record.size) || 0);
   const id =
     typeof record.id === 'string' && record.id.trim()
