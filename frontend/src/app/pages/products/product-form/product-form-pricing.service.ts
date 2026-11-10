@@ -547,9 +547,12 @@ export class ProductFormPricingService {
       return;
     }
 
-    const result = this.productPricing.applyMarginToCost(
+    // costValue incluye insumos: el margen va solo sobre el costo de proceso.
+    const supplyValue = this.catalogSupplyValue();
+    const result = this.productPricing.priceWithSupplies(
       this.buildPricingInput(),
-      costValue,
+      Math.max(0, costValue - supplyValue),
+      supplyValue,
       this.context.catalogProducts,
       settings,
     );
@@ -633,13 +636,24 @@ export class ProductFormPricingService {
         this.pricingStore.clearCostContribution('assembly');
       }
       this.pricingStore.clearCostContribution('production');
+      this.pricingStore.clearCostContribution('supplies');
       this.pricingStore.setComponentsPrice(partsPrice);
       this.pricingStore.setCostBreakdown(this.costBreakdown);
     } else {
       this.pricingStore.setCostBreakdown(this.costBreakdown);
       this.pricingStore.clearCostContribution('components');
       this.pricingStore.setComponentsPrice(0);
-      this.pricingStore.setCostContribution('production', this.effectiveCost);
+      // Los insumos van aparte: el margen solo corre sobre el costo de proceso.
+      const supplyValue = this.catalogSupplyValue();
+      this.pricingStore.setCostContribution(
+        'production',
+        Math.max(0, this.effectiveCost - supplyValue),
+      );
+      if (supplyValue > 0) {
+        this.pricingStore.setCostContribution('supplies', supplyValue);
+      } else {
+        this.pricingStore.clearCostContribution('supplies');
+      }
     }
 
     if (this.appliedMarginPercent != null) {

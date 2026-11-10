@@ -292,7 +292,7 @@ describe('CostCalculatorService', () => {
         includesPieces: false,
         components: [],
         assemblyTimeHours: 0,
-        grams: 10,
+        grams: 0, // sin datos de impresión: el costo guardado es el vigente
         printTimeHours: 1,
         workTimeHours: 0,
       },
@@ -323,6 +323,66 @@ describe('CostCalculatorService', () => {
     expect(service.resolveProductUnitCost('combo-1')).toBe(2000);
   });
 
+  it('costo del combo usa el costo vigente de cada pieza, no el guardado', () => {
+    const base = {
+      images: [],
+      attachments: [],
+      updatedAt: '2026-07-01T10:00:00.000Z',
+      categoryIds: [],
+      size: '5 cm',
+      published: true,
+      assemblyTimeHours: 0,
+    };
+    store.products.push(
+      {
+        ...base,
+        id: 'piece-old',
+        name: 'Pieza',
+        type: ProductType.FDM,
+        price: 2000,
+        cost: 5000, // guardado desactualizado
+        profit: 0,
+        includesPieces: false,
+        components: [],
+        grams: 10,
+        printTimeHours: 1,
+        workTimeHours: 0,
+      },
+      {
+        ...base,
+        id: 'combo-old',
+        name: 'Combo',
+        type: ProductType.COMBO,
+        price: 9999,
+        cost: 10000,
+        profit: 0,
+        includesPieces: true,
+        components: [{ productId: 'piece-old', quantity: 2 }],
+      },
+    );
+    store.indexProduct(store.products[0]);
+    store.indexProduct(store.products[1]);
+
+    const current = service.calculateProductPricing({
+      type: ProductType.FDM,
+      grams: 10,
+      printTimeHours: 1,
+      workTimeHours: 0,
+      cost: 0,
+    }).cost;
+    expect(current).not.toBe(5000);
+
+    expect(service.resolveProductUnitCost('piece-old')).toBe(current);
+    expect(service.resolveProductUnitCost('combo-old')).toBe(current * 2);
+    expect(
+      service.calculateCompositeCost(
+        [{ productId: 'piece-old', quantity: 2 }],
+        0,
+        ProductType.COMBO,
+      ).totalCost,
+    ).toBe(current * 2);
+  });
+
   it('no aplica margen de error en productos armados por piezas', () => {
     store.generalSettings.errorMarginPercent = 10;
     store.products.push({
@@ -341,7 +401,7 @@ describe('CostCalculatorService', () => {
       components: [],
       assemblyTimeHours: 0,
       includesPieces: false,
-      grams: 10,
+      grams: 0,
       printTimeHours: 1,
       workTimeHours: 0,
     });

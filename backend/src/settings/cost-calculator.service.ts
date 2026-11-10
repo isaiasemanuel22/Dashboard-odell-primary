@@ -52,6 +52,7 @@ import {
   resolveFdmFilaments,
 } from '../products/fdm-product.util';
 import { normalizeProductComponents } from '../products/product-component.util';
+import { productToPricingInput } from '../products/product-pricing-input.util';
 import {
   calcFilamentCost,
   calcPurgeCost,
@@ -196,13 +197,20 @@ export class CostCalculatorService {
     };
   }
 
-  sumComponentsCost(components: ProductComponent[]): number {
+  sumComponentsCost(
+    components: ProductComponent[],
+    visiting: Set<string> = new Set(),
+  ): number {
     return components.reduce((sum, item) => {
-      const unitCost = this.resolveProductUnitCost(item.productId);
+      const unitCost = this.resolveProductUnitCost(item.productId, visiting);
       return sum + unitCost * Number(item.quantity);
     }, 0);
   }
 
+  /**
+   * Costo vigente de una pieza: se recalcula con la calculadora actual y no
+   * se lee el `cost` guardado (puede estar desactualizado).
+   */
   resolveProductUnitCost(
     productId: string,
     visiting: Set<string> = new Set(),
@@ -227,21 +235,29 @@ export class CostCalculatorService {
       product.includesPieces === true ||
       components.length > 0;
 
-    if (!usesPieceAssembly || components.length === 0) {
-      return product.cost ?? 0;
+    if (usesPieceAssembly && components.length > 0) {
+      visiting.add(productId);
+      try {
+        return this.calculateCompositeCost(
+          components,
+          product.assemblyTimeHours ?? 0,
+          product.type,
+          visiting,
+        ).totalCost;
+      } finally {
+        visiting.delete(productId);
+      }
     }
 
-    visiting.add(productId);
-    const partsCost = components.reduce((sum, item) => {
-      return (
-        sum +
-        this.resolveProductUnitCost(item.productId, visiting) *
-          Number(item.quantity)
-      );
-    }, 0);
-    visiting.delete(productId);
-
-    return partsCost;
+    try {
+      const cost = this.calculateProductPricing(
+        productToPricingInput(product, this.store.products),
+      ).cost;
+      if (Number.isFinite(cost) && cost >= 0) return cost;
+    } catch {
+      // Sin datos para recalcular: queda el costo guardado.
+    }
+    return product.cost ?? 0;
   }
 
   sumComponentsPrice(components: ProductComponent[]): number {
@@ -296,8 +312,9 @@ export class CostCalculatorService {
     components: ProductComponent[],
     assemblyTimeHours: number,
     productType: ProductType = ProductType.FDM,
+    visiting: Set<string> = new Set(),
   ): CostBreakdown {
-    const partsCost = this.sumComponentsCost(components);
+    const partsCost = this.sumComponentsCost(components, visiting);
     const assemblyHours = Number(assemblyTimeHours) || 0;
 
     if (assemblyHours <= 0) {

@@ -108,6 +108,40 @@ export class ProductPricingService {
     );
   }
 
+  /**
+   * Precio único: el margen se aplica solo al costo de proceso y el valor de
+   * los insumos de catálogo se suma aparte, sin margen. `cost` del resultado
+   * incluye los insumos.
+   */
+  priceWithSupplies(
+    input: Pick<
+      ProductPricingInput,
+      'type' | 'components' | 'suggestedPrice' | 'price'
+    >,
+    processCost: number,
+    supplyValue: number,
+    catalog: Product[],
+    settings: GeneralSettings,
+  ): ProductPricingResult {
+    const result = this.applyMarginToCost(input, processCost, catalog, settings);
+    const hasComponents = (input.components ?? []).length > 0;
+    const suggested =
+      input.suggestedPrice != null && Number(input.suggestedPrice) > 0;
+    let processPrice = result.price;
+    if (supplyValue > 0 && !suggested && !hasComponents && processCost <= 0) {
+      processPrice = 0;
+    }
+    const price = processPrice + supplyValue;
+    const fullCost = processCost + supplyValue;
+    return {
+      ...result,
+      cost: fullCost,
+      price,
+      profit: price - fullCost,
+      marginPercent: markupPercentOnCostRounded(price, fullCost) ?? 0,
+    };
+  }
+
   private buildResult(
     input: ProductPricingInput,
     catalog: Product[],
@@ -116,21 +150,8 @@ export class ProductPricingService {
     breakdown: CostBreakdown | null,
     supplyValue = 0,
   ): ProductPricingResult {
-    const result = this.applyMarginToCost(input, cost, catalog, settings);
-    const hasComponents = (input.components ?? []).length > 0;
-    const suggested =
-      input.suggestedPrice != null && Number(input.suggestedPrice) > 0;
-    let processPrice = result.price;
-    if (supplyValue > 0 && !suggested && !hasComponents && cost <= 0) {
-      processPrice = 0;
-    }
-    const price = processPrice + supplyValue;
-    const fullCost = cost + supplyValue;
     return {
-      ...result,
-      cost: fullCost,
-      price,
-      profit: price - fullCost,
+      ...this.priceWithSupplies(input, cost, supplyValue, catalog, settings),
       breakdown,
     };
   }

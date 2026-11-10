@@ -7,6 +7,8 @@ export interface ProductFormPricingCalculationInput {
   suggestedPrice?: number | null;
   componentsPrice?: number;
   catalogPrice?: number | null;
+  /** Parte de totalCost que son insumos de catálogo: se suma sin margen. */
+  supplyValue?: number;
 }
 
 export interface ProductFormPricingCalculationResult {
@@ -40,7 +42,15 @@ export class ProductFormPricingCalculationService {
     } else if (componentsPrice > 0) {
       price = componentsPrice;
     } else if (totalCost > 0) {
-      price = priceFromCostAndMargin(totalCost, input.profitMarginPercent);
+      const supplyValue = Math.min(
+        totalCost,
+        Math.max(0, Number(input.supplyValue) || 0),
+      );
+      price =
+        priceFromCostAndMargin(
+          totalCost - supplyValue,
+          input.profitMarginPercent,
+        ) + supplyValue;
     }
 
     return {

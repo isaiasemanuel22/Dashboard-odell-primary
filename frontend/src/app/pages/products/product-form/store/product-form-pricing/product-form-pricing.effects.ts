@@ -58,6 +58,7 @@ export class ProductFormPricingEffects {
           suggestedPrice: state.suggestedPrice,
           componentsPrice: state.componentsPrice,
           catalogPrice: state.catalogPrice,
+          supplyValue: state.contributions['supplies'],
         });
 
         return ProductFormPricingActions.setPricingResult({
