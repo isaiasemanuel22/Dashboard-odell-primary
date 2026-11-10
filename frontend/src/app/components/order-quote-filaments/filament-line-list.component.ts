@@ -94,6 +94,7 @@ export class FilamentLineListComponent
       return `Total ${gramsLabel} g · Material ${this.money(material)}`;
     },
     rowCost: (item) => this.lineCost(item),
+    rowBadge: (item) => (item.source === '3mf' ? '.3mf' : null),
     minItems: 1,
     createItem: () =>
       createEmptyFdmFilamentLine(this.primaryFilamentType),
@@ -105,6 +106,7 @@ export class FilamentLineListComponent
         label: 'Color',
         appearance: 'popover',
         filamentTypeFrom: (item) => item?.filamentType ?? null,
+        changeFn: (item) => this.clearImportSource(item),
       },
       {
         type: 'select',
@@ -112,6 +114,7 @@ export class FilamentLineListComponent
         label: 'Filamento',
         optionsFn: (item, items) => this.getFilamentTypeOptions(item, items),
         changeFn: (item) => {
+          this.clearImportSource(item);
           item.colorId = INDISTINTO_COLOR_ID;
         },
       },
@@ -120,6 +123,7 @@ export class FilamentLineListComponent
         name: 'label',
         label: 'Etiqueta',
         placeholder: 'Ej.: Base',
+        changeFn: (item) => this.clearImportSource(item),
       },
       {
         type: 'input',
@@ -129,16 +133,21 @@ export class FilamentLineListComponent
         suffix: 'g',
         min: 0,
         step: 0.1,
+        changeFn: (item) => this.clearImportSource(item),
       },
     ],
   };
 
   ngOnInit(): void {
+    // Extra `auto` para el pill `.3mf` (rowBadge).
     if (this.embedded) {
       this.filamentConfig.addPlacement = 'inside';
       // min-widths razonables: evita que «Filamento» / cantidad se pisen.
       this.filamentConfig.tableColumns =
-        'minmax(5.5rem, 0.9fr) minmax(7.5rem, 1.4fr) minmax(5rem, 0.85fr) minmax(5.25rem, 5.75rem) minmax(4.75rem, 5.5rem) 1.75rem';
+        'minmax(5.5rem, 0.9fr) minmax(7.5rem, 1.4fr) minmax(5rem, 0.85fr) minmax(5.25rem, 5.75rem) minmax(4.75rem, 5.5rem) auto 1.75rem';
+    } else {
+      this.filamentConfig.tableColumns =
+        'minmax(8.75rem, 1.05fr) minmax(12rem, 1.75fr) minmax(8rem, 1.15fr) 6.25rem 4.75rem auto 2rem';
     }
     this.settingsFacade
       .watchUntilDestroyed(this.destroyRef)
@@ -175,6 +184,12 @@ export class FilamentLineListComponent
   onListChange(value: FdmFilamentLine[]): void {
     this.onChange(value);
     this.onTouched();
+  }
+
+  private clearImportSource(item: FdmFilamentLine): void {
+    if (item.source) {
+      item.source = null;
+    }
   }
 
   private getFilamentTypeOptions(

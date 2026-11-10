@@ -70,6 +70,26 @@ export function storedFdmFilaments(filaments: FdmFilamentLine[]): FdmFilamentLin
   );
 }
 
+/** Redondea gramos de purga a 1 decimal; null/vacío → null. */
+export function normalizePurgeGrams(
+  value: number | null | undefined,
+): number | null {
+  if (value === null || value === undefined) return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return null;
+  if (n === 0) return 0;
+  return Math.round(n * 10) / 10;
+}
+
+export function normalizeColorChanges(
+  value: number | null | undefined,
+): number | null {
+  if (value === null || value === undefined) return null;
+  const n = Number(value);
+  if (!Number.isFinite(n) || n < 0) return null;
+  return Math.trunc(n);
+}
+
 export function resolveFdmFilaments(input: {
   filaments?: FdmFilamentLine[];
   grams?: number;

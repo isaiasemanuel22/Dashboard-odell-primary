@@ -539,6 +539,8 @@ export interface SupplyPriceChangeRow {
 
 export interface CostBreakdown {
   materialCost: number;
+  /** Costo de purga AMS (FDM). Separado del material; entra al margen de error. */
+  purgeCost?: number;
   energyCost: number;
   machineCost: number;
   errorMarginCost: number;
@@ -549,6 +551,8 @@ export interface CostBreakdown {
 export interface CalculateCostPayload {
   type: ProductType;
   grams?: number;
+  /** Gramos de purga AMS por unidad (FDM). No suman a `grams`. */
+  purgeGrams?: number | null;
   printTimeHours?: number;
   workTimeHours?: number;
   brand?: string;
@@ -561,6 +565,8 @@ export interface CalculateCostPayload {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Impresora preferida del producto: perfil print para luz/máquina si es válido. */
+  preferredPrinterId?: string | null;
 }
 
 export interface ProductPricingInput {
@@ -571,6 +577,7 @@ export interface ProductPricingInput {
   price?: number;
   cost?: number;
   grams?: number;
+  purgeGrams?: number | null;
   printTimeHours?: number;
   workTimeHours?: number;
   brand?: string;
@@ -583,6 +590,8 @@ export interface ProductPricingInput {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Impresora preferida del producto: perfil print para luz/máquina si es válido. */
+  preferredPrinterId?: string | null;
 }
 
 export interface ProductPricingResult {
@@ -669,6 +678,18 @@ export interface Product3D extends ProductBase {
   brand?: string;
   filamentType?: FilamentType;
   filaments?: FdmFilamentLine[];
+  /**
+   * Gramos de purga del AMS por unidad (FDM). No entran en `grams`
+   * (suma de filas) pero sí al costo y al consumo de stock.
+   */
+  purgeGrams?: number | null;
+  /** Cambios de color del modelo (informativo; suele venir del .3mf). */
+  colorChanges?: number | null;
+  /**
+   * Id de impresora FDM con cola preferida. Si la impresora ya no existe o
+   * no tiene cola, al leer se trata como «Cualquiera» (null).
+   */
+  preferredPrinterId?: string | null;
   resinType?: ResinType | string;
   colorId?: string;
   /** Insumos del producto. Mismo contrato que el estampado: supplyId + cantidad. */
@@ -709,6 +730,8 @@ export interface FdmFilamentLine {
   brand?: string;
   label?: string;
   colorId?: string;
+  /** Origen de la fila; `'3mf'` hasta que el usuario la edite. */
+  source?: '3mf' | null;
 }
 
 export interface ProductEstampado extends ProductBase {
@@ -1036,6 +1059,11 @@ export interface OrderLineDraft {
   cureMinutes?: number;
   /** Filamentos/colores del desglose 3D (se persisten en el ítem). */
   filaments?: FdmFilamentLine[];
+  /**
+   * Gramos de purga AMS por unidad (FDM). Entra a la base del margen de error.
+   * En product-form se sincroniza desde el FormGroup; en pedidos a medida aún no.
+   */
+  purgeGrams?: number | null;
   /** Horas de mano de obra del desglose 3D (se persisten). */
   workTimeHours?: number;
   /** Nota de mano de obra (se persiste). */

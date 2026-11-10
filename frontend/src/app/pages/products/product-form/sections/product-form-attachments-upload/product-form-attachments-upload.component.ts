@@ -55,6 +55,16 @@ export class ProductFormAttachmentsUploadComponent {
     this.cdr.markForCheck();
   }
 
+  addFiles(files: File[]): void {
+    if (!files.length) return;
+    this.upload?.addFiles(files);
+    this.cdr.markForCheck();
+  }
+
+  /**
+   * Intenta subir pendientes. Si falla, deja aviso y descarta el staged
+   * para que el producto se pueda guardar igual sin el adjunto.
+   */
   async ensureUploaded(): Promise<boolean> {
     this.facade.attachmentUploadError = '';
     if (!this.upload?.hasPendingUploads) return true;
@@ -67,9 +77,11 @@ export class ProductFormAttachmentsUploadComponent {
     if (!uploaded) {
       this.facade.attachmentUploadError =
         this.upload.uploadError ||
-        'No se pudieron subir los archivos pendientes. Revisá la conexión e intentá de nuevo.';
+        'No se pudo subir el adjunto; el producto se guarda igual sin ese archivo.';
+      this.upload.clearStaged();
       this.cdr.markForCheck();
-      return false;
+      // Soft-fail: no bloquear el alta/edición del producto.
+      return true;
     }
 
     this.facade.form.patchValue({

@@ -592,6 +592,8 @@ export class ProductFormPricingService {
       v.prints,
       v.pressCycles,
       v.supplyLines,
+      v.purgeGrams,
+      v.preferredPrinterId,
     );
   }
 

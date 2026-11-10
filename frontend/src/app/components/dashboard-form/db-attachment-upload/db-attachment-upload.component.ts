@@ -23,6 +23,7 @@ import {
   DbAttachmentUploadFn,
   DbAttachmentUploadStagedItem,
 } from './db-attachment-upload.types';
+import { formatFileSizeEsAr } from '../../../shared/utils/file-size.util';
 
 let dbAttachmentUploadId = 0;
 
@@ -190,16 +191,7 @@ export class DbAttachmentUploadComponent
   }
 
   formatFileSize(bytes: number): string {
-    if (!Number.isFinite(bytes) || bytes <= 0) return '0 B';
-    const units = ['B', 'KB', 'MB', 'GB'];
-    let value = bytes;
-    let unitIndex = 0;
-    while (value >= 1024 && unitIndex < units.length - 1) {
-      value /= 1024;
-      unitIndex += 1;
-    }
-    const decimals = unitIndex === 0 ? 0 : 1;
-    return `${value.toFixed(decimals)} ${units[unitIndex]}`;
+    return formatFileSizeEsAr(bytes);
   }
 
   private stageFiles(selected: File[]): void {

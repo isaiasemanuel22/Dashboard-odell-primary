@@ -63,6 +63,8 @@ export class OrderQuotePrintComponent implements OnInit {
   @Input({ required: true }) line!: OrderLineDraft;
   @Input() product: Product | null = null;
   @Input({ required: true }) lineIndex!: number;
+  /** Preferida del formulario de producto (si no hay `product` cargado). */
+  @Input() preferredPrinterId: string | null = null;
   @Output() changed = new EventEmitter<void>();
 
   private generalSettings: GeneralSettings | null = null;
@@ -135,12 +137,26 @@ export class OrderQuotePrintComponent implements OnInit {
   private machineProfile(productType: ProductType, role: MachineProfileRole) {
     if (!this.generalSettings) return undefined;
     if (role === MachineProfileRole.PRINT) {
-      return selectPrintProfileForCost(this.generalSettings, productType);
+      return selectPrintProfileForCost(
+        this.generalSettings,
+        productType,
+        this.resolvePreferredPrinterId(),
+      );
     }
     return getMachineProfilesForProductType(
       this.generalSettings,
       productType,
     ).find((profile) => profile.role === role);
+  }
+
+  private resolvePreferredPrinterId(): string | null {
+    const fromInput = this.preferredPrinterId?.trim();
+    if (fromInput) return fromInput;
+    const fromProduct =
+      this.product && 'preferredPrinterId' in this.product
+        ? this.product.preferredPrinterId?.trim()
+        : undefined;
+    return fromProduct || null;
   }
 
   private resolveResinType(): string | undefined {
@@ -217,6 +233,7 @@ export class OrderQuotePrintComponent implements OnInit {
         workTimeHours: Number(this.line.workTimeHours) || 0,
         filamentType: this.line.filamentType as FilamentType,
         filaments: filamentsForQuote.length ? filamentsForQuote : undefined,
+        preferredPrinterId: this.resolvePreferredPrinterId(),
       },
       {
         settings: this.generalSettings,

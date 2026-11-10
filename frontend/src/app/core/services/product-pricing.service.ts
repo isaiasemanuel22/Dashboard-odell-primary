@@ -261,6 +261,7 @@ export class ProductPricingService {
     return {
       type: input.type,
       grams: input.grams,
+      purgeGrams: input.purgeGrams,
       printTimeHours: input.printTimeHours,
       workTimeHours: input.workTimeHours,
       brand: input.brand,
@@ -273,6 +274,7 @@ export class ProductPricingService {
       estampadoPrints: input.estampadoPrints,
       estampadoPressCycles: input.estampadoPressCycles,
       estampadoSupplies: input.estampadoSupplies,
+      preferredPrinterId: input.preferredPrinterId,
     };
   }
 }

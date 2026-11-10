@@ -125,7 +125,9 @@ con cola (`preferredPrinterId`). Al crear la tarea de impresión se asigna
 esa impresora si sigue habilitada; si no, se comporta como «Cualquiera»
 (asignación automática / sin preferencia). La asignación manual posterior
 sigue vigente. Si la impresora se borra o se deshabilita, al leer el
-producto se trata como sin preferencia (no rompe).
+producto se trata como sin preferencia (no rompe). Con preferida válida, el
+costo de impresión (luz + máquina) usa el perfil de esa impresora; con
+«Cualquiera», el perfil `costBase` (o el primero) del tipo.
 
 A ese material se suman energía, máquina, mano de obra y el margen de error
 de Ajustes. Ese conjunto es el costo del proceso. Si con esos datos el costo
@@ -1887,7 +1889,8 @@ campo histórico `amsSlots` del perfil **no** es la fuente operativa.
 - Tareas **bloqueadas**: ocupan lugar en la cola con `blocked=true` pero
   **no consumen** horas (sin start/end).
 - Feriados: se ignoran en esta fase.
-- Costeo de productos con varios perfiles print FDM: usa el marcado
+- Costeo de productos con varios perfiles print FDM: si el producto tiene
+  impresora preferida válida, usa ese perfil; si no, el marcado
   `costBase`; si ninguno, el primero. Al guardar, solo uno queda con
   `costBase=true` por productType.
 

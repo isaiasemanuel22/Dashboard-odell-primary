@@ -265,6 +265,14 @@
   }
 }
 
+.footer-3mf-hint {
+  margin: 0;
+  color: $color-text-muted;
+  font-size: 0.75rem;
+  font-weight: 400;
+  line-height: 1.35;
+}
+
 .product-create__actions {
   display: flex;
   gap: 0.5rem;

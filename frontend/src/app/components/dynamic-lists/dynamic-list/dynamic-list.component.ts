@@ -398,6 +398,13 @@ export class DynamicListComponent<T extends object>
       }
     }
 
+    // Metadatos de fila que no son campos editables (p. ej. source `.3mf`).
+    for (const [key, value] of Object.entries(row)) {
+      if (!(key in controls)) {
+        controls[key] = new FormControl(value ?? null);
+      }
+    }
+
     return new FormGroup(controls);
   }
 

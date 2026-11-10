@@ -11,7 +11,12 @@ import {
   FdmFilamentLine,
   ProductAttachment,
 } from '../../../../core/models';
-import { storedFdmFilaments, totalFdmFilamentGrams } from '../../../../shared/utils/fdm.helpers';
+import {
+  normalizeColorChanges,
+  normalizePurgeGrams,
+  storedFdmFilaments,
+  totalFdmFilamentGrams,
+} from '../../../../shared/utils/fdm.helpers';
 import { formatEstampadoSizeFromPrints, formatPrintDimensionsCm } from '../../../../shared/utils/estampado.helpers';
 
 export interface ProductPayloadInput {
@@ -41,6 +46,9 @@ export interface ProductPayloadInput {
   filaments: FdmFilamentLine[];
   filamentType: FilamentType;
   filamentLines: FdmFilamentLine[];
+  purgeGrams: number | null;
+  colorChanges: number | null;
+  preferredPrinterId: string | null;
   resinType: ResinType | string;
   colorId: string;
   washMinutes: number;
@@ -140,6 +148,15 @@ export class ProductPayloadBuilderService {
                   : input.isFdm
                     ? input.filamentType
                     : undefined,
+              purgeGrams: input.isFdm
+                ? normalizePurgeGrams(input.purgeGrams)
+                : undefined,
+              colorChanges: input.isFdm
+                ? normalizeColorChanges(input.colorChanges)
+                : undefined,
+              preferredPrinterId: input.isFdm
+                ? input.preferredPrinterId?.trim() || null
+                : undefined,
               resinType: input.isResina ? input.resinType : undefined,
               colorId: input.isResina ? input.colorId : undefined,
               washMinutes: input.isResina ? Number(input.washMinutes) || undefined : undefined,
@@ -181,16 +198,18 @@ export class ProductPayloadBuilderService {
     grams: number,
     printTimeHours: number,
     workTimeHours: number,
-    filamentLines: FdmFilamentLine[],
-    filamentType: FilamentType,
-    isResina: boolean,
-    resinType: ResinType | string,
-    colorId: string,
-    washMinutes: number,
-    cureMinutes: number,
-    prints: EstampadoPrintSpec[],
-    pressCycles: EstampadoPressCycle[],
-    supplyLines: EstampadoSupplyLine[],
+  filamentLines: FdmFilamentLine[],
+  filamentType: FilamentType,
+  isResina: boolean,
+  resinType: ResinType | string,
+  colorId: string,
+  washMinutes: number,
+  cureMinutes: number,
+  prints: EstampadoPrintSpec[],
+  pressCycles: EstampadoPressCycle[],
+  supplyLines: EstampadoSupplyLine[],
+  purgeGrams: number | null = null,
+  preferredPrinterId: string | null = null,
   ): any {
     const storedCost = Number(cost) || Number(productCost) || 0;
 
@@ -205,6 +224,7 @@ export class ProductPayloadBuilderService {
         : is3D
           ? {
               grams: isFdm ? totalFilamentGrams : Number(grams) || 0,
+              purgeGrams: isFdm ? normalizePurgeGrams(purgeGrams) : undefined,
               printTimeHours: Number(printTimeHours) || 0,
               workTimeHours: Number(workTimeHours) || 0,
               filaments: isFdm ? storedFdmFilaments(filamentLines) : undefined,
@@ -219,6 +239,9 @@ export class ProductPayloadBuilderService {
               washMinutes: isResina ? Number(washMinutes) || undefined : undefined,
               cureMinutes: isResina ? Number(cureMinutes) || undefined : undefined,
               estampadoSupplies: supplyLines,
+              preferredPrinterId: isFdm
+                ? preferredPrinterId?.trim() || null
+                : undefined,
             }
           : {
               workTimeHours: Number(workTimeHours) || 0,

@@ -266,4 +266,70 @@ describe('machine-profile.util', () => {
     };
     expect(selectPrintProfileForCost(multi, ProductType.FDM)?.id).toBe('first');
   });
+
+  it('con preferredPrinterId válido prioriza esa impresora sobre costBase', () => {
+    const multi = {
+      ...settings,
+      electricityCostPerKwh: 100,
+      machineProfiles: normalizeMachineProfiles([
+        {
+          id: 'a1-1',
+          name: 'A1 #1',
+          role: MachineProfileRole.PRINT,
+          watts: 1000,
+          costPerHour: 100,
+          productType: ProductType.FDM,
+          costBase: true,
+        },
+        {
+          id: 'a1-2',
+          name: 'A1 #2',
+          role: MachineProfileRole.PRINT,
+          watts: 2000,
+          costPerHour: 300,
+          productType: ProductType.FDM,
+        },
+      ]),
+    };
+    expect(
+      selectPrintProfileForCost(multi, ProductType.FDM, 'a1-2')?.id,
+    ).toBe('a1-2');
+    const overhead = calculateMachineOverhead(
+      multi,
+      ProductType.FDM,
+      { printTimeHours: 1 },
+      'a1-2',
+    );
+    // 2 kW × 1 h × $100 + máquina $300
+    expect(overhead.energyCost).toBe(200);
+    expect(overhead.machineCost).toBe(300);
+  });
+
+  it('preferredPrinterId inválido cae a costBase', () => {
+    const multi = {
+      ...settings,
+      machineProfiles: normalizeMachineProfiles([
+        {
+          id: 'a1-1',
+          name: 'A1 #1',
+          role: MachineProfileRole.PRINT,
+          watts: 100,
+          costPerHour: 100,
+          productType: ProductType.FDM,
+          costBase: true,
+        },
+        {
+          id: 'a1-2',
+          name: 'A1 #2',
+          role: MachineProfileRole.PRINT,
+          watts: 200,
+          costPerHour: 200,
+          productType: ProductType.FDM,
+        },
+      ]),
+    };
+    expect(
+      selectPrintProfileForCost(multi, ProductType.FDM, 'no-existe')?.id,
+    ).toBe('a1-1');
+  });
 });

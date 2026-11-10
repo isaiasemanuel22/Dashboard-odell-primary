@@ -34,6 +34,10 @@ export class ProductFormMediaSectionComponent {
   @ViewChild(ProductFormAttachmentsUploadComponent)
   private attachments?: ProductFormAttachmentsUploadComponent;
 
+  addAttachmentFiles(files: File[]): void {
+    this.attachments?.addFiles(files);
+  }
+
   async ensureUploads(): Promise<boolean> {
     if (!(await this.photos?.ensureUploaded())) return false;
     return (await this.attachments?.ensureUploaded()) ?? false;

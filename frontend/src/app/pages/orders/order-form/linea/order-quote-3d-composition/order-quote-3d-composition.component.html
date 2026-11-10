@@ -65,13 +65,16 @@
       [product]="product"
       [lineIndex]="lineIndex"
       (changed)="onChildChanged()"
-    />
+    >
+      <ng-content select="[amsPurge]" />
+    </app-order-quote-filaments>
   }
 
   <app-order-quote-print
     [line]="line"
     [product]="product"
     [lineIndex]="lineIndex"
+    [preferredPrinterId]="preferredPrinterId"
     (changed)="onChildChanged()"
   />
   <app-order-quote-estampado-supplies

@@ -17,7 +17,9 @@ import {
 } from '../../../../core/models';
 import {
   createEmptyFdmFilamentLine,
+  normalizeColorChanges,
   normalizeFdmFilaments,
+  normalizePurgeGrams,
 } from '../../../../shared/utils/fdm.helpers';
 import {
   createEmptyEstampadoPrint,
@@ -58,6 +60,9 @@ export interface ProductFormState {
   supplyLines: EstampadoSupplyLine[];
   filamentLines: FdmFilamentLine[];
   filamentType: FilamentType;
+  purgeGrams: number | null;
+  colorChanges: number | null;
+  preferredPrinterId: string | null;
   resinType: ResinType | string;
   colorId: string;
   components: ProductComponent[];
@@ -92,6 +97,9 @@ export type ProductFormGroup = FormGroup<{
   resinType: FormControl<ResinType | string>;
   colorId: FormControl<string>;
   filamentType: FormControl<FilamentType>;
+  purgeGrams: FormControl<number | null>;
+  colorChanges: FormControl<number | null>;
+  preferredPrinterId: FormControl<string | null>;
   assemblyTimeHours: FormControl<number>;
   suggestedPrice: FormControl<number | null>;
   categoryIds: FormControl<string[]>;
@@ -141,6 +149,9 @@ export class ProductFormStateManagerService {
       supplyLines: [],
       filamentLines: [createEmptyFdmFilamentLine()],
       filamentType: FilamentType.PLA,
+      purgeGrams: null,
+      colorChanges: null,
+      preferredPrinterId: null,
       resinType: ResinType.ESTANDAR,
       colorId: INDISTINTO_COLOR_ID,
       components: [],
@@ -189,6 +200,11 @@ export class ProductFormStateManagerService {
       resinType: new FormControl(state.resinType, { nonNullable: true }),
       colorId: new FormControl(state.colorId, { nonNullable: true }),
       filamentType: new FormControl(state.filamentType, { nonNullable: true }),
+      purgeGrams: new FormControl<number | null>(state.purgeGrams),
+      colorChanges: new FormControl<number | null>(state.colorChanges),
+      preferredPrinterId: new FormControl<string | null>(
+        state.preferredPrinterId,
+      ),
       assemblyTimeHours: new FormControl(state.assemblyTimeHours, {
         nonNullable: true,
       }),
@@ -233,6 +249,9 @@ export class ProductFormStateManagerService {
         resinType: state.resinType,
         colorId: state.colorId,
         filamentType: state.filamentType,
+        purgeGrams: state.purgeGrams,
+        colorChanges: state.colorChanges,
+        preferredPrinterId: state.preferredPrinterId,
         assemblyTimeHours: state.assemblyTimeHours,
         suggestedPrice: state.suggestedPrice,
         categoryIds: state.categoryIds,
@@ -322,6 +341,11 @@ export class ProductFormStateManagerService {
         }
         line.grams = Math.max(0, Number(product.grams) || 0);
         state.filamentLines = [line];
+      }
+      if (product.type === ProductType.FDM) {
+        state.purgeGrams = normalizePurgeGrams(product.purgeGrams);
+        state.colorChanges = normalizeColorChanges(product.colorChanges);
+        state.preferredPrinterId = product.preferredPrinterId?.trim() || null;
       }
       state.resinType = product.resinType ?? ('' as ResinType);
       state.colorId = normalizeColorId(product.colorId);

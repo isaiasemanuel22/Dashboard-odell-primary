@@ -42,6 +42,26 @@
     border-top: 1px solid #eef3f7;
   }
 
+  &__badge {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    min-width: 0;
+  }
+
+  &__pill {
+    display: inline-flex;
+    align-items: center;
+    height: 1.125rem;
+    padding: 0 0.5rem;
+    border-radius: 999px;
+    background: #e0f0f8;
+    color: #0b5f86;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
   &__cost {
     color: #15803d;
     font-size: 0.875rem;

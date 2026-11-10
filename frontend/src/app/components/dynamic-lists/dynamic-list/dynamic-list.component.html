@@ -37,6 +37,9 @@
             @if (config.rowCost) {
               <span class="line-table__head-cost">Costo</span>
             }
+            @if (config.rowBadge) {
+              <span></span>
+            }
             <span></span>
           </div>
           <div formArrayName="items">
@@ -142,6 +145,13 @@
                   <strong class="line-table__cost">
                     {{ config.rowCost(rawItem(itemGroup)) | currencyArs }}
                   </strong>
+                }
+                @if (config.rowBadge) {
+                  <span class="line-table__badge">
+                    @if (config.rowBadge(rawItem(itemGroup)); as badge) {
+                      <span class="line-table__pill">{{ badge }}</span>
+                    }
+                  </span>
                 }
                 @if (canRemove()) {
                   <button type="button" class="dynamic-list-item__remove" aria-label="Quitar" (click)="onRemove(i)">

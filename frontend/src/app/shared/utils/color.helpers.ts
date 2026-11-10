@@ -38,6 +38,51 @@ export function resolveColorHex(
   return catalog.find((color) => color.id === colorId)?.hex;
 }
 
+/** Distancia euclídea RGB entre dos hex (#RRGGBB). */
+export function hexColorDistance(a: string, b: string): number {
+  const ra = parseHexRgb(a);
+  const rb = parseHexRgb(b);
+  if (!ra || !rb) return Number.POSITIVE_INFINITY;
+  const dr = ra.r - rb.r;
+  const dg = ra.g - rb.g;
+  const db = ra.b - rb.b;
+  return Math.sqrt(dr * dr + dg * dg + db * db);
+}
+
+/**
+ * Color del catálogo más cercano al hex. Si la distancia supera el umbral,
+ * devuelve Indistinto para que el usuario elija.
+ */
+export function nearestCatalogColorId(
+  hex: string | undefined,
+  catalog: ColorConfig[],
+  maxDistance = 48,
+): string {
+  if (!hex || !catalog.length) return INDISTINTO_COLOR_ID;
+  let bestId = INDISTINTO_COLOR_ID;
+  let best = Number.POSITIVE_INFINITY;
+  for (const color of catalog) {
+    const d = hexColorDistance(hex, color.hex);
+    if (d < best) {
+      best = d;
+      bestId = color.id;
+    }
+  }
+  return best <= maxDistance ? bestId : INDISTINTO_COLOR_ID;
+}
+
+function parseHexRgb(
+  hex: string,
+): { r: number; g: number; b: number } | null {
+  const cleaned = hex.trim().replace(/^#/, '');
+  if (!/^[0-9a-fA-F]{6}$/.test(cleaned)) return null;
+  return {
+    r: Number.parseInt(cleaned.slice(0, 2), 16),
+    g: Number.parseInt(cleaned.slice(2, 4), 16),
+    b: Number.parseInt(cleaned.slice(4, 6), 16),
+  };
+}
+
 export function supplyRequiresColor(category: SupplyCategory): boolean {
   return (
     category === SupplyCategory.FDM ||

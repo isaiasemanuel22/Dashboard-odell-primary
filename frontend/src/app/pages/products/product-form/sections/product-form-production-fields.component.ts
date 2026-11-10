@@ -27,11 +27,15 @@ import { supplyLinesValue } from '../../../../shared/utils/supply-line-value.uti
 import { SuppliesService } from '../../../../core/services/settings.service';
 import { Supply } from '../../../../core/models';
 import { OrderQuoteEstampadoCompositionComponent } from '../../../orders/order-form/linea/order-quote-estampado-composition/order-quote-estampado-composition.component';
-import { createEmptyFdmFilamentLine } from '../../../../shared/utils/fdm.helpers';
+import {
+  createEmptyFdmFilamentLine,
+  normalizePurgeGrams,
+} from '../../../../shared/utils/fdm.helpers';
 import {
   createEmptyEstampadoPressCycle,
   createEmptyEstampadoPrint,
 } from '../../../../shared/utils/estampado.helpers';
+import { ProductFormAmsPurgeRowComponent } from './product-form-ams-purge-row/product-form-ams-purge-row.component';
 
 @Component({
   selector: 'app-product-form-production-fields',
@@ -43,6 +47,7 @@ import {
     OrderQuote3dCompositionComponent,
     OrderQuoteEstampadoCompositionComponent,
     OrderQuoteEstampadoSuppliesComponent,
+    ProductFormAmsPurgeRowComponent,
   ],
   templateUrl: './product-form-production-fields.component.html',
   styleUrl: './product-form-production-fields.component.scss',
@@ -57,6 +62,8 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
   @Input({ required: true }) form!: ProductFormGroup;
   @Input({ required: true }) productType!: ProductType;
   @Input() includesPieces = false;
+  @Input() printHoursFrom3mf = false;
+  @Input() purgeFrom3mf = false;
 
   /** Puente mutable hacia los bloques de quote (mutan el draft in-place). */
   line: OrderLineDraft = this.createDraft(ProductType.FDM);
@@ -112,6 +119,10 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
     return isProductType3D(this.productType);
   }
 
+  get isFdm(): boolean {
+    return this.productType === ProductType.FDM;
+  }
+
   get suppliesCost(): number {
     return supplyLinesValue(this.line.estampadoSupplies, (supplyId) => {
       const supply = this.supplies.find((item) => item.id === supplyId);
@@ -156,6 +167,13 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
     this.cdr.markForCheck();
   }
 
+  onPurgeGramsChange(value: number | null): void {
+    this.form.controls.purgeGrams.setValue(normalizePurgeGrams(value), {
+      emitEvent: true,
+    });
+    this.cdr.markForCheck();
+  }
+
   private hydrateLineFromForm(): void {
     const v = this.form.getRawValue();
     const draft = this.createDraft(this.productType);
@@ -184,6 +202,7 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
       draft.washMinutes = undefined;
       draft.cureMinutes = undefined;
       draft.filamentType = v.filamentType;
+      draft.purgeGrams = normalizePurgeGrams(v.purgeGrams);
       const nextFilaments = structuredClone(
         v.filamentLines?.length
           ? v.filamentLines
@@ -206,7 +225,10 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
       );
     }
 
-    // Misma referencia si no cambia el servicio → no se colapsan los <details>.
+    // Misma identidad de servicio; nueva referencia de objeto para que los
+    // hijos OnPush (filamentos / impresión / DynamicList) rebinden ngModel.
+    // Mutar `line` in-place dejaba el form (y el pricing) al día pero los
+    // controles seguían mostrando el draft viejo tras un import .3mf.
     if (this.line.serviceType === draft.serviceType) {
       Object.assign(this.line, draft);
       // Object.assign no borra claves ausentes: forzar limpieza FDM↔resina.
@@ -218,8 +240,10 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
       } else if (isResina) {
         this.line.filaments = undefined;
         this.line.filamentType = undefined;
+        this.line.purgeGrams = undefined;
         this.line.printProcess = 'resina';
       }
+      this.line = { ...this.line };
     } else {
       this.line = draft;
     }

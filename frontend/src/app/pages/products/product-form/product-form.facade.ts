@@ -151,23 +151,27 @@ export class ProductFormFacade {
       published: v.published,
       includesPieces: v.includesPieces,
       finishedStock: v.finishedStock,
+      preferredPrinterId: v.preferredPrinterId,
     };
   }
 
   patchBasicFields(value: ProductFormBasicFieldsValue): void {
     const current = this.basicFieldsValue;
-    const patch: Partial<ProductFormBasicFieldsValue> = {};
-    if (current.type !== value.type) patch.type = value.type;
-    if (current.name !== value.name) patch.name = value.name;
+    const patch: Record<string, unknown> = {};
+    if (current.type !== value.type) patch['type'] = value.type;
+    if (current.name !== value.name) patch['name'] = value.name;
     if (current.description !== value.description) {
-      patch.description = value.description;
+      patch['description'] = value.description;
     }
-    if (current.published !== value.published) patch.published = value.published;
+    if (current.published !== value.published) patch['published'] = value.published;
     if (current.includesPieces !== value.includesPieces) {
-      patch.includesPieces = value.includesPieces;
+      patch['includesPieces'] = value.includesPieces;
     }
     if (current.finishedStock !== value.finishedStock) {
-      patch.finishedStock = value.finishedStock;
+      patch['finishedStock'] = value.finishedStock;
+    }
+    if (current.preferredPrinterId !== value.preferredPrinterId) {
+      patch['preferredPrinterId'] = value.preferredPrinterId;
     }
     if (Object.keys(patch).length === 0) return;
     this.form.patchValue(patch);
@@ -376,6 +380,9 @@ export class ProductFormFacade {
       filaments: storedFdmFilaments(v.filamentLines),
       filamentType: v.filamentType,
       filamentLines: v.filamentLines,
+      purgeGrams: v.purgeGrams,
+      colorChanges: v.colorChanges,
+      preferredPrinterId: v.preferredPrinterId,
       resinType: v.resinType,
       colorId: v.colorId,
       washMinutes: v.washMinutes,
@@ -432,6 +439,8 @@ export class ProductFormFacade {
       this.form.controls.prints.valueChanges,
       this.form.controls.pressCycles.valueChanges,
       this.form.controls.supplyLines.valueChanges,
+      this.form.controls.purgeGrams.valueChanges,
+      this.form.controls.preferredPrinterId.valueChanges,
     )
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.pricing.onProductionFieldChange());

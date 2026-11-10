@@ -30,13 +30,32 @@
         />
       </section>
     }
+    @if (printHoursFrom3mf && isFdm) {
+      <p class="from-3mf-hint" role="status">
+        Horas de impresión y gramos de filamento cargados desde el .3mf
+        <span class="from-3mf-pill">.3mf</span>
+      </p>
+    }
     <app-order-quote-3d-composition
       [line]="line"
       [lineIndex]="0"
       [showProcessToggle]="false"
       [printProcess]="printProcess"
+      [preferredPrinterId]="form.controls.preferredPrinterId.value"
       (changed)="onQuoteChanged()"
-    />
+    >
+      @if (isFdm && !includesPieces) {
+        <app-product-form-ams-purge-row
+          amsPurge
+          [filaments]="form.controls.filamentLines.value"
+          [filamentType]="form.controls.filamentType.value"
+          [purgeGrams]="form.controls.purgeGrams.value"
+          [colorChanges]="form.controls.colorChanges.value"
+          [from3mf]="purgeFrom3mf"
+          (purgeGramsChange)="onPurgeGramsChange($event)"
+        />
+      }
+    </app-order-quote-3d-composition>
   }
 
   @if (showProductionFields && isEstampado) {

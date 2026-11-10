@@ -75,4 +75,20 @@
       Filamento: <strong>{{ product.filamentType | filamentTypeLabel }}</strong>
     </p>
   }
+
+  @if (!hasComponents && purgeGrams != null && purgeGrams > 0) {
+    <p class="production-brand">
+      Purga del AMS:
+      <strong>{{ purgeGrams }} g</strong>
+      @if (colorChanges != null) {
+        <span> · {{ colorChanges }} {{ colorChanges === 1 ? 'cambio' : 'cambios' }} de color</span>
+      }
+    </p>
+  }
+
+  @if (!hasComponents && preferredPrinterName) {
+    <p class="production-brand">
+      Impresora preferida: <strong>{{ preferredPrinterName }}</strong>
+    </p>
+  }
 </section>

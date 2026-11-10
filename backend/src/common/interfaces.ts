@@ -334,6 +334,8 @@ export interface CalculateCostDto {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Impresora preferida del producto: perfil print para luz/máquina si es válido. */
+  preferredPrinterId?: string | null;
 }
 
 export interface ImpresoCostPreview {
@@ -367,6 +369,8 @@ export interface ProductPricingInput {
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
   includesPieces?: boolean;
+  /** Impresora preferida del producto: perfil print para luz/máquina si es válido. */
+  preferredPrinterId?: string | null;
 }
 
 export interface ProductPricingResult {

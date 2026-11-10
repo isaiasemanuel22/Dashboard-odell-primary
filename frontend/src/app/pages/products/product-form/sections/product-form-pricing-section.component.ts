@@ -92,6 +92,16 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     return null;
   }
 
+  get purgeLabel(): string | null {
+    if (this.form.controls.type.value !== ProductType.FDM) return null;
+    const grams = Math.max(0, Number(this.form.controls.purgeGrams.value) || 0);
+    if (grams <= 0) return null;
+    const label = new Intl.NumberFormat('es-AR', {
+      maximumFractionDigits: 1,
+    }).format(grams);
+    return `${label} g`;
+  }
+
   get lightLabel(): string | null {
     const printer = this.printProfile();
     return printer ? `${printer.watts} W` : null;
@@ -236,9 +246,14 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
 
   private printProfile() {
     if (!this.settings) return null;
+    const preferred =
+      this.form.controls.type.value === ProductType.FDM
+        ? this.form.controls.preferredPrinterId.value
+        : null;
     return selectPrintProfileForCost(
       this.settings,
       this.form.controls.type.value,
+      preferred,
     ) ?? null;
   }
 

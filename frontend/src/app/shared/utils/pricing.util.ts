@@ -116,6 +116,7 @@ export function priceFromCostAndMargin(
 
 export function totalCostFromBreakdown(breakdown: {
   materialCost: number;
+  purgeCost?: number;
   energyCost: number;
   machineCost: number;
   errorMarginCost: number;
@@ -127,6 +128,7 @@ export function totalCostFromBreakdown(breakdown: {
   }
   return Math.round(
     (Number(breakdown.materialCost) || 0) +
+      (Number(breakdown.purgeCost) || 0) +
       (Number(breakdown.energyCost) || 0) +
       (Number(breakdown.machineCost) || 0) +
       (Number(breakdown.errorMarginCost) || 0) +
@@ -150,13 +152,18 @@ export function calculateErrorMarginCost(
   energyCost: number,
   machineCost: number,
   errorMarginPercent: number,
+  purgeCost = 0,
 ): number {
   const percent = Math.min(
     Math.max(Number(errorMarginPercent) || 0, 0),
     100,
   );
   if (percent === 0) return 0;
-  const base = materialCost + energyCost + machineCost;
+  const base =
+    materialCost +
+    Math.max(0, Number(purgeCost) || 0) +
+    energyCost +
+    machineCost;
   return Math.round(base * (percent / 100));
 }
 

@@ -126,6 +126,13 @@
     gap: 8px;
   }
 
+  .footer-3mf-hint {
+    order: -1;
+    width: 100%;
+    font-size: 12px;
+    color: mobile.$m-text-secondary;
+  }
+
   .product-create__actions {
     margin-left: 0;
     width: 100%;
@@ -180,6 +187,15 @@
 
     .db-button {
       min-height: 44px;
+    }
+
+    .cost-composition__summary-meta {
+      min-width: 0;
+      white-space: normal;
+      overflow: visible;
+      text-overflow: clip;
+      overflow-wrap: anywhere;
+      line-height: 1.3;
     }
   }
 }

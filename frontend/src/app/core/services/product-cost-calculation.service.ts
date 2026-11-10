@@ -37,6 +37,7 @@ import {
   resolveFilamentPricePerKg,
   resolveResinPricePerLiter,
 } from '../../shared/utils/material-type-price.util';
+import { calcPurgeCost } from '../../shared/utils/cost-material.util';
 
 export interface ProductCostCalculationContext {
   settings: GeneralSettings;
@@ -108,22 +109,33 @@ export class ProductCostCalculationService {
       supplies,
       impresos,
     );
-    const overhead = calculateMachineOverhead(settings, dto.type, {
-      printTimeHours,
-      washMinutes: dto.washMinutes,
-      cureMinutes: dto.cureMinutes,
-      pressMinutes,
-    });
+    const purgeCost =
+      dto.type === ProductType.FDM
+        ? calcPurgeCost(dto.purgeGrams, dto, settings)
+        : 0;
+    const overhead = calculateMachineOverhead(
+      settings,
+      dto.type,
+      {
+        printTimeHours,
+        washMinutes: dto.washMinutes,
+        cureMinutes: dto.cureMinutes,
+        pressMinutes,
+      },
+      dto.preferredPrinterId,
+    );
     const laborCost = workTimeHours * settings.laborCostPerHour;
     const errorMarginCost = this.calculateErrorMarginCost(
       materialCost,
       overhead.energyCost,
       overhead.machineCost,
       settings,
+      purgeCost,
     );
 
     const totalCost = Math.round(
       materialCost +
+        purgeCost +
         overhead.energyCost +
         overhead.machineCost +
         errorMarginCost +
@@ -132,6 +144,7 @@ export class ProductCostCalculationService {
 
     return {
       materialCost: Math.round(materialCost),
+      purgeCost: Math.round(purgeCost),
       energyCost: overhead.energyCost,
       machineCost: overhead.machineCost,
       errorMarginCost,
@@ -373,6 +386,7 @@ export class ProductCostCalculationService {
     energyCost: number,
     machineCost: number,
     settings: GeneralSettings,
+    purgeCost = 0,
   ): number {
     const percent = Math.min(
       Math.max(Number(settings.errorMarginPercent) || 0, 0),
@@ -381,7 +395,11 @@ export class ProductCostCalculationService {
     if (percent === 0) {
       return 0;
     }
-    const base = materialCost + energyCost + machineCost;
+    const base =
+      materialCost +
+      Math.max(0, Number(purgeCost) || 0) +
+      energyCost +
+      machineCost;
     return Math.round(base * (percent / 100));
   }
 }

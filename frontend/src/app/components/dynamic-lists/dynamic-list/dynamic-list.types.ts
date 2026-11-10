@@ -108,4 +108,6 @@ export interface DynamicListConfig<T> {
   footerActionLabel?: string;
   displayColumns?: DynamicDisplayColumn<T>[];
   rowCost?: (item: T) => number;
+  /** Pill opcional por fila (p. ej. `.3mf`); null/vacío no renderiza. */
+  rowBadge?: (item: T) => string | null;
 }

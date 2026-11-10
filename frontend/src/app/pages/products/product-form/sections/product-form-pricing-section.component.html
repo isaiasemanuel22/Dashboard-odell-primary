@@ -31,6 +31,12 @@
           <dt>Material @if (gramsLabel) { <span>· {{ gramsLabel }}</span> }</dt>
           <dd>{{ (vm.costBreakdown?.materialCost ?? 0) | currencyArs }}</dd>
         </div>
+        @if (purgeLabel; as purge) {
+          <div>
+            <dt>Purga AMS <span>· {{ purge }}</span></dt>
+            <dd>{{ (vm.costBreakdown?.purgeCost ?? 0) | currencyArs }}</dd>
+          </div>
+        }
         <div>
           <dt>Luz @if (lightLabel) { <span>· {{ lightLabel }}</span> }</dt>
           <dd>{{ (vm.costBreakdown?.energyCost ?? 0) | currencyArs }}</dd>

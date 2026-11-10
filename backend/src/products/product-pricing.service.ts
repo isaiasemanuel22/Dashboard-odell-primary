@@ -91,6 +91,10 @@ export class ProductPricingService {
       washMinutes: product3d.washMinutes,
       cureMinutes: product3d.cureMinutes,
       estampadoSupplies: normalizeEstampadoSupplies(product3d.supplies),
+      preferredPrinterId:
+        product3d.type === ProductType.FDM
+          ? product3d.preferredPrinterId
+          : undefined,
     };
   }
 
@@ -148,6 +152,10 @@ export class ProductPricingService {
           estampadoData?.supplies ??
           merged.supplies,
       ),
+      preferredPrinterId:
+        merged.type === ProductType.FDM
+          ? product3d?.preferredPrinterId
+          : undefined,
     };
   }
 }

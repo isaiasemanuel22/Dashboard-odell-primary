@@ -1,0 +1,91 @@
+<section
+  class="mf3"
+  [class.mf3--drag]="dragOver"
+  (dragover)="onDragOver($event)"
+  (dragleave)="onDragLeave($event)"
+  (drop)="onDrop($event)"
+>
+  @if (!hasCard) {
+    <div class="mf3-empty">
+      <span class="mf3-empty__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12v9M12 12L4 7.5" />
+        </svg>
+      </span>
+      <div class="mf3-empty__copy">
+        <p class="mf3-empty__title">
+          Cargá el .3mf de Bambu Studio para completar gramos, tiempo, colores y purga
+        </p>
+      </div>
+      <db-button
+        label="Elegir archivo .3mf"
+        variant="secondary"
+        format="solid"
+        [disabled]="reading"
+        (clicked)="onBrowse()"
+      />
+    </div>
+  } @else {
+    <div class="mf3-card">
+      <span class="mf3-card__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 3l8 4.5v9L12 21l-8-4.5v-9zM12 12l8-4.5M12 12v9M12 12L4 7.5" />
+        </svg>
+      </span>
+      <div class="mf3-card__body">
+        <span class="mf3-card__name">
+          {{ fileName }}
+          @if (fromBambu) {
+            <span class="mf3-card__badge">Desde Bambu Studio</span>
+          }
+        </span>
+        @if (cardSummary) {
+          <span class="mf3-card__summary">{{ cardSummary }}</span>
+        }
+      </div>
+      <div class="mf3-card__actions">
+        @if (showRereadButton) {
+          <db-button
+            label="Volver a leer"
+            variant="secondary"
+            format="solid"
+            extraClass="mf3-card__btn"
+            [disabled]="reading"
+            (clicked)="onReread()"
+          />
+        }
+        <db-button
+          label="Cambiar archivo"
+          variant="secondary"
+          format="solid"
+          extraClass="mf3-card__btn"
+          [disabled]="reading"
+          (clicked)="onChangeFile()"
+        />
+      </div>
+    </div>
+  }
+
+  @if (noteKind && noteText) {
+    <div class="mf3-note" [class.mf3-note--ok]="noteKind === 'ok'" [class.mf3-note--warn]="noteKind === 'warn'" role="status">
+      @if (noteKind === 'ok') {
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <path d="M5 12l5 5L20 7" />
+        </svg>
+      }
+      <span>{{ noteText }}</span>
+    </div>
+  }
+
+  @if (error) {
+    <p class="mf3-error" role="alert">{{ error }}</p>
+  }
+
+  <input
+    #fileInput
+    type="file"
+    accept=".3mf,model/3mf,application/vnd.ms-package.3dmanufacturing-3dmodel+xml"
+    hidden
+    (change)="onFileInput($event)"
+  />
+</section>

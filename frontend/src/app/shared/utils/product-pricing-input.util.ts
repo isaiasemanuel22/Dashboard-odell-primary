@@ -57,6 +57,8 @@ export function productToPricingInput(
     price: product.price,
     cost: product.cost,
     grams: product3d.grams,
+    purgeGrams:
+      product3d.type === ProductType.FDM ? product3d.purgeGrams : undefined,
     printTimeHours: product3d.printTimeHours,
     workTimeHours: product3d.workTimeHours,
     brand: product3d.brand,
@@ -65,6 +67,10 @@ export function productToPricingInput(
     resinType: product3d.resinType,
     washMinutes: product3d.washMinutes,
     cureMinutes: product3d.cureMinutes,
+    preferredPrinterId:
+      product3d.type === ProductType.FDM
+        ? product3d.preferredPrinterId
+        : undefined,
   };
 }
 

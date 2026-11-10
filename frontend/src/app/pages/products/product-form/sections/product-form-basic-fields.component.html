@@ -17,6 +17,8 @@
     </section>
   }
 
+  <ng-content select="[productForm3mf]" />
+
   <section class="form-block">
     <h4 class="desktop-only">Datos del producto</h4>
     <div class="data-row">
@@ -39,6 +41,16 @@
         [ngModelOptions]="{ standalone: true }"
         (ngModelChange)="onFieldChange()"
       />
+      @if (showPreferredPrinter) {
+        <db-select
+          label="Impresora preferida"
+          name="preferredPrinterId"
+          [options]="preferredPrinterOptions"
+          [(ngModel)]="preferredPrinterId"
+          [ngModelOptions]="{ standalone: true }"
+          (ngModelChange)="onFieldChange()"
+        />
+      }
     </div>
     <db-textarea
       label="Descripción"
@@ -52,7 +64,7 @@
     />
   </section>
 
-  <ng-content />
+  <ng-content select=":not([productForm3mf])" />
 
   @if (showIncludesPiecesCheckbox) {
     <div class="product-flags desktop-only">

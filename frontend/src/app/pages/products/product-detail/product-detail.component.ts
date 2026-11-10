@@ -374,6 +374,18 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
           });
         }
       }
+
+      const purgeGrams = Math.max(0, Number(printed.purgeGrams) || 0);
+      if (purgeGrams > 0) {
+        rows.push({
+          title: `Purga AMS · ${purgeGrams} g`,
+          detail:
+            printed.colorChanges != null
+              ? `${printed.colorChanges} cambios de color`
+              : null,
+          amount: breakdown?.purgeCost ?? null,
+        });
+      }
     }
 
     if (this.printHours > 0) {
@@ -428,7 +440,9 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     if (errorPercent > 0 || (breakdown?.errorMarginCost ?? 0) > 0) {
       rows.push({
         title: `Margen de error · ${errorPercent} %`,
-        detail: 'Sobre material y máquina',
+        detail: (breakdown?.purgeCost ?? 0) > 0
+          ? 'Sobre material, purga, luz y máquina'
+          : 'Sobre material, luz y máquina',
         amount: breakdown?.errorMarginCost ?? null,
       });
     }
@@ -445,6 +459,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       {
         type: printed.type,
         grams: this.grams,
+        purgeGrams: printed.purgeGrams,
         printTimeHours: this.printHours,
         workTimeHours: this.workHours,
         brand: printed.brand,

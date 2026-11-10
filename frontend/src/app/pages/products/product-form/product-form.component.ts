@@ -1,5 +1,6 @@
 import {
   Component,
+  DestroyRef,
   EventEmitter,
   HostListener,
   Input,
@@ -16,7 +17,9 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { Subject, takeUntil } from 'rxjs';
 import {
   CreateProductPayload,
+  MachineProfileRole,
   Product,
+  ProductAttachment,
   ProductType,
   UpdateProductPayload,
 } from '../../../core/models';
@@ -24,10 +27,13 @@ import {
   DbFormComponent,
   DbFormErrorComponent,
 } from '@dashboard-form';
+import type { DbSelectOption } from '@dashboard-form';
 import { DbButtonComponent } from '../../../components/db-button/db-button.component';
 import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { PRODUCT_TYPE_LABELS } from '../../../shared/constants/labels';
 import { computeAssemblableUnits } from '../../../shared/utils/stock.helpers';
+import { getMachineProfilesForProductType } from '../../../shared/utils/machine-profile.util';
+import { SettingsFacade } from '../../../store/settings/settings.facade';
 import { ProductFormPricingFacade } from './store/product-form-pricing/product-form-pricing.facade';
 import { ProductFormFacade } from './product-form.facade';
 import { ProductFormPricingService } from './product-form-pricing.service';
@@ -37,6 +43,11 @@ import { ProductFormComponentsSectionComponent, ProductFormComponentsValue } fro
 import { ProductFormCategoriesSectionComponent } from './sections/product-form-categories-section.component';
 import { ProductFormMediaSectionComponent } from './sections/product-form-media-section.component';
 import { ProductFormPricingSectionComponent } from './sections/product-form-pricing-section.component';
+import {
+  ProductForm3mfImportComponent,
+  ProductForm3mfApplyPayload,
+} from './sections/product-form-3mf-import/product-form-3mf-import.component';
+import { apply3mfResultToProductForm } from './product-form-3mf-apply';
 
 type AccordionKey = 'datos' | 'piezas' | 'produccion' | 'media' | 'precio';
 
@@ -54,6 +65,7 @@ type AccordionKey = 'datos' | 'piezas' | 'produccion' | 'media' | 'precio';
     ProductFormCategoriesSectionComponent,
     ProductFormMediaSectionComponent,
     ProductFormPricingSectionComponent,
+    ProductForm3mfImportComponent,
   ],
   providers: [ProductFormFacade, ProductFormPricingService],
   templateUrl: './product-form.component.html',
@@ -64,9 +76,23 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   private readonly pricingStore = inject(ProductFormPricingFacade);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly breakpoint = inject(BreakpointService);
+  private readonly settingsFacade = inject(SettingsFacade);
+  private readonly destroyRef = inject(DestroyRef);
   private readonly destroy$ = new Subject<void>();
 
   readonly isMobile = this.breakpoint.isMobile;
+  preferredPrinterOptions: DbSelectOption[] = [
+    { value: '', label: 'Cualquiera (la que termine antes)' },
+  ];
+  /** Campos aún marcados como venidos del .3mf (hasta que el usuario los edite). */
+  sourcedFrom3mf = {
+    filaments: false,
+    printHours: false,
+    purge: false,
+  };
+  /** .3mf leído en esta sesión (aún no necesariamente persistido). */
+  private sessionHas3mf = false;
+  private applying3mf = false;
 
   @Input() product: Product | null = null;
   @Input() loading = false;
@@ -165,12 +191,53 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     this.syncBasicFields();
     this.syncCategoryIds();
     this.syncComponentsValue();
+    this.settingsFacade
+      .watchUntilDestroyed(this.destroyRef)
+      .subscribe((settings) => {
+        if (!settings) return;
+        const printers = getMachineProfilesForProductType(
+          settings,
+          ProductType.FDM,
+        ).filter(
+          (p) => p.role === MachineProfileRole.PRINT && !!p.queueEnabled,
+        );
+        this.preferredPrinterOptions = [
+          { value: '', label: 'Cualquiera (la que termine antes)' },
+          ...printers.map((p) => ({ value: p.id, label: p.name })),
+        ];
+        this.cdr.markForCheck();
+      });
+    this.settingsFacade.ensureLoaded().subscribe();
     this.facade.form.controls.includesPieces.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.cdr.markForCheck());
     this.facade.form.controls.components.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.cdr.markForCheck());
+    this.facade.form.controls.filamentLines.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (!this.applying3mf && this.sourcedFrom3mf.filaments) {
+          this.sourcedFrom3mf = { ...this.sourcedFrom3mf, filaments: false };
+        }
+        this.cdr.markForCheck();
+      });
+    this.facade.form.controls.printTimeHours.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (!this.applying3mf && this.sourcedFrom3mf.printHours) {
+          this.sourcedFrom3mf = { ...this.sourcedFrom3mf, printHours: false };
+        }
+        this.cdr.markForCheck();
+      });
+    this.facade.form.controls.purgeGrams.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => {
+        if (!this.applying3mf && this.sourcedFrom3mf.purge) {
+          this.sourcedFrom3mf = { ...this.sourcedFrom3mf, purge: false };
+        }
+        this.cdr.markForCheck();
+      });
     this.facade.form.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => this.cdr.markForCheck());
@@ -289,6 +356,53 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   onComponentsChange(value: ProductFormComponentsValue): void {
     this.componentsValue = value;
     this.facade.patchComponentsValue(value);
+  }
+
+  get showFdm3mfImport(): boolean {
+    return this.productType === ProductType.FDM && !this.facade.includesPieces;
+  }
+
+  get show3mfFooterHint(): boolean {
+    if (!this.showFdm3mfImport) return false;
+    if (this.sessionHas3mf || this.existing3mfAttachment) return true;
+    const attachments = this.facade.form.controls.attachments.value ?? [];
+    return attachments.some((item) => /\.3mf$/i.test(item.name || ''));
+  }
+
+  /** Primer adjunto .3mf del producto (edición). */
+  get existing3mfAttachment(): ProductAttachment | null {
+    const attachments = this.facade.form.controls.attachments.value ?? [];
+    return (
+      attachments.find((item) => /\.3mf$/i.test(item.name || '')) ?? null
+    );
+  }
+
+  get saved3mfColorCount(): number {
+    const lines = this.facade.form.controls.filamentLines.value ?? [];
+    return lines.filter((row) => (Number(row.grams) || 0) > 0 || !!row.colorId)
+      .length;
+  }
+
+  on3mfApplied(payload: ProductForm3mfApplyPayload): void {
+    this.applying3mf = true;
+    apply3mfResultToProductForm(this.facade.form, {
+      filaments: payload.filaments,
+      printTimeHours: payload.printTimeHours,
+      purgeGrams: payload.purgeGrams,
+      colorChanges: payload.colorChanges,
+    });
+
+    this.sourcedFrom3mf = {
+      filaments: payload.result.sliced,
+      printHours: payload.result.printHours != null,
+      purge: payload.purgeGrams != null && payload.purgeGrams > 0,
+    };
+    this.sessionHas3mf = true;
+    this.applying3mf = false;
+
+    this.mediaSection?.addAttachmentFiles([payload.file]);
+    this.userEdited = true;
+    this.cdr.markForCheck();
   }
 
   private syncBasicFields(): void {

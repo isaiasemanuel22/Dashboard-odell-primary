@@ -62,6 +62,11 @@ export interface ProductFormDialogData {
             (save)="save($event)"
             (cancel)="cancel()"
           />
+          @if (form?.show3mfFooterHint) {
+            <p dockHint class="product-form-dialog__dock-hint">
+              El .3mf queda adjunto al producto para reimprimir
+            </p>
+          }
         </db-mobile-form-shell>
       } @else {
         <app-product-form
@@ -74,6 +79,16 @@ export interface ProductFormDialogData {
       }
     </app-form-dialog-shell>
   `,
+  styles: [
+    `
+      .product-form-dialog__dock-hint {
+        margin: 0;
+        text-align: center;
+        font-size: 12px;
+        color: #5b7083;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ProductFormDialogComponent implements OnInit {

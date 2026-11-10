@@ -316,14 +316,24 @@ export function normalizeMachineProfiles(
   return enforceSingleCostBase(normalized);
 }
 
-/** Perfil print usado para costear: costBase o el primero del productType. */
+/**
+ * Perfil print usado para costear.
+ * Si hay `preferredPrinterId` válido (perfil print del productType), usa ese;
+ * si no («Cualquiera» o id inválido), `costBase` o el primero del productType.
+ */
 export function selectPrintProfileForCost(
   settings: GeneralSettings,
   productType: ProductType,
+  preferredPrinterId?: string | null,
 ): MachineProfile | undefined {
   const prints = getMachineProfilesForProductType(settings, productType).filter(
     (profile) => profile.role === MachineProfileRole.PRINT,
   );
+  const preferred = preferredPrinterId?.trim();
+  if (preferred) {
+    const match = prints.find((profile) => profile.id === preferred);
+    if (match) return match;
+  }
   return prints.find((profile) => profile.costBase) ?? prints[0];
 }
 
@@ -398,9 +408,14 @@ export function calculateMachineOverhead(
   settings: GeneralSettings,
   productType: ProductType,
   context: MachineTimeContext,
+  preferredPrinterId?: string | null,
 ): { energyCost: number; machineCost: number } {
   const all = getMachineProfilesForProductType(settings, productType);
-  const printForCost = selectPrintProfileForCost(settings, productType);
+  const printForCost = selectPrintProfileForCost(
+    settings,
+    productType,
+    preferredPrinterId,
+  );
   const profiles = all.filter((profile) => {
     if (profile.role !== MachineProfileRole.PRINT) return true;
     return printForCost ? profile.id === printForCost.id : false;

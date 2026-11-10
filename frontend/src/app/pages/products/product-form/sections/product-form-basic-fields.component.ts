@@ -13,6 +13,7 @@ import { ProductType } from '../../../../core/models';
 import {
   DbCheckboxComponent,
   DbInputComponent,
+  DbSelectComponent,
   DbTextareaComponent,
 } from '@dashboard-form';
 import type { DbSelectOption } from '@dashboard-form';
@@ -25,6 +26,7 @@ export interface ProductFormBasicFieldsValue {
   published: boolean;
   includesPieces: boolean;
   finishedStock: number;
+  preferredPrinterId: string | null;
 }
 
 @Component({
@@ -34,6 +36,7 @@ export interface ProductFormBasicFieldsValue {
     FormsModule,
     DbCheckboxComponent,
     DbInputComponent,
+    DbSelectComponent,
     DbTextareaComponent,
     MobileToggleRowComponent,
   ],
@@ -45,6 +48,7 @@ export class ProductFormBasicFieldsComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
 
   @Input({ required: true }) productTypeOptions!: DbSelectOption[];
+  @Input() preferredPrinterOptions: DbSelectOption[] = [];
   /** En mobile el tipo vive fuera, en el segmentado del form. */
   @Input() hideTypeSwitch = false;
   @Output() readonly valueChange =
@@ -56,6 +60,8 @@ export class ProductFormBasicFieldsComponent implements OnInit {
   published = true;
   includesPieces = false;
   finishedStock = 0;
+  /** '' = cualquiera (null en el form). */
+  preferredPrinterId = '';
 
   private ready = false;
   private lastEmitted: ProductFormBasicFieldsValue | null = null;
@@ -72,6 +78,7 @@ export class ProductFormBasicFieldsComponent implements OnInit {
       this.published = value.published;
       this.includesPieces = value.includesPieces;
       this.finishedStock = value.finishedStock;
+      this.preferredPrinterId = value.preferredPrinterId ?? '';
     }
 
     this.lastEmitted = { ...value };
@@ -90,6 +97,10 @@ export class ProductFormBasicFieldsComponent implements OnInit {
 
   get showIncludesPiecesCheckbox(): boolean {
     return this.type !== ProductType.COMBO;
+  }
+
+  get showPreferredPrinter(): boolean {
+    return this.type === ProductType.FDM;
   }
 
   selectType(value: string): void {
@@ -144,6 +155,10 @@ export class ProductFormBasicFieldsComponent implements OnInit {
       published: this.published,
       includesPieces: this.includesPieces,
       finishedStock: Math.max(0, Math.trunc(Number(this.finishedStock) || 0)),
+      preferredPrinterId:
+        this.type === ProductType.FDM
+          ? this.preferredPrinterId.trim() || null
+          : null,
     };
   }
 
@@ -160,8 +175,9 @@ export class ProductFormBasicFieldsComponent implements OnInit {
       a.name === b.name &&
       a.description === b.description &&
       a.published === b.published &&
-      a.includesPieces === b.includesPieces
-      && a.finishedStock === b.finishedStock
+      a.includesPieces === b.includesPieces &&
+      a.finishedStock === b.finishedStock &&
+      a.preferredPrinterId === b.preferredPrinterId
     );
   }
 }

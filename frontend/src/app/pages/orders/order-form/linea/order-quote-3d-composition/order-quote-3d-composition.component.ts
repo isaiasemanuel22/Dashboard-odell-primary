@@ -73,6 +73,8 @@ export class OrderQuote3dCompositionComponent implements OnInit {
   @Input({ required: true }) line!: OrderLineDraft;
   @Input() product: Product | null = null;
   @Input({ required: true }) lineIndex!: number;
+  /** Preferida del form de producto (se propaga al bloque Impresión). */
+  @Input() preferredPrinterId: string | null = null;
   /** When false, Filamento/Resina toggle is hidden (line orchestrates process). */
   @Input() showProcessToggle = true;
   /**
@@ -129,6 +131,10 @@ export class OrderQuote3dCompositionComponent implements OnInit {
 
   get errorMarginMeta(): string {
     if (!this.generalSettings) return 'Cargando Ajustes…';
+    const purge = Math.max(0, Number(this.line.purgeGrams) || 0);
+    if (purge > 0) {
+      return `${this.errorMarginPercent}% sobre material, purga, luz y máquina`;
+    }
     return `${this.errorMarginPercent}% sobre material, luz y máquina`;
   }
 
@@ -185,6 +191,7 @@ export class OrderQuote3dCompositionComponent implements OnInit {
       {
         type: isResin ? ProductType.RESINA : ProductType.FDM,
         grams: Number(this.line.grams) || 0,
+        purgeGrams: isResin ? undefined : this.line.purgeGrams,
         printTimeHours: Number(this.line.printTimeHours) || 0,
         workTimeHours: Number(this.line.workTimeHours) || 0,
         filamentType: isResin

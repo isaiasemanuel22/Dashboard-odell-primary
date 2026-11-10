@@ -133,12 +133,17 @@ export class CostCalculatorService {
       dto.type === ProductType.FDM
         ? calcPurgeCost(dto.purgeGrams, dto, settings)
         : 0;
-    const overhead = calculateMachineOverhead(settings, dto.type, {
-      printTimeHours,
-      washMinutes: dto.washMinutes,
-      cureMinutes: dto.cureMinutes,
-      pressMinutes,
-    });
+    const overhead = calculateMachineOverhead(
+      settings,
+      dto.type,
+      {
+        printTimeHours,
+        washMinutes: dto.washMinutes,
+        cureMinutes: dto.cureMinutes,
+        pressMinutes,
+      },
+      dto.preferredPrinterId,
+    );
     const laborCost = workTimeHours * settings.laborCostPerHour;
     const errorMarginCost = this.calculateErrorMarginCost(
       materialCost,
@@ -731,6 +736,7 @@ export class CostCalculatorService {
       estampadoPrints: input.estampadoPrints,
       estampadoPressCycles: input.estampadoPressCycles,
       estampadoSupplies: input.estampadoSupplies,
+      preferredPrinterId: input.preferredPrinterId,
     };
   }
 

@@ -1,0 +1,33 @@
+@if (visible) {
+  <div class="purge-row" role="group" aria-label="Purga del AMS">
+    <div class="purge-row__label">
+      <strong>Purga del AMS</strong>
+      <span class="purge-row__sub">{{ subtitle }}</span>
+    </div>
+    <div class="purge-row__grams">
+      <db-input
+        label="Gramos"
+        type="number"
+        name="purgeGrams"
+        [min]="0"
+        [step]="0.1"
+        [ngModel]="gramsDisplay"
+        [ngModelOptions]="{ standalone: true }"
+        (ngModelChange)="onGramsChange($event)"
+      />
+      @if (from3mf) {
+        <span class="purge-row__pill">.3mf</span>
+      }
+    </div>
+    <div class="purge-row__price">
+      @if (pricePerKg != null) {
+        <span>{{ pricePerKg | currencyArs }}/kg</span>
+      } @else {
+        <span>—</span>
+      }
+    </div>
+    <div class="purge-row__cost">
+      <strong>{{ purgeCost | currencyArs }}</strong>
+    </div>
+  </div>
+}

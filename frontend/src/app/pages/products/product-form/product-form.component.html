@@ -47,9 +47,22 @@
             <app-product-form-basic-fields
               [value]="basicFields ?? facade.basicFieldsValue"
               [productTypeOptions]="facade.productTypeOptions"
+              [preferredPrinterOptions]="preferredPrinterOptions"
               [hideTypeSwitch]="isMobile()"
               (valueChange)="onBasicFieldsChange($event)"
             >
+              @if (showFdm3mfImport) {
+                <app-product-form-3mf-import
+                  productForm3mf
+                  [existingFilaments]="facade.form.controls.filamentLines.value"
+                  [existingPrintHours]="facade.form.controls.printTimeHours.value"
+                  [existingAttachment]="existing3mfAttachment"
+                  [savedPrintHours]="facade.form.controls.printTimeHours.value"
+                  [savedGrams]="facade.form.controls.grams.value"
+                  [savedColorCount]="saved3mfColorCount"
+                  (applied)="on3mfApplied($event)"
+                />
+              }
               <app-product-form-categories-section
                 [productType]="productType"
                 [value]="categoryIds"
@@ -120,6 +133,8 @@
               [form]="facade.form"
               [productType]="productType"
               [includesPieces]="facade.includesPieces"
+              [printHoursFrom3mf]="sourcedFrom3mf.printHours"
+              [purgeFrom3mf]="sourcedFrom3mf.purge"
             />
           </div>
         </div>
@@ -199,6 +214,8 @@
           <p class="footer-stock-hint">
             Stock terminado sugerido: {{ suggestedFinishedStock }} (lo que alcanzan las piezas)
           </p>
+        } @else if (show3mfFooterHint) {
+          <p class="footer-3mf-hint">El .3mf queda adjunto al producto para reimprimir</p>
         } @else {
           <span></span>
         }
