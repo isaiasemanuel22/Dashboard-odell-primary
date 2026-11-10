@@ -1,9 +1,6 @@
 import { ProductType, ServiceType } from '../common/enums';
 import { Product, QuoteItem } from '../common/interfaces';
-import {
-  isAreaService,
-  isDesignService,
-} from '../common/service-type.util';
+import { isAreaService, isDesignService } from '../common/service-type.util';
 import {
   normalizeEstampadoPressCycles,
   normalizeEstampadoPrints,

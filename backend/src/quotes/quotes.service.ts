@@ -80,15 +80,18 @@ export class QuotesService {
     );
     const priceType =
       data.priceType ?? this.defaultPriceTypeForCustomer(customer);
-    const normalizedItems = this.normalizeQuoteItems(data.items);
+    const status = this.resolveFormStatus(data.status);
+    const description = this.normalizeDescription(data.description);
+    const normalizedItems = this.normalizeItemsForStatus(data.items);
     const priced = this.priceQuoteItems(normalizedItems, priceType, customer);
     const items = priced.items;
     const services = this.deriveServices(items);
     const discount = normalizeDiscountFields(data);
     const now = new Date();
     const quotedAt = this.todayQuotedAt(now);
-    const status = this.resolveFormStatus(data.status);
     this.assertCustomerForSent(status, customerId);
+    this.assertItemsForSent(status, items);
+    this.assertDraftHasContent(status, customerId, description);
 
     const quote: Quote = {
       id: this.quotes.nextId(),
@@ -105,7 +108,7 @@ export class QuotesService {
       total: this.calculateTotal(items, discount),
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
-      description: this.normalizeDescription(data.description),
+      description,
       attachments: sanitizeDocumentAttachments(data.attachments),
     };
 
@@ -133,9 +136,18 @@ export class QuotesService {
       data.customerId !== undefined ||
       data.items !== undefined;
 
+    const status =
+      data.status !== undefined
+        ? this.resolveFormStatus(data.status)
+        : current.status;
+    const description =
+      data.description !== undefined
+        ? this.normalizeDescription(data.description)
+        : current.description;
+
     let items =
       data.items !== undefined
-        ? this.normalizeQuoteItems(data.items)
+        ? this.normalizeItemsForStatus(data.items)
         : current.items;
     let wholesaleApplied = current.wholesaleApplied === true;
 
@@ -163,11 +175,9 @@ export class QuotesService {
           : current.discountAmount,
     });
 
-    const status =
-      data.status !== undefined
-        ? this.resolveFormStatus(data.status)
-        : current.status;
     this.assertCustomerForSent(status, customerId);
+    this.assertItemsForSent(status, items);
+    this.assertDraftHasContent(status, customerId, description);
 
     const salesChannel =
       data.salesChannel !== undefined
@@ -186,10 +196,7 @@ export class QuotesService {
       total: this.calculateTotal(items, discount),
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
-      description:
-        data.description !== undefined
-          ? this.normalizeDescription(data.description)
-          : current.description,
+      description,
       attachments:
         data.attachments !== undefined
           ? sanitizeDocumentAttachments(data.attachments)
@@ -220,6 +227,9 @@ export class QuotesService {
       throw new BadRequestException('El pedido requiere un cliente asociado');
     }
     this.assertCustomerForSent(status, quote.customerId);
+    if (status === QuoteStatus.ENVIADO || status === QuoteStatus.ACEPTADO) {
+      this.assertItemsForSent(QuoteStatus.ENVIADO, quote.items);
+    }
 
     quote.status = status;
     this.quotes.save(quote);
@@ -362,6 +372,40 @@ export class QuotesService {
     throw new BadRequestException(
       'Para dejar el presupuesto Enviado necesitás un cliente',
     );
+  }
+
+  /** Enviado (y Aceptado) exige al menos una línea. */
+  private assertItemsForSent(
+    status: QuoteStatus,
+    items: QuoteItem[] | undefined,
+  ): void {
+    if (status !== QuoteStatus.ENVIADO) return;
+    if (items && items.length > 0) return;
+    throw new BadRequestException(
+      'El presupuesto necesita al menos una línea para enviarse',
+    );
+  }
+
+  /** Un borrador puede no tener líneas, pero sí cliente o descripción. */
+  private assertDraftHasContent(
+    status: QuoteStatus,
+    customerId: string | null | undefined,
+    description: string | undefined,
+  ): void {
+    if (status !== QuoteStatus.BORRADOR) return;
+    if (customerId?.trim() || description) return;
+    throw new BadRequestException(
+      'El borrador necesita al menos un cliente o una descripción',
+    );
+  }
+
+  /**
+   * Sin líneas no pasa por el normalizer (que las exige en pedidos): el
+   * borrador queda vacío y Enviado lo rechaza `assertItemsForSent`.
+   */
+  private normalizeItemsForStatus(items: OrderItem[] | undefined): QuoteItem[] {
+    if (!(items && items.length > 0)) return [];
+    return this.normalizeQuoteItems(items ?? []);
   }
 
   private deriveServices(items: QuoteItem[]): ServiceType[] {

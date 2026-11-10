@@ -50,6 +50,7 @@ export class QuoteCardComponent {
 
   get summaryLabel(): string {
     const concepts = this.quote.items.length;
+    if (!concepts) return 'Sin líneas';
     const units = this.quote.items.reduce(
       (sum, item) => sum + (Number(item.quantity) || 0),
       0,

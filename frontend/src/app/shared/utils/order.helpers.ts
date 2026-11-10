@@ -483,7 +483,7 @@ export function isLineBlank(line: OrderLineDraft): boolean {
   if (line.includesRevisions) return false;
   if (line.needsClientProduct) return false;
   if (line.linkPrint) return false;
-  if (line.filaments?.some((f) => (Number(f.grams) || 0) > 0 || !!f.filamentType)) {
+  if (line.filaments?.some((f) => (Number(f.grams) || 0) > 0)) {
     return false;
   }
   if (

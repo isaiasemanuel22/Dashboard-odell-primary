@@ -231,6 +231,13 @@ RECHAZADO
 CANCELADO
 ```
 
+Un presupuesto en **borrador** se puede guardar sin líneas: alcanza con tener
+un cliente o una descripción (al menos uno). Si tiene líneas a medio completar
+no se guarda hasta corregirlas (las líneas totalmente vacías se ignoran). Para
+pasar a **enviado**, **aceptado** (y convertir a pedido) o exportar el PDF se
+exigen cliente y al menos una línea válida; un presupuesto enviado no puede
+quedar sin líneas al editarlo.
+
 Cuando el cliente acepta el presupuesto de un producto nuevo:
 
 - el producto se crea en el catálogo como no publicado;

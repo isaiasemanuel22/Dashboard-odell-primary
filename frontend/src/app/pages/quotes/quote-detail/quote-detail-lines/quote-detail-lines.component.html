@@ -1,5 +1,10 @@
 <section class="panel">
   <h3>Líneas del presupuesto</h3>
+  @if (!quote.items.length) {
+    <p class="quote-detail-lines__empty">
+      Sin líneas todavía — editá el borrador para agregarlas
+    </p>
+  } @else {
   <db-data-table
     label="Líneas del presupuesto"
     [rows]="quote.items"
@@ -38,6 +43,7 @@
       }
     </ng-template>
   </db-data-table>
+  }
   <table class="quote-detail-totals" aria-label="Totales del presupuesto">
     <tbody>
       <tr>

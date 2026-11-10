@@ -2,6 +2,9 @@
   <div class="quote-detail__panel">
     <div class="quote-detail__layout">
       <div>
+        @if (!quote.items.length) {
+          <p class="quote-detail__empty">Sin líneas todavía</p>
+        } @else {
         <table class="quote-detail__table">
           <thead>
             <tr>
@@ -22,6 +25,7 @@
             }
           </tbody>
         </table>
+        }
         <p class="quote-detail__total">
           Total <strong>{{ quote.total | currencyArs }}</strong>
         </p>
@@ -101,6 +105,9 @@
       <div class="quote-detail__panel">
         <div class="quote-detail__layout">
           <div>
+            @if (!quote.items.length) {
+              <p class="quote-detail__empty">Sin líneas todavía</p>
+            } @else {
             <table class="quote-detail__table">
               <thead>
                 <tr>
@@ -121,6 +128,7 @@
                 }
               </tbody>
             </table>
+            }
             <p class="quote-detail__total">
               Total <strong>{{ quote.total | currencyArs }}</strong>
             </p>

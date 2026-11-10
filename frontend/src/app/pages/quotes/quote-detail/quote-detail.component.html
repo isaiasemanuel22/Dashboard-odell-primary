@@ -79,7 +79,8 @@
               <button
                 type="button"
                 [class.on]="quote.status === opt.status"
-                [disabled]="statusLoading"
+                [disabled]="statusLoading || statusNeedsLines(opt.status)"
+                [attr.title]="statusNeedsLines(opt.status) ? noLinesHint : null"
                 (click)="updateStatus(opt.status)"
               >
                 {{ opt.label }}
@@ -91,6 +92,11 @@
 
       <h2 class="m-sec-t">Líneas</h2>
       <section class="m-card m-card--flush" aria-label="Líneas del presupuesto">
+        @if (hasNoLines) {
+          <div class="m-row qd-m__line qd-m__line--empty">
+            <span class="m-hint">{{ noLinesHint }}</span>
+          </div>
+        }
         @for (item of quote.items; track $index) {
           <div class="m-row qd-m__line">
             <div class="m-row__text">
@@ -215,12 +221,16 @@
           label="Generar presupuesto"
           variant="secondary"
           format="soft"
+          [disabled]="hasNoLines"
+          [attr.title]="hasNoLines ? noLinesHint : null"
           (clicked)="generateDocument()"
         />
         <db-button
           label="Generar presupuesto comparativo"
           variant="secondary"
           format="soft"
+          [disabled]="hasNoLines"
+          [attr.title]="hasNoLines ? noLinesHint : null"
           (clicked)="generateComparativeDocument()"
         />
         @if (quote.orderId) {
@@ -235,7 +245,8 @@
             [label]="generateOrderLabel"
             variant="primary"
             format="solid"
-            [disabled]="generatingOrder"
+            [disabled]="generatingOrder || hasNoLines"
+            [attr.title]="hasNoLines ? noLinesHint : null"
             (clicked)="generateOrder()"
           />
         }
@@ -311,7 +322,8 @@
                 [label]="action.label"
                 variant="primary-outline"
                 format="soft"
-                [disabled]="statusLoading"
+                [disabled]="statusLoading || statusNeedsLines(action.status)"
+                [attr.title]="statusNeedsLines(action.status) ? noLinesHint : null"
                 (clicked)="updateStatus(action.status)"
               />
             }

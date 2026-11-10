@@ -433,7 +433,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
       .filter(({ line }) => !isLineBlank(line));
 
     if (!relevant.length) {
-      missing.push('al menos un producto');
+      // Un borrador puede guardarse sin líneas; Enviado exige al menos una.
+      if (!asDraft) missing.push('al menos un producto');
     } else {
       for (const { line, index } of relevant) {
         if (isLineValid(line)) continue;
@@ -447,7 +448,11 @@ export class OrderFormComponent implements OnChanges, OnInit {
       missing.push('descripción más corta');
     }
 
-    if (!asDraft && !this.customerId.trim()) {
+    if (asDraft) {
+      if (!this.customerId.trim() && !hasRichTextContent(this.description)) {
+        missing.push('cliente o descripción');
+      }
+    } else if (!this.customerId.trim()) {
       missing.push('cliente');
     }
 
@@ -1561,7 +1566,27 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   get quoteNeedsCustomerHint(): string {
     if (!this.isQuoteForm || this.customerId.trim()) return '';
-    return 'Elegí un cliente para crear el presupuesto (Enviado). El borrador puede guardarse sin cliente.';
+    return 'Elegí un cliente para crear el presupuesto (Enviado). El borrador puede guardarse sin cliente si tiene descripción.';
+  }
+
+  /** Aviso del pie de presupuesto: distingue borrador guardable de envío. */
+  get quoteFooterLabel(): string {
+    if (!this.isQuoteForm) return this.submitMissingLabel;
+    const send = this.quoteSubmitMissing(false);
+    if (!send.length) return '';
+    if (this.quoteSubmitMissing(true).length === 0) {
+      return `Se puede guardar como borrador. Para crear el presupuesto falta: ${send.join(', ')}`;
+    }
+    return this.draftMissingLabel
+      ? `${this.draftMissingLabel}. Para crear el presupuesto falta: ${send.join(', ')}`
+      : this.submitMissingLabel;
+  }
+
+  /** Qué falta para «Guardar borrador» (vacío si se puede guardar). */
+  get draftMissingLabel(): string {
+    if (!this.isQuoteForm) return '';
+    const items = this.quoteSubmitMissing(true);
+    return items.length ? `Borrador: falta ${items.join(', ')}` : '';
   }
 
   private loadResponsibleChoices(): void {

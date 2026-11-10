@@ -125,3 +125,9 @@
     grid-template-columns: 1fr;
   }
 }
+
+.quote-detail__empty {
+  margin: 0;
+  color: var(--color-text-muted, #6b7280);
+  font-size: 0.875rem;
+}

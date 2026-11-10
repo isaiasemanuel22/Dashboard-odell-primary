@@ -102,7 +102,7 @@ export class QuotesComponent implements OnInit {
   readonly mobileChips = quoteMobileChips();
 
   readonly searchText = (quote: Quote) =>
-    [quote.id, quote.customerName, ...quote.items.map((item) => item.productName)].join(' ');
+    [quote.id, quote.customerName, ...(quote.items ?? []).map((item) => item.productName)].join(' ');
 
   readonly statusFilters: OdlFilter<Quote>[] = quoteStatusFilters().map((filter) => ({
     id: String(filter.value),
@@ -181,7 +181,8 @@ export class QuotesComponent implements OnInit {
   }
 
   private quoteSummary(quote: Quote): string {
-    const concepts = quote.items.length;
+    const concepts = quote.items?.length ?? 0;
+    if (!concepts) return 'Sin líneas';
     const units = quote.items.reduce((sum, item) => sum + (Number(item.quantity) || 0), 0);
     const conceptWord = concepts === 1 ? 'concepto' : 'conceptos';
     const unitWord = units === 1 ? 'unidad' : 'unidades';

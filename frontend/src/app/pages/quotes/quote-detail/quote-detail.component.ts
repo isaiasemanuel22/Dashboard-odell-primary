@@ -141,6 +141,22 @@ export class QuoteDetailComponent implements OnInit {
     return this.quote?.status === QuoteStatus.ENVIADO;
   }
 
+  /** Borrador vacío: no se puede exportar, enviar ni aceptar. */
+  get hasNoLines(): boolean {
+    return !!this.quote && !this.quote.items?.length;
+  }
+
+  readonly noLinesHint =
+    'Sin líneas todavía — editá el borrador para agregarlas';
+
+  /** Pasar a Enviado o Aceptado exige al menos una línea. */
+  statusNeedsLines(status: QuoteStatus): boolean {
+    return (
+      this.hasNoLines &&
+      (status === QuoteStatus.ENVIADO || status === QuoteStatus.ACEPTADO)
+    );
+  }
+
   get canGenerateOrder(): boolean {
     return this.quote
       ? canGenerateOrderFromQuote(this.quote.status) && !this.quote.orderId
@@ -294,7 +310,12 @@ export class QuoteDetailComponent implements OnInit {
   get mobileDockActions(): MobileDockAction[] {
     if (!this.quote) return [];
     const actions: MobileDockAction[] = [
-      { id: 'pdf', label: 'Exportar PDF', kind: 'secondary' },
+      {
+        id: 'pdf',
+        label: 'Exportar PDF',
+        kind: 'secondary',
+        disabled: this.hasNoLines,
+      },
     ];
     if (this.quote.orderId) {
       actions.push({ id: 'view-order', label: 'Ver pedido', kind: 'primary' });
@@ -303,7 +324,8 @@ export class QuoteDetailComponent implements OnInit {
         id: 'accept',
         label: this.mobileAcceptLabel,
         kind: 'primary',
-        disabled: this.generatingOrder || this.statusLoading,
+        disabled:
+          this.generatingOrder || this.statusLoading || this.hasNoLines,
       });
     }
     return actions;
@@ -391,12 +413,12 @@ export class QuoteDetailComponent implements OnInit {
   }
 
   generateDocument(): void {
-    if (!this.quote) return;
+    if (!this.quote || this.hasNoLines) return;
     this.formDialogs.openQuoteDocumentExport(this.quote).subscribe();
   }
 
   generateComparativeDocument(): void {
-    if (!this.quote) return;
+    if (!this.quote || this.hasNoLines) return;
     this.formDialogs.openQuoteDocumentExport(this.quote, true).subscribe();
   }
 
@@ -407,6 +429,7 @@ export class QuoteDetailComponent implements OnInit {
 
   generateOrder(): void {
     if (!this.quote || !this.canGenerateOrder || this.generatingOrder) return;
+    if (this.hasNoLines) return;
 
     const quote = this.quote;
 
@@ -457,6 +480,7 @@ export class QuoteDetailComponent implements OnInit {
   updateStatus(status: QuoteStatus): void {
     if (!this.quote || this.statusLoading) return;
     if (status === this.quote.status) return;
+    if (this.statusNeedsLines(status)) return;
     if (status === QuoteStatus.ACEPTADO) {
       const createsProduct = this.quote.items.some((item) => !item.productId);
       const message = createsProduct

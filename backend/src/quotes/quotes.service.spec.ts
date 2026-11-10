@@ -276,3 +276,83 @@ describe('QuotesService precio mayorista (§10)', () => {
     expect(updated.total).toBe(800);
   });
 });
+
+describe('QuotesService borrador sin líneas', () => {
+  function setup() {
+    const store = new StoreService();
+    const state = createEmptyState();
+    state.customers.push({
+      id: 'cust-1',
+      name: 'Cliente',
+      email: 'a@test.com',
+      phone: '123',
+      type: CustomerType.PARTICULAR,
+      createdAt: '2026-10-21T12:00:00.000Z',
+    });
+    store.applyState(state);
+    return buildQuotesService(store);
+  }
+
+  const line = {
+    serviceType: ServiceType.IMPRESION_3D,
+    productName: 'Mate',
+    quantity: 1,
+    unitPrice: 2500,
+    grams: 40,
+    printTimeHours: 2,
+    filamentType: FilamentType.PLA,
+  };
+
+  it('borrador vacío con cliente se guarda', () => {
+    const quote = setup().create({ customerId: 'cust-1', items: [] });
+    expect(quote.status).toBe(QuoteStatus.BORRADOR);
+    expect(quote.items).toEqual([]);
+    expect(quote.total).toBe(0);
+  });
+
+  it('borrador sin cliente ni descripción se rechaza', () => {
+    expect(() => setup().create({ items: [] })).toThrow(
+      'El borrador necesita al menos un cliente o una descripción',
+    );
+  });
+
+  it('borrador con descripción sin cliente se guarda', () => {
+    const quote = setup().create({ items: [], description: '<p>Nota</p>' });
+    expect(quote.customerId).toBeNull();
+    expect(quote.items).toEqual([]);
+  });
+
+  it('crear Enviado sin líneas se rechaza', () => {
+    expect(() =>
+      setup().create({
+        customerId: 'cust-1',
+        items: [],
+        status: QuoteStatus.ENVIADO,
+      }),
+    ).toThrow('El presupuesto necesita al menos una línea para enviarse');
+  });
+
+  it('updateStatus a Enviado o Aceptado sin líneas se rechaza', () => {
+    const service = setup();
+    const quote = service.create({ customerId: 'cust-1', items: [] });
+    expect(() => service.updateStatus(quote.id, QuoteStatus.ENVIADO)).toThrow(
+      'al menos una línea',
+    );
+    expect(() => service.updateStatus(quote.id, QuoteStatus.ACEPTADO)).toThrow(
+      'al menos una línea',
+    );
+  });
+
+  it('editar un Enviado dejándolo sin líneas se rechaza', () => {
+    const service = setup();
+    const quote = service.create({
+      customerId: 'cust-1',
+      items: [line],
+      status: QuoteStatus.ENVIADO,
+    });
+    expect(quote.status).toBe(QuoteStatus.ENVIADO);
+    expect(() => service.update(quote.id, { items: [] })).toThrow(
+      'al menos una línea',
+    );
+  });
+});
