@@ -119,22 +119,30 @@
 
 .product-card__pricing {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.4rem;
+  // Con la tarjeta angosta pasa a dos columnas en vez de pisar los encabezados.
+  grid-template-columns: repeat(auto-fit, minmax(4.4rem, 1fr));
+  gap: 0.4rem 0.6rem;
   margin-top: 0.65rem;
 
   small {
     display: block;
     margin-bottom: 0.1rem;
+    overflow: hidden;
     color: $color-text-subtle;
     font-size: 0.68rem;
     font-weight: 700;
-    letter-spacing: 0.03em;
+    letter-spacing: 0.02em;
+    text-overflow: ellipsis;
     text-transform: uppercase;
+    white-space: nowrap;
   }
 
   strong,
   span {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
     font-size: $font-body;
     font-weight: 700;
     color: $color-text;
