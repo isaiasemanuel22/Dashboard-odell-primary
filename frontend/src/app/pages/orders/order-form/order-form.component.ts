@@ -75,9 +75,7 @@ import {
   isLineBlank,
   isLineValid,
   lineFromOrderItem,
-  lineConceptError,
-  lineQuantityError,
-  lineUnitPriceError,
+  lineMissingReasons as buildLineMissingReasons,
   orderLinesFromSaleCart,
   orderLineStockHint,
   ORDER_DESCRIPTION_MAX_LENGTH,
@@ -85,7 +83,6 @@ import {
   toDateInputValue,
   toOrderDueDate,
 } from '../../../shared/utils/order.helpers';
-import { isDesignPrintConfigured } from '../../../shared/utils/design-print.util';
 import {
   calculateOrderLinesCost,
   resolveProductUnitCost,
@@ -1553,49 +1550,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
    * que `isLineValid` / mensajes de error de línea.
    */
   private lineMissingReasons(line: OrderLineDraft, lineNumber: number): string[] {
-    const reasons: string[] = [];
-    const n = lineNumber;
-
-    if (lineQuantityError(line.quantity)) {
-      reasons.push(`cantidad de la línea ${n}`);
-    }
-    if (lineConceptError(line)) {
-      reasons.push(`concepto de la línea ${n}`);
-    }
-    if (lineUnitPriceError(line)) {
-      reasons.push(`precio de la línea ${n}`);
-    }
-
-    if (isDesignService(line.serviceType)) {
-      if (line.includesPrint && !isDesignPrintConfigured(line)) {
-        reasons.push(`impresión de la línea ${n}`);
-      }
-    } else if (isImpresion3DLine(line.serviceType) && !line.productId?.trim()) {
-      const product = this.productForLine(line);
-      const resin = isResinQuoteLine(line, product);
-      const configured = resin
-        ? isResinQuoteConfigured(line)
-        : isFdmQuoteConfigured(line);
-      if (!configured) {
-        reasons.push(`gramos de la línea ${n}`);
-      }
-    } else if (isEstampadoLine(line.serviceType) && !line.productId?.trim()) {
-      if (!isEstampadoQuoteConfigured(line)) {
-        reasons.push(`composición de la línea ${n}`);
-      }
-    } else if (
-      !isDesignService(line.serviceType) &&
-      !isImpresion3DLine(line.serviceType) &&
-      !isEstampadoLine(line.serviceType) &&
-      !line.productId?.trim()
-    ) {
-      reasons.push(`producto de la línea ${n}`);
-    }
-
-    if (!reasons.length) {
-      reasons.push(`datos de la línea ${n}`);
-    }
-    return reasons;
+    return buildLineMissingReasons(line, lineNumber, this.productForLine(line));
   }
 
   get quoteNeedsCustomerHint(): string {

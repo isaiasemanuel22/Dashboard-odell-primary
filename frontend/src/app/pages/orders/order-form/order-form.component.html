@@ -385,7 +385,11 @@
     @if (isQuoteForm) {
       <db-form-footer class="quote-form__footer desktop-only">
         @if (!canSubmit(false) && submitMissingLabel) {
-          <p class="quote-form__warning" role="status">{{ submitMissingLabel }}</p>
+          <p
+            class="quote-form__warning"
+            role="status"
+            [attr.title]="submitMissingLabel"
+          >{{ submitMissingLabel }}</p>
         } @else if (!isEditing) {
           <p class="quote-form__note">
             «Crear presupuesto» lo deja Enviado · «Guardar borrador» lo deja Borrador
@@ -416,7 +420,10 @@
           />
         </div>
         @if (quoteNeedsCustomerHint) {
-          <p class="quote-form__warning">{{ quoteNeedsCustomerHint }}</p>
+          <p
+            class="quote-form__warning quote-form__warning--hint"
+            [attr.title]="quoteNeedsCustomerHint"
+          >{{ quoteNeedsCustomerHint }}</p>
         }
       </db-form-footer>
       <db-mobile-dock
@@ -432,7 +439,11 @@
     } @else {
       <db-form-footer class="order-form__footer desktop-only">
         @if (!canSubmit() && submitMissingLabel) {
-          <p class="order-form__warning" role="status">{{ submitMissingLabel }}</p>
+          <p
+            class="order-form__warning"
+            role="status"
+            [attr.title]="submitMissingLabel"
+          >{{ submitMissingLabel }}</p>
         } @else if (!isEditing) {
           <p class="order-form__note">
             Se crea en estado Pendiente · la seña queda vinculada al pedido

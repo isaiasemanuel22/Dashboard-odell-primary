@@ -401,31 +401,51 @@
 }
 
 // El fondo gris, el borde y el padding los pone el shell (footerBar).
+// Altura estable: aviso clamp a 2 líneas; botones no se corren.
+$footer-warning-line-height: 1.35;
+$footer-warning-font-size: 0.75rem;
+$footer-warning-min-height: calc(
+  #{$footer-warning-font-size} * #{$footer-warning-line-height} * 2
+);
+
 .quote-form__footer ::ng-deep .db-form-footer {
   display: flex;
   flex-direction: row;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
+  min-height: $footer-warning-min-height;
 }
 
 .quote-form__note {
   margin: 0;
   color: $color-text-muted;
-  font-size: 0.75rem;
-  line-height: 1.35;
+  font-size: $footer-warning-font-size;
+  line-height: $footer-warning-line-height;
   flex: 1 1 auto;
+  min-width: 0;
 }
 
 .quote-form__warning {
   margin: 0;
   color: $color-warning-accent;
-  font-size: 0.75rem;
+  font-size: $footer-warning-font-size;
   font-weight: 500;
-  line-height: 1.35;
+  line-height: $footer-warning-line-height;
   text-align: left;
   flex: 1 1 auto;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+}
+
+.quote-form__warning--hint {
+  flex: 0 1 auto;
+  max-width: 40%;
 }
 
 .quote-form__actions {
@@ -447,31 +467,41 @@
 
 .order-form__footer ::ng-deep .db-form-footer {
   display: flex;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.85rem;
+  min-height: $footer-warning-min-height;
 }
 
 .order-form__note {
   margin: 0;
   color: $color-text-muted;
-  font-size: 0.75rem;
-  line-height: 1.35;
-  flex-shrink: 0;
+  font-size: $footer-warning-font-size;
+  line-height: $footer-warning-line-height;
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .order-form__warning {
   margin: 0;
   color: $color-warning-accent;
-  font-size: 0.75rem;
+  font-size: $footer-warning-font-size;
   font-weight: 500;
-  line-height: 1.35;
+  line-height: $footer-warning-line-height;
   text-align: left;
   flex: 1 1 auto;
+  min-width: 0;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
 }
 
 .order-form__note-spacer {
   flex: 1;
+  min-width: 0;
 }
 
 .order-form__actions {

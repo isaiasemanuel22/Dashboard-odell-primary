@@ -4,6 +4,7 @@ import {
   isLineBlank,
   isLineValid,
   isValidLineQuantity,
+  lineMissingReasons,
   lineQuantityError,
   lineUnitPriceError,
   lineValidationMessage,
@@ -50,6 +51,45 @@ describe('B9 order line validations', () => {
     expect(isLineValid(baseLine({ quantity: 2.5 }))).toBe(false);
     expect(isLineValid(baseLine({ unitPrice: 0 }))).toBe(false);
     expect(isLineValid(baseLine())).toBe(true);
+  });
+
+  it('lineMissingReasons omits product for supply and third-party lines', () => {
+    const serviceReasons = lineMissingReasons(
+      {
+        serviceType: ServiceType.SERVICIO_TERCERO,
+        quantity: 1,
+        unitPrice: 0,
+        customName: 'Corte láser',
+      },
+      2,
+    );
+    expect(serviceReasons).toContain('precio de la línea 2');
+    expect(serviceReasons.some((r) => r.includes('producto'))).toBe(false);
+
+    const unnamedService = lineMissingReasons(
+      {
+        serviceType: ServiceType.SERVICIO_TERCERO,
+        quantity: 1,
+        unitPrice: 500,
+        customName: '',
+      },
+      3,
+    );
+    expect(unnamedService).toContain('nombre de la línea 3');
+    expect(unnamedService.some((r) => r.includes('concepto'))).toBe(false);
+    expect(unnamedService.some((r) => r.includes('producto'))).toBe(false);
+
+    const supplyReasons = lineMissingReasons(
+      {
+        serviceType: ServiceType.INSUMO,
+        quantity: 1,
+        unitPrice: 100,
+        estampadoSupplies: [{ id: 's1', supplyId: '', quantity: 1 }],
+      },
+      1,
+    );
+    expect(supplyReasons).toContain('insumo de la línea 1');
+    expect(supplyReasons.some((r) => r.includes('producto'))).toBe(false);
   });
 
   it('marks empty default line as blank', () => {

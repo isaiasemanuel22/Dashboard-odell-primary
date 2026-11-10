@@ -555,6 +555,74 @@ export function isLineValid(line: OrderLineDraft): boolean {
   return !!line.productId?.trim();
 }
 
+/**
+ * Motivos legibles por línea inválida, alineados con `isLineValid`
+ * y con los mensajes de error de línea.
+ */
+export function lineMissingReasons(
+  line: OrderLineDraft,
+  lineNumber: number,
+  product?: Product,
+): string[] {
+  const reasons: string[] = [];
+  const n = lineNumber;
+
+  if (lineQuantityError(line.quantity)) {
+    reasons.push(`cantidad de la línea ${n}`);
+  }
+
+  const conceptErr = lineConceptError(line);
+  if (
+    conceptErr &&
+    !isSupplyOrderLine(line.serviceType) &&
+    !isThirdPartyService(line.serviceType)
+  ) {
+    reasons.push(`concepto de la línea ${n}`);
+  }
+
+  if (lineUnitPriceError(line)) {
+    reasons.push(`precio de la línea ${n}`);
+  }
+
+  if (isSupplyOrderLine(line.serviceType)) {
+    if (!line.estampadoSupplies?.[0]?.supplyId) {
+      reasons.push(`insumo de la línea ${n}`);
+    }
+  } else if (isThirdPartyService(line.serviceType)) {
+    if (!line.customName?.trim()) {
+      reasons.push(`nombre de la línea ${n}`);
+    }
+  } else if (isDesignService(line.serviceType)) {
+    if (line.includesPrint && !isDesignPrintConfigured(line)) {
+      reasons.push(`impresión de la línea ${n}`);
+    }
+  } else if (isImpresion3DLine(line.serviceType) && !line.productId?.trim()) {
+    const resin = isResinQuoteLine(line, product);
+    const configured = resin
+      ? isResinQuoteConfigured(line)
+      : isFdmQuoteConfigured(line);
+    if (!configured) {
+      reasons.push(`gramos de la línea ${n}`);
+    }
+  } else if (isEstampadoLine(line.serviceType) && !line.productId?.trim()) {
+    if (!isEstampadoQuoteConfigured(line)) {
+      reasons.push(`composición de la línea ${n}`);
+    }
+  } else if (
+    !isDesignService(line.serviceType) &&
+    !isImpresion3DLine(line.serviceType) &&
+    !isEstampadoLine(line.serviceType) &&
+    !line.productId?.trim()
+  ) {
+    reasons.push(`producto de la línea ${n}`);
+  }
+
+  if (!reasons.length) {
+    reasons.push(`datos de la línea ${n}`);
+  }
+  return reasons;
+}
+
 export function orderLinesFromSaleCart(
   lines: Array<{ productId: string; quantity: number; unitPrice: number }>,
   products: Product[],
