@@ -270,6 +270,20 @@
   }
 }
 
+/* Desktop: el pie queda siempre visible abajo; el cuerpo del diálogo scrollea. */
+@media (min-width: 769px) {
+  .product-create__footer {
+    position: sticky;
+    // Compensa el padding inferior de .modal__body (1.1rem en modal xl).
+    bottom: -1.1rem;
+    margin-bottom: -1.1rem;
+    z-index: 3;
+    background: #fff;
+    padding-bottom: 1.95rem;
+    box-shadow: 0 -6px 10px -8px rgba(15, 23, 42, 0.18);
+  }
+}
+
 .footer-3mf-hint {
   margin: 0;
   color: $color-text-muted;

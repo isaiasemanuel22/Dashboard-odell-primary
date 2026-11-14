@@ -568,6 +568,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (this.responsibleError) return this.responsibleError;
     if (
       !this.isQuoteForm &&
+      (this.submitAttempted || this.responsibleManual) &&
       !this.responsibleUserId.trim() &&
       this.responsibleOptions.length > 0
     ) {
