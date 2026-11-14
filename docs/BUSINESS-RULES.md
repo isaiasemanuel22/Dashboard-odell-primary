@@ -423,9 +423,12 @@ reserva ocurre cuando la tarea `Preparar pedido` pasa a `EN PROGRESO`:
 - dejan de estar disponibles para otras operaciones;
 - el stock físico se descuenta cuando se registra la entrega.
 
-Como el stock puede cambiar antes de comenzar la preparación, en ese momento
-se recalculan las cantidades provenientes de stock y las cantidades que deben
-producirse. Si aparece un faltante, se crea una tarea:
+Al confirmar el pedido, la parte que el stock disponible no cubre genera la
+tarea de fabricación (publicado o no el producto, y también en pedidos que
+salen de un presupuesto). Como el stock puede cambiar antes de comenzar la
+preparación, al iniciarla se recalculan las cantidades provenientes de stock y
+las que deben producirse: la tarea existente se actualiza (no se duplica) y,
+si aparece un faltante nuevo, se crea una sola tarea:
 
 ```text
 Hacer {cantidad faltante} {nombre del producto}
@@ -658,8 +661,9 @@ Al confirmar el pedido:
   total;
 - una tarea de servicio no mezcla productos o servicios distintos.
 
-Cuando un producto debe fabricarse por falta de stock, el sistema genera una
-única tarea `Hacer {cantidad} {producto}`. Las subtareas que el usuario cree
+Cuando un producto debe fabricarse por falta de stock, el sistema genera al
+confirmar el pedido una única tarea `Hacer {cantidad faltante} {producto}`;
+la parte cubierta por stock sigue el flujo de reserva al preparar. Las subtareas que el usuario cree
 manualmente se consideran dependencias de esa tarea principal: la tarea
 principal no puede terminar hasta que todas sus subtareas hayan terminado.
 
@@ -808,11 +812,11 @@ encarga de fabricar; Ventas se encarga de preparar y entregar.
 La tarea se crea automáticamente al confirmar el pedido y comienza
 `BLOQUEADA`.
 
-Ventas puede pasar `Preparar pedido` a `EN PROGRESO` cuando exista al menos
-un ítem disponible, ya sea proveniente del stock que puede reservarse o de
-una tarea de producción terminada o parcialmente completada. En ese momento
-se reserva el stock disponible y se recalcula cualquier faltante que deba
-producirse. Ventas no necesita esperar toda la producción y puede gestionar
+Las tareas `Hacer…` por faltante ya existen desde la confirmación. Ventas
+puede pasar `Preparar pedido` a `EN PROGRESO` cuando haya algo disponible, ya
+sea del stock que puede reservarse o de una tarea de producción terminada o
+parcialmente completada. En ese momento se reserva el stock disponible y se
+recalcula el faltante, actualizando la tarea existente sin duplicarla. Ventas no necesita esperar toda la producción y puede gestionar
 entregas parciales.
 
 La tarea permanece activa durante las entregas parciales y pasa a

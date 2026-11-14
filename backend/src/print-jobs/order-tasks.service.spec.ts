@@ -111,9 +111,11 @@ describe('OrderTasksService', () => {
 
     expect(order.items[0].reservedQuantity).toBe(0);
     expect(order.items[0].productionRequiredQuantity).toBe(3);
+    // El faltante genera «Hacer…» al confirmar; lo que hay en stock se reserva al preparar.
     expect(
-      store.printJobs.find((task) => task.taskType === TaskType.PRODUCTION),
-    ).toBeUndefined();
+      store.printJobs.find((task) => task.taskType === TaskType.PRODUCTION)
+        ?.quantity,
+    ).toBe(3);
 
     const prepare = store.printJobs.find(
       (task) => task.taskType === TaskType.PREPARE_ORDER,
@@ -124,13 +126,16 @@ describe('OrderTasksService', () => {
     expect(order.items[0].reservedQuantity).toBe(2);
     expect(order.items[0].productionRequiredQuantity).toBe(3);
     expect(
+      store.printJobs.filter((task) => task.taskType === TaskType.PRODUCTION),
+    ).toHaveLength(1);
+    expect(
       store.printJobs.find((task) => task.taskType === TaskType.PRODUCTION)
         ?.quantity,
     ).toBe(3);
     expect(store.products[0].stock).toBe(2);
   });
 
-  it('no reserva al confirmar y crea la producción al preparar', () => {
+  it('no reserva al confirmar y crea la producción del faltante al confirmar', () => {
     store.products[0].stock = 0;
     const order: Order = {
       id: 'ord-no-stock',
@@ -159,7 +164,7 @@ describe('OrderTasksService', () => {
     expect(order.items[0].reservedQuantity).toBe(0);
     expect(
       store.printJobs.find((task) => task.taskType === TaskType.PRODUCTION),
-    ).toBeUndefined();
+    ).toMatchObject({ quantity: 2, productName: 'Hacer 2 Pieza' });
     expect(service.buildOperationalAlerts(order)).toEqual([
       expect.objectContaining({
         code: 'insufficient_stock',

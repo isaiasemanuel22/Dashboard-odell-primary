@@ -783,13 +783,12 @@ export class OrderTasksService implements OnModuleInit {
     );
     item.reservedQuantity = reserve ? fromStock : 0;
 
-    // Producto no publicado y sin stock (el que crea un presupuesto aceptado):
-    // se produce a pedido, así que la tarea «Hacer…» nace con el pedido, igual
-    // que en una línea a medida cargada a mano.
-    const makeToOrder = product.published === false && fromStock <= 0;
-    if ((reserve || makeToOrder) && item.productionRequiredQuantity > 0) {
+    // El faltante genera «Hacer…» al confirmar (publicado o no); lo que cubre
+    // el stock se reserva recién al iniciar «Preparar pedido». ensureItemTask
+    // reutiliza la tarea existente, así que recalcular no la duplica.
+    if (item.productionRequiredQuantity > 0) {
       this.ensureItemTask(order, item, index, TaskType.PRODUCTION);
-    } else if (!reserve || item.productionRequiredQuantity <= 0) {
+    } else {
       this.cancelOpenProductionTask(order.id, index);
     }
   }
