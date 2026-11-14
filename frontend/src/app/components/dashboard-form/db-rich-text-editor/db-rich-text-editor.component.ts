@@ -68,6 +68,10 @@ export class DbRichTextEditorComponent
   private quillRoot: HTMLElement | null = null;
   private onPasteCapture: ((e: ClipboardEvent) => void) | null = null;
   private onDropCapture: ((e: DragEvent) => void) | null = null;
+  private imeRoot: HTMLElement | null = null;
+  private imeQuill: Quill | null = null;
+  private onCompositionStart: (() => void) | null = null;
+  private onImeSync: (() => void) | null = null;
 
   ngOnInit(): void {
     this.modules = {
@@ -86,6 +90,19 @@ export class DbRichTextEditorComponent
   }
 
   ngOnDestroy(): void {
+    if (this.imeRoot) {
+      if (this.onCompositionStart) {
+        this.imeRoot.removeEventListener('compositionstart', this.onCompositionStart);
+      }
+      if (this.onImeSync) {
+        this.imeRoot.removeEventListener('input', this.onImeSync);
+        this.imeRoot.removeEventListener('compositionend', this.onImeSync);
+      }
+    }
+    this.imeRoot = null;
+    this.imeQuill = null;
+    this.onCompositionStart = null;
+    this.onImeSync = null;
     if (!this.quillRoot) return;
     if (this.onPasteCapture) {
       this.quillRoot.removeEventListener('paste', this.onPasteCapture, true);
@@ -178,6 +195,8 @@ export class DbRichTextEditorComponent
       return delta;
     });
 
+    this.setupImePlaceholder(quill);
+
     if (!this.uploadFn) return;
 
     this.quillRoot = quill.root;
@@ -185,6 +204,26 @@ export class DbRichTextEditorComponent
     this.onDropCapture = (e: DragEvent) => this.handleDrop(e, quill);
     quill.root.addEventListener('paste', this.onPasteCapture, true);
     quill.root.addEventListener('drop', this.onDropCapture, true);
+  }
+
+  /**
+   * En Android (IME) Quill actualiza `ql-blank` recién al terminar la composición,
+   * así que el placeholder queda sobre la primera letra. Se sincroniza a mano.
+   */
+  private setupImePlaceholder(quill: Quill): void {
+    const root = quill.root;
+    this.imeRoot = root;
+    this.imeQuill = quill;
+    this.onCompositionStart = () => root.classList.remove('ql-blank');
+    this.onImeSync = () => {
+      const empty =
+        (this.imeQuill?.getLength() ?? 1) <= 1 &&
+        !(root.textContent ?? '').replace(/\u200B/g, '').length;
+      root.classList.toggle('ql-blank', empty);
+    };
+    root.addEventListener('compositionstart', this.onCompositionStart);
+    root.addEventListener('input', this.onImeSync);
+    root.addEventListener('compositionend', this.onImeSync);
   }
 
   openImageUpload(): void {
