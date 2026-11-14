@@ -1,6 +1,6 @@
 import { test, expect } from './fixtures';
 import { gotoApp } from './helpers/nav';
-import { api, apiGet, apiPost, apiDelete, cleanupCreated, createCustomer, createQuote, e2eName } from './helpers/api';
+import { api, apiGet, createOrder, apiPost, apiDelete, cleanupCreated, createCustomer, createQuote, e2eName } from './helpers/api';
 
 const TS = Date.now();
 const NOMBRE_TILDE = `E2E-${TS} Ñandú Pérez`;
@@ -77,11 +77,19 @@ test.describe('Busqueda sin tildes', () => {
     await page.getByRole('searchbox', { name: /Buscar clientes/ }).or(page.getByPlaceholder(/Buscar por nombre, email/)).first().fill('nandu perez');
     await expect(page.getByText(NOMBRE_TILDE).locator("visible=true").first()).toBeVisible();
 
-    // Pedidos: sin pedidos del cliente, la busqueda no debe romper y el buscador acepta el texto
+    // Pedidos: pedido real del cliente, la busqueda sin tildes debe encontrarlo
+    const responsibles = await apiGet<Array<{ firebaseUid: string }>>('user-access/order-responsibles');
+    const order = await createOrder({
+      customerId: c.id,
+      responsibleUserId: responsibles[0].firebaseUid,
+      dueDate: new Date(Date.now() + 30 * 86400_000).toISOString().slice(0, 10),
+      items: [{ serviceType: 'diseno_grafico', productName: e2eName('diseno'), quantity: 1, unitPrice: 1000 }],
+    });
     await gotoApp(page, '/pedidos');
     const pedBox = page.getByRole('searchbox', { name: /Buscar pedidos/ }).or(page.getByPlaceholder(/Buscar por cliente/)).first();
     await pedBox.fill('nandu perez');
-    await expect(pedBox).toHaveValue('nandu perez');
+    await expect(page.getByText(NOMBRE_TILDE).locator('visible=true').first()).toBeVisible();
+    expect(order.id).toBeTruthy();
 
     // Insumos
     if (supply) {
