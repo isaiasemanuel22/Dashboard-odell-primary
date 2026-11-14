@@ -11,7 +11,7 @@
                 {{ entry.changedAt | dateTime }}
               </time>
               <span class="status-history__source">
-                {{ sourceLabels[entry.source] }}
+                {{ historySourceLabel(entry) }}
               </span>
             </div>
             <p class="status-history__transition">

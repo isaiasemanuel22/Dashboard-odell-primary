@@ -231,6 +231,25 @@ export class OrderFormLineComponent implements OnInit {
     this.cdr.markForCheck();
   }
 
+  /**
+   * Costo actual del catálogo cuando difiere del costo guardado en la línea
+   * (el pedido arrastra un costo viejo). `null` si coinciden o no aplica.
+   */
+  get catalogCostChange(): number | null {
+    if (!this.line.productId?.trim() || !this.hasCostComposition) return null;
+    if (this.line.unitCost == null) return null;
+    const catalog = Math.round(this.productUnitCost());
+    if (catalog <= 0) return null;
+    return catalog !== Math.round(Number(this.line.unitCost) || 0) ? catalog : null;
+  }
+
+  updateCostFromCatalog(): void {
+    const catalog = this.catalogCostChange;
+    if (catalog == null) return;
+    this.line.unitCost = catalog;
+    this.emitChanged();
+  }
+
   toggleCostComposition(): void {
     this.costCompositionExpandedOverride = !this.costCompositionExpanded;
     this.cdr.markForCheck();
@@ -240,7 +259,10 @@ export class OrderFormLineComponent implements OnInit {
   get isCostCompositionReady(): boolean {
     if (this.line.productId?.trim()) return true;
     if (isDesignService(this.line.serviceType)) {
-      return !!this.line.customName?.trim() && this.unitCost >= 0;
+      // Completa si hay costo fijo cargado o horas presupuestadas (el concepto se valida aparte).
+      return this.chargeModeFor() === 'fixed'
+        ? (Number(this.line.unitCost) || 0) > 0
+        : (Number(this.line.budgetedHours) || 0) > 0;
     }
     if (isImpresion3DLine(this.line.serviceType)) {
       if (isResinQuoteLine(this.line, this.product ?? undefined)) {

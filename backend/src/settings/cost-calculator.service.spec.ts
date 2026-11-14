@@ -1,3 +1,4 @@
+import { calcWashSupplyCost } from './machine-profile.util';
 import { ProductType, SupplyCategory } from '../common/enums';
 import type { Product, ProductPricingInput } from '../common/interfaces';
 import { CostCalculatorService } from './cost-calculator.service';
@@ -82,6 +83,28 @@ describe('CostCalculatorService', () => {
     expect(result.totalCost).toBe(
       base + result.errorMarginCost + result.laborCost,
     );
+  });
+
+  it('resina: el alcohol de lavado queda fuera del margen de error', () => {
+    const result = service.calculateCost({
+      type: ProductType.RESINA,
+      grams: 50,
+      printTimeHours: 1,
+      workTimeHours: 0,
+      washMinutes: 8,
+      cureMinutes: 10,
+      resinType: 'estandar',
+      brand: 'Test',
+    });
+    const washSupply = calcWashSupplyCost(
+      store.generalSettings,
+      store.supplies,
+      ProductType.RESINA,
+    );
+    expect(washSupply).toBeGreaterThan(0);
+    const resinOnly = result.materialCost - Math.round(washSupply);
+    const base = resinOnly + result.energyCost + result.machineCost;
+    expect(result.errorMarginCost).toBe(Math.round(base * 0.1));
   });
 
   it('incluye purgeCost FDM en el desglose y en el margen de error', () => {

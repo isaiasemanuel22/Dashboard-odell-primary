@@ -16,12 +16,14 @@ export class ProductPricingComponent {
   @Input() showMargin = false;
   /** Margen objetivo del área del producto (sobre el costo). */
   @Input() targetMarginPercent: number | null = null;
+  /** Mano de obra incluida en el costo: no lleva margen y se descuenta de la base del %. */
+  @Input() laborCost = 0;
   @Input() priceLabel = 'Precio';
   @Input() costLabel = 'Costo';
   @Input() profitLabel = 'Ganancia';
 
   get marginPercent(): number | null {
     if (!this.showMargin) return null;
-    return markupPercentOnCostRounded(this.price, this.cost);
+    return markupPercentOnCostRounded(this.price, this.cost, this.laborCost);
   }
 }

@@ -144,7 +144,8 @@
 
       &__control--with-pill {
         ::ng-deep .db-select,
-        ::ng-deep select.db-select {
+        ::ng-deep select.db-select,
+        ::ng-deep input.db-input {
           padding-right: 7.5rem;
         }
       }
@@ -274,5 +275,24 @@
 
   .quote-date-field__validity {
     font-size: 0.6875rem;
+  }
+}
+
+// Mobile: «+ Cliente nuevo» con área de toque ≥44px.
+@include mobile.mobile-only {
+  :host-context(.order-form),
+  :host-context(.quote-form) {
+    .quote-customer-field__head {
+      height: auto;
+      min-height: 44px;
+    }
+
+    ::ng-deep .quote-customer-field__new {
+      display: inline-flex;
+      align-items: center;
+      min-height: 44px;
+      padding-left: 0.5rem;
+      padding-right: 0.5rem;
+    }
   }
 }

@@ -243,7 +243,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     },
     { key: 'taskKind', header: 'Tipo', value: (task) => this.taskKindLabels[task.taskKind] },
     { key: 'status', header: 'Estado' },
-    { key: 'active', header: 'Ubicación', value: (task) => (task.active ? 'Tablero' : 'Pendiente') },
+    { key: 'active', header: 'Ubicación', value: (task) => this.taskLocationLabel(task) || '—' },
     { key: 'dueDate', header: 'Entrega', type: 'date' },
   ];
   alerts: OrderAlert[] = [];
@@ -609,11 +609,6 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     }
     if (this.showMobileDeliver) {
       actions.push({
-        id: 'deliver-all',
-        label: 'Entregado',
-        kind: 'secondary',
-      });
-      actions.push({
         id: 'deliver',
         label: 'Entregar',
         kind: 'primary',
@@ -625,10 +620,6 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   onMobileDockAction(id: string): void {
     if (id === 'pay') {
       this.openMobilePaymentsFromDock();
-      return;
-    }
-    if (id === 'deliver-all') {
-      this.deliverySheet?.confirmDeliverAll();
       return;
     }
     if (id === 'deliver') {
@@ -719,6 +710,32 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /** «···» solo aparece si hay alguna acción útil (pedido entregado/cancelado no tiene). */
+  get showMobileMoreActions(): boolean {
+    return this.canEditOrder || this.canCancelOrder || this.showMobileMarkAllDelivered;
+  }
+
+  get showMobileMarkAllDelivered(): boolean {
+    return this.showMobileDeliver && this.order?.items.some((item) => this.itemPending(item) > 0) === true;
+  }
+
+  onMobileMarkAllDelivered(): void {
+    this.closeMobileActions();
+    this.deliverySheet?.confirmDeliverAll();
+  }
+
+  /** Ubicación de la tarea; si ya terminó o está archivada solo vale su estado. */
+  taskLocationLabel(task: PrintJob): string {
+    if (
+      task.archived ||
+      task.status === 'terminado' ||
+      task.status === 'cancelado'
+    ) {
+      return '';
+    }
+    return task.active ? 'Tablero' : 'Sin publicar';
+  }
+
   onMobileEdit(): void {
     this.closeMobileActions();
     this.openEdit();
@@ -799,7 +816,9 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   lineProgressLabel(item: OrderItem): string {
     const produced = this.itemProduced(item);
     const delivered = this.itemDelivered(item);
-    const total = delivered + this.itemPending(item);
+    const pending = this.itemPending(item);
+    if (pending <= 0) return `Entregado: ${delivered}`;
+    const total = delivered + pending;
     return `Preparar: ${produced} de ${total} · Entregado: ${delivered}`;
   }
 

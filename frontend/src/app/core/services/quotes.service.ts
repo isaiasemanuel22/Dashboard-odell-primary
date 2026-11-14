@@ -38,6 +38,11 @@ export class QuotesService {
     });
   }
 
+  /** Extiende la validez: la emisión pasa a hoy. */
+  renewQuote(id: string): Observable<Quote> {
+    return this.http.post<Quote>(`${this.baseUrl}/quotes/${id}/renew`, {});
+  }
+
   deleteQuote(id: string): Observable<{ deleted: boolean }> {
     return this.http.delete<{ deleted: boolean }>(
       `${this.baseUrl}/quotes/${id}`,

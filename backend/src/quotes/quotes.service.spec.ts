@@ -404,6 +404,82 @@ describe('QuotesService tareas de producción', () => {
   });
 });
 
+describe('QuotesService pedido mixto entregado (MA-4)', () => {
+  it('genera las tareas de impresión y, al entregar todo, quedan terminadas y archivadas', () => {
+    const store = new StoreService();
+    const state = createEmptyState();
+    state.customers.push({
+      id: 'cust-1',
+      name: 'Cliente',
+      email: 'a@test.com',
+      phone: '123',
+      type: CustomerType.PARTICULAR,
+      createdAt: '2026-10-21T12:00:00.000Z',
+    });
+    state.quotes.push({
+      id: 'qte-1',
+      customerId: 'cust-1',
+      customerName: 'Cliente',
+      services: [ServiceType.IMPRESION_3D, ServiceType.DISENO_GRAFICO],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productName: 'Soporte nuevo',
+          quantity: 1,
+          unitPrice: 2500,
+          grams: 50,
+          printTimeHours: 2,
+          filamentType: FilamentType.PLA,
+        },
+        {
+          serviceType: ServiceType.DISENO_GRAFICO,
+          productName: 'Logo',
+          quantity: 1,
+          unitPrice: 1000,
+        },
+      ],
+      status: QuoteStatus.ACEPTADO,
+      total: 3500,
+      quotedAt: '2026-10-21T12:00:00.000Z',
+      createdAt: '2026-10-21T12:00:00.000Z',
+    });
+    store.applyState(state);
+    const orderTasks = new OrderTasksService(store);
+    const orders = new OrdersService(
+      new OrderRepository(store),
+      new CustomerRepository(store),
+      new ProductRepository(store),
+      orderTasks,
+      new PrintJobsService(store, orderTasks),
+      new CostCalculatorService(store),
+      store,
+    );
+    const quotes = new QuotesService(
+      new QuoteRepository(store),
+      new CustomerRepository(store),
+      orders,
+      new ProductRepository(store),
+      store,
+      { recordChange: jest.fn() } as unknown as StoreChangeService,
+    );
+
+    const order = quotes.createOrderFromQuote('qte-1');
+    const jobs = () =>
+      store.printJobs.filter((job) => job.orderId === order.id);
+    expect(jobs().some((job) => job.taskType === TaskType.PRODUCTION)).toBe(
+      true,
+    );
+
+    orders.deliverAll(order.id);
+    expect(jobs().length).toBeGreaterThanOrEqual(3);
+    for (const job of jobs()) {
+      expect(job.archived).toBe(true);
+      expect(job.active).toBe(false);
+      expect(job.status).toBe('terminado');
+    }
+  });
+});
+
 describe('QuotesService costo cargado en servicios de terceros', () => {
   it('conserva el costo al guardar, reeditar y convertir en pedido', () => {
     const store = new StoreService();
@@ -459,5 +535,59 @@ describe('QuoteRepository.nextId', () => {
     const id = new QuoteRepository(store).nextId();
     expect(id).toBe('quo-10');
     expect(id.startsWith('quo-')).toBe(true);
+  });
+});
+
+describe('QuotesService presupuesto vencido', () => {
+  function setup(quotedAt: string) {
+    const store = new StoreService();
+    const state = createEmptyState();
+    state.customers.push({
+      id: 'cust-1',
+      name: 'Cliente',
+      email: 'a@test.com',
+      phone: '123',
+      type: CustomerType.PARTICULAR,
+      createdAt: '2026-01-01T12:00:00.000Z',
+    });
+    state.quotes.push({
+      id: 'qte-v',
+      customerId: 'cust-1',
+      customerName: 'Cliente',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productName: 'Mate',
+          quantity: 1,
+          unitPrice: 2500,
+          grams: 40,
+          printTimeHours: 2,
+          filamentType: FilamentType.PLA,
+        },
+      ],
+      status: QuoteStatus.ENVIADO,
+      total: 2500,
+      quotedAt,
+      createdAt: quotedAt,
+    });
+    store.applyState(state);
+    return buildQuotesService(store);
+  }
+
+  it('rechaza aceptar un presupuesto vencido', () => {
+    const service = setup('2020-01-01T12:00:00.000Z');
+    expect(() => service.updateStatus('qte-v', QuoteStatus.ACEPTADO)).toThrow(
+      'vencido',
+    );
+  });
+
+  it('renovar extiende la validez y permite aceptar', () => {
+    const service = setup('2020-01-01T12:00:00.000Z');
+    const renewed = service.renew('qte-v');
+    expect(new Date(renewed.quotedAt).getUTCFullYear()).toBeGreaterThan(2020);
+    expect(() =>
+      service.updateStatus('qte-v', QuoteStatus.ACEPTADO),
+    ).not.toThrow();
   });
 });

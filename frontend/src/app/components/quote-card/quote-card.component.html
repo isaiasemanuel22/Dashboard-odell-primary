@@ -77,8 +77,8 @@
   </td>
   <td class="quote-line__date">{{ quote.quotedAt | dateShort }}</td>
   <td>
-    <span class="status-chip" [class]="'status-chip--' + quote.status">
-      {{ quote.status | quoteStatusLabel }}
+    <span class="status-chip" [class]="'status-chip--' + (expired ? 'rechazado' : quote.status)">
+      {{ expired ? 'Vencido' : (quote.status | quoteStatusLabel) }}
     </span>
   </td>
   <td class="quote-line__total">{{ quote.total | currencyArs }}</td>

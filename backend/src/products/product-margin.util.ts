@@ -1,11 +1,20 @@
 export type PriceRoundTo = 0 | 100 | 500;
 
-/** Markup sobre el costo: (precio − costo) ÷ costo × 100. Null si cost <= 0. */
+/**
+ * Markup sobre el costo: (precio − costo) ÷ costo × 100. Null si la base <= 0.
+ * `laborCost` se descuenta de la base: el margen se mide sin mano de obra.
+ */
 export function productMarkupPercent(
   price: number,
   cost: number,
+  laborCost = 0,
 ): number | null {
-  const safeCost = Number(cost);
+  const totalCost = Number(cost);
+  const labor = Math.min(
+    Math.max(Number(laborCost) || 0, 0),
+    Math.max(totalCost || 0, 0),
+  );
+  const safeCost = totalCost - labor;
   if (!Number.isFinite(safeCost) || safeCost <= 0) {
     return null;
   }
@@ -13,7 +22,7 @@ export function productMarkupPercent(
   if (!Number.isFinite(safePrice)) {
     return null;
   }
-  return ((safePrice - safeCost) / safeCost) * 100;
+  return ((safePrice - totalCost) / safeCost) * 100;
 }
 
 /**

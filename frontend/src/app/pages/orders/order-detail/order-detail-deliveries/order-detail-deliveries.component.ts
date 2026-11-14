@@ -37,6 +37,7 @@ import {
   orderBalanceAmount,
   pluralize,
 } from '../../../../shared/utils/order.helpers';
+import { formatCurrencyArs } from '../../../../shared/utils/currency-ars.util';
 import { isAreaService } from '../../../../shared/utils/service-type.util';
 
 @Component({
@@ -207,14 +208,18 @@ export class OrderDetailDeliveriesComponent implements OnChanges {
   confirmDeliverAll(): void {
     if (!this.canMarkDelivered) return;
     const openTasks = this.hasOpenTasks;
-    const message = openTasks
+    const balance = this.unpaidBalance;
+    let message = openTasks
       ? 'Se marcará todo como entregado, aunque haya tareas de producción sin terminar. Esas tareas se archivan.'
       : 'Se marcará todo como entregado.';
+    if (balance > 0) {
+      message += ` Queda un saldo de ${formatCurrencyArs(balance)} sin cobrar: se anota como deuda del cliente.`;
+    }
     this.formDialogs
       .openConfirm({
-        title: '¿Marcar como entregado?',
+        title: '¿Marcar todo como entregado?',
         message,
-        confirmLabel: 'Entregado',
+        confirmLabel: 'Marcar todo entregado',
         cancelLabel: 'Cancelar',
       })
       .pipe(takeUntilDestroyed(this.destroyRef))

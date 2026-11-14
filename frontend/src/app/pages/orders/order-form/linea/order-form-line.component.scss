@@ -507,3 +507,30 @@
     }
   }
 }
+
+.order-line__cost-notice {
+  margin: 0.5rem 0;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  background: #fff7e6;
+  color: #8a5a00;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+}
+
+.order-line__cost-notice-btn {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  padding: 0 0.25rem;
+  color: #1a6fb0;
+  font-family: inherit;
+  font-size: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+
+  @media (max-width: 768px) {
+    min-height: 44px;
+  }
+}

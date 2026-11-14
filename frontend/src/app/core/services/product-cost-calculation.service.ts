@@ -125,8 +125,13 @@ export class ProductCostCalculationService {
       dto.preferredPrinterId,
     );
     const laborCost = workTimeHours * settings.laborCostPerHour;
+    // El alcohol de lavado es un insumo: queda fuera del margen de error.
+    const washSupplyCost =
+      dto.type === ProductType.RESINA
+        ? calcWashSupplyCost(settings, supplies, dto.type)
+        : 0;
     const errorMarginCost = this.calculateErrorMarginCost(
-      materialCost,
+      Math.max(0, materialCost - washSupplyCost),
       overhead.energyCost,
       overhead.machineCost,
       settings,

@@ -39,6 +39,7 @@ import {
   isQuoteLineMissingFromCatalog,
   unpublishedProductFromQuoteLine,
 } from './quote-product.util';
+import { isQuoteExpired } from './quote-validity.util';
 import {
   ORDER_RICH_TEXT_MAX_LENGTH,
   hasRichTextContent,
@@ -223,6 +224,11 @@ export class QuotesService {
       );
     }
 
+    if (status === QuoteStatus.ACEPTADO && isQuoteExpired(quote)) {
+      throw new BadRequestException(
+        'El presupuesto está vencido: renovalo para extender la validez antes de aceptarlo',
+      );
+    }
     if (status === QuoteStatus.ACEPTADO && !quote.customerId) {
       throw new BadRequestException('El pedido requiere un cliente asociado');
     }
@@ -237,6 +243,13 @@ export class QuotesService {
       this.createOrderFromQuote(quote.id, actorUserId);
     }
     return this.findOne(id);
+  }
+
+  /** Extiende la validez: la fecha de emisión pasa a hoy (validez = emisión + 15 días). */
+  renew(id: string): Quote {
+    const quote = this.findOne(id);
+    this.assertEditable(quote);
+    return this.quotes.save({ ...quote, quotedAt: this.todayQuotedAt() });
   }
 
   remove(id: string): void {

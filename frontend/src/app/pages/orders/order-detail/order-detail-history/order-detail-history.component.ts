@@ -31,6 +31,8 @@ import {
 export class OrderDetailHistoryComponent {
   @Input() statusHistory: OrderStatusHistoryEntry[] = [];
   @Input() priceHistory: OrderPriceHistoryEntry[] = [];
+  /** Presupuesto de origen, para rotular la creación del pedido. */
+  @Input() sourceQuoteId: string | null = null;
 
   readonly sourceLabels = ORDER_STATUS_CHANGE_SOURCE_LABELS;
   readonly priceTriggerLabels: Record<OrderPriceHistoryEntry['trigger'], string> = {
@@ -40,6 +42,16 @@ export class OrderDetailHistoryComponent {
     bulk_price: 'Precios en bloque',
     discount_change: 'Cambio de descuento',
   };
+
+  /** La creación no la hizo la cola de trabajo: se dice de dónde viene el pedido. */
+  historySourceLabel(entry: OrderStatusHistoryEntry): string {
+    if (entry.fromStatus === null) {
+      return this.sourceQuoteId
+        ? `Creado desde presupuesto ${this.sourceQuoteId}`
+        : 'Creación del pedido';
+    }
+    return this.sourceLabels[entry.source];
+  }
 
   historyTransition(entry: OrderStatusHistoryEntry): string {
     if (entry.fromStatus === null) {

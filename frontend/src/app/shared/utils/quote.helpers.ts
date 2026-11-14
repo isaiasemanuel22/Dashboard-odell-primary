@@ -4,29 +4,64 @@ import { QUOTE_STATUS_LABELS, SERVICE_TYPE_LABELS } from '../constants/labels';
 import { labelsToSelectOptions } from './select-options';
 import { lineFromOrderItem } from './order.helpers';
 import { isThirdPartyService } from './service-type.util';
+import {
+  QUOTE_EXPIRED_LABEL,
+  isQuoteExpired,
+  quoteValidUntilYmd,
+} from './quote-validity.util';
 
-export type QuoteStatusFilter = QuoteStatus | 'all' | 'activos';
+type QuoteStateInput = Pick<Quote, 'status' | 'quotedAt'>;
+
+export type QuoteStatusFilter =
+  | QuoteStatus
+  | 'all'
+  | 'activos'
+  | 'vencidos';
 
 export function quoteStatusFilters(): ListFilterOption<QuoteStatusFilter>[] {
   return [
-    { value: 'activos', label: 'Activos' },
-    { value: 'all', label: 'Todos' },
+    { value: 'activos', label: 'Abiertos' },
+    { value: 'vencidos', label: QUOTE_EXPIRED_LABEL + 's' },
     ...labelsToSelectOptions(QUOTE_STATUS_LABELS),
+    { value: 'all', label: 'Todos' },
   ];
 }
 
+/**
+ * Los vencidos (Borrador/Enviado con validez pasada) solo aparecen en
+ * «Vencidos» y «Todos»: no cuentan como abiertos ni en su estado guardado.
+ */
 export function matchesQuoteStatusFilter(
-  status: QuoteStatus,
+  quote: QuoteStateInput,
   filter: QuoteStatusFilter,
 ): boolean {
   if (filter === 'all') return true;
+  const expired = isQuoteExpired(quote);
+  if (filter === 'vencidos') return expired;
+  if (expired) return false;
   if (filter === 'activos') {
     return (
-      status === QuoteStatus.BORRADOR || status === QuoteStatus.ENVIADO
+      quote.status === QuoteStatus.BORRADOR ||
+      quote.status === QuoteStatus.ENVIADO
     );
   }
-  return status === filter;
+  return quote.status === filter;
 }
+
+/** Etiqueta de estado visible: «Vencido» pisa Borrador/Enviado. */
+export function quoteStatusLabelFor(quote: QuoteStateInput): string {
+  return isQuoteExpired(quote)
+    ? QUOTE_EXPIRED_LABEL
+    : (QUOTE_STATUS_LABELS[quote.status] ?? quote.status);
+}
+
+/** Aceptar solo con validez vigente. */
+export function canAcceptQuote(quote: QuoteStateInput): boolean {
+  return isQuoteEditable(quote.status) && !isQuoteExpired(quote);
+}
+
+export const QUOTE_EXPIRED_HINT =
+  'Presupuesto vencido: renovalo para extender la validez antes de aceptarlo.';
 
 export function isQuoteEditable(status: QuoteStatus): boolean {
   return (
@@ -100,27 +135,29 @@ export function formatQuoteValidityLabel(quotedAt?: string | Date | null): strin
   return `Válido hasta el ${validUntil.getDate()} de ${months[validUntil.getMonth()]} de ${validUntil.getFullYear()}`;
 }
 
-/** Chip de la lista mobile: Abiertos (= activos) + cada QuoteStatus. */
-export type QuoteMobileChip = 'abiertos' | QuoteStatus;
+/** Chip de la lista mobile: Abiertos, Vencidos, cada QuoteStatus y Todos. */
+export type QuoteMobileChip = 'abiertos' | 'vencidos' | 'todos' | QuoteStatus;
 
 export function quoteMobileChips(): { value: QuoteMobileChip; label: string }[] {
   return [
     { value: 'abiertos', label: 'Abiertos' },
+    { value: 'vencidos', label: QUOTE_EXPIRED_LABEL + 's' },
     ...Object.values(QuoteStatus).map((status) => ({
-      value: status,
+      value: status as QuoteMobileChip,
       label: QUOTE_STATUS_LABELS[status],
     })),
+    { value: 'todos', label: 'Todos' },
   ];
 }
 
 export function matchesQuoteMobileChip(
-  status: QuoteStatus,
+  quote: QuoteStateInput,
   chip: QuoteMobileChip,
 ): boolean {
-  if (chip === 'abiertos') {
-    return matchesQuoteStatusFilter(status, 'activos');
-  }
-  return status === chip;
+  if (chip === 'abiertos') return matchesQuoteStatusFilter(quote, 'activos');
+  if (chip === 'vencidos') return matchesQuoteStatusFilter(quote, 'vencidos');
+  if (chip === 'todos') return true;
+  return matchesQuoteStatusFilter(quote, chip);
 }
 
 /** «Válido hasta 15/11» (corto, para tarjetas). */
@@ -143,6 +180,8 @@ export function formatQuoteMobileContextHint(quote: Quote): string {
   }
 
   const validity = formatQuoteMobileValidityShort(quote.quotedAt);
+  if (isQuoteExpired(quote)) return `Venció el ${validityShortDate(quote.quotedAt)}`;
+  if (isEmptyQuote(quote)) return 'Vacío · sin líneas';
   if (quote.status === QuoteStatus.ENVIADO) {
     const days = daysSince(quote.quotedAt);
     if (days == null) return validity;
@@ -153,6 +192,20 @@ export function formatQuoteMobileContextHint(quote: Quote): string {
   return validity;
 }
 
+function validityShortDate(quotedAt: string | Date): string {
+  const [, month, day] = quoteValidUntilYmd(quotedAt).split('-').map(Number);
+  return `${day}/${month}`;
+}
+
+/** Borrador sin líneas ni total (datos de prueba o creados a medias). */
+export function isEmptyQuote(quote: Pick<Quote, 'items' | 'total' | 'status'>): boolean {
+  return (
+    quote.status === QuoteStatus.BORRADOR &&
+    !(quote.items?.length > 0) &&
+    !(Number(quote.total) > 0)
+  );
+}
+
 export function quoteLinesMetaLabel(quote: Quote): string {
   const lines = quote.items.length;
   const noun = lines === 1 ? 'línea' : 'líneas';
@@ -160,7 +213,11 @@ export function quoteLinesMetaLabel(quote: Quote): string {
 }
 
 /** Clase de pill de estado (m-pill + variante). */
-export function quoteStatusPillClass(status: QuoteStatus): string {
+export function quoteStatusPillClass(
+  status: QuoteStatus,
+  expired = false,
+): string {
+  if (expired) return 'm-pill m-pill--d';
   switch (status) {
     case QuoteStatus.ACEPTADO:
       return 'm-pill m-pill--ok';

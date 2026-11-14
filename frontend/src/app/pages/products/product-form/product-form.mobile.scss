@@ -215,4 +215,14 @@
     border: 0;
     background: transparent;
   }
+
+  // UM-3: el switch (44×26) suma área de toque invisible hasta 44 px de alto.
+  :host ::ng-deep .m-sw::before {
+    content: '';
+    position: absolute;
+    top: -9px;
+    bottom: -9px;
+    left: 0;
+    right: 0;
+  }
 }

@@ -133,9 +133,18 @@ A ese material se suman energía, máquina, mano de obra y el margen de error
 de Ajustes. Ese conjunto es el costo del proceso. Si con esos datos el costo
 queda en 0, el guardado se rechaza.
 
-El precio del proceso es ese costo con el margen del área (Impresión 3D o
-Estampado). Si se carga un precio sugerido, ese valor reemplaza al precio
-del proceso. Los insumos del producto no entran en ese margen (§9.1).
+El margen de error se aplica solo a material, purga, luz y máquina. Los
+insumos (incluido el alcohol de lavado de la resina) quedan afuera.
+
+El precio del proceso es el costo sin mano de obra con el margen del área
+(Impresión 3D o Estampado), más la mano de obra tal cual:
+`precio = (costo sin mano de obra) × (1 + margen) + mano de obra`. El margen
+que se muestra se mide sobre el costo sin mano de obra, así un producto
+calculado muestra el margen objetivo. La mano de obra se muestra como
+componente aparte. Si se carga un precio sugerido, ese valor reemplaza al
+precio del proceso. Los insumos del producto no entran en ese margen (§9.1).
+El detalle avisa cuando el precio de lista o el mayorista quedan por debajo
+del costo; «Vender» sigue habilitado.
 
 El producto incompleto que nace al aceptar un presupuesto (§5) sigue
 pudiendo crearse con el nombre. Cuando después se edita y se guarda como

@@ -1,4 +1,4 @@
-import { Component, DestroyRef, OnInit, inject } from '@angular/core';
+import { Component, DestroyRef, OnInit, computed, inject, signal } from '@angular/core';
 import { AsyncPipe } from '@angular/common';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { filter, map } from 'rxjs';
@@ -59,6 +59,10 @@ export class LayoutComponent implements OnInit {
   readonly user$ = this.auth.currentUser$;
   readonly authEnabled = this.auth.enabled;
 
+  private readonly isMobile = signal(false);
+  /** En mobile el menú cerrado queda fuera de pantalla: inert evita el foco por teclado. */
+  readonly sidebarHidden = computed(() => this.isMobile() && !this.layoutUi.navOpen());
+
   hideBottomNav = false;
   /** En `/ventas` el FAB abre venta de mostrador; en `/presupuestos`, nuevo presupuesto; en `/clientes`, nuevo cliente; en `/cola`, nueva tarea. */
   fabOpensCounterSale = false;
@@ -92,6 +96,13 @@ export class LayoutComponent implements OnInit {
   private lastNavUrl = '';
 
   ngOnInit(): void {
+    if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+      const mq = window.matchMedia('(max-width: 768px)');
+      this.isMobile.set(mq.matches);
+      const onChange = (e: MediaQueryListEvent) => this.isMobile.set(e.matches);
+      mq.addEventListener('change', onChange);
+      this.destroyRef.onDestroy(() => mq.removeEventListener('change', onChange));
+    }
     this.realtime.connectIfEnabled();
     this.storeBootstrap.bootstrap();
     this.userAccess.loadCurrentUser().subscribe({

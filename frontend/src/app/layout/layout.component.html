@@ -11,7 +11,12 @@
     aria-hidden="true"
   ></div>
 
-  <aside class="sidebar" [class.sidebar--open]="layoutUi.navOpen()">
+  <aside
+    class="sidebar"
+    [class.sidebar--open]="layoutUi.navOpen()"
+    [attr.inert]="sidebarHidden() ? '' : null"
+    [attr.aria-hidden]="sidebarHidden() ? 'true' : null"
+  >
     <div class="brand">
       <img class="brand-logo" src="/logo.png" alt="Odell Dashboard" width="40" height="40" />
       <div>

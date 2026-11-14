@@ -30,6 +30,7 @@ import {
   sanitizeRichTextHtml,
 } from '../utils/rich-text.util';
 import { markupPercentOnCostRounded } from '../utils/product-margin.util';
+import { formatDecimalEs } from '../utils/decimal-es.util';
 import { formatPercentIntegerLabel } from '../utils/percent.util';
 import { normalizeServiceType } from '../utils/service-type.util';
 
@@ -118,6 +119,13 @@ export class CurrencyArsPipe implements PipeTransform {
 export class PercentIntegerPipe implements PipeTransform {
   transform(value: number | null | undefined): string {
     return formatPercentIntegerLabel(value);
+  }
+}
+
+@Pipe({ name: 'decimalEs', standalone: true })
+export class DecimalEsPipe implements PipeTransform {
+  transform(value: number | null | undefined, maxDecimals = 2): string {
+    return formatDecimalEs(Number(value) || 0, maxDecimals);
   }
 }
 

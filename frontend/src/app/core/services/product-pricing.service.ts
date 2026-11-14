@@ -59,7 +59,7 @@ export class ProductPricingService {
       cost,
       price,
       profit: price - cost,
-      marginPercent: markupPercentOnCostRounded(price, cost) ?? 0,
+      marginPercent: markupPercentOnCostRounded(price, cost, laborCost) ?? 0,
       configuredMarginPercent: margin,
       breakdown: null,
     };
@@ -137,7 +137,8 @@ export class ProductPricingService {
       cost: fullCost,
       price,
       profit: price - fullCost,
-      marginPercent: markupPercentOnCostRounded(price, fullCost) ?? 0,
+      marginPercent:
+        markupPercentOnCostRounded(price, fullCost, laborCost) ?? 0,
     };
   }
 

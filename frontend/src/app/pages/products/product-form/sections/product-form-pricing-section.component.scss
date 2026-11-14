@@ -223,6 +223,11 @@
   &:hover {
     background: #fef3c7;
   }
+
+  // UM-3: área de toque mínima solo en mobile.
+  @include mobile.mobile-only {
+    min-height: 44px;
+  }
 }
 
 .price-warn {

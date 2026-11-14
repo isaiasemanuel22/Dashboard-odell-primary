@@ -67,6 +67,21 @@
   }
 }
 
+// Desktop: la descripción va antes que las líneas aunque en el DOM sigan 1, 2, 3.
+.quote-layout__main {
+  > .quote-party-sec {
+    order: 1;
+  }
+
+  > .quote-description-sec {
+    order: 2;
+  }
+
+  > .quote-lines-section {
+    order: 3;
+  }
+}
+
 .quote-layout__main,
 .order-layout__main {
   min-width: 0;
@@ -561,7 +576,7 @@ $footer-warning-min-height: calc(
     }
 
     .quote-layout__main {
-      // Mobile: 1 Cliente → 2 Líneas → 3 Descripción (DOM: party, desc, lines).
+      // Mobile: 1 Cliente → 2 Líneas → 3 Descripción (DOM: party, lines, desc).
       .quote-party-sec {
         order: 1;
       }

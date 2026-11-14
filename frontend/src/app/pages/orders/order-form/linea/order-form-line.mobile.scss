@@ -25,6 +25,10 @@
       display: none;
     }
 
+    .service-pill {
+      min-height: 44px;
+    }
+
     .service-pill--active {
       background: mobile.$m-primary !important;
       border-color: mobile.$m-primary !important;
@@ -204,10 +208,6 @@
       ::ng-deep .cost-composition__head {
         display: none;
       }
-    }
-
-    .order-line__pricing {
-      display: none;
     }
 
     // Composición: meta en hasta 2 líneas; filas y «+ Agregar…» ≥44px.

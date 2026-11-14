@@ -31,6 +31,7 @@ import {
   getMarginForProductType,
   marginLabelForProductType,
 } from '../../../../shared/utils/pricing.util';
+import { formatHoursEs } from '../../../../shared/utils/decimal-es.util';
 import { markupPercentOnCostRounded } from '../../../../shared/utils/product-margin.util';
 import { ProductFormGroup } from '../services/product-form-state-manager.service';
 import { ProductFormPricingFacade } from '../store/product-form-pricing/product-form-pricing.facade';
@@ -148,7 +149,7 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   get assemblyHoursLabel(): string | null {
     const hours = Number(this.form.controls.assemblyTimeHours.value) || 0;
     if (hours <= 0) return null;
-    return `${String(hours).replace('.', ',')} h`;
+    return formatHoursEs(hours);
   }
 
   /** Objetivo del área (ajustes), no el margen del precio cargado. */
@@ -223,9 +224,13 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   }
 
   /** Precio de venta por debajo del costo (se puede guardar, pero se avisa). */
-  belowCostNotice(price: number, cost: number): string | null {
+  belowCostNotice(
+    price: number,
+    cost: number,
+    laborCost = 0,
+  ): string | null {
     if (!(price > 0) || !(cost > 0) || price >= cost) return null;
-    const margin = markupPercentOnCostRounded(price, cost);
+    const margin = markupPercentOnCostRounded(price, cost, laborCost);
     return `El precio de venta (${this.money(price)}) está por debajo del costo (${this.money(cost)}): margen ${margin}%. Se vende a pérdida.`;
   }
 
@@ -308,7 +313,11 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  unitPriceHint(calculatedPrice: number, cost: number): string {
+  unitPriceHint(
+    calculatedPrice: number,
+    cost: number,
+    laborCost = 0,
+  ): string {
     const calculated = Number(this.pricing.computedPrice) || calculatedPrice;
     const calculatedLabel =
       calculated > 0
@@ -319,7 +328,7 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
       : calculated;
     const margin =
       cost > 0 && price > 0
-        ? Math.round(((price - cost) / cost) * 100)
+        ? markupPercentOnCostRounded(price, cost, laborCost)
         : null;
     if (this.priceManual && margin != null && margin < 0) {
       return `${calculatedLabel} · precio manual · margen ${margin}%`;
@@ -333,8 +342,12 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     return calculatedLabel;
   }
 
-  actualMarginPercent(price: number, cost: number): number | null {
-    return markupPercentOnCostRounded(price, cost);
+  actualMarginPercent(
+    price: number,
+    cost: number,
+    laborCost = 0,
+  ): number | null {
+    return markupPercentOnCostRounded(price, cost, laborCost);
   }
 
   setSavings(componentsPrice: number, salePrice: number): number {

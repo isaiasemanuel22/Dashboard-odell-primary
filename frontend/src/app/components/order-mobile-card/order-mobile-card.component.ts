@@ -22,6 +22,7 @@ import { normalizeServiceType } from '../../shared/utils/service-type.util';
 export type OrderMobilePaymentLine =
   | { kind: 'deposit'; deposit: number; balance: number }
   | { kind: 'paid'; paid: number; balance: number }
+  | { kind: 'owes'; balance: number }
   | { kind: 'none' };
 
 @Component({
@@ -111,15 +112,17 @@ export function orderMobilePaymentLine(
   if (balance <= 0) return null;
 
   const deposit = orderDepositAmount(order);
-  if (deposit > 0) {
+  const paid = orderPaidAmount(order);
+  // «Seña» solo si lo cobrado es exactamente la seña; con más pagos, «Pagado».
+  if (deposit > 0 && paid > 0 && deposit === paid) {
     return { kind: 'deposit', deposit, balance };
   }
-
-  const paid = orderPaidAmount(order);
   if (paid > 0) {
     return { kind: 'paid', paid, balance };
   }
 
   if (order.status === OrderStatus.CANCELADO) return null;
+  // Ya entregado y sin cobrar: es una deuda, no «sin pagos».
+  if (order.status === OrderStatus.ENTREGADO) return { kind: 'owes', balance };
   return { kind: 'none' };
 }

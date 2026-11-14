@@ -7,6 +7,8 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import {
+  DbAutocompleteComponent,
+  DbAutocompleteOption,
   DbButtonComponent,
   DbFormGridComponent,
   DbInputComponent,
@@ -29,6 +31,7 @@ export type WholesaleMinimumNotice = {
     FormsModule,
     DbFormGridComponent,
     DbSelectComponent,
+    DbAutocompleteComponent,
     DbInputComponent,
     DbButtonComponent,
     DbSegmentedControlComponent,
@@ -41,7 +44,7 @@ export type WholesaleMinimumNotice = {
 export class OrderFormPartyComponent {
   @Input() variant: 'order' | 'quote' = 'order';
   @Input() customerId = '';
-  @Input() customerOptions: DbSelectOption[] = [];
+  @Input() customerOptions: DbAutocompleteOption[] = [];
   @Input() dueDate = '';
   @Input() minDueDate = '';
   @Input() dueDateError = '';

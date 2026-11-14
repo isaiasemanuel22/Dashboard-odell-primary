@@ -33,6 +33,7 @@ import {
   isResinQuoteConfigured,
 } from '../orders/order-fdm-quote.util';
 import {
+  calcWashSupplyCost,
   calculateMachineOverhead,
   ensureMachineProfiles,
   getMachineProfilesForProductType,
@@ -151,8 +152,13 @@ export class CostCalculatorService {
       dto.preferredPrinterId,
     );
     const laborCost = workTimeHours * settings.laborCostPerHour;
+    // El alcohol de lavado es un insumo: queda fuera del margen de error.
+    const washSupplyCost =
+      dto.type === ProductType.RESINA
+        ? calcWashSupplyCost(settings, this.store.supplies, dto.type)
+        : 0;
     const errorMarginCost = this.calculateErrorMarginCost(
-      materialCost,
+      Math.max(0, materialCost - washSupplyCost),
       overhead.energyCost,
       overhead.machineCost,
       settings,
@@ -437,10 +443,24 @@ export class CostCalculatorService {
       cost,
       price,
       profit,
-      marginPercent: price > 0 ? Math.round((profit / price) * 100) : 0,
+      // Margen sobre el costo sin mano de obra (la mano de obra no lleva margen).
+      marginPercent: this.markupOnCostWithoutLabor(
+        profit,
+        cost,
+        breakdown?.laborCost ?? 0,
+      ),
       configuredMarginPercent,
       breakdown,
     };
+  }
+
+  private markupOnCostWithoutLabor(
+    profit: number,
+    cost: number,
+    laborCost: number,
+  ): number {
+    const base = cost - Math.min(Math.max(laborCost, 0), Math.max(cost, 0));
+    return base > 0 ? Math.round((profit / base) * 100) : 0;
   }
 
   resolveProductPrice(

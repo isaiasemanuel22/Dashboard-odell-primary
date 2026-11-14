@@ -160,6 +160,18 @@
     background: #e9f3f9;
   }
 
+  // B-M9: sin imagen, el espacio vacío se reduce a una franja.
+  .pd-m__gallery--empty {
+    ::ng-deep .carousel--mobile {
+      height: 48px;
+    }
+
+    ::ng-deep .carousel-empty {
+      min-height: 0;
+      font-size: 0.75rem;
+    }
+  }
+
   .pd-m__pills {
     justify-content: flex-start;
     flex-wrap: wrap;
@@ -210,4 +222,30 @@
     margin: 0 0 10px;
   }
 
+}
+
+// MM-6: avisos de precio por debajo del costo (mobile y desktop).
+.pd-warn {
+  margin: 0.5rem 0 0;
+  padding: 0.6rem 0.75rem;
+  border: 1px solid $color-danger-border;
+  border-radius: 10px;
+  background: #fef2f2;
+  color: $color-danger-text;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.pd-wholesale {
+  margin: 0.5rem 0 0;
+  font-size: 0.875rem;
+  color: $color-text-muted;
+}
+
+.pd-cost-detail {
+  display: block;
+  text-transform: none;
+  font-weight: 400;
+  letter-spacing: 0;
 }

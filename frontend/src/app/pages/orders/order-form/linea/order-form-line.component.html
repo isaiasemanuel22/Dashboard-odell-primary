@@ -404,6 +404,15 @@
       </button>
     }
 
+    @if (catalogCostChange != null) {
+      <p class="order-line__cost-notice">
+        El costo del producto cambió: {{ unitCostFormatted }} → {{ catalogCostChange | currencyArs }}
+        <button type="button" class="order-line__cost-notice-btn" (click)="updateCostFromCatalog()">
+          Actualizar
+        </button>
+      </p>
+    }
+
     <div
       class="order-line__composition"
       [class.order-line__composition--collapsed]="
@@ -457,13 +466,16 @@
       }
 
       @if (isDesign()) {
-        <app-order-quote-design-composition
-          [line]="line"
-          [product]="product"
-          [lineIndex]="lineIndex"
-          (changed)="onDesignCompositionChanged()"
-          (linkPrintChange)="onLinkPrintFromComposition($event)"
-        />
+        <!-- Se recrea al cambiar de área (Diseño ↔ Modelado) para no arrastrar el estado de la anterior. -->
+        @for (area of [line.serviceType]; track area) {
+          <app-order-quote-design-composition
+            [line]="line"
+            [product]="product"
+            [lineIndex]="lineIndex"
+            (changed)="onDesignCompositionChanged()"
+            (linkPrintChange)="onLinkPrintFromComposition($event)"
+          />
+        }
       }
 
       @if (variant === 'order' && isGraphic()) {

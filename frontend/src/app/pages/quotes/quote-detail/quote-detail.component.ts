@@ -14,6 +14,7 @@ import {
   QuoteItem,
   QuoteStatus,
 } from '../../../core/models';
+import { CustomersService } from '../../../core/services/customers.service';
 import { QuotesService } from '../../../core/services/quotes.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
 import { FormDialogService } from '../../../modals/public-api';
@@ -32,12 +33,19 @@ import {
 } from '@general-components';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import {
+  QUOTE_EXPIRED_HINT,
   canGenerateOrderFromQuote,
   formatQuoteValidityLabel,
   isQuoteEditable,
   quoteEstimatedProfit,
+  quoteStatusLabelFor,
   quoteStatusPillClass,
 } from '../../../shared/utils/quote.helpers';
+import { isQuoteExpired } from '../../../shared/utils/quote-validity.util';
+import {
+  buildQuoteShareText,
+  quoteWhatsAppUrl,
+} from '../../../shared/utils/quote-share.util';
 import {
   calculateLinePriceTotal,
   calculateOrderDiscount,
@@ -52,7 +60,6 @@ import { QUOTE_STATUS_LABELS, serviceTypeLabel } from '../../../shared/constants
 import {
   CurrencyArsPipe,
   DateShortPipe,
-  QuoteStatusLabelPipe,
   RichTextPipe,
 } from '../../../shared/pipes/labels.pipe';
 import { QuoteDetailLinesComponent } from './quote-detail-lines/quote-detail-lines.component';
@@ -65,7 +72,6 @@ import { DocumentAttachmentsViewComponent } from '../../../components/document-a
     DocumentAttachmentsViewComponent,
     RouterLink,
     DateShortPipe,
-    QuoteStatusLabelPipe,
     RichTextPipe,
     CurrencyArsPipe,
     DbSkeletonComponent,
@@ -88,6 +94,7 @@ export class QuoteDetailComponent implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly quotesService = inject(QuotesService);
+  private readonly customersService = inject(CustomersService);
   private readonly formDialogs = inject(FormDialogService);
   private readonly realtime = inject(RealtimeService);
   private readonly destroyRef = inject(DestroyRef);
@@ -100,6 +107,10 @@ export class QuoteDetailComponent implements OnInit {
   statusLoading = false;
   generatingOrder = false;
   mobileActionsOpen = false;
+  renewing = false;
+  customerPhone: string | null = null;
+
+  readonly expiredHint = QUOTE_EXPIRED_HINT;
 
   readonly QuoteStatus = QuoteStatus;
   readonly depositPercent = Math.round(DEPOSIT_FACTOR * 100);
@@ -157,6 +168,87 @@ export class QuoteDetailComponent implements OnInit {
     );
   }
 
+  get expired(): boolean {
+    return !!this.quote && isQuoteExpired(this.quote);
+  }
+
+  /** Clase del badge desktop: «Vencido» usa el estilo de rechazado. */
+  get statusBadgeClass(): string {
+    return this.expired ? 'rechazado' : (this.quote?.status ?? '');
+  }
+
+  get statusLabel(): string {
+    return this.quote ? quoteStatusLabelFor(this.quote) : '';
+  }
+
+  /** Aceptar bloqueado: sin líneas o vencido. */
+  acceptBlocked(status: QuoteStatus): boolean {
+    return (
+      this.statusNeedsLines(status) ||
+      (status === QuoteStatus.ACEPTADO && this.expired)
+    );
+  }
+
+  statusBlockedHint(status: QuoteStatus): string | null {
+    if (this.statusNeedsLines(status)) return this.noLinesHint;
+    if (status === QuoteStatus.ACEPTADO && this.expired) return this.expiredHint;
+    return null;
+  }
+
+  get whatsappHref(): string {
+    return this.quote ? quoteWhatsAppUrl(this.quote, this.customerPhone) : '';
+  }
+
+  get canShare(): boolean {
+    return (
+      typeof navigator !== 'undefined' &&
+      typeof navigator.share === 'function' &&
+      !this.hasNoLines
+    );
+  }
+
+  openWhatsApp(): void {
+    if (!this.quote || this.hasNoLines) return;
+    window.open(this.whatsappHref, '_blank', 'noopener');
+  }
+
+  shareQuote(): void {
+    if (!this.quote || !this.canShare) return;
+    void navigator
+      .share({
+        title: `Presupuesto ${this.quote.id}`,
+        text: buildQuoteShareText(this.quote),
+      })
+      .catch(() => undefined);
+  }
+
+  /** Extiende la validez (la emisión pasa a hoy). */
+  renewQuote(): void {
+    if (!this.quote || this.renewing) return;
+    this.renewing = true;
+    this.cdr.markForCheck();
+    this.quotesService.renewQuote(this.quote.id).subscribe({
+      next: (updated) => {
+        this.quote = updated;
+        this.renewing = false;
+        this.closeMobileActions();
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.renewing = false;
+        this.cdr.markForCheck();
+        this.formDialogs
+          .openConfirm({
+            title: 'No se pudo renovar',
+            message: extractApiErrorMessage(err, 'No se pudo renovar el presupuesto'),
+            confirmLabel: 'Entendido',
+            alertOnly: true,
+          })
+          .subscribe();
+      },
+    });
+  }
+
   get canGenerateOrder(): boolean {
     return this.quote
       ? canGenerateOrderFromQuote(this.quote.status) && !this.quote.orderId
@@ -184,7 +276,9 @@ export class QuoteDetailComponent implements OnInit {
   }
 
   get statusPillClass(): string {
-    return this.quote ? quoteStatusPillClass(this.quote.status) : 'm-pill';
+    return this.quote
+      ? quoteStatusPillClass(this.quote.status, this.expired)
+      : 'm-pill';
   }
 
   get salesChannelPill(): string | null {
@@ -309,23 +403,29 @@ export class QuoteDetailComponent implements OnInit {
 
   get mobileDockActions(): MobileDockAction[] {
     if (!this.quote) return [];
+    const share = this.canShare;
     const actions: MobileDockAction[] = [
       {
         id: 'pdf',
-        label: 'Exportar PDF',
+        label: share ? 'PDF' : 'Exportar PDF',
+        ariaLabel: 'Exportar PDF',
         kind: 'secondary',
         disabled: this.hasNoLines,
       },
     ];
+    if (share) {
+      actions.push({ id: 'share', label: 'Compartir', kind: 'secondary' });
+    }
     if (this.quote.orderId) {
       actions.push({ id: 'view-order', label: 'Ver pedido', kind: 'primary' });
-    } else if (this.showMobileAccept) {
+    } else {
+      // WhatsApp es la acción principal; aceptar vive en el selector de estado y en «Más acciones».
       actions.push({
-        id: 'accept',
-        label: this.mobileAcceptLabel,
+        id: 'whatsapp',
+        label: 'WhatsApp',
+        ariaLabel: 'Enviar por WhatsApp',
         kind: 'primary',
-        disabled:
-          this.generatingOrder || this.statusLoading || this.hasNoLines,
+        disabled: this.hasNoLines,
       });
     }
     return actions;
@@ -334,6 +434,14 @@ export class QuoteDetailComponent implements OnInit {
   onMobileDockAction(id: string): void {
     if (id === 'pdf') {
       this.generateDocument();
+      return;
+    }
+    if (id === 'whatsapp') {
+      this.openWhatsApp();
+      return;
+    }
+    if (id === 'share') {
+      this.shareQuote();
       return;
     }
     if (id === 'view-order' && this.quote?.orderId) {
@@ -472,7 +580,7 @@ export class QuoteDetailComponent implements OnInit {
       this.generateOrder();
       return;
     }
-    if (this.editable) {
+    if (this.editable && !this.expired) {
       this.updateStatus(QuoteStatus.ACEPTADO);
     }
   }
@@ -480,7 +588,7 @@ export class QuoteDetailComponent implements OnInit {
   updateStatus(status: QuoteStatus): void {
     if (!this.quote || this.statusLoading) return;
     if (status === this.quote.status) return;
-    if (this.statusNeedsLines(status)) return;
+    if (this.acceptBlocked(status)) return;
     if (status === QuoteStatus.ACEPTADO) {
       const createsProduct = this.quote.items.some((item) => !item.productId);
       const message = createsProduct
@@ -609,6 +717,21 @@ export class QuoteDetailComponent implements OnInit {
     return null;
   }
 
+  private loadCustomerPhone(customerId: string | null): void {
+    this.customerPhone = null;
+    if (!customerId) return;
+    this.customersService
+      .getCustomer(customerId)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (customer) => {
+          this.customerPhone = customer.phone?.trim() || null;
+          this.cdr.markForCheck();
+        },
+        error: () => undefined,
+      });
+  }
+
   private loadQuote(id: string): void {
     this.loading = true;
     this.cdr.markForCheck();
@@ -619,6 +742,7 @@ export class QuoteDetailComponent implements OnInit {
       next: (quote) => {
         if (this.route.snapshot.paramMap.get('id') !== id) return;
         this.quote = quote;
+        this.loadCustomerPhone(quote.customerId);
         this.loading = false;
         this.notFound = false;
         this.cdr.markForCheck();

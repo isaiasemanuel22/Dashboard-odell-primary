@@ -15,6 +15,7 @@ import {
   inject,
 } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { Subject, takeUntil } from 'rxjs';
 import {
   CreateProductPayload,
@@ -37,6 +38,9 @@ import { getMachineProfilesForProductType } from '../../../shared/utils/machine-
 import { SettingsFacade } from '../../../store/settings/settings.facade';
 import { ProductFormFacade } from './product-form.facade';
 import { ProductFormPricingService } from './product-form-pricing.service';
+import { ProductFormPricingFacade } from './store/product-form-pricing/product-form-pricing.facade';
+import { formatCurrencyArs } from '../../../shared/utils/currency-ars.util';
+import { markupPercentOnCostRounded } from '../../../shared/utils/product-margin.util';
 import { ProductFormBasicFieldsComponent, ProductFormBasicFieldsValue } from './sections/product-form-basic-fields.component';
 import { ProductFormProductionFieldsComponent } from './sections/product-form-production-fields.component';
 import { ProductFormComponentsSectionComponent, ProductFormComponentsValue } from './sections/product-form-components-section.component';
@@ -79,6 +83,12 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   private readonly settingsFacade = inject(SettingsFacade);
   private readonly destroyRef = inject(DestroyRef);
   private readonly destroy$ = new Subject<void>();
+
+  private readonly pricingService = inject(ProductFormPricingService);
+  private readonly pricingStore = inject(ProductFormPricingFacade);
+  private readonly pricingVm = toSignal(this.pricingStore.vm$, {
+    initialValue: null,
+  });
 
   readonly isMobile = this.breakpoint.isMobile;
   preferredPrinterOptions: DbSelectOption[] = [
@@ -172,6 +182,30 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
 
   get productType(): ProductType {
     return this.basicFields?.type ?? this.facade.type;
+  }
+
+  /**
+   * Precio de venta y margen para la barra fija mobile («Guardar cambios · $ X»).
+   * Mismo precio que muestra el panel de precio (manual o conservado si aplica).
+   */
+  get dockPriceSummary(): { price: number; label: string; margin: number | null } | null {
+    const vm = this.pricingVm();
+    if (!vm || !(vm.price > 0)) return null;
+    const manual = Number(this.pricingService.manualUnitPrice) || 0;
+    let price = vm.price;
+    if (manual > 0) {
+      price = manual;
+    } else {
+      const held = this.pricingService.heldCatalogPrice();
+      const next = Math.round(Number(this.pricingService.computedPrice) || vm.price);
+      if (held != null && next > 0 && next !== held) price = held;
+    }
+    const margin = markupPercentOnCostRounded(
+      price,
+      vm.totalCost,
+      vm.costBreakdown?.laborCost ?? 0,
+    );
+    return { price, label: formatCurrencyArs(Math.round(price)), margin };
   }
 
   get missingFields(): string[] {

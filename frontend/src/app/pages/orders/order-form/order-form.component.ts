@@ -544,9 +544,10 @@ export class OrderFormComponent implements OnChanges, OnInit {
             ? `${c.name} - ${c.company}`
             : c.name,
         id: c.id,
+        searchText: c.phone ?? '',
       })),
       (o) => shortId(o.id),
-    ).map(({ value, label }) => ({ value, label }));
+    ).map(({ value, label, searchText }) => ({ value, label, searchText }));
   }
 
   get selectedCustomer(): Customer | undefined {

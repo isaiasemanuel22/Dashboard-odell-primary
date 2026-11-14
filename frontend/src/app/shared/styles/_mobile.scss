@@ -102,3 +102,35 @@ $m-radius-lg: 20px;
     background: $m-bg;
   }
 }
+
+// UM-1: 16px en campos de texto evita el zoom automático de iOS al enfocar.
+@include mobile-only {
+  input:not([type='checkbox']):not([type='radio']):not([type='file']):not([type='range']):not([type='color']),
+  select,
+  textarea,
+  .ql-editor,
+  .mat-mdc-input-element,
+  .mat-mdc-select {
+    font-size: 16px;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    font-size: 16px;
+  }
+}
+
+// UM-3: área de toque mínima de 44px (botones, chips y utilitaria .m-tap).
+@include mobile-only {
+  .db-button--solid,
+  .db-button--soft,
+  .db-button--filter,
+  .db-button--chip,
+  .m-tap {
+    min-height: 44px;
+  }
+
+  .m-chip-group__chip {
+    min-height: 44px;
+  }
+}

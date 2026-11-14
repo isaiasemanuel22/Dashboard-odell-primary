@@ -14,7 +14,11 @@ import {
   ControlValueAccessor,
   NG_VALUE_ACCESSOR,
 } from '@angular/forms';
-import { formatCurrencyArs } from '../../shared/utils/currency-ars.util';
+import {
+  formatArsAmountEditable,
+  formatCurrencyArsExact,
+  parseArsAmount,
+} from '../../shared/utils/currency-ars.util';
 
 /**
  * Monto grande mobile: centrado, 30px, subrayado.
@@ -40,6 +44,8 @@ export class MobileAmountInputComponent implements ControlValueAccessor {
   @Input() label = 'Monto';
   @Input() name = 'mobileAmount';
   @Input() ariaLabel?: string;
+  /** Si es true, conserva el signo "-" para que el formulario pueda avisar; si no, se descarta. */
+  @Input() allowNegative = false;
   @Output() readonly amountChange = new EventEmitter<number | null>();
 
   @ViewChild('amountInput') private readonly amountInput?: ElementRef<HTMLInputElement>;
@@ -47,19 +53,20 @@ export class MobileAmountInputComponent implements ControlValueAccessor {
   value: number | null = null;
   editing = false;
   disabled = false;
+  /** Texto tal cual lo escribe el usuario mientras edita (conserva la coma final, ceros, etc.). */
+  private rawText = '';
 
   private onChange: (value: number | null) => void = () => undefined;
   private onTouched: () => void = () => undefined;
 
   get displayValue(): string {
     if (this.editing) {
-      if (this.value == null || !Number.isFinite(this.value)) return '';
-      return String(this.value);
+      return this.rawText;
     }
-    if (this.value == null || !Number.isFinite(this.value) || this.value <= 0) {
+    if (this.value == null || !Number.isFinite(this.value) || this.value === 0) {
       return '';
     }
-    return formatCurrencyArs(this.value);
+    return formatCurrencyArsExact(this.value);
   }
 
   writeValue(value: number | null): void {
@@ -83,6 +90,10 @@ export class MobileAmountInputComponent implements ControlValueAccessor {
 
   onFocus(): void {
     this.editing = true;
+    this.rawText =
+      this.value == null || !Number.isFinite(this.value)
+        ? ''
+        : formatArsAmountEditable(this.value);
     this.cdr.markForCheck();
     queueMicrotask(() => {
       const el = this.amountInput?.nativeElement;
@@ -98,13 +109,10 @@ export class MobileAmountInputComponent implements ControlValueAccessor {
   }
 
   onInput(raw: string): void {
-    const cleaned = raw.replace(/[^\d.,]/g, '').replace(',', '.');
-    if (!cleaned.trim()) {
-      this.setValue(null);
-      return;
-    }
-    const parsed = Number(cleaned);
-    if (!Number.isFinite(parsed)) return;
+    const negative = this.allowNegative && raw.trim().startsWith('-');
+    const cleaned = `${negative ? '-' : ''}${raw.replace(/[^\d.,]/g, '')}`;
+    this.rawText = cleaned;
+    const parsed = parseArsAmount(cleaned);
     this.setValue(parsed);
   }
 

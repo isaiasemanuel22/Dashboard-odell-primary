@@ -18,7 +18,7 @@ import {
   ProductType,
 } from '../../../../core/models';
 import { ImpresosService } from '../../../../core/services/impresos.service';
-import { PaperTypeLabelPipe } from '../../../../shared/pipes/labels.pipe';
+import { DecimalEsPipe, PaperTypeLabelPipe } from '../../../../shared/pipes/labels.pipe';
 import {
   resolveColorHex,
   resolveColorLabel,
@@ -60,7 +60,7 @@ interface CycleRow {
 @Component({
   selector: 'app-product-detail-estampado',
   standalone: true,
-  imports: [PaperTypeLabelPipe],
+  imports: [DecimalEsPipe, PaperTypeLabelPipe],
   templateUrl: './product-detail-estampado.component.html',
   styleUrl: './product-detail-estampado.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

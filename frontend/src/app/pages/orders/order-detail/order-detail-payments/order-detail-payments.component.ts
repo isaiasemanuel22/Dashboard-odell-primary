@@ -44,7 +44,7 @@ import {
 import { labelsToSelectOptions } from '../../../../shared/utils/select-options';
 import { defaultAccountForMethod } from '../../../../shared/utils/treasury-account.util';
 import { orderBalanceAmount, orderPaidAmount } from '../../../../shared/utils/order.helpers';
-import { formatCurrencyArs } from '../../../../shared/utils/currency-ars.util';
+import { formatCurrencyArsExact } from '../../../../shared/utils/currency-ars.util';
 
 type AmountShortcut = 'full' | 'half' | 'other';
 
@@ -122,19 +122,34 @@ export class OrderDetailPaymentsComponent {
     return orderBalanceAmount(this.order);
   }
 
+  /** Monto > 0 y no mayor al saldo (comparado en centavos, como el servidor). */
   get hasValidAmount(): boolean {
     const amount = Number(this.paymentAmount);
-    return Number.isFinite(amount) && amount > 0;
+    if (!Number.isFinite(amount) || amount <= 0) return false;
+    return Math.round(amount * 100) <= Math.round(this.balanceAmount * 100);
   }
 
-  /** Hay un monto escrito pero es cero o negativo. */
+  /** Hay un monto escrito pero no es válido (cero, negativo o mayor al saldo). */
   get showAmountError(): boolean {
-    return (
-      this.paymentAmount !== null &&
-      this.paymentAmount !== undefined &&
-      String(this.paymentAmount) !== '' &&
-      !this.hasValidAmount
-    );
+    return this.amountErrorMessage !== '';
+  }
+
+  get amountErrorMessage(): string {
+    if (
+      this.paymentAmount === null ||
+      this.paymentAmount === undefined ||
+      String(this.paymentAmount) === ''
+    ) {
+      return '';
+    }
+    const amount = Number(this.paymentAmount);
+    if (!Number.isFinite(amount)) return 'Ingresá un monto válido';
+    if (amount < 0) return 'El monto no puede ser negativo';
+    if (amount === 0) return 'El monto debe ser mayor a 0';
+    if (Math.round(amount * 100) > Math.round(this.balanceAmount * 100)) {
+      return `El monto supera el saldo pendiente (${formatCurrencyArsExact(this.balanceAmount)})`;
+    }
+    return '';
   }
 
   get paymentStatusLabel(): string {
@@ -156,7 +171,7 @@ export class OrderDetailPaymentsComponent {
     if (this.paymentLoading) return 'Registrando...';
     const amount = Number(this.paymentAmount);
     if (!Number.isFinite(amount) || amount <= 0) return 'Registrar pago';
-    return `Registrar ${formatCurrencyArs(amount)}`;
+    return `Registrar ${formatCurrencyArsExact(amount)}`;
   }
 
   preparePayment(amount: number, options?: { scroll?: boolean }): void {
@@ -186,9 +201,9 @@ export class OrderDetailPaymentsComponent {
     if (shortcut == null) return;
     this.amountShortcut = shortcut;
     if (shortcut === 'full') {
-      this.paymentAmount = Math.round(this.balanceAmount);
+      this.paymentAmount = this.roundCents(this.balanceAmount);
     } else if (shortcut === 'half') {
-      this.paymentAmount = Math.round(this.balanceAmount / 2);
+      this.paymentAmount = this.roundCents(this.balanceAmount / 2);
     } else if (shortcut === 'other') {
       this.paymentAmount = null;
       this.cdr.markForCheck();
@@ -208,19 +223,23 @@ export class OrderDetailPaymentsComponent {
     this.cdr.markForCheck();
   }
 
+  private roundCents(value: number): number {
+    return Math.round(value * 100) / 100;
+  }
+
   private syncShortcutFromAmount(): void {
     const amount = Number(this.paymentAmount);
     if (!Number.isFinite(amount) || amount <= 0) {
       this.amountShortcut = 'other';
       return;
     }
-    const balance = Math.round(this.balanceAmount);
-    const half = Math.round(this.balanceAmount / 2);
-    if (Math.round(amount) === balance) {
+    const balance = this.roundCents(this.balanceAmount);
+    const half = this.roundCents(this.balanceAmount / 2);
+    if (this.roundCents(amount) === balance) {
       this.amountShortcut = 'full';
       return;
     }
-    if (Math.round(amount) === half) {
+    if (this.roundCents(amount) === half) {
       this.amountShortcut = 'half';
       return;
     }
@@ -282,7 +301,7 @@ export class OrderDetailPaymentsComponent {
     const fee = Number(this.paymentFee);
     this.ordersService
       .addPayment(this.order.id, {
-        amount: Number(this.paymentAmount),
+        amount: this.roundCents(Number(this.paymentAmount)),
         deposit: this.paymentDeposit,
         method: this.paymentMethod,
         account: this.paymentAccount,

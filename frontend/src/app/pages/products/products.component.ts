@@ -69,7 +69,12 @@ import { ProductsSupplyPriceChangesComponent } from './products-supply-price-cha
 import { ProductsToolbarComponent } from './products-toolbar/products-toolbar.component';
 import { normalizeSearchText } from '../../shared/utils/search-text.util';
 type TypeFilter = ProductType | 'all';
-type ListFilter = 'all' | 'below_margin' | 'fixed_price' | 'in_stock';
+type ListFilter =
+  | 'all'
+  | 'below_margin'
+  | 'fixed_price'
+  | 'in_stock'
+  | 'internal';
 
 interface ProductsMobileListState {
   listFilter: ListFilter;
@@ -155,6 +160,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     { value: ProductType.FDM, label: 'FDM' },
     { value: ProductType.RESINA, label: 'Resina' },
     { value: ProductType.ESTAMPADO, label: 'Estampado' },
+    { value: ProductType.COMBO, label: 'Combo' },
   ];
 
   ngOnInit(): void {
@@ -306,7 +312,13 @@ export class ProductsComponent implements OnInit, OnDestroy {
         label: `Precio fijo · ${fixed}`,
       },
       { value: 'in_stock', label: 'Con stock' },
+      { value: 'internal', label: `Internos · ${this.internalCount}` },
     ];
+  }
+
+  /** Productos internos (no publicados): no salen en «Todos». */
+  get internalCount(): number {
+    return this.products.filter((p) => p.published === false).length;
   }
 
   /**
@@ -336,6 +348,11 @@ export class ProductsComponent implements OnInit, OnDestroy {
         id: 'in_stock',
         label: 'Con stock',
         count: base.filter((p) => productListStock(p) > 0).length,
+      },
+      {
+        id: 'internal',
+        label: 'Internos',
+        count: base.filter((p) => p.published === false).length,
       },
     ];
     return chips.filter(
@@ -808,6 +825,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
         return hasFixedCatalogPrice(product);
       case 'in_stock':
         return productListStock(product) > 0;
+      case 'internal':
+        return product.published === false;
       case 'all':
       default:
         return product.published !== false;

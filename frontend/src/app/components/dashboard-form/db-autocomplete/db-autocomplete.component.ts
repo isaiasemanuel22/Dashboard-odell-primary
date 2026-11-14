@@ -91,7 +91,9 @@ export class DbAutocompleteComponent implements ControlValueAccessor, OnChanges 
     return this.options.filter(
       (option) =>
         normalizeSearchText(option.label).includes(normalizedQuery) ||
-        normalizeSearchText(option.value).includes(normalizedQuery),
+        normalizeSearchText(option.value).includes(normalizedQuery) ||
+        (!!option.searchText &&
+          normalizeSearchText(option.searchText).includes(normalizedQuery)),
     );
   }
 

@@ -22,7 +22,7 @@
     @if (incompleteCostNotice; as incomplete) {
       <p class="price-warn price-warn--incomplete" role="alert">{{ incomplete }}</p>
     }
-    @if (belowCostNotice(shownPrice, vm.totalCost); as belowCost) {
+    @if (belowCostNotice(shownPrice, vm.totalCost, vm.costBreakdown?.laborCost ?? 0); as belowCost) {
       <p class="price-warn price-warn--loss" role="alert">{{ belowCost }}</p>
     }
     @if (vm.calculating) {
@@ -87,10 +87,10 @@
       <div>
         <span>Margen objetivo ({{ targetMarginLabel }}): {{ targetMarginPercent }} %</span>
       </div>
-      @let realMargin = actualMarginPercent(shownPrice, vm.totalCost);
+      @let realMargin = actualMarginPercent(shownPrice, vm.totalCost, vm.costBreakdown?.laborCost ?? 0);
       @if (realMargin !== null) {
         <div>
-          <span>Margen</span>
+          <span>Margen (sin mano de obra)</span>
           <strong [class.is-loss]="realMargin < 0">{{ realMargin }}%</strong>
         </div>
       }
@@ -124,7 +124,7 @@
           aria-label="Precio unitario"
         />
       </div>
-      <p class="price-note">{{ unitPriceHint(vm.price, vm.totalCost) }}</p>
+      <p class="price-note">{{ unitPriceHint(vm.price, vm.totalCost, vm.costBreakdown?.laborCost ?? 0) }}</p>
       @if (priceManual) {
         <button type="button" class="unit-price__reset" (click)="resetUnitPrice()">
           Volver al sugerido

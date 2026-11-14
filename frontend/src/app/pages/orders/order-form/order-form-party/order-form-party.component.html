@@ -22,12 +22,14 @@
       class="quote-customer-field__control"
       [class.quote-customer-field__control--with-pill]="!!resellerPillLabel"
     >
-      <db-select
+      <db-autocomplete
         [ngModel]="customerId"
         (ngModelChange)="customerIdChange.emit($event)"
         name="customerId"
-        placeholder="Seleccionar cliente"
+        placeholder="Buscar cliente por nombre o teléfono"
         [required]="variant === 'order'"
+        [allowCreate]="false"
+        [preserveCase]="true"
         [options]="customerOptions"
       />
       @if (resellerPillLabel) {

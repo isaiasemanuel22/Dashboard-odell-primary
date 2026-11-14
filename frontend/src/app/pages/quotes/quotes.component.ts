@@ -33,6 +33,7 @@ import {
   MobileListToolbarComponent,
   type MobileListToolbarChip,
   OdlActionEvent,
+  OdlBadge,
   OdlColumn,
   OdlFilter,
   OdlRowAction,
@@ -60,6 +61,10 @@ import {
   quoteStatusFilters,
   isQuoteEditable,
 } from '../../shared/utils/quote.helpers';
+import {
+  QUOTE_EXPIRED_LABEL,
+  isQuoteExpired,
+} from '../../shared/utils/quote-validity.util';
 import { normalizeSearchText } from '../../shared/utils/search-text.util';
 
 interface QuotesMobileListState {
@@ -117,7 +122,7 @@ export class QuotesComponent implements OnInit {
     predicate:
       filter.value === 'all'
         ? undefined
-        : (quote: Quote) => matchesQuoteStatusFilter(quote.status, filter.value),
+        : (quote: Quote) => matchesQuoteStatusFilter(quote, filter.value),
   }));
 
   readonly serviceFilters: OdlFilter<Quote>[] = quoteServiceFilters().map((filter) => ({
@@ -156,7 +161,7 @@ export class QuotesComponent implements OnInit {
     },
     { key: 'services', header: 'Áreas', type: 'tags', tags: (quote) => quote.services.map(serviceTag) },
     { key: 'quotedAt', header: 'Fecha', type: 'date' },
-    { key: 'status', header: 'Estado', type: 'badge', badge: (quote) => quoteStatusBadge(quote.status) },
+    { key: 'status', header: 'Estado', type: 'badge', badge: (quote) => this.statusBadge(quote) },
     { key: 'total', header: 'Total', type: 'money' },
   ];
 
@@ -239,6 +244,12 @@ export class QuotesComponent implements OnInit {
     });
   }
 
+  private statusBadge(quote: Quote): OdlBadge {
+    return isQuoteExpired(quote)
+      ? { label: QUOTE_EXPIRED_LABEL, tone: 'danger' }
+      : quoteStatusBadge(quote.status);
+  }
+
   private quoteSummary(quote: Quote): string {
     const concepts = quote.items?.length ?? 0;
     if (!concepts) return 'Sin líneas';
@@ -277,7 +288,7 @@ export class QuotesComponent implements OnInit {
   get mobileFilteredQuotes(): Quote[] {
     const term = normalizeSearchText(this.search);
     return this.quotes.filter((quote) => {
-      if (!matchesQuoteMobileChip(quote.status, this.mobileChip)) return false;
+      if (!matchesQuoteMobileChip(quote, this.mobileChip)) return false;
       if (!matchesQuoteMobileSheetFilters(quote, this.mobileSheetFilters)) {
         return false;
       }
@@ -302,7 +313,7 @@ export class QuotesComponent implements OnInit {
   private get mobileQuotesForSheet(): Quote[] {
     const term = normalizeSearchText(this.search);
     return this.quotes.filter((quote) => {
-      if (!matchesQuoteMobileChip(quote.status, this.mobileChip)) return false;
+      if (!matchesQuoteMobileChip(quote, this.mobileChip)) return false;
       if (!term) return true;
       return normalizeSearchText(this.searchText(quote)).includes(term);
     });
@@ -333,6 +344,8 @@ export class QuotesComponent implements OnInit {
   get mobileChipCounts(): Record<QuoteMobileChip, number> {
     const counts = {
       abiertos: 0,
+      vencidos: 0,
+      todos: 0,
       [QuoteStatus.BORRADOR]: 0,
       [QuoteStatus.ENVIADO]: 0,
       [QuoteStatus.ACEPTADO]: 0,
@@ -341,10 +354,10 @@ export class QuotesComponent implements OnInit {
     } as Record<QuoteMobileChip, number>;
 
     for (const quote of this.mobileCountBase) {
-      if (matchesQuoteMobileChip(quote.status, 'abiertos')) {
-        counts.abiertos += 1;
-      }
-      counts[quote.status] += 1;
+      counts.todos += 1;
+      if (matchesQuoteMobileChip(quote, 'abiertos')) counts.abiertos += 1;
+      if (matchesQuoteMobileChip(quote, 'vencidos')) counts.vencidos += 1;
+      if (matchesQuoteMobileChip(quote, quote.status)) counts[quote.status] += 1;
     }
     return counts;
   }
@@ -355,6 +368,9 @@ export class QuotesComponent implements OnInit {
     }
     if (this.mobileChip === 'abiertos') {
       return 'No hay presupuestos abiertos.';
+    }
+    if (this.mobileChip === 'vencidos') {
+      return 'No hay presupuestos vencidos.';
     }
     return 'No hay presupuestos en este estado.';
   }

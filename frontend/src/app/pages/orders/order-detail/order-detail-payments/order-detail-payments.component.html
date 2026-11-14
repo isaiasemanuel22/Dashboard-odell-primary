@@ -9,10 +9,11 @@
       label="Monto"
       name="paymentAmountSheet"
       [(ngModel)]="paymentAmount"
+      [allowNegative]="true"
       (amountChange)="onAmountShortcutSynced()"
     />
     @if (showAmountError) {
-      <p class="order-payments__error" role="alert">El monto debe ser mayor a 0</p>
+      <p class="order-payments__error" role="alert">{{ amountErrorMessage }}</p>
     }
 
     <div class="od-pay-sheet__shortcuts">
@@ -174,7 +175,7 @@
         />
         @if (showAmountError) {
           <p class="order-payments__error order-payments__amount-error" role="alert">
-            El monto debe ser mayor a 0
+            {{ amountErrorMessage }}
           </p>
         }
         <div class="order-payments__method">

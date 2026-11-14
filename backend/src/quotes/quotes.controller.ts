@@ -70,6 +70,11 @@ export class QuotesController {
     );
   }
 
+  @Post(':id/renew')
+  renew(@Param('id') id: string) {
+    return this.quotesService.renew(id);
+  }
+
   @Patch(':id')
   update(@Param('id') id: string, @Body() data: UpdateQuoteDto) {
     return this.quotesService.update(id, data);

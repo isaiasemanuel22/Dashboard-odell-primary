@@ -52,7 +52,7 @@
     <div class="m-body qd-m__body" [class.m-has-dock]="showMobileDock">
       <section class="m-card" aria-label="Resumen del presupuesto">
         <div class="m-ln">
-          <span [class]="statusPillClass">{{ quote.status | quoteStatusLabel }}</span>
+          <span [class]="statusPillClass">{{ statusLabel }}</span>
           <span class="m-lbl">{{ mobileValidityLabel }}</span>
         </div>
 
@@ -60,6 +60,20 @@
           <strong class="qd-m__customer">{{ quote.customerName }}</strong>
         } @else {
           <strong class="qd-m__customer qd-m__customer--empty">Sin cliente</strong>
+        }
+
+        @if (expired) {
+          <div class="qd-m__expired" role="alert">
+            <p>{{ expiredHint }}</p>
+            <button
+              type="button"
+              class="qd-m__expired-btn"
+              [disabled]="renewing"
+              (click)="renewQuote()"
+            >
+              Renovar (15 días desde hoy)
+            </button>
+          </div>
         }
 
         @if (wholesalePill || salesChannelPill) {
@@ -79,8 +93,8 @@
               <button
                 type="button"
                 [class.on]="quote.status === opt.status"
-                [disabled]="statusLoading || statusNeedsLines(opt.status)"
-                [attr.title]="statusNeedsLines(opt.status) ? noLinesHint : null"
+                [disabled]="statusLoading || acceptBlocked(opt.status)"
+                [attr.title]="statusBlockedHint(opt.status)"
                 (click)="updateStatus(opt.status)"
               >
                 {{ opt.label }}
@@ -160,6 +174,36 @@
       ariaLabel="Más acciones"
       (closed)="closeMobileActions()"
     >
+      @if (!hasNoLines) {
+        <button type="button" class="m-sheet-action" (click)="closeMobileActions(); openWhatsApp()">
+          Enviar por WhatsApp
+        </button>
+        @if (canShare) {
+          <button type="button" class="m-sheet-action" (click)="closeMobileActions(); shareQuote()">
+            Compartir
+          </button>
+        }
+      }
+      @if (expired) {
+        <button
+          type="button"
+          class="m-sheet-action"
+          [disabled]="renewing"
+          (click)="renewQuote()"
+        >
+          Renovar validez
+        </button>
+      }
+      @if (editable && !quote.orderId) {
+        <button
+          type="button"
+          class="m-sheet-action"
+          [disabled]="statusLoading || generatingOrder || hasNoLines || expired"
+          (click)="closeMobileActions(); onMobileAccept()"
+        >
+          Aceptar y crear pedido{{ expired ? ' (vencido)' : '' }}
+        </button>
+      }
       <button type="button" class="m-sheet-action" (click)="onMobileComparative()">
         Generar presupuesto comparativo
       </button>
@@ -207,8 +251,8 @@
         <div class="title-row">
           <h2>Presupuesto {{ quote.id }}</h2>
           <db-status-badge
-            [statusClass]="quote.status"
-            [label]="quote.status | quoteStatusLabel"
+            [statusClass]="statusBadgeClass"
+            [label]="statusLabel"
           />
         </div>
         <p class="meta-line">
@@ -217,6 +261,14 @@
         </p>
       </div>
       <div class="header-actions">
+        <db-button
+          label="Enviar por WhatsApp"
+          variant="secondary"
+          format="soft"
+          [disabled]="hasNoLines"
+          [attr.title]="hasNoLines ? noLinesHint : null"
+          (clicked)="openWhatsApp()"
+        />
         <db-button
           label="Generar presupuesto"
           variant="secondary"
@@ -252,6 +304,19 @@
         }
       </div>
     </header>
+
+    @if (expired) {
+      <div class="quote-expired-banner" role="alert">
+        <p>{{ expiredHint }}</p>
+        <db-button
+          label="Renovar (15 días desde hoy)"
+          variant="primary-outline"
+          format="soft"
+          [disabled]="renewing"
+          (clicked)="renewQuote()"
+        />
+      </div>
+    }
 
     <div class="detail-layout">
       <section class="panel">
@@ -323,8 +388,8 @@
                   [label]="action.label"
                   variant="primary-outline"
                   format="soft"
-                  [disabled]="statusLoading || statusNeedsLines(action.status)"
-                  [attr.title]="statusNeedsLines(action.status) ? noLinesHint : null"
+                  [disabled]="statusLoading || acceptBlocked(action.status)"
+                  [attr.title]="statusBlockedHint(action.status)"
                   (clicked)="updateStatus(action.status)"
                 />
               }

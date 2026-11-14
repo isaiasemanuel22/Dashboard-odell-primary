@@ -21,6 +21,7 @@ import {
   Product,
   Product3D,
   ProductAttachment,
+  EstampadoSupplyLine,
   ProductEstampado,
   ProductType,
   ProductStockOverview,
@@ -39,6 +40,7 @@ import { RealtimeCatalogSyncService } from '../../../core/services/realtime-cata
 import { RealtimeService } from '../../../core/services/realtime.service';
 import { SaleCartService } from '../../../core/services/sale-cart.service';
 import { SettingsService } from '../../../core/services/settings.service';
+import { formatDecimalEs } from '../../../shared/utils/decimal-es.util';
 import { productStockOverview } from '../../../shared/utils/stock.helpers';
 import { ProductDetailEstampadoComponent } from './product-detail-estampado/product-detail-estampado.component';
 import { ProductDetailProductionComponent } from './product-detail-production/product-detail-production.component';
@@ -84,6 +86,7 @@ import {
 import {
   CurrencyArsPipe,
   DateShortPipe,
+  DecimalEsPipe,
   ProductTypeLabelPipe,
 } from '../../../shared/pipes/labels.pipe';
 import {
@@ -93,6 +96,18 @@ import {
 } from '../../../shared/constants/labels';
 import { Store } from '@ngrx/store';
 import { selectSupplies } from '../../../store/supplies/supplies.selectors';
+import { selectImpresos } from '../../../store/impresos/impresos.selectors';
+import { SuppliesFacade } from '../../../store/supplies/supplies.facade';
+import { ImpresosService } from '../../../core/services/impresos.service';
+import { calcWashSupplyCost } from '../../../shared/utils/machine-profile.util';
+import { formatSupplyQuantity } from '../../../shared/utils/supply-unit.util';
+import {
+  normalizeEstampadoPrints,
+  normalizeEstampadoSupplies,
+  printQuantity,
+  resolvePrintDimensions,
+  totalEstampadoPressMinutes,
+} from '../../../shared/utils/estampado.helpers';
 import { resolveFilamentPricePerKg, resolveResinPricePerLiter } from '../../../shared/utils/material-type-price.util';
 import { formatCurrencyArs } from '../../../shared/utils/currency-ars.util';
 import { resolveFdmFilaments } from '../../../shared/utils/fdm.helpers';
@@ -111,6 +126,7 @@ export interface MobileCostCompositionRow {
     RouterLink,
     CurrencyArsPipe,
     DateShortPipe,
+    DecimalEsPipe,
     ProductTypeLabelPipe,
     DbButtonComponent,
     DbAttachmentUploadComponent,
@@ -147,6 +163,9 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   private readonly costCalculation = inject(ProductCostCalculationService);
   private readonly ngrxStore = inject(Store);
   private readonly suppliesSignal = this.ngrxStore.selectSignal(selectSupplies);
+  private readonly impresosSignal = this.ngrxStore.selectSignal(selectImpresos);
+  private readonly suppliesFacade = inject(SuppliesFacade);
+  private readonly impresosService = inject(ImpresosService);
   private readonly saleCart = inject(SaleCartService);
   product: Product | null = null;
   colorCatalog: ColorConfig[] = [];
@@ -186,6 +205,11 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   }
 
   ngOnInit(): void {
+    this.suppliesFacade.load(false);
+    this.impresosService
+      .getImpresos()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.cdr.markForCheck());
     this.settingsService
       .getGeneralSettings()
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -307,10 +331,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   }
 
   get mobileMarginLine(): string {
-    const margin = markupPercentOnCostRounded(
-      this.displayPrice,
-      this.displayCost,
-    );
+    const margin = this.marginPercent;
     const target = this.targetMarginPercent;
     const nbsp = '\u00a0';
     const marginPart =
@@ -318,161 +339,357 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     return `${marginPart} · objetivo ${target}${nbsp}%`;
   }
 
-  /** Filas de composición mobile con montos del mismo cálculo de costo de la app. */
-  get mobileCostCompositionRows(): MobileCostCompositionRow[] {
-    const printed = this.product3d;
+  /** Mano de obra del producto (armado si es compuesto): no lleva margen. */
+  get laborCost(): number {
     const settings = this.generalSettings;
-    if (!printed || !settings) return [];
+    const product = this.product;
+    if (!settings || !product) return 0;
+    const rate = Number(settings.laborCostPerHour) || 0;
+    if (rate <= 0) return 0;
+    let hours = 0;
+    if (this.hasComponents) {
+      hours = Number(product.assemblyTimeHours) || 0;
+    } else if (this.product3d) {
+      hours = this.workHours;
+    } else if (this.productEstampado) {
+      hours = Number(this.productEstampado.workTimeHours) || 0;
+    }
+    return Math.round(hours * rate);
+  }
 
-    const breakdown = this.mobileCostBreakdown;
+  /** Margen sobre el costo sin mano de obra (null si no hay base). */
+  get marginPercent(): number | null {
+    return markupPercentOnCostRounded(
+      this.displayPrice,
+      this.displayCost,
+      this.laborCost,
+    );
+  }
+
+  /** Avisos de precio por debajo del costo (lista y mayorista). */
+  get priceWarnings(): string[] {
+    const cost = this.displayCost;
+    const price = this.displayPrice;
+    const warnings: string[] = [];
+    if (!(cost > 0) || !(price > 0)) return warnings;
+    const nbsp = '\u00a0';
+    if (price < cost) {
+      const margin = this.marginPercent;
+      warnings.push(
+        `Precio de lista por debajo del costo (${formatCurrencyArs(price)} < ${formatCurrencyArs(cost)})${margin == null ? '' : `: margen ${margin}${nbsp}%`}. Se vende a pérdida.`,
+      );
+    }
+    const wholesale = this.wholesalePrice;
+    if (wholesale != null && wholesale < cost) {
+      warnings.push(
+        `Precio mayorista por debajo del costo (${formatCurrencyArs(wholesale)} < ${formatCurrencyArs(cost)}). Vender por mayor genera pérdida.`,
+      );
+    }
+    return warnings;
+  }
+
+  /**
+   * Composición del costo (todos los tipos). Los bloques suman exactamente
+   * el costo del producto: insumos aparte y, si queda diferencia, "Otros costos".
+   */
+  get costCompositionRows(): MobileCostCompositionRow[] {
+    const product = this.product;
+    const settings = this.generalSettings;
+    if (!product || !settings) return [];
+
+    let rows: MobileCostCompositionRow[] = [];
+    if (this.hasComponents) {
+      rows = this.componentCostRows(settings);
+    } else if (this.product3d) {
+      rows = this.printedCostRows(this.product3d, settings);
+    } else if (this.productEstampado) {
+      rows = this.estampadoCostRows(this.productEstampado, settings);
+    }
+    rows = [...rows, ...this.supplyCostRows()];
+    return this.reconcileCostRows(rows);
+  }
+
+  private reconcileCostRows(
+    rows: MobileCostCompositionRow[],
+  ): MobileCostCompositionRow[] {
+    if (!rows.length) return rows;
+    const total = Math.round(this.displayCost);
+    if (!(total > 0)) return rows;
+    const withAmount = rows.filter((row) => row.amount != null);
+    const sum = withAmount.reduce((acc, row) => acc + (row.amount ?? 0), 0);
+    const diff = total - sum;
+    if (diff === 0) return rows;
+    // Ruido de redondeo por línea: se absorbe en el bloque más grande.
+    if (withAmount.length && Math.abs(diff) <= withAmount.length) {
+      const biggest = withAmount.reduce((a, b) =>
+        (b.amount ?? 0) > (a.amount ?? 0) ? b : a,
+      );
+      return rows.map((row) =>
+        row === biggest ? { ...row, amount: (row.amount ?? 0) + diff } : row,
+      );
+    }
+    return [
+      ...rows,
+      {
+        title: 'Otros costos',
+        detail: 'Diferencia con el costo guardado del producto',
+        amount: diff,
+      },
+    ];
+  }
+
+  private componentCostRows(settings: GeneralSettings): MobileCostCompositionRow[] {
+    const rows: MobileCostCompositionRow[] = this.resolvedComponents.map(
+      (item) => {
+        const part = this.catalogProducts.find((p) => p.id === item.productId);
+        const quantity = Math.max(1, Number(item.quantity) || 1);
+        return {
+          title: `${part?.name ?? 'Pieza'} × ${quantity}`,
+          detail: part ? `${formatCurrencyArs(part.cost)} c/u` : null,
+          amount: part ? Math.round((Number(part.cost) || 0) * quantity) : null,
+        };
+      },
+    );
+    const assemblyHours = Number(this.product?.assemblyTimeHours) || 0;
+    if (assemblyHours > 0) {
+      const rate = Number(settings.laborCostPerHour) || 0;
+      rows.push({
+        title: `Armado · ${formatDecimalEs(assemblyHours)} h`,
+        detail: rate > 0 ? `${formatCurrencyArs(rate)} / h · sin margen` : null,
+        amount: rate > 0 ? this.laborCost : null,
+      });
+    }
+    return rows;
+  }
+
+  private supplyCostRows(): MobileCostCompositionRow[] {
+    const lines = normalizeEstampadoSupplies(
+      (this.product as { supplies?: EstampadoSupplyLine[] } | null)?.supplies,
+    );
+    const catalog = this.suppliesSignal();
+    return lines.map((line) => {
+      const supply = catalog.find((item) => item.id === line.supplyId);
+      const unitPrice = Number(supply?.unitPrice) || 0;
+      return {
+        title: `Insumo · ${supply?.name ?? 'Insumo'}`,
+        detail: supply
+          ? formatSupplyQuantity(line.quantity, supply.unit)
+          : String(line.quantity),
+        amount: unitPrice > 0 ? Math.round(unitPrice * line.quantity) : null,
+      };
+    });
+  }
+
+  private estampadoCostRows(
+    product: ProductEstampado,
+    settings: GeneralSettings,
+  ): MobileCostCompositionRow[] {
+    const impresos = this.impresosSignal();
+    const getImpreso = (id: string) => impresos.find((item) => item.id === id);
     const rows: MobileCostCompositionRow[] = [];
 
-    if (!this.hasComponents) {
-      const filaments = resolveFdmFilaments(printed);
-      if (filaments.length) {
-        for (const line of filaments) {
-          const grams = Number(line.grams) || 0;
-          const pricePerKg = resolveFilamentPricePerKg(
-            settings,
-            line.filamentType,
-            this.suppliesSignal(),
-          );
-          const amount =
+    for (const print of normalizeEstampadoPrints(product.prints)) {
+      const impreso = print.impresoId ? getImpreso(print.impresoId) : undefined;
+      const dims = resolvePrintDimensions(print, getImpreso);
+      const quantity = printQuantity(print);
+      rows.push({
+        title: `Impreso · ${impreso?.name ?? print.label?.trim() ?? 'Impreso'} × ${quantity}`,
+        detail: null,
+        amount: dims
+          ? Math.round(
+              this.costCalculation.calculateImpresoPaperCost(
+                settings,
+                dims.paperType,
+                dims.widthCm,
+                dims.heightCm,
+              ) * quantity,
+            )
+          : null,
+      });
+    }
+
+    const breakdown = this.costCalculation.calculateCost(
+      {
+        type: ProductType.ESTAMPADO,
+        workTimeHours: Number(product.workTimeHours) || 0,
+        estampadoPrints: product.prints,
+        estampadoPressCycles: product.pressCycles,
+      },
+      { settings, impresos },
+    );
+
+    const pressMinutes = totalEstampadoPressMinutes(product.pressCycles);
+    if (pressMinutes > 0) {
+      rows.push({
+        title: `Plancha · ${formatDecimalEs(pressMinutes)} min`,
+        detail: 'Luz y máquina',
+        amount: Math.round(breakdown.energyCost + breakdown.machineCost),
+      });
+    }
+    this.pushLaborRow(rows, Number(product.workTimeHours) || 0, settings);
+    this.pushErrorMarginRow(rows, breakdown, settings);
+    return rows;
+  }
+
+  private pushLaborRow(
+    rows: MobileCostCompositionRow[],
+    hours: number,
+    settings: GeneralSettings,
+  ): void {
+    if (!(hours > 0)) return;
+    const rate = Number(settings.laborCostPerHour) || 0;
+    rows.push({
+      title: `Mano de obra · ${formatDecimalEs(hours)} h`,
+      detail: rate > 0 ? `${formatCurrencyArs(rate)} / h · sin margen` : null,
+      amount: rate > 0 ? Math.round(hours * rate) : null,
+    });
+  }
+
+  private pushErrorMarginRow(
+    rows: MobileCostCompositionRow[],
+    breakdown: CostBreakdown | null,
+    settings: GeneralSettings,
+  ): void {
+    const errorPercent = Number(settings.errorMarginPercent) || 0;
+    if (!breakdown || (errorPercent <= 0 && breakdown.errorMarginCost <= 0)) {
+      return;
+    }
+    rows.push({
+      title: `Margen de error · ${formatDecimalEs(errorPercent)} %`,
+      detail:
+        (breakdown.purgeCost ?? 0) > 0
+          ? 'Solo sobre material, purga, luz y máquina (sin insumos)'
+          : 'Solo sobre material, luz y máquina (sin insumos)',
+      amount: breakdown.errorMarginCost,
+    });
+  }
+
+  private printedCostRows(
+    printed: Product3D,
+    settings: GeneralSettings,
+  ): MobileCostCompositionRow[] {
+    const breakdown = this.printedCostBreakdown(printed, settings);
+    const rows: MobileCostCompositionRow[] = [];
+
+    const filaments = resolveFdmFilaments(printed);
+    if (filaments.length) {
+      for (const line of filaments) {
+        const grams = Number(line.grams) || 0;
+        const pricePerKg = resolveFilamentPricePerKg(
+          settings,
+          line.filamentType,
+          this.suppliesSignal(),
+        );
+        rows.push({
+          title: `Filamento ${FILAMENT_TYPE_LABELS[line.filamentType as FilamentType] ?? String(line.filamentType).toUpperCase()} · ${formatDecimalEs(grams)} g`,
+          detail:
+            pricePerKg == null
+              ? this.colorLabel(line.colorId)
+              : `${formatCurrencyArs(pricePerKg)} / kg`,
+          amount:
+            pricePerKg == null ? null : Math.round((grams / 1000) * pricePerKg),
+        });
+      }
+    } else if (this.grams > 0 || printed.filamentType || printed.resinType) {
+      if (printed.resinType) {
+        const pricePerL = resolveResinPricePerLiter(
+          settings,
+          printed.resinType,
+          this.suppliesSignal(),
+          printed.brand,
+        );
+        rows.push({
+          title: `Resina ${RESIN_TYPE_LABELS[printed.resinType as ResinType] ?? printed.resinType} · ${formatDecimalEs(this.grams)} ml`,
+          detail:
+            pricePerL == null
+              ? printed.brand || null
+              : `${formatCurrencyArs(pricePerL)} / L`,
+          amount:
+            pricePerL == null
+              ? null
+              : Math.round((this.grams / 1000) * pricePerL),
+        });
+      } else {
+        const pricePerKg = resolveFilamentPricePerKg(
+          settings,
+          printed.filamentType,
+          this.suppliesSignal(),
+        );
+        rows.push({
+          title: printed.filamentType
+            ? `Filamento ${FILAMENT_TYPE_LABELS[printed.filamentType as FilamentType] ?? String(printed.filamentType).toUpperCase()} · ${formatDecimalEs(this.grams)} g`
+            : `Material · ${formatDecimalEs(this.grams)} g`,
+          detail:
+            pricePerKg == null
+              ? printed.brand || null
+              : `${formatCurrencyArs(pricePerKg)} / kg`,
+          amount:
             pricePerKg == null
               ? null
-              : Math.round((grams / 1000) * pricePerKg);
-          rows.push({
-            title: `Filamento ${FILAMENT_TYPE_LABELS[line.filamentType as FilamentType] ?? String(line.filamentType).toUpperCase()} · ${grams} g`,
-            detail:
-              pricePerKg == null
-                ? this.colorLabel(line.colorId)
-                : `${formatCurrencyArs(pricePerKg)} / kg`,
-            amount,
-          });
-        }
-      } else if (this.grams > 0 || printed.filamentType || printed.resinType) {
-        if (printed.resinType) {
-          const pricePerL = resolveResinPricePerLiter(
-            settings,
-            printed.resinType,
-            this.suppliesSignal(),
-            printed.brand,
-          );
-          const amount =
-            pricePerL == null
-              ? breakdown?.materialCost ?? null
-              : Math.round((this.grams / 1000) * pricePerL);
-          rows.push({
-            title: `Resina ${RESIN_TYPE_LABELS[printed.resinType as ResinType] ?? printed.resinType} · ${this.grams} g`,
-            detail:
-              pricePerL == null
-                ? printed.brand || null
-                : `${formatCurrencyArs(pricePerL)} / L`,
-            amount,
-          });
-        } else {
-          const pricePerKg = resolveFilamentPricePerKg(
-            settings,
-            printed.filamentType,
-            this.suppliesSignal(),
-          );
-          const amount =
-            pricePerKg == null
-              ? breakdown?.materialCost ?? null
-              : Math.round((this.grams / 1000) * pricePerKg);
-          rows.push({
-            title: printed.filamentType
-              ? `Filamento ${FILAMENT_TYPE_LABELS[printed.filamentType as FilamentType] ?? String(printed.filamentType).toUpperCase()} · ${this.grams} g`
-              : `Material · ${this.grams} g`,
-            detail:
-              pricePerKg == null
-                ? printed.brand || null
-                : `${formatCurrencyArs(pricePerKg)} / kg`,
-            amount,
-          });
-        }
-      }
-
-      const purgeGrams = Math.max(0, Number(printed.purgeGrams) || 0);
-      if (purgeGrams > 0) {
-        rows.push({
-          title: `Purga AMS · ${purgeGrams} g`,
-          detail:
-            printed.colorChanges != null
-              ? `${printed.colorChanges} cambios de color`
-              : null,
-          amount: breakdown?.purgeCost ?? null,
+              : Math.round((this.grams / 1000) * pricePerKg),
         });
       }
     }
 
-    if (this.printHours > 0) {
-      const printAmount =
-        breakdown != null
-          ? Math.round(breakdown.energyCost + breakdown.machineCost)
-          : null;
+    const purgeGrams = Math.max(0, Number(printed.purgeGrams) || 0);
+    if (purgeGrams > 0) {
       rows.push({
-        title: `Impresión · ${this.printHours} h`,
-        detail: PRODUCT_TYPE_LABELS[printed.type] ?? printed.type,
-        amount: printAmount,
+        title: `Purga AMS · ${formatDecimalEs(purgeGrams)} g`,
+        detail:
+          printed.colorChanges != null
+            ? `${printed.colorChanges} cambios de color`
+            : null,
+        amount: breakdown?.purgeCost ?? null,
       });
     }
 
-    if (this.workHours > 0) {
-      const rate = Number(settings.laborCostPerHour) || 0;
+    if (this.printHours > 0) {
       rows.push({
-        title: `Mano de obra · ${this.workHours} h`,
-        detail: rate > 0 ? `${formatCurrencyArs(rate)} / h` : null,
-        amount: breakdown?.laborCost ?? (rate > 0 ? Math.round(this.workHours * rate) : null),
+        title: `Impresión · ${formatDecimalEs(this.printHours)} h`,
+        detail: PRODUCT_TYPE_LABELS[printed.type] ?? printed.type,
+        amount: Math.round(
+          (breakdown?.energyCost ?? 0) + (breakdown?.machineCost ?? 0),
+        ),
       });
     }
 
     if (printed.washMinutes) {
       rows.push({
         title: `Lavado · ${printed.washMinutes} min`,
-        detail: null,
+        detail: 'Incluido en luz y máquina',
         amount: null,
       });
     }
-
     if (printed.cureMinutes) {
       rows.push({
         title: `Curado · ${printed.cureMinutes} min`,
-        detail: null,
+        detail: 'Incluido en luz y máquina',
         amount: null,
       });
     }
 
-    if (this.hasComponents) {
-      rows.push({
-        title: `Piezas incluidas · ${this.resolvedComponents.length}`,
-        detail:
-          this.product && this.product.assemblyTimeHours > 0
-            ? `Armado ${this.product.assemblyTimeHours} h`
-            : null,
-        amount: breakdown?.materialCost ?? null,
-      });
-    }
+    this.pushLaborRow(rows, this.workHours, settings);
+    this.pushErrorMarginRow(rows, breakdown, settings);
 
-    const errorPercent = Number(settings.errorMarginPercent) || 0;
-    if (errorPercent > 0 || (breakdown?.errorMarginCost ?? 0) > 0) {
-      rows.push({
-        title: `Margen de error · ${errorPercent} %`,
-        detail: (breakdown?.purgeCost ?? 0) > 0
-          ? 'Sobre material, purga, luz y máquina'
-          : 'Sobre material, luz y máquina',
-        amount: breakdown?.errorMarginCost ?? null,
-      });
+    if (printed.type === ProductType.RESINA) {
+      const washSupplyCost = Math.round(
+        calcWashSupplyCost(settings, this.suppliesSignal(), ProductType.RESINA),
+      );
+      if (washSupplyCost > 0) {
+        rows.push({
+          title: 'Insumo · Alcohol de lavado',
+          detail: 'Sin margen de error',
+          amount: washSupplyCost,
+        });
+      }
     }
-
     return rows;
   }
 
-  private get mobileCostBreakdown(): CostBreakdown | null {
-    const printed = this.product3d;
-    const settings = this.generalSettings;
-    // Combo/piezas: sin recalcular costos de componentes acá.
-    if (!printed || !settings || this.hasComponents) return null;
+  private printedCostBreakdown(
+    printed: Product3D,
+    settings: GeneralSettings,
+  ): CostBreakdown {
     return this.costCalculation.calculateCost(
       {
         type: printed.type,

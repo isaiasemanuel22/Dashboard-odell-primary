@@ -8,6 +8,7 @@ import {
   ProductType,
 } from '../../../../core/models';
 import {
+  DecimalEsPipe,
   FilamentTypeLabelPipe,
   ResinTypeLabelPipe,
 } from '../../../../shared/pipes/labels.pipe';
@@ -23,7 +24,7 @@ import {
 @Component({
   selector: 'app-product-detail-production',
   standalone: true,
-  imports: [FilamentTypeLabelPipe, ResinTypeLabelPipe],
+  imports: [DecimalEsPipe, FilamentTypeLabelPipe, ResinTypeLabelPipe],
   templateUrl: './product-detail-production.component.html',
   styleUrl: './product-detail-production.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

@@ -39,6 +39,7 @@
 @if (!loading && order && !notFound) {
   <div class="mobile-only od-m">
     <db-mobile-bar [title]="order.id" backLink="/pedidos">
+      @if (showMobileMoreActions) {
       <button
         type="button"
         class="m-ib"
@@ -58,6 +59,7 @@
           <path d="M5 12h.01M12 12h.01M19 12h.01" />
         </svg>
       </button>
+      }
     </db-mobile-bar>
 
     <div class="m-body od-m__body" [class.m-has-dock]="showMobileDock">
@@ -191,18 +193,9 @@
             >
               <strong>Atención ({{ alerts.length }})</strong>
               <span>{{ alertItem.message }}</span>
-              @if (mobileAlertsExpanded) {
-                @for (extra of extraAlerts; track extra.code + '-' + $index) {
-                  <span class="od-m__alert-extra">{{ extra.message }}</span>
-                }
+              @for (extra of extraAlerts; track extra.code + '-' + $index) {
+                <span class="od-m__alert-extra">{{ extra.message }}</span>
               }
-              <button
-                type="button"
-                class="od-m__alerts-toggle"
-                (click)="toggleMobileAlerts()"
-              >
-                {{ mobileAlertsExpanded ? 'Ver menos' : 'Ver todas' }}
-              </button>
             </div>
           }
         </section>
@@ -304,7 +297,7 @@
                   <li class="od-m__task">
                     <div class="od-m__task-main">
                       <strong>{{ task.productName }}</strong>
-                      <span>{{ taskKindLabels[task.taskKind] }} · {{ task.active ? 'Tablero' : 'Pendiente' }}</span>
+                      <span>{{ taskKindLabels[task.taskKind] }}@if (taskLocationLabel(task); as location) { · {{ location }}}</span>
                       @if (task.status === 'bloqueado' && task.blockedReason) {
                         <span class="od-m__task-block">Bloqueo: {{ task.blockedReason }}</span>
                       }
@@ -352,6 +345,7 @@
           <app-order-detail-history
             [statusHistory]="statusHistory"
             [priceHistory]="priceHistory"
+            [sourceQuoteId]="sourceQuoteId"
           />
         }
       </db-mobile-collapsible>
@@ -396,6 +390,11 @@
       @if (canEditOrder) {
         <button type="button" class="m-sheet-action" (click)="onMobileEdit()">
           Editar
+        </button>
+      }
+      @if (showMobileMarkAllDelivered) {
+        <button type="button" class="m-sheet-action" (click)="onMobileMarkAllDelivered()">
+          Marcar todo entregado
         </button>
       }
       @if (canCancelOrder) {
@@ -682,6 +681,7 @@
           <app-order-detail-history
             [statusHistory]="statusHistory"
             [priceHistory]="priceHistory"
+            [sourceQuoteId]="sourceQuoteId"
           />
         }
 

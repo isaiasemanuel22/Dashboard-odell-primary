@@ -232,6 +232,38 @@
     }
   }
 
+  .qd-m__expired {
+    margin-top: 8px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: $color-status-danger-bg;
+    color: $color-status-danger-text;
+
+    p {
+      margin: 0 0 8px;
+      font-size: 13px;
+      line-height: 1.35;
+    }
+  }
+
+  .qd-m__expired-btn {
+    min-height: 40px;
+    width: 100%;
+    border: 1px solid $color-danger-border;
+    border-radius: 10px;
+    background: #fff;
+    color: $color-danger-text;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+  }
+
   .qd-m__line {
     align-items: flex-start;
   }
@@ -287,4 +319,22 @@
     margin-top: 4px;
   }
 
+}
+
+.quote-expired-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid $color-danger-border;
+  border-radius: 10px;
+  background: $color-status-danger-bg;
+  color: $color-status-danger-text;
+
+  p {
+    margin: 0;
+    font-size: 0.875rem;
+  }
 }

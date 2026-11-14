@@ -65,7 +65,10 @@
       </button>
     </db-mobile-bar>
 
-    <div class="pd-m__gallery">
+    <div
+      class="pd-m__gallery"
+      [class.pd-m__gallery--empty]="!product.images.length"
+    >
       <app-product-image-carousel
         [images]="product.images"
         [alt]="product.name"
@@ -105,6 +108,10 @@
         </div>
       </div>
 
+      @for (warning of priceWarnings; track $index) {
+        <p class="pd-warn" role="alert">{{ warning }}</p>
+      }
+
       <h2 class="m-sec-t">Stock</h2>
       <div class="m-card">
         <div class="m-ln">
@@ -121,10 +128,10 @@
         </div>
       </div>
 
-      @if (product3d && mobileCostCompositionRows.length) {
+      @if (costCompositionRows.length) {
         <h2 class="m-sec-t">Composición del costo</h2>
         <div class="m-card m-card--flush">
-          @for (row of mobileCostCompositionRows; track row.title) {
+          @for (row of costCompositionRows; track $index) {
             <div class="m-row pd-m__cost-row">
               <div class="m-row__text">
                 <b>{{ row.title }}</b>
@@ -234,10 +241,36 @@
             [cost]="displayCost"
             [profit]="displayProfit"
             [showMargin]="true"
+            [laborCost]="laborCost"
             [targetMarginPercent]="targetMarginPercent"
             priceLabel="Precio de venta"
           />
+          @if (wholesalePrice; as mayorista) {
+            <p class="pd-wholesale">Mayorista {{ mayorista | currencyArs }}</p>
+          }
+          @for (warning of priceWarnings; track $index) {
+            <p class="pd-warn" role="alert">{{ warning }}</p>
+          }
         </section>
+
+        @if (costCompositionRows.length) {
+          <section class="panel">
+            <h3>Composición del costo</h3>
+            <dl class="detail-list">
+              @for (row of costCompositionRows; track $index) {
+                <div>
+                  <dt>
+                    {{ row.title }}
+                    @if (row.detail) {
+                      <small class="pd-cost-detail">{{ row.detail }}</small>
+                    }
+                  </dt>
+                  <dd>{{ row.amount != null ? (row.amount | currencyArs) : '' }}</dd>
+                </div>
+              }
+            </dl>
+          </section>
+        }
 
         <section class="panel">
           <h3>Información general</h3>
@@ -307,7 +340,7 @@
               [colorCatalog]="colorCatalog"
             />
             @if (product.assemblyTimeHours > 0) {
-              <p class="assembly-note">Tiempo de armado: {{ product.assemblyTimeHours }} h</p>
+              <p class="assembly-note">Tiempo de armado: {{ product.assemblyTimeHours | decimalEs }} h</p>
             }
           </section>
         }

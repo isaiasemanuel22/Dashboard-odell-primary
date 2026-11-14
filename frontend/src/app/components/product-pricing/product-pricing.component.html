@@ -17,9 +17,15 @@
       {{ profit | currencyArs }}
     </span>
   </div>
+  @if (showMargin && laborCost > 0) {
+    <div class="pricing-item">
+      <small>Mano de obra (sin margen)</small>
+      <span>{{ laborCost | currencyArs }}</span>
+    </div>
+  }
   @if (showMargin && marginPercent !== null) {
     <div class="pricing-item">
-      <small>Margen</small>
+      <small>{{ laborCost > 0 ? 'Margen (sin mano de obra)' : 'Margen' }}</small>
       <span [class.negative]="profit < 0">
         {{ marginPercent }}%
         @if (targetMarginPercent != null) {

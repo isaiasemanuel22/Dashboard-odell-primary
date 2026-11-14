@@ -1,3 +1,4 @@
+@if (isMobile()) {
 <div class="mobile-only orders-m">
   <db-mobile-bar title="Pedidos" backLink="/dashboard">
     <span class="orders-m__open">{{ openOrdersBarLabel }}</span>
@@ -41,7 +42,7 @@
     </div>
   }
 </div>
-
+} @else {
 <div class="desktop-only">
   <header class="orders-header">
     <div>
@@ -116,3 +117,4 @@
     }
   }
 </div>
+}

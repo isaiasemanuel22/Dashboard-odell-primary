@@ -8,11 +8,11 @@
     </div>
     <div class="production-stat">
       <span class="production-stat__label">Impresión</span>
-      <strong class="production-stat__value">{{ printHours }} h</strong>
+      <strong class="production-stat__value">{{ printHours | decimalEs }} h</strong>
     </div>
     <div class="production-stat">
       <span class="production-stat__label">Mano de obra</span>
-      <strong class="production-stat__value">{{ workHours }} h</strong>
+      <strong class="production-stat__value">{{ workHours | decimalEs }} h</strong>
     </div>
     @if (product.washMinutes) {
       <div class="production-stat">

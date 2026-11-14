@@ -58,7 +58,7 @@ export interface QuoteFormDialogData {
           [title]="dialogTitle"
           [headerActionLabel]="headerActionLabel"
           [headerActionDisabled]="loading || !canSaveDraft"
-          discardEntityLabel="el presupuesto"
+          [discardEntityLabel]="quote ? 'los cambios' : 'el presupuesto'"
           [isDirty]="!!form?.hasUnsavedChanges()"
           (close)="forceClose()"
           (headerAction)="saveDraft()"
@@ -222,7 +222,7 @@ export class QuoteFormDialogComponent implements OnInit, AfterViewInit {
     this.confirmingDiscard = true;
     confirmMobileFormDiscard(this.formDialogs, {
       hasChanges: !!this.form?.hasUnsavedChanges(),
-      entityLabel: 'el presupuesto',
+      entityLabel: this.quote ? 'los cambios' : 'el presupuesto',
     }).subscribe((confirmed) => {
       this.confirmingDiscard = false;
       if (confirmed) this.forceClose();

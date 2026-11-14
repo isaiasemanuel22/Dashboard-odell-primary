@@ -6,13 +6,14 @@ import {
 } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { Quote } from '../../core/models';
-import { QUOTE_STATUS_LABELS } from '../../shared/constants/labels';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 import {
   formatQuoteMobileContextHint,
   quoteLinesMetaLabel,
+  quoteStatusLabelFor,
   quoteStatusPillClass,
 } from '../../shared/utils/quote.helpers';
+import { isQuoteExpired } from '../../shared/utils/quote-validity.util';
 
 @Component({
   selector: 'app-quote-mobile-card',
@@ -28,11 +29,11 @@ export class QuoteMobileCardComponent {
   protected readonly metaLabel = computed(() => quoteLinesMetaLabel(this.quote()));
 
   protected readonly statusLabel = computed(
-    () => QUOTE_STATUS_LABELS[this.quote().status] ?? this.quote().status,
+    () => quoteStatusLabelFor(this.quote()),
   );
 
   protected readonly statusPillClass = computed(() =>
-    quoteStatusPillClass(this.quote().status),
+    quoteStatusPillClass(this.quote().status, isQuoteExpired(this.quote())),
   );
 
   protected readonly customerLabel = computed(() => {

@@ -283,3 +283,36 @@
     text-decoration: underline;
   }
 }
+
+// Mobile: campos editables cómodos (≥44px, 16px para que iOS no haga zoom).
+@media (max-width: 768px) {
+  :host {
+    margin-top: 0.5rem;
+  }
+
+  .order-line__money-value--editable {
+    height: 2.75rem !important;
+    min-height: 2.75rem !important;
+    max-height: 2.75rem !important;
+  }
+
+  .order-line__money-value,
+  .order-line__money-value--with-prefix::before,
+  .order-line__money-control {
+    font-size: 1rem !important;
+  }
+
+  .order-line__money-control {
+    min-height: 2.75rem;
+  }
+
+  // El subtotal ya se muestra en la fila mobile de la línea.
+  .order-line__subtotal {
+    display: none;
+  }
+
+  .order-line__price-reset {
+    min-height: 2.75rem;
+    padding: 0 0.25rem;
+  }
+}

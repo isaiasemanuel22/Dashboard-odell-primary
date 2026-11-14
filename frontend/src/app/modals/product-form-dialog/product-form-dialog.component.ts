@@ -25,6 +25,7 @@ import { confirmMobileFormDiscard } from '../../components/mobile-form-shell/con
 import type { MobileDockAction } from '../../components/mobile-dock/mobile-dock.component';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { ProductFormComponent } from '../../pages/products/product-form/product-form.component';
+import { ProductFormPricingFacade } from '../../pages/products/product-form/store/product-form-pricing/product-form-pricing.facade';
 import { FormDialogService } from '../form-dialog.service';
 
 export interface ProductFormDialogData {
@@ -64,8 +65,15 @@ export interface ProductFormDialogData {
             (save)="save($event)"
             (cancel)="cancel()"
           />
+          @let priceHint = dockPriceHint;
           @if (missingLabel) {
-            <p dockHint role="status">{{ missingLabel }}</p>
+            <p dockHint role="status">
+              {{ missingLabel }}@if (priceHint) { · {{ priceHint }} }
+            </p>
+          } @else if (priceHint) {
+            <p dockHint class="product-form-dialog__dock-hint" role="status">
+              {{ priceHint }}
+            </p>
           } @else if (form?.show3mfFooterHint) {
             <p dockHint class="product-form-dialog__dock-hint">
               El .3mf queda adjunto al producto para reimprimir
@@ -105,6 +113,7 @@ export class ProductFormDialogComponent implements OnInit {
   private readonly breakpoint = inject(BreakpointService);
   private readonly router = inject(Router);
   private readonly unsavedRegistry = inject(UnsavedDialogRegistry);
+  private readonly pricingStore = inject(ProductFormPricingFacade);
 
   @ViewChild(ProductFormComponent) form?: ProductFormComponent;
   @ViewChild(MobileFormShellComponent)
@@ -137,6 +146,15 @@ export class ProductFormDialogComponent implements OnInit {
       : `Faltan: ${items.join(', ')}`;
   }
 
+  /** «Precio $ X · margen Y %» para la barra fija (el precio no se ve mientras se carga). */
+  get dockPriceHint(): string {
+    const summary = this.form?.dockPriceSummary;
+    if (!summary) return '';
+    const margin =
+      summary.margin == null ? '' : ` · margen ${summary.margin}\u00a0%`;
+    return `Precio ${summary.label}${margin}`;
+  }
+
   get mobileDockActions(): MobileDockAction[] {
     const form = this.form;
     const facade = form?.facade;
@@ -159,9 +177,7 @@ export class ProductFormDialogComponent implements OnInit {
           ? 'Subiendo archivos...'
           : this.loading
             ? 'Guardando...'
-            : this.product
-              ? 'Guardar'
-              : 'Crear producto',
+            : `${this.product ? 'Guardar cambios' : 'Crear producto'}${this.form?.dockPriceSummary ? ` · ${this.form.dockPriceSummary.label}` : ''}`,
         kind: 'primary',
         disabled: this.loading || savingFiles || !canSave,
         loading: this.loading || savingFiles,
@@ -182,6 +198,9 @@ export class ProductFormDialogComponent implements OnInit {
   ngOnInit(): void {
     this.product = this.data.product;
     this.resetState();
+    this.pricingStore.vm$
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe(() => this.cdr.markForCheck());
     this.dialogRef.disableClose = true;
     // Navegar (atrás del navegador, etc.) con cambios sin guardar pregunta
     // "¿descartar?" vía guard de ruta; si se confirma, el diálogo se cierra.

@@ -93,6 +93,8 @@ export class OrdersComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly breakpoint = inject(BreakpointService);
+  /** Solo se renderiza la vista (tarjetas o tabla) que corresponde al ancho. */
+  readonly isMobile = this.breakpoint.isMobile;
   private readonly dataChanged = inject(DataChangedService);
   private readonly listPersistence =
     injectMobileListPersistence<OrdersMobileListState>(MOBILE_LIST_KEYS.orders);

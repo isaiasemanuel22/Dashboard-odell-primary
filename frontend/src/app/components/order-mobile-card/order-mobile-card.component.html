@@ -43,6 +43,9 @@
             @case ('paid') {
               Pagado {{ line.paid | currencyArs }} · saldo {{ line.balance | currencyArs }}
             }
+            @case ('owes') {
+              Debe {{ line.balance | currencyArs }}
+            }
             @case ('none') {
               Sin pagos
             }

@@ -20,6 +20,8 @@ import { DbButtonComponent } from '../db-button/db-button.component';
 import { DbServiceBadgeComponent } from '../db-service-badge/db-service-badge.component';
 import { isQuoteEditable } from '../../shared/utils/quote.helpers';
 
+import { isQuoteExpired } from '../../shared/utils/quote-validity.util';
+
 @Component({
   selector: 'app-quote-card',
   standalone: true,
@@ -58,6 +60,10 @@ export class QuoteCardComponent {
     const conceptWord = concepts === 1 ? 'concepto' : 'conceptos';
     const unitWord = units === 1 ? 'unidad' : 'unidades';
     return `${concepts} ${conceptWord} · ${units} ${unitWord}`;
+  }
+
+  get expired(): boolean {
+    return isQuoteExpired(this.quote);
   }
 
   get canEdit(): boolean {

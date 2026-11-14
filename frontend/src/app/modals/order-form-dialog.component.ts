@@ -63,7 +63,7 @@ export interface OrderFormDialogData {
       @if (isMobile()) {
         <db-mobile-form-shell
           [title]="dialogTitle"
-          discardEntityLabel="el pedido"
+          [discardEntityLabel]="order ? 'los cambios' : 'el pedido'"
           [isDirty]="!!form?.hasUnsavedChanges()"
           (close)="forceClose()"
         >
@@ -229,7 +229,7 @@ export class OrderFormDialogComponent implements OnInit, AfterViewInit {
     this.confirmingDiscard = true;
     confirmMobileFormDiscard(this.formDialogs, {
       hasChanges: !!this.form?.hasUnsavedChanges(),
-      entityLabel: 'el pedido',
+      entityLabel: this.order ? 'los cambios' : 'el pedido',
     }).subscribe((confirmed) => {
       this.confirmingDiscard = false;
       if (confirmed) this.forceClose();
