@@ -295,6 +295,11 @@ export class CostCalculatorService {
       return product.price ?? 0;
     }
 
+    // Combo anidado: cuenta su precio guardado, no la suma de sus piezas.
+    if ((product.price ?? 0) > 0) {
+      return product.price;
+    }
+
     visiting.add(productId);
     const partsPrice = components.reduce((sum, item) => {
       return (
@@ -570,7 +575,10 @@ export class CostCalculatorService {
   }): number {
     // Snapshot persistido al cotizar: no recalcular con Ajustes actuales.
     if (item.serviceType && isThirdPartyService(item.serviceType)) {
-      return 0;
+      // Costo cargado a mano en la línea; sin cargar, 0.
+      return item.unitCost != null && Number.isFinite(Number(item.unitCost))
+        ? Math.max(0, Number(item.unitCost))
+        : 0;
     }
     if (item.serviceType && isSupplyOrderLine(item.serviceType)) {
       const snapshot =

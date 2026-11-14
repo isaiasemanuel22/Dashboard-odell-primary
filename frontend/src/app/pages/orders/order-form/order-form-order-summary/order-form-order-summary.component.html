@@ -63,7 +63,9 @@
           [class.order-resumen__neg]="profit < 0"
         >
           {{ profit | currencyArs }}
-          @if (totalCost > 0) {
+          @if (costIncomplete) {
+            · costo incompleto
+          } @else if (totalCost > 0) {
             · {{ profitPercentOnCost }}%
           }
         </strong>
@@ -97,7 +99,9 @@
           [class.order-resumen__neg]="profit < 0"
         >
           {{ profit | currencyArs }}
-          @if (totalCost > 0) {
+          @if (costIncomplete) {
+            · costo incompleto
+          } @else if (totalCost > 0) {
             · {{ profitPercentOnCost }}%
           }
         </strong>

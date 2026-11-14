@@ -1,11 +1,28 @@
 <div class="order-line__money-field">
   <span class="order-line__money-label">Costo unitario</span>
-  <div
-    class="order-line__money-value order-line__money-value--muted"
-    [class.order-line__money-value--with-prefix]="usePlainCostPrefix"
-  >
-    {{ unitCostFormatted }}
-  </div>
+  @if (unitCostEditable) {
+    <div
+      class="order-line__money-value order-line__money-value--editable order-line__money-value--with-prefix"
+    >
+      <input
+        class="order-line__money-control"
+        type="text"
+        inputmode="numeric"
+        [ngModel]="unitCostDisplay"
+        (ngModelChange)="onUnitCostDisplayChange($event)"
+        [name]="'cost-' + lineIndex"
+        autocomplete="off"
+        aria-label="Costo unitario"
+      />
+    </div>
+  } @else {
+    <div
+      class="order-line__money-value order-line__money-value--muted"
+      [class.order-line__money-value--with-prefix]="usePlainCostPrefix"
+    >
+      {{ unitCostFormatted }}
+    </div>
+  }
   <p class="order-line__money-hint">
     {{ unitCostHint }}
   </p>

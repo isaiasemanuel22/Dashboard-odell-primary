@@ -79,11 +79,13 @@ import {
   lineMissingReasons as buildLineMissingReasons,
   orderLinesFromSaleCart,
   orderLineStockHint,
+  orderPaidAmount,
   ORDER_DESCRIPTION_MAX_LENGTH,
   serviceTypeOptions,
   toDateInputValue,
   toOrderDueDate,
 } from '../../../shared/utils/order.helpers';
+import { formatCurrencyArs } from '../../../shared/utils/currency-ars.util';
 import {
   calculateOrderLinesCost,
   resolveProductUnitCost,
@@ -189,6 +191,7 @@ import {
   MobileDockComponent,
 } from '../../../components/mobile-dock/mobile-dock.component';
 import { MobileFormStepComponent } from '../../../components/mobile-form-step/mobile-form-step.component';
+import { shortId, sortAndDisambiguateOptions } from '../../../shared/utils/search-text.util';
 
 export type OrderFormVariant = 'order' | 'quote';
 
@@ -344,15 +347,45 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   get submitLabel(): string {
     if (this.loading) return 'Guardando...';
+    if (this.isQuoteForm && this.isEditingQuoteDraft) {
+      return 'Guardar y marcar enviado';
+    }
     if (this.isEditing) return 'Guardar cambios';
     if (this.presetQuote) return 'Generar pedido';
     return this.isQuoteForm ? 'Crear presupuesto' : 'Crear pedido';
+  }
+
+  /** Presupuesto que ya existe y sigue en Borrador. */
+  get isEditingQuoteDraft(): boolean {
+    return (
+      this.isQuoteForm &&
+      this.quote !== null &&
+      this.quote.status === QuoteStatus.BORRADOR
+    );
+  }
+
+  /**
+   * Editar un presupuesto Enviado: «Guardar cambios» conserva su estado
+   * (nunca lo pasa a Borrador ni lo reenvía).
+   */
+  get keepsQuoteStatus(): boolean {
+    return (
+      this.isQuoteForm &&
+      this.quote !== null &&
+      this.quote.status !== QuoteStatus.BORRADOR
+    );
+  }
+
+  /** Etiqueta de la acción secundaria (guardar sin cambiar de estado). */
+  get quoteSaveKeepLabel(): string {
+    return this.isEditingQuoteDraft ? 'Guardar' : 'Guardar borrador';
   }
 
   /** Dock mobile: mismo submit + total ya calculado. */
   get submitLabelMobile(): string {
     if (this.loading) return 'Guardando...';
     if (this.isQuoteForm) {
+      if (this.isEditingQuoteDraft) return 'Guardar y marcar enviado';
       if (this.isEditing) return 'Guardar cambios';
       return 'Crear y enviar';
     }
@@ -416,6 +449,18 @@ export class OrderFormComponent implements OnChanges, OnInit {
       }
     }
 
+    const paid = this.order ? orderPaidAmount(this.order) : 0;
+    if (
+      this.order &&
+      paid > 0 &&
+      Math.round(this.total * 100) !== Math.round(this.order.total * 100) &&
+      Math.round(this.total * 100) < Math.round(paid * 100)
+    ) {
+      missing.push(
+        `un total que no sea menor a lo ya cobrado (${formatCurrencyArs(paid)})`,
+      );
+    }
+
     if (
       plainTextFromHtml(this.description).length > this.descriptionMaxLength
     ) {
@@ -427,6 +472,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   /** Mismas reglas que `canSubmit` del presupuesto. */
   private quoteSubmitMissing(asDraft: boolean): string[] {
+    // Un presupuesto Enviado conserva su estado: se valida completo.
+    if (this.keepsQuoteStatus) asDraft = false;
     const missing: string[] = [];
     const relevant = this.lines
       .map((line, index) => ({ line, index }))
@@ -435,7 +482,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (!relevant.length) {
       // Un borrador puede guardarse sin líneas; Enviado exige al menos una.
       if (!asDraft) missing.push('al menos un producto');
-    } else {
+    } else if (!asDraft) {
+      // El borrador se guarda incompleto: valida recién al enviar.
       for (const { line, index } of relevant) {
         if (isLineValid(line)) continue;
         missing.push(...this.lineMissingReasons(line, index + 1));
@@ -449,8 +497,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }
 
     if (asDraft) {
-      if (!this.customerId.trim() && !hasRichTextContent(this.description)) {
-        missing.push('cliente o descripción');
+      // Evita borradores vacíos de $0: hace falta una línea completa o una descripción.
+      if (
+        !this.lines.some((line) => isLineValid(line)) &&
+        !hasRichTextContent(this.description)
+      ) {
+        missing.push('una línea completa o una descripción');
       }
     } else if (!this.customerId.trim()) {
       missing.push('cliente');
@@ -471,13 +523,17 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   get customerOptions() {
-    return this.customers.map((c) => ({
-      value: c.id,
-      label:
-        c.company && c.company.trim() !== c.name.trim()
-          ? `${c.name} - ${c.company}`
-          : c.name,
-    }));
+    return sortAndDisambiguateOptions(
+      this.customers.map((c) => ({
+        value: c.id,
+        label:
+          c.company && c.company.trim() !== c.name.trim()
+            ? `${c.name} - ${c.company}`
+            : c.name,
+        id: c.id,
+      })),
+      (o) => shortId(o.id),
+    ).map(({ value, label }) => ({ value, label }));
   }
 
   get selectedCustomer(): Customer | undefined {
@@ -518,13 +574,36 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   get priceTypeOptions(): DbSegmentOption<PriceType>[] {
     const percent = this.wholesaleDiscount.percent;
+    const shortfall = this.wholesaleShortfall;
+    const base = percent > 0 ? `Mayorista −${percent}%` : 'Mayorista';
     return [
       { value: PriceType.LISTA, label: 'Lista' },
       {
         value: PriceType.MAYORISTA,
-        label: percent > 0 ? `Mayorista −${percent}%` : 'Mayorista',
+        label:
+          shortfall > 0
+            ? `${base} · no disponible (faltan ${this.money(shortfall)})`
+            : base,
       },
     ];
+  }
+
+  /** Monto que falta (a precio de lista) para llegar al mínimo mayorista; 0 si aplica o no hay mínimo. */
+  get wholesaleShortfall(): number {
+    if (this.priceType !== PriceType.MAYORISTA) return 0;
+    const minimum = this.selectedCustomer?.wholesaleMinimum;
+    if (minimum == null || !Number.isFinite(Number(minimum))) return 0;
+    const hasPricedLine = this.lines.some(
+      (line) => !isLineBlank(line) && lineListUnitPrice(line) > 0,
+    );
+    if (!hasPricedLine) return 0;
+    if (meetsWholesaleMinimum(this.listSubtotal, Number(minimum))) return 0;
+    return Math.max(0, Math.ceil(Number(minimum) - this.listSubtotal));
+  }
+
+  /** Lo marcado en pantalla: «Mayorista» no se muestra activo si no se aplica. */
+  get priceTypeDisplay(): PriceType {
+    return this.wholesaleShortfall > 0 ? PriceType.LISTA : this.priceType;
   }
 
   get depositMethodOptions(): DbSegmentOption<PaymentMethod>[] {
@@ -677,10 +756,12 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   get totalCost(): number {
     if (!this.profitMargins) return 0;
-    return calculateOrderLinesCost(
-      this.billableLines,
-      this.products,
-      this.profitMargins,
+    return (
+      calculateOrderLinesCost(
+        this.billableLines,
+        this.products,
+        this.profitMargins,
+      ) + this.thirdPartyCost
     );
   }
 
@@ -690,12 +771,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   get profit(): number {
-    return (
-      this.total -
-      this.thirdPartyChargedShare -
-      this.totalCost -
-      this.paymentFeePreview
-    );
+    return this.total - this.totalCost - this.paymentFeePreview;
   }
 
   get profitPercentOnCost(): number {
@@ -704,34 +780,43 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   get listProfit(): number {
-    return (
-      this.listSubtotal -
-      this.thirdPartyListShare -
-      this.discountApplied -
-      this.totalCost
-    );
+    return this.listSubtotal - this.discountApplied - this.totalCost;
   }
 
-  /** Lo que paga el cliente por servicios de un tercero. No es ganancia. */
-  private get thirdPartyChargedShare(): number {
-    return this.shareOfCharged(this.thirdPartyListShare);
-  }
-
-  private get thirdPartyListShare(): number {
+  /** Costo cargado en las líneas de Servicio (tercero); sin costo cuenta 0. */
+  private get thirdPartyCost(): number {
     return this.billableLines.reduce((sum, line) => {
       if (!isThirdPartyService(line.serviceType)) return sum;
-      return sum + linePreviewSubtotal(line, false, this.wholesaleDiscount);
+      const qty = Math.max(0, Number(line.quantity) || 0);
+      return sum + Math.max(0, Number(line.unitCost) || 0) * qty;
     }, 0);
   }
 
-  private shareOfCharged(amount: number): number {
-    const base = this.chargedSubtotal;
-    if (!(amount > 0) || !(base > 0)) return 0;
-    return Math.round(amount * (this.total / base));
+  /**
+   * La ganancia está inflada: hay Servicio, Diseño o Modelado con precio pero
+   * sin costo cargado (tarifa en $0 o sin definir).
+   */
+  get costIncomplete(): boolean {
+    return this.billableLines.some((line) => {
+      if (
+        !isThirdPartyService(line.serviceType) &&
+        !isDesignService(line.serviceType)
+      ) {
+        return false;
+      }
+      const price = isDesignService(line.serviceType)
+        ? Number(line.designUnitPrice ?? line.unitPrice) || 0
+        : Number(line.unitPrice) || 0;
+      return price > 0 && (Number(line.unitCost) || 0) <= 0;
+    });
   }
 
   get resellerSavings(): number {
-    return this.wholesaleDiscountAmount;
+    // El descuento manual suma solo si el cliente es revendedor o ya hay mayorista.
+    if (!this.isResellerCustomer && !(this.wholesaleDiscountAmount > 0)) {
+      return 0;
+    }
+    return this.wholesaleDiscountAmount + this.discountApplied;
   }
 
   get depositAmount(): number {
@@ -1466,7 +1551,10 @@ export class OrderFormComponent implements OnChanges, OnInit {
           ? sanitizeRichTextHtml(this.description)
           : '',
         attachments: [...this.attachments],
-        status: asDraft ? QuoteStatus.BORRADOR : QuoteStatus.ENVIADO,
+        status:
+          asDraft && !this.keepsQuoteStatus
+            ? QuoteStatus.BORRADOR
+            : QuoteStatus.ENVIADO,
         priceType: this.priceType,
         salesChannel: this.salesChannel,
       } satisfies CreateQuotePayload);
@@ -1510,7 +1598,14 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   /** True si el usuario cambió un valor respecto del estado inicial. */
   hasUnsavedChanges(): boolean {
-    return this.userEdited;
+    if (this.userEdited) return true;
+    // Selecciones por listas desplegables o botones "agregar línea" no siempre
+    // disparan input/change: si el form nuevo ya tiene datos cargados, es dirty.
+    if (this.isEditing || this.isQuoteForm) return false;
+    return (
+      this.lines.length > 1 ||
+      this.lines.some((line) => !!line.productId || !!line.customName?.trim())
+    ) && !this.presetCartLines.length && !this.presetQuote;
   }
 
   @HostListener('input')
@@ -1566,7 +1661,18 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   get quoteNeedsCustomerHint(): string {
     if (!this.isQuoteForm || this.customerId.trim()) return '';
-    return 'Elegí un cliente para crear el presupuesto (Enviado). El borrador puede guardarse sin cliente si tiene descripción.';
+    return 'Elegí un cliente para crear el presupuesto (Enviado). El borrador puede guardarse sin cliente.';
+  }
+
+  /** Líneas incompletas que no se guardan en el borrador. */
+  get draftIncompleteLinesNote(): string {
+    if (!this.isQuoteForm || this.keepsQuoteStatus) return '';
+    const incomplete = this.lines.filter(
+      (line) => !isLineBlank(line) && !isLineValid(line),
+    ).length;
+    if (!incomplete) return '';
+    const noun = incomplete === 1 ? 'línea incompleta' : 'líneas incompletas';
+    return `${incomplete} ${noun}: el borrador las deja afuera hasta que las completes.`;
   }
 
   /** Aviso del pie de presupuesto: distingue borrador guardable de envío. */

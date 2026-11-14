@@ -248,9 +248,13 @@ export function buildOrderItems(
           ).trim(),
           quantity: line.quantity,
           unitPrice: Number(line.unitPrice) || 0,
-          unitCost: isSupplyOrderLine(line.serviceType)
-            ? Number(line.unitPrice) || 0
-            : 0,
+          // Costo cargado a mano; sin cargar, el insumo cuesta lo que vale y el servicio 0.
+          unitCost:
+            line.unitCost != null && Number.isFinite(Number(line.unitCost))
+              ? Math.max(0, Number(line.unitCost))
+              : isSupplyOrderLine(line.serviceType)
+                ? Number(line.unitPrice) || 0
+                : 0,
           estampadoSupplies: isSupplyOrderLine(line.serviceType)
             ? normalizeEstampadoSupplies([
                 {
@@ -652,7 +656,7 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
       unitPrice: item.listUnitPrice ?? item.unitPrice,
       unitCost: isSupplyOrderLine(serviceType)
         ? (item.unitCost ?? item.unitPrice)
-        : 0,
+        : Math.max(0, Number(item.unitCost) || 0),
       laborNote: isThirdPartyService(serviceType) ? item.laborNote : undefined,
       estampadoSupplies: isSupplyOrderLine(serviceType)
         ? normalizeEstampadoSupplies(item.estampadoSupplies)

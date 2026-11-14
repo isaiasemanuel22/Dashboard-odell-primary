@@ -99,6 +99,7 @@ import { OrderDetailHistoryComponent } from './order-detail-history/order-detail
 import { OrderDetailPaymentsComponent } from './order-detail-payments/order-detail-payments.component';
 import { OrderDetailDeliveriesComponent } from './order-detail-deliveries/order-detail-deliveries.component';
 import { DocumentAttachmentsViewComponent } from '../../../components/document-attachments-view/document-attachments-view.component';
+import { shortId, sortAndDisambiguateOptions } from '../../../shared/utils/search-text.util';
 
 type MobileAccordionKey = 'payments' | 'tasks' | 'deliveries' | 'history';
 
@@ -300,6 +301,35 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Cancelado o entregado: sin alertas de producción ni columna "Pend.". */
+  private isOrderSettled(order: Order | null | undefined): boolean {
+    return (
+      order?.status === OrderStatus.CANCELADO ||
+      order?.status === OrderStatus.ENTREGADO
+    );
+  }
+
+  private visibleColumnsSettled: boolean | null = null;
+  private visibleColumnsCache: OdlColumn<OrderItem>[] = this.lineColumns;
+
+  get visibleLineColumns(): OdlColumn<OrderItem>[] {
+    const settled = this.isOrderSettled(this.order);
+    if (this.visibleColumnsSettled !== settled) {
+      this.visibleColumnsSettled = settled;
+      this.visibleColumnsCache = settled
+        ? this.lineColumns.filter((col) => col.key !== 'pending')
+        : this.lineColumns;
+    }
+    return this.visibleColumnsCache;
+  }
+
+  get canCancelOrder(): boolean {
+    return (
+      this.order?.status !== OrderStatus.CANCELADO &&
+      this.order?.status !== OrderStatus.ENTREGADO
+    );
+  }
+
   get canEditOrder(): boolean {
     return (
       this.order?.status === OrderStatus.PENDIENTE ||
@@ -367,12 +397,15 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   }
 
   get customerOptions() {
-    return this.customers.map((customer) => ({
-      value: customer.id,
-      label: customer.company
-        ? `${customer.name} (${customer.company})`
-        : customer.name,
-    }));
+    return sortAndDisambiguateOptions(
+      this.customers.map((customer) => ({
+        value: customer.id,
+        label: customer.company
+          ? `${customer.name} (${customer.company})`
+          : customer.name,
+      })),
+      (o) => shortId(o.value),
+    );
   }
 
   get mobileMoneyRows(): MobileTotalRow[] {
@@ -815,7 +848,9 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
         if (this.route.snapshot.paramMap.get('id') !== id) return;
         this.order = overview.order;
         this.tasks = overview.tasks;
-        this.alerts = overview.alerts ?? [];
+        this.alerts = this.isOrderSettled(overview.order)
+          ? []
+          : (overview.alerts ?? []);
         this.priceNotices = overview.priceNotices ?? [];
         this.deliveries =
           overview.deliveries ?? overview.order.deliveryHistory ?? [];
@@ -1031,6 +1066,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   }
 
   private openPaymentSheet(amount?: number): void {
+    if (this.order?.status === OrderStatus.CANCELADO) return;
     this.closeDeliverySheet();
     this.mobilePaymentSheetOpen = true;
     this.cdr.markForCheck();

@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard, guestGuard } from './core/auth/auth.guard';
 import { LayoutComponent } from './layout/layout.component';
+import { unsavedDialogGuard } from './modals/unsaved-dialog-guard';
 import { settingsUnsavedChangesGuard } from './pages/settings/settings-unsaved-changes';
 
 export const routes: Routes = [
@@ -122,6 +123,7 @@ export const routes: Routes = [
               import('./pages/products/products.component').then(
                 (m) => m.ProductsComponent,
               ),
+            canDeactivate: [unsavedDialogGuard],
           },
           {
             path: ':id',
@@ -129,6 +131,7 @@ export const routes: Routes = [
               import('./pages/products/product-detail/product-detail.component').then(
                 (m) => m.ProductDetailComponent,
               ),
+            canDeactivate: [unsavedDialogGuard],
           },
         ],
       },
@@ -259,6 +262,10 @@ export const routes: Routes = [
         ],
       },
       { path: 'impresos', redirectTo: 'ajustes/impresos', pathMatch: 'full' },
+      { path: 'cola-de-trabajo', redirectTo: 'cola', pathMatch: 'full' },
+      // Ruta inexistente: al inicio en vez de una pantalla en blanco.
+      { path: '**', redirectTo: 'dashboard' },
     ],
   },
+  { path: '**', redirectTo: '' },
 ];

@@ -39,6 +39,8 @@ export class OrderFormQuoteSummaryComponent {
   @Input() total = 0;
   @Input() totalCost = 0;
   @Input() profit = 0;
+  /** Hay líneas de Servicio/Diseño/Modelado sin costo: la ganancia no es real. */
+  @Input() costIncomplete = false;
   @Input() depositPercent = 0;
   @Input() depositAmount = 0;
   @Input() areaShares: QuoteAreaShare[] = [];

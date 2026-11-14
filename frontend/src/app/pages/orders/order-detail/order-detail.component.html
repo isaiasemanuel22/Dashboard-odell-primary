@@ -392,7 +392,7 @@
           Editar
         </button>
       }
-      @if (order.status !== 'cancelado') {
+      @if (canCancelOrder) {
         <button
           type="button"
           class="m-sheet-action m-sheet-action--danger"
@@ -550,7 +550,7 @@
           <db-data-table
             label="Líneas del pedido"
             [rows]="order.items"
-            [columns]="lineColumns"
+            [columns]="visibleLineColumns"
             [clientSide]="false"
             minWidth="0"
           >
@@ -696,7 +696,7 @@
             (clicked)="openEdit()"
           />
         }
-        @if (order.status !== 'cancelado') {
+        @if (canCancelOrder) {
           <db-button
             [label]="statusLoading ? 'Cancelando...' : 'Cancelar pedido'"
             variant="delete"

@@ -8,7 +8,12 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
-import { Quote, QuoteStatus, ServiceType } from '../../core/models';
+import {
+  CreateQuotePayload,
+  Quote,
+  QuoteStatus,
+  ServiceType,
+} from '../../core/models';
 import { RealtimeEvent } from '../../core/models/realtime.model';
 import { DataChangedService } from '../../core/services/data-changed.service';
 import {
@@ -53,7 +58,9 @@ import {
   quoteMobileChips,
   quoteServiceFilters,
   quoteStatusFilters,
+  isQuoteEditable,
 } from '../../shared/utils/quote.helpers';
+import { normalizeSearchText } from '../../shared/utils/search-text.util';
 
 interface QuotesMobileListState {
   chip: QuoteMobileChip;
@@ -123,6 +130,13 @@ export class QuotesComponent implements OnInit {
   }));
 
   readonly actions: OdlRowAction<Quote>[] = [
+    { id: 'ver', label: 'Ver' },
+    {
+      id: 'editar',
+      label: 'Editar',
+      hidden: (quote) => !isQuoteEditable(quote.status),
+    },
+    { id: 'duplicar', label: 'Duplicar' },
     {
       id: 'eliminar',
       label: 'Eliminar',
@@ -177,7 +191,52 @@ export class QuotesComponent implements OnInit {
   }
 
   onAction(event: OdlActionEvent<Quote>): void {
-    if (event.actionId === 'eliminar') this.deleteQuote(event.row);
+    if (event.actionId === 'ver') {
+      void this.router.navigate(['/presupuestos', event.row.id]);
+    } else if (event.actionId === 'editar') {
+      this.openEditQuote(event.row);
+    } else if (event.actionId === 'duplicar') {
+      this.duplicateQuote(event.row);
+    } else if (event.actionId === 'eliminar') {
+      this.deleteQuote(event.row);
+    }
+  }
+
+  /** Crea un borrador nuevo con el mismo cliente y las mismas líneas. */
+  duplicateQuote(quote: Quote): void {
+    const payload: CreateQuotePayload = {
+      // Precio de lista: el backend vuelve a aplicar el mayorista al guardar.
+      items: (quote.items ?? []).map((item) => ({
+        ...item,
+        unitPrice: item.listUnitPrice ?? item.unitPrice,
+        listUnitPrice: undefined,
+      })),
+      status: QuoteStatus.BORRADOR,
+      ...(quote.customerId ? { customerId: quote.customerId } : {}),
+      ...(quote.priceType ? { priceType: quote.priceType } : {}),
+      ...(quote.salesChannel ? { salesChannel: quote.salesChannel } : {}),
+      ...(quote.discountPercent
+        ? { discountPercent: quote.discountPercent }
+        : {}),
+      ...(quote.discountAmount ? { discountAmount: quote.discountAmount } : {}),
+      ...(quote.description ? { description: quote.description } : {}),
+    };
+    this.quotesService.createQuote(payload).subscribe({
+      next: (created) => this.onQuoteSaved(created),
+      error: (err) => {
+        this.formDialogs
+          .openConfirm({
+            title: 'No se pudo duplicar',
+            message: extractApiErrorMessage(
+              err,
+              'No se pudo duplicar el presupuesto',
+            ),
+            confirmLabel: 'Entendido',
+            alertOnly: true,
+          })
+          .subscribe();
+      },
+    });
   }
 
   private quoteSummary(quote: Quote): string {
@@ -216,36 +275,36 @@ export class QuotesComponent implements OnInit {
   }
 
   get mobileFilteredQuotes(): Quote[] {
-    const term = this.search.trim().toLowerCase();
+    const term = normalizeSearchText(this.search);
     return this.quotes.filter((quote) => {
       if (!matchesQuoteMobileChip(quote.status, this.mobileChip)) return false;
       if (!matchesQuoteMobileSheetFilters(quote, this.mobileSheetFilters)) {
         return false;
       }
       if (!term) return true;
-      return this.searchText(quote).toLowerCase().includes(term);
+      return normalizeSearchText(this.searchText(quote)).includes(term);
     });
   }
 
   /** Base de contadores: búsqueda + filtros de hoja (sin chip). */
   private get mobileCountBase(): Quote[] {
-    const term = this.search.trim().toLowerCase();
+    const term = normalizeSearchText(this.search);
     return this.quotes.filter((quote) => {
       if (!matchesQuoteMobileSheetFilters(quote, this.mobileSheetFilters)) {
         return false;
       }
       if (!term) return true;
-      return this.searchText(quote).toLowerCase().includes(term);
+      return normalizeSearchText(this.searchText(quote)).includes(term);
     });
   }
 
   /** Lista para el contador en vivo de la hoja (chip + búsqueda, sin área). */
   private get mobileQuotesForSheet(): Quote[] {
-    const term = this.search.trim().toLowerCase();
+    const term = normalizeSearchText(this.search);
     return this.quotes.filter((quote) => {
       if (!matchesQuoteMobileChip(quote.status, this.mobileChip)) return false;
       if (!term) return true;
-      return this.searchText(quote).toLowerCase().includes(term);
+      return normalizeSearchText(this.searchText(quote)).includes(term);
     });
   }
 

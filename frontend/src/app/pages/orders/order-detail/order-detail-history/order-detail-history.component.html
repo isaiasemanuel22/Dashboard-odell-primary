@@ -46,12 +46,21 @@
                 {{ priceTriggerLabels[entry.trigger] }}
               </span>
             </div>
-            <p class="status-history__transition">
-              {{ entry.productName }}:
-              {{ entry.previousUnitPrice | currencyArs }}
-              →
-              {{ entry.newUnitPrice | currencyArs }}
-            </p>
+            @if (entry.trigger === 'discount_change') {
+              <p class="status-history__transition">
+                Descuento:
+                {{ entry.previousDiscountLabel }}
+                →
+                {{ entry.newDiscountLabel }}
+              </p>
+            } @else {
+              <p class="status-history__transition">
+                {{ entry.productName }}:
+                {{ entry.previousUnitPrice | currencyArs }}
+                →
+                {{ entry.newUnitPrice | currencyArs }}
+              </p>
+            }
             <p class="status-history__transition">
               Total pedido:
               {{ entry.previousOrderTotal | currencyArs }}

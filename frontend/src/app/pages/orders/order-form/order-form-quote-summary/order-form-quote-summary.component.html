@@ -55,7 +55,12 @@
         [class.quote-resumen__meta--loss]="profit < 0"
       >
         <span>Ganancia estimada</span>
-        <strong>{{ profit | currencyArs }}</strong>
+        <strong>
+          {{ profit | currencyArs }}
+          @if (costIncomplete) {
+            <em class="quote-resumen__incomplete">costo incompleto</em>
+          }
+        </strong>
       </p>
       <p class="quote-resumen__meta">
         <span>Seña {{ depositPercent }}%</span>

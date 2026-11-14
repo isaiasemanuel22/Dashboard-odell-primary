@@ -232,6 +232,15 @@
       padding-right: 0.25rem;
       white-space: nowrap;
     }
+
+    // Pantalla angosta: una columna para que el medio de pago no quede cortado.
+    @media (max-width: 1200px) {
+      grid-template-columns: minmax(0, 1fr);
+
+      > db-button {
+        justify-self: stretch;
+      }
+    }
   }
 
   &__method {

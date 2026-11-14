@@ -95,7 +95,7 @@
       }
       <span class="priority-pill">{{ priorityLabel }}</span>
     </div>
-    <span class="task-kind">{{ taskKindLabels[job.taskKind] }}</span>
+    <span class="task-kind">{{ taskKindLabel(job) }}</span>
     <h3>
       @if (job.orderId) {
         <a [routerLink]="['/pedidos', job.orderId]" class="job-order-link">

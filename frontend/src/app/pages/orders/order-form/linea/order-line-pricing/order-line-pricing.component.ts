@@ -29,6 +29,9 @@ export class OrderLinePricingComponent {
   @Input() usePlainCostPrefix = false;
   @Input() unitCostFormatted = '';
   @Input() unitCostHint = '';
+  /** Servicio de un tercero / insumo: el costo se carga a mano. */
+  @Input() unitCostEditable = false;
+  @Input() unitCostValue: number | string = 0;
   @Input() unitPrice: number | string = 0;
   @Input() unitPriceError = '';
   @Input() priceHint = '';
@@ -46,6 +49,7 @@ export class OrderLinePricingComponent {
   @Input() wholesaleMarginWarn = false;
   @Input() closedPriceNote = '';
 
+  @Output() unitCostChange = new EventEmitter<number | string>();
   @Output() unitPriceChange = new EventEmitter<number | string>();
   @Output() unitPriceBlur = new EventEmitter<void>();
   @Output() resetPrice = new EventEmitter<void>();
@@ -55,6 +59,17 @@ export class OrderLinePricingComponent {
     if (this.unitPrice === '' || this.unitPrice == null) return '';
     const amount = Math.round(Number(this.unitPrice) || 0);
     return new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(amount);
+  }
+
+  get unitCostDisplay(): string {
+    if (this.unitCostValue === '' || this.unitCostValue == null) return '';
+    const amount = Math.round(Number(this.unitCostValue) || 0);
+    return new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(amount);
+  }
+
+  onUnitCostDisplayChange(raw: string): void {
+    const digits = String(raw ?? '').replace(/\D/g, '');
+    this.unitCostChange.emit(digits ? Math.round(Number(digits)) : 0);
   }
 
   onUnitPriceDisplayChange(raw: string): void {

@@ -309,34 +309,36 @@
 
         <app-quote-detail-lines [quote]="quote" />
 
-        <section class="panel quote-actions">
-          @if (editable) {
-            <db-button
-              label="Editar presupuesto"
-              variant="secondary"
-              format="soft"
-              (clicked)="openEdit()"
-            />
-            @for (action of statusActions(); track action.status) {
+        @if (editable || quote.status !== 'aceptado') {
+          <section class="panel quote-actions">
+            @if (editable) {
               <db-button
-                [label]="action.label"
-                variant="primary-outline"
+                label="Editar presupuesto"
+                variant="secondary"
                 format="soft"
-                [disabled]="statusLoading || statusNeedsLines(action.status)"
-                [attr.title]="statusNeedsLines(action.status) ? noLinesHint : null"
-                (clicked)="updateStatus(action.status)"
+                (clicked)="openEdit()"
+              />
+              @for (action of statusActions(); track action.status) {
+                <db-button
+                  [label]="action.label"
+                  variant="primary-outline"
+                  format="soft"
+                  [disabled]="statusLoading || statusNeedsLines(action.status)"
+                  [attr.title]="statusNeedsLines(action.status) ? noLinesHint : null"
+                  (clicked)="updateStatus(action.status)"
+                />
+              }
+            }
+            @if (quote.status !== 'aceptado') {
+              <db-button
+                label="Eliminar"
+                variant="delete"
+                format="soft"
+                (clicked)="deleteQuote()"
               />
             }
-          }
-          @if (quote.status !== 'aceptado') {
-            <db-button
-              label="Eliminar"
-              variant="delete"
-              format="soft"
-              (clicked)="deleteQuote()"
-            />
-          }
-        </section>
+          </section>
+        }
       </div>
     </div>
   </div>

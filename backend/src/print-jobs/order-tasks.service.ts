@@ -410,11 +410,82 @@ export class OrderTasksService implements OnModuleInit {
     return alerts;
   }
 
+  /**
+   * Al entregar el pedido completo las tareas se archivan. Las que seguían
+   * abiertas se marcan como hechas (la entrega las da por cumplidas) y las de
+   * producción descuentan sus insumos una sola vez (`consumedAt`).
+   */
   archiveTasksForOrder(orderId: string): void {
+    const order = this.store.getOrderById(orderId);
+    const delivered = order?.status === OrderStatus.ENTREGADO;
     for (const job of this.getTasksForOrder(orderId)) {
+      if (
+        delivered &&
+        !job.archived &&
+        job.status !== PrintJobStatus.TERMINADO &&
+        job.status !== PrintJobStatus.CANCELADO
+      ) {
+        job.status = PrintJobStatus.TERMINADO;
+        job.completedAt = new Date().toISOString();
+        if (job.taskType === TaskType.PRODUCTION) {
+          this.consumeStockOnce(job);
+          const item = order?.items[job.orderItemIndex];
+          if (item) {
+            item.producedQuantity = Math.max(
+              item.producedQuantity ?? 0,
+              job.quantity ?? 0,
+            );
+          }
+        }
+      }
       job.active = false;
       job.archived = true;
     }
+  }
+
+  /** ¿La línea tiene una tarea de producción pendiente (todavía sin terminar)? */
+  hasOpenProductionTask(orderId: string, itemIndex: number): boolean {
+    return this.getTasksForOrder(orderId).some(
+      (job) =>
+        job.orderItemIndex === itemIndex &&
+        job.taskType === TaskType.PRODUCTION &&
+        job.status !== PrintJobStatus.TERMINADO &&
+        job.status !== PrintJobStatus.CANCELADO,
+    );
+  }
+
+  /**
+   * Descuenta los insumos de unidades entregadas que no salieron de stock ni
+   * pasaron por una tarea de producción.
+   */
+  consumeSuppliesForDeliveredUnits(
+    order: Order,
+    itemIndex: number,
+    quantity: number,
+  ): string[] {
+    const item = order.items[itemIndex];
+    if (!item || !(quantity > 0)) return [];
+    const now = new Date().toISOString();
+    const job: PrintJob = {
+      id: `delivery-${order.id}-${itemIndex}-${now}`,
+      orderId: order.id,
+      orderItemIndex: itemIndex,
+      customerName: order.customerName,
+      productName: item.productName,
+      productId: item.productId,
+      type: item.serviceType,
+      taskType: TaskType.PRODUCTION,
+      status: PrintJobStatus.TERMINADO,
+      quantity,
+      active: false,
+      archived: true,
+      priority: 1,
+      machine: this.defaultMachine(item, TaskType.PRODUCTION),
+      estimatedHours: 0,
+      dueDate: order.dueDate,
+      completedAt: now,
+    };
+    return this.consumeStockOnce(job);
   }
 
   private getTasksForOrder(orderId: string): PrintJob[] {
@@ -535,6 +606,15 @@ export class OrderTasksService implements OnModuleInit {
     item.deliveredFromProductionQuantity ??= 0;
   }
 
+  /** Unidades totales del pedido (lo que se prepara), no «1» fijo. */
+  private orderUnits(order: Order): number {
+    const units = order.items.reduce(
+      (sum, item) => sum + (Number(item.quantity) || 0),
+      0,
+    );
+    return Math.max(units, 1);
+  }
+
   private ensurePrepareTask(order: Order): void {
     const existing = this.store.printJobs.find(
       (job) =>
@@ -544,6 +624,7 @@ export class OrderTasksService implements OnModuleInit {
       existing.customerName = order.customerName;
       existing.productName = `Preparar pedido #${order.id}`;
       existing.dueDate = order.dueDate;
+      existing.quantity = this.orderUnits(order);
       existing.archived = false;
       return;
     }
@@ -556,7 +637,7 @@ export class OrderTasksService implements OnModuleInit {
       productName: `Preparar pedido #${order.id}`,
       type: order.services[0] ?? ServiceType.IMPRESION_3D,
       taskType: TaskType.PREPARE_ORDER,
-      quantity: 1,
+      quantity: this.orderUnits(order),
       status: PrintJobStatus.BLOQUEADO,
       blockedReason: 'Esperando inicio de preparación',
       active: false,
@@ -702,7 +783,11 @@ export class OrderTasksService implements OnModuleInit {
     );
     item.reservedQuantity = reserve ? fromStock : 0;
 
-    if (reserve && item.productionRequiredQuantity > 0) {
+    // Producto no publicado y sin stock (el que crea un presupuesto aceptado):
+    // se produce a pedido, así que la tarea «Hacer…» nace con el pedido, igual
+    // que en una línea a medida cargada a mano.
+    const makeToOrder = product.published === false && fromStock <= 0;
+    if ((reserve || makeToOrder) && item.productionRequiredQuantity > 0) {
       this.ensureItemTask(order, item, index, TaskType.PRODUCTION);
     } else if (!reserve || item.productionRequiredQuantity <= 0) {
       this.cancelOpenProductionTask(order.id, index);

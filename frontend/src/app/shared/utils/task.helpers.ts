@@ -1,4 +1,5 @@
-import { PrintJob, TaskKind } from '../../core/models';
+import { PrintJob, ServiceType, TaskKind } from '../../core/models';
+import { TASK_KIND_LABELS } from '../constants/labels';
 
 const TASK_KIND_VALUES = new Set<string>(Object.values(TaskKind));
 
@@ -36,4 +37,13 @@ export function normalizePrintJobs(
   jobs: Array<PrintJob & { taskType?: string }>,
 ): PrintJob[] {
   return jobs.map((job) => normalizePrintJob(job));
+}
+
+/** Etiqueta del tipo de tarea: diseño y modelado se muestran por su área, no como «Servicio». */
+export function taskKindLabel(job: Pick<PrintJob, 'taskKind' | 'type'>): string {
+  if (job.taskKind === TaskKind.SERVICE) {
+    if (job.type === ServiceType.DISENO_GRAFICO) return 'Diseño';
+    if (job.type === ServiceType.MODELADO) return 'Modelado';
+  }
+  return TASK_KIND_LABELS[job.taskKind] ?? '';
 }

@@ -68,6 +68,8 @@ export class OrderFormOrderSummaryComponent {
   /** Comisión del medio: solo en alta de pedido con seña editable. */
   @Input() showPaymentFee = true;
   @Input() profit = 0;
+  /** Hay líneas de Servicio/Diseño/Modelado sin costo: la ganancia no es real. */
+  @Input() costIncomplete = false;
   @Input() profitPercentOnCost = 0;
   @Input() listProfit = 0;
 

@@ -11,6 +11,9 @@
       [(ngModel)]="paymentAmount"
       (amountChange)="onAmountShortcutSynced()"
     />
+    @if (showAmountError) {
+      <p class="order-payments__error" role="alert">El monto debe ser mayor a 0</p>
+    }
 
     <div class="od-pay-sheet__shortcuts">
       <db-mobile-chip-group
@@ -72,7 +75,7 @@
         [label]="sheetSubmitLabel"
         variant="primary"
         format="solid"
-        [disabled]="paymentLoading || !paymentAmount"
+        [disabled]="paymentLoading || !hasValidAmount"
         (clicked)="registerPayment()"
       />
     </div>
@@ -94,6 +97,11 @@
         <dd>{{ paymentStatusLabel }}</dd>
       </div>
     </dl>
+    @if (order.status === 'cancelado' && paidAmount > 0) {
+      <p class="order-payments__error" role="status">
+        Pedido cancelado: {{ paidAmount | currencyArs }} cobrados a devolver o resolver.
+      </p>
+    }
     @if (order.payments?.length) {
       <ul class="order-payments">
         @for (payment of order.payments; track payment.id) {
@@ -119,9 +127,13 @@
           type="number"
           [(ngModel)]="paymentAmount"
           name="paymentAmount"
-          [min]="0.01"
           [step]="0.01"
         />
+        @if (showAmountError) {
+          <p class="order-payments__error order-payments__amount-error" role="alert">
+            El monto debe ser mayor a 0
+          </p>
+        }
         <div class="order-payments__method">
           <span class="order-payments__label" id="payment-method-label">Medio de pago</span>
           <db-segmented-control
@@ -159,7 +171,7 @@
           [label]="paymentLoading ? 'Registrando...' : 'Registrar pago'"
           variant="primary"
           format="solid"
-          [disabled]="paymentLoading || !paymentAmount"
+          [disabled]="paymentLoading || !hasValidAmount"
           (clicked)="registerPayment()"
         />
       </div>

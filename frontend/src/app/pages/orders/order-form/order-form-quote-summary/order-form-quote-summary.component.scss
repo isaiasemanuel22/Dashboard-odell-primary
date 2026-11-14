@@ -157,6 +157,15 @@
     }
   }
 
+  &__incomplete {
+    display: block;
+    color: $color-error;
+    font-size: 0.6875rem;
+    font-style: normal;
+    font-weight: 600;
+    text-align: right;
+  }
+
   &__areas {
     display: flex;
     flex-direction: column;

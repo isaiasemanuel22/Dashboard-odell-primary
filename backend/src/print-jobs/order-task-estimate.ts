@@ -78,6 +78,15 @@ export function estimateTaskHours(
     return Math.max(1, item.quantity);
   }
 
+  // Diseño y modelado: el tiempo de la tarea es el cotizado, sin redondear.
+  if (
+    (item.serviceType === ServiceType.DISENO_GRAFICO ||
+      item.serviceType === ServiceType.MODELADO) &&
+    Number(item.budgetedHours) > 0
+  ) {
+    return Number(item.budgetedHours);
+  }
+
   if (item.printTimeHours) {
     return Math.max(1, Math.ceil(Number(item.printTimeHours) * item.quantity));
   }

@@ -34,6 +34,7 @@ import {
   TaskKind,
   UpdatePrintJobPayload,
 } from '../core/models';
+import { DataChangedService } from '../core/services/data-changed.service';
 import { PrintJobsService } from '../core/services/print-jobs.service';
 import { UserAccessService } from '../core/services/user-access.service';
 import {
@@ -93,6 +94,7 @@ export class TaskDetailDialogComponent implements OnInit {
     inject(DialogRef<TaskDetailDialogResult | undefined>);
   private readonly data = inject<TaskDetailDialogData>(DIALOG_DATA);
   private readonly printJobs = inject(PrintJobsService);
+  private readonly dataChanged = inject(DataChangedService);
   private readonly userAccess = inject(UserAccessService);
   private readonly formDialogs = inject(FormDialogService);
   private readonly router = inject(Router);
@@ -431,6 +433,7 @@ export class TaskDetailDialogComponent implements OnInit {
         next: (updated) => {
           this.saving = false;
           this.didMutate = true;
+          this.dataChanged.emit('print-jobs');
           this.lastStockWarnings = updated.stockWarnings;
           this.applyJob(updated);
           this.successNotice = 'Tarea desbloqueada';
@@ -467,6 +470,7 @@ export class TaskDetailDialogComponent implements OnInit {
             next: (updated) => {
               this.saving = false;
               this.didMutate = true;
+          this.dataChanged.emit('print-jobs');
               this.lastStockWarnings = updated.stockWarnings;
               this.applyJob(updated);
               this.successNotice = 'Tarea bloqueada';
@@ -503,6 +507,7 @@ export class TaskDetailDialogComponent implements OnInit {
         next: (result) => {
           this.saving = false;
           this.didMutate = true;
+          this.dataChanged.emit('print-jobs');
           this.applyJob(result.job);
           this.failurePieces = null;
           this.failureGrams = null;
@@ -537,6 +542,7 @@ export class TaskDetailDialogComponent implements OnInit {
       next: ({ saved }) => {
         this.saving = false;
         this.didMutate = true;
+          this.dataChanged.emit('print-jobs');
         this.lastStockWarnings = saved.stockWarnings;
         this.applyJob(saved);
         this.successNotice = 'Tarea guardada';
@@ -614,6 +620,7 @@ export class TaskDetailDialogComponent implements OnInit {
         next: (updated) => {
           this.saving = false;
           this.didMutate = true;
+          this.dataChanged.emit('print-jobs');
           this.lastStockWarnings = updated.stockWarnings;
           this.applyJob(updated);
           this.successNotice = 'Insumo reemplazado';

@@ -10,6 +10,7 @@ import {
   UpdateTreasuryExpenseDto,
 } from '../common/dto';
 import {
+  OrderStatus,
   PaymentMethod,
   SupplyCategory,
   TreasuryAccount,
@@ -387,7 +388,12 @@ export class TreasuryService {
       source: 'order_payment',
       occurredAt: payment.createdAt,
       concept: `${kind} ${order.id} · ${order.customerName}`,
-      detail: payment.deposit ? 'Vinculada al pedido' : 'Pago del pedido',
+      detail:
+        order.status === OrderStatus.CANCELADO
+          ? 'Pedido cancelado: a devolver o resolver'
+          : payment.deposit
+            ? 'Vinculada al pedido'
+            : 'Pago del pedido',
       account: this.resolvePaymentAccount(payment),
       method: payment.method ?? PaymentMethod.EFECTIVO,
       amount,

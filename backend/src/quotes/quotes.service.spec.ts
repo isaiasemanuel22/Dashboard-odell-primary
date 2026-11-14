@@ -6,6 +6,7 @@ import {
   QuoteStatus,
   SalesChannel,
   ServiceType,
+  TaskType,
 } from '../common/enums';
 import { OrdersService } from '../orders/orders.service';
 import { OrderTasksService } from '../print-jobs/order-tasks.service';
@@ -354,5 +355,92 @@ describe('QuotesService borrador sin líneas', () => {
     expect(() => service.update(quote.id, { items: [] })).toThrow(
       'al menos una línea',
     );
+  });
+});
+
+describe('QuotesService tareas de producción', () => {
+  it('presupuesto aceptado → pedido con tarea «Hacer…» y Preparar con las unidades', () => {
+    const store = new StoreService();
+    const state = createEmptyState();
+    state.customers.push({
+      id: 'cust-1',
+      name: 'Cliente',
+      email: 'a@test.com',
+      phone: '123',
+      type: CustomerType.PARTICULAR,
+      createdAt: '2026-10-21T12:00:00.000Z',
+    });
+    state.quotes.push({
+      id: 'qte-1',
+      customerId: 'cust-1',
+      customerName: 'Cliente',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productName: 'Mate nuevo',
+          quantity: 2,
+          unitPrice: 2500,
+          grams: 40,
+          printTimeHours: 2,
+          filamentType: FilamentType.PLA,
+        },
+      ],
+      status: QuoteStatus.ACEPTADO,
+      total: 5000,
+      quotedAt: '2026-10-21T12:00:00.000Z',
+      createdAt: '2026-10-21T12:00:00.000Z',
+    });
+    store.applyState(state);
+
+    const order = buildQuotesService(store).createOrderFromQuote('qte-1');
+    const jobs = store.printJobs.filter((job) => job.orderId === order.id);
+    const production = jobs.find((job) => job.taskType === TaskType.PRODUCTION);
+    expect(production?.productName).toBe('Hacer 2 Mate nuevo');
+    expect(production?.quantity).toBe(2);
+    const prepare = jobs.find((job) => job.taskType === TaskType.PREPARE_ORDER);
+    expect(prepare?.quantity).toBe(2);
+  });
+});
+
+describe('QuotesService costo cargado en servicios de terceros', () => {
+  it('conserva el costo al guardar, reeditar y convertir en pedido', () => {
+    const store = new StoreService();
+    const state = createEmptyState();
+    state.customers.push({
+      id: 'cust-1',
+      name: 'Cliente',
+      email: 'a@test.com',
+      phone: '123',
+      type: CustomerType.PARTICULAR,
+      createdAt: '2026-10-21T12:00:00.000Z',
+    });
+    store.applyState(state);
+    const service = buildQuotesService(store);
+    const resolver = new CostCalculatorService(store);
+
+    const quote = service.create({
+      customerId: 'cust-1',
+      status: QuoteStatus.ENVIADO,
+      items: [
+        {
+          serviceType: ServiceType.SERVICIO_TERCERO,
+          productName: 'QA2-envio',
+          quantity: 1,
+          unitPrice: 2000,
+          unitCost: 300,
+        },
+      ],
+    });
+    expect(quote.items[0].unitCost).toBe(300);
+    expect(service.findOne(quote.id).items[0].unitCost).toBe(300);
+    expect(resolver.resolveOrderItemUnitCost(quote.items[0])).toBe(300);
+
+    const edited = service.update(quote.id, { description: 'nota' });
+    expect(edited.items[0].unitCost).toBe(300);
+
+    service.updateStatus(quote.id, QuoteStatus.ACEPTADO);
+    const order = service.createOrderFromQuote(quote.id);
+    expect(order.items[0].unitCost).toBe(300);
   });
 });

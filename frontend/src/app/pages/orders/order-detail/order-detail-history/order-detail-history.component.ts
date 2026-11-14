@@ -38,6 +38,7 @@ export class OrderDetailHistoryComponent {
     supply_price: 'Precio de insumo',
     product_update: 'Actualización de producto',
     bulk_price: 'Precios en bloque',
+    discount_change: 'Cambio de descuento',
   };
 
   historyTransition(entry: OrderStatusHistoryEntry): string {

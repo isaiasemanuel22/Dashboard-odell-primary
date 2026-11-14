@@ -612,7 +612,11 @@ export interface OrderStatusHistoryEntry {
 }
 
 export type OrderPriceChangeTrigger =
-  'settings' | 'supply_price' | 'product_update' | 'bulk_price';
+  | 'settings'
+  | 'supply_price'
+  | 'product_update'
+  | 'bulk_price'
+  | 'discount_change';
 
 export interface OrderPriceHistoryEntry {
   id: string;
@@ -627,6 +631,9 @@ export interface OrderPriceHistoryEntry {
   newOrderTotal: number;
   /** El usuario dejó el precio acordado. No cambia el total del pedido. */
   kept?: boolean;
+  /** Solo trigger discount_change: descuento anterior y nuevo, ya formateados. */
+  previousDiscountLabel?: string;
+  newDiscountLabel?: string;
 }
 
 export interface Order {

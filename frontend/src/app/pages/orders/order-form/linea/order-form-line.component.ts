@@ -122,6 +122,7 @@ import {
   wholesalePriceFromList,
 } from '../../../../shared/utils/wholesale-example.util';
 import { combineLatest } from 'rxjs';
+import { shortId, sortAndDisambiguateOptions } from '../../../../shared/utils/search-text.util';
 
 export type OrderFormLineVariant = 'quote' | 'order';
 
@@ -336,10 +337,13 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   get supplyOptions(): DbSelectOption[] {
-    return this.supplies.filter(isCatalogInsumo).map((supply) => ({
-      value: supply.id,
-      label: supply.name,
-    }));
+    return sortAndDisambiguateOptions(
+      this.supplies.filter(isCatalogInsumo).map((supply) => ({
+        value: supply.id,
+        label: supply.name,
+      })),
+      (o) => shortId(o.value),
+    );
   }
 
   get selectedSupplyId(): string {
@@ -361,12 +365,15 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   get productOptions(): DbSelectOption[] {
-    const options = this.products
-      .filter((p) => productMatchesServiceType(p, this.line.serviceType))
-      .map((p) => ({
-        value: p.id,
-        label: productComponentSelectLabel(p),
-      }));
+    const options = sortAndDisambiguateOptions(
+      this.products
+        .filter((p) => productMatchesServiceType(p, this.line.serviceType))
+        .map((p) => ({
+          value: p.id,
+          label: productComponentSelectLabel(p),
+        })),
+      (o) => shortId(o.value),
+    );
 
     if (
       isImpresion3DLine(this.line.serviceType) ||
@@ -427,9 +434,13 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   get unitCost(): number {
-    if (isThirdPartyService(this.line.serviceType)) return 0;
+    if (isThirdPartyService(this.line.serviceType)) {
+      return Math.max(0, Number(this.line.unitCost) || 0);
+    }
     if (isSupplyOrderLine(this.line.serviceType)) {
-      return Number(this.line.unitPrice) || 0;
+      return this.line.unitCost != null && Number(this.line.unitCost) >= 0
+        ? Number(this.line.unitCost)
+        : Number(this.line.unitPrice) || 0;
     }
     if (
       isEstampadoLine(this.line.serviceType) &&
@@ -520,10 +531,10 @@ export class OrderFormLineComponent implements OnInit {
 
   get unitCostHint(): string {
     if (isSupplyOrderLine(this.line.serviceType)) {
-      return 'Igual al precio · sin ganancia';
+      return 'Por defecto igual al precio (sin ganancia); cargá tu costo real';
     }
     if (isThirdPartyService(this.line.serviceType)) {
-      return 'No entra en el costo';
+      return 'Costo del servicio (si lo dejás en $0 la ganancia no es real)';
     }
     if (isDesignService(this.line.serviceType)) {
       return isGraphicDesignService(this.line.serviceType)
@@ -903,10 +914,21 @@ export class OrderFormLineComponent implements OnInit {
       return;
     }
     if (isSupplyOrderLine(this.line.serviceType)) return;
-    if (isThirdPartyService(this.line.serviceType)) {
-      this.line.unitCost = 0;
-    }
     this.onUnitPriceChange(raw);
+  }
+
+  /** Servicios de un tercero e insumos: el costo unitario se carga a mano. */
+  get unitCostEditable(): boolean {
+    return (
+      isThirdPartyService(this.line.serviceType) ||
+      isSupplyOrderLine(this.line.serviceType)
+    );
+  }
+
+  onUnitCostChange(raw: number | string): void {
+    const digits = String(raw ?? '').replace(/\D/g, '');
+    this.line.unitCost = digits ? Math.round(Number(digits)) : 0;
+    this.emitChanged();
   }
 
   resetUnitPriceToSuggested(): void {
@@ -1001,7 +1023,6 @@ export class OrderFormLineComponent implements OnInit {
       if (entry) {
         entry.quantity = Math.max(1, Number(this.line.quantity) || 1);
       }
-      this.line.unitCost = Number(this.line.unitPrice) || 0;
     }
     this.emitChanged();
   }

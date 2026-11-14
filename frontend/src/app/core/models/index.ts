@@ -872,7 +872,8 @@ export type OrderPriceChangeTrigger =
   | 'settings'
   | 'supply_price'
   | 'product_update'
-  | 'bulk_price';
+  | 'bulk_price'
+  | 'discount_change';
 
 export interface OrderPriceHistoryEntry {
   id: string;
@@ -886,6 +887,9 @@ export interface OrderPriceHistoryEntry {
   previousOrderTotal: number;
   newOrderTotal: number;
   kept?: boolean;
+  /** Solo discount_change: descuento anterior y nuevo, ya formateados. */
+  previousDiscountLabel?: string;
+  newDiscountLabel?: string;
 }
 
 export interface Order {

@@ -56,7 +56,7 @@ export interface QuoteFormDialogData {
       @if (isMobile()) {
         <db-mobile-form-shell
           [title]="dialogTitle"
-          headerActionLabel="Guardar borrador"
+          [headerActionLabel]="headerActionLabel"
           [headerActionDisabled]="loading || !canSaveDraft"
           discardEntityLabel="el presupuesto"
           [isDirty]="!!form?.hasUnsavedChanges()"
@@ -123,6 +123,7 @@ export class QuoteFormDialogComponent implements OnInit, AfterViewInit {
   error = '';
   formSubtitle = '';
   canSaveDraft = false;
+  headerActionLabel = 'Guardar borrador';
   private closing = false;
   private confirmingDiscard = false;
 
@@ -165,6 +166,9 @@ export class QuoteFormDialogComponent implements OnInit, AfterViewInit {
   onFormUiMeta(): void {
     this.formSubtitle = this.form?.modalSubtitle ?? this.formSubtitle;
     this.canSaveDraft = !!this.form?.canSubmit(true);
+    this.headerActionLabel = this.form?.keepsQuoteStatus
+      ? 'Guardar cambios'
+      : (this.form?.quoteSaveKeepLabel ?? 'Guardar borrador');
     this.cdr.markForCheck();
   }
 

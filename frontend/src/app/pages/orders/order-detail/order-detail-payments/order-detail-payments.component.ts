@@ -118,6 +118,21 @@ export class OrderDetailPaymentsComponent {
     return orderBalanceAmount(this.order);
   }
 
+  get hasValidAmount(): boolean {
+    const amount = Number(this.paymentAmount);
+    return Number.isFinite(amount) && amount > 0;
+  }
+
+  /** Hay un monto escrito pero es cero o negativo. */
+  get showAmountError(): boolean {
+    return (
+      this.paymentAmount !== null &&
+      this.paymentAmount !== undefined &&
+      String(this.paymentAmount) !== '' &&
+      !this.hasValidAmount
+    );
+  }
+
   get paymentStatusLabel(): string {
     if (this.paidAmount <= 0) return 'No pagado';
     if (this.balanceAmount <= 0) return 'Pagado';
@@ -209,7 +224,7 @@ export class OrderDetailPaymentsComponent {
   }
 
   registerPayment(): void {
-    if (this.paymentLoading || !this.paymentAmount) return;
+    if (this.paymentLoading || !this.hasValidAmount) return;
     this.paymentLoading = true;
     this.paymentError = '';
     this.cdr.markForCheck();

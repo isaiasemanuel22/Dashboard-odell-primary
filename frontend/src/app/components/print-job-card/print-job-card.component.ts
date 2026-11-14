@@ -24,7 +24,7 @@ import {
 import { DbButtonComponent } from '../db-button';
 import { DbServiceBadgeComponent } from '../db-service-badge/db-service-badge.component';
 import { DbStatusBadgeComponent } from '../db-status-badge/db-status-badge.component';
-import { TASK_KIND_LABELS } from '../../shared/constants/labels';
+import { taskKindLabel } from '../../shared/utils/task.helpers';
 import { designatedArea } from '../../shared/utils/service-type.util';
 import { nameInitials } from '../../shared/utils/name-initials.util';
 import { orderOverdueDays } from '../../shared/utils/order.helpers';
@@ -58,7 +58,7 @@ export class PrintJobCardComponent {
   @Input() addDisabled = false;
   @Output() replaceSupply = new EventEmitter<PrintJob>();
   @Output() addToBoard = new EventEmitter<PrintJob>();
-  readonly taskKindLabels = TASK_KIND_LABELS;
+  readonly taskKindLabel = taskKindLabel;
 
   get priorityClass(): string {
     return priorityTierClass(this.job.priority);
@@ -108,7 +108,7 @@ export class PrintJobCardComponent {
   }
 
   get stepLabel(): string {
-    const kind = this.taskKindLabels[this.job.taskKind] ?? '';
+    const kind = taskKindLabel(this.job);
     const hours = Number(this.job.estimatedHours);
     if (hours > 0) {
       const h = Number.isInteger(hours) ? String(hours) : String(hours);

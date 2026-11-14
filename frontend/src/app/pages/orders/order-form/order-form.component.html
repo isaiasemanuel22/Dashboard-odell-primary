@@ -23,7 +23,7 @@
                 [responsibleOptions]="responsibleSelectOptions"
                 [responsibleError]="responsibleError"
                 (responsibleUserIdChange)="onResponsibleUserIdChange($event)"
-                [priceType]="priceType"
+                [priceType]="priceTypeDisplay"
                 [priceTypeOptions]="priceTypeOptions"
                 (priceTypeChange)="onPriceTypeChange($event)"
                 [wholesaleMinimumNotice]="wholesaleMinimumNotice"
@@ -195,6 +195,7 @@
           [paymentFee]="paymentFeePreview"
           [showPaymentFee]="showDepositBlock"
           [profit]="profit"
+          [costIncomplete]="costIncomplete"
           [profitPercentOnCost]="profitPercentOnCost"
           [listProfit]="listProfit"
           [depositMode]="showDepositBlock ? 'editable' : 'none'"
@@ -234,7 +235,7 @@
                 [salesChannel]="salesChannel"
                 [salesChannelOptions]="salesChannelOptions"
                 (salesChannelChange)="onSalesChannelChange($event)"
-                [priceType]="priceType"
+                [priceType]="priceTypeDisplay"
                 [priceTypeOptions]="priceTypeOptions"
                 (priceTypeChange)="onPriceTypeChange($event)"
                 [wholesaleMinimumNotice]="wholesaleMinimumNotice"
@@ -379,6 +380,7 @@
           [paymentFee]="0"
           [showPaymentFee]="false"
           [profit]="profit"
+          [costIncomplete]="costIncomplete"
           [profitPercentOnCost]="profitPercentOnCost"
           [listProfit]="listProfit"
           depositMode="info"
@@ -408,6 +410,10 @@
           <p class="quote-form__note">
             «Crear presupuesto» lo deja Enviado · «Guardar borrador» lo deja Borrador
           </p>
+        } @else if (isEditingQuoteDraft) {
+          <p class="quote-form__note">
+            «Guardar» mantiene el Borrador · «Guardar y marcar enviado» lo pasa a Enviado
+          </p>
         } @else {
           <span class="order-form__note-spacer"></span>
         }
@@ -418,13 +424,15 @@
             format="solid"
             (clicked)="cancel.emit()"
           />
-          <db-button
-            label="Guardar borrador"
-            variant="secondary"
-            format="solid"
-            [disabled]="loading || !canSubmit(true)"
-            (clicked)="onSubmit(true)"
-          />
+          @if (!keepsQuoteStatus) {
+            <db-button
+              [label]="quoteSaveKeepLabel"
+              variant="secondary"
+              format="solid"
+              [disabled]="loading || !canSubmit(true)"
+              (clicked)="onSubmit(true)"
+            />
+          }
           <db-button
             [label]="submitLabel"
             variant="primary"
@@ -439,6 +447,12 @@
             role="status"
             [attr.title]="draftMissingLabel"
           >{{ draftMissingLabel }}</p>
+        } @else if (draftIncompleteLinesNote) {
+          <p
+            class="quote-form__warning quote-form__warning--hint"
+            role="status"
+            [attr.title]="draftIncompleteLinesNote"
+          >{{ draftIncompleteLinesNote }}</p>
         } @else if (quoteNeedsCustomerHint) {
           <p
             class="quote-form__warning quote-form__warning--hint"

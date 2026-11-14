@@ -11,7 +11,7 @@ const deps = {
 };
 
 describe('normalizeIncomingOrderItems insumos y terceros', () => {
-  it('línea suelta de insumo: costo igual al precio y ganancia 0', () => {
+  it('línea suelta de insumo: respeta el costo cargado', () => {
     const [item] = normalizeIncomingOrderItems(
       [
         {
@@ -29,12 +29,30 @@ describe('normalizeIncomingOrderItems insumos y terceros', () => {
     );
 
     expect(item.unitPrice).toBe(800);
-    expect(item.unitCost).toBe(800);
-    expect((item.unitPrice ?? 0) - (item.unitCost ?? 0)).toBe(0);
+    expect(item.unitCost).toBe(100);
     expect(item.productId).toBeUndefined();
   });
 
-  it('servicio de un tercero: no registra costo', () => {
+  it('línea suelta de insumo sin costo: igual al precio', () => {
+    const [item] = normalizeIncomingOrderItems(
+      [
+        {
+          serviceType: ServiceType.INSUMO,
+          productName: 'Polímero',
+          quantity: 2,
+          unitPrice: 800,
+          estampadoSupplies: [
+            { id: 'l1', supplyId: 'sup-polimero', quantity: 2 },
+          ],
+        },
+      ],
+      deps,
+    );
+
+    expect(item.unitCost).toBe(800);
+  });
+
+  it('servicio de un tercero: respeta el costo cargado', () => {
     const [item] = normalizeIncomingOrderItems(
       [
         {
@@ -50,7 +68,7 @@ describe('normalizeIncomingOrderItems insumos y terceros', () => {
     );
 
     expect(item.unitPrice).toBe(1500);
-    expect(item.unitCost).toBe(0);
+    expect(item.unitCost).toBe(400);
     expect(item.laborNote).toBe('moto');
     expect(item.productId).toBeUndefined();
   });

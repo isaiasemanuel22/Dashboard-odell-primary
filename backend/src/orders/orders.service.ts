@@ -29,14 +29,21 @@ import {
   calculateTotalWithDiscount,
   normalizeDiscountFields,
 } from '../common/utils/discount.util';
-import { outstandingCents, toCents } from '../common/utils/money.util';
+import {
+  outstandingCents,
+  paidCents,
+  toCents,
+} from '../common/utils/money.util';
 import { defaultAccountForMethod } from '../treasury/treasury-account.util';
 import { calculateOrderItemsSubtotal } from './order-pricing.util';
 import {
   DUE_DATE_AFTER_TODAY_MESSAGE,
   isDueDateAfterToday,
 } from './due-date.util';
-import { appendOrderPriceHistory } from './order-price-history.util';
+import {
+  appendOrderPriceHistory,
+  describeOrderDiscount,
+} from './order-price-history.util';
 import {
   listOrderPriceNotices,
   orderLineListPrice,
@@ -250,6 +257,36 @@ export class OrdersService {
     return order;
   }
 
+  /**
+   * Los contadores de cumplimiento (hecho, reservado, entregado) los maneja el
+   * servidor: un PATCH con líneas viejas no debe pisarlos. Se conservan por
+   * posición cuando la línea sigue siendo el mismo producto y servicio.
+   */
+  private keepFulfillmentCounters(
+    incoming: OrderItem[],
+    current: OrderItem[],
+  ): OrderItem[] {
+    return incoming.map((item, index) => {
+      const previous = current[index];
+      if (
+        !previous ||
+        previous.productId !== item.productId ||
+        previous.serviceType !== item.serviceType
+      ) {
+        return item;
+      }
+      return {
+        ...item,
+        deliveredQuantity: previous.deliveredQuantity ?? 0,
+        reservedQuantity: previous.reservedQuantity ?? 0,
+        productionRequiredQuantity: previous.productionRequiredQuantity ?? 0,
+        producedQuantity: previous.producedQuantity ?? 0,
+        deliveredFromProductionQuantity:
+          previous.deliveredFromProductionQuantity ?? 0,
+      };
+    });
+  }
+
   update(id: string, data: UpdateOrderDto): Order {
     const current = this.orders.findById(id);
     if (!current) {
@@ -275,7 +312,10 @@ export class OrdersService {
 
     let items =
       data.items !== undefined
-        ? this.normalizeOrderItems(data.items)
+        ? this.keepFulfillmentCounters(
+            this.normalizeOrderItems(data.items),
+            current.items,
+          )
         : current.items;
     let wholesaleApplied = current.wholesaleApplied === true;
 
@@ -331,6 +371,17 @@ export class OrdersService {
         ? this.normalizeSalesChannel(data.salesChannel)
         : current.salesChannel;
 
+    const newTotal = this.calculateTotal(items, discount);
+    const paidSoFar = paidCents(current);
+    if (
+      toCents(newTotal) !== toCents(current.total) &&
+      toCents(newTotal) < paidSoFar
+    ) {
+      throw new BadRequestException(
+        `Ya se cobraron $${paidSoFar / 100}; el total no puede ser menor`,
+      );
+    }
+
     const updated: Order = {
       ...current,
       ...data,
@@ -341,7 +392,7 @@ export class OrdersService {
       priceType,
       wholesaleApplied,
       salesChannel,
-      total: this.calculateTotal(items, discount),
+      total: newTotal,
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
       description:
@@ -372,6 +423,26 @@ export class OrdersService {
         updated.status,
         'manual',
       );
+    }
+
+    const previousDiscount = describeOrderDiscount({
+      discountPercent: current.discountPercent,
+      discountAmount: current.discountAmount,
+    });
+    const nextDiscount = describeOrderDiscount(discount);
+    if (previousDiscount !== nextDiscount) {
+      appendOrderPriceHistory(updated, {
+        trigger: 'discount_change',
+        itemIndex: -1,
+        productId: '',
+        productName: 'Descuento',
+        previousUnitPrice: 0,
+        newUnitPrice: 0,
+        previousOrderTotal: current.total,
+        newOrderTotal: newTotal,
+        previousDiscountLabel: previousDiscount,
+        newDiscountLabel: nextDiscount,
+      });
     }
 
     this.orders.save(updated);
@@ -573,6 +644,9 @@ export class OrdersService {
         }
         item.reservedQuantity = (item.reservedQuantity ?? 0) - fromStock;
       }
+      if (options.force && item.productId) {
+        this.settleUncoveredDelivery(order, line, item, fromStock);
+      }
       item.deliveredFromProductionQuantity =
         (item.deliveredFromProductionQuantity ?? 0) +
         (line.quantity - fromStock);
@@ -588,6 +662,46 @@ export class OrdersService {
     });
     this.orderTasks.syncOrderStatusFromTasks(order.id);
     return this.orders.save(order);
+  }
+
+  /**
+   * Entrega forzada: unidades de un producto que no estaban reservadas ni
+   * producidas. Si hay una tarea de producción abierta, sus insumos se
+   * descuentan al darla por hecha (no se descuenta acá para no duplicar). Si no,
+   * salen del stock terminado y lo que falte descuenta los insumos de la receta.
+   */
+  private settleUncoveredDelivery(
+    order: Order,
+    line: { orderItemIndex: number; quantity: number },
+    item: OrderItem,
+    fromStock: number,
+  ): void {
+    const producedAvailable = Math.max(
+      (item.producedQuantity ?? 0) -
+        (item.deliveredFromProductionQuantity ?? 0),
+      0,
+    );
+    const uncovered = Math.max(
+      line.quantity - fromStock - producedAvailable,
+      0,
+    );
+    if (uncovered <= 0 || !item.productId) return;
+    if (this.orderTasks.hasOpenProductionTask(order.id, line.orderItemIndex)) {
+      return;
+    }
+    const product = this.products.findById(item.productId);
+    const take = Math.min(uncovered, Math.max(product?.stock ?? 0, 0));
+    if (product && take > 0) {
+      product.stock = (product.stock ?? 0) - take;
+      this.products.save(product);
+    }
+    if (uncovered - take > 0) {
+      this.orderTasks.consumeSuppliesForDeliveredUnits(
+        order,
+        line.orderItemIndex,
+        uncovered - take,
+      );
+    }
   }
 
   /**
