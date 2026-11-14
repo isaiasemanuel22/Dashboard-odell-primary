@@ -37,3 +37,10 @@ backend/generated
 # OS
 .DS_Store
 Thumbs.db
+
+# Playwright E2E
+test-results/
+playwright-report/
+e2e/.auth/
+.env.e2e
+.playwright-mcp/

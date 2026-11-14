@@ -512,6 +512,7 @@ export class SupplyFormComponent implements OnInit, OnChanges {
     this.suppliersService.list().subscribe({
       next: (items) => {
         this.suppliers = items;
+        this.cdr.markForCheck();
       },
     });
   }

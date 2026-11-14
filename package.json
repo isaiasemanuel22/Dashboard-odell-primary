@@ -15,6 +15,8 @@
     "db:generate": "npm run db:generate --prefix backend",
     "db:push:heroku": "npm run db:push:heroku --prefix backend",
     "heroku:setup": "bash scripts/heroku-setup.sh",
+    "e2e": "playwright test",
+    "e2e:report": "playwright show-report",
     "heroku-postbuild": "npm ci --prefix backend --include=dev && npm run build --prefix backend && npm prune --prefix backend --omit=dev",
     "start": "node backend/dist/main.js",
     "frontend:build": "npm run build:prod --prefix frontend",
@@ -22,6 +24,7 @@
     "frontend:deploy:preview": "npm run frontend:build && npx netlify-cli deploy --dir=frontend/dist/frontend/browser"
   },
   "devDependencies": {
+    "@playwright/test": "^1.65.1",
     "concurrently": "^9.2.4"
   },
   "dependencies": {
