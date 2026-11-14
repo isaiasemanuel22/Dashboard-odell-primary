@@ -739,6 +739,8 @@ export interface OrderOverview {
   tasks: PrintJob[];
   alerts?: OrderAlert[];
   priceNotices?: OrderPriceNotice[];
+  /** Presupuesto del que salió el pedido (quote.orderId === order.id). */
+  sourceQuote?: { id: string };
 }
 
 export interface OrderAlert {
@@ -843,6 +845,8 @@ export interface PrintJob {
   priorityOverride?: number | null;
   /** Prioridad por dueDate sin override (solo respuesta API). */
   calculatedPriority?: number;
+  /** Solo respuesta API de «Preparar pedido»: si ya hay algo para preparar (§12.4). */
+  prepareReadiness?: { canStart: boolean; waitingReason?: string };
   /** Si true, el sync del pedido no pisa responsibleUserId. */
   responsibleManual?: boolean;
   failures?: PrintJobFailure[];

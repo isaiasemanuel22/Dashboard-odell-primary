@@ -95,6 +95,10 @@
           }
         }
 
+        @if (sourceQuoteId) {
+          <a class="customer-link" [routerLink]="['/presupuestos', sourceQuoteId]">Desde presupuesto {{ sourceQuoteId }}</a>
+        }
+
         @if (salesChannelPill || wholesalePill) {
           <div class="od-m__pills">
             @if (salesChannelPill; as channel) {
@@ -475,6 +479,14 @@
               }
             </dd>
           </div>
+          @if (sourceQuoteId) {
+            <div>
+              <dt>Origen</dt>
+              <dd>
+                <a [routerLink]="['/presupuestos', sourceQuoteId]" class="customer-link">Desde presupuesto {{ sourceQuoteId }}</a>
+              </dd>
+            </div>
+          }
           <div>
             <dt>Servicios</dt>
             <dd><db-service-badges [types]="order.services" /></dd>

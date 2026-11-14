@@ -14,11 +14,23 @@ import {
   UpdateQuoteDto,
   UpdateQuoteStatusDto,
 } from '../common/dto';
+import { UserAccessService } from '../users/user-access.service';
+import { resolveOrderResponsible } from './quote-responsible.util';
+import { QuoteStatus } from '../common/enums';
 import { QuotesService } from './quotes.service';
 
 @Controller('quotes')
 export class QuotesController {
-  constructor(private readonly quotesService: QuotesService) {}
+  constructor(
+    private readonly quotesService: QuotesService,
+    private readonly userAccess: UserAccessService,
+  ) {}
+
+  private responsibleFor(request: Request): Promise<string | undefined> {
+    return resolveOrderResponsible(request.user?.uid, () =>
+      this.userAccess.listOrderResponsibles(),
+    );
+  }
 
   @Get()
   findAll() {
@@ -36,17 +48,26 @@ export class QuotesController {
   }
 
   @Post(':id/order')
-  createOrder(@Param('id') id: string, @Req() request: Request) {
-    return this.quotesService.createOrderFromQuote(id, request.user?.uid);
+  async createOrder(@Param('id') id: string, @Req() request: Request) {
+    return this.quotesService.createOrderFromQuote(
+      id,
+      await this.responsibleFor(request),
+    );
   }
 
   @Patch(':id/status')
-  updateStatus(
+  async updateStatus(
     @Param('id') id: string,
     @Body() body: UpdateQuoteStatusDto,
     @Req() request: Request,
   ) {
-    return this.quotesService.updateStatus(id, body.status, request.user?.uid);
+    return this.quotesService.updateStatus(
+      id,
+      body.status,
+      body.status === QuoteStatus.ACEPTADO
+        ? await this.responsibleFor(request)
+        : request.user?.uid,
+    );
   }
 
   @Patch(':id')

@@ -317,6 +317,9 @@
                           [addDisabled]="updating"
                           (replaceSupply)="onReplaceSupply($event)"
                           (addToBoard)="addToBoard($event)"
+                          [showStartPreparation]="canStartPreparation(job)"
+                          [startDisabled]="updating"
+                          (startPreparation)="startPreparation($event)"
                         />
                       </div>
                     }
@@ -347,7 +350,10 @@
                       variant="board"
                       [orderStatus]="orderStatusByOrderId[job.orderId]"
                       [showReplaceSupply]="isSupplyBlocked(job)"
+                      [showStartPreparation]="canStartPreparation(job)"
+                      [startDisabled]="updating"
                       (replaceSupply)="onReplaceSupply($event)"
+                      (startPreparation)="startPreparation($event)"
                     />
                   </div>
                 } @empty {

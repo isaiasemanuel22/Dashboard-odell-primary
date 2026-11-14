@@ -107,11 +107,7 @@ export class PrintJobsService {
   }
 
   /** Costo estimado de falla (material + luz + máquina) para gramos/horas dados. */
-  failureCost(
-    id: string,
-    grams: number,
-    hours: number,
-  ): { cost: number } {
+  failureCost(id: string, grams: number, hours: number): { cost: number } {
     const job = this.findOne(id);
     const g = Number(grams);
     const h = Number(hours);
@@ -149,6 +145,7 @@ export class PrintJobsService {
     return {
       ...job,
       calculatedPriority: calcTaskPriority(job.dueDate),
+      ...this.orderTasks.prepareReadinessFor(job),
     };
   }
 
@@ -220,8 +217,7 @@ export class PrintJobsService {
     }
 
     if (dto.responsibleUserId !== undefined) {
-      const nextResponsible =
-        (dto.responsibleUserId ?? '').trim() || undefined;
+      const nextResponsible = (dto.responsibleUserId ?? '').trim() || undefined;
       if (nextResponsible !== job.responsibleUserId) {
         this.orderTasks.assertActorCanMove(job, actor);
       }

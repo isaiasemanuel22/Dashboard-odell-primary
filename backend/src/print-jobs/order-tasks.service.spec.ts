@@ -1,3 +1,4 @@
+import { assertPrintJobStatusTransition } from '../common/validators/domain.validators';
 import { BadRequestException, ForbiddenException } from '@nestjs/common';
 import {
   CustomerType,
@@ -133,6 +134,61 @@ describe('OrderTasksService', () => {
         ?.quantity,
     ).toBe(3);
     expect(store.products[0].stock).toBe(2);
+  });
+
+  it('Preparar pedido: informa si hay algo disponible y permite BLOQUEADA a EN_PROCESO', () => {
+    const mk = (id: string, quantity: number): Order => ({
+      id,
+      customerId: 'cust-1',
+      customerName: 'Cliente Test',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity,
+          unitPrice: 1000,
+        },
+      ],
+      status: OrderStatus.PENDIENTE,
+      total: quantity * 1000,
+      createdAt: new Date().toISOString(),
+      dueDate: new Date().toISOString(),
+    });
+    const prepareOf = (orderId: string) =>
+      store.printJobs.find(
+        (task) =>
+          task.orderId === orderId && task.taskType === TaskType.PREPARE_ORDER,
+      )!;
+
+    const withStock = mk('ord-ready', 5);
+    store.orders.push(withStock);
+    service.syncOrderTasks(withStock);
+    const ready = prepareOf('ord-ready');
+    expect(ready.status).toBe(PrintJobStatus.BLOQUEADO);
+    expect(service.prepareReadinessFor(ready)).toEqual({
+      prepareReadiness: { canStart: true },
+    });
+    service.beforeStatusChange(ready, PrintJobStatus.EN_PROCESO, adminActor);
+    expect(withStock.items[0].reservedQuantity).toBe(2);
+
+    store.products[0].stock = 0;
+    const noStock = mk('ord-wait', 2);
+    store.orders.push(noStock);
+    service.syncOrderTasks(noStock);
+    expect(service.prepareReadinessFor(prepareOf('ord-wait'))).toEqual({
+      prepareReadiness: {
+        canStart: false,
+        waitingReason: 'Esperando producción: Hacer 2 Pieza',
+      },
+    });
+    expect(() =>
+      assertPrintJobStatusTransition(
+        PrintJobStatus.BLOQUEADO,
+        PrintJobStatus.EN_PROCESO,
+      ),
+    ).not.toThrow();
   });
 
   it('no reserva al confirmar y crea la producción del faltante al confirmar', () => {

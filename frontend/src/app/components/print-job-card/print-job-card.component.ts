@@ -57,6 +57,10 @@ export class PrintJobCardComponent {
   @Input() showAddToBoard = false;
   @Input() addDisabled = false;
   @Output() replaceSupply = new EventEmitter<PrintJob>();
+  /** Muestra «Iniciar preparación» (solo «Preparar pedido» sin iniciar). */
+  @Input() showStartPreparation = false;
+  @Input() startDisabled = false;
+  @Output() startPreparation = new EventEmitter<PrintJob>();
   @Output() addToBoard = new EventEmitter<PrintJob>();
   readonly taskKindLabel = taskKindLabel;
 
@@ -70,6 +74,13 @@ export class PrintJobCardComponent {
 
   get isPrepareOrder(): boolean {
     return this.job.taskKind === TaskKind.PREPARE_ORDER;
+  }
+
+  /** Motivo por el que todavía no se puede iniciar (vacío = se puede). */
+  get startBlockedReason(): string {
+    const readiness = this.job.prepareReadiness;
+    if (!readiness || readiness.canStart) return '';
+    return readiness.waitingReason || 'Esperando producción';
   }
 
   /** Null cuando la tarea no tiene área: no se inventa un badge. */

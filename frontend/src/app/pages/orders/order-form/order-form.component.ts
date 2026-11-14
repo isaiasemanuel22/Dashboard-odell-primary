@@ -296,7 +296,6 @@ export class OrderFormComponent implements OnChanges, OnInit {
   depositMethod: PaymentMethod = PaymentMethod.EFECTIVO;
   depositAccount: TreasuryAccount = defaultAccountForMethod(PaymentMethod.EFECTIVO);
   depositFeeInput: number | null = null;
-  private depositAmountTouched = false;
 
   /**
    * Mobile «DETALLES»: plegado si descripción y notas están vacías.
@@ -555,6 +554,19 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (!this.isResellerCustomer) return '';
     const percent = this.wholesaleDiscount.percent;
     return `Revendedor · −${percent}%`;
+  }
+
+  /** Error junto al campo: el guardado falla o falta elegir responsable. */
+  get responsibleFieldError(): string {
+    if (this.responsibleError) return this.responsibleError;
+    if (
+      !this.isQuoteForm &&
+      !this.responsibleUserId.trim() &&
+      this.responsibleOptions.length > 0
+    ) {
+      return 'Elegí un responsable';
+    }
+    return '';
   }
 
   get responsibleSelectOptions(): DbSelectOption[] {
@@ -831,8 +843,8 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   get depositAmountValue(): number | null {
-    if (this.depositAmountTouched) return this.depositAmountInput;
-    return this.depositAmountInput ?? this.depositAmount;
+    // La seña no se fuerza: vacío/0 crea el pedido sin pago (el 50 % es solo sugerencia).
+    return this.depositAmountInput;
   }
 
   get balanceAfterDeposit(): number {
@@ -1408,7 +1420,6 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   onDepositAmountChange(raw: number | null): void {
-    this.depositAmountTouched = true;
     this.depositAmountInput =
       raw === null || raw === ('' as unknown) ? null : Number(raw);
   }
@@ -1762,7 +1773,6 @@ export class OrderFormComponent implements OnChanges, OnInit {
     this.responsibleUserId = this.isQuoteForm
       ? ''
       : (this.order?.responsibleUserId ?? this.sessionFirebaseUid);
-    this.depositAmountTouched = false;
     this.depositAmountInput = null;
     this.depositFeeInput = null;
     this.depositMethod = PaymentMethod.EFECTIVO;

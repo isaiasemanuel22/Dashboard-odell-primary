@@ -66,6 +66,21 @@
       </footer>
     }
 
+    @if (showStartPreparation) {
+      @if (startBlockedReason) {
+        <p class="job-card__start-hint" role="status">{{ startBlockedReason }}</p>
+      }
+      <db-button
+        label="Iniciar preparación"
+        variant="primary"
+        format="solid"
+        [block]="true"
+        [disabled]="startDisabled || !!startBlockedReason"
+        extraClass="job-card__start"
+        (clicked)="startPreparation.emit(job)"
+      />
+    }
+
     @if (showAddToBoard) {
       <db-button
         label="+ Agregar al tablero"

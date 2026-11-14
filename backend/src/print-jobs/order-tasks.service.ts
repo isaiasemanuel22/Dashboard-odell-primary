@@ -839,6 +839,53 @@ export class OrderTasksService implements OnModuleInit {
     });
   }
 
+  /**
+   * §12.4: «Preparar pedido» puede iniciarse cuando hay algo disponible
+   * (stock reservable o producción terminada/parcial). Solo informativo.
+   */
+  prepareReadinessFor(job: PrintJob): Pick<PrintJob, 'prepareReadiness'> {
+    if (
+      job.taskType !== TaskType.PREPARE_ORDER ||
+      job.status === PrintJobStatus.TERMINADO ||
+      job.status === PrintJobStatus.CANCELADO
+    ) {
+      return {};
+    }
+    const order = this.store.getOrderById(job.orderId);
+    if (!order) return {};
+
+    const hasAvailable = order.items.some((item) => {
+      const pending = Math.max(
+        item.quantity - (item.deliveredQuantity ?? 0),
+        0,
+      );
+      if (pending <= 0) return false;
+      if ((item.producedQuantity ?? 0) > 0) return true;
+      if (!item.productId) return false;
+      return this.getAvailableStock(item.productId, order.id) > 0;
+    });
+    if (hasAvailable) return { prepareReadiness: { canStart: true } };
+
+    const names = this.store.printJobs
+      .filter(
+        (task) =>
+          task.orderId === order.id &&
+          task.taskType === TaskType.PRODUCTION &&
+          !task.archived &&
+          task.status !== PrintJobStatus.TERMINADO &&
+          task.status !== PrintJobStatus.CANCELADO,
+      )
+      .map((task) => task.productName);
+    return {
+      prepareReadiness: {
+        canStart: false,
+        waitingReason: names.length
+          ? `Esperando producción: ${names.join(', ')}`
+          : 'Esperando producción',
+      },
+    };
+  }
+
   private prepareStillHasOpenWork(
     orderId: string,
     prepareJobId: string,

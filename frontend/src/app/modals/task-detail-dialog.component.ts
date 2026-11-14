@@ -219,7 +219,58 @@ export class TaskDetailDialogComponent implements OnInit {
 
   /** Bloqueo manual (no insumos): Desbloquear en el footer izquierdo. */
   get showUnblockInFooter(): boolean {
-    return this.canEdit && this.isBlocked && !this.isSupplyBlock;
+    return (
+      this.canEdit &&
+      this.isBlocked &&
+      !this.isSupplyBlock &&
+      !this.showStartPreparation
+    );
+  }
+
+  /** «Preparar pedido» sin iniciar: un solo paso hasta En progreso (§12.4). */
+  get showStartPreparation(): boolean {
+    return (
+      this.canEdit &&
+      this.job.taskKind === TaskKind.PREPARE_ORDER &&
+      (this.job.status === PrintJobStatus.BLOQUEADO ||
+        this.job.status === PrintJobStatus.POR_HACER)
+    );
+  }
+
+  /** Aún no llegó prepareReadiness: se muestra «Comprobando…». */
+  get startPreparationChecking(): boolean {
+    return !this.job.prepareReadiness;
+  }
+
+  get startPreparationDisabledReason(): string {
+    const readiness = this.job.prepareReadiness;
+    if (!readiness || readiness.canStart) return '';
+    return readiness.waitingReason || 'Esperando producción';
+  }
+
+  onStartPreparation(): void {
+    if (!this.showStartPreparation || this.saving) return;
+    if (this.startPreparationChecking || this.startPreparationDisabledReason) {
+      return;
+    }
+    this.saving = true;
+    this.error = '';
+    this.cdr.markForCheck();
+    this.printJobs
+      .updatePrintJob(this.job.id, { status: PrintJobStatus.EN_PROCESO })
+      .subscribe({
+        next: (updated) => {
+          this.saving = false;
+          this.didMutate = true;
+          this.dataChanged.emit('print-jobs');
+          this.lastStockWarnings = updated.stockWarnings;
+          this.applyJob(updated);
+          this.successNotice = 'Preparación iniciada';
+          this.reloadDetail();
+        },
+        error: (err: unknown) =>
+          this.handleError(err, 'No se pudo iniciar la preparación'),
+      });
   }
 
   get isBlocked(): boolean {

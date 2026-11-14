@@ -1171,6 +1171,8 @@ export interface PrintJob {
   priorityOverride?: number | null;
   /** Prioridad por dueDate sin override (API). */
   calculatedPriority?: number;
+  /** Solo «Preparar pedido»: si ya hay algo disponible para iniciar (§12.4). */
+  prepareReadiness?: { canStart: boolean; waitingReason?: string };
   /** Si true, el sync del pedido no pisa responsibleUserId. */
   responsibleManual?: boolean;
   failures?: PrintJobFailure[];
@@ -1329,6 +1331,8 @@ export interface OrderOverview {
   alerts: OrderAlert[];
   deliveries?: OrderDelivery[];
   priceNotices?: OrderPriceNotice[];
+  /** Presupuesto del que salió el pedido. */
+  sourceQuote?: { id: string };
 }
 
 export interface ProductOverview {

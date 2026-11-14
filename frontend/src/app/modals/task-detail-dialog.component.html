@@ -41,7 +41,7 @@
               [disabled]="saving"
               (clicked)="onReplaceSupply()"
             />
-          } @else {
+          } @else if (!showStartPreparation) {
             <db-button
               label="Desbloquear"
               variant="secondary"
@@ -463,6 +463,26 @@
           [disabled]="saving"
           (clicked)="onReturnToBlocked()"
         />
+      }
+      @if (showStartPreparation) {
+        <db-button
+          label="Iniciar preparación"
+          variant="primary"
+          format="solid"
+          [disabled]="
+            saving ||
+            startPreparationChecking ||
+            !!startPreparationDisabledReason
+          "
+          (clicked)="onStartPreparation()"
+        />
+        @if (startPreparationChecking) {
+          <span class="td__start-hint" role="status">Comprobando…</span>
+        } @else if (startPreparationDisabledReason) {
+          <span class="td__start-hint" role="status">{{
+            startPreparationDisabledReason
+          }}</span>
+        }
       }
       @if (showUnblockInFooter) {
         <db-button

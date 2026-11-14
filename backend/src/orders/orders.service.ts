@@ -101,9 +101,11 @@ export class OrdersService {
 
   getOverview(id: string): OrderOverview {
     const order = this.findOne(id);
+    const sourceQuote = this.store.quotes.find((quote) => quote.orderId === id);
 
     return {
       order,
+      ...(sourceQuote ? { sourceQuote: { id: sourceQuote.id } } : {}),
       tasks: this.printJobs.findByOrderId(id),
       alerts: this.orderTasks.buildOperationalAlerts(order),
       priceNotices: listOrderPriceNotices(

@@ -1154,6 +1154,21 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
     this.persistMove(job, job.status, false, false);
   }
 
+  /** «Preparar pedido» sin iniciar (bloqueada o por hacer). */
+  canStartPreparation(job: PrintJob): boolean {
+    return (
+      this.isPrepareOrder(job) &&
+      (job.status === PrintJobStatus.BLOQUEADO ||
+        job.status === PrintJobStatus.POR_HACER)
+    );
+  }
+
+  /** Un solo paso: directo a En progreso (reserva stock y recalcula faltantes). */
+  startPreparation(job: PrintJob): void {
+    if (this.updating || job.prepareReadiness?.canStart === false) return;
+    this.moveJobToStatus(job, PrintJobStatus.EN_PROCESO);
+  }
+
   addToBoard(job: PrintJob): void {
     if (job.active || this.updating) return;
 

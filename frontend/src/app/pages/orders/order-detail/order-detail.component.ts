@@ -246,6 +246,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   ];
   alerts: OrderAlert[] = [];
   priceNotices: OrderPriceNotice[] = [];
+  sourceQuoteId: string | null = null;
   priceDecisionLoading = false;
   deliveries: OrderDelivery[] = [];
   loading = true;
@@ -844,6 +845,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
           ? []
           : (overview.alerts ?? []);
         this.priceNotices = overview.priceNotices ?? [];
+        this.sourceQuoteId = overview.sourceQuote?.id ?? null;
         this.deliveries =
           overview.deliveries ?? overview.order.deliveryHistory ?? [];
         this.loading = false;

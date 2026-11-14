@@ -112,7 +112,7 @@ export class OrderFormOrderSummaryComponent {
 
   /** La ayuda «N% del total» solo si el monto coincide con la seña sugerida. */
   get isSuggestedDeposit(): boolean {
-    if (this.depositAmount == null) return true;
+    if (this.depositAmount == null) return false;
     return Math.round(Number(this.depositAmount) || 0) === Math.round(Number(this.depositSuggested) || 0);
   }
 
@@ -130,6 +130,10 @@ export class OrderFormOrderSummaryComponent {
       return;
     }
     this.depositAmountChange.emit(Math.round(Number(digits)));
+  }
+
+  useSuggestedDeposit(): void {
+    this.depositAmountChange.emit(Math.round(Number(this.depositSuggested) || 0));
   }
 
   onDepositChipChange(value: PaymentMethod | null): void {

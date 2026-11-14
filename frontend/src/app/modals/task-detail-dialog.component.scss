@@ -514,3 +514,9 @@ $td-stats-bg: #f7fafc;
     white-space: nowrap;
   }
 }
+
+.td__start-hint {
+  align-self: center;
+  font-size: 0.8125rem;
+  color: var(--text-muted, #6b7280);
+}

@@ -106,6 +106,12 @@ describe('OrdersService.getOverview', () => {
     expect(Array.isArray(overview.tasks)).toBe(true);
   });
 
+  it('devuelve el presupuesto de origen si algún quote guarda ese orderId', () => {
+    expect(service.getOverview('ord-1').sourceQuote).toBeUndefined();
+    store.quotes.push({ id: 'quo-7', orderId: 'ord-1' } as never);
+    expect(service.getOverview('ord-1').sourceQuote).toEqual({ id: 'quo-7' });
+  });
+
   it('registra entrega parcial y descuenta solo stock reservado', () => {
     const order = store.orders[0];
     order.items = [

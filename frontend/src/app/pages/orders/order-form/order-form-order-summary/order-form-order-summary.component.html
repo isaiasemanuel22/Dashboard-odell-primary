@@ -132,6 +132,7 @@
               [ngModel]="depositAmountDisplay"
               (ngModelChange)="onDepositAmountDisplayChange($event)"
               autocomplete="off"
+              placeholder="Sin seña"
               aria-describedby="deposit-amount-hint"
             />
             <span class="order-resumen__money-suffix" id="deposit-amount-hint">
@@ -141,6 +142,11 @@
                 Saldo {{ balanceAfterDeposit | currencyArs }}
               }
             </span>
+            @if (!isSuggestedDeposit && depositSuggested > 0) {
+              <button type="button" class="order-resumen__suggest" (click)="useSuggestedDeposit()">
+                Usar {{ depositPercent }}%
+              </button>
+            }
           </div>
         </div>
 

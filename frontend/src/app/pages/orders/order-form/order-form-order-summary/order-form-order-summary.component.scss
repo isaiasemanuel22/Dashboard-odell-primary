@@ -181,6 +181,18 @@
     white-space: nowrap;
   }
 
+  &__suggest {
+    flex: none;
+    border: 0;
+    background: transparent;
+    padding: 0;
+    cursor: pointer;
+    color: $color-primary;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: underline;
+  }
+
   &__seg {
     display: block;
     width: 100%;
