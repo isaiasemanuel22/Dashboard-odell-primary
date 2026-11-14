@@ -96,8 +96,8 @@ Vista: desktop, mobile o ambas; «(prod)» si se vio en producción. Si no dice 
 | E86 | 2026-11-13 | desktop | Cola › diálogo y tarjetas | En el diálogo de la tarea, el botón «Cancelar» cambia de lugar según el pedido, y los títulos de las tarjetas se cortan en algunos anchos. Lo vio el tester | Botón en un lugar fijo y títulos legibles | ✅ 2026-11-14 · 1679167 |
 | E87 | 2026-11-13 | desktop | Pedidos y presupuestos › pie | «Falta: al menos un producto» no distingue entre no tener ninguna línea y tener una línea incompleta. Lo vio el tester | El aviso dice qué falta y en qué línea | ✅ 2026-11-14 · 1679167 |
 | E88 | 2026-11-13 | desktop | Backend › lint | 27 errores de formato de eslint que ya existían en archivos de customers, spools, sales, supplies, settings, store y print-jobs | eslint sin errores | ✅ 2026-11-14 · 1679167 |
-| E89 | 2026-11-14 | desktop | Cola › detalle de «Preparar pedido» | «Lista para iniciar» aparece dos veces en el mismo diálogo: una etiqueta celeste arriba y otra amarilla (color de aviso) junto al número de pedido. Lo vio el tester | Una sola etiqueta, en color neutro | 🔴 |
-| E90 | 2026-11-14 | desktop | Productos › editar producto | Al abrir el formulario, «Cancelar» y «Guardar cambios» no se ven y hay que scrollear hasta el final; en el diálogo de tarea de la cola quedan fijos abajo. Ya pasaba antes | Botones del pie siempre visibles | 🔴 |
+| E89 | 2026-11-14 | desktop | Cola › detalle de «Preparar pedido» | «Lista para iniciar» aparece dos veces en el mismo diálogo: una etiqueta celeste arriba y otra amarilla (color de aviso) junto al número de pedido. Lo vio el tester | Una sola etiqueta, en color neutro | ✅ 2026-11-14 · ecffd7b |
+| E90 | 2026-11-14 | desktop | Productos › editar producto | Al abrir el formulario, «Cancelar» y «Guardar cambios» no se ven y hay que scrollear hasta el final; en el diálogo de tarea de la cola quedan fijos abajo. Ya pasaba antes | Botones del pie siempre visibles | ✅ 2026-11-14 · ecffd7b |
 
 ## Por definir (reporte QA 2026-11-13)
 
