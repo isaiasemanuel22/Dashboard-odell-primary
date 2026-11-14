@@ -1,0 +1,66 @@
+<section class="panel production-panel">
+  <h3>Composición de Estampado</h3>
+
+  <div class="production-stats">
+    <div class="production-stat">
+      <span class="production-stat__label">Plancha</span>
+      <strong class="production-stat__value">{{ totalMinutes }} min</strong>
+    </div>
+    <div class="production-stat">
+      <span class="production-stat__label">Mano de obra</span>
+      <strong class="production-stat__value">{{ workHours }} h</strong>
+    </div>
+  </div>
+
+  @if (printRows.length) {
+    <h4 class="production-subtitle">Impresos</h4>
+    <div class="filament-cards">
+      @for (row of printRows; track $index) {
+        <article class="filament-card">
+          <div class="filament-card__body">
+            <strong class="filament-card__type">{{ row.name }}</strong>
+            <span class="filament-card__grams">{{ row.size }} · {{ row.paperType | paperTypeLabel }}</span>
+            <span class="filament-card__color">Cantidad: {{ row.quantity }}</span>
+          </div>
+        </article>
+      }
+    </div>
+  }
+
+  @if (cycleRows.length) {
+    <h4 class="production-subtitle">
+      Plancha@if (pressName) { · {{ pressName }} }
+    </h4>
+    <div class="filament-cards">
+      @for (row of cycleRows; track $index) {
+        <article class="filament-card">
+          <div class="filament-card__body">
+            <strong class="filament-card__type">{{ row.label }}</strong>
+            <span class="filament-card__grams">{{ row.minutes }} min por bajada</span>
+            <span class="filament-card__color">{{ row.bajadas }} {{ row.bajadas === 1 ? 'bajada' : 'bajadas' }}</span>
+          </div>
+        </article>
+      }
+    </div>
+  }
+
+  @if (supplyRows.length) {
+    <h4 class="production-subtitle">Insumos</h4>
+    <div class="filament-cards">
+      @for (row of supplyRows; track $index) {
+        <article class="filament-card">
+          <div
+            class="filament-card__swatch"
+            [class.filament-card__swatch--indistinto]="!colorHex(row.colorId)"
+            [style.background-color]="colorHex(row.colorId) || null"
+          ></div>
+          <div class="filament-card__body">
+            <strong class="filament-card__type">{{ row.name }}</strong>
+            <span class="filament-card__grams">{{ row.quantity }} {{ row.unit }}</span>
+            <span class="filament-card__color">{{ colorLabel(row.colorId) }}</span>
+          </div>
+        </article>
+      }
+    </div>
+  }
+</section>

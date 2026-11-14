@@ -41,6 +41,23 @@ export function calculatePaperCostFromReferenceSheet(
   return Math.round(printAreaCm2 * pricePerCm2);
 }
 
+/** True si la medida entra en el pliego en alguna orientación. */
+export function printFitsReferenceSheet(
+  sheet: PaperReferenceSheet,
+  widthCm: number,
+  lengthCm: number,
+): boolean {
+  const w = Number(widthCm) || 0;
+  const l = Number(lengthCm) || 0;
+  if (w <= 0 || l <= 0 || sheet.widthCm <= 0 || sheet.lengthCm <= 0) {
+    return true;
+  }
+  return (
+    (w <= sheet.widthCm && l <= sheet.lengthCm) ||
+    (w <= sheet.lengthCm && l <= sheet.widthCm)
+  );
+}
+
 export function pricePerSqmFromReferenceSheet(
   sheet: PaperReferenceSheet,
 ): number {

@@ -11,6 +11,10 @@ import {
   ImpresoWithCost,
   UpdateImpresoDto,
 } from '../common/interfaces';
+import {
+  paperReferenceKey,
+  printFitsReferenceSheet,
+} from '../common/paper-cost.util';
 import { resolvePrintAreaSecondCm } from '../products/estampado-product.util';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
 import { StoreService } from '../store/store.service';
@@ -127,6 +131,19 @@ export class ImpresosService {
       resolvePrintAreaSecondCm(data.lengthCm, data.heightCm) <= 0
     ) {
       throw new BadRequestException('Ancho y largo deben ser mayores a 0');
+    }
+    const sheet =
+      this.store.generalSettings?.paperReferenceSheets?.[
+        paperReferenceKey(data.paperType)
+      ];
+    const second = resolvePrintAreaSecondCm(data.lengthCm, data.heightCm);
+    if (
+      sheet &&
+      !printFitsReferenceSheet(sheet, Number(data.widthCm), second)
+    ) {
+      throw new BadRequestException(
+        `La medida (${data.widthCm} × ${second} cm) no entra en el pliego de ${sheet.widthCm} × ${sheet.lengthCm} cm configurado en Ajustes`,
+      );
     }
   }
 

@@ -21,6 +21,8 @@ import {
   Product,
   Product3D,
   ProductAttachment,
+  ProductEstampado,
+  ProductType,
   ProductStockOverview,
   ResinType,
   ServiceProfitMargins,
@@ -38,6 +40,7 @@ import { RealtimeService } from '../../../core/services/realtime.service';
 import { SaleCartService } from '../../../core/services/sale-cart.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { productStockOverview } from '../../../shared/utils/stock.helpers';
+import { ProductDetailEstampadoComponent } from './product-detail-estampado/product-detail-estampado.component';
 import { ProductDetailProductionComponent } from './product-detail-production/product-detail-production.component';
 import {
   DbAttachmentUploadComponent,
@@ -120,6 +123,7 @@ export interface MobileCostCompositionRow {
     ProductPricingComponent,
     ProductComponentsTableComponent,
     ProductDetailProductionComponent,
+    ProductDetailEstampadoComponent,
   ],
   templateUrl: './product-detail.component.html',
   styleUrl: './product-detail.component.scss',
@@ -165,6 +169,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   get product3d(): Product3D | null {
     return this.product && isProduct3D(this.product) ? this.product : null;
+  }
+
+  get productEstampado(): ProductEstampado | null {
+    return this.product?.type === ProductType.ESTAMPADO
+      ? (this.product as ProductEstampado)
+      : null;
   }
 
   get stockOverview(): ProductStockOverview {

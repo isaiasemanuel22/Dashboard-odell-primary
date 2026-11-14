@@ -388,7 +388,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
 
   get mobileOutdatedPriceAlertTitle(): string {
     const n = this.mobileOutdatedPriceAlerts.length;
-    return n === 1 ? '1 precio desactualizado' : `${n} precios desactualizados`;
+    return n === 1 ? '1 precio bajo el margen' : `${n} precios bajo el margen`;
   }
 
   get mobileFixedPriceMarginAlertTitle(): string {
@@ -399,16 +399,16 @@ export class ProductsComponent implements OnInit, OnDestroy {
   get outdatedPriceAlertMessage(): string {
     const n = this.outdatedPriceAlerts.length;
     return n === 1
-      ? '1 producto tiene el precio desactualizado respecto de su costo'
-      : `${n} productos tienen el precio desactualizado respecto de su costo`;
+      ? '1 producto con el precio bajo el margen respecto de su costo'
+      : `${n} productos con el precio bajo el margen respecto de su costo`;
   }
 
   get fixedPriceMarginAlertMessage(): string {
     const n = this.fixedPriceMarginAlerts.length;
     const base =
       n === 1
-        ? '1 producto con precio fijo quedó por debajo de su margen'
-        : `${n} productos con precio fijo quedaron por debajo de su margen`;
+        ? '1 producto con precio fijo bajo el margen'
+        : `${n} productos con precio fijo bajo el margen`;
     const supply = this.topSupplyIncrease;
     if (!supply) return base;
     const before = this.currency.transform(supply.priceBefore);
@@ -622,7 +622,17 @@ export class ProductsComponent implements OnInit, OnDestroy {
       });
   }
 
+  desktopBulkOpen = false;
+
+  /** Muestra el panel de precios en bloque al tocar «Actualizar precios». */
   scrollToBulkPrice(): void {
+    this.desktopBulkOpen = true;
+    setTimeout(() => {
+      this.scrollToBulkPanel();
+    });
+  }
+
+  private scrollToBulkPanel(): void {
     const el = document.getElementById('masiva');
     el?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
@@ -637,8 +647,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
         title: 'Recalcular precios',
         message:
           n === 1
-            ? '¿Recalcular el precio del producto desactualizado según su costo actual?'
-            : `¿Recalcular los precios de ${n} productos desactualizados según su costo actual?`,
+            ? '¿Recalcular el precio del producto bajo el margen según su costo actual?'
+            : `¿Recalcular los precios de ${n} productos bajo el margen según su costo actual?`,
         confirmLabel: 'Recalcular precios',
       })
       .subscribe((confirmed) => {

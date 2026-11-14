@@ -47,8 +47,15 @@
       <div class="cost-preview">
         <span>Tamaño: {{ dimensionsLabel }}</span>
         <strong>Costo estimado del papel: {{ estimatedCost | currencyArs }}</strong>
-        <small>Precio según configuración actual ($/m² en Ajustes)</small>
+        <small>Precio según configuración actual ($/m² en Ajustes). El tamaño es el que cargás acá, sin margen ni sangrado.</small>
+        @if (referenceSheet; as sheet) {
+          <small>Pliego de referencia: {{ sheet.widthCm }} × {{ sheet.lengthCm }} cm</small>
+        }
       </div>
+
+      @if (sheetWarning) {
+        <db-form-error>{{ sheetWarning }}</db-form-error>
+      }
 
       @if (error) {
         <db-form-error>{{ error }}</db-form-error>
@@ -61,7 +68,7 @@
         <button
           type="submit"
           class="btn primary"
-          [disabled]="loading || !name.trim() || widthCm <= 0 || lengthCm <= 0"
+          [disabled]="loading || !name.trim() || widthCm <= 0 || lengthCm <= 0 || exceedsSheet"
         >
           {{ loading ? 'Guardando...' : (impreso ? 'Guardar cambios' : 'Crear impreso') }}
         </button>

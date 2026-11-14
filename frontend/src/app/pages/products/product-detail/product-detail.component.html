@@ -321,6 +321,14 @@
             [generalSettings]="generalSettings"
           />
         }
+
+        @if (productEstampado; as estampado) {
+          <app-product-detail-estampado
+            [product]="estampado"
+            [colorCatalog]="colorCatalog"
+            [generalSettings]="generalSettings"
+          />
+        }
       </div>
 
       <footer class="panel detail-actions">

@@ -105,7 +105,7 @@
 
 .sheet-card__sizes {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
   gap: 0.6rem;
 }
 

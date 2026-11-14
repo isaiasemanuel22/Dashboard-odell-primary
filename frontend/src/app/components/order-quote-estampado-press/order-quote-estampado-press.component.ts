@@ -95,10 +95,10 @@ export class OrderQuoteEstampadoPressComponent implements OnInit {
 
   get pressSummary(): string {
     const cycles = normalizeEstampadoPressCycles(this.line.estampadoPressCycles);
-    const bajadas = cycles.reduce(
-      (sum, cycle) => sum + (Number(cycle.bajadas) || 1),
-      0,
-    );
+    // Sin ciclos cargados el formulario muestra una bajada por defecto (1).
+    const bajadas = cycles.length
+      ? cycles.reduce((sum, cycle) => sum + (Number(cycle.bajadas) || 1), 0)
+      : 1;
     const minutes = totalEstampadoPressMinutes(this.line.estampadoPressCycles);
     const profile = this.pressProfile;
     const parts = profile ? [profile.name] : [];

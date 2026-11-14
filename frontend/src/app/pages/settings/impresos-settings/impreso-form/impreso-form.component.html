@@ -58,6 +58,10 @@
       <small>Calculado con los precios por m² configurados arriba</small>
     </div>
 
+    @if (sheetWarning) {
+      <db-form-error>{{ sheetWarning }}</db-form-error>
+    }
+
     @if (error) {
       <db-form-error>{{ error }}</db-form-error>
     }
@@ -74,7 +78,7 @@
         variant="primary"
         format="solid"
         buttonType="submit"
-        [disabled]="loading || !name.trim() || widthCm <= 0 || lengthCm <= 0"
+        [disabled]="loading || !name.trim() || widthCm <= 0 || lengthCm <= 0 || exceedsSheet"
       />
     </db-form-footer>
   </form>

@@ -23,10 +23,16 @@ import {
 } from '@general-components';
 import {
   CreateImpresoPayload,
+  GeneralSettings,
   ImpresoWithCost,
   PaperType,
 } from '../../../../core/models';
 import { BreakpointService } from '../../../../core/services/breakpoint.service';
+import { SettingsService } from '../../../../core/services/settings.service';
+import {
+  printFitsReferenceSheet,
+  paperReferenceKey,
+} from '../../../../shared/utils/paper-cost.util';
 import { ImpresosService } from '../../../../core/services/impresos.service';
 import {
   formatPrintDimensionsCm,
@@ -60,6 +66,8 @@ const PAPER_TYPE_OPTIONS: DbSelectOption[] = [
 })
 export class ImpresoFormComponent implements OnChanges, OnDestroy {
   private readonly impresosService = inject(ImpresosService);
+  private readonly settingsService = inject(SettingsService);
+  settings: GeneralSettings | null = null;
   private readonly cdr = inject(ChangeDetectorRef);
   readonly isMobile = inject(BreakpointService).isMobile;
 
@@ -89,6 +97,21 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
     this.clearPreviewTimer();
   }
 
+  get exceedsSheet(): boolean {
+    const sheet =
+      this.settings?.paperReferenceSheets?.[paperReferenceKey(this.paperType)];
+    return (
+      !!sheet && !printFitsReferenceSheet(sheet, this.widthCm, this.lengthCm)
+    );
+  }
+
+  get sheetWarning(): string {
+    const sheet =
+      this.settings?.paperReferenceSheets?.[paperReferenceKey(this.paperType)];
+    if (!sheet || !this.exceedsSheet) return '';
+    return `La medida (${this.dimensionsLabel}) no entra en el pliego de ${sheet.widthCm} × ${sheet.lengthCm} cm configurado, ni girándola. Reducila para poder guardar.`;
+  }
+
   get dimensionsLabel(): string {
     return formatPrintDimensionsCm(this.widthCm, this.lengthCm);
   }
@@ -103,6 +126,7 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
   }
 
   onSubmit(): void {
+    if (this.exceedsSheet) return;
     this.save.emit({
       name: this.name.trim(),
       paperType: this.paperType,
@@ -113,6 +137,10 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
   }
 
   private resetForm(): void {
+    this.settingsService.getGeneralSettings().subscribe((s) => {
+      this.settings = s;
+      this.cdr.markForCheck();
+    });
     if (this.impreso) {
       this.name = this.impreso.name;
       this.paperType = this.impreso.paperType;

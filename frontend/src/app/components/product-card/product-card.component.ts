@@ -93,7 +93,7 @@ export class ProductCardComponent {
 
   /** Sin stock → pedido (§8); con stock → venta de mostrador vía carrito. */
   get cartButtonLabel(): string {
-    return this.finishedStock > 0 ? 'Agregar al carrito' : 'Agregar para pedido';
+    return 'Agregar al carrito';
   }
 
   get hasFixedPrice(): boolean {

@@ -21,6 +21,7 @@ import {
   CreateImpresoPayload,
   GeneralSettings,
   ImpresoWithCost,
+  PaperReferenceSheet,
   PaperType,
 } from '../../../core/models';
 import { SettingsService } from '../../../core/services/settings.service';
@@ -33,6 +34,7 @@ import {
 import {
   calculatePaperCostFromPricePerSqm,
   paperReferenceKey,
+  printFitsReferenceSheet,
   pricePerSqmFromReferenceSheet,
 } from '../../../shared/utils/paper-cost.util';
 
@@ -83,10 +85,7 @@ export class ImpresoFormComponent implements OnChanges {
   }
 
   get estimatedCost(): number {
-    if (
-      !this.settings ||
-      !hasValidPrintSize(this.widthCm, this.lengthCm, 0)
-    ) {
+    if (!this.settings || !hasValidPrintSize(this.widthCm, this.lengthCm, 0)) {
       return 0;
     }
     const pricePerSqm =
@@ -98,6 +97,27 @@ export class ImpresoFormComponent implements OnChanges {
     );
   }
 
+  /** Pliego de referencia del papel elegido (Ajustes). */
+  get referenceSheet(): PaperReferenceSheet | null {
+    return (
+      this.settings?.paperReferenceSheets?.[
+        paperReferenceKey(this.paperType)
+      ] ?? null
+    );
+  }
+
+  get exceedsSheet(): boolean {
+    const sheet = this.referenceSheet;
+    if (!sheet) return false;
+    return !printFitsReferenceSheet(sheet, this.widthCm, this.lengthCm);
+  }
+
+  get sheetWarning(): string {
+    const sheet = this.referenceSheet;
+    if (!sheet || !this.exceedsSheet) return '';
+    return `La medida (${this.dimensionsLabel}) no entra en el pliego de ${sheet.widthCm} × ${sheet.lengthCm} cm configurado en Ajustes, ni girándola. Reducila para poder guardar.`;
+  }
+
   get dimensionsLabel(): string {
     return formatPrintDimensionsCm(this.widthCm, this.lengthCm);
   }
@@ -107,6 +127,7 @@ export class ImpresoFormComponent implements OnChanges {
   }
 
   onSubmit(): void {
+    if (this.exceedsSheet) return;
     this.save.emit({
       name: this.name.trim(),
       paperType: this.paperType,

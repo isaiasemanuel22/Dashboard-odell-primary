@@ -558,8 +558,8 @@ export class DashboardComponent implements OnInit {
         tone: 'warn',
         title:
           count === 1
-            ? `1 producto bajo el ${target}% de margen`
-            : `${count} productos bajo el ${target}% de margen`,
+            ? `1 producto con el precio bajo el margen (${target}%)`
+            : `${count} productos con el precio bajo el margen (${target}%)`,
         detail: 'revisá costos y precios',
         actionLabel: 'Actualizar precios',
         route: '/productos',
