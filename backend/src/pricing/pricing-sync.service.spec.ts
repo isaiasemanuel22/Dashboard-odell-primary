@@ -63,7 +63,7 @@ describe('PricingSyncService', () => {
     };
   }
 
-  it('recalcula ensamblados FDM aunque estén antes que sus piezas en el catálogo', () => {
+  it('no recalcula solo el precio ni el costo guardado de un ensamblado al guardar una pieza', () => {
     const store = new StoreService();
     store.applyState(createEmptyState());
 
@@ -119,9 +119,8 @@ describe('PricingSyncService', () => {
     service.syncAfterProductSave('piece-c', 355);
 
     const updated = store.getProductById('assembly-1');
-    // Precio = costo total x margen del tipo (40 %), no la suma de las piezas.
-    expect(updated?.cost).toBe(6000);
-    expect(updated?.price).toBe(8400);
+    expect(updated?.cost).toBe(14924);
+    expect(updated?.price).toBe(22190);
   });
 
   it('no pisa el precio manual de un ensamblado al cambiar una pieza', () => {
@@ -166,7 +165,7 @@ describe('PricingSyncService', () => {
     expect(updated?.suggestedPrice).toBe(14500);
   });
 
-  it('propaga cambios de pieza a ensamblados FDM al guardar un componente', () => {
+  it('guardar un componente no reescribe el precio del ensamblado; el recálculo explícito sí', () => {
     const store = new StoreService();
     store.applyState(createEmptyState());
 
@@ -202,6 +201,15 @@ describe('PricingSyncService', () => {
     const { service } = createService(store);
     service.syncAfterProductSave('piece-a', 1000);
 
+    const untouched = store.getProductById('assembly-1');
+    expect(untouched?.cost).toBe(600);
+    expect(untouched?.price).toBe(1500);
+
+    // Sin pedido explícito, refrescar costos tampoco toca el precio.
+    service.syncAllProductsAndOrders('supply_price');
+    expect(store.getProductById('assembly-1')?.price).toBe(1500);
+
+    service.syncAllProductsAndOrders('settings', { updatePrices: true });
     const updated = store.getProductById('assembly-1');
     expect(updated?.cost).toBe(300);
     expect(updated?.price).toBe(420);

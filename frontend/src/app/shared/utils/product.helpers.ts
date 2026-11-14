@@ -186,6 +186,10 @@ export function resolveProductUnitPrice(
 ): number {
   if (!product) return 0;
   if (visiting.has(product.id)) return product.price ?? 0;
+  // Combo usado como pieza de otro: cuenta su precio propio, no la suma de sus piezas.
+  if (visiting.size > 0 && product.type === ProductType.COMBO && (product.price ?? 0) > 0) {
+    return product.price;
+  }
 
   const components = normalizeProductComponents(product.components ?? [], catalog);
   if (!productUsesPieceAssembly({ ...product, components }) || components.length === 0) {
@@ -228,6 +232,10 @@ export function getComponentLinePrice(
 ): number {
   const part = findProductById(catalog, productId);
   const qty = Math.max(1, Number(quantity) || 1);
+  // Pieza que es combo: su precio propio, no la suma de sus piezas.
+  if (part?.type === ProductType.COMBO && (part.price ?? 0) > 0) {
+    return part.price * qty;
+  }
   return resolveProductUnitPrice(part, catalog) * qty;
 }
 

@@ -29,6 +29,10 @@
 
   &--detail {
     aspect-ratio: 4 / 3;
+
+    .carousel-slide {
+      background-size: contain;
+    }
   }
 
   &--mobile {

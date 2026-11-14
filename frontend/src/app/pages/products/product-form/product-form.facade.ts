@@ -287,6 +287,33 @@ export class ProductFormFacade {
     return 'Indicá los gramos y el tipo de material. El costo de un producto de impresión 3D sale de eso. No se puede guardar solo con el precio.';
   }
 
+  /** Obligatorios que hoy solo se avisan al guardar; se listan en "Faltan". */
+  get missingRequiredFields(): string[] {
+    const missing: string[] = [];
+    if (this.usesPieceAssembly) {
+      if (this.isCombo && this.components.length < 1) {
+        missing.push('al menos una pieza');
+      }
+      return missing;
+    }
+    if (this.isFdm) {
+      const lines = this.form.controls.filamentLines.value;
+      if (!hasValidFdmFilamentInput(lines)) {
+        missing.push(totalFdmFilamentGrams(lines) > 0 ? 'tipo de material' : 'gramos');
+      }
+    } else if (this.isResina) {
+      if (!(Number(this.form.controls.grams.value) > 0)) missing.push('mililitros de resina');
+      if (!String(this.form.controls.resinType.value ?? '').trim()) {
+        missing.push('tipo de resina');
+      }
+    }
+    return missing;
+  }
+
+  get usesCalculatedPrice(): boolean {
+    return this.pricing.isUsingCalculatedPrice;
+  }
+
   get canAutoCalculateCost() {
     return this.pricing.canAutoCalculate();
   }
@@ -470,6 +497,8 @@ export class ProductFormFacade {
     }
 
     this.form.patchValue(patch, { emitEvent: false });
+    // Antes de cambiar el tipo: el precio del tipo anterior no debe sobrevivir.
+    this.pricingStore.setCatalogPrice(null);
     this.pricingStore.setProductType(formType(this.form));
     this.pricing.onTypeChange();
   }

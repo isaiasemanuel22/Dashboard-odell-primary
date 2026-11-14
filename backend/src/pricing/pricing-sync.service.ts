@@ -53,8 +53,18 @@ export class PricingSyncService {
     private readonly storeChange: StoreChangeService,
   ) {}
 
-  syncAllProductsAndOrders(trigger: OrderPriceChangeTrigger): void {
-    const { priceChanges, recalculated } = this.recalculateAllProducts();
+  /**
+   * `updatePrices: false` (por defecto): solo refresca costo/ganancia/métricas
+   * guardadas; el precio de venta NO cambia solo. `true` es el recálculo
+   * explícito pedido por el usuario («Recalcular precios»).
+   */
+  syncAllProductsAndOrders(
+    trigger: OrderPriceChangeTrigger,
+    options: { updatePrices?: boolean } = {},
+  ): void {
+    const updatePrices = options.updatePrices === true;
+    const { priceChanges, recalculated } =
+      this.recalculateAllProducts(updatePrices);
     const quotesChanged = this.syncQuotePrices(priceChanges);
     this.syncOrderPrices(priceChanges, trigger);
     this.notifyChanges(recalculated || priceChanges.size > 0, quotesChanged);
@@ -72,14 +82,11 @@ export class PricingSyncService {
       });
     }
 
-    const compositeRecalculated =
-      this.recalculateCompositeProducts(priceChanges);
+    // Guardar un producto no reescribe el precio de otros (combos que lo usan):
+    // su costo se lee vigente al consultarlos y el precio queda como estaba.
     const quotesChanged = this.syncQuotePrices(priceChanges);
     this.syncOrderPrices(priceChanges, 'product_update');
-    this.notifyChanges(
-      priceChanges.size > 0 || compositeRecalculated,
-      quotesChanged,
-    );
+    this.notifyChanges(priceChanges.size > 0, quotesChanged);
   }
 
   /** Registra avisos en pedidos (y sync de presupuestos) tras un cambio de catálogo ya guardado. */
@@ -93,7 +100,7 @@ export class PricingSyncService {
     this.notifyChanges(true, quotesChanged);
   }
 
-  private recalculateAllProducts(): {
+  private recalculateAllProducts(updatePrices: boolean): {
     priceChanges: Map<string, ProductPriceChange>;
     recalculated: boolean;
   } {
@@ -102,12 +109,12 @@ export class PricingSyncService {
 
     for (const product of [...this.store.products]) {
       if (this.hasComponents(product)) continue;
-      if (this.applyProductRecalc(product, priceChanges)) {
+      if (this.applyProductRecalc(product, priceChanges, updatePrices)) {
         recalculated = true;
       }
     }
 
-    if (this.recalculateCompositeProducts(priceChanges)) {
+    if (this.recalculateCompositeProducts(priceChanges, updatePrices)) {
       recalculated = true;
     }
 
@@ -122,13 +129,14 @@ export class PricingSyncService {
 
   private recalculateCompositeProducts(
     priceChanges: Map<string, ProductPriceChange>,
+    updatePrices: boolean,
   ): boolean {
     let recalculated = false;
     for (let pass = 0; pass < 12; pass++) {
       let changed = false;
       for (const product of [...this.store.products]) {
         if (!this.hasComponents(product)) continue;
-        if (this.applyProductRecalc(product, priceChanges)) {
+        if (this.applyProductRecalc(product, priceChanges, updatePrices)) {
           changed = true;
           recalculated = true;
         }
@@ -145,13 +153,21 @@ export class PricingSyncService {
   private applyProductRecalc(
     product: Product,
     priceChanges: Map<string, ProductPriceChange>,
+    updatePrices: boolean,
   ): boolean {
     const current = this.store.getProductById(product.id);
     if (!current) return false;
 
-    const result = this.pricing.resolvePricing(
+    const computed = this.pricing.resolvePricing(
       this.pricing.productToPricingInput(current),
     );
+    const result = updatePrices
+      ? computed
+      : {
+          ...computed,
+          price: current.price,
+          profit: current.price - computed.cost,
+        };
     const productionMetrics = this.resolveCompositeProductionMetrics(current);
 
     if (

@@ -9,8 +9,21 @@
     (valueChange)="onPriceModeChange($event)"
   />
   @if (vm$ | async; as vm) {
+    @let held = heldPrice(vm.price);
+    @let shownPrice = held ?? vm.price;
     @if (stalePriceNotice(vm.price); as notice) {
-      <p class="price-stale" role="status">{{ notice }}</p>
+      <div class="price-stale" role="status">
+        <p>{{ notice }}</p>
+        <button type="button" class="price-stale__action" (click)="useCalculatedPrice()">
+          Usar precio calculado
+        </button>
+      </div>
+    }
+    @if (incompleteCostNotice; as incomplete) {
+      <p class="price-warn price-warn--incomplete" role="alert">{{ incomplete }}</p>
+    }
+    @if (belowCostNotice(shownPrice, vm.totalCost); as belowCost) {
+      <p class="price-warn price-warn--loss" role="alert">{{ belowCost }}</p>
     }
     @if (vm.calculating) {
       <p class="price-note">Calculando costo...</p>
@@ -28,7 +41,7 @@
         </div>
       } @else {
         <div>
-          <dt>Material @if (gramsLabel) { <span>· {{ gramsLabel }}</span> }</dt>
+          <dt>{{ materialLineLabel }} @if (gramsLabel) { <span>· {{ gramsLabel }}</span> }</dt>
           <dd>{{ (vm.costBreakdown?.materialCost ?? 0) | currencyArs }}</dd>
         </div>
         @if (purgeLabel; as purge) {
@@ -38,11 +51,11 @@
           </div>
         }
         <div>
-          <dt>Luz @if (lightLabel) { <span>· {{ lightLabel }}</span> }</dt>
+          <dt>{{ energyLineLabel }} @if (lightLabel) { <span>· {{ lightLabel }}</span> }</dt>
           <dd>{{ (vm.costBreakdown?.energyCost ?? 0) | currencyArs }}</dd>
         </div>
         <div>
-          <dt>Máquina @if (machineLabel) { <span>· {{ machineLabel }}</span> }</dt>
+          <dt>{{ machineLineLabel }} @if (machineLabel) { <span>· {{ machineLabel }}</span> }</dt>
           <dd>{{ (vm.costBreakdown?.machineCost ?? 0) | currencyArs }}</dd>
         </div>
         <div>
@@ -66,11 +79,15 @@
       </div>
     </dl>
 
-    <div class="price-margin">
+    <div
+      class="price-margin"
+      [class.price-margin--loss]="shownPrice > 0 && vm.totalCost > 0 && shownPrice < vm.totalCost"
+      [class.price-margin--incomplete]="missingPriceItems.length > 0"
+    >
       <div>
         <span>Margen objetivo ({{ targetMarginLabel }}): {{ targetMarginPercent }} %</span>
       </div>
-      @let realMargin = actualMarginPercent(vm.price, vm.totalCost);
+      @let realMargin = actualMarginPercent(shownPrice, vm.totalCost);
       @if (realMargin !== null) {
         <div>
           <span>Margen</span>
@@ -79,12 +96,18 @@
       }
       <div>
         <span>Ganancia</span>
-        <strong [class.is-loss]="vm.profit < 0">{{ vm.profit | currencyArs }}</strong>
+        <strong [class.is-loss]="shownPrice - vm.totalCost < 0">{{ shownPrice - vm.totalCost | currencyArs }}</strong>
       </div>
       <div class="price-margin__sale">
         <span>Precio de venta</span>
-        <strong>{{ vm.price | currencyArs }}</strong>
+        <strong>{{ shownPrice | currencyArs }}</strong>
       </div>
+      @if (held !== null) {
+        <div>
+          <span>Calculado</span>
+          <span>{{ vm.price | currencyArs }}</span>
+        </div>
+      }
     </div>
 
     <div class="unit-price">

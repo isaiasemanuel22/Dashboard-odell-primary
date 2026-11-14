@@ -59,6 +59,12 @@ export class ProductsController {
     };
   }
 
+  /** Antes de @Get(':id'). Piezas candidatas sin ciclos, con costo vigente. */
+  @Get('component-candidates')
+  getComponentCandidates(@Query('productId') productId?: string) {
+    return this.productsService.getComponentCandidates(productId);
+  }
+
   @Get(':id/overview')
   getOverview(@Param('id') id: string) {
     return this.productsService.getOverview(id);

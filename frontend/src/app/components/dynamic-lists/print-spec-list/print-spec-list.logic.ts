@@ -26,7 +26,7 @@ export class PrintSpecListLogic {
     layout: 'table',
     addPlacement: 'inside',
     tableColumns:
-      'minmax(0, 1.05fr) minmax(0, 0.72fr) minmax(0, 1.15fr) minmax(0, 0.95fr) minmax(2.4rem, 3rem) minmax(4.75rem, 5.5rem) 1.6rem',
+      'minmax(0, 1.05fr) minmax(0, 0.72fr) minmax(0, 1.1fr) minmax(9.5rem, 1fr) minmax(2.4rem, 3rem) minmax(4.75rem, 5.5rem) 1.6rem',
     itemLabel: (index) => `Impreso ${index + 1}`,
     addButtonLabel: '+ Agregar impreso',
     emptyMessage: 'Sin impresos configurados',

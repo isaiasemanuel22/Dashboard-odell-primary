@@ -9,13 +9,15 @@
     <span class="type-chip" [class]="'type-chip--' + product.type">
       {{ product.type | productTypeLabel }}
     </span>
-    <span
-      class="stock-pill"
-      [class.stock-pill--ok]="finishedStock > 0"
-      [class.stock-pill--empty]="finishedStock <= 0"
-    >
-      {{ finishedStock > 0 ? 'Stock ' + finishedStock : 'Sin stock' }}
-    </span>
+    @if (showStockPill) {
+      <span
+        class="stock-pill"
+        [class.stock-pill--ok]="finishedStock > 0"
+        [class.stock-pill--empty]="finishedStock <= 0"
+      >
+        {{ finishedStock > 0 ? 'Stock ' + finishedStock : 'Sin stock' }}
+      </span>
+    }
   </div>
 
   <div class="product-card__body">

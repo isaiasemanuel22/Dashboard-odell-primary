@@ -1,4 +1,10 @@
-import { FilamentType, ProductType } from '../common/enums';
+import { ConflictException } from '@nestjs/common';
+import {
+  FilamentType,
+  OrderStatus,
+  ProductType,
+  QuoteStatus,
+} from '../common/enums';
 import { Product } from '../common/interfaces';
 import { ProductRepository } from '../store/repositories/product.repository';
 import { StoreService } from '../store/store.service';
@@ -146,6 +152,82 @@ describe('ProductsService', () => {
     ).toThrow(
       'Indicá los gramos y el tipo de material. El costo de un producto de impresión 3D sale de eso. No se puede guardar solo con el precio.',
     );
+  });
+
+  it('update respeta el precio que manda el cliente y sin precio deja el actual', () => {
+    const store = new StoreService();
+    seedStore(store, [baseProduct({ price: 1234, cost: 500 })]);
+    const service = createService(store);
+
+    const renamed = service.update('prod-1', { description: 'x' });
+    expect(renamed.price).toBe(1234);
+
+    const repriced = service.update('prod-1', { price: 2222 });
+    expect(repriced.price).toBe(2222);
+  });
+
+  it('rechaza con 409 nombres duplicados al crear o renombrar', () => {
+    const store = new StoreService();
+    seedStore(store, [
+      baseProduct({ id: 'prod-1', name: 'Árbol de equilibrio' }),
+      baseProduct({ id: 'prod-2', name: 'Otro' }),
+    ]);
+    const service = createService(store);
+
+    expect(() =>
+      service.update('prod-2', { name: '  arbol DE equilibrio ' }),
+    ).toThrow(ConflictException);
+    expect(() =>
+      service.create({
+        ...baseProduct(),
+        name: 'ARBOL de equilibrio',
+      }),
+    ).toThrow(ConflictException);
+    // Guardar sin cambiar el nombre no choca consigo mismo.
+    expect(() => service.update('prod-1', { description: 'ok' })).not.toThrow();
+  });
+
+  it('DELETE responde 409 si el producto está en pedidos sin cerrar o presupuestos abiertos', () => {
+    const store = new StoreService();
+    seedStore(store, [baseProduct()]);
+    const service = createService(store);
+    const line = { productId: 'prod-1', quantity: 1 } as never;
+
+    store.orders.push({
+      id: 'ord-1',
+      status: OrderStatus.PENDIENTE,
+      items: [line],
+    } as never);
+    expect(() => service.remove('prod-1')).toThrow(ConflictException);
+
+    store.orders[0].status = OrderStatus.ENTREGADO;
+    store.quotes.push({
+      id: 'quo-1',
+      status: QuoteStatus.BORRADOR,
+      items: [line],
+    } as never);
+    expect(() => service.remove('prod-1')).toThrow(ConflictException);
+
+    store.quotes[0].status = QuoteStatus.ACEPTADO;
+    expect(() => service.remove('prod-1')).not.toThrow();
+  });
+
+  it('piezas candidatas excluyen las que generarían un ciclo', () => {
+    const store = new StoreService();
+    seedStore(store, [
+      baseProduct({ id: 'a', name: 'A' }),
+      baseProduct({
+        id: 'b',
+        name: 'B',
+        type: ProductType.COMBO,
+        components: [{ productId: 'a', quantity: 1 }],
+      }),
+      baseProduct({ id: 'c', name: 'C' }),
+    ]);
+    const service = createService(store);
+
+    expect(service.getComponentCandidates('a').map((p) => p.id)).toEqual(['c']);
+    expect(service.getComponentCandidates().map((p) => p.id)).toHaveLength(3);
   });
 
   it('devuelve overview de producto con categorías y catálogo', () => {

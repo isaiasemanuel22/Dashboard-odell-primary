@@ -82,12 +82,21 @@
     } @else if (filteredProducts.length === 0) {
       <div class="m-card products-m__empty">
         <p>{{ emptyMessage }}</p>
-        <db-button
-          label="Nuevo producto"
-          variant="primary"
-          format="solid"
-          (clicked)="openCreateProduct()"
-        />
+        @if (hasActiveFilters) {
+          <db-button
+            label="Limpiar búsqueda"
+            variant="secondary"
+            format="soft"
+            (clicked)="clearSearchAndFilters()"
+          />
+        } @else {
+          <db-button
+            label="Nuevo producto"
+            variant="primary"
+            format="solid"
+            (clicked)="openCreateProduct()"
+          />
+        }
       </div>
     } @else {
       @for (product of filteredProducts; track product.id) {
@@ -305,13 +314,23 @@
       [empty]="filteredProducts.length === 0"
       [emptyMessage]="emptyMessage"
     >
-      <db-button
-        emptyActions
-        label="Crear primer producto"
-        variant="primary"
-        format="solid"
-        (clicked)="openCreateProduct()"
-      />
+      @if (hasActiveFilters) {
+        <db-button
+          emptyActions
+          label="Limpiar búsqueda"
+          variant="secondary"
+          format="soft"
+          (clicked)="clearSearchAndFilters()"
+        />
+      } @else {
+        <db-button
+          emptyActions
+          label="Crear primer producto"
+          variant="primary"
+          format="solid"
+          (clicked)="openCreateProduct()"
+        />
+      }
     </db-state-message>
 
     @if (filteredProducts.length) {

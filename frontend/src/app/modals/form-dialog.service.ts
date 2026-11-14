@@ -230,6 +230,7 @@ export class FormDialogService {
             ariaLabel: product ? 'Editar producto' : 'Nuevo producto',
             // Mobile: pantalla completa como pedido.
             panelClass: ['form-dialog-panel--order-fullscreen'],
+            keepOnNavigation: true,
           }),
       ),
     );
@@ -555,6 +556,8 @@ export class FormDialogService {
       ariaLabel: string;
       panelClass?: string[];
       maxWidth?: string;
+      /** El diálogo no se cierra solo al navegar: lo decide un guard de ruta. */
+      keepOnNavigation?: boolean;
     },
   ): Observable<TResult | undefined> {
     const base = this.baseConfig(size);
@@ -568,6 +571,7 @@ export class FormDialogService {
       maxWidth: isMobile ? '100%' : (overrides.maxWidth ?? base.maxWidth),
       ariaLabel: overrides.ariaLabel,
       data,
+      ...(overrides.keepOnNavigation ? { closeOnNavigation: false } : {}),
     });
     return (ref.closed as Observable<TResult | undefined>).pipe(
       finalize(() => {

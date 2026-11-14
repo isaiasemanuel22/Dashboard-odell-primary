@@ -11,6 +11,21 @@ export function productPhysicalStock(
   return Math.max(0, Math.trunc(Number(product.stock ?? product.finishedStock) || 0));
 }
 
+/**
+ * Stock físico para listas y tarjetas: el del backend (`stockOverview.physical`,
+ * incluye armables en combos) y, si falta, el de producto terminado.
+ * Es el mismo número que muestra el detalle.
+ */
+export function productListStock(
+  product: Pick<Product, 'stock' | 'finishedStock' | 'stockOverview'>,
+): number {
+  const physical = product.stockOverview?.physical;
+  if (physical != null && Number.isFinite(Number(physical))) {
+    return Math.max(0, Math.trunc(Number(physical)));
+  }
+  return productPhysicalStock(product);
+}
+
 /** Cuántas unidades completas se pueden armar con el stock disponible de las piezas. */
 export function computeAssemblableUnits(
   product: Pick<

@@ -97,7 +97,7 @@ describe('product-stock.util', () => {
     });
   });
 
-  it('devuelve stock cero si las piezas no alcanzan aunque haya terminados', () => {
+  it('cuenta los terminados aunque las piezas no alcancen (misma fuente para tarjeta y detalle)', () => {
     const store = new StoreService();
     store.applyState(createEmptyState());
     store.products.push(
@@ -118,9 +118,9 @@ describe('product-stock.util', () => {
     );
 
     expect(buildProductStockOverview(store, 'combo-empty')).toEqual({
-      physical: 0,
+      physical: 4,
       reserved: 0,
-      available: 0,
+      available: 4,
     });
   });
 });

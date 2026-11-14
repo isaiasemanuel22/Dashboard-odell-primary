@@ -17,7 +17,13 @@ import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import {
   GeneralSettings,
   ProductType,
+  Supply,
 } from '../../../../core/models';
+import { SuppliesService } from '../../../../core/services/settings.service';
+import {
+  resolveFilamentPricePerKg,
+  resolveResinPricePerLiter,
+} from '../../../../shared/utils/material-type-price.util';
 import { SettingsFacade } from '../../../../store/settings/settings.facade';
 import { selectPrintProfileForCost } from '../../../../shared/utils/machine-profile.util';
 import { totalFdmFilamentGrams } from '../../../../shared/utils/fdm.helpers';
@@ -54,6 +60,8 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
   private settings: GeneralSettings | null = null;
+  private readonly suppliesService = inject(SuppliesService);
+  private supplies: Supply[] = [];
 
   @Input({ required: true }) facade!: ProductFormFacade;
   @Input({ required: true }) form!: ProductFormGroup;
@@ -73,6 +81,13 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     this.form.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => {
       this.cdr.markForCheck();
     });
+    this.suppliesService
+      .watchSupplies()
+      .pipe(takeUntil(this.destroy$))
+      .subscribe((items) => {
+        this.supplies = items;
+        this.cdr.markForCheck();
+      });
     this.settingsFacade
       .watchUntilDestroyed(this.destroyRef)
       .subscribe((settings) => {
@@ -146,7 +161,64 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   }
 
   get targetMarginLabel(): string {
+    if (this.form.controls.type.value === ProductType.COMBO) return 'Combo';
     return marginLabelForProductType(this.form.controls.type.value);
+  }
+
+  get isEstampadoType(): boolean {
+    return this.form.controls.type.value === ProductType.ESTAMPADO;
+  }
+
+  /** Etiquetas de las líneas de costo según el tipo de producto. */
+  get materialLineLabel(): string {
+    return this.isEstampadoType ? 'Impresos' : 'Material';
+  }
+
+  get energyLineLabel(): string {
+    return this.isEstampadoType ? 'Luz (plancha)' : 'Luz';
+  }
+
+  get machineLineLabel(): string {
+    return this.isEstampadoType ? 'Plancha' : 'Máquina';
+  }
+
+  /** Insumos y materiales sin precio: el costo mostrado queda incompleto. */
+  get missingPriceItems(): string[] {
+    const items: string[] = [];
+    for (const line of this.form.controls.supplyLines.value ?? []) {
+      if (!line.supplyId || !(Number(line.quantity) > 0)) continue;
+      const supply = this.supplies.find((item) => item.id === line.supplyId);
+      if (supply && !(Number(supply.unitPrice) > 0)) items.push(supply.name);
+    }
+    const type = this.form.controls.type.value;
+    if (this.facade.usesPieceAssembly || !this.settings) return items;
+    if (type === ProductType.FDM) {
+      for (const line of this.form.controls.filamentLines.value ?? []) {
+        if (!(Number(line.grams) > 0) || !line.filamentType) continue;
+        const price = resolveFilamentPricePerKg(this.settings, line.filamentType);
+        if (!(Number(price) > 0)) items.push(`filamento ${line.filamentType}`);
+      }
+    } else if (type === ProductType.RESINA) {
+      const resin = String(this.form.controls.resinType.value ?? '');
+      if (resin && Number(this.form.controls.grams.value) > 0) {
+        const price = resolveResinPricePerLiter(this.settings, resin);
+        if (!(Number(price) > 0)) items.push(`resina ${resin}`);
+      }
+    }
+    return [...new Set(items)];
+  }
+
+  get incompleteCostNotice(): string | null {
+    const items = this.missingPriceItems;
+    if (!items.length) return null;
+    return `Costo incompleto: falta el precio de ${items.join(', ')}. El margen real es menor al que se muestra.`;
+  }
+
+  /** Precio de venta por debajo del costo (se puede guardar, pero se avisa). */
+  belowCostNotice(price: number, cost: number): string | null {
+    if (!(price > 0) || !(cost > 0) || price >= cost) return null;
+    const margin = markupPercentOnCostRounded(price, cost);
+    return `El precio de venta (${this.money(price)}) está por debajo del costo (${this.money(cost)}): margen ${margin}%. Se vende a pérdida.`;
   }
 
   get supplyCost(): number {
@@ -177,20 +249,35 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
-  stalePriceNotice(displayedPrice: number): string | null {
+  /** Precio guardado que se conserva si el calculado difiere. */
+  heldPrice(displayedPrice: number): number | null {
     if (this.priceManual) return null;
-    const catalog = Math.round(Number(this.facade.product?.price) || 0);
+    const held = this.pricing.heldCatalogPrice();
+    if (held == null) return null;
     const next = Math.round(
       Number(this.pricing.computedPrice) || Number(displayedPrice) || 0,
     );
-    if (!(catalog > 0) || !(next > 0) || catalog === next) return null;
-    return `Hoy se vende a ${this.money(catalog)}: el precio quedó desactualizado. Al guardar pasa a ${this.money(next)}.`;
+    return next > 0 && next !== held ? held : null;
+  }
+
+  stalePriceNotice(displayedPrice: number): string | null {
+    const held = this.heldPrice(displayedPrice);
+    if (held == null) return null;
+    const next = Math.round(
+      Number(this.pricing.computedPrice) || Number(displayedPrice) || 0,
+    );
+    return `Hoy se vende a ${this.money(held)}; el precio calculado es ${this.money(next)}. Al guardar se mantiene ${this.money(held)}.`;
+  }
+
+  useCalculatedPrice(): void {
+    this.pricing.acceptCalculatedPrice();
+    this.cdr.markForCheck();
   }
 
   unitPriceDisplay(calculatedPrice: number): string {
     const amount = this.priceManual
       ? this.pricing.manualUnitPrice!
-      : calculatedPrice;
+      : (this.heldPrice(calculatedPrice) ?? calculatedPrice);
     return new Intl.NumberFormat('es-AR', { maximumFractionDigits: 0 }).format(
       Math.round(Number(amount) || 0),
     );
@@ -207,7 +294,9 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   }
 
   resetUnitPrice(): void {
+    // Volver a "Calculado" es una elección explícita del usuario.
     this.pricing.clearManualUnitPrice();
+    this.pricing.acceptCalculatedPrice();
     this.cdr.markForCheck();
   }
 

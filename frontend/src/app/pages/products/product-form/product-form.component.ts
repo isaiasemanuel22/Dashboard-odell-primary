@@ -11,6 +11,7 @@ import {
   SimpleChanges,
   ViewChild,
   ChangeDetectorRef,
+  ElementRef,
   inject,
 } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
@@ -34,7 +35,6 @@ import { PRODUCT_TYPE_LABELS } from '../../../shared/constants/labels';
 import { computeAssemblableUnits } from '../../../shared/utils/stock.helpers';
 import { getMachineProfilesForProductType } from '../../../shared/utils/machine-profile.util';
 import { SettingsFacade } from '../../../store/settings/settings.facade';
-import { ProductFormPricingFacade } from './store/product-form-pricing/product-form-pricing.facade';
 import { ProductFormFacade } from './product-form.facade';
 import { ProductFormPricingService } from './product-form-pricing.service';
 import { ProductFormBasicFieldsComponent, ProductFormBasicFieldsValue } from './sections/product-form-basic-fields.component';
@@ -73,8 +73,8 @@ type AccordionKey = 'datos' | 'piezas' | 'produccion' | 'media' | 'precio';
 })
 export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   readonly facade = inject(ProductFormFacade);
-  private readonly pricingStore = inject(ProductFormPricingFacade);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly breakpoint = inject(BreakpointService);
   private readonly settingsFacade = inject(SettingsFacade);
   private readonly destroyRef = inject(DestroyRef);
@@ -130,7 +130,24 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
 
   /** True si el usuario tocó el form y se perderían cambios al cerrar. */
   hasUnsavedChanges(): boolean {
-    return this.userEdited;
+    if (!this.userEdited) return false;
+    // Un click sin cambio real (o la carga inicial) no cuenta como modificación.
+    return this.snapshot() !== this.baseline;
+  }
+
+  private baseline = '';
+
+  private snapshot(): string {
+    const { categoryPicker, componentPicker, componentQty, ...rest } =
+      this.facade.form.getRawValue();
+    void categoryPicker;
+    void componentPicker;
+    void componentQty;
+    return JSON.stringify([rest, this.facade.usesCalculatedPrice]);
+  }
+
+  private captureBaseline(): void {
+    if (!this.userEdited) this.baseline = this.snapshot();
   }
 
   @HostListener('input')
@@ -161,6 +178,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     const missing: string[] = [];
     if (!this.facade.form.controls.name.value.trim()) missing.push('nombre');
     if (this.facade.categoryIds.length < 1) missing.push('una categoría');
+    missing.push(...this.facade.missingRequiredFields);
     if (this.facade.is3D && this.facade.showProductionFields) {
       if (!(Number(this.facade.form.controls.printTimeHours.value) > 0)) {
         missing.push('horas de impresión');
@@ -186,8 +204,38 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     );
   }
 
+  /** Abre los bloques de costo cerrados (Impresión, Mano de obra, Insumos). */
+  private openCostBlocks(titles: string[]): void {
+    if (titles.length) this.accProduccion = true;
+    this.cdr.markForCheck();
+    setTimeout(() => {
+      const blocks = this.host.nativeElement.querySelectorAll<HTMLDetailsElement>(
+        'details.cost-composition__block',
+      );
+      blocks.forEach((block) => {
+        const title = block
+          .querySelector('.cost-composition__summary-title')
+          ?.textContent?.trim();
+        if (title && titles.includes(title)) block.open = true;
+      });
+    }, 0);
+  }
+
+  private openBlocksForMissing(): void {
+    const titles: string[] = [];
+    for (const item of this.missingFields) {
+      if (item === 'horas de impresión') titles.push('Impresión');
+      if (item === 'mano de obra') titles.push('Mano de obra');
+    }
+    if (this.facade.missingRequiredFields.length) this.accProduccion = true;
+    if (titles.length) this.openCostBlocks(titles);
+  }
+
   ngOnInit(): void {
     this.facade.init(this.product);
+    if (!this.product) {
+      this.openCostBlocks(['Impresión', 'Mano de obra', 'Insumos']);
+    }
     this.syncBasicFields();
     this.syncCategoryIds();
     this.syncComponentsValue();
@@ -240,7 +288,11 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       });
     this.facade.form.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(() => this.cdr.markForCheck());
+      .subscribe(() => {
+        this.captureBaseline();
+        this.cdr.markForCheck();
+      });
+    this.baseline = this.snapshot();
     this.facade.basicFieldsSync$
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
@@ -257,6 +309,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       .pipe(takeUntil(this.destroy$))
       .subscribe(() => {
         this.syncComponentsValue();
+        this.captureBaseline();
         this.cdr.markForCheck();
       });
   }
@@ -264,6 +317,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   ngOnChanges(changes: SimpleChanges): void {
     if (changes['product'] && !changes['product'].firstChange) {
       this.facade.setProduct(this.product);
+      this.baseline = this.snapshot();
       this.syncBasicFields();
       this.syncCategoryIds();
       this.syncComponentsValue();
@@ -275,7 +329,10 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     this.basicFields = value;
     this.facade.patchBasicFields(value);
     if (previousType !== value.type) {
-      this.pricingStore.setProductType(value.type);
+      // El facade ya actualiza el tipo del panel (handleTypeChange).
+      if (!this.product) {
+        this.openCostBlocks(['Impresión', 'Mano de obra', 'Insumos']);
+      }
     }
     this.syncComponentsValue();
     this.cdr.markForCheck();
@@ -429,6 +486,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     this.flushSectionValues();
+    this.openBlocksForMissing();
     const materialError = this.facade.printedMaterialError;
     if (materialError) {
       this.clientError = materialError;

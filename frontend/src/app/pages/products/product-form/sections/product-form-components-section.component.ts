@@ -18,6 +18,7 @@ import {
   ProductComponent,
   ProductType,
 } from '../../../../core/models';
+import { ProductsService } from '../../../../core/services/products.service';
 import { CatalogFacade } from '../../../../store/catalog/catalog.facade';
 import { SettingsFacade } from '../../../../store/settings/settings.facade';
 import { ProductFormPricingFacade } from '../store/product-form-pricing/product-form-pricing.facade';
@@ -51,6 +52,7 @@ export interface ProductFormComponentsValue {
 })
 export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy {
   private readonly catalogFacade = inject(CatalogFacade);
+  private readonly productsService = inject(ProductsService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly settingsFacade = inject(SettingsFacade);
   private readonly pricingStore = inject(ProductFormPricingFacade);
@@ -62,6 +64,8 @@ export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy 
   @Output() readonly valueChange = new EventEmitter<ProductFormComponentsValue>();
 
   catalogProducts: Product[] = [];
+  /** Piezas candidatas del servidor (sin ciclos, con costo vigente). */
+  private candidates: Product[] | null = null;
   categories: Category[] = [];
   components: ProductComponent[] = [];
   colorCatalog: ColorConfig[] = [];
@@ -95,6 +99,7 @@ export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy 
   ngOnInit(): void {
     this.catalogFacade.loadAllProducts(true);
     this.catalogFacade.load(false);
+    this.loadCandidates();
     this.catalogFacade.allProductsLoading$
       .pipe(takeUntil(this.destroy$))
       .subscribe((loading) => {
@@ -146,6 +151,26 @@ export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy 
 
   get isEstampado(): boolean {
     return this.productType === ProductType.ESTAMPADO;
+  }
+
+  /** Lo que ofrece el selector: candidatos del servidor o, mientras cargan, el catálogo. */
+  get pickerProducts(): Product[] {
+    return this.candidates ?? this.catalogProducts;
+  }
+
+  private loadCandidates(): void {
+    this.productsService
+      .getComponentCandidates(this.editingProductId ?? undefined)
+      .pipe(takeUntil(this.destroy$))
+      .subscribe({
+        next: (items) => {
+          this.candidates = items;
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.candidates = null;
+        },
+      });
   }
 
   get excludeIds(): string[] {
@@ -212,6 +237,9 @@ export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy 
   onPieceCreated(product: Product): void {
     if (!this.catalogProducts.some((item) => item.id === product.id)) {
       this.catalogProducts = [...this.catalogProducts, product];
+    }
+    if (this.candidates && !this.candidates.some((item) => item.id === product.id)) {
+      this.candidates = [...this.candidates, product];
     }
     this.cdr.markForCheck();
   }

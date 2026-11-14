@@ -1,9 +1,16 @@
 import {
   BadRequestException,
+  ConflictException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { FilamentType, ProductType, ServiceType } from '../common/enums';
+import {
+  FilamentType,
+  OrderStatus,
+  ProductType,
+  QuoteStatus,
+  ServiceType,
+} from '../common/enums';
 import { resolveProductColorId } from '../common/color.util';
 import { BulkPriceDto } from '../common/dto';
 import {
@@ -169,8 +176,8 @@ export class ProductsService {
     if (!product) {
       throw new NotFoundException(`Producto ${id} no encontrado`);
     }
-    return this.withCurrentCost(
-      this.withResolvedPreferredPrinter(
+    return this.withCurrentCost({
+      ...this.withResolvedPreferredPrinter(
         withResolvedProductionMetrics(this.store, {
           ...product,
           components: normalizeProductComponents(
@@ -179,7 +186,44 @@ export class ProductsService {
           ),
         }),
       ),
-    );
+      stockOverview: buildProductStockOverview(this.store, product.id),
+    });
+  }
+
+  /**
+   * Piezas que se pueden agregar a un combo: excluye el propio producto y los
+   * que lo contienen (generarían un ciclo). Costo vigente, igual que en lista y detalle.
+   */
+  getComponentCandidates(productId?: string): Product[] {
+    const blocked = new Set<string>();
+    if (productId) {
+      blocked.add(productId);
+      for (const product of this.store.products) {
+        if (this.containsComponent(product.id, productId, new Set())) {
+          blocked.add(product.id);
+        }
+      }
+    }
+    return this.store.products
+      .filter((product) => !blocked.has(product.id))
+      .map((product) => this.withCurrentCost(product));
+  }
+
+  private containsComponent(
+    currentId: string,
+    targetId: string,
+    visited: Set<string>,
+  ): boolean {
+    if (visited.has(currentId)) return false;
+    visited.add(currentId);
+    const product = this.store.getProductById(currentId);
+    for (const child of product?.components ?? []) {
+      if (child.productId === targetId) return true;
+      if (this.containsComponent(child.productId, targetId, visited)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   getOverview(id: string): ProductOverview {
@@ -187,15 +231,21 @@ export class ProductsService {
     return {
       product,
       categories: [...this.store.categories],
-      catalogProducts: [...this.store.products],
+      catalogProducts: this.store.products.map((p) => this.withCurrentCost(p)),
       stock: buildProductStockOverview(this.store, id),
     };
   }
 
   create(data: CreateProductDto): Product {
     this.validateProductData(data);
+    this.assertUniqueName(data.name);
     const pricing = this.pricing.resolvePricing(
       this.pricing.toPricingInput(data),
+    );
+    const clientPrice = this.respectClientPrice(
+      pricing,
+      data.price,
+      data.suggestedPrice,
     );
     this.rejectPrintedProductWithoutCost(data, pricing.cost);
     const now = new Date().toISOString();
@@ -213,9 +263,9 @@ export class ProductsService {
       images: normalizeProductImages(data.images ?? []),
       attachments: normalizeProductAttachments(data.attachments ?? []),
       updatedAt: now,
-      price: pricing.price,
+      price: clientPrice.price,
       cost: pricing.cost,
-      profit: pricing.profit,
+      profit: clientPrice.profit,
       suggestedPrice,
       categoryIds: data.categoryIds ?? [],
       size:
@@ -414,7 +464,8 @@ export class ProductsService {
                 ? data.colorId
                 : (existing as Product3D).colorId,
             supplies:
-              'estampadoSupplies' in data && data.estampadoSupplies !== undefined
+              'estampadoSupplies' in data &&
+              data.estampadoSupplies !== undefined
                 ? data.estampadoSupplies
                 : 'supplies' in data && data.supplies !== undefined
                   ? data.supplies
@@ -441,6 +492,12 @@ export class ProductsService {
           }),
     } as CreateProductDto;
     this.validateProductData(mergedForValidation, true, id, data);
+    if (
+      data.name !== undefined &&
+      this.normalizeName(data.name) !== this.normalizeName(existing.name)
+    ) {
+      this.assertUniqueName(data.name, id);
+    }
 
     const pricingInput = this.pricing.toPricingInput(mergedForValidation);
     const pricing = this.pricing.resolvePricing(pricingInput);
@@ -449,6 +506,15 @@ export class ProductsService {
       pricing.cost,
       true,
       data,
+    );
+    // El precio guardado no cambia solo: se respeta el que manda el cliente;
+    // sin precio nuevo queda el actual (salvo precio fijo o cambio de tipo).
+    const typeChanged = data.type !== undefined && data.type !== existing.type;
+    const clientPrice = this.respectClientPrice(
+      pricing,
+      data.price,
+      mergedSuggestedPrice,
+      typeChanged || !(existing.price > 0) ? undefined : existing.price,
     );
 
     const updated: Product = {
@@ -460,9 +526,9 @@ export class ProductsService {
           ? data.description.trim() || undefined
           : existing.description,
       size: data.size?.trim() ?? existing.size,
-      price: pricing.price,
+      price: clientPrice.price,
       cost: pricing.cost,
-      profit: pricing.profit,
+      profit: clientPrice.profit,
       suggestedPrice: mergedSuggestedPrice,
       updatedAt: new Date().toISOString(),
       categoryIds: data.categoryIds ?? existing.categoryIds,
@@ -604,7 +670,82 @@ export class ProductsService {
       );
     }
 
+    this.assertNotInOpenDocuments(id);
     this.products.remove(id);
+  }
+
+  /** 409 si el producto figura en pedidos sin cerrar o presupuestos abiertos. */
+  private assertNotInOpenDocuments(id: string): void {
+    const orderIds = this.store.orders
+      .filter(
+        (order) =>
+          order.status !== OrderStatus.ENTREGADO &&
+          order.status !== OrderStatus.CANCELADO &&
+          (order.items ?? []).some((item) => item.productId === id),
+      )
+      .map((order) => order.id);
+    const quoteIds = this.store.quotes
+      .filter(
+        (quote) =>
+          (quote.status === QuoteStatus.BORRADOR ||
+            quote.status === QuoteStatus.ENVIADO) &&
+          (quote.items ?? []).some((item) => item.productId === id),
+      )
+      .map((quote) => quote.id);
+    if (!orderIds.length && !quoteIds.length) return;
+
+    const parts: string[] = [];
+    if (orderIds.length)
+      parts.push(`pedidos sin cerrar (${orderIds.join(', ')})`);
+    if (quoteIds.length) {
+      parts.push(`presupuestos abiertos (${quoteIds.join(', ')})`);
+    }
+    throw new ConflictException(
+      `No se puede eliminar: el producto está en ${parts.join(' y ')}. Cerrá o editá esos documentos, o despublicá el producto para sacarlo del catálogo.`,
+    );
+  }
+
+  private normalizeName(value: string | undefined): string {
+    return (value ?? '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, ' ')
+      .trim()
+      .toLowerCase();
+  }
+
+  /** 409 si ya existe otro producto con el mismo nombre (sin mayúsculas, tildes ni espacios extremos). */
+  private assertUniqueName(name: string | undefined, selfId?: string): void {
+    const wanted = this.normalizeName(name);
+    if (!wanted) return;
+    const clash = this.store.products.find(
+      (p) => p.id !== selfId && this.normalizeName(p.name) === wanted,
+    );
+    if (clash) {
+      throw new ConflictException(
+        `Ya existe un producto llamado "${clash.name}". Usá otro nombre.`,
+      );
+    }
+  }
+
+  /**
+   * Precio a guardar: precio fijo > precio que manda el cliente > precio
+   * actual (si se pasa) > el calculado. Nunca recalcula solo.
+   */
+  private respectClientPrice(
+    pricing: ProductPricingResult,
+    clientPrice: number | undefined | null,
+    suggestedPrice: number | null | undefined,
+    fallbackPrice?: number,
+  ): { price: number; profit: number } {
+    let price = pricing.price;
+    const fixed = this.normalizeSuggestedPrice(suggestedPrice);
+    if (fixed == null) {
+      const sent = Number(clientPrice);
+      if (Number.isFinite(sent) && sent > 0) price = sent;
+      else if (fallbackPrice != null) price = fallbackPrice;
+    }
+    return { price, profit: price - pricing.cost };
   }
 
   previewPricing(input: ProductPricingInput): ProductPricingResult {
@@ -626,7 +767,9 @@ export class ProductsService {
 
   /** Recalcula y persiste precios de todo el catálogo y pedidos abiertos (bajo demanda). */
   syncPricingToDatabase(): ProductPricingFields[] {
-    this.pricingSync.syncAllProductsAndOrders('settings');
+    this.pricingSync.syncAllProductsAndOrders('settings', {
+      updatePrices: true,
+    });
     this.storeChange.recordChange({
       collections: ['products', 'orders'],
       realtime: {
@@ -871,7 +1014,11 @@ export class ProductsService {
         if (!category) {
           throw new BadRequestException(`Categoría ${catId} no encontrada`);
         }
-        if (!category.productTypes.includes(data.type)) {
+        // Un combo arma piezas de cualquier tipo: acepta cualquier categoría.
+        if (
+          data.type !== ProductType.COMBO &&
+          !category.productTypes.includes(data.type)
+        ) {
           throw new BadRequestException(
             `La categoría "${category.name}" no aplica al tipo ${data.type}`,
           );
@@ -960,8 +1107,7 @@ export class ProductsService {
       if (
         colorIncoming !== undefined &&
         colorIncoming !== null &&
-        (!Number.isInteger(Number(colorIncoming)) ||
-          Number(colorIncoming) < 0)
+        (!Number.isInteger(Number(colorIncoming)) || Number(colorIncoming) < 0)
       ) {
         throw new BadRequestException(
           'Los cambios de color deben ser un entero mayor o igual a 0',

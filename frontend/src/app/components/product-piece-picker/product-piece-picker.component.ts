@@ -24,6 +24,7 @@ import { BreakpointService } from '../../core/services/breakpoint.service';
 import { LayoutUiService } from '../../layout/layout-ui.service';
 import { DbButtonComponent } from '../db-button/db-button.component';
 import { MobileBarComponent } from '../mobile-bar/mobile-bar.component';
+import { normalizeSearchText } from '../../shared/utils/search-text.util';
 
 @Component({
   selector: 'app-product-piece-picker',
@@ -66,10 +67,10 @@ export class ProductPiecePickerComponent implements OnDestroy {
   }
 
   get filtered(): Product[] {
-    const q = this.query.trim().toLowerCase();
+    const q = normalizeSearchText(this.query);
     if (!q) return this.available;
     return this.available.filter((product) =>
-      product.name.toLowerCase().includes(q),
+      normalizeSearchText(product.name).includes(q),
     );
   }
 
@@ -79,7 +80,11 @@ export class ProductPiecePickerComponent implements OnDestroy {
 
   meta(product: Product): string {
     const category = this.categoryLabel(product);
-    const cost = resolveProductUnitCost(product, this.products);
+    // Costo vigente que devuelve el servidor; recalcular solo si no viene.
+    const cost =
+      Number(product.cost) > 0
+        ? Number(product.cost)
+        : resolveProductUnitCost(product, this.products);
     const stock = productPhysicalStock(product);
     const stockLabel = stock > 0 ? `${stock} en stock` : 'sin stock';
     return `${category} · costo ${this.formatMoney(cost)} · ${stockLabel}`;

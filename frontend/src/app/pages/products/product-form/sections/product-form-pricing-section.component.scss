@@ -1,13 +1,25 @@
 @use '../../../../shared/styles/variables' as *;
+@use '../../../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+}
+
+@include mobile.desktop-only {
+  // El host es el ítem de la grilla: queda fijo en la columna derecha al scrollear.
+  :host {
+    position: sticky;
+    top: 0.5rem;
+    align-self: start;
+    max-height: calc(100vh - 6rem);
+    overflow-y: auto;
+  }
+}
 
 .price-card {
-  position: sticky;
-  top: 0;
-  align-self: stretch;
   display: flex;
   flex-direction: column;
   gap: 0.65rem;
-  min-height: 100%;
   padding: 0.85rem 0.9rem 1rem;
   border-radius: 14px;
   background: #f3f7fa;
@@ -189,4 +201,55 @@
 .price-savings__gain {
   color: $color-success;
   font-weight: 700;
+}
+
+.price-stale p {
+  margin: 0;
+}
+
+.price-stale__action {
+  appearance: none;
+  margin-top: 0.4rem;
+  padding: 0.3rem 0.6rem;
+  border: 1px solid #d97706;
+  border-radius: 8px;
+  background: #fff;
+  color: #92400e;
+  font-size: 0.75rem;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+
+  &:hover {
+    background: #fef3c7;
+  }
+}
+
+.price-warn {
+  margin: 0;
+  padding: 0.6rem 0.75rem;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.price-warn--loss {
+  border: 1px solid #fca5a5;
+  background: #fef2f2;
+  color: #b91c1c;
+}
+
+.price-warn--incomplete {
+  border: 1px solid #fcd34d;
+  background: #fffbeb;
+  color: #92400e;
+}
+
+.price-margin--loss {
+  background: #fee2e2;
+}
+
+.price-margin--incomplete:not(.price-margin--loss) {
+  background: #fef3c7;
 }

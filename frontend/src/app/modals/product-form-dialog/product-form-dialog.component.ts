@@ -9,7 +9,9 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
+import { Router, NavigationEnd } from '@angular/router';
 import { filter } from 'rxjs';
+import { UnsavedDialogRegistry } from '../unsaved-dialog-guard';
 import {
   CreateProductPayload,
   Product,
@@ -101,6 +103,8 @@ export class ProductFormDialogComponent implements OnInit {
   private readonly dialogRef = inject(DialogRef<Product>);
   private readonly data = inject<ProductFormDialogData>(DIALOG_DATA);
   private readonly breakpoint = inject(BreakpointService);
+  private readonly router = inject(Router);
+  private readonly unsavedRegistry = inject(UnsavedDialogRegistry);
 
   @ViewChild(ProductFormComponent) form?: ProductFormComponent;
   @ViewChild(MobileFormShellComponent)
@@ -179,6 +183,19 @@ export class ProductFormDialogComponent implements OnInit {
     this.product = this.data.product;
     this.resetState();
     this.dialogRef.disableClose = true;
+    // Navegar (atrás del navegador, etc.) con cambios sin guardar pregunta
+    // "¿descartar?" vía guard de ruta; si se confirma, el diálogo se cierra.
+    const unregister = this.unsavedRegistry.register(
+      () => !this.closing && !!this.form?.hasUnsavedChanges(),
+      'el producto',
+    );
+    this.destroyRef.onDestroy(unregister);
+    this.router.events
+      .pipe(
+        filter((event) => event instanceof NavigationEnd),
+        takeUntilDestroyed(this.destroyRef),
+      )
+      .subscribe(() => this.forceClose());
     this.dialogRef.backdropClick
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe(() => this.cancel());

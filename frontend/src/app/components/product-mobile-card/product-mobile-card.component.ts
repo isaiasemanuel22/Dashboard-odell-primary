@@ -26,7 +26,7 @@ import {
 } from '../../shared/utils/product-margin.util';
 import { getMarginForProductType } from '../../shared/utils/pricing.util';
 import { resolveProfitArea } from '../../shared/utils/profit-area.util';
-import { productPhysicalStock } from '../../shared/utils/stock.helpers';
+import { productListStock } from '../../shared/utils/stock.helpers';
 import {
   normalizeWholesaleDiscount,
   wholesalePriceFromList,
@@ -79,7 +79,8 @@ export class ProductMobileCardComponent {
       const count = product.components.length;
       parts.push(`${count} ${count === 1 ? 'pieza' : 'piezas'}`);
     } else {
-      parts.push(`Stock ${productPhysicalStock(product)}`);
+      const stock = productListStock(product);
+      if (stock > 0) parts.push(`Stock ${stock}`);
     }
 
     return parts.join(' · ');

@@ -58,7 +58,7 @@ import {
   normalizeProfitMargins,
 } from '../../shared/utils/pricing.util';
 import { resolveCategoryNamesText } from '../../shared/utils/product.helpers';
-import { productPhysicalStock } from '../../shared/utils/stock.helpers';
+import { productListStock } from '../../shared/utils/stock.helpers';
 import { normalizeWholesaleDiscount } from '../../shared/utils/wholesale-example.util';
 import { countProductMobileSheetFilters } from '../../modals/product-filters-sheet.component';
 import { FormDialogService } from '../../modals/public-api';
@@ -67,7 +67,7 @@ import { LayoutUiService } from '../../layout/layout-ui.service';
 import { ProductsBulkPriceComponent } from './products-bulk-price/products-bulk-price.component';
 import { ProductsSupplyPriceChangesComponent } from './products-supply-price-changes/products-supply-price-changes.component';
 import { ProductsToolbarComponent } from './products-toolbar/products-toolbar.component';
-
+import { normalizeSearchText } from '../../shared/utils/search-text.util';
 type TypeFilter = ProductType | 'all';
 type ListFilter = 'all' | 'below_margin' | 'fixed_price' | 'in_stock';
 
@@ -335,7 +335,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       {
         id: 'in_stock',
         label: 'Con stock',
-        count: base.filter((p) => productPhysicalStock(p) > 0).length,
+        count: base.filter((p) => productListStock(p) > 0).length,
       },
     ];
     return chips.filter(
@@ -438,27 +438,42 @@ export class ProductsComponent implements OnInit, OnDestroy {
   get productsForSheet(): Product[] {
     return this.products.filter((p) => {
       const matchesList = this.matchesListFilter(p);
-      const query = this.search.trim().toLowerCase();
+      const query = normalizeSearchText(this.search);
       const matchesSearch =
         !query ||
-        p.name.toLowerCase().includes(query) ||
-        resolveCategoryNamesText(p.categoryIds, this.categories)
-          .toLowerCase()
-          .includes(query);
+        normalizeSearchText(p.name).includes(query) ||
+        normalizeSearchText(
+          resolveCategoryNamesText(p.categoryIds, this.categories),
+        ).includes(query);
       return matchesList && matchesSearch;
     });
   }
 
-  get emptyMessage(): string {
-    if (
+  /** Hay búsqueda o filtros aplicados (la lista vacía no es un catálogo vacío). */
+  get hasActiveFilters(): boolean {
+    return !!(
       this.search.trim() ||
       this.typeFilter !== 'all' ||
       this.categoryFilter !== 'all' ||
       this.listFilter !== 'all'
-    ) {
-      return 'No hay productos que coincidan con la búsqueda.';
+    );
+  }
+
+  get emptyMessage(): string {
+    const term = this.search.trim();
+    if (term) return `Sin resultados para '${term}'.`;
+    if (this.hasActiveFilters) {
+      return 'No hay productos que coincidan con los filtros.';
     }
     return 'No hay productos publicados en el catálogo.';
+  }
+
+  clearSearchAndFilters(): void {
+    this.search = '';
+    this.typeFilter = 'all';
+    this.categoryFilter = 'all';
+    this.listFilter = 'all';
+    this.cdr.markForCheck();
   }
 
   get visibleCategories(): Category[] {
@@ -694,9 +709,17 @@ export class ProductsComponent implements OnInit, OnDestroy {
             this.reloadMarginAlerts();
           },
           error: (err) => {
-            this.showNotice(
-              extractApiErrorMessage(err, 'No se pudo eliminar el producto'),
-            );
+            this.formDialogs
+              .openConfirm({
+                title: 'No se pudo eliminar',
+                message: extractApiErrorMessage(
+                  err,
+                  'No se pudo eliminar el producto',
+                ),
+                confirmLabel: 'Entendido',
+                alertOnly: true,
+              })
+              .subscribe();
           },
         });
       });
@@ -751,13 +774,13 @@ export class ProductsComponent implements OnInit, OnDestroy {
     typeFilter: TypeFilter = this.typeFilter,
     categoryFilter: string = this.categoryFilter,
   ): boolean {
-    const query = this.search.trim().toLowerCase();
+    const query = normalizeSearchText(this.search);
     const matchesSearch =
       !query ||
-      product.name.toLowerCase().includes(query) ||
-      resolveCategoryNamesText(product.categoryIds, this.categories)
-        .toLowerCase()
-        .includes(query);
+      normalizeSearchText(product.name).includes(query) ||
+      normalizeSearchText(
+        resolveCategoryNamesText(product.categoryIds, this.categories),
+      ).includes(query);
     const matchesType = typeFilter === 'all' || product.type === typeFilter;
     const matchesCategory =
       categoryFilter === 'all' || product.categoryIds.includes(categoryFilter);
@@ -774,7 +797,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       case 'fixed_price':
         return hasFixedCatalogPrice(product);
       case 'in_stock':
-        return productPhysicalStock(product) > 0;
+        return productListStock(product) > 0;
       case 'all':
       default:
         return product.published !== false;

@@ -36,7 +36,7 @@ import {
 } from '../../shared/utils/product-margin.util';
 import { getMarginForProductType } from '../../shared/utils/pricing.util';
 import { resolveProfitArea } from '../../shared/utils/profit-area.util';
-import { productPhysicalStock } from '../../shared/utils/stock.helpers';
+import { productListStock } from '../../shared/utils/stock.helpers';
 import {
   normalizeWholesaleDiscount,
   wholesalePriceFromList,
@@ -77,7 +77,14 @@ export class ProductCardComponent {
   }
 
   get finishedStock(): number {
-    return productPhysicalStock(this.product);
+    return productListStock(this.product);
+  }
+
+  /** «Sin stock» solo importa si hay stock reservado; con 0 y sin reservas no se muestra. */
+  get showStockPill(): boolean {
+    return (
+      this.finishedStock > 0 || (this.product.stockOverview?.reserved ?? 0) > 0
+    );
   }
 
   get canAddToCart(): boolean {

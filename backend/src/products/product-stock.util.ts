@@ -98,12 +98,8 @@ export function resolveProductPhysicalStock(
     return finished;
   }
 
-  const assemblable = computeAssemblableUnits(store, productId);
-  if (assemblable <= 0) {
-    return 0;
-  }
-
-  return finished + assemblable;
+  // Terminadas + armables con las piezas: misma fuente para tarjeta y detalle.
+  return finished + computeAssemblableUnits(store, productId);
 }
 
 export function buildProductStockOverview(

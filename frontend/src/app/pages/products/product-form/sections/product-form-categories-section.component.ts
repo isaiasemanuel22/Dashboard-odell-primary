@@ -90,6 +90,10 @@ export class ProductFormCategoriesSectionComponent implements OnInit, OnDestroy 
   }
 
   get filteredCategoriesList(): Category[] {
+    // Un combo arma piezas de cualquier tipo: acepta cualquier categoría.
+    if (this.currentProductType === ProductType.COMBO) {
+      return this.categoriesList;
+    }
     return this.categoriesList.filter((category) =>
       category.productTypes.includes(this.currentProductType),
     );
@@ -150,7 +154,8 @@ export class ProductFormCategoriesSectionComponent implements OnInit, OnDestroy 
       this.catalogFacade.upsertCategory(category);
 
       if (
-        category.productTypes.includes(this.currentProductType) &&
+        (this.currentProductType === ProductType.COMBO ||
+          category.productTypes.includes(this.currentProductType)) &&
         !this.categoryIds.includes(category.id) &&
         this.categoryIds.length < 5
       ) {

@@ -62,6 +62,10 @@ export class ProductFormPricingService {
   calculatingCost = false;
   computedPrice: number | null = null;
   private keepCatalogPrice = false;
+  /** Costo anulado a propósito (p. ej. gramos en 0): no volver al costo guardado. */
+  private costInvalidated = false;
+  /** El usuario eligió explícitamente usar el precio calculado. */
+  private useCalculatedPrice = false;
   appliedMarginPercent: number | null = null;
   profitMargins: GeneralSettings['profitMargins'] | null = null;
 
@@ -108,6 +112,32 @@ export class ProductFormPricingService {
     this.appliedMarginPercent = input.appliedMarginPercent;
     // El precio guardado solo se muestra hasta que termina el recálculo.
     this.keepCatalogPrice = false;
+    this.costInvalidated = false;
+    this.useCalculatedPrice = false;
+  }
+
+  /**
+   * Precio guardado que se conserva al guardar: un producto "Calculado" no
+   * cambia de precio sin que el usuario elija "Usar precio calculado".
+   */
+  heldCatalogPrice(): number | null {
+    if (!this.context) return null;
+    const product = this.context.product;
+    if (!product || this.useCalculatedPrice) return null;
+    if (product.type !== formType(this.context.form)) return null;
+    const suggested = Number(this.context.form.controls.suggestedPrice.value);
+    if (suggested > 0) return null;
+    const stored = Math.round(Number(product.price) || 0);
+    return stored > 0 ? stored : null;
+  }
+
+  get isUsingCalculatedPrice(): boolean {
+    return this.useCalculatedPrice;
+  }
+
+  acceptCalculatedPrice(): void {
+    this.useCalculatedPrice = true;
+    this.emitChange();
   }
 
   clearPricingState(): void {
@@ -137,7 +167,9 @@ export class ProductFormPricingService {
       type: formType(form),
       usesPieceAssembly: usesFormPieceAssembly(form),
       cost: this.cost,
-      productCost: this.context.product?.cost,
+      productCost: this.costInvalidated
+        ? undefined
+        : this.context.product?.cost,
       costBreakdown: this.costBreakdown,
       componentsCostTotal: componentsCostTotal(
         this.context.catalogProducts,
@@ -296,6 +328,8 @@ export class ProductFormPricingService {
     }
 
     this.releaseCatalogPrice();
+    this.pricingStore.setCatalogPrice(null);
+    this.costInvalidated = false;
     this.clearPricingState();
     this.scheduleCostCalculation();
   }
@@ -319,7 +353,7 @@ export class ProductFormPricingService {
 
     this.syncToStore();
     return {
-      finalPrice: this.finalPrice,
+      finalPrice: this.heldCatalogPrice() ?? this.finalPrice,
       effectiveCost: this.effectiveCost,
     };
   }
@@ -339,6 +373,16 @@ export class ProductFormPricingService {
         if (!this.context.product) {
           this.cost = 0;
         }
+      } else if (isForm3D(form) && !usesFormPieceAssembly(form)) {
+        // Sin gramos válidos no hay costo: el panel no puede quedar con el viejo.
+        this.cost = 0;
+        this.costBreakdown = null;
+        this.computedPrice = null;
+        this.appliedMarginPercent = null;
+        this.costInvalidated = true;
+        this.pricingStore.setCatalogPrice(null);
+        this.emitChange();
+        return;
       } else if (
         !isForm3D(form) &&
         !isFormEstampado(form) &&
@@ -353,6 +397,7 @@ export class ProductFormPricingService {
       return;
     }
 
+    this.costInvalidated = false;
     if (!this.keepCatalogPrice) {
       this.computedPrice = null;
       this.appliedMarginPercent = null;

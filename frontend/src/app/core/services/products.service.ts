@@ -30,6 +30,15 @@ export class ProductsService {
     return this.http.get<Product[]>(`${this.baseUrl}/products`, { params });
   }
 
+  /** Piezas candidatas para un combo: sin ciclos y con el costo vigente. */
+  getComponentCandidates(productId?: string): Observable<Product[]> {
+    let params = new HttpParams();
+    if (productId) params = params.set('productId', productId);
+    return this.http.get<Product[]>(`${this.baseUrl}/products/component-candidates`, {
+      params,
+    });
+  }
+
   getProduct(id: string): Observable<Product> {
     return this.http.get<Product>(`${this.baseUrl}/products/${id}`);
   }
