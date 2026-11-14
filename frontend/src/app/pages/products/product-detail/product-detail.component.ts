@@ -65,6 +65,7 @@ import { FormDialogService } from '../../../modals/public-api';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import { resolveColorLabel } from '../../../shared/utils/color.helpers';
 import { markupPercentOnCostRounded } from '../../../shared/utils/product-margin.util';
+import { resolveProductLaborCost } from '../../../shared/utils/product-labor.util';
 import {
   isProductPublished,
   normalizeProductComponents,
@@ -335,26 +336,19 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     const target = this.targetMarginPercent;
     const nbsp = '\u00a0';
     const marginPart =
-      margin == null ? 'Sin margen' : `Margen ${margin}${nbsp}%`;
+      margin == null
+        ? 'Sin margen'
+        : `${this.laborCost > 0 ? 'Margen (sin mano de obra)' : 'Margen'} ${margin}${nbsp}%`;
     return `${marginPart} · objetivo ${target}${nbsp}%`;
   }
 
   /** Mano de obra del producto (armado si es compuesto): no lleva margen. */
   get laborCost(): number {
-    const settings = this.generalSettings;
-    const product = this.product;
-    if (!settings || !product) return 0;
-    const rate = Number(settings.laborCostPerHour) || 0;
-    if (rate <= 0) return 0;
-    let hours = 0;
-    if (this.hasComponents) {
-      hours = Number(product.assemblyTimeHours) || 0;
-    } else if (this.product3d) {
-      hours = this.workHours;
-    } else if (this.productEstampado) {
-      hours = Number(this.productEstampado.workTimeHours) || 0;
-    }
-    return Math.round(hours * rate);
+    return resolveProductLaborCost(
+      this.product,
+      this.catalogProducts,
+      this.generalSettings?.laborCostPerHour,
+    );
   }
 
   /** Margen sobre el costo sin mano de obra (null si no hay base). */
@@ -374,9 +368,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     if (!(cost > 0) || !(price > 0)) return warnings;
     const nbsp = '\u00a0';
     if (price < cost) {
-      const margin = this.marginPercent;
       warnings.push(
-        `Precio de lista por debajo del costo (${formatCurrencyArs(price)} < ${formatCurrencyArs(cost)})${margin == null ? '' : `: margen ${margin}${nbsp}%`}. Se vende a pérdida.`,
+        `Precio de lista por debajo del costo (${formatCurrencyArs(price)} < ${formatCurrencyArs(cost)}). Se vende a pérdida.`,
       );
     }
     const wholesale = this.wholesalePrice;

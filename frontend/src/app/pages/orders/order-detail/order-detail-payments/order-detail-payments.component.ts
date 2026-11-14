@@ -158,6 +158,11 @@ export class OrderDetailPaymentsComponent {
     return 'Parcialmente pagado';
   }
 
+  get netAmountLabel(): string {
+    const net = this.netAmount;
+    return net == null ? '' : formatCurrencyArsExact(Math.round(net * 100) / 100);
+  }
+
   /** Neto = monto − comisión (solo si hay monto válido). */
   get netAmount(): number | null {
     const amount = Number(this.paymentAmount);

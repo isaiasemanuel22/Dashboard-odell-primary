@@ -35,6 +35,7 @@ import {
   markupPercentOnCostRounded,
 } from '../../shared/utils/product-margin.util';
 import { getMarginForProductType } from '../../shared/utils/pricing.util';
+import { resolveProductLaborCost } from '../../shared/utils/product-labor.util';
 import { resolveProfitArea } from '../../shared/utils/profit-area.util';
 import { productListStock } from '../../shared/utils/stock.helpers';
 import {
@@ -64,6 +65,8 @@ export class ProductCardComponent {
   @Input({ required: true }) categories!: Category[];
   @Input() showAddToCart = false;
   @Input() catalogProducts: Product[] = [];
+  /** Costo de mano de obra por hora (ajustes generales) para medir el margen sin MO. */
+  @Input() laborCostPerHour: number | null = null;
   @Input() profitMargins: ServiceProfitMargins | null = null;
   @Input() wholesaleDiscount: WholesaleDiscountSettings | null = null;
   @Output() edit = new EventEmitter<Product>();
@@ -128,7 +131,15 @@ export class ProductCardComponent {
   }
 
   get markupPercent(): number | null {
-    return markupPercentOnCostRounded(this.listPrice, this.product.cost);
+    return markupPercentOnCostRounded(
+      this.listPrice,
+      this.product.cost,
+      resolveProductLaborCost(
+        this.product,
+        this.catalogProducts,
+        this.laborCostPerHour,
+      ),
+    );
   }
 
   get targetMarginPercent(): number {

@@ -103,6 +103,8 @@
         <app-product-mobile-card
           [product]="product"
           [categories]="categories"
+          [catalogProducts]="allProducts"
+          [laborCostPerHour]="laborCostPerHour"
           [profitMargins]="profitMargins"
           [wholesaleDiscount]="wholesaleDiscount"
           [belowMargin]="isBelowMargin(product)"
@@ -334,6 +336,7 @@
             [product]="product"
             [categories]="categories"
             [catalogProducts]="allProducts"
+            [laborCostPerHour]="laborCostPerHour"
             [profitMargins]="profitMargins"
             [wholesaleDiscount]="wholesaleDiscount"
             [showAddToCart]="true"

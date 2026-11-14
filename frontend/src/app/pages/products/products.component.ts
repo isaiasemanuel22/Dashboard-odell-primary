@@ -148,6 +148,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
   marginAlerts: ProductMarginAlert[] = [];
   supplyPriceChanges: SupplyPriceChangeRow[] = [];
   supplyChangesLoading = false;
+  laborCostPerHour = 0;
   profitMargins: ServiceProfitMargins = { ...DEFAULT_PROFIT_MARGINS };
   wholesaleDiscount: WholesaleDiscountSettings =
     normalizeWholesaleDiscount(null);
@@ -206,6 +207,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       .watchUntilDestroyed(this.destroyRef)
       .subscribe((settings) => {
         if (!settings) return;
+        this.laborCostPerHour = Number(settings.laborCostPerHour) || 0;
         this.profitMargins = normalizeProfitMargins(settings.profitMargins);
         this.wholesaleDiscount = normalizeWholesaleDiscount(
           settings.wholesaleDiscount,

@@ -7,12 +7,12 @@ export function formatCurrencyArs(value: number): string {
   }).format(value);
 }
 
-/** Igual que `formatCurrencyArs` pero conserva los centavos si los hay. */
+/** Igual que `formatCurrencyArs` pero conserva los centavos si los hay (siempre 2 decimales). */
 export function formatCurrencyArsExact(value: number): string {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: 'ARS',
-    minimumFractionDigits: 0,
+    minimumFractionDigits: Number.isInteger(value) ? 0 : 2,
     maximumFractionDigits: 2,
   }).format(value);
 }

@@ -132,6 +132,15 @@
   resize: vertical;
 }
 
+// UM-1: 16px en mobile evita el zoom automático de iOS al enfocar.
+@media (max-width: 768px) {
+  .db-input,
+  .db-select,
+  .db-textarea {
+    font-size: 16px;
+  }
+}
+
 .db-form-hint {
   font-size: 0.75rem;
   font-weight: 400;

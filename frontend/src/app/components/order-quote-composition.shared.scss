@@ -203,6 +203,10 @@
   ::ng-deep select.db-select {
     min-height: 2.25rem;
     font-size: 0.8125rem;
+
+    @media (max-width: 768px) {
+      font-size: 16px;
+    }
   }
 }
 

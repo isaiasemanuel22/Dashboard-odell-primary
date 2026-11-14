@@ -25,6 +25,7 @@ import {
   markupPercentOnCostRounded,
 } from '../../shared/utils/product-margin.util';
 import { getMarginForProductType } from '../../shared/utils/pricing.util';
+import { resolveProductLaborCost } from '../../shared/utils/product-labor.util';
 import { resolveProfitArea } from '../../shared/utils/profit-area.util';
 import { productListStock } from '../../shared/utils/stock.helpers';
 import {
@@ -48,6 +49,9 @@ export class ProductMobileCardComponent {
 
   readonly product = input.required<Product>();
   readonly categories = input.required<Category[]>();
+  readonly catalogProducts = input<Product[]>([]);
+  /** Costo de mano de obra por hora (ajustes generales) para medir el margen sin MO. */
+  readonly laborCostPerHour = input<number | null>(null);
   readonly profitMargins = input<ServiceProfitMargins | null>(null);
   readonly wholesaleDiscount = input<WholesaleDiscountSettings | null>(null);
   /** Mismo criterio que el chip «Bajo margen» (alertas del backend); null = calcular. */
@@ -105,7 +109,15 @@ export class ProductMobileCardComponent {
   });
 
   protected readonly markupPercent = computed(() =>
-    markupPercentOnCostRounded(this.listPrice(), this.product().cost),
+    markupPercentOnCostRounded(
+      this.listPrice(),
+      this.product().cost,
+      resolveProductLaborCost(
+        this.product(),
+        this.catalogProducts(),
+        this.laborCostPerHour(),
+      ),
+    ),
   );
 
   /** «−28 %» / «45 %» con menos tipográfico si es negativo. */

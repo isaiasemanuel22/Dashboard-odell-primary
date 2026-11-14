@@ -230,6 +230,10 @@
   min-height: 2.25rem;
   padding: 0.32rem 0.55rem;
   font-size: 0.8125rem;
+
+  @media (max-width: 768px) {
+    font-size: 16px;
+  }
 }
 
 .line-table__suffix.has-suffix ::ng-deep .db-input {
