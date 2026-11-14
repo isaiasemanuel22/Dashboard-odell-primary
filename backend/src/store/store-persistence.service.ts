@@ -85,6 +85,10 @@ export class StorePersistenceService
    */
   private allowBootstrapPersist = false;
   private readonly dirtyCollections = new Set<StoreCollection>();
+  /** Cadena que serializa los guardados: nunca hay dos transacciones a la vez. */
+  private persistChain: Promise<void> = Promise.resolve();
+  private consecutiveFailures = 0;
+  private static readonly MAX_PERSIST_RETRIES = 3;
 
   constructor(
     private readonly prismaService: PrismaService,
@@ -161,12 +165,16 @@ export class StorePersistenceService
       this.persistTimer = null;
     }
 
+    // Espera el guardado en curso; si falló, su reintento deja todo sucio.
+    await this.persistChain;
+
     if (!this.dbEnabled || !this.persistQueued) return;
 
     this.persistQueued = false;
     const collections = this.dirtyCollections.size
       ? [...this.dirtyCollections]
       : ALL_STORE_COLLECTIONS;
+    this.dirtyCollections.clear();
     await this.persistNow(collections);
   }
 
@@ -221,18 +229,37 @@ export class StorePersistenceService
     await this.persistNow(collections);
   }
 
-  private async persistNow(collections: StoreCollection[]): Promise<void> {
-    if (!this.dbEnabled) return;
+  private persistNow(collections: StoreCollection[]): Promise<void> {
+    if (!this.dbEnabled) return Promise.resolve();
 
+    const run = this.persistChain.then(() => this.runPersist(collections));
+    this.persistChain = run;
+    return run;
+  }
+
+  /** Nunca rechaza: un fallo vuelve a marcar las colecciones y agenda reintento. */
+  private async runPersist(collections: StoreCollection[]): Promise<void> {
     try {
       await this.saveStatePartial(this.store.toState(), collections);
       this.healthy = true;
       this.lastError = null;
       this.lastSuccessAt = new Date().toISOString();
+      this.consecutiveFailures = 0;
     } catch (error) {
       const message = this.errorMessage(error);
       this.markUnhealthy(message);
       this.logger.error(`Error al guardar en MySQL: ${message}`);
+
+      for (const collection of collections) {
+        this.dirtyCollections.add(collection);
+      }
+      this.persistQueued = true;
+      this.consecutiveFailures += 1;
+      if (
+        this.consecutiveFailures <= StorePersistenceService.MAX_PERSIST_RETRIES
+      ) {
+        this.schedulePersist(collections);
+      }
     }
   }
 
