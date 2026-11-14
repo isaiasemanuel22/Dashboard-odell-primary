@@ -237,7 +237,7 @@ export function mapProductToDb(product: Product) {
         : null,
     preferredPrinterId:
       product3d?.type === ProductType.FDM
-        ? (product3d.preferredPrinterId?.trim() || null)
+        ? product3d.preferredPrinterId?.trim() || null
         : null,
   };
 }

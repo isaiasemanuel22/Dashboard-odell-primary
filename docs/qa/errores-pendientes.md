@@ -91,6 +91,11 @@ Vista: desktop, mobile o ambas; «(prod)» si se vio en producción. Si no dice 
 | E81 | 2026-11-13 | desktop | Cola › «Preparar pedido» | Para pasar «Preparar pedido» de un pedido nuevo a En progreso hay que desbloquearla (vuelve a «Por agregar al tablero»), agregarla al tablero y arrastrarla: son demasiados pasos y no se entiende el orden. Lo vio el tester | Un solo paso claro para iniciar la preparación | ✅ 2026-11-13 · 96ec651 |
 | E82 | 2026-11-13 | desktop | Pedidos › nuevo pedido (seña) | El monto de la seña se completa solo con el 50 % y no se puede dejar en 0. Lo vio el tester | Poder crear el pedido sin seña (0) o con el monto que se elija | ✅ 2026-11-13 · 96ec651 |
 | E83 | 2026-11-13 | desktop | Pedidos › pedido desde presupuesto | En local, el pedido creado al aceptar un presupuesto queda sin responsable, y «Guardar» no se habilita hasta elegir uno, con «Falta: responsable» lejos del campo. El servidor asigna a quien acepta; en local sin usuario logueado no llega nadie | Responsable asignado o el aviso junto al campo | ✅ 2026-11-13 · 96ec651 |
+| E84 | 2026-11-13 | desktop | Cola › «Preparar pedido» | Una tarea Preparar pedido con stock disponible sigue en Bloqueado con el cartel rojo «Esperando inicio de preparación» aunque ya se puede iniciar. Lo vio el tester | Que se vea como lista para iniciar | 🔴 |
+| E85 | 2026-11-13 | desktop | Pedidos › detalle | El detalle del pedido no muestra el responsable; solo se ve al editarlo. Lo vio el tester | El responsable visible en el detalle | 🔴 |
+| E86 | 2026-11-13 | desktop | Cola › diálogo y tarjetas | En el diálogo de la tarea, el botón «Cancelar» cambia de lugar según el pedido, y los títulos de las tarjetas se cortan en algunos anchos. Lo vio el tester | Botón en un lugar fijo y títulos legibles | 🔴 |
+| E87 | 2026-11-13 | desktop | Pedidos y presupuestos › pie | «Falta: al menos un producto» no distingue entre no tener ninguna línea y tener una línea incompleta. Lo vio el tester | El aviso dice qué falta y en qué línea | 🔴 |
+| E88 | 2026-11-13 | desktop | Backend › lint | 27 errores de formato de eslint que ya existían en archivos de customers, spools, sales, supplies, settings, store y print-jobs | eslint sin errores | 🔴 |
 
 ## Por definir (reporte QA 2026-11-13)
 

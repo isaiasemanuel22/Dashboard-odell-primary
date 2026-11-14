@@ -252,7 +252,8 @@ export class OrderFormDialogComponent implements OnInit, AfterViewInit {
   private loadCatalogs(): void {
     forkJoin({
       customers: this.customerCatalog.getCustomers(),
-      products: this.productCatalog.getAllProducts(),
+      // refresh: el stock reservado por otros pedidos cambia seguido.
+      products: this.productCatalog.getAllProducts(true),
     }).subscribe({
       next: ({ customers, products }) => {
         this.customers = customers;

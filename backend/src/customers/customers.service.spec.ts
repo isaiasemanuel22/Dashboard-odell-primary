@@ -38,7 +38,11 @@ describe('CustomersService', () => {
       const { service } = setup();
 
       const first = service.create({ name: 'Sin mail', phone: '111' });
-      const second = service.create({ name: 'Tampoco', phone: '222', email: '' });
+      const second = service.create({
+        name: 'Tampoco',
+        phone: '222',
+        email: '',
+      });
 
       expect(first.email).toBe('');
       expect(second.email).toBe('');

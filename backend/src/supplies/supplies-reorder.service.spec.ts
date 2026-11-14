@@ -66,7 +66,9 @@ describe('SuppliesReorderService', () => {
         delta: -0.07,
         grams: -70,
         reason: 'task',
-        at: new Date(now.getTime() - (7 + i * 5) * 24 * 60 * 60 * 1000).toISOString(),
+        at: new Date(
+          now.getTime() - (7 + i * 5) * 24 * 60 * 60 * 1000,
+        ).toISOString(),
       });
     }
     store.supplyMovements[0].at = new Date(

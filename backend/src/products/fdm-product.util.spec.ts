@@ -33,9 +33,9 @@ describe('fdm-product.util', () => {
   });
 
   it('reparte la purga AMS en proporción a los gramos de cada fila', () => {
-    expect(
-      distributePurgeGrams([{ grams: 30 }, { grams: 70 }], 9),
-    ).toEqual([2.7, 6.3]);
+    expect(distributePurgeGrams([{ grams: 30 }, { grams: 70 }], 9)).toEqual([
+      2.7, 6.3,
+    ]);
     expect(distributePurgeGrams([{ grams: 10 }], 0)).toEqual([0]);
     expect(distributePurgeGrams([], 9)).toEqual([]);
   });

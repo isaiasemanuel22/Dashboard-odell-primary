@@ -33,7 +33,9 @@ export class SpoolLocationDto {
   @ValidateIf((o: SpoolLocationDto) => o.kind === 'shelf')
   @IsString({ message: 'El texto del estante es obligatorio' })
   @IsNotEmpty({ message: 'El texto del estante es obligatorio' })
-  @MaxLength(120, { message: 'El texto del estante no puede superar 120 caracteres' })
+  @MaxLength(120, {
+    message: 'El texto del estante no puede superar 120 caracteres',
+  })
   text?: string;
 }
 

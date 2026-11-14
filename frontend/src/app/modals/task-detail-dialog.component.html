@@ -6,7 +6,9 @@
   (close)="cancel()"
 >
   <div class="td">
-    @if (isBlocked) {
+    @if (isReadyToStart) {
+      <div class="td__ready" role="status">Lista para iniciar</div>
+    } @else if (isBlocked) {
       <div class="td__blocked" role="status">
         <div class="td__blocked-main">
           <span class="td__blocked-lock" aria-hidden="true">
@@ -64,10 +66,14 @@
         <span class="td__order td__order--muted">Interna</span>
       }
       <span class="td__delivery">{{ deliveryLine }}</span>
-      <db-status-badge
-        [statusClass]="job.status"
-        [label]="job.status | printJobStatusLabel"
-      />
+      @if (isReadyToStart) {
+        <db-status-badge statusClass="por_hacer" label="Lista para iniciar" />
+      } @else {
+        <db-status-badge
+          [statusClass]="job.status"
+          [label]="job.status | printJobStatusLabel"
+        />
+      }
     </div>
 
     @if (error) {

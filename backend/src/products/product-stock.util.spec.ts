@@ -63,6 +63,45 @@ describe('product-stock.util', () => {
     });
   });
 
+  it('la reserva de otro pedido baja el disponible y la propia se excluye', () => {
+    const store = new StoreService();
+    store.applyState(createEmptyState());
+    store.products.push({
+      id: 'prod-1',
+      ...baseProduct({ name: 'Llavero', stock: 2 }),
+    });
+    const order = (id: string, reserved: number) => ({
+      id,
+      customerId: 'cust-1',
+      customerName: 'Cliente',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Llavero',
+          quantity: 1,
+          unitPrice: 1000,
+          reservedQuantity: reserved,
+        },
+      ],
+      status: OrderStatus.EN_PROGRESO,
+      total: 1000,
+      createdAt: new Date().toISOString(),
+      dueDate: new Date().toISOString(),
+    });
+    store.orders.push(order('ord-40', 1));
+
+    expect(buildProductStockOverview(store, 'prod-1')).toEqual({
+      physical: 2,
+      reserved: 1,
+      available: 1,
+    });
+    expect(
+      buildProductStockOverview(store, 'prod-1', { excludeOrderId: 'ord-40' }),
+    ).toEqual({ physical: 2, reserved: 0, available: 2 });
+  });
+
   it('calcula stock compuesto según piezas disponibles', () => {
     const store = new StoreService();
     store.applyState(createEmptyState());

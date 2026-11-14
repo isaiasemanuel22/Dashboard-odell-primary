@@ -425,7 +425,7 @@ $td-stats-bg: #f7fafc;
 .td__footer.modal__footer,
 .td__footer {
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
@@ -446,7 +446,14 @@ $td-stats-bg: #f7fafc;
   gap: 0.75rem;
 }
 
+.td__footer-left {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
 .td__footer-right {
+  flex-shrink: 0;
+  flex-wrap: nowrap;
   margin-left: auto;
 }
 
@@ -481,6 +488,7 @@ $td-stats-bg: #f7fafc;
   :host ::ng-deep .modal .modal__footer.td__footer,
   .td__footer.modal__footer,
   .td__footer {
+    flex-wrap: wrap;
     padding: 14px 16px calc(14px + env(safe-area-inset-bottom, 0px));
     border-top: 1px solid $td-footer-border;
     background: $td-footer-bg;
@@ -519,4 +527,15 @@ $td-stats-bg: #f7fafc;
   align-self: center;
   font-size: 0.8125rem;
   color: var(--text-muted, #6b7280);
+}
+
+.td__ready {
+  display: inline-block;
+  align-self: flex-start;
+  padding: 0.4rem 0.75rem;
+  border-radius: 8px;
+  background: #eaf6fb;
+  color: #0e6a96;
+  font-size: 0.8125rem;
+  font-weight: 600;
 }

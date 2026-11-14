@@ -120,7 +120,12 @@ function decodeHtmlEntities(value: string): string {
   for (let i = 0; i < maxIterations; i++) {
     const next = current.replace(
       /&(?:#x([0-9a-fA-F]+)|#(\d+)|([a-zA-Z]+));/g,
-      (full, hex: string | undefined, dec: string | undefined, name: string | undefined) => {
+      (
+        full,
+        hex: string | undefined,
+        dec: string | undefined,
+        name: string | undefined,
+      ) => {
         if (hex !== undefined) {
           const code = Number.parseInt(hex, 16);
           return Number.isFinite(code) && code >= 0 && code <= 0x10ffff

@@ -358,6 +358,7 @@ export class FormDialogService {
             {
               ariaLabel: 'Detalle de tarea',
               maxWidth: '860px',
+              pinnedTop: '8vh',
             },
           ),
       ),
@@ -556,6 +557,8 @@ export class FormDialogService {
       ariaLabel: string;
       panelClass?: string[];
       maxWidth?: string;
+      /** Desktop: ancla el cuadro arriba con altura fija (X y footer no se mueven). */
+      pinnedTop?: string;
       /** El diálogo no se cierra solo al navegar: lo decide un guard de ruta. */
       keepOnNavigation?: boolean;
     },
@@ -565,9 +568,25 @@ export class FormDialogService {
     if (isMobile) {
       this.layoutUi.pushOverlay();
     }
+    const pinned = !isMobile && overrides.pinnedTop;
     const ref = this.dialog.open(component, {
       ...base,
-      panelClass: [...base.panelClass, ...(overrides.panelClass ?? [])],
+      panelClass: [
+        ...base.panelClass,
+        ...(overrides.panelClass ?? []),
+        ...(pinned ? ['form-dialog-panel--pinned'] : []),
+      ],
+      ...(pinned
+        ? {
+            positionStrategy: this.overlay
+              .position()
+              .global()
+              .centerHorizontally()
+              .top(pinned),
+            height: `calc(100vh - 2 * ${pinned})`,
+            maxHeight: `calc(100vh - 2 * ${pinned})`,
+          }
+        : {}),
       maxWidth: isMobile ? '100%' : (overrides.maxWidth ?? base.maxWidth),
       ariaLabel: overrides.ariaLabel,
       data,

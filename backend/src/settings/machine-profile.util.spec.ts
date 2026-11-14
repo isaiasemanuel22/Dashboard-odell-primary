@@ -291,9 +291,9 @@ describe('machine-profile.util', () => {
         },
       ]),
     };
-    expect(
-      selectPrintProfileForCost(multi, ProductType.FDM, 'a1-2')?.id,
-    ).toBe('a1-2');
+    expect(selectPrintProfileForCost(multi, ProductType.FDM, 'a1-2')?.id).toBe(
+      'a1-2',
+    );
     const overhead = calculateMachineOverhead(
       multi,
       ProductType.FDM,

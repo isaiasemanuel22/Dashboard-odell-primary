@@ -95,6 +95,8 @@
           }
         }
 
+        <span class="od-m__meta">Responsable: {{ responsibleName || 'sin asignar' }}</span>
+
         @if (sourceQuoteId) {
           <a class="customer-link" [routerLink]="['/presupuestos', sourceQuoteId]">Desde presupuesto {{ sourceQuoteId }}</a>
         }
@@ -476,6 +478,16 @@
                 </a>
               } @else {
                 <span class="no-customer">Sin cliente asignado</span>
+              }
+            </dd>
+          </div>
+          <div>
+            <dt>Responsable</dt>
+            <dd>
+              @if (responsibleName) {
+                {{ responsibleName }}
+              } @else {
+                <span class="no-customer">Sin responsable</span>
               }
             </dd>
           </div>

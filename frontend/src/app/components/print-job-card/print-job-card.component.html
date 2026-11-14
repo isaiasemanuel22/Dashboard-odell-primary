@@ -18,10 +18,12 @@
     </header>
 
     <h3 class="job-card__title">
-      <span class="job-card__title-link">{{ job.productName }}</span>
+      <span class="job-card__title-link" [title]="job.productName">{{ job.productName }}</span>
     </h3>
 
-    @if (job.status === 'bloqueado') {
+    @if (isReadyToStart) {
+      <p class="job-card__ready" role="status">Lista para iniciar</p>
+    } @else if (job.status === 'bloqueado') {
       <p class="job-card__blocked" role="status">
         {{ job.blockedReason || 'Esperando condición operativa.' }}
       </p>

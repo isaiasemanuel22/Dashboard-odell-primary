@@ -52,11 +52,16 @@ export class CatalogFacade {
     return combineLatest([
       this.allProducts$,
       this.allProductsLoaded$,
+      this.allProductsLoading$,
       this.error$,
     ]).pipe(
-      filter(([, loaded, error]) => loaded || error !== null),
+      // Con refresh, esperar a que termine la recarga (no devolver el caché viejo).
+      filter(
+        ([, loaded, loading, error]) =>
+          (loaded && !(refresh && loading)) || error !== null,
+      ),
       take(1),
-      switchMap(([products, , error]) =>
+      switchMap(([products, , , error]) =>
         error ? throwError(() => new Error(error)) : of(products),
       ),
     );

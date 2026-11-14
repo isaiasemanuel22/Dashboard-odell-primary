@@ -273,6 +273,15 @@ export class TaskDetailDialogComponent implements OnInit {
       });
   }
 
+  /** «Preparar pedido» bloqueada solo por no iniciarse, con algo disponible. */
+  get isReadyToStart(): boolean {
+    return (
+      this.job.taskKind === TaskKind.PREPARE_ORDER &&
+      this.isBlocked &&
+      this.job.prepareReadiness?.canStart === true
+    );
+  }
+
   get isBlocked(): boolean {
     return this.job.status === PrintJobStatus.BLOQUEADO;
   }

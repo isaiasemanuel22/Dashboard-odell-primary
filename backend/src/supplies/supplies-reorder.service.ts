@@ -86,7 +86,7 @@ export class SuppliesReorderService {
           : null;
       const hasMin = minStock != null;
       const outOfStock = stock <= 0;
-      const belowMin = !outOfStock && hasMin && stock <= (minStock as number);
+      const belowMin = !outOfStock && hasMin && stock <= minStock;
       const hasConsumption = consumptionMoves.length > 0;
 
       // Sin consumo y por encima del mínimo: no listar en reposición.
@@ -104,8 +104,7 @@ export class SuppliesReorderService {
         !firstAt ||
         firstAgeDays < 7;
 
-      const coversDays =
-        hasConsumption && daily > 1e-12 ? stock / daily : null;
+      const coversDays = hasConsumption && daily > 1e-12 ? stock / daily : null;
 
       const supplierEntity = supply.supplierId
         ? (this.store.getSupplierById(supply.supplierId) ?? null)
@@ -131,7 +130,13 @@ export class SuppliesReorderService {
         if (!hasConsumption) {
           suggested = this.suggestedWithoutConsumption(supply, stock, minStock);
         } else if (daily > 1e-12 && lead != null) {
-          suggested = this.suggestedFromForecast(supply, stock, daily, today, lead);
+          suggested = this.suggestedFromForecast(
+            supply,
+            stock,
+            daily,
+            today,
+            lead,
+          );
           if (suggested <= 0) {
             suggested = this.suggestedWithoutConsumption(
               supply,
@@ -229,7 +234,10 @@ export class SuppliesReorderService {
       const need = Math.max(minStock - stock, 0);
       if (need <= 1e-9) {
         return supply.category === SupplyCategory.FDM
-          ? this.roundSuggested(supply, gramsToSupplyQuantity(supply, resolveSpoolGrams(supply)))
+          ? this.roundSuggested(
+              supply,
+              gramsToSupplyQuantity(supply, resolveSpoolGrams(supply)),
+            )
           : 1;
       }
       return this.roundSuggested(supply, need);

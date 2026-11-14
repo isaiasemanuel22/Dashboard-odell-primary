@@ -76,6 +76,15 @@ export class PrintJobCardComponent {
     return this.job.taskKind === TaskKind.PREPARE_ORDER;
   }
 
+  /** «Preparar pedido» bloqueada solo por no haberse iniciado, pero ya con algo disponible. */
+  get isReadyToStart(): boolean {
+    return (
+      this.isPrepareOrder &&
+      this.job.status === PrintJobStatus.BLOQUEADO &&
+      this.job.prepareReadiness?.canStart === true
+    );
+  }
+
   /** Motivo por el que todavía no se puede iniciar (vacío = se puede). */
   get startBlockedReason(): string {
     const readiness = this.job.prepareReadiness;

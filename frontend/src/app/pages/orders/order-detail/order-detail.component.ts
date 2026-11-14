@@ -27,6 +27,7 @@ import {
   ServiceProfitMargins,
 } from '../../../core/models';
 import { RealtimeEvent } from '../../../core/models/realtime.model';
+import { UserAccessService } from '../../../core/services/user-access.service';
 import { OrdersService } from '../../../core/services/orders.service';
 import { PrintJobsService } from '../../../core/services/print-jobs.service';
 import { CustomerCatalogService } from '../../../core/services/customer-catalog.service';
@@ -142,6 +143,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly ordersService = inject(OrdersService);
+  private readonly userAccess = inject(UserAccessService);
   private readonly printJobsService = inject(PrintJobsService);
   private readonly catalogSync = inject(RealtimeCatalogSyncService);
   private readonly realtime = inject(RealtimeService);
@@ -247,6 +249,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   alerts: OrderAlert[] = [];
   priceNotices: OrderPriceNotice[] = [];
   sourceQuoteId: string | null = null;
+  responsibleName = '';
   priceDecisionLoading = false;
   deliveries: OrderDelivery[] = [];
   loading = true;
@@ -846,6 +849,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
           : (overview.alerts ?? []);
         this.priceNotices = overview.priceNotices ?? [];
         this.sourceQuoteId = overview.sourceQuote?.id ?? null;
+        this.loadResponsibleName(overview.order.responsibleUserId);
         this.deliveries =
           overview.deliveries ?? overview.order.deliveryHistory ?? [];
         this.loading = false;
@@ -858,6 +862,26 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  private loadResponsibleName(uid?: string): void {
+    this.responsibleName = '';
+    if (!uid?.trim()) return;
+    this.userAccess
+      .listOrderResponsibles()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (users) => {
+          this.responsibleName =
+            users.find((user) => user.firebaseUid === uid)?.displayName ??
+            'Responsable asignado';
+          this.cdr.markForCheck();
+        },
+        error: () => {
+          this.responsibleName = 'Responsable asignado';
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   cancelOrder(): void {

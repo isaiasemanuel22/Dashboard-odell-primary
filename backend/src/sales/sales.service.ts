@@ -233,7 +233,8 @@ export class SalesService {
       0,
     );
     const thirdParty = items.reduce((sum, item) => {
-      if (!item.serviceType || !isThirdPartyService(item.serviceType)) return sum;
+      if (!item.serviceType || !isThirdPartyService(item.serviceType))
+        return sum;
       return sum + calculateOrderLineSubtotal(item);
     }, 0);
     const chargedThird =

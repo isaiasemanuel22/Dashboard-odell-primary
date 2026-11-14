@@ -23,6 +23,35 @@
   }
 }
 
+/* Diálogo anclado arriba con altura fija: el cuerpo scrollea por dentro. */
+.cdk-overlay-pane.form-dialog-panel.form-dialog-panel--pinned {
+  display: flex;
+  flex-direction: column;
+
+  /* Cadena flex: panel > contenedor > host del diálogo > shell > .modal > body. */
+  .cdk-dialog-container {
+    display: flex;
+    flex-direction: column;
+    flex: 1 1 auto;
+    height: 100%;
+    min-height: 0;
+    overflow: hidden;
+
+    > * {
+      flex: 1 1 auto;
+      min-height: 0;
+      height: 100%;
+    }
+  }
+
+  .modal {
+    flex: 1 1 auto;
+    min-height: 0;
+    height: auto;
+    max-height: 100%;
+  }
+}
+
 .cdk-overlay-pane.form-dialog-panel--sm {
   max-width: 420px;
 }

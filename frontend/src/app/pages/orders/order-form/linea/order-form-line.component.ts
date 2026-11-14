@@ -80,6 +80,7 @@ import {
   lineConceptError as orderLineConceptError,
   lineQuantityError as orderLineQuantityError,
   lineUnitPriceError as orderLineUnitPriceError,
+  orderLineReservedNote,
   orderLineStockHint,
   productMatchesServiceType,
 } from '../../../../shared/utils/order.helpers';
@@ -168,6 +169,8 @@ export class OrderFormLineComponent implements OnInit {
   @Input() showErrors = false;
   unitPriceTouched = false;
   @Input() products: Product[] = [];
+  /** Unidades que el pedido en edición ya reservó, por producto. */
+  @Input() ownReservedByProduct: Record<string, number> = {};
   @Input() serviceTypeOptions: Array<{ value: ServiceType; label: string }> = [];
   @Input() paperTypeOptions: DbSelectOption[] = [];
   /** Pedido v1: tipo de precio y descuento mayorista para la vista previa. */
@@ -589,7 +592,21 @@ export class OrderFormLineComponent implements OnInit {
 
   get stockHint(): string | null {
     const product = this.products.find((p) => p.id === this.line.productId);
-    return orderLineStockHint(this.line, product, this.products);
+    return orderLineStockHint(
+      this.line,
+      product,
+      this.products,
+      this.ownReservedByProduct[this.line.productId ?? ''] ?? 0,
+    );
+  }
+
+  get reservedNote(): string | null {
+    const product = this.products.find((p) => p.id === this.line.productId);
+    return orderLineReservedNote(
+      this.line,
+      product,
+      this.ownReservedByProduct[this.line.productId ?? ''] ?? 0,
+    );
   }
 
   get isUnitPriceManual(): boolean {

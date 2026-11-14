@@ -175,6 +175,12 @@
     font-weight: 700;
     line-height: 1.3;
     color: #0f2a3a;
+    display: -webkit-box;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+    line-clamp: 2;
+    overflow: hidden;
+    overflow-wrap: anywhere;
   }
 
   .job-card__title-link {
@@ -203,6 +209,17 @@
       color: #b91c1c;
       font-weight: 700;
     }
+  }
+
+  .job-card__ready {
+    margin: 0;
+    padding: 0.4rem 0.5rem;
+    border-radius: 8px;
+    background: #eaf6fb;
+    color: #0e6a96;
+    font-size: 0.75rem;
+    font-weight: 600;
+    line-height: 1.35;
   }
 
   .job-card__blocked {

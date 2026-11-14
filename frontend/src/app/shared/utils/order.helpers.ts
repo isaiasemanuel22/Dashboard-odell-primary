@@ -5,13 +5,14 @@ import {
   OrderLineDraft,
   OrderStatus,
   Product,
+  ProductStockOverview,
   ProductType,
   ServiceType,
 } from '../../core/models';
 import { ListFilterOption } from '../../components/db-list-toolbar/db-list-toolbar.component';
 import { ORDER_STATUS_LABELS, SERVICE_TYPE_LABELS } from '../constants/labels';
 import { labelsToSelectOptions } from './select-options';
-import { productPhysicalStock, productStockOverview } from './stock.helpers';
+import { productStockOverview } from './stock.helpers';
 import {
   isDesignPrintConfigured,
   resolveLinePrintUnitPrice,
@@ -190,6 +191,8 @@ export function orderLineStockHint(
       >
     | undefined,
   catalog?: Product[],
+  /** Reservas del propio pedido (al editar): no cuentan como ajenas, igual que en el backend. */
+  ownReserved = 0,
 ): string | null {
   if (isDesignService(line.serviceType) || !line.productId || !product) {
     return null;
@@ -198,18 +201,53 @@ export function orderLineStockHint(
   const requested = Math.max(Math.trunc(Number(line.quantity) || 0), 0);
   if (requested <= 0) return null;
 
-  const available = product.stockOverview
-    ? product.stockOverview.available
-    : catalog?.length
-      ? productStockOverview(product, undefined, catalog).available
-      : productPhysicalStock(product);
+  const own = Math.max(0, Math.trunc(Number(ownReserved) || 0));
+  const base = lineStockOverview(product, catalog);
+  const overview = {
+    physical: base.physical,
+    reserved: Math.max(0, base.reserved - own),
+    available: Math.min(base.physical, base.available + own),
+  };
+  const available = overview.available;
   if (requested <= available) return null;
 
   if (available === 0) {
-    return 'Sin stock disponible: al preparar el pedido se creará una tarea de producción.';
+    return 'Sin stock disponible: se va a producir.';
   }
 
-  return `Stock insuficiente (${available} disponible): faltan ${requested - available} unidades por producir.`;
+  const reservedNote = overview.reserved > 0 ? ' (resto reservado)' : '';
+  return `Disponible ${available} de ${overview.physical}${reservedNote}: faltan ${requested - available} por producir.`;
+}
+
+function lineStockOverview(
+  product: Parameters<typeof productStockOverview>[0],
+  catalog?: Product[],
+) {
+  const withOverview = product as { stockOverview?: ProductStockOverview };
+  if (withOverview.stockOverview) {
+    return productStockOverview(product, withOverview.stockOverview);
+  }
+  return catalog?.length
+    ? productStockOverview(product, undefined, catalog)
+    : productStockOverview(product);
+}
+
+/** «N reservados» (por otros pedidos) para que se entienda la diferencia con el stock físico. */
+export function orderLineReservedNote(
+  line: Pick<OrderLineDraft, 'serviceType' | 'productId'>,
+  product: Pick<Product, 'stockOverview'> | undefined,
+  ownReserved = 0,
+): string | null {
+  if (isDesignService(line.serviceType) || !line.productId || !product) {
+    return null;
+  }
+  const base = product.stockOverview;
+  if (!base) return null;
+  const own = Math.max(0, Math.trunc(Number(ownReserved) || 0));
+  const reserved = Math.max(0, base.reserved - own);
+  if (reserved <= 0) return null;
+  const available = Math.min(base.physical, base.available + own);
+  return `Stock ${base.physical} · ${reserved} reservados (disponible ${available})`;
 }
 
 export function deriveOrderServices(

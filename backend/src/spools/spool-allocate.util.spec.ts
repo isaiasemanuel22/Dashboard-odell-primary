@@ -33,7 +33,11 @@ describe('allocateSpools', () => {
     ];
     const result = allocateSpools(open, 80, 'mp-1');
     expect(result.spools).toEqual([
-      expect.objectContaining({ spoolId: 'spl-2', grams: 80, remainingAfter: 20 }),
+      expect.objectContaining({
+        spoolId: 'spl-2',
+        grams: 80,
+        remainingAfter: 20,
+      }),
     ]);
     expect(result.closedGrams).toBe(0);
   });

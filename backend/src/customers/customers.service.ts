@@ -98,8 +98,7 @@ export class CustomersService {
       ...current,
       ...data,
       name: data.name !== undefined ? data.name.trim() : current.name,
-      email:
-        data.email !== undefined ? data.email.trim() : current.email,
+      email: data.email !== undefined ? data.email.trim() : current.email,
       phone: data.phone !== undefined ? data.phone.trim() : current.phone,
       company:
         data.company !== undefined

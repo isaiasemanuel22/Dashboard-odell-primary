@@ -8,6 +8,7 @@ import {
   lineQuantityError,
   lineUnitPriceError,
   lineValidationMessage,
+  orderLineStockHint,
   pluralize,
   toDateInputValue,
 } from './order.helpers';
@@ -143,5 +144,25 @@ describe('due date calendar day', () => {
   it('toDateInputValue toma el día del ISO sin convertir zona', () => {
     expect(toDateInputValue('2026-11-14T00:00:00.000Z')).toBe('2026-11-14');
     expect(toDateInputValue('2026-11-14T18:00:00.000Z')).toBe('2026-11-14');
+  });
+});
+
+describe('orderLineStockHint con reservas propias', () => {
+  const product = {
+    id: 'p1',
+    type: 'FDM',
+    stock: 2,
+    stockOverview: { physical: 2, reserved: 1, available: 1 },
+  } as never;
+  const line = baseLine({ productId: 'p1', quantity: 2 });
+
+  it('avisa disponible vs reservado cuando la reserva es ajena', () => {
+    expect(orderLineStockHint(line, product)).toContain(
+      'Disponible 1 de 2 (resto reservado)',
+    );
+  });
+
+  it('no cuenta como ajena la reserva del propio pedido', () => {
+    expect(orderLineStockHint(line, product, undefined, 1)).toBeNull();
   });
 });

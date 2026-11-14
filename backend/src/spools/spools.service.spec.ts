@@ -1,5 +1,9 @@
 import { BadRequestException } from '@nestjs/common';
-import { MachineProfileRole, ProductType, SupplyCategory } from '../common/enums';
+import {
+  MachineProfileRole,
+  ProductType,
+  SupplyCategory,
+} from '../common/enums';
 import { Spool, Supply } from '../common/interfaces';
 import { StoreService } from '../store/store.service';
 import { SuppliesReorderService } from '../supplies/supplies-reorder.service';
@@ -137,10 +141,15 @@ describe('SpoolsService', () => {
       location: { kind: 'printer', printerId: 'mp-1', slot: 2 },
     });
     const supply = store.getSupplyById('sup-1')!;
-    service.allocate(supply, 100, { id: 'job-1', printerId: 'mp-1' }, {
-      dryRun: false,
-      reason: 'task',
-    });
+    service.allocate(
+      supply,
+      100,
+      { id: 'job-1', printerId: 'mp-1' },
+      {
+        dryRun: false,
+        reason: 'task',
+      },
+    );
     expect(store.getSpoolById(opened.id)!.finishedAt).toBeTruthy();
     expect(supply.quantity).toBeCloseTo(0.9, 5);
   });

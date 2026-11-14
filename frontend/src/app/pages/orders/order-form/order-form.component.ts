@@ -442,7 +442,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       .filter(({ line }) => !isLineBlank(line));
 
     if (!relevant.length) {
-      missing.push('al menos un producto');
+      missing.push(...this.noLineMissing());
     } else {
       for (const { line, index } of relevant) {
         if (isLineValid(line)) continue;
@@ -471,6 +471,13 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return missing;
   }
 
+  /** Sin líneas cargadas, o solo líneas vacías (se indica qué falta en la primera). */
+  private noLineMissing(): string[] {
+    if (!this.lines.length) return ['agregar al menos una línea'];
+    const reasons = this.lineMissingReasons(this.lines[0], 1);
+    return reasons.length ? reasons : ['completar al menos una línea'];
+  }
+
   /** Mismas reglas que `canSubmit` del presupuesto. */
   private quoteSubmitMissing(asDraft: boolean): string[] {
     // Un presupuesto Enviado conserva su estado: se valida completo.
@@ -482,7 +489,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
     if (!relevant.length) {
       // Un borrador puede guardarse sin líneas; Enviado exige al menos una.
-      if (!asDraft) missing.push('al menos un producto');
+      if (!asDraft) missing.push(...this.noLineMissing());
     } else if (!asDraft) {
       // El borrador se guarda incompleto: valida recién al enviar.
       for (const { line, index } of relevant) {
@@ -1501,9 +1508,34 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return resolveProductUnitCost(product, this.products);
   }
 
+  /** Reservas del pedido que se edita, por producto (el backend las excluye del disponible). */
+  get ownReservedByProduct(): Record<string, number> {
+    if (this.ownReservedCache?.order === this.order) {
+      return this.ownReservedCache.value;
+    }
+    const result: Record<string, number> = {};
+    for (const item of this.order?.items ?? []) {
+      if (!item.productId) continue;
+      result[item.productId] =
+        (result[item.productId] ?? 0) + (item.reservedQuantity ?? 0);
+    }
+    this.ownReservedCache = { order: this.order, value: result };
+    return result;
+  }
+
+  private ownReservedCache: {
+    order: Order | null;
+    value: Record<string, number>;
+  } | null = null;
+
   lineStockHint(line: OrderLineDraft): string | null {
     const product = this.products.find((p) => p.id === line.productId);
-    return orderLineStockHint(line, product, this.products);
+    return orderLineStockHint(
+      line,
+      product,
+      this.products,
+      this.ownReservedByProduct[line.productId ?? ''] ?? 0,
+    );
   }
 
   addLine(): void {

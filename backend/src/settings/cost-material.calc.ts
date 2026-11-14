@@ -152,6 +152,9 @@ export function calculateErrorMarginCost(
     return 0;
   }
   const base =
-    materialCost + Math.max(0, Number(purgeCost) || 0) + energyCost + machineCost;
+    materialCost +
+    Math.max(0, Number(purgeCost) || 0) +
+    energyCost +
+    machineCost;
   return Math.round(base * (percent / 100));
 }

@@ -17,7 +17,6 @@ export function actorFromRequest(
   return {
     userId: request.user?.uid,
     isAdmin:
-      !!profile &&
-      (profile.isAdmin || profile.roleIds.includes(ADMIN_ROLE_ID)),
+      !!profile && (profile.isAdmin || profile.roleIds.includes(ADMIN_ROLE_ID)),
   };
 }

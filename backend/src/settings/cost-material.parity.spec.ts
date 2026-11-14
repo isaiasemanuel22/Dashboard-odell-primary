@@ -1,9 +1,6 @@
 import { FilamentType } from '../common/enums';
 import { GeneralSettings } from '../common/interfaces';
-import {
-  calcPurgeCost,
-  calculateErrorMarginCost,
-} from './cost-material.calc';
+import { calcPurgeCost, calculateErrorMarginCost } from './cost-material.calc';
 import { averageFilamentPriceByType } from './material-type-price.util';
 
 /**
@@ -47,9 +44,15 @@ describe('paridad de costo con el cliente', () => {
       } as GeneralSettings),
     ).toBe(3);
     expect(
-      calculateErrorMarginCost(100, 20, 30, {
-        errorMarginPercent: 10,
-      } as GeneralSettings, 50),
+      calculateErrorMarginCost(
+        100,
+        20,
+        30,
+        {
+          errorMarginPercent: 10,
+        } as GeneralSettings,
+        50,
+      ),
     ).toBe(20);
   });
 

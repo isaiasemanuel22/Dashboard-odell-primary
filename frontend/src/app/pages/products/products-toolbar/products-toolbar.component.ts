@@ -1,6 +1,5 @@
 import { ChangeDetectionStrategy, Component, EventEmitter, Input, Output } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { RouterLink } from '@angular/router';
 import {
   DbButtonComponent,
   DbFilterPanelComponent,
@@ -12,7 +11,7 @@ import {
 @Component({
   selector: 'app-products-toolbar',
   standalone: true,
-  imports: [FormsModule, RouterLink, DbButtonComponent, DbFilterPanelComponent],
+  imports: [FormsModule, DbButtonComponent, DbFilterPanelComponent],
   templateUrl: './products-toolbar.component.html',
   styleUrl: './products-toolbar.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,
