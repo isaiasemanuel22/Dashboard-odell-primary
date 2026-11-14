@@ -7,6 +7,7 @@ import {
   computed,
   inject,
 } from '@angular/core';
+import { formatSupplyQuantity } from '../../shared/utils/supply-unit.util';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { AsyncPipe } from '@angular/common';
 import { Router, RouterLink } from '@angular/router';
@@ -461,15 +462,8 @@ export class DashboardComponent implements OnInit {
   /** «Quedan 10,2 ml» / «Quedan 0 unidades» / «Quedan 1 unidad». */
   private formatLowStockRemaining(item: DashboardLowStockItem): string {
     const qty = Number(item.quantity) || 0;
-    const qtyLabel = new Intl.NumberFormat('es-AR', {
-      maximumFractionDigits: 2,
-    }).format(qty);
     const rawUnit = (item.unit ?? '').trim() || 'unidad';
-    if (/^unidad(es)?$/i.test(rawUnit)) {
-      const word = qty === 1 ? 'unidad' : 'unidades';
-      return `Quedan ${qtyLabel} ${word}`;
-    }
-    return `Quedan ${qtyLabel} ${rawUnit}`;
+    return `Quedan ${formatSupplyQuantity(qty, rawUnit)}`;
   }
 
   inProgressCount(stats: DashboardStats): number {

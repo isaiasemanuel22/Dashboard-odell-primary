@@ -467,10 +467,17 @@ export class SuppliesComponent implements OnInit {
     );
     const preferred = this.suppliers.filter((s) => withSuggestions.has(s.id));
     const rest = this.suppliers.filter((s) => !withSuggestions.has(s.id));
-    return [...preferred, ...rest].map((s) => ({
-      value: s.id,
-      label: s.name,
-    }));
+    const toOptions = (list: Supplier[]) =>
+      list.map((s) => ({ value: s.id, label: s.name }));
+    const all = sortAndDisambiguateOptions(
+      toOptions([...preferred, ...rest]),
+      (o) => shortId(o.value),
+    );
+    const preferredIds = new Set(preferred.map((s) => s.id));
+    return [
+      ...all.filter((o) => preferredIds.has(o.value as string)),
+      ...all.filter((o) => !preferredIds.has(o.value as string)),
+    ];
   }
 
   get hasListFilters(): boolean {

@@ -31,6 +31,7 @@ import {
   printQuantity,
   totalEstampadoPressMinutes,
 } from '../../../../shared/utils/estampado.helpers';
+import { formatSupplyQuantity } from '../../../../shared/utils/supply-unit.util';
 import { getMachineProfilesForProductType } from '../../../../shared/utils/machine-profile.util';
 import { SuppliesFacade } from '../../../../store/supplies/supplies.facade';
 import { selectSupplies } from '../../../../store/supplies/supplies.selectors';
@@ -46,6 +47,7 @@ interface SupplyRow {
   name: string;
   quantity: number;
   unit: string;
+  quantityLabel: string;
   colorId?: string;
 }
 
@@ -97,16 +99,26 @@ export class ProductDetailEstampadoComponent implements OnInit {
         name:
           impreso?.name ??
           print.label?.trim() ??
-          (print.impresoId ? 'Impreso (ya no está en el catálogo)' : 'Impreso'),
+          (print.impresoId
+            ? 'Impreso (ya no está en el catálogo)'
+            : 'Impreso sin vincular'),
         paperType: impreso?.paperType ?? print.paperType,
-        size: formatPrintDimensionsCm(
-          impreso?.widthCm ?? print.widthCm ?? 0,
-          impreso?.lengthCm ?? print.lengthCm,
-          impreso?.heightCm ?? print.heightCm,
-        ),
+        size: this.printSize(print, impreso),
         quantity: printQuantity(print),
       };
     });
+  }
+
+  private printSize(
+    print: ReturnType<typeof normalizeEstampadoPrints>[number],
+    impreso?: ImpresoWithCost,
+  ): string {
+    const size = formatPrintDimensionsCm(
+      impreso?.widthCm ?? print.widthCm ?? 0,
+      impreso?.lengthCm ?? print.lengthCm,
+      impreso?.heightCm ?? print.heightCm,
+    );
+    return size === '—' ? 'Sin medidas' : size;
   }
 
   get cycleRows(): CycleRow[] {
@@ -141,6 +153,9 @@ export class ProductDetailEstampadoComponent implements OnInit {
         name: supply?.name ?? 'Insumo',
         quantity: line.quantity,
         unit: supply?.unit ?? '',
+        quantityLabel: supply
+          ? formatSupplyQuantity(line.quantity, supply.unit)
+          : String(line.quantity),
         colorId: line.colorId,
       };
     });

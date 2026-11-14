@@ -38,6 +38,7 @@ import { FormDialogService } from '../../../modals/form-dialog.service';
 import { supplyCategoryOptions } from '../../../shared/utils/select-options';
 import { buildFilamentTypeOptions } from '../../../shared/utils/filament-type.util';
 import { buildResinTypeOptions } from '../../../shared/utils/resin-type.util';
+import { shortId, sortAndDisambiguateOptions } from '../../../shared/utils/search-text.util';
 import {
   defaultSupplyUnit,
   supplyUnitOptions,
@@ -114,10 +115,13 @@ export class SupplyFormComponent implements OnInit, OnChanges {
   get supplierOptions(): DbSelectOption[] {
     return [
       { value: '', label: 'Sin proveedor' },
-      ...this.suppliers.map((supplier) => ({
-        value: supplier.id,
-        label: supplier.name,
-      })),
+      ...sortAndDisambiguateOptions(
+        this.suppliers.map((supplier) => ({
+          value: supplier.id,
+          label: supplier.name,
+        })),
+        (o) => shortId(o.value),
+      ),
       { value: NEW_SUPPLIER_VALUE, label: '+ Nuevo proveedor' },
     ];
   }

@@ -7,6 +7,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
+import { shortId, sortAndDisambiguateOptions } from '../../../shared/utils/search-text.util';
 import { forkJoin, Subscription } from 'rxjs';
 import {
   GeneralSettings,
@@ -238,10 +239,13 @@ export class GeneralValuesComponent
   get supplyOptions(): DbSelectOption[] {
     return [
       { value: '', label: '— Sin insumo —' },
-      ...this.supplies.map((supply) => ({
-        value: supply.id,
-        label: `${supply.name} ($${supply.unitPrice}/${supply.unit})`,
-      })),
+      ...sortAndDisambiguateOptions(
+        this.supplies.map((supply) => ({
+          value: supply.id,
+          label: `${supply.name} ($${supply.unitPrice}/${supply.unit})`,
+        })),
+        (o) => shortId(o.value),
+      ),
     ];
   }
 
