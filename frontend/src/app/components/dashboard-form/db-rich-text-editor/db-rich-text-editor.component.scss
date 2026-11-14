@@ -125,9 +125,27 @@
 // UM-3: botones de la barra con área de toque de 44 px solo en mobile.
 @include mobile.mobile-only {
   :host ::ng-deep .ql-toolbar.ql-snow button {
-    width: 44px;
+    width: 34px;
     height: 44px;
-    padding: 0 13px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  :host ::ng-deep .ql-toolbar.ql-snow {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  :host ::ng-deep .ql-toolbar.ql-snow .ql-formats {
+    margin-right: 4px;
+  }
+
+  :host ::ng-deep .ql-toolbar.ql-snow button svg {
+    width: 20px;
+    height: 20px;
+    float: none;
   }
 
   :host ::ng-deep .ql-toolbar.ql-snow .ql-picker-label {

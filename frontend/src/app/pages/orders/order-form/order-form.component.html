@@ -244,7 +244,31 @@
           </db-mobile-form-step>
 
           <db-mobile-form-step
-            title="2 · Líneas"
+            title="2 · Descripción para el cliente"
+            class="quote-description-sec"
+            cardClass="quote-description-field"
+          >
+              <db-form-grid-full>
+                <db-rich-text-editor
+                  label="Descripción"
+                  [(ngModel)]="description"
+                  name="quoteDescription"
+                  placeholder="Describí el trabajo: qué necesita el cliente, referencias, alcances..."
+                  [maxLength]="descriptionMaxLength"
+                  [uploadFn]="uploadDescriptionImage"
+                />
+              </db-form-grid-full>
+              <db-form-grid-full>
+                <app-document-attachments
+                  folder="quotes"
+                  [attachments]="attachments"
+                  (attachmentsChange)="attachments = $event"
+                />
+              </db-form-grid-full>
+          </db-mobile-form-step>
+
+          <db-mobile-form-step
+            title="3 · Líneas"
             class="quote-lines-section"
             cardClass="order-m-card--lines"
           >
@@ -335,30 +359,6 @@
                   </span>
                 </div>
               }
-          </db-mobile-form-step>
-
-          <db-mobile-form-step
-            title="3 · Descripción para el cliente"
-            class="quote-description-sec"
-            cardClass="quote-description-field"
-          >
-              <db-form-grid-full>
-                <db-rich-text-editor
-                  label="Descripción"
-                  [(ngModel)]="description"
-                  name="quoteDescription"
-                  placeholder="Describí el trabajo: qué necesita el cliente, referencias, alcances..."
-                  [maxLength]="descriptionMaxLength"
-                  [uploadFn]="uploadDescriptionImage"
-                />
-              </db-form-grid-full>
-              <db-form-grid-full>
-                <app-document-attachments
-                  folder="quotes"
-                  [attachments]="attachments"
-                  (attachmentsChange)="attachments = $event"
-                />
-              </db-form-grid-full>
           </db-mobile-form-step>
         </div>
 
