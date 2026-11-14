@@ -38,17 +38,24 @@ import { extractApiErrorMessage } from '../shared/utils/api-error';
         <p>
           Esta acción borra todos los registros: pedidos, productos, clientes,
           ventas, insumos y el resto. La base quedará vacía. No se puede
-          deshacer. Ingresá el código de confirmación.
+          deshacer. Escribí RESETEAR e ingresá el código de confirmación.
         </p>
         <ng-container ngProjectAs="[confirmFields]">
+          <db-input
+            label="Escribí RESETEAR para confirmar"
+            [(ngModel)]="confirmText"
+            name="confirmText"
+            autocomplete="off"
+            [required]="true"
+            placeholder="RESETEAR"
+          />
           <db-input
             label="Código de confirmación"
             [(ngModel)]="resetCode"
             name="resetCode"
             type="password"
-            autocomplete="off"
+            autocomplete="new-password"
             [required]="true"
-            placeholder="•••••"
           />
           @if (error()) {
             <db-form-error>{{ error() }}</db-form-error>
@@ -69,7 +76,7 @@ import { extractApiErrorMessage } from '../shared/utils/api-error';
         variant="delete"
         format="solid"
         extraClass="db-button--danger-solid"
-        [disabled]="loading() || !resetCode.trim()"
+        [disabled]="loading() || !resetCode.trim() || confirmText.trim() !== 'RESETEAR'"
         (clicked)="confirmReset()"
       />
     </app-form-dialog-shell>
@@ -82,6 +89,7 @@ export class ResetDatabaseDialogComponent {
   private readonly dialogRef = inject(DialogRef<boolean>);
 
   resetCode = '';
+  confirmText = '';
   loading = signal(false);
   error = signal('');
 
@@ -91,7 +99,7 @@ export class ResetDatabaseDialogComponent {
   }
 
   confirmReset(): void {
-    if (this.loading()) return;
+    if (this.loading() || this.confirmText.trim() !== 'RESETEAR') return;
 
     this.loading.set(true);
     this.error.set('');

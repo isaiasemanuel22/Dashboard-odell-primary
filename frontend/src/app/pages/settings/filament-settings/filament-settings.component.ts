@@ -35,6 +35,7 @@ import {
   OdlRowAction,
 } from '@general-components';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
+import { normalizeSearchText } from '../../../shared/utils/search-text.util';
 
 interface FilamentPriceGroup {
   key: string;
@@ -143,12 +144,12 @@ export class FilamentSettingsComponent implements OnInit, OnDestroy {
   }
 
   get visiblePrices(): FilamentPriceConfig[] {
-    const query = this.search.trim().toLowerCase();
+    const query = normalizeSearchText(this.search);
     return (this.settings?.filamentPrices ?? []).filter((item) => {
       const typeKey = item.filamentTypeId || item.materialType;
       const matchesType =
         this.typeFilter === 'all' || typeKey === this.typeFilter;
-      const matchesSearch = !query || item.brand.toLowerCase().includes(query);
+      const matchesSearch = !query || normalizeSearchText(item.brand).includes(query);
       return matchesType && matchesSearch;
     });
   }

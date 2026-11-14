@@ -13,6 +13,7 @@ import {
 } from '../../components/db-data-table';
 
 type PaperFilter = PaperType | 'all';
+import { normalizeSearchText } from '../../shared/utils/search-text.util';
 
 @Component({
   selector: 'app-impresos',
@@ -71,7 +72,7 @@ export class ImpresosComponent implements OnInit {
     return this.impresos.filter((item) => {
       const matchesSearch =
         !this.search ||
-        item.name.toLowerCase().includes(this.search.toLowerCase());
+        item.name.toLowerCase().includes(normalizeSearchText(this.search));
       const matchesType =
         this.paperFilter === 'all' || item.paperType === this.paperFilter;
       return matchesSearch && matchesType;

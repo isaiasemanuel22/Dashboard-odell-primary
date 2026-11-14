@@ -56,6 +56,7 @@ import {
   orderServiceFilters,
   orderStatusFilters,
 } from '../../shared/utils/order.helpers';
+import { normalizeSearchText } from '../../shared/utils/search-text.util';
 
 interface OrdersMobileListState {
   chip: OrderMobileChip;
@@ -178,7 +179,7 @@ export class OrdersComponent implements OnInit {
   }
 
   get filteredOrders(): Order[] {
-    const term = this.search.trim().toLowerCase();
+    const term = normalizeSearchText(this.search);
     let list = !term
       ? [...this.orders]
       : this.orders.filter((order) =>
@@ -189,8 +190,8 @@ export class OrdersComponent implements OnInit {
             order.notes ?? '',
             ...order.items.map((item) => item.productName),
           ]
+            .map((part) => normalizeSearchText(part))
             .join(' ')
-            .toLowerCase()
             .includes(term),
         );
     if (this.overdueOnly) {
@@ -289,7 +290,7 @@ export class OrdersComponent implements OnInit {
 
   /** Base de contadores: búsqueda + filtros de hoja (sin chip). */
   private get mobileCountBase(): Order[] {
-    const term = this.search.trim().toLowerCase();
+    const term = normalizeSearchText(this.search);
     return this.orders.filter((order) => {
       if (!matchesOrderMobileSheetFilters(order, this.mobileSheetFilters)) {
         return false;
@@ -302,8 +303,8 @@ export class OrdersComponent implements OnInit {
         order.notes ?? '',
         ...order.items.map((item) => item.productName),
       ]
+        .map((part) => normalizeSearchText(part))
         .join(' ')
-        .toLowerCase()
         .includes(term);
     });
   }
@@ -486,7 +487,7 @@ export class OrdersComponent implements OnInit {
     source: Order[],
     sheet: OrderMobileSheetFilters,
   ): Order[] {
-    const term = this.search.trim().toLowerCase();
+    const term = normalizeSearchText(this.search);
     return source.filter((order) => {
       if (!matchesOrderMobileChip(order, this.mobileChip)) return false;
       if (!matchesOrderMobileSheetFilters(order, sheet)) return false;
@@ -498,8 +499,8 @@ export class OrdersComponent implements OnInit {
         order.notes ?? '',
         ...order.items.map((item) => item.productName),
       ]
+        .map((part) => normalizeSearchText(part))
         .join(' ')
-        .toLowerCase()
         .includes(term);
     });
   }

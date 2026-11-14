@@ -835,6 +835,9 @@ export class SettingsService {
     code: string,
     actor?: CurrentUserProfile | null,
   ): Promise<{ reset: true }> {
+    if (this.config.isProduction) {
+      throw new NotFoundException('Recurso no disponible');
+    }
     if (!actor?.isAdmin) {
       throw new ForbiddenException(
         'Solo un administrador puede resetear la base',

@@ -26,6 +26,8 @@ import {
   DynamicListComponent,
   DynamicListConfig,
 } from '../dynamic-list/dynamic-list.component';
+import { shortId, sortAndDisambiguateOptions } from '../../../shared/utils/search-text.util';
+import { formatSupplyQuantity } from '../../../shared/utils/supply-unit.util';
 
 @Component({
   selector: 'app-supply-line-list',
@@ -170,12 +172,16 @@ export class SupplyLineListComponent
         .map((item) => item.supplyId),
     );
 
-    return this.suppliesCatalog
-      .filter((supply) => !usedSupplyIds.has(supply.id))
-      .map((supply) => ({
-        value: supply.id,
-        label: `${supply.name} · ${this.quantityLabel(supply.quantity)} ${supply.unit} en stock`,
-      }));
+    return sortAndDisambiguateOptions(
+      this.suppliesCatalog
+        .filter((supply) => !usedSupplyIds.has(supply.id))
+        .map((supply) => ({
+          value: supply.id,
+          name: supply.name,
+          label: `${supply.name} · ${formatSupplyQuantity(supply.quantity, supply.unit)} en stock`,
+        })),
+      (o) => shortId(o.value),
+    ).map(({ value, label }) => ({ value, label }));
   }
 
   private unitPriceCell(line: EstampadoSupplyLine) {
@@ -191,12 +197,6 @@ export class SupplyLineListComponent
     const supply = this.suppliesCatalog.find((item) => item.id === line.supplyId);
     if (!supply) return 0;
     return (Number(supply.unitPrice) || 0) * (Number(line.quantity) || 0);
-  }
-
-  private quantityLabel(value: number): string {
-    return new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 }).format(
-      Number(value) || 0,
-    );
   }
 
   private money(value: number): string {

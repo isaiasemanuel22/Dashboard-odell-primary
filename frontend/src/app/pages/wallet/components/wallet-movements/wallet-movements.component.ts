@@ -36,6 +36,7 @@ import {
 } from '../../../../shared/utils/v1-labels.util';
 import { formatDateDayMonth } from '../../../../shared/utils/date-format.util';
 import { TREASURY_ACCOUNTS_ORDER } from '../../../../shared/utils/treasury-account.util';
+import { normalizeSearchText } from '../../../../shared/utils/search-text.util';
 import type { WalletAccountFilter } from '../wallet-metrics/wallet-metrics.component';
 
 export type WalletMovementKind = 'income' | 'expense' | 'transfer';
@@ -314,14 +315,14 @@ export class WalletMovementsComponent implements OnChanges, OnDestroy {
   }
 
   private mobileFilteredMovements(): TreasuryMovement[] {
-    const query = this.mobileSearch.trim().toLocaleLowerCase('es');
+    const query = normalizeSearchText(this.mobileSearch);
     const filtered = this.sortedMovements.filter((movement) => {
       if (this.mobileAccountFilter !== 'all') {
         const account = movement.account ?? TreasuryAccount.CAJA;
         if (account !== this.mobileAccountFilter) return false;
       }
       if (!query) return true;
-      return this.searchText(movement).toLocaleLowerCase('es').includes(query);
+      return normalizeSearchText(this.searchText(movement)).includes(query);
     });
     return this.collapseTransferPairs(filtered);
   }

@@ -43,6 +43,7 @@ import { DbFormFieldComponent } from '../db-form-field/db-form-field.component';
 import { DbColorSelectOption } from './db-color-select.types';
 
 let dbColorSelectId = 0;
+import { normalizeSearchText } from '../../../shared/utils/search-text.util';
 
 @Component({
   selector: 'db-color-select',
@@ -169,12 +170,12 @@ export class DbColorSelectComponent
   }
 
   get filteredOptions(): DbColorSelectOption[] {
-    const term = this.query.trim().toLowerCase();
+    const term = normalizeSearchText(this.query);
     if (!term) return this.resolvedOptions;
     return this.resolvedOptions.filter((option) =>
       [option.label, option.hint ?? '', option.hex ?? '']
+        .map((part) => normalizeSearchText(part))
         .join(' ')
-        .toLowerCase()
         .includes(term),
     );
   }

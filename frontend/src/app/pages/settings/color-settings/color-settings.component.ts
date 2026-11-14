@@ -31,6 +31,7 @@ type ColorFamily =
   | 'verdes'
   | 'azules'
   | 'marrones';
+import { normalizeSearchText } from '../../../shared/utils/search-text.util';
 
 @Component({
   selector: 'app-color-settings',
@@ -105,15 +106,15 @@ export class ColorSettingsComponent implements OnInit, OnDestroy {
   }
 
   get visibleColors(): ColorConfig[] {
-    const query = this.search.trim().toLowerCase();
+    const query = normalizeSearchText(this.search);
     return (this.settings?.colors ?? [])
       .filter((color) => {
         const matchesFamily =
           this.family === 'all' || this.colorFamily(color.hex) === this.family;
         const matchesSearch =
           !query ||
-          color.name.toLowerCase().includes(query) ||
-          color.hex.toLowerCase().includes(query);
+          normalizeSearchText(color.name).includes(query) ||
+          normalizeSearchText(color.hex).includes(query);
         return matchesFamily && matchesSearch;
       })
       .slice()

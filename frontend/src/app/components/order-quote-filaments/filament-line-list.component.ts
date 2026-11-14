@@ -228,7 +228,7 @@ export class FilamentLineListComponent
     );
     const typeLabel = FILAMENT_TYPE_LABELS[type as FilamentType] ?? fallback;
     if (perKg == null) return typeLabel;
-    const price = `${this.money(perKg)}/kg`;
+    const price = `${this.money(perKg)}/kg · precio de Ajustes`;
     if (prices.length === 1) {
       return `${prices[0].brand} · ${typeLabel} · ${price}`;
     }

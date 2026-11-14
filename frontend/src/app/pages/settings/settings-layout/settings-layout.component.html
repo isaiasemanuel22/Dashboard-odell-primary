@@ -3,6 +3,7 @@
     <h2>Ajustes</h2>
     <p>Configuración general del emprendimiento</p>
   </div>
+  @if (showReset) {
   <db-button
     label="Resetear base de datos"
     variant="delete"
@@ -10,6 +11,7 @@
     extraClass="db-button--danger-solid"
     (clicked)="openResetModal()"
   />
+  }
 </header>
 
 <div class="settings-shell">

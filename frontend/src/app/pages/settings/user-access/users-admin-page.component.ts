@@ -29,6 +29,7 @@ import { UserAccessHeadComponent } from './user-access-head.component';
 import { UserAccessNavComponent } from './user-access-nav.component';
 import { UsersAdminFormComponent } from './users-admin-form/users-admin-form.component';
 import { SettingsUsersMobileShellComponent } from './settings-users-mobile-shell.component';
+import { normalizeSearchText } from '../../../shared/utils/search-text.util';
 
 @Component({
   selector: 'app-users-admin-page',
@@ -122,12 +123,12 @@ export class UsersAdminPageComponent implements OnInit {
   }
 
   get visibleUsers(): AppUser[] {
-    const query = this.search.trim().toLowerCase();
+    const query = normalizeSearchText(this.search);
     if (!query) return this.users;
     return this.users.filter(
       (user) =>
-        user.displayName.toLowerCase().includes(query) ||
-        user.email.toLowerCase().includes(query),
+        normalizeSearchText(user.displayName).includes(query) ||
+        normalizeSearchText(user.email).includes(query),
     );
   }
 

@@ -88,6 +88,7 @@ import { todayYmd } from '../../shared/utils/calendar-grid.util';
 import { nameInitials } from '../../shared/utils/name-initials.util';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
+import { normalizeSearchText } from '../../shared/utils/search-text.util';
 
 const VIEW_MODE_STORAGE_KEY = 'odell.print-jobs.view-mode';
 
@@ -434,12 +435,12 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
   }
 
   private jobMatchesFilters(job: PrintJob): boolean {
-    const query = this.searchQuery.trim().toLowerCase();
+    const query = normalizeSearchText(this.searchQuery);
     if (query) {
       const hit =
-        job.productName.toLowerCase().includes(query) ||
-        job.orderId.toLowerCase().includes(query) ||
-        job.customerName.toLowerCase().includes(query);
+        normalizeSearchText(job.productName).includes(query) ||
+        normalizeSearchText(job.orderId).includes(query) ||
+        normalizeSearchText(job.customerName).includes(query);
       if (!hit) return false;
     }
     if (this.areaFilter) {
@@ -505,13 +506,13 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
   /** Misma base que desktop: búsqueda + área, sin filtro de cliente. */
   private jobsForCustomerFilterCount(): PrintJob[] {
     let list = this.allJobs;
-    const query = this.searchQuery.trim().toLowerCase();
+    const query = normalizeSearchText(this.searchQuery);
     if (query) {
       list = list.filter(
         (job) =>
-          job.productName.toLowerCase().includes(query) ||
-          job.orderId.toLowerCase().includes(query) ||
-          job.customerName.toLowerCase().includes(query),
+          normalizeSearchText(job.productName).includes(query) ||
+          normalizeSearchText(job.orderId).includes(query) ||
+          normalizeSearchText(job.customerName).includes(query),
       );
     }
     if (this.areaFilter) {
@@ -1263,14 +1264,14 @@ export class PrintJobsComponent implements OnInit, AfterViewChecked {
 
   private filterJobs(jobs: PrintJob[]): PrintJob[] {
     let list = jobs;
-    const query = this.searchQuery.trim().toLowerCase();
+    const query = normalizeSearchText(this.searchQuery);
 
     if (query) {
       list = list.filter(
         (job) =>
-          job.productName.toLowerCase().includes(query) ||
-          job.orderId.toLowerCase().includes(query) ||
-          job.customerName.toLowerCase().includes(query),
+          normalizeSearchText(job.productName).includes(query) ||
+          normalizeSearchText(job.orderId).includes(query) ||
+          normalizeSearchText(job.customerName).includes(query),
       );
     }
 

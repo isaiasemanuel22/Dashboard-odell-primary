@@ -37,6 +37,7 @@ import {
   SettingsEditBaseline,
   SettingsUnsavedChanges,
 } from '../settings-unsaved-changes';
+import { normalizeSearchText } from '../../../shared/utils/search-text.util';
 
 interface PaperSheetGroup {
   key: keyof GeneralSettings['paperReferenceSheets'];
@@ -221,12 +222,12 @@ export class ImpresosSettingsComponent
   }
 
   get visibleImpresos(): ImpresoWithCost[] {
-    const query = this.search.trim().toLowerCase();
+    const query = normalizeSearchText(this.search);
     return this.impresos
       .filter((item) => {
         const matchesTechnique =
           this.techniqueFilter === 'all' || item.paperType === this.techniqueFilter;
-        const matchesSearch = !query || item.name.toLowerCase().includes(query);
+        const matchesSearch = !query || normalizeSearchText(item.name).includes(query);
         return matchesTechnique && matchesSearch;
       })
       .sort((a, b) => a.name.localeCompare(b.name, 'es'));

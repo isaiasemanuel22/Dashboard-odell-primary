@@ -20,6 +20,7 @@ import { DbFormFieldComponent } from '../db-form-field/db-form-field.component';
 import { DbAutocompleteOption } from './db-autocomplete.types';
 
 let dbAutocompleteId = 0;
+import { normalizeSearchText } from '../../../shared/utils/search-text.util';
 
 @Component({
   selector: 'db-autocomplete',
@@ -82,15 +83,15 @@ export class DbAutocompleteComponent implements ControlValueAccessor, OnChanges 
   }
 
   get filteredOptions(): DbAutocompleteOption[] {
-    const normalizedQuery = this.query.trim().toLowerCase();
+    const normalizedQuery = normalizeSearchText(this.query);
     if (normalizedQuery.length < this.minFilterChars) {
       return this.options;
     }
 
     return this.options.filter(
       (option) =>
-        option.label.toLowerCase().includes(normalizedQuery) ||
-        option.value.toLowerCase().includes(normalizedQuery),
+        normalizeSearchText(option.label).includes(normalizedQuery) ||
+        normalizeSearchText(option.value).includes(normalizedQuery),
     );
   }
 

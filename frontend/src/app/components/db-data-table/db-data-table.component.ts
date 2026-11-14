@@ -29,6 +29,7 @@ import {
   FilterPanelValues,
 } from '../db-filter-panel/db-filter-panel.component';
 import { orderIsOverdue } from '../../shared/utils/order.helpers';
+import { normalizeSearchText } from '../../shared/utils/search-text.util';
 
 export type OdlTone = 'pending' | 'ok' | 'danger' | 'info' | 'neutral';
 export type OdlArea = 'impresion3d' | 'diseno' | 'modelado' | 'estampado' | 'general';
@@ -538,7 +539,7 @@ export class DbDataTableComponent<T> {
 }
 
 function normalize(s: string): string {
-  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  return normalizeSearchText(s);
 }
 
 function compare(a: unknown, b: unknown): number {

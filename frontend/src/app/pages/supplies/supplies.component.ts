@@ -76,6 +76,11 @@ import {
   storeSuppliesTab,
   supplyQuantityToGrams,
 } from './supplies-tab.util';
+import {
+  normalizeSearchText,
+  shortId,
+  sortAndDisambiguateOptions,
+} from '../../shared/utils/search-text.util';
 
 type CategoryFilter = SupplyCategory | 'all';
 type StockFilter = 'all' | 'ok' | 'low';
@@ -260,7 +265,7 @@ export class SuppliesComponent implements OnInit {
   }
 
   private get mobileCountBase(): Supply[] {
-    const term = this.search.trim().toLowerCase();
+    const term = normalizeSearchText(this.search);
     if (!term) return this.supplies;
     return this.supplies.filter((s) => this.supplySearchText(s).includes(term));
   }
@@ -383,13 +388,16 @@ export class SuppliesComponent implements OnInit {
   }
 
   get filamentSupplyOptions(): DbSelectOption[] {
-    return this.supplies
-      .filter((s) => s.category === SupplyCategory.FDM)
-      .filter((s) => this.closedGrams(s) > 1)
-      .map((s) => ({
-        value: s.id,
-        label: s.name,
-      }));
+    return sortAndDisambiguateOptions(
+      this.supplies
+        .filter((s) => s.category === SupplyCategory.FDM)
+        .filter((s) => this.closedGrams(s) > 1)
+        .map((s) => ({
+          value: s.id,
+          label: s.name,
+        })),
+      (o) => shortId(o.value),
+    );
   }
 
   get openSupplyHint(): string {
@@ -481,7 +489,7 @@ export class SuppliesComponent implements OnInit {
   }
 
   get filteredSupplies(): Supply[] {
-    const term = this.search.trim().toLowerCase();
+    const term = normalizeSearchText(this.search);
     return this.supplies.filter((s) => {
       const matchesSearch = !term || this.supplySearchText(s).includes(term);
       const matchesCategory =
@@ -1208,7 +1216,7 @@ export class SuppliesComponent implements OnInit {
         : '',
     ]
       .filter((part) => Boolean(part))
-      .join(' ')
-      .toLowerCase();
+      .map((part) => normalizeSearchText(part))
+      .join(' ');
   }
 }

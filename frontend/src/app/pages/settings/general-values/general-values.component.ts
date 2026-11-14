@@ -215,6 +215,26 @@ export class GeneralValuesComponent
     this.settingsSub?.unsubscribe();
   }
 
+  ratesMissing(): boolean {
+    return this.missingRates().length > 0;
+  }
+
+  ratesMissingText(): string {
+    const m = this.missingRates();
+    return m.length === 1
+      ? `La tarifa de ${m[0]} está sin definir.`
+      : `Las tarifas de ${m.join(' y ')} están sin definir.`;
+  }
+
+  private missingRates(): string[] {
+    const missing: string[] = [];
+    if (!this.settings?.modelingRatePerHour) missing.push('modelado');
+    if (!this.settings?.graphicDesignRatePerHour) {
+      missing.push('diseño gráfico');
+    }
+    return missing;
+  }
+
   get supplyOptions(): DbSelectOption[] {
     return [
       { value: '', label: '— Sin insumo —' },

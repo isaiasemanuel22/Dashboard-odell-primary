@@ -75,6 +75,7 @@ import { MobileSheetComponent } from '../../../components/mobile-sheet/mobile-sh
 import { FormDialogService } from '../../../modals/form-dialog.service';
 
 let cartLineKey = 0;
+import { normalizeSearchText } from '../../../shared/utils/search-text.util';
 
 @Component({
   selector: 'app-sale-form',
@@ -198,13 +199,13 @@ export class SaleFormComponent implements OnChanges {
   }
 
   get searchableProducts(): Product[] {
-    const query = this.productSearch.trim().toLowerCase();
+    const query = normalizeSearchText(this.productSearch);
     if (!query) return [];
     return this.products
       .filter((product) => {
         if (product.published === false) return false;
         if (this.availableStock(product.id) < 1) return false;
-        return product.name.toLowerCase().includes(query);
+        return normalizeSearchText(product.name).includes(query);
       })
       .slice(0, 8);
   }

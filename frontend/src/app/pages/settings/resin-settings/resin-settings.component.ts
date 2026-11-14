@@ -35,6 +35,7 @@ import {
   OdlRowAction,
 } from '@general-components';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
+import { normalizeSearchText } from '../../../shared/utils/search-text.util';
 
 interface ResinPriceGroup {
   key: string;
@@ -143,12 +144,12 @@ export class ResinSettingsComponent implements OnInit, OnDestroy {
   }
 
   get visiblePrices(): ResinPriceConfig[] {
-    const query = this.search.trim().toLowerCase();
+    const query = normalizeSearchText(this.search);
     return (this.settings?.resinPrices ?? []).filter((item) => {
       const typeKey = item.resinTypeId || String(item.resinType);
       const matchesType =
         this.typeFilter === 'all' || typeKey === this.typeFilter;
-      const matchesSearch = !query || item.brand.toLowerCase().includes(query);
+      const matchesSearch = !query || normalizeSearchText(item.brand).includes(query);
       return matchesType && matchesSearch;
     });
   }

@@ -54,6 +54,7 @@ import {
   CUSTOMER_TYPE_LABELS,
 } from '../../shared/utils/v1-labels.util';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
+import { normalizeSearchText } from '../../shared/utils/search-text.util';
 
 export type CustomersMobileChip =
   | 'all'
@@ -206,7 +207,7 @@ export class CustomersComponent implements OnInit {
 
   /** Base de contadores: solo búsqueda (sin chip). */
   private get mobileCountBase(): Customer[] {
-    const term = this.search.trim().toLowerCase();
+    const term = normalizeSearchText(this.search);
     if (!term) return this.customers;
     return this.customers.filter((customer) => {
       const haystack = [
@@ -216,8 +217,8 @@ export class CustomersComponent implements OnInit {
         customer.company,
       ]
         .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
+        .map((part) => normalizeSearchText(part))
+        .join(' ');
       return haystack.includes(term);
     });
   }
@@ -241,7 +242,7 @@ export class CustomersComponent implements OnInit {
   }
 
   get filteredMobileCustomers(): Customer[] {
-    const term = this.search.trim().toLowerCase();
+    const term = normalizeSearchText(this.search);
     return this.customers.filter((customer) => {
       if (!this.matchesMobileChip(customer)) return false;
       if (!term) return true;
@@ -252,8 +253,8 @@ export class CustomersComponent implements OnInit {
         customer.company,
       ]
         .filter(Boolean)
-        .join(' ')
-        .toLowerCase();
+        .map((part) => normalizeSearchText(part))
+        .join(' ');
       return haystack.includes(term);
     });
   }

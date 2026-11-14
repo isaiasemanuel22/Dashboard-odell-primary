@@ -13,6 +13,7 @@ import { SettingsService } from '../../../core/services/settings.service';
 import { UserAccessService } from '../../../core/services/user-access.service';
 import { ImpresosService } from '../../../core/services/impresos.service';
 import { FormDialogService } from '../../../modals/public-api';
+import { environment } from '../../../../environments/environment';
 import {
   MobileBarComponent,
   MobileNavListComponent,
@@ -163,18 +164,22 @@ export class SettingsHomeComponent implements OnInit {
         },
       ],
     },
-    {
-      title: 'Zona de cuidado',
-      items: [
-        {
-          id: 'reset-db',
-          label: 'Resetear base de datos',
-          hint: 'Solo administrador · pide un código',
-          danger: true,
-          action: this.isAdmin(),
-        },
-      ],
-    },
+    ...(environment.production
+      ? []
+      : [
+          {
+            title: 'Zona de cuidado',
+            items: [
+              {
+                id: 'reset-db',
+                label: 'Resetear base de datos',
+                hint: 'Solo desarrollo · administrador · pide un código',
+                danger: true,
+                action: this.isAdmin(),
+              },
+            ],
+          },
+        ]),
   ]);
 
   ngOnInit(): void {

@@ -9,6 +9,12 @@
           <p class="st-m__msg">{{ message }}</p>
         }
 
+@if (ratesMissing()) {
+        <div class="rates-banner" role="alert">
+          <strong>Faltan tarifas por hora.</strong>
+          {{ ratesMissingText() }} Cargalas para que modelado y diseño no salgan en $ 0.
+        </div>
+        }
         <h2 class="m-sec-t">Tarifas por hora</h2>
         <div class="m-card">
           <div class="st-m__two">
@@ -148,6 +154,13 @@
       <div class="values-page">
         @if (message) {
           <p class="message">{{ message }}</p>
+        }
+
+@if (ratesMissing()) {
+        <div class="rates-banner" role="alert">
+          <strong>Faltan tarifas por hora.</strong>
+          {{ ratesMissingText() }} Cargalas para que modelado y diseño no salgan en $ 0.
+        </div>
         }
 
         <section class="settings-card">
