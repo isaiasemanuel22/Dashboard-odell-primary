@@ -90,6 +90,10 @@ export class OrderDetailPaymentsComponent {
   paymentLoading = false;
   paymentError = '';
   amountShortcut: AmountShortcut | null = 'full';
+  voidingPaymentId: string | null = null;
+  voidReason = '';
+  voidLoading = false;
+  voidError = '';
 
   readonly amountChipOptions: MobileChipOption<AmountShortcut>[] = [
     { value: 'full', label: 'Todo el saldo' },
@@ -221,6 +225,53 @@ export class OrderDetailPaymentsComponent {
       return;
     }
     this.amountShortcut = 'other';
+  }
+
+  startVoid(paymentId: string): void {
+    this.voidingPaymentId = paymentId;
+    this.voidReason = '';
+    this.voidError = '';
+    this.cdr.markForCheck();
+  }
+
+  cancelVoid(): void {
+    this.voidingPaymentId = null;
+    this.voidReason = '';
+    this.voidError = '';
+    this.cdr.markForCheck();
+  }
+
+  confirmVoid(): void {
+    const reason = this.voidReason.trim();
+    if (!this.voidingPaymentId || this.voidLoading) return;
+    if (!reason) {
+      this.voidError = 'El motivo es obligatorio';
+      this.cdr.markForCheck();
+      return;
+    }
+    this.voidLoading = true;
+    this.voidError = '';
+    this.cdr.markForCheck();
+    this.ordersService
+      .voidPayment(this.order.id, this.voidingPaymentId, reason)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (order) => {
+          this.voidLoading = false;
+          this.voidingPaymentId = null;
+          this.voidReason = '';
+          this.orderChange.emit(order);
+          this.cdr.markForCheck();
+        },
+        error: (err) => {
+          this.voidLoading = false;
+          this.voidError = extractApiErrorMessage(
+            err,
+            'No se pudo anular el pago',
+          );
+          this.cdr.markForCheck();
+        },
+      });
   }
 
   registerPayment(): void {

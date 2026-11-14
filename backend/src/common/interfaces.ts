@@ -677,6 +677,9 @@ export interface OrderPayment {
   account?: TreasuryAccount;
   /** Comisión del medio en pesos. */
   fee?: number;
+  /** Si está anulado deja de contar en saldo, cobrado y caja. */
+  voidedAt?: string;
+  voidReason?: string;
 }
 
 export type QuoteItem = Omit<

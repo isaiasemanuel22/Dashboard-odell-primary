@@ -1125,9 +1125,7 @@ export class OrderFormLineComponent implements OnInit {
     this.line.needsClientProduct = undefined;
     this.line.linkPrint = undefined;
     if (isDesignService(this.line.serviceType)) {
-      this.line.chargeMode = isGraphicDesignService(this.line.serviceType)
-        ? 'fixed'
-        : 'hours';
+      this.line.chargeMode = 'hours';
       this.applyDesignBudget();
     } else {
       this.line.chargeMode = undefined;
@@ -1479,7 +1477,7 @@ export class OrderFormLineComponent implements OnInit {
 
   private chargeModeFor(): 'hours' | 'fixed' {
     if (this.line.chargeMode) return this.line.chargeMode;
-    return isGraphicDesignService(this.line.serviceType) ? 'fixed' : 'hours';
+    return 'hours';
   }
 
   private designMarginFor(): number {

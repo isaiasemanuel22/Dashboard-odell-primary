@@ -42,6 +42,7 @@ import {
   TreasuryAccount,
   WholesaleDiscountSettings,
 } from '../../../core/models';
+import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { SettingsService, SuppliesService } from '../../../core/services/settings.service';
 import { UserAccessService } from '../../../core/services/user-access.service';
 import { ImpresosService } from '../../../core/services/impresos.service';
@@ -221,6 +222,7 @@ export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
   styleUrl: './order-form.component.scss',
 })
 export class OrderFormComponent implements OnChanges, OnInit {
+  private readonly breakpoint = inject(BreakpointService);
   private readonly formDialogs = inject(FormDialogService);
   private readonly mediaUpload = inject(MediaUploadService);
   private readonly settingsService = inject(SettingsService);
@@ -509,6 +511,11 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }
 
     return missing;
+  }
+
+  /** Evita renderizar el aviso del pie de escritorio y el del dock a la vez. */
+  get isMobileView(): boolean {
+    return this.breakpoint.isMobile();
   }
 
   get submitMissingLabel(): string {
@@ -1050,7 +1057,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   chargeModeFor(line: OrderLineDraft): 'hours' | 'fixed' {
     if (line.chargeMode) return line.chargeMode;
-    return isGraphicDesignService(line.serviceType) ? 'fixed' : 'hours';
+    return 'hours';
   }
 
 
@@ -1680,12 +1687,11 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (!this.isQuoteForm) return this.submitMissingLabel;
     const send = this.quoteSubmitMissing(false);
     if (!send.length) return '';
-    if (this.quoteSubmitMissing(true).length === 0) {
-      return `Se puede guardar como borrador. Para crear el presupuesto falta: ${send.join(', ')}`;
+    const draft = this.quoteSubmitMissing(true);
+    if (draft.length === 0) {
+      return `Para crear el presupuesto falta: ${send.join(', ')}. Podés guardarlo como borrador.`;
     }
-    return this.draftMissingLabel
-      ? `${this.draftMissingLabel}. Para crear el presupuesto falta: ${send.join(', ')}`
-      : this.submitMissingLabel;
+    return `Falta: ${send.join(', ')}`;
   }
 
   /** Qué falta para «Guardar borrador» (vacío si se puede guardar). */

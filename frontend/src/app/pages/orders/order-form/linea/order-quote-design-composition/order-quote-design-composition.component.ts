@@ -81,7 +81,7 @@ export class OrderQuoteDesignCompositionComponent implements OnInit {
 
   get chargeMode(): 'hours' | 'fixed' {
     if (this.line.chargeMode) return this.line.chargeMode;
-    return this.isGraphic ? 'fixed' : 'hours';
+    return 'hours';
   }
 
   get serviceRate(): number {
@@ -114,7 +114,7 @@ export class OrderQuoteDesignCompositionComponent implements OnInit {
   get workSummary(): string {
     const parts: string[] = [];
     if (this.chargeMode === 'fixed') {
-      parts.push('Precio fijo');
+      parts.push('Costo fijo');
     } else {
       parts.push(
         `${formatOrderQuoteNumber(Number(this.line.budgetedHours) || 0)} h`,

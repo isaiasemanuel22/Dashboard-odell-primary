@@ -400,7 +400,7 @@
 
     @if (isQuoteForm) {
       <db-form-footer class="quote-form__footer desktop-only">
-        @if (!canSubmit(false) && quoteFooterLabel) {
+        @if (!isMobileView && !canSubmit(false) && quoteFooterLabel) {
           <p
             class="quote-form__warning"
             role="status"
@@ -441,30 +441,12 @@
             [disabled]="loading || !canSubmit(false)"
           />
         </div>
-        @if (draftMissingLabel) {
-          <p
-            class="quote-form__warning quote-form__warning--hint"
-            role="status"
-            [attr.title]="draftMissingLabel"
-          >{{ draftMissingLabel }}</p>
-        } @else if (draftIncompleteLinesNote) {
-          <p
-            class="quote-form__warning quote-form__warning--hint"
-            role="status"
-            [attr.title]="draftIncompleteLinesNote"
-          >{{ draftIncompleteLinesNote }}</p>
-        } @else if (quoteNeedsCustomerHint) {
-          <p
-            class="quote-form__warning quote-form__warning--hint"
-            [attr.title]="quoteNeedsCustomerHint"
-          >{{ quoteNeedsCustomerHint }}</p>
-        }
       </db-form-footer>
       <db-mobile-dock
         [actions]="mobileDockActions"
         (action)="onMobileDockAction($event)"
       >
-        @if (!canSubmit(false) && quoteFooterLabel) {
+        @if (isMobileView && !canSubmit(false) && quoteFooterLabel) {
           <p dockHint class="order-form__missing" role="status">
             {{ quoteFooterLabel }}
           </p>
@@ -472,7 +454,7 @@
       </db-mobile-dock>
     } @else {
       <db-form-footer class="order-form__footer desktop-only">
-        @if (!canSubmit() && submitMissingLabel) {
+        @if (!isMobileView && !canSubmit() && submitMissingLabel) {
           <p
             class="order-form__warning"
             role="status"
@@ -505,7 +487,7 @@
         [actions]="mobileDockActions"
         (action)="onMobileDockAction($event)"
       >
-        @if (!canSubmit() && submitMissingLabel) {
+        @if (isMobileView && !canSubmit() && submitMissingLabel) {
           <p dockHint class="order-form__missing" role="status">
             {{ submitMissingLabel }}
           </p>

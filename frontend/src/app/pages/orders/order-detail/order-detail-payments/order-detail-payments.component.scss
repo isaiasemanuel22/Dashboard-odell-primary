@@ -193,6 +193,42 @@
     color: $color-text-muted;
   }
 
+  &__voided &__amount {
+    text-decoration: line-through;
+    color: $color-text-muted;
+  }
+
+  &__badge {
+    font-weight: 700;
+    color: $color-text-muted;
+  }
+
+  &__void-btn {
+    margin-left: 0.5rem;
+    padding: 0;
+    border: 0;
+    background: none;
+    font-family: inherit;
+    font-size: inherit;
+    font-weight: 600;
+    color: $color-text-label;
+    text-decoration: underline;
+    cursor: pointer;
+  }
+
+  &__void-form {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+  }
+
+  &__void-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
   // Grilla de 3 columnas (RdPedidoDetalle): Monto | Medio | Seña / Cuenta | Comisión | botón.
   &__form {
     grid-template-columns: repeat(3, minmax(0, 1fr));

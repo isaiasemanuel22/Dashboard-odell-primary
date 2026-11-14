@@ -405,6 +405,12 @@ export class CreateOrderPaymentDto {
   fee?: number;
 }
 
+export class VoidOrderPaymentDto {
+  @IsString()
+  @IsNotEmpty()
+  reason!: string;
+}
+
 export class CreateOrderDto {
   @IsOptional()
   @IsString()

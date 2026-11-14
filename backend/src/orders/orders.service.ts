@@ -538,6 +538,24 @@ export class OrdersService {
     return this.orders.save(order);
   }
 
+  voidPayment(id: string, paymentId: string, reason: string): Order {
+    const order = this.findOne(id);
+    const trimmed = (reason ?? '').trim();
+    if (!trimmed) {
+      throw new BadRequestException('El motivo de la anulación es obligatorio');
+    }
+    const payment = (order.payments ?? []).find((p) => p.id === paymentId);
+    if (!payment) {
+      throw new NotFoundException('Pago no encontrado');
+    }
+    if (payment.voidedAt) {
+      throw new BadRequestException('El pago ya está anulado');
+    }
+    payment.voidedAt = new Date().toISOString();
+    payment.voidReason = trimmed;
+    return this.orders.save(order);
+  }
+
   deliver(id: string, lines: OrderDeliveryLine[]): Order {
     return this.applyDelivery(id, lines, { force: false });
   }

@@ -325,6 +325,7 @@ export class TreasuryService {
 
     for (const order of this.orders.findAll()) {
       for (const payment of order.payments ?? []) {
+        if (payment.voidedAt) continue;
         const account = this.resolvePaymentAccount(payment);
         add(account, paymentNetCents(payment), paymentFeeCents(payment));
       }
@@ -383,13 +384,15 @@ export class TreasuryService {
     const amount = Number(payment.amount) || 0;
     const fee = Number(payment.fee) || 0;
     const kind = payment.deposit ? 'Seña' : 'Pago';
+    const voided = !!payment.voidedAt;
     return {
       id: payment.id,
       source: 'order_payment',
       occurredAt: payment.createdAt,
       concept: `${kind} ${order.id} · ${order.customerName}`,
-      detail:
-        order.status === OrderStatus.CANCELADO
+      detail: voided
+        ? `Anulado: ${payment.voidReason ?? ''}`.trim()
+        : order.status === OrderStatus.CANCELADO
           ? 'Pedido cancelado: a devolver o resolver'
           : payment.deposit
             ? 'Vinculada al pedido'
@@ -399,7 +402,9 @@ export class TreasuryService {
       amount,
       fee,
       net: amount - fee,
-      voided: false,
+      voided: !!payment.voidedAt,
+      voidedAt: payment.voidedAt,
+      voidReason: payment.voidReason,
       orderId: order.id,
     };
   }

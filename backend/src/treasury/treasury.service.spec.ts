@@ -169,6 +169,38 @@ describe('TreasuryService', () => {
     expect(service.getAvailableBalance()).toBe(7000);
   });
 
+  it('un pago anulado no suma a la caja y queda marcado en movimientos (U-16)', () => {
+    store.orders.push({
+      id: 'ord-1',
+      customerName: 'Ana',
+      status: 'pendiente',
+      total: 500,
+      items: [],
+      createdAt: '2026-08-02T12:00:00.000Z',
+      dueDate: '2026-08-20T12:00:00.000Z',
+      payments: [
+        {
+          id: 'ord-1-pay-1',
+          amount: 500,
+          deposit: false,
+          createdAt: '2026-08-02T12:00:00.000Z',
+          method: PaymentMethod.EFECTIVO,
+          account: TreasuryAccount.CAJA,
+          fee: 0,
+          voidedAt: '2026-08-03T12:00:00.000Z',
+          voidReason: 'error de carga',
+        },
+      ],
+    } as never);
+
+    expect(service.getAvailableBalance()).toBe(10000);
+    const movement = service
+      .getOverview()
+      .movements.find((m) => m.id === 'ord-1-pay-1')!;
+    expect(movement.voided).toBe(true);
+    expect(movement.voidReason).toBe('error de carga');
+  });
+
   it('registra ingresos manuales y los suma al saldo', () => {
     service.recordExpense({
       isSupplyPurchase: false,

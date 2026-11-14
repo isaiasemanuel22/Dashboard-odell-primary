@@ -883,13 +883,13 @@ export const DUE_DATE_AFTER_TODAY_MESSAGE =
 export function cancelOrderConfirmMessage(order: {
   id: string;
   status: OrderStatus;
-  payments?: Array<{ amount: number }>;
+  payments?: Array<{ amount: number; voidedAt?: string }>;
 }): string {
   const delivered =
     order.status === OrderStatus.ENTREGADO ||
     order.status === OrderStatus.PARCIALMENTE_ENTREGADO;
   const hasPayments = (order.payments ?? []).some(
-    (payment) => Number(payment.amount) > 0,
+    (payment) => !payment.voidedAt && Number(payment.amount) > 0,
   );
   if (delivered) {
     return `El pedido ${order.id} ya está entregado. Cancelarlo lo saca de Ventas. El dinero cobrado no se devuelve solo: hay que resolverlo en Billetera. ¿Cancelar igual?`;
@@ -958,10 +958,9 @@ export function orderIsOverdue(
 }
 
 export function orderPaidAmount(order: Pick<Order, 'payments'>): number {
-  return (order.payments ?? []).reduce(
-    (sum, payment) => sum + (Number(payment.amount) || 0),
-    0,
-  );
+  return (order.payments ?? [])
+    .filter((payment) => !payment.voidedAt)
+    .reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0);
 }
 
 /** Saldo pendiente: total − pagos. */
@@ -976,7 +975,7 @@ export function orderBalanceAmount(
 
 export function orderDepositAmount(order: Pick<Order, 'payments'>): number {
   return (order.payments ?? [])
-    .filter((payment) => payment.deposit)
+    .filter((payment) => payment.deposit && !payment.voidedAt)
     .reduce((sum, payment) => sum + (Number(payment.amount) || 0), 0);
 }
 

@@ -81,7 +81,8 @@ describe('QuotesService producto nuevo', () => {
     store.applyState(state);
 
     const service = buildQuotesService(store);
-    const order = service.createOrderFromQuote('qte-1');
+    const order = service.createOrderFromQuote('qte-1', 'uid-acepta');
+    expect(order.responsibleUserId).toBe('uid-acepta');
     const productId = order.items[0]?.productId;
 
     expect(productId).toBeTruthy();

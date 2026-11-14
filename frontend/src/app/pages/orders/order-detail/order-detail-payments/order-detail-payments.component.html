@@ -105,7 +105,7 @@
     @if (order.payments?.length) {
       <ul class="order-payments">
         @for (payment of order.payments; track payment.id) {
-          <li>
+          <li [class.order-payments__voided]="payment.voidedAt">
             <span class="order-payments__amount">{{ payment.amount | currencyArs }}</span>
             @if (payment.deposit) {
               <span> · seña</span>
@@ -116,6 +116,49 @@
               <span> · comisión {{ payment.fee | currencyArs }}</span>
             }
             <span class="order-payments__date"> · {{ payment.createdAt | dateShort }}</span>
+            @if (payment.voidedAt) {
+              <span class="order-payments__badge"> · Anulado</span>
+              <span class="order-payments__date">
+                el {{ payment.voidedAt | dateShort }}: {{ payment.voidReason }}
+              </span>
+            } @else if (voidingPaymentId === payment.id) {
+              <div class="order-payments__void-form">
+                <db-input
+                  label="Motivo de la anulación"
+                  [(ngModel)]="voidReason"
+                  name="voidReason"
+                />
+                @if (!voidReason.trim() && !voidError) {
+                  <p class="order-payments__date">Escribí el motivo para anular</p>
+                }
+                @if (voidError) {
+                  <p class="order-payments__error" role="alert">{{ voidError }}</p>
+                }
+                <div class="order-payments__void-actions">
+                  <db-button
+                    label="Confirmar anulación"
+                    variant="delete"
+                    format="solid"
+                    [disabled]="voidLoading || !voidReason.trim()"
+                    (clicked)="confirmVoid()"
+                  />
+                  <db-button
+                    label="Volver"
+                    variant="secondary"
+                    format="soft"
+                    (clicked)="cancelVoid()"
+                  />
+                </div>
+              </div>
+            } @else {
+              <button
+                type="button"
+                class="order-payments__void-btn"
+                (click)="startVoid(payment.id)"
+              >
+                Anular pago
+              </button>
+            }
           </li>
         }
       </ul>

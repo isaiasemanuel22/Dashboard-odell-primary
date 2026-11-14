@@ -520,7 +520,9 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
   get depositSummary(): string | null {
     if (!this.order) return null;
-    const deposit = (this.order.payments ?? []).find((payment) => payment.deposit);
+    const deposit = (this.order.payments ?? []).find(
+      (payment) => payment.deposit && !payment.voidedAt,
+    );
     if (!deposit) return null;
     return this.formatPaymentSummary(deposit);
   }
@@ -801,17 +803,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     const order = this.order;
     if (!order) return;
     this.closeDeliverySheet();
-    const balance = Math.max(
-      0,
-      Math.round(
-        (order.total -
-          (order.payments ?? []).reduce(
-            (sum, payment) => sum + (Number(payment.amount) || 0),
-            0,
-          )) *
-          100,
-      ) / 100,
-    );
+    const balance = orderBalanceAmount(order);
     this.loadOrder(order.id);
     if (balance <= 0) return;
 

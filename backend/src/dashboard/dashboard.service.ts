@@ -196,6 +196,7 @@ export class DashboardService {
       // Los pagos de pedidos cancelados quedan "a devolver/resolver": no cuentan como cobrado.
       if (order.status === OrderStatus.CANCELADO) continue;
       for (const payment of order.payments ?? []) {
+        if (payment.voidedAt) continue;
         const createdAt = new Date(payment.createdAt);
         if (!isDateInMonthRange(createdAt, range)) continue;
         collectedCents += paymentNetCents(payment);

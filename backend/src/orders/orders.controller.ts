@@ -13,6 +13,7 @@ import {
   CreateOrderDto,
   CreateOrderDeliveryDto,
   CreateOrderPaymentDto,
+  VoidOrderPaymentDto,
   OrderPriceDecisionDto,
   UpdateOrderDto,
   UpdateStatusDto,
@@ -79,6 +80,15 @@ export class OrdersController {
   @Post(':id/payments')
   addPayment(@Param('id') id: string, @Body() body: CreateOrderPaymentDto) {
     return this.ordersService.addPayment(id, body);
+  }
+
+  @Post(':id/payments/:paymentId/void')
+  voidPayment(
+    @Param('id') id: string,
+    @Param('paymentId') paymentId: string,
+    @Body() body: VoidOrderPaymentDto,
+  ) {
+    return this.ordersService.voidPayment(id, paymentId, body.reason);
   }
 
   @Post(':id/deliveries')

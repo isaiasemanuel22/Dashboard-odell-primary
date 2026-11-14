@@ -933,6 +933,9 @@ export interface OrderPayment {
   account?: TreasuryAccount;
   /** Comisión del medio en pesos. */
   fee?: number;
+  /** Pago anulado: no cuenta en saldo ni cobrado. */
+  voidedAt?: string;
+  voidReason?: string;
 }
 
 export type CreateOrderPaymentPayload = {

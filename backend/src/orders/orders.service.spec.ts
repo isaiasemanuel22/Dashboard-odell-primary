@@ -22,6 +22,7 @@ import {
 } from '../store/repositories';
 import { StoreService } from '../store/store.service';
 import { createEmptyState } from '../store/store.seed';
+import { paidCents } from '../common/utils/money.util';
 import { OrdersService } from './orders.service';
 
 function futureDueDate(daysAhead = 7): string {
@@ -185,6 +186,27 @@ describe('OrdersService.getOverview', () => {
       /supera el saldo pendiente/,
     );
     service.addPayment(order.id, { amount: 60 });
+    expect(order.payments).toHaveLength(2);
+  });
+
+  it('anula un pago con motivo y libera el saldo (U-16)', () => {
+    const order = store.orders[0];
+    order.total = 100;
+    service.addPayment(order.id, { amount: 100 });
+    const id = order.payments![0].id;
+
+    expect(() => service.voidPayment(order.id, id, '  ')).toThrow(/motivo/);
+    expect(() => service.voidPayment(order.id, 'nope', 'error')).toThrow(
+      /no encontrado/,
+    );
+    service.voidPayment(order.id, id, 'monto mal cargado');
+    expect(order.payments![0].voidedAt).toBeTruthy();
+    expect(order.payments![0].voidReason).toBe('monto mal cargado');
+    expect(() => service.voidPayment(order.id, id, 'otra vez')).toThrow(
+      /ya está anulado/,
+    );
+    expect(paidCents(order)).toBe(0);
+    service.addPayment(order.id, { amount: 100 });
     expect(order.payments).toHaveLength(2);
   });
 

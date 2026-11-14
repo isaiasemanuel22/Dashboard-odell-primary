@@ -81,6 +81,17 @@ export class OrdersService {
     return this.http.post<Order>(`${this.baseUrl}/orders/${id}/payments`, data);
   }
 
+  voidPayment(
+    id: string,
+    paymentId: string,
+    reason: string,
+  ): Observable<Order> {
+    return this.http.post<Order>(
+      `${this.baseUrl}/orders/${id}/payments/${paymentId}/void`,
+      { reason },
+    );
+  }
+
   createDelivery(
     id: string,
     data: CreateOrderDeliveryPayload,

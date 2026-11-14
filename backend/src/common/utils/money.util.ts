@@ -16,9 +16,18 @@ export function paymentNetCents(payment: {
   return toCents(payment.amount) - paymentFeeCents(payment);
 }
 
-/** Suma de los pagos registrados, en centavos (bruto hacia el saldo del pedido). */
-export function paidCents(order: { payments?: { amount: number }[] }): number {
-  return (order.payments ?? []).reduce(
+/** Pagos que siguen vigentes (sin anular). */
+export function activePayments<T extends { voidedAt?: string }>(
+  payments: T[] | undefined,
+): T[] {
+  return (payments ?? []).filter((payment) => !payment.voidedAt);
+}
+
+/** Suma de los pagos vigentes, en centavos (bruto hacia el saldo del pedido). */
+export function paidCents(order: {
+  payments?: { amount: number; voidedAt?: string }[];
+}): number {
+  return activePayments(order.payments).reduce(
     (sum, payment) => sum + toCents(payment.amount),
     0,
   );
@@ -29,9 +38,9 @@ export function paidCents(order: { payments?: { amount: number }[] }): number {
  * en centavos.
  */
 export function collectedPaymentsCents(order: {
-  payments?: { amount: number; fee?: number }[];
+  payments?: { amount: number; fee?: number; voidedAt?: string }[];
 }): number {
-  return (order.payments ?? []).reduce(
+  return activePayments(order.payments).reduce(
     (sum, payment) => sum + paymentNetCents(payment),
     0,
   );
@@ -40,7 +49,7 @@ export function collectedPaymentsCents(order: {
 /** Saldo impago del pedido en centavos (nunca negativo). */
 export function outstandingCents(order: {
   total: number;
-  payments?: { amount: number }[];
+  payments?: { amount: number; voidedAt?: string }[];
 }): number {
   return Math.max(0, toCents(order.total) - paidCents(order));
 }
