@@ -17,17 +17,21 @@ export function productMarkupPercent(
 }
 
 /**
- * Precio de lista para alcanzar el markup objetivo, redondeado hacia arriba
+ * Precio de lista para alcanzar el markup objetivo sobre el costo sin mano de
+ * obra (+ mano de obra sin margen), redondeado hacia arriba
  * al múltiplo `roundTo` (por defecto 100).
  */
 export function priceForTargetMarkup(
   cost: number,
   targetPercent: number,
   roundTo = 100,
+  laborCost = 0,
 ): number {
   const safeCost = Number(cost) || 0;
   const target = Number(targetPercent) || 0;
-  const raw = safeCost * (1 + target / 100);
+  // La mano de obra no lleva margen: se suma al precio tal cual.
+  const labor = Math.min(Math.max(Number(laborCost) || 0, 0), safeCost);
+  const raw = (safeCost - labor) * (1 + target / 100) + labor;
   return roundPrice(raw, roundTo as PriceRoundTo);
 }
 

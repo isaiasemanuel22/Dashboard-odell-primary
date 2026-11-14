@@ -73,7 +73,12 @@ export class CostCalculatorService {
     const settings = this.store.generalSettings;
     const filamentType = this.resolveFailureFilamentType(job);
     const material = Math.round(
-      calcFilamentCost(filamentType, Number(grams) || 0, settings),
+      calcFilamentCost(
+        filamentType,
+        Number(grams) || 0,
+        settings,
+        this.store.supplies,
+      ),
     );
 
     const productType = this.resolveFailureProductType(job);
@@ -132,7 +137,7 @@ export class CostCalculatorService {
     const materialCost = this.calculateMaterialCost(dto, settings);
     const purgeCost =
       dto.type === ProductType.FDM
-        ? calcPurgeCost(dto.purgeGrams, dto, settings)
+        ? calcPurgeCost(dto.purgeGrams, dto, settings, this.store.supplies)
         : 0;
     const overhead = calculateMachineOverhead(
       settings,
@@ -422,6 +427,7 @@ export class CostCalculatorService {
       input,
       processCost,
       supplyValue <= 0,
+      breakdown?.laborCost ?? 0,
     );
     const price = processPrice + supplyValue;
     const profit = price - cost;
@@ -441,6 +447,7 @@ export class CostCalculatorService {
     input: ProductPricingInput,
     cost = Number(input.cost) || 0,
     allowStoredPrice = true,
+    laborCost = 0,
   ): number {
     if (input.suggestedPrice != null && Number(input.suggestedPrice) > 0) {
       return Number(input.suggestedPrice);
@@ -448,7 +455,7 @@ export class CostCalculatorService {
 
     const margin = this.getMarginForProductType(input.type);
     if (cost > 0) {
-      return this.priceFromCostAndMargin(cost, margin);
+      return this.priceFromCostAndMargin(cost, margin, laborCost);
     }
 
     if (!allowStoredPrice) return 0;
@@ -481,12 +488,21 @@ export class CostCalculatorService {
     return getMachineProfilesForProductType(this.store.generalSettings, type);
   }
 
-  priceFromCostAndMargin(cost: number, marginPercent: number): number {
+  /**
+   * Precio = (costo sin mano de obra) × (1 + margen) + mano de obra.
+   * `cost` es el costo total (incluye `laborCost`); la mano de obra no lleva margen.
+   */
+  priceFromCostAndMargin(
+    cost: number,
+    marginPercent: number,
+    laborCost = 0,
+  ): number {
     const markup = Math.min(Math.max(Number(marginPercent) || 0, 0), 999);
+    const labor = Math.min(Math.max(Number(laborCost) || 0, 0), cost);
     if (markup === 0) {
       return Math.round(cost);
     }
-    return Math.round(cost * (1 + markup / 100));
+    return Math.round((cost - labor) * (1 + markup / 100) + labor);
   }
 
   costFromPriceAndMargin(price: number, marginPercent: number): number {
@@ -784,12 +800,8 @@ export class CostCalculatorService {
     dto: CalculateCostDto,
     settings: GeneralSettings,
   ): number {
-    return materialCost(
-      dto,
-      settings,
-      this.store.supplies,
-      (value) => this.calcEstampadoMaterialCost(value),
-      (brand, resinType) => this.getDefaultResinPrice(brand, resinType),
+    return materialCost(dto, settings, this.store.supplies, (value) =>
+      this.calcEstampadoMaterialCost(value),
     );
   }
 

@@ -36,7 +36,7 @@
           <dd>{{ (vm.costBreakdown?.materialCost ?? 0) | currencyArs }}</dd>
         </div>
         <div>
-          <dt>Armado@if (assemblyHoursLabel) { <span> - {{ assemblyHoursLabel }}</span> }</dt>
+          <dt>Armado (mano de obra, sin margen)@if (assemblyHoursLabel) { <span> - {{ assemblyHoursLabel }}</span> }</dt>
           <dd>{{ (vm.costBreakdown?.laborCost ?? 0) | currencyArs }}</dd>
         </div>
       } @else {
@@ -63,7 +63,7 @@
           <dd>{{ (vm.costBreakdown?.errorMarginCost ?? 0) | currencyArs }}</dd>
         </div>
         <div>
-          <dt>Mano de obra @if (laborLabel) { <span>· {{ laborLabel }}</span> }</dt>
+          <dt>Mano de obra (sin margen) @if (laborLabel) { <span>· {{ laborLabel }}</span> }</dt>
           <dd>{{ (vm.costBreakdown?.laborCost ?? 0) | currencyArs }}</dd>
         </div>
         @if (supplyCost > 0) {

@@ -9,6 +9,8 @@ export interface ProductFormPricingCalculationInput {
   catalogPrice?: number | null;
   /** Parte de totalCost que son insumos de catálogo: se suma sin margen. */
   supplyValue?: number;
+  /** Parte de totalCost que es mano de obra: se suma sin margen. */
+  laborCost?: number;
 }
 
 export interface ProductFormPricingCalculationResult {
@@ -47,6 +49,7 @@ export class ProductFormPricingCalculationService {
         priceFromCostAndMargin(
           totalCost - supplyValue,
           input.profitMarginPercent,
+          input.laborCost,
         ) + supplyValue;
     }
 

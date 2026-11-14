@@ -39,4 +39,17 @@ describe('ProductFormPricingCalculationService', () => {
     });
     expect(result.price).toBe(50000);
   });
+
+  it('la mano de obra no lleva margen: con margen 100 % suma $1.000, no $2.000', () => {
+    expect(
+      service.calculate({
+        totalCost: 3000,
+        profitMarginPercent: 100,
+        laborCost: 1000,
+      }).price,
+    ).toBe(5000);
+    expect(
+      service.calculate({ totalCost: 2000, profitMarginPercent: 100 }).price,
+    ).toBe(4000);
+  });
 });

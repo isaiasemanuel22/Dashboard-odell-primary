@@ -793,10 +793,25 @@ export class ProductsService {
       const markupPercent = productMarkupPercent(price, cost);
       if (markupPercent == null) continue;
 
-      const targetPercent = this.costCalculator.getMarginForProductType(
+      const configuredPercent = this.costCalculator.getMarginForProductType(
         product.type,
       );
+      const laborCost = this.resolveLaborCost(product);
+      // Markup efectivo esperado: la mano de obra no lleva margen.
+      const rawTarget = priceForTargetMarkup(
+        cost,
+        configuredPercent,
+        0,
+        laborCost,
+      );
+      const targetPercent = ((rawTarget - cost) / cost) * 100;
       if (markupPercent >= targetPercent) continue;
+      const priceForTarget = priceForTargetMarkup(
+        cost,
+        configuredPercent,
+        100,
+        laborCost,
+      );
 
       alerts.push({
         productId: product.id,
@@ -805,12 +820,23 @@ export class ProductsService {
         cost,
         markupPercent,
         targetPercent,
-        priceForTarget: priceForTargetMarkup(cost, targetPercent),
+        priceForTarget,
         fixedPrice: this.hasFixedPrice(product),
       });
     }
 
     return alerts.sort((a, b) => a.markupPercent - b.markupPercent);
+  }
+
+  private resolveLaborCost(product: Product): number {
+    try {
+      return (
+        this.pricing.resolvePricing(this.pricing.productToPricingInput(product))
+          .breakdown?.laborCost ?? 0
+      );
+    } catch {
+      return 0;
+    }
   }
 
   /** Precio fijo de catálogo (suggestedPrice > 0), misma regla que alertas de margen. */

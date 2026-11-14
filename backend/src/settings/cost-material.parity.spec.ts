@@ -1,6 +1,10 @@
-import { FilamentType } from '../common/enums';
-import { GeneralSettings } from '../common/interfaces';
-import { calcPurgeCost, calculateErrorMarginCost } from './cost-material.calc';
+import { FilamentType, SupplyCategory } from '../common/enums';
+import { GeneralSettings, Supply } from '../common/interfaces';
+import {
+  calcFilamentCost,
+  calcPurgeCost,
+  calculateErrorMarginCost,
+} from './cost-material.calc';
 import { averageFilamentPriceByType } from './material-type-price.util';
 
 /**
@@ -75,17 +79,53 @@ describe('paridad de costo con el cliente', () => {
           ],
         },
         settings,
+        [],
       ),
     ).toBe(153);
 
-    expect(calcPurgeCost(0, { filamentType: FilamentType.PLA }, settings)).toBe(
-      0,
-    );
     expect(
-      calcPurgeCost(null, { filamentType: FilamentType.PLA }, settings),
+      calcPurgeCost(0, { filamentType: FilamentType.PLA }, settings, []),
     ).toBe(0);
     expect(
-      calcPurgeCost(10, { filamentType: FilamentType.PLA }, settings),
+      calcPurgeCost(null, { filamentType: FilamentType.PLA }, settings, []),
+    ).toBe(0);
+    expect(
+      calcPurgeCost(10, { filamentType: FilamentType.PLA }, settings, []),
     ).toBe(200);
+  });
+
+  it('costea con el promedio de Insumos y cae a Ajustes sin precio (paridad con el cliente)', () => {
+    const settings = {
+      filamentTypeAverages: { [FilamentType.PLA]: 10036 },
+    } as unknown as GeneralSettings;
+    const supplies = [
+      {
+        category: SupplyCategory.FDM,
+        filamentType: FilamentType.PLA,
+        unit: 'kg',
+        unitPrice: 5000,
+      },
+      {
+        category: SupplyCategory.FDM,
+        filamentType: FilamentType.PLA,
+        unit: 'g',
+        unitPrice: 7,
+      },
+      {
+        category: SupplyCategory.FDM,
+        filamentType: FilamentType.PLA,
+        unit: 'kg',
+        unitPrice: 0,
+      },
+    ] as unknown as Supply[];
+
+    // (5000 + 7×1000) / 2 = 6000 $/kg → 100 g = 600
+    expect(calcFilamentCost(FilamentType.PLA, 100, settings, supplies)).toBe(
+      600,
+    );
+    // Sin insumos del tipo: respaldo de Ajustes.
+    expect(calcFilamentCost(FilamentType.PLA, 100, settings, [])).toBeCloseTo(
+      1003.6,
+    );
   });
 });

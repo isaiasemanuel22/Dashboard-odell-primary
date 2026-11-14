@@ -744,7 +744,10 @@ export class OrderFormLineComponent implements OnInit {
       this.line.filaments = undefined;
       this.line.filamentType = undefined;
       if (!this.line.resinType) {
-        this.line.resinType = defaultPricedResinTypeCode(this.generalSettings);
+        this.line.resinType = defaultPricedResinTypeCode(
+          this.generalSettings,
+          this.supplies,
+        );
       }
       this.line.washMinutes ??= 0;
       this.line.cureMinutes ??= 0;
@@ -1297,7 +1300,12 @@ export class OrderFormLineComponent implements OnInit {
     const margin = isEstampadoLine(this.line.serviceType)
       ? estampadoMargin(this.profitMargins)
       : impresion3DMargin(this.profitMargins);
-    return priceFromCostAndMargin(cost, margin);
+    // La mano de obra no lleva margen.
+    const labor = Math.round(
+      (Number(this.line.workTimeHours) || 0) *
+        (Number(this.generalSettings?.laborCostPerHour) || 0),
+    );
+    return priceFromCostAndMargin(cost, margin, labor);
   }
 
   private unitPriceAnnotation(): string {

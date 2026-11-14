@@ -6,16 +6,21 @@ import {
   OnDestroy,
   OnInit,
   inject, DestroyRef } from '@angular/core';
+import { Store } from '@ngrx/store';
+import { selectSupplies } from '../../../store/supplies/supplies.selectors';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { merge, Subject, takeUntil } from 'rxjs';
 import {
   GeneralSettings,
   INDISTINTO_COLOR_ID,
   ResinType,
+  Supply,
 } from '../../../core/models';
 import { SettingsFacade } from '../../../store/settings/settings.facade';
 import {
+  materialPriceSourceLabel,
   resinMaterialCost,
-  resolveResinPricePerLiter,
+  resolveResinMaterialPrice,
 } from '../../../shared/utils/material-type-price.util';
 import {
   buildResinTypeOptions,
@@ -54,6 +59,8 @@ export class ResinLineListComponent implements OnInit, OnDestroy {
   initialValue: ResinTableLine[] | null = null;
 
   private readonly settingsFacade = inject(SettingsFacade);
+  private readonly ngrxStore = inject(Store);
+  private supplies: Supply[] = [];
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
@@ -118,6 +125,14 @@ export class ResinLineListComponent implements OnInit, OnDestroy {
         this.cdr.markForCheck();
       });
 
+    this.ngrxStore
+      .select(selectSupplies)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((items) => {
+        this.supplies = items;
+        this.cdr.markForCheck();
+      });
+
     merge(
       this.form.controls.resinType.valueChanges,
       this.form.controls.colorId.valueChanges,
@@ -176,16 +191,14 @@ export class ResinLineListComponent implements OnInit, OnDestroy {
   private resinOptionLabel(type: string, fallback: string): string {
     if (!this.generalSettings) return fallback;
     const catalog = this.generalSettings.resinTypes ?? [];
-    const prices = this.generalSettings.resinPrices.filter(
-      (entry) => entry.resinType === type,
+    const resolved = resolveResinMaterialPrice(
+      this.generalSettings,
+      type,
+      this.supplies,
     );
-    const perLiter = resolveResinPricePerLiter(this.generalSettings, type);
     const typeLabel = resinTypeDisplayLabel(type, catalog) || fallback;
-    if (perLiter == null) return `${typeLabel} · falta precio`;
-    const price = `${this.money(perLiter)}/L`;
-    if (prices.length === 1) {
-      return `${prices[0].brand} · ${typeLabel} · ${price}`;
-    }
+    if (resolved == null) return `${typeLabel} · falta precio`;
+    const price = `${this.money(resolved.price)}/L · ${materialPriceSourceLabel(resolved.source)}`;
     return `${typeLabel} · ${price}`;
   }
 
@@ -195,6 +208,7 @@ export class ResinLineListComponent implements OnInit, OnDestroy {
       this.generalSettings,
       line.resinType,
       Number(line.grams) || 0,
+      this.supplies,
     );
   }
 

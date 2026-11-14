@@ -636,4 +636,52 @@ describe('CostCalculatorService', () => {
     // material 0.1 kg × 10000 = 1000; FDM default 120W/1000*1*100 + 150*1
     expect(cost).toBe(1000 + 12 + 150);
   });
+
+  describe('mano de obra sin margen', () => {
+    beforeEach(() => {
+      store.generalSettings.laborCostPerHour = 1000;
+      store.generalSettings.profitMargins = {
+        ...store.generalSettings.profitMargins,
+        impresion_3d: 100,
+      };
+    });
+
+    const fdm = (workTimeHours: number): ProductPricingInput => ({
+      type: ProductType.FDM,
+      grams: 100,
+      filamentType: 'pla' as never,
+      printTimeHours: 2,
+      workTimeHours,
+    });
+
+    it('con margen 100 % la mano de obra suma $1.000 al precio, no $2.000', () => {
+      const sin = service.calculateProductPricing(fdm(0));
+      const con = service.calculateProductPricing(fdm(1));
+      expect(con.cost - sin.cost).toBe(1000);
+      expect(con.price - sin.price).toBe(1000);
+      expect(con.breakdown?.laborCost).toBe(1000);
+    });
+
+    it('priceFromCostAndMargin aplica el margen solo al costo sin mano de obra', () => {
+      expect(service.priceFromCostAndMargin(3000, 100, 1000)).toBe(5000);
+      expect(service.priceFromCostAndMargin(3000, 100)).toBe(6000);
+    });
+
+    it('combo: margen sobre piezas y armado sin margen', () => {
+      store.products.push({
+        id: 'pieza',
+        name: 'Pieza',
+        type: ProductType.FDM,
+        cost: 2000,
+        price: 4000,
+      } as unknown as Product);
+      const result = service.calculateProductPricing({
+        type: ProductType.COMBO,
+        components: [{ productId: 'pieza', quantity: 1 }],
+        assemblyTimeHours: 1,
+      });
+      expect(result.cost).toBe(3000);
+      expect(result.price).toBe(5000);
+    });
+  });
 });

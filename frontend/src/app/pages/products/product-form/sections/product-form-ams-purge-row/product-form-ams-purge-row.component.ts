@@ -17,6 +17,8 @@ import {
   FilamentType,
   GeneralSettings,
 } from '../../../../../core/models';
+import { Store } from '@ngrx/store';
+import { selectSupplies } from '../../../../../store/supplies/supplies.selectors';
 import { SettingsFacade } from '../../../../../store/settings/settings.facade';
 import { averageFilamentLinesPricePerKg } from '../../../../../shared/utils/cost-material.util';
 import { normalizePurgeGrams } from '../../../../../shared/utils/fdm.helpers';
@@ -33,6 +35,8 @@ import { CurrencyArsPipe } from '../../../../../shared/pipes/labels.pipe';
 })
 export class ProductFormAmsPurgeRowComponent implements OnChanges {
   private readonly settingsFacade = inject(SettingsFacade);
+  private readonly store = inject(Store);
+  private readonly supplies = this.store.selectSignal(selectSupplies);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private settings: GeneralSettings | null = null;
@@ -82,6 +86,7 @@ export class ProductFormAmsPurgeRowComponent implements OnChanges {
       this.filaments,
       this.settings,
       this.filamentType,
+      this.supplies(),
     );
   }
 

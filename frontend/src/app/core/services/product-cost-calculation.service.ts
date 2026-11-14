@@ -111,7 +111,7 @@ export class ProductCostCalculationService {
     );
     const purgeCost =
       dto.type === ProductType.FDM
-        ? calcPurgeCost(dto.purgeGrams, dto, settings)
+        ? calcPurgeCost(dto.purgeGrams, dto, settings, supplies)
         : 0;
     const overhead = calculateMachineOverhead(
       settings,
@@ -189,7 +189,13 @@ export class ProductCostCalculationService {
     };
 
     const resinCost = Math.round(
-      this.calcResinCost(dto.brand, dto.resinType, grams, settings),
+      this.calcResinCost(
+        dto.brand,
+        dto.resinType,
+        grams,
+        settings,
+        supplies,
+      ),
     );
     const washSupplyCost = Math.round(
       calcWashSupplyCost(settings, supplies, ProductType.RESINA),
@@ -265,16 +271,27 @@ export class ProductCostCalculationService {
         return filaments.reduce(
           (sum, line) =>
             sum +
-            this.calcFilamentCost(line.filamentType, line.grams, settings),
+            this.calcFilamentCost(
+              line.filamentType,
+              line.grams,
+              settings,
+              supplies,
+            ),
           0,
         );
       }
-      return this.calcFilamentCost(dto.filamentType, grams, settings);
+      return this.calcFilamentCost(dto.filamentType, grams, settings, supplies);
     }
 
     if (dto.type === ProductType.RESINA) {
       return (
-        this.calcResinCost(dto.brand, dto.resinType, grams, settings) +
+        this.calcResinCost(
+          dto.brand,
+          dto.resinType,
+          grams,
+          settings,
+          supplies,
+        ) +
         calcWashSupplyCost(settings, supplies, dto.type)
       );
     }
@@ -337,33 +354,15 @@ export class ProductCostCalculationService {
     materialType: FilamentType | undefined,
     grams: number,
     settings: GeneralSettings,
+    supplies: Supply[],
   ): number {
-    const pricePerKg = resolveFilamentPricePerKg(settings, materialType);
+    const pricePerKg = resolveFilamentPricePerKg(
+      settings,
+      materialType,
+      supplies,
+    );
     if (pricePerKg === null) return 0;
     return (grams / 1000) * pricePerKg;
-  }
-
-  private getDefaultResinPrice(
-    settings: GeneralSettings,
-    brand: string | undefined,
-    resinType: ResinType | string | undefined,
-  ): number | null {
-    if (!resinType) return null;
-
-    const matches = settings.resinPrices.filter(
-      (entry) => entry.resinType === resinType,
-    );
-    if (!matches.length) return null;
-
-    if (brand) {
-      const exact = matches.find(
-        (entry) => entry.brand.toLowerCase() === brand.toLowerCase(),
-      );
-      if (exact) return exact.pricePerLiter;
-    }
-
-    const total = matches.reduce((sum, entry) => sum + entry.pricePerLiter, 0);
-    return total / matches.length;
   }
 
   private calcResinCost(
@@ -371,10 +370,14 @@ export class ProductCostCalculationService {
     resinType: ResinType | string | undefined,
     grams: number,
     settings: GeneralSettings,
+    supplies: Supply[],
   ): number {
-    const pricePerLiter = brand
-      ? this.getDefaultResinPrice(settings, brand, resinType)
-      : resolveResinPricePerLiter(settings, resinType);
+    const pricePerLiter = resolveResinPricePerLiter(
+      settings,
+      resinType,
+      supplies,
+      brand,
+    );
     if (pricePerLiter === null) return 0;
     // Campo `grams` del DTO = ml de resina.
     const liters = grams / 1000;

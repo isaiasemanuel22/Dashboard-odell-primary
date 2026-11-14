@@ -195,13 +195,21 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     if (type === ProductType.FDM) {
       for (const line of this.form.controls.filamentLines.value ?? []) {
         if (!(Number(line.grams) > 0) || !line.filamentType) continue;
-        const price = resolveFilamentPricePerKg(this.settings, line.filamentType);
+        const price = resolveFilamentPricePerKg(
+          this.settings,
+          line.filamentType,
+          this.supplies,
+        );
         if (!(Number(price) > 0)) items.push(`filamento ${line.filamentType}`);
       }
     } else if (type === ProductType.RESINA) {
       const resin = String(this.form.controls.resinType.value ?? '');
       if (resin && Number(this.form.controls.grams.value) > 0) {
-        const price = resolveResinPricePerLiter(this.settings, resin);
+        const price = resolveResinPricePerLiter(
+          this.settings,
+          resin,
+          this.supplies,
+        );
         if (!(Number(price) > 0)) items.push(`resina ${resin}`);
       }
     }

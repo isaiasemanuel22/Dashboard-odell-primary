@@ -3,6 +3,7 @@ import {
   ResinPriceConfig,
   ResinType,
   ResinTypeConfig,
+  Supply,
 } from '../../core/models';
 import { RESIN_TYPE_LABELS } from '../constants/labels';
 import type { DbAutocompleteOption } from '@dashboard-form/db-autocomplete/db-autocomplete.types';
@@ -107,6 +108,7 @@ export function buildResinTypeOptions(
  */
 export function defaultPricedResinTypeCode(
   settings: GeneralSettings | null | undefined,
+  supplies?: readonly Supply[],
 ): string | undefined {
   if (!settings) return undefined;
   const options = buildResinTypeOptions(
@@ -117,7 +119,7 @@ export function defaultPricedResinTypeCode(
   );
   const priced = options.find(
     (option) =>
-      resolveResinPricePerLiter(settings, String(option.value)) != null,
+      resolveResinPricePerLiter(settings, String(option.value), supplies) != null,
   );
   return priced ? String(priced.value) : undefined;
 }

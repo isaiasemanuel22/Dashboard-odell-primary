@@ -15,12 +15,16 @@ import { Subject, takeUntil } from 'rxjs';
 import {
   FdmFilamentLine,
   FilamentType,
+  Supply,
   GeneralSettings,
   INDISTINTO_COLOR_ID,
 } from '../../core/models';
 import { SettingsFacade } from '../../store/settings/settings.facade';
 import { buildFilamentTypeOptions } from '../../shared/utils/filament-type.util';
-import { resolveFilamentPricePerKg } from '../../shared/utils/material-type-price.util';
+import { Store } from '@ngrx/store';
+import { selectSupplies } from '../../store/supplies/supplies.selectors';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { resolveFilamentPricePerKg, resolveFilamentMaterialPrice, materialPriceSourceLabel } from '../../shared/utils/material-type-price.util';
 import { FILAMENT_TYPE_LABELS } from '../../shared/constants/labels';
 import {
   createEmptyFdmFilamentLine,
@@ -67,6 +71,8 @@ export class FilamentLineListComponent
   optionsEpoch = 0;
 
   private readonly settingsFacade = inject(SettingsFacade);
+  private readonly ngrxStore = inject(Store);
+  private supplies: Supply[] = [];
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
@@ -156,6 +162,15 @@ export class FilamentLineListComponent
         this.optionsEpoch++;
         this.cdr.markForCheck();
       });
+
+    this.ngrxStore
+      .select(selectSupplies)
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((items) => {
+        this.supplies = items;
+        this.optionsEpoch++;
+        this.cdr.markForCheck();
+      });
   }
 
   ngOnDestroy(): void {
@@ -219,19 +234,14 @@ export class FilamentLineListComponent
 
   private filamentOptionLabel(type: string, fallback: string): string {
     if (!this.generalSettings) return fallback;
-    const prices = this.generalSettings.filamentPrices.filter(
-      (entry) => entry.materialType === type,
-    );
-    const perKg = resolveFilamentPricePerKg(
+    const resolved = resolveFilamentMaterialPrice(
       this.generalSettings,
       type as FilamentType,
+      this.supplies,
     );
     const typeLabel = FILAMENT_TYPE_LABELS[type as FilamentType] ?? fallback;
-    if (perKg == null) return typeLabel;
-    const price = `${this.money(perKg)}/kg · precio de Ajustes`;
-    if (prices.length === 1) {
-      return `${prices[0].brand} · ${typeLabel} · ${price}`;
-    }
+    if (resolved == null) return typeLabel;
+    const price = `${this.money(resolved.price)}/kg · ${materialPriceSourceLabel(resolved.source)}`;
     return `${typeLabel} · ${price}`;
   }
 
@@ -240,6 +250,7 @@ export class FilamentLineListComponent
     const perKg = resolveFilamentPricePerKg(
       this.generalSettings,
       line.filamentType,
+      this.supplies,
     );
     if (perKg == null) return 0;
     return ((Number(line.grams) || 0) / 1000) * perKg;

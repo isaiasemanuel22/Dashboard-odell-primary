@@ -3,8 +3,11 @@ import {
   MachineProfileRole,
   ProductType,
 } from '../../core/models';
-import { GeneralSettings } from '../../core/models';
-import { averageFilamentPriceByType } from './material-type-price.util';
+import { GeneralSettings, Supply, SupplyCategory } from '../../core/models';
+import {
+  averageFilamentPriceByType,
+  resolveFilamentMaterialPrice,
+} from './material-type-price.util';
 import { calculateErrorMarginCost } from './pricing.util';
 import { calcPurgeCost } from './cost-material.util';
 import {
@@ -38,6 +41,24 @@ describe('paridad de costo con el API', () => {
     expect(calculateErrorMarginCost(100, 20, 30, 150)).toBe(150);
     expect(calculateErrorMarginCost(10, 0, 0, 33)).toBe(3);
     expect(calculateErrorMarginCost(100, 20, 30, 10, 50)).toBe(20);
+  });
+
+  it('costea con el promedio de Insumos y cae a Ajustes sin precio', () => {
+    const settings = {
+      filamentTypeAverages: { [FilamentType.PLA]: 10036 },
+    } as unknown as GeneralSettings;
+    const supplies = [
+      { category: SupplyCategory.FDM, filamentType: FilamentType.PLA, unit: 'kg', unitPrice: 5000 },
+      { category: SupplyCategory.FDM, filamentType: FilamentType.PLA, unit: 'g', unitPrice: 7 },
+      { category: SupplyCategory.FDM, filamentType: FilamentType.PLA, unit: 'kg', unitPrice: 0 },
+    ] as unknown as Supply[];
+
+    expect(
+      resolveFilamentMaterialPrice(settings, FilamentType.PLA, supplies),
+    ).toEqual({ price: 6000, source: 'supplies' });
+    expect(
+      resolveFilamentMaterialPrice(settings, FilamentType.PLA, []),
+    ).toEqual({ price: 10036, source: 'settings' });
   });
 
   it('calcula purga AMS con promedio simple de precios por fila', () => {

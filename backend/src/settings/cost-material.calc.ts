@@ -11,8 +11,8 @@ import {
 } from '../common/interfaces';
 import { calcWashSupplyCost } from './machine-profile.util';
 import {
-  resolveFilamentPricePerKg,
-  resolveResinPricePerLiter,
+  resolveFilamentMaterialPrice,
+  resolveResinMaterialPrice,
 } from './material-type-price.util';
 import { resolveFdmFilaments } from '../products/fdm-product.util';
 
@@ -21,10 +21,6 @@ export function calculateMaterialCost(
   settings: GeneralSettings,
   supplies: Supply[],
   calcEstampadoMaterialCost: (dto: CalculateCostDto) => number,
-  brandedResinPricePerLiter: (
-    brand: string,
-    resinType: ResinType | string | undefined,
-  ) => number | null,
 ): number {
   const grams = Number(dto.grams) || 0;
 
@@ -33,21 +29,17 @@ export function calculateMaterialCost(
     if (filaments.length) {
       return filaments.reduce(
         (sum, line) =>
-          sum + calcFilamentCost(line.filamentType, line.grams, settings),
+          sum +
+          calcFilamentCost(line.filamentType, line.grams, settings, supplies),
         0,
       );
     }
-    return calcFilamentCost(dto.filamentType, grams, settings);
+    return calcFilamentCost(dto.filamentType, grams, settings, supplies);
   }
   if (dto.type === ProductType.RESINA) {
     return (
-      calcResinCost(
-        dto.brand,
-        dto.resinType,
-        grams,
-        settings,
-        brandedResinPricePerLiter,
-      ) + calcWashSupplyCost(settings, supplies, dto.type)
+      calcResinCost(dto.brand, dto.resinType, grams, settings, supplies) +
+      calcWashSupplyCost(settings, supplies, dto.type)
     );
   }
   if (dto.type === ProductType.ESTAMPADO) {
@@ -60,10 +52,15 @@ export function calcFilamentCost(
   materialType: FilamentType | undefined,
   grams: number,
   settings: GeneralSettings,
+  supplies: Supply[],
 ): number {
-  const pricePerKg = resolveFilamentPricePerKg(settings, materialType);
-  if (pricePerKg === null) return 0;
-  return (grams / 1000) * pricePerKg;
+  const resolved = resolveFilamentMaterialPrice(
+    settings,
+    supplies,
+    materialType,
+  );
+  if (resolved === null) return 0;
+  return (grams / 1000) * resolved.price;
 }
 
 /**
@@ -73,16 +70,24 @@ export function calcFilamentCost(
 export function averageFdmFilamentPricePerKg(
   dto: Pick<CalculateCostDto, 'filaments' | 'filamentType' | 'grams' | 'brand'>,
   settings: GeneralSettings,
+  supplies: Supply[],
 ): number | null {
   const filaments = resolveFdmFilaments(dto);
   if (filaments.length) {
     const prices = filaments
-      .map((line) => resolveFilamentPricePerKg(settings, line.filamentType))
+      .map(
+        (line) =>
+          resolveFilamentMaterialPrice(settings, supplies, line.filamentType)
+            ?.price ?? null,
+      )
       .filter((price): price is number => price !== null);
     if (!prices.length) return null;
     return prices.reduce((sum, price) => sum + price, 0) / prices.length;
   }
-  return resolveFilamentPricePerKg(settings, dto.filamentType);
+  return (
+    resolveFilamentMaterialPrice(settings, supplies, dto.filamentType)?.price ??
+    null
+  );
 }
 
 /**
@@ -93,10 +98,11 @@ export function calcPurgeCost(
   purgeGrams: number | null | undefined,
   dto: Pick<CalculateCostDto, 'filaments' | 'filamentType' | 'grams' | 'brand'>,
   settings: GeneralSettings,
+  supplies: Supply[],
 ): number {
   const grams = Math.max(0, Number(purgeGrams) || 0);
   if (grams <= 0) return 0;
-  const pricePerKg = averageFdmFilamentPricePerKg(dto, settings);
+  const pricePerKg = averageFdmFilamentPricePerKg(dto, settings, supplies);
   if (pricePerKg === null) return 0;
   return (grams / 1000) * pricePerKg;
 }
@@ -106,18 +112,18 @@ export function calcResinCost(
   resinType: ResinType | string | undefined,
   grams: number,
   settings: GeneralSettings,
-  brandedPricePerLiter: (
-    brand: string,
-    resinType: ResinType | string | undefined,
-  ) => number | null,
+  supplies: Supply[],
 ): number {
-  const pricePerLiter = brand
-    ? brandedPricePerLiter(brand, resinType)
-    : resolveResinPricePerLiter(settings, resinType);
-  if (pricePerLiter === null) return 0;
+  const resolved = resolveResinMaterialPrice(
+    settings,
+    supplies,
+    resinType,
+    brand,
+  );
+  if (resolved === null) return 0;
   // Campo grams del DTO = ml de resina.
   const liters = grams / 1000;
-  return liters * pricePerLiter;
+  return liters * resolved.price;
 }
 
 export function paperPricePerSqm(

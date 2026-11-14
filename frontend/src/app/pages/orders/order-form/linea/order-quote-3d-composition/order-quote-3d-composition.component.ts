@@ -146,7 +146,10 @@ export class OrderQuote3dCompositionComponent implements OnInit {
       this.line.filaments = undefined;
       this.line.filamentType = undefined;
       if (!this.line.resinType) {
-        this.line.resinType = defaultPricedResinTypeCode(this.generalSettings);
+        this.line.resinType = defaultPricedResinTypeCode(
+          this.generalSettings,
+          this.supplies,
+        );
       }
       this.line.washMinutes ??= 0;
       this.line.cureMinutes ??= 0;

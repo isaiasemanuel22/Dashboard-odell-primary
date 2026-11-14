@@ -11,7 +11,7 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { catchError, map, of, switchMap } from 'rxjs';
+import { EMPTY, catchError, map, of, startWith, switchMap } from 'rxjs';
 import {
   Category,
   ColorConfig,
@@ -91,6 +91,8 @@ import {
   PRODUCT_TYPE_LABELS,
   RESIN_TYPE_LABELS,
 } from '../../../shared/constants/labels';
+import { Store } from '@ngrx/store';
+import { selectSupplies } from '../../../store/supplies/supplies.selectors';
 import { resolveFilamentPricePerKg, resolveResinPricePerLiter } from '../../../shared/utils/material-type-price.util';
 import { formatCurrencyArs } from '../../../shared/utils/currency-ars.util';
 import { resolveFdmFilaments } from '../../../shared/utils/fdm.helpers';
@@ -143,6 +145,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   private readonly mediaUpload = inject(MediaUploadService);
   private readonly settingsService = inject(SettingsService);
   private readonly costCalculation = inject(ProductCostCalculationService);
+  private readonly ngrxStore = inject(Store);
+  private readonly suppliesSignal = this.ngrxStore.selectSignal(selectSupplies);
   private readonly saleCart = inject(SaleCartService);
   product: Product | null = null;
   colorCatalog: ColorConfig[] = [];
@@ -331,6 +335,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
           const pricePerKg = resolveFilamentPricePerKg(
             settings,
             line.filamentType,
+            this.suppliesSignal(),
           );
           const amount =
             pricePerKg == null
@@ -350,6 +355,8 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
           const pricePerL = resolveResinPricePerLiter(
             settings,
             printed.resinType,
+            this.suppliesSignal(),
+            printed.brand,
           );
           const amount =
             pricePerL == null
@@ -367,6 +374,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
           const pricePerKg = resolveFilamentPricePerKg(
             settings,
             printed.filamentType,
+            this.suppliesSignal(),
           );
           const amount =
             pricePerKg == null
@@ -692,13 +700,28 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.notFound = false;
     this.cdr.markForCheck();
 
-    return this.productsService.getProductOverview(id).pipe(
-      map(({ product, categories, catalogProducts, stock }) => ({
-        product,
-        categories,
-        catalog: catalogProducts,
-        stock,
-      })),
+    // Primer pintado con solo el producto (GET /products/:id); el resto
+    // (categorías, catálogo completo y stock) llega después con /overview.
+    return this.productsService.getProduct(id).pipe(
+      switchMap((product) => {
+        const partial = {
+          product,
+          categories: this.categories,
+          catalog: this.catalogProducts,
+          stock: this.stock,
+        };
+        return this.productsService.getProductOverview(id).pipe(
+          map(({ product: full, categories, catalogProducts, stock }) => ({
+            product: full,
+            categories,
+            catalog: catalogProducts,
+            stock,
+          })),
+          catchError(() => of(null)),
+          switchMap((full) => (full ? of(full) : EMPTY)),
+          startWith(partial),
+        );
+      }),
       catchError((err) => {
         this.loading = false;
         this.notFound = err.status === 404;

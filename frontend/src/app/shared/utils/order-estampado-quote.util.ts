@@ -163,7 +163,11 @@ export function syncEstampadoQuotePricing(
   const preserve = options?.preservePrice || !!line.unitPriceManual;
   if (!preserve) {
     line.unitPrice =
-      priceFromCostAndMargin(processCost, marginPercent) + supplyValue;
+      priceFromCostAndMargin(
+        processCost,
+        marginPercent,
+        breakdown.laborCost,
+      ) + supplyValue;
   }
 }
 

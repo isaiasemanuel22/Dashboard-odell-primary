@@ -49,10 +49,11 @@ export class ProductPricingService {
     cost: number,
     catalog: Product[],
     settings: GeneralSettings,
+    laborCost = 0,
   ): ProductPricingResult {
     const margins = normalizeProfitMargins(settings.profitMargins);
     const margin = getMarginForProductType(input.type, margins);
-    const price = resolveProductPrice(input, cost, margins);
+    const price = resolveProductPrice(input, cost, margins, laborCost);
 
     return {
       cost,
@@ -100,8 +101,9 @@ export class ProductPricingService {
 
   /**
    * Precio único: el margen se aplica solo al costo de proceso y el valor de
-   * los insumos de catálogo se suma aparte, sin margen. `cost` del resultado
-   * incluye los insumos.
+   * los insumos de catálogo se suma aparte, sin margen. La mano de obra
+   * (`laborCost`, parte de `processCost`) tampoco lleva margen. `cost` del
+   * resultado incluye los insumos.
    */
   priceWithSupplies(
     input: Pick<
@@ -112,8 +114,15 @@ export class ProductPricingService {
     supplyValue: number,
     catalog: Product[],
     settings: GeneralSettings,
+    laborCost = 0,
   ): ProductPricingResult {
-    const result = this.applyMarginToCost(input, processCost, catalog, settings);
+    const result = this.applyMarginToCost(
+      input,
+      processCost,
+      catalog,
+      settings,
+      laborCost,
+    );
     const hasComponents = (input.components ?? []).length > 0;
     const suggested =
       input.suggestedPrice != null && Number(input.suggestedPrice) > 0;
@@ -141,7 +150,14 @@ export class ProductPricingService {
     supplyValue = 0,
   ): ProductPricingResult {
     return {
-      ...this.priceWithSupplies(input, cost, supplyValue, catalog, settings),
+      ...this.priceWithSupplies(
+        input,
+        cost,
+        supplyValue,
+        catalog,
+        settings,
+        breakdown?.laborCost ?? 0,
+      ),
       breakdown,
     };
   }

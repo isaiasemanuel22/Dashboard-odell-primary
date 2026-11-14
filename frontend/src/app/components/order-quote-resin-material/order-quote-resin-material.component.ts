@@ -27,7 +27,10 @@ import { DbInputComponent } from '../dashboard-form/db-input/db-input.component'
 import { DbSelectComponent } from '../dashboard-form/db-select/db-select.component';
 import { DbSelectOption } from '../dashboard-form/db-select/db-select.types';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
-import { resolveResinPricePerLiter } from '../../shared/utils/material-type-price.util';
+import {
+  materialPriceSourceLabel,
+  resolveResinMaterialPrice,
+} from '../../shared/utils/material-type-price.util';
 import { isResinQuoteLine } from '../../shared/utils/order-fdm-quote.util';
 import {
   buildResinTypeOptions,
@@ -172,8 +175,12 @@ export class OrderQuoteResinMaterialComponent implements OnInit {
     if (!this.generalSettings) return fallback;
     const catalog = this.generalSettings.resinTypes ?? [];
     const typeLabel = resinTypeDisplayLabel(type, catalog) || fallback;
-    const perLiter = resolveResinPricePerLiter(this.generalSettings, type);
-    if (perLiter == null) return `${typeLabel} · falta precio`;
-    return `${typeLabel} · ${formatOrderQuoteMoney(perLiter)}/L`;
+    const resolved = resolveResinMaterialPrice(
+      this.generalSettings,
+      type,
+      this.supplies,
+    );
+    if (resolved == null) return `${typeLabel} · falta precio`;
+    return `${typeLabel} · ${formatOrderQuoteMoney(resolved.price)}/L · ${materialPriceSourceLabel(resolved.source)}`;
   }
 }

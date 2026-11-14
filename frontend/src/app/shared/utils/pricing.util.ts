@@ -103,15 +103,21 @@ export function marginLabelForProductType(type: ProductType): string {
   }
 }
 
-/** Precio = costo × (1 + markup%/100). El % es ganancia sobre costo. */
+/**
+ * Precio = (costo sin mano de obra) × (1 + markup%/100) + mano de obra.
+ * `cost` es el costo total (incluye `laborCost`); la mano de obra no lleva margen.
+ * El % es ganancia sobre costo.
+ */
 export function priceFromCostAndMargin(
   cost: number,
   marginPercent: number,
+  laborCost = 0,
 ): number {
   const markup = Math.min(Math.max(Number(marginPercent) || 0, 0), 999);
   if (cost <= 0) return 0;
   if (markup === 0) return Math.round(cost);
-  return Math.round(cost * (1 + markup / 100));
+  const labor = Math.min(Math.max(Number(laborCost) || 0, 0), cost);
+  return Math.round((cost - labor) * (1 + markup / 100) + labor);
 }
 
 export function totalCostFromBreakdown(breakdown: {
@@ -176,6 +182,7 @@ export function resolveProductPrice(
   },
   cost: number,
   margins: ServiceProfitMargins,
+  laborCost = 0,
 ): number {
   if (
     input.suggestedPrice != null &&
@@ -186,7 +193,7 @@ export function resolveProductPrice(
 
   const margin = getMarginForProductType(input.type, margins);
   if (cost > 0) {
-    return priceFromCostAndMargin(cost, margin);
+    return priceFromCostAndMargin(cost, margin, laborCost);
   }
 
   return Number(input.price) || 0;

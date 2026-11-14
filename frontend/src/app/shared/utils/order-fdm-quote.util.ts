@@ -225,7 +225,7 @@ export function syncFdmQuotePricing(
     ? undefined
     : (line.filaments ?? []).map((row) => ({ ...row, brand: undefined }));
 
-  const processCost = processReady
+  const processBreakdown = processReady
     ? costCalculator.calculateCost(
         {
           type,
@@ -242,8 +242,10 @@ export function syncFdmQuotePricing(
           cureMinutes: options?.cureMinutes,
         },
         { settings, supplies: options?.supplies },
-      ).totalCost
-    : 0;
+      )
+    : null;
+  const processCost = processBreakdown?.totalCost ?? 0;
+  const laborCost = processBreakdown?.laborCost ?? 0;
 
   if (line.productId?.trim()) {
     return;
@@ -263,7 +265,8 @@ export function syncFdmQuotePricing(
   const preserve = options?.preservePrice || !!line.unitPriceManual;
   if (!preserve) {
     line.unitPrice =
-      priceFromCostAndMargin(processCost, marginPercent) + supplyValue;
+      priceFromCostAndMargin(processCost, marginPercent, laborCost) +
+      supplyValue;
   }
 }
 

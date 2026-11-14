@@ -445,3 +445,19 @@ describe('QuotesService costo cargado en servicios de terceros', () => {
     expect(order.items[0].unitCost).toBe(300);
   });
 });
+
+describe('QuoteRepository.nextId', () => {
+  it('un presupuesto nuevo usa quo- y no choca con ids qte- ni quo- existentes', () => {
+    const store = new StoreService();
+    const state = createEmptyState();
+    state.quotes.push(
+      { id: 'qte-5' } as never,
+      { id: 'quo-3' } as never,
+      { id: 'qte-9' } as never,
+    );
+    store.applyState(state);
+    const id = new QuoteRepository(store).nextId();
+    expect(id).toBe('quo-10');
+    expect(id.startsWith('quo-')).toBe(true);
+  });
+});

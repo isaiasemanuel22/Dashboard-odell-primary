@@ -197,8 +197,11 @@ export class ProductFormPricingService {
       const assemblyCost = Math.max(0, Number(this.cost) || 0);
       if (assemblyCost > 0) {
         return (
-          priceFromCostAndMargin(assemblyCost, this.configuredProfitMargin) +
-          supplyValue
+          priceFromCostAndMargin(
+            assemblyCost,
+            this.configuredProfitMargin,
+            this.costBreakdown?.laborCost,
+          ) + supplyValue
         );
       }
       return supplyValue;
@@ -210,7 +213,11 @@ export class ProductFormPricingService {
 
     const costValue = this.effectiveCost;
     if (costValue > 0 && this.profitMargins) {
-      return priceFromCostAndMargin(costValue, this.configuredProfitMargin);
+      return priceFromCostAndMargin(
+        costValue,
+        this.configuredProfitMargin,
+        this.costBreakdown?.laborCost,
+      );
     }
     return costValue;
   }
@@ -238,9 +245,13 @@ export class ProductFormPricingService {
     );
   }
 
-  private assemblyPrice(totalCost: number): number | null {
+  private assemblyPrice(totalCost: number, laborCost = 0): number | null {
     return totalCost > 0
-      ? priceFromCostAndMargin(totalCost, this.configuredProfitMargin)
+      ? priceFromCostAndMargin(
+          totalCost,
+          this.configuredProfitMargin,
+          laborCost,
+        )
       : null;
   }
 
@@ -266,7 +277,7 @@ export class ProductFormPricingService {
         : 0;
 
     this.cost = partsCost + laborCost;
-    this.computedPrice = this.assemblyPrice(this.cost);
+    this.computedPrice = this.assemblyPrice(this.cost, laborCost);
     this.costBreakdown = {
       materialCost: partsCost,
       energyCost: 0,
@@ -491,6 +502,7 @@ export class ProductFormPricingService {
                     this.cost,
                     result.configuredMarginPercent ??
                       this.configuredProfitMargin,
+                    result.breakdown?.laborCost,
                   )
                 : result.price > 0
                   ? result.price
@@ -512,6 +524,7 @@ export class ProductFormPricingService {
                         resolvedCost,
                         result.configuredMarginPercent ??
                           this.configuredProfitMargin,
+                        result.breakdown?.laborCost,
                       )
                     : 0;
               if (priceFollowsCost && this.computedPrice != null) {
@@ -571,7 +584,7 @@ export class ProductFormPricingService {
           ? Math.round(assemblyHours * settings.laborCostPerHour)
           : 0;
       this.cost = partsCost + laborCost;
-      this.computedPrice = this.assemblyPrice(this.cost);
+      this.computedPrice = this.assemblyPrice(this.cost, laborCost);
       this.costBreakdown = {
         materialCost: partsCost,
         energyCost: 0,
@@ -598,6 +611,7 @@ export class ProductFormPricingService {
       supplyValue,
       this.context.catalogProducts,
       settings,
+      this.costBreakdown?.laborCost ?? 0,
     );
     this.cost = costValue;
     this.computedPrice = result.price;

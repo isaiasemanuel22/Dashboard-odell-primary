@@ -267,9 +267,18 @@ tareas; los demás ítems del pedido continúan.
 Reglas confirmadas para crear o editar un presupuesto (y la misma lógica de
 línea cuando el pedido cotiza impresión 3D):
 
-- **Filamento (FDM).** El costo de material se cotiza con el **promedio del
-  tipo** configurado en Ajustes (o el promedio de precios de ese tipo). No se
-  usa el precio por marca del producto ni de la línea de filamento.
+- **Filamento (FDM).** El costo de material se cotiza con el **promedio de
+  los insumos de ese tipo cargados en Insumos** ($/kg: el `unitPrice` de cada
+  rollo, normalizado de g a kg, solo con precio > 0). No se usa el precio por
+  marca del producto ni de la línea de filamento. Si no hay ningún insumo con
+  precio de ese tipo, se usa como **respaldo** el valor de Ajustes (promedio
+  del tipo o de la lista de precios), y la interfaz lo dice («de Ajustes (no
+  hay precio en Insumos)»). La resina sigue la misma regla en $/L (ml a L);
+  con marca se promedian los insumos de esa marca si existen, y si no, los
+  del tipo. Esta fuente rige para producto, presupuesto, pedido, purga AMS,
+  fallas y recálculo masivo. Cambiar precios en Insumos solo cambia el costo:
+  el precio de venta guardado cambia únicamente con «Actualizar precios», y
+  el producto puede quedar marcado como «precio bajo el margen».
 - **Resina.** Se cotiza con su propia composición de costo (resina, impresora
   de resina, lavado/curado/alcohol según Ajustes). No se costea como FDM. El
   alcohol sale del **insumo vinculado a la máquina de lavado** en Ajustes →
@@ -1029,6 +1038,24 @@ descuento.
 No debe asumirse que el pedido necesita recalcular desde cero la estructura
 de costos del producto para obtener estos valores: la información comercial
 del producto ya contiene precio, costo y ganancia.
+
+### 16.1.1 Precio calculado y mano de obra sin margen
+
+La mano de obra (horas de trabajo y armado de combos) **no lleva margen**.
+El margen objetivo se aplica solo al costo sin mano de obra y la mano de obra
+se suma tal cual:
+
+```text
+precio calculado = (costo sin mano de obra) × (1 + margen) + mano de obra
+```
+
+El costo total sigue incluyendo la mano de obra (para costo, ganancia y margen
+real). Vale para FDM, resina, estampado y combos (margen sobre piezas y otros
+costos; el armado se suma sin margen). Los insumos de catálogo también se
+suman sin margen. Ejemplo: con margen 100 % y mano de obra $1.000, la mano de
+obra suma $1.000 al precio, no $2.000. Las líneas de Diseño y Modelado tienen
+tarifa y margen propios y no cambian. Los precios guardados no cambian hasta
+usar «Actualizar precios».
 
 ### 16.2 Precio de servicios
 

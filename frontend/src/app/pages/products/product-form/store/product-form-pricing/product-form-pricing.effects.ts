@@ -59,6 +59,7 @@ export class ProductFormPricingEffects {
           componentsPrice: state.componentsPrice,
           catalogPrice: state.catalogPrice,
           supplyValue: state.contributions['supplies'],
+          laborCost: state.costBreakdown?.laborCost,
         });
 
         return ProductFormPricingActions.setPricingResult({
