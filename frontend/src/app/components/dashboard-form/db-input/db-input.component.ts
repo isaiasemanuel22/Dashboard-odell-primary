@@ -56,6 +56,8 @@ export class DbInputComponent implements ControlValueAccessor, OnChanges {
     return this.id || this.autoId;
   }
   value: string | number = '';
+  private modelValue: string | number = '';
+  private focused = false;
   private onChange: (value: string | number) => void = () => {};
   private onTouched: () => void = () => {};
 
@@ -70,7 +72,11 @@ export class DbInputComponent implements ControlValueAccessor, OnChanges {
   }
 
   writeValue(value: string | number | null): void {
-    this.value = value ?? '';
+    this.modelValue = value ?? '';
+    // Mientras se escribe un número, el campo muestra lo tipeado (vacío, 0 o
+    // un valor fuera de rango); el valor del modelo se muestra al salir.
+    if (this.type === 'number' && this.focused) return;
+    this.value = this.modelValue;
   }
 
   registerOnChange(fn: (value: string | number) => void): void {
@@ -85,39 +91,41 @@ export class DbInputComponent implements ControlValueAccessor, OnChanges {
     this.disabled = isDisabled;
   }
 
+  onFocus(): void {
+    this.focused = true;
+  }
+
   onInput(value: string | number): void {
+    this.value = value;
     if (this.type !== 'number' || value === '') {
-      this.value = value;
-      this.onChange(this.value);
+      this.emit(value);
       return;
     }
 
-    let num = Number(value);
-    if (!Number.isFinite(num)) {
-      this.value = value;
-      this.onChange(this.value);
-      return;
-    }
+    const num = Number(value);
+    // El modelo recibe el valor dentro de min/max, pero el campo no se
+    // corrige mientras se escribe: así se puede borrar o pasar por 0.
+    this.emit(Number.isFinite(num) ? this.clampNumber(num) : value);
+  }
 
-    const clamped = this.clampNumber(num);
-    const wasClamped = clamped !== num;
-    this.value = clamped;
-    this.onChange(this.value);
-    // Si el modelo del padre no cambia (p. ej. ya era 0 y se tipó −5),
-    // Angular no llama writeValue; sincronizar el DOM al valor clampeado.
-    if (wasClamped) {
-      this.syncNativeNumber(clamped);
-    }
+  /**
+   * Los formularios reactivos no llaman a writeValue con lo que viene de la
+   * vista: se guarda acá lo emitido para mostrarlo al salir del campo.
+   */
+  private emit(value: string | number): void {
+    this.modelValue = value;
+    this.onChange(value);
   }
 
   onBlur(): void {
-    if (this.type === 'number' && this.value !== '' && Number.isFinite(Number(this.value))) {
-      const clamped = this.clampNumber(Number(this.value));
-      if (clamped !== Number(this.value)) {
-        this.value = clamped;
-        this.onChange(this.value);
-        this.syncNativeNumber(clamped);
+    this.focused = false;
+    if (this.type === 'number') {
+      const typed = this.value;
+      if (typed !== '' && Number.isFinite(Number(typed))) {
+        const clamped = this.clampNumber(Number(typed));
+        if (clamped !== Number(typed)) this.emit(clamped);
       }
+      this.syncNativeToModel();
     }
     this.onTouched();
   }
@@ -133,17 +141,18 @@ export class DbInputComponent implements ControlValueAccessor, OnChanges {
     return next;
   }
 
-  private syncNativeNumber(num: number): void {
+  /** Al salir del campo, muestra el valor que quedó en el modelo. */
+  private syncNativeToModel(): void {
     void Promise.resolve().then(() => {
+      if (this.focused) return;
+      const next = this.modelValue;
+      this.value = next;
       const input = this.host.nativeElement.querySelector(
         'input',
       ) as HTMLInputElement | null;
-      if (!input) return;
-      const shown = input.value === '' ? NaN : Number(input.value);
-      if (shown !== num) {
-        input.value = String(num);
+      if (input && input.value !== String(next)) {
+        input.value = String(next);
       }
-      this.value = num;
     });
   }
 }

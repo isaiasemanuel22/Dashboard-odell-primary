@@ -16,6 +16,13 @@ Pendiente: …
 
 ---
 
+## 2026-11-15 · Campos numéricos, margen y precio fijo de Estampado (E124–E126)
+Rama: feat/apk-twa · Commits: sin commit
+Hecho: db-input (type number) ya no corrige el valor mientras se escribe: deja vaciar y pasar por 0, el modelo recibe el valor dentro de mín/máx y al salir del campo se muestra el valor del modelo. Probado en editar producto (medida 0,5 y cantidad vacía); 88 tests ok. E124 anotado: el precio $6.610 cumple §16.1.1 y §16.3 (insumos ×1,5 sin margen del área); el texto «30 % sobre impresos, insumos y plancha» está mal (no incluye insumos).
+Decisiones: ninguna; E124 espera que Isaías elija entre aclarar la pantalla o aplicar el margen del área a los insumos.
+Pendiente: inputs numéricos nativos fuera de db-input; corregir el texto del margen de error; commit y deploy.
+Agregado (grabaciones de Isaías): db-input guarda lo emitido para formularios reactivos (E125). E126: el precio fijo de Estampado perdía los insumos al editar (backend `products.service.ts`); probado en local, 488 tests backend y 88 frontend ok. Requiere deploy de backend.
+
 ## 2026-11-15 · Publicación de la APK (TWA)
 Rama: feat/apk-twa → main · Commits: d44835e
 Hecho: push a main; Netlify sirve assetlinks.json (application/json), manifest e íconos. La API de Digital Asset Links de Google confirma el vínculo com.odell.dashboard + huella de la firma. Heroku sin cambios.

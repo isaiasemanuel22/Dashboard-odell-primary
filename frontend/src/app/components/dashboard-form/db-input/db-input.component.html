@@ -26,6 +26,7 @@
       [ngModel]="value"
       [ngModelOptions]="{ standalone: true }"
       (ngModelChange)="onInput($event)"
+      (focus)="onFocus()"
       (blur)="onBlur()"
     />
   </db-form-field>
@@ -51,6 +52,7 @@
     [ngModel]="value"
     [ngModelOptions]="{ standalone: true }"
     (ngModelChange)="onInput($event)"
-    (blur)="onBlur()"
+    (focus)="onFocus()"
+      (blur)="onBlur()"
   />
 }

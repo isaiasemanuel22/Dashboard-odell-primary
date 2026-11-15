@@ -500,6 +500,13 @@ export class ProductsService {
                 : 'pressCycles' in data && data.pressCycles !== undefined
                   ? data.pressCycles
                   : (existing as ProductEstampado).pressCycles,
+            supplies:
+              'estampadoSupplies' in data &&
+              data.estampadoSupplies !== undefined
+                ? data.estampadoSupplies
+                : 'supplies' in data && data.supplies !== undefined
+                  ? data.supplies
+                  : (existing as ProductEstampado).supplies,
           }),
     } as CreateProductDto;
     this.validateProductData(mergedForValidation, true, id, data);
