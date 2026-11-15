@@ -16,6 +16,30 @@ Pendiente: …
 
 ---
 
+## 2026-11-15 · Duplicar, insumos del combo, servicio de tercero y avisos de faltantes
+Rama: feat/apk-twa → main · Commits: bb92539
+Hecho: todo lo de «Duplicar al instante» y «No publicados» más: combo con insumos propios (costo + valor, lista + valor ×1,5; duplicar los copia); servicio de tercero con costo (toma el precio al cargarlo, se edita aparte, puede ir a $0; cuenta en costo total y pérdida, panel/diálogo/backend iguales); resumen rojo «Falta: …» tocable en producto, pedido, presupuesto y venta (E127); concepto obligatorio en líneas manuales; correcciones E128–E131, «0» que quedaba «05», bucle infinito al abrir «Nuevo producto» (getter con arreglo nuevo por ciclo en `[ngModel]`); E124. 4 rondas del tester; Karma 114, jest 491.
+Decisiones: Isaías: alcohol de resina sigue como material; combos con insumos propios; servicio de tercero precio libre vs costo; categoría obligatoria con botón deshabilitado y aviso visible; combos sí cuentan en «Bajo margen»; concepto obligatorio en línea manual. Supuesta: copia sin publicar y stock 0.
+Pendiente: E132 (estampado sin costo una vez, sin reproducir); Modelado con costo fijo sin probar en esta tanda; el buscador de piezas no se limpia al agregar una.
+
+## 2026-11-15 · Duplicar al instante y filtro «No publicados»
+Rama: feat/apk-twa · Commits: sin commit
+Hecho: «Duplicar» ya no abre el formulario: crea la copia en el momento (`ProductsService.duplicateProduct`, payload armado desde el producto guardado con los campos del DTO), muestra «Copia creada: …» y lleva al detalle de la copia; guard contra doble clic. Nombre «(copia)», «(copia 2)»… sin repetir; stock 0, sin publicar. Se quitó el modo duplicar del diálogo. En Productos el chip «Internos» pasa a «No publicados» y, con texto en la búsqueda, «Todos» también muestra los no publicados. Probado por el tester en escritorio y mobile: combo, FDM con 1 y 2 filamentos, Estampado con precio fijo, (copia 2), editar la copia; mismo costo y precio que el original.
+Decisiones: Isaías pidió que la copia se cree al instante y poder encontrar los no publicados con filtro o búsqueda.
+Pendiente: commit y deploy (solo frontend). Sin probar con imagen real ni insumos adicionales. Detalles menores: el contador del chip «Precio fijo» incluye no publicados; en el menú de la tarjeta el primer clic a veces parece no hacer nada.
+
+## 2026-11-15 · Duplicar producto
+Rama: feat/apk-twa · Commits: sin commit
+Hecho: botón «Duplicar» en la tarjeta del listado, en el detalle (escritorio y «Más acciones» en mobile). Abre el diálogo «Duplicar producto» precargado con todo el original (piezas, insumos, filamentos, estampado, precio fijo, descuento, imágenes y .3mf por la misma URL) y se crea recién con «Crear copia». La copia queda con nombre «X (copia)» / «(copia 2)»…, stock 0 y sin publicar. Solo frontend, usa el POST de creación; helper `buildProductDuplicate` con spec. El payload ya no fuerza `published = true` en combos (editar un combo conserva su valor). Probado por el tester: combo, FDM, Estampado con precio fijo, cancelar, clics repetidos y mobile.
+Decisiones: supuestas (Claude): copia sin publicar, stock 0, imágenes compartidas por URL (borrar un producto no borra archivos de Storage).
+Pendiente: commit y deploy (solo frontend). Sin probar con un producto con imagen ni con insumos adicionales.
+
+## 2026-11-15 · Panel de precio: cómo se arma el calculado (E124)
+Rama: feat/apk-twa · Commits: sin commit
+Hecho: en Editar producto (modo Calculado, con insumos, no combos) el panel muestra costo sin insumos ni mano de obra + margen del área, insumos + 50 % y mano de obra sin margen, hasta el precio calculado; «Margen real» con aviso si queda bajo el objetivo por los insumos. Texto del margen de error de Estampado en pedidos: «sobre impresos y plancha (sin insumos)». 88 tests ok.
+Decisiones: Isaías eligió aclarar la pantalla; la regla §16.3 (insumos ×1,5) no cambia.
+Pendiente: commit y deploy (solo frontend).
+
 ## 2026-11-15 · Todos los campos numéricos editables igual (E125)
 Rama: feat/apk-twa → main · Commits: 5d96eda
 Hecho: directiva `dbKeepTyping` para `<input>` nativos con `[ngModel]` (muestra lo tipeado con foco, el valor final al salir) aplicada en seña, costo/precio de línea, márgenes, Ajustes, carrito y piezas. Precio unitario del producto: se puede vaciar; vacío al salir = precio calculado. Probado en Ganancias y producto; 88 tests ok.
