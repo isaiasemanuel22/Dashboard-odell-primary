@@ -29,7 +29,6 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `DEFAULT_PROFIT_MARGINS` (rama propia) y separar la app en módulo base +
   módulos opcionales (ver ODELL.md «Rumbo»).
 - Decidir si `odell-qa-visual` pasa a sonnet (hoy hereda Opus).
-- Commitear `CLAUDE.md` y `docs/contexto/` (2026-11-14).
 
 ## Por definir (preguntar a Isaías antes de tocar)
 - ¿Un presupuesto borrador sin líneas puede pasar a Rechazado/Cancelado? Hoy sí.
