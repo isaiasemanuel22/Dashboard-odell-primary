@@ -3,19 +3,19 @@
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
 ## Producción
-- GitHub `main` = Heroku = `623efaf` (arreglos mobile), deployado el
-  2026-11-14 (Heroku v41, health ok). Netlify publica el frontend solo al
-  pushear `main`.
+- GitHub `main` = Heroku = `73efc45` (insumos +50 %, mínimo mayorista, venta a
+  pérdida con motivo), deployado el 2026-11-15 (Heroku v42, `db:push:heroku`
+  hecho, health ok). Netlify publica el frontend solo al pushear `main`.
 - Orden de deploy: push a origin → push a heroku → recién después
   `npm run db:push:heroku` si hubo cambios de esquema. Nunca ACCEPT_DATA_LOSS.
 - El worktree `../dashboard-rediseno` tiene `main` tomado: pushear con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `feat/insumos-mayorista-perdida`, sin commitear: insumos +50 %,
-  mayorista con mínimo costo + 10 % y venta a pérdida con motivo. Probada en
-  local. El deploy necesita `db:push:heroku` (`lossReason` y `lossReasonNote`
-  en Order, Quote y RetailSale).
+- Rama actual: `feat/insumos-mayorista-perdida`, igual a `main`. Sin trabajo a medias.
+- Precios de catálogo guardados no se recalcularon con la regla de insumos +50 %:
+  cada producto con insumos los toma al usar «Usar precio calculado» o
+  «Actualizar precios».
 - Errores reportados: todos corregidos (E1–E122) en `docs/qa/errores-pendientes.md`.
 - Ramas viejas ya unidas (borrables con OK): feat/3mf-purga,
   feat/bobinas-reposicion, feat/cola-por-impresora, feat/rediseno-faltantes,
