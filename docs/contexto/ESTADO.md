@@ -3,8 +3,8 @@
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
 ## Producción
-- GitHub `main` = `fix/lista-pedidos-menu` (menú de pedidos, E123), 2026-11-15,
-  solo frontend. Heroku = `8a7f8fc` (descuento de producto, v43; sin cambios de
+- GitHub `main` = `feat/apk-twa` (APK de Android, TWA), 2026-11-15, solo
+  frontend; assetlinks verificado por Google. Heroku = `8a7f8fc` (descuento de producto, v43; sin cambios de
   backend después). Netlify publica el frontend solo al pushear `main`.
 - Orden de deploy: push a origin → push a heroku → recién después
   `npm run db:push:heroku` si hubo cambios de esquema. Nunca ACCEPT_DATA_LOSS.
@@ -12,9 +12,8 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `feat/apk-twa` (APK de Android con TWA), sin commitear. Falta
-  publicar en main el manifest y `.well-known/assetlinks.json` y probar en un
-  teléfono. Para regenerar: `android-twa/` + Bubblewrap; JDK, SDK y clave de
+- Rama actual: `feat/apk-twa`, igual a `main`. APK en `~/Escritorio/Odell.apk`;
+  falta probarla en un teléfono. Para regenerar: `android-twa/` + Bubblewrap; JDK, SDK y clave de
   firma en `~/.odell-android` (perder la clave = no se puede actualizar la app).
 - Precios de catálogo guardados no se recalcularon con la regla de insumos +50 % ni
   con la nueva lista de combos (suma de precios de piezas):

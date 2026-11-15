@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-15 · Publicación de la APK (TWA)
+Rama: feat/apk-twa → main · Commits: d44835e
+Hecho: push a main; Netlify sirve assetlinks.json (application/json), manifest e íconos. La API de Digital Asset Links de Google confirma el vínculo com.odell.dashboard + huella de la firma. Heroku sin cambios.
+Decisiones: Isaías pidió publicar antes de probar en el teléfono.
+Pendiente: probar la APK en un Android real.
+
 ## 2026-11-15 · APK de Android (TWA)
 Rama: feat/apk-twa · Commits: sin commit
 Hecho: APK firmada `com.odell.dashboard` 1.0.0 (versionCode 1) con Bubblewrap; abre https://odell-dashboard-v2.netlify.app a pantalla completa. Frontend: manifest.webmanifest (theme #00aae4, fondo #edf5f9), íconos 192/512/maskable, `.well-known/assetlinks.json` y headers en netlify.toml. Proyecto Android en `android-twa/`. JDK 17, SDK y clave de firma en `~/.odell-android` (fuera del repo).
