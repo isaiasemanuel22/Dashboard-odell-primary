@@ -19,7 +19,7 @@
         <div class="m-card">
           <div class="st-m__two">
             <db-mobile-field-group label="Mano de obra" labelFor="m-labor" prefix="$">
-              <input
+              <input dbKeepTyping
                 id="m-labor"
                 class="st-m__inp"
                 type="number"
@@ -30,7 +30,7 @@
               />
             </db-mobile-field-group>
             <db-mobile-field-group label="Modelado 3D" labelFor="m-modeling" prefix="$">
-              <input
+              <input dbKeepTyping
                 id="m-modeling"
                 class="st-m__inp"
                 type="number"
@@ -48,7 +48,7 @@
             [hint]="!settings.graphicDesignRatePerHour ? 'En $ 0, las líneas de diseño salen sin costo' : null"
             [hintTone]="!settings.graphicDesignRatePerHour ? 'danger' : 'default'"
           >
-            <input
+            <input dbKeepTyping
               id="m-design"
               class="st-m__inp"
               type="number"
@@ -64,7 +64,7 @@
         <div class="m-card">
           <div class="st-m__two">
             <db-mobile-field-group label="Luz por kWh" labelFor="m-kwh" prefix="$">
-              <input
+              <input dbKeepTyping
                 id="m-kwh"
                 class="st-m__inp"
                 type="number"
@@ -76,7 +76,7 @@
               />
             </db-mobile-field-group>
             <db-mobile-field-group label="Margen de error" labelFor="m-err" suffix="%">
-              <input
+              <input dbKeepTyping
                 id="m-err"
                 class="st-m__inp"
                 type="number"

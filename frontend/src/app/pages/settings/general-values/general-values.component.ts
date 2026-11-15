@@ -47,11 +47,12 @@ import {
   mergeMachineProfilesPreservingDirty,
   selectDirtyMachineProfilesForSave,
 } from './machine-profiles-dirty.util';
+import { KeepTypingDirective } from '../../../shared/directives/keep-typing.directive';
 
 @Component({
   selector: 'app-general-values',
   standalone: true,
-  imports: [
+  imports: [KeepTypingDirective, 
     FormsModule,
     DbFormComponent,
     DbInputComponent,

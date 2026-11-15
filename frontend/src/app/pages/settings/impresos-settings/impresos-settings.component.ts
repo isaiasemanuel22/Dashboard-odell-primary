@@ -38,6 +38,7 @@ import {
   SettingsUnsavedChanges,
 } from '../settings-unsaved-changes';
 import { normalizeSearchText } from '../../../shared/utils/search-text.util';
+import { KeepTypingDirective } from '../../../shared/directives/keep-typing.directive';
 
 interface PaperSheetGroup {
   key: keyof GeneralSettings['paperReferenceSheets'];
@@ -47,7 +48,7 @@ interface PaperSheetGroup {
 @Component({
   selector: 'app-impresos-settings',
   standalone: true,
-  imports: [
+  imports: [KeepTypingDirective, 
     FormsModule,
     DbButtonComponent,
     DbInputComponent,

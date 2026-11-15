@@ -10,11 +10,12 @@ import { RouterLink } from '@angular/router';
 import type { SaleCartLine } from '../sale-cart-line/sale-cart-line.types';
 import { DbButtonComponent } from '../db-button/db-button.component';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
+import { KeepTypingDirective } from '../../shared/directives/keep-typing.directive';
 
 @Component({
   selector: 'app-sale-cart-line-card',
   standalone: true,
-  imports: [FormsModule, RouterLink, DbButtonComponent, CurrencyArsPipe],
+  imports: [KeepTypingDirective, FormsModule, RouterLink, DbButtonComponent, CurrencyArsPipe],
   templateUrl: './sale-cart-line-card.component.html',
   styleUrl: './sale-cart-line-card.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

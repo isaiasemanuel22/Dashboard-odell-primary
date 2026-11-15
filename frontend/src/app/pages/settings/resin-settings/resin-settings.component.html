@@ -66,7 +66,7 @@
                 </db-mobile-field-group>
               </div>
               <db-mobile-field-group label="Precio / L" labelFor="rm-price" prefix="$">
-                <input id="rm-price" class="st-m__inp" type="number" min="0" [(ngModel)]="editForm.pricePerLiter" name="mEditResinPrice" />
+                <input dbKeepTyping id="rm-price" class="st-m__inp" type="number" min="0" [(ngModel)]="editForm.pricePerLiter" name="mEditResinPrice" />
               </db-mobile-field-group>
             } @else {
               <div class="st-m__two">
@@ -84,7 +84,7 @@
                 </db-mobile-field-group>
               </div>
               <db-mobile-field-group label="Precio / L" labelFor="rm-new-price" prefix="$">
-                <input id="rm-new-price" class="st-m__inp" type="number" min="0" [(ngModel)]="newResin.pricePerLiter" name="mNewResinPrice" />
+                <input dbKeepTyping id="rm-new-price" class="st-m__inp" type="number" min="0" [(ngModel)]="newResin.pricePerLiter" name="mNewResinPrice" />
               </db-mobile-field-group>
             }
           </db-mobile-sheet>

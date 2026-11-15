@@ -48,6 +48,7 @@ import {
   SettingsEditBaseline,
   SettingsUnsavedChanges,
 } from '../settings-unsaved-changes';
+import { KeepTypingDirective } from '../../../shared/directives/keep-typing.directive';
 
 interface MarginField {
   service: ServiceType;
@@ -58,7 +59,7 @@ interface MarginField {
 @Component({
   selector: 'app-profit-settings',
   standalone: true,
-  imports: [
+  imports: [KeepTypingDirective, 
     FormsModule,
     RouterLink,
     CurrencyArsPipe,

@@ -21,13 +21,14 @@ import { PaymentMethod } from '../../../../core/models';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import { DiscountMode } from '../../../../shared/utils/discount.util';
 import { OrderFormDiscountComponent } from '../order-form-discount/order-form-discount.component';
+import { KeepTypingDirective } from '../../../../shared/directives/keep-typing.directive';
 
 export type OrderFormDepositMode = 'editable' | 'info' | 'none';
 
 @Component({
   selector: 'app-order-form-order-summary',
   standalone: true,
-  imports: [
+  imports: [KeepTypingDirective, 
     FormsModule,
     CurrencyArsPipe,
     DbInputComponent,

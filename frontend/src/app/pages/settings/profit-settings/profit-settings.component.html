@@ -25,7 +25,7 @@
                 [labelFor]="'m-margin-' + field.service"
                 suffix="%"
               >
-                <input
+                <input dbKeepTyping
                   [id]="'m-margin-' + field.service"
                   class="st-m__inp st-m__inp--pct"
                   type="number"
@@ -58,7 +58,7 @@
               labelFor="mWholesalePercent"
               suffix="%"
             >
-              <input
+              <input dbKeepTyping
                 id="mWholesalePercent"
                 class="st-m__inp st-m__inp--pct"
                 type="number"
@@ -150,7 +150,7 @@
       >
         <ng-template odlCell="margen" let-field>
           <label class="margin-cell">
-            <input
+            <input dbKeepTyping
               type="number"
               min="0"
               max="999"

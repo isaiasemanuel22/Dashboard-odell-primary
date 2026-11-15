@@ -7,11 +7,12 @@ import {
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CurrencyArsPipe } from '../../../../../shared/pipes/labels.pipe';
+import { KeepTypingDirective } from '../../../../../shared/directives/keep-typing.directive';
 
 @Component({
   selector: 'app-order-line-pricing',
   standalone: true,
-  imports: [FormsModule, CurrencyArsPipe],
+  imports: [KeepTypingDirective, FormsModule, CurrencyArsPipe],
   templateUrl: './order-line-pricing.component.html',
   styleUrl: './order-line-pricing.component.scss',
   changeDetection: ChangeDetectionStrategy.OnPush,

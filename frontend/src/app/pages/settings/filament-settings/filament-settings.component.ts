@@ -36,6 +36,7 @@ import {
 } from '@general-components';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import { normalizeSearchText } from '../../../shared/utils/search-text.util';
+import { KeepTypingDirective } from '../../../shared/directives/keep-typing.directive';
 
 interface FilamentPriceGroup {
   key: string;
@@ -47,7 +48,7 @@ interface FilamentPriceGroup {
 @Component({
   selector: 'app-filament-settings',
   standalone: true,
-  imports: [
+  imports: [KeepTypingDirective, 
     FormsModule,
     DbAutocompleteComponent,
     DbButtonComponent,

@@ -30,11 +30,12 @@ import {
 import { productPhysicalStock } from '../../shared/utils/stock.helpers';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 import { DbColorSelectComponent } from '../dashboard-form/db-color-select/db-color-select.component';
+import { KeepTypingDirective } from '../../shared/directives/keep-typing.directive';
 
 @Component({
   selector: 'app-product-components-table',
   standalone: true,
-  imports: [
+  imports: [KeepTypingDirective, 
     RouterLink,
     FormsModule,
     CurrencyArsPipe,

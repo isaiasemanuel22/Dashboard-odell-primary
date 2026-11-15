@@ -11,13 +11,14 @@ import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 import { DbButtonComponent } from '../db-button/db-button.component';
 
 import type { SaleCartLine } from './sale-cart-line.types';
+import { KeepTypingDirective } from '../../shared/directives/keep-typing.directive';
 
 export type { SaleCartLine } from './sale-cart-line.types';
 
 @Component({
   selector: 'app-sale-cart-line',
   standalone: true,
-  imports: [FormsModule, RouterLink, CurrencyArsPipe, DbButtonComponent],
+  imports: [KeepTypingDirective, FormsModule, RouterLink, CurrencyArsPipe, DbButtonComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
   templateUrl: './sale-cart-line.component.html',
   styleUrl: './sale-cart-line.component.scss',

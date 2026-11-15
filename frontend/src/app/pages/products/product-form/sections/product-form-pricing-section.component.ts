@@ -327,13 +327,29 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     );
   }
 
+  /** Texto del precio unitario mientras se edita; null fuera del campo. */
+  unitPriceDraft: string | null = null;
+
+  onUnitPriceFocus(calculatedPrice: number): void {
+    this.unitPriceDraft = this.unitPriceDisplay(calculatedPrice);
+  }
+
   onUnitPriceDisplayChange(raw: string): void {
-    const digits = String(raw ?? '').replace(/\D/g, '');
-    if (!digits) {
+    this.unitPriceDraft = String(raw ?? '');
+    const digits = this.unitPriceDraft.replace(/\D/g, '');
+    // Vacío mientras se escribe: no se toca el precio hasta salir del campo.
+    if (!digits) return;
+    this.pricing.applyManualUnitPrice(Math.round(Number(digits)));
+    this.cdr.markForCheck();
+  }
+
+  onUnitPriceBlur(): void {
+    const empty = !(this.unitPriceDraft ?? '').replace(/\D/g, '');
+    this.unitPriceDraft = null;
+    if (empty) {
       this.resetUnitPrice();
       return;
     }
-    this.pricing.applyManualUnitPrice(Math.round(Number(digits)));
     this.cdr.markForCheck();
   }
 

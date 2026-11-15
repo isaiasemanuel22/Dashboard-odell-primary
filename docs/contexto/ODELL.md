@@ -72,6 +72,10 @@ Monorepo: `backend/` (NestJS + Prisma) y `frontend/` (Angular + NgRx).
 - Un solo cálculo de costo para toda la app; no duplicar fórmulas.
 - Cada funcionalidad nueva en su propio módulo Nest y carpeta de página; no
   sumar enums fijos del rubro.
+- Campos numéricos: todos se comportan igual. Mientras tienen foco muestran lo
+  que se escribe (vacío, 0, fuera de rango); mín/máx y valores por defecto se
+  aplican al salir. Usar `db-input` o, en un `<input>` nativo con `[ngModel]`,
+  la directiva `dbKeepTyping` (`shared/directives/keep-typing.directive.ts`).
 
 ## Decisiones confirmadas (resumen; el detalle está en BUSINESS-RULES)
 - Margen siempre sobre el costo: (precio − costo) ÷ costo.
