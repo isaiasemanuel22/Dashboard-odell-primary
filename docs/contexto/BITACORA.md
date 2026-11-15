@@ -23,7 +23,7 @@ Decisiones: Isaías pidió deployar solo main; el trabajo sin commitear de insum
 Pendiente: cerrar, commitear y deployar insumos mayorista + venta a pérdida (con db:push).
 
 ## 2026-11-15 · Menú «···» de la lista de pedidos (E123)
-Rama: fix/lista-pedidos-menu · Commits: 86545ad
+Rama: fix/lista-pedidos-menu · Commits: 86545ad, 65ddaf0
 Hecho: el menú «···» de la fila de pedidos (escritorio) es un desplegable en caja con ítems y se abre hacia arriba si no entra abajo; las acciones de la fila expandida dejaron de estar en posición absoluta y ya no pisan la nota. Solo frontend (order-card).
 Decisiones: ninguna.
 Pendiente: no se probó con una nota larga real (no hay en la base local).
