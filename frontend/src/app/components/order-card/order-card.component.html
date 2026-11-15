@@ -1,6 +1,6 @@
-@if (layout === 'detail') {
+@if (layout === "detail") {
   <ng-container *ngTemplateOutlet="detail" />
-} @else if (layout === 'card') {
+} @else if (layout === "card") {
   <article class="order-card" [class.order-card--open]="expanded">
     <div class="order-card__line">
       <button
@@ -10,9 +10,11 @@
         [attr.aria-label]="expanded ? 'Contraer pedido' : 'Expandir pedido'"
         (click)="expanded = !expanded"
       >
-        {{ expanded ? '⌄' : '›' }}
+        {{ expanded ? "⌄" : "›" }}
       </button>
-      <a class="order-line__id" [routerLink]="['/pedidos', order.id]">{{ order.id }}</a>
+      <a class="order-line__id" [routerLink]="['/pedidos', order.id]">{{
+        order.id
+      }}</a>
       <span>
         <strong class="order-line__customer">{{ order.customerName }}</strong>
         <span class="order-line__meta">{{ summaryLabel }}</span>
@@ -23,7 +25,10 @@
         }
       </span>
       <span>
-        <span class="order-line__date" [class.order-line__date--late]="isOverdue">
+        <span
+          class="order-line__date"
+          [class.order-line__date--late]="isOverdue"
+        >
           {{ order.dueDate | dateShort }}
         </span>
         @if (isOverdue) {
@@ -46,10 +51,26 @@
           ···
         </button>
         @if (menuOpen) {
-          <a class="order-line__delete" [routerLink]="['/pedidos', order.id]">Ver pedido</a>
-          <button type="button" class="order-line__delete" (click)="confirmDelete()">
-            Cancelar
-          </button>
+          <div
+            class="order-line__dropdown"
+            [class.order-line__dropdown--up]="menuUp"
+            role="menu"
+          >
+            <a
+              class="order-line__item"
+              role="menuitem"
+              [routerLink]="['/pedidos', order.id]"
+              >Ver pedido</a
+            >
+            <button
+              type="button"
+              class="order-line__item order-line__item--danger"
+              role="menuitem"
+              (click)="confirmDelete()"
+            >
+              Cancelar
+            </button>
+          </div>
         }
       </span>
     </div>
@@ -69,10 +90,12 @@
         [attr.aria-label]="expanded ? 'Contraer pedido' : 'Expandir pedido'"
         (click)="expanded = !expanded"
       >
-        {{ expanded ? '⌄' : '›' }}
+        {{ expanded ? "⌄" : "›" }}
       </button>
     </td>
-    <td class="order-line__id"><a [routerLink]="['/pedidos', order.id]">{{ order.id }}</a></td>
+    <td class="order-line__id">
+      <a [routerLink]="['/pedidos', order.id]">{{ order.id }}</a>
+    </td>
     <td>
       <strong class="order-line__customer">{{ order.customerName }}</strong>
       <span class="order-line__meta">{{ summaryLabel }}</span>
@@ -108,10 +131,26 @@
         ···
       </button>
       @if (menuOpen) {
-        <a class="order-line__delete" [routerLink]="['/pedidos', order.id]">Ver pedido</a>
-        <button type="button" class="order-line__delete" (click)="confirmDelete()">
-          Cancelar
-        </button>
+        <div
+          class="order-line__dropdown"
+          [class.order-line__dropdown--up]="menuUp"
+          role="menu"
+        >
+          <a
+            class="order-line__item"
+            role="menuitem"
+            [routerLink]="['/pedidos', order.id]"
+            >Ver pedido</a
+          >
+          <button
+            type="button"
+            class="order-line__item order-line__item--danger"
+            role="menuitem"
+            (click)="confirmDelete()"
+          >
+            Cancelar
+          </button>
+        </div>
       }
     </td>
   </tr>
@@ -152,10 +191,13 @@
             </span>
           </td>
           @if (first) {
-            <td class="order-detail__note" [attr.rowspan]="order.items.length || 1">
+            <td
+              class="order-detail__note"
+              [attr.rowspan]="order.items.length || 1"
+            >
               <div class="order-detail__note-body">
                 @if (order.description) {
-                  <p>{{ order.description | plainText:220 }}</p>
+                  <p>{{ order.description | plainText: 220 }}</p>
                 }
                 <div class="order-detail__actions">
                   <db-button

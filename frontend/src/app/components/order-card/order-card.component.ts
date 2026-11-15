@@ -50,6 +50,7 @@ export class OrderCardComponent {
 
   expanded = false;
   menuOpen = false;
+  menuUp = false;
 
   get summaryLabel(): string {
     const products = this.order.items.length;
@@ -90,6 +91,28 @@ export class OrderCardComponent {
   toggleMenu(event: MouseEvent): void {
     event.stopPropagation();
     this.menuOpen = !this.menuOpen;
+    if (this.menuOpen) {
+      this.menuUp = this.shouldOpenUp(event.currentTarget as HTMLElement);
+    }
+  }
+
+  /** Abre hacia arriba si abajo no entra el menú dentro del contenedor con scroll ni del viewport. */
+  private shouldOpenUp(button: HTMLElement): boolean {
+    const menuHeight = 150;
+    const rect = button.getBoundingClientRect();
+    let limit = window.innerHeight;
+    let node = button.parentElement;
+    while (node) {
+      const overflowY = getComputedStyle(node).overflowY;
+      if (overflowY !== 'visible') {
+        limit = Math.min(limit, node.getBoundingClientRect().bottom);
+        break;
+      }
+      node = node.parentElement;
+    }
+    const spaceBelow = limit - rect.bottom;
+    const spaceAbove = rect.top;
+    return spaceBelow < menuHeight && spaceAbove > spaceBelow;
   }
 
   confirmDelete(): void {

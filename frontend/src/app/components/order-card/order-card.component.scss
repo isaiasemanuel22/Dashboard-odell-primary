@@ -1,5 +1,5 @@
-@use '../../shared/styles/variables' as *;
-@use '../../shared/styles/screen' as screen;
+@use "../../shared/styles/variables" as *;
+@use "../../shared/styles/screen" as screen;
 
 :host {
   display: contents;
@@ -96,8 +96,49 @@
   @include screen.record-menu;
 }
 
-.order-line__delete {
-  @include screen.record-delete;
+.order-line__dropdown {
+  position: absolute;
+  right: 0;
+  top: calc(100% + 0.2rem);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  min-width: 9rem;
+  padding: 0.3rem;
+  background: $color-surface;
+  border: 1px solid $color-border-soft;
+  border-radius: $radius-sm;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.14);
+  text-align: left;
+}
+
+.order-line__dropdown--up {
+  top: auto;
+  bottom: calc(100% + 0.2rem);
+}
+
+.order-line__item {
+  display: block;
+  width: 100%;
+  padding: 0.5rem 0.7rem;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: $color-text-label;
+  font-size: $font-control;
+  font-weight: 600;
+  text-align: left;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+
+  &:hover {
+    background: $color-surface-inset;
+  }
+
+  &--danger {
+    color: $color-danger-text;
+  }
 }
 
 .order-detail td {
@@ -138,9 +179,8 @@
 }
 
 .order-detail__note {
-  position: relative;
   width: 16rem;
-  min-height: 6.5rem;
+  min-width: 14rem;
   color: $color-text-muted;
   font-size: $font-control;
   line-height: 1.4;
@@ -148,15 +188,14 @@
 }
 
 .order-detail__note-body {
-  position: absolute;
-  inset: 0.15rem 0.15rem 0.2rem 0.35rem;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
   gap: 0.75rem;
+  padding: 0.15rem 0.15rem 0.5rem 0.35rem;
 
   p {
     margin: 0;
+    overflow-wrap: anywhere;
   }
 }
 
@@ -165,6 +204,7 @@
   justify-content: flex-end;
   align-items: center;
   gap: 0.45rem;
+  flex-wrap: wrap;
   margin-top: auto;
 
   db-button {
