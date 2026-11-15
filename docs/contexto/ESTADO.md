@@ -3,9 +3,9 @@
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
 ## Producción
-- GitHub `main` = Heroku = `73efc45` (insumos +50 %, mínimo mayorista, venta a
-  pérdida con motivo), deployado el 2026-11-15 (Heroku v42, `db:push:heroku`
-  hecho, health ok). Netlify publica el frontend solo al pushear `main`.
+- GitHub `main` = Heroku = `8a7f8fc` (descuento propio de producto y combo),
+  deployado el 2026-11-15 (Heroku v43, `db:push:heroku` hecho, health ok).
+  Netlify publica el frontend solo al pushear `main`.
 - Orden de deploy: push a origin → push a heroku → recién después
   `npm run db:push:heroku` si hubo cambios de esquema. Nunca ACCEPT_DATA_LOSS.
 - El worktree `../dashboard-rediseno` tiene `main` tomado: pushear con
