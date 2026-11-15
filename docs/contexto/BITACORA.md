@@ -22,6 +22,12 @@ Hecho: Heroku pasó de 22bf9bc a 623efaf (v41); solo había cambios de frontend,
 Decisiones: Isaías pidió deployar solo main; el trabajo sin commitear de insumos y pérdida queda afuera.
 Pendiente: cerrar, commitear y deployar insumos mayorista + venta a pérdida (con db:push).
 
+## 2026-11-15 · Menú «···» de la lista de pedidos (E123)
+Rama: fix/lista-pedidos-menu · Commits: 86545ad
+Hecho: el menú «···» de la fila de pedidos (escritorio) es un desplegable en caja con ítems y se abre hacia arriba si no entra abajo; las acciones de la fila expandida dejaron de estar en posición absoluta y ya no pisan la nota. Solo frontend (order-card).
+Decisiones: ninguna.
+Pendiente: no se probó con una nota larga real (no hay en la base local).
+
 ## 2026-11-15 · Descuento propio de producto y combo
 Rama: feat/descuento-producto · Commits: ver git log (deploy 2026-11-15)
 Hecho: productos y combos pueden tener descuento propio (% 0–99 o monto fijo, nunca los dos; discountPercent/discountAmount en Product). price sigue siendo la lista; venta = lista − descuento vía productSalePrice (front y back), usado en pedidos, presupuestos, mostrador y avisos de precio. Lista del combo = suma de listas de piezas + armado sin margen + insumos ×1,5. Mayorista sobre el precio de venta con mínimo costo + 10 %. UI: lista tachada y etiqueta en tarjeta/detalle, formulario con precio de venta y aviso bajo costo. Fix: «Editar producto» mostraba nada al cargar y apilaba diálogos; ahora dice «Abriendo…» e ignora clics repetidos.

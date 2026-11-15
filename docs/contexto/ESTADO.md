@@ -3,21 +3,21 @@
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
 ## Producción
-- GitHub `main` = Heroku = `8a7f8fc` (descuento propio de producto y combo),
-  deployado el 2026-11-15 (Heroku v43, `db:push:heroku` hecho, health ok).
-  Netlify publica el frontend solo al pushear `main`.
+- GitHub `main` = `fix/lista-pedidos-menu` (menú de pedidos, E123), 2026-11-15,
+  solo frontend. Heroku = `8a7f8fc` (descuento de producto, v43; sin cambios de
+  backend después). Netlify publica el frontend solo al pushear `main`.
 - Orden de deploy: push a origin → push a heroku → recién después
   `npm run db:push:heroku` si hubo cambios de esquema. Nunca ACCEPT_DATA_LOSS.
 - El worktree `../dashboard-rediseno` tiene `main` tomado: pushear con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `feat/descuento-producto`, igual a `main`. Sin trabajo a medias.
+- Rama actual: `fix/lista-pedidos-menu`, igual a `main`. Sin trabajo a medias.
 - Precios de catálogo guardados no se recalcularon con la regla de insumos +50 % ni
   con la nueva lista de combos (suma de precios de piezas):
   cada producto con insumos los toma al usar «Usar precio calculado» o
   «Actualizar precios».
-- Errores reportados: todos corregidos (E1–E122) en `docs/qa/errores-pendientes.md`.
+- Errores reportados: todos corregidos (E1–E123) en `docs/qa/errores-pendientes.md`.
 - Ramas viejas ya unidas (borrables con OK): feat/3mf-purga,
   feat/bobinas-reposicion, feat/cola-por-impresora, feat/rediseno-faltantes,
   fix/errores-tanda-1, docs/deploy-netlify.
