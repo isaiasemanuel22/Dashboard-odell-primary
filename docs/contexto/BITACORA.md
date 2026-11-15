@@ -17,10 +17,10 @@ Pendiente: …
 ---
 
 ## 2026-11-15 · Todos los campos numéricos editables igual (E125)
-Rama: feat/apk-twa · Commits: sin commit
+Rama: feat/apk-twa → main · Commits: 5d96eda
 Hecho: directiva `dbKeepTyping` para `<input>` nativos con `[ngModel]` (muestra lo tipeado con foco, el valor final al salir) aplicada en seña, costo/precio de línea, márgenes, Ajustes, carrito y piezas. Precio unitario del producto: se puede vaciar; vacío al salir = precio calculado. Probado en Ganancias y producto; 88 tests ok.
 Decisiones: Isaías pidió que todos los inputs funcionen igual, salvo casos particulares (descuento avisa si supera el máximo).
-Pendiente: commit y deploy.
+Pendiente: nada de esta tarea; publicado en Netlify (solo frontend, Heroku sin cambios).
 
 ## 2026-11-15 · Deploy de E125 y E126
 Rama: feat/apk-twa → main · Commits: ce64767
