@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-15 · Deploy de E125 y E126
+Rama: feat/apk-twa → main · Commits: ce64767
+Hecho: push a GitHub main y a Heroku (sin cambios de esquema, sin db:push). Health ok y persistencia sana; Netlify sirve el db-input nuevo.
+Decisiones: Isaías pidió deployar.
+Pendiente: E124; inputs numéricos nativos; regrabar productos de Estampado con precio fijo.
+
 ## 2026-11-15 · Campos numéricos, margen y precio fijo de Estampado (E124–E126)
 Rama: feat/apk-twa · Commits: sin commit
 Hecho: db-input (type number) ya no corrige el valor mientras se escribe: deja vaciar y pasar por 0, el modelo recibe el valor dentro de mín/máx y al salir del campo se muestra el valor del modelo. Probado en editar producto (medida 0,5 y cantidad vacía); 88 tests ok. E124 anotado: el precio $6.610 cumple §16.1.1 y §16.3 (insumos ×1,5 sin margen del área); el texto «30 % sobre impresos, insumos y plancha» está mal (no incluye insumos).

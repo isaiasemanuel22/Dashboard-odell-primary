@@ -3,9 +3,10 @@
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
 ## Producción
-- GitHub `main` = `feat/apk-twa` (APK de Android, TWA), 2026-11-15, solo
-  frontend; assetlinks verificado por Google. Heroku = `8a7f8fc` (descuento de producto, v43; sin cambios de
-  backend después). Netlify publica el frontend solo al pushear `main`.
+- GitHub `main` = Heroku = `feat/apk-twa` en `ce64767` (2026-11-15): precio fijo de
+  Estampado con insumos (E126) y campos numéricos editables (E125). Health ok.
+  APK TWA publicada; assetlinks verificado por Google. Netlify publica el
+  frontend solo al pushear `main`.
 - Orden de deploy: push a origin → push a heroku → recién después
   `npm run db:push:heroku` si hubo cambios de esquema. Nunca ACCEPT_DATA_LOSS.
 - El worktree `../dashboard-rediseno` tiene `main` tomado: pushear con
@@ -19,7 +20,13 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   con la nueva lista de combos (suma de precios de piezas):
   cada producto con insumos los toma al usar «Usar precio calculado» o
   «Actualizar precios».
-- Errores reportados: todos corregidos (E1–E123) en `docs/qa/errores-pendientes.md`.
+- Errores reportados: corregidos hasta E126 salvo E124 (margen de Estampado vs
+  insumos +50 %: Isaías elige entre aclarar la pantalla o aplicar el margen del
+  área a los insumos). E125 falta en inputs numéricos nativos (billetera,
+  ventas, insumos, algunos Ajustes). Texto «30 % sobre impresos, insumos y
+  plancha» mal (el margen de error no incluye insumos).
+- Productos de Estampado con precio fijo guardados antes de `ce64767` tienen la
+  lista sin insumos: se corrigen al volver a guardarlos.
 - Ramas viejas ya unidas (borrables con OK): feat/3mf-purga,
   feat/bobinas-reposicion, feat/cola-por-impresora, feat/rediseno-faltantes,
   fix/errores-tanda-1, docs/deploy-netlify.
