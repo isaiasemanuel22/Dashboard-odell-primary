@@ -53,6 +53,10 @@
                 →
                 {{ entry.newDiscountLabel }}
               </p>
+            } @else if (entry.trigger === 'loss_sale') {
+              <p class="status-history__transition">
+                Vendido a pérdida: {{ lossLabel(entry) }}
+              </p>
             } @else {
               <p class="status-history__transition">
                 {{ entry.productName }}:
@@ -61,12 +65,14 @@
                 {{ entry.newUnitPrice | currencyArs }}
               </p>
             }
-            <p class="status-history__transition">
-              Total pedido:
-              {{ entry.previousOrderTotal | currencyArs }}
-              →
-              {{ entry.newOrderTotal | currencyArs }}
-            </p>
+            @if (entry.trigger !== 'loss_sale') {
+              <p class="status-history__transition">
+                Total pedido:
+                {{ entry.previousOrderTotal | currencyArs }}
+                →
+                {{ entry.newOrderTotal | currencyArs }}
+              </p>
+            }
           </div>
         </li>
       }

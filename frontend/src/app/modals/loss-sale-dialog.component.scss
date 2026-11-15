@@ -1,0 +1,95 @@
+@use '../shared/styles/variables' as *;
+@use '../shared/styles/mobile' as mobile;
+
+.loss-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.loss-lines__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: $color-status-warning-bg;
+  color: $color-status-warning-text;
+  min-width: 0;
+}
+
+.loss-lines__name {
+  font-weight: 600;
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+
+.loss-lines__detail {
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.loss-reasons {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+}
+
+.loss-reasons__legend {
+  padding: 0;
+  margin-bottom: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-text;
+}
+
+.loss-reasons .loss-reasons__option {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 6px 12px;
+  border: 1px solid $color-border;
+  border-radius: 10px;
+  font-size: 14px;
+  line-height: 1.35;
+  color: $color-text;
+  cursor: pointer;
+  box-sizing: border-box;
+
+  // Más específico que `.modal input` / `.modal label` (estilos globales de formularios).
+  input[type='radio'] {
+    flex: none;
+    width: 20px;
+    height: 20px;
+    margin: 0;
+    padding: 0;
+    box-shadow: none;
+  }
+
+  span {
+    flex: 1;
+    min-width: 0;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+}
+
+.loss-reasons .loss-reasons__option--checked {
+  border-color: $color-primary;
+  background: $color-primary-bg;
+}
+
+@include mobile.mobile-only {
+  .loss-reasons .loss-reasons__option {
+    font-size: 15px;
+  }
+}

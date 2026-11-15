@@ -33,6 +33,10 @@ import type {
   TaskDetailDialogResult,
 } from './task-detail-dialog.component';
 import type { PromptDialogData } from './prompt-dialog.component';
+import type {
+  LossSaleDialogData,
+  LossSaleDialogResult,
+} from './loss-sale-dialog.component';
 import type { OrderFormDialogData } from './order-form-dialog.component';
 import type { QuoteDocumentExportDialogData } from './quote-document-export-dialog.component';
 import type { CalendarEventDialogData } from './calendar-event-dialog.component';
@@ -376,6 +380,27 @@ export class FormDialogService {
             data,
           });
           return ref.closed as Observable<string | undefined>;
+        },
+      ),
+    );
+  }
+
+  /** Venta a pérdida: pide el motivo. `undefined` = volver a editar. */
+  openLossSale(
+    data: LossSaleDialogData,
+  ): Observable<LossSaleDialogResult | undefined> {
+    return from(import('./loss-sale-dialog.component')).pipe(
+      switchMap(
+        ({
+          LossSaleDialogComponent,
+        }): Observable<LossSaleDialogResult | undefined> => {
+          const base = this.baseConfig('sm');
+          const ref = this.dialog.open(LossSaleDialogComponent, {
+            ...base,
+            ariaLabel: 'Estás vendiendo a pérdida',
+            data,
+          });
+          return ref.closed as Observable<LossSaleDialogResult | undefined>;
         },
       ),
     );

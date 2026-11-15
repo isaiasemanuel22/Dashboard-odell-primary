@@ -4,7 +4,10 @@ import {
   WholesaleDiscountSettings,
 } from '../../core/models';
 import { isAreaService, isDesignService } from './service-type.util';
-import { wholesalePriceFromList } from './wholesale-example.util';
+import {
+  wholesaleFloorApplied,
+  wholesalePriceFromList,
+} from './wholesale-example.util';
 
 /** Precio de lista editable/visible: listUnitPrice ?? unitPrice (o design). */
 export function lineListUnitPrice(line: OrderLineDraft): number {
@@ -52,12 +55,20 @@ export function wouldApplyWholesale(input: {
   return meetsWholesaleMinimum(input.listSubtotal, input.customerMinimum);
 }
 
+/**
+ * Precio unitario de la vista previa (misma regla que el backend):
+ * precio manual tal cual; si no, max(descuento, costo + 10 %) sin pasar de la lista.
+ */
 export function linePreviewUnitPrice(
   line: OrderLineDraft,
   wholesaleApplied: boolean,
   settings: WholesaleDiscountSettings | null | undefined,
+  unitCost?: number | null,
 ): number {
   const list = lineListUnitPrice(line);
+  if (line.unitPriceManual) {
+    return list;
+  }
   if (
     !wholesaleApplied ||
     !settings ||
@@ -65,7 +76,23 @@ export function linePreviewUnitPrice(
   ) {
     return list;
   }
-  return wholesalePriceFromList(list, settings.percent);
+  return wholesalePriceFromList(list, settings.percent, unitCost);
+}
+
+/** True si el piso (costo + 10 %) subió el precio mayorista de la línea. */
+export function lineWholesaleFloorApplied(
+  line: OrderLineDraft,
+  wholesaleApplied: boolean,
+  settings: WholesaleDiscountSettings | null | undefined,
+  unitCost?: number | null,
+): boolean {
+  if (line.unitPriceManual || !wholesaleApplied || !settings) return false;
+  if (!wholesaleAppliesToService(line.serviceType, settings)) return false;
+  return wholesaleFloorApplied(
+    lineListUnitPrice(line),
+    settings.percent,
+    unitCost,
+  );
 }
 
 export function lineListSubtotal(line: OrderLineDraft): number {
@@ -77,9 +104,12 @@ export function linePreviewSubtotal(
   line: OrderLineDraft,
   wholesaleApplied: boolean,
   settings: WholesaleDiscountSettings | null | undefined,
+  unitCost?: number | null,
 ): number {
   const qty = Math.max(0, Number(line.quantity) || 0);
-  return Math.round(linePreviewUnitPrice(line, wholesaleApplied, settings) * qty);
+  return Math.round(
+    linePreviewUnitPrice(line, wholesaleApplied, settings, unitCost) * qty,
+  );
 }
 
 /** Margen por mayor sobre el COSTO: (precioMayor − costo) / costo × 100. */

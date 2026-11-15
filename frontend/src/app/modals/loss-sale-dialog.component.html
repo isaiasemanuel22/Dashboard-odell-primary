@@ -1,0 +1,78 @@
+<app-form-dialog-shell
+  title="Estás vendiendo a pérdida"
+  size="sm"
+  [confirm]="true"
+  (close)="cancel()"
+>
+  <app-confirm-lead tone="info" title="Estás vendiendo a pérdida">
+    <p>
+      Esta venta deja menos que lo que cuesta. Podés seguir, pero tenés que
+      indicar el motivo.
+    </p>
+    <ng-container ngProjectAs="[confirmFields]">
+      <ul class="loss-lines" aria-label="Detalle de la pérdida">
+        @for (line of data.lines; track line.index) {
+          <li class="loss-lines__item">
+            <span class="loss-lines__name">{{ line.productName }}</span>
+            <span class="loss-lines__detail">
+              Precio {{ money(line.unitPrice) }} · costo
+              {{ money(line.unitCost) }} · pierde {{ money(line.loss) }}
+            </span>
+          </li>
+        }
+        @if (data.profitNegative) {
+          <li class="loss-lines__item">
+            <span class="loss-lines__name">Total de la venta</span>
+            <span class="loss-lines__detail">
+              Ganancia {{ money(data.profit) }}: el total no cubre el costo.
+            </span>
+          </li>
+        }
+      </ul>
+
+      <fieldset class="loss-reasons">
+        <legend class="loss-reasons__legend">Motivo *</legend>
+        @for (item of reasons; track item.code) {
+          <label
+            class="loss-reasons__option checkbox-field"
+            [class.loss-reasons__option--checked]="reason() === item.code"
+          >
+            <input
+              type="radio"
+              name="lossReason"
+              [value]="item.code"
+              [checked]="reason() === item.code"
+              (change)="select(item.code)"
+            />
+            <span>{{ item.label }}</span>
+          </label>
+        }
+      </fieldset>
+
+      <db-textarea
+        [label]="noteRequired() ? 'Nota (obligatoria)' : 'Nota (opcional)'"
+        name="lossReasonNote"
+        [rows]="2"
+        [maxLength]="noteMax"
+        [required]="noteRequired()"
+        [ngModel]="note()"
+        (ngModelChange)="note.set($event ?? '')"
+      />
+    </ng-container>
+  </app-confirm-lead>
+  <db-button
+    modalFooter
+    label="Volver a editar"
+    variant="secondary"
+    format="soft"
+    (clicked)="cancel()"
+  />
+  <db-button
+    modalFooter
+    [label]="data.confirmLabel ?? 'Vender igual'"
+    variant="primary"
+    format="solid"
+    [disabled]="!canConfirm()"
+    (clicked)="confirm()"
+  />
+</app-form-dialog-shell>

@@ -167,6 +167,8 @@ export function mapOrderFromDb(row: {
   responsibleUserId?: string | null;
   discountPercent?: number;
   discountAmount?: number;
+  lossReason?: string | null;
+  lossReasonNote?: string | null;
   description: string | null;
   attachments?: Prisma.JsonValue;
   notes: string | null;
@@ -206,6 +208,8 @@ export function mapOrderFromDb(row: {
     responsibleUserId: row.responsibleUserId?.trim() || undefined,
     discountPercent: row.discountPercent ?? 0,
     discountAmount: row.discountAmount ?? 0,
+    lossReason: row.lossReason ?? undefined,
+    lossReasonNote: row.lossReasonNote ?? undefined,
     description: row.description ?? undefined,
     attachments: normalizeProductAttachments(fromJson(row.attachments ?? [])),
     notes: row.notes ?? undefined,
@@ -234,6 +238,8 @@ function mapOrderScalarsToDb(order: Order) {
     responsibleUserId: order.responsibleUserId ?? null,
     discountPercent: order.discountPercent ?? 0,
     discountAmount: order.discountAmount ?? 0,
+    lossReason: order.lossReason ?? null,
+    lossReasonNote: order.lossReasonNote ?? null,
     description: order.description ?? null,
     attachments: toInputJson(order.attachments ?? []),
     notes: order.notes ?? null,

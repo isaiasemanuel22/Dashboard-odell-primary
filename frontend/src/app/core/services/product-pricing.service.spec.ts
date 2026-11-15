@@ -20,7 +20,7 @@ describe('ProductPricingService.priceWithSupplies', () => {
     service = TestBed.inject(ProductPricingService);
   });
 
-  it('aplica el margen solo al costo de proceso y suma los insumos sin margen', () => {
+  it('aplica el margen solo al costo de proceso y suma los insumos a costo × 1,5 sin margen', () => {
     // Taza estampada: proceso $1.967 + insumos $3.500, margen 100%.
     const result = service.priceWithSupplies(
       { type: ProductType.ESTAMPADO },
@@ -31,7 +31,8 @@ describe('ProductPricingService.priceWithSupplies', () => {
     );
 
     expect(result.cost).toBe(5467);
-    expect(result.price).toBe(1967 * 2 + 3500);
+    // Insumos 3.500 → 5.250 en el precio; el costo no cambia.
+    expect(result.price).toBe(1967 * 2 + 5250);
     expect(result.profit).toBe(result.price - 5467);
   });
 

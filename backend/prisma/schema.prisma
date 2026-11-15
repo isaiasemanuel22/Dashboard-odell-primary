@@ -210,6 +210,9 @@ model Order {
   responsibleUserId String? @map("responsible_user_id") @db.VarChar(128)
   discountPercent Float @default(0) @map("discount_percent")
   discountAmount  Float @default(0) @map("discount_amount")
+  /** Motivo de venta a pérdida (código) y nota opcional. */
+  lossReason      String? @map("loss_reason") @db.VarChar(32)
+  lossReasonNote  String? @map("loss_reason_note") @db.VarChar(255)
   description  String?  @db.Text
   attachments  Json     @default("[]") @map("attachments")
   notes        String?  @db.Text
@@ -293,6 +296,9 @@ model Quote {
   salesChannel    String?  @map("sales_channel") @db.VarChar(32)
   discountPercent Float    @default(0) @map("discount_percent")
   discountAmount  Float    @default(0) @map("discount_amount")
+  /** Motivo de venta a pérdida (código) y nota opcional. */
+  lossReason      String?  @map("loss_reason") @db.VarChar(32)
+  lossReasonNote  String?  @map("loss_reason_note") @db.VarChar(255)
   description     String?  @db.Text
   attachments     Json     @default("[]") @map("attachments")
   quotedAt        DateTime @map("quoted_at")
@@ -400,6 +406,9 @@ model RetailSale {
   total           Float
   discountPercent Float            @default(0) @map("discount_percent")
   discountAmount  Float            @default(0) @map("discount_amount")
+  /** Motivo de venta a pérdida (código) y nota opcional. */
+  lossReason      String?          @map("loss_reason") @db.VarChar(32)
+  lossReasonNote  String?          @map("loss_reason_note") @db.VarChar(255)
   notes           String?          @db.Text
   method          String           @default("efectivo") @db.VarChar(32)
   account         String           @default("caja") @db.VarChar(32)

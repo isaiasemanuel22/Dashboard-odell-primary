@@ -29,6 +29,7 @@ import {
   ImpresoWithCost,
   CurrentUserResponse,
   Order,
+  OrderItemPayload,
   OrderLineDraft,
   PaymentMethod,
   ProductAttachment,
@@ -59,6 +60,11 @@ import {
   DbButtonComponent,
 } from '@general-components';
 import { FormDialogService } from '../../../modals/public-api';
+import {
+  detectLossSale,
+  LossSaleItemInput,
+  lossSaleSignature,
+} from '../../../shared/utils/loss-sale.util';
 import {
   buildOrderItems,
   calculateLinePriceTotal,
@@ -710,10 +716,14 @@ export class OrderFormComponent implements OnChanges, OnInit {
         return sum;
       }
       const list = lineListUnitPrice(line);
-      const wholesale = wholesalePriceFromList(
-        list,
-        this.wholesaleDiscount.percent,
-      );
+      // Precio manual: sin descuento. Piso: costo + 10 %.
+      const wholesale = line.unitPriceManual
+        ? list
+        : wholesalePriceFromList(
+            list,
+            this.wholesaleDiscount.percent,
+            this.lineUnitCost(line),
+          );
       const qty = Math.max(0, Number(line.quantity) || 0);
       return sum + Math.round((list - wholesale) * qty);
     }, 0);
@@ -728,6 +738,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
           line,
           this.wholesaleAppliedPreview,
           this.wholesaleDiscount,
+          this.lineUnitCost(line),
         ),
       0,
     );
@@ -912,12 +923,16 @@ export class OrderFormComponent implements OnChanges, OnInit {
       if (!wholesaleAppliesToService(line.serviceType, this.wholesaleDiscount)) {
         continue;
       }
+      if (line.unitPriceManual) {
+        continue;
+      }
       const list = lineListUnitPrice(line);
+      const unitCost = this.lineUnitCost(line);
       const wholesale = wholesalePriceFromList(
         list,
         this.wholesaleDiscount.percent,
+        unitCost,
       );
-      const unitCost = this.lineUnitCost(line);
       const area = getMarginForService(line.serviceType, this.profitMargins);
       if (!isWholesaleMarginBelowArea(wholesale, unitCost, area)) {
         continue;
@@ -1596,9 +1611,73 @@ export class OrderFormComponent implements OnChanges, OnInit {
       ...(this.customerId.trim() ? { customerId: this.customerId.trim() } : {}),
     };
 
+    // Venta a pérdida: el vendedor confirma y da un motivo (§16).
+    const loss = detectLossSale(items, this.total);
+    if (!loss.isLoss) {
+      this.emitSave(shared, asDraft);
+      return;
+    }
+    const existing = this.existingLossDocument();
+    const sameLossSet =
+      !!existing?.lossReason &&
+      lossSaleSignature(detectLossSale(existing.items, existing.total)) ===
+        lossSaleSignature(loss);
+    if (sameLossSet && existing) {
+      this.emitSave(shared, asDraft, {
+        lossReason: existing.lossReason!,
+        lossReasonNote: existing.lossReasonNote,
+      });
+      return;
+    }
+    this.formDialogs
+      .openLossSale({
+        lines: loss.lines,
+        profit: loss.profit,
+        profitNegative: loss.profitNegative,
+        lossReason: existing?.lossReason,
+        lossReasonNote: existing?.lossReasonNote,
+        ...(this.isQuoteForm ? { confirmLabel: 'Guardar igual' } : {}),
+      })
+      .subscribe((result) => {
+        if (!result) return;
+        this.emitSave(shared, asDraft, result);
+      });
+  }
+
+  /** Documento original (pedido, presupuesto o presupuesto de origen) con su motivo. */
+  private existingLossDocument(): {
+    items: LossSaleItemInput[];
+    total: number;
+    lossReason?: string;
+    lossReasonNote?: string;
+  } | null {
+    return this.order ?? this.quote ?? this.presetQuote ?? null;
+  }
+
+  private emitSave(
+    shared: {
+      items: OrderItemPayload[];
+      discountPercent: number | undefined;
+      discountAmount: number | undefined;
+      customerId?: string;
+    },
+    asDraft: boolean,
+    lossFields?: { lossReason: string; lossReasonNote?: string },
+  ): void {
+    const lossPayload = lossFields
+      ? {
+          lossReason: lossFields.lossReason,
+          ...(lossFields.lossReasonNote
+            ? { lossReasonNote: lossFields.lossReasonNote }
+            : {}),
+        }
+      : {};
+    const validLines = this.lines.filter((line) => isLineValid(line));
+
     if (this.isQuoteForm) {
       this.save.emit({
         ...shared,
+        ...lossPayload,
         description: hasRichTextContent(this.description)
           ? sanitizeRichTextHtml(this.description)
           : '',
@@ -1615,6 +1694,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
     this.save.emit({
       ...shared,
+      ...lossPayload,
       services: deriveOrderServices(validLines),
       description: hasRichTextContent(this.description)
         ? sanitizeRichTextHtml(this.description)

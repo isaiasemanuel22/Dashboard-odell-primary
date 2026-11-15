@@ -1,4 +1,8 @@
 import {
+  storedWholesaleFloorApplied,
+  WHOLESALE_FLOOR_NOTE,
+} from '../../../shared/utils/wholesale-example.util';
+import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
@@ -63,12 +67,14 @@ import {
   RichTextPipe,
 } from '../../../shared/pipes/labels.pipe';
 import { QuoteDetailLinesComponent } from './quote-detail-lines/quote-detail-lines.component';
+import { LossSaleNoticeComponent } from '../../../components/loss-sale-notice/loss-sale-notice.component';
 import { DocumentAttachmentsViewComponent } from '../../../components/document-attachments-view/document-attachments-view.component';
 
 @Component({
   selector: 'app-quote-detail',
   standalone: true,
   imports: [
+    LossSaleNoticeComponent,
     DocumentAttachmentsViewComponent,
     RouterLink,
     DateShortPipe,
@@ -496,6 +502,12 @@ export class QuoteDetailComponent implements OnInit {
 
   lineSubtotal(item: QuoteItem): number {
     return calculateLinePriceTotal(item);
+  }
+
+  readonly wholesaleFloorNote = WHOLESALE_FLOOR_NOTE;
+
+  lineWholesaleFloored(item: QuoteItem): boolean {
+    return storedWholesaleFloorApplied(item);
   }
 
   lineHasListPrice(item: QuoteItem): boolean {

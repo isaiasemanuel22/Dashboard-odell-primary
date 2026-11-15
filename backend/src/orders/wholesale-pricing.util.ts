@@ -8,20 +8,32 @@ import {
 } from '../common/interfaces';
 import { wholesaleUnitPrice } from '../settings/wholesale-discount.util';
 
+/** Piso del precio mayorista: costo unitario + 10 % (§16.1). */
+export const WHOLESALE_MIN_MARKUP = 10;
+
 export type WholesalePricedItem = OrderItem | QuoteItem;
 
 export interface ApplyWholesalePricingInput {
   priceType: PriceType;
   customer?: Pick<Customer, 'wholesaleMinimum'> | null;
   settings: WholesaleDiscountSettings;
+  /** Costo unitario de la línea; sin costo (0/undefined) no hay piso. */
+  resolveUnitCost?: (item: WholesalePricedItem) => number | undefined;
 }
 
 export interface ApplyWholesalePricingResult<T extends WholesalePricedItem> {
   items: T[];
   wholesaleApplied: boolean;
+  /** Índices de líneas cuyo precio mayorista se subió al piso (costo + 10 %). */
+  flooredIndexes: number[];
 }
 
 function listBaseUnitPrice(item: WholesalePricedItem): number {
+  // Precio manual: es el precio cobrado, no hay lista a la que volver.
+  if (item.unitPriceManual === true) {
+    const manual = Number(item.unitPrice);
+    return Number.isFinite(manual) && manual >= 0 ? manual : 0;
+  }
   const fromList = Number(item.listUnitPrice);
   if (Number.isFinite(fromList) && fromList >= 0) {
     return fromList;
@@ -61,12 +73,18 @@ export function applyWholesalePricing<T extends WholesalePricedItem>(
     input.settings.enabled === true &&
     meetsWholesaleMinimum(listSubtotal, input.customer);
 
+  const flooredIndexes: number[] = [];
   const priced = items.map((item, index) => {
     const base = bases[index];
     const next: T = { ...item, unitPrice: base };
     delete next.listUnitPrice;
 
     if (!wholesaleApplied) {
+      return next;
+    }
+
+    // Precio manual: se respeta tal cual (sin descuento ni piso).
+    if (item.unitPriceManual === true) {
       return next;
     }
 
@@ -79,10 +97,24 @@ export function applyWholesalePricing<T extends WholesalePricedItem>(
       return next;
     }
 
+    const discounted = wholesaleUnitPrice(
+      base,
+      input.settings,
+      item.serviceType,
+    );
+    const unitCost = Number(input.resolveUnitCost?.(item)) || 0;
+    const floor =
+      unitCost > 0
+        ? Math.round(unitCost * (1 + WHOLESALE_MIN_MARKUP / 100))
+        : 0;
+    // Piso: nunca baja de costo + 10 %, pero tampoco supera la lista.
+    const price = Math.min(base, Math.max(discounted, floor));
+    if (price > discounted) flooredIndexes.push(index);
+
     next.listUnitPrice = base;
-    next.unitPrice = wholesaleUnitPrice(base, input.settings, item.serviceType);
+    next.unitPrice = price;
     return next;
   });
 
-  return { items: priced, wholesaleApplied };
+  return { items: priced, wholesaleApplied, flooredIndexes };
 }

@@ -89,6 +89,31 @@ describe('SalesService order revenue', () => {
     expect(stats.monthlyOrdersCount).toBe(1);
   });
 
+  it('venta de mostrador a pérdida exige motivo', () => {
+    const lossy = new SalesService(
+      new RetailSaleRepository(store),
+      new OrderRepository(store),
+      new ProductRepository(store),
+      {
+        resolveCatalogUnitCost: () => 0,
+        resolveCatalogUnitPrice: () => 100,
+        resolveDesignUnitCost: () => 0,
+        resolveOrderItemUnitCost: () => 500,
+      } as unknown as CostCalculatorService,
+    );
+    const dto = {
+      items: [{ productName: 'Pieza', quantity: 1, unitPrice: 100 }],
+    };
+    expect(() => lossy.createRetail(dto)).toThrow(
+      'Estás vendiendo a pérdida: indicá el motivo',
+    );
+    const sale = lossy.createRetail({ ...dto, lossReason: 'liquidacion' });
+    expect(sale.lossReason).toBe('liquidacion');
+    expect(lossy.updateRetail(sale.id, { notes: 'x' }).lossReason).toBe(
+      'liquidacion',
+    );
+  });
+
   it('pasa la mano de obra de la línea al costo de la venta', () => {
     const resolveOrderItemUnitCost = jest.fn().mockReturnValue(1804);
     const checked = new SalesService(

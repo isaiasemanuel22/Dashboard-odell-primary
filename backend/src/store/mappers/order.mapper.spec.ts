@@ -127,6 +127,35 @@ describe('order.mapper payments', () => {
     expect(mapOrderFromDb(base).attachments).toEqual([]);
   });
 
+  it('hace ida y vuelta del motivo de venta a pérdida', () => {
+    const base = {
+      id: 'ord-l',
+      customerId: null,
+      customerName: 'Ana',
+      services: [ServiceType.IMPRESION_3D] as never,
+      status: OrderStatus.PENDIENTE,
+      total: 0,
+      description: null,
+      notes: null,
+      createdAt: new Date('2026-08-01T12:00:00.000Z'),
+      dueDate: new Date('2026-08-10T12:00:00.000Z'),
+      statusHistory: [] as never,
+      items: [],
+    };
+    const order = mapOrderFromDb({
+      ...base,
+      lossReason: 'muestra',
+      lossReasonNote: 'cliente nuevo',
+    });
+    expect(order.lossReason).toBe('muestra');
+    const db = mapOrderToDbCreate(order);
+    expect(db.lossReason).toBe('muestra');
+    expect(db.lossReasonNote).toBe('cliente nuevo');
+    const plain = mapOrderFromDb(base);
+    expect(plain.lossReason).toBeUndefined();
+    expect(mapOrderToDbCreate(plain).lossReason).toBeNull();
+  });
+
   it('mapea pagos ausentes a []', () => {
     const fromDb = mapOrderFromDb({
       id: 'ord-2',

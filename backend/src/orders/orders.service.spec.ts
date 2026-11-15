@@ -92,7 +92,9 @@ describe('OrdersService.getOverview', () => {
       products,
       orderTasks,
       printJobs,
-      {} as CostCalculatorService,
+      {
+        resolveOrderItemUnitCost: () => 0,
+      } as unknown as CostCalculatorService,
       store,
     );
   });
@@ -612,6 +614,69 @@ describe('OrdersService precio mayorista (§10)', () => {
     );
   });
 
+  describe('venta a pérdida', () => {
+    const lossItem = {
+      serviceType: ServiceType.IMPRESION_3D,
+      productId: 'prod-1',
+      productName: 'Pieza',
+      quantity: 1,
+      unitPrice: 100,
+      unitCost: 400,
+    };
+
+    it('rechaza una venta a pérdida sin motivo', () => {
+      expect(() =>
+        service.create({
+          customerId: 'cust-part',
+          dueDate: futureDueDate(),
+          items: [lossItem],
+        }),
+      ).toThrow('Estás vendiendo a pérdida: indicá el motivo');
+    });
+
+    it('acepta con motivo y lo deja en el historial', () => {
+      const order = service.create({
+        customerId: 'cust-part',
+        dueDate: futureDueDate(),
+        items: [lossItem],
+        lossReason: 'muestra',
+        lossReasonNote: 'cliente nuevo',
+      });
+      expect(order.lossReason).toBe('muestra');
+      expect(order.lossReasonNote).toBe('cliente nuevo');
+      expect(order.priceHistory?.[0]).toMatchObject({
+        trigger: 'loss_sale',
+        lossReason: 'muestra',
+      });
+    });
+
+    it('limpia el motivo cuando ya no hay pérdida', () => {
+      const order = service.create({
+        customerId: 'cust-part',
+        dueDate: futureDueDate(),
+        items: [lossItem],
+        lossReason: 'promocion',
+      });
+      const updated = service.update(order.id, {
+        items: [{ ...lossItem, unitPrice: 900 }],
+      });
+      expect(updated.lossReason).toBeUndefined();
+      expect(updated.lossReasonNote).toBeUndefined();
+    });
+
+    it('un pedido desde presupuesto no se bloquea sin motivo', () => {
+      const order = service.create(
+        {
+          customerId: 'cust-part',
+          dueDate: futureDueDate(),
+          items: [lossItem],
+        },
+        { keepQuotedPrices: { wholesaleApplied: false } },
+      );
+      expect(order.lossReason).toBeUndefined();
+    });
+  });
+
   it('pedido de revendedor sale mayorista por defecto', () => {
     const order = service.create({
       customerId: 'cust-rev-sin-min',
@@ -830,6 +895,7 @@ describe('OrdersService.update conserva el cumplimiento', () => {
       {
         resolveOrderUnitPrice: (_s: unknown, _p: unknown, price: number) =>
           price,
+        resolveOrderItemUnitCost: () => 0,
       } as unknown as CostCalculatorService,
       store,
     );

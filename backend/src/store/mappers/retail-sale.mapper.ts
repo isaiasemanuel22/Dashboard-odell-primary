@@ -37,6 +37,8 @@ export function mapRetailSaleFromDb(row: {
   total: number;
   discountPercent?: number;
   discountAmount?: number;
+  lossReason?: string | null;
+  lossReasonNote?: string | null;
   notes: string | null;
   method?: string | null;
   account?: string | null;
@@ -59,6 +61,8 @@ export function mapRetailSaleFromDb(row: {
     total: row.total,
     discountPercent: row.discountPercent ?? 0,
     discountAmount: row.discountAmount ?? 0,
+    lossReason: row.lossReason ?? undefined,
+    lossReasonNote: row.lossReasonNote ?? undefined,
     notes: row.notes ?? undefined,
     method,
     account,
@@ -75,6 +79,8 @@ export function mapRetailSaleToDb(sale: RetailSale) {
     total: sale.total,
     discountPercent: sale.discountPercent ?? 0,
     discountAmount: sale.discountAmount ?? 0,
+    lossReason: sale.lossReason ?? null,
+    lossReasonNote: sale.lossReasonNote ?? null,
     notes: sale.notes ?? null,
     method,
     account: sale.account ?? defaultAccountForMethod(method),

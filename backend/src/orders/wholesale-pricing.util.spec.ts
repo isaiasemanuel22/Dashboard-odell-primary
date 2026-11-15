@@ -218,4 +218,74 @@ describe('applyWholesalePricing', () => {
     expect(result.items[1].unitPrice).toBe(400);
     expect(result.items[2].unitPrice).toBe(1500);
   });
+
+  describe('piso costo + 10 %', () => {
+    const run = (
+      item: Partial<OrderItem>,
+      cost: number | undefined,
+    ): ReturnType<typeof applyWholesalePricing<OrderItem>> =>
+      applyWholesalePricing(
+        [
+          line({
+            serviceType: ServiceType.IMPRESION_3D,
+            productName: 'Pieza',
+            quantity: 1,
+            unitPrice: 1200,
+            ...item,
+          }),
+        ],
+        {
+          priceType: PriceType.MAYORISTA,
+          customer: null,
+          settings,
+          resolveUnitCost: () => cost,
+        },
+      );
+
+    it('sube el precio al piso cuando el descuento queda por debajo', () => {
+      const result = run({ unitPrice: 1200 }, 1000);
+      expect(result.items[0].unitPrice).toBe(1100);
+      expect(result.items[0].listUnitPrice).toBe(1200);
+      expect(result.flooredIndexes).toEqual([0]);
+    });
+
+    it('nunca supera la lista', () => {
+      const result = run({ unitPrice: 1000 }, 1000);
+      expect(result.items[0].unitPrice).toBe(1000);
+      expect(result.flooredIndexes).toEqual([0]);
+    });
+
+    it('sin costo no hay piso', () => {
+      for (const cost of [0, undefined]) {
+        const result = run({ unitPrice: 1200 }, cost);
+        expect(result.items[0].unitPrice).toBe(960);
+        expect(result.flooredIndexes).toEqual([]);
+      }
+    });
+
+    it('no marca piso si el descuento ya queda sobre costo + 10 %', () => {
+      const result = run({ unitPrice: 2000 }, 1000);
+      expect(result.items[0].unitPrice).toBe(1600);
+      expect(result.flooredIndexes).toEqual([]);
+    });
+
+    it('respeta el precio manual: sin descuento ni piso', () => {
+      const result = run({ unitPrice: 700, unitPriceManual: true }, 1000);
+      expect(result.items[0].unitPrice).toBe(700);
+      expect(result.items[0].listUnitPrice).toBeUndefined();
+      expect(result.flooredIndexes).toEqual([]);
+    });
+
+    it('es idempotente al volver a aplicar', () => {
+      const first = run({ unitPrice: 1200 }, 1000);
+      const second = applyWholesalePricing(first.items, {
+        priceType: PriceType.MAYORISTA,
+        customer: null,
+        settings,
+        resolveUnitCost: () => 1000,
+      });
+      expect(second.items[0].unitPrice).toBe(1100);
+      expect(second.items[0].listUnitPrice).toBe(1200);
+    });
+  });
 });

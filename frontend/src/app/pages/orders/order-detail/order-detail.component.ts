@@ -90,7 +90,11 @@ import {
   getMarginForService,
   normalizeProfitMargins,
 } from '../../../shared/utils/pricing.util';
-import { normalizeWholesaleDiscount } from '../../../shared/utils/wholesale-example.util';
+import {
+  normalizeWholesaleDiscount,
+  storedWholesaleFloorApplied,
+  WHOLESALE_FLOOR_NOTE,
+} from '../../../shared/utils/wholesale-example.util';
 import {
   paymentMethodLabel,
   salesChannelLabel,
@@ -99,6 +103,7 @@ import {
 import { OrderDetailHistoryComponent } from './order-detail-history/order-detail-history.component';
 import { OrderDetailPaymentsComponent } from './order-detail-payments/order-detail-payments.component';
 import { OrderDetailDeliveriesComponent } from './order-detail-deliveries/order-detail-deliveries.component';
+import { LossSaleNoticeComponent } from '../../../components/loss-sale-notice/loss-sale-notice.component';
 import { DocumentAttachmentsViewComponent } from '../../../components/document-attachments-view/document-attachments-view.component';
 import { shortId, sortAndDisambiguateOptions } from '../../../shared/utils/search-text.util';
 
@@ -108,6 +113,7 @@ type MobileAccordionKey = 'payments' | 'tasks' | 'deliveries' | 'history';
   selector: 'app-order-detail',
   standalone: true,
   imports: [
+    LossSaleNoticeComponent,
     DocumentAttachmentsViewComponent,
     FormsModule,
     RouterLink,
@@ -226,6 +232,12 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
       value: (item) => this.lineSubtotal(item),
     },
   ];
+
+  readonly wholesaleFloorNote = WHOLESALE_FLOOR_NOTE;
+
+  lineWholesaleFloored(item: OrderItem): boolean {
+    return storedWholesaleFloorApplied(item);
+  }
 
   hasWholesalePrice(item: OrderItem): boolean {
     return item.listUnitPrice != null && Number(item.listUnitPrice) > 0;

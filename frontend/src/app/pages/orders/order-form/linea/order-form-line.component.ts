@@ -114,12 +114,14 @@ import {
 } from '../../../../shared/utils/product.helpers';
 import {
   lineListUnitPrice,
+  lineWholesaleFloorApplied,
   wholesaleAppliesToService,
   isWholesaleMarginBelowArea,
   wholesaleMarginPercentOnCost,
 } from '../../../../shared/utils/order-wholesale-preview.util';
 import {
   normalizeWholesaleDiscount,
+  WHOLESALE_FLOOR_NOTE,
   wholesalePriceFromList,
 } from '../../../../shared/utils/wholesale-example.util';
 import { combineLatest } from 'rxjs';
@@ -907,11 +909,29 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   get wholesaleUnitPricePreview(): number {
+    // Precio manual: tal cual (sin descuento ni piso).
+    if (this.line.unitPriceManual) return this.editableUnitPrice;
     return wholesalePriceFromList(
       this.editableUnitPrice,
       this.wholesaleDiscount.percent,
+      this.unitCost,
     );
   }
+
+  /** True si el piso (costo + 10 %) subió el precio mayorista de esta línea. */
+  get wholesaleFloorApplied(): boolean {
+    return (
+      this.showWholesaleColumns &&
+      lineWholesaleFloorApplied(
+        this.line,
+        this.wholesaleApplied,
+        this.wholesaleDiscount,
+        this.unitCost,
+      )
+    );
+  }
+
+  readonly wholesaleFloorNote = WHOLESALE_FLOOR_NOTE;
 
   get wholesaleLineTotalPreview(): number {
     const qty = Math.max(0, Number(this.line.quantity) || 0);

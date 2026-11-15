@@ -873,7 +873,8 @@ export type OrderPriceChangeTrigger =
   | 'supply_price'
   | 'product_update'
   | 'bulk_price'
-  | 'discount_change';
+  | 'discount_change'
+  | 'loss_sale';
 
 export interface OrderPriceHistoryEntry {
   id: string;
@@ -890,6 +891,9 @@ export interface OrderPriceHistoryEntry {
   /** Solo discount_change: descuento anterior y nuevo, ya formateados. */
   previousDiscountLabel?: string;
   newDiscountLabel?: string;
+  /** Solo loss_sale: código del motivo y nota. */
+  lossReason?: string;
+  lossReasonNote?: string;
 }
 
 export interface Order {
@@ -910,6 +914,9 @@ export interface Order {
   responsibleUserId?: string;
   discountPercent?: number;
   discountAmount?: number;
+  /** Motivo de venta a pérdida (código) y nota. */
+  lossReason?: string;
+  lossReasonNote?: string;
   description?: string;
   /** Archivos e imágenes de referencia (máx. 10). */
   attachments?: ProductAttachment[];
@@ -991,6 +998,9 @@ export interface Quote {
   salesChannel?: SalesChannel;
   discountPercent?: number;
   discountAmount?: number;
+  /** Motivo de venta a pérdida (código) y nota. */
+  lossReason?: string;
+  lossReasonNote?: string;
   description?: string;
   /** Archivos e imágenes de referencia (máx. 10). */
   attachments?: ProductAttachment[];
@@ -1007,6 +1017,8 @@ export type CreateQuotePayload = {
   salesChannel?: SalesChannel | null;
   discountPercent?: number;
   discountAmount?: number;
+  lossReason?: string;
+  lossReasonNote?: string;
   description?: string;
   attachments?: ProductAttachment[];
   /** Solo borrador | enviado desde el formulario (Crear vs Guardar borrador). */
@@ -1631,6 +1643,9 @@ export interface RetailSale {
   total: number;
   discountPercent?: number;
   discountAmount?: number;
+  /** Motivo de venta a pérdida (código) y nota. */
+  lossReason?: string;
+  lossReasonNote?: string;
   notes?: string;
   method?: PaymentMethod;
   account?: TreasuryAccount;
@@ -1651,6 +1666,8 @@ export type CreateRetailSalePayload = {
   soldAt?: string;
   discountPercent?: number;
   discountAmount?: number;
+  lossReason?: string;
+  lossReasonNote?: string;
   method?: PaymentMethod;
   account?: TreasuryAccount;
 };

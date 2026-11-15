@@ -1,11 +1,14 @@
 import {
   IsEnum,
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
   ValidateNested,
 } from 'class-validator';
+import { LOSS_REASON_CODES, LOSS_REASON_NOTE_MAX } from '../loss-reason';
 import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
 import { PaymentMethod, TreasuryAccount } from '../enums';
@@ -50,6 +53,16 @@ export class CreateRetailSaleDto {
   @IsNumber()
   @Min(0)
   discountAmount?: number;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(LOSS_REASON_CODES)
+  lossReason?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(LOSS_REASON_NOTE_MAX)
+  lossReasonNote?: string;
 
   @IsOptional()
   @IsEnum(PaymentMethod)

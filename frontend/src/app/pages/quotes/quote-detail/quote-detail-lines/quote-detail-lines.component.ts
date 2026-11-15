@@ -16,6 +16,10 @@ import { isImpresion3DLine } from '../../../../shared/utils/order-fdm-quote.util
 import { resolveLinePrintUnitPrice } from '../../../../shared/utils/design-print.util';
 import { DEPOSIT_FACTOR } from '../../../../shared/utils/quote-document.util';
 import { serviceTypeLabel } from '../../../../shared/constants/labels';
+import {
+  storedWholesaleFloorApplied,
+  WHOLESALE_FLOOR_NOTE,
+} from '../../../../shared/utils/wholesale-example.util';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 
 @Component({
@@ -31,6 +35,12 @@ export class QuoteDetailLinesComponent {
   @Input({ required: true }) quote!: Quote;
 
   readonly isDesignService = isDesignService;
+  readonly wholesaleFloorNote = WHOLESALE_FLOOR_NOTE;
+
+  lineWholesaleFloored(item: QuoteItem): boolean {
+    return storedWholesaleFloorApplied(item);
+  }
+
   readonly depositPercent = Math.round(DEPOSIT_FACTOR * 100);
   readonly lineColumns: OdlColumn<QuoteItem>[] = [
     { key: 'service', header: 'Servicio', value: (item) => serviceTypeLabel(item.serviceType) },

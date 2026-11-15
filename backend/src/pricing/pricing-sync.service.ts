@@ -289,6 +289,7 @@ export class PricingSyncService {
       settings: normalizeWholesaleDiscount(
         this.store.generalSettings.wholesaleDiscount,
       ),
+      resolveUnitCost: (item) => this.pricing.resolveOrderItemUnitCost(item),
     });
     quote.items = priced.items;
     quote.wholesaleApplied = priced.wholesaleApplied;
@@ -317,7 +318,7 @@ export class PricingSyncService {
       let recorded = false;
       for (let index = 0; index < order.items.length; index++) {
         const item = order.items[index];
-        if (!item.productId) continue;
+        if (!item.productId || item.unitPriceManual === true) continue;
 
         const change = priceChanges.get(item.productId);
         // El catálogo es de lista: comparar contra la lista de la línea, no

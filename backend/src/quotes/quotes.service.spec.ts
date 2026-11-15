@@ -522,6 +522,102 @@ describe('QuotesService costo cargado en servicios de terceros', () => {
   });
 });
 
+describe('QuotesService venta a pérdida', () => {
+  function setup() {
+    const store = new StoreService();
+    const state = createEmptyState();
+    state.customers.push({
+      id: 'cust-1',
+      name: 'Cliente',
+      email: 'a@test.com',
+      phone: '123',
+      type: CustomerType.PARTICULAR,
+      createdAt: '2026-10-21T12:00:00.000Z',
+    });
+    state.products.push({
+      id: 'prod-1',
+      name: 'Pieza',
+      type: ProductType.FDM,
+      images: [],
+      attachments: [],
+      updatedAt: '2026-07-01T10:00:00.000Z',
+      price: 1000,
+      cost: 400,
+      profit: 600,
+      categoryIds: [],
+      size: '10 cm',
+      published: true,
+      components: [],
+      assemblyTimeHours: 0,
+      includesPieces: false,
+      grams: 10,
+      printTimeHours: 1,
+      workTimeHours: 0,
+      stock: 10,
+    });
+    store.applyState(state);
+    return buildQuotesService(store);
+  }
+  const lossItem = {
+    serviceType: ServiceType.SERVICIO_TERCERO,
+    productName: 'Envío',
+    quantity: 1,
+    unitPrice: 100,
+    unitCost: 400,
+  };
+  const underCostItem = {
+    serviceType: ServiceType.IMPRESION_3D,
+    productId: 'prod-1',
+    productName: 'Pieza',
+    quantity: 1,
+    unitPrice: 100,
+    unitCost: 400,
+  };
+
+  it('rechaza sin motivo y acepta con motivo', () => {
+    const service = setup();
+    expect(() =>
+      service.create({
+        customerId: 'cust-1',
+        status: QuoteStatus.ENVIADO,
+        items: [underCostItem],
+      }),
+    ).toThrow('Estás vendiendo a pérdida: indicá el motivo');
+    const quote = service.create({
+      customerId: 'cust-1',
+      status: QuoteStatus.ENVIADO,
+      items: [underCostItem],
+      lossReason: 'competencia',
+    });
+    expect(quote.lossReason).toBe('competencia');
+  });
+
+  it('el servicio de un tercero no cuenta como pérdida', () => {
+    const service = setup();
+    const quote = service.create({
+      customerId: 'cust-1',
+      status: QuoteStatus.ENVIADO,
+      items: [lossItem],
+    });
+    expect(quote.lossReason).toBeUndefined();
+  });
+
+  it('copia el motivo al pedido', () => {
+    const service = setup();
+    const quote = service.create({
+      customerId: 'cust-1',
+      status: QuoteStatus.ENVIADO,
+      items: [underCostItem],
+      lossReason: 'muestra',
+      lossReasonNote: 'prueba',
+    });
+    service.updateStatus(quote.id, QuoteStatus.ACEPTADO);
+    const order = service.createOrderFromQuote(quote.id);
+    expect(order.lossReason).toBe('muestra');
+    expect(order.lossReasonNote).toBe('prueba');
+  });
+});
+
 describe('QuoteRepository.nextId', () => {
   it('un presupuesto nuevo usa quo- y no choca con ids qte- ni quo- existentes', () => {
     const store = new StoreService();

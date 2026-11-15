@@ -1,6 +1,7 @@
 import {
   ArrayMaxSize,
   IsArray,
+  IsIn,
   IsNumber,
   IsOptional,
   IsString,
@@ -8,6 +9,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
+import { LOSS_REASON_CODES, LOSS_REASON_NOTE_MAX } from '../loss-reason';
 import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
 import { IsEnum } from 'class-validator';
@@ -44,6 +46,16 @@ export class CreateQuoteDto {
   @IsNumber()
   @Min(0)
   discountAmount?: number;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(LOSS_REASON_CODES)
+  lossReason?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(LOSS_REASON_NOTE_MAX)
+  lossReasonNote?: string;
 
   @IsOptional()
   @IsString()

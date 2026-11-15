@@ -105,7 +105,11 @@ export class ProductMobileCardComponent {
     ) {
       return null;
     }
-    return wholesalePriceFromList(this.listPrice(), discount.percent);
+    return wholesalePriceFromList(
+      this.listPrice(),
+      discount.percent,
+      product.cost,
+    );
   });
 
   protected readonly markupPercent = computed(() =>

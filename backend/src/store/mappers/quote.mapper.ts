@@ -137,6 +137,8 @@ export function mapQuoteFromDb(row: {
   salesChannel?: string | null;
   discountPercent?: number;
   discountAmount?: number;
+  lossReason?: string | null;
+  lossReasonNote?: string | null;
   description?: string | null;
   attachments?: Prisma.JsonValue;
   quotedAt: Date;
@@ -173,6 +175,8 @@ export function mapQuoteFromDb(row: {
     salesChannel: normalizeSalesChannel(row.salesChannel),
     discountPercent: row.discountPercent ?? 0,
     discountAmount: row.discountAmount ?? 0,
+    lossReason: row.lossReason ?? undefined,
+    lossReasonNote: row.lossReasonNote ?? undefined,
     description: row.description ?? undefined,
     attachments: normalizeProductAttachments(fromJson(row.attachments ?? [])),
     quotedAt: row.quotedAt.toISOString(),
@@ -193,6 +197,8 @@ function mapQuoteScalarsToDb(quote: Quote) {
     salesChannel: quote.salesChannel ?? null,
     discountPercent: quote.discountPercent ?? 0,
     discountAmount: quote.discountAmount ?? 0,
+    lossReason: quote.lossReason ?? null,
+    lossReasonNote: quote.lossReasonNote ?? null,
     description: quote.description ?? null,
     attachments: toInputJson(quote.attachments ?? []),
     quotedAt: new Date(quote.quotedAt),

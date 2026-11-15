@@ -22,6 +22,12 @@ Hecho: Heroku pasó de 22bf9bc a 623efaf (v41); solo había cambios de frontend,
 Decisiones: Isaías pidió deployar solo main; el trabajo sin commitear de insumos y pérdida queda afuera.
 Pendiente: cerrar, commitear y deployar insumos mayorista + venta a pérdida (con db:push).
 
+## 2026-11-15 · Insumos +50 %, mínimo mayorista y venta a pérdida
+Rama: feat/insumos-mayorista-perdida · Commits: ver git log (deploy 2026-11-15)
+Hecho: insumos de producto y línea a medida se cobran costo × 1,5 (constante SUPPLY_PRICE_MULTIPLIER por lado). Mayorista con mínimo costo + 10 % sin pasar la lista (WHOLESALE_MIN_MARKUP); precio manual se respeta tal cual. Venta a pérdida (línea bajo costo o ganancia total negativa) pide motivo en pedido, presupuesto y venta de mostrador (loss-sale-dialog, 11 códigos); lossReason/lossReasonNote en Order, Quote y RetailSale; trigger loss_sale en historial. Líneas manuales ya no disparan el aviso de cambio de precio de catálogo.
+Decisiones: de Isaías: +50 % fijo en insumos, mínimo mayorista, vender a pérdida con motivo y 10 motivos. Supuestas: mínimo = costo + 10 %; borradores de presupuesto también piden motivo; si el set de líneas en pérdida no cambia, se reusa el motivo sin preguntar.
+Pendiente: db:push:heroku en el deploy (campos nuevos). Precios guardados de catálogo no se recalculan solos. 6 errores 500 en consola sin URL, probablemente reinicios de nest --watch (no reproducidos con curl).
+
 ## 2026-11-14 · Documento de costos y precios
 Rama: fix/errores-tanda-2 · Commits: sin commit
 Hecho: docs/PRECIOS-Y-COSTOS.md con el desglose de costo y precio por tipo de producto (FDM, resina, estampado, combo) y de línea (diseño, modelado, insumo, tercero), con mayorista y descuento, relevado del código.

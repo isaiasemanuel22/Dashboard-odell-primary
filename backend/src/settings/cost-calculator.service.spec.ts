@@ -508,7 +508,7 @@ describe('CostCalculatorService', () => {
     expect(result.materialCost).toBe(900);
   });
 
-  it('suma el insumo encima del margen, sin aplicárselo', () => {
+  it('cobra el insumo a costo × 1,5 encima del margen, sin aplicárselo', () => {
     store.generalSettings.errorMarginPercent = 0;
     store.generalSettings.profitMargins = {
       impresion_3d: 50,
@@ -545,12 +545,13 @@ describe('CostCalculatorService', () => {
     expect(base.cost).toBe(1000);
     expect(base.price).toBe(1500);
     expect(withSupply.cost).toBe(1800);
-    expect(withSupply.price).toBe(2300);
-    expect(withSupply.profit).toBe(base.profit);
-    expect(withSupply.profit).toBe(500);
+    // Insumo 800 → precio 1.200 (+50 %); el costo queda en 800.
+    expect(withSupply.price).toBe(1500 + 1200);
+    expect(withSupply.profit).toBe(base.profit + 400);
+    expect(withSupply.profit).toBe(900);
   });
 
-  it('suma el insumo encima del precio sugerido', () => {
+  it('suma el insumo (costo × 1,5) encima del precio sugerido', () => {
     store.generalSettings.errorMarginPercent = 0;
     store.supplies.push({
       id: 'sup-polimero',
@@ -576,8 +577,8 @@ describe('CostCalculatorService', () => {
     });
 
     expect(result.cost).toBe(1800);
-    expect(result.price).toBe(2800);
-    expect(result.profit).toBe(1000);
+    expect(result.price).toBe(2000 + 1200);
+    expect(result.profit).toBe(1400);
   });
 
   it('no mete los insumos del producto en el costo de material del estampado', () => {

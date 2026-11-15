@@ -15,6 +15,7 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
+import { LOSS_REASON_CODES, LOSS_REASON_NOTE_MAX } from '../loss-reason';
 import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
 import {
@@ -466,6 +467,16 @@ export class CreateOrderDto {
   @IsNumber()
   @Min(0)
   discountAmount?: number;
+
+  @IsOptional()
+  @IsString()
+  @IsIn(LOSS_REASON_CODES)
+  lossReason?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(LOSS_REASON_NOTE_MAX)
+  lossReasonNote?: string;
 
   /** uid de Firebase del responsable del pedido. */
   @IsOptional()

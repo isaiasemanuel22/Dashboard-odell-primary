@@ -1,0 +1,17 @@
+@use '../../shared/styles/variables' as *;
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.loss-sale-notice {
+  margin: 8px 0 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: $color-status-warning-bg;
+  color: $color-status-warning-text;
+  font-size: 13px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}

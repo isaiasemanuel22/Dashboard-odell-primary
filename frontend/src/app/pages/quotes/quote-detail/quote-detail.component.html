@@ -62,6 +62,8 @@
           <strong class="qd-m__customer qd-m__customer--empty">Sin cliente</strong>
         }
 
+        <app-loss-sale-notice [reason]="quote.lossReason" [note]="quote.lossReasonNote" />
+
         @if (expired) {
           <div class="qd-m__expired" role="alert">
             <p>{{ expiredHint }}</p>
@@ -134,6 +136,9 @@
                   · {{ serviceLabel(item) }}
                 }
               </span>
+              @if (lineWholesaleFloored(item)) {
+                <span>{{ wholesaleFloorNote }}</span>
+              }
             </div>
             <div class="qd-m__line-end">{{ lineSubtotal(item) | currencyArs }}</div>
           </div>
@@ -259,6 +264,7 @@
           Fecha: {{ quote.quotedAt | dateShort }} · Creado: {{ quote.createdAt | dateShort }}
           · {{ quoteValidityLabel }}
         </p>
+        <app-loss-sale-notice [reason]="quote.lossReason" [note]="quote.lossReasonNote" />
       </div>
       <div class="header-actions">
         <db-button

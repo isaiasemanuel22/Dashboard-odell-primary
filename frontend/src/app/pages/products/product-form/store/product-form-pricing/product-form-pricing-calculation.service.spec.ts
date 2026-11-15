@@ -11,7 +11,8 @@ describe('ProductFormPricingCalculationService', () => {
       supplyValue: 3500,
     });
 
-    expect(result.price).toBe(1967 * 2 + 3500);
+    // Insumos a costo × 1,5.
+    expect(result.price).toBe(1967 * 2 + 5250);
     expect(result.profit).toBe(result.price - 5467);
   });
 

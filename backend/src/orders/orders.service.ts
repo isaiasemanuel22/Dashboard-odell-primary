@@ -49,6 +49,12 @@ import {
   orderLineListPrice,
   rememberKeptLinePrice,
 } from './order-price-notice.util';
+import {
+  detectLossSale,
+  LossReasonFields,
+  LossSaleResult,
+  resolveLossReason,
+} from '../common/utils/loss-sale.util';
 import { filterOrders, OrderListFilters } from './order-filter.util';
 import { normalizeIncomingOrderItems } from './order-items.normalizer';
 import { appendOrderStatusHistory } from './order-status-history.util';
@@ -127,7 +133,7 @@ export class OrdersService {
     }> = [];
 
     order.items.forEach((item, index) => {
-      if (!item.productId) return;
+      if (!item.productId || item.unitPriceManual === true) return;
       const product = this.products.findById(item.productId);
       const listPrice = item.listUnitPrice ?? item.unitPrice;
       if (!product || product.price === listPrice) return;
@@ -177,7 +183,7 @@ export class OrdersService {
     let changed = false;
 
     order.items.forEach((item, index) => {
-      if (!item.productId) return;
+      if (!item.productId || item.unitPriceManual === true) return;
       const product = this.products.findById(item.productId);
       const listPrice = orderLineListPrice(item);
       if (!product || product.price === listPrice) return;
@@ -224,6 +230,11 @@ export class OrdersService {
     const items = priced.items;
     const services = this.normalizeServices(items);
     const discount = normalizeDiscountFields(data);
+    const total = this.calculateTotal(items, discount);
+    // Pedido que viene de un presupuesto: se copia el motivo sin bloquear.
+    const lossFields = this.resolveLossReasonFields(items, total, data, {
+      allowMissing: !!options.keepQuotedPrices,
+    });
     const order: Order = {
       id: this.orders.nextId(),
       createdAt: new Date().toISOString(),
@@ -235,9 +246,11 @@ export class OrdersService {
       priceType,
       wholesaleApplied: priced.wholesaleApplied,
       salesChannel: this.normalizeSalesChannel(data.salesChannel),
-      total: this.calculateTotal(items, discount),
+      total,
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
+      lossReason: lossFields.lossReason,
+      lossReasonNote: lossFields.lossReasonNote,
       description: this.normalizeDescription(data.description),
       attachments: sanitizeDocumentAttachments(data.attachments),
       notes: data.notes?.trim() || undefined,
@@ -254,6 +267,9 @@ export class OrdersService {
       'auto',
       order.createdAt,
     );
+    if (order.lossReason) {
+      this.appendLossSaleHistory(order, 0, order.total);
+    }
     this.orders.create(order);
     this.orderTasks.syncOrderTasks(order);
     return order;
@@ -384,9 +400,31 @@ export class OrdersService {
       );
     }
 
+    // El motivo se exige al tocar precios, líneas o descuento (o al mandarlo).
+    const pricingTouched =
+      data.items !== undefined ||
+      data.discountPercent !== undefined ||
+      data.discountAmount !== undefined ||
+      data.priceType !== undefined ||
+      data.lossReason !== undefined;
+    const lossFields = pricingTouched
+      ? this.resolveLossReasonFields(items, newTotal, {
+          lossReason: data.lossReason ?? current.lossReason,
+          lossReasonNote:
+            data.lossReason !== undefined
+              ? data.lossReasonNote
+              : (data.lossReasonNote ?? current.lossReasonNote),
+        })
+      : {
+          lossReason: current.lossReason,
+          lossReasonNote: current.lossReasonNote,
+        };
+
     const updated: Order = {
       ...current,
       ...data,
+      lossReason: lossFields.lossReason,
+      lossReasonNote: lossFields.lossReasonNote,
       customerId,
       customerName,
       services,
@@ -447,9 +485,36 @@ export class OrdersService {
       });
     }
 
+    if (
+      updated.lossReason &&
+      (updated.lossReason !== current.lossReason ||
+        updated.lossReasonNote !== current.lossReasonNote)
+    ) {
+      this.appendLossSaleHistory(updated, current.total, newTotal);
+    }
+
     this.orders.save(updated);
     this.orderTasks.syncOrderTasks(updated);
     return updated;
+  }
+
+  private appendLossSaleHistory(
+    order: Order,
+    previousTotal: number,
+    newTotal: number,
+  ): void {
+    appendOrderPriceHistory(order, {
+      trigger: 'loss_sale',
+      itemIndex: -1,
+      productId: '',
+      productName: 'Venta a pérdida',
+      previousUnitPrice: 0,
+      newUnitPrice: 0,
+      previousOrderTotal: previousTotal,
+      newOrderTotal: newTotal,
+      lossReason: order.lossReason,
+      lossReasonNote: order.lossReasonNote,
+    });
   }
 
   updateStatus(id: string, status: OrderStatus): Order {
@@ -776,6 +841,22 @@ export class OrdersService {
     });
   }
 
+  /**
+   * Detecta venta a pérdida y valida el motivo (§16). Sin pérdida devuelve
+   * el motivo vacío (se limpia al guardar). Con pérdida y sin motivo → 400.
+   */
+  resolveLossReasonFields(
+    items: OrderItem[],
+    total: number,
+    fields: LossReasonFields,
+    options: { allowMissing?: boolean } = {},
+  ): { lossReason?: string; lossReasonNote?: string; loss: LossSaleResult } {
+    const loss = detectLossSale(items, total, (item) =>
+      this.resolveItemUnitCost(item),
+    );
+    return { ...resolveLossReason(loss, fields, options), loss };
+  }
+
   private calculateTotal(
     items: OrderItem[],
     discount: ReturnType<typeof normalizeDiscountFields>,
@@ -903,6 +984,14 @@ export class OrdersService {
       priceType,
       customer: resolvedCustomer,
       settings,
+      resolveUnitCost: (item) => this.resolveItemUnitCost(item),
     });
+  }
+
+  /** Costo unitario de una línea (piso del precio mayorista, §16.1). */
+  resolveItemUnitCost(
+    item: Parameters<CostCalculatorService['resolveOrderItemUnitCost']>[0],
+  ): number {
+    return this.costCalculator.resolveOrderItemUnitCost(item);
   }
 }

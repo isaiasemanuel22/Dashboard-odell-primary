@@ -125,6 +125,9 @@
         />
       </div>
       <p class="price-note">{{ unitPriceHint(vm.price, vm.totalCost, vm.costBreakdown?.laborCost ?? 0) }}</p>
+      @if (supplyCost > 0) {
+        <p class="price-note">Insumos (+50 %) en el precio: {{ supplyPrice | currencyArs }}</p>
+      }
       @if (priceManual) {
         <button type="button" class="unit-price__reset" (click)="resetUnitPrice()">
           Volver al sugerido

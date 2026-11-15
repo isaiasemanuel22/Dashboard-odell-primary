@@ -20,6 +20,7 @@ import {
   resolveProductGrams,
   resolveProductPrintTimeHours,
 } from './product.helpers';
+import { supplyPriceFromValue } from './supply-line-value.util';
 
 export function isFdmQuoteConfigured(
   line: Pick<
@@ -266,7 +267,7 @@ export function syncFdmQuotePricing(
   if (!preserve) {
     line.unitPrice =
       priceFromCostAndMargin(processCost, marginPercent, laborCost) +
-      supplyValue;
+      supplyPriceFromValue(supplyValue);
   }
 }
 

@@ -5,3 +5,7 @@ export type {
   TaskDetailDialogData,
   TaskDetailDialogResult,
 } from './task-detail-dialog.component';
+export type {
+  LossSaleDialogData,
+  LossSaleDialogResult,
+} from './loss-sale-dialog.component';

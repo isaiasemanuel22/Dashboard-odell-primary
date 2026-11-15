@@ -22,6 +22,7 @@ import {
   getMarginForService,
   priceFromCostAndMargin,
 } from './pricing.util';
+import { supplyPriceFromValue } from './supply-line-value.util';
 
 export function isEstampadoLine(serviceType: ServiceType): boolean {
   return serviceType === ServiceType.ESTAMPADO;
@@ -167,7 +168,7 @@ export function syncEstampadoQuotePricing(
         processCost,
         marginPercent,
         breakdown.laborCost,
-      ) + supplyValue;
+      ) + supplyPriceFromValue(supplyValue);
   }
 }
 

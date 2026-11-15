@@ -21,6 +21,7 @@ import {
   priceFromCostAndMargin,
   totalCostFromBreakdown,
 } from '../../../shared/utils/pricing.util';
+import { supplyPriceFromValue } from '../../../shared/utils/supply-line-value.util';
 import { totalFdmFilamentGrams, hasValidFdmFilamentInput } from '../../../shared/utils/fdm.helpers';
 import {
   componentsCostTotal,
@@ -187,10 +188,11 @@ export class ProductFormPricingService {
     if (!this.context) return 0;
     const form = this.context.form;
     const suggestedPrice = form.controls.suggestedPrice.value;
-    const supplyValue = this.catalogSupplyValue();
+    // Los insumos entran al precio a costo × 1,5 (§16.3).
+    const supplyPrice = this.catalogSupplyPrice();
 
     if (suggestedPrice != null && Number(suggestedPrice) > 0) {
-      return Number(suggestedPrice) + supplyValue;
+      return Number(suggestedPrice) + supplyPrice;
     }
 
     if (usesFormPieceAssembly(form)) {
@@ -201,10 +203,10 @@ export class ProductFormPricingService {
             assemblyCost,
             this.configuredProfitMargin,
             this.costBreakdown?.laborCost,
-          ) + supplyValue
+          ) + supplyPrice
         );
       }
-      return supplyValue;
+      return supplyPrice;
     }
 
     if (this.computedPrice != null) {
@@ -719,7 +721,7 @@ export class ProductFormPricingService {
 
     const process = Number(form.controls.suggestedPrice.value) || 0;
     if (process > 0) {
-      this.manualUnitPrice = process + this.catalogSupplyValue();
+      this.manualUnitPrice = process + this.catalogSupplyPrice();
       this.pricingStore.setSuggestedPrice(this.manualUnitPrice);
       return;
     }
@@ -733,8 +735,14 @@ export class ProductFormPricingService {
   /** Precio unitario que el usuario escribió. Null si sigue el calculado. */
   manualUnitPrice: number | null = null;
 
+  /** Costo de los insumos de catálogo. */
   supplyValue(): number {
     return this.catalogSupplyValue();
+  }
+
+  /** Precio de los insumos de catálogo (costo × 1,5). */
+  supplyPrice(): number {
+    return this.catalogSupplyPrice();
   }
 
   /** El número del campo es el precio unitario. El sugerido guarda solo el proceso. */
@@ -746,7 +754,7 @@ export class ProductFormPricingService {
       return;
     }
     this.manualUnitPrice = typed;
-    const supply = this.catalogSupplyValue();
+    const supply = this.catalogSupplyPrice();
     const process = Math.round(typed - supply);
     this.context.form.controls.suggestedPrice.setValue(
       process > 0 ? process : null,
@@ -772,11 +780,16 @@ export class ProductFormPricingService {
       this.manualUnitPrice = null;
       return;
     }
-    this.manualUnitPrice = process + this.catalogSupplyValue();
+    this.manualUnitPrice = process + this.catalogSupplyPrice();
     this.pricingStore.setSuggestedPrice(this.manualUnitPrice);
   }
 
-  /** Valor de insumos del catálogo: cantidad × precio unitario, sin margen. */
+  /** Precio de insumos del catálogo: costo × 1,5 (§16.3). */
+  private catalogSupplyPrice(): number {
+    return supplyPriceFromValue(this.catalogSupplyValue());
+  }
+
+  /** Costo de insumos del catálogo: cantidad × precio unitario, sin margen. */
   private catalogSupplyValue(): number {
     if (!this.context) return 0;
     return this.productCost.supplyLinesValue(

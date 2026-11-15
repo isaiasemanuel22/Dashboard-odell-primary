@@ -38,6 +38,10 @@ import { defaultAccountForMethod } from '../treasury/treasury-account.util';
 import { isRevenueOrder, resolveOrderSoldAt } from './sales-order.util';
 import { calculateOrderLineSubtotal } from '../orders/order-pricing.util';
 import { isThirdPartyService } from '../common/service-type.util';
+import {
+  detectLossSale,
+  resolveLossReason,
+} from '../common/utils/loss-sale.util';
 import { computeAreaProfitBalances } from './profit-area.util';
 
 @Injectable()
@@ -132,6 +136,11 @@ export class SalesService {
           : current.discountAmount,
       method: data.method ?? current.method,
       account: data.account ?? current.account,
+      lossReason: data.lossReason ?? current.lossReason,
+      lossReasonNote:
+        data.lossReason !== undefined
+          ? data.lossReasonNote
+          : (data.lossReasonNote ?? current.lossReasonNote),
     };
 
     const updated = this.buildRetailSale(merged, id, current.createdAt);
@@ -318,6 +327,11 @@ export class SalesService {
     const now = new Date().toISOString();
     const method = data.method ?? PaymentMethod.EFECTIVO;
     const account = data.account ?? defaultAccountForMethod(method);
+    // Venta a pérdida: exige motivo; sin pérdida se limpia (§16).
+    const loss = detectLossSale(items, total, (item) =>
+      this.costCalculator.resolveOrderItemUnitCost(item),
+    );
+    const lossFields = resolveLossReason(loss, data);
 
     return {
       id: id ?? this.retailSales.nextId(),
@@ -325,6 +339,8 @@ export class SalesService {
       total,
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
+      lossReason: lossFields.lossReason,
+      lossReasonNote: lossFields.lossReasonNote,
       notes: data.notes?.trim() || undefined,
       method,
       account,

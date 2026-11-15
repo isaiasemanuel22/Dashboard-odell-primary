@@ -27,6 +27,8 @@ interface OrderDto {
   payments?: Payment[];
   priceHistory?: Array<{ trigger: string }>;
   responsibleUserId?: string;
+  lossReason?: string;
+  lossReasonNote?: string;
 }
 
 let customerId: string;
@@ -66,6 +68,33 @@ test.describe('Pedidos: regresion de reglas corregidas', () => {
     for (const id of extraOrderIds) await apiDelete(`orders/${id}`);
     for (const id of extraQuoteIds) await apiDelete(`quotes/${id}`);
     await cleanupCreated();
+  });
+
+  test('venta a pérdida: sin motivo da 400 y con motivo se guarda y queda en el historial (API)', async () => {
+    const body = (extra: Record<string, unknown> = {}) => ({
+      customerId,
+      responsibleUserId,
+      dueDate: futureDate(),
+      items: [
+        {
+          serviceType: 'diseno_grafico',
+          productName: e2eName('diseno'),
+          quantity: 1,
+          unitPrice: 1000,
+          designUnitPrice: 1000,
+          unitCost: 3000,
+        },
+      ],
+      ...extra,
+    });
+    const rejected = await post('orders', body());
+    expect(rejected.status()).toBe(400);
+    expect(await rejected.text()).toContain('indicá el motivo');
+
+    const order = await createOrder(body({ lossReason: 'muestra', lossReasonNote: 'E2E' }));
+    const saved = await getOrder(order.id);
+    expect(saved).toMatchObject({ lossReason: 'muestra', lossReasonNote: 'E2E' });
+    expect(saved.priceHistory?.some((entry) => entry.trigger === 'loss_sale')).toBe(true);
   });
 
   test('A-1: pagos con monto negativo o cero dan 400 (API)', async () => {

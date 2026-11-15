@@ -557,6 +557,9 @@
       [wholesaleMarginWarn]="wholesaleMarginBelowArea"
       [closedPriceNote]="showClosedPriceNote ? 'Precio cerrado: el descuento no aplica' : ''"
     />
+    @if (wholesaleFloorApplied) {
+      <p class="order-line__wholesale-floor">{{ wholesaleFloorNote }}</p>
+    }
 
     @if (stockHint) {
       <p class="order-line__stock-hint">{{ stockHint }}</p>

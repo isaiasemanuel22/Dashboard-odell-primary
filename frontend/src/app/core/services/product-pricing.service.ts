@@ -22,6 +22,7 @@ import {
   resolveProductPrice,
   totalCostFromBreakdown,
 } from '../../shared/utils/pricing.util';
+import { supplyPriceFromValue } from '../../shared/utils/supply-line-value.util';
 import { markupPercentOnCostRounded } from '../../shared/utils/product-margin.util';
 
 @Injectable({ providedIn: 'root' })
@@ -100,8 +101,8 @@ export class ProductPricingService {
   }
 
   /**
-   * Precio único: el margen se aplica solo al costo de proceso y el valor de
-   * los insumos de catálogo se suma aparte, sin margen. La mano de obra
+   * Precio único: el margen se aplica solo al costo de proceso y los insumos
+   * de catálogo se suman aparte a costo × 1,5 (`supplyValue` es su costo). La mano de obra
    * (`laborCost`, parte de `processCost`) tampoco lleva margen. `cost` del
    * resultado incluye los insumos.
    */
@@ -130,7 +131,8 @@ export class ProductPricingService {
     if (supplyValue > 0 && !suggested && !hasComponents && processCost <= 0) {
       processPrice = 0;
     }
-    const price = processPrice + supplyValue;
+    // Los insumos se cobran a costo × 1,5; el costo no cambia (§16.3).
+    const price = processPrice + supplyPriceFromValue(supplyValue);
     const fullCost = processCost + supplyValue;
     return {
       ...result,

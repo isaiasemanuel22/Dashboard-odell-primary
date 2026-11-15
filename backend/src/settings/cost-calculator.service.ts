@@ -47,7 +47,10 @@ import {
   resolvePrintDimensions,
   totalEstampadoPressMinutes,
 } from '../products/estampado-product.util';
-import { supplyLinesValue } from '../products/supply-line-value.util';
+import {
+  supplyLinesValue,
+  supplyPriceFromValue,
+} from '../products/supply-line-value.util';
 import {
   hasValidFdmFilamentInput,
   resolveFdmFilaments,
@@ -435,7 +438,8 @@ export class CostCalculatorService {
       supplyValue <= 0,
       breakdown?.laborCost ?? 0,
     );
-    const price = processPrice + supplyValue;
+    // Los insumos se cobran a costo × 1,5; el costo no cambia (§16.3).
+    const price = processPrice + supplyPriceFromValue(supplyValue);
     const profit = price - cost;
     const configuredMarginPercent = this.getMarginForProductType(input.type);
 

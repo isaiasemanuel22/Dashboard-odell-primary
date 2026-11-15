@@ -99,6 +99,9 @@
           <span class="pd-m__kv">{{ displayPrice | currencyArs }}</span>
           @if (wholesalePrice; as mayorista) {
             <span class="pd-m__ks">Mayorista {{ mayorista | currencyArs }}</span>
+            @if (wholesaleFloorApplied) {
+              <span class="pd-m__ks pd-m__floor">{{ wholesaleFloorNote }}</span>
+            }
           }
         </div>
         <div class="m-kpi">
@@ -247,6 +250,9 @@
           />
           @if (wholesalePrice; as mayorista) {
             <p class="pd-wholesale">Mayorista {{ mayorista | currencyArs }}</p>
+            @if (wholesaleFloorApplied) {
+              <p class="pd-wholesale pd-wholesale--floor">{{ wholesaleFloorNote }}</p>
+            }
           }
           @for (warning of priceWarnings; track $index) {
             <p class="pd-warn" role="alert">{{ warning }}</p>

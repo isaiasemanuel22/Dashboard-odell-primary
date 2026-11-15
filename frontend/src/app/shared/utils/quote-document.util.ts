@@ -130,11 +130,12 @@ function documentWholesaleUnitPrice(
   listPrice: number,
   serviceType: QuoteItem['serviceType'],
   settings: WholesaleDiscountSettings,
+  unitCost?: number | null,
 ): number {
   if (!wholesaleAppliesToService(serviceType, settings)) {
     return listPrice;
   }
-  return wholesalePriceFromList(listPrice, settings.percent);
+  return wholesalePriceFromList(listPrice, settings.percent, unitCost);
 }
 
 function measuresForItem(
@@ -164,9 +165,16 @@ export function buildQuoteDocumentInput(
     const listPrice = documentListUnitPrice(item);
     // Si la línea ya quedó cotizada a mayorista, se muestra ese precio (§16.2).
     const wholesalePrice =
-      item.listUnitPrice != null
+      item.unitPriceManual
+        ? listPrice
+        : item.listUnitPrice != null
         ? Number(item.unitPrice) || 0
-        : documentWholesaleUnitPrice(listPrice, item.serviceType, settings);
+        : documentWholesaleUnitPrice(
+            listPrice,
+            item.serviceType,
+            settings,
+            item.unitCost,
+          );
     const quantity = Math.max(Math.trunc(Number(item.quantity) || 0), 0);
     return {
       productName: item.productName || 'Sin nombre',

@@ -33,6 +33,7 @@ import {
   DbSegmentedControlComponent,
   DbSegmentOption,
 } from '@general-components';
+import { LossSaleNoticeComponent } from '../../../components/loss-sale-notice/loss-sale-notice.component';
 import { SaleFormCartComponent } from './sale-form-cart/sale-form-cart.component';
 import { SaleCartLine } from '@general-components';
 import { BreakpointService } from '../../../core/services/breakpoint.service';
@@ -46,7 +47,14 @@ import {
   discountModeFromValues,
   discountPayloadFromMode,
 } from '../../../shared/utils/discount.util';
-import { calculateCatalogLinesCost } from '../../../shared/utils/product.helpers';
+import {
+  detectLossSale,
+  lossSaleSignature,
+} from '../../../shared/utils/loss-sale.util';
+import {
+  calculateCatalogLinesCost,
+  getComponentLineCost,
+} from '../../../shared/utils/product.helpers';
 import {
   availableStockForSaleEdit,
   canCloseRetailSale,
@@ -81,6 +89,7 @@ import { normalizeSearchText } from '../../../shared/utils/search-text.util';
   selector: 'app-sale-form',
   standalone: true,
   imports: [
+    LossSaleNoticeComponent,
     FormsModule,
     RouterLink,
     DbFormComponent,
@@ -502,15 +511,78 @@ export class SaleFormComponent implements OnChanges {
   closeSale(): void {
     if (!this.cart.length) return;
 
+    // Venta a pérdida: el vendedor confirma y da un motivo (§16).
+    const loss = detectLossSale(
+      this.cart.map((line) => ({
+        productName: line.productName,
+        quantity: line.quantity,
+        unitPrice: line.unitPrice,
+        unitCost:
+          getComponentLineCost(this.products, line.productId, line.quantity) /
+          Math.max(1, Number(line.quantity) || 1),
+      })),
+      this.cartTotal,
+    );
+    if (!loss.isLoss) {
+      this.emitSale();
+      return;
+    }
+    const sameLossSet =
+      !!this.sale?.lossReason &&
+      lossSaleSignature(
+        detectLossSale(
+          this.sale.items.map((item) => ({
+            productName: item.productName,
+            quantity: item.quantity,
+            unitPrice: item.unitPrice,
+            unitCost:
+              item.productId
+                ? getComponentLineCost(this.products, item.productId, 1)
+                : 0,
+          })),
+          this.sale.total,
+        ),
+      ) === lossSaleSignature(loss);
+    if (sameLossSet && this.sale) {
+      this.emitSale({
+        lossReason: this.sale.lossReason!,
+        lossReasonNote: this.sale.lossReasonNote,
+      });
+      return;
+    }
+    this.formDialogs
+      .openLossSale({
+        lines: loss.lines,
+        profit: loss.profit,
+        profitNegative: loss.profitNegative,
+        lossReason: this.sale?.lossReason,
+        lossReasonNote: this.sale?.lossReasonNote,
+      })
+      .subscribe((result) => {
+        if (result) this.emitSale(result);
+      });
+  }
+
+  private emitSale(lossFields?: {
+    lossReason: string;
+    lossReasonNote?: string;
+  }): void {
     const discount = discountPayloadFromMode(
       this.discountMode,
       this.discountPercent,
       this.discountAmount,
     );
-
     const soldAt = this.resolveSoldAtPayload();
 
     this.save.emit({
+      ...(lossFields
+        ? {
+            lossReason: lossFields.lossReason,
+            ...(lossFields.lossReasonNote
+              ? { lossReasonNote: lossFields.lossReasonNote }
+              : {}),
+          }
+        : {}),
       items: this.cart.map((line) => ({
         productId: line.productId,
         productName: line.productName,

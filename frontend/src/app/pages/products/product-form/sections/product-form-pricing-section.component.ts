@@ -238,6 +238,11 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     return this.pricing.supplyValue();
   }
 
+  /** Precio de los insumos dentro del precio de venta (costo + 50 %). */
+  get supplyPrice(): number {
+    return this.pricing.supplyPrice();
+  }
+
   get priceManual(): boolean {
     return this.pricing.manualUnitPrice != null && this.pricing.manualUnitPrice > 0;
   }

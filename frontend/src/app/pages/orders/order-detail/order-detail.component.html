@@ -150,6 +150,7 @@
             [showIdentity]="false"
           />
         }
+        <app-loss-sale-notice [reason]="order.lossReason" [note]="order.lossReasonNote" />
       </section>
 
       @if (priceNotices.length) {
@@ -253,6 +254,9 @@
                 >
               }
             </div>
+            @if (lineWholesaleFloored(item)) {
+              <p class="od-m__line-progress">{{ wholesaleFloorNote }}</p>
+            }
             <p class="od-m__line-progress">{{ lineProgressLabel(item) }}</p>
           </div>
         }
@@ -451,6 +455,7 @@
           />
         </div>
         <p class="meta-line">Creado: {{ order.createdAt | dateShort }}</p>
+        <app-loss-sale-notice [reason]="order.lossReason" [note]="order.lossReasonNote" />
       </div>
     </header>
 
@@ -601,6 +606,9 @@
                 <span class="order-item__list-price">
                   Lista <s>{{ item.listUnitPrice | currencyArs }}</s>
                 </span>
+                @if (lineWholesaleFloored(item)) {
+                  <span class="order-item__floor-note">{{ wholesaleFloorNote }}</span>
+                }
               } @else {
                 {{ item.unitPrice | currencyArs }}
               }

@@ -127,7 +127,11 @@ export class ProductCardComponent {
     ) {
       return null;
     }
-    return wholesalePriceFromList(this.listPrice, discount.percent);
+    return wholesalePriceFromList(
+      this.listPrice,
+      discount.percent,
+      this.product.cost,
+    );
   }
 
   get markupPercent(): number | null {

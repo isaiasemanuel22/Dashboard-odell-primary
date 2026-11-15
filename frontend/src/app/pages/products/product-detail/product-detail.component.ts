@@ -82,8 +82,11 @@ import {
 import {
   DEFAULT_WHOLESALE_DISCOUNT,
   normalizeWholesaleDiscount,
+  WHOLESALE_FLOOR_NOTE,
+  wholesaleFloorApplied,
   wholesalePriceFromList,
 } from '../../../shared/utils/wholesale-example.util';
+import { resolveProfitArea } from '../../../shared/utils/profit-area.util';
 import {
   CurrencyArsPipe,
   DateShortPipe,
@@ -314,8 +317,33 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
   get wholesalePrice(): number | null {
     const percent = this.wholesaleDiscount.percent;
     if (!(percent > 0) || !(this.displayPrice > 0)) return null;
-    return wholesalePriceFromList(this.displayPrice, percent);
+    // Igual que el backend: solo si el mayorista está activo para el área del producto.
+    const area = this.product ? resolveProfitArea(this.product) : null;
+    if (
+      !this.wholesaleDiscount.enabled ||
+      !area ||
+      !this.wholesaleDiscount.serviceTypes.includes(area)
+    ) {
+      return null;
+    }
+    return wholesalePriceFromList(
+      this.displayPrice,
+      percent,
+      this.displayCost,
+    );
   }
+
+  /** True si el piso (costo + 10 %) subió el precio mayorista. */
+  get wholesaleFloorApplied(): boolean {
+    if (this.wholesalePrice == null) return false;
+    return wholesaleFloorApplied(
+      this.displayPrice,
+      this.wholesaleDiscount.percent,
+      this.displayCost,
+    );
+  }
+
+  readonly wholesaleFloorNote = WHOLESALE_FLOOR_NOTE;
 
   get mobileMetaLine(): string {
     if (!this.product) return '';

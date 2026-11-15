@@ -24,6 +24,13 @@ export class ProductPricingService {
     private readonly store: StoreService,
   ) {}
 
+  /** Costo unitario de una línea de pedido/presupuesto. */
+  resolveOrderItemUnitCost(
+    item: Parameters<CostCalculatorService['resolveOrderItemUnitCost']>[0],
+  ): number {
+    return this.costCalculator.resolveOrderItemUnitCost(item);
+  }
+
   resolvePricing(input: ProductPricingInput): ProductPricingResult {
     return this.costCalculator.calculateProductPricing(input);
   }

@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { priceFromCostAndMargin } from '../../../../../shared/utils/pricing.util';
+import { supplyPriceFromValue } from '../../../../../shared/utils/supply-line-value.util';
 
 export interface ProductFormPricingCalculationInput {
   totalCost: number;
@@ -7,7 +8,7 @@ export interface ProductFormPricingCalculationInput {
   suggestedPrice?: number | null;
   componentsPrice?: number;
   catalogPrice?: number | null;
-  /** Parte de totalCost que son insumos de catálogo: se suma sin margen. */
+  /** Parte de totalCost que son insumos de catálogo: al precio van a costo × 1,5, sin margen. */
   supplyValue?: number;
   /** Parte de totalCost que es mano de obra: se suma sin margen. */
   laborCost?: number;
@@ -50,7 +51,7 @@ export class ProductFormPricingCalculationService {
           totalCost - supplyValue,
           input.profitMarginPercent,
           input.laborCost,
-        ) + supplyValue;
+        ) + supplyPriceFromValue(supplyValue); // insumos a costo × 1,5 (§16.3)
     }
 
     return {

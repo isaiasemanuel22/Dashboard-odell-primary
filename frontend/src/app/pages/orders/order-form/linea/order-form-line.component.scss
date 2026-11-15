@@ -368,6 +368,14 @@
     color: $color-text-muted;
   }
 
+  &__wholesale-floor {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-size: 0.8rem;
+    color: $color-text-muted;
+    overflow-wrap: anywhere;
+  }
+
   &__stock-hint {
     grid-column: 1 / -1;
     margin: 0;

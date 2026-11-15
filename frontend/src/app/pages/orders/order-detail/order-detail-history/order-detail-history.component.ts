@@ -7,6 +7,7 @@ import {
   OrderPriceHistoryEntry,
   OrderStatusHistoryEntry,
 } from '../../../../core/models';
+import { lossReasonLabel } from '../../../../shared/utils/loss-reason';
 import { DbStatusBadgeComponent } from '@general-components';
 import { ORDER_STATUS_CHANGE_SOURCE_LABELS, ORDER_STATUS_LABELS } from '../../../../shared/constants/labels';
 import {
@@ -41,7 +42,15 @@ export class OrderDetailHistoryComponent {
     product_update: 'Actualización de producto',
     bulk_price: 'Precios en bloque',
     discount_change: 'Cambio de descuento',
+    loss_sale: 'Venta a pérdida',
   };
+
+  /** «Vendido a pérdida: <motivo>[ · nota]» del historial de precios. */
+  lossLabel(entry: OrderPriceHistoryEntry): string {
+    const label = lossReasonLabel(entry.lossReason) || 'sin motivo';
+    const note = entry.lossReasonNote?.trim();
+    return note ? `${label} · ${note}` : label;
+  }
 
   /** La creación no la hizo la cola de trabajo: se dice de dónde viene el pedido. */
   historySourceLabel(entry: OrderStatusHistoryEntry): string {

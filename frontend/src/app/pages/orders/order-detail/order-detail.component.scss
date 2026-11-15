@@ -108,6 +108,14 @@
   }
 }
 
+.order-item__floor-note {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.7rem;
+  color: $color-text-muted;
+  white-space: normal;
+}
+
 .order-item__print-unit {
   display: block;
   margin-top: 0.15rem;

@@ -93,6 +93,8 @@ export class QuotesService {
     this.assertCustomerForSent(status, customerId);
     this.assertItemsForSent(status, items);
     this.assertDraftHasContent(status, customerId, description);
+    const total = this.calculateTotal(items, discount);
+    const lossFields = this.orders.resolveLossReasonFields(items, total, data);
 
     const quote: Quote = {
       id: this.quotes.nextId(),
@@ -106,9 +108,11 @@ export class QuotesService {
       priceType,
       wholesaleApplied: priced.wholesaleApplied,
       salesChannel: this.normalizeSalesChannel(data.salesChannel),
-      total: this.calculateTotal(items, discount),
+      total,
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
+      lossReason: lossFields.lossReason,
+      lossReasonNote: lossFields.lossReasonNote,
       description,
       attachments: sanitizeDocumentAttachments(data.attachments),
     };
@@ -185,6 +189,27 @@ export class QuotesService {
         ? this.normalizeSalesChannel(data.salesChannel)
         : current.salesChannel;
 
+    const total = this.calculateTotal(items, discount);
+    // El motivo se exige al tocar precios, líneas o descuento (o al mandarlo).
+    const pricingTouched =
+      data.items !== undefined ||
+      data.discountPercent !== undefined ||
+      data.discountAmount !== undefined ||
+      data.priceType !== undefined ||
+      data.lossReason !== undefined;
+    const lossFields = pricingTouched
+      ? this.orders.resolveLossReasonFields(items, total, {
+          lossReason: data.lossReason ?? current.lossReason,
+          lossReasonNote:
+            data.lossReason !== undefined
+              ? data.lossReasonNote
+              : (data.lossReasonNote ?? current.lossReasonNote),
+        })
+      : {
+          lossReason: current.lossReason,
+          lossReasonNote: current.lossReasonNote,
+        };
+
     const updated: Quote = {
       ...current,
       customerId,
@@ -194,9 +219,11 @@ export class QuotesService {
       priceType,
       wholesaleApplied,
       salesChannel,
-      total: this.calculateTotal(items, discount),
+      total,
       discountPercent: discount.discountPercent,
       discountAmount: discount.discountAmount,
+      lossReason: lossFields.lossReason,
+      lossReasonNote: lossFields.lossReasonNote,
       description,
       attachments:
         data.attachments !== undefined
@@ -297,6 +324,8 @@ export class QuotesService {
         salesChannel: quote.salesChannel,
         discountPercent: quote.discountPercent,
         discountAmount: quote.discountAmount,
+        lossReason: quote.lossReason,
+        lossReasonNote: quote.lossReasonNote,
         description: quote.description,
         attachments: quote.attachments?.length
           ? quote.attachments.map((item) => ({ ...item }))
@@ -533,6 +562,7 @@ export class QuotesService {
       priceType,
       customer: customer ?? null,
       settings,
+      resolveUnitCost: (item) => this.orders.resolveItemUnitCost(item),
     });
   }
 }

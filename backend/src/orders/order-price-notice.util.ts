@@ -28,7 +28,7 @@ export function listOrderPriceNotices(
 
   const notices: OrderPriceNotice[] = [];
   order.items.forEach((item, itemIndex) => {
-    if (!item.productId) return;
+    if (!item.productId || item.unitPriceManual === true) return;
     const current = currentPrice(item.productId);
     const agreed = orderLineListPrice(item);
     if (current === undefined || current === agreed) return;

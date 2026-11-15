@@ -16,6 +16,16 @@ import {
   selectPrintProfileForCost,
 } from './machine-profile.util';
 import { formatFileSizeEsAr } from './file-size.util';
+import {
+  supplyLinesPrice,
+  supplyLinesValue,
+  supplyPriceFromValue,
+} from './supply-line-value.util';
+import {
+  storedWholesaleFloorApplied,
+  wholesaleFloorApplied,
+  wholesalePriceFromList,
+} from './wholesale-example.util';
 
 /**
  * Misma tabla que `backend/src/settings/cost-material.parity.spec.ts`.
@@ -135,5 +145,42 @@ describe('paridad de costo con el API', () => {
     expect(formatFileSizeEsAr(1126)).toBe('1,1 KB');
     expect(formatFileSizeEsAr(840 * 1024)).toBe('840 KB');
     expect(formatFileSizeEsAr(1.2 * 1024 * 1024)).toBe('1,2 MB');
+  });
+
+  it('cobra los insumos a costo × 1,5 y redondea', () => {
+    const lines = [{ id: 'l1', supplyId: 's1', quantity: 1 }];
+    expect(supplyLinesValue(lines, () => 1500)).toBe(1500);
+    expect(supplyLinesPrice(lines, () => 1500)).toBe(2250);
+    expect(supplyPriceFromValue(801)).toBe(1202);
+    expect(supplyPriceFromValue(0)).toBe(0);
+  });
+
+  it('el mayorista nunca baja de costo + 10 % ni supera la lista', () => {
+    // Taza estampada: lista 746 + 2.250 = 2.996 → 20 % = 2.397 (costo 1.973 × 1,1 = 2.170).
+    expect(wholesalePriceFromList(2996, 20, 1973)).toBe(2397);
+    expect(wholesalePriceFromList(1200, 20, 1000)).toBe(1100);
+    expect(wholesaleFloorApplied(1200, 20, 1000)).toBe(true);
+    expect(wholesalePriceFromList(1000, 20, 1000)).toBe(1000);
+    expect(wholesalePriceFromList(1200, 20, 0)).toBe(960);
+    expect(wholesalePriceFromList(1200, 20)).toBe(960);
+    expect(wholesaleFloorApplied(1200, 20, undefined)).toBe(false);
+  });
+
+  it('con la lista por debajo del costo no se muestra «ajustado al mínimo»', () => {
+    expect(wholesaleFloorApplied(3934, 20, 4467)).toBe(false);
+    expect(
+      storedWholesaleFloorApplied({
+        unitPrice: 1100,
+        listUnitPrice: 1200,
+        unitCost: 1000,
+      }),
+    ).toBe(true);
+    expect(
+      storedWholesaleFloorApplied({
+        unitPrice: 3934,
+        listUnitPrice: 3934,
+        unitCost: 4467,
+      }),
+    ).toBe(false);
   });
 });

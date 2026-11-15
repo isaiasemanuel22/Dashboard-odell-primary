@@ -1060,8 +1060,8 @@ precio calculado = (costo sin mano de obra) × (1 + margen) + mano de obra
 
 El costo total sigue incluyendo la mano de obra (para costo, ganancia y margen
 real). Vale para FDM, resina, estampado y combos (margen sobre piezas y otros
-costos; el armado se suma sin margen). Los insumos de catálogo también se
-suman sin margen. Ejemplo: con margen 100 % y mano de obra $1.000, la mano de
+costos; el armado se suma sin margen). Los insumos se suman con un 50 % fijo
+encima de su costo (§16.3). Ejemplo: con margen 100 % y mano de obra $1.000, la mano de
 obra suma $1.000 al precio, no $2.000. Las líneas de Diseño y Modelado tienen
 tarifa y margen propios y no cambian. Los precios guardados no cambian hasta
 usar «Actualizar precios».
@@ -1088,17 +1088,47 @@ presupuestado.
 
 ### 16.3 Insumo y servicio de un tercero
 
-El insumo no genera ganancia (confirmado el 2026-11-03). Su valor se suma
-al costo y al precio del producto, y de la línea de Impresión 3D o de
-Estampado, por el mismo importe (§3).
+Desde el 2026-11-15, el insumo que forma parte de un producto o de una línea
+a medida de Impresión 3D o de Estampado se cobra a **su costo × 1,5**: al
+costo se suma su valor y al precio, su valor más un 50 % (§3). No lleva
+margen de error ni el margen del área. Reemplaza la regla del 2026-11-03
+(insumo sin ganancia).
 
-En una línea propia de insumo, el precio y el costo son la cantidad por el
-precio unitario. La ganancia de esa línea es cero.
+En una línea propia de insumo (insumo suelto) no cambia: el precio y el costo
+son la cantidad por el precio unitario y la ganancia de esa línea es cero.
 
 El servicio de un tercero solo tiene el precio que paga el cliente. No
 registra lo que Odell le paga al tercero: no entra en el costo total y no
 se le calcula ganancia. El precio sí entra en el total del pedido o del
 presupuesto.
+
+### 16.4 Mínimo del precio mayorista
+
+Confirmado el 2026-11-15. El precio mayorista de una línea nunca baja de
+**costo unitario + 10 %**, ni supera el precio de lista:
+
+```text
+mayorista = mín(lista, máx(lista × (1 − % mayorista), costo × 1,10))
+```
+
+Cuando se usa el mínimo, la línea y el detalle muestran «Mayorista ajustado
+al mínimo (costo + 10 %)». Una línea con precio cargado a mano se respeta tal
+cual: no recibe el descuento mayorista ni el mínimo.
+
+### 16.5 Venta a pérdida
+
+Confirmado el 2026-11-15. Se puede vender a pérdida, pero hay que confirmarlo
+y dar un motivo. Hay pérdida si una línea queda con precio menor que su costo
+o si la ganancia total del documento queda negativa (por ejemplo, por el
+descuento). Vale para pedidos, presupuestos y ventas de mostrador.
+
+Al guardar, la app muestra un aviso con las líneas en pérdida y pide elegir un
+motivo: liquidación de stock, producto con falla, compensación por un error o
+reclamo, muestra para un cliente nuevo, promoción, fidelización, pedido grande
+que trae más trabajo, canje o colaboración, igualar a la competencia, costo
+mal cargado u otro (con texto obligatorio). El motivo queda en el documento,
+se ve en su detalle y en el historial del pedido, y pasa del presupuesto al
+pedido. Sin motivo, el servidor no guarda.
 
 ---
 

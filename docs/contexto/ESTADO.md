@@ -1,4 +1,4 @@
-# Estado de Odell — al 2026-11-14
+# Estado de Odell — al 2026-11-15
 
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
@@ -12,9 +12,10 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `feat/insumos-mayorista-perdida` (sin upstream), en `623efaf`
-  con ~58 archivos sin commitear: motivo de venta a pérdida (`lossReason` en
-  Order/Quote/RetailSale, requiere `db:push`) y mayorista. No está cerrado.
+- Rama actual: `feat/insumos-mayorista-perdida`, sin commitear: insumos +50 %,
+  mayorista con mínimo costo + 10 % y venta a pérdida con motivo. Probada en
+  local. El deploy necesita `db:push:heroku` (`lossReason` y `lossReasonNote`
+  en Order, Quote y RetailSale).
 - Errores reportados: todos corregidos (E1–E122) en `docs/qa/errores-pendientes.md`.
 - Ramas viejas ya unidas (borrables con OK): feat/3mf-purga,
   feat/bobinas-reposicion, feat/cola-por-impresora, feat/rediseno-faltantes,

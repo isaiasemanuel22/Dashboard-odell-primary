@@ -82,6 +82,7 @@
     </div>
 
     <div class="m-body sale-m__body m-has-dock">
+      <app-loss-sale-notice [reason]="sale?.lossReason" [note]="sale?.lossReasonNote" />
       <db-mobile-form-step [title]="cartSectionTitle" [flush]="!!cart.length">
       @if (cart.length) {
           @for (line of cart; track line.key) {
@@ -347,6 +348,7 @@
 
       <section class="sale-d__right" aria-label="Cobro">
         <h4 class="sale-d__title">Cobro</h4>
+        <app-loss-sale-notice [reason]="sale?.lossReason" [note]="sale?.lossReasonNote" />
 
         <div class="sale-d__field">
           <span class="sale-d__label">Medio de pago</span>
@@ -475,6 +477,7 @@
   </div>
 } @else {
   <db-form [class.sale-form--mobile]="useCardLayout">
+    <app-loss-sale-notice [reason]="sale?.lossReason" [note]="sale?.lossReasonNote" />
     <db-fieldset legend="Carrito">
       <app-sale-form-cart
         [cart]="cart"

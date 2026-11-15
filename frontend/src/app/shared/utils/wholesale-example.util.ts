@@ -16,13 +16,25 @@ export const DEFAULT_WHOLESALE_DISCOUNT: WholesaleDiscountSettings = {
 
 const VALID_SERVICE_TYPES = new Set<string>(Object.values(ServiceType));
 
+/** Piso del precio mayorista: costo unitario + 10 % (§16.1). */
+export const WHOLESALE_MIN_MARKUP = 10;
+
+/** Piso = round(costo × 1,10). 0 si no hay costo. */
+export function wholesaleFloorPrice(unitCost?: number | null): number {
+  const cost = Number(unitCost);
+  if (!Number.isFinite(cost) || cost <= 0) return 0;
+  return Math.round(cost * (1 + WHOLESALE_MIN_MARKUP / 100));
+}
+
 /**
- * Precio unitario mayorista = round(lista × (1 − %/100)).
- * Misma fórmula que `backend/src/settings/wholesale-discount.util.ts`.
+ * Precio unitario mayorista = max(round(lista × (1 − %/100)), round(costo × 1,10)),
+ * sin pasar nunca de la lista. Sin costo no hay piso.
+ * Misma fórmula que `backend/src/orders/wholesale-pricing.util.ts`.
  */
 export function wholesalePriceFromList(
   listUnitPrice: number,
   percent: number,
+  unitCost?: number | null,
 ): number {
   const list = Number(listUnitPrice);
   const discount = Number(percent);
@@ -32,8 +44,50 @@ export function wholesalePriceFromList(
   if (!Number.isFinite(discount) || discount <= 0) {
     return Math.round(list);
   }
-  return Math.round(list * (1 - discount / 100));
+  const discounted = Math.round(list * (1 - discount / 100));
+  const floor = wholesaleFloorPrice(unitCost);
+  return Math.min(Math.round(list), Math.max(discounted, floor));
 }
+
+/** True si el piso (costo + 10 %) subió el precio mayorista por encima del descuento. */
+export function wholesaleFloorApplied(
+  listUnitPrice: number,
+  percent: number,
+  unitCost?: number | null,
+): boolean {
+  // Lista por debajo del costo: el piso no se pudo aplicar (solo aviso rojo).
+  const cost = Number(unitCost);
+  if (Number.isFinite(cost) && cost > 0 && Number(listUnitPrice) < cost) {
+    return false;
+  }
+  const withFloor = wholesalePriceFromList(listUnitPrice, percent, unitCost);
+  const without = wholesalePriceFromList(listUnitPrice, percent);
+  return withFloor > without;
+}
+
+/**
+ * Deduce de una línea guardada (pedido/presupuesto) si el mayorista quedó en el
+ * piso: se cobra exactamente costo + 10 %, con lista igual o mayor al costo.
+ * Con lista por debajo del costo el piso no se pudo aplicar.
+ */
+export function storedWholesaleFloorApplied(item: {
+  unitPrice: number;
+  listUnitPrice?: number | null;
+  unitCost?: number | null;
+  unitPriceManual?: boolean;
+}): boolean {
+  if (item.unitPriceManual) return false;
+  const list = Number(item.listUnitPrice);
+  const cost = Number(item.unitCost);
+  if (!Number.isFinite(list) || list <= 0) return false;
+  if (!Number.isFinite(cost) || cost <= 0 || list < cost) return false;
+  const unit = Number(item.unitPrice);
+  return unit <= list && unit === wholesaleFloorPrice(cost);
+}
+
+/** Texto chico cuando se aplicó el piso. */
+export const WHOLESALE_FLOOR_NOTE =
+  'Mayorista ajustado al mínimo (costo + 10 %)';
 
 /**
  * Margen mínimo para no vender a pérdida por mayor:
