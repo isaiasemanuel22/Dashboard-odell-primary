@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-15 · APK de Android (TWA)
+Rama: feat/apk-twa · Commits: sin commit
+Hecho: APK firmada `com.odell.dashboard` 1.0.0 (versionCode 1) con Bubblewrap; abre https://odell-dashboard-v2.netlify.app a pantalla completa. Frontend: manifest.webmanifest (theme #00aae4, fondo #edf5f9), íconos 192/512/maskable, `.well-known/assetlinks.json` y headers en netlify.toml. Proyecto Android en `android-twa/`. JDK 17, SDK y clave de firma en `~/.odell-android` (fuera del repo).
+Decisiones: Isaías eligió TWA en vez de Capacitor. minSdk 24 (lo exige androidbrowserhelper 2.7.4).
+Pendiente: publicar en main (sin eso la app muestra barra de navegador); probar en un teléfono; logo de 512 px o más (los íconos se agrandaron desde 480).
+
 ## 2026-11-14 · Deploy de main a Heroku
 Rama: main · Commits: 623efaf (sin commits nuevos)
 Hecho: Heroku pasó de 22bf9bc a 623efaf (v41); solo había cambios de frontend, que Netlify ya publicó. Health ok, persistencia sana.

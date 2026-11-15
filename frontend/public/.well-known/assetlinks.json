@@ -1,0 +1,10 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.odell.dashboard",
+      "sha256_cert_fingerprints": ["90:A4:08:B9:DE:5C:56:3F:F5:45:77:A7:89:5C:EA:68:5D:EA:3C:EA:2C:46:7D:63:B8:5A:22:41:B6:8D:D7:83"]
+    }
+  }
+]

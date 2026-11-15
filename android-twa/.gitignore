@@ -1,0 +1,11 @@
+# Artefactos de compilacion y firma: no van al repo
+*.apk
+*.aab
+*.idsig
+*.keystore
+*.jks
+build/
+app/build/
+.gradle/
+local.properties
+store_icon.png

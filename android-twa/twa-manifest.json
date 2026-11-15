@@ -1,0 +1,41 @@
+{
+  "packageId": "com.odell.dashboard",
+  "host": "odell-dashboard-v2.netlify.app",
+  "name": "Odell",
+  "launcherName": "Odell",
+  "display": "standalone",
+  "orientation": "default",
+  "themeColor": "#00AAE4",
+  "themeColorDark": "#00AAE4",
+  "navigationColor": "#00AAE4",
+  "navigationColorDark": "#00AAE4",
+  "navigationDividerColor": "#00AAE4",
+  "navigationDividerColorDark": "#00AAE4",
+  "backgroundColor": "#EDF5F9",
+  "enableNotifications": false,
+  "startUrl": "/",
+  "iconUrl": "https://odell-dashboard-v2.netlify.app/icon-512.png",
+  "maskableIconUrl": "https://odell-dashboard-v2.netlify.app/icon-maskable-512.png",
+  "splashScreenFadeOutDuration": 300,
+  "signingKey": {
+    "path": "/home/icalfin/.odell-android/odell-release.keystore",
+    "alias": "odell"
+  },
+  "appVersionName": "1.0.0",
+  "appVersionCode": 1,
+  "appVersion": "1.0.0",
+  "shortcuts": [],
+  "generatorApp": "bubblewrap-cli",
+  "webManifestUrl": "https://odell-dashboard-v2.netlify.app/manifest.webmanifest",
+  "fallbackType": "customtabs",
+  "features": {},
+  "alphaDependencies": {
+    "enabled": false
+  },
+  "enableSiteSettingsShortcut": true,
+  "isChromeOSOnly": false,
+  "isMetaQuest": false,
+  "fullScopeUrl": "https://odell-dashboard-v2.netlify.app/",
+  "minSdkVersion": 24,
+  "retainedBundles": []
+}

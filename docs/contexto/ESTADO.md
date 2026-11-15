@@ -12,7 +12,10 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `fix/lista-pedidos-menu`, igual a `main`. Sin trabajo a medias.
+- Rama actual: `feat/apk-twa` (APK de Android con TWA), sin commitear. Falta
+  publicar en main el manifest y `.well-known/assetlinks.json` y probar en un
+  teléfono. Para regenerar: `android-twa/` + Bubblewrap; JDK, SDK y clave de
+  firma en `~/.odell-android` (perder la clave = no se puede actualizar la app).
 - Precios de catálogo guardados no se recalcularon con la regla de insumos +50 % ni
   con la nueva lista de combos (suma de precios de piezas):
   cada producto con insumos los toma al usar «Usar precio calculado» o
