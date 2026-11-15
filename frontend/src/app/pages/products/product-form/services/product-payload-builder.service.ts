@@ -32,6 +32,8 @@ export interface ProductPayloadInput {
   finalPrice: number;
   effectiveCost: number;
   suggestedPrice: number | null;
+  discountPercent?: number | null;
+  discountAmount?: number | null;
   categoryIds: string[];
   images: string[];
   attachments: ProductAttachment[];
@@ -121,6 +123,16 @@ export class ProductPayloadBuilderService {
       price: input.finalPrice,
       cost: input.effectiveCost,
       suggestedPrice: input.suggestedPrice,
+      discountPercent:
+        Number(input.discountPercent) > 0 ? Number(input.discountPercent) : null,
+      // El monto queda como mucho un peso menos que la lista (§16.1).
+      discountAmount:
+        Number(input.discountAmount) > 0
+          ? Math.min(
+              Math.round(Number(input.discountAmount)),
+              Math.max(1, Math.round(Number(input.finalPrice) || 0) - 1),
+            )
+          : null,
       categoryIds: input.categoryIds,
       images: input.images,
       attachments: input.attachments,

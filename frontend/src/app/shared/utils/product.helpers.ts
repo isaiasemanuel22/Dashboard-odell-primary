@@ -303,6 +303,7 @@ export function calculateOrderLinesCost(
   }, 0);
 }
 
+/** Suma de precios de LISTA de las piezas × cantidad (sin descuentos de pieza). */
 export function sumComponentsPrice(
   catalog: Product[],
   components: ProductComponent[],

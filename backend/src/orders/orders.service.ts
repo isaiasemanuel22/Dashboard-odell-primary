@@ -70,6 +70,7 @@ import {
   ProductRepository,
 } from '../store/repositories';
 import { StoreService } from '../store/store.service';
+import { productSalePrice } from '../common/utils/product-discount.util';
 import {
   ORDER_RICH_TEXT_MAX_LENGTH,
   hasRichTextContent,
@@ -114,10 +115,10 @@ export class OrdersService {
       ...(sourceQuote ? { sourceQuote: { id: sourceQuote.id } } : {}),
       tasks: this.printJobs.findByOrderId(id),
       alerts: this.orderTasks.buildOperationalAlerts(order),
-      priceNotices: listOrderPriceNotices(
-        order,
-        (productId) => this.products.findById(productId)?.price,
-      ),
+      priceNotices: listOrderPriceNotices(order, (productId) => {
+        const product = this.products.findById(productId);
+        return product ? productSalePrice(product) : undefined;
+      }),
     };
   }
 
@@ -136,15 +137,16 @@ export class OrdersService {
       if (!item.productId || item.unitPriceManual === true) return;
       const product = this.products.findById(item.productId);
       const listPrice = item.listUnitPrice ?? item.unitPrice;
-      if (!product || product.price === listPrice) return;
+      if (!product || productSalePrice(product) === listPrice) return;
       changes.push({
         index,
         productId: item.productId,
         productName: item.productName,
         previousUnitPrice: item.unitPrice,
       });
-      // El precio de catálogo es de lista; el mayorista se reaplica después.
-      item.unitPrice = product.price;
+      // El precio de catálogo es el de venta (lista − descuento del producto);
+      // el mayorista se reaplica después.
+      item.unitPrice = productSalePrice(product);
       delete item.listUnitPrice;
     });
 
@@ -186,12 +188,12 @@ export class OrdersService {
       if (!item.productId || item.unitPriceManual === true) return;
       const product = this.products.findById(item.productId);
       const listPrice = orderLineListPrice(item);
-      if (!product || product.price === listPrice) return;
+      if (!product || productSalePrice(product) === listPrice) return;
       const kept = rememberKeptLinePrice(
         order,
         index,
         listPrice,
-        product.price,
+        productSalePrice(product),
         item.productId,
         item.productName,
       );

@@ -199,6 +199,7 @@ import {
 } from '../../../components/mobile-dock/mobile-dock.component';
 import { MobileFormStepComponent } from '../../../components/mobile-form-step/mobile-form-step.component';
 import { shortId, sortAndDisambiguateOptions } from '../../../shared/utils/search-text.util';
+import { productSalePrice } from '../../../shared/utils/product-discount.util';
 
 export type OrderFormVariant = 'order' | 'quote';
 
@@ -2170,7 +2171,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     }
     if (!keepPrice) {
       if (product && Number(product.price) > 0) {
-        line.unitPrice = product.price;
+        line.unitPrice = productSalePrice(product);
       } else {
         line.unitPrice = 0;
       }
@@ -2217,7 +2218,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
     if (!keepPrice) {
       const product = this.productForLine(line);
       if (product && Number(product.price) > 0) {
-        line.unitPrice = product.price;
+        line.unitPrice = productSalePrice(product);
       } else {
         line.unitPrice = 0;
       }

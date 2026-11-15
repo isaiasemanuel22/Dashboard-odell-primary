@@ -126,6 +126,12 @@ import {
 } from '../../../../shared/utils/wholesale-example.util';
 import { combineLatest } from 'rxjs';
 import { shortId, sortAndDisambiguateOptions } from '../../../../shared/utils/search-text.util';
+import { formatCurrencyArs } from '../../../../shared/utils/currency-ars.util';
+import {
+  hasProductDiscount,
+  productDiscountLabel,
+  productSalePrice,
+} from '../../../../shared/utils/product-discount.util';
 
 export type OrderFormLineVariant = 'quote' | 'order';
 
@@ -594,6 +600,8 @@ export class OrderFormLineComponent implements OnInit {
       return 'Lo que paga el cliente · sin costo interno';
     }
     if (isDesignService(this.line.serviceType)) return this.designPriceHint;
+    const catalogHint = this.catalogLineHint;
+    if (catalogHint) return catalogHint;
     return this.variant === 'quote'
       ? this.suggestedUnitPriceHint
       : this.unitPriceHint;
@@ -678,11 +686,27 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   get unitPriceHint(): string {
-    const annotation = this.unitPriceAnnotation();
-    if (this.line.productId && !this.line.unitPriceManual) {
-      return `${annotation} · precio de lista del catálogo`;
+    return this.catalogLineHint ?? this.unitPriceAnnotation();
+  }
+
+  /**
+   * Línea de producto del catálogo sin precio manual: lista, descuento propio y
+   * margen sobre el precio cobrado (no el «Calculado» por costo).
+   */
+  private get catalogLineHint(): string | null {
+    const product = this.product;
+    if (!product || this.line.unitPriceManual || this.isExtraLine) return null;
+    if (!(Number(product.price) > 0)) return null;
+    const parts = [`Precio de lista del catálogo ${this.money(Number(product.price))}`];
+    if (hasProductDiscount(product)) {
+      parts.push(`Descuento del producto ${productDiscountLabel(product, formatCurrencyArs)}`);
     }
-    return annotation;
+    const cost = this.unitCost;
+    const price = Number(this.line.unitPrice) || 0;
+    if (cost > 0 && price > 0) {
+      parts.push(`margen ${Math.round(((price - cost) / cost) * 100)}%`);
+    }
+    return parts.join(' · ');
   }
 
   get fdmPricingHint(): string {
@@ -932,6 +956,14 @@ export class OrderFormLineComponent implements OnInit {
   }
 
   readonly wholesaleFloorNote = WHOLESALE_FLOOR_NOTE;
+
+  /** «Descuento del producto −15 %» si la línea usa el precio de venta del catálogo. */
+  get productDiscountNote(): string {
+    const product = this.product;
+    if (!product || this.line.unitPriceManual || this.isExtraLine) return '';
+    if (!hasProductDiscount(product)) return '';
+    return `Descuento del producto ${productDiscountLabel(product, formatCurrencyArs)}`;
+  }
 
   get wholesaleLineTotalPreview(): number {
     const qty = Math.max(0, Number(this.line.quantity) || 0);
@@ -1310,8 +1342,9 @@ export class OrderFormLineComponent implements OnInit {
   // ── Private: pricing / sync ──────────────────────────────────────
 
   private applyCatalogListPrice(product: Product): void {
+    // Precio de venta del producto: lista − descuento propio (§16.1.2).
     if (Number(product.price) > 0) {
-      this.line.unitPrice = product.price;
+      this.line.unitPrice = productSalePrice(product);
       this.line.unitPriceManual = undefined;
     }
     if (Number(product.cost) > 0) {
@@ -1642,7 +1675,7 @@ export class OrderFormLineComponent implements OnInit {
     }
     if (!keepPrice) {
       if (product && Number(product.price) > 0) {
-        this.line.unitPrice = product.price;
+        this.line.unitPrice = productSalePrice(product);
       } else {
         this.line.unitPrice = 0;
       }
@@ -1688,7 +1721,7 @@ export class OrderFormLineComponent implements OnInit {
     if (!keepPrice) {
       const product = this.product ?? undefined;
       if (product && Number(product.price) > 0) {
-        this.line.unitPrice = product.price;
+        this.line.unitPrice = productSalePrice(product);
       } else {
         this.line.unitPrice = 0;
       }

@@ -197,16 +197,9 @@ export class ProductFormPricingService {
 
     if (usesFormPieceAssembly(form)) {
       const assemblyCost = Math.max(0, Number(this.cost) || 0);
-      if (assemblyCost > 0) {
-        return (
-          priceFromCostAndMargin(
-            assemblyCost,
-            this.configuredProfitMargin,
-            this.costBreakdown?.laborCost,
-          ) + supplyPrice
-        );
-      }
-      return supplyPrice;
+      const listBase =
+        this.assemblyPrice(assemblyCost, this.costBreakdown?.laborCost ?? 0) ?? 0;
+      return listBase + supplyPrice;
     }
 
     if (this.computedPrice != null) {
@@ -247,7 +240,15 @@ export class ProductFormPricingService {
     );
   }
 
+  /**
+   * Lista de un combo: suma de precios de lista de las piezas + armado sin
+   * margen. Sin precios de pieza, vuelve al cálculo por costo y margen.
+   */
   private assemblyPrice(totalCost: number, laborCost = 0): number | null {
+    const partsPrice = this.context
+      ? componentsPriceTotal(this.context.catalogProducts, this.context.form)
+      : 0;
+    if (partsPrice > 0) return partsPrice + laborCost;
     return totalCost > 0
       ? priceFromCostAndMargin(
           totalCost,
@@ -695,7 +696,12 @@ export class ProductFormPricingService {
         this.pricingStore.clearCostContribution('assembly');
       }
       this.pricingStore.clearCostContribution('production');
-      this.pricingStore.clearCostContribution('supplies');
+      const assemblySupply = this.catalogSupplyValue();
+      if (assemblySupply > 0) {
+        this.pricingStore.setCostContribution('supplies', assemblySupply);
+      } else {
+        this.pricingStore.clearCostContribution('supplies');
+      }
       this.pricingStore.setComponentsPrice(partsPrice);
       this.pricingStore.setCostBreakdown(this.costBreakdown);
     } else {

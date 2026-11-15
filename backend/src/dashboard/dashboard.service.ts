@@ -26,6 +26,7 @@ import { ProductsService } from '../products/products.service';
 import { StoreService } from '../store/store.service';
 import { TreasuryService } from '../treasury/treasury.service';
 import { computeDebtorBalances } from '../treasury/treasury-debtor.util';
+import { productSalePrice } from '../common/utils/product-discount.util';
 import { listOrderPriceNotices } from '../orders/order-price-notice.util';
 import {
   outstandingCents,
@@ -442,10 +443,10 @@ export class DashboardService {
     }
 
     for (const order of this.store.orders) {
-      const notices = listOrderPriceNotices(
-        order,
-        (productId) => this.store.getProductById(productId)?.price,
-      );
+      const notices = listOrderPriceNotices(order, (productId) => {
+        const product = this.store.getProductById(productId);
+        return product ? productSalePrice(product) : undefined;
+      });
       if (!notices.length) continue;
       notifications.push({
         id: `order-price-${order.id}`,

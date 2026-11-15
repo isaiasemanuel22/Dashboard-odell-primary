@@ -34,11 +34,18 @@ export class ProductFormPricingCalculationService {
     const totalCost = Math.max(0, Number(input.totalCost) || 0);
     const suggestedPrice = Number(input.suggestedPrice);
     const catalogPrice = Number(input.catalogPrice);
+    const componentsPrice = Math.max(0, Number(input.componentsPrice) || 0);
 
     let price = 0;
 
     if (Number.isFinite(suggestedPrice) && suggestedPrice > 0) {
       price = suggestedPrice;
+    } else if (componentsPrice > 0) {
+      // Combo (§16.1.3): lista de las piezas + armado sin margen + insumos ×1,5.
+      price =
+        componentsPrice +
+        Math.max(0, Number(input.laborCost) || 0) +
+        supplyPriceFromValue(Math.max(0, Number(input.supplyValue) || 0));
     } else if (Number.isFinite(catalogPrice) && catalogPrice > 0) {
       price = catalogPrice;
     } else if (totalCost > 0) {

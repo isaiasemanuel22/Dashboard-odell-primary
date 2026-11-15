@@ -47,6 +47,9 @@ export interface ProductFormState {
   sizeHeightCm: number;
   cost: number;
   suggestedPrice: number | null;
+  /** Descuento propio del producto: uno solo de los dos (§16.1.2). */
+  discountPercent: number | null;
+  discountAmount: number | null;
   categoryIds: string[];
   images: string[];
   attachments: ProductAttachment[];
@@ -102,6 +105,8 @@ export type ProductFormGroup = FormGroup<{
   preferredPrinterId: FormControl<string | null>;
   assemblyTimeHours: FormControl<number>;
   suggestedPrice: FormControl<number | null>;
+  discountPercent: FormControl<number | null>;
+  discountAmount: FormControl<number | null>;
   categoryIds: FormControl<string[]>;
   categoryPicker: FormControl<string>;
   components: FormControl<ProductFormState['components']>;
@@ -136,6 +141,8 @@ export class ProductFormStateManagerService {
       sizeHeightCm: 0,
       cost: 0,
       suggestedPrice: null,
+      discountPercent: null,
+      discountAmount: null,
       categoryIds: [],
       images: [],
       attachments: [],
@@ -209,6 +216,8 @@ export class ProductFormStateManagerService {
         nonNullable: true,
       }),
       suggestedPrice: new FormControl(state.suggestedPrice),
+      discountPercent: new FormControl(state.discountPercent),
+      discountAmount: new FormControl(state.discountAmount),
       categoryIds: new FormControl(state.categoryIds, { nonNullable: true }),
       categoryPicker: new FormControl(state.categoryPicker, {
         nonNullable: true,
@@ -254,6 +263,8 @@ export class ProductFormStateManagerService {
         preferredPrinterId: state.preferredPrinterId,
         assemblyTimeHours: state.assemblyTimeHours,
         suggestedPrice: state.suggestedPrice,
+        discountPercent: state.discountPercent,
+        discountAmount: state.discountAmount,
         categoryIds: state.categoryIds,
         categoryPicker: state.categoryPicker,
         components: state.components,
@@ -290,6 +301,10 @@ export class ProductFormStateManagerService {
       product.suggestedPrice != null && Number(product.suggestedPrice) > 0
         ? Number(product.suggestedPrice)
         : null;
+    state.discountPercent =
+      Number(product.discountPercent) > 0 ? Number(product.discountPercent) : null;
+    state.discountAmount =
+      Number(product.discountAmount) > 0 ? Number(product.discountAmount) : null;
     state.categoryIds = [...product.categoryIds];
 
     const sanitizedImages = sanitizePersistableProductImages(product.images);

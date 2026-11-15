@@ -27,6 +27,11 @@ import {
 import { getMarginForProductType } from '../../shared/utils/pricing.util';
 import { resolveProductLaborCost } from '../../shared/utils/product-labor.util';
 import { resolveProfitArea } from '../../shared/utils/profit-area.util';
+import {
+  hasProductDiscount,
+  productDiscountLabel,
+  productSalePrice,
+} from '../../shared/utils/product-discount.util';
 import { productListStock } from '../../shared/utils/stock.helpers';
 import {
   normalizeWholesaleDiscount,
@@ -94,6 +99,19 @@ export class ProductMobileCardComponent {
     () => Number(this.product().price) || 0,
   );
 
+  protected readonly hasDiscount = computed(() =>
+    hasProductDiscount(this.product()),
+  );
+
+  /** Precio de venta (lista − descuento). Base del mayorista y del margen. */
+  protected readonly salePrice = computed(
+    () => Number(productSalePrice(this.product())) || 0,
+  );
+
+  protected readonly discountTag = computed(() =>
+    productDiscountLabel(this.product()),
+  );
+
   protected readonly wholesalePrice = computed((): number | null => {
     const product = this.product();
     const area = resolveProfitArea(product);
@@ -106,7 +124,7 @@ export class ProductMobileCardComponent {
       return null;
     }
     return wholesalePriceFromList(
-      this.listPrice(),
+      this.salePrice(),
       discount.percent,
       product.cost,
     );
@@ -114,7 +132,7 @@ export class ProductMobileCardComponent {
 
   protected readonly markupPercent = computed(() =>
     markupPercentOnCostRounded(
-      this.listPrice(),
+      this.salePrice(),
       this.product().cost,
       resolveProductLaborCost(
         this.product(),
@@ -139,9 +157,13 @@ export class ProductMobileCardComponent {
       style: 'currency',
       currency: 'ARS',
       maximumFractionDigits: 0,
-    }).format(this.listPrice());
+    }).format(this.salePrice());
     const margin = this.markupLabel();
-    const parts = [product.name, this.subtitle(), `lista ${list}`];
+    const parts = [
+      product.name,
+      this.subtitle(),
+      `${this.hasDiscount() ? 'venta' : 'lista'} ${list}`,
+    ];
     if (margin) parts.push(`margen ${margin}`);
     return parts.join(', ');
   });

@@ -32,6 +32,19 @@ import {
   marginLabelForProductType,
 } from '../../../../shared/utils/pricing.util';
 import { formatHoursEs } from '../../../../shared/utils/decimal-es.util';
+import {
+  DISCOUNT_PERCENT_MAX,
+  DiscountMode,
+  clampDiscountAmount,
+  clampDiscountPercent,
+  discountAmountClampMessage,
+  discountModeFromValues,
+  discountPercentClampMessage,
+} from '../../../../shared/utils/discount.util';
+import {
+  productDiscountLabel,
+  productSalePrice,
+} from '../../../../shared/utils/product-discount.util';
 import { markupPercentOnCostRounded } from '../../../../shared/utils/product-margin.util';
 import { ProductFormGroup } from '../services/product-form-state-manager.service';
 import { ProductFormPricingFacade } from '../store/product-form-pricing/product-form-pricing.facade';
@@ -74,7 +87,20 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     { value: 'fixed', label: 'Precio fijo' },
   ];
 
+  readonly discountSegmentOptions: DbSegmentOption<DiscountMode>[] = [
+    { value: 'none', label: 'Sin' },
+    { value: 'percent', label: '%' },
+    { value: 'amount', label: '$' },
+  ];
+
+  discountMode: DiscountMode = 'none';
+  discountNotice = '';
+
   ngOnInit(): void {
+    this.discountMode = discountModeFromValues(
+      this.form.controls.discountPercent.value ?? undefined,
+      this.form.controls.discountAmount.value ?? undefined,
+    );
     const stored = Number(this.form.controls.suggestedPrice.value) || 0;
     if (stored > 0) {
       this.pricing.adoptStoredManualPrice();
@@ -331,10 +357,14 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     const price = this.priceManual
       ? Number(this.pricing.manualUnitPrice) || 0
       : calculated;
+    const salePrice = this.salePriceFor(price);
     const margin =
-      cost > 0 && price > 0
-        ? markupPercentOnCostRounded(price, cost, laborCost)
+      cost > 0 && salePrice > 0
+        ? markupPercentOnCostRounded(salePrice, cost, laborCost)
         : null;
+    if (this.hasDiscount && margin != null) {
+      return `${calculatedLabel}${this.priceManual ? ' · precio manual' : ''} · margen sobre la venta ${margin}%`;
+    }
     if (this.priceManual && margin != null && margin < 0) {
       return `${calculatedLabel} · precio manual · margen ${margin}%`;
     }
@@ -354,6 +384,93 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   ): number | null {
     return markupPercentOnCostRounded(price, cost, laborCost);
   }
+
+  // ── Descuento propio del producto (§16.1.2) ─────────────────────────
+
+  /** Precio de venta = lista − descuento del formulario. */
+  salePriceFor(listPrice: number): number {
+    return productSalePrice({
+      price: listPrice,
+      discountPercent: this.form.controls.discountPercent.value,
+      discountAmount: this.form.controls.discountAmount.value,
+    });
+  }
+
+  get hasDiscount(): boolean {
+    return (
+      Number(this.form.controls.discountPercent.value) > 0 ||
+      Number(this.form.controls.discountAmount.value) > 0
+    );
+  }
+
+  get discountTag(): string {
+    return productDiscountLabel(
+      {
+        discountPercent: this.form.controls.discountPercent.value,
+        discountAmount: this.form.controls.discountAmount.value,
+      },
+      (value) => this.money(value),
+    );
+  }
+
+  /** «−15 %» o «−$1.000» sin el signo, para el texto «Precio de venta $X (−Y %)». */
+  discountSummary(listPrice: number): string {
+    const sale = this.salePriceFor(listPrice);
+    return `Precio de venta ${this.money(sale)} (${this.discountTag})`;
+  }
+
+  get discountValueDisplay(): string {
+    const value =
+      this.discountMode === 'percent'
+        ? this.form.controls.discountPercent.value
+        : this.form.controls.discountAmount.value;
+    return Number(value) > 0 ? String(value) : '';
+  }
+
+  onDiscountModeChange(mode: DiscountMode): void {
+    this.discountMode = mode;
+    this.discountNotice = '';
+    if (mode !== 'percent') this.form.controls.discountPercent.setValue(null);
+    if (mode !== 'amount') this.form.controls.discountAmount.setValue(null);
+    this.form.markAsDirty();
+    this.cdr.markForCheck();
+  }
+
+  onDiscountInput(input: HTMLInputElement, listPrice: number): void {
+    const raw = input.value;
+    const parsed = Number(String(raw ?? '').replace(',', '.'));
+    const hasValue = String(raw ?? '').trim() !== '' && Number.isFinite(parsed);
+    this.discountNotice = '';
+    if (this.discountMode === 'percent') {
+      this.form.controls.discountAmount.setValue(null);
+      if (!hasValue || parsed <= 0) {
+        this.form.controls.discountPercent.setValue(null);
+      } else {
+        const clamped = clampDiscountPercent(parsed);
+        this.form.controls.discountPercent.setValue(clamped);
+        if (clamped !== parsed) {
+          this.discountNotice = discountPercentClampMessage(parsed);
+          input.value = String(clamped);
+        }
+      }
+    } else if (this.discountMode === 'amount') {
+      this.form.controls.discountPercent.setValue(null);
+      if (!hasValue || parsed <= 0) {
+        this.form.controls.discountAmount.setValue(null);
+      } else {
+        const clamped = Math.round(clampDiscountAmount(parsed, listPrice));
+        this.form.controls.discountAmount.setValue(clamped > 0 ? clamped : null);
+        if (clamped !== Math.round(parsed)) {
+          this.discountNotice = discountAmountClampMessage(parsed, listPrice);
+          input.value = String(clamped);
+        }
+      }
+    }
+    this.form.markAsDirty();
+    this.cdr.markForCheck();
+  }
+
+  readonly discountPercentMax = DISCOUNT_PERCENT_MAX;
 
   setSavings(componentsPrice: number, salePrice: number): number {
     return Math.max(0, Math.round((Number(componentsPrice) || 0) - (Number(salePrice) || 0)));

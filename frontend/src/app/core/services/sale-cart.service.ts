@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { BehaviorSubject } from 'rxjs';
 import type { SaleCartLine } from '../../components/sale-cart-line/sale-cart-line.types';
 import { Product } from '../models';
+import { productSalePrice } from '../../shared/utils/product-discount.util';
 
 let cartLineKey = 0;
 
@@ -48,7 +49,7 @@ export class SaleCartService {
         productId: product.id,
         productName: product.name,
         quantity: qty,
-        unitPrice: product.price,
+        unitPrice: productSalePrice(product),
       });
     }
 

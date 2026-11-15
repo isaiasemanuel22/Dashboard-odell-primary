@@ -118,6 +118,28 @@
   color: mobile.$m-text;
 }
 
+.pmc__struck {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  font-size: 11px;
+  line-height: 1.2;
+  color: mobile.$m-text-secondary;
+}
+
+.pmc__discount-tag {
+  padding: 0 6px;
+  border-radius: 999px;
+  background: #e7f8ee;
+  color: #15803d;
+  font-size: 11px;
+  font-style: normal;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .pmc__margin {
   display: flex;
   align-items: center;

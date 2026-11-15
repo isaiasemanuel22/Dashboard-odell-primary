@@ -1,5 +1,6 @@
 import { PriceType, ServiceType } from '../common/enums';
 import { OrderItem, WholesaleDiscountSettings } from '../common/interfaces';
+import { productSalePrice } from '../common/utils/product-discount.util';
 import { applyWholesalePricing } from './wholesale-pricing.util';
 
 const settings: WholesaleDiscountSettings = {
@@ -286,6 +287,37 @@ describe('applyWholesalePricing', () => {
       });
       expect(second.items[0].unitPrice).toBe(1100);
       expect(second.items[0].listUnitPrice).toBe(1200);
+    });
+  });
+  describe('sobre el precio de venta del producto (con descuento propio)', () => {
+    const run = (cost: number) =>
+      applyWholesalePricing(
+        [
+          line({
+            serviceType: ServiceType.IMPRESION_3D,
+            productName: 'Pieza',
+            quantity: 1,
+            // Lista $10.000 con 15 % de descuento del producto.
+            unitPrice: productSalePrice({ price: 10000, discountPercent: 15 }),
+          }),
+        ],
+        {
+          priceType: PriceType.MAYORISTA,
+          customer: null,
+          settings,
+          resolveUnitCost: () => cost,
+        },
+      );
+
+    it('mayorista 20 % sobre $8.500 da $6.800', () => {
+      const result = run(1000);
+      expect(result.items[0].listUnitPrice).toBe(8500);
+      expect(result.items[0].unitPrice).toBe(6800);
+    });
+
+    it('respeta el mínimo costo + 10 % sin pasar el precio de venta', () => {
+      expect(run(7000).items[0].unitPrice).toBe(7700);
+      expect(run(9000).items[0].unitPrice).toBe(8500);
     });
   });
 });

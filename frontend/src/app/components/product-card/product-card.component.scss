@@ -149,6 +149,28 @@
   }
 }
 
+.product-card__list-struck {
+  display: flex !important;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.7rem !important;
+  font-weight: 500 !important;
+  white-space: normal !important;
+  color: $color-text-subtle !important;
+}
+
+.product-card__discount-tag {
+  padding: 0.02rem 0.4rem;
+  border-radius: 999px;
+  background: #e7f8ee;
+  color: $color-success;
+  font-size: 0.68rem;
+  font-style: normal;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .product-card__na {
   color: $color-text-subtle;
 }

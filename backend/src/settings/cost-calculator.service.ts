@@ -57,6 +57,7 @@ import {
 } from '../products/fdm-product.util';
 import { normalizeProductComponents } from '../products/product-component.util';
 import { productToPricingInput } from '../products/product-pricing-input.util';
+import { productSalePrice } from '../common/utils/product-discount.util';
 import {
   calcFilamentCost,
   calcPurgeCost,
@@ -274,6 +275,7 @@ export class CostCalculatorService {
     return product.cost ?? 0;
   }
 
+  /** Suma de precios de LISTA de las piezas × cantidad (sin descuentos de pieza). */
   sumComponentsPrice(components: ProductComponent[]): number {
     return components.reduce((sum, item) => {
       const unitPrice = this.resolveProductUnitPrice(item.productId);
@@ -432,12 +434,22 @@ export class CostCalculatorService {
 
     const processCost = cost;
     cost = processCost + supplyValue;
-    const processPrice = this.resolveProductPrice(
-      input,
-      processCost,
-      supplyValue <= 0,
-      breakdown?.laborCost ?? 0,
-    );
+    const laborCost = breakdown?.laborCost ?? 0;
+    const fixedPrice =
+      input.suggestedPrice != null && Number(input.suggestedPrice) > 0;
+    // Combo / armado de piezas: lista = suma de precios de lista de las piezas
+    // + armado sin margen (§16.1.3). Con precio fijo manda el fijo.
+    const partsPrice =
+      hasComponents && !fixedPrice ? this.sumComponentsPrice(components) : 0;
+    const processPrice =
+      partsPrice > 0
+        ? partsPrice + laborCost
+        : this.resolveProductPrice(
+            input,
+            processCost,
+            supplyValue <= 0,
+            laborCost,
+          );
     // Los insumos se cobran a costo × 1,5; el costo no cambia (§16.3).
     const price = processPrice + supplyPriceFromValue(supplyValue);
     const profit = price - cost;
@@ -571,7 +583,8 @@ export class CostCalculatorService {
     if (!product) {
       throw new BadRequestException(`Producto ${productId} no encontrado`);
     }
-    return product.price;
+    // Precio de venta: lista − descuento propio del producto (§16.1.2).
+    return productSalePrice(product);
   }
 
   resolveCatalogUnitCost(productId: string): number {

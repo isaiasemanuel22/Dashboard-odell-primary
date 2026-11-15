@@ -42,6 +42,11 @@ import {
   normalizeWholesaleDiscount,
   wholesalePriceFromList,
 } from '../../shared/utils/wholesale-example.util';
+import {
+  hasProductDiscount,
+  productDiscountLabel,
+  productSalePrice,
+} from '../../shared/utils/product-discount.util';
 import { ProductImageCarouselComponent } from '../product-image-carousel/product-image-carousel.component';
 import { DbRowMenuComponent } from '../db-row-menu/db-row-menu.component';
 
@@ -112,8 +117,22 @@ export class ProductCardComponent {
     return sum > 0 ? sum : null;
   }
 
+  /** Precio de lista guardado (antes del descuento del producto). */
   get listPrice(): number {
     return Number(this.product.price) || 0;
+  }
+
+  get hasDiscount(): boolean {
+    return hasProductDiscount(this.product);
+  }
+
+  /** Precio de venta (lista − descuento). Base del mayorista y del margen. */
+  get salePrice(): number {
+    return Number(productSalePrice(this.product)) || 0;
+  }
+
+  get discountTag(): string {
+    return productDiscountLabel(this.product);
   }
 
   /** Null si el área no aplica o el descuento está inactivo → mostrar «—». */
@@ -128,7 +147,7 @@ export class ProductCardComponent {
       return null;
     }
     return wholesalePriceFromList(
-      this.listPrice,
+      this.salePrice,
       discount.percent,
       this.product.cost,
     );
@@ -136,7 +155,7 @@ export class ProductCardComponent {
 
   get markupPercent(): number | null {
     return markupPercentOnCostRounded(
-      this.listPrice,
+      this.salePrice,
       this.product.cost,
       resolveProductLaborCost(
         this.product,

@@ -258,3 +258,47 @@
 .price-margin--incomplete:not(.price-margin--loss) {
   background: #fef3c7;
 }
+
+.price-margin__list {
+  text-decoration: line-through;
+  color: $color-text-muted;
+}
+
+.price-note--strong {
+  color: $color-brand-deep;
+  font-weight: 600;
+}
+
+.discount-box {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.discount-box__mode {
+  display: block;
+  width: 100%;
+}
+
+.discount-box__input {
+  // Mismo recuadro que el precio unitario; el prefijo `$` solo va en pesos.
+  &.discount-box__input--percent {
+    padding-left: 0.75rem;
+
+    &::before {
+      content: none;
+    }
+  }
+
+  input.unit-price__control {
+    min-width: 0;
+  }
+
+  @include mobile.mobile-only {
+    min-height: 44px;
+
+    input.unit-price__control {
+      font-size: 16px;
+    }
+  }
+}

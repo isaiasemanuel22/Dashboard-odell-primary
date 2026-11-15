@@ -1,3 +1,4 @@
+import { productSalePrice } from '../../../shared/utils/product-discount.util';
 import {
   Component,
   EventEmitter,
@@ -202,7 +203,7 @@ export class SaleFormComponent implements OnChanges {
   get productOptions(): DbSelectOption[] {
     return this.products.map((product) => ({
       value: product.id,
-      label: `${product.name} · ${this.formatPrice(product.price)} · ${this.availableStock(product.id)} disp.`,
+      label: `${product.name} · ${this.formatPrice(productSalePrice(product))} · ${this.availableStock(product.id)} disp.`,
       disabled: this.availableStock(product.id) < 1,
     }));
   }
@@ -464,7 +465,7 @@ export class SaleFormComponent implements OnChanges {
           productId: product.id,
           productName: product.name,
           quantity,
-          unitPrice: product.price,
+          unitPrice: productSalePrice(product),
         });
       }
     } else {
@@ -630,6 +631,8 @@ export class SaleFormComponent implements OnChanges {
     this.saleCart.clear();
     this.cancel.emit();
   }
+
+  readonly salePrice = productSalePrice;
 
   formatPrice(value: number): string {
     return new Intl.NumberFormat('es-AR', {

@@ -63,8 +63,17 @@
 
     <div class="product-card__pricing">
       <div>
-        <small>Lista</small>
-        <strong>{{ listPrice | currencyArs }}</strong>
+        @if (hasDiscount) {
+          <small>Venta</small>
+          <strong>{{ salePrice | currencyArs }}</strong>
+          <span class="product-card__list-struck">
+            <s>{{ listPrice | currencyArs }}</s>
+            <em class="product-card__discount-tag">{{ discountTag }}</em>
+          </span>
+        } @else {
+          <small>Lista</small>
+          <strong>{{ listPrice | currencyArs }}</strong>
+        }
       </div>
       <div>
         <small>Mayorista</small>

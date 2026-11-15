@@ -1059,12 +1059,36 @@ precio calculado = (costo sin mano de obra) × (1 + margen) + mano de obra
 ```
 
 El costo total sigue incluyendo la mano de obra (para costo, ganancia y margen
-real). Vale para FDM, resina, estampado y combos (margen sobre piezas y otros
-costos; el armado se suma sin margen). Los insumos se suman con un 50 % fijo
+real). Vale para FDM, resina y estampado. Los combos tienen su propia regla
+(§16.1.3). Los insumos se suman con un 50 % fijo
 encima de su costo (§16.3). Ejemplo: con margen 100 % y mano de obra $1.000, la mano de
 obra suma $1.000 al precio, no $2.000. Las líneas de Diseño y Modelado tienen
 tarifa y margen propios y no cambian. Los precios guardados no cambian hasta
 usar «Actualizar precios».
+
+### 16.1.2 Descuento del producto
+
+Confirmado el 2026-11-15. Un producto o combo del catálogo puede tener un
+descuento propio: un porcentaje (0 a 99) o un monto fijo (menor que el precio
+de lista), nunca los dos.
+
+```text
+precio de venta = precio de lista − descuento del producto
+```
+
+El precio guardado sigue siendo el de lista. Pedidos, presupuestos y ventas de
+mostrador toman el precio de venta. El descuento del producto se acumula con el
+mayorista (que se calcula sobre el precio de venta y respeta el mínimo de
+§16.4) y con el descuento general de §16.1. Si el resultado queda a pérdida,
+aplica §16.5.
+
+### 16.1.3 Precio del combo
+
+Confirmado el 2026-11-15. El precio de lista calculado de un combo es la suma
+de los precios de lista de sus piezas por su cantidad, más el armado (sin
+margen) y los insumos propios del combo (§16.3). Su descuento (§16.1.2) se
+resta de esa lista. Si el combo tiene precio fijo, el fijo es la lista. El
+costo del combo no cambia: suma de los costos de sus piezas más el armado.
 
 ### 16.2 Precio de servicios
 

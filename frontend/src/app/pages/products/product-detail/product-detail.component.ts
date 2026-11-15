@@ -11,7 +11,15 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { firstValueFrom } from 'rxjs';
-import { EMPTY, catchError, map, of, startWith, switchMap } from 'rxjs';
+import {
+  EMPTY,
+  catchError,
+  finalize,
+  map,
+  of,
+  startWith,
+  switchMap,
+} from 'rxjs';
 import {
   Category,
   ColorConfig,
@@ -112,8 +120,16 @@ import {
   resolvePrintDimensions,
   totalEstampadoPressMinutes,
 } from '../../../shared/utils/estampado.helpers';
-import { resolveFilamentPricePerKg, resolveResinPricePerLiter } from '../../../shared/utils/material-type-price.util';
+import {
+  resolveFilamentPricePerKg,
+  resolveResinPricePerLiter,
+} from '../../../shared/utils/material-type-price.util';
 import { formatCurrencyArs } from '../../../shared/utils/currency-ars.util';
+import {
+  hasProductDiscount,
+  productDiscountLabel,
+  productSalePrice,
+} from '../../../shared/utils/product-discount.util';
 import { resolveFdmFilaments } from '../../../shared/utils/fdm.helpers';
 
 export interface MobileCostCompositionRow {
@@ -218,16 +234,16 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       .getGeneralSettings()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
-      next: (settings) => {
-        this.generalSettings = settings;
-        this.colorCatalog = settings.colors ?? [];
-        this.profitMargins = normalizeProfitMargins(settings.profitMargins);
-        this.wholesaleDiscount = normalizeWholesaleDiscount(
-          settings.wholesaleDiscount,
-        );
-        this.cdr.markForCheck();
-      },
-    });
+        next: (settings) => {
+          this.generalSettings = settings;
+          this.colorCatalog = settings.colors ?? [];
+          this.profitMargins = normalizeProfitMargins(settings.profitMargins);
+          this.wholesaleDiscount = normalizeWholesaleDiscount(
+            settings.wholesaleDiscount,
+          );
+          this.cdr.markForCheck();
+        },
+      });
 
     this.route.paramMap
       .pipe(
@@ -238,7 +254,9 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       .subscribe((result) => {
         if (!result) return;
         this.product = result.product;
-        this.attachments = normalizeProductAttachments(result.product.attachments);
+        this.attachments = normalizeProductAttachments(
+          result.product.attachments,
+        );
         this.categories = result.categories;
         this.catalogProducts = result.catalog;
         this.stock = result.stock;
@@ -276,12 +294,29 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     return this.product?.cost ?? 0;
   }
 
-  get displayPrice(): number {
+  /** Precio de lista guardado (antes del descuento del producto). */
+  get listPrice(): number {
     return this.product?.price ?? 0;
+  }
+
+  /** Precio de venta: lista − descuento propio. Base del mayorista y del margen. */
+  get displayPrice(): number {
+    return this.product ? productSalePrice(this.product) : 0;
+  }
+
+  get hasDiscount(): boolean {
+    return this.product ? hasProductDiscount(this.product) : false;
+  }
+
+  get discountTag(): string {
+    return this.product
+      ? productDiscountLabel(this.product, formatCurrencyArs)
+      : '';
   }
 
   get displayProfit(): number {
     if (!this.product) return 0;
+    if (this.hasDiscount) return this.displayPrice - this.displayCost;
     return this.product.profit ?? this.displayPrice - this.displayCost;
   }
 
@@ -326,11 +361,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     ) {
       return null;
     }
-    return wholesalePriceFromList(
-      this.displayPrice,
-      percent,
-      this.displayCost,
-    );
+    return wholesalePriceFromList(this.displayPrice, percent, this.displayCost);
   }
 
   /** True si el piso (costo + 10 %) subió el precio mayorista. */
@@ -459,7 +490,9 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     ];
   }
 
-  private componentCostRows(settings: GeneralSettings): MobileCostCompositionRow[] {
+  private componentCostRows(
+    settings: GeneralSettings,
+  ): MobileCostCompositionRow[] {
     const rows: MobileCostCompositionRow[] = this.resolvedComponents.map(
       (item) => {
         const part = this.catalogProducts.find((p) => p.id === item.productId);
@@ -771,21 +804,39 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     }
   }
 
+  /** True desde el clic en Editar hasta que se cierra el diálogo (evita diálogos apilados). */
+  editOpening = false;
+
   openEdit(): void {
-    if (!this.product) return;
+    if (!this.product || this.editOpening) return;
+    this.editOpening = true;
+    this.cdr.markForCheck();
 
     this.productsService.getProduct(this.product.id).subscribe({
       next: (fresh) => {
-        this.formDialogs.openProduct(fresh).subscribe((updated) => {
-          if (!updated) return;
-          this.reloadCurrentProduct();
-        });
+        this.formDialogs
+          .openProduct(fresh)
+          .pipe(
+            finalize(() => {
+              this.editOpening = false;
+              this.cdr.markForCheck();
+            }),
+          )
+          .subscribe((updated) => {
+            if (!updated) return;
+            this.reloadCurrentProduct();
+          });
       },
       error: (err) => {
+        this.editOpening = false;
+        this.cdr.markForCheck();
         this.formDialogs
           .openConfirm({
             title: 'No se pudo cargar',
-            message: extractApiErrorMessage(err, 'No se pudo cargar el producto'),
+            message: extractApiErrorMessage(
+              err,
+              'No se pudo cargar el producto',
+            ),
             confirmLabel: 'Entendido',
             alertOnly: true,
           })
@@ -815,7 +866,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
             this.formDialogs
               .openConfirm({
                 title: 'No se pudo eliminar',
-                message: extractApiErrorMessage(err, 'No se pudo eliminar el producto'),
+                message: extractApiErrorMessage(
+                  err,
+                  'No se pudo eliminar el producto',
+                ),
                 confirmLabel: 'Entendido',
                 alertOnly: true,
               })
@@ -863,7 +917,10 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
           this.formDialogs
             .openConfirm({
               title: 'No se pudo actualizar',
-              message: extractApiErrorMessage(err, 'No se pudo actualizar el producto'),
+              message: extractApiErrorMessage(
+                err,
+                'No se pudo actualizar el producto',
+              ),
               confirmLabel: 'Entendido',
               alertOnly: true,
             })
@@ -884,7 +941,9 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     this.loadProduct(id).subscribe((result) => {
       if (!result) return;
       this.product = result.product;
-      this.attachments = normalizeProductAttachments(result.product.attachments);
+      this.attachments = normalizeProductAttachments(
+        result.product.attachments,
+      );
       this.categories = result.categories;
       this.catalogProducts = result.catalog;
       this.stock = result.stock;

@@ -109,6 +109,9 @@ model Product {
   colorChanges          Int?    @map("color_changes")
   /** Impresora FDM preferida (id de MachineProfile con cola). */
   preferredPrinterId    String? @map("preferred_printer_id") @db.VarChar(64)
+  /** Descuento propio del producto: % (0–99) o monto fijo; nunca los dos. */
+  discountPercent       Float?  @map("discount_percent")
+  discountAmount        Float?  @map("discount_amount")
 
   @@map("products")
 }

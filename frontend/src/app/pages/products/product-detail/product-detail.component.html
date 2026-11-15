@@ -43,7 +43,14 @@
 @if (!loading && product && !notFound) {
   <div class="mobile-only pd-m">
     <db-mobile-bar title="Producto" backLink="/productos">
-      <button type="button" class="m-ib txt" (click)="openEdit()">Editar</button>
+      <button
+        type="button"
+        class="m-ib txt"
+        [disabled]="editOpening"
+        (click)="openEdit()"
+      >
+        {{ editOpening ? "Abriendo…" : "Editar" }}
+      </button>
       <button
         type="button"
         class="m-ib"
@@ -79,7 +86,9 @@
     <div class="m-body pd-m__body m-has-dock">
       <section class="m-card" aria-label="Resumen del producto">
         <div class="m-ln pd-m__pills">
-          <span class="m-pill m-pill--b">{{ product.type | productTypeLabel }}</span>
+          <span class="m-pill m-pill--b">{{
+            product.type | productTypeLabel
+          }}</span>
           @if (isPublished) {
             <span class="m-pill m-pill--ok">Publicado</span>
           } @else {
@@ -95,10 +104,20 @@
 
       <div class="m-kpis">
         <div class="m-kpi">
-          <span class="m-lbl">Precio de lista</span>
+          <span class="m-lbl">{{
+            hasDiscount ? "Precio de venta" : "Precio de lista"
+          }}</span>
           <span class="pd-m__kv">{{ displayPrice | currencyArs }}</span>
+          @if (hasDiscount) {
+            <span class="pd-m__ks">
+              <s>{{ listPrice | currencyArs }}</s>
+              <span class="pd-discount-tag">{{ discountTag }}</span>
+            </span>
+          }
           @if (wholesalePrice; as mayorista) {
-            <span class="pd-m__ks">Mayorista {{ mayorista | currencyArs }}</span>
+            <span class="pd-m__ks"
+              >Mayorista {{ mayorista | currencyArs }}</span
+            >
             @if (wholesaleFloorApplied) {
               <span class="pd-m__ks pd-m__floor">{{ wholesaleFloorNote }}</span>
             }
@@ -143,7 +162,9 @@
                 }
               </div>
               @if (row.amount != null) {
-                <span class="pd-m__cost-end">{{ row.amount | currencyArs }}</span>
+                <span class="pd-m__cost-end">{{
+                  row.amount | currencyArs
+                }}</span>
               }
             </div>
           }
@@ -238,6 +259,12 @@
       <div class="detail-panels">
         <section class="panel">
           <h3>Precios</h3>
+          @if (hasDiscount) {
+            <p class="pd-list-price">
+              Precio de lista <s>{{ listPrice | currencyArs }}</s>
+              <span class="pd-discount-tag">{{ discountTag }}</span>
+            </p>
+          }
           <app-product-pricing
             layout="grid"
             [price]="displayPrice"
@@ -251,7 +278,9 @@
           @if (wholesalePrice; as mayorista) {
             <p class="pd-wholesale">Mayorista {{ mayorista | currencyArs }}</p>
             @if (wholesaleFloorApplied) {
-              <p class="pd-wholesale pd-wholesale--floor">{{ wholesaleFloorNote }}</p>
+              <p class="pd-wholesale pd-wholesale--floor">
+                {{ wholesaleFloorNote }}
+              </p>
             }
           }
           @for (warning of priceWarnings; track $index) {
@@ -271,7 +300,9 @@
                       <small class="pd-cost-detail">{{ row.detail }}</small>
                     }
                   </dt>
-                  <dd>{{ row.amount != null ? (row.amount | currencyArs) : '' }}</dd>
+                  <dd>
+                    {{ row.amount != null ? (row.amount | currencyArs) : "" }}
+                  </dd>
                 </div>
               }
             </dl>
@@ -324,7 +355,8 @@
         <section class="panel">
           <h3>Archivos adjuntos</h3>
           <p class="attachments-hint">
-            Planos, STL, PDF u otros archivos de referencia. Los cambios se guardan al subir o quitar un archivo.
+            Planos, STL, PDF u otros archivos de referencia. Los cambios se
+            guardan al subir o quitar un archivo.
           </p>
           <db-attachment-upload
             [ngModel]="attachments"
@@ -346,7 +378,9 @@
               [colorCatalog]="colorCatalog"
             />
             @if (product.assemblyTimeHours > 0) {
-              <p class="assembly-note">Tiempo de armado: {{ product.assemblyTimeHours | decimalEs }} h</p>
+              <p class="assembly-note">
+                Tiempo de armado: {{ product.assemblyTimeHours | decimalEs }} h
+              </p>
             }
           </section>
         }
@@ -379,9 +413,10 @@
           (clicked)="togglePublished()"
         />
         <db-button
-          label="Editar producto"
+          [label]="editOpening ? 'Abriendo…' : 'Editar producto'"
           variant="primary"
           format="solid"
+          [disabled]="editOpening"
           (clicked)="openEdit()"
         />
         <db-button

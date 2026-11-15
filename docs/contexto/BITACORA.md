@@ -22,6 +22,12 @@ Hecho: Heroku pasó de 22bf9bc a 623efaf (v41); solo había cambios de frontend,
 Decisiones: Isaías pidió deployar solo main; el trabajo sin commitear de insumos y pérdida queda afuera.
 Pendiente: cerrar, commitear y deployar insumos mayorista + venta a pérdida (con db:push).
 
+## 2026-11-15 · Descuento propio de producto y combo
+Rama: feat/descuento-producto · Commits: ver git log (deploy 2026-11-15)
+Hecho: productos y combos pueden tener descuento propio (% 0–99 o monto fijo, nunca los dos; discountPercent/discountAmount en Product). price sigue siendo la lista; venta = lista − descuento vía productSalePrice (front y back), usado en pedidos, presupuestos, mostrador y avisos de precio. Lista del combo = suma de listas de piezas + armado sin margen + insumos ×1,5. Mayorista sobre el precio de venta con mínimo costo + 10 %. UI: lista tachada y etiqueta en tarjeta/detalle, formulario con precio de venta y aviso bajo costo. Fix: «Editar producto» mostraba nada al cargar y apilaba diálogos; ahora dice «Abriendo…» e ignora clics repetidos.
+Decisiones: de Isaías: descuento en el producto, combo sobre suma de precios, se acumula con mayorista y descuento general con el mínimo. Supuesta: todos los combos (con o sin descuento) calculan su lista desde la suma de precios de piezas.
+Pendiente: db:push:heroku al deployar (campos nuevos). Combos existentes mantienen su precio guardado hasta «Usar precio calculado». getProduct tarda ~1 s al abrir la edición.
+
 ## 2026-11-15 · Insumos +50 %, mínimo mayorista y venta a pérdida
 Rama: feat/insumos-mayorista-perdida · Commits: ver git log (deploy 2026-11-15)
 Hecho: insumos de producto y línea a medida se cobran costo × 1,5 (constante SUPPLY_PRICE_MULTIPLIER por lado). Mayorista con mínimo costo + 10 % sin pasar la lista (WHOLESALE_MIN_MARKUP); precio manual se respeta tal cual. Venta a pérdida (línea bajo costo o ganancia total negativa) pide motivo en pedido, presupuesto y venta de mostrador (loss-sale-dialog, 11 códigos); lossReason/lossReasonNote en Order, Quote y RetailSale; trigger loss_sale en historial. Líneas manuales ya no disparan el aviso de cambio de precio de catálogo.

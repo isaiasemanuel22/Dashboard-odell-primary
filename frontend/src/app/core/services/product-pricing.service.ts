@@ -13,6 +13,7 @@ import { SettingsFacade } from '../../store/settings/settings.facade';
 import { ProductCostCalculationService } from './product-cost-calculation.service';
 import {
   sumComponentsCost,
+  sumComponentsPrice,
 } from '../../shared/utils/product.helpers';
 import { isEstampadoPrintValid } from '../../shared/utils/estampado.helpers';
 import { hasValidFdmFilamentInput } from '../../shared/utils/fdm.helpers';
@@ -128,6 +129,12 @@ export class ProductPricingService {
     const suggested =
       input.suggestedPrice != null && Number(input.suggestedPrice) > 0;
     let processPrice = result.price;
+    // Combo / armado de piezas: lista = suma de listas de las piezas + armado
+    // sin margen (§16.1.3). Con precio fijo manda el fijo.
+    if (hasComponents && !suggested) {
+      const partsPrice = sumComponentsPrice(catalog, input.components ?? []);
+      if (partsPrice > 0) processPrice = partsPrice + laborCost;
+    }
     if (supplyValue > 0 && !suggested && !hasComponents && processCost <= 0) {
       processPrice = 0;
     }

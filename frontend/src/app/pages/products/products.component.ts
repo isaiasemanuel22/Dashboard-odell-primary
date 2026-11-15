@@ -10,7 +10,7 @@ import {
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
-import { combineLatest } from 'rxjs';
+import { combineLatest, finalize } from 'rxjs';
 import {
   Category,
   Product,
@@ -70,11 +70,7 @@ import { ProductsToolbarComponent } from './products-toolbar/products-toolbar.co
 import { normalizeSearchText } from '../../shared/utils/search-text.util';
 type TypeFilter = ProductType | 'all';
 type ListFilter =
-  | 'all'
-  | 'below_margin'
-  | 'fixed_price'
-  | 'in_stock'
-  | 'internal';
+  'all' | 'below_margin' | 'fixed_price' | 'in_stock' | 'internal';
 
 interface ProductsMobileListState {
   listFilter: ListFilter;
@@ -222,7 +218,10 @@ export class ProductsComponent implements OnInit, OnDestroy {
     this.saleCart.lines$
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((lines) => {
-        this.cartItemCount = lines.reduce((sum, line) => sum + line.quantity, 0);
+        this.cartItemCount = lines.reduce(
+          (sum, line) => sum + line.quantity,
+          0,
+        );
         this.cdr.markForCheck();
       });
 
@@ -680,7 +679,10 @@ export class ProductsComponent implements OnInit, OnDestroy {
           },
           error: (err) => {
             this.showNotice(
-              extractApiErrorMessage(err, 'No se pudieron recalcular los precios'),
+              extractApiErrorMessage(
+                err,
+                'No se pudieron recalcular los precios',
+              ),
             );
           },
         });
@@ -704,17 +706,25 @@ export class ProductsComponent implements OnInit, OnDestroy {
     });
   }
 
+  private editOpening = false;
+
   openEditProduct(product: Product): void {
+    if (this.editOpening) return;
+    this.editOpening = true;
     this.productsService.getProduct(product.id).subscribe({
       next: (fresh) => {
-        this.formDialogs.openProduct(fresh).subscribe((saved) => {
-          if (saved) {
-            this.reloadProducts();
-            this.reloadMarginAlerts();
-          }
-        });
+        this.formDialogs
+          .openProduct(fresh)
+          .pipe(finalize(() => (this.editOpening = false)))
+          .subscribe((saved) => {
+            if (saved) {
+              this.reloadProducts();
+              this.reloadMarginAlerts();
+            }
+          });
       },
       error: (err) => {
+        this.editOpening = false;
         this.showNotice(
           extractApiErrorMessage(err, 'No se pudo cargar el producto'),
         );

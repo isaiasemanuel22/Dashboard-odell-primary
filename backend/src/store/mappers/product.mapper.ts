@@ -55,6 +55,8 @@ export function mapProductFromDb(row: {
   purgeGrams?: number | null;
   colorChanges?: number | null;
   preferredPrinterId?: string | null;
+  discountPercent?: number | null;
+  discountAmount?: number | null;
 }): Product {
   const components = normalizeProductComponents(fromJson(row.components));
   const base = {
@@ -78,6 +80,8 @@ export function mapProductFromDb(row: {
     components,
     assemblyTimeHours: row.assemblyTimeHours,
     stock: row.stock ?? 0,
+    discountPercent: row.discountPercent ?? null,
+    discountAmount: row.discountAmount ?? null,
   };
 
   if (row.type === (ProductType.COMBO as string)) {
@@ -223,6 +227,8 @@ export function mapProductToDb(product: Product) {
     ),
     fdmFilaments: toInputJson(fdmFilaments.map(persistedFdmLine)),
     stock: Math.max(0, Math.trunc(product.stock ?? 0)),
+    discountPercent: product.discountPercent ?? null,
+    discountAmount: product.discountAmount ?? null,
     colorId:
       product3d?.type === ProductType.RESINA
         ? (product3d.colorId ?? null)

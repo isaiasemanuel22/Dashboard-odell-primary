@@ -27,6 +27,10 @@ import {
 } from '../common/interfaces';
 import { ProductPricingService } from './product-pricing.service';
 import {
+  normalizeProductDiscount,
+  productSalePrice,
+} from '../common/utils/product-discount.util';
+import {
   PricingSyncService,
   ProductPriceChange,
 } from '../pricing/pricing-sync.service';
@@ -256,6 +260,7 @@ export class ProductsService {
       data.includesPieces === true ||
       components.length > 0;
     const suggestedPrice = this.normalizeSuggestedPrice(data.suggestedPrice);
+    const discount = normalizeProductDiscount(data, clientPrice.price);
     const base = {
       id: this.store.nextId('prod', this.store.products),
       name: data.name.trim(),
@@ -267,6 +272,8 @@ export class ProductsService {
       cost: pricing.cost,
       profit: clientPrice.profit,
       suggestedPrice,
+      discountPercent: discount.discountPercent,
+      discountAmount: discount.discountAmount,
       categoryIds: data.categoryIds ?? [],
       size:
         (data.size ?? '').trim() ||
@@ -362,13 +369,17 @@ export class ProductsService {
     const created = this.applyCompositeProductionMetrics(product, components);
     linkProductBrands(this.store, created);
     this.products.create(created);
-    this.pricingSync.syncAfterProductSave(product.id, product.price);
+    this.pricingSync.syncAfterProductSave(
+      product.id,
+      productSalePrice(product),
+    );
     return this.findOne(product.id);
   }
 
   update(id: string, data: UpdateProductDto): Product {
     const existing = this.findOne(id);
-    const previousPrice = existing.price;
+    // El aviso de cambio de precio en pedidos usa el precio de venta (con descuento).
+    const previousPrice = productSalePrice(existing);
     const mergedType = data.type ?? existing.type;
     let mergedComponents = normalizeProductComponents(
       data.components !== undefined
@@ -517,9 +528,25 @@ export class ProductsService {
       typeChanged || !(existing.price > 0) ? undefined : existing.price,
     );
 
+    const discount =
+      data.discountPercent !== undefined || data.discountAmount !== undefined
+        ? normalizeProductDiscount(
+            {
+              discountPercent: data.discountPercent ?? null,
+              discountAmount: data.discountAmount ?? null,
+            },
+            clientPrice.price,
+          )
+        : {
+            discountPercent: existing.discountPercent ?? null,
+            discountAmount: existing.discountAmount ?? null,
+          };
+
     const updated: Product = {
       ...existing,
       ...data,
+      discountPercent: discount.discountPercent,
+      discountAmount: discount.discountAmount,
       name: data.name?.trim() ?? existing.name,
       description:
         data.description !== undefined
@@ -860,8 +887,8 @@ export class ProductsService {
       if (!current) continue;
 
       priceChanges.set(item.productId, {
-        oldPrice: item.currentPrice,
-        newPrice: item.newPrice,
+        oldPrice: productSalePrice(current),
+        newPrice: productSalePrice({ ...current, price: item.newPrice }),
       });
 
       this.products.save({
@@ -899,7 +926,11 @@ export class ProductsService {
         name: product.name,
         currentPrice,
         newPrice,
-        newWholesalePrice: wholesaleUnitPrice(newPrice, wholesale, area),
+        newWholesalePrice: wholesaleUnitPrice(
+          productSalePrice({ ...product, price: newPrice }),
+          wholesale,
+          area,
+        ),
         cost,
         newMarkupPercent: productMarkupPercent(newPrice, cost),
       });

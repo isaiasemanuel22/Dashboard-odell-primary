@@ -645,6 +645,9 @@ export interface ProductBase {
   profit: number;
   /** Precio manual del catálogo; si está seteado, no se pisa al recalcular. */
   suggestedPrice?: number | null;
+  /** Descuento propio: `price` es la lista; venta = lista − descuento. Uno solo. */
+  discountPercent?: number | null;
+  discountAmount?: number | null;
   categoryIds: string[];
   type: ProductType;
   size: string;
@@ -762,6 +765,8 @@ export type CreateProductPayload = (
   | Omit<ProductCombo, 'id' | 'updatedAt' | 'profit'>
 ) & {
   suggestedPrice?: number | null;
+  discountPercent?: number | null;
+  discountAmount?: number | null;
   includesPieces?: boolean;
   supplies?: EstampadoSupplyLine[];
 };

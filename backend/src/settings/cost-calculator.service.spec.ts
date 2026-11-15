@@ -1,3 +1,4 @@
+import { productSalePrice } from '../common/utils/product-discount.util';
 import { calcWashSupplyCost } from './machine-profile.util';
 import { ProductType, SupplyCategory } from '../common/enums';
 import type { Product, ProductPricingInput } from '../common/interfaces';
@@ -347,7 +348,7 @@ describe('CostCalculatorService', () => {
     expect(service.resolveProductUnitCost('combo-1')).toBe(2000);
   });
 
-  it('el precio del combo es costo total x margen, o el precio sugerido', () => {
+  it('el precio de lista del combo es la suma de precios de lista de sus piezas, o el precio sugerido', () => {
     const piece = {
       id: 'piece-1',
       name: 'Pieza',
@@ -376,16 +377,58 @@ describe('CostCalculatorService', () => {
       components: [{ productId: 'piece-1', quantity: 2 }],
       assemblyTimeHours: 0,
     } as ProductPricingInput;
-    const margin = service.getMarginForProductType(ProductType.FDM);
 
     const result = service.calculateProductPricing(input);
+    // Costo: suma de costos de piezas. Lista: suma de listas × cantidad.
     expect(result.cost).toBe(2000);
-    expect(result.price).toBe(service.priceFromCostAndMargin(2000, margin));
-    expect(result.price).not.toBe(10000);
+    expect(result.price).toBe(10000);
 
     expect(
       service.calculateProductPricing({ ...input, suggestedPrice: 3333 }).price,
     ).toBe(3333);
+  });
+
+  it('combo: lista $6.000 + $4.000 sin armado da lista $10.000 y venta $8.500 con 15 %', () => {
+    const make = (id: string, price: number) =>
+      ({
+        id,
+        name: id,
+        type: ProductType.FDM,
+        images: [],
+        attachments: [],
+        updatedAt: '2026-07-01T10:00:00.000Z',
+        price,
+        cost: 1000,
+        profit: price - 1000,
+        categoryIds: [],
+        size: '5 cm',
+        published: true,
+        includesPieces: false,
+        components: [],
+        assemblyTimeHours: 0,
+        grams: 0,
+        printTimeHours: 1,
+        workTimeHours: 0,
+        // El descuento de una pieza no entra en la suma: cuenta su lista.
+        discountPercent: id === 'p-a' ? 50 : null,
+      }) as unknown as Product;
+    for (const piece of [make('p-a', 6000), make('p-b', 4000)]) {
+      store.products.push(piece);
+      store.indexProduct(piece);
+    }
+
+    const result = service.calculateProductPricing({
+      type: ProductType.COMBO,
+      components: [
+        { productId: 'p-a', quantity: 1 },
+        { productId: 'p-b', quantity: 1 },
+      ],
+      assemblyTimeHours: 0,
+    });
+    expect(result.price).toBe(10000);
+    expect(productSalePrice({ price: result.price, discountPercent: 15 })).toBe(
+      8500,
+    );
   });
 
   it('costo del combo usa el costo vigente de cada pieza, no el guardado', () => {

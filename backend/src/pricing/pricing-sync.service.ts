@@ -28,6 +28,7 @@ import {
 } from '../store/repositories';
 import { StoreChangeService } from '../store/store-change.service';
 import { StoreService } from '../store/store.service';
+import { productSalePrice } from '../common/utils/product-discount.util';
 
 export interface ProductPriceChange {
   oldPrice: number;
@@ -75,10 +76,12 @@ export class PricingSyncService {
     if (!product) return;
 
     const priceChanges = new Map<string, ProductPriceChange>();
-    if (product.price !== previousPrice) {
+    // `previousPrice` es el precio de venta anterior (con descuento del producto).
+    const salePrice = productSalePrice(product);
+    if (salePrice !== previousPrice) {
       priceChanges.set(productId, {
         oldPrice: previousPrice,
-        newPrice: product.price,
+        newPrice: salePrice,
       });
     }
 
@@ -179,7 +182,7 @@ export class PricingSyncService {
       return false;
     }
 
-    const oldPrice = current.price;
+    const oldPrice = productSalePrice(current);
     const updated: Product = {
       ...current,
       price: result.price,
@@ -195,11 +198,9 @@ export class PricingSyncService {
 
     this.products.save(updated);
 
-    if (oldPrice !== result.price) {
-      priceChanges.set(current.id, {
-        oldPrice,
-        newPrice: result.price,
-      });
+    const newPrice = productSalePrice(updated);
+    if (oldPrice !== newPrice) {
+      priceChanges.set(current.id, { oldPrice, newPrice });
     }
 
     return true;

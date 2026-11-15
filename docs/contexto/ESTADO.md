@@ -12,8 +12,9 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `feat/insumos-mayorista-perdida`, igual a `main`. Sin trabajo a medias.
-- Precios de catálogo guardados no se recalcularon con la regla de insumos +50 %:
+- Rama actual: `feat/descuento-producto`, igual a `main`. Sin trabajo a medias.
+- Precios de catálogo guardados no se recalcularon con la regla de insumos +50 % ni
+  con la nueva lista de combos (suma de precios de piezas):
   cada producto con insumos los toma al usar «Usar precio calculado» o
   «Actualizar precios».
 - Errores reportados: todos corregidos (E1–E122) en `docs/qa/errores-pendientes.md`.

@@ -10,7 +10,8 @@
   />
   @if (vm$ | async; as vm) {
     @let held = heldPrice(vm.price);
-    @let shownPrice = held ?? vm.price;
+    @let listPrice = held ?? vm.price;
+    @let shownPrice = salePriceFor(listPrice);
     @if (stalePriceNotice(vm.price); as notice) {
       <div class="price-stale" role="status">
         <p>{{ notice }}</p>
@@ -23,6 +24,7 @@
       <p class="price-warn price-warn--incomplete" role="alert">{{ incomplete }}</p>
     }
     @if (belowCostNotice(shownPrice, vm.totalCost, vm.costBreakdown?.laborCost ?? 0); as belowCost) {
+      <p class="price-warn price-warn--loss" role="alert">El precio de venta queda por debajo del costo</p>
       <p class="price-warn price-warn--loss" role="alert">{{ belowCost }}</p>
     }
     @if (vm.calculating) {
@@ -98,6 +100,16 @@
         <span>Ganancia</span>
         <strong [class.is-loss]="shownPrice - vm.totalCost < 0">{{ shownPrice - vm.totalCost | currencyArs }}</strong>
       </div>
+      @if (hasDiscount) {
+        <div>
+          <span>Precio de lista</span>
+          <span class="price-margin__list">{{ listPrice | currencyArs }}</span>
+        </div>
+        <div>
+          <span>Descuento del producto</span>
+          <strong>{{ discountTag }}</strong>
+        </div>
+      }
       <div class="price-margin__sale">
         <span>Precio de venta</span>
         <strong>{{ shownPrice | currencyArs }}</strong>
@@ -135,16 +147,71 @@
       }
     </div>
 
+    <div class="discount-box">
+      <span class="unit-price__label">Descuento del producto</span>
+      <db-segmented-control
+        class="discount-box__mode"
+        size="lg"
+        [options]="discountSegmentOptions"
+        [value]="discountMode"
+        ariaLabel="Tipo de descuento del producto"
+        (valueChange)="onDiscountModeChange($event)"
+      />
+      @if (discountMode !== 'none') {
+        <div class="unit-price__box discount-box__input" [class.discount-box__input--percent]="discountMode === 'percent'">
+          <input
+            class="unit-price__control"
+            type="text"
+            inputmode="decimal"
+            [value]="discountValueDisplay"
+            (input)="onDiscountInput($any($event.target), listPrice)"
+            autocomplete="off"
+            [attr.aria-label]="discountMode === 'percent' ? 'Descuento en porcentaje' : 'Descuento en pesos'"
+            [attr.placeholder]="discountMode === 'percent' ? '0 a ' + discountPercentMax : '0'"
+          />
+        </div>
+      }
+      @if (discountNotice) {
+        <p class="price-note" role="status">{{ discountNotice }}</p>
+      }
+      @if (hasDiscount && listPrice > 0) {
+        <p class="price-note price-note--strong">{{ discountSummary(listPrice) }}</p>
+      }
+    </div>
+
     @if (facade.usesPieceAssembly && facade.components.length && vm.componentsPrice > 0) {
       <div class="price-savings">
         <div>
-          <span>Piezas vendidas por separado</span>
+          <span>Suma de precios de las piezas</span>
           <strong>{{ vm.componentsPrice | currencyArs }}</strong>
         </div>
-        <div>
-          <span>El conjunto le ahorra al cliente</span>
-          <strong class="price-savings__gain">{{ setSavings(vm.componentsPrice, vm.price) | currencyArs }}</strong>
-        </div>
+        @if (hasDiscount) {
+          @if ((vm.costBreakdown?.laborCost ?? 0) > 0) {
+            <div>
+              <span>Armado</span>
+              <strong>{{ vm.costBreakdown?.laborCost ?? 0 | currencyArs }}</strong>
+            </div>
+          }
+          @if (supplyPrice > 0) {
+            <div>
+              <span>Insumos (+50 %)</span>
+              <strong>{{ supplyPrice | currencyArs }}</strong>
+            </div>
+          }
+          <div>
+            <span>Descuento del combo ({{ discountTag }})</span>
+            <strong>{{ listPrice - shownPrice | currencyArs }}</strong>
+          </div>
+          <div>
+            <span>Precio final</span>
+            <strong class="price-savings__gain">{{ shownPrice | currencyArs }}</strong>
+          </div>
+        } @else if (setSavings(vm.componentsPrice, vm.price) > 0) {
+          <div>
+            <span>El conjunto le ahorra al cliente</span>
+            <strong class="price-savings__gain">{{ setSavings(vm.componentsPrice, vm.price) | currencyArs }}</strong>
+          </div>
+        }
       </div>
       <p class="price-note">El margen de error ya está incluido en el costo de cada pieza.</p>
     }

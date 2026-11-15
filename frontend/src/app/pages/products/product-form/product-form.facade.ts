@@ -393,6 +393,8 @@ export class ProductFormFacade {
       finalPrice: pricing.finalPrice,
       effectiveCost: pricing.effectiveCost,
       suggestedPrice: v.suggestedPrice,
+      discountPercent: v.discountPercent,
+      discountAmount: v.discountAmount,
       categoryIds: v.categoryIds,
       images: v.images,
       attachments: v.attachments,

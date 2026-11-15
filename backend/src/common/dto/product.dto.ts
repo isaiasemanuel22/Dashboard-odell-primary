@@ -14,6 +14,8 @@ import {
   Min,
   ValidateIf,
   ValidateNested,
+  registerDecorator,
+  ValidationArguments,
 } from 'class-validator';
 import { PartialType } from '@nestjs/mapped-types';
 import { FilamentType, PaperType, ProductType } from '../enums';
@@ -22,6 +24,27 @@ import {
   EstampadoPrintSpec,
   EstampadoSupplyLine,
 } from '../interfaces';
+
+/** El descuento del producto es % o monto fijo, nunca los dos. */
+function NotWithDiscountPercent() {
+  return (target: object, propertyName: string) => {
+    registerDecorator({
+      name: 'notWithDiscountPercent',
+      target: target.constructor,
+      propertyName,
+      validator: {
+        validate(value: unknown, args: ValidationArguments) {
+          const other = (args.object as { discountPercent?: unknown })
+            .discountPercent;
+          return !(Number(value) > 0 && Number(other) > 0);
+        },
+        defaultMessage() {
+          return 'Usá un solo tipo de descuento: porcentaje o monto fijo';
+        },
+      },
+    });
+  };
+}
 
 export class ProductComponentDto {
   @IsString()
@@ -273,6 +296,20 @@ export class CreateProductDto {
   @IsOptional()
   @IsNumber()
   suggestedPrice?: number | null;
+
+  /** Descuento propio del producto en % (0–99). */
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(99)
+  discountPercent?: number | null;
+
+  /** Descuento propio del producto en pesos (menor que el precio de lista). */
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @NotWithDiscountPercent()
+  discountAmount?: number | null;
 
   @IsOptional()
   @IsArray()

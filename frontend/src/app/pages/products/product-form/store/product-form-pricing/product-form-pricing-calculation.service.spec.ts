@@ -22,13 +22,29 @@ describe('ProductFormPricingCalculationService', () => {
     ).toBe(2000);
   });
 
-  it('ignora la suma de piezas y usa costo x margen', () => {
+  it('sin precios de piezas usa costo x margen', () => {
     const result = service.calculate({
       totalCost: 14488,
       profitMarginPercent: 200,
-      componentsPrice: 41601,
     });
     expect(result.price).toBe(43464);
+  });
+
+  it('combo: lista = suma de listas de piezas + armado sin margen + insumos x1,5 (§16.1.3)', () => {
+    const result = service.calculate({
+      totalCost: 3000,
+      profitMarginPercent: 200,
+      componentsPrice: 10700,
+    });
+    expect(result.price).toBe(10700);
+    const withExtras = service.calculate({
+      totalCost: 4000,
+      profitMarginPercent: 200,
+      componentsPrice: 10700,
+      laborCost: 500,
+      supplyValue: 200,
+    });
+    expect(withExtras.price).toBe(11500);
   });
 
   it('el precio sugerido tiene prioridad sobre costo x margen', () => {

@@ -21,8 +21,17 @@
 
     <div class="pmc__prices">
       <div class="pmc__price">
-        <span class="pmc__price-label">Lista</span>
-        <strong class="pmc__price-value">{{ listPrice() | currencyArs }}</strong>
+        @if (hasDiscount()) {
+          <span class="pmc__price-label">Venta</span>
+          <strong class="pmc__price-value">{{ salePrice() | currencyArs }}</strong>
+          <span class="pmc__struck">
+            <s>{{ listPrice() | currencyArs }}</s>
+            <em class="pmc__discount-tag">{{ discountTag() }}</em>
+          </span>
+        } @else {
+          <span class="pmc__price-label">Lista</span>
+          <strong class="pmc__price-value">{{ listPrice() | currencyArs }}</strong>
+        }
       </div>
       @if (wholesalePrice(); as mayorista) {
         <div class="pmc__price">
