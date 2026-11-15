@@ -184,40 +184,40 @@
             <db-service-badge [type]="item.serviceType" />
           </td>
           <td>{{ item.quantity }}</td>
-          <td class="order-detail__progress">
-            <span>{{ finishedCount(item) }} de {{ item.quantity }}</span>
-            <span class="order-detail__bar" aria-hidden="true">
-              <span [style.width.%]="progressPercent(item)"></span>
-            </span>
+          <td>
+            <div class="order-detail__progress">
+              <span>{{ finishedCount(item) }} de {{ item.quantity }}</span>
+              <span class="order-detail__bar" aria-hidden="true">
+                <span [style.width.%]="progressPercent(item)"></span>
+              </span>
+            </div>
           </td>
           @if (first) {
             <td
               class="order-detail__note"
               [attr.rowspan]="order.items.length || 1"
             >
-              <div class="order-detail__note-body">
-                @if (order.description) {
-                  <p>{{ order.description | plainText: 220 }}</p>
-                }
-                <div class="order-detail__actions">
-                  <db-button
-                    label="Ver pedido"
-                    variant="primary"
-                    format="solid"
-                    [routerLink]="['/pedidos', order.id]"
-                  />
-                  <db-button
-                    label="Editar"
-                    variant="secondary"
-                    format="solid"
-                    (clicked)="edit.emit(order)"
-                  />
-                </div>
-              </div>
+              @if (order.description) {
+                <p>{{ order.description | plainText: 220 }}</p>
+              }
             </td>
           }
         </tr>
       }
     </tbody>
   </table>
+  <div class="order-detail__actions">
+    <db-button
+      label="Ver pedido"
+      variant="primary"
+      format="solid"
+      [routerLink]="['/pedidos', order.id]"
+    />
+    <db-button
+      label="Editar"
+      variant="secondary"
+      format="solid"
+      (clicked)="edit.emit(order)"
+    />
+  </div>
 </ng-template>

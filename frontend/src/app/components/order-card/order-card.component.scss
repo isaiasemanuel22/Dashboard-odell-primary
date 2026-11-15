@@ -184,14 +184,7 @@
   color: $color-text-muted;
   font-size: $font-control;
   line-height: 1.4;
-  vertical-align: top;
-}
-
-.order-detail__note-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  padding: 0.15rem 0.15rem 0.5rem 0.35rem;
+  vertical-align: middle;
 
   p {
     margin: 0;
@@ -205,7 +198,7 @@
   align-items: center;
   gap: 0.45rem;
   flex-wrap: wrap;
-  margin-top: auto;
+  padding-top: 0.65rem;
 
   db-button {
     display: flex;
