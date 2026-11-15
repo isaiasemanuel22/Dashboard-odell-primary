@@ -1,5 +1,6 @@
 import {
   Category,
+  EstampadoSupplyLine,
   FilamentType,
   INDISTINTO_COLOR_ID,
   Product,
@@ -8,7 +9,8 @@ import {
   ServiceProfitMargins,
   ServiceType,
 } from '../../core/models';
-import { isDesignService, isThirdPartyService } from './service-type.util';
+import { isDesignService } from './service-type.util';
+import { supplyLinesPrice, supplyLinesValue } from './supply-line-value.util';
 
 export function normalizeProductComponents(
   raw: ProductComponent[] | unknown,
@@ -56,7 +58,11 @@ function normalizeOneProductComponent(
   if (!productId) return null;
 
   const quantityRaw =
-    record['quantity'] ?? record['qty'] ?? record['count'] ?? record['amount'] ?? 1;
+    record['quantity'] ??
+    record['qty'] ??
+    record['count'] ??
+    record['amount'] ??
+    1;
   const quantity = Math.max(1, Math.floor(Number(quantityRaw) || 1));
   const colorIdRaw = pickComponentString(record, ['colorId', 'color_id']);
   const colorId =
@@ -155,16 +161,35 @@ export function productUsesPieceAssembly(
   );
 }
 
+/**
+ * Con `options` el costo del combo incluye el armado (horas × tarifa) y sus
+ * insumos propios, igual que el backend (CostCalculatorService). Sin
+ * `options` es solo la suma de piezas.
+ */
+export interface ProductUnitCostOptions {
+  laborCostPerHour?: number;
+  supplyUnitPrice?: (supplyId: string) => number;
+}
+
 export function resolveProductUnitCost(
-  product: Pick<Product, 'id' | 'type' | 'includesPieces' | 'components' | 'cost'> | undefined,
+  product:
+    | Pick<Product, 'id' | 'type' | 'includesPieces' | 'components' | 'cost'>
+    | undefined,
   catalog: Product[],
   visiting: Set<string> = new Set(),
+  options?: ProductUnitCostOptions,
 ): number {
   if (!product) return 0;
   if (visiting.has(product.id)) return product.cost ?? 0;
 
-  const components = normalizeProductComponents(product.components ?? [], catalog);
-  if (!productUsesPieceAssembly({ ...product, components }) || components.length === 0) {
+  const components = normalizeProductComponents(
+    product.components ?? [],
+    catalog,
+  );
+  if (
+    !productUsesPieceAssembly({ ...product, components }) ||
+    components.length === 0
+  ) {
     return product.cost ?? 0;
   }
 
@@ -172,27 +197,54 @@ export function resolveProductUnitCost(
   const partsCost = components.reduce((sum, item) => {
     const part = findProductById(catalog, item.productId);
     const qty = Math.max(1, Number(item.quantity) || 1);
-    return sum + resolveProductUnitCost(part, catalog, visiting) * qty;
+    return sum + resolveProductUnitCost(part, catalog, visiting, options) * qty;
   }, 0);
   visiting.delete(product.id);
 
-  return partsCost;
+  if (!options) return partsCost;
+  const assemblyHours = Number((product as Product).assemblyTimeHours) || 0;
+  const assembly = Math.round(
+    Math.max(0, assemblyHours) * (Number(options.laborCostPerHour) || 0),
+  );
+  const supplies = options.supplyUnitPrice
+    ? supplyLinesValue(
+        // Insumos propios del combo: `supplies` (fallback legado `estampadoSupplies`).
+        (product as { supplies?: EstampadoSupplyLine[] }).supplies ??
+          (product as { estampadoSupplies?: EstampadoSupplyLine[] })
+            .estampadoSupplies,
+        options.supplyUnitPrice,
+      )
+    : 0;
+  return partsCost + assembly + supplies;
 }
 
 export function resolveProductUnitPrice(
-  product: Pick<Product, 'id' | 'type' | 'includesPieces' | 'components' | 'price'> | undefined,
+  product:
+    | Pick<Product, 'id' | 'type' | 'includesPieces' | 'components' | 'price'>
+    | undefined,
   catalog: Product[],
   visiting: Set<string> = new Set(),
+  options?: ProductUnitCostOptions,
 ): number {
   if (!product) return 0;
   if (visiting.has(product.id)) return product.price ?? 0;
   // Combo usado como pieza de otro: cuenta su precio propio, no la suma de sus piezas.
-  if (visiting.size > 0 && product.type === ProductType.COMBO && (product.price ?? 0) > 0) {
+  if (
+    visiting.size > 0 &&
+    product.type === ProductType.COMBO &&
+    (product.price ?? 0) > 0
+  ) {
     return product.price;
   }
 
-  const components = normalizeProductComponents(product.components ?? [], catalog);
-  if (!productUsesPieceAssembly({ ...product, components }) || components.length === 0) {
+  const components = normalizeProductComponents(
+    product.components ?? [],
+    catalog,
+  );
+  if (
+    !productUsesPieceAssembly({ ...product, components }) ||
+    components.length === 0
+  ) {
     return product.price ?? 0;
   }
 
@@ -200,11 +252,25 @@ export function resolveProductUnitPrice(
   const partsPrice = components.reduce((sum, item) => {
     const part = findProductById(catalog, item.productId);
     const qty = Math.max(1, Number(item.quantity) || 1);
-    return sum + resolveProductUnitPrice(part, catalog, visiting) * qty;
+    return sum + resolveProductUnitPrice(part, catalog, visiting, options) * qty;
   }, 0);
   visiting.delete(product.id);
 
-  return partsPrice;
+  if (!options) return partsPrice;
+  // Igual que el backend (§16.1.3): armado sin margen + insumos propios × 1,5.
+  const assembly = Math.round(
+    Math.max(0, Number((product as Product).assemblyTimeHours) || 0) *
+      (Number(options.laborCostPerHour) || 0),
+  );
+  const ownSupplies = options.supplyUnitPrice
+    ? supplyLinesPrice(
+        (product as { supplies?: EstampadoSupplyLine[] }).supplies ??
+          (product as { estampadoSupplies?: EstampadoSupplyLine[] })
+            .estampadoSupplies,
+        options.supplyUnitPrice,
+      )
+    : 0;
+  return partsPrice + assembly + ownSupplies;
 }
 
 export function getProductName(
@@ -244,7 +310,8 @@ export function sumComponentsCost(
   components: ProductComponent[],
 ): number {
   return components.reduce(
-    (sum, item) => sum + getComponentLineCost(catalog, item.productId, item.quantity),
+    (sum, item) =>
+      sum + getComponentLineCost(catalog, item.productId, item.quantity),
     0,
   );
 }
@@ -279,14 +346,13 @@ export function calculateOrderLinesCost(
   return lines.reduce((sum, line) => {
     const qty = Math.max(0, Number(line.quantity) || 0);
 
-    if (line.serviceType && isThirdPartyService(line.serviceType)) {
-      return sum;
-    }
+    // Servicio de un tercero: costo cargado × cantidad, como cualquier línea (§16.3).
 
     // Diseño: costo = horas × tarifa del form (unitCost). No inventar desde precio.
     if (line.serviceType && isDesignService(line.serviceType)) {
-      const designCost = line.unitCost != null && line.unitCost >= 0 ? line.unitCost : 0;
-      const printCost = line.includesPrint ? line.printUnitCost ?? 0 : 0;
+      const designCost =
+        line.unitCost != null && line.unitCost >= 0 ? line.unitCost : 0;
+      const printCost = line.includesPrint ? (line.printUnitCost ?? 0) : 0;
       return sum + designCost + printCost * qty;
     }
 
@@ -309,7 +375,8 @@ export function sumComponentsPrice(
   components: ProductComponent[],
 ): number {
   return components.reduce(
-    (sum, item) => sum + getComponentLinePrice(catalog, item.productId, item.quantity),
+    (sum, item) =>
+      sum + getComponentLinePrice(catalog, item.productId, item.quantity),
     0,
   );
 }
@@ -336,7 +403,10 @@ export function resolveProductGrams(
     return 0;
   }
 
-  const components = normalizeProductComponents(product.components ?? [], catalog);
+  const components = normalizeProductComponents(
+    product.components ?? [],
+    catalog,
+  );
   if (!productUsesPieceAssembly(product) || components.length === 0) {
     return Math.max(0, Number(product.grams) || 0);
   }
@@ -369,7 +439,10 @@ export function resolveProductPrintTimeHours(
     return 0;
   }
 
-  const components = normalizeProductComponents(product.components ?? [], catalog);
+  const components = normalizeProductComponents(
+    product.components ?? [],
+    catalog,
+  );
   if (!productUsesPieceAssembly(product) || components.length === 0) {
     return roundProductionHours(Number(product.printTimeHours) || 0);
   }
@@ -402,7 +475,10 @@ function resolveProductPrintTimeHoursRaw(
     return 0;
   }
 
-  const components = normalizeProductComponents(product.components ?? [], catalog);
+  const components = normalizeProductComponents(
+    product.components ?? [],
+    catalog,
+  );
   if (!productUsesPieceAssembly(product) || components.length === 0) {
     return Math.max(0, Number(product.printTimeHours) || 0);
   }
@@ -455,7 +531,10 @@ function resolveProductWorkTimeHoursRaw(
     return 0;
   }
 
-  const components = normalizeProductComponents(product.components ?? [], catalog);
+  const components = normalizeProductComponents(
+    product.components ?? [],
+    catalog,
+  );
   if (!productUsesPieceAssembly(product) || components.length === 0) {
     return Math.max(0, Number(product.workTimeHours) || 0);
   }
@@ -520,7 +599,9 @@ export function resolveCategoryNamesText(
 }
 
 export function productComponentSelectLabel(product: Product): string {
-  return product.published === false ? `${product.name} (interno)` : product.name;
+  return product.published === false
+    ? `${product.name} (interno)`
+    : product.name;
 }
 
 export function isProductPublished(product: Product): boolean {

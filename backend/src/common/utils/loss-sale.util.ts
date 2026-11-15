@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { ServiceType } from '../enums';
-import { isDesignService, isThirdPartyService } from '../service-type.util';
+import { isDesignService } from '../service-type.util';
 import { calculateOrderLineSubtotal } from '../../orders/order-pricing.util';
 import {
   LOSS_REASON_CODES,
@@ -30,7 +30,7 @@ export interface LossSaleLine {
 export interface LossSaleResult {
   isLoss: boolean;
   lines: LossSaleLine[];
-  /** Ganancia total (total − costo − terceros prorrateados). */
+  /** Ganancia total (total − costo; el servicio de un tercero cuenta su costo, §16.3). */
   profit: number;
   profitNegative: boolean;
 }
@@ -47,18 +47,10 @@ export function detectLossSale<T extends LossSaleItemInput>(
 ): LossSaleResult {
   const lines: LossSaleLine[] = [];
   let cost = 0;
-  let linesTotal = 0;
-  let thirdParty = 0;
 
   items.forEach((item, index) => {
     const quantity = Math.max(Math.trunc(Number(item.quantity) || 0), 0);
     const revenue = calculateOrderLineSubtotal(item);
-    linesTotal += revenue;
-
-    if (item.serviceType && isThirdPartyService(item.serviceType)) {
-      thirdParty += revenue;
-      return;
-    }
     const unitCost = Math.max(Number(resolveUnitCost(item)) || 0, 0);
     const lineCost = unitCost * (Number(item.quantity) || 0);
     cost += lineCost;
@@ -81,9 +73,7 @@ export function detectLossSale<T extends LossSaleItemInput>(
     }
   });
 
-  const chargedThird =
-    linesTotal > 0 ? Math.round(thirdParty * (total / linesTotal)) : 0;
-  const profit = Math.round(total - cost - chargedThird);
+  const profit = Math.round(total - cost);
   const profitNegative = profit < 0;
 
   return {

@@ -1,10 +1,10 @@
-<section class="form-block">
+<section class="form-block" data-missing="category">
   <div class="form-block__head">
     <h4>Categorías <em>*</em></h4>
   </div>
 
   <div class="category-picker">
-    <div class="category-field">
+    <div class="category-field" [class.category-field--error]="showError">
       @if (selectedCategoriesList.length) {
         <div class="selected-categories">
           @for (cat of selectedCategoriesList; track cat.id) {
@@ -34,7 +34,9 @@
   </div>
 
   @if (!selectedCategoriesList.length) {
-    <p class="category-empty">Seleccioná al menos una categoría.</p>
+    <p class="category-empty" [class.category-empty--error]="showError" [attr.role]="showError ? 'alert' : null">
+      {{ showError ? 'Elegí al menos una categoría' : 'Seleccioná al menos una categoría.' }}
+    </p>
   }
 
   @if (filteredCategoriesList.length === 0) {

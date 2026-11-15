@@ -313,7 +313,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
         label: `Precio fijo · ${fixed}`,
       },
       { value: 'in_stock', label: 'Con stock' },
-      { value: 'internal', label: `Internos · ${this.internalCount}` },
+      { value: 'internal', label: `No publicados · ${this.internalCount}` },
     ];
   }
 
@@ -333,7 +333,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       {
         id: 'all',
         label: 'Todos',
-        count: base.filter((p) => p.published !== false).length,
+        count: base.filter((p) => this.matchesListFilter(p, 'all')).length,
       },
       {
         id: 'below_margin',
@@ -352,7 +352,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       },
       {
         id: 'internal',
-        label: 'Internos',
+        label: 'No publicados',
         count: base.filter((p) => p.published === false).length,
       },
     ];
@@ -732,6 +732,36 @@ export class ProductsComponent implements OnInit, OnDestroy {
     });
   }
 
+  /** Id del producto que se está duplicando (guard contra clics repetidos). */
+  duplicatingId: string | null = null;
+
+  duplicateProduct(product: Product): void {
+    if (this.duplicatingId) return;
+    this.duplicatingId = product.id;
+    this.cdr.markForCheck();
+    this.productsService
+      .duplicateProduct(product.id)
+      .pipe(
+        finalize(() => {
+          this.duplicatingId = null;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (created) => {
+          this.reloadProducts();
+          this.reloadMarginAlerts();
+          this.showNotice(`Copia creada: ${created.name}`);
+          void this.router.navigate(['/productos', created.id]);
+        },
+        error: (err) => {
+          this.showNotice(
+            extractApiErrorMessage(err, 'No se pudo duplicar el producto'),
+          );
+        },
+      });
+  }
+
   deleteProduct(product: Product): void {
     this.formDialogs
       .openConfirm({
@@ -841,7 +871,11 @@ export class ProductsComponent implements OnInit, OnDestroy {
         return product.published === false;
       case 'all':
       default:
-        return product.published !== false;
+        // Buscando por nombre también aparecen los no publicados.
+        return (
+          product.published !== false ||
+          !!normalizeSearchText(this.search)
+        );
     }
   }
 

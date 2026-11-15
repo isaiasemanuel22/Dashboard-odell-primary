@@ -126,3 +126,14 @@
     margin-block: 4px;
   }
 }
+
+.category-empty--error {
+  color: #c0392b;
+  font-weight: 600;
+}
+
+.category-field--error {
+  border-radius: 10px;
+  outline: 1px solid #c0392b;
+  outline-offset: 3px;
+}

@@ -1,16 +1,25 @@
 import {
   ChangeDetectorRef,
   Component,
+  ElementRef,
   EventEmitter,
   HostListener,
   Input,
   OnChanges,
   OnInit,
   Output,
+  QueryList,
   SimpleChanges,
+  ViewChildren,
   DestroyRef,
   inject,
 } from '@angular/core';
+import { scrollToField } from '../../../shared/utils/form-missing.util';
+import { isSupplyOrderLine } from '../../../shared/utils/service-type.util';
+import {
+  MissingSummaryComponent,
+  MissingSummaryItem,
+} from '../../../components/missing-summary/missing-summary.component';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
 import { RouterLink } from '@angular/router';
@@ -146,7 +155,6 @@ import {
   normalizeWholesaleDiscount,
   wholesalePriceFromList,
 } from '../../../shared/utils/wholesale-example.util';
-import { isThirdPartyService } from '../../../shared/utils/service-type.util';
 import {
   isWholesaleMarginBelowArea,
   lineListSubtotal,
@@ -224,11 +232,16 @@ export type OrderFormSavePayload = CreateOrderPayload | CreateQuotePayload;
     OrderFormOrderSummaryComponent,
     MobileDockComponent,
     MobileFormStepComponent,
+    MissingSummaryComponent,
   ],
   templateUrl: './order-form.component.html',
   styleUrl: './order-form.component.scss',
 })
 export class OrderFormComponent implements OnChanges, OnInit {
+  private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  @ViewChildren(OrderFormLineComponent)
+  private lineComponents?: QueryList<OrderFormLineComponent>;
   private readonly breakpoint = inject(BreakpointService);
   private readonly formDialogs = inject(FormDialogService);
   private readonly mediaUpload = inject(MediaUploadService);
@@ -456,6 +469,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
         missing.push(...this.lineMissingReasons(line, index + 1));
       }
     }
+    missing.push(...this.blankLinesMissing(relevant.length > 0));
 
     const paid = this.order ? orderPaidAmount(this.order) : 0;
     if (
@@ -475,6 +489,24 @@ export class OrderFormComponent implements OnChanges, OnInit {
       missing.push('descripción más corta');
     }
 
+    return missing;
+  }
+
+  /**
+   * Líneas agregadas y vacías: hay que completarlas o quitarlas. Si todas están
+   * vacías, la primera ya se indica en `noLineMissing`.
+   */
+  private blankLinesMissing(hasFilledLines: boolean): string[] {
+    const missing: string[] = [];
+    this.lines.forEach((line, index) => {
+      if (!isLineBlank(line)) return;
+      if (!hasFilledLines && index === 0) return;
+      if (isSupplyOrderLine(line.serviceType)) {
+        missing.push(`insumo de la línea ${index + 1}`);
+      } else {
+        missing.push(`línea ${index + 1} vacía: completala o quitala`);
+      }
+    });
     return missing;
   }
 
@@ -504,6 +536,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
         missing.push(...this.lineMissingReasons(line, index + 1));
       }
     }
+    if (!asDraft) missing.push(...this.blankLinesMissing(relevant.length > 0));
 
     if (
       plainTextFromHtml(this.description).length > this.descriptionMaxLength
@@ -529,6 +562,130 @@ export class OrderFormComponent implements OnChanges, OnInit {
   /** Evita renderizar el aviso del pie de escritorio y el del dock a la vez. */
   get isMobileView(): boolean {
     return this.breakpoint.isMobile();
+  }
+
+  /** Faltantes del pie como ítems con destino (cada uno lleva a su campo). */
+  get footerMissingItems(): MissingSummaryItem[] {
+    const labels = this.isQuoteForm
+      ? this.quoteSubmitMissing(false)
+      : this.submitMissing;
+    return labels.map((label) => ({ label, key: this.missingKey(label) }));
+  }
+
+  /** Presupuesto: si el borrador ya se puede guardar, lo aclara. */
+  get footerMissingPrefix(): string {
+    if (!this.isQuoteForm) return '';
+    return this.quoteSubmitMissing(true).length === 0
+      ? 'Para crear el presupuesto falta:'
+      : '';
+  }
+
+  get footerMissingSuffix(): string {
+    if (!this.isQuoteForm) return '';
+    return this.quoteSubmitMissing(true).length === 0
+      ? 'Podés guardarlo como borrador.'
+      : '';
+  }
+
+  private missingKey(label: string): string {
+    const line = /línea (\d+)/.exec(label);
+    if (line) {
+      const field = this.lineFieldFor(label);
+      return `line:${Number(line[1]) - 1}${field ? `:${field}` : ''}`;
+    }
+    if (label.startsWith('cliente')) return 'customer';
+    if (label.startsWith('responsable')) return 'responsible';
+    if (label.includes('fecha de entrega')) return 'dueDate';
+    if (label.startsWith('descripción')) return 'description';
+    if (label.includes('línea')) return 'line:0';
+    if (label.startsWith('un total')) return 'lines';
+    return 'lines';
+  }
+
+  /**
+   * Dentro de una composición, el input exacto que falta: gramos o ml (primer
+   * vacío) y medida del impreso (primer ancho/largo vacío).
+   */
+  private preciseInput(host: HTMLElement, field: string): HTMLElement | null {
+    const selectors: Record<string, string[]> = {
+      grams: [
+        '[data-control="grams"] input, input[data-control="grams"]',
+        '[name^="resin-ml-"] input, input[name^="resin-ml-"]',
+      ],
+      composition: [
+        '[data-control="widthCm"] input, input[data-control="widthCm"]',
+        '[data-control="lengthCm"] input, input[data-control="lengthCm"]',
+      ],
+    };
+    const list = selectors[field];
+    if (!list) return null;
+    const inputs = list.flatMap((selector) =>
+      Array.from(host.querySelectorAll<HTMLInputElement>(selector)),
+    );
+    const visible = inputs.filter((el) => el.getClientRects().length > 0);
+    const pool = visible.length ? visible : inputs;
+    return (
+      pool.find((el) => !(Number(el.value) > 0)) ?? pool[0] ?? null
+    );
+  }
+
+  /** Campo de la línea (atributo data-field) que corresponde a un faltante. */
+  private lineFieldFor(label: string): string {
+    const map: Array<[string, string]> = [
+      ['cantidad', 'quantity'],
+      ['concepto', 'concept'],
+      ['precio', 'price'],
+      ['insumo', 'supply'],
+      ['nombre', 'name'],
+      ['impresión', 'print'],
+      ['gramos', 'grams'],
+      ['composición', 'composition'],
+      ['producto', 'product'],
+    ];
+    return map.find(([prefix]) => label.startsWith(prefix))?.[1] ?? '';
+  }
+
+  /** Lleva la vista al campo que falta y lo enfoca (abre la línea si hace falta). */
+  goToMissing(item: MissingSummaryItem): void {
+    const root = this.hostRef.nativeElement;
+    const selectors: Record<string, string> = {
+      customer: '.quote-customer-field db-autocomplete',
+      responsible: '.quote-responsible-field db-select',
+      dueDate: '.quote-date-field input',
+      description: 'db-rich-text-editor',
+    };
+    if (item.key.startsWith('line:') || item.key === 'lines') {
+      const [, rawIndex, field] = item.key.split(':');
+      const index = Number(rawIndex) || 0;
+      const component = this.lineComponents?.get(index);
+      if (!component) return;
+      component.expand();
+      const host = component.hostElement;
+      let target: HTMLElement | null = null;
+      if (field) {
+        // Hay una versión desktop y una mobile del campo: va a la visible.
+        const candidates = Array.from(
+          host.querySelectorAll<HTMLElement>(`[data-field="${field}"]`),
+        );
+        target =
+          candidates.find((el) => el.getClientRects().length > 0) ??
+          candidates[0] ??
+          null;
+        target = this.preciseInput(host, field) ?? target;
+      }
+      target ??= host;
+      scrollToField(root, target, { highlight: target === host });
+      return;
+    }
+    const editable =
+      item.key === 'description'
+        ? root.querySelector<HTMLElement>(
+            'db-rich-text-editor [contenteditable="true"]',
+          )
+        : null;
+    scrollToField(root, editable ?? selectors[item.key] ?? null, {
+      highlight: true,
+    });
   }
 
   get submitMissingLabel(): string {
@@ -796,12 +953,10 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   get totalCost(): number {
     if (!this.profitMargins) return 0;
-    return (
-      calculateOrderLinesCost(
-        this.billableLines,
-        this.products,
-        this.profitMargins,
-      ) + this.thirdPartyCost
+    return calculateOrderLinesCost(
+      this.billableLines,
+      this.products,
+      this.profitMargins,
     );
   }
 
@@ -810,8 +965,16 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return Math.max(0, Number(this.depositFeeInput) || 0);
   }
 
+  /**
+   * Ganancia del panel: el mismo cálculo del aviso de venta a pérdida
+   * (detectLossSale), así el panel y el diálogo muestran el mismo número.
+   * El servicio de un tercero se descuenta prorrateado (§16.3).
+   */
   get profit(): number {
-    return this.total - this.totalCost - this.paymentFeePreview;
+    const items = buildOrderItems(this.billableLines, this.products);
+    return (
+      detectLossSale(items, this.total).profit - this.paymentFeePreview
+    );
   }
 
   get profitPercentOnCost(): number {
@@ -823,30 +986,15 @@ export class OrderFormComponent implements OnChanges, OnInit {
     return this.listSubtotal - this.discountApplied - this.totalCost;
   }
 
-  /** Costo cargado en las líneas de Servicio (tercero); sin costo cuenta 0. */
-  private get thirdPartyCost(): number {
-    return this.billableLines.reduce((sum, line) => {
-      if (!isThirdPartyService(line.serviceType)) return sum;
-      const qty = Math.max(0, Number(line.quantity) || 0);
-      return sum + Math.max(0, Number(line.unitCost) || 0) * qty;
-    }, 0);
-  }
-
   /**
-   * La ganancia está inflada: hay Servicio, Diseño o Modelado con precio pero
-   * sin costo cargado (tarifa en $0 o sin definir).
+   * La ganancia está inflada: hay Diseño o Modelado con precio pero sin costo
+   * cargado (tarifa en $0 o sin definir). El servicio de un tercero ya no
+   * entra: su costo se completa solo con el precio (§16.3).
    */
   get costIncomplete(): boolean {
     return this.billableLines.some((line) => {
-      if (
-        !isThirdPartyService(line.serviceType) &&
-        !isDesignService(line.serviceType)
-      ) {
-        return false;
-      }
-      const price = isDesignService(line.serviceType)
-        ? Number(line.designUnitPrice ?? line.unitPrice) || 0
-        : Number(line.unitPrice) || 0;
+      if (!isDesignService(line.serviceType)) return false;
+      const price = Number(line.designUnitPrice ?? line.unitPrice) || 0;
       return price > 0 && (Number(line.unitCost) || 0) <= 0;
     });
   }
@@ -1523,7 +1671,11 @@ export class OrderFormComponent implements OnChanges, OnInit {
 
   productUnitCost(line: OrderLineDraft): number {
     const product = this.products.find((p) => p.id === line.productId);
-    return resolveProductUnitCost(product, this.products);
+    return resolveProductUnitCost(product, this.products, new Set(), {
+      laborCostPerHour: this.generalSettings?.laborCostPerHour,
+      supplyUnitPrice: (id) =>
+        Number(this.supplies.find((item) => item.id === id)?.unitPrice) || 0,
+    });
   }
 
   /** Reservas del pedido que se edita, por producto (el backend las excluye del disponible). */

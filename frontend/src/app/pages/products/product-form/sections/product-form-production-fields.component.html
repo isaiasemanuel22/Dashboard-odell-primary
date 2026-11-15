@@ -10,7 +10,7 @@
     </section>
   }
 
-  @if ((is3D || isEstampado) && includesPieces) {
+  @if ((is3D || isEstampado || isCombo) && includesPieces) {
     <app-order-quote-estampado-supplies
       [line]="line"
       [lineIndex]="0"

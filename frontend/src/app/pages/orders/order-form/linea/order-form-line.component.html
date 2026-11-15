@@ -133,7 +133,7 @@
             <db-select
               label="Insumo"
               [ngModel]="selectedSupplyId"
-              [name]="'supply-' + lineIndex"
+              data-field="supply" [name]="'supply-' + lineIndex"
               placeholder="Seleccionar insumo"
               [options]="supplyOptions"
               (ngModelChange)="onSupplySelected($event)"
@@ -142,7 +142,7 @@
             <db-input
               label="Nombre"
               [ngModel]="line.customName"
-              [name]="'third-' + lineIndex"
+              data-field="name" [name]="'third-' + lineIndex"
               placeholder="Ej.: Envío, bordado externo"
               (ngModelChange)="onConceptChange($event)"
               [error]="conceptError"
@@ -160,7 +160,7 @@
             class="desktop-only"
             label="Producto"
             [ngModel]="''"
-            [name]="'design-product-' + lineIndex"
+            data-field="product" [name]="'design-product-' + lineIndex"
             [options]="[{ value: '', label: 'Presupuesto manual (sin catálogo)' }]"
             [disabled]="true"
           />
@@ -168,7 +168,7 @@
           <db-select
             label="Producto"
             [ngModel]="line.productId"
-            [name]="'product-' + lineIndex"
+            data-field="product" [name]="'product-' + lineIndex"
             [options]="productOptions"
             (ngModelChange)="onProductChange($event)"
           />
@@ -176,7 +176,7 @@
           <db-select
             label="Producto"
             [ngModel]="line.productId"
-            [name]="'product-' + lineIndex"
+            data-field="product" [name]="'product-' + lineIndex"
             placeholder="Seleccionar producto"
             [options]="productOptions"
             (ngModelChange)="onProductChange($event)"
@@ -188,7 +188,7 @@
           label="Cantidad"
           type="number"
           [(ngModel)]="line.quantity"
-          [name]="'qty-' + lineIndex"
+          data-field="quantity" [name]="'qty-' + lineIndex"
           [min]="1"
           [step]="1"
           (ngModelChange)="onQuantityChange()"
@@ -202,7 +202,7 @@
             <db-input
               label="Concepto"
               [ngModel]="line.customName"
-              [name]="'design-' + lineIndex"
+              data-field="concept" [name]="'design-' + lineIndex"
               [placeholder]="line.serviceType === ServiceType.MODELADO ? 'Ej.: Modelado de pieza' : 'Ej.: Diseño de logo'"
               (ngModelChange)="onConceptChange($event)"
               [error]="conceptError"
@@ -211,7 +211,7 @@
             <db-input
               label="Concepto"
               [ngModel]="line.customName"
-              [name]="'fdm-concept-' + lineIndex"
+              data-field="concept" [name]="'fdm-concept-' + lineIndex"
               placeholder="Ej.: Soporte para celular"
               (ngModelChange)="onConceptChange($event)"
               [error]="conceptError"
@@ -220,7 +220,7 @@
             <db-input
               label="Concepto"
               [ngModel]="line.customName"
-              [name]="'estampado-concept-' + lineIndex"
+              data-field="concept" [name]="'estampado-concept-' + lineIndex"
               placeholder="Ej.: Remera con logo en pecho y manga"
               (ngModelChange)="onConceptChange($event)"
               [error]="conceptError"
@@ -272,7 +272,7 @@
             <db-select
               label="Insumo"
               [ngModel]="selectedSupplyId"
-              [name]="'supply-order-' + lineIndex"
+              data-field="supply" [name]="'supply-order-' + lineIndex"
               placeholder="Seleccionar insumo"
               [options]="supplyOptions"
               (ngModelChange)="onSupplySelected($event)"
@@ -281,7 +281,7 @@
             <db-input
               label="Nombre"
               [ngModel]="line.customName"
-              [name]="'third-order-' + lineIndex"
+              data-field="name" [name]="'third-order-' + lineIndex"
               placeholder="Ej.: Envío, bordado externo"
               (ngModelChange)="onConceptChange($event)"
               [error]="conceptError"
@@ -298,7 +298,7 @@
           <db-input
             label="Concepto"
             [ngModel]="line.customName"
-            [name]="'design-' + lineIndex"
+            data-field="concept" [name]="'design-' + lineIndex"
             [placeholder]="line.serviceType === ServiceType.MODELADO ? 'Ej.: Modelado de pieza' : 'Ej.: Diseño de logo'"
             (ngModelChange)="onConceptChange($event)"
             [error]="conceptError"
@@ -307,7 +307,7 @@
           <db-select
             [label]="productFieldLabel"
             [ngModel]="line.productId"
-            [name]="'product-' + lineIndex"
+            data-field="product" [name]="'product-' + lineIndex"
             placeholder="Opcional — presupuesto manual"
             [options]="productOptions"
             (ngModelChange)="onProductChange($event)"
@@ -316,7 +316,7 @@
           <db-select
             [label]="productFieldLabel"
             [ngModel]="line.productId"
-            [name]="'product-' + lineIndex"
+            data-field="product" [name]="'product-' + lineIndex"
             placeholder="Seleccionar producto"
             [options]="productOptions"
             (ngModelChange)="onProductChange($event)"
@@ -329,7 +329,7 @@
             label="Cantidad"
             type="number"
             [(ngModel)]="line.quantity"
-            [name]="'qty-' + lineIndex"
+            data-field="quantity" [name]="'qty-' + lineIndex"
             [min]="1"
             [step]="1"
             (ngModelChange)="onQuantityChange()"
@@ -367,7 +367,7 @@
           <db-input
             label="Concepto"
             [ngModel]="line.customName"
-            [name]="'fdm-concept-' + lineIndex"
+            data-field="concept" [name]="'fdm-concept-' + lineIndex"
             placeholder="Ej.: Soporte para celular"
             (ngModelChange)="onConceptChange($event)"
             [error]="conceptError"
@@ -380,7 +380,7 @@
           <db-input
             label="Concepto"
             [ngModel]="line.customName"
-            [name]="'estampado-concept-' + lineIndex"
+            data-field="concept" [name]="'estampado-concept-' + lineIndex"
             placeholder="Ej.: Remera personalizada"
             (ngModelChange)="onConceptChange($event)"
             [error]="conceptError"
@@ -447,6 +447,7 @@
           </div>
         }
         <app-order-quote-3d-composition
+          data-field="grams"
           [line]="line"
           [product]="product"
           [lineIndex]="lineIndex"
@@ -458,6 +459,7 @@
 
       @if (showEstampado()) {
         <app-order-quote-estampado-composition
+          data-field="composition"
           [line]="line"
           [product]="product"
           [lineIndex]="lineIndex"
@@ -484,7 +486,7 @@
             label="Incluye impresión"
             [ngModel]="!!line.includesPrint"
             (ngModelChange)="onIncludesPrintChange($event)"
-            [name]="'includes-print-' + lineIndex"
+            data-field="print" [name]="'includes-print-' + lineIndex"
           />
 
           @if (line.includesPrint) {
@@ -492,14 +494,14 @@
               <db-select
                 label="Tipo de impresión"
                 [(ngModel)]="line.printPaperType"
-                [name]="'print-type-' + lineIndex"
+                data-field="print" [name]="'print-type-' + lineIndex"
                 [options]="paperTypeOptions"
                 (ngModelChange)="onPrintPaperTypeChange()"
               />
               <db-select
                 label="Tamaño del catálogo"
                 [(ngModel)]="line.printImpresoId"
-                [name]="'print-impreso-' + lineIndex"
+                data-field="print" [name]="'print-impreso-' + lineIndex"
                 placeholder="Opcional — elegir tamaño..."
                 [options]="impresoOptions"
                 (ngModelChange)="onPrintImpresoChange()"
@@ -508,7 +510,7 @@
                 label="Ancho (cm)"
                 type="number"
                 [(ngModel)]="line.printWidthCm"
-                [name]="'print-width-' + lineIndex"
+                data-field="print" [name]="'print-width-' + lineIndex"
                 [min]="0.1"
                 [step]="0.1"
                 (ngModelChange)="onPrintDimensionsChange()"
@@ -517,7 +519,7 @@
                 label="Alto (cm)"
                 type="number"
                 [(ngModel)]="line.printLengthCm"
-                [name]="'print-height-' + lineIndex"
+                data-field="print" [name]="'print-height-' + lineIndex"
                 [min]="0.1"
                 [step]="0.1"
                 (ngModelChange)="onPrintDimensionsChange()"

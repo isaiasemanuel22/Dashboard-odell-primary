@@ -25,6 +25,7 @@ import { confirmMobileFormDiscard } from '../../components/mobile-form-shell/con
 import type { MobileDockAction } from '../../components/mobile-dock/mobile-dock.component';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { ProductFormComponent } from '../../pages/products/product-form/product-form.component';
+import { ProductFormMissingSummaryComponent } from '../../pages/products/product-form/product-form-missing-summary.component';
 import { ProductFormPricingFacade } from '../../pages/products/product-form/store/product-form-pricing/product-form-pricing.facade';
 import { FormDialogService } from '../form-dialog.service';
 
@@ -38,6 +39,7 @@ export interface ProductFormDialogData {
     FormDialogShellComponent,
     MobileFormShellComponent,
     ProductFormComponent,
+    ProductFormMissingSummaryComponent,
   ],
   template: `
     <app-form-dialog-shell
@@ -66,10 +68,16 @@ export interface ProductFormDialogData {
             (cancel)="cancel()"
           />
           @let priceHint = dockPriceHint;
-          @if (missingLabel) {
-            <p dockHint role="status">
-              {{ missingLabel }}@if (priceHint) { · {{ priceHint }} }
-            </p>
+          @if (missingItems.length) {
+            <div dockHint data-discard-safe>
+              <app-product-form-missing-summary
+                [items]="missingItems"
+                (select)="form?.goToMissing($event)"
+              />
+              @if (priceHint) {
+                <p class="product-form-dialog__dock-hint">{{ priceHint }}</p>
+              }
+            </div>
           } @else if (priceHint) {
             <p dockHint class="product-form-dialog__dock-hint" role="status">
               {{ priceHint }}
@@ -94,7 +102,7 @@ export interface ProductFormDialogData {
   styles: [
     `
       .product-form-dialog__dock-hint {
-        margin: 0;
+        margin: 4px 0 0;
         text-align: center;
         font-size: 12px;
         color: #5b7083;
@@ -137,13 +145,9 @@ export class ProductFormDialogComponent implements OnInit {
       : 'El precio se calcula solo a medida que cargás material y tiempos';
   }
 
-  /** Campos que faltan para crear: mismo aviso que el pie de escritorio. */
-  get missingLabel(): string {
-    const items = this.form?.missingFields ?? [];
-    if (!items.length) return '';
-    return items.length === 1
-      ? `Falta: ${items[0]}`
-      : `Faltan: ${items.join(', ')}`;
+  /** Campos que faltan para guardar: mismo aviso que el pie de escritorio. */
+  get missingItems(): string[] {
+    return this.form?.missingFields ?? [];
   }
 
   /** «Precio $ X · margen Y %» para la barra fija (el precio no se ve mientras se carga). */
@@ -161,9 +165,8 @@ export class ProductFormDialogComponent implements OnInit {
     const savingFiles = !!(
       facade?.savingImages || facade?.savingAttachments
     );
-    const canSave =
-      !!facade?.form.controls.name.value.trim() &&
-      (facade?.categoryIds.length ?? 0) >= 1;
+    // Misma regla que el botón de escritorio: todos los obligatorios.
+    const canSave = !!form && form.canSave;
     return [
       {
         id: 'cancel',

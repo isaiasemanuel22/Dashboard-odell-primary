@@ -287,7 +287,8 @@ línea cuando el pedido cotiza impresión 3D):
   del tipo. Esta fuente rige para producto, presupuesto, pedido, purga AMS,
   fallas y recálculo masivo. Cambiar precios en Insumos solo cambia el costo:
   el precio de venta guardado cambia únicamente con «Actualizar precios», y
-  el producto puede quedar marcado como «precio bajo el margen».
+  el producto puede quedar marcado como «precio bajo el margen». Los combos
+  también entran en el aviso «Bajo margen» (confirmado el 2026-11-15).
 - **Resina.** Se cotiza con su propia composición de costo (resina, impresora
   de resina, lavado/curado/alcohol según Ajustes). No se costea como FDM. El
   alcohol sale del **insumo vinculado a la máquina de lavado** en Ajustes →
@@ -316,7 +317,9 @@ línea cuando el pedido cotiza impresión 3D):
 - **Descripción.** Opcional. Límite de 1.000 caracteres. En el pedido va arriba del listado de productos. El producto de catálogo también tiene una descripción opcional.
 - **Concepto.** En líneas de impresión 3D y estampado, el campo Concepto
   muestra el nombre del producto de catálogo (o el texto manual). Al reabrir
-  un presupuesto debe verse ese valor, no quedar vacío.
+  un presupuesto debe verse ese valor, no quedar vacío. En una línea manual
+  (sin producto de catálogo) de Impresión 3D o de Estampado el concepto es
+  obligatorio (confirmado el 2026-11-15).
 - **Insumos dentro de la línea** (confirmado el 2026-11-03). Una línea de
   Impresión 3D o de Estampado puede incluir insumos del catálogo, con
   cantidad. Si la línea sale de un producto de catálogo, los insumos del
@@ -332,9 +335,10 @@ línea cuando el pedido cotiza impresión 3D):
   pertenece a esas áreas.
 - **Servicio de un tercero.** Es una línea propia. No sale del catálogo ni
   de un área de Odell. Se carga el nombre, un detalle opcional y el precio.
-  Ese precio es lo que paga el cliente y se suma al total. La línea no
-  registra costo, no entra en el costo total y no se le calcula ganancia.
-  No lleva margen de área, el mayorista no la modifica y no genera tarea.
+  Ese precio es lo que paga el cliente y se suma al total. El costo toma el
+  precio al cargarlo y se puede editar aparte (§16.3); entra en el costo
+  total. No lleva margen de área, el mayorista no la modifica y no genera
+  tarea.
 - **Botones.** Al lado de «Agregar producto» están «Agregar insumo» y
   «Agregar servicio». Valen en el presupuesto y en el pedido, en escritorio
   y en celular. «Agregar producto» sigue abriendo una línea de Impresión 3D,
@@ -1088,7 +1092,13 @@ Confirmado el 2026-11-15. El precio de lista calculado de un combo es la suma
 de los precios de lista de sus piezas por su cantidad, más el armado (sin
 margen) y los insumos propios del combo (§16.3). Su descuento (§16.1.2) se
 resta de esa lista. Si el combo tiene precio fijo, el fijo es la lista. El
-costo del combo no cambia: suma de los costos de sus piezas más el armado.
+costo del combo es la suma de los costos de sus piezas más el armado y el
+valor de sus insumos propios.
+
+Insumos propios del combo (confirmado el 2026-11-15): el formulario del combo
+permite cargar insumos (cajas, bolsas, moños, decoración, etc.) además de las
+piezas y el armado, para que el costo del combo sea real. Entran al costo por
+su valor y al precio por su valor × 1,5 (§16.3).
 
 ### 16.2 Precio de servicios
 
@@ -1121,10 +1131,17 @@ margen de error ni el margen del área. Reemplaza la regla del 2026-11-03
 En una línea propia de insumo (insumo suelto) no cambia: el precio y el costo
 son la cantidad por el precio unitario y la ganancia de esa línea es cero.
 
-El servicio de un tercero solo tiene el precio que paga el cliente. No
-registra lo que Odell le paga al tercero: no entra en el costo total y no
-se le calcula ganancia. El precio sí entra en el total del pedido o del
-presupuesto.
+Servicio de un tercero (confirmado el 2026-11-15, reemplaza la regla
+anterior de «solo precio»): la línea tiene precio y costo. Al cargar el
+precio, el costo toma el mismo valor; después cada uno se puede editar por
+separado, y si el precio se cambia (incluso a 0) el costo no se toca. El
+precio al cliente puede ser menor, igual o mayor que el costo: Odell puede
+ganar, cobrarlo al costo o no cobrarlo y absorber el gasto. El costo entra
+en el costo total del pedido o presupuesto y el precio, en el total. No
+lleva margen de área y el mayorista no lo modifica.
+
+El alcohol de lavado de la resina sigue como parte del proceso (material,
+con el margen del área), no como insumo × 1,5 (confirmado el 2026-11-15).
 
 ### 16.4 Mínimo del precio mayorista
 

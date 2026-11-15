@@ -75,6 +75,8 @@ export class ProductCardComponent {
   @Input() profitMargins: ServiceProfitMargins | null = null;
   @Input() wholesaleDiscount: WholesaleDiscountSettings | null = null;
   @Output() edit = new EventEmitter<Product>();
+  @Input() duplicating = false;
+  @Output() duplicate = new EventEmitter<Product>();
   @Output() delete = new EventEmitter<Product>();
   @Output() addToCart = new EventEmitter<Product>();
 

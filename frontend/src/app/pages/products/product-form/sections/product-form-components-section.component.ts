@@ -197,7 +197,7 @@ export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy 
   get assemblableUnits(): number {
     return computeAssemblableUnits(
       {
-        id: this.editingProductId ?? '__draft-product__',
+        id: this.editingProductId || '__draft-product__',
         type: this.productType,
         includesPieces: true,
         components: this.components,

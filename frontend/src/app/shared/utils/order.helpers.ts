@@ -127,6 +127,9 @@ export function calculateOrderSubtotal(
 }
 
 export function isLineBillable(line: OrderLineDraft): boolean {
+  if (isThirdPartyService(line.serviceType) && (Number(line.unitCost) || 0) > 0) {
+    return true;
+  }
   return calculateLinePriceTotal(line) > 0;
 }
 
@@ -286,13 +289,11 @@ export function buildOrderItems(
           ).trim(),
           quantity: line.quantity,
           unitPrice: Number(line.unitPrice) || 0,
-          // Costo cargado a mano; sin cargar, el insumo cuesta lo que vale y el servicio 0.
+          // Costo cargado a mano; sin cargar, igual al precio (insumo y servicio de un tercero, §16.3).
           unitCost:
             line.unitCost != null && Number.isFinite(Number(line.unitCost))
               ? Math.max(0, Number(line.unitCost))
-              : isSupplyOrderLine(line.serviceType)
-                ? Number(line.unitPrice) || 0
-                : 0,
+              : Number(line.unitPrice) || 0,
           estampadoSupplies: isSupplyOrderLine(line.serviceType)
             ? normalizeEstampadoSupplies([
                 {
@@ -461,6 +462,8 @@ export function lineUnitPriceError(line: OrderLineDraft): string {
   if (price < 0) {
     return 'El precio unitario no puede ser negativo';
   }
+  // Servicio de un tercero: precio 0 es válido (no se cobra, pero hubo gasto).
+  if (isThirdPartyService(line.serviceType)) return '';
   if (!(price > 0) && calculateLinePriceTotal(line) <= 0) {
     return 'Indicá un precio unitario mayor a 0';
   }
@@ -481,13 +484,10 @@ export function lineConceptError(line: OrderLineDraft): string {
     return line.customName?.trim() ? '' : 'Indicá un concepto';
   }
   if (isImpresion3DLine(line.serviceType) || isEstampadoLine(line.serviceType)) {
+    // Línea manual de Impresión 3D o Estampado: el concepto es obligatorio.
     if (line.customName?.trim()) return '';
-    if (isImpresion3DLine(line.serviceType) && isFdmQuoteConfigured(line)) {
-      return 'Indicá un concepto';
-    }
-    if (isEstampadoLine(line.serviceType) && isEstampadoQuoteConfigured(line)) {
-      return 'Indicá un concepto';
-    }
+    if (isLineBlank(line)) return '';
+    return 'Indicá un concepto';
   }
   return '';
 }
@@ -569,7 +569,7 @@ export function isLineValid(line: OrderLineDraft): boolean {
   }
 
   if (isThirdPartyService(line.serviceType)) {
-    return !!line.customName?.trim() && price > 0;
+    return !!line.customName?.trim();
   }
 
   if (isDesignService(line.serviceType)) {

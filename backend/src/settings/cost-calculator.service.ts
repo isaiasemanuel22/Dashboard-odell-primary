@@ -13,6 +13,7 @@ import {
   GeneralSettings,
   ImpresoCostPreview,
   PrintJob,
+  Product,
   Product3D,
   ProductComponent,
   ProductPricingInput,
@@ -253,12 +254,14 @@ export class CostCalculatorService {
     if (usesPieceAssembly && components.length > 0) {
       visiting.add(productId);
       try {
-        return this.calculateCompositeCost(
-          components,
-          product.assemblyTimeHours ?? 0,
-          product.type,
-          visiting,
-        ).totalCost;
+        return (
+          this.calculateCompositeCost(
+            components,
+            product.assemblyTimeHours ?? 0,
+            product.type,
+            visiting,
+          ).totalCost + this.supplyValue(this.productSupplies(product))
+        );
       } finally {
         visiting.delete(productId);
       }
@@ -326,7 +329,18 @@ export class CostCalculatorService {
     }, 0);
     visiting.delete(productId);
 
-    return partsPrice;
+    return (
+      partsPrice +
+      supplyPriceFromValue(this.supplyValue(this.productSupplies(product)))
+    );
+  }
+
+  /** Insumos propios de un producto guardado (combo, 3D o estampado). */
+  private productSupplies(
+    product: Product,
+  ): CalculateCostDto['estampadoSupplies'] {
+    return (product as { supplies?: CalculateCostDto['estampadoSupplies'] })
+      .supplies;
   }
 
   calculateCompositeCost(
@@ -451,7 +465,11 @@ export class CostCalculatorService {
             laborCost,
           );
     // Los insumos se cobran a costo × 1,5; el costo no cambia (§16.3).
-    const price = processPrice + supplyPriceFromValue(supplyValue);
+    // Combo con precio fijo: el fijo es la lista completa, no se le suman insumos (§16.1.3).
+    const price =
+      input.type === ProductType.COMBO && fixedPrice
+        ? processPrice
+        : processPrice + supplyPriceFromValue(supplyValue);
     const profit = price - cost;
     const configuredMarginPercent = this.getMarginForProductType(input.type);
 

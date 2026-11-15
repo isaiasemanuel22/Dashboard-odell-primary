@@ -19,11 +19,13 @@ import {
   ProductType,
   Supply,
 } from '../../../../../core/models';
+import { productUsesPieceAssembly } from '../../../../../shared/utils/product.helpers';
 import { ProductCostCalculationService } from '../../../../../core/services/product-cost-calculation.service';
 import { SuppliesService } from '../../../../../core/services/settings.service';
 import {
   isFdmQuoteConfigured,
   isResinQuoteLine,
+  lineSuppliesForDisplay,
 } from '../../../../../shared/utils/order-fdm-quote.util';
 import {
   defaultPricedResinTypeCode,
@@ -118,8 +120,13 @@ export class OrderQuote3dCompositionComponent implements OnInit {
     );
   }
 
+  /** Combo del catálogo: no imprime por sí mismo, sus piezas ya están costeadas. */
+  get isPieceCombo(): boolean {
+    return !!this.product && productUsesPieceAssembly(this.product);
+  }
+
   get suppliesCost(): number {
-    return supplyLinesValue(this.line.estampadoSupplies, (supplyId) => {
+    return supplyLinesValue(lineSuppliesForDisplay(this.line, this.product), (supplyId) => {
       const supply = this.supplies.find((item) => item.id === supplyId);
       return supply ? Number(supply.unitPrice) || 0 : 0;
     });

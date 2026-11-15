@@ -234,8 +234,12 @@
       }
     </div>
   </div>
-    @if (closeSaleDockHint) {
-      <p dockHint role="status">{{ closeSaleDockHint }}</p>
+    @if (closeSaleMissingItems.length) {
+      <app-missing-summary
+        dockHint
+        [items]="closeSaleMissingItems"
+        (select)="goToMissing($event)"
+      />
     }
 
     <db-mobile-sheet
@@ -450,6 +454,13 @@
       </section>
     </div>
 
+    @if (closeSaleMissingItems.length) {
+      <app-missing-summary
+        class="sale-form__missing"
+        [items]="closeSaleMissingItems"
+        (select)="goToMissing($event)"
+      />
+    }
     <db-form-footer>
       <db-button
         label="Cancelar"
@@ -540,6 +551,13 @@
       <p class="sale-form__stock-hint">{{ closeSaleBlockReason }}</p>
     }
 
+    @if (closeSaleMissingItems.length) {
+      <app-missing-summary
+        class="sale-form__missing"
+        [items]="closeSaleMissingItems"
+        (select)="goToMissing($event)"
+      />
+    }
     <db-form-footer [class.sale-form__footer--sticky]="useCardLayout">
       <db-button
         label="Cancelar"

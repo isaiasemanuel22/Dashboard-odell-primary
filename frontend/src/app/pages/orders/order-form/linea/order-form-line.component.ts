@@ -4,6 +4,7 @@ import {
   ChangeDetectorRef,
   Component,
   DestroyRef,
+  ElementRef,
   EventEmitter,
   Input,
   OnInit,
@@ -232,6 +233,16 @@ export class OrderFormLineComponent implements OnInit {
         this.impresos = items;
         this.cdr.markForCheck();
       });
+  }
+
+  /** Elemento raíz de la línea (para llevar la vista desde el resumen de faltantes). */
+  readonly hostElement: HTMLElement = inject<ElementRef<HTMLElement>>(ElementRef).nativeElement;
+
+  /** Abre la línea si está colapsada. */
+  expand(): void {
+    if (!this.collapsed) return;
+    this.collapsed = false;
+    this.cdr.detectChanges();
   }
 
   toggleCollapsed(): void {
@@ -597,7 +608,7 @@ export class OrderFormLineComponent implements OnInit {
       return 'Cantidad × precio del insumo, sin margen';
     }
     if (isThirdPartyService(this.line.serviceType)) {
-      return 'Lo que paga el cliente · sin costo interno';
+      return 'Lo que paga el cliente';
     }
     if (isDesignService(this.line.serviceType)) return this.designPriceHint;
     const catalogHint = this.catalogLineHint;
@@ -1008,6 +1019,16 @@ export class OrderFormLineComponent implements OnInit {
       return;
     }
     if (isSupplyOrderLine(this.line.serviceType)) return;
+    if (isThirdPartyService(this.line.serviceType)) {
+      // §16.3: el costo copia el precio mientras esté vacío o igual al precio
+      // anterior; editado a mano (o con el precio en 0) no se toca.
+      const previousPrice = Number(this.line.unitPrice) || 0;
+      const currentCost = Number(this.line.unitCost) || 0;
+      const nextPrice = Number(raw) || 0;
+      if (nextPrice > 0 && (currentCost === 0 || currentCost === previousPrice)) {
+        this.line.unitCost = nextPrice;
+      }
+    }
     this.onUnitPriceChange(raw);
   }
 
@@ -1572,7 +1593,11 @@ export class OrderFormLineComponent implements OnInit {
 
   private productUnitCost(): number {
     const product = this.products.find((p) => p.id === this.line.productId);
-    return resolveProductUnitCost(product, this.products);
+    return resolveProductUnitCost(product, this.products, new Set(), {
+      laborCostPerHour: this.generalSettings?.laborCostPerHour,
+      supplyUnitPrice: (id) =>
+        Number(this.supplies.find((item) => item.id === id)?.unitPrice) || 0,
+    });
   }
 
   private chargeModeFor(): 'hours' | 'fixed' {

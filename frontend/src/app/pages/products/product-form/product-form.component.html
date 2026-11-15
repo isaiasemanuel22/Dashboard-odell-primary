@@ -1,6 +1,15 @@
 <db-form>
   <form [formGroup]="facade.form" (ngSubmit)="onSubmit()" autocomplete="off">
     <div class="product-create">
+      @if (isMobile() && missingFields.length) {
+        <div class="pf-m-missing" data-discard-safe>
+          <app-product-form-missing-summary
+            [banner]="true"
+            [items]="missingFields"
+            (select)="goToMissing($event)"
+          />
+        </div>
+      }
       @if (isMobile()) {
         <div class="pf-m-type">
           <span class="pf-m-type__label">Tipo</span>
@@ -49,6 +58,7 @@
               [productTypeOptions]="facade.productTypeOptions"
               [preferredPrinterOptions]="preferredPrinterOptions"
               [hideTypeSwitch]="isMobile()"
+              [showErrors]="showMissingErrors"
               (valueChange)="onBasicFieldsChange($event)"
             >
               @if (showFdm3mfImport) {
@@ -66,6 +76,7 @@
               <app-product-form-categories-section
                 [productType]="productType"
                 [value]="categoryIds"
+                [showErrors]="showMissingErrors"
                 (valueChange)="onCategoriesChange($event)"
               />
             </app-product-form-basic-fields>
@@ -98,7 +109,7 @@
             <div class="pf-m-acc__b">
               <app-product-form-components-section
                 [productType]="productType"
-                [editingProductId]="product?.id ?? null"
+                [editingProductId]="product?.id || null"
                 [value]="componentsValue ?? facade.componentsValue"
                 (valueChange)="onComponentsChange($event)"
               />
@@ -207,15 +218,22 @@
     }
 
     @if (!hideFooter) {
+      @if (facade.usesPieceAssembly && facade.components.length) {
+        <p class="footer-stock-hint">
+          Stock terminado sugerido: {{ suggestedFinishedStock }} (lo que alcanzan las piezas)
+        </p>
+      }
+      @if (show3mfFooterHint) {
+        <p class="footer-3mf-hint">El .3mf queda adjunto al producto para reimprimir</p>
+      }
       <footer class="product-create__footer">
         @if (missingFields.length) {
-          <p>Faltan: {{ missingFields.join(', ') }}</p>
-        } @else if (facade.usesPieceAssembly && facade.components.length) {
-          <p class="footer-stock-hint">
-            Stock terminado sugerido: {{ suggestedFinishedStock }} (lo que alcanzan las piezas)
-          </p>
-        } @else if (show3mfFooterHint) {
-          <p class="footer-3mf-hint">El .3mf queda adjunto al producto para reimprimir</p>
+          <div data-discard-safe>
+            <app-product-form-missing-summary
+              [items]="missingFields"
+              (select)="goToMissing($event)"
+            />
+          </div>
         } @else {
           <span></span>
         }
@@ -231,7 +249,7 @@
             variant="primary"
             format="solid"
             buttonType="submit"
-            [disabled]="loading || facade.savingImages || facade.savingAttachments || !facade.form.controls.name.value.trim() || facade.categoryIds.length < 1"
+            [disabled]="loading || facade.savingImages || facade.savingAttachments || !canSave"
           />
         </div>
       </footer>

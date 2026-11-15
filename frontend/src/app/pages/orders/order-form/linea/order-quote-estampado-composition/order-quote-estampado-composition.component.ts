@@ -115,7 +115,7 @@ export class OrderQuoteEstampadoCompositionComponent implements OnInit {
 
   get errorMarginMeta(): string {
     if (!this.generalSettings) return 'Cargando Ajustes…';
-    return `${this.errorMarginPercent}% sobre impresos, insumos y plancha`;
+    return `${this.errorMarginPercent}% sobre impresos y plancha (sin insumos)`;
   }
 
   get costs(): OrderQuoteEstampadoCosts {

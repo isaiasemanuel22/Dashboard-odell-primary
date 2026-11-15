@@ -845,6 +845,42 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  duplicating = false;
+
+  openDuplicate(): void {
+    if (!this.product || this.duplicating) return;
+    this.duplicating = true;
+    this.cdr.markForCheck();
+    this.productsService
+      .duplicateProduct(this.product.id)
+      .pipe(
+        finalize(() => {
+          this.duplicating = false;
+          this.cdr.markForCheck();
+        }),
+      )
+      .subscribe({
+        next: (created) => {
+          this.cartNotice = `Copia creada: ${created.name}`;
+          this.cdr.markForCheck();
+          void this.router.navigate(['/productos', created.id]);
+        },
+        error: (err) => {
+          this.formDialogs
+            .openConfirm({
+              title: 'No se pudo duplicar',
+              message: extractApiErrorMessage(
+                err,
+                'No se pudo duplicar el producto',
+              ),
+              confirmLabel: 'Entendido',
+              alertOnly: true,
+            })
+            .subscribe();
+        },
+      });
+  }
+
   deleteProduct(): void {
     if (!this.product) return;
     const product = this.product;

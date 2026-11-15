@@ -1,5 +1,7 @@
 import { ServiceType } from '../../core/models';
 import {
+  buildOrderItems,
+  isLineBillable,
   formatOrderMobileDeliveryLabel,
   isLineBlank,
   isLineValid,
@@ -64,7 +66,8 @@ describe('B9 order line validations', () => {
       },
       2,
     );
-    expect(serviceReasons).toContain('precio de la línea 2');
+    // Precio 0 es válido en un servicio de tercero con nombre (§16.3).
+    expect(serviceReasons).not.toContain('precio de la línea 2');
     expect(serviceReasons.some((r) => r.includes('producto'))).toBe(false);
 
     const unnamedService = lineMissingReasons(
@@ -164,5 +167,73 @@ describe('orderLineStockHint con reservas propias', () => {
 
   it('no cuenta como ajena la reserva del propio pedido', () => {
     expect(orderLineStockHint(line, product, undefined, 1)).toBeNull();
+  });
+});
+
+describe('servicio de un tercero con costo (§16.3)', () => {
+  const service = (over: Partial<OrderLineDraft> = {}): OrderLineDraft => ({
+    serviceType: ServiceType.SERVICIO_TERCERO,
+    quantity: 1,
+    unitPrice: 800,
+    customName: 'Envío',
+    ...over,
+  });
+
+  it('sin costo cargado, el costo enviado es igual al precio', () => {
+    const [item] = buildOrderItems([service()], []);
+    expect(item.unitCost).toBe(800);
+  });
+
+  it('con costo cargado se respeta, aunque sea menor o mayor al precio', () => {
+    expect(buildOrderItems([service({ unitCost: 500 })], [])[0].unitCost).toBe(500);
+    expect(buildOrderItems([service({ unitCost: 1200 })], [])[0].unitCost).toBe(1200);
+  });
+
+  it('precio 0 es válido si tiene nombre, y la línea cuenta por su costo', () => {
+    const free = service({ unitPrice: 0, unitCost: 500 });
+    expect(isLineValid(free)).toBeTrue();
+    expect(lineUnitPriceError(free)).toBe('');
+    expect(isLineBillable(free)).toBeTrue();
+    expect(isLineValid(service({ unitPrice: 0, customName: '' }))).toBeFalse();
+  });
+});
+
+describe('concepto obligatorio en línea manual (3D y Estampado)', () => {
+  it('Impresión 3D manual sin concepto lo pide, aunque falten gramos', () => {
+    const line: OrderLineDraft = {
+      serviceType: ServiceType.IMPRESION_3D,
+      quantity: 1,
+      unitPrice: 1000,
+    };
+    expect(lineMissingReasons(line, 3)).toContain('concepto de la línea 3');
+    expect(isLineValid(line)).toBeFalse();
+  });
+
+  it('Estampado manual sin concepto lo pide', () => {
+    const line: OrderLineDraft = {
+      serviceType: ServiceType.ESTAMPADO,
+      quantity: 1,
+      unitPrice: 1000,
+    };
+    expect(lineMissingReasons(line, 1)).toContain('concepto de la línea 1');
+  });
+
+  it('con concepto no lo pide', () => {
+    const line: OrderLineDraft = {
+      serviceType: ServiceType.IMPRESION_3D,
+      quantity: 1,
+      unitPrice: 1000,
+      customName: 'Llavero',
+    };
+    expect(lineMissingReasons(line, 1)).not.toContain('concepto de la línea 1');
+  });
+
+  it('una línea vacía no marca concepto (se avisa como línea vacía)', () => {
+    expect(
+      lineMissingReasons(
+        { serviceType: ServiceType.IMPRESION_3D, quantity: 1, unitPrice: 0 },
+        1,
+      ),
+    ).not.toContain('concepto de la línea 1');
   });
 });

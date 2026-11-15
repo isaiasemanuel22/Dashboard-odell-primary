@@ -58,6 +58,10 @@ export class ProductFormBasicFieldsComponent implements OnInit {
   name = '';
   description = '';
   published = true;
+  /** El usuario ya pasó por el nombre (para mostrar el error en rojo). */
+  nameTouched = false;
+  /** El formulario pide marcar en rojo lo que falta. */
+  @Input() showErrors = false;
   includesPieces = false;
   finishedStock = 0;
   /** '' = cualquiera (null en el form). */
@@ -153,7 +157,8 @@ export class ProductFormBasicFieldsComponent implements OnInit {
       name: this.name,
       description: this.description,
       published: this.published,
-      includesPieces: this.includesPieces,
+      includesPieces:
+        this.type === ProductType.COMBO ? true : this.includesPieces,
       finishedStock: Math.max(0, Math.trunc(Number(this.finishedStock) || 0)),
       preferredPrinterId:
         this.type === ProductType.FDM

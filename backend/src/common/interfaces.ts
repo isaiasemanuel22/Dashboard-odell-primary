@@ -524,6 +524,8 @@ export interface ProductEstampado extends ProductBase {
 
 export interface ProductCombo extends ProductBase {
   type: ProductType.COMBO;
+  /** Insumos propios del combo (cajas, bolsas, moños…): entran al costo (§16.1.3). */
+  supplies?: EstampadoSupplyLine[];
 }
 
 export type Product = Product3D | ProductEstampado | ProductCombo;

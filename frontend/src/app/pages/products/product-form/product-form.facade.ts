@@ -26,6 +26,10 @@ import {
   createEmptyEstampadoPrint,
 } from '../../../shared/utils/estampado.helpers';
 import {
+  estampadoMissingLabels,
+  fixedPriceMissingLabels,
+} from '../../../shared/utils/form-missing.util';
+import {
   createEmptyFdmFilamentLine,
   hasValidFdmFilamentInput,
   storedFdmFilaments,
@@ -164,8 +168,12 @@ export class ProductFormFacade {
       patch['description'] = value.description;
     }
     if (current.published !== value.published) patch['published'] = value.published;
-    if (current.includesPieces !== value.includesPieces) {
-      patch['includesPieces'] = value.includesPieces;
+    // Un combo siempre arma piezas: el checkbox oculto de la sección no manda.
+    // Si no, escribir el nombre apagaba includesPieces y vaciaba las piezas.
+    const nextIncludesPieces =
+      value.type === ProductType.COMBO ? true : value.includesPieces;
+    if (current.includesPieces !== nextIncludesPieces) {
+      patch['includesPieces'] = nextIncludesPieces;
     }
     if (current.finishedStock !== value.finishedStock) {
       patch['finishedStock'] = value.finishedStock;
@@ -294,9 +302,7 @@ export class ProductFormFacade {
       if (this.isCombo && this.components.length < 1) {
         missing.push('al menos una pieza');
       }
-      return missing;
-    }
-    if (this.isFdm) {
+    } else if (this.isFdm) {
       const lines = this.form.controls.filamentLines.value;
       if (!hasValidFdmFilamentInput(lines)) {
         missing.push(totalFdmFilamentGrams(lines) > 0 ? 'tipo de material' : 'gramos');
@@ -306,7 +312,20 @@ export class ProductFormFacade {
       if (!String(this.form.controls.resinType.value ?? '').trim()) {
         missing.push('tipo de resina');
       }
+    } else if (this.isEstampado) {
+      missing.push(
+        ...estampadoMissingLabels(
+          this.form.controls.prints.value,
+          this.form.controls.supplyLines.value,
+        ),
+      );
     }
+    missing.push(
+      ...fixedPriceMissingLabels(
+        this.pricing.fixedPriceMode,
+        this.pricing.manualUnitPrice,
+      ),
+    );
     return missing;
   }
 

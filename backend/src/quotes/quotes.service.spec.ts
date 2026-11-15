@@ -592,14 +592,15 @@ describe('QuotesService venta a pérdida', () => {
     expect(quote.lossReason).toBe('competencia');
   });
 
-  it('el servicio de un tercero no cuenta como pérdida', () => {
+  it('el servicio de un tercero cuenta su costo: precio menor al costo pide motivo', () => {
     const service = setup();
-    const quote = service.create({
-      customerId: 'cust-1',
-      status: QuoteStatus.ENVIADO,
-      items: [lossItem],
-    });
-    expect(quote.lossReason).toBeUndefined();
+    expect(() =>
+      service.create({
+        customerId: 'cust-1',
+        status: QuoteStatus.ENVIADO,
+        items: [lossItem],
+      }),
+    ).toThrow('Estás vendiendo a pérdida: indicá el motivo');
   });
 
   it('copia el motivo al pedido', () => {

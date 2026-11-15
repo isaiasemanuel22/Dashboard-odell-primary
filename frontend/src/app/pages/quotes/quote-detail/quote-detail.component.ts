@@ -56,7 +56,6 @@ import {
   calculateOrderSubtotal,
   isDesignService,
 } from '../../../shared/utils/order.helpers';
-import { isThirdPartyService } from '../../../shared/utils/service-type.util';
 import { resolveLinePrintUnitPrice } from '../../../shared/utils/design-print.util';
 import { DEPOSIT_FACTOR } from '../../../shared/utils/quote-document.util';
 import { salesChannelLabel } from '../../../shared/utils/v1-labels.util';
@@ -386,7 +385,6 @@ export class QuoteDetailComponent implements OnInit {
   get quoteHasLoadedCost(): boolean {
     if (!this.quote) return false;
     return this.quote.items.some((item) => {
-      if (isThirdPartyService(item.serviceType)) return false;
       return (Number(item.unitCost) || 0) > 0;
     });
   }

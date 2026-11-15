@@ -19,7 +19,8 @@
   }
 
   &.order-line__pricing--wholesale {
-    grid-template-columns: repeat(4, minmax(9.5rem, 1fr));
+    // auto-fit: con el panel lateral a 1024 px, 4 columnas de 9,5 rem no caben.
+    grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr));
 
     @media (max-width: 900px) {
       grid-template-columns: repeat(2, minmax(9.5rem, 1fr));
@@ -28,6 +29,10 @@
     @media (max-width: 520px) {
       grid-template-columns: minmax(0, 1fr);
     }
+  }
+
+  > * {
+    min-width: 0;
   }
 
   @media (max-width: 900px) {

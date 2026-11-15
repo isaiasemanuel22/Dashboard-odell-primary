@@ -33,6 +33,21 @@ describe('normalizeIncomingOrderItems insumos y terceros', () => {
     expect(item.productId).toBeUndefined();
   });
 
+  it('servicio de un tercero sin costo cargado: el costo toma el precio', () => {
+    const [item] = normalizeIncomingOrderItems(
+      [
+        {
+          serviceType: ServiceType.SERVICIO_TERCERO,
+          productName: 'Envío',
+          quantity: 1,
+          unitPrice: 1500,
+        },
+      ],
+      deps,
+    );
+    expect(item.unitCost).toBe(1500);
+  });
+
   it('línea suelta de insumo sin costo: igual al precio', () => {
     const [item] = normalizeIncomingOrderItems(
       [

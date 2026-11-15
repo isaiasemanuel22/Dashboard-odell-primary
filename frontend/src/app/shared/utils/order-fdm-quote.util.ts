@@ -1,4 +1,5 @@
 import {
+  EstampadoSupplyLine,
   FilamentType,
   GeneralSettings,
   OrderLineDraft,
@@ -273,4 +274,19 @@ export function syncFdmQuotePricing(
 
 export function impresion3DMargin(margins: Parameters<typeof getMarginForService>[1]): number {
   return getMarginForService(ServiceType.IMPRESION_3D, margins);
+}
+
+const NO_SUPPLY_LINES: EstampadoSupplyLine[] = [];
+
+/**
+ * Insumos que se muestran en una línea: los propios de la línea o, si es un
+ * combo del catálogo sin insumos copiados, los `supplies` del combo.
+ */
+export function lineSuppliesForDisplay(
+  line: Pick<OrderLineDraft, 'estampadoSupplies'>,
+  product: { supplies?: EstampadoSupplyLine[] } | null | undefined,
+): EstampadoSupplyLine[] {
+  if (line.estampadoSupplies?.length) return line.estampadoSupplies;
+  // Referencia estable: un arreglo nuevo por ciclo rompe [ngModel] (bucle de detección).
+  return product?.supplies?.length ? product.supplies : NO_SUPPLY_LINES;
 }

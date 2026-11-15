@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable } from 'rxjs';
+import { Observable, forkJoin, switchMap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   BulkPricePayload,
@@ -16,6 +16,7 @@ import {
   ProductType,
   UpdateProductPayload,
 } from '../models';
+import { buildProductDuplicatePayload } from '../../shared/utils/product-duplicate.util';
 
 @Injectable({ providedIn: 'root' })
 export class ProductsService {
@@ -79,6 +80,23 @@ export class ProductsService {
 
   createProduct(data: CreateProductPayload): Observable<Product> {
     return this.http.post<Product>(`${this.baseUrl}/products`, data);
+  }
+
+  /** Crea una copia (sin publicar, stock 0) del producto y la devuelve. */
+  duplicateProduct(id: string): Observable<Product> {
+    return forkJoin({
+      source: this.getProduct(id),
+      all: this.getProducts(undefined, { all: true }),
+    }).pipe(
+      switchMap(({ source, all }) =>
+        this.createProduct(
+          buildProductDuplicatePayload(
+            source,
+            all.map((p) => p.name),
+          ),
+        ),
+      ),
+    );
   }
 
   updateProduct(id: string, data: UpdateProductPayload): Observable<Product> {

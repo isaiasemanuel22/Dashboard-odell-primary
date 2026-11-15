@@ -74,6 +74,27 @@
   }
 }
 
+.price-build {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+  padding-top: 0.5rem;
+  border-top: 1px dashed $color-border-soft;
+}
+
+.price-build__title {
+  margin: 0;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: $color-text-muted;
+}
+
+.price-margin__note {
+  margin: 0;
+  font-size: 0.75rem;
+  color: $color-text-muted;
+}
+
 .price-margin__sale strong {
   font-size: 1.35rem;
   color: $color-brand-deep;

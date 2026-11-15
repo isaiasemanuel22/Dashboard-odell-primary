@@ -111,6 +111,10 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
     return this.productType === ProductType.ESTAMPADO;
   }
 
+  get isCombo(): boolean {
+    return this.productType === ProductType.COMBO;
+  }
+
   get isResina(): boolean {
     return this.productType === ProductType.RESINA;
   }
@@ -184,7 +188,7 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
     draft.workTimeHours = Number(v.workTimeHours) || 0;
     draft.grams = Number(v.grams) || 0;
 
-    if (isResina || isFdm) {
+    if (isResina || isFdm || this.productType === ProductType.COMBO) {
       draft.estampadoSupplies = structuredClone(v.supplyLines ?? []);
     }
 

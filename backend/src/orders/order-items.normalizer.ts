@@ -271,8 +271,8 @@ export function normalizeIncomingOrderItems(
         }
       : {};
 
-    // El costo cargado a mano se respeta también en insumos (si falta, igual
-    // al precio) y en servicios de un tercero (si falta, 0).
+    // El costo cargado a mano se respeta también en insumos y en servicios de
+    // un tercero; si falta, igual al precio (§16.3).
     const clientUnitCost =
       item.unitCost != null && Number.isFinite(Number(item.unitCost))
         ? Math.max(0, Number(item.unitCost))
@@ -280,7 +280,7 @@ export function normalizeIncomingOrderItems(
     const unitCost = supplyLine
       ? (clientUnitCost ?? resolvedUnitPrice)
       : thirdPartyLine
-        ? (clientUnitCost ?? 0)
+        ? (clientUnitCost ?? resolvedUnitPrice)
         : clientUnitCost;
 
     const listUnitPrice =

@@ -53,7 +53,7 @@ describe('detectLossSale', () => {
     expect(r.isLoss).toBe(false);
   });
 
-  it('servicio de tercero no tiene costo ni se marca', () => {
+  it('servicio de tercero cuenta su costo como cualquier línea (§16.3)', () => {
     const r = detectLossSale(
       [
         line({
@@ -63,6 +63,23 @@ describe('detectLossSale', () => {
         }),
       ],
       200,
+      cost,
+    );
+    expect(r.isLoss).toBe(true);
+    expect(r.profit).toBe(-300);
+    expect(r.lines[0].loss).toBe(300);
+  });
+
+  it('servicio de tercero cobrado al costo no es pérdida', () => {
+    const r = detectLossSale(
+      [
+        line({
+          serviceType: ServiceType.SERVICIO_TERCERO,
+          unitPrice: 500,
+          unitCost: 500,
+        }),
+      ],
+      500,
       cost,
     );
     expect(r.isLoss).toBe(false);

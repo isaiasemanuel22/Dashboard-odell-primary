@@ -216,6 +216,14 @@
       </button>
       <button
         type="button"
+        class="m-sheet-action"
+        [disabled]="editOpening || duplicating"
+        (click)="closeMobileActions(); openDuplicate()"
+      >
+        {{ duplicating ? "Duplicando…" : "Duplicar" }}
+      </button>
+      <button
+        type="button"
         class="m-sheet-action m-sheet-action--danger"
         (click)="closeMobileActions(); deleteProduct()"
       >
@@ -229,6 +237,9 @@
   </div>
 
   <div class="desktop-only">
+    @if (cartNotice) {
+      <p class="detail-notice" role="status">{{ cartNotice }}</p>
+    }
     <header class="page-header detail-header">
       <div>
         <a routerLink="/productos" class="back-link">← Productos</a>
@@ -418,6 +429,13 @@
           format="solid"
           [disabled]="editOpening"
           (clicked)="openEdit()"
+        />
+        <db-button
+          [label]="duplicating ? 'Duplicando…' : 'Duplicar'"
+          variant="secondary"
+          format="solid"
+          [disabled]="editOpening || duplicating"
+          (clicked)="openDuplicate()"
         />
         <db-button
           label="Eliminar"

@@ -3,6 +3,7 @@ import {
   Component,
   EventEmitter,
   HostListener,
+  ElementRef,
   Injector,
   Input,
   OnChanges,
@@ -34,6 +35,11 @@ import {
   DbSegmentedControlComponent,
   DbSegmentOption,
 } from '@general-components';
+import {
+  MissingSummaryComponent,
+  MissingSummaryItem,
+} from '../../../components/missing-summary/missing-summary.component';
+import { scrollToField } from '../../../shared/utils/form-missing.util';
 import { LossSaleNoticeComponent } from '../../../components/loss-sale-notice/loss-sale-notice.component';
 import { SaleFormCartComponent } from './sale-form-cart/sale-form-cart.component';
 import { SaleCartLine } from '@general-components';
@@ -90,6 +96,7 @@ import { normalizeSearchText } from '../../../shared/utils/search-text.util';
   selector: 'app-sale-form',
   standalone: true,
   imports: [
+    MissingSummaryComponent,
     LossSaleNoticeComponent,
     FormsModule,
     RouterLink,
@@ -120,6 +127,7 @@ export class SaleFormComponent implements OnChanges {
   private readonly formDialogs = inject(FormDialogService);
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
+  private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
   private confirmingDiscard = false;
 
   @Input() sale: RetailSale | null = null;
@@ -275,14 +283,24 @@ export class SaleFormComponent implements OnChanges {
     return `No se puede cerrar la venta: ${names.join(', ')} no tiene stock suficiente. Creá un pedido para producirlo.`;
   }
 
-  /** Texto corto en el pie del dock cuando Cobrar está deshabilitado. */
-  get closeSaleDockHint(): string | null {
-    if (this.loading || this.canCloseSale) return null;
-    if (!this.cart.length) return 'Falta: productos en el carrito';
-    if (this.closeSaleBlockReason) {
-      return 'No hay stock suficiente para cobrar';
+  /** Qué falta para cobrar (vacío si se puede). Cada ítem lleva al carrito. */
+  get closeSaleMissingItems(): MissingSummaryItem[] {
+    if (this.loading || this.canCloseSale) return [];
+    if (!this.cart.length) {
+      return [{ label: 'productos en el carrito', key: 'cart' }];
     }
-    return null;
+    return this.cart
+      .filter((line) => line.quantity > this.availableStock(line.productId))
+      .map((line) => ({
+        label: `stock suficiente de ${line.productName}`,
+        key: `stock:${line.productId}`,
+      }));
+  }
+
+  /** Lleva la vista al carrito y enfoca el primer campo editable. */
+  goToMissing(item: MissingSummaryItem): void {
+    const root = this.hostRef.nativeElement;
+    scrollToField(root, 'app-sale-form-cart, db-select', { highlight: true });
   }
 
   stockLimitNotice = '';

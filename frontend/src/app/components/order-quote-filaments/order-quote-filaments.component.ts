@@ -23,6 +23,7 @@ import {
 } from '../../core/models';
 import { ProductCostCalculationService } from '../../core/services/product-cost-calculation.service';
 import { SuppliesService } from '../../core/services/settings.service';
+import { productUsesPieceAssembly } from '../../shared/utils/product.helpers';
 import { FilamentLineListComponent } from './filament-line-list.component';
 import { FILAMENT_TYPE_LABELS } from '../../shared/constants/labels';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
@@ -83,7 +84,13 @@ export class OrderQuoteFilamentsComponent implements OnInit {
   }
 
   get visible(): boolean {
-    return !isResinQuoteLine(this.line, this.product ?? undefined);
+    if (isResinQuoteLine(this.line, this.product ?? undefined)) return false;
+    // Un combo (o un producto del catálogo que no es FDM) no lleva filamento propio.
+    const product = this.product;
+    if (product && (productUsesPieceAssembly(product) || product.type !== ProductType.FDM)) {
+      return false;
+    }
+    return true;
   }
 
   get catalogLocked(): boolean {

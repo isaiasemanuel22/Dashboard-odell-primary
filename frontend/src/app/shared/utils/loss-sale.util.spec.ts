@@ -43,19 +43,14 @@ describe('detectLossSale', () => {
     expect(r.isLoss).toBe(false);
   });
 
-  it('servicio de tercero no tiene costo ni se marca', () => {
+  it('servicio de tercero cobrado menos que su costo es pérdida (§16.3)', () => {
     const r = detectLossSale(
-      [
-        line({
-          serviceType: ServiceType.SERVICIO_TERCERO,
-          unitPrice: 200,
-          unitCost: 500,
-        }),
-      ],
+      [line({ serviceType: ServiceType.SERVICIO_TERCERO, unitPrice: 200, unitCost: 500 })],
       200,
     );
-    expect(r.isLoss).toBe(false);
-    expect(r.profit).toBe(0);
+    expect(r.isLoss).toBe(true);
+    expect(r.lines[0].loss).toBe(300);
+    expect(r.profit).toBe(-300);
   });
 
   it('diseño compara precio de diseño con costo de diseño', () => {
@@ -73,6 +68,19 @@ describe('detectLossSale', () => {
     expect(r.lines[0]).toEqual(
       jasmine.objectContaining({ unitPrice: 800, unitCost: 1000, loss: 200 }),
     );
+  });
+});
+
+describe('detectLossSale con servicio de tercero y descuento', () => {
+  it('la ganancia descuenta el costo del tercero como cualquier línea', () => {
+    const items = [
+      line({ unitPrice: 1000, unitCost: 600, quantity: 2 }),
+      line({ serviceType: ServiceType.SERVICIO_TERCERO, unitPrice: 500, unitCost: 500 }),
+    ];
+    // Subtotal 2.500, descuento 60 % => total 1.000; costo 1.200 + 500.
+    const r = detectLossSale(items, 1000);
+    expect(r.profit).toBe(1000 - 1200 - 500);
+    expect(r.profitNegative).toBeTrue();
   });
 });
 

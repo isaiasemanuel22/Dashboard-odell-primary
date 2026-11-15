@@ -43,6 +43,17 @@ export class ProductFormCategoriesSectionComponent implements OnInit, OnDestroy 
   categoriesList: Category[] = [];
   categoryIds: string[] = [];
   categoryPicker = '';
+  /** El formulario pide marcar en rojo lo que falta. */
+  @Input() set showErrors(value: boolean) {
+    this._showErrors = value;
+    this.cdr.markForCheck();
+  }
+  private _showErrors = false;
+  private touched = false;
+
+  get showError(): boolean {
+    return (this._showErrors || this.touched) && this.categoryIds.length < 1;
+  }
 
   private loaded = false;
   private lastEmitted: string[] | null = null;
@@ -141,6 +152,7 @@ export class ProductFormCategoriesSectionComponent implements OnInit, OnDestroy 
       return;
     }
 
+    this.touched = true;
     this.categoryIds = this.categoryIds.filter((categoryId) => categoryId !== id);
     this.emitIfLoaded();
   }
@@ -178,6 +190,8 @@ export class ProductFormCategoriesSectionComponent implements OnInit, OnDestroy 
 
     if (!this.sameIds(validIds, this.categoryIds)) {
       this.categoryIds = validIds;
+      // Forzar el aviso: el formulario debe quedar igual a lo que se ve.
+      this.lastEmitted = null;
       this.emitIfLoaded();
     }
   }

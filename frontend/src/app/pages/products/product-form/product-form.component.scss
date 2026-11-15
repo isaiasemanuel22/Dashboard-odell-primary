@@ -261,13 +261,6 @@
   margin-top: 0.85rem;
   padding-top: 0.75rem;
   border-top: 1px solid $color-divider;
-
-  p {
-    margin: 0;
-    color: #c2410c;
-    font-size: 0.8125rem;
-    font-weight: 600;
-  }
 }
 
 /* Desktop: el pie queda siempre visible abajo; el cuerpo del diálogo scrollea. */
@@ -284,8 +277,9 @@
   }
 }
 
+.footer-stock-hint,
 .footer-3mf-hint {
-  margin: 0;
+  margin: 0.6rem 0 0;
   color: $color-text-muted;
   font-size: 0.75rem;
   font-weight: 400;

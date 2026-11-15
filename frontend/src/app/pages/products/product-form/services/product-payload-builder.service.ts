@@ -136,14 +136,14 @@ export class ProductPayloadBuilderService {
       categoryIds: input.categoryIds,
       images: input.images,
       attachments: input.attachments,
-      published: input.isCombo ? true : input.published,
+      published: input.published,
       stock: Math.max(0, Math.trunc(Number(input.finishedStock) || 0)),
       includesPieces: usesPieceAssembly,
       components: usesPieceAssembly ? input.components : [],
       assemblyTimeHours:
         usesPieceAssembly ? Number(input.assemblyTimeHours) || 0 : 0,
       ...(input.isCombo
-        ? {}
+        ? { supplies: input.supplyLines }
         : input.is3D
           ? {
               grams: input.isFdm
@@ -232,7 +232,7 @@ export class ProductPayloadBuilderService {
       suggestedPrice,
       cost: usesPieceAssembly ? 0 : storedCost,
       ...(isCombo
-        ? {}
+        ? { estampadoSupplies: supplyLines }
         : is3D
           ? {
               grams: isFdm ? totalFilamentGrams : Number(grams) || 0,

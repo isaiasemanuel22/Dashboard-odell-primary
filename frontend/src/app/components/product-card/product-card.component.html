@@ -151,6 +151,9 @@
       (toggled)="toggleMenu()"
     >
       <button type="button" (click)="edit.emit(product); menuOpen = false">Editar</button>
+      <button type="button" [disabled]="duplicating" (click)="duplicate.emit(product); menuOpen = false">
+        {{ duplicating ? 'Duplicando…' : 'Duplicar' }}
+      </button>
       <button type="button" class="is-danger" (click)="delete.emit(product); menuOpen = false">
         Eliminar
       </button>

@@ -26,6 +26,7 @@ export function productToPricingInput(
       suggestedPrice: product.suggestedPrice,
       price: product.price,
       cost: product.cost,
+      estampadoSupplies: normalizeEstampadoSupplies(product.supplies),
     };
   }
 

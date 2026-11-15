@@ -1,6 +1,6 @@
 import { ServiceType } from '../../core/models';
 import { calculateLinePriceTotal } from './order.helpers';
-import { isDesignService, isThirdPartyService } from './service-type.util';
+import { isDesignService } from './service-type.util';
 
 export interface LossSaleItemInput {
   serviceType?: ServiceType;
@@ -26,7 +26,7 @@ export interface LossSaleLine {
 export interface LossSaleResult {
   isLoss: boolean;
   lines: LossSaleLine[];
-  /** Ganancia total (total − costo − terceros prorrateados). */
+  /** Ganancia total (total − costo; el servicio de un tercero cuenta su costo, §16.3). */
   profit: number;
   profitNegative: boolean;
 }
@@ -41,8 +41,6 @@ export function detectLossSale(
 ): LossSaleResult {
   const lines: LossSaleLine[] = [];
   let cost = 0;
-  let linesTotal = 0;
-  let thirdParty = 0;
 
   items.forEach((item, index) => {
     const quantity = Math.max(Math.trunc(Number(item.quantity) || 0), 0);
@@ -54,12 +52,7 @@ export function detectLossSale(
       designUnitPrice: item.designUnitPrice,
       includesPrint: item.includesPrint,
     });
-    linesTotal += revenue;
 
-    if (serviceType && isThirdPartyService(serviceType)) {
-      thirdParty += revenue;
-      return;
-    }
     const unitCost = Math.max(Number(item.unitCost) || 0, 0);
     const lineCost = unitCost * (Number(item.quantity) || 0);
     cost += lineCost;
@@ -80,9 +73,7 @@ export function detectLossSale(
     }
   });
 
-  const chargedThird =
-    linesTotal > 0 ? Math.round(thirdParty * (total / linesTotal)) : 0;
-  const profit = Math.round(total - cost - chargedThird);
+  const profit = Math.round(total - cost);
   const profitNegative = profit < 0;
 
   return {

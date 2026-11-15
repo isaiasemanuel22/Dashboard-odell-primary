@@ -29,6 +29,9 @@
         [ngModelOptions]="{ standalone: true }"
         placeholder="Ej.: Árbol de equilibrio"
         [required]="true"
+        data-missing="name"
+        [error]="(showErrors || nameTouched) && !name.trim() ? 'Ingresá un nombre' : ''"
+        (focusout)="nameTouched = true"
         (ngModelChange)="onFieldChange()"
       />
       <db-input

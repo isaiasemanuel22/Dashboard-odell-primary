@@ -15,6 +15,7 @@ import { OrderLineDraft, Product, Supply } from '../../core/models';
 import { SuppliesService } from '../../core/services/settings.service';
 import { SupplyLineListComponent } from '../dynamic-lists/supply-line-list/supply-line-list.component';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
+import { lineSuppliesForDisplay } from '../../shared/utils/order-fdm-quote.util';
 import { normalizeEstampadoSupplies } from '../../shared/utils/estampado.helpers';
 import {
   formatOrderQuoteNumber,
@@ -57,7 +58,7 @@ export class OrderQuoteEstampadoSuppliesComponent implements OnInit {
   }
 
   get suppliesInfo(): { text: string; missingPrice: boolean } {
-    const entries = normalizeEstampadoSupplies(this.line.estampadoSupplies);
+    const entries = normalizeEstampadoSupplies(this.displayedSupplies);
     if (!entries.length) return { text: 'Sin insumos', missingPrice: false };
     let missingPrice = false;
     const text = entries
@@ -68,6 +69,16 @@ export class OrderQuoteEstampadoSuppliesComponent implements OnInit {
       })
       .join(' · ');
     return { text, missingPrice };
+  }
+
+  /** Insumos propios de la línea o, en un combo, los del combo (solo lectura). */
+  get displayedSupplies() {
+    return lineSuppliesForDisplay(this.line, this.product);
+  }
+
+  onSuppliesChange(value: OrderLineDraft['estampadoSupplies']): void {
+    if (!this.catalogLocked) this.line.estampadoSupplies = value;
+    this.onChange();
   }
 
   onChange(): void {

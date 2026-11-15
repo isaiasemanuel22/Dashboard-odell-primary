@@ -1,5 +1,10 @@
 import { Prisma } from '@prisma/client';
-import { Product, Product3D, ProductEstampado } from '../../common/interfaces';
+import {
+  Product,
+  Product3D,
+  ProductCombo,
+  ProductEstampado,
+} from '../../common/interfaces';
 import { ProductType } from '../../common/enums';
 import { fromJson, toInputJson } from '../../prisma/json.util';
 import { persistedFdmLine } from '../brand-link.util';
@@ -89,6 +94,9 @@ export function mapProductFromDb(row: {
       ...base,
       type: ProductType.COMBO,
       includesPieces: true,
+      supplies: normalizeEstampadoSupplies(
+        fromJson<ProductCombo['supplies']>(row.estampadoSupplies ?? []),
+      ),
     };
   }
 
@@ -223,7 +231,10 @@ export function mapProductToDb(product: Product) {
     estampadoPrints: toInputJson(estampado?.prints ?? []),
     estampadoPressCycles: toInputJson(estampado?.pressCycles ?? []),
     estampadoSupplies: toInputJson(
-      estampado?.supplies ?? product3d?.supplies ?? [],
+      estampado?.supplies ??
+        product3d?.supplies ??
+        (isCombo ? product.supplies : undefined) ??
+        [],
     ),
     fdmFilaments: toInputJson(fdmFilaments.map(persistedFdmLine)),
     stock: Math.max(0, Math.trunc(product.stock ?? 0)),

@@ -332,6 +332,10 @@ export class ProductFormStateManagerService {
 
     if (product.type === ProductType.COMBO) {
       state.includesPieces = true;
+      state.supplyLines = structuredClone(product.supplies ?? []).map((line) => ({
+        ...line,
+        colorId: normalizeColorId(line.colorId),
+      }));
     } else if (
       product.type === ProductType.FDM ||
       product.type === ProductType.RESINA

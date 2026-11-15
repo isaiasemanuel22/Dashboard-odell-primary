@@ -37,6 +37,8 @@ import { computeAssemblableUnits } from '../../../shared/utils/stock.helpers';
 import { getMachineProfilesForProductType } from '../../../shared/utils/machine-profile.util';
 import { SettingsFacade } from '../../../store/settings/settings.facade';
 import { ProductFormFacade } from './product-form.facade';
+import { ProductFormMissingSummaryComponent } from './product-form-missing-summary.component';
+import { pickMissingControl, scrollToField } from '../../../shared/utils/form-missing.util';
 import { ProductFormPricingService } from './product-form-pricing.service';
 import { ProductFormPricingFacade } from './store/product-form-pricing/product-form-pricing.facade';
 import { formatCurrencyArs } from '../../../shared/utils/currency-ars.util';
@@ -53,6 +55,8 @@ import {
   ProductForm3mfApplyPayload,
 } from './sections/product-form-3mf-import/product-form-3mf-import.component';
 import { apply3mfResultToProductForm } from './product-form-3mf-apply';
+
+const FIELDS = 'app-product-form-production-fields';
 
 type AccordionKey = 'datos' | 'piezas' | 'produccion' | 'media' | 'precio';
 
@@ -71,6 +75,7 @@ type AccordionKey = 'datos' | 'piezas' | 'produccion' | 'media' | 'precio';
     ProductFormMediaSectionComponent,
     ProductFormPricingSectionComponent,
     ProductForm3mfImportComponent,
+    ProductFormMissingSummaryComponent,
   ],
   providers: [ProductFormFacade, ProductFormPricingService],
   templateUrl: './product-form.component.html',
@@ -111,6 +116,8 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   /** En mobile el pie vive en `db-mobile-form-shell` / dock. */
   @Input() hideFooter = false;
   clientError = '';
+  /** Marca en rojo los campos faltantes (tras tocar el resumen o intentar guardar). */
+  showMissingErrors = false;
   @Output() save = new EventEmitter<CreateProductPayload | UpdateProductPayload>();
   @Output() cancel = new EventEmitter<void>();
 
@@ -217,7 +224,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   get missingFields(): string[] {
     const missing: string[] = [];
     if (!this.facade.form.controls.name.value.trim()) missing.push('nombre');
-    if (this.facade.categoryIds.length < 1) missing.push('una categoría');
+    if (this.currentCategoryIds().length < 1) missing.push('categoría');
     missing.push(...this.facade.missingRequiredFields);
     if (this.facade.is3D && this.facade.showProductionFields) {
       if (!(Number(this.facade.form.controls.printTimeHours.value) > 0)) {
@@ -230,10 +237,113 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     return missing;
   }
 
+  /** Hay obligatorios sin completar: el botón de guardar queda deshabilitado. */
+  get canSave(): boolean {
+    return this.missingFields.length === 0;
+  }
+
+  /** Lleva a un faltante (abre el bloque cerrado), lo marca y lo enfoca. */
+  goToMissing(label: string): void {
+    this.showMissingErrors = true;
+    const target = this.missingTarget(label);
+    if (target.acc) this.openAccordion(target.acc);
+    if (target.blockTitle) this.openCostBlocks([target.blockTitle]);
+    this.cdr.markForCheck();
+    setTimeout(() => {
+      const root = this.host.nativeElement;
+      let el: HTMLElement | null = null;
+      if (target.blockTitle) el = this.findCostBlock(target.blockTitle);
+      if (!el && target.selector) el = root.querySelector<HTMLElement>(target.selector);
+      if (!el) return;
+      const field = target.field ? pickMissingControl(el, target.field, target.label) : null;
+      scrollToField(root, field ?? el, {
+        highlight: !!target.blockTitle,
+        highlightEl: el,
+      });
+    }, 60);
+  }
+
+  private missingTarget(label: string): {
+    acc: AccordionKey;
+    selector?: string;
+    blockTitle?: string;
+    /** Selectores del control exacto dentro del bloque. */
+    field?: string;
+    /** Etiqueta del campo (vista de tarjetas en mobile). */
+    label?: string;
+  } {
+    switch (label) {
+      case 'nombre':
+        return { acc: 'datos', selector: '[data-missing="name"]' };
+      case 'categoría':
+        return { acc: 'datos', selector: '[data-missing="category"]' };
+      case 'al menos una pieza':
+        return { acc: 'piezas', selector: 'app-product-form-components-section' };
+      case 'gramos':
+        return { acc: 'produccion', blockTitle: 'Filamentos', field: 'input[aria-label="Gramos"]', label: 'Gramos', selector: FIELDS };
+      case 'tipo de material':
+        return { acc: 'produccion', blockTitle: 'Filamentos', field: 'select', selector: FIELDS };
+      case 'mililitros de resina':
+        return { acc: 'produccion', blockTitle: 'Resina', field: 'input[name^="resin-ml-"]', selector: FIELDS };
+      case 'tipo de resina':
+        return { acc: 'produccion', blockTitle: 'Resina', field: 'select', selector: FIELDS };
+      case 'horas de impresión':
+        return { acc: 'produccion', blockTitle: 'Impresión', field: 'input[name^="print-hours-"]', selector: FIELDS };
+      case 'mano de obra':
+        return { acc: 'produccion', blockTitle: 'Mano de obra', field: 'input[name^="labor-hours-"]', selector: FIELDS };
+      case 'medida del impreso':
+        return { acc: 'produccion', blockTitle: 'Impresos', field: '.line-table__measure input, .dynamic-list-dimensions input', selector: FIELDS };
+      case 'insumo':
+        return { acc: 'produccion', blockTitle: 'Insumos', field: 'select', selector: FIELDS };
+      case 'precio fijo':
+        return { acc: 'precio', selector: '.unit-price__control' };
+      default:
+        return { acc: 'datos' };
+    }
+  }
+
+  private openAccordion(key: AccordionKey): void {
+    switch (key) {
+      case 'datos':
+        this.accDatos = true;
+        break;
+      case 'piezas':
+        this.accPiezas = true;
+        break;
+      case 'produccion':
+        this.accProduccion = true;
+        break;
+      case 'media':
+        this.accMedia = true;
+        break;
+      case 'precio':
+        this.accPrecio = true;
+        break;
+    }
+  }
+
+  private findCostBlock(title: string): HTMLElement | null {
+    const blocks = this.host.nativeElement.querySelectorAll<HTMLElement>(
+      'details.cost-composition__block',
+    );
+    for (const block of Array.from(blocks)) {
+      const t = block
+        .querySelector('.cost-composition__summary-title')
+        ?.textContent?.trim();
+      if (t === title) return block;
+    }
+    return null;
+  }
+
+  /** Categorías que se ven en la sección (si ya existe) o las del formulario. */
+  private currentCategoryIds(): string[] {
+    return this.categoriesSection?.readValue() ?? this.facade.categoryIds;
+  }
+
   get suggestedFinishedStock(): number {
     return computeAssemblableUnits(
       {
-        id: this.product?.id ?? '__draft-product__',
+        id: this.product?.id || '__draft-product__',
         type: this.productType,
         includesPieces: true,
         components: this.facade.components,
@@ -448,11 +558,13 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
   onCategoriesChange(categoryIds: string[]): void {
     this.categoryIds = categoryIds;
     this.facade.patchCategoryIds(categoryIds);
+    this.cdr.markForCheck();
   }
 
   onComponentsChange(value: ProductFormComponentsValue): void {
     this.componentsValue = value;
     this.facade.patchComponentsValue(value);
+    this.cdr.markForCheck();
   }
 
   get showFdm3mfImport(): boolean {
@@ -526,6 +638,10 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     }
 
     this.flushSectionValues();
+    if (!this.canSave) {
+      this.goToMissing(this.missingFields[0]);
+      return;
+    }
     this.openBlocksForMissing();
     const materialError = this.facade.printedMaterialError;
     if (materialError) {

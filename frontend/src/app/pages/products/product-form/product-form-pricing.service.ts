@@ -115,6 +115,7 @@ export class ProductFormPricingService {
     this.keepCatalogPrice = false;
     this.costInvalidated = false;
     this.useCalculatedPrice = false;
+    this.fixedPriceMode = false;
   }
 
   /**
@@ -192,7 +193,7 @@ export class ProductFormPricingService {
     const supplyPrice = this.catalogSupplyPrice();
 
     if (suggestedPrice != null && Number(suggestedPrice) > 0) {
-      return Number(suggestedPrice) + supplyPrice;
+      return Number(suggestedPrice) + this.fixedPriceSupplyAddon();
     }
 
     if (usesFormPieceAssembly(form)) {
@@ -727,7 +728,7 @@ export class ProductFormPricingService {
 
     const process = Number(form.controls.suggestedPrice.value) || 0;
     if (process > 0) {
-      this.manualUnitPrice = process + this.catalogSupplyPrice();
+      this.manualUnitPrice = process + this.fixedPriceSupplyAddon();
       this.pricingStore.setSuggestedPrice(this.manualUnitPrice);
       return;
     }
@@ -740,6 +741,17 @@ export class ProductFormPricingService {
 
   /** Precio unitario que el usuario escribió. Null si sigue el calculado. */
   manualUnitPrice: number | null = null;
+
+  /**
+   * El usuario eligió «Precio fijo». Se mantiene aunque el precio quede vacío o
+   * en 0: ahí cuenta como faltante, el modo no vuelve solo a «Calculado».
+   */
+  fixedPriceMode = false;
+
+  /** «Precio fijo» elegido pero sin un precio mayor a 0: no se puede guardar. */
+  get fixedPriceMissing(): boolean {
+    return this.fixedPriceMode && !(Number(this.manualUnitPrice) > 0);
+  }
 
   /** Costo de los insumos de catálogo. */
   supplyValue(): number {
@@ -760,7 +772,8 @@ export class ProductFormPricingService {
       return;
     }
     this.manualUnitPrice = typed;
-    const supply = this.catalogSupplyPrice();
+    this.fixedPriceMode = true;
+    const supply = this.fixedPriceSupplyAddon();
     const process = Math.round(typed - supply);
     this.context.form.controls.suggestedPrice.setValue(
       process > 0 ? process : null,
@@ -786,8 +799,18 @@ export class ProductFormPricingService {
       this.manualUnitPrice = null;
       return;
     }
-    this.manualUnitPrice = process + this.catalogSupplyPrice();
+    this.manualUnitPrice = process + this.fixedPriceSupplyAddon();
+    this.fixedPriceMode = true;
     this.pricingStore.setSuggestedPrice(this.manualUnitPrice);
+  }
+
+  /**
+   * Insumos que se suman al precio fijo. En un combo el fijo es la lista
+   * completa y no lleva insumos encima (§16.1.3); en el resto, sí (§16.3).
+   */
+  private fixedPriceSupplyAddon(): number {
+    if (this.context && isFormCombo(this.context.form)) return 0;
+    return this.catalogSupplyPrice();
   }
 
   /** Precio de insumos del catálogo: costo × 1,5 (§16.3). */

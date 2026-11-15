@@ -13,6 +13,8 @@ import {
 } from '@angular/forms';
 import { DbFormFieldComponent } from '../db-form-field/db-form-field.component';
 
+import { selectIfZero } from '../../../shared/directives/keep-typing.directive';
+
 let dbInputId = 0;
 
 @Component({
@@ -93,6 +95,10 @@ export class DbInputComponent implements ControlValueAccessor, OnChanges {
 
   onFocus(): void {
     this.focused = true;
+    if (this.type === 'number') {
+      const input = this.host.nativeElement.querySelector('input');
+      if (input) selectIfZero(input as HTMLInputElement);
+    }
   }
 
   onInput(value: string | number): void {

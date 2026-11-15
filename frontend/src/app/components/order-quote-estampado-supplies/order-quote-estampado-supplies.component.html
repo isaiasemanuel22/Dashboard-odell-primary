@@ -14,9 +14,9 @@
     <app-supply-line-list
       [embedded]="true"
       [locked]="catalogLocked"
-      [(ngModel)]="line.estampadoSupplies"
+      [ngModel]="displayedSupplies"
       [name]="'estampado-supplies-' + lineIndex"
-      (ngModelChange)="onChange()"
+      (ngModelChange)="onSuppliesChange($event)"
     />
   </div>
 </details>

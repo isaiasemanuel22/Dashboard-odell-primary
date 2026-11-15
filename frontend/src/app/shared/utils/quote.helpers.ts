@@ -3,7 +3,6 @@ import { ListFilterOption } from '../../components/db-list-toolbar/db-list-toolb
 import { QUOTE_STATUS_LABELS, SERVICE_TYPE_LABELS } from '../constants/labels';
 import { labelsToSelectOptions } from './select-options';
 import { lineFromOrderItem } from './order.helpers';
-import { isThirdPartyService } from './service-type.util';
 import {
   QUOTE_EXPIRED_LABEL,
   isQuoteExpired,
@@ -232,26 +231,14 @@ export function quoteStatusPillClass(
   }
 }
 
-/** Ganancia estimada: total − costo. El servicio de un tercero no suma ganancia. */
+/** Ganancia estimada: total − costo. El servicio de un tercero cuenta su costo (§16.3). */
 export function quoteEstimatedProfit(quote: Quote): number {
   const cost = quote.items.reduce((sum, item) => {
-    if (isThirdPartyService(item.serviceType)) return sum;
     const unit = Number(item.unitCost) || 0;
     const qty = Number(item.quantity) || 0;
     return sum + unit * qty;
   }, 0);
-  const linesTotal = quote.items.reduce((sum, item) => {
-    const qty = Number(item.quantity) || 0;
-    return sum + (Number(item.unitPrice) || 0) * qty;
-  }, 0);
-  const thirdParty = quote.items.reduce((sum, item) => {
-    if (!isThirdPartyService(item.serviceType)) return sum;
-    const qty = Number(item.quantity) || 0;
-    return sum + (Number(item.unitPrice) || 0) * qty;
-  }, 0);
-  const chargedThird =
-    linesTotal > 0 ? Math.round(thirdParty * (quote.total / linesTotal)) : 0;
-  return Math.round(quote.total - cost - chargedThird);
+  return Math.round(quote.total - cost);
 }
 
 function daysSince(iso: string | Date | null | undefined): number | null {

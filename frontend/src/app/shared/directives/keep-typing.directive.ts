@@ -11,14 +11,15 @@ import { NgModel } from '@angular/forms';
   standalone: true,
 })
 export class KeepTypingDirective {
-  private readonly el = inject<ElementRef<HTMLInputElement>>(ElementRef)
-    .nativeElement;
+  private readonly el =
+    inject<ElementRef<HTMLInputElement>>(ElementRef).nativeElement;
   private readonly ngModel = inject(NgModel, { self: true, optional: true });
   private typed: string | null = null;
 
   @HostListener('focus')
   onFocus(): void {
     this.typed = this.el.value;
+    selectIfZero(this.el);
   }
 
   @HostListener('input')
@@ -42,4 +43,14 @@ export class KeepTypingDirective {
       if (this.el.value !== next) this.el.value = next;
     });
   }
+}
+
+/** Un «0» se selecciona al enfocar: lo que se escribe lo reemplaza (no queda «05»). */
+export function selectIfZero(el: HTMLInputElement): void {
+  const text = el.value.trim();
+  if (text === '' || Number(text) !== 0) return;
+  // Después del evento de foco/clic, para que el navegador no deseleccione.
+  setTimeout(() => {
+    if (document.activeElement === el) el.select();
+  });
 }

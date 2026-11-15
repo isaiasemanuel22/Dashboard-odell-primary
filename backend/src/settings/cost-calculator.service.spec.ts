@@ -431,6 +431,64 @@ describe('CostCalculatorService', () => {
     );
   });
 
+  it('combo con insumos propios: costo suma su valor, lista suma valor × 1,5 y el precio fijo los ignora', () => {
+    store.generalSettings.errorMarginPercent = 0;
+    store.supplies.push({
+      id: 'sup-caja',
+      name: 'Caja',
+      category: SupplyCategory.GENERAL,
+      unit: 'u',
+      quantity: 10,
+      minStock: 0,
+      unitPrice: 400,
+      priceFromSettings: false,
+      updatedAt: new Date().toISOString(),
+    });
+    const piece = {
+      id: 'p-c',
+      name: 'p-c',
+      type: ProductType.FDM,
+      images: [],
+      attachments: [],
+      updatedAt: '2026-07-01T10:00:00.000Z',
+      price: 5000,
+      cost: 2000,
+      profit: 3000,
+      categoryIds: [],
+      size: '5 cm',
+      published: true,
+      includesPieces: false,
+      components: [],
+      assemblyTimeHours: 0,
+      grams: 0,
+      printTimeHours: 1,
+      workTimeHours: 0,
+    } as unknown as Product;
+    store.products.push(piece);
+    store.indexProduct(piece);
+
+    const input = {
+      type: ProductType.COMBO,
+      components: [{ productId: 'p-c', quantity: 1 }],
+      assemblyTimeHours: 0,
+    };
+    const without = service.calculateProductPricing(input);
+    const withSupply = service.calculateProductPricing({
+      ...input,
+      estampadoSupplies: [{ id: 'l1', supplyId: 'sup-caja', quantity: 2 }],
+    });
+    // Insumos: 2 × 400 = 800; precio 800 × 1,5 = 1.200.
+    expect(withSupply.cost).toBe(without.cost + 800);
+    expect(withSupply.price).toBe(without.price + 1200);
+    const fixed = service.calculateProductPricing({
+      ...input,
+      suggestedPrice: 9000,
+      estampadoSupplies: [{ id: 'l1', supplyId: 'sup-caja', quantity: 2 }],
+    });
+    expect(fixed.price).toBe(9000);
+    expect(fixed.cost).toBe(without.cost + 800);
+  });
+
   it('costo del combo usa el costo vigente de cada pieza, no el guardado', () => {
     const base = {
       images: [],

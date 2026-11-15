@@ -274,7 +274,7 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   }
 
   get priceMode(): PriceMode {
-    return this.priceManual ? 'fixed' : 'calculated';
+    return this.priceManual || this.pricing.fixedPriceMode ? 'fixed' : 'calculated';
   }
 
   onPriceModeChange(mode: PriceMode): void {
@@ -282,7 +282,13 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
       this.resetUnitPrice();
       return;
     }
-    const calculated = Math.round(Number(this.pricing.computedPrice) || 0);
+    this.pricing.fixedPriceMode = true;
+    // Combo: el calculado que se ve incluye los insumos (× 1,5); arranca con ese.
+    const calculated = Math.round(
+      this.calculatedFor(Number(this.facade.finalPrice)) ||
+        Number(this.facade.finalPrice) ||
+        0,
+    );
     const current = this.priceManual
       ? Math.round(Number(this.pricing.manualUnitPrice) || 0)
       : calculated;
@@ -293,13 +299,25 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     this.cdr.markForCheck();
   }
 
+  /**
+   * Precio calculado que ve el usuario. En armado de piezas (combo) el interno
+   * no incluye los insumos: manda el del panel, que sí.
+   */
+  private calculatedFor(displayedPrice: number): number {
+    if (this.facade.usesPieceAssembly) {
+      const parts = Number(this.pricing.computedPrice) || 0;
+      return parts > 0 ? parts + this.supplyPrice : Number(displayedPrice) || 0;
+    }
+    return Number(this.pricing.computedPrice) || Number(displayedPrice) || 0;
+  }
+
   /** Precio guardado que se conserva si el calculado difiere. */
   heldPrice(displayedPrice: number): number | null {
     if (this.priceManual) return null;
     const held = this.pricing.heldCatalogPrice();
     if (held == null) return null;
     const next = Math.round(
-      Number(this.pricing.computedPrice) || Number(displayedPrice) || 0,
+      this.calculatedFor(displayedPrice),
     );
     return next > 0 && next !== held ? held : null;
   }
@@ -308,7 +326,7 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     const held = this.heldPrice(displayedPrice);
     if (held == null) return null;
     const next = Math.round(
-      Number(this.pricing.computedPrice) || Number(displayedPrice) || 0,
+      this.calculatedFor(displayedPrice),
     );
     return `Hoy se vende a ${this.money(held)}; el precio calculado es ${this.money(next)}. Al guardar se mantiene ${this.money(held)}.`;
   }
@@ -319,6 +337,8 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   }
 
   unitPriceDisplay(calculatedPrice: number): string {
+    // Precio fijo vacío o en 0: el campo queda vacío (falta cargarlo).
+    if (this.pricing.fixedPriceMissing) return '';
     const amount = this.priceManual
       ? this.pricing.manualUnitPrice!
       : (this.heldPrice(calculatedPrice) ?? calculatedPrice);
@@ -337,24 +357,19 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   onUnitPriceDisplayChange(raw: string): void {
     this.unitPriceDraft = String(raw ?? '');
     const digits = this.unitPriceDraft.replace(/\D/g, '');
-    // Vacío mientras se escribe: no se toca el precio hasta salir del campo.
-    if (!digits) return;
-    this.pricing.applyManualUnitPrice(Math.round(Number(digits)));
+    // Vacío o 0: el modo sigue en «Precio fijo» y el precio pasa a faltante.
+    this.pricing.applyManualUnitPrice(digits ? Math.round(Number(digits)) : 0);
     this.cdr.markForCheck();
   }
 
   onUnitPriceBlur(): void {
-    const empty = !(this.unitPriceDraft ?? '').replace(/\D/g, '');
     this.unitPriceDraft = null;
-    if (empty) {
-      this.resetUnitPrice();
-      return;
-    }
     this.cdr.markForCheck();
   }
 
   resetUnitPrice(): void {
     // Volver a "Calculado" es una elección explícita del usuario.
+    this.pricing.fixedPriceMode = false;
     this.pricing.clearManualUnitPrice();
     this.pricing.acceptCalculatedPrice();
     this.cdr.markForCheck();
@@ -365,7 +380,7 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     cost: number,
     laborCost = 0,
   ): string {
-    const calculated = Number(this.pricing.computedPrice) || calculatedPrice;
+    const calculated = this.calculatedFor(calculatedPrice);
     const calculatedLabel =
       calculated > 0
         ? `Calculado ${this.money(calculated)}`

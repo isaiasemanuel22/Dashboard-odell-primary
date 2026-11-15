@@ -644,11 +644,15 @@ $footer-warning-min-height: calc(
 
     .order-form__missing {
       margin: 0;
-      text-align: center;
-      font-size: 12px;
-      font-weight: 500;
-      color: $color-warning-text;
       width: 100%;
+    }
+
+    .order-form__missing-top {
+      margin: 0 0 12px;
+      padding: 10px 12px;
+      border: 1px solid $color-danger-border;
+      border-radius: 10px;
+      background: #fef2f2;
     }
 
   }

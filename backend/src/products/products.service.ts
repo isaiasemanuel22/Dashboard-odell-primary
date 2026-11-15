@@ -17,6 +17,7 @@ import {
   CreateProductDto,
   Product,
   Product3D,
+  ProductCombo,
   ProductEstampado,
   ProductComponent,
   ProductOverview,
@@ -291,6 +292,9 @@ export class ProductsService {
         ...base,
         type: ProductType.COMBO,
         includesPieces: true,
+        supplies: normalizeEstampadoSupplies(
+          data.estampadoSupplies ?? data.supplies,
+        ),
       };
     } else if (data.type === ProductType.ESTAMPADO) {
       const prints = normalizeEstampadoPrints(
@@ -594,6 +598,16 @@ export class ProductsService {
     ) {
       updated.type = ProductType.COMBO;
       updated.includesPieces = true;
+      const combo = updated as ProductCombo;
+      if ('estampadoSupplies' in data && data.estampadoSupplies !== undefined) {
+        combo.supplies = normalizeEstampadoSupplies(data.estampadoSupplies);
+      } else if ('supplies' in data && data.supplies !== undefined) {
+        combo.supplies = normalizeEstampadoSupplies(data.supplies);
+      } else {
+        combo.supplies = normalizeEstampadoSupplies(
+          (existing as ProductCombo).supplies,
+        );
+      }
     } else if (existing.type === ProductType.ESTAMPADO) {
       const current = updated as ProductEstampado;
       if ('workTimeHours' in data && data.workTimeHours !== undefined) {

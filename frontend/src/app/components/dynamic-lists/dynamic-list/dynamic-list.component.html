@@ -59,6 +59,7 @@
                           <db-input
                             [type]="field.inputType || 'text'"
                             [formControlName]="field.name"
+                            [attr.data-control]="field.name"
                             [min]="field.min"
                             [max]="field.max"
                             [step]="field.step"
@@ -72,6 +73,7 @@
                           <db-input
                             [type]="field.inputType || 'text'"
                             [formControlName]="field.name"
+                            [attr.data-control]="field.name"
                             [placeholder]="field.placeholder ?? ''"
                             [min]="field.min"
                             [max]="field.max"
@@ -88,6 +90,7 @@
                     @case ('select') {
                       <db-select
                         [formControlName]="field.name"
+                        [attr.data-control]="field.name"
                         [placeholder]="field.placeholder ?? ''"
                         [options]="selectOptions(field, i)"
                         [required]="field.required ?? false"
@@ -97,6 +100,7 @@
                       <db-color-select
                         [appearance]="field.appearance ?? 'panel'"
                         [formControlName]="field.name"
+                        [attr.data-control]="field.name"
                         [filamentType]="colorFilter(field, i).filamentType"
                         [resinType]="colorFilter(field, i).resinType"
                         [supplyCategory]="colorFilter(field, i).supplyCategory"
@@ -112,6 +116,7 @@
                         <db-input
                           type="number"
                           [formControlName]="field.widthName"
+                          [attr.data-control]="field.widthName"
                           [min]="field.min ?? 0.1"
                           [step]="field.step ?? 0.1"
                         />
@@ -119,6 +124,7 @@
                         <db-input
                           type="number"
                           [formControlName]="field.lengthName"
+                          [attr.data-control]="field.lengthName"
                           [min]="field.min ?? 0.1"
                           [step]="field.step ?? 0.1"
                         />
@@ -224,6 +230,7 @@
                       [label]="field.label"
                       [type]="field.inputType || 'text'"
                       [formControlName]="field.name"
+                      [attr.data-control]="field.name"
                       [placeholder]="field.placeholder ?? ''"
                       [min]="field.min"
                       [max]="field.max"
@@ -236,6 +243,7 @@
                       [class.dynamic-list-field--full]="field.fullWidth"
                       [label]="field.label"
                       [formControlName]="field.name"
+                      [attr.data-control]="field.name"
                       [placeholder]="field.placeholder ?? ''"
                       [options]="selectOptions(field, i)"
                       [required]="field.required ?? false"
@@ -246,6 +254,7 @@
                       [class.dynamic-list-field--full]="field.fullWidth"
                       [label]="field.label"
                       [formControlName]="field.name"
+                      [attr.data-control]="field.name"
                       [appearance]="field.appearance ?? 'panel'"
                       [filamentType]="colorFilter(field, i).filamentType"
                       [resinType]="colorFilter(field, i).resinType"
@@ -259,6 +268,7 @@
                       [class.dynamic-list-field--full]="field.fullWidth"
                       [label]="field.label"
                       [formControlName]="field.name"
+                      [attr.data-control]="field.name"
                       [placeholder]="field.placeholder ?? ''"
                     />
                   }
@@ -268,6 +278,7 @@
                         [label]="field.widthLabel ?? 'Ancho (cm)'"
                         type="number"
                         [formControlName]="field.widthName"
+                        [attr.data-control]="field.widthName"
                         [min]="field.min ?? 0.1"
                         [step]="field.step ?? 0.1"
                       />
@@ -275,6 +286,7 @@
                         [label]="field.lengthLabel ?? 'Largo (cm)'"
                         type="number"
                         [formControlName]="field.lengthName"
+                        [attr.data-control]="field.lengthName"
                         [min]="field.min ?? 0.1"
                         [step]="field.step ?? 0.1"
                       />
