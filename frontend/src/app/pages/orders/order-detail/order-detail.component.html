@@ -221,6 +221,13 @@
           <p class="m-hint od-m__deposit">{{ depositLine }}</p>
         }
       </db-mobile-totals>
+      @if (hasRefundPending) {
+        <div class="od-m__notice od-m__notice--error" role="status">
+          <span>
+            Pedido cancelado: {{ paidAmount | currencyArs }} cobrados a devolver o resolver.
+          </span>
+        </div>
+      }
 
       <h2 class="m-sec-t">Productos</h2>
       <section class="m-card m-card--flush od-m__products" aria-label="Productos del pedido">
@@ -275,7 +282,7 @@
       <db-mobile-collapsible
         panelId="od-m-acc-payments"
         title="Pagos"
-        [summary]="'Pagado ' + paidPercentLabel"
+        [summary]="paymentsAccordionSummary"
         [open]="isAccordionOpen('payments')"
         (toggled)="setAccordionOpen('payments', $event)"
       >

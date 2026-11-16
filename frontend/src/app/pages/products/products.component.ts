@@ -148,6 +148,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
   supplyChangesLoading = false;
   laborCostPerHour = 0;
   profitMargins: ServiceProfitMargins = { ...DEFAULT_PROFIT_MARGINS };
+  /** Hasta que llegan los Ajustes no se muestra el margen (el default no es el real). */
+  private marginsLoaded = false;
   wholesaleDiscount: WholesaleDiscountSettings =
     normalizeWholesaleDiscount(null);
 
@@ -207,6 +209,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
         if (!settings) return;
         this.laborCostPerHour = Number(settings.laborCostPerHour) || 0;
         this.profitMargins = normalizeProfitMargins(settings.profitMargins);
+        this.marginsLoaded = true;
         this.wholesaleDiscount = normalizeWholesaleDiscount(
           settings.wholesaleDiscount,
         );
@@ -295,7 +298,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
     }
   }
 
-  get targetMarginPercent(): number {
+  get targetMarginPercent(): number | null {
+    if (!this.marginsLoaded) return null;
     return (
       this.profitMargins.impresion_3d ?? DEFAULT_PROFIT_MARGINS.impresion_3d
     );

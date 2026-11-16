@@ -309,6 +309,47 @@ describe('ProductsService', () => {
     expect(alerts[0].priceForTarget).toBe(1400);
   });
 
+  it('getMarginAlerts mide el margen sin mano de obra y contra el margen configurado', () => {
+    const store = new StoreService();
+    seedStore(store, [
+      baseProduct({
+        id: 'prod-labor',
+        name: 'Con mano de obra',
+        price: 1150,
+        cost: 1000,
+        profit: 150,
+        suggestedPrice: 1150,
+      }),
+    ]);
+    const pricing = {
+      resolvePricing: jest.fn((input: { price?: number; cost?: number }) => ({
+        price: input.price ?? 0,
+        cost: input.cost ?? 0,
+        profit: (input.price ?? 0) - (input.cost ?? 0),
+        breakdown: { laborCost: 500 },
+      })),
+      productToPricingInput: jest.fn((product: Product) => ({
+        type: product.type,
+        price: product.price,
+        cost: product.cost,
+        suggestedPrice: product.suggestedPrice,
+      })),
+    } as unknown as ProductPricingService;
+    const service = new ProductsService(
+      store,
+      new ProductRepository(store),
+      pricing,
+      { syncAfterProductSave: jest.fn() } as never,
+      { recordChange: jest.fn() } as never,
+      { getMarginForProductType: () => 40 } as never,
+    );
+
+    const [alert] = service.getMarginAlerts();
+    // (1150 − 1000) ÷ (1000 − 500 de mano de obra) = 30 %
+    expect(alert.markupPercent).toBe(30);
+    expect(alert.targetPercent).toBe(40);
+  });
+
   it('getMarginAlerts excluye productos no publicados', () => {
     const store = new StoreService();
     seedStore(store, [

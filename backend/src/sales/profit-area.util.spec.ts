@@ -175,5 +175,56 @@ describe('profit-area.util', () => {
         orders: { revenue: 0, cost: 0, profit: 0 },
       });
     });
+
+    it('agrega «Sin área» con lo que no se pudo asignar para que sume al total', () => {
+      const entries: SaleEntry[] = [
+        {
+          id: 'order-1',
+          source: 'order' as never,
+          saleId: 'ord-1',
+          items: [
+            {
+              productId: 'prod-3d',
+              productName: 'Pieza',
+              quantity: 1,
+              unitPrice: 1000,
+              lineTotal: 1000,
+            },
+            {
+              productName: 'Ítem libre',
+              quantity: 1,
+              unitPrice: 500,
+              lineTotal: 500,
+            },
+          ],
+          total: 1500,
+          cost: 0,
+          profit: 0,
+          soldAt: new Date().toISOString(),
+          editable: false,
+        },
+      ];
+
+      const balances = computeAreaProfitBalances(
+        entries,
+        () => 100,
+        (productId) =>
+          productId === 'prod-3d' ? { type: ProductType.FDM } : null,
+      );
+
+      const total = balances.reduce((sum, balance) => sum + balance.revenue, 0);
+      expect(total).toBe(1500);
+      const unassigned = balances.find(
+        (balance) => balance.area === 'sin_area',
+      );
+      expect(unassigned).toEqual({
+        area: 'sin_area',
+        revenue: 500,
+        cost: 100,
+        profit: 400,
+        retail: { revenue: 0, cost: 0, profit: 0 },
+        orders: { revenue: 500, cost: 100, profit: 400 },
+      });
+    });
   });
 });

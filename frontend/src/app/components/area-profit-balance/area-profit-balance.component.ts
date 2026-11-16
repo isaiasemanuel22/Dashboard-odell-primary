@@ -15,6 +15,6 @@ export class AreaProfitBalanceComponent {
   @Input({ required: true }) balances!: AreaProfitBalance[];
 
   areaLabel(area: AreaProfitBalance['area']): string {
-    return SERVICE_TYPE_LABELS[area];
+    return area === 'sin_area' ? 'Sin área' : SERVICE_TYPE_LABELS[area];
   }
 }

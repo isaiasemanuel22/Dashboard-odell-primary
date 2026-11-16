@@ -129,7 +129,7 @@ function appendAreaBalanceSection(
     startY,
     head: [['Área', 'Vendido', 'Costos', 'Ganancia', 'Ventas', 'Pedidos']],
     body: (stats.profitByArea ?? []).map((balance) => [
-      SERVICE_TYPE_LABELS[balance.area],
+      balance.area === 'sin_area' ? 'Sin área' : SERVICE_TYPE_LABELS[balance.area],
       formatCurrency(balance.revenue),
       formatCurrency(balance.cost),
       formatCurrency(balance.profit),

@@ -275,8 +275,11 @@ function normalizeWeekdays(value: number[] | undefined): number[] {
   ].sort((a, b) => a - b);
 }
 
-/** Rango máximo del feed (el default son ~3 meses). */
-const MAX_FEED_DAYS = 400;
+/**
+ * Rango máximo del feed. El calendario pide desde hoy − 400 días hasta el mes
+ * que se mira; 1500 días alcanza para navegar ~3 años.
+ */
+const MAX_FEED_DAYS = 1500;
 
 function daysBetween(from: string, to: string): number {
   const toUtc = (ymd: string) => {

@@ -1,15 +1,6 @@
 <db-form>
   <form [formGroup]="facade.form" (ngSubmit)="onSubmit()" autocomplete="off">
     <div class="product-create">
-      @if (isMobile() && missingFields.length) {
-        <div class="pf-m-missing" data-discard-safe>
-          <app-product-form-missing-summary
-            [banner]="true"
-            [items]="missingFields"
-            (select)="goToMissing($event)"
-          />
-        </div>
-      }
       @if (isMobile()) {
         <div class="pf-m-type">
           <span class="pf-m-type__label">Tipo</span>

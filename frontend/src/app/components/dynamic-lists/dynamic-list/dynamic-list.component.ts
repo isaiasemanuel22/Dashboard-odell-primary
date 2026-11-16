@@ -414,7 +414,11 @@ export class DynamicListComponent<T extends object>
         group
           .get(controlName)
           ?.valueChanges.pipe(takeUntil(this.fieldChangeDestroy$))
-          .subscribe(() => this.onFieldChange(index, field));
+          .subscribe(() => {
+            // El índice cambia al borrar una fila anterior: se busca al emitir.
+            const current = this.itemsArray.controls.indexOf(group);
+            this.onFieldChange(current >= 0 ? current : index, field);
+          });
       }
     }
   }

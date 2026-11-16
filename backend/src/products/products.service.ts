@@ -838,21 +838,22 @@ export class ProductsService {
       const product = this.withCurrentCost(raw);
       const cost = Number(product.cost) || 0;
       const price = Number(product.price) || 0;
-      const markupPercent = productMarkupPercent(price, cost);
+      const laborCost = this.resolveLaborCost(product);
+      // Mismo margen que ve Productos: precio de venta (con descuento propio)
+      // sobre el costo sin mano de obra, que no lleva margen (§16.1.1).
+      const markupPercent = productMarkupPercent(
+        Number(productSalePrice(product)) || 0,
+        cost,
+        laborCost,
+      );
       if (markupPercent == null) continue;
 
       const configuredPercent = this.costCalculator.getMarginForProductType(
         product.type,
       );
-      const laborCost = this.resolveLaborCost(product);
-      // Markup efectivo esperado: la mano de obra no lleva margen.
-      const rawTarget = priceForTargetMarkup(
-        cost,
-        configuredPercent,
-        0,
-        laborCost,
-      );
-      const targetPercent = ((rawTarget - cost) / cost) * 100;
+      // El objetivo es el margen configurado del área, el mismo que muestra
+      // Productos (no el markup efectivo sobre el costo total).
+      const targetPercent = configuredPercent;
       if (markupPercent >= targetPercent) continue;
       const priceForTarget = priceForTargetMarkup(
         cost,

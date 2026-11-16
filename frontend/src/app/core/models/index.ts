@@ -1710,8 +1710,11 @@ export interface AreaProfitSourceBreakdown {
   profit: number;
 }
 
+/** Ventas cuyo ítem no se pudo asignar a un área (sin producto ni servicio). */
+export type UnassignedProfitArea = 'sin_area';
+
 export interface AreaProfitBalance {
-  area: ProfitArea;
+  area: ProfitArea | UnassignedProfitArea;
   revenue: number;
   cost: number;
   profit: number;

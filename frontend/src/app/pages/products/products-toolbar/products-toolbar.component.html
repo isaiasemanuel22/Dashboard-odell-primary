@@ -2,8 +2,10 @@
   <div>
     <h2>Productos</h2>
     <p>
-      Catálogo de impresión 3D y estampados · {{ publishedCount }} publicados · margen objetivo
-      {{ targetMarginPercent }}%
+      Catálogo de impresión 3D y estampados · {{ publishedCount }} publicados
+      @if (targetMarginPercent != null) {
+        · margen objetivo {{ targetMarginPercent }}%
+      }
     </p>
   </div>
   <div class="header-actions">

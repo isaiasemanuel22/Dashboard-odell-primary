@@ -3,7 +3,6 @@ import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {
   AreaProfitBalance,
-  ProfitArea,
   SaleEntry,
   SaleSource,
   SalesStats,
@@ -267,8 +266,8 @@ export class SalesComponent implements OnInit {
     }
   }
 
-  areaLabel(area: ProfitArea): string {
-    return SERVICE_TYPE_LABELS[area];
+  areaLabel(area: AreaProfitBalance['area']): string {
+    return area === 'sin_area' ? 'Sin área' : SERVICE_TYPE_LABELS[area];
   }
 
   areaSourceLabel(area: AreaProfitBalance): string {

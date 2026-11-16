@@ -436,7 +436,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
       {
         label: 'Pagado',
         value: this.currencyArs.transform(this.paidAmount),
-        tone: 'success',
+        tone: this.hasRefundPending ? 'danger' : 'success',
       },
       {
         label: 'Saldo',
@@ -444,6 +444,18 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
         tone: this.balanceAmount > 0 ? 'danger' : 'success',
       },
     ];
+  }
+
+  /** Pedido cancelado con plata cobrada: hay que devolverla o resolverla. */
+  get hasRefundPending(): boolean {
+    return this.order?.status === OrderStatus.CANCELADO && this.paidAmount > 0;
+  }
+
+  /** Resumen del acordeón de pagos (mobile). */
+  get paymentsAccordionSummary(): string {
+    return this.hasRefundPending
+      ? `${this.currencyArs.transform(this.paidAmount)} a devolver`
+      : `Pagado ${this.paidPercentLabel}`;
   }
 
   get paidAmount(): number {

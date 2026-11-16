@@ -18,7 +18,7 @@ import {
 })
 export class ProductsToolbarComponent {
   @Input() publishedCount = 0;
-  @Input() targetMarginPercent = 40;
+  @Input() targetMarginPercent: number | null = null;
   @Input() cartItemCount = 0;
   @Input() listFilters: DbPillOption[] = [];
   @Input() listFilter = 'all';

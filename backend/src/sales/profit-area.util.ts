@@ -5,6 +5,7 @@ import {
   Product,
   SaleEntry,
   SaleEntryItem,
+  UNASSIGNED_PROFIT_AREA,
 } from '../common/interfaces';
 import {
   isDesignService,
@@ -78,22 +79,49 @@ export function emptyAreaProfitBalances(): AreaProfitBalance[] {
   }));
 }
 
+function addToBucket(
+  bucket: AreaProfitBalance,
+  source: SaleSource,
+  revenue: number,
+  cost: number,
+): void {
+  const sourceBucket =
+    source === SaleSource.RETAIL ? bucket.retail : bucket.orders;
+  bucket.revenue += revenue;
+  bucket.cost += cost;
+  bucket.profit += revenue - cost;
+  sourceBucket.revenue += revenue;
+  sourceBucket.cost += cost;
+  sourceBucket.profit += revenue - cost;
+}
+
 export function computeAreaProfitBalances(
   entries: SaleEntry[],
   resolveUnitCost: (item: SaleEntryItem) => number,
   resolveProduct: (productId: string) => Pick<Product, 'type'> | null,
 ): AreaProfitBalance[] {
-  const totals = new Map<ProfitArea, AreaProfitBalance>(
+  const totals = new Map<AreaProfitBalance['area'], AreaProfitBalance>(
     emptyAreaProfitBalances().map((balance) => [balance.area, { ...balance }]),
   );
 
+  // Lo que no cae en ninguna área (ítems sin producto ni servicio, pedidos
+  // con subtotal 0): sin esto la suma de áreas no llega al total del mes.
+  const unassigned: AreaProfitBalance = {
+    area: UNASSIGNED_PROFIT_AREA,
+    revenue: 0,
+    cost: 0,
+    profit: 0,
+    retail: emptyAreaProfitSourceBreakdown(),
+    orders: emptyAreaProfitSourceBreakdown(),
+  };
+
   for (const entry of entries) {
     const subtotal = entry.items.reduce((sum, item) => sum + item.lineTotal, 0);
+    let assignedRevenue = 0;
 
     for (const item of entry.items) {
       const product = item.productId ? resolveProduct(item.productId) : null;
       const area = resolveProfitArea(product, item.serviceType);
-      if (!area) continue;
 
       const normalizedService = item.serviceType
         ? (normalizeServiceType(item.serviceType) ?? item.serviceType)
@@ -105,19 +133,23 @@ export function computeAreaProfitBalances(
       const lineCost = resolveUnitCost(item) * quantityMultiplier;
       const lineRevenue =
         subtotal > 0 ? (item.lineTotal / subtotal) * entry.total : 0;
-      const lineProfit = lineRevenue - lineCost;
-      const bucket = totals.get(area)!;
-      const sourceBucket =
-        entry.source === SaleSource.RETAIL ? bucket.retail : bucket.orders;
+      if (!area) {
+        // Su ingreso entra por el resto del pedido (abajo); acá solo el costo.
+        addToBucket(unassigned, entry.source, 0, lineCost);
+        continue;
+      }
+      assignedRevenue += lineRevenue;
+      addToBucket(totals.get(area)!, entry.source, lineRevenue, lineCost);
+    }
 
-      bucket.revenue += lineRevenue;
-      bucket.cost += lineCost;
-      bucket.profit += lineProfit;
-      sourceBucket.revenue += lineRevenue;
-      sourceBucket.cost += lineCost;
-      sourceBucket.profit += lineProfit;
+    const remainder = entry.total - assignedRevenue;
+    if (Math.abs(remainder) > 0.005) {
+      addToBucket(unassigned, entry.source, remainder, 0);
     }
   }
 
-  return PROFIT_AREAS.map((area) => totals.get(area)!);
+  const balances = PROFIT_AREAS.map((area) => totals.get(area)!);
+  const hasUnassigned =
+    Math.abs(unassigned.revenue) > 0.005 || Math.abs(unassigned.cost) > 0.005;
+  return hasUnassigned ? [...balances, unassigned] : balances;
 }
