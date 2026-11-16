@@ -48,8 +48,11 @@ export class ProductFormPricingEffects {
         ProductFormPricingActions.setCatalogPrice,
         ProductFormPricingActions.setAppliedMargin,
       ),
-      withLatestFrom(this.store.select(selectProductFormPricingState)),
-      map(([, state]) => {
+      withLatestFrom(
+        this.store.select(selectProductFormPricingState),
+        this.settingsFacade.generalSettings$,
+      ),
+      map(([, state, settings]) => {
         const margin =
           state.appliedMarginPercent ?? state.profitMarginPercent;
         const result = this.calculationService.calculate({
@@ -59,6 +62,7 @@ export class ProductFormPricingEffects {
           componentsPrice: state.componentsPrice,
           catalogPrice: state.catalogPrice,
           supplyValue: state.contributions['supplies'],
+          errorMarginPercent: Number(settings?.errorMarginPercent) || 0,
           laborCost: state.costBreakdown?.laborCost,
         });
 

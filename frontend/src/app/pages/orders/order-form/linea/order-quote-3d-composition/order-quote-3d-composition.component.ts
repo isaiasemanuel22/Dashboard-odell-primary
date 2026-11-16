@@ -45,7 +45,10 @@ import {
   resolveOrderQuoteCureMinutes,
   resolveOrderQuoteWashMinutes,
 } from '../../../../../components/order-quote-composition.util';
-import { supplyLinesValue } from '../../../../../shared/utils/supply-line-value.util';
+import {
+  supplyErrorFromValue,
+  supplyLinesValue,
+} from '../../../../../shared/utils/supply-line-value.util';
 
 @Component({
   selector: 'app-order-quote-3d-composition',
@@ -133,14 +136,22 @@ export class OrderQuote3dCompositionComponent implements OnInit {
   }
 
   get errorMarginCost(): number {
-    return this.fdmBreakdown()?.errorMarginCost ?? 0;
+    const processError = this.fdmBreakdown()?.errorMarginCost ?? 0;
+    return processError + supplyErrorFromValue(this.suppliesCost, this.errorMarginPercent);
   }
 
   get errorMarginMeta(): string {
     if (!this.generalSettings) return 'Cargando Ajustes…';
     const purge = Math.max(0, Number(this.line.purgeGrams) || 0);
+    const hasSupplies = this.suppliesCost > 0;
+    if (purge > 0 && hasSupplies) {
+      return `${this.errorMarginPercent}% sobre material, purga, luz, máquina e insumos`;
+    }
     if (purge > 0) {
       return `${this.errorMarginPercent}% sobre material, purga, luz y máquina`;
+    }
+    if (hasSupplies) {
+      return `${this.errorMarginPercent}% sobre material, luz, máquina e insumos`;
     }
     return `${this.errorMarginPercent}% sobre material, luz y máquina`;
   }

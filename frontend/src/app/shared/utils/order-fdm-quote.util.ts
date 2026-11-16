@@ -21,7 +21,10 @@ import {
   resolveProductGrams,
   resolveProductPrintTimeHours,
 } from './product.helpers';
-import { supplyPriceFromValue } from './supply-line-value.util';
+import {
+  supplyCostFromValue,
+  supplyPriceFromValue,
+} from './supply-line-value.util';
 
 export function isFdmQuoteConfigured(
   line: Pick<
@@ -257,18 +260,20 @@ export function syncFdmQuotePricing(
     line.estampadoSupplies,
     options?.supplies,
   );
+  const errorMarginPercent = Number(settings.errorMarginPercent) || 0;
   const keepCost =
     options?.preserveCost &&
     line.unitCost != null &&
     Number.isFinite(Number(line.unitCost));
   if (!keepCost) {
-    line.unitCost = processCost + supplyValue;
+    line.unitCost =
+      processCost + supplyCostFromValue(supplyValue, errorMarginPercent);
   }
   const preserve = options?.preservePrice || !!line.unitPriceManual;
   if (!preserve) {
     line.unitPrice =
       priceFromCostAndMargin(processCost, marginPercent, laborCost) +
-      supplyPriceFromValue(supplyValue);
+      supplyPriceFromValue(supplyValue, errorMarginPercent);
   }
 }
 

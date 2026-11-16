@@ -3,12 +3,18 @@ import { normalizeEstampadoSupplies } from './estampado.helpers';
 
 /**
  * Valor del insumo: cantidad × precio unitario, sin margen de área.
- * Se suma al costo; el precio lleva el valor × SUPPLY_PRICE_MULTIPLIER (§16.3).
+ * Al costo y al precio se suma además el margen de error de Ajustes (§16.3).
  * Misma fórmula que backend/src/products/supply-line-value.util.ts.
  */
-/** Los insumos de producto o línea a medida se cobran a costo × 1,5 (§16.3). */
-export const SUPPLY_PRICE_MULTIPLIER = 1.5;
+/** Los insumos de producto o línea a medida se cobran a costo × 2 (§16.3). */
+export const SUPPLY_PRICE_MULTIPLIER = 2;
 
+/** Mismo clamp 0–100 que calculateErrorMarginCost. */
+export function clampErrorMarginPercent(percent: number): number {
+  return Math.min(Math.max(Number(percent) || 0, 0), 100);
+}
+
+/** Valor del insumo: cantidad × precio unitario (sin error ni × 2). */
 export function supplyLinesValue(
   lines: EstampadoSupplyLine[] | undefined,
   unitPriceOf: (supplyId: string) => number,
@@ -21,23 +27,68 @@ export function supplyLinesValue(
   return Math.round(total);
 }
 
+/**
+ * Error del insumo sobre su valor: round(valor × margen/100).
+ * Se suma tal cual a costo y precio (sin el recargo).
+ */
+export function supplyErrorFromValue(
+  value: number,
+  errorMarginPercent = 0,
+): number {
+  const percent = clampErrorMarginPercent(errorMarginPercent);
+  if (percent === 0) return 0;
+  return Math.round((Number(value) || 0) * (percent / 100));
+}
+
+/** Costo del insumo: valor + error del insumo (§16.3). */
+export function supplyCostFromValue(
+  value: number,
+  errorMarginPercent = 0,
+): number {
+  const raw = Number(value) || 0;
+  return Math.round(raw) + supplyErrorFromValue(raw, errorMarginPercent);
+}
+
+/** Precio de los insumos: round(valor × 2) + error (el error no lleva el recargo). */
+export function supplyPriceFromValue(
+  value: number,
+  errorMarginPercent = 0,
+): number {
+  const raw = Number(value) || 0;
+  return (
+    Math.round(raw * SUPPLY_PRICE_MULTIPLIER) +
+    supplyErrorFromValue(raw, errorMarginPercent)
+  );
+}
+
+/** Costo de las líneas: valor + error del insumo. */
+export function supplyLinesCost(
+  lines: EstampadoSupplyLine[] | undefined,
+  unitPriceOf: (supplyId: string) => number,
+  errorMarginPercent = 0,
+): number {
+  return supplyCostFromValue(
+    supplyLinesValue(lines, unitPriceOf),
+    errorMarginPercent,
+  );
+}
+
+/** Precio de las líneas: valor × 2 + error del insumo. */
+export function supplyLinesPrice(
+  lines: EstampadoSupplyLine[] | undefined,
+  unitPriceOf: (supplyId: string) => number,
+  errorMarginPercent = 0,
+): number {
+  return supplyPriceFromValue(
+    supplyLinesValue(lines, unitPriceOf),
+    errorMarginPercent,
+  );
+}
+
 /** Insumo de catálogo. Filamento, resina y alcohol de lavado no entran (§5.1, §9.1). */
 export function isCatalogInsumo(supply: { category: SupplyCategory }): boolean {
   return (
     supply.category === SupplyCategory.ESTAMPADO ||
     supply.category === SupplyCategory.GENERAL
   );
-}
-
-/** Precio de los insumos a partir de su valor (costo): round(valor × 1,5). */
-export function supplyPriceFromValue(value: number): number {
-  return Math.round((Number(value) || 0) * SUPPLY_PRICE_MULTIPLIER);
-}
-
-/** Precio de las líneas de insumo: round(supplyLinesValue × 1,5). */
-export function supplyLinesPrice(
-  lines: EstampadoSupplyLine[] | undefined,
-  unitPriceOf: (supplyId: string) => number,
-): number {
-  return supplyPriceFromValue(supplyLinesValue(lines, unitPriceOf));
 }

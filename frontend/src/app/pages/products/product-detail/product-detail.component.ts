@@ -125,6 +125,7 @@ import {
   resolveResinPricePerLiter,
 } from '../../../shared/utils/material-type-price.util';
 import { formatCurrencyArs } from '../../../shared/utils/currency-ars.util';
+import { supplyErrorFromValue } from '../../../shared/utils/supply-line-value.util';
 import {
   hasProductDiscount,
   productDiscountLabel,
@@ -458,6 +459,9 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       rows = this.estampadoCostRows(this.productEstampado, settings);
     }
     rows = [...rows, ...this.supplyCostRows()];
+    if (this.hasComponents) {
+      this.pushErrorMarginRow(rows, null, settings, this.catalogSupplyValue());
+    }
     return this.reconcileCostRows(rows);
   }
 
@@ -581,7 +585,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       });
     }
     this.pushLaborRow(rows, Number(product.workTimeHours) || 0, settings);
-    this.pushErrorMarginRow(rows, breakdown, settings);
+    this.pushErrorMarginRow(
+      rows,
+      breakdown,
+      settings,
+      this.catalogSupplyValue(),
+    );
     return rows;
   }
 
@@ -599,22 +608,52 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     });
   }
 
+  private catalogSupplyValue(): number {
+    const lines = normalizeEstampadoSupplies(
+      (this.product as { supplies?: EstampadoSupplyLine[] } | null)?.supplies,
+    );
+    const catalog = this.suppliesSignal();
+    return Math.round(
+      lines.reduce((sum, line) => {
+        const unit =
+          Number(catalog.find((item) => item.id === line.supplyId)?.unitPrice) ||
+          0;
+        return unit > 0 ? sum + unit * line.quantity : sum;
+      }, 0),
+    );
+  }
+
   private pushErrorMarginRow(
     rows: MobileCostCompositionRow[],
     breakdown: CostBreakdown | null,
     settings: GeneralSettings,
+    supplyValue = 0,
   ): void {
     const errorPercent = Number(settings.errorMarginPercent) || 0;
-    if (!breakdown || (errorPercent <= 0 && breakdown.errorMarginCost <= 0)) {
+    const processError = breakdown?.errorMarginCost ?? 0;
+    const supplyError = supplyErrorFromValue(supplyValue, errorPercent);
+    const amount = processError + supplyError;
+    if (errorPercent <= 0 && amount <= 0) {
       return;
+    }
+    const hasPurge = (breakdown?.purgeCost ?? 0) > 0;
+    const hasSupplies = supplyValue > 0;
+    let detail: string;
+    if (hasPurge && hasSupplies) {
+      detail = 'Sobre material, purga, luz, máquina e insumos';
+    } else if (hasPurge) {
+      detail = 'Sobre material, purga, luz y máquina';
+    } else if (hasSupplies && !breakdown) {
+      detail = 'Sobre insumos';
+    } else if (hasSupplies) {
+      detail = 'Sobre material, luz, máquina e insumos';
+    } else {
+      detail = 'Sobre material, luz y máquina';
     }
     rows.push({
       title: `Margen de error · ${formatDecimalEs(errorPercent)} %`,
-      detail:
-        (breakdown.purgeCost ?? 0) > 0
-          ? 'Solo sobre material, purga, luz y máquina (sin insumos)'
-          : 'Solo sobre material, luz y máquina (sin insumos)',
-      amount: breakdown.errorMarginCost,
+      detail,
+      amount,
     });
   }
 
@@ -723,7 +762,12 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     }
 
     this.pushLaborRow(rows, this.workHours, settings);
-    this.pushErrorMarginRow(rows, breakdown, settings);
+    this.pushErrorMarginRow(
+      rows,
+      breakdown,
+      settings,
+      this.catalogSupplyValue(),
+    );
 
     if (printed.type === ProductType.RESINA) {
       const washSupplyCost = Math.round(

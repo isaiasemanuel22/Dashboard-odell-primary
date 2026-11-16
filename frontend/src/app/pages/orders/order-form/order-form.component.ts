@@ -1307,18 +1307,21 @@ export class OrderFormComponent implements OnChanges, OnInit {
         (Number(settings.laborCostPerHour) || 0),
     );
     const percent = this.errorMarginPercent;
-    const errorMargin = percent
+    const suppliesRounded = Math.round(supplies);
+    const processError = percent
       ? Math.round(
-          (prints + supplies + overhead.energyCost + overhead.machineCost) *
+          (prints + overhead.energyCost + overhead.machineCost) *
             (percent / 100),
         )
       : 0;
     return {
       prints: Math.round(prints),
-      supplies: Math.round(supplies),
+      supplies: suppliesRounded,
       press: overhead.energyCost + overhead.machineCost,
       labor,
-      errorMargin,
+      errorMargin:
+        processError +
+        (percent ? Math.round(suppliesRounded * (percent / 100)) : 0),
       pressMinutes,
       energy: overhead.energyCost,
       machine: overhead.machineCost,
@@ -1675,6 +1678,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       laborCostPerHour: this.generalSettings?.laborCostPerHour,
       supplyUnitPrice: (id) =>
         Number(this.supplies.find((item) => item.id === id)?.unitPrice) || 0,
+      errorMarginPercent: this.generalSettings?.errorMarginPercent,
     });
   }
 

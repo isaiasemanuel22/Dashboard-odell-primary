@@ -22,7 +22,10 @@ import {
   getMarginForService,
   priceFromCostAndMargin,
 } from './pricing.util';
-import { supplyPriceFromValue } from './supply-line-value.util';
+import {
+  supplyCostFromValue,
+  supplyPriceFromValue,
+} from './supply-line-value.util';
 
 export function isEstampadoLine(serviceType: ServiceType): boolean {
   return serviceType === ServiceType.ESTAMPADO;
@@ -153,13 +156,15 @@ export function syncEstampadoQuotePricing(
     line.estampadoSupplies,
     options?.supplies,
   );
+  const errorMarginPercent = Number(settings.errorMarginPercent) || 0;
   const processCost = breakdown.totalCost;
   const keepCost =
     options?.preserveCost &&
     line.unitCost != null &&
     Number.isFinite(Number(line.unitCost));
   if (!keepCost) {
-    line.unitCost = processCost + supplyValue;
+    line.unitCost =
+      processCost + supplyCostFromValue(supplyValue, errorMarginPercent);
   }
   const preserve = options?.preservePrice || !!line.unitPriceManual;
   if (!preserve) {
@@ -168,7 +173,7 @@ export function syncEstampadoQuotePricing(
         processCost,
         marginPercent,
         breakdown.laborCost,
-      ) + supplyPriceFromValue(supplyValue);
+      ) + supplyPriceFromValue(supplyValue, errorMarginPercent);
   }
 }
 

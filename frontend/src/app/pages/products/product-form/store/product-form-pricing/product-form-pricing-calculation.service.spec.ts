@@ -11,9 +11,21 @@ describe('ProductFormPricingCalculationService', () => {
       supplyValue: 3500,
     });
 
-    // Insumos a costo × 1,5.
-    expect(result.price).toBe(1967 * 2 + 5250);
+    // Insumos a costo × 2.
+    expect(result.price).toBe(1967 * 2 + 7000);
     expect(result.profit).toBe(result.price - 5467);
+  });
+
+  it('remera $3000 / 10 %: precio de insumos 6300 y el error no lleva el 50 %', () => {
+    // total = proceso 1000 + valor 3000 + error 300
+    const result = service.calculate({
+      totalCost: 4300,
+      profitMarginPercent: 50,
+      supplyValue: 3000,
+      errorMarginPercent: 10,
+    });
+    expect(result.price).toBe(1500 + 6300);
+    expect(result.profit).toBe(result.price - 4300);
   });
 
   it('sin insumos aplica el margen al costo total', () => {
@@ -30,7 +42,7 @@ describe('ProductFormPricingCalculationService', () => {
     expect(result.price).toBe(43464);
   });
 
-  it('combo: lista = suma de listas de piezas + armado sin margen + insumos x1,5 (§16.1.3)', () => {
+  it('combo: lista = suma de listas de piezas + armado sin margen + insumos x2 (§16.1.3)', () => {
     const result = service.calculate({
       totalCost: 3000,
       profitMarginPercent: 200,
@@ -44,7 +56,7 @@ describe('ProductFormPricingCalculationService', () => {
       laborCost: 500,
       supplyValue: 200,
     });
-    expect(withExtras.price).toBe(11500);
+    expect(withExtras.price).toBe(11600);
   });
 
   it('el precio sugerido tiene prioridad sobre costo x margen', () => {

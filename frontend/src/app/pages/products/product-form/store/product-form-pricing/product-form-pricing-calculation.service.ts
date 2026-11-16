@@ -1,6 +1,9 @@
 import { Injectable } from '@angular/core';
 import { priceFromCostAndMargin } from '../../../../../shared/utils/pricing.util';
-import { supplyPriceFromValue } from '../../../../../shared/utils/supply-line-value.util';
+import {
+  supplyCostFromValue,
+  supplyPriceFromValue,
+} from '../../../../../shared/utils/supply-line-value.util';
 
 export interface ProductFormPricingCalculationInput {
   totalCost: number;
@@ -8,8 +11,10 @@ export interface ProductFormPricingCalculationInput {
   suggestedPrice?: number | null;
   componentsPrice?: number;
   catalogPrice?: number | null;
-  /** Parte de totalCost que son insumos de catálogo: al precio van a costo × 1,5, sin margen. */
+  /** Parte de totalCost que es valor de insumos (cantidad × unitario), sin error. */
   supplyValue?: number;
+  /** Margen de error de Ajustes (0–100); el error del insumo no lleva el recargo. */
+  errorMarginPercent?: number;
   /** Parte de totalCost que es mano de obra: se suma sin margen. */
   laborCost?: number;
 }
@@ -35,30 +40,33 @@ export class ProductFormPricingCalculationService {
     const suggestedPrice = Number(input.suggestedPrice);
     const catalogPrice = Number(input.catalogPrice);
     const componentsPrice = Math.max(0, Number(input.componentsPrice) || 0);
+    const errorMarginPercent = Number(input.errorMarginPercent) || 0;
+    const supplyValue = Math.max(0, Number(input.supplyValue) || 0);
 
     let price = 0;
 
     if (Number.isFinite(suggestedPrice) && suggestedPrice > 0) {
       price = suggestedPrice;
     } else if (componentsPrice > 0) {
-      // Combo (§16.1.3): lista de las piezas + armado sin margen + insumos ×1,5.
+      // Combo (§16.1.3): lista de las piezas + armado sin margen + insumos × 2 + error.
       price =
         componentsPrice +
         Math.max(0, Number(input.laborCost) || 0) +
-        supplyPriceFromValue(Math.max(0, Number(input.supplyValue) || 0));
+        supplyPriceFromValue(supplyValue, errorMarginPercent);
     } else if (Number.isFinite(catalogPrice) && catalogPrice > 0) {
       price = catalogPrice;
     } else if (totalCost > 0) {
-      const supplyValue = Math.min(
-        totalCost,
-        Math.max(0, Number(input.supplyValue) || 0),
+      const cappedSupply = Math.min(totalCost, supplyValue);
+      const supplyCost = supplyCostFromValue(
+        cappedSupply,
+        errorMarginPercent,
       );
       price =
         priceFromCostAndMargin(
-          totalCost - supplyValue,
+          Math.max(0, totalCost - supplyCost),
           input.profitMarginPercent,
           input.laborCost,
-        ) + supplyPriceFromValue(supplyValue); // insumos a costo × 1,5 (§16.3)
+        ) + supplyPriceFromValue(cappedSupply, errorMarginPercent);
     }
 
     return {

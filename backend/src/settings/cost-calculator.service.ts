@@ -49,6 +49,8 @@ import {
   totalEstampadoPressMinutes,
 } from '../products/estampado-product.util';
 import {
+  supplyCostFromValue,
+  supplyErrorFromValue,
   supplyLinesValue,
   supplyPriceFromValue,
 } from '../products/supply-line-value.util';
@@ -260,7 +262,11 @@ export class CostCalculatorService {
             product.assemblyTimeHours ?? 0,
             product.type,
             visiting,
-          ).totalCost + this.supplyValue(this.productSupplies(product))
+          ).totalCost +
+          supplyCostFromValue(
+            this.supplyValue(this.productSupplies(product)),
+            this.store.generalSettings.errorMarginPercent,
+          )
         );
       } finally {
         visiting.delete(productId);
@@ -331,7 +337,10 @@ export class CostCalculatorService {
 
     return (
       partsPrice +
-      supplyPriceFromValue(this.supplyValue(this.productSupplies(product)))
+      supplyPriceFromValue(
+        this.supplyValue(this.productSupplies(product)),
+        this.store.generalSettings.errorMarginPercent,
+      )
     );
   }
 
@@ -437,6 +446,9 @@ export class CostCalculatorService {
     }
 
     const supplyValue = this.supplyValue(input.estampadoSupplies);
+    const errorMarginPercent =
+      Number(this.store.generalSettings.errorMarginPercent) || 0;
+    const supplyError = supplyErrorFromValue(supplyValue, errorMarginPercent);
     const storedCost = Number(input.cost) || 0;
     // El costo guardado ya incluye insumos. No usarlo si hay que sumarlos de nuevo.
     if (cost <= 0 && storedCost > 0 && supplyValue <= 0) {
@@ -447,7 +459,14 @@ export class CostCalculatorService {
     }
 
     const processCost = cost;
-    cost = processCost + supplyValue;
+    // Valor del insumo + su margen de error (§16.3); el valor se muestra aparte.
+    cost = processCost + supplyCostFromValue(supplyValue, errorMarginPercent);
+    if (breakdown && supplyError > 0) {
+      breakdown = {
+        ...breakdown,
+        errorMarginCost: (breakdown.errorMarginCost ?? 0) + supplyError,
+      };
+    }
     const laborCost = breakdown?.laborCost ?? 0;
     const fixedPrice =
       input.suggestedPrice != null && Number(input.suggestedPrice) > 0;
@@ -464,12 +483,13 @@ export class CostCalculatorService {
             supplyValue <= 0,
             laborCost,
           );
-    // Los insumos se cobran a costo × 1,5; el costo no cambia (§16.3).
+    // Insumos: valor × 2 + error del insumo (sin el recargo sobre el error) (§16.3).
     // Combo con precio fijo: el fijo es la lista completa, no se le suman insumos (§16.1.3).
     const price =
       input.type === ProductType.COMBO && fixedPrice
         ? processPrice
-        : processPrice + supplyPriceFromValue(supplyValue);
+        : processPrice +
+          supplyPriceFromValue(supplyValue, errorMarginPercent);
     const profit = price - cost;
     const configuredMarginPercent = this.getMarginForProductType(input.type);
 

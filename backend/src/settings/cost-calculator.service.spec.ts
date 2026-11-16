@@ -431,7 +431,7 @@ describe('CostCalculatorService', () => {
     );
   });
 
-  it('combo con insumos propios: costo suma su valor, lista suma valor × 1,5 y el precio fijo los ignora', () => {
+  it('combo con insumos propios: costo suma su valor, lista suma valor × 2 y el precio fijo los ignora', () => {
     store.generalSettings.errorMarginPercent = 0;
     store.supplies.push({
       id: 'sup-caja',
@@ -477,9 +477,9 @@ describe('CostCalculatorService', () => {
       ...input,
       estampadoSupplies: [{ id: 'l1', supplyId: 'sup-caja', quantity: 2 }],
     });
-    // Insumos: 2 × 400 = 800; precio 800 × 1,5 = 1.200.
+    // Insumos: 2 × 400 = 800; precio 800 × 2 = 1.600.
     expect(withSupply.cost).toBe(without.cost + 800);
-    expect(withSupply.price).toBe(without.price + 1200);
+    expect(withSupply.price).toBe(without.price + 1600);
     const fixed = service.calculateProductPricing({
       ...input,
       suggestedPrice: 9000,
@@ -609,7 +609,41 @@ describe('CostCalculatorService', () => {
     expect(result.materialCost).toBe(900);
   });
 
-  it('cobra el insumo a costo × 1,5 encima del margen, sin aplicárselo', () => {
+  it('margen de error del insumo: remera $3000 / 10 % → costo 3300, precio 6300 (§16.3)', () => {
+    store.generalSettings.errorMarginPercent = 10;
+    store.generalSettings.profitMargins = {
+      impresion_3d: 50,
+      diseno_grafico: 0,
+      modelado: 0,
+      estampado: 50,
+    };
+    store.supplies.push({
+      id: 'sup-remera-err',
+      name: 'Remera',
+      category: SupplyCategory.ESTAMPADO,
+      unit: 'u',
+      quantity: 10,
+      minStock: 0,
+      unitPrice: 3000,
+      priceFromSettings: false,
+      updatedAt: new Date().toISOString(),
+    });
+
+    const onlySupply = service.calculateProductPricing({
+      type: ProductType.ESTAMPADO,
+      estampadoSupplies: [
+        { id: 'l1', supplyId: 'sup-remera-err', quantity: 1 },
+      ],
+      pressMinutes: 0,
+      workTimeHours: 0,
+    });
+
+    expect(onlySupply.cost).toBe(3300);
+    expect(onlySupply.price).toBe(6300);
+    expect(onlySupply.breakdown?.errorMarginCost).toBe(300);
+  });
+
+  it('cobra el insumo a costo × 2 encima del margen, sin aplicárselo', () => {
     store.generalSettings.errorMarginPercent = 0;
     store.generalSettings.profitMargins = {
       impresion_3d: 50,
@@ -646,13 +680,13 @@ describe('CostCalculatorService', () => {
     expect(base.cost).toBe(1000);
     expect(base.price).toBe(1500);
     expect(withSupply.cost).toBe(1800);
-    // Insumo 800 → precio 1.200 (+50 %); el costo queda en 800.
-    expect(withSupply.price).toBe(1500 + 1200);
-    expect(withSupply.profit).toBe(base.profit + 400);
-    expect(withSupply.profit).toBe(900);
+    // Insumo 800 → precio 1.600 (×2); el costo queda en 800.
+    expect(withSupply.price).toBe(1500 + 1600);
+    expect(withSupply.profit).toBe(base.profit + 800);
+    expect(withSupply.profit).toBe(1300);
   });
 
-  it('suma el insumo (costo × 1,5) encima del precio sugerido', () => {
+  it('suma el insumo (costo × 2) encima del precio sugerido', () => {
     store.generalSettings.errorMarginPercent = 0;
     store.supplies.push({
       id: 'sup-polimero',
@@ -678,8 +712,8 @@ describe('CostCalculatorService', () => {
     });
 
     expect(result.cost).toBe(1800);
-    expect(result.price).toBe(2000 + 1200);
-    expect(result.profit).toBe(1400);
+    expect(result.price).toBe(2000 + 1600);
+    expect(result.profit).toBe(1800);
   });
 
   it('no mete los insumos del producto en el costo de material del estampado', () => {

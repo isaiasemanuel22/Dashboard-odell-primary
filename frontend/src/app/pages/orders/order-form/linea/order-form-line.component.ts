@@ -51,7 +51,10 @@ import { SuppliesService } from '../../../../core/services/settings.service';
 import { SettingsFacade } from '../../../../store/settings/settings.facade';
 import { FormDialogService } from '../../../../modals/public-api';
 import { serviceTypeLabel } from '../../../../shared/constants/labels';
-import { isCatalogInsumo } from '../../../../shared/utils/supply-line-value.util';
+import {
+  isCatalogInsumo,
+  supplyErrorFromValue,
+} from '../../../../shared/utils/supply-line-value.util';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import {
   applyImpresoToDesignLine,
@@ -1573,7 +1576,8 @@ export class OrderFormLineComponent implements OnInit {
         (Number(settings.laborCostPerHour) || 0),
     );
     const percent = this.errorMarginPercent;
-    const errorMargin = percent
+    const suppliesRounded = Math.round(supplies);
+    const processError = percent
       ? Math.round(
           (prints + overhead.energyCost + overhead.machineCost) *
             (percent / 100),
@@ -1581,10 +1585,11 @@ export class OrderFormLineComponent implements OnInit {
       : 0;
     return {
       prints: Math.round(prints),
-      supplies: Math.round(supplies),
+      supplies: suppliesRounded,
       press: overhead.energyCost + overhead.machineCost,
       labor,
-      errorMargin,
+      errorMargin:
+        processError + supplyErrorFromValue(suppliesRounded, percent),
       pressMinutes,
       energy: overhead.energyCost,
       machine: overhead.machineCost,
@@ -1597,6 +1602,7 @@ export class OrderFormLineComponent implements OnInit {
       laborCostPerHour: this.generalSettings?.laborCostPerHour,
       supplyUnitPrice: (id) =>
         Number(this.supplies.find((item) => item.id === id)?.unitPrice) || 0,
+      errorMarginPercent: this.generalSettings?.errorMarginPercent,
     });
   }
 

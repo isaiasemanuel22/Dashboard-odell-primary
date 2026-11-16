@@ -23,7 +23,11 @@ import {
   resolveProductPrice,
   totalCostFromBreakdown,
 } from '../../shared/utils/pricing.util';
-import { supplyPriceFromValue } from '../../shared/utils/supply-line-value.util';
+import {
+  supplyCostFromValue,
+  supplyErrorFromValue,
+  supplyPriceFromValue,
+} from '../../shared/utils/supply-line-value.util';
 import { markupPercentOnCostRounded } from '../../shared/utils/product-margin.util';
 
 @Injectable({ providedIn: 'root' })
@@ -103,9 +107,10 @@ export class ProductPricingService {
 
   /**
    * Precio único: el margen se aplica solo al costo de proceso y los insumos
-   * de catálogo se suman aparte a costo × 1,5 (`supplyValue` es su costo). La mano de obra
-   * (`laborCost`, parte de `processCost`) tampoco lleva margen. `cost` del
-   * resultado incluye los insumos.
+   * de catálogo se suman aparte a valor × 2 + error (`supplyValue` es su
+   * valor cantidad × unitario). La mano de obra (`laborCost`, parte de
+   * `processCost`) tampoco lleva margen. `cost` del resultado incluye valor
+   * y error del insumo (§16.3).
    */
   priceWithSupplies(
     input: Pick<
@@ -138,9 +143,12 @@ export class ProductPricingService {
     if (supplyValue > 0 && !suggested && !hasComponents && processCost <= 0) {
       processPrice = 0;
     }
-    // Los insumos se cobran a costo × 1,5; el costo no cambia (§16.3).
-    const price = processPrice + supplyPriceFromValue(supplyValue);
-    const fullCost = processCost + supplyValue;
+    const errorMarginPercent = Number(settings.errorMarginPercent) || 0;
+    // Insumos: valor × 2 + error (el error no lleva el recargo) (§16.3).
+    const price =
+      processPrice + supplyPriceFromValue(supplyValue, errorMarginPercent);
+    const fullCost =
+      processCost + supplyCostFromValue(supplyValue, errorMarginPercent);
     return {
       ...result,
       cost: fullCost,
@@ -159,16 +167,28 @@ export class ProductPricingService {
     breakdown: CostBreakdown | null,
     supplyValue = 0,
   ): ProductPricingResult {
+    const priced = this.priceWithSupplies(
+      input,
+      cost,
+      supplyValue,
+      catalog,
+      settings,
+      breakdown?.laborCost ?? 0,
+    );
+    const supplyError = supplyErrorFromValue(
+      supplyValue,
+      Number(settings.errorMarginPercent) || 0,
+    );
+    const withSupplyError =
+      breakdown && supplyError > 0
+        ? {
+            ...breakdown,
+            errorMarginCost: (breakdown.errorMarginCost ?? 0) + supplyError,
+          }
+        : breakdown;
     return {
-      ...this.priceWithSupplies(
-        input,
-        cost,
-        supplyValue,
-        catalog,
-        settings,
-        breakdown?.laborCost ?? 0,
-      ),
-      breakdown,
+      ...priced,
+      breakdown: withSupplyError,
     };
   }
 

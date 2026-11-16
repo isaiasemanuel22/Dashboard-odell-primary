@@ -264,7 +264,12 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     return this.pricing.supplyValue();
   }
 
-  /** Precio de los insumos dentro del precio de venta (costo + 50 %). */
+  /** Valor + error del insumo (para restar del total al mostrar la base del margen). */
+  get supplyCostWithError(): number {
+    return this.pricing.supplyCostWithError();
+  }
+
+  /** Precio de los insumos dentro del precio de venta (valor × 2 + error). */
   get supplyPrice(): number {
     return this.pricing.supplyPrice();
   }
@@ -283,7 +288,7 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
       return;
     }
     this.pricing.fixedPriceMode = true;
-    // Combo: el calculado que se ve incluye los insumos (× 1,5); arranca con ese.
+    // Combo: el calculado que se ve incluye los insumos (× 2); arranca con ese.
     const calculated = Math.round(
       this.calculatedFor(Number(this.facade.finalPrice)) ||
         Number(this.facade.finalPrice) ||

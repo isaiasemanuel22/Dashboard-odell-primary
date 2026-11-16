@@ -133,8 +133,9 @@ A ese material se suman energía, máquina, mano de obra y el margen de error
 de Ajustes. Ese conjunto es el costo del proceso. Si con esos datos el costo
 queda en 0, el guardado se rechaza.
 
-El margen de error se aplica solo a material, purga, luz y máquina. Los
-insumos (incluido el alcohol de lavado de la resina) quedan afuera.
+El margen de error del proceso se aplica a material, purga, luz y máquina.
+Los insumos del producto llevan su propio margen de error (§16.3,
+confirmado el 2026-11-16). El alcohol de lavado de la resina queda afuera.
 
 El precio del proceso es el costo sin mano de obra con el margen del área
 (Impresión 3D o Estampado), más la mano de obra tal cual:
@@ -327,7 +328,7 @@ línea cuando el pedido cotiza impresión 3D):
   producto, y no se cobran de nuevo. Si la línea es a medida, se cargan en
   la composición y entran en el costo y en el precio de la línea con la
   misma fórmula del producto (§3): el margen del área se aplica al proceso
-  y el valor de los insumos se suma igual al costo y al precio.
+  y los insumos se suman a costo × 2 más su margen de error (§16.3).
 - **Línea de insumo.** Un insumo puede no formar parte de ninguna línea de
   Impresión 3D ni de Estampado. En ese caso es una línea propia. El precio
   y el costo son la cantidad por el precio unitario del insumo, y la
@@ -1064,7 +1065,7 @@ precio calculado = (costo sin mano de obra) × (1 + margen) + mano de obra
 
 El costo total sigue incluyendo la mano de obra (para costo, ganancia y margen
 real). Vale para FDM, resina y estampado. Los combos tienen su propia regla
-(§16.1.3). Los insumos se suman con un 50 % fijo
+(§16.1.3). Los insumos se suman con un recargo fijo (× 2)
 encima de su costo (§16.3). Ejemplo: con margen 100 % y mano de obra $1.000, la mano de
 obra suma $1.000 al precio, no $2.000. Las líneas de Diseño y Modelado tienen
 tarifa y margen propios y no cambian. Los precios guardados no cambian hasta
@@ -1098,7 +1099,8 @@ valor de sus insumos propios.
 Insumos propios del combo (confirmado el 2026-11-15): el formulario del combo
 permite cargar insumos (cajas, bolsas, moños, decoración, etc.) además de las
 piezas y el armado, para que el costo del combo sea real. Entran al costo por
-su valor y al precio por su valor × 1,5 (§16.3).
+su valor y al precio por su valor × 2, más su margen de error en los dos
+(§16.3).
 
 ### 16.2 Precio de servicios
 
@@ -1123,10 +1125,34 @@ presupuestado.
 ### 16.3 Insumo y servicio de un tercero
 
 Desde el 2026-11-15, el insumo que forma parte de un producto o de una línea
-a medida de Impresión 3D o de Estampado se cobra a **su costo × 1,5**: al
-costo se suma su valor y al precio, su valor más un 50 % (§3). No lleva
-margen de error ni el margen del área. Reemplaza la regla del 2026-11-03
-(insumo sin ganancia).
+a medida de Impresión 3D o de Estampado se cobra a **su costo × 2**
+(confirmado el 2026-11-16; del 2026-11-15 al 2026-11-16 fue × 1,5): al costo
+se suma su valor y al precio, el doble de su valor (§3). No lleva el margen
+del área. Reemplaza la regla del 2026-11-03 (insumo sin ganancia).
+
+Margen de error del insumo (confirmado el 2026-11-16): el insumo de un
+producto, de un combo o de una línea a medida también lleva el margen de
+error de Ajustes. Se calcula sobre su valor y se suma al costo y al precio
+tal cual, sin el recargo:
+
+```text
+valor del insumo = cantidad × precio unitario
+error del insumo = valor × margen de error
+costo  += valor + error del insumo
+precio += valor × 2 + error del insumo
+```
+
+Ejemplo: remera de $3.000 con margen de error 10 %: costo $3.300, precio
+$6.000 + $300 = $6.300.
+
+Ejemplo completo (2026-11-16): taza sublimada, impreso de 25 × 15 cm con
+papel a $2.258/m², 2 minutos de prensa, media hora de mano de obra a $1.000,
+taza de $3.500, margen de error 30 % y margen de Estampado 200 %. Proceso sin
+mano de obra $124 (papel $85, prensa $11, error $29); precio del proceso
+$124 × 3 + $500 = $873; taza: costo $4.550, precio $7.000 + $1.050 = $8.050.
+Total: costo $5.174, precio $8.923. La mano de obra no lleva margen de error. Vale para Estampado, Impresión 3D, los insumos
+propios del combo y las líneas a medida de pedidos y presupuestos. El
+alcohol de lavado de la resina no lo lleva (sigue en el proceso).
 
 En una línea propia de insumo (insumo suelto) no cambia: el precio y el costo
 son la cantidad por el precio unitario y la ganancia de esa línea es cero.
@@ -1141,7 +1167,7 @@ en el costo total del pedido o presupuesto y el precio, en el total. No
 lleva margen de área y el mayorista no lo modifica.
 
 El alcohol de lavado de la resina sigue como parte del proceso (material,
-con el margen del área), no como insumo × 1,5 (confirmado el 2026-11-15).
+con el margen del área), no como insumo × 2 (confirmado el 2026-11-15).
 
 ### 16.4 Mínimo del precio mayorista
 
@@ -1887,9 +1913,8 @@ fdm | resina | estampado | combo
   precio sugerido. Sin cantidad, sin tipo o con costo 0 el API rechaza el
   alta o la edición.
 - **Estampado:** insumos de estampado, ciclos de prensa, impresiones. El
-  costo de esos insumos entra al material y el margen del área se aplica
-  también sobre ese total. La regla de §3 (el insumo se suma sin margen)
-  todavía no está implementada. Impresión 3D no guarda insumos del producto.
+  costo de los impresos (papel) entra al material. Los insumos se suman
+  aparte a costo × 2 más su margen de error (§16.3).
 - **Combo:** producto compuesto por otros productos (piezas); el stock
   disponible puede derivar del ensamblaje de piezas.
 

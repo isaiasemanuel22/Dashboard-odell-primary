@@ -36,6 +36,7 @@ import { OrderQuoteEstampadoPrintsComponent } from '../../../../../components/or
 import { OrderQuoteEstampadoSuppliesComponent } from '../../../../../components/order-quote-estampado-supplies/order-quote-estampado-supplies.component';
 import { OrderQuoteLaborComponent } from '../../../../../components/order-quote-labor/order-quote-labor.component';
 import { isOrderQuoteCatalogLocked } from '../../../../../components/order-quote-composition.util';
+import { supplyErrorFromValue } from '../../../../../shared/utils/supply-line-value.util';
 
 export interface OrderQuoteEstampadoCosts {
   prints: number;
@@ -115,7 +116,10 @@ export class OrderQuoteEstampadoCompositionComponent implements OnInit {
 
   get errorMarginMeta(): string {
     if (!this.generalSettings) return 'Cargando Ajustes…';
-    return `${this.errorMarginPercent}% sobre impresos y plancha (sin insumos)`;
+    if ((this.costs?.supplies ?? 0) > 0) {
+      return `${this.errorMarginPercent}% sobre impresos, plancha e insumos`;
+    }
+    return `${this.errorMarginPercent}% sobre impresos y plancha`;
   }
 
   get costs(): OrderQuoteEstampadoCosts {
@@ -178,15 +182,18 @@ export class OrderQuoteEstampadoCompositionComponent implements OnInit {
     const laborRate = Number(settings.laborCostPerHour) || 0;
     const labor = Math.round(laborHours * laborRate);
     const percent = this.errorMarginPercent;
-    const errorMargin = percent
+    const suppliesRounded = Math.round(supplies);
+    const processError = percent
       ? Math.round(
           (prints + overhead.energyCost + overhead.machineCost) *
             (percent / 100),
         )
       : 0;
+    const errorMargin =
+      processError + supplyErrorFromValue(suppliesRounded, percent);
     return {
       prints: Math.round(prints),
-      supplies: Math.round(supplies),
+      supplies: suppliesRounded,
       press: overhead.energyCost + overhead.machineCost,
       labor,
       errorMargin,

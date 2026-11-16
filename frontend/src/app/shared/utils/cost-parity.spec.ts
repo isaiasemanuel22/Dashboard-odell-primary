@@ -17,6 +17,8 @@ import {
 } from './machine-profile.util';
 import { formatFileSizeEsAr } from './file-size.util';
 import {
+  supplyCostFromValue,
+  supplyErrorFromValue,
   supplyLinesPrice,
   supplyLinesValue,
   supplyPriceFromValue,
@@ -147,12 +149,26 @@ describe('paridad de costo con el API', () => {
     expect(formatFileSizeEsAr(1.2 * 1024 * 1024)).toBe('1,2 MB');
   });
 
-  it('cobra los insumos a costo × 1,5 y redondea', () => {
+  it('cobra los insumos a costo × 2 y redondea', () => {
     const lines = [{ id: 'l1', supplyId: 's1', quantity: 1 }];
     expect(supplyLinesValue(lines, () => 1500)).toBe(1500);
-    expect(supplyLinesPrice(lines, () => 1500)).toBe(2250);
-    expect(supplyPriceFromValue(801)).toBe(1202);
+    expect(supplyLinesPrice(lines, () => 1500)).toBe(3000);
+    expect(supplyPriceFromValue(801)).toBe(1602);
     expect(supplyPriceFromValue(0)).toBe(0);
+  });
+
+  it('margen de error del insumo: remera $3000 / 10 % → costo 3300, precio 6300 (§16.3)', () => {
+    const lines = [{ id: 'l1', supplyId: 'remera', quantity: 1 }];
+    expect(supplyLinesValue(lines, () => 3000)).toBe(3000);
+    expect(supplyErrorFromValue(3000, 10)).toBe(300);
+    expect(supplyCostFromValue(3000, 10)).toBe(3300);
+    expect(supplyPriceFromValue(3000, 10)).toBe(6300);
+    expect(supplyLinesPrice(lines, () => 3000, 10)).toBe(6300);
+    // Con margen 0, igual que antes.
+    expect(supplyCostFromValue(3000, 0)).toBe(3000);
+    expect(supplyPriceFromValue(3000, 0)).toBe(6000);
+    // Clamp 100 %: error = valor entero; precio = 6000 + 3000.
+    expect(supplyPriceFromValue(3000, 150)).toBe(9000);
   });
 
   it('el mayorista nunca baja de costo + 10 % ni supera la lista', () => {

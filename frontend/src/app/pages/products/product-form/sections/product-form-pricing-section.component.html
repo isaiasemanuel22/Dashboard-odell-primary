@@ -47,6 +47,12 @@
             <dd>{{ supplyCost | currencyArs }}</dd>
           </div>
         }
+        @if ((vm.costBreakdown?.errorMarginCost ?? 0) > 0) {
+          <div>
+            <dt>Margen de error @if (errorMarginLabel) { <span>· {{ errorMarginLabel }}</span> }</dt>
+            <dd>{{ (vm.costBreakdown?.errorMarginCost ?? 0) | currencyArs }}</dd>
+          </div>
+        }
       } @else {
         <div>
           <dt>{{ materialLineLabel }} @if (gramsLabel) { <span>· {{ gramsLabel }}</span> }</dt>
@@ -93,11 +99,11 @@
       <p class="price-build__title">Cómo se arma el precio calculado</p>
       <dl class="price-lines">
         <div>
-          <dt>Costo sin insumos ni mano de obra {{ (vm.totalCost - labor - supplyCost) | currencyArs }} + {{ targetMarginPercent }} %</dt>
+          <dt>Costo sin insumos ni mano de obra {{ (vm.totalCost - labor - supplyCostWithError) | currencyArs }} + {{ targetMarginPercent }} %</dt>
           <dd>{{ (vm.price - supplyPrice - labor) | currencyArs }}</dd>
         </div>
         <div>
-          <dt>Insumos {{ supplyCost | currencyArs }} + 50 %</dt>
+          <dt>Insumos {{ supplyCost | currencyArs }} × 2 + margen de error</dt>
           <dd>{{ supplyPrice | currencyArs }}</dd>
         </div>
         <div>
@@ -128,7 +134,7 @@
         </div>
         @if (supplyCost > 0 && realMargin < targetMarginPercent) {
           <p class="price-margin__note">
-            Es menor al objetivo porque los insumos llevan +50 % y no el margen del área.
+            Es menor al objetivo porque los insumos llevan × 2 y no el margen del área.
           </p>
         }
       }
@@ -176,7 +182,7 @@
       </div>
       <p class="price-note">{{ unitPriceHint(vm.price, vm.totalCost, vm.costBreakdown?.laborCost ?? 0) }}</p>
       @if (supplyCost > 0 && !(facade.isCombo && priceManual)) {
-        <p class="price-note">Insumos (+50 %) en el precio: {{ supplyPrice | currencyArs }}</p>
+        <p class="price-note">Insumos (× 2 + margen de error) en el precio: {{ supplyPrice | currencyArs }}</p>
       }
       @if (priceMode === 'fixed') {
         <button type="button" class="unit-price__reset" (click)="resetUnitPrice()">
@@ -232,7 +238,7 @@
           }
           @if (supplyPrice > 0) {
             <div>
-              <span>Insumos (+50 %)</span>
+              <span>Insumos (× 2 + margen de error)</span>
               <strong>{{ supplyPrice | currencyArs }}</strong>
             </div>
           }

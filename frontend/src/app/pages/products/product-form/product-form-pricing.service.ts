@@ -21,7 +21,11 @@ import {
   priceFromCostAndMargin,
   totalCostFromBreakdown,
 } from '../../../shared/utils/pricing.util';
-import { supplyPriceFromValue } from '../../../shared/utils/supply-line-value.util';
+import {
+  supplyCostFromValue,
+  supplyErrorFromValue,
+  supplyPriceFromValue,
+} from '../../../shared/utils/supply-line-value.util';
 import { totalFdmFilamentGrams, hasValidFdmFilamentInput } from '../../../shared/utils/fdm.helpers';
 import {
   componentsCostTotal,
@@ -180,7 +184,7 @@ export class ProductFormPricingService {
       components: form.controls.components.value,
     });
     if (usesFormPieceAssembly(form)) {
-      return base + this.catalogSupplyValue();
+      return base + this.catalogSupplyCost();
     }
     return base;
   }
@@ -189,7 +193,7 @@ export class ProductFormPricingService {
     if (!this.context) return 0;
     const form = this.context.form;
     const suggestedPrice = form.controls.suggestedPrice.value;
-    // Los insumos entran al precio a costo × 1,5 (§16.3).
+    // Los insumos entran al precio a costo × 2 (§16.3).
     const supplyPrice = this.catalogSupplyPrice();
 
     if (suggestedPrice != null && Number(suggestedPrice) > 0) {
@@ -587,13 +591,18 @@ export class ProductFormPricingService {
         settings && assemblyHours > 0
           ? Math.round(assemblyHours * settings.laborCostPerHour)
           : 0;
+      const supplyValue = this.catalogSupplyValue();
+      const supplyError = supplyErrorFromValue(
+        supplyValue,
+        this.errorMarginPercent(),
+      );
       this.cost = partsCost + laborCost;
       this.computedPrice = this.assemblyPrice(this.cost, laborCost);
       this.costBreakdown = {
         materialCost: partsCost,
         energyCost: 0,
         machineCost: 0,
-        errorMarginCost: 0,
+        errorMarginCost: supplyError,
         laborCost,
         totalCost: partsCost + laborCost,
       };
@@ -607,11 +616,12 @@ export class ProductFormPricingService {
       return;
     }
 
-    // costValue incluye insumos: el margen va solo sobre el costo de proceso.
+    // costValue incluye valor + error de insumos: el margen va solo sobre el proceso.
     const supplyValue = this.catalogSupplyValue();
+    const supplyCost = this.catalogSupplyCost();
     const result = this.productPricing.priceWithSupplies(
       this.buildPricingInput(),
-      Math.max(0, costValue - supplyValue),
+      Math.max(0, costValue - supplyCost),
       supplyValue,
       this.context.catalogProducts,
       settings,
@@ -699,17 +709,26 @@ export class ProductFormPricingService {
       this.pricingStore.clearCostContribution('production');
       const assemblySupply = this.catalogSupplyValue();
       if (assemblySupply > 0) {
+        // «supplies» = valor; el error del insumo va en supplyError para el total.
         this.pricingStore.setCostContribution('supplies', assemblySupply);
+        const supplyError = this.catalogSupplyCost() - assemblySupply;
+        if (supplyError > 0) {
+          this.pricingStore.setCostContribution('supplyError', supplyError);
+        } else {
+          this.pricingStore.clearCostContribution('supplyError');
+        }
       } else {
         this.pricingStore.clearCostContribution('supplies');
+        this.pricingStore.clearCostContribution('supplyError');
       }
       this.pricingStore.setComponentsPrice(partsPrice);
       this.pricingStore.setCostBreakdown(this.costBreakdown);
     } else {
       this.pricingStore.setCostBreakdown(this.costBreakdown);
       this.pricingStore.clearCostContribution('components');
+      this.pricingStore.clearCostContribution('supplyError');
       this.pricingStore.setComponentsPrice(0);
-      // Los insumos van aparte: el margen solo corre sobre el costo de proceso.
+      // supplies = valor; production = proceso + error del insumo (total = effectiveCost).
       const supplyValue = this.catalogSupplyValue();
       this.pricingStore.setCostContribution(
         'production',
@@ -758,9 +777,14 @@ export class ProductFormPricingService {
     return this.catalogSupplyValue();
   }
 
-  /** Precio de los insumos de catálogo (costo × 1,5). */
+  /** Precio de los insumos de catálogo (valor × 2 + error). */
   supplyPrice(): number {
     return this.catalogSupplyPrice();
+  }
+
+  /** Costo de insumos con margen de error (valor + error). */
+  supplyCostWithError(): number {
+    return this.catalogSupplyCost();
   }
 
   /** El número del campo es el precio unitario. El sugerido guarda solo el proceso. */
@@ -813,16 +837,32 @@ export class ProductFormPricingService {
     return this.catalogSupplyPrice();
   }
 
-  /** Precio de insumos del catálogo: costo × 1,5 (§16.3). */
+  /** Precio de insumos del catálogo: valor × 2 + error (§16.3). */
   private catalogSupplyPrice(): number {
-    return supplyPriceFromValue(this.catalogSupplyValue());
+    return supplyPriceFromValue(
+      this.catalogSupplyValue(),
+      this.errorMarginPercent(),
+    );
   }
 
-  /** Costo de insumos del catálogo: cantidad × precio unitario, sin margen. */
+  /** Costo de insumos: valor + error del insumo (§16.3). */
+  private catalogSupplyCost(): number {
+    return supplyCostFromValue(
+      this.catalogSupplyValue(),
+      this.errorMarginPercent(),
+    );
+  }
+
+  /** Valor de insumos del catálogo: cantidad × precio unitario (sin error). */
   private catalogSupplyValue(): number {
     if (!this.context) return 0;
     return this.productCost.supplyLinesValue(
       this.context.form.controls.supplyLines.value,
     );
+  }
+
+  private errorMarginPercent(): number {
+    const settings = this.settingsFacade.peekGeneralSettings();
+    return Number(settings?.errorMarginPercent) || 0;
   }
 }

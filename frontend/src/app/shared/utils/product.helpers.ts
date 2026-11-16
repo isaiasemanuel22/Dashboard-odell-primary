@@ -10,7 +10,7 @@ import {
   ServiceType,
 } from '../../core/models';
 import { isDesignService } from './service-type.util';
-import { supplyLinesPrice, supplyLinesValue } from './supply-line-value.util';
+import { supplyLinesCost, supplyLinesPrice } from './supply-line-value.util';
 
 export function normalizeProductComponents(
   raw: ProductComponent[] | unknown,
@@ -169,6 +169,8 @@ export function productUsesPieceAssembly(
 export interface ProductUnitCostOptions {
   laborCostPerHour?: number;
   supplyUnitPrice?: (supplyId: string) => number;
+  /** Margen de error de Ajustes para insumos propios del combo (§16.3). */
+  errorMarginPercent?: number;
 }
 
 export function resolveProductUnitCost(
@@ -207,12 +209,13 @@ export function resolveProductUnitCost(
     Math.max(0, assemblyHours) * (Number(options.laborCostPerHour) || 0),
   );
   const supplies = options.supplyUnitPrice
-    ? supplyLinesValue(
+    ? supplyLinesCost(
         // Insumos propios del combo: `supplies` (fallback legado `estampadoSupplies`).
         (product as { supplies?: EstampadoSupplyLine[] }).supplies ??
           (product as { estampadoSupplies?: EstampadoSupplyLine[] })
             .estampadoSupplies,
         options.supplyUnitPrice,
+        options.errorMarginPercent,
       )
     : 0;
   return partsCost + assembly + supplies;
@@ -257,7 +260,7 @@ export function resolveProductUnitPrice(
   visiting.delete(product.id);
 
   if (!options) return partsPrice;
-  // Igual que el backend (§16.1.3): armado sin margen + insumos propios × 1,5.
+  // Igual que el backend (§16.1.3): armado sin margen + insumos propios × 2.
   const assembly = Math.round(
     Math.max(0, Number((product as Product).assemblyTimeHours) || 0) *
       (Number(options.laborCostPerHour) || 0),
@@ -268,6 +271,7 @@ export function resolveProductUnitPrice(
           (product as { estampadoSupplies?: EstampadoSupplyLine[] })
             .estampadoSupplies,
         options.supplyUnitPrice,
+        options.errorMarginPercent,
       )
     : 0;
   return partsPrice + assembly + ownSupplies;
