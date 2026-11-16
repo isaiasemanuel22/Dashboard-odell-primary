@@ -8,7 +8,7 @@ import {
   averageFilamentPriceByType,
   resolveFilamentMaterialPrice,
 } from './material-type-price.util';
-import { calculateErrorMarginCost } from './pricing.util';
+import { calculateErrorMarginCost, priceFromCostAndMargin } from './pricing.util';
 import { calcPurgeCost } from './cost-material.util';
 import {
   calculateMachineOverhead,
@@ -198,5 +198,68 @@ describe('paridad de costo con el API', () => {
         unitCost: 4467,
       }),
     ).toBe(false);
+  });
+});
+
+/**
+ * §16.3 — Leyenda «Calculado» en línea de pedido/presupuesto con insumos.
+ *
+ * Los insumos no llevan el margen del área: se extraen del costo total antes
+ * de aplicar el margen, y se suman al precio con su propia fórmula (valor × 2 + error).
+ *
+ * procesoCostoTotal = unitCost − supplyValue − supplyError
+ * calculado = priceFromCostAndMargin(procesoCostoTotal, margin, labor)
+ *           + supplyPriceFromValue(supplyValue, errorPercent)
+ *
+ * Mismo cálculo que syncEstampadoQuotePricing / syncFdmQuotePricing (líneas de pedido).
+ */
+describe('calculatedUnitPrice con insumos (§16.3): margen solo sobre el proceso', () => {
+  // Escenario: taza $2.500, error 30 %, margen área 100 %.
+  // Proceso: processCostNoLabor=500, labor=500 → processCost=1000.
+  // totalCost = 1000 + supplyCostFromValue(2500, 30) = 1000 + 3250 = 4250.
+
+  const supplyValue = 2500;
+  const errorPercent = 30;
+  const areaMargin = 100;
+  const labor = 500;
+
+  it('supplyError = 30 % de $2.500 = $750', () => {
+    expect(supplyErrorFromValue(supplyValue, errorPercent)).toBe(750);
+  });
+
+  it('extrae el insumo del costo total y recalcula: precio correcto $7.250 (no $8.000)', () => {
+    const totalCost = 1000 + supplyCostFromValue(supplyValue, errorPercent); // 4250
+
+    // Fórmula correcta (§16.3): margen solo sobre el proceso.
+    const supplyError = supplyErrorFromValue(supplyValue, errorPercent);     // 750
+    const processCost = totalCost - supplyValue - supplyError;               // 1000
+    const correct =
+      priceFromCostAndMargin(processCost, areaMargin, labor) +
+      supplyPriceFromValue(supplyValue, errorPercent);
+    // = (1000-500)×2+500 + (5000+750) = 1500 + 5750 = 7250
+    expect(correct).toBe(7250);
+
+    // Fórmula incorrecta (aplica margen sobre todo el costo, incluido insumo y su error).
+    const wrong = priceFromCostAndMargin(totalCost, areaMargin, labor);
+    // = (4250-500)×2+500 = 7500+500 = 8000
+    expect(wrong).toBe(8000);
+
+    // La diferencia es exactamente el supplyError cuando el margen es 100 % (§16.3).
+    expect(wrong - correct).toBe(supplyError);
+  });
+
+  it('sin insumos la fórmula no cambia: priceFromCostAndMargin normal', () => {
+    // processCost=1000, margen 100%, labor 500 → (500)×2+500 = 1500.
+    expect(priceFromCostAndMargin(1000, areaMargin, labor)).toBe(1500);
+  });
+
+  it('con insumos sin precio (valor=0) el resultado es igual a sin insumos', () => {
+    const noSupplyPrice = 0;
+    const supplyError = supplyErrorFromValue(noSupplyPrice, errorPercent);   // 0
+    const processCost = 1000 - noSupplyPrice - supplyError;                  // 1000
+    const result =
+      priceFromCostAndMargin(processCost, areaMargin, labor) +
+      supplyPriceFromValue(noSupplyPrice, errorPercent);
+    expect(result).toBe(1500);
   });
 });

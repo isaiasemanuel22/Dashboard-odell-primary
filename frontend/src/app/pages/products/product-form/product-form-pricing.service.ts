@@ -284,13 +284,16 @@ export class ProductFormPricingService {
         ? Math.round(assemblyHours * settings.laborCostPerHour)
         : 0;
 
+    const supplyValue = this.catalogSupplyValue();
+    const supplyError = supplyErrorFromValue(supplyValue, this.errorMarginPercent());
+
     this.cost = partsCost + laborCost;
     this.computedPrice = this.assemblyPrice(this.cost, laborCost);
     this.costBreakdown = {
       materialCost: partsCost,
       energyCost: 0,
       machineCost: 0,
-      errorMarginCost: 0,
+      errorMarginCost: supplyError,
       laborCost,
       totalCost: partsCost + laborCost,
     };

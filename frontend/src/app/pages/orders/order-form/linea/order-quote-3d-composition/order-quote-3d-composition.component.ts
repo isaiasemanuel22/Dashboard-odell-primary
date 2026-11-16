@@ -143,7 +143,11 @@ export class OrderQuote3dCompositionComponent implements OnInit {
   get errorMarginMeta(): string {
     if (!this.generalSettings) return 'Cargando Ajustes…';
     const purge = Math.max(0, Number(this.line.purgeGrams) || 0);
-    const hasSupplies = this.suppliesCost > 0;
+    // Verificar presencia de insumos (no solo costo, que depende de que los precios estén cargados).
+    const displayedSupplies = lineSuppliesForDisplay(this.line, this.product);
+    const hasSupplies = displayedSupplies.some(
+      (e) => !!e.supplyId && (Number(e.quantity) || 0) > 0,
+    );
     if (purge > 0 && hasSupplies) {
       return `${this.errorMarginPercent}% sobre material, purga, luz, máquina e insumos`;
     }

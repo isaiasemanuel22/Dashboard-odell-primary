@@ -54,6 +54,8 @@ import { serviceTypeLabel } from '../../../../shared/constants/labels';
 import {
   isCatalogInsumo,
   supplyErrorFromValue,
+  supplyPriceFromValue,
+  supplyLinesValue,
 } from '../../../../shared/utils/supply-line-value.util';
 import { CurrencyArsPipe } from '../../../../shared/pipes/labels.pipe';
 import {
@@ -104,6 +106,7 @@ import {
   lineHasCatalogSupplies,
   isResinQuoteConfigured,
   isResinQuoteLine,
+  lineSuppliesForDisplay,
   shouldShowFdmQuoteFields,
   syncFdmQuotePricing,
 } from '../../../../shared/utils/order-fdm-quote.util';
@@ -590,7 +593,7 @@ export class OrderFormLineComponent implements OnInit {
     }
     if (this.variant === 'quote') {
       if (isEstampadoLine(this.line.serviceType)) {
-        return 'Calculado: impresos + insumos + plancha';
+        return 'Calculado: impresos + plancha + mano de obra + margen de error + insumos';
       }
       if (isImpresion3DLine(this.line.serviceType)) {
         return 'Calculado: material + impresión + mano de obra + error + insumos';
@@ -1404,6 +1407,35 @@ export class OrderFormLineComponent implements OnInit {
       (Number(this.line.workTimeHours) || 0) *
         (Number(this.generalSettings?.laborCostPerHour) || 0),
     );
+    const percent = this.errorMarginPercent;
+    // Los insumos no llevan el margen del área (§16.3): se extraen del costo antes de aplicar
+    // el margen, y se suman al precio con su propia fórmula (valor × 2 + error).
+    if (isEstampadoLine(this.line.serviceType) && isEstampadoQuoteConfigured(this.line)) {
+      const supplyValue = this.estampadoCosts().supplies;
+      if (supplyValue > 0) {
+        const supplyError = supplyErrorFromValue(supplyValue, percent);
+        const processCost = cost - supplyValue - supplyError;
+        return (
+          priceFromCostAndMargin(Math.max(0, processCost), margin, labor) +
+          supplyPriceFromValue(supplyValue, percent)
+        );
+      }
+    }
+    if (isImpresion3DLine(this.line.serviceType)) {
+      const supplyLines = lineSuppliesForDisplay(this.line, this.product);
+      const supplyValue = supplyLinesValue(supplyLines, (id) => {
+        const supply = this.supplies.find((s) => s.id === id);
+        return supply ? Number(supply.unitPrice) || 0 : 0;
+      });
+      if (supplyValue > 0) {
+        const supplyError = supplyErrorFromValue(supplyValue, percent);
+        const processCost = cost - supplyValue - supplyError;
+        return (
+          priceFromCostAndMargin(Math.max(0, processCost), margin, labor) +
+          supplyPriceFromValue(supplyValue, percent)
+        );
+      }
+    }
     return priceFromCostAndMargin(cost, margin, labor);
   }
 
