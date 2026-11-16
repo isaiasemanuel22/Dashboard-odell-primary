@@ -27,6 +27,7 @@ import { FormDialogService } from '../../modals/public-api';
 import {
   DB_DATA_TABLE,
   DbButtonComponent,
+  DbStateMessageComponent,
   DbSkeletonComponent,
   MobileBarComponent,
   MobileCardLinkComponent,
@@ -79,6 +80,7 @@ interface CustomerOrderStats {
   imports: [
     FormsModule,
     DbButtonComponent,
+    DbStateMessageComponent,
     DbSkeletonComponent,
     MobileBarComponent,
     MobileListToolbarComponent,
@@ -109,6 +111,7 @@ export class CustomersComponent implements OnInit {
     );
 
   customers: Customer[] = [];
+  loadError = false;
   loading = true;
   search = '';
   mobileChip: CustomersMobileChip = 'all';
@@ -271,6 +274,7 @@ export class CustomersComponent implements OnInit {
 
   loadCustomers(): void {
     this.loading = true;
+    this.loadError = false;
     this.cdr.markForCheck();
     // Siempre desde API para traer type / wholesaleMinimum (el cache de
     // reference-data a veces no los incluye).
@@ -290,6 +294,7 @@ export class CustomersComponent implements OnInit {
       },
       error: () => {
         this.loading = false;
+        this.loadError = true;
         this.cdr.markForCheck();
       },
     });

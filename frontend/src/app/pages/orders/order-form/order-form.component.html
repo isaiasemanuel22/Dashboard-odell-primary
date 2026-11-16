@@ -75,7 +75,7 @@
               </p>
             </header>
               <div class="order-lines">
-                @for (line of lines; track $index; let i = $index) {
+                @for (line of lines; track line.uiId; let i = $index) {
                   <app-order-form-line
                     [line]="line"
                     [lineIndex]="i"
@@ -288,7 +288,7 @@
               </p>
             </header>
               <div class="order-lines">
-                @for (line of lines; track $index; let i = $index) {
+                @for (line of lines; track line.uiId; let i = $index) {
                   <app-order-form-line
                     [line]="line"
                     [lineIndex]="i"

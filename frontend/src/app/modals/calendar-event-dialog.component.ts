@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   HostListener,
   OnInit,
   inject,
@@ -39,6 +40,7 @@ import { FormDialogShellComponent } from './form-dialog-shell/form-dialog-shell.
 import { FormDialogService } from './form-dialog.service';
 import { CalendarEventWeekdaysComponent } from './calendar-event-weekdays/calendar-event-weekdays.component';
 import { extractApiErrorMessage } from '../shared/utils/api-error';
+import { guardDialogDismiss } from './dialog-dismiss-guard';
 import { confirmMobileFormDiscard } from '../components/mobile-form-shell/confirm-mobile-form-discard';
 import { forkJoin, of } from 'rxjs';
 import { catchError } from 'rxjs/operators';
@@ -78,6 +80,7 @@ export class CalendarEventDialogComponent implements OnInit {
   private readonly dialogRef = inject(DialogRef<CalendarEntry | undefined>);
   private readonly data = inject<CalendarEventDialogData>(DIALOG_DATA);
   private readonly cdr = inject(ChangeDetectorRef);
+  private readonly destroyRef = inject(DestroyRef);
 
   readonly kindOptions: DbSegmentOption<CalendarEntryKind>[] = [
     {
@@ -240,6 +243,7 @@ export class CalendarEventDialogComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    guardDialogDismiss(this.dialogRef, this.destroyRef, () => this.cancel());
     const entry = this.data.entry;
     if (entry) {
       this.kind = entry.kind;

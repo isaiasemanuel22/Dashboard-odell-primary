@@ -6,6 +6,8 @@ import { lineFromOrderItem } from './order.helpers';
 import {
   QUOTE_EXPIRED_LABEL,
   isQuoteExpired,
+  quoteValidUntilLong,
+  quoteValidUntilParts,
   quoteValidUntilYmd,
 } from './quote-validity.util';
 
@@ -114,24 +116,7 @@ export function matchesQuoteMobileSheetFilters(
 
 /** Validez del presupuesto: quotedAt + 15 días (misma regla que el formulario). */
 export function formatQuoteValidityLabel(quotedAt?: string | Date | null): string {
-  const base = new Date(quotedAt ?? Date.now());
-  const validUntil = new Date(base);
-  validUntil.setDate(validUntil.getDate() + 15);
-  const months = [
-    'ene',
-    'feb',
-    'mar',
-    'abr',
-    'may',
-    'jun',
-    'jul',
-    'ago',
-    'sep',
-    'oct',
-    'nov',
-    'dic',
-  ];
-  return `Válido hasta el ${validUntil.getDate()} de ${months[validUntil.getMonth()]} de ${validUntil.getFullYear()}`;
+  return quoteValidUntilLong(quotedAt);
 }
 
 /** Chip de la lista mobile: Abiertos, Vencidos, cada QuoteStatus y Todos. */
@@ -163,10 +148,8 @@ export function matchesQuoteMobileChip(
 export function formatQuoteMobileValidityShort(
   quotedAt?: string | Date | null,
 ): string {
-  const base = new Date(quotedAt ?? Date.now());
-  const validUntil = new Date(base);
-  validUntil.setDate(validUntil.getDate() + 15);
-  return `Válido hasta ${validUntil.getDate()}/${validUntil.getMonth() + 1}`;
+  const { day, month } = quoteValidUntilParts(quotedAt);
+  return `Válido hasta ${day}/${month}`;
 }
 
 /** Línea de contexto de la tarjeta mobile. */

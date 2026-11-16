@@ -49,6 +49,8 @@ export class DbInputComponent implements ControlValueAccessor, OnChanges {
   @Input() list?: string;
   @Input() autocomplete = 'off';
   @Input() id = '';
+  /** Teclado virtual; en type="number" el valor por defecto es «decimal». */
+  @Input() inputmode?: string;
 
   private readonly autoId = `db-input-${++dbInputId}`;
 
@@ -67,6 +69,26 @@ export class DbInputComponent implements ControlValueAccessor, OnChanges {
     if (changes['disabled'] && this.disabled) {
       this.onTouched();
     }
+  }
+
+  get resolvedInputmode(): string | null {
+    if (this.inputmode) return this.inputmode;
+    return this.type === 'number' ? 'decimal' : null;
+  }
+
+  get resolvedAutocapitalize(): string | null {
+    return this.type === 'email' ||
+      this.type === 'password' ||
+      (this.type as string) === 'url'
+      ? 'off'
+      : null;
+  }
+
+  get describedBy(): string | null {
+    const ids: string[] = [];
+    if (this.error) ids.push(`${this.inputId}-err`);
+    if (this.hint) ids.push(`${this.inputId}-hint`);
+    return ids.length ? ids.join(' ') : null;
   }
 
   get inputClass(): string {

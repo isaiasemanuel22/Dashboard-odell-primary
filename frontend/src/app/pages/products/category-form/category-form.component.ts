@@ -7,7 +7,7 @@ import {
   SimpleChanges,
 } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ProductType } from '../../../core/models';
+import { Category, ProductType } from '../../../core/models';
 import { productTypeOptions } from '../../../shared/utils/select-options';
 import {
   DbCheckboxComponent,
@@ -39,6 +39,8 @@ export class CategoryFormComponent implements OnChanges {
   @Input() loading = false;
   @Input() error = '';
   @Input() presetProductType?: ProductType;
+  /** Categoría a editar; sin ella el formulario crea una nueva. */
+  @Input() category: Category | null = null;
   @Output() save = new EventEmitter<{
     name: string;
     productTypes: ProductType[];
@@ -51,9 +53,29 @@ export class CategoryFormComponent implements OnChanges {
   readonly typeOptions = productTypeOptions();
 
   ngOnChanges(changes: SimpleChanges): void {
+    if (changes['category'] && this.category) {
+      this.name = this.category.name;
+      this.selectedTypes = [...this.category.productTypes];
+      this.initialSignature = this.signature();
+      return;
+    }
     if (changes['presetProductType'] && this.presetProductType) {
       this.selectedTypes = [this.presetProductType];
+      this.initialSignature = this.signature();
     }
+  }
+
+  private initialSignature = this.signature();
+
+  private signature(): string {
+    return JSON.stringify([
+      this.name.trim(),
+      [...this.selectedTypes].sort(),
+    ]);
+  }
+
+  hasUnsavedChanges(): boolean {
+    return this.signature() !== this.initialSignature;
   }
 
   toggleType(type: ProductType): void {

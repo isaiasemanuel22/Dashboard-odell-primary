@@ -5,7 +5,7 @@
         <li class="cart-line">
           <span class="cart-line__thumb" aria-hidden="true">
             @if (imageFor(line); as src) {
-              <img [src]="src" alt="" />
+              <img [src]="src" alt="" width="44" height="44" loading="lazy" decoding="async" />
             } @else {
               Img
             }

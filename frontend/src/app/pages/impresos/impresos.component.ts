@@ -4,6 +4,8 @@ import { ImpresoWithCost, PaperType, CreateImpresoPayload } from '../../core/mod
 import { ImpresosService } from '../../core/services/impresos.service';
 import { PAPER_TYPE_LABELS } from '../../shared/constants/labels';
 import { formatPrintDimensionsCm } from '../../shared/utils/estampado.helpers';
+import { FormDialogService } from '../../modals/form-dialog.service';
+import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import { ImpresoFormComponent } from './impreso-form/impreso-form.component';
 import {
   DB_DATA_TABLE,
@@ -28,6 +30,7 @@ import { normalizeSearchText } from '../../shared/utils/search-text.util';
 })
 export class ImpresosComponent implements OnInit {
   private readonly impresosService = inject(ImpresosService);
+  private readonly formDialogs = inject(FormDialogService);
 
   impresos: ImpresoWithCost[] = [];
   loading = true;
@@ -38,6 +41,7 @@ export class ImpresosComponent implements OnInit {
   editing: ImpresoWithCost | null = null;
   formLoading = false;
   formError = '';
+  listError = '';
 
   readonly typeFilters: { value: PaperFilter; label: string }[] = [
     { value: 'all', label: 'Todos' },
@@ -136,10 +140,26 @@ export class ImpresosComponent implements OnInit {
   }
 
   deleteImpreso(item: ImpresoWithCost): void {
-    if (!confirm(`¿Eliminar "${item.name}"?`)) return;
-    this.impresosService.deleteImpreso(item.id).subscribe(() => {
-      this.loadImpresos();
-    });
+    this.formDialogs
+      .openConfirm({
+        title: 'Eliminar impreso',
+        message: `¿Eliminar "${item.name}"?`,
+        confirmLabel: 'Eliminar',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        this.listError = '';
+        this.impresosService.deleteImpreso(item.id).subscribe({
+          next: () => this.loadImpresos(),
+          error: (err) => {
+            this.listError = extractApiErrorMessage(
+              err,
+              'No se pudo eliminar el impreso',
+            );
+          },
+        });
+      });
   }
 
   formatDimensions(item: ImpresoWithCost): string {

@@ -313,7 +313,7 @@
       border: 0;
       outline: 0;
       font-family: inherit;
-      font-size: 14px;
+      font-size: 16px;
       flex: 1;
       min-width: 0;
       background: transparent;
@@ -520,5 +520,16 @@
     display: inline-flex;
     align-items: center;
     min-height: 44px;
+  }
+
+  // iOS hace zoom al enfocar un campo con menos de 16px.
+  .form-field input,
+  .form-field textarea,
+  .modal input:not([type='checkbox']):not([type='file']),
+  .modal textarea,
+  .modal select,
+  .search-input,
+  .category-select {
+    font-size: 16px;
   }
 }

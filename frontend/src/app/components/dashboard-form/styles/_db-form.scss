@@ -55,6 +55,11 @@
   gap: 0.35rem;
 }
 
+// Región aria-live siempre presente; vacía no debe sumar el gap del flex.
+.db-form-field__live:empty {
+  margin-top: -0.35rem;
+}
+
 .db-input,
 .db-textarea {
   padding: 0.6rem 0.75rem;

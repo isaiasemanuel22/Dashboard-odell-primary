@@ -28,6 +28,7 @@ import { FormDialogService } from '../../modals/public-api';
 import {
   DB_DATA_TABLE,
   DbButtonComponent,
+  DbStateMessageComponent,
   DbSkeletonComponent,
   MobileBarComponent,
   MobileListToolbarComponent,
@@ -80,6 +81,7 @@ interface QuotesMobileListState {
   imports: [
     FormsModule,
     DbButtonComponent,
+    DbStateMessageComponent,
     DbSkeletonComponent,
     MobileBarComponent,
     MobileListToolbarComponent,
@@ -104,6 +106,7 @@ export class QuotesComponent implements OnInit {
     injectMobileListPersistence<QuotesMobileListState>(MOBILE_LIST_KEYS.quotes);
 
   quotes: Quote[] = [];
+  loadError = false;
   loading = true;
   search = '';
   mobileChip: QuoteMobileChip = 'abiertos';
@@ -261,6 +264,7 @@ export class QuotesComponent implements OnInit {
 
   loadQuotes(): void {
     this.loading = true;
+    this.loadError = false;
     this.cdr.markForCheck();
     this.quotesService.getQuotes().subscribe({
       next: (quotes) => {
@@ -271,6 +275,7 @@ export class QuotesComponent implements OnInit {
       },
       error: () => {
         this.loading = false;
+        this.loadError = true;
         this.cdr.markForCheck();
       },
     });

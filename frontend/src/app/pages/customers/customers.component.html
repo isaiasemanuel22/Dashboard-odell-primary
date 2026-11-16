@@ -35,6 +35,16 @@
   <div class="m-body customers-m__list">
     @if (loading) {
       <db-skeleton variant="cards" [count]="4" />
+    } @else if (loadError) {
+      <div class="m-card customers-m__empty">
+        <p>No se pudieron cargar los clientes.</p>
+        <db-button
+          label="Reintentar"
+          variant="secondary"
+          format="soft"
+          (clicked)="loadCustomers()"
+        />
+      </div>
     } @else if (filteredMobileCustomers.length === 0) {
       <div class="m-card customers-m__empty">
         <p>No hay clientes registrados.</p>
@@ -90,27 +100,42 @@
     />
   </header>
 
-  <db-data-table
-    label="Clientes"
-    [rows]="customers"
-    [columns]="columns"
-    [actions]="actions"
-    [filters]="kindFilters"
-    [loading]="loading"
-    searchPlaceholder="Buscar por nombre, email o teléfono"
-    emptyText="No hay clientes registrados."
-    emptyActionLabel="Crear primer cliente"
-    [clickableRows]="true"
-    (rowClick)="openCustomer($event)"
-    (action)="onAction($event)"
-    (emptyAction)="openCreateCustomer()"
-  >
-    <ng-template odlCell="email" let-customer>
-      @if (customer.email) {
-        <a [href]="'mailto:' + customer.email">{{ customer.email }}</a>
-      } @else {
-        —
-      }
-    </ng-template>
-  </db-data-table>
+  @if (loadError && !loading) {
+    <db-state-message
+      [empty]="true"
+      emptyMessage="No se pudieron cargar los clientes."
+    >
+      <db-button
+        emptyActions
+        label="Reintentar"
+        variant="secondary"
+        format="soft"
+        (clicked)="loadCustomers()"
+      />
+    </db-state-message>
+  } @else {
+    <db-data-table
+      label="Clientes"
+      [rows]="customers"
+      [columns]="columns"
+      [actions]="actions"
+      [filters]="kindFilters"
+      [loading]="loading"
+      searchPlaceholder="Buscar por nombre, email o teléfono"
+      emptyText="No hay clientes registrados."
+      emptyActionLabel="Crear primer cliente"
+      [clickableRows]="true"
+      (rowClick)="openCustomer($event)"
+      (action)="onAction($event)"
+      (emptyAction)="openCreateCustomer()"
+    >
+      <ng-template odlCell="email" let-customer>
+        @if (customer.email) {
+          <a [href]="'mailto:' + customer.email">{{ customer.email }}</a>
+        } @else {
+          —
+        }
+      </ng-template>
+    </db-data-table>
+  }
 </div>

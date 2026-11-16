@@ -254,6 +254,7 @@ export class FormDialogService {
 
   openCategory(
     presetProductType?: ProductType,
+    category: Category | null = null,
   ): Observable<Category | undefined> {
     return from(
       import('./category-form-dialog/category-form-dialog.component'),
@@ -262,9 +263,9 @@ export class FormDialogService {
         ({ CategoryFormDialogComponent }): Observable<Category | undefined> =>
           this.open(
             CategoryFormDialogComponent,
-            { presetProductType },
+            { presetProductType, category },
             'md',
-            { ariaLabel: 'Nueva categoría' },
+            { ariaLabel: category ? 'Editar categoría' : 'Nueva categoría' },
           ),
       ),
     );

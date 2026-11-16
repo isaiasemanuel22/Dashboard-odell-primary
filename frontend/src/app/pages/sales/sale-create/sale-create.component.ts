@@ -76,6 +76,7 @@ export class SaleCreateComponent implements OnInit {
   }
 
   save(data: CreateRetailSalePayload): void {
+    if (this.loading) return;
     this.loading = true;
     this.error = '';
     this.cdr.markForCheck();
@@ -154,6 +155,13 @@ export class SaleCreateComponent implements OnInit {
             product.id,
             productStockOverview(product, undefined, products),
           ]),
+        );
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.error = extractApiErrorMessage(
+          err,
+          'No se pudieron cargar los productos. Volvé a abrir la pantalla para reintentar.',
         );
         this.cdr.markForCheck();
       },

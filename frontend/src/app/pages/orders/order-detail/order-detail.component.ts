@@ -9,6 +9,7 @@ import {
   ViewChild,
   inject,
 } from '@angular/core';
+import { CdkTrapFocus } from '@angular/cdk/a11y';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
@@ -113,6 +114,7 @@ type MobileAccordionKey = 'payments' | 'tasks' | 'deliveries' | 'history';
   selector: 'app-order-detail',
   standalone: true,
   imports: [
+    CdkTrapFocus,
     LossSaleNoticeComponent,
     DocumentAttachmentsViewComponent,
     FormsModule,

@@ -5,7 +5,7 @@
     [attr.aria-label]="resolvedAriaLabel()"
   >
     @if (imageUrl(); as src) {
-      <img class="mcl__av mcl__av--img" [src]="src" [alt]="imageAlt()" />
+      <img class="mcl__av mcl__av--img" [src]="src" [alt]="imageAlt()" width="40" height="40" loading="lazy" decoding="async" />
     } @else if (initials()) {
       <span class="mcl__av" aria-hidden="true">{{ initials() }}</span>
     }
@@ -52,7 +52,7 @@
     (click)="onPress()"
   >
     @if (imageUrl(); as src) {
-      <img class="mcl__av mcl__av--img" [src]="src" [alt]="imageAlt()" />
+      <img class="mcl__av mcl__av--img" [src]="src" [alt]="imageAlt()" width="40" height="40" loading="lazy" decoding="async" />
     } @else if (initials()) {
       <span class="mcl__av" aria-hidden="true">{{ initials() }}</span>
     }

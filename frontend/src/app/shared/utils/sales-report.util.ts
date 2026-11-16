@@ -69,7 +69,10 @@ export function buildSalesReportAreaSections(
       if (!area) continue;
 
       const economics = allocateSaleEntryItemEconomics(entry, item);
-      const key = normalizeProductKey(item.productName);
+      // Por id de producto (dos productos con el mismo nombre no se mezclan).
+      const key = item.productId
+        ? `id:${item.productId}`
+        : `name:${normalizeProductKey(item.productName)}`;
       const byProduct =
         grouped.get(area) ??
         new Map<string, SalesReportProductRow & { key: string }>();

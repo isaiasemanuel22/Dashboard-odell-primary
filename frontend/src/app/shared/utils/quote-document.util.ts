@@ -21,12 +21,12 @@ import {
   normalizeWholesaleDiscount,
   wholesalePriceFromList,
 } from './wholesale-example.util';
+import { quoteValidUntilYmd } from './quote-validity.util';
 import { STORE_QR_PATH } from './quote-document-qr';
 
 const PAGE_W = 794;
 const PAGE_H = 1123;
 export const DEPOSIT_FACTOR = 0.5;
-const VALIDITY_DAYS = 15;
 const LOGO_SRC = '/odell-logo-presupuesto.png';
 const FONT_HREF =
   'https://fonts.googleapis.com/css2?family=Ubuntu:wght@400;500;700&display=swap';
@@ -202,8 +202,7 @@ export function buildQuoteDocumentInput(
     chargedGross > 0 ? Math.max(chargedGross - discount, 0) / chargedGross : 1;
 
   const quotedAt = new Date(quote.quotedAt || quote.createdAt);
-  const validUntil = new Date(quotedAt);
-  validUntil.setDate(validUntil.getDate() + VALIDITY_DAYS);
+  const validUntil = new Date(`${quoteValidUntilYmd(quotedAt)}T12:00:00`);
 
   return {
     numberLabel: quoteNumberLabel(quote.id),

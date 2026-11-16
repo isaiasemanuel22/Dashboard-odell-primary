@@ -51,4 +51,37 @@ describe('sales-report.util', () => {
       }),
     ]);
   });
+
+  it('B7: agrupa por id de producto, no por nombre', () => {
+    const item = (productId: string, productName: string, quantity: number) => ({
+      productId,
+      productName,
+      quantity,
+      unitPrice: 1000,
+      lineTotal: 1000 * quantity,
+    });
+    const sections = buildSalesReportAreaSections(
+      [
+        {
+          id: 'retail-1',
+          source: SaleSource.RETAIL,
+          saleId: 'v-1',
+          items: [
+            item('p1', 'Taza', 1),
+            item('p2', 'Taza', 2),
+            item('p1', 'Taza (renombrada)', 3),
+          ],
+          total: 6000,
+          cost: 0,
+          profit: 6000,
+          soldAt: '2026-08-10T12:00:00.000Z',
+          editable: true,
+        },
+      ],
+      () => ({ type: ProductType.ESTAMPADO }),
+    );
+    const rows = sections[0]?.rows ?? [];
+    expect(rows.length).toBe(2);
+    expect(rows.map((row) => row.quantity).sort()).toEqual([2, 4]);
+  });
 });

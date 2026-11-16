@@ -49,7 +49,7 @@
 }
 
 <!-- Tabla -->
-<div class="odl-box">
+<div class="odl-box" role="region" [attr.aria-label]="label() || 'Tabla'" tabindex="0">
   <table class="odl-table" [style.min-width]="minWidth()" [attr.aria-label]="label()" [attr.aria-busy]="loading()">
     <thead>
       <tr>

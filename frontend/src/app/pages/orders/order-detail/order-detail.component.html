@@ -748,6 +748,8 @@
       role="dialog"
       aria-modal="true"
       aria-label="Vista ampliada de imagen"
+      cdkTrapFocus
+      [cdkTrapFocusAutoCapture]="true"
       (click)="closeImagePreview()"
     >
       <button

@@ -16,6 +16,7 @@ import {
   MobileDockComponent,
 } from '../mobile-dock/mobile-dock.component';
 import { LayoutUiService } from '../../layout/layout-ui.service';
+import { trapTabKey } from '../../layout/focus-trap.util';
 
 @Component({
   selector: 'db-mobile-sheet',
@@ -147,6 +148,10 @@ export class MobileSheetComponent implements OnChanges, OnDestroy {
     }
     if (!this.escapeHandler) {
       this.escapeHandler = (event: KeyboardEvent) => {
+        if (event.key === 'Tab') {
+          trapTabKey(event, this.sheetPanel?.nativeElement ?? null);
+          return;
+        }
         if (event.key !== 'Escape') return;
         event.preventDefault();
         this.requestClose();

@@ -69,6 +69,7 @@ import {
   DbButtonComponent,
 } from '@general-components';
 import { FormDialogService } from '../../../modals/public-api';
+import { quoteValidUntilLong } from '../../../shared/utils/quote-validity.util';
 import {
   detectLossSale,
   LossSaleItemInput,
@@ -350,11 +351,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   get quoteValidityLabel(): string {
-    const base = new Date(this.quote?.quotedAt ?? Date.now());
-    const validUntil = new Date(base);
-    validUntil.setDate(validUntil.getDate() + 15);
-    const months = ['ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago', 'sep', 'oct', 'nov', 'dic'];
-    return `Válido hasta el ${validUntil.getDate()} de ${months[validUntil.getMonth()]} de ${validUntil.getFullYear()}`;
+    return quoteValidUntilLong(this.quote?.quotedAt);
   }
 
   get linesHint(): string {
@@ -971,7 +968,11 @@ export class OrderFormComponent implements OnChanges, OnInit {
    * El servicio de un tercero se descuenta prorrateado (§16.3).
    */
   get profit(): number {
-    const items = buildOrderItems(this.billableLines, this.products);
+    const items = buildOrderItems(
+      this.billableLines,
+      this.products,
+      isLineBillable,
+    );
     return (
       detectLossSale(items, this.total).profit - this.paymentFeePreview
     );
@@ -1769,7 +1770,11 @@ export class OrderFormComponent implements OnChanges, OnInit {
     };
 
     // Venta a pérdida: el vendedor confirma y da un motivo (§16).
-    const loss = detectLossSale(items, this.total);
+    // Mismas líneas que total/totalCost (E135).
+    const loss = detectLossSale(
+      buildOrderItems(this.billableLines, this.products, isLineBillable),
+      this.total,
+    );
     if (!loss.isLoss) {
       this.emitSave(shared, asDraft);
       return;

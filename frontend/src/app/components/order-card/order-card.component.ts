@@ -18,6 +18,7 @@ import {
   OrderStatusLabelPipe,
   PlainTextPipe,
 } from '../../shared/pipes/labels.pipe';
+import { orderIsOverdue } from '../../shared/utils/order.helpers';
 import { DbButtonComponent } from '../db-button/db-button.component';
 import { DbServiceBadgeComponent } from '../db-service-badge/db-service-badge.component';
 
@@ -74,18 +75,7 @@ export class OrderCardComponent {
   }
 
   get isOverdue(): boolean {
-    if (
-      this.order.status === 'entregado' ||
-      this.order.status === 'cancelado'
-    ) {
-      return false;
-    }
-    const due = new Date(this.order.dueDate);
-    if (Number.isNaN(due.getTime())) return false;
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    due.setHours(0, 0, 0, 0);
-    return due < today;
+    return orderIsOverdue(this.order.dueDate, this.order.status);
   }
 
   toggleMenu(event: MouseEvent): void {

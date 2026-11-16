@@ -34,7 +34,7 @@
         (clicked)="cancel.emit()"
       />
       <db-button
-        [label]="loading ? 'Guardando...' : 'Crear categoría'"
+        [label]="loading ? 'Guardando...' : category ? 'Guardar' : 'Crear categoría'"
         variant="primary"
         format="solid"
         buttonType="submit"

@@ -85,6 +85,21 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
   lengthCm = 0;
   estimatedCost = 0;
 
+  private initialSignature = '';
+
+  private signature(): string {
+    return JSON.stringify([
+      this.name.trim(),
+      this.paperType,
+      Number(this.widthCm) || 0,
+      Number(this.lengthCm) || 0,
+    ]);
+  }
+
+  hasUnsavedChanges(): boolean {
+    return this.signature() !== this.initialSignature;
+  }
+
   private previewTimer: ReturnType<typeof setTimeout> | null = null;
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -155,6 +170,7 @@ export class ImpresoFormComponent implements OnChanges, OnDestroy {
       this.widthCm = 0;
       this.lengthCm = 0;
     }
+    this.initialSignature = this.signature();
     this.scheduleCostPreview();
   }
 

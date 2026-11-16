@@ -22,6 +22,10 @@
   <input type="search" [(ngModel)]="search" placeholder="Buscar..." class="search-input" />
 </div>
 
+@if (listError) {
+  <p class="list-error" role="alert">{{ listError }}</p>
+}
+
 @if (loading) {
   <div class="loading">Cargando impresos...</div>
 } @else {

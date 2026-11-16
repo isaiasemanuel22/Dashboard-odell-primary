@@ -55,3 +55,8 @@
     padding: 4px 16px 0;
   }
 }
+
+// Foco inicial programático en el panel (tabindex="-1"): sin anillo.
+:host .modal:focus {
+  outline: none;
+}

@@ -15,6 +15,7 @@ import {
   toDateInputValue,
 } from './order.helpers';
 import { discountValidationMessage } from './discount.util';
+import { detectLossSale } from './loss-sale.util';
 import type { OrderLineDraft } from '../../core/models';
 
 function baseLine(overrides: Partial<OrderLineDraft> = {}): OrderLineDraft {
@@ -235,5 +236,23 @@ describe('concepto obligatorio en línea manual (3D y Estampado)', () => {
         1,
       ),
     ).not.toContain('concepto de la línea 1');
+  });
+});
+
+describe('E135: ganancia con las mismas líneas que el total', () => {
+  it('una línea facturable sin concepto entra en el cálculo de ganancia', () => {
+    const line: OrderLineDraft = {
+      serviceType: ServiceType.IMPRESION_3D,
+      quantity: 2,
+      unitPrice: 1000,
+      unitCost: 400,
+    };
+    expect(isLineValid(line)).toBeFalse();
+    expect(isLineBillable(line)).toBeTrue();
+    expect(buildOrderItems([line], [])).toEqual([]);
+    const items = buildOrderItems([line], [], isLineBillable);
+    expect(items.length).toBe(1);
+    // total 2000 - costo 800
+    expect(detectLossSale(items, 2000).profit).toBe(1200);
   });
 });

@@ -40,6 +40,18 @@
     <div class="quotes-m__list">
       <db-skeleton variant="cards" [count]="3" />
     </div>
+  } @else if (loadError) {
+    <div class="quotes-m__list">
+      <div class="m-card quotes-m__empty">
+        <p>No se pudieron cargar los presupuestos.</p>
+        <db-button
+          label="Reintentar"
+          variant="secondary"
+          format="soft"
+          (clicked)="loadQuotes()"
+        />
+      </div>
+    </div>
   } @else if (mobileFilteredQuotes.length === 0) {
     <div class="quotes-m__list">
       <div class="m-card quotes-m__empty">
@@ -75,28 +87,43 @@
     />
   </header>
 
-  <db-data-table
-    label="Presupuestos"
-    [rows]="quotes"
-    [columns]="columns"
-    [actions]="actions"
-    [filters]="statusFilters"
-    [areaFilters]="serviceFilters"
-    filterPanelTitle="Filtrar presupuestos"
-    filterGroupLabel="Estado"
-    panelEntityOne="presupuesto"
-    panelEntityMany="presupuestos"
-    [loading]="loading"
-    [expandable]="true"
-    searchPlaceholder="Buscar por cliente o concepto"
-    [searchText]="searchText"
-    emptyText="No hay presupuestos registrados."
-    emptyActionLabel="Crear primer presupuesto"
-    (action)="onAction($event)"
-    (emptyAction)="openCreateQuote()"
-  >
-    <ng-template odlRowDetail let-quote>
-      <app-quote-card layout="detail" [quote]="quote" (edit)="openEditQuote($event)" />
-    </ng-template>
-  </db-data-table>
+  @if (loadError && !loading) {
+    <db-state-message
+      [empty]="true"
+      emptyMessage="No se pudieron cargar los presupuestos."
+    >
+      <db-button
+        emptyActions
+        label="Reintentar"
+        variant="secondary"
+        format="soft"
+        (clicked)="loadQuotes()"
+      />
+    </db-state-message>
+  } @else {
+    <db-data-table
+      label="Presupuestos"
+      [rows]="quotes"
+      [columns]="columns"
+      [actions]="actions"
+      [filters]="statusFilters"
+      [areaFilters]="serviceFilters"
+      filterPanelTitle="Filtrar presupuestos"
+      filterGroupLabel="Estado"
+      panelEntityOne="presupuesto"
+      panelEntityMany="presupuestos"
+      [loading]="loading"
+      [expandable]="true"
+      searchPlaceholder="Buscar por cliente o concepto"
+      [searchText]="searchText"
+      emptyText="No hay presupuestos registrados."
+      emptyActionLabel="Crear primer presupuesto"
+      (action)="onAction($event)"
+      (emptyAction)="openCreateQuote()"
+    >
+      <ng-template odlRowDetail let-quote>
+        <app-quote-card layout="detail" [quote]="quote" (edit)="openEditQuote($event)" />
+      </ng-template>
+    </db-data-table>
+  }
 </div>

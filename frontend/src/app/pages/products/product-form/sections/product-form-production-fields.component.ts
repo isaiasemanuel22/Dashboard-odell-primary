@@ -69,6 +69,10 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
   line: OrderLineDraft = this.createDraft(ProductType.FDM);
 
   private writing = false;
+  /** Listas de Estampado como las vio el form la última vez (E132). */
+  private syncedPrints: unknown = null;
+  private syncedSupplies: unknown = null;
+  private syncedCycles: unknown = null;
 
   ngOnInit(): void {
     this.suppliesService
@@ -167,6 +171,10 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
       },
       { emitEvent: true },
     );
+    const synced = this.form.getRawValue();
+    this.syncedPrints = structuredClone(synced.prints ?? []);
+    this.syncedSupplies = structuredClone(synced.supplyLines ?? []);
+    this.syncedCycles = structuredClone(synced.pressCycles ?? []);
     this.writing = false;
     this.cdr.markForCheck();
   }
@@ -218,15 +226,32 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
     }
 
     if (this.productType === ProductType.ESTAMPADO) {
+      // E132: si el form no cambió estas listas desde la última sincronización,
+      // lo escrito en `line` (todavía sin pasar al form) no se pisa.
+      const formPrints = v.prints ?? [];
+      const formSupplies = v.supplyLines ?? [];
+      const formCycles = v.pressCycles ?? [];
+      const keepLine = this.line.serviceType === draft.serviceType;
+      const prints = this.sameJson(formPrints, this.syncedPrints) && keepLine
+        ? this.line.estampadoPrints
+        : undefined;
+      const supplies = this.sameJson(formSupplies, this.syncedSupplies) && keepLine
+        ? this.line.estampadoSupplies
+        : undefined;
+      const cycles = this.sameJson(formCycles, this.syncedCycles) && keepLine
+        ? this.line.estampadoPressCycles
+        : undefined;
       draft.estampadoPrints = structuredClone(
-        v.prints?.length ? v.prints : [createEmptyEstampadoPrint()],
+        prints ?? (formPrints.length ? formPrints : [createEmptyEstampadoPrint()]),
       );
-      draft.estampadoSupplies = structuredClone(v.supplyLines ?? []);
+      draft.estampadoSupplies = structuredClone(supplies ?? formSupplies);
       draft.estampadoPressCycles = structuredClone(
-        v.pressCycles?.length
-          ? v.pressCycles
-          : [createEmptyEstampadoPressCycle()],
+        cycles ??
+          (formCycles.length ? formCycles : [createEmptyEstampadoPressCycle()]),
       );
+      this.syncedPrints = structuredClone(formPrints);
+      this.syncedSupplies = structuredClone(formSupplies);
+      this.syncedCycles = structuredClone(formCycles);
     }
 
     // Misma identidad de servicio; nueva referencia de objeto para que los

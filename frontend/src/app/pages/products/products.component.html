@@ -150,6 +150,9 @@
       role="dialog"
       aria-modal="true"
       aria-label="Actualizar precios en bloque"
+      tabindex="-1"
+      appPanelDialog
+      (panelEscape)="closeMobileBulkPrice()"
     >
       <div class="products-m__panel-bar">
         <button
@@ -194,6 +197,9 @@
       role="dialog"
       aria-modal="true"
       aria-label="Cambios de precio de insumos"
+      tabindex="-1"
+      appPanelDialog
+      (panelEscape)="closeMobileSupplyChanges()"
     >
       <div class="products-m__panel-bar">
         <button

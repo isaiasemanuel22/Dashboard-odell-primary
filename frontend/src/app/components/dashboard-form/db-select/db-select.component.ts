@@ -50,6 +50,13 @@ export class DbSelectComponent implements ControlValueAccessor, OnChanges {
     }
   }
 
+  get describedBy(): string | null {
+    const ids: string[] = [];
+    if (this.error) ids.push(`${this.selectId}-err`);
+    if (this.hint) ids.push(`${this.selectId}-hint`);
+    return ids.length ? ids.join(' ') : null;
+  }
+
   get selectClass(): string {
     return this.error ? 'db-select db-select--error' : 'db-select';
   }

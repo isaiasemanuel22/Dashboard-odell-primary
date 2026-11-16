@@ -124,6 +124,11 @@ function sanitizeNode(node: ParentNode): void {
       element.removeAttribute(attr.name);
     }
 
+    if (tag === 'a' && element.hasAttribute('href')) {
+      element.setAttribute('rel', 'noopener noreferrer');
+      element.setAttribute('target', '_blank');
+    }
+
     sanitizeNode(element);
   }
 }

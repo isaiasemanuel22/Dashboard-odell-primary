@@ -129,6 +129,13 @@ export class ProductsService {
     return this.http.post<Category>(`${this.baseUrl}/categories`, data);
   }
 
+  updateCategory(
+    id: string,
+    data: { name?: string; productTypes?: ProductType[] },
+  ): Observable<Category> {
+    return this.http.patch<Category>(`${this.baseUrl}/categories/${id}`, data);
+  }
+
   deleteCategory(id: string): Observable<{ deleted: boolean }> {
     return this.http.delete<{ deleted: boolean }>(
       `${this.baseUrl}/categories/${id}`,

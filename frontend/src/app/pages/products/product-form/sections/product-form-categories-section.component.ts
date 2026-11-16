@@ -179,6 +179,16 @@ export class ProductFormCategoriesSectionComponent implements OnInit, OnDestroy 
     });
   }
 
+  editCategory(category: Category): void {
+    this.formDialogs
+      .openCategory(this.currentProductType, category)
+      .subscribe((updated) => {
+        if (!updated) return;
+        this.catalogFacade.upsertCategory(updated);
+        this.cdr.markForCheck();
+      });
+  }
+
   private filterCategoryIdsForType(): void {
     if (!this.loaded || !this.categoriesList.length) {
       return;

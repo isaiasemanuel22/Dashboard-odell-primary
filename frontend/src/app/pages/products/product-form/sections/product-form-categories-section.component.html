@@ -10,6 +10,7 @@
           @for (cat of selectedCategoriesList; track cat.id) {
             <span class="category-chip">
               {{ cat.name }}
+              <button type="button" class="category-chip__edit" [attr.aria-label]="'Editar ' + cat.name" (click)="editCategory(cat)">✎</button>
               <button type="button" [attr.aria-label]="'Quitar ' + cat.name" (click)="removeCategory(cat.id)">×</button>
             </span>
           }

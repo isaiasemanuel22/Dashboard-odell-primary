@@ -275,9 +275,14 @@ export function orderIncludesService(
 export function buildOrderItems(
   lines: OrderLineDraft[],
   catalog: Product[],
+  /**
+   * Qué líneas entran. Por defecto las válidas (payload); el cálculo de
+   * ganancia pasa `isLineBillable` para usar las mismas líneas que el total.
+   */
+  include: (line: OrderLineDraft) => boolean = isLineValid,
 ): OrderItemPayload[] {
   return lines
-    .filter((line) => isLineValid(line))
+    .filter((line) => include(line))
     .map((line) => {
       if (isSupplyOrderLine(line.serviceType) || isThirdPartyService(line.serviceType)) {
         const supplyId = line.estampadoSupplies?.[0]?.supplyId;
@@ -319,7 +324,7 @@ export function buildOrderItems(
         const designList = Number(line.designUnitPrice ?? line.unitPrice) || 0;
         return {
           serviceType: line.serviceType,
-          productName: line.customName!.trim(),
+          productName: (line.customName ?? '').trim(),
           quantity: line.quantity,
           unitPrice: line.includesPrint
             ? resolveLinePrintUnitPrice(line)
@@ -380,7 +385,7 @@ export function buildOrderItems(
         productId: line.productId?.trim() || undefined,
         productName:
           isCustomFdm || isCustomEstampado
-            ? line.customName!.trim()
+            ? (line.customName ?? '').trim()
             : (product?.name ?? line.customName?.trim() ?? 'Producto'),
         quantity: line.quantity,
         unitPrice: listUnit,

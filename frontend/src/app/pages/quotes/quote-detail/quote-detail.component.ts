@@ -45,7 +45,10 @@ import {
   quoteStatusLabelFor,
   quoteStatusPillClass,
 } from '../../../shared/utils/quote.helpers';
-import { isQuoteExpired } from '../../../shared/utils/quote-validity.util';
+import {
+  isQuoteExpired,
+  quoteValidUntilNumeric,
+} from '../../../shared/utils/quote-validity.util';
 import {
   buildQuoteShareText,
   quoteWhatsAppUrl,
@@ -274,10 +277,7 @@ export class QuoteDetailComponent implements OnInit {
   get mobileValidityLabel(): string {
     if (!this.quote) return '';
     // Artboard: «Válido hasta 15/11/2026».
-    const base = new Date(this.quote.quotedAt ?? Date.now());
-    const validUntil = new Date(base);
-    validUntil.setDate(validUntil.getDate() + 15);
-    return `Válido hasta ${validUntil.getDate()}/${validUntil.getMonth() + 1}/${validUntil.getFullYear()}`;
+    return quoteValidUntilNumeric(this.quote.quotedAt);
   }
 
   get statusPillClass(): string {

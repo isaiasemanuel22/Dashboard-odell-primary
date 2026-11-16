@@ -67,7 +67,7 @@
 
   <div class="layout-main">
     @if (layoutUi.pageBarCount() === 0) {
-      <header class="mobile-header">
+      <header class="mobile-header" [attr.inert]="layoutUi.overlayCount() > 0 ? '' : null">
         <button
           type="button"
           class="mobile-header__menu"
@@ -91,6 +91,7 @@
     <nav
       class="bottom-nav"
       aria-label="Navegación principal"
+      [attr.inert]="layoutUi.overlayCount() > 0 ? '' : null"
       [class.bottom-nav--hidden]="hideBottomNav || layoutUi.overlayCount() > 0"
     >
       @for (item of bottomNavItems; track trackBottomSlot($index, item)) {

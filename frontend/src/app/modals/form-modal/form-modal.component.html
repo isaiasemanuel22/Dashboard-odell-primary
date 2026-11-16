@@ -1,8 +1,20 @@
-<div class="modal-backdrop" (click)="close.emit()">
-  <div [ngClass]="modalClass()" (click)="$event.stopPropagation()">
+<div
+  class="modal-backdrop"
+  (mousedown)="onBackdropMouseDown($event)"
+  (click)="onBackdropClick($event)"
+>
+  <div
+    #panel
+    [ngClass]="modalClass()"
+    role="dialog"
+    aria-modal="true"
+    [attr.aria-labelledby]="titleId"
+    tabindex="-1"
+    (click)="$event.stopPropagation()"
+  >
     <header [ngClass]="headerClass()">
       <div class="modal__heading">
-        <h3>{{ title }}</h3>
+        <h3 [id]="titleId">{{ title }}</h3>
         @if (subtitle) {
           <p>{{ subtitle }}</p>
         }

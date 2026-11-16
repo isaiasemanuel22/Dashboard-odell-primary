@@ -7,8 +7,11 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import { shortId, sortAndDisambiguateOptions } from '../../../shared/utils/search-text.util';
-import { forkJoin, Subscription } from 'rxjs';
+import {
+  shortId,
+  sortAndDisambiguateOptions,
+} from '../../../shared/utils/search-text.util';
+import { Subscription, concatMap, from, tap, toArray } from 'rxjs';
 import {
   GeneralSettings,
   MachineProfile,
@@ -16,7 +19,10 @@ import {
   ProductType,
   Supply,
 } from '../../../core/models';
-import { SettingsService, SuppliesService } from '../../../core/services/settings.service';
+import {
+  SettingsService,
+  SuppliesService,
+} from '../../../core/services/settings.service';
 import { RealtimeService } from '../../../core/services/realtime.service';
 import { BreakpointService } from '../../../core/services/breakpoint.service';
 import {
@@ -52,7 +58,8 @@ import { KeepTypingDirective } from '../../../shared/directives/keep-typing.dire
 @Component({
   selector: 'app-general-values',
   standalone: true,
-  imports: [KeepTypingDirective, 
+  imports: [
+    KeepTypingDirective,
     FormsModule,
     DbFormComponent,
     DbInputComponent,
@@ -86,13 +93,32 @@ export class GeneralValuesComponent
       value: (profile) => profile.name.trim() || 'Nuevo equipo',
       secondary: (profile) => this.supplyCaption(profile),
     },
-    { key: 'role', header: 'Rol', value: (profile) => this.roleLabels[profile.role] },
-    { key: 'productType', header: 'Tipo de producto', value: (profile) => this.productTypeLabel(profile) },
-    { key: 'watts', header: 'Consumo', value: (profile) => `${profile.watts} W` },
-    { key: 'costPerHour', header: 'Costo máquina', type: 'money', secondary: () => '/ h' },
+    {
+      key: 'role',
+      header: 'Rol',
+      value: (profile) => this.roleLabels[profile.role],
+    },
+    {
+      key: 'productType',
+      header: 'Tipo de producto',
+      value: (profile) => this.productTypeLabel(profile),
+    },
+    {
+      key: 'watts',
+      header: 'Consumo',
+      value: (profile) => `${profile.watts} W`,
+    },
+    {
+      key: 'costPerHour',
+      header: 'Costo máquina',
+      type: 'money',
+      secondary: () => '/ h',
+    },
   ];
 
-  profileQueueBadges(profile: MachineProfile): { label: string; tone: string }[] {
+  profileQueueBadges(
+    profile: MachineProfile,
+  ): { label: string; tone: string }[] {
     const badges: { label: string; tone: string }[] = [];
     if (profile.queueEnabled) {
       badges.push({ label: 'En cola', tone: 'info' });
@@ -162,26 +188,28 @@ export class GeneralValuesComponent
 
   ngOnInit(): void {
     this.realtimeSyncEnabled = this.realtime.isSyncEnabled();
-    this.settingsSub = this.settingsService.watchGeneralSettings().subscribe((settings) => {
-      if (!settings || this.saving || this.savingProfiles) return;
-      const incoming = structuredClone(settings);
-      incoming.errorMarginPercent ??= 0;
-      this.profilesSnapshot = structuredClone(incoming.machineProfiles);
+    this.settingsSub = this.settingsService
+      .watchGeneralSettings()
+      .subscribe((settings) => {
+        if (!settings || this.saving || this.savingProfiles) return;
+        const incoming = structuredClone(settings);
+        incoming.errorMarginPercent ??= 0;
+        this.profilesSnapshot = structuredClone(incoming.machineProfiles);
 
-      if (this.settings && this.dirtyProfileIds.size > 0) {
-        this.settings = {
-          ...incoming,
-          machineProfiles: mergeMachineProfilesPreservingDirty(
-            incoming.machineProfiles,
-            this.settings.machineProfiles,
-            this.dirtyProfileIds,
-          ),
-        };
-      } else {
-        this.settings = incoming;
-      }
-      this.captureCoreBaseline();
-    });
+        if (this.settings && this.dirtyProfileIds.size > 0) {
+          this.settings = {
+            ...incoming,
+            machineProfiles: mergeMachineProfilesPreservingDirty(
+              incoming.machineProfiles,
+              this.settings.machineProfiles,
+              this.dirtyProfileIds,
+            ),
+          };
+        } else {
+          this.settings = incoming;
+        }
+        this.captureCoreBaseline();
+      });
     this.settingsService.getGeneralSettings(false).subscribe();
     this.suppliesService
       .watchSupplies()
@@ -261,8 +289,9 @@ export class GeneralValuesComponent
   get selectedProfile(): MachineProfile | null {
     if (!this.settings || !this.selectedProfileId) return null;
     return (
-      this.settings.machineProfiles.find((profile) => profile.id === this.selectedProfileId) ??
-      null
+      this.settings.machineProfiles.find(
+        (profile) => profile.id === this.selectedProfileId,
+      ) ?? null
     );
   }
 
@@ -291,9 +320,13 @@ export class GeneralValuesComponent
 
   supplyCaption(profile: MachineProfile): string | null {
     if (!this.isWash(profile) || !profile.washSupplyId) return null;
-    const supply = this.supplies.find((item) => item.id === profile.washSupplyId);
+    const supply = this.supplies.find(
+      (item) => item.id === profile.washSupplyId,
+    );
     if (!supply) return null;
-    const ml = profile.consumptionMl ? `${profile.consumptionMl} ml por baño` : '';
+    const ml = profile.consumptionMl
+      ? `${profile.consumptionMl} ml por baño`
+      : '';
     const uses = `${profile.washBathUses || 10} usos`;
     return [supply.name, ml, uses].filter(Boolean).join(' · ');
   }
@@ -302,9 +335,7 @@ export class GeneralValuesComponent
     return [
       {
         id: 'save',
-        label: this.saving
-          ? 'Guardando…'
-          : 'Guardar y recalcular precios',
+        label: this.saving ? 'Guardando…' : 'Guardar y recalcular precios',
         kind: 'primary',
         disabled: this.saving,
       },
@@ -374,56 +405,65 @@ export class GeneralValuesComponent
     this.savingProfiles = true;
     this.message = '';
 
-    const requests = profiles.map((profile) => {
-      const payload = this.toMachineProfilePayload(profile);
-      if (this.isTemporaryProfile(profile.id)) {
-        return this.settingsService.addMachineProfile(payload);
+    // En serie: cada perfil guardado se reconcilia (id real) al momento, así un
+    // reintento tras un error no vuelve a crear los que ya se crearon.
+    const reconcile = (
+      oldProfile: MachineProfile,
+      saved: MachineProfile,
+    ): void => {
+      if (!this.settings) return;
+      const nextProfiles = [...this.settings.machineProfiles];
+      const idx = nextProfiles.findIndex((p) => p.id === oldProfile.id);
+      if (idx >= 0) {
+        nextProfiles[idx] = saved;
       }
-      return this.settingsService.updateMachineProfile(profile.id, payload);
-    });
+      this.dirtyProfileIds.delete(oldProfile.id);
+      if (this.selectedProfileId === oldProfile.id) {
+        this.selectedProfileId = saved.id;
+      }
+      this.settings = { ...this.settings, machineProfiles: nextProfiles };
+    };
 
-    forkJoin(requests).subscribe({
-      next: (savedProfiles) => {
-        if (this.settings) {
-          let nextProfiles = [...this.settings.machineProfiles];
-          profiles.forEach((oldProfile, index) => {
-            const saved = savedProfiles[index];
-            const idx = nextProfiles.findIndex((p) => p.id === oldProfile.id);
-            if (idx >= 0) {
-              nextProfiles[idx] = saved;
-            }
-            this.dirtyProfileIds.delete(oldProfile.id);
-            if (this.selectedProfileId === oldProfile.id) {
-              this.selectedProfileId = saved.id;
-            }
-          });
-          this.settings = {
-            ...this.settings,
-            machineProfiles: nextProfiles,
-          };
-          // Snapshot = perfiles ya persistidos (sin dirty restantes).
-          this.profilesSnapshot = structuredClone(
-            nextProfiles.filter((p) => !this.dirtyProfileIds.has(p.id)),
-          );
-        }
-        this.savingProfiles = false;
-        this.message = 'Perfiles de máquina guardados';
-        if (
-          this.selectedProfileId &&
-          !this.settings?.machineProfiles.some(
-            (profile) => profile.id === this.selectedProfileId,
-          )
-        ) {
-          this.selectedProfileId = null;
-        }
-        this.scrollToSettingsMessage();
-      },
-      error: () => {
-        this.savingProfiles = false;
-        this.message = 'Error al guardar perfiles';
-        this.scrollToSettingsMessage();
-      },
-    });
+    from(profiles)
+      .pipe(
+        concatMap((profile) => {
+          const payload = this.toMachineProfilePayload(profile);
+          const request = this.isTemporaryProfile(profile.id)
+            ? this.settingsService.addMachineProfile(payload)
+            : this.settingsService.updateMachineProfile(profile.id, payload);
+          return request.pipe(tap((saved) => reconcile(profile, saved)));
+        }),
+        toArray(),
+      )
+      .subscribe({
+        next: () => {
+          if (this.settings) {
+            // Snapshot = perfiles ya persistidos (sin dirty restantes).
+            this.profilesSnapshot = structuredClone(
+              this.settings.machineProfiles.filter(
+                (p) => !this.dirtyProfileIds.has(p.id),
+              ),
+            );
+          }
+          this.savingProfiles = false;
+          this.message = 'Perfiles de máquina guardados';
+          if (
+            this.selectedProfileId &&
+            !this.settings?.machineProfiles.some(
+              (profile) => profile.id === this.selectedProfileId,
+            )
+          ) {
+            this.selectedProfileId = null;
+          }
+          this.scrollToSettingsMessage();
+        },
+        error: () => {
+          this.savingProfiles = false;
+          this.message =
+            'Error al guardar perfiles. Los que ya se guardaron no se repiten al reintentar.';
+          this.scrollToSettingsMessage();
+        },
+      });
   }
 
   /** Lleva al aviso de confirmación de Ajustes (mismo patrón que el resto). */
@@ -507,8 +547,9 @@ export class GeneralValuesComponent
   productTypeLabel(profile: MachineProfile): string | null {
     if (!profile.productType) return 'Todos';
     return (
-      this.productTypeOptions.find((option) => option.value === profile.productType)
-        ?.label ?? profile.productType
+      this.productTypeOptions.find(
+        (option) => option.value === profile.productType,
+      )?.label ?? profile.productType
     );
   }
 

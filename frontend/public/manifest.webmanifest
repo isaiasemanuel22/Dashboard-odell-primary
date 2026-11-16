@@ -1,6 +1,7 @@
 {
   "name": "Odell",
   "short_name": "Odell",
+  "id": "/",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

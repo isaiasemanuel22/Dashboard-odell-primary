@@ -10,10 +10,16 @@
   <div class="db-form-field__control">
     <ng-content />
     @if (hint) {
-      <p class="db-form-hint">{{ hint }}</p>
+      <p class="db-form-hint" [attr.id]="forId ? forId + '-hint' : null">{{ hint }}</p>
     }
-    @if (error) {
-      <p class="db-form-error">{{ error }}</p>
-    }
+    <div
+      class="db-form-field__live"
+      [attr.id]="forId ? forId + '-err' : null"
+      aria-live="polite"
+    >
+      @if (error) {
+        <p class="db-form-error">{{ error }}</p>
+      }
+    </div>
   </div>
 </div>

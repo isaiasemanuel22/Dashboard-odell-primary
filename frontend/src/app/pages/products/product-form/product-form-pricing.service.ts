@@ -119,7 +119,47 @@ export class ProductFormPricingService {
     this.keepCatalogPrice = false;
     this.costInvalidated = false;
     this.useCalculatedPrice = false;
-    this.fixedPriceMode = false;
+    // Estado recién cargado: el usuario todavía no eligió modo (E134).
+    this.fixedModeChosenByUser = false;
+    this.storedPriceChecked = false;
+    this.manualUnitPrice = null;
+    this.fixedModeValue = false;
+    const suggested = this.context
+      ? Number(this.context.form.controls.suggestedPrice.value) || 0
+      : 0;
+    if (suggested > 0) {
+      this.adoptStoredManualPrice();
+    }
+  }
+
+  /**
+   * E134: un producto con precio cargado distinto del calculado (≥ $1) pasa
+   * solo a «Precio fijo». Corre una vez por carga, cuando el cálculo terminó,
+   * y no pisa lo que el usuario eligió a mano.
+   */
+  adoptFixedModeFromStoredPrice(): void {
+    if (this.storedPriceChecked || !this.context) return;
+    if (this.fixedModeChosenByUser || this.fixedModeValue) {
+      this.storedPriceChecked = true;
+      return;
+    }
+    const product = this.context.product;
+    if (!product || product.type !== formType(this.context.form)) return;
+    if (this.calculatingCost || this.useCalculatedPrice) return;
+    const stored = Math.round(Number(product.price) || 0);
+    const calculated = Number(this.finalPrice) || 0;
+    if (stored <= 0 || calculated <= 0) return;
+    this.storedPriceChecked = true;
+    if (Math.abs(stored - calculated) < 1) return;
+    this.fixedModeValue = true;
+    this.manualUnitPrice = stored;
+    const supply = this.fixedPriceSupplyAddon();
+    const process = Math.round(stored - supply);
+    this.context.form.controls.suggestedPrice.setValue(
+      process > 0 ? process : null,
+      { emitEvent: false },
+    );
+    this.pricingStore.setSuggestedPrice(stored);
   }
 
   /**
@@ -385,6 +425,8 @@ export class ProductFormPricingService {
     const form = this.context.form;
 
     this.clearCostCalcTimer();
+    // Un cálculo en vuelo quedaría viejo: se cancela al reprogramar (E132).
+    this.cancelPricingPreview();
     if (!this.canAutoCalculate()) {
       if (this.keepCatalogPrice) {
         this.publishCatalogPrice();
@@ -455,6 +497,13 @@ export class ProductFormPricingService {
     }
 
     this.runPricingPreview();
+  }
+
+  private cancelPricingPreview(): void {
+    if (!this.pricingPreviewSub) return;
+    this.pricingPreviewSub.unsubscribe();
+    this.pricingPreviewSub = null;
+    this.calculatingCost = false;
   }
 
   private runPricingPreview(): void {
@@ -682,6 +731,7 @@ export class ProductFormPricingService {
   }
 
   private emitChange(): void {
+    this.adoptFixedModeFromStoredPrice();
     this.syncToStore();
     this.stateChanged$.next();
   }
@@ -768,7 +818,18 @@ export class ProductFormPricingService {
    * El usuario eligió «Precio fijo». Se mantiene aunque el precio quede vacío o
    * en 0: ahí cuenta como faltante, el modo no vuelve solo a «Calculado».
    */
-  fixedPriceMode = false;
+  private fixedModeValue = false;
+  private fixedModeChosenByUser = false;
+  private storedPriceChecked = false;
+
+  get fixedPriceMode(): boolean {
+    return this.fixedModeValue;
+  }
+
+  set fixedPriceMode(value: boolean) {
+    this.fixedModeChosenByUser = true;
+    this.fixedModeValue = value;
+  }
 
   /** «Precio fijo» elegido pero sin un precio mayor a 0: no se puede guardar. */
   get fixedPriceMissing(): boolean {
@@ -827,7 +888,7 @@ export class ProductFormPricingService {
       return;
     }
     this.manualUnitPrice = process + this.fixedPriceSupplyAddon();
-    this.fixedPriceMode = true;
+    this.fixedModeValue = true;
     this.pricingStore.setSuggestedPrice(this.manualUnitPrice);
   }
 

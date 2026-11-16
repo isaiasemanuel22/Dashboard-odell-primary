@@ -1018,7 +1018,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) return;
 
-    this.loadProduct(id).subscribe((result) => {
+    this.loadProduct(id, true).subscribe((result) => {
       if (!result) return;
       this.product = result.product;
       this.attachments = normalizeProductAttachments(
@@ -1066,16 +1066,22 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       });
   }
 
-  private loadProduct(id: string | null) {
+  /**
+   * `silent`: recarga por realtime. No muestra el skeleton (`loading`) para no
+   * perder el scroll ni las secciones abiertas.
+   */
+  private loadProduct(id: string | null, silent = false) {
     if (!id) {
       this.notFound = true;
       this.loading = false;
       return of(null);
     }
 
-    this.loading = true;
-    this.notFound = false;
-    this.cdr.markForCheck();
+    if (!silent) {
+      this.loading = true;
+      this.notFound = false;
+      this.cdr.markForCheck();
+    }
 
     // Primer pintado con solo el producto (GET /products/:id); el resto
     // (categorías, catálogo completo y stock) llega después con /overview.
@@ -1101,7 +1107,9 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       }),
       catchError((err) => {
         this.loading = false;
-        this.notFound = err.status === 404;
+        if (!silent || err.status === 404) {
+          this.notFound = err.status === 404;
+        }
         this.cdr.markForCheck();
         return of(null);
       }),

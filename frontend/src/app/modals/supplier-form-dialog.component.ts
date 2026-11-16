@@ -2,6 +2,7 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
+  DestroyRef,
   OnInit,
   inject,
 } from '@angular/core';
@@ -18,6 +19,9 @@ import {
 import { Supplier } from '../core/models';
 import { SuppliersService } from '../core/services/suppliers.service';
 import { extractApiErrorMessage } from '../shared/utils/api-error';
+import { confirmMobileFormDiscard } from '../components/mobile-form-shell/confirm-mobile-form-discard';
+import { FormDialogService } from './form-dialog.service';
+import { guardDialogDismiss } from './dialog-dismiss-guard';
 import { FormDialogShellComponent } from './form-dialog-shell/form-dialog-shell.component';
 
 export interface SupplierFormDialogData {
@@ -101,6 +105,10 @@ export class SupplierFormDialogComponent implements OnInit {
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly dialogRef = inject(DialogRef<Supplier | undefined>);
   private readonly data = inject<SupplierFormDialogData>(DIALOG_DATA);
+  private readonly formDialogs = inject(FormDialogService);
+  private readonly destroyRef = inject(DestroyRef);
+  private initialSignature = '';
+  private confirmingDiscard = false;
 
   supplier: Supplier | null = null;
   name = '';
@@ -118,6 +126,17 @@ export class SupplierFormDialogComponent implements OnInit {
       this.contact = this.supplier.contact ?? '';
       this.notes = this.supplier.notes ?? '';
     }
+    this.initialSignature = this.signature();
+    guardDialogDismiss(this.dialogRef, this.destroyRef, () => this.cancel());
+  }
+
+  private signature(): string {
+    return JSON.stringify([
+      this.name.trim(),
+      Number(this.leadTimeBusinessDays) || 0,
+      this.contact.trim(),
+      this.notes.trim(),
+    ]);
   }
 
   save(): void {
@@ -156,6 +175,14 @@ export class SupplierFormDialogComponent implements OnInit {
   }
 
   cancel(): void {
-    this.dialogRef.close();
+    if (this.confirmingDiscard || this.loading) return;
+    this.confirmingDiscard = true;
+    confirmMobileFormDiscard(this.formDialogs, {
+      hasChanges: this.signature() !== this.initialSignature,
+      entityLabel: 'el proveedor',
+    }).subscribe((confirmed) => {
+      this.confirmingDiscard = false;
+      if (confirmed) this.dialogRef.close();
+    });
   }
 }

@@ -4,7 +4,10 @@
       class="pmc__thumb"
       [src]="src | mediaUrl"
       [alt]="product().name"
+      width="72"
+      height="72"
       loading="lazy"
+      decoding="async"
     />
   } @else {
     <div class="pmc__thumb pmc__thumb--empty" aria-hidden="true">Sin imagen</div>

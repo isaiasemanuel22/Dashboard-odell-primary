@@ -46,6 +46,7 @@ import {
   type MobileListToolbarChip,
   MobileSheetComponent,
 } from '@general-components';
+import { PanelDialogDirective } from '../../layout/panel-dialog.directive';
 import { ProductMobileCardComponent } from '../../components/product-mobile-card/product-mobile-card.component';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
 import {
@@ -98,6 +99,7 @@ interface ProductsMobileListState {
     MobileBannerComponent,
     MobileListToolbarComponent,
     MobileSheetComponent,
+    PanelDialogDirective,
   ],
   templateUrl: './products.component.html',
   styleUrl: './products.component.scss',

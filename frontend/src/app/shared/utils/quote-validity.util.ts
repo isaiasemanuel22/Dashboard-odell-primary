@@ -31,6 +31,35 @@ export function quoteValidUntilYmd(quotedAt: string | Date): string {
     .slice(0, 10);
 }
 
+const MONTHS_SHORT = [
+  'ene', 'feb', 'mar', 'abr', 'may', 'jun',
+  'jul', 'ago', 'sep', 'oct', 'nov', 'dic',
+];
+
+/** Último día válido como partes numéricas (misma fuente: quoteValidUntilYmd). */
+export function quoteValidUntilParts(quotedAt?: string | Date | null): {
+  day: number;
+  month: number;
+  year: number;
+} {
+  const [year, month, day] = quoteValidUntilYmd(quotedAt ?? new Date())
+    .split('-')
+    .map(Number);
+  return { day, month, year };
+}
+
+/** «Válido hasta el 15 de nov de 2026». */
+export function quoteValidUntilLong(quotedAt?: string | Date | null): string {
+  const { day, month, year } = quoteValidUntilParts(quotedAt);
+  return `Válido hasta el ${day} de ${MONTHS_SHORT[month - 1]} de ${year}`;
+}
+
+/** «Válido hasta 15/11/2026». */
+export function quoteValidUntilNumeric(quotedAt?: string | Date | null): string {
+  const { day, month, year } = quoteValidUntilParts(quotedAt);
+  return `Válido hasta ${day}/${month}/${year}`;
+}
+
 /** «Vencido» se deriva: solo Borrador/Enviado con la validez ya pasada (día AR). */
 export function isQuoteExpired(
   quote: { status: QuoteStatus; quotedAt?: string | Date | null },

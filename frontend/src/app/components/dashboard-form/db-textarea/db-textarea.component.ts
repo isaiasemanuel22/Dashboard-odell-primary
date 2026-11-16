@@ -43,6 +43,13 @@ export class DbTextareaComponent implements ControlValueAccessor {
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void = () => {};
 
+  get describedBy(): string | null {
+    const ids: string[] = [];
+    if (this.error) ids.push(`${this.textareaId}-err`);
+    if (this.hint || this.charCountHint) ids.push(`${this.textareaId}-hint`);
+    return ids.length ? ids.join(' ') : null;
+  }
+
   get textareaClass(): string {
     return this.error ? 'db-textarea db-textarea--error' : 'db-textarea';
   }

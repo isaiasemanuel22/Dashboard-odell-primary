@@ -1,3 +1,4 @@
+import { Subscription } from 'rxjs';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {
@@ -379,11 +380,15 @@ export class SalesComponent implements OnInit {
       });
   }
 
+  private overviewSub?: Subscription;
+
   loadData(): void {
     this.loading = true;
     this.loadError = false;
 
-    this.salesService.getOverview(this.monthParam()).subscribe({
+    // Cambio de mes rápido: la respuesta del mes anterior se descarta.
+    this.overviewSub?.unsubscribe();
+    this.overviewSub = this.salesService.getOverview(this.monthParam()).subscribe({
       next: ({ stats, entries }) => {
         this.stats = stats;
         this.entries = entries;
@@ -397,21 +402,29 @@ export class SalesComponent implements OnInit {
   }
 
   generateReport(): void {
+    if (this.loading) {
+      this.reportMessage = 'Esperá a que termine de cargar el mes.';
+      return;
+    }
     if (!this.stats || !this.entries.length) {
       this.reportMessage = 'No hay ventas en el mes para armar el reporte.';
       return;
     }
+    // Datos y mes tal como se ven ahora, aunque después se cambie de mes.
+    const stats = this.stats;
+    const entries = this.entries;
+    const monthLabel = this.monthLabel;
 
     this.productsService.getProducts(undefined, { all: true }).subscribe({
       next: (products) => {
         void downloadSalesReportPdf(
-          this.stats!,
-          this.entries,
+          stats,
+          entries,
           products,
-          this.monthLabel,
+          monthLabel,
         )
           .then(() => {
-            this.reportMessage = `Listo: se descargó el reporte de ${this.monthLabel}.`;
+            this.reportMessage = `Listo: se descargó el reporte de ${monthLabel}.`;
           })
           .catch((err) => {
             this.reportMessage = extractApiErrorMessage(
