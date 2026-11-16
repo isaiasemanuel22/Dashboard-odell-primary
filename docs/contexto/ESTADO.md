@@ -3,9 +3,9 @@
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
 ## Producción
-- GitHub `main` = `feat/apk-twa` en `bb92539` + docs (2026-11-15: duplicar producto,
-  insumos del combo, servicio de tercero con costo, avisos de faltantes).
-  Heroku = `bb92539` (sin cambios de esquema). APK TWA publicada; assetlinks verificado.
+- GitHub `main` = `feat/insumo-margen-error` en `02dbe97` (2026-11-16: insumos a
+  costo × 2 + margen de error, §16.3). Heroku v46 = `02dbe97` (sin cambios de
+  esquema). Netlify ya sirve el frontend nuevo. APK TWA publicada; assetlinks verificado.
   Netlify publica el frontend solo al pushear `main`.
 - Orden de deploy: push a origin → push a heroku → recién después
   `npm run db:push:heroku` si hubo cambios de esquema. Nunca ACCEPT_DATA_LOSS.
@@ -13,8 +13,7 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `feat/insumo-margen-error` (sobre `main`, commit `e4b836c`): insumos
-  a costo × 2 + margen de error (§16.3), probado en la app local. Sin deploy.
+- Rama actual: `feat/insumo-margen-error`, igual a `main` (publicada 2026-11-16).
 - APK en `~/Escritorio/Odell.apk`; falta probarla en un teléfono. Para regenerar:
   `android-twa/` + Bubblewrap; JDK, SDK y clave de firma en `~/.odell-android`
   (perder la clave = no se puede actualizar la app).
@@ -42,6 +41,8 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
 - ¿Un presupuesto borrador sin líneas puede pasar a Rechazado/Cancelado? Hoy sí.
 - ¿Se puede vender por encima del stock? Hoy el stepper se limita al stock.
 - ¿Aviso al salir de Ajustes con cambios sin guardar?
+- Diseño v3 (merch): ¿la seña es obligatoria (50% desde 20 prendas) y frena
+  la producción? Choca con §Pagos de BUSINESS-RULES, donde la seña no tiene efectos.
 
 ## Entorno local
 - Dev server: launch `odell-dev-4300` (el 4200 lo usa otro proyecto).

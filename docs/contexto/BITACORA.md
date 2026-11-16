@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-16 · Rediseño de la página v3 (Estampado y merch) del lienzo
+Rama: — · Commits: sin commit (solo lienzo de diseño)
+Hecho: odell-disenador rehízo los 3 artboards de v3 (V3ModalPedido, V3PedidoDetalle, V3Prendas) con el patrón de la app actual: sidebar, paneles, tablas, badges, chips y segmentado de RdPedidoDetalle. El pedido de merch pasó de modal a página, como el form real (Resumen + Seña). Se mantuvieron las funciones de v3.
+Decisiones: supuesta: el código manda sobre el artboard viejo (por eso el pedido ya no es un modal).
+Pendiente: confirmar con Isaías la «seña obligatoria 50% desde 20 prendas» de v3, que choca con BUSINESS-RULES §Pagos (la seña no tiene efectos). Matriz de talles, stock de prendas lisas y link de aprobación no existen en el código.
+
 ## 2026-11-16 · Prueba en la app de insumos × 2 + margen de error
 Rama: feat/insumo-margen-error · Commits: 8276ef1
 Hecho: odell-tester probó producto Estampado, precio fijo, presupuesto (línea a medida + insumo suelto), combo y detalle; cuentas iguales a mano (±$1 de redondeo). Corregidos: leyenda «Calculado» del presupuesto con el error del insumo duplicado, renglón «Margen de error» en el combo, textos de error y de «Costo unitario».
