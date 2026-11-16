@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-16 · Deploy de insumos × 2 + margen de error
+Rama: feat/insumo-margen-error → main · Commits: 02dbe97
+Hecho: push a origin main y a Heroku (v46); sin cambios de esquema, sin db:push. Netlify sirve el chunk nuevo.
+Decisiones: Isaías pidió publicar.
+Pendiente: en producción, «Actualizar precios» o «Usar precio calculado» en los productos con insumos para tomar la regla nueva; E135.
+
 ## 2026-11-16 · Rediseño de la página v3 (Estampado y merch) del lienzo
 Rama: — · Commits: sin commit (solo lienzo de diseño)
 Hecho: odell-disenador rehízo los 3 artboards de v3 (V3ModalPedido, V3PedidoDetalle, V3Prendas) con el patrón de la app actual: sidebar, paneles, tablas, badges, chips y segmentado de RdPedidoDetalle. El pedido de merch pasó de modal a página, como el form real (Resumen + Seña). Se mantuvieron las funciones de v3.
