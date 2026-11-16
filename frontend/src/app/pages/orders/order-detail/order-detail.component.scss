@@ -668,6 +668,10 @@
     height: 8px;
     background: #15803d;
     border-radius: 999px;
+
+    &--refund {
+      background: #b91c1c;
+    }
   }
 
   .od-m__deposit {

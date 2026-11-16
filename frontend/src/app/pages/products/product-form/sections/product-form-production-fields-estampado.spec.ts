@@ -3,6 +3,7 @@ import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
 import { Store } from '@ngrx/store';
 import { BehaviorSubject, of } from 'rxjs';
+import { createEmptyEstampadoPrint } from '../../../../shared/utils/estampado.helpers';
 import { GeneralSettings, ProductType } from '../../../../core/models';
 import { ImpresosService } from '../../../../core/services/impresos.service';
 import { SuppliesService } from '../../../../core/services/settings.service';
@@ -126,5 +127,34 @@ describe('ProductFormProductionFieldsComponent — impresos de Estampado', () =>
     expect(component.line.estampadoPrints!.length).toBe(1);
     expect(component.line.estampadoPrints![0].widthCm).toBe(20);
     expect(component.line.estampadoPrints![0].lengthCm).toBe(25);
+  });
+
+  it('alta: producto nuevo que pasa a Estampado calcula la fila inicial (E132)', () => {
+    // Estado de arranque del alta: componente nuevo, tipo previo sin impresos.
+    fixture = TestBed.createComponent(ProductFormProductionFieldsComponent);
+    component = fixture.componentInstance;
+    component.form = stateManager.buildFormGroup(stateManager.createInitialState());
+    component.form.controls.prints.setValue([], { emitEvent: false });
+    component.form.controls.type.setValue(ProductType.COMBO);
+    fixture.componentRef.setInput('productType', ProductType.COMBO);
+    fixture.detectChanges();
+    settle();
+
+    // Lo que hace la facade al cambiar el tipo (handleTypeChange).
+    component.form.controls.type.setValue(ProductType.ESTAMPADO);
+    component.form.patchValue(
+      { prints: [createEmptyEstampadoPrint()] },
+      { emitEvent: false },
+    );
+    fixture.componentRef.setInput('productType', ProductType.ESTAMPADO);
+    fixture.detectChanges();
+    settle();
+
+    typeInto(0, 'widthCm', 20);
+    typeInto(0, 'lengthCm', 25);
+
+    expect(component.form.controls.prints.value[0].widthCm).toBe(20);
+    expect(component.form.controls.prints.value[0].lengthCm).toBe(25);
+    expect(rowCosts()[0]).not.toContain('$0');
   });
 });

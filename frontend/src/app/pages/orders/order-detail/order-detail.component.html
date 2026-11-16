@@ -213,9 +213,13 @@
           [attr.aria-valuenow]="paidPercent"
           aria-valuemin="0"
           aria-valuemax="100"
-          [attr.aria-label]="'Pagado el ' + paidPercentLabel"
+          [attr.aria-label]="hasRefundPending ? 'A devolver ' + (paidAmount | currencyArs) : 'Pagado el ' + paidPercentLabel"
         >
-          <div class="od-m__fill" [style.width.%]="paidPercent"></div>
+          <div
+            class="od-m__fill"
+            [class.od-m__fill--refund]="hasRefundPending"
+            [style.width.%]="paidPercent"
+          ></div>
         </div>
         @if (depositSummary; as depositLine) {
           <p class="m-hint od-m__deposit">{{ depositLine }}</p>

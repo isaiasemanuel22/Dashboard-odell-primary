@@ -1,14 +1,5 @@
 <db-form class="work-form" [class.quote-form]="isQuoteForm" [class.order-form]="!isQuoteForm">
   <form (ngSubmit)="onSubmit()">
-    @if (isMobileView && !canSubmit(false) && footerMissingItems.length) {
-      <app-missing-summary
-        class="order-form__missing-top"
-        [items]="footerMissingItems"
-        [prefix]="footerMissingPrefix"
-        [suffix]="footerMissingSuffix"
-        (select)="goToMissing($event)"
-      />
-    }
     @if (!isQuoteForm) {
       <div class="order-layout">
         <div class="order-layout__main">
