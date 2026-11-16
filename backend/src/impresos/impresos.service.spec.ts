@@ -7,9 +7,10 @@ import { ImpresosService } from './impresos.service';
 
 describe('ImpresosService (pliego)', () => {
   let service: ImpresosService;
+  let store: StoreService;
 
   beforeEach(() => {
-    const store = new StoreService();
+    store = new StoreService();
     store.applyState(createEmptyState());
     store.generalSettings.paperReferenceSheets.dtf = {
       widthCm: 60,
@@ -40,5 +41,38 @@ describe('ImpresosService (pliego)', () => {
       heightCm: 0,
     });
     expect(created.widthCm).toBe(90);
+  });
+
+  it('rechaza borrar un impreso usado por un producto', () => {
+    const created = service.create({
+      name: 'Chico',
+      paperType: PaperType.DTF,
+      widthCm: 10,
+      lengthCm: 10,
+      heightCm: 0,
+    });
+    store.products.push({
+      id: 'p1',
+      estampadoPrints: [
+        { id: 'pr1', paperType: PaperType.DTF, impresoId: created.id },
+      ],
+    } as never);
+    expect(() => service.remove(created.id)).toThrow(
+      'No se puede eliminar: hay productos usando este impreso',
+    );
+    store.products.length = 0;
+    expect(() => service.remove(created.id)).not.toThrow();
+  });
+
+  it('rechaza borrar un impreso usado por impresoId directo', () => {
+    const created = service.create({
+      name: 'Otro',
+      paperType: PaperType.DTF,
+      widthCm: 10,
+      lengthCm: 10,
+      heightCm: 0,
+    });
+    store.products.push({ id: 'p2', impresoId: created.id } as never);
+    expect(() => service.remove(created.id)).toThrow(BadRequestException);
   });
 });

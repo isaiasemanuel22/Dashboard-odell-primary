@@ -299,4 +299,40 @@ describe('SalesService order revenue', () => {
     });
     expect(store.products[0].stock).toBe(0);
   });
+
+  it('al devolver stock ignora productos ya eliminados', () => {
+    const base = {
+      name: 'Producto',
+      type: ProductType.FDM,
+      images: [],
+      attachments: [],
+      updatedAt: '2026-01-01T00:00:00.000Z',
+      price: 100,
+      cost: 50,
+      profit: 50,
+      categoryIds: [],
+      size: 'u',
+      published: true,
+      includesPieces: true,
+      components: [],
+      assemblyTimeHours: 0,
+    } as never;
+    store.products.push(
+      { ...(base as object), id: 'prod-a', stock: 5 } as never,
+      { ...(base as object), id: 'prod-b', stock: 5 } as never,
+    );
+    const sale = service.createRetail({
+      items: [
+        { productId: 'prod-a', quantity: 1, unitPrice: 100 },
+        { productId: 'prod-b', quantity: 2, unitPrice: 100 },
+      ],
+    });
+    expect(store.products.find((p) => p.id === 'prod-b')?.stock).toBe(3);
+
+    store.removeProduct('prod-b');
+
+    expect(() => service.removeRetail(sale.id)).not.toThrow();
+    expect(store.products.find((p) => p.id === 'prod-a')?.stock).toBe(5);
+    expect(store.retailSales.find((s) => s.id === sale.id)).toBeUndefined();
+  });
 });

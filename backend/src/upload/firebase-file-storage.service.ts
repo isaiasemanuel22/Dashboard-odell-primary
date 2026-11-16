@@ -22,43 +22,45 @@ export class FirebaseFileStorageService implements FileStorage {
   }
 
   async saveUploadedFile(file: Express.Multer.File, folder = 'products') {
-    const bucketName = this.firebaseAdmin.getStorageBucket();
-    if (!this.firebaseAdmin.isEnabled() || !bucketName) {
-      throw new Error('Firebase Storage no está configurado');
-    }
-
-    const safeName = file.originalname.replace(/[^\w.-]+/g, '_');
-    const filename = `${Date.now()}-${safeName}`;
-    const objectPath = `${folder.replace(/\/+$/, '')}/${filename}`;
-    const token = randomUUID();
-
     try {
-      const bucket = getStorage().bucket(bucketName);
-      await bucket.file(objectPath).save(readFileSync(file.path), {
-        metadata: {
-          contentType: file.mimetype,
+      const bucketName = this.firebaseAdmin.getStorageBucket();
+      if (!this.firebaseAdmin.isEnabled() || !bucketName) {
+        throw new Error('Firebase Storage no está configurado');
+      }
+
+      const safeName = file.originalname.replace(/[^\w.-]+/g, '_');
+      const filename = `${Date.now()}-${safeName}`;
+      const objectPath = `${folder.replace(/\/+$/, '')}/${filename}`;
+      const token = randomUUID();
+
+      try {
+        const bucket = getStorage().bucket(bucketName);
+        await bucket.file(objectPath).save(readFileSync(file.path), {
           metadata: {
-            firebaseStorageDownloadTokens: token,
+            contentType: file.mimetype,
+            metadata: {
+              firebaseStorageDownloadTokens: token,
+            },
           },
-        },
-      });
-    } catch (error) {
-      this.logger.error(
-        `Error al subir a Firebase Storage: ${this.errorMessage(error)}`,
-      );
-      throw this.toUploadException(error, bucketName);
+        });
+      } catch (error) {
+        this.logger.error(
+          `Error al subir a Firebase Storage: ${this.errorMessage(error)}`,
+        );
+        throw this.toUploadException(error, bucketName);
+      }
+
+      const encodedPath = encodeURIComponent(objectPath);
+      const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedPath}?alt=media&token=${token}`;
+
+      return {
+        filename,
+        publicUrl,
+        absolutePath: objectPath,
+      };
     } finally {
       this.deleteFile(file.path);
     }
-
-    const encodedPath = encodeURIComponent(objectPath);
-    const publicUrl = `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedPath}?alt=media&token=${token}`;
-
-    return {
-      filename,
-      publicUrl,
-      absolutePath: objectPath,
-    };
   }
 
   deleteFile(absolutePath: string): void {

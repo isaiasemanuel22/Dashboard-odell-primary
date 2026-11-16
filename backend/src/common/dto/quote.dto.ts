@@ -22,6 +22,7 @@ import { ProductAttachmentDto } from './product.dto';
 export class CreateQuoteDto {
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   customerId?: string;
 
   @ValidateNested({ each: true })

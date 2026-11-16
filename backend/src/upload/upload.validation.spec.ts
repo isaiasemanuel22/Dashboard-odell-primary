@@ -1,5 +1,6 @@
 import {
   detectImageMime,
+  isAllowedAttachmentExtension,
   isAllowedImageExtension,
   isBlockedAttachmentExtension,
   resolveAttachmentFolder,
@@ -74,5 +75,25 @@ describe('upload.validation', () => {
     } as Express.Multer.File);
     expect(empty.ok).toBe(true);
     if (empty.ok) expect(empty.mime).toBe('model/3mf');
+  });
+
+  it('lista blanca de adjuntos: bloquea html y svg, acepta pdf y modelos', () => {
+    expect(isAllowedAttachmentExtension('x.html')).toBe(false);
+    expect(isAllowedAttachmentExtension('x.SVG')).toBe(false);
+    expect(isAllowedAttachmentExtension('x.pdf')).toBe(true);
+    expect(isAllowedAttachmentExtension('x.3mf')).toBe(true);
+    expect(
+      validateUploadedAttachment({
+        originalname: 'pagina.html',
+        mimetype: 'text/html',
+      } as Express.Multer.File).ok,
+    ).toBe(false);
+  });
+
+  it('webp exige WEBP en los bytes 8-11', () => {
+    const riff = Buffer.from('RIFF\x00\x00\x00\x00WAVEfmt ', 'binary');
+    expect(detectImageMime(riff)).toBeNull();
+    const webp = Buffer.from('RIFF\x00\x00\x00\x00WEBPVP8 ', 'binary');
+    expect(detectImageMime(webp)).toBe('image/webp');
   });
 });

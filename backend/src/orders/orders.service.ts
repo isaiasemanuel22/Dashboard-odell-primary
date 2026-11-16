@@ -78,6 +78,9 @@ import {
   sanitizeRichTextHtml,
 } from './rich-text.util';
 
+/** Tolerancia de punto flotante al comparar cantidades. */
+const QUANTITY_EPSILON = 1e-9;
+
 @Injectable()
 export class OrdersService {
   constructor(
@@ -339,6 +342,17 @@ export class OrdersService {
         : current.items;
     let wholesaleApplied = current.wholesaleApplied === true;
 
+    if (data.items !== undefined) {
+      for (const item of items) {
+        const delivered = item.deliveredQuantity ?? 0;
+        if (Number(item.quantity) < delivered - 1e-9) {
+          throw new BadRequestException(
+            `"${item.productName}": ya se entregaron ${delivered}, la cantidad no puede ser menor`,
+          );
+        }
+      }
+    }
+
     if (shouldReprice) {
       const priced = this.priceOrderItems(
         items,
@@ -521,6 +535,13 @@ export class OrdersService {
 
   updateStatus(id: string, status: OrderStatus): Order {
     const order = this.findOne(id);
+    if (order.status === status) {
+      throw new BadRequestException(
+        status === OrderStatus.CANCELADO
+          ? 'El pedido ya está cancelado'
+          : 'El pedido ya está en ese estado',
+      );
+    }
     if (
       status !== OrderStatus.CANCELADO &&
       !(
@@ -555,6 +576,8 @@ export class OrdersService {
   }
 
   remove(id: string): void {
+    // Cancelar algo ya cancelado no hace nada (evita historial duplicado).
+    if (this.findOne(id).status === OrderStatus.CANCELADO) return;
     this.updateStatus(id, OrderStatus.CANCELADO);
   }
 
@@ -670,10 +693,11 @@ export class OrdersService {
       quantity: Number(line.quantity),
     }));
     const seen = new Set<number>();
+    const stockNeeded = new Map<string, number>();
     for (const line of normalized) {
       if (
         !Number.isInteger(line.orderItemIndex) ||
-        !Number.isInteger(line.quantity) ||
+        !Number.isFinite(line.quantity) ||
         line.quantity <= 0 ||
         seen.has(line.orderItemIndex)
       ) {
@@ -685,7 +709,7 @@ export class OrdersService {
         throw new BadRequestException('El ítem de entrega no existe');
       }
       const pending = item.quantity - (item.deliveredQuantity ?? 0);
-      if (line.quantity > pending) {
+      if (line.quantity > pending + QUANTITY_EPSILON) {
         throw new BadRequestException(
           `No hay cantidad disponible para entregar "${item.productName}"`,
         );
@@ -700,12 +724,26 @@ export class OrdersService {
             0,
           )
         : this.serviceDeliverableQuantity(order, item, line.orderItemIndex);
-      if (line.quantity > available) {
+      if (line.quantity > available + QUANTITY_EPSILON) {
         throw new BadRequestException(
           available <= 0 && !item.productId
             ? `No se puede entregar "${item.productName}": la tarea todavía no está terminada`
             : `No hay cantidad disponible para entregar "${item.productName}"`,
         );
+      }
+
+      // Stock físico: se valida acá, antes de mutar nada (varias líneas
+      // pueden compartir producto, por eso se acumula).
+      const reserved = Math.min(line.quantity, item.reservedQuantity ?? 0);
+      if (reserved > 0 && item.productId) {
+        const needed = (stockNeeded.get(item.productId) ?? 0) + reserved;
+        stockNeeded.set(item.productId, needed);
+        const product = this.products.findById(item.productId);
+        if (!product || (product.stock ?? 0) < needed - QUANTITY_EPSILON) {
+          throw new BadRequestException(
+            `Stock físico inconsistente para "${item.productName}"`,
+          );
+        }
       }
     }
 
@@ -715,13 +753,11 @@ export class OrdersService {
       if (fromStock > 0 && item.productId) {
         const product = this.products.findById(item.productId);
         if (!options.force) {
-          if (!product || (product.stock ?? 0) < fromStock) {
-            throw new BadRequestException(
-              `Stock físico inconsistente para "${item.productName}"`,
-            );
+          // Ya validado en el primer pase.
+          if (product) {
+            product.stock = (product.stock ?? 0) - fromStock;
+            this.products.save(product);
           }
-          product.stock = (product.stock ?? 0) - fromStock;
-          this.products.save(product);
         } else if (product) {
           const take = Math.min(fromStock, product.stock ?? 0);
           if (take > 0) {

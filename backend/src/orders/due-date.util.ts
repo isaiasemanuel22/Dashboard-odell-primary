@@ -1,3 +1,5 @@
+import { arTodayKey } from '../common/utils/ar-date.util';
+
 export const DUE_DATE_AFTER_TODAY_MESSAGE =
   'La fecha de entrega tiene que ser posterior a hoy';
 
@@ -7,10 +9,7 @@ export function calendarDay(value: string): string | null {
 }
 
 export function todayCalendarDay(reference = new Date()): string {
-  const year = reference.getFullYear();
-  const month = String(reference.getMonth() + 1).padStart(2, '0');
-  const day = String(reference.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return arTodayKey(reference);
 }
 
 export function isDueDateAfterToday(

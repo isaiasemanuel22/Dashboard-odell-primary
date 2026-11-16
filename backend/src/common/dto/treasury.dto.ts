@@ -30,6 +30,7 @@ function isPersonMovement(data: CreateTreasuryExpenseDto): boolean {
 
 export class TreasurySupplyLineDto {
   @IsString()
+  @MaxLength(64)
   @MinLength(1)
   supplyId!: string;
 
@@ -49,6 +50,7 @@ export class TreasurySupplyLineDto {
 export class CreateTreasuryExpenseDto {
   @ValidateIf((data: CreateTreasuryExpenseDto) => !data.isSupplyPurchase)
   @IsString()
+  @MaxLength(255)
   @MinLength(1)
   name?: string;
 
@@ -89,6 +91,7 @@ export class CreateTreasuryExpenseDto {
 export class UpdateTreasuryExpenseDto {
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   @MinLength(1)
   name?: string;
 

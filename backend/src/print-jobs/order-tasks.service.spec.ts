@@ -778,7 +778,7 @@ describe('OrderTasksService', () => {
     store.products[0] = {
       ...store.products[0],
       supplies: [{ id: 'line-1', supplyId: 'sup-pol', quantity: 1 }],
-    } as Product3D;
+    };
     const supply = {
       id: 'sup-pol',
       name: 'Polímero',
@@ -931,7 +931,7 @@ describe('OrderTasksService', () => {
     store.products[0] = {
       ...store.products[0],
       supplies: [{ id: 'line-1', supplyId: 'sup-pol', quantity: 1 }],
-    } as Product3D;
+    };
     store.supplies.push({
       id: 'sup-pol',
       name: 'Polímero',

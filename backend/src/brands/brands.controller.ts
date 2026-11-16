@@ -8,12 +8,21 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
-import { IsArray, IsEnum, IsOptional, IsString } from 'class-validator';
+import {
+  IsArray,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+  IsNotEmpty,
+} from 'class-validator';
 import { BrandMaterialType } from '../common/enums';
 import { BrandsService } from './brands.service';
 
 class BrandBodyDto {
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
   name!: string;
 
   @IsOptional()
@@ -25,6 +34,8 @@ class BrandBodyDto {
 class UpdateBrandBodyDto {
   @IsOptional()
   @IsString()
+  @IsNotEmpty()
+  @MaxLength(128)
   name?: string;
 
   @IsOptional()

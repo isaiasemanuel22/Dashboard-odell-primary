@@ -66,6 +66,7 @@ export class CreateCalendarEntryDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   linkId?: string;
 }
 

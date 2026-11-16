@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { ValidationPipe } from '@nestjs/common';
+import helmet from 'helmet';
 import { NestFactory } from '@nestjs/core';
 import { NestExpressApplication } from '@nestjs/platform-express';
 import { AppModule } from './app.module';
@@ -15,6 +16,14 @@ async function bootstrap() {
   const config = app.get(AppConfigService);
 
   app.setGlobalPrefix('api');
+  // API JSON consumida desde otro origen (Netlify): se deja pasar el recurso
+  // entre orígenes y se desactiva la CSP, que no aplica a respuestas JSON.
+  app.use(
+    helmet({
+      contentSecurityPolicy: false,
+      crossOriginResourcePolicy: { policy: 'cross-origin' },
+    }),
+  );
   app.use(requestIdMiddleware);
   app.useGlobalPipes(
     new ValidationPipe({

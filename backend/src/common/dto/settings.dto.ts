@@ -10,6 +10,7 @@ import {
   IsOptional,
   IsString,
   Matches,
+  MaxLength,
   Max,
   Min,
 } from 'class-validator';
@@ -30,6 +31,7 @@ import {
 export class UpdateMaterialDto {
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   name?: string;
 
   @IsOptional()
@@ -43,6 +45,7 @@ export class UpdateMaterialDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(32)
   unit?: string;
 
   @IsOptional()
@@ -52,6 +55,7 @@ export class UpdateMaterialDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   supplier?: string;
 }
 
@@ -168,10 +172,12 @@ export class UpdatePaperPricesDto {
 
 export class MachineProfileDto {
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   name!: string;
 
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   role!: string;
 
@@ -185,10 +191,12 @@ export class MachineProfileDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   productType?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   washSupplyId?: string;
 
   @IsOptional()
@@ -225,6 +233,7 @@ export class MachineProfileDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   amsType?: string;
 
   @IsOptional()
@@ -241,6 +250,7 @@ export class UpdateMachineProfileDto extends PartialType(MachineProfileDto) {}
 
 export class PowerConsumptionEntryDto {
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   name!: string;
 
@@ -249,8 +259,13 @@ export class PowerConsumptionEntryDto {
   watts!: number;
 }
 
+export class UpdatePowerConsumptionEntryDto extends PartialType(
+  PowerConsumptionEntryDto,
+) {}
+
 export class MachineCostEntryDto {
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   name!: string;
 
@@ -259,8 +274,13 @@ export class MachineCostEntryDto {
   costPerHour!: number;
 }
 
+export class UpdateMachineCostEntryDto extends PartialType(
+  MachineCostEntryDto,
+) {}
+
 export class NamedCostEntryDto {
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   name!: string;
 
@@ -275,17 +295,20 @@ export class NamedCostEntryDto {
 
 export class FilamentPriceDto {
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   brand!: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   @IsNotEmpty()
   filamentTypeId?: string;
 
   /** Compat / fallback si aún no se envía filamentTypeId. */
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   materialType?: string;
 
   @IsNumber()
@@ -293,25 +316,35 @@ export class FilamentPriceDto {
   pricePerKg!: number;
 }
 
+export class UpdateFilamentPriceDto extends PartialType(FilamentPriceDto) {}
+
 export class FilamentTypeConfigDto {
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   name!: string;
 }
 
+export class UpdateFilamentTypeConfigDto extends PartialType(
+  FilamentTypeConfigDto,
+) {}
+
 export class ResinPriceDto {
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   brand!: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   @IsNotEmpty()
   resinTypeId?: string;
 
   /** Compat / fallback si aún no se envía resinTypeId. */
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   resinType?: string;
 
   @IsNumber()
@@ -319,21 +352,30 @@ export class ResinPriceDto {
   pricePerLiter!: number;
 }
 
+export class UpdateResinPriceDto extends PartialType(ResinPriceDto) {}
+
 export class ResinTypeConfigDto {
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   name!: string;
 }
+
+export class UpdateResinTypeConfigDto extends PartialType(ResinTypeConfigDto) {}
 
 export class ColorConfigDto {
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   name!: string;
 
   @IsString()
+  @MaxLength(16)
   @IsNotEmpty()
   hex!: string;
 }
+
+export class UpdateColorConfigDto extends PartialType(ColorConfigDto) {}
 
 export class CalculateCostDto {
   @IsEnum(ProductType)
@@ -361,6 +403,7 @@ export class CalculateCostDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   brand?: string;
 
   @IsOptional()
@@ -369,6 +412,7 @@ export class CalculateCostDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   resinType?: string;
 
   @IsOptional()
@@ -412,10 +456,12 @@ export class CalculateCostDto {
 
 export class CreateImpresoDto {
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   name!: string;
 
   @IsString()
+  @MaxLength(32)
   paperType!: string;
 
   @IsNumber()
@@ -437,6 +483,7 @@ export class UpdateImpresoDto extends PartialType(CreateImpresoDto) {}
 
 export class ImpresoPreviewCostDto {
   @IsString()
+  @MaxLength(32)
   paperType!: string;
 
   @IsNumber()
@@ -460,19 +507,23 @@ export class SupplyDefaultPriceDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   brand?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   filamentType?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   resinType?: string;
 }
 
 export class CreateSupplyDto {
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   name!: string;
 
@@ -480,6 +531,7 @@ export class CreateSupplyDto {
   category!: SupplyCategory;
 
   @IsString()
+  @MaxLength(32)
   unit!: string;
 
   @IsNumber()
@@ -500,22 +552,27 @@ export class CreateSupplyDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(128)
   brand?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(32)
   filamentType?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(32)
   resinType?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   supplier?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   supplierId?: string;
 
   @IsOptional()
@@ -525,6 +582,7 @@ export class CreateSupplyDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   colorId?: string;
 }
 
@@ -536,19 +594,23 @@ export class SupplyDefaultPriceQueryDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   brand?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   filamentType?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   resinType?: string;
 }
 
 export class ResetDatabaseDto {
   @IsString()
+  @MaxLength(64)
   @IsNotEmpty()
   code!: string;
 }

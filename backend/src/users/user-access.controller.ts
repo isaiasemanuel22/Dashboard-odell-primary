@@ -145,8 +145,11 @@ export class UserAccessController {
 
   @Delete('users/:id')
   async removeUser(@Req() request: Request, @Param('id') id: string) {
-    await this.requirePermission(request, PermissionAction.MANAGE_USERS);
-    await this.userAccess.removeUser(id);
+    const actor = await this.requirePermission(
+      request,
+      PermissionAction.MANAGE_USERS,
+    );
+    await this.userAccess.removeUser(id, actor?.id);
     return { deleted: true };
   }
 

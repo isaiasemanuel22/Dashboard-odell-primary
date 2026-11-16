@@ -688,3 +688,54 @@ describe('QuotesService presupuesto vencido', () => {
     ).not.toThrow();
   });
 });
+
+describe('QuotesService aceptar con pedido fallido', () => {
+  it('si no se puede crear el pedido, el presupuesto no queda aceptado ni deja productos huérfanos', () => {
+    const store = new StoreService();
+    const state = createEmptyState();
+    state.customers.push({
+      id: 'cust-1',
+      name: 'Cliente',
+      email: 'a@test.com',
+      phone: '123',
+      type: CustomerType.PARTICULAR,
+      createdAt: '2026-10-21T12:00:00.000Z',
+    });
+    state.quotes.push({
+      id: 'qte-1',
+      customerId: 'cust-1',
+      customerName: 'Cliente',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productName: 'Mate nuevo',
+          quantity: 1,
+          unitPrice: 2500,
+          grams: 40,
+          printTimeHours: 2,
+          filamentType: FilamentType.PLA,
+        },
+      ],
+      status: QuoteStatus.ENVIADO,
+      total: 2500,
+      quotedAt: new Date().toISOString(),
+      createdAt: '2026-10-21T12:00:00.000Z',
+    });
+    store.applyState(state);
+
+    const service = buildQuotesService(store);
+    const orders = (service as unknown as { orders: OrdersService }).orders;
+    jest.spyOn(orders, 'create').mockImplementation(() => {
+      throw new Error('boom');
+    });
+
+    expect(() => service.updateStatus('qte-1', QuoteStatus.ACEPTADO)).toThrow(
+      'boom',
+    );
+
+    expect(store.getQuoteById('qte-1')?.status).toBe(QuoteStatus.ENVIADO);
+    expect(store.getQuoteById('qte-1')?.orderId).toBeUndefined();
+    expect(store.products).toHaveLength(0);
+  });
+});

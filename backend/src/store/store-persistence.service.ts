@@ -76,6 +76,8 @@ export class StorePersistenceService
   private dbEnabled = false;
   private persistQueued = false;
   private healthy = true;
+  /** Fallo de una colección secundaria durante el guardado en curso. */
+  private secondaryError: string | null = null;
   private lastError: string | null = null;
   private lastSuccessAt: string | null = null;
   /**
@@ -240,7 +242,13 @@ export class StorePersistenceService
   /** Nunca rechaza: un fallo vuelve a marcar las colecciones y agenda reintento. */
   private async runPersist(collections: StoreCollection[]): Promise<void> {
     try {
+      this.secondaryError = null;
       await this.saveStatePartial(this.store.toState(), collections);
+      if (this.secondaryError) {
+        // El guardado principal anduvo, pero una colección secundaria no.
+        this.markUnhealthy(this.secondaryError);
+        return;
+      }
       this.healthy = true;
       this.lastError = null;
       this.lastSuccessAt = new Date().toISOString();
@@ -261,6 +269,11 @@ export class StorePersistenceService
         this.schedulePersist(collections);
       }
     }
+  }
+
+  private noteSecondaryFailure(message: string): void {
+    this.logger.warn(message);
+    this.secondaryError = message;
   }
 
   private markUnhealthy(message: string): void {
@@ -543,7 +556,7 @@ export class StorePersistenceService
               }),
           );
         } catch (error) {
-          this.logger.warn(
+          this.noteSecondaryFailure(
             `No se pudieron guardar egresos de billetera (${this.errorMessage(error)}).`,
           );
         }
@@ -565,7 +578,7 @@ export class StorePersistenceService
               }),
           );
         } catch (error) {
-          this.logger.warn(
+          this.noteSecondaryFailure(
             `No se pudieron guardar entradas de calendario (${this.errorMessage(error)}).`,
           );
         }
@@ -587,7 +600,7 @@ export class StorePersistenceService
               }),
           );
         } catch (error) {
-          this.logger.warn(
+          this.noteSecondaryFailure(
             `No se pudieron guardar proveedores (${this.errorMessage(error)}).`,
           );
         }
@@ -609,7 +622,7 @@ export class StorePersistenceService
               }),
           );
         } catch (error) {
-          this.logger.warn(
+          this.noteSecondaryFailure(
             `No se pudieron guardar bobinas (${this.errorMessage(error)}).`,
           );
         }
@@ -631,7 +644,7 @@ export class StorePersistenceService
               }),
           );
         } catch (error) {
-          this.logger.warn(
+          this.noteSecondaryFailure(
             `No se pudieron guardar movimientos de stock (${this.errorMessage(error)}).`,
           );
         }

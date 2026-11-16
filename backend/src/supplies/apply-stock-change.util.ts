@@ -43,14 +43,18 @@ export function applyStockChange(
   reason: SupplyMovementReason,
   meta: ApplyStockChangeMeta = {},
 ): SupplyMovement {
-  const amount = Number(delta) || 0;
-  const next = Number(supply.quantity) + amount;
+  const requested = Number(delta) || 0;
+  const before = Number(supply.quantity) || 0;
+  const next = before + requested;
   const clamped = next < 1e-9 && next > -1e-9 ? 0 : Math.max(0, next);
   supply.quantity = roundSupplyQuantity(clamped);
+  // El movimiento registra lo realmente aplicado (el stock no baja de 0).
+  const applied = roundSupplyQuantity(supply.quantity - before);
+  const amount = applied;
   supply.updatedAt = meta.at ?? new Date().toISOString();
 
   const grams =
-    meta.grams !== undefined
+    meta.grams !== undefined && applied === roundSupplyQuantity(requested)
       ? Number(meta.grams)
       : supplyQuantityToGrams({ ...supply, quantity: amount });
 

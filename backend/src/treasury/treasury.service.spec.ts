@@ -777,4 +777,85 @@ describe('TreasuryService', () => {
       /ya está anulado/,
     );
   });
+
+  it('borrar una compra anulada no revierte el stock otra vez', () => {
+    const [purchase] = service.recordExpense({
+      isSupplyPurchase: true,
+      amount: 4800,
+      occurredAt: '2026-08-10',
+      supplyLines: [
+        { supplyId: 'sup-1', quantity: 2, amountSpent: 4800, unitPrice: 2400 },
+      ],
+    });
+    expect(store.supplies[0]?.quantity).toBe(3);
+    service.voidExpense(purchase.id, 'Error de carga');
+    expect(store.supplies[0]?.quantity).toBe(1);
+
+    service.removeExpense(purchase.id);
+
+    expect(store.supplies[0]?.quantity).toBe(1);
+    expect(store.treasuryExpenses).toHaveLength(0);
+  });
+
+  it('borrar una pata de transferencia borra las dos', () => {
+    const [outbound] = service.transferBetweenAccounts({
+      from: TreasuryAccount.CAJA,
+      to: TreasuryAccount.BANCO,
+      amount: 2500,
+      occurredAt: '2026-08-10',
+    });
+    expect(store.treasuryExpenses).toHaveLength(2);
+
+    service.removeExpense(outbound.id);
+
+    expect(store.treasuryExpenses).toHaveLength(0);
+  });
+
+  it('no deja bajar un préstamo por debajo de lo ya devuelto', () => {
+    const [loan] = service.recordExpense({
+      isSupplyPurchase: false,
+      category: TreasuryExpenseCategory.LOAN,
+      name: 'Marta',
+      amount: 1000,
+      occurredAt: '2026-08-10',
+    });
+    service.recordExpense({
+      isSupplyPurchase: false,
+      category: TreasuryExpenseCategory.LOAN_REPAYMENT,
+      name: 'Marta',
+      amount: 600,
+      occurredAt: '2026-08-11',
+    });
+
+    expect(() => service.updateExpense(loan.id, { amount: 500 })).toThrow(
+      /ya devolvió/,
+    );
+    expect(service.updateExpense(loan.id, { amount: 600 }).amount).toBe(600);
+  });
+
+  it('la fecha de hoy se toma en hora de Argentina', () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-12-01T01:30:00Z'));
+    try {
+      // 30/11 22:30 en Argentina: el 30/11 es hoy y el 1/12 todavía no.
+      const [record] = service.recordExpense({
+        isSupplyPurchase: false,
+        direction: TreasuryMovementDirection.EXPENSE,
+        name: 'Transporte',
+        amount: 10,
+        occurredAt: '2026-11-30',
+      });
+      expect(record.occurredAt).toBe('2026-11-30T15:00:00.000Z');
+      expect(() =>
+        service.recordExpense({
+          isSupplyPurchase: false,
+          direction: TreasuryMovementDirection.EXPENSE,
+          name: 'Transporte',
+          amount: 10,
+          occurredAt: '2026-12-01',
+        }),
+      ).toThrow(/posterior a hoy/);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });

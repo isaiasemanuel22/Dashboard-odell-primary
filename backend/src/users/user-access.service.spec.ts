@@ -41,6 +41,7 @@ describe('UserAccessService.resolveCurrentUser cache', () => {
   let prisma: {
     appUser: {
       findUnique: jest.Mock;
+      findMany: jest.Mock;
       delete: jest.Mock;
     };
     appRole: {
@@ -56,6 +57,7 @@ describe('UserAccessService.resolveCurrentUser cache', () => {
     prisma = {
       appUser: {
         findUnique: findUniqueUser,
+        findMany: jest.fn().mockResolvedValue([userRow]),
         delete: jest.fn().mockResolvedValue(undefined),
       },
       appRole: {
@@ -302,5 +304,111 @@ describe('UserAccessService.listOrderResponsibles', () => {
     );
     expect(result).toHaveLength(1);
     expect(result[0].firebaseUid).toBe('fb-1');
+  });
+});
+
+describe('UserAccessService protección de administradores', () => {
+  const date = new Date('2026-01-01T00:00:00.000Z');
+  const adminPerms = ['manage_users', 'manage_roles', 'manage_areas'].map(
+    (action, i) => ({
+      id: `p${i}`,
+      roleId: 'role-admin',
+      areaId: null,
+      action,
+    }),
+  );
+  const adminRole = {
+    id: 'role-admin',
+    name: 'Admin',
+    description: null,
+    isSystem: true,
+    createdAt: date,
+    updatedAt: date,
+    permissions: adminPerms,
+  };
+  const adminUser = {
+    id: 'u-admin',
+    email: 'a@test.com',
+    displayName: 'Admin',
+    firebaseUid: null,
+    active: true,
+    createdAt: date,
+    updatedAt: date,
+    userRoles: [{ roleId: 'role-admin' }],
+    permissionOverrides: [],
+  };
+  const otherAdmin = { ...adminUser, id: 'u-admin2', email: 'b@test.com' };
+
+  function build(users: unknown[]) {
+    const prisma = {
+      appUser: {
+        findUnique: jest
+          .fn()
+          .mockImplementation(({ where }: { where: { id: string } }) =>
+            Promise.resolve(
+              (users as { id: string }[]).find((u) => u.id === where.id) ??
+                null,
+            ),
+          ),
+        findMany: jest.fn().mockResolvedValue(users),
+        delete: jest.fn().mockResolvedValue(undefined),
+        update: jest.fn(),
+      },
+      appRole: {
+        findMany: jest.fn().mockResolvedValue([adminRole]),
+        findUnique: jest.fn().mockResolvedValue(adminRole),
+        update: jest.fn(),
+      },
+      userRole: { deleteMany: jest.fn() },
+      userPermissionOverride: { deleteMany: jest.fn() },
+      rolePermission: { deleteMany: jest.fn() },
+      $transaction: jest.fn().mockResolvedValue(undefined),
+    };
+    const service = new UserAccessService(
+      { isConfigured: () => true, prisma } as unknown as PrismaService,
+      { syncDefaults: jest.fn() } as unknown as UserAccessBootstrapService,
+    );
+    return { service, prisma };
+  }
+
+  it('no deja borrar al último administrador', async () => {
+    const { service, prisma } = build([adminUser]);
+    await expect(service.removeUser('u-admin')).rejects.toThrow(
+      'al menos un administrador',
+    );
+    expect(prisma.appUser.delete).not.toHaveBeenCalled();
+  });
+
+  it('permite borrar un administrador si queda otro', async () => {
+    const { service, prisma } = build([adminUser, otherAdmin]);
+    await service.removeUser('u-admin');
+    expect(prisma.appUser.delete).toHaveBeenCalled();
+  });
+
+  it('no deja que un usuario se borre a sí mismo', async () => {
+    const { service, prisma } = build([adminUser, otherAdmin]);
+    await expect(service.removeUser('u-admin', 'u-admin')).rejects.toThrow(
+      'tu propio usuario',
+    );
+    expect(prisma.appUser.delete).not.toHaveBeenCalled();
+  });
+
+  it('no deja desactivar ni quitarle el rol al último administrador', async () => {
+    const { service, prisma } = build([adminUser]);
+    await expect(
+      service.updateUser('u-admin', { active: false }),
+    ).rejects.toThrow('al menos un administrador');
+    await expect(
+      service.updateUser('u-admin', { roleIds: [] }),
+    ).rejects.toThrow('al menos un administrador');
+    expect(prisma.$transaction).not.toHaveBeenCalled();
+  });
+
+  it('un rol del sistema no puede perder permisos de administración', async () => {
+    const { service, prisma } = build([adminUser, otherAdmin]);
+    await expect(
+      service.updateRole('role-admin', { permissions: [] }),
+    ).rejects.toThrow('rol del sistema');
+    expect(prisma.$transaction).not.toHaveBeenCalled();
   });
 });

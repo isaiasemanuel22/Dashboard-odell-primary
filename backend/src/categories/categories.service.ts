@@ -37,6 +37,32 @@ export class CategoriesService {
     return this.categories.create({ name, productTypes: data.productTypes });
   }
 
+  update(
+    id: string,
+    data: { name?: string; productTypes?: ProductType[] },
+  ): Category {
+    const category = this.findOne(id);
+    if (data.name !== undefined) {
+      const name = data.name.trim();
+      if (!name) {
+        throw new BadRequestException('El nombre es obligatorio');
+      }
+      if (this.categories.nameExists(name, id)) {
+        throw new BadRequestException('Ya existe una categoría con ese nombre');
+      }
+      category.name = name;
+    }
+    if (data.productTypes !== undefined) {
+      if (!data.productTypes.length) {
+        throw new BadRequestException(
+          'Seleccioná al menos un tipo de producto',
+        );
+      }
+      category.productTypes = data.productTypes;
+    }
+    return category;
+  }
+
   remove(id: string): void {
     if (!this.categories.findById(id)) {
       throw new NotFoundException(`Categoría ${id} no encontrada`);

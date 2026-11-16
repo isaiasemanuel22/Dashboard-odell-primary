@@ -93,6 +93,8 @@ describe('OrdersService.getOverview', () => {
       orderTasks,
       printJobs,
       {
+        resolveOrderUnitPrice: (_s: unknown, _p: unknown, price: number) =>
+          price,
         resolveOrderItemUnitCost: () => 0,
       } as unknown as CostCalculatorService,
       store,
@@ -541,6 +543,97 @@ describe('OrdersService.getOverview', () => {
     // 2 un. × 100 g = 0.2 kg, una sola vez
     expect(store.supplies[0].quantity).toBeCloseTo(0.8, 5);
     expect(store.supplyMovements).toHaveLength(1);
+  });
+
+  describe('entregas', () => {
+    const line = (overrides: Record<string, unknown> = {}) => ({
+      serviceType: ServiceType.IMPRESION_3D,
+      productId: 'prod-1',
+      productName: 'Pieza',
+      quantity: 1,
+      unitPrice: 100,
+      reservedQuantity: 1,
+      producedQuantity: 0,
+      deliveredQuantity: 0,
+      productionRequiredQuantity: 0,
+      deliveredFromProductionQuantity: 0,
+      ...overrides,
+    });
+
+    it('valida todas las líneas antes de tocar stock o contadores', () => {
+      const order = store.orders[0];
+      store.products[0].stock = 2;
+      order.items = [
+        line({ quantity: 1, reservedQuantity: 1 }),
+        line({ quantity: 3, reservedQuantity: 3 }),
+      ];
+
+      expect(() =>
+        service.deliver(order.id, [
+          { orderItemIndex: 0, quantity: 1 },
+          { orderItemIndex: 1, quantity: 3 },
+        ]),
+      ).toThrow(/Stock físico inconsistente/);
+
+      expect(store.products[0].stock).toBe(2);
+      expect(order.items[0].deliveredQuantity).toBe(0);
+      expect(order.items[0].reservedQuantity).toBe(1);
+      expect(order.deliveryHistory ?? []).toHaveLength(0);
+    });
+
+    it('acepta cantidades decimales hasta lo pendiente', () => {
+      const order = store.orders[0];
+      store.products[0].stock = 3;
+      order.items = [line({ quantity: 2.5, reservedQuantity: 2.5 })];
+
+      service.deliver(order.id, [{ orderItemIndex: 0, quantity: 0.5 }]);
+      expect(order.items[0].deliveredQuantity).toBe(0.5);
+
+      expect(() =>
+        service.deliver(order.id, [{ orderItemIndex: 0, quantity: 2.1 }]),
+      ).toThrow(/No hay cantidad disponible/);
+
+      service.deliver(order.id, [{ orderItemIndex: 0, quantity: 2 }]);
+      expect(order.items[0].deliveredQuantity).toBe(2.5);
+    });
+
+    it('rechaza cantidades cero o negativas', () => {
+      const order = store.orders[0];
+      order.items = [line()];
+      expect(() =>
+        service.deliver(order.id, [{ orderItemIndex: 0, quantity: 0 }]),
+      ).toThrow(/inválida/);
+    });
+
+    it('update rechaza dejar una línea por debajo de lo entregado', () => {
+      const order = store.orders[0];
+      order.items = [line({ quantity: 3, deliveredQuantity: 2 })];
+
+      expect(() =>
+        service.update(order.id, {
+          items: [
+            {
+              serviceType: ServiceType.IMPRESION_3D,
+              productId: 'prod-1',
+              productName: 'Pieza',
+              quantity: 1,
+              unitPrice: 100,
+            },
+          ],
+        }),
+      ).toThrow(/ya se entregaron 2/);
+    });
+
+    it('updateStatus rechaza pasar al mismo estado', () => {
+      const order = store.orders[0];
+      service.updateStatus(order.id, OrderStatus.CANCELADO);
+      const history = order.statusHistory?.length ?? 0;
+
+      expect(() =>
+        service.updateStatus(order.id, OrderStatus.CANCELADO),
+      ).toThrow(/ya está cancelado/);
+      expect(order.statusHistory?.length ?? 0).toBe(history);
+    });
   });
 });
 

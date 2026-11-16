@@ -101,7 +101,13 @@ export class UploadController {
     @UploadedFile() file: Express.Multer.File,
     @Query('folder') folder?: string,
   ) {
-    const attachmentFolder = resolveAttachmentFolder(folder);
+    let attachmentFolder: string;
+    try {
+      attachmentFolder = resolveAttachmentFolder(folder);
+    } catch (error) {
+      if (file?.path) this.storage.deleteFile(file.path);
+      throw error;
+    }
     this.storage.ensureReady();
 
     if (!file) {

@@ -1,3 +1,5 @@
+import { arStartOfDay, toArParts } from './ar-date.util';
+
 export interface MonthRange {
   start: Date;
   end: Date;
@@ -6,45 +8,36 @@ export interface MonthRange {
 /** Período calendario del dashboard de rentabilidad. */
 export type DashboardPeriod = 'month' | 'quarter' | 'year';
 
+/** Todos los límites son de Argentina (UTC-3), aunque el servidor corra en UTC. */
 export function getMonthRange(reference = new Date()): MonthRange {
+  const { year, month } = toArParts(reference);
+  return monthsRange(year, month, 1);
+}
+
+function monthsRange(year: number, month: number, months: number): MonthRange {
   return {
-    start: new Date(reference.getFullYear(), reference.getMonth(), 1),
-    end: new Date(
-      reference.getFullYear(),
-      reference.getMonth() + 1,
-      0,
-      23,
-      59,
-      59,
-      999,
-    ),
+    start: arStartOfDay(year, month, 1),
+    end: new Date(arStartOfDay(year, month + months, 1).getTime() - 1),
   };
 }
 
 /**
- * Rango del mes, trimestre o año calendario que contiene `reference`
- * (por defecto, hoy).
+ * Rango del mes, trimestre o año calendario (hora AR) que contiene
+ * `reference` (por defecto, hoy).
  */
 export function getPeriodRange(
   period: DashboardPeriod = 'month',
   reference = new Date(),
 ): MonthRange {
-  const year = reference.getFullYear();
-  const month = reference.getMonth();
+  const { year, month } = toArParts(reference);
 
   if (period === 'year') {
-    return {
-      start: new Date(year, 0, 1),
-      end: new Date(year, 11, 31, 23, 59, 59, 999),
-    };
+    return monthsRange(year, 1, 12);
   }
 
   if (period === 'quarter') {
-    const quarterStartMonth = Math.floor(month / 3) * 3;
-    return {
-      start: new Date(year, quarterStartMonth, 1),
-      end: new Date(year, quarterStartMonth + 3, 0, 23, 59, 59, 999),
-    };
+    const quarterStartMonth = Math.floor((month - 1) / 3) * 3 + 1;
+    return monthsRange(year, quarterStartMonth, 3);
   }
 
   return getMonthRange(reference);

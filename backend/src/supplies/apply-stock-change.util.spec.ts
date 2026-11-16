@@ -57,6 +57,27 @@ describe('applyStockChange', () => {
     expect(store.supplyMovements[1].jobId).toBe('job-1');
   });
 
+  it('registra el delta realmente aplicado cuando el stock se trunca en 0', () => {
+    const store = emptyStore();
+    const supply = {
+      id: 'sup-1',
+      name: 'PLA',
+      category: SupplyCategory.FDM,
+      unit: 'kg',
+      quantity: 0.3,
+      minStock: 0,
+      unitPrice: 1,
+      priceFromSettings: false,
+      updatedAt: '2026-01-01T00:00:00.000Z',
+    };
+    store.supplies.push(supply);
+
+    const movement = applyStockChange(store, supply, -1, 'task');
+
+    expect(supply.quantity).toBe(0);
+    expect(movement.delta).toBeCloseTo(-0.3, 6);
+  });
+
   it('redondea basura de punto flotante a 6 decimales', () => {
     const store = emptyStore();
     const supply = {

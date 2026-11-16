@@ -6,6 +6,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  MaxLength,
   Min,
   MinLength,
   ValidateNested,
@@ -28,16 +29,19 @@ export class RolePermissionDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   areaId?: string | null;
 }
 
 export class CreateWorkAreaDto {
   @IsString()
+  @MaxLength(128)
   @MinLength(1)
   name!: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   slug?: string;
 
   @IsOptional()
@@ -53,11 +57,13 @@ export class CreateWorkAreaDto {
 export class UpdateWorkAreaDto {
   @IsOptional()
   @IsString()
+  @MaxLength(128)
   @MinLength(1)
   name?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   slug?: string;
 
   @IsOptional()
@@ -72,11 +78,13 @@ export class UpdateWorkAreaDto {
 
 export class CreateAppRoleDto {
   @IsString()
+  @MaxLength(128)
   @MinLength(1)
   name!: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   description?: string;
 
   @IsOptional()
@@ -89,11 +97,13 @@ export class CreateAppRoleDto {
 export class UpdateAppRoleDto {
   @IsOptional()
   @IsString()
+  @MaxLength(128)
   @MinLength(1)
   name?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   description?: string;
 
   @IsOptional()
@@ -109,6 +119,7 @@ export class UserPermissionOverrideDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   areaId?: string | null;
 
   @IsBoolean()
@@ -120,11 +131,13 @@ export class CreateAppUserDto {
   email!: string;
 
   @IsString()
+  @MaxLength(255)
   @MinLength(1)
   displayName!: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(128)
   firebaseUid?: string;
 
   @IsOptional()
@@ -150,11 +163,13 @@ export class UpdateAppUserDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   @MinLength(1)
   displayName?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(128)
   firebaseUid?: string | null;
 
   @IsOptional()

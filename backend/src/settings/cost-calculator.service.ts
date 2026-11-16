@@ -488,8 +488,7 @@ export class CostCalculatorService {
     const price =
       input.type === ProductType.COMBO && fixedPrice
         ? processPrice
-        : processPrice +
-          supplyPriceFromValue(supplyValue, errorMarginPercent);
+        : processPrice + supplyPriceFromValue(supplyValue, errorMarginPercent);
     const profit = price - cost;
     const configuredMarginPercent = this.getMarginForProductType(input.type);
 

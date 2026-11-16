@@ -6,7 +6,13 @@ import {
   Optional,
   forwardRef,
 } from '@nestjs/common';
-import { FilamentType, ResinType, SupplyCategory } from '../common/enums';
+import {
+  FilamentType,
+  ResinType,
+  SupplyCategory,
+  TreasuryExpenseCategory,
+} from '../common/enums';
+import { toCents } from '../common/utils/money.util';
 import { Supply } from '../common/interfaces';
 import {
   supplyRequiresColor,
@@ -223,7 +229,7 @@ export class SuppliesService {
       data.unitPrice !== undefined ? Number(data.unitPrice) : undefined;
     const unitPriceChanged =
       unitPrice !== undefined &&
-      Math.round(unitPrice) !== Math.round(Number(existing.unitPrice));
+      toCents(unitPrice) !== toCents(existing.unitPrice);
 
     const priceHistory = unitPriceChanged
       ? appendSupplyPriceHistory(existing.priceHistory, unitPrice)
@@ -318,6 +324,42 @@ export class SuppliesService {
     if (!this.supplies.findById(id)) {
       throw new NotFoundException(`Insumo ${id} no encontrado`);
     }
+    const supply = this.supplies.findById(id)!;
+
+    if (
+      this.store.spools.some(
+        (spool) => spool.supplyId === id && !spool.finishedAt,
+      )
+    ) {
+      throw new BadRequestException(
+        `No se puede eliminar «${supply.name}»: tiene bobinas abiertas. Terminá o quitá las bobinas primero.`,
+      );
+    }
+
+    const productsUsing = countProductsUsingSupply(
+      this.store.products,
+      supply,
+      this.store.generalSettings,
+    );
+    if (productsUsing > 0) {
+      throw new BadRequestException(
+        `No se puede eliminar «${supply.name}»: lo usan ${productsUsing} ${productsUsing === 1 ? 'producto' : 'productos'}. Sacalo de esos productos primero.`,
+      );
+    }
+
+    if (
+      this.store.treasuryExpenses.some(
+        (record) =>
+          record.category === TreasuryExpenseCategory.SUPPLY_PURCHASE &&
+          record.referenceId === id &&
+          !record.voidedAt,
+      )
+    ) {
+      throw new BadRequestException(
+        `No se puede eliminar «${supply.name}»: tiene compras registradas en Tesorería. Eliminá o anulá esas compras primero.`,
+      );
+    }
+
     this.supplies.remove(id);
   }
 

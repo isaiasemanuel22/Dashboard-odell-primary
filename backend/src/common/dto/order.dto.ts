@@ -15,6 +15,7 @@ import {
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
+import { IsRealCalendarDay } from '../validators/calendar-date.validator';
 import { LOSS_REASON_CODES, LOSS_REASON_NOTE_MAX } from '../loss-reason';
 import { PartialType } from '@nestjs/mapped-types';
 import { Type } from 'class-transformer';
@@ -99,6 +100,7 @@ export class SupplyReplacementDto {
   requirementKey!: string;
 
   @IsString()
+  @MaxLength(64)
   @IsNotEmpty()
   supplyId!: string;
 }
@@ -115,6 +117,7 @@ export class UpdatePrintJobDto {
   @IsOptional()
   @ValidateIf((_, value) => value !== null)
   @IsString()
+  @MaxLength(128)
   responsibleUserId?: string | null;
 
   @IsOptional()
@@ -152,6 +155,7 @@ export class AssignPrintJobPrinterDto {
   /** Id de perfil, null para desasignar, o 'auto'. */
   @ValidateIf((_, value) => value !== null)
   @IsString()
+  @MaxLength(64)
   printerId!: string | null;
 
   @IsOptional()
@@ -197,15 +201,19 @@ export class CreateIndependentTaskDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(40)
+  @IsRealCalendarDay()
   dueDate?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(128)
   responsibleUserId?: string;
 
   @IsOptional()
   @IsNumber()
-  @Min(0)
+  @Min(0.1)
+  @Max(1000)
   estimatedHours?: number;
 }
 
@@ -231,9 +239,11 @@ export class OrderItemDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   productId?: string;
 
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   productName!: string;
 
@@ -279,6 +289,7 @@ export class OrderItemDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   printImpresoId?: string;
 
   @IsOptional()
@@ -306,6 +317,7 @@ export class OrderItemDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(32)
   resinType?: string;
 
   @IsOptional()
@@ -408,6 +420,7 @@ export class CreateOrderPaymentDto {
 
 export class VoidOrderPaymentDto {
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   reason!: string;
 }
@@ -415,6 +428,7 @@ export class VoidOrderPaymentDto {
 export class CreateOrderDto {
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   customerId?: string;
 
   @IsOptional()
@@ -440,6 +454,8 @@ export class CreateOrderDto {
 
   @IsString()
   @IsNotEmpty()
+  @MaxLength(40)
+  @IsRealCalendarDay()
   dueDate!: string;
 
   @IsOptional()
@@ -481,6 +497,7 @@ export class CreateOrderDto {
   /** uid de Firebase del responsable del pedido. */
   @IsOptional()
   @IsString()
+  @MaxLength(128)
   responsibleUserId?: string;
 }
 

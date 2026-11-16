@@ -10,7 +10,6 @@ const IMAGE_SIGNATURES: Array<{
   { mime: 'image/jpeg', bytes: [0xff, 0xd8, 0xff] },
   { mime: 'image/png', bytes: [0x89, 0x50, 0x4e, 0x47] },
   { mime: 'image/gif', bytes: [0x47, 0x49, 0x46] },
-  { mime: 'image/webp', bytes: [0x52, 0x49, 0x46, 0x46], offset: 0 },
 ];
 
 const ALLOWED_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp']);
@@ -82,6 +81,38 @@ export function isBlockedAttachmentExtension(filename: string): boolean {
   return BLOCKED_ATTACHMENT_EXTENSIONS.has(extension);
 }
 
+/** Lista blanca de adjuntos: imágenes, PDF, modelos 3D y documentos comunes. */
+const ALLOWED_ATTACHMENT_EXTENSIONS = new Set([
+  '.jpg',
+  '.jpeg',
+  '.png',
+  '.webp',
+  '.gif',
+  '.pdf',
+  '.3mf',
+  '.stl',
+  '.obj',
+  '.step',
+  '.stp',
+  '.txt',
+  '.csv',
+  '.doc',
+  '.docx',
+  '.xls',
+  '.xlsx',
+]);
+
+/** Nunca se aceptan, aunque alguien los agregue a la lista blanca por error. */
+const SCRIPTABLE_EXTENSIONS = new Set(['.html', '.htm', '.svg', '.xml', '.js']);
+
+export function isAllowedAttachmentExtension(filename: string): boolean {
+  const extension = extname(filename).toLowerCase();
+  return (
+    !SCRIPTABLE_EXTENSIONS.has(extension) &&
+    ALLOWED_ATTACHMENT_EXTENSIONS.has(extension)
+  );
+}
+
 /** Normaliza MIME de adjuntos; .3mf → model/3mf aunque venga octet-stream o vacío. */
 export function normalizeAttachmentMime(
   filename: string,
@@ -105,6 +136,14 @@ export function validateUploadedAttachment(
 
   if (isBlockedAttachmentExtension(name)) {
     return { ok: false, reason: 'Tipo de archivo no permitido' };
+  }
+
+  if (!isAllowedAttachmentExtension(name)) {
+    return {
+      ok: false,
+      reason:
+        'Tipo de archivo no permitido (imágenes, PDF, modelos 3D y documentos)',
+    };
   }
 
   const mime = normalizeAttachmentMime(name, file.mimetype);

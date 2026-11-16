@@ -11,14 +11,21 @@ import {
 import type { Request } from 'express';
 import {
   ColorConfigDto,
+  UpdateColorConfigDto,
   FilamentPriceDto,
+  UpdateFilamentPriceDto,
   FilamentTypeConfigDto,
+  UpdateFilamentTypeConfigDto,
   MachineCostEntryDto,
+  UpdateMachineCostEntryDto,
   MachineProfileDto,
   PowerConsumptionEntryDto,
+  UpdatePowerConsumptionEntryDto,
   ResetDatabaseDto,
   ResinPriceDto,
+  UpdateResinPriceDto,
   ResinTypeConfigDto,
+  UpdateResinTypeConfigDto,
   SupplyDefaultPriceDto,
   UpdateCoreValuesDto,
   LegacyPatchGeneralSettingsDto,
@@ -99,7 +106,7 @@ export class SettingsController {
   @Patch('general/filament-prices/:id')
   updateFilamentPrice(
     @Param('id') id: string,
-    @Body() data: Partial<FilamentPriceDto>,
+    @Body() data: UpdateFilamentPriceDto,
   ) {
     return this.settingsService.updateFilamentPrice(id, data);
   }
@@ -116,10 +123,7 @@ export class SettingsController {
   }
 
   @Patch('general/resin-prices/:id')
-  updateResinPrice(
-    @Param('id') id: string,
-    @Body() data: Partial<ResinPriceDto>,
-  ) {
+  updateResinPrice(@Param('id') id: string, @Body() data: UpdateResinPriceDto) {
     return this.settingsService.updateResinPrice(id, data);
   }
 
@@ -137,7 +141,7 @@ export class SettingsController {
   @Patch('general/filament-types/:id')
   updateFilamentType(
     @Param('id') id: string,
-    @Body() data: Partial<FilamentTypeConfigDto>,
+    @Body() data: UpdateFilamentTypeConfigDto,
   ) {
     return this.settingsService.updateFilamentType(id, data);
   }
@@ -156,7 +160,7 @@ export class SettingsController {
   @Patch('general/resin-types/:id')
   updateResinType(
     @Param('id') id: string,
-    @Body() data: Partial<ResinTypeConfigDto>,
+    @Body() data: UpdateResinTypeConfigDto,
   ) {
     return this.settingsService.updateResinType(id, data);
   }
@@ -173,7 +177,7 @@ export class SettingsController {
   }
 
   @Patch('general/colors/:id')
-  updateColor(@Param('id') id: string, @Body() data: Partial<ColorConfigDto>) {
+  updateColor(@Param('id') id: string, @Body() data: UpdateColorConfigDto) {
     return this.settingsService.updateColor(id, data);
   }
 
@@ -191,7 +195,7 @@ export class SettingsController {
   @Patch('general/power-consumptions/:id')
   updatePowerConsumption(
     @Param('id') id: string,
-    @Body() data: Partial<PowerConsumptionEntryDto>,
+    @Body() data: UpdatePowerConsumptionEntryDto,
   ) {
     return this.settingsService.updatePowerConsumption(id, data);
   }
@@ -210,7 +214,7 @@ export class SettingsController {
   @Patch('general/machine-costs/:id')
   updateMachineCost(
     @Param('id') id: string,
-    @Body() data: Partial<MachineCostEntryDto>,
+    @Body() data: UpdateMachineCostEntryDto,
   ) {
     return this.settingsService.updateMachineCost(id, data);
   }

@@ -24,6 +24,7 @@ import {
   assertPrintJobStatus,
   assertPrintJobStatusTransition,
 } from '../common/validators/domain.validators';
+import { isRealCalendarDay } from '../common/validators/calendar-date.validator';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
 import { StoreChangeService } from '../store/store-change.service';
 import { StoreService } from '../store/store.service';
@@ -149,13 +150,12 @@ export class PrintJobsService {
     };
   }
 
-  update(
-    id: string,
+  private applyUpdate(
+    job: PrintJob,
     dto: UpdatePrintJobDto,
-    actor?: PrintJobActor,
-  ): PrintJobUpdateResult {
-    const job = this.findOne(id);
-
+    actor: PrintJobActor | undefined,
+    nextActualHours: number | null | undefined,
+  ): void {
     if (dto.supplyReplacements) {
       this.orderTasks.applySupplyReplacements(job, dto.supplyReplacements);
     }
@@ -168,22 +168,8 @@ export class PrintJobsService {
       }
     }
 
-    if (dto.actualHours !== undefined) {
-      if (
-        dto.actualHours === null ||
-        (typeof dto.actualHours === 'string' &&
-          String(dto.actualHours).trim() === '')
-      ) {
-        job.actualHours = null;
-      } else {
-        const hours = Number(dto.actualHours);
-        if (!Number.isFinite(hours) || hours < 0 || hours > 1000) {
-          throw new BadRequestException(
-            'Las horas reales deben estar entre 0 y 1000',
-          );
-        }
-        job.actualHours = hours;
-      }
+    if (nextActualHours !== undefined) {
+      job.actualHours = nextActualHours;
     }
 
     if (dto.priority !== undefined) {
@@ -193,8 +179,6 @@ export class PrintJobsService {
     }
 
     if (dto.status !== undefined) {
-      assertPrintJobStatus(dto.status);
-      assertPrintJobStatusTransition(job.status, dto.status);
       this.orderTasks.beforeStatusChange(job, dto.status, actor, {
         blockedReason: dto.blockedReason,
       });
@@ -218,9 +202,6 @@ export class PrintJobsService {
 
     if (dto.responsibleUserId !== undefined) {
       const nextResponsible = (dto.responsibleUserId ?? '').trim() || undefined;
-      if (nextResponsible !== job.responsibleUserId) {
-        this.orderTasks.assertActorCanMove(job, actor);
-      }
       job.responsibleUserId = nextResponsible;
       job.responsibleManual = true;
     }
@@ -250,6 +231,59 @@ export class PrintJobsService {
         job.startedAt = undefined;
         job.completedAt = undefined;
       }
+    }
+  }
+
+  update(
+    id: string,
+    dto: UpdatePrintJobDto,
+    actor?: PrintJobActor,
+  ): PrintJobUpdateResult {
+    const job = this.findOne(id);
+
+    // 1) Validar todo antes de tocar nada.
+    let nextActualHours: number | null | undefined;
+    if (dto.actualHours !== undefined) {
+      if (
+        dto.actualHours === null ||
+        (typeof dto.actualHours === 'string' &&
+          String(dto.actualHours).trim() === '')
+      ) {
+        nextActualHours = null;
+      } else {
+        const hours = Number(dto.actualHours);
+        if (!Number.isFinite(hours) || hours < 0 || hours > 1000) {
+          throw new BadRequestException(
+            'Las horas reales deben estar entre 0 y 1000',
+          );
+        }
+        nextActualHours = hours;
+      }
+    }
+    if (dto.status !== undefined) {
+      assertPrintJobStatus(dto.status);
+      assertPrintJobStatusTransition(job.status, dto.status);
+      if (dto.status !== job.status) {
+        this.orderTasks.assertActorCanMove(job, actor);
+      }
+    }
+    if (dto.responsibleUserId !== undefined) {
+      const nextResponsible = (dto.responsibleUserId ?? '').trim() || undefined;
+      if (nextResponsible !== job.responsibleUserId) {
+        this.orderTasks.assertActorCanMove(job, actor);
+      }
+    }
+
+    // 2) Aplicar; si algo falla a mitad de camino se restaura la tarea.
+    const snapshot = structuredClone(job);
+    try {
+      this.applyUpdate(job, dto, actor, nextActualHours);
+    } catch (error) {
+      for (const key of Object.keys(job)) {
+        delete (job as unknown as Record<string, unknown>)[key];
+      }
+      Object.assign(job, snapshot);
+      throw error;
     }
 
     const stockWarnings = this.orderTasks.afterStatusChange(job);
@@ -421,7 +455,7 @@ export class PrintJobsService {
       active: true,
       priority: effectiveTaskPriority(dueDate),
       machine: machineForIndependentTask(type),
-      estimatedHours: Math.max(0, Number(dto.estimatedHours) || 1),
+      estimatedHours: independentEstimatedHours(dto.estimatedHours),
       dueDate,
       responsibleUserId:
         dto.responsibleUserId?.trim() || actor?.userId || undefined,
@@ -441,14 +475,29 @@ export class PrintJobsService {
   }
 }
 
+/** Horas estimadas de una tarea independiente: 1 si no se informa; el DTO ya valida el rango. */
+function independentEstimatedHours(value: number | undefined): number {
+  if (value === undefined || value === null) return 1;
+  const hours = Number(value);
+  if (!Number.isFinite(hours) || hours < 0.1 || hours > 1000) {
+    throw new BadRequestException(
+      'Las horas estimadas deben estar entre 0,1 y 1000',
+    );
+  }
+  return hours;
+}
+
 /** Misma convención que pedidos (`toOrderDueDate`): día calendario + T18:00Z. */
 function resolveDueDate(value: string | undefined): string {
   const trimmed = value?.trim();
   if (trimmed) {
     const ymd = trimmed.slice(0, 10);
-    if (/^\d{4}-\d{2}-\d{2}$/.test(ymd)) {
-      return new Date(`${ymd}T18:00:00.000Z`).toISOString();
+    if (!isRealCalendarDay(ymd)) {
+      throw new BadRequestException(
+        'La fecha de entrega no es válida (usá AAAA-MM-DD)',
+      );
     }
+    return new Date(`${ymd}T18:00:00.000Z`).toISOString();
   }
   const due = new Date();
   due.setDate(due.getDate() + 7);

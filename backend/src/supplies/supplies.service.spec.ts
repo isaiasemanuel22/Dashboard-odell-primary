@@ -242,4 +242,75 @@ describe('SuppliesService', () => {
     const service = createService(store);
     expect(service.getPriceChanges(90)).toEqual([]);
   });
+
+  describe('remove', () => {
+    it('elimina un insumo sin vínculos', () => {
+      const store = new StoreService();
+      seed(store, [baseSupply()]);
+      const service = createService(store);
+      service.remove('sup-1');
+      expect(store.supplies).toHaveLength(0);
+    });
+
+    it('rechaza si tiene bobinas abiertas', () => {
+      const store = new StoreService();
+      seed(store, [baseSupply()]);
+      store.spools.push({
+        id: 'spl-1',
+        code: 'B-01',
+        supplyId: 'sup-1',
+        initialGrams: 1000,
+        remainingGrams: 800,
+        location: 'stock' as never,
+        openedAt: '2026-01-01T00:00:00.000Z',
+        finishedAt: null,
+        createdAt: '2026-01-01T00:00:00.000Z',
+        updatedAt: '2026-01-01T00:00:00.000Z',
+      });
+      const service = createService(store);
+      expect(() => service.remove('sup-1')).toThrow(/bobinas abiertas/);
+      expect(store.supplies).toHaveLength(1);
+    });
+
+    it('rechaza si tiene compras en tesorería', () => {
+      const store = new StoreService();
+      seed(store, [baseSupply()]);
+      store.treasuryExpenses.push({
+        id: 'tre-1',
+        category: 'supply_purchase' as never,
+        referenceId: 'sup-1',
+        amount: 1000,
+      } as never);
+      const service = createService(store);
+      expect(() => service.remove('sup-1')).toThrow(/Tesorería/);
+    });
+
+    it('rechaza si algún producto lo usa', () => {
+      const store = new StoreService();
+      const product = {
+        id: 'prod-1',
+        name: 'Taza',
+        type: ProductType.ESTAMPADO,
+        images: [],
+        attachments: [],
+        updatedAt: '2026-01-01T00:00:00.000Z',
+        price: 5000,
+        cost: 2000,
+        profit: 3000,
+        categoryIds: [],
+        size: 'A4',
+        published: true,
+        components: [],
+        assemblyTimeHours: 0,
+        includesPieces: false,
+        workTimeHours: 1,
+        prints: [],
+        pressCycles: [],
+        supplies: [{ id: 'es-1', supplyId: 'sup-1', quantity: 1 }],
+      } as Product;
+      seed(store, [baseSupply()], [product]);
+      const service = createService(store);
+      expect(() => service.remove('sup-1')).toThrow(/lo usan 1 producto/);
+    });
+  });
 });

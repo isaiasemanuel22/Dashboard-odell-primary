@@ -1,3 +1,4 @@
+import { arTodayKey } from '../common/utils/ar-date.util';
 import {
   BadRequestException,
   Injectable,
@@ -264,10 +265,18 @@ export class QuotesService {
       this.assertItemsForSent(QuoteStatus.ENVIADO, quote.items);
     }
 
+    const previousStatus = quote.status;
     quote.status = status;
     this.quotes.save(quote);
     if (status === QuoteStatus.ACEPTADO && !quote.orderId) {
-      this.createOrderFromQuote(quote.id, actorUserId);
+      try {
+        this.createOrderFromQuote(quote.id, actorUserId);
+      } catch (error) {
+        // Si el pedido no se pudo crear, el presupuesto no queda aceptado.
+        const current = this.quotes.findById(id);
+        if (current) this.quotes.save({ ...current, status: previousStatus });
+        throw error;
+      }
     }
     return this.findOne(id);
   }
@@ -314,9 +323,39 @@ export class QuotesService {
       }
     }
 
-    const items = this.attachCatalogProducts(quote.items);
+    const createdProductIds: string[] = [];
+    let items: QuoteItem[];
+    let order: Order;
+    try {
+      items = this.attachCatalogProducts(quote.items, createdProductIds);
+      order = this.createOrderFromQuoteItems(quote, items, actorUserId);
+    } catch (error) {
+      // No dejar productos huérfanos si el pedido no se pudo crear.
+      for (const productId of createdProductIds) {
+        this.products.remove(productId);
+      }
+      throw error;
+    }
+    this.quotes.save({ ...quote, items, orderId: order.id });
+    this.storeChange.recordChange({
+      collections: ['quotes', 'orders', 'printJobs', 'products'],
+      realtime: {
+        scopes: ['quotes', 'orders', 'print-jobs', 'products', 'dashboard'],
+        action: 'create',
+        entity: 'order',
+        id: order.id,
+      },
+    });
+    return order;
+  }
+
+  private createOrderFromQuoteItems(
+    quote: Quote,
+    items: QuoteItem[],
+    actorUserId?: string,
+  ): Order {
     // Copia priceType, canal y precios cotizados sin recalcularlos (§16.2).
-    const order = this.orders.create(
+    return this.orders.create(
       {
         customerId: quote.customerId ?? undefined,
         items: items,
@@ -337,21 +376,12 @@ export class QuotesService {
         keepQuotedPrices: { wholesaleApplied: quote.wholesaleApplied === true },
       },
     );
-
-    this.quotes.save({ ...quote, items, orderId: order.id });
-    this.storeChange.recordChange({
-      collections: ['quotes', 'orders', 'printJobs', 'products'],
-      realtime: {
-        scopes: ['quotes', 'orders', 'print-jobs', 'products', 'dashboard'],
-        action: 'create',
-        entity: 'order',
-        id: order.id,
-      },
-    });
-    return order;
   }
 
-  private attachCatalogProducts(items: QuoteItem[]): QuoteItem[] {
+  private attachCatalogProducts(
+    items: QuoteItem[],
+    createdProductIds: string[] = [],
+  ): QuoteItem[] {
     return items.map((item) => {
       if (
         !isQuoteLineMissingFromCatalog(item, (productId) =>
@@ -374,6 +404,7 @@ export class QuotesService {
       if (!product) return item;
 
       this.products.create(product);
+      createdProductIds.push(product.id);
       return {
         ...item,
         productId: product.id,
@@ -482,16 +513,8 @@ export class QuotesService {
   }
 
   private todayQuotedAt(reference = new Date()): string {
-    return new Date(
-      Date.UTC(
-        reference.getFullYear(),
-        reference.getMonth(),
-        reference.getDate(),
-        12,
-        0,
-        0,
-      ),
-    ).toISOString();
+    const [year, month, day] = arTodayKey(reference).split('-').map(Number);
+    return new Date(Date.UTC(year, month - 1, day, 12, 0, 0)).toISOString();
   }
 
   private normalizeDescription(description?: string): string | undefined {

@@ -12,7 +12,8 @@ import {
 } from '../common/enums';
 import { CreateCalendarEntryDto, UpdateCalendarEntryDto } from '../common/dto';
 import { CalendarEntry, CalendarFeedItem } from '../common/interfaces';
-import { calendarDay, todayCalendarDay } from '../orders/due-date.util';
+import { arTodayKey } from '../common/utils/ar-date.util';
+import { calendarDay } from '../orders/due-date.util';
 import { StoreService } from '../store/store.service';
 import { expandEntryDates } from './calendar-repeat.util';
 
@@ -28,11 +29,16 @@ export class CalendarService {
   constructor(private readonly store: StoreService) {}
 
   getFeed(fromRaw?: string, toRaw?: string): CalendarFeedItem[] {
-    const today = todayCalendarDay();
+    const today = arTodayKey();
     const from = calendarDay(fromRaw ?? '') ?? addMonths(today, -1);
     const to = calendarDay(toRaw ?? '') ?? addMonths(today, 2);
     if (from > to) {
       throw new BadRequestException('from debe ser anterior o igual a to');
+    }
+    if (daysBetween(from, to) > MAX_FEED_DAYS) {
+      throw new BadRequestException(
+        `El rango del calendario no puede superar los ${MAX_FEED_DAYS} días`,
+      );
     }
 
     const items: CalendarFeedItem[] = [];
@@ -128,7 +134,7 @@ export class CalendarService {
 
   /** Entries that should surface as dashboard notifications today. */
   buildNotifyCandidates(reference = new Date()): CalendarFeedItem[] {
-    const today = todayCalendarDay(reference);
+    const today = arTodayKey(reference);
     const items = this.entryItems(addDays(today, -7), addDays(today, 7));
     return items.filter((item) => {
       if (!item.entryId) return false;
@@ -267,6 +273,17 @@ function normalizeWeekdays(value: number[] | undefined): number[] {
         .filter((n) => Number.isInteger(n) && n >= 1 && n <= 7),
     ),
   ].sort((a, b) => a - b);
+}
+
+/** Rango máximo del feed (el default son ~3 meses). */
+const MAX_FEED_DAYS = 400;
+
+function daysBetween(from: string, to: string): number {
+  const toUtc = (ymd: string) => {
+    const [y, m, d] = ymd.split('-').map(Number);
+    return Date.UTC(y, m - 1, d);
+  };
+  return Math.round((toUtc(to) - toUtc(from)) / 86_400_000);
 }
 
 function addMonths(ymd: string, delta: number): string {

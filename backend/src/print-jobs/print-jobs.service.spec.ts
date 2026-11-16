@@ -68,6 +68,49 @@ describe('PrintJobsService.createIndependent', () => {
     return new PrintJobsService(store, new OrderTasksService(store));
   }
 
+  it('rechaza una fecha de entrega inexistente con 400', () => {
+    expect(() =>
+      service().createIndependent({
+        productName: 'Tarea',
+        dueDate: '2026-02-30',
+      }),
+    ).toThrow('La fecha de entrega no es válida');
+  });
+
+  it('el DTO rechaza 2026-02-30 y horas fuera de rango', async () => {
+    const bad = plainToInstance(CreateIndependentTaskDto, {
+      productName: 'T',
+      dueDate: '2026-02-30',
+      estimatedHours: 0,
+    });
+    const errors = await validate(bad);
+    expect(errors.map((e) => e.property).sort()).toEqual([
+      'dueDate',
+      'estimatedHours',
+    ]);
+    const ok = plainToInstance(CreateIndependentTaskDto, {
+      productName: 'T',
+      dueDate: '2026-02-28',
+      estimatedHours: 0.5,
+    });
+    expect(await validate(ok)).toHaveLength(0);
+  });
+
+  it('update no muta nada si el actor no puede mover la tarea', () => {
+    const store = new StoreService();
+    store.applyState(createEmptyState());
+    const svc = new PrintJobsService(store, new OrderTasksService(store));
+    const job = svc.createIndependent({ productName: 'Tarea' });
+    expect(() =>
+      svc.update(
+        job.id,
+        { notes: 'cambio', responsibleUserId: 'otro' },
+        { isAdmin: false, userId: 'x' },
+      ),
+    ).toThrow();
+    expect(store.printJobs[0].notes).toBeUndefined();
+  });
+
   it('prioridad alta fija override 3; normal limpia el override', () => {
     const store = new StoreService();
     store.applyState(createEmptyState());

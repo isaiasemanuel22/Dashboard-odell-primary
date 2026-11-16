@@ -16,10 +16,12 @@ import { PaymentMethod, TreasuryAccount } from '../enums';
 export class CreateRetailSaleItemDto {
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   productId?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   productName?: string;
 
   @IsNumber()

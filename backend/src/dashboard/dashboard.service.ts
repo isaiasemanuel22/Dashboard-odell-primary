@@ -1,3 +1,9 @@
+import {
+  arStartOfDay,
+  arTodayKey,
+  toArParts,
+} from '../common/utils/ar-date.util';
+import { calendarDay } from '../orders/due-date.util';
 import { Injectable } from '@nestjs/common';
 import {
   OrderStatus,
@@ -488,28 +494,22 @@ export class DashboardService {
   }
 
   private buildMonthlyTrend(): MonthlyTrendPoint[] {
-    const now = new Date();
+    const now = toArParts(new Date());
     const points: MonthlyTrendPoint[] = [];
 
     for (let offset = TREND_MONTHS - 1; offset >= 0; offset -= 1) {
-      const monthStart = new Date(
-        now.getFullYear(),
-        now.getMonth() - offset,
-        1,
-      );
+      // Meses calendario de Argentina; Date.UTC normaliza meses fuera de 1–12.
+      const target = new Date(Date.UTC(now.year, now.month - 1 - offset, 1));
+      const year = target.getUTCFullYear();
+      const monthIndex = target.getUTCMonth();
+      const monthStart = arStartOfDay(year, monthIndex + 1, 1);
       const monthEnd = new Date(
-        now.getFullYear(),
-        now.getMonth() - offset + 1,
-        0,
-        23,
-        59,
-        59,
-        999,
+        arStartOfDay(year, monthIndex + 2, 1).getTime() - 1,
       );
       const range: MonthRange = { start: monthStart, end: monthEnd };
 
-      const month = `${monthStart.getFullYear()}-${String(monthStart.getMonth() + 1).padStart(2, '0')}`;
-      const label = `${MONTH_LABELS[monthStart.getMonth()]} ${monthStart.getFullYear()}`;
+      const month = `${year}-${String(monthIndex + 1).padStart(2, '0')}`;
+      const label = `${MONTH_LABELS[monthIndex]} ${year}`;
 
       points.push({
         month,
@@ -641,13 +641,9 @@ export class DashboardService {
       return false;
     }
 
-    const due = new Date(order.dueDate);
-    if (Number.isNaN(due.getTime())) return false;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    due.setHours(0, 0, 0, 0);
-    return due < today;
+    const dueDay = calendarDay(order.dueDate);
+    if (!dueDay) return false;
+    return dueDay < arTodayKey();
   }
 
   private formatNotificationDate(value: string): string {

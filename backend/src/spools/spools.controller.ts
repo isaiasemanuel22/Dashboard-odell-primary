@@ -52,15 +52,6 @@ export class SpoolsController {
 
   @Patch(':id')
   move(@Param('id') id: string, @Body() data: MoveSpoolDto) {
-    // Compat: body con location = mover; con remainingGrams = ajustar.
-    if (
-      data &&
-      typeof data === 'object' &&
-      'remainingGrams' in (data as object) &&
-      !('location' in (data as object))
-    ) {
-      return this.spoolsService.adjust(id, data as unknown as AdjustSpoolDto);
-    }
     return this.spoolsService.move(id, data);
   }
 

@@ -39,6 +39,7 @@ import {
 import {
   hasPermission,
   normalizeRolePermissions,
+  isAdminPermission,
   resolvePermissions,
   userIsAdmin,
 } from './user-access.util';
@@ -254,6 +255,28 @@ export class UserAccessService {
       await this.validatePermissionReferences(permissions);
     }
 
+    if (current.isSystem && data.permissions !== undefined) {
+      const kept = new Set(
+        permissions.map((entry) => `${entry.action}:${entry.areaId ?? '*'}`),
+      );
+      const losesAdmin = current.permissions.some(
+        (entry) =>
+          isAdminPermission(entry.action) &&
+          !kept.has(`${entry.action}:${entry.areaId ?? '*'}`),
+      );
+      if (losesAdmin) {
+        throw new ConflictException(
+          'Un rol del sistema no puede perder sus permisos de administración',
+        );
+      }
+    }
+    if (data.permissions !== undefined) {
+      await this.assertAdminRemains({
+        roleId: id,
+        rolePermissions: permissions,
+      });
+    }
+
     const now = new Date();
     await this.db().$transaction([
       this.db().rolePermission.deleteMany({ where: { roleId: id } }),
@@ -450,6 +473,17 @@ export class UserAccessService {
       await this.validatePermissionReferences(this.mapUserOverrides(overrides));
     }
 
+    await this.assertAdminRemains({
+      userId: id,
+      userChange: {
+        active: data.active ?? current.active,
+        roleIds: data.roleIds ?? current.roleIds,
+        permissionOverrides: overrides
+          ? this.mapUserOverrides(overrides)
+          : current.permissionOverrides,
+      },
+    });
+
     const now = new Date();
     const operations = [
       this.db().userRole.deleteMany({ where: { userId: id } }),
@@ -489,8 +523,72 @@ export class UserAccessService {
     return this.findUser(id);
   }
 
-  async removeUser(id: string): Promise<void> {
+  /**
+   * Cuenta administradores activos como quedarían tras un cambio hipotético.
+   * `userChange`: usuario modificado (o `null` si se borra). `roleChange`:
+   * permisos nuevos de un rol.
+   */
+  private async countActiveAdmins(scenario: {
+    userId?: string;
+    userChange?: Pick<
+      AppUser,
+      'active' | 'roleIds' | 'permissionOverrides'
+    > | null;
+    roleId?: string;
+    rolePermissions?: AppRole['permissions'];
+  }): Promise<number> {
+    const [userRows, roles] = await Promise.all([
+      this.db().appUser.findMany({
+        include: { userRoles: true, permissionOverrides: true },
+      }),
+      this.listRoles(),
+    ]);
+    const effectiveRoles = roles.map((role) =>
+      role.id === scenario.roleId && scenario.rolePermissions
+        ? { ...role, permissions: scenario.rolePermissions }
+        : role,
+    );
+    let users = userRows.map(mapAppUserFromDb);
+    if (scenario.userId) {
+      users =
+        scenario.userChange === null
+          ? users.filter((user) => user.id !== scenario.userId)
+          : users.map((user) =>
+              user.id === scenario.userId && scenario.userChange
+                ? { ...user, ...scenario.userChange }
+                : user,
+            );
+    }
+    return users.filter((user) => {
+      if (!user.active) return false;
+      const userRoles = effectiveRoles.filter((role) =>
+        user.roleIds.includes(role.id),
+      );
+      return userIsAdmin(
+        resolvePermissions(userRoles, user.permissionOverrides),
+      );
+    }).length;
+  }
+
+  private async assertAdminRemains(
+    scenario: Parameters<UserAccessService['countActiveAdmins']>[0],
+  ): Promise<void> {
+    const before = await this.countActiveAdmins({});
+    if (before === 0) return;
+    const after = await this.countActiveAdmins(scenario);
+    if (after === 0) {
+      throw new ConflictException(
+        'Tiene que quedar al menos un administrador activo',
+      );
+    }
+  }
+
+  async removeUser(id: string, actorId?: string): Promise<void> {
     await this.findUser(id);
+    if (actorId && actorId === id) {
+      throw new ConflictException('No podés eliminar tu propio usuario');
+    }
+    await this.assertAdminRemains({ userId: id, userChange: null });
     await this.db().appUser.delete({ where: { id } });
     this.invalidateAccessCache();
   }

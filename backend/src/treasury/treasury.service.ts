@@ -1,4 +1,9 @@
 import {
+  arTodayKey,
+  fromArLocal,
+  toArParts,
+} from '../common/utils/ar-date.util';
+import {
   BadRequestException,
   Injectable,
   NotFoundException,
@@ -42,6 +47,7 @@ import {
 import {
   computeDebtorBalances,
   getDebtorOutstanding,
+  loanPersonName,
 } from './treasury-debtor.util';
 import {
   paymentFeeCents,
@@ -299,6 +305,22 @@ export class TreasuryService {
       throw new NotFoundException('Registro no encontrado');
     }
 
+    // Una transferencia se borra entera: borrar una sola punta descuadra el total.
+    if (
+      current.category === TreasuryExpenseCategory.TRANSFER &&
+      current.referenceId
+    ) {
+      for (const pair of this.expenses.findAll()) {
+        if (
+          pair.id !== current.id &&
+          pair.category === TreasuryExpenseCategory.TRANSFER &&
+          pair.referenceId === current.referenceId
+        ) {
+          this.expenses.remove(pair.id);
+        }
+      }
+    }
+
     this.persistRecords(suppliesChanged, 'delete');
   }
 
@@ -529,6 +551,10 @@ export class TreasuryService {
         ? `Pago a ${name}`
         : `Préstamo a ${name}`;
 
+    if (current.category === TreasuryExpenseCategory.LOAN) {
+      this.assertLoanCoversRepayments(current, name, amount);
+    }
+
     return this.replaceRecord(
       {
         ...current,
@@ -542,6 +568,44 @@ export class TreasuryService {
       },
       false,
     );
+  }
+
+  /** Un préstamo no puede quedar por debajo de lo que ya se devolvió. */
+  private assertLoanCoversRepayments(
+    current: TreasuryExpense,
+    newName: string,
+    newAmount: number,
+  ): void {
+    const active = this.expenses
+      .findAll()
+      .filter((record) => !record.voidedAt && record.id !== current.id);
+    const check = (person: string, extraLoanCents: number) => {
+      const key = loanPersonName(person).toLocaleLowerCase('es');
+      let loans = extraLoanCents;
+      let repaid = 0;
+      for (const record of active) {
+        if (loanPersonName(record.name).toLocaleLowerCase('es') !== key) {
+          continue;
+        }
+        if (record.category === TreasuryExpenseCategory.LOAN) {
+          loans += toCents(record.amount);
+        } else if (record.category === TreasuryExpenseCategory.LOAN_REPAYMENT) {
+          repaid += toCents(record.amount);
+        }
+      }
+      if (loans < repaid) {
+        throw new BadRequestException(
+          `El préstamo no puede quedar por debajo de lo que ${person} ya devolvió`,
+        );
+      }
+    };
+    check(newName, toCents(newAmount));
+    if (
+      loanPersonName(newName).toLocaleLowerCase('es') !==
+      loanPersonName(current.name).toLocaleLowerCase('es')
+    ) {
+      check(current.name, 0);
+    }
   }
 
   private updateLoanRepayment(
@@ -565,7 +629,7 @@ export class TreasuryService {
     if (outstanding <= 0) {
       throw new BadRequestException('Esta persona no tiene deuda pendiente');
     }
-    if (Math.round(amount) > outstanding) {
+    if (toCents(amount) > toCents(outstanding)) {
       throw new BadRequestException(
         `El monto supera la deuda pendiente (${outstanding})`,
       );
@@ -608,8 +672,7 @@ export class TreasuryService {
 
     const quantityChanged =
       Math.abs(quantity - Number(current.quantity)) > 1e-9;
-    const priceChanged =
-      Math.round(unitPrice) !== Math.round(Number(current.unitPrice));
+    const priceChanged = toCents(unitPrice) !== toCents(current.unitPrice);
 
     if (supplyId && !supply && (quantityChanged || priceChanged)) {
       throw new BadRequestException(
@@ -664,7 +727,7 @@ export class TreasuryService {
     if (outstanding <= 0) {
       throw new BadRequestException('Esta persona no tiene deuda pendiente');
     }
-    if (Math.round(amount) > outstanding) {
+    if (toCents(amount) > toCents(outstanding)) {
       throw new BadRequestException(
         `El monto supera la deuda pendiente (${outstanding})`,
       );
@@ -877,21 +940,17 @@ export class TreasuryService {
     const year = Number(match[1]);
     const month = Number(match[2]);
     const day = Number(match[3]);
-    const parsed = new Date(year, month - 1, day, 12, 0, 0, 0);
+    // Mediodía de Argentina: el día calendario no cambia según la zona del servidor.
+    const parsed = fromArLocal(year, month, day, 12, 0, 0);
+    const check = toArParts(parsed);
 
-    if (
-      parsed.getFullYear() !== year ||
-      parsed.getMonth() !== month - 1 ||
-      parsed.getDate() !== day
-    ) {
+    if (check.year !== year || check.month !== month || check.day !== day) {
       throw new BadRequestException(
         'La fecha no es válida. Usá el formato AAAA-MM-DD',
       );
     }
 
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
-    if (parsed.getTime() > today.getTime()) {
+    if (value.trim() > arTodayKey()) {
       throw new BadRequestException('La fecha no puede ser posterior a hoy');
     }
 
@@ -913,6 +972,8 @@ export class TreasuryService {
   }
 
   private linkedSupplyId(record: TreasuryExpense): string | null {
+    // Una compra anulada ya revirtió su stock: no se revierte dos veces.
+    if (record.voidedAt) return null;
     if (record.category !== TreasuryExpenseCategory.SUPPLY_PURCHASE) {
       return null;
     }
@@ -963,8 +1024,7 @@ export class TreasuryService {
     const previousQuantity = Number(supply.quantity);
     const price = unitPrice !== undefined ? Number(unitPrice) : undefined;
     const unitPriceChanged =
-      price !== undefined &&
-      Math.round(price) !== Math.round(Number(supply.unitPrice));
+      price !== undefined && toCents(price) !== toCents(supply.unitPrice);
 
     if (unitPriceChanged) {
       supply.unitPrice = price!;

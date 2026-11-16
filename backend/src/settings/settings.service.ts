@@ -53,7 +53,7 @@ import {
   referenceSheetFromPricePerSqm,
   syncPaperPricesFromReferenceSheets,
 } from '../common/paper-cost.util';
-import { SupplyCategory } from '../common/enums';
+import { MachineProfileRole, SupplyCategory } from '../common/enums';
 import { validateColorConfig } from '../common/color.util';
 import { StoreService } from '../store/store.service';
 import { RealtimeScope } from '../realtime/realtime.types';
@@ -158,6 +158,69 @@ export class SettingsService {
     filamentTypeAverages?: Partial<GeneralSettings['filamentTypeAverages']>;
     resinTypeAverages?: Partial<GeneralSettings['resinTypeAverages']>;
   }): GeneralSettings {
+    // Se valida lo que se puede antes de tocar nada, y si algo falla igual
+    // a mitad de camino se restaura el estado anterior (todo o nada).
+    const validatedProfiles =
+      data.machineProfiles !== undefined
+        ? this.validateMachineProfilesInput(data.machineProfiles)
+        : undefined;
+    const backup = structuredClone(this.store.generalSettings);
+    try {
+      this.applyGeneralPatch(data, validatedProfiles);
+    } catch (error) {
+      const current = this.store.generalSettings as unknown as Record<
+        string,
+        unknown
+      >;
+      for (const key of Object.keys(current)) delete current[key];
+      Object.assign(current, backup);
+      throw error;
+    }
+    return this.getGeneralSettings();
+  }
+
+  private validateMachineProfilesInput(input: unknown): MachineProfile[] {
+    if (!Array.isArray(input) || input.length > 50) {
+      throw new BadRequestException(
+        'Los perfiles de máquina tienen que ser una lista de hasta 50',
+      );
+    }
+    const roles = Object.values(MachineProfileRole) as string[];
+    for (const entry of input) {
+      const profile = entry as Record<string, unknown> | null;
+      if (
+        !profile ||
+        typeof profile !== 'object' ||
+        typeof profile.name !== 'string' ||
+        !profile.name.trim() ||
+        profile.name.length > 255 ||
+        typeof profile.role !== 'string' ||
+        !roles.includes(profile.role)
+      ) {
+        throw new BadRequestException(
+          'Cada perfil de máquina necesita un nombre y un rol válido',
+        );
+      }
+      for (const field of ['watts', 'costPerHour', 'consumptionMl']) {
+        const value = profile[field];
+        if (
+          value !== undefined &&
+          value !== null &&
+          (typeof value !== 'number' || !Number.isFinite(value) || value < 0)
+        ) {
+          throw new BadRequestException(
+            `El perfil de máquina «${profile.name}» tiene un valor inválido en ${field}`,
+          );
+        }
+      }
+    }
+    return input as MachineProfile[];
+  }
+
+  private applyGeneralPatch(
+    data: Parameters<SettingsService['patchGeneralSettings']>[0],
+    validatedProfiles: MachineProfile[] | undefined,
+  ): void {
     if (
       data.electricityCostPerKwh !== undefined ||
       data.laborCostPerHour !== undefined ||
@@ -207,8 +270,8 @@ export class SettingsService {
       this.updatePaperPrices(partial);
     }
 
-    if (data.machineProfiles !== undefined) {
-      this.replaceMachineProfiles(data.machineProfiles as MachineProfile[]);
+    if (validatedProfiles !== undefined) {
+      this.replaceMachineProfiles(validatedProfiles);
     }
 
     if (
@@ -220,8 +283,6 @@ export class SettingsService {
         resinTypeAverages: data.resinTypeAverages,
       });
     }
-
-    return this.getGeneralSettings();
   }
 
   private replaceMachineProfiles(profiles: MachineProfile[]): void {
@@ -649,6 +710,15 @@ export class SettingsService {
     if (duplicate && duplicate.id !== id) {
       throw new BadRequestException('Ya existe un tipo con ese nombre');
     }
+    const previousCode = resinTypeCodeFromName(catalog[index].name);
+    if (
+      previousCode !== resinTypeCodeFromName(name) &&
+      this.isTypeCodeInUse('resinType', previousCode)
+    ) {
+      throw new BadRequestException(
+        'No se puede renombrar: el tipo de resina está en uso en productos, insumos, bobinas o ítems. Creá un tipo nuevo en su lugar.',
+      );
+    }
     catalog[index] = { ...catalog[index], name };
     for (const price of this.store.generalSettings.resinPrices) {
       if (price.resinTypeId === id) {
@@ -710,6 +780,15 @@ export class SettingsService {
     if (duplicate && duplicate.id !== id) {
       throw new BadRequestException('Ya existe un tipo con ese nombre');
     }
+    const previousCode = filamentTypeCodeFromName(catalog[index].name);
+    if (
+      previousCode !== filamentTypeCodeFromName(name) &&
+      this.isTypeCodeInUse('filamentType', previousCode)
+    ) {
+      throw new BadRequestException(
+        'No se puede renombrar: el tipo de filamento está en uso en productos, insumos, bobinas o ítems. Creá un tipo nuevo en su lugar.',
+      );
+    }
     catalog[index] = { ...catalog[index], name };
     for (const price of this.store.generalSettings.filamentPrices) {
       if (price.filamentTypeId === id) {
@@ -718,6 +797,40 @@ export class SettingsService {
     }
     this.recordSettingsChange(['settings', 'supplies', 'products']);
     return catalog[index];
+  }
+
+  /** ¿Algún producto, insumo, bobina, pedido o presupuesto usa este código de tipo? */
+  private isTypeCodeInUse(
+    key: 'filamentType' | 'resinType',
+    code: string,
+  ): boolean {
+    const wanted = code.trim().toLowerCase();
+    const scan = (value: unknown, depth: number): boolean => {
+      if (depth > 6 || value === null || typeof value !== 'object') {
+        return false;
+      }
+      if (Array.isArray(value)) {
+        return value.some((entry) => scan(entry, depth + 1));
+      }
+      for (const [field, entry] of Object.entries(value)) {
+        if (
+          field === key &&
+          typeof entry === 'string' &&
+          entry.trim().toLowerCase() === wanted
+        ) {
+          return true;
+        }
+        if (scan(entry, depth + 1)) return true;
+      }
+      return false;
+    };
+    return [
+      this.store.products,
+      this.store.supplies,
+      this.store.spools,
+      this.store.orders,
+      this.store.quotes,
+    ].some((collection) => scan(collection, 0));
   }
 
   removeFilamentType(id: string): void {

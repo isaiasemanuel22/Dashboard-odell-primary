@@ -116,6 +116,20 @@ export class ImpresosService {
     if (index === -1) {
       throw new NotFoundException(`Impreso ${id} no encontrado`);
     }
+    const used = this.store.products.some((product) => {
+      const { impresoId, estampadoPrints } = product as {
+        impresoId?: string;
+        estampadoPrints?: { impresoId?: string }[];
+      };
+      return (
+        impresoId === id || !!estampadoPrints?.some((p) => p.impresoId === id)
+      );
+    });
+    if (used) {
+      throw new BadRequestException(
+        'No se puede eliminar: hay productos usando este impreso',
+      );
+    }
     this.store.impresos.splice(index, 1);
   }
 

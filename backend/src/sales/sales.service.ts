@@ -1,3 +1,4 @@
+import { fromArLocal } from '../common/utils/ar-date.util';
 import {
   BadRequestException,
   Injectable,
@@ -397,14 +398,24 @@ export class SalesService {
       }
     }
 
-    for (const productId of deltas.keys()) {
+    const sold = new Set(next.map((item) => item.productId));
+    const apply: [
+      NonNullable<ReturnType<ProductRepository['findById']>>,
+      number,
+    ][] = [];
+    for (const [productId, delta] of deltas) {
       const product = this.products.findById(productId);
       if (!product) {
-        throw new NotFoundException(`Producto ${productId} no encontrado`);
+        // Al devolver stock de un producto ya eliminado no hay nada que
+        // reponer; solo falla si se está vendiendo.
+        if (sold.has(productId)) {
+          throw new NotFoundException(`Producto ${productId} no encontrado`);
+        }
+        continue;
       }
+      apply.push([product, delta]);
     }
-    for (const [productId, delta] of deltas) {
-      const product = this.products.findById(productId)!;
+    for (const [product, delta] of apply) {
       product.stock = Math.max(0, (product.stock ?? 0) + delta);
       this.products.save(product);
     }
@@ -415,5 +426,6 @@ function referenceFromMonth(month?: string): Date {
   if (!month || !/^\d{4}-\d{2}$/.test(month)) return new Date();
   const [year, mon] = month.split('-').map(Number);
   if (!year || mon < 1 || mon > 12) return new Date();
-  return new Date(year, mon - 1, 1);
+  // Mediodía AR del día 15: cae en ese mes sin importar la zona del servidor.
+  return fromArLocal(year, mon, 15, 12);
 }

@@ -48,6 +48,7 @@ function NotWithDiscountPercent() {
 
 export class ProductComponentDto {
   @IsString()
+  @MaxLength(64)
   @IsNotEmpty()
   productId!: string;
 
@@ -57,6 +58,7 @@ export class ProductComponentDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   colorId?: string;
 }
 
@@ -74,10 +76,12 @@ export class FdmFilamentLineDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   brandId?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(128)
   brand?: string;
 
   @IsOptional()
@@ -86,6 +90,7 @@ export class FdmFilamentLineDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   colorId?: string;
 }
 
@@ -95,6 +100,7 @@ export class ProductAttachmentDto {
   id!: string;
 
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   name!: string;
 
@@ -113,15 +119,18 @@ export class ProductAttachmentDto {
 
 export class CreateCategoryDto {
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   name!: string;
 
-  @IsString({ each: true })
-  productTypes!: string[];
+  @IsArray()
+  @IsEnum(ProductType, { each: true })
+  productTypes!: ProductType[];
 }
 
 export class CreateProductDto {
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   name!: string;
 
@@ -159,6 +168,7 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(128)
   size?: string;
 
   @IsOptional()
@@ -186,6 +196,7 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(128)
   brand?: string;
 
   @IsOptional()
@@ -221,10 +232,12 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(32)
   resinType?: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   colorId?: string;
 
   @IsOptional()
@@ -248,6 +261,7 @@ export class CreateProductDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(64)
   impresoId?: string;
 
   @IsOptional()
@@ -331,6 +345,7 @@ export class BulkPriceDto {
 
   @ValidateIf((data: BulkPriceDto) => data.scope === 'category')
   @IsString()
+  @MaxLength(64)
   @IsNotEmpty()
   categoryId?: string;
 

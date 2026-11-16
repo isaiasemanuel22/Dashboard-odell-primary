@@ -23,6 +23,7 @@ export class CreateSupplierDto {
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   contact?: string;
 
   @IsOptional()

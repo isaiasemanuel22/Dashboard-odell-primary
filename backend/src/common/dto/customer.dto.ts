@@ -14,6 +14,7 @@ import { CustomerSource, CustomerType } from '../enums';
 
 export class CreateCustomerDto {
   @IsString()
+  @MaxLength(255)
   @IsNotEmpty()
   name!: string;
 
@@ -23,11 +24,13 @@ export class CreateCustomerDto {
   email?: string;
 
   @IsString()
+  @MaxLength(64)
   @IsNotEmpty()
   phone!: string;
 
   @IsOptional()
   @IsString()
+  @MaxLength(255)
   company?: string;
 
   @IsOptional()
