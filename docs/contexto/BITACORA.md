@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-16 · Prueba en la app de insumos × 2 + margen de error
+Rama: feat/insumo-margen-error · Commits: 8276ef1
+Hecho: odell-tester probó producto Estampado, precio fijo, presupuesto (línea a medida + insumo suelto), combo y detalle; cuentas iguales a mano (±$1 de redondeo). Corregidos: leyenda «Calculado» del presupuesto con el error del insumo duplicado, renglón «Margen de error» en el combo, textos de error y de «Costo unitario».
+Decisiones: el «Precio fijo» del producto sigue siendo el total (ya incluye insumos), como antes.
+Pendiente: E135 (ganancia estimada sin concepto). Dato de QA: producto «QA taza ×2» (prod-45) en la base local.
+
 ## 2026-11-16 · Insumos a costo × 2 con margen de error
 Rama: feat/insumo-margen-error · Commits: e4b836c
 Hecho: insumos de producto (Estampado/FDM/Resina), combo y línea a medida: costo = valor + valor × error; precio = valor × 2 + valor × error. Utils espejo front/back, desglose suma el error al renglón «Margen de error», textos «× 2 + margen de error» y hint de Ajustes. Jest 492, Karma 117, builds OK. No se probó en la app.

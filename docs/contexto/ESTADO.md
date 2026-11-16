@@ -14,14 +14,14 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
 
 ## Ramas y trabajo en curso
 - Rama actual: `feat/insumo-margen-error` (sobre `main`, commit `e4b836c`): insumos
-  a costo × 2 + margen de error (§16.3). Sin deploy y sin probar en la app.
+  a costo × 2 + margen de error (§16.3), probado en la app local. Sin deploy.
 - APK en `~/Escritorio/Odell.apk`; falta probarla en un teléfono. Para regenerar:
   `android-twa/` + Bubblewrap; JDK, SDK y clave de firma en `~/.odell-android`
   (perder la clave = no se puede actualizar la app).
 - Precios de catálogo guardados no se recalcularon con la regla de insumos × 2 +
   margen de error ni con la lista de combos: cada producto con insumos los toma
   al usar «Usar precio calculado» o «Actualizar precios».
-- Errores reportados: corregidos hasta E131; E132 sin reproducir.
+- Errores reportados: corregidos hasta E131; E132 sin reproducir; E133–E135 pendientes.
 - Productos de Estampado con precio fijo guardados antes de `ce64767` tienen la
   lista sin insumos: se corrigen al volver a guardarlos.
 - Ramas viejas ya unidas (borrables con OK): feat/3mf-purga,
@@ -48,4 +48,4 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
 - Cada worktree con backend propio necesita base aparte: si comparten la
   base local, se pisan los datos.
 - Datos de QA en la base local: cust-2 «QA Revendedor», pedidos ord-13 a
-  ord-29, presupuesto quo-18.
+  ord-29, presupuesto quo-18, producto prod-45 «QA taza ×2».
