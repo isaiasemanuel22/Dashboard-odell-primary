@@ -16,6 +16,23 @@ Pendiente: …
 
 ---
 
+## 2026-11-16 · Barrido de errores en toda la app
+Rama: fix/barrido-errores · Commits: 23d5fe9, c62f727, 3ebbc49, f21b91b
+Hecho: auditoría con agentes (backend, frontend, UI con la skill modern-web-guidance, tester en escritorio y celular) y ~70 correcciones. Backend: tesorería (doble reversión de stock, transferencias, préstamos), entregas validadas antes de mutar y con decimales, presupuesto aceptado sin pedido, fechas y meses en hora de Argentina (`common/utils/ar-date.util.ts`), insumos/impresos/tipos en uso no se borran ni renombran, DTO de PATCH de Ajustes validados, MaxLength según schema, último admin protegido, uploads con lista blanca, `/health` mínimo, helmet, `PATCH /categories/:id`, alertas de margen con el criterio de Productos, fila «Sin área» en el balance. Frontend: E133–E135, 401 cierra sesión, diálogos que confirman antes de descartar, form-modal con rol, foco, Esc y scroll lock, inputs accesibles (aria-invalid/describedby, inputmode, 16 px en celular), pedido cancelado con pagos claro en celular. Tests: jest 529, Angular 130, builds OK; tester re-probó en la app y dio OK.
+Decisiones (supuestas, sin preguntar): no se bloqueó editar pedidos entregados/cancelados; Esc en form-modal cierra sin confirmar; tope del calendario 1500 días.
+Pendiente: E132 sin reproducir; E136–E138 nuevos; preguntas para Isaías en ESTADO; sin deploy (helmet es dependencia nueva del backend).
+
+## 2026-11-16 · Ideas: exhibidor de tazas 140 × 50 × 50 cm
+Rama: sin commit (investigación, agente `ideas`)
+Hecho: opciones para una impresora de 25 × 25 × 25 cm. Recomendado: conectores impresos en PETG + estantes de madera o MDF.
+Pendiente: falta la API key de Gemini para Nano Banana: sin ella no andan `editor-imagenes` ni las imágenes de `ideas`.
+
+## 2026-11-16 · Cinco agentes de apoyo al negocio
+Rama: sin commit (archivos en `~/.claude/agents/`, fuera del repo)
+Hecho: agentes `editor-imagenes`, `ideas`, `precios`, `seguimiento` y `tester-online` (sonnet). `tester-online` mira Odell en producción sin crear ni cambiar datos.
+Decisiones: Isaías eligió cinco agentes separados; el seguimiento (insumos, competencia, tendencias) va a Google Sheets.
+Pendiente: crear la planilla «Odell — Seguimiento» (el conector de Drive no dejó crearla) y poner su ID en `seguimiento.md`.
+
 ## 2026-11-16 · Deploy de insumos × 2 + margen de error
 Rama: feat/insumo-margen-error → main · Commits: 02dbe97
 Hecho: push a origin main y a Heroku (v46); sin cambios de esquema, sin db:push. Netlify sirve el chunk nuevo.
