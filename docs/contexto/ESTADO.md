@@ -1,4 +1,4 @@
-# Estado de Odell — al 2026-11-15
+# Estado de Odell — al 2026-11-16
 
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
@@ -13,13 +13,14 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `feat/apk-twa`, igual a `main`. APK en `~/Escritorio/Odell.apk`;
-  falta probarla en un teléfono. Para regenerar: `android-twa/` + Bubblewrap; JDK, SDK y clave de
-  firma en `~/.odell-android` (perder la clave = no se puede actualizar la app).
-- Precios de catálogo guardados no se recalcularon con la regla de insumos +50 % ni
-  con la nueva lista de combos (suma de precios de piezas):
-  cada producto con insumos los toma al usar «Usar precio calculado» o
-  «Actualizar precios».
+- Rama actual: `feat/insumo-margen-error` (sobre `main`, commit `e4b836c`): insumos
+  a costo × 2 + margen de error (§16.3). Sin deploy y sin probar en la app.
+- APK en `~/Escritorio/Odell.apk`; falta probarla en un teléfono. Para regenerar:
+  `android-twa/` + Bubblewrap; JDK, SDK y clave de firma en `~/.odell-android`
+  (perder la clave = no se puede actualizar la app).
+- Precios de catálogo guardados no se recalcularon con la regla de insumos × 2 +
+  margen de error ni con la lista de combos: cada producto con insumos los toma
+  al usar «Usar precio calculado» o «Actualizar precios».
 - Errores reportados: corregidos hasta E131; E132 sin reproducir.
 - Productos de Estampado con precio fijo guardados antes de `ce64767` tienen la
   lista sin insumos: se corrigen al volver a guardarlos.

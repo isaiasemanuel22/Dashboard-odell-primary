@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-16 · Insumos a costo × 2 con margen de error
+Rama: feat/insumo-margen-error · Commits: e4b836c
+Hecho: insumos de producto (Estampado/FDM/Resina), combo y línea a medida: costo = valor + valor × error; precio = valor × 2 + valor × error. Utils espejo front/back, desglose suma el error al renglón «Margen de error», textos «× 2 + margen de error» y hint de Ajustes. Jest 492, Karma 117, builds OK. No se probó en la app.
+Decisiones: Isaías 2026-11-16: recargo × 2 (antes × 1,5), error del insumo aparte sin recargo, sin error sobre mano de obra ni alcohol de lavado; aplica a todos los productos con insumos. Ejemplo de la taza sublimada en §16.3 ($8.923).
+Pendiente: probar en la app, deploy y recalcular precios guardados.
+
 ## 2026-11-15 · Duplicar, insumos del combo, servicio de tercero y avisos de faltantes
 Rama: feat/apk-twa → main · Commits: bb92539
 Hecho: todo lo de «Duplicar al instante» y «No publicados» más: combo con insumos propios (costo + valor, lista + valor ×1,5; duplicar los copia); servicio de tercero con costo (toma el precio al cargarlo, se edita aparte, puede ir a $0; cuenta en costo total y pérdida, panel/diálogo/backend iguales); resumen rojo «Falta: …» tocable en producto, pedido, presupuesto y venta (E127); concepto obligatorio en líneas manuales; correcciones E128–E131, «0» que quedaba «05», bucle infinito al abrir «Nuevo producto» (getter con arreglo nuevo por ciclo en `[ngModel]`); E124. 4 rondas del tester; Karma 114, jest 491.
