@@ -1,21 +1,23 @@
-# Estado de Odell — al 2026-11-16
+# Estado de Odell — al 2026-11-17
 
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
 ## Producción
-- GitHub `main` = `feat/insumo-margen-error` en `02dbe97` (2026-11-16: insumos a
-  costo × 2 + margen de error, §16.3). Heroku v46 = `02dbe97` (sin cambios de
-  esquema). Netlify ya sirve el frontend nuevo. APK TWA publicada; assetlinks verificado.
+- GitHub `main` = `fix/barrido-errores` en `be10655` (2026-11-17: barrido de errores
+  de toda la app). Heroku v47 = `be10655` (sin cambios de esquema; suma `helmet`).
+  Netlify ya sirve el frontend nuevo. APK TWA publicada; assetlinks verificado.
   Netlify publica el frontend solo al pushear `main`.
+- Lockfile del backend: regenerarlo siempre con npm 10.9.9 (el de Heroku):
+  `npx npm@10.9.9 install --package-lock-only --registry=https://registry.npmjs.org`.
+  El npm local (11.x) y el registry configurado (almundo) rompen `npm ci` en Heroku.
 - Orden de deploy: push a origin → push a heroku → recién después
   `npm run db:push:heroku` si hubo cambios de esquema. Nunca ACCEPT_DATA_LOSS.
 - El worktree `../dashboard-rediseno` tiene `main` tomado: pushear con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `fix/barrido-errores` (sale de `main`): barrido de errores de toda la
-  app, verificado con tests y tester, **sin deploy**. Backend suma `helmet` (npm ci
-  en Heroku) y no cambia el esquema. Ver bitácora 2026-11-16.
+- Rama actual: `fix/barrido-errores`, igual a `main` (publicada 2026-11-17). Falta
+  revisar producción con sesión iniciada (el agente solo vio el login).
 - APK en `~/Escritorio/Odell.apk`; falta probarla en un teléfono. Para regenerar:
   `android-twa/` + Bubblewrap; JDK, SDK y clave de firma en `~/.odell-android`
   (perder la clave = no se puede actualizar la app).

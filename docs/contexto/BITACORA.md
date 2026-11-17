@@ -16,6 +16,11 @@ Pendiente: …
 
 ---
 
+## 2026-11-17 · Deploy del barrido de errores
+Rama: fix/barrido-errores → main · Commits: be10655
+Hecho: push a origin main y Heroku v47; sin cambios de esquema, sin db:push. Los dos primeros intentos de Heroku fallaron en `npm ci` porque el lockfile lo había regenerado npm 11 local; se rehízo sobre el de 02dbe97 con npm 10.9.9. En producción: `/api/health` solo da status/uptime, headers de helmet presentes, la API pide login; Netlify sirve el bundle nuevo.
+Pendiente: revisar las pantallas de producción con sesión iniciada.
+
 ## 2026-11-16 · Barrido de errores en toda la app
 Rama: fix/barrido-errores · Commits: 23d5fe9, c62f727, 3ebbc49, f21b91b
 Hecho: auditoría con agentes (backend, frontend, UI con la skill modern-web-guidance, tester en escritorio y celular) y ~70 correcciones. Backend: tesorería (doble reversión de stock, transferencias, préstamos), entregas validadas antes de mutar y con decimales, presupuesto aceptado sin pedido, fechas y meses en hora de Argentina (`common/utils/ar-date.util.ts`), insumos/impresos/tipos en uso no se borran ni renombran, DTO de PATCH de Ajustes validados, MaxLength según schema, último admin protegido, uploads con lista blanca, `/health` mínimo, helmet, `PATCH /categories/:id`, alertas de margen con el criterio de Productos, fila «Sin área» en el balance. Frontend: E133–E135, 401 cierra sesión, diálogos que confirman antes de descartar, form-modal con rol, foco, Esc y scroll lock, inputs accesibles (aria-invalid/describedby, inputmode, 16 px en celular), pedido cancelado con pagos claro en celular. Tests: jest 529, Angular 130, builds OK; tester re-probó en la app y dio OK.
