@@ -17,6 +17,7 @@ function emptyState(overrides: Partial<StoreState> = {}): StoreState {
     retailSales: [],
     treasuryExpenses: [],
     calendarEntries: [],
+    fairs: [],
     suppliers: [],
     spools: [],
     supplyMovements: [],

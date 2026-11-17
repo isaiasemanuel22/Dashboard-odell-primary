@@ -11,6 +11,7 @@ export * from './print-job.mapper';
 export * from './retail-sale.mapper';
 export * from './treasury-expense.mapper';
 export * from './calendar-entry.mapper';
+export * from './fair.mapper';
 export * from './supplier.mapper';
 export * from './spool.mapper';
 export * from './supply-movement.mapper';

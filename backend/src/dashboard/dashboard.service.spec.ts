@@ -13,6 +13,7 @@ import {
   OrderRepository,
   ProductRepository,
   RetailSaleRepository,
+  FairRepository,
 } from '../store/repositories';
 import { StoreService } from '../store/store.service';
 import { createEmptyState } from '../store/store.seed';
@@ -38,6 +39,7 @@ describe('DashboardService', () => {
         resolveDesignUnitCost: () => 0,
         resolveOrderItemUnitCost: () => 400,
       } as unknown as CostCalculatorService,
+      new FairRepository(store),
     );
     productsService = {
       getMarginAlerts: jest.fn().mockReturnValue([]),

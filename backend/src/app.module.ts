@@ -11,6 +11,7 @@ import { QuotesModule } from './quotes/quotes.module';
 import { CalendarModule } from './calendar/calendar.module';
 import { PrintJobsModule } from './print-jobs/print-jobs.module';
 import { ProductsModule } from './products/products.module';
+import { FairsModule } from './fairs/fairs.module';
 import { SalesModule } from './sales/sales.module';
 import { SettingsModule } from './settings/settings.module';
 import { StoreModule } from './store/store.module';
@@ -51,6 +52,7 @@ import { UsersModule } from './users/users.module';
     CalendarModule,
     PrintJobsModule,
     SalesModule,
+    FairsModule,
     TreasuryModule,
   ],
 })

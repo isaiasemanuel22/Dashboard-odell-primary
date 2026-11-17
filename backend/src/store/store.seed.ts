@@ -14,10 +14,13 @@ import {
   CalendarNotify,
   CalendarRepeat,
   CustomerType,
+  FairStatus,
+  PaymentMethod,
 } from '../common/enums';
 import { adoptLegacyBrandNames } from './brand-link.util';
 import { StoreState } from './store.state';
-import { Product, Order } from '../common/interfaces';
+import { Fair, Product, Order, RetailSale } from '../common/interfaces';
+import { defaultAccountForMethod } from '../treasury/treasury-account.util';
 import { createDefaultMachineProfiles } from '../settings/machine-profile.util';
 import { ensureOrderStatusHistory } from '../orders/order-status-history.util';
 import { adoptLegacySuppliers } from '../supplies/supplier-migration.util';
@@ -89,6 +92,7 @@ export function createEmptyState(): StoreState {
     retailSales: [],
     treasuryExpenses: [],
     calendarEntries: [],
+    fairs: [],
     suppliers: [],
     spools: [],
     supplyMovements: [],
@@ -832,7 +836,7 @@ export function createSeedState(): StoreState {
 
   const printJobs: StoreState['printJobs'] = [];
 
-  const retailSales = [
+  const retailSales: RetailSale[] = [
     {
       id: 'sale-1',
       items: [
@@ -872,6 +876,9 @@ export function createSeedState(): StoreState {
       createdAt: '2026-07-09T11:15:00.000Z',
     },
   ];
+
+  const { fairs, fairSales } = buildSeedFairs();
+  retailSales.push(...fairSales);
 
   const ord1 = orders.find((order) => order.id === 'ord-1');
   if (ord1) {
@@ -1076,6 +1083,7 @@ export function createSeedState(): StoreState {
     printJobs,
     retailSales,
     treasuryExpenses,
+    fairs,
     calendarEntries: [
       {
         id: 'cal-1',
@@ -1100,4 +1108,107 @@ export function createSeedState(): StoreState {
   adoptLegacyBrandNames(state);
   adoptLegacySuppliers(state);
   return state;
+}
+
+/**
+ * Ejemplo de ferias: tres cerradas con el mismo nombre (alimentan «qué llevar»)
+ * y una abierta hoy (§26).
+ */
+function buildSeedFairs(): { fairs: Fair[]; fairSales: RetailSale[] } {
+  const closed = [
+    { n: 1, date: '2026-09-26', trees: 6, boards: 2, figures: 1 },
+    { n: 2, date: '2026-10-10', trees: 9, boards: 3, figures: 2 },
+    { n: 3, date: '2026-10-24', trees: 7, boards: 2, figures: 1 },
+  ];
+  const fairs: Fair[] = [];
+  const fairSales: RetailSale[] = [];
+  const line = (
+    productId: string,
+    productName: string,
+    quantity: number,
+    unitPrice: number,
+  ) => ({
+    productId,
+    productName,
+    quantity,
+    unitPrice,
+    lineTotal: quantity * unitPrice,
+  });
+
+  for (const fair of closed) {
+    const fairId = `fair-${fair.n}`;
+    const items = [
+      line('prod-9', 'Pieza de juego (árbol)', fair.trees, 180),
+      line('prod-8', 'Tablero árbol de equilibrio', fair.boards, 3200),
+      line('prod-1', 'Figura personalizada PLA', fair.figures, 8500),
+    ];
+    // Un par de ventas por feria: una en efectivo y otra por Mercado Pago.
+    const cashItems = items.map((item) => ({ ...item }));
+    const mpItems = [line('prod-9', 'Pieza de juego (árbol)', 1, 180)];
+    cashItems[0] = line(
+      'prod-9',
+      'Pieza de juego (árbol)',
+      fair.trees - 1,
+      180,
+    );
+    const sales: Array<{
+      items: ReturnType<typeof line>[];
+      method: PaymentMethod;
+      hour: number;
+    }> = [
+      { items: cashItems, method: PaymentMethod.EFECTIVO, hour: 15 },
+      { items: mpItems, method: PaymentMethod.MERCADO_PAGO, hour: 18 },
+    ];
+    sales.forEach((sale, index) => {
+      const total = sale.items.reduce((sum, item) => sum + item.lineTotal, 0);
+      // Hora de Argentina (UTC-3) → UTC.
+      const soldAt = `${fair.date}T${String(sale.hour + 3).padStart(2, '0')}:00:00.000Z`;
+      fairSales.push({
+        id: `sale-${fairId}-${index + 1}`,
+        items: sale.items,
+        total,
+        method: sale.method,
+        account: defaultAccountForMethod(sale.method),
+        fairId,
+        soldAt,
+        createdAt: soldAt,
+      });
+    });
+    const cashTotal = cashItems.reduce((sum, item) => sum + item.lineTotal, 0);
+    fairs.push({
+      id: fairId,
+      name: 'Feria Plaza España',
+      date: fair.date,
+      recurring: true,
+      calendarEntryId: null,
+      status: FairStatus.CLOSED,
+      openedAt: `${fair.date}T13:00:00.000Z`,
+      openingFloat: 5000,
+      closedAt: `${fair.date}T23:00:00.000Z`,
+      countedCash: 5000 + cashTotal,
+      cashDifference: 0,
+      differenceReason: null,
+      createdAt: `${fair.date}T10:00:00.000Z`,
+      updatedAt: `${fair.date}T23:00:00.000Z`,
+    });
+  }
+
+  fairs.push({
+    id: 'fair-4',
+    name: 'Feria Plaza España',
+    date: '2026-11-17',
+    recurring: true,
+    calendarEntryId: null,
+    status: FairStatus.OPEN,
+    openedAt: '2026-11-17T13:00:00.000Z',
+    openingFloat: 5000,
+    closedAt: null,
+    countedCash: null,
+    cashDifference: null,
+    differenceReason: null,
+    createdAt: '2026-11-10T10:00:00.000Z',
+    updatedAt: '2026-11-17T13:00:00.000Z',
+  });
+
+  return { fairs, fairSales };
 }

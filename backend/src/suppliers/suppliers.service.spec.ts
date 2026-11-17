@@ -35,6 +35,7 @@ describe('SuppliersService', () => {
       retailSales: [],
       treasuryExpenses: [],
       calendarEntries: [],
+      fairs: [],
       suppliers: [
         {
           id: 'suplr-1',
@@ -110,6 +111,7 @@ describe('SuppliersService', () => {
       retailSales: [],
       treasuryExpenses: [],
       calendarEntries: [],
+      fairs: [],
       suppliers: [
         {
           id: 'suplr-1',

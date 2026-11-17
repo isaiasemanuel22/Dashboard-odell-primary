@@ -117,7 +117,15 @@ export enum TreasuryExpenseCategory {
   LOAN = 'loan',
   LOAN_REPAYMENT = 'loan_repayment',
   TRANSFER = 'transfer',
+  /** Gastos de feria (stand, transporte…) y diferencia de caja de un cierre. */
+  FAIR = 'fair',
   OTHER = 'other',
+}
+
+export enum FairStatus {
+  PLANNED = 'planned',
+  OPEN = 'open',
+  CLOSED = 'closed',
 }
 
 export enum TreasuryMovementDirection {
@@ -149,6 +157,7 @@ export enum CalendarLinkType {
   ORDER = 'order',
   QUOTE = 'quote',
   CUSTOMER = 'customer',
+  FERIA = 'feria',
 }
 
 export enum BrandMaterialType {

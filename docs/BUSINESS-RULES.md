@@ -2149,3 +2149,66 @@ dinámicos, recotización bloqueante, etc.) pueden estar **parcialmente**
 implementadas o pendientes; este anexo no las modifica — solo registra lo
 que el código expone hoy y que no figuraba antes en el documento.
 
+
+---
+
+## 26. Ferias
+
+Confirmado por Isaías el 2026-11-17 (diseño v4). Una feria es un día de venta
+en un puesto, con su caja y sus gastos.
+
+### 26.1 Ciclo de vida
+
+- Estados: `planned` (planificada) → `open` (abierta) → `closed` (cerrada).
+  Una feria se crea planificada con nombre y fecha, y puede vincularse a un
+  evento del calendario (tipo de vínculo `feria`) y marcarse como recurrente.
+- Se abre una sola vez, indicando el **fondo inicial** (efectivo con el que
+  arranca la caja). El fondo inicial no genera movimientos en la Billetera.
+- Una feria **cerrada queda cerrada**: no se reabre, no se le crean ventas, no
+  se editan ni borran sus ventas y no se cargan gastos.
+- Se puede borrar solo si no tiene ventas ni gastos (ni movimientos de cierre).
+
+### 26.2 Ventas de feria
+
+- Una venta de feria es una venta de mostrador normal (§7, §25.3) con la feria
+  asociada. Aparece en Ventas con origen «Feria <nombre>» en lugar de
+  «Mostrador», descuenta stock como cualquier venta de mostrador y entra a la
+  Billetera al cobrarse, en la cuenta de su medio de pago (§20, §25.1):
+  efectivo → Caja, Mercado Pago → Mercado Pago, transferencia → Banco.
+- Solo se pueden cargar ventas en una feria **abierta**.
+- Vender por encima del stock sigue la regla de ventas de mostrador (sin
+  cambios).
+
+### 26.3 Gastos de feria
+
+- Stand, transporte, etc. Se cargan mientras la feria no esté cerrada (planificada
+  o abierta) como egresos de la Billetera, con la categoría «Stand / feria».
+  Cuenta Caja por defecto, con opción de elegir otra.
+- Los gastos de la feria son sus egresos no anulados.
+
+### 26.4 Cierre de caja
+
+- Efectivo esperado = fondo inicial + ventas en efectivo de la feria.
+- Se carga el efectivo contado; diferencia = contado − esperado.
+- El cierre **no mueve el dinero de las ventas** (ya entró al cobrarse). Solo
+  registra la diferencia como movimiento en Caja efectivo (ingreso si sobra,
+  egreso si falta) y marca la feria cerrada.
+- Si hay diferencia, el motivo es obligatorio. Sin diferencia no se crea
+  ningún movimiento.
+
+### 26.5 Resultado
+
+- Resultado = vendido − costo de los productos vendidos − gastos. El costo se
+  calcula igual que en Ventas (por línea, costo unitario × cantidad).
+- La diferencia de caja **no cuenta como gasto**, pero se informa junto al
+  cierre.
+
+### 26.6 Qué llevar
+
+- Para una feria con un nombre dado se toman las **últimas 3 ferias cerradas
+  con el mismo nombre** (sin distinguir mayúsculas; si hay menos, las que haya).
+- Promedio por producto = unidades vendidas ÷ cantidad de ferias consideradas
+  (una feria donde no se vendió cuenta como 0).
+- Llevar = máximo entre `ceil(promedio × 1,2)` y `ceil(promedio) + 1`, para
+  promedio > 0.
+- A imprimir = máximo entre 0 y (llevar − stock actual).

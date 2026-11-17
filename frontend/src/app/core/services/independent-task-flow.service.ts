@@ -14,15 +14,19 @@ export class IndependentTaskFlowService {
   private readonly userAccess = inject(UserAccessService);
   private readonly formDialogs = inject(FormDialogService);
 
-  pick(): Observable<IndependentTaskDialogResult | undefined> {
+  /** Uid del usuario actual (responsable por defecto de una tarea). */
+  currentResponsibleId(): Observable<string> {
     const cachedUid = sessionFirebaseUid(this.userAccess.peekCurrentUser());
-    const uid$ = cachedUid
+    return cachedUid
       ? of(cachedUid)
       : this.userAccess.loadCurrentUser().pipe(
           map((profile) => sessionFirebaseUid(profile)),
           catchError(() => of('')),
         );
-    return uid$.pipe(
+  }
+
+  pick(): Observable<IndependentTaskDialogResult | undefined> {
+    return this.currentResponsibleId().pipe(
       switchMap((uid) =>
         this.userAccess.listOrderResponsibles().pipe(
           catchError(() => of([])),

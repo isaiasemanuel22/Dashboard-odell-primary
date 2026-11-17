@@ -6,6 +6,7 @@ import {
   CalendarRepeat,
   CustomerSource,
   CustomerType,
+  FairStatus,
   FilamentType,
   OrderStatus,
   PaperType,
@@ -933,6 +934,8 @@ export interface RetailSale {
   notes?: string;
   method?: PaymentMethod;
   account?: TreasuryAccount;
+  /** Feria donde se vendió (§26); sin feria es venta de mostrador común. */
+  fairId?: string;
   soldAt: string;
   createdAt: string;
 }
@@ -954,6 +957,7 @@ export type CreateRetailSaleDto = {
   lossReasonNote?: string;
   method?: PaymentMethod;
   account?: TreasuryAccount;
+  fairId?: string;
 };
 
 export type UpdateRetailSaleDto = Partial<CreateRetailSaleDto>;
@@ -1374,4 +1378,86 @@ export interface CurrentUserProfile extends AppUser {
   roles: AppRole[];
   permissions: ResolvedPermissionEntry[];
   isAdmin: boolean;
+}
+
+export interface Fair {
+  id: string;
+  name: string;
+  /** YYYY-MM-DD */
+  date: string;
+  recurring: boolean;
+  calendarEntryId: string | null;
+  status: FairStatus;
+  openedAt: string | null;
+  openingFloat: number;
+  closedAt: string | null;
+  countedCash: number | null;
+  cashDifference: number | null;
+  differenceReason: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface FairSummary extends Fair {
+  salesCount: number;
+  sold: number;
+  cost: number;
+  expenses: number;
+  result: number;
+}
+
+export interface FairBestHour {
+  from: string;
+  to: string;
+  count: number;
+}
+
+export interface FairDetail extends FairSummary {
+  byMethod: { efectivo: number; mercado_pago: number; transferencia: number };
+  expectedCash: number;
+  bestHour: FairBestHour | null;
+  expensesList: Array<{
+    id: string;
+    name: string;
+    amount: number;
+    account: TreasuryAccount;
+    occurredAt: string;
+  }>;
+  sales: Array<{
+    id: string;
+    soldAt: string;
+    total: number;
+    method: PaymentMethod;
+    items: Array<{
+      productId?: string;
+      name: string;
+      quantity: number;
+      unitPrice: number;
+    }>;
+  }>;
+}
+
+export interface FairsOverview {
+  fairs: FairSummary[];
+  kpis: {
+    sold: number;
+    net: number;
+    fairsCount: number;
+    bestFair: { id: string; name: string; date: string; result: number } | null;
+    topProduct: { productId: string; name: string; quantity: number } | null;
+  };
+}
+
+export interface FairPlanItem {
+  productId: string;
+  name: string;
+  average: number;
+  stock: number;
+  take: number;
+  toPrint: number;
+}
+
+export interface FairPlan {
+  basedOn: number;
+  items: FairPlanItem[];
 }

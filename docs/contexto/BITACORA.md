@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-17 · Módulo Ferias (v4): página, venta rápida y cierre de caja
+Rama: feat/ferias · Commits: ver git log (feat(ferias)…)
+Hecho: implementado el diseño v4 del lienzo. Backend: modelo `Fair` (planned/open/closed) y `RetailSale.fairId`, módulo `backend/src/fairs/` (resultados y KPIs del mes, detalle por medio de pago y mejor horario, gastos como egresos categoría `fair`, cierre que solo registra la diferencia de caja, «qué llevar»), `CalendarLinkType.FERIA`, bloqueo de ventas/gastos/anulaciones en feria cerrada. Frontend: `/ferias` (KPIs, tabla, detalle, qué llevar → cola), `/ferias/:id/vender` y `/ferias/:id/cierre` para celular, menú y «Más». Esquema aplicado solo en local. Tester: 6 flujos OK; QA visual «cercano» y sus ajustes aplicados. Jest 546, Angular 145, builds OK.
+Decisiones: de Isaías (BUSINESS-RULES §26): las tres pantallas; venta de feria = venta normal canal Feria que entra a Billetera al cobrar; el cierre solo registra gastos y diferencia (el fondo no se mueve); Transf. → Banco; gastos en cualquier momento, Caja por defecto con opción de otra cuenta; feria cerrada no se reabre; llevar = máx(⌈prom×1,2⌉, ⌈prom⌉+1) sobre las últimas 3 del mismo nombre. Supuestas: la diferencia de caja usa la categoría `fair` sin contar como gasto; KPIs excluyen ferias planificadas; «Agregado a la cola» solo se recuerda en memoria.
+Pendiente: deploy con `db:push:heroku` (tabla `fairs` y columna `retail_sales.fair_id`); sin UI para editar una feria ni el fondo/gastos; tests de `recordDetail` en Billetera; no se probó diferencia positiva ni vínculo con calendario.
+
 ## 2026-11-17 · Skills de proyecto: interrogar-plan y revisar-ui
 Rama: fix/barrido-errores · Commits: ver git log (docs(claude): skills…)
 Hecho: a partir del artículo de Firecrawl sobre skills, se crearon dos en `.claude/skills/`. `interrogar-plan` (versión propia de «Grill Me»): pregunta de a una antes de implementar y anota lo confirmado en BUSINESS-RULES. `revisar-ui`: auditoría de interfaz con las Web Interface Guidelines de Vercel, adaptadas a Angular y al español. Se instaló sin `npx skills`: copia fija del commit 434b7f9 de vercel-labs/web-interface-guidelines (MIT, revisada) en vez de bajarla en cada uso.

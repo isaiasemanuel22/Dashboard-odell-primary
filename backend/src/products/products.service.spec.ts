@@ -121,6 +121,7 @@ describe('ProductsService', () => {
       quotes: [],
       treasuryExpenses: [],
       calendarEntries: [],
+      fairs: [],
       suppliers: [],
       spools: [],
       supplyMovements: [],

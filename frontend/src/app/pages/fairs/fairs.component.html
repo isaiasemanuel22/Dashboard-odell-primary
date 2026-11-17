@@ -1,0 +1,289 @@
+<div class="mobile-only">
+  <db-mobile-bar title="Ferias" backLink="/mas" />
+</div>
+
+<div class="fairs">
+  <header class="page-header fairs__header">
+    <div class="desktop-only">
+      <h2>Ferias</h2>
+      <p>Resultado de cada feria y qué llevar a la próxima</p>
+    </div>
+    <div class="header-actions fairs__actions">
+      <db-button
+        label="Abrir modo feria en el celular"
+        variant="secondary"
+        format="solid"
+        [disabled]="contextLoading() || !fairMode()"
+        (clicked)="openFairMode()"
+      />
+      <db-button
+        label="+ Nueva feria"
+        variant="primary"
+        format="solid"
+        (clicked)="openNewFair()"
+      />
+    </div>
+    @if (!contextLoading() && !fairMode()) {
+      <p class="fairs__help">
+        No hay una feria abierta ni una planificada para hoy. Creá una con «+ Nueva feria».
+      </p>
+    }
+  </header>
+
+  <div class="fairs__month" role="group" aria-label="Mes">
+    <button type="button" class="fairs__month-btn" aria-label="Mes anterior" (click)="shiftMonth(-1)">‹</button>
+    <b>{{ monthLabel() }}</b>
+    <button type="button" class="fairs__month-btn" aria-label="Mes siguiente" (click)="shiftMonth(1)">›</button>
+  </div>
+
+  @if (message()) {
+    <p class="fairs__notice" role="status">{{ message() }}</p>
+  }
+
+  @if (loadError()) {
+    <db-state-message
+      [empty]="true"
+      emptyMessage="No se pudo cargar las ferias."
+    >
+      <db-button
+        emptyActions
+        label="Reintentar"
+        variant="secondary"
+        format="soft"
+        (clicked)="load()"
+      />
+    </db-state-message>
+  } @else if (loading()) {
+    <db-state-message [loading]="true" loadingMessage="Cargando ferias..." />
+  } @else {
+   @if (overview(); as ov) {
+    <section class="fairs__kpis" aria-label="Resumen del mes">
+      <div class="fairs__kpi">
+        <span class="fairs__kpi-l">Vendido en ferias · {{ monthName() }}</span>
+        <b class="fairs__kpi-v">{{ ov.kpis.sold | currencyArs }}</b>
+        <span class="fairs__kpi-s">{{ ov.kpis.fairsCount }} {{ ov.kpis.fairsCount === 1 ? 'feria' : 'ferias' }}</span>
+      </div>
+      <div class="fairs__kpi">
+        <span class="fairs__kpi-l">Resultado neto</span>
+        <b class="fairs__kpi-v" [class.pos]="ov.kpis.net > 0" [class.neg]="ov.kpis.net < 0">{{ ov.kpis.net | currencyArs }}</b>
+        <span class="fairs__kpi-s">Después de costos y gastos</span>
+      </div>
+      <div class="fairs__kpi">
+        <span class="fairs__kpi-l">Mejor feria</span>
+        <b class="fairs__kpi-v fairs__kpi-v--sm">{{ ov.kpis.bestFair?.name ?? '—' }}</b>
+        <span class="fairs__kpi-s">{{ kpiBestSub() }}</span>
+      </div>
+      <div class="fairs__kpi">
+        <span class="fairs__kpi-l">Producto estrella</span>
+        <b class="fairs__kpi-v fairs__kpi-v--sm">{{ ov.kpis.topProduct?.name ?? '—' }}</b>
+        <span class="fairs__kpi-s">
+          @if (ov.kpis.topProduct; as top) {
+            {{ top.quantity }} vendidos en el mes
+          } @else {
+            Sin ventas en el mes
+          }
+        </span>
+      </div>
+    </section>
+
+    @if (!fairs().length) {
+      <div class="fairs__card fairs__empty">
+        <p>No hay ferias en {{ monthName() }}.</p>
+        <db-button
+          label="+ Nueva feria"
+          variant="primary"
+          format="solid"
+          (clicked)="openNewFair()"
+        />
+      </div>
+    } @else {
+      <div class="fairs__tbox">
+        <table class="fairs__tbl">
+          <thead>
+            <tr>
+              <th>Feria</th>
+              <th>Fecha</th>
+              <th class="r">Ventas</th>
+              <th class="r">Vendido</th>
+              <th class="r">Costo</th>
+              <th class="r">Gastos</th>
+              <th class="r">Resultado</th>
+              <th>Caja</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (fair of fairs(); track fair.id) {
+              <tr
+                [class.is-selected]="selectedId() === fair.id"
+                tabindex="0"
+                (click)="selectFair(fair)"
+                (keydown.enter)="selectFair(fair)"
+              >
+                <td>
+                  <span class="strong fairs__name">{{ fair.name }}</span>
+                  <span class="sec">{{ recurringLabel(fair) }}</span>
+                </td>
+                <td>{{ formatDate(fair.date) }}</td>
+                <td class="r">{{ fair.salesCount }}</td>
+                <td class="r strong">{{ fair.sold | currencyArs }}</td>
+                <td class="r">{{ fair.cost | currencyArs }}</td>
+                <td class="r">{{ fair.expenses | currencyArs }}</td>
+                <td class="r strong" [class.pos]="fair.result > 0" [class.neg]="fair.result < 0">{{ fair.result | currencyArs }}</td>
+                <td>
+                  <span class="fairs__pill" [class]="'fairs__pill fairs__pill--' + cashStatus(fair).tone">{{ cashStatus(fair).label }}</span>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <ul class="fairs__cards" aria-label="Ferias del mes">
+        @for (fair of fairs(); track fair.id) {
+          <li>
+            <button
+              type="button"
+              class="fairs__fcard"
+              [class.is-selected]="selectedId() === fair.id"
+              (click)="selectFair(fair, true)"
+            >
+              <span class="fairs__fcard-top">
+                <span class="strong">{{ fair.name }}</span>
+                <span [class]="'fairs__pill fairs__pill--' + cashStatus(fair).tone">{{ cashStatus(fair).label }}</span>
+              </span>
+              <span class="sec">{{ formatDate(fair.date) }} · {{ recurringLabel(fair) }}</span>
+              <span class="fairs__fcard-nums">
+                <span>Vendido <b>{{ fair.sold | currencyArs }}</b></span>
+                <span>{{ fair.salesCount }} {{ fair.salesCount === 1 ? 'venta' : 'ventas' }}</span>
+                <span [class.pos]="fair.result > 0" [class.neg]="fair.result < 0">Resultado <b>{{ fair.result | currencyArs }}</b></span>
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+   }
+  }
+
+  <section class="fairs__grid">
+    <div class="fairs__card">
+      <div class="fairs__bar">
+        <div class="fairs__bar-text">
+          <h3>Qué llevar a la próxima</h3>
+          @if (planFair(); as pf) {
+            <p class="sec">
+              {{ pf.name }} · {{ formatDateLong(pf.date) }}
+              @if (plan(); as p) {
+                @if (p.basedOn === 0) {
+                  · Sin ferias anteriores con ese nombre
+                } @else if (p.basedOn === 1) {
+                  · según la última
+                } @else {
+                  · según las últimas {{ p.basedOn }}
+                }
+              }
+            </p>
+          }
+        </div>
+        <db-button
+          [label]="planFair()?.id === queuedFairId() ? 'Agregado a la cola' : 'Agregar a la cola'"
+          variant="secondary"
+          format="soft"
+          [disabled]="!planToPrint().length || queueing() || planFair()?.id === queuedFairId()"
+          (clicked)="queuePlan()"
+        />
+      </div>
+      @if (planLoading()) {
+        <p class="sec">Calculando...</p>
+      } @else {
+       @if (plan(); as p) {
+        @if (!p.items.length) {
+          <p class="sec">Todavía no hay ventas de ferias anteriores para calcular.</p>
+        } @else {
+          <div class="fairs__tbox fairs__tbox--inner">
+            <table class="fairs__tbl">
+              <thead>
+                <tr>
+                  <th>Producto</th>
+                  <th class="r">Vendés en promedio</th>
+                  <th class="r">Tenés</th>
+                  <th class="r">Llevar</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of p.items; track item.productId) {
+                  <tr>
+                    <td class="strong">{{ item.name }}</td>
+                    <td class="r">{{ item.average }}</td>
+                    <td class="r" [class.neg]="item.toPrint > 0">{{ item.stock }}</td>
+                    <td class="r strong">
+                      {{ item.take }}
+                      @if (item.toPrint > 0) {
+                        · <span class="neg">imprimir {{ item.toPrint }}</span>
+                      }
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      } @else {
+        <p class="sec">Cuando tengas una feria cargada vas a ver acá qué llevar.</p>
+      }
+      }
+    </div>
+
+    <div class="fairs__card" id="fair-detail">
+      @if (detail(); as d) {
+        <h3>{{ d.name }} · {{ formatDate(d.date) }}</h3>
+        <div class="fairs__line"><span>Efectivo</span><b>{{ d.byMethod.efectivo | currencyArs }}</b></div>
+        <div class="fairs__line"><span>QR Mercado Pago</span><b>{{ d.byMethod.mercado_pago | currencyArs }}</b></div>
+        <div class="fairs__line"><span>Transferencia</span><b>{{ d.byMethod.transferencia | currencyArs }}</b></div>
+        <div class="fairs__line">
+          <span>Diferencia de caja</span>
+          @if (d.status !== 'closed') {
+            <b>{{ d.status === 'open' ? 'Caja abierta' : '—' }}</b>
+          } @else if ((d.cashDifference ?? 0) === 0) {
+            <b class="pos">OK</b>
+          } @else {
+            <b class="warn">{{ formatSigned(d.cashDifference ?? 0) }}@if (d.differenceReason) { · “{{ d.differenceReason }}” }</b>
+          }
+        </div>
+        <div class="fairs__line"><span>Mejor horario</span><b>{{ formatBestHour(d.bestHour) }}</b></div>
+
+        <div class="fairs__sub">
+          <b>Gastos</b>
+          @if (d.status !== 'closed') {
+            <button type="button" class="fairs__link" (click)="addExpense(d)">+ Cargar gasto</button>
+          }
+        </div>
+        @for (exp of d.expensesList; track exp.id) {
+          <div class="fairs__line"><span>{{ exp.name }}</span><b>{{ exp.amount | currencyArs }}</b></div>
+        } @empty {
+          <p class="sec">Sin gastos cargados.</p>
+        }
+
+        <div class="fairs__links">
+          @if (d.status === 'open') {
+            <a [routerLink]="['/ferias', d.id, 'vender']">Ir a vender →</a>
+          }
+          @if (d.status !== 'planned') {
+            <a [routerLink]="['/ferias', d.id, 'cierre']">{{ d.status === 'closed' ? 'Ver el cierre →' : 'Cierre de caja →' }}</a>
+          }
+          @if (d.calendarEntryId) {
+            <a routerLink="/calendario">Ver en el calendario →</a>
+          }
+          @if (canDelete(d)) {
+            <button type="button" class="fairs__link fairs__link--danger" (click)="deleteFair(d)">Eliminar feria</button>
+          }
+        </div>
+      } @else if (detailLoading()) {
+        <p class="sec">Cargando detalle...</p>
+      } @else {
+        <h3>Detalle de la feria</h3>
+        <p class="sec">Elegí una feria para ver el detalle.</p>
+      }
+    </div>
+  </section>
+</div>

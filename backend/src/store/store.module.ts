@@ -3,6 +3,7 @@ import { RealtimeModule } from '../realtime/realtime.module';
 import {
   CategoryRepository,
   CustomerRepository,
+  FairRepository,
   OrderRepository,
   ProductRepository,
   QuoteRepository,
@@ -22,6 +23,7 @@ import { StoreService } from './store.service';
     StorePersistenceService,
     StoreChangeService,
     CustomerRepository,
+    FairRepository,
     OrderRepository,
     QuoteRepository,
     ProductRepository,
@@ -35,6 +37,7 @@ import { StoreService } from './store.service';
     StorePersistenceService,
     StoreChangeService,
     CustomerRepository,
+    FairRepository,
     OrderRepository,
     QuoteRepository,
     ProductRepository,

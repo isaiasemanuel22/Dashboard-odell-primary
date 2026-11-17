@@ -115,6 +115,32 @@ export const routes: Routes = [
           ),
       },
       {
+        path: 'ferias',
+        children: [
+          {
+            path: '',
+            loadComponent: () =>
+              import('./pages/fairs/fairs.component').then(
+                (m) => m.FairsComponent,
+              ),
+          },
+          {
+            path: ':id/vender',
+            loadComponent: () =>
+              import('./pages/fairs/fair-sell/fair-sell.component').then(
+                (m) => m.FairSellComponent,
+              ),
+          },
+          {
+            path: ':id/cierre',
+            loadComponent: () =>
+              import('./pages/fairs/fair-close/fair-close.component').then(
+                (m) => m.FairCloseComponent,
+              ),
+          },
+        ],
+      },
+      {
         path: 'productos',
         children: [
           {

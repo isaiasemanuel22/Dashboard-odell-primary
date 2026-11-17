@@ -41,6 +41,7 @@ describe('SuppliesReorderService', () => {
       retailSales: [],
       treasuryExpenses: [],
       calendarEntries: [],
+      fairs: [],
       suppliers: [
         {
           id: 'suplr-1',

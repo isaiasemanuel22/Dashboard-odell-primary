@@ -56,6 +56,7 @@ describe('SuppliesService', () => {
       quotes: [],
       treasuryExpenses: [],
       calendarEntries: [],
+      fairs: [],
       suppliers: [],
       spools: [],
       supplyMovements: [],

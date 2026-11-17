@@ -4,6 +4,7 @@ import {
   OrderRepository,
   ProductRepository,
   RetailSaleRepository,
+  FairRepository,
 } from '../store/repositories';
 import { StoreService } from '../store/store.service';
 import { createEmptyState } from '../store/store.seed';
@@ -20,12 +21,18 @@ describe('SalesService order revenue', () => {
     const retailSales = new RetailSaleRepository(store);
     const orders = new OrderRepository(store);
     const products = new ProductRepository(store);
-    service = new SalesService(retailSales, orders, products, {
-      resolveCatalogUnitCost: () => 0,
-      resolveCatalogUnitPrice: () => 100,
-      resolveDesignUnitCost: () => 0,
-      resolveOrderItemUnitCost: () => 0,
-    } as unknown as CostCalculatorService);
+    service = new SalesService(
+      retailSales,
+      orders,
+      products,
+      {
+        resolveCatalogUnitCost: () => 0,
+        resolveCatalogUnitPrice: () => 100,
+        resolveDesignUnitCost: () => 0,
+        resolveOrderItemUnitCost: () => 0,
+      } as unknown as CostCalculatorService,
+      new FairRepository(store),
+    );
   });
 
   it('solo incluye pedidos entregados en el listado de ventas', () => {
@@ -100,6 +107,7 @@ describe('SalesService order revenue', () => {
         resolveDesignUnitCost: () => 0,
         resolveOrderItemUnitCost: () => 500,
       } as unknown as CostCalculatorService,
+      new FairRepository(store),
     );
     const dto = {
       items: [{ productName: 'Pieza', quantity: 1, unitPrice: 100 }],
@@ -126,6 +134,7 @@ describe('SalesService order revenue', () => {
         resolveDesignUnitCost: () => 0,
         resolveOrderItemUnitCost,
       } as unknown as CostCalculatorService,
+      new FairRepository(store),
     );
     const dueDate = new Date().toISOString();
 

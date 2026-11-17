@@ -78,6 +78,7 @@ export class LayoutComponent implements OnInit {
     { label: 'Presupuestos', route: '/presupuestos', icon: 'quotes' },
     { label: 'Cola de trabajo', route: '/cola', icon: 'queue' },
     { label: 'Calendario', route: '/calendario', icon: 'calendar' },
+    { label: 'Ferias', route: '/ferias', icon: 'fairs' },
     { label: 'Productos', route: '/productos', icon: 'products' },
     { label: 'Insumos', route: '/insumos', icon: 'supplies' },
     { label: 'Clientes', route: '/clientes', icon: 'customers' },
@@ -178,6 +179,7 @@ export class LayoutComponent implements OnInit {
       /^\/pedidos\/[^/]+$/.test(path) ||
       /^\/presupuestos\/[^/]+$/.test(path) ||
       /^\/clientes\/[^/]+$/.test(path) ||
+      /^\/ferias\/[^/]+\/(vender|cierre)$/.test(path) ||
       /^\/productos\/[^/]+$/.test(path) ||
       path === '/ajustes/valores-generales' ||
       path === '/ajustes/ganancias' ||

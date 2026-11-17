@@ -42,6 +42,7 @@ export function mapRetailSaleFromDb(row: {
   notes: string | null;
   method?: string | null;
   account?: string | null;
+  fairId?: string | null;
   soldAt: Date;
   createdAt: Date;
   items: Array<{
@@ -66,6 +67,7 @@ export function mapRetailSaleFromDb(row: {
     notes: row.notes ?? undefined,
     method,
     account,
+    fairId: row.fairId ?? undefined,
     soldAt: row.soldAt.toISOString(),
     createdAt: row.createdAt.toISOString(),
     items: row.items.map((item) => mapRetailSaleItemFromDb(item)),
@@ -84,6 +86,7 @@ export function mapRetailSaleToDb(sale: RetailSale) {
     notes: sale.notes ?? null,
     method,
     account: sale.account ?? defaultAccountForMethod(method),
+    fairId: sale.fairId ?? null,
     soldAt: new Date(sale.soldAt),
     createdAt: new Date(sale.createdAt),
   };

@@ -73,6 +73,11 @@ export class CreateRetailSaleDto {
   @IsOptional()
   @IsEnum(TreasuryAccount)
   account?: TreasuryAccount;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  fairId?: string;
 }
 
 export class UpdateRetailSaleDto extends PartialType(CreateRetailSaleDto) {}

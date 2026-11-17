@@ -12,6 +12,7 @@ export type StoreCollection =
   | 'retailSales'
   | 'treasuryExpenses'
   | 'calendarEntries'
+  | 'fairs'
   | 'suppliers'
   | 'spools'
   | 'supplyMovements';
@@ -30,6 +31,7 @@ export const ALL_STORE_COLLECTIONS: StoreCollection[] = [
   'retailSales',
   'treasuryExpenses',
   'calendarEntries',
+  'fairs',
   'suppliers',
   'spools',
   'supplyMovements',

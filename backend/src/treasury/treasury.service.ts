@@ -15,6 +15,7 @@ import {
   UpdateTreasuryExpenseDto,
 } from '../common/dto';
 import {
+  FairStatus,
   OrderStatus,
   PaymentMethod,
   SupplyCategory,
@@ -32,7 +33,7 @@ import {
   TreasuryMovement,
   TreasuryOverview,
 } from '../common/interfaces';
-import { SalesService } from '../sales/sales.service';
+import { fairOriginLabel, SalesService } from '../sales/sales.service';
 import { applyStockChange } from '../supplies/apply-stock-change.util';
 import { SuppliesService } from '../supplies/supplies.service';
 import { appendSupplyPriceHistory } from '../supplies/supply-price-history.util';
@@ -202,9 +203,27 @@ export class TreasuryService {
     return this.updateSimpleMovement(current, data, occurredAt, account);
   }
 
+  /** Los egresos de una feria cerrada no se anulan: el cierre ya los contó (§26). */
+  private assertFairAllowsVoid(record: TreasuryExpense): void {
+    const ref = record.referenceId;
+    if (!ref) return;
+    const fairId = ref.startsWith('fair-diff-')
+      ? ref.slice('fair-diff-'.length)
+      : ref;
+    const fair = this.store.getFairById(fairId);
+    const isFairRecord =
+      record.category === TreasuryExpenseCategory.FAIR || !!fair;
+    if (isFairRecord && fair?.status === FairStatus.CLOSED) {
+      throw new BadRequestException(
+        `La feria «${fair.name}» está cerrada: sus gastos y su diferencia de caja no se pueden anular`,
+      );
+    }
+  }
+
   voidExpense(id: string, reason: string): TreasuryExpense {
     const current = this.requireRecord(id);
     this.assertNotVoided(current);
+    this.assertFairAllowsVoid(current);
 
     const trimmed = reason.trim();
     if (!trimmed) {
@@ -437,7 +456,9 @@ export class TreasuryService {
       id: sale.id,
       source: 'retail_sale',
       occurredAt: sale.soldAt,
-      concept: 'Venta de mostrador',
+      concept: sale.fairId
+        ? fairOriginLabel(this.store.getFairById(sale.fairId)?.name)
+        : 'Venta de mostrador',
       detail: `${sale.items.length} ${sale.items.length === 1 ? 'producto' : 'productos'}`,
       account: this.resolveSaleAccount(sale),
       method: sale.method ?? PaymentMethod.EFECTIVO,
@@ -458,7 +479,7 @@ export class TreasuryService {
       source: 'record',
       occurredAt: record.occurredAt,
       concept: record.name,
-      detail: record.description,
+      detail: this.recordDetail(record),
       account: this.resolveRecordAccount(record),
       amount: signed,
       fee: 0,
@@ -468,6 +489,20 @@ export class TreasuryService {
       voidReason: record.voidReason,
       recordId: record.id,
     };
+  }
+
+  /** Los gastos de feria guardados con «Feria Feria X» se muestran con el label único. */
+  private recordDetail(record: TreasuryExpense): string | undefined {
+    const ref = record.referenceId;
+    if (
+      record.category === TreasuryExpenseCategory.FAIR &&
+      ref &&
+      !ref.startsWith('fair-diff-')
+    ) {
+      const fair = this.store.getFairById(ref);
+      if (fair) return fairOriginLabel(fair.name);
+    }
+    return record.description;
   }
 
   private resolvePaymentAccount(payment: OrderPayment): TreasuryAccount {

@@ -20,6 +20,8 @@ import {
   mapBrandFromDb,
   mapBrandToDb,
   mapCalendarEntryFromDb,
+  mapFairFromDb,
+  mapFairToDb,
   mapCalendarEntryToDb,
   mapCategoryFromDb,
   mapCategoryToDb,
@@ -318,6 +320,17 @@ export class StorePersistenceService
     }
   }
 
+  private async loadFairs() {
+    try {
+      return await this.db.fair.findMany();
+    } catch (error) {
+      this.logger.warn(
+        `No se pudieron cargar las ferias (${this.errorMessage(error)}).`,
+      );
+      return [];
+    }
+  }
+
   private async loadSuppliers() {
     try {
       return await this.db.supplier.findMany();
@@ -366,6 +379,7 @@ export class StorePersistenceService
       retailSales,
       treasuryExpenses,
       calendarEntries,
+      fairs,
       suppliers,
       spools,
       supplyMovements,
@@ -389,6 +403,7 @@ export class StorePersistenceService
       }),
       this.loadTreasuryExpenses(),
       this.loadCalendarEntries(),
+      this.loadFairs(),
       this.loadSuppliers(),
       this.loadSpools(),
       this.loadSupplyMovements(),
@@ -418,6 +433,7 @@ export class StorePersistenceService
       calendarEntries: calendarEntries.map((row) =>
         mapCalendarEntryFromDb(row),
       ),
+      fairs: fairs.map((row) => mapFairFromDb(row)),
       suppliers: suppliers.map((row) => mapSupplierFromDb(row)),
       spools: spools.map((row) => mapSpoolFromDb(row)),
       supplyMovements: supplyMovements.map((row) =>
@@ -580,6 +596,25 @@ export class StorePersistenceService
         } catch (error) {
           this.noteSecondaryFailure(
             `No se pudieron guardar entradas de calendario (${this.errorMessage(error)}).`,
+          );
+        }
+      }
+      if (dirty.has('fairs')) {
+        try {
+          await this.syncCollection(
+            tx,
+            state.fairs,
+            (ids) => tx.fair.deleteMany({ where: { id: { notIn: ids } } }),
+            (row) =>
+              tx.fair.upsert({
+                where: { id: row.id },
+                create: mapFairToDb(row),
+                update: mapFairToDb(row),
+              }),
+          );
+        } catch (error) {
+          this.noteSecondaryFailure(
+            `No se pudieron guardar las ferias (${this.errorMessage(error)}).`,
           );
         }
       }

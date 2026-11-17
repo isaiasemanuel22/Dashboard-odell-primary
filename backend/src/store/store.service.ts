@@ -4,6 +4,7 @@ import {
   CalendarEntry,
   Category,
   Customer,
+  Fair,
   GeneralSettings,
   Impreso,
   Order,
@@ -39,6 +40,7 @@ export class StoreService {
   retailSales: RetailSale[] = [];
   treasuryExpenses: TreasuryExpense[] = [];
   calendarEntries: CalendarEntry[] = [];
+  fairs: Fair[] = [];
   suppliers: Supplier[] = [];
   spools: Spool[] = [];
   supplyMovements: SupplyMovement[] = [];
@@ -77,6 +79,7 @@ export class StoreService {
     this.retailSales = state.retailSales;
     this.treasuryExpenses = state.treasuryExpenses;
     this.calendarEntries = state.calendarEntries ?? [];
+    this.fairs = state.fairs ?? [];
     this.suppliers = state.suppliers ?? [];
     this.spools = state.spools ?? [];
     this.supplyMovements = state.supplyMovements ?? [];
@@ -98,6 +101,7 @@ export class StoreService {
       retailSales: this.retailSales,
       treasuryExpenses: this.treasuryExpenses,
       calendarEntries: this.calendarEntries,
+      fairs: this.fairs,
       suppliers: this.suppliers,
       spools: this.spools,
       supplyMovements: this.supplyMovements,
@@ -308,6 +312,22 @@ export class StoreService {
 
   nextTreasuryExpenseId(): string {
     return this.nextId('treasury', this.treasuryExpenses);
+  }
+
+  nextFairId(): string {
+    return this.nextId('fair', this.fairs);
+  }
+
+  getFairById(id: string): Fair | undefined {
+    return this.fairs.find((fair) => fair.id === id);
+  }
+
+  replaceFair(fair: Fair): void {
+    replaceInCollection(this.fairs, fair.id, fair);
+  }
+
+  removeFair(id: string): boolean {
+    return removeFromCollection(this.fairs, id);
   }
 
   nextCalendarEntryId(): string {

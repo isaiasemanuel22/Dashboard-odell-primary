@@ -3,6 +3,7 @@ import {
   CalendarEntry,
   Category,
   Customer,
+  Fair,
   GeneralSettings,
   Impreso,
   Order,
@@ -31,6 +32,7 @@ export interface StoreState {
   retailSales: RetailSale[];
   treasuryExpenses: TreasuryExpense[];
   calendarEntries: CalendarEntry[];
+  fairs: Fair[];
   suppliers: Supplier[];
   spools: Spool[];
   supplyMovements: SupplyMovement[];

@@ -1,4 +1,5 @@
 import {
+  FairStatus,
   OrderStatus,
   PaymentMethod,
   ServiceType,
@@ -9,6 +10,7 @@ import {
 import { SalesService } from '../sales/sales.service';
 import { SuppliesService } from '../supplies/supplies.service';
 import {
+  FairRepository,
   OrderRepository,
   ProductRepository,
   RetailSaleRepository,
@@ -62,6 +64,7 @@ describe('TreasuryService', () => {
       new OrderRepository(store),
       new ProductRepository(store),
       {} as never,
+      new FairRepository(store),
     );
 
     suppliesService = {
@@ -149,6 +152,54 @@ describe('TreasuryService', () => {
     });
 
     expect(expense.description).toBe('Compra de material: Filamento PLA');
+  });
+
+  it('no anula egresos de una feria cerrada, sí de una abierta', () => {
+    const now = '2026-08-01T12:00:00.000Z';
+    const fair = {
+      id: 'fair-1',
+      name: 'Plaza',
+      date: '2026-08-01',
+      recurring: false,
+      calendarEntryId: null,
+      status: FairStatus.OPEN,
+      openedAt: now,
+      openingFloat: 0,
+      closedAt: null,
+      countedCash: null,
+      cashDifference: null,
+      differenceReason: null,
+      createdAt: now,
+      updatedAt: now,
+    };
+    store.fairs.push(fair);
+    const base = {
+      direction: TreasuryMovementDirection.EXPENSE,
+      category: TreasuryExpenseCategory.FAIR,
+      quantity: 1,
+      unitPrice: 10,
+      amount: 10,
+      occurredAt: now,
+      createdAt: now,
+    };
+    store.treasuryExpenses.push(
+      { ...base, id: 'fx-1', name: 'Stand', referenceId: 'fair-1' },
+      { ...base, id: 'fx-2', name: 'Stand 2', referenceId: 'fair-1' },
+      {
+        ...base,
+        id: 'fx-3',
+        name: 'Diferencia',
+        referenceId: 'fair-diff-fair-1',
+      },
+    );
+
+    expect(
+      service.voidExpense('fx-1', 'error de carga').voidedAt,
+    ).toBeDefined();
+
+    fair.status = FairStatus.CLOSED;
+    expect(() => service.voidExpense('fx-2', 'x')).toThrow('está cerrada');
+    expect(() => service.voidExpense('fx-3', 'x')).toThrow('está cerrada');
   });
 
   it('registra egresos simples con nombre, monto y fecha', () => {

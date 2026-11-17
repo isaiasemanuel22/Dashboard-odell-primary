@@ -1,5 +1,6 @@
 export { CategoryRepository } from './category.repository';
 export { CustomerRepository } from './customer.repository';
+export { FairRepository } from './fair.repository';
 export { OrderRepository } from './order.repository';
 export { QuoteRepository } from './quote.repository';
 export { ProductRepository } from './product.repository';

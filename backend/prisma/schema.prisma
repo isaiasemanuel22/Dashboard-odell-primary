@@ -415,10 +415,13 @@ model RetailSale {
   notes           String?          @db.Text
   method          String           @default("efectivo") @db.VarChar(32)
   account         String           @default("caja") @db.VarChar(32)
+  /// Feria donde se hizo la venta (null = mostrador común).
+  fairId    String?          @map("fair_id") @db.VarChar(64)
   soldAt    DateTime         @map("sold_at")
   createdAt DateTime         @map("created_at")
   items     RetailSaleItem[]
 
+  @@index([fairId])
   @@map("retail_sales")
 }
 
@@ -479,6 +482,26 @@ model CalendarEntry {
   @@index([date])
   @@index([kind])
   @@map("calendar_entries")
+}
+
+model Fair {
+  id               String    @id @db.VarChar(64)
+  name             String    @db.VarChar(255)
+  date             String    @db.VarChar(10)
+  recurring        Boolean   @default(false)
+  calendarEntryId  String?   @map("calendar_entry_id") @db.VarChar(64)
+  status           String    @default("planned") @db.VarChar(16)
+  openedAt         DateTime? @map("opened_at")
+  openingFloat     Float     @default(0) @map("opening_float")
+  closedAt         DateTime? @map("closed_at")
+  countedCash      Float?    @map("counted_cash")
+  cashDifference   Float?    @map("cash_difference")
+  differenceReason String?   @map("difference_reason") @db.VarChar(255)
+  createdAt        DateTime  @map("created_at")
+  updatedAt        DateTime  @map("updated_at")
+
+  @@index([date])
+  @@map("fairs")
 }
 
 model WorkArea {

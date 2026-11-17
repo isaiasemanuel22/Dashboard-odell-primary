@@ -2,6 +2,7 @@ export * from './order.dto';
 export * from './quote.dto';
 export * from './customer.dto';
 export * from './sale.dto';
+export * from './fair.dto';
 export * from './product.dto';
 export * from './settings.dto';
 export * from './shared.dto';

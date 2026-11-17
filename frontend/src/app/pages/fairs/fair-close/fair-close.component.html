@@ -1,0 +1,131 @@
+<div class="fclose">
+  <header class="fclose__top">
+    <a class="fclose__back" [routerLink]="isClosed() ? '/ferias' : ['/ferias', fairId, 'vender']" aria-label="Volver">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+      {{ isClosed() ? 'Ferias' : 'Seguir vendiendo' }}
+    </a>
+    @if (fair(); as f) {
+      <div>
+        <div class="fclose__title">Cierre de caja</div>
+        <small>
+          {{ f.name }} · {{ formatDate(f.date) }}
+          @if (f.openedAt) {
+            · {{ formatTime(f.openedAt) }}
+            @if (f.closedAt) {
+              a {{ formatTime(f.closedAt) }}
+            }
+          }
+        </small>
+      </div>
+      <div class="fclose__ln">
+        <small>{{ f.salesCount }} {{ f.salesCount === 1 ? 'venta' : 'ventas' }}</small>
+        <span class="fclose__sold">{{ f.sold | currencyArs }}</span>
+      </div>
+    }
+  </header>
+
+  <div class="fclose__body">
+    @if (loading()) {
+      <p class="fclose__state">Cargando feria...</p>
+    } @else if (loadError()) {
+      <p class="fclose__state fclose__state--err">{{ loadError() }}</p>
+      <a routerLink="/ferias">Volver a Ferias</a>
+    } @else {
+     @if (fair(); as f) {
+      @if (f.status === 'planned') {
+        <p class="fclose__state fclose__state--warn" role="status">
+          Esta feria todavía no tiene la caja abierta; no hay nada para cerrar.
+        </p>
+      }
+      <section class="fclose__box">
+        <b class="fclose__h">Por medio de pago</b>
+        <div class="fclose__ln"><span>Efectivo</span><b>{{ f.byMethod.efectivo | currencyArs }}</b></div>
+        <div class="fclose__ln"><span>QR Mercado Pago</span><b>{{ f.byMethod.mercado_pago | currencyArs }}</b></div>
+        <div class="fclose__ln"><span>Transferencia</span><b>{{ f.byMethod.transferencia | currencyArs }}</b></div>
+      </section>
+
+      <section class="fclose__box">
+        <b class="fclose__h">Contá el efectivo</b>
+        <div class="fclose__ln fclose__ln--muted">
+          <span>Fondo inicial {{ f.openingFloat | currencyArs }} + ventas {{ cashSales() | currencyArs }}</span>
+          <span>Esperado {{ expected() | currencyArs }}</span>
+        </div>
+        @if (isClosed()) {
+          <div class="fclose__ln"><span>Efectivo contado</span><b>{{ (f.countedCash ?? 0) | currencyArs }}</b></div>
+          <div class="fclose__diff" [class.fclose__diff--warn]="(f.cashDifference ?? 0) !== 0">
+            <span>Diferencia</span>
+            <b>{{ (f.cashDifference ?? 0) === 0 ? 'OK' : formatSigned(f.cashDifference ?? 0) }}</b>
+          </div>
+          @if (f.differenceReason) {
+            <p class="fclose__reason">Motivo: “{{ f.differenceReason }}”</p>
+          }
+        } @else {
+          <label class="fclose__field">
+            <span>Efectivo contado</span>
+            <input
+              class="fclose__amount"
+              type="text"
+              inputmode="decimal"
+              autocomplete="off"
+              name="countedCash"
+              placeholder="$ 0"
+              [disabled]="!isOpen()"
+              [value]="countedDisplay()"
+              (focus)="onCountedFocus($event)"
+              (blur)="countedFocused.set(false)"
+              (input)="onCountedInput($any($event.target).value)"
+            />
+          </label>
+          @if (difference() !== null) {
+            <div class="fclose__diff" [class.fclose__diff--warn]="needsReason()">
+              <span>Diferencia</span>
+              <b>{{ needsReason() ? formatSigned(difference() ?? 0) : 'OK' }}</b>
+            </div>
+          }
+          @if (needsReason()) {
+            <db-input
+              label="Motivo de la diferencia"
+              name="differenceReason"
+              placeholder="Ej.: vuelto mal dado"
+              [required]="true"
+              [ngModel]="reason()"
+              (ngModelChange)="reason.set($event)"
+            />
+          }
+        }
+      </section>
+
+      <section class="fclose__box">
+        <div class="fclose__ln">
+          <b class="fclose__h">Gastos de la feria</b>
+          @if (!isClosed() && f.status === 'open') {
+            <button type="button" class="fclose__link" (click)="addExpense()">+ Cargar gasto</button>
+          }
+        </div>
+        @for (exp of f.expensesList; track exp.id) {
+          <div class="fclose__ln"><span>{{ exp.name }}</span><b>{{ exp.amount | currencyArs }}</b></div>
+        } @empty {
+          <p class="fclose__muted">Sin gastos cargados.</p>
+        }
+        <div class="fclose__ln fclose__ln--total">
+          <span>Resultado de la feria</span>
+          <b [class.pos]="f.result > 0" [class.neg]="f.result < 0">{{ f.result | currencyArs }}</b>
+        </div>
+      </section>
+
+      @if (error()) {
+        <p class="fclose__state fclose__state--err" role="alert">{{ error() }}</p>
+      }
+     }
+    }
+  </div>
+
+  @if (isOpen()) {
+    <div class="fclose__sheet">
+      <button type="button" class="fclose__cta" [disabled]="!canClose()" (click)="close()">
+        {{ saving() ? 'Cerrando...' : 'Cerrar caja' }}
+      </button>
+      <span class="fclose__hint">Las ventas ya están en Billetera; se registra la diferencia de caja</span>
+    </div>
+  }
+</div>

@@ -163,6 +163,12 @@ export class MoreComponent implements OnInit {
         icon: 'calendar',
       },
       {
+        label: 'Ferias',
+        subtitle: 'Ventas en puesto y cierre',
+        route: '/ferias',
+        icon: 'fairs',
+      },
+      {
         label: 'Ajustes',
         subtitle: 'Costos, márgenes, usuarios',
         route: '/ajustes',

@@ -25,6 +25,11 @@ import { formDialogConfig } from './form-dialog.config';
 import { ModalSize } from './modal-size';
 import type { ConfirmDialogData } from './confirm-dialog.component';
 import type {
+  FairAmountDialogData,
+  FairAmountDialogResult,
+} from './fair-amount-dialog.component';
+import type { FairFormDialogResult } from './fair-form-dialog.component';
+import type {
   IndependentTaskDialogData,
   IndependentTaskDialogResult,
 } from './independent-task-dialog.component';
@@ -321,6 +326,34 @@ export class FormDialogService {
         }): Observable<boolean | undefined> =>
           this.open(ResetDatabaseDialogComponent, {}, 'sm', {
             ariaLabel: 'Resetear base de datos',
+          }),
+      ),
+    );
+  }
+
+  /** «Nueva feria» (módulo Ferias). */
+  openFairForm(): Observable<FairFormDialogResult | undefined> {
+    return from(import('./fair-form-dialog.component')).pipe(
+      switchMap(
+        ({ FairFormDialogComponent }): Observable<FairFormDialogResult | undefined> =>
+          this.open(FairFormDialogComponent, null, 'md', {
+            ariaLabel: 'Nueva feria',
+          }),
+      ),
+    );
+  }
+
+  /** Fondo inicial o gasto de una feria (monto, con nombre opcional). */
+  openFairAmount(
+    data: FairAmountDialogData,
+  ): Observable<FairAmountDialogResult | undefined> {
+    return from(import('./fair-amount-dialog.component')).pipe(
+      switchMap(
+        ({
+          FairAmountDialogComponent,
+        }): Observable<FairAmountDialogResult | undefined> =>
+          this.open(FairAmountDialogComponent, data, 'sm', {
+            ariaLabel: data.title,
           }),
       ),
     );

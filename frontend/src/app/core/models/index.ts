@@ -1677,6 +1677,8 @@ export type CreateRetailSalePayload = {
   lossReasonNote?: string;
   method?: PaymentMethod;
   account?: TreasuryAccount;
+  /** Venta hecha en una feria (módulo Ferias). */
+  fairId?: string;
 };
 
 export type UpdateRetailSalePayload = Partial<CreateRetailSalePayload>;
@@ -1867,3 +1869,5 @@ export interface CurrentUserProfile extends AppUser {
 }
 
 export type CurrentUserResponse = CurrentUserProfile | { authenticated: false };
+
+export * from './fair.model';

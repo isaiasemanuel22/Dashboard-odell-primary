@@ -4,7 +4,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { PaymentMethod, SaleSource } from '../common/enums';
+import { FairStatus, PaymentMethod, SaleSource } from '../common/enums';
 import {
   CreateRetailSaleDto,
   CreateRetailSaleItemDto,
@@ -24,6 +24,7 @@ import {
   isDateInMonthRange,
 } from '../common/utils/month-range.util';
 import {
+  FairRepository,
   OrderRepository,
   ProductRepository,
   RetailSaleRepository,
@@ -51,6 +52,7 @@ export class SalesService {
     private readonly orders: OrderRepository,
     private readonly products: ProductRepository,
     private readonly costCalculator: CostCalculatorService,
+    private readonly fairs: FairRepository,
   ) {}
 
   getOverview(month?: string): SalesOverview {
@@ -104,6 +106,20 @@ export class SalesService {
   }
 
   createRetail(data: CreateRetailSaleDto): RetailSale {
+    const fairId = data.fairId?.trim() || undefined;
+    if (fairId) {
+      const fair = this.fairs.findById(fairId);
+      if (!fair) {
+        throw new NotFoundException(`Feria ${fairId} no encontrada`);
+      }
+      if (fair.status !== FairStatus.OPEN) {
+        throw new BadRequestException(
+          fair.status === FairStatus.CLOSED
+            ? 'La feria está cerrada: no se pueden cargar ventas'
+            : 'La feria todavía no está abierta: abrila para cargar ventas',
+        );
+      }
+    }
     const sale = this.buildRetailSale(data);
     this.applyRetailStockChange([], sale.items);
     return this.retailSales.create(sale);
@@ -115,7 +131,10 @@ export class SalesService {
       throw new NotFoundException(`Venta ${id} no encontrada`);
     }
 
+    this.assertFairAllowsChanges(current);
+
     const merged: CreateRetailSaleDto = {
+      fairId: current.fairId,
       items:
         data.items ??
         current.items.map((item) => ({
@@ -153,8 +172,20 @@ export class SalesService {
     if (!sale) {
       throw new NotFoundException(`Venta ${id} no encontrada`);
     }
+    this.assertFairAllowsChanges(sale);
     this.applyRetailStockChange(sale.items, []);
     this.retailSales.remove(id);
+  }
+
+  /** Las ventas de una feria cerrada no se editan ni se borran (§26). */
+  private assertFairAllowsChanges(sale: RetailSale): void {
+    if (!sale.fairId) return;
+    const fair = this.fairs.findById(sale.fairId);
+    if (fair?.status === FairStatus.CLOSED) {
+      throw new BadRequestException(
+        'La feria está cerrada: sus ventas no se pueden editar ni borrar',
+      );
+    }
   }
 
   private buildEntries(): SaleEntry[] {
@@ -179,7 +210,9 @@ export class SalesService {
       id: `retail-${sale.id}`,
       source: SaleSource.RETAIL,
       saleId: sale.id,
-      customerName: 'Mostrador',
+      customerName: sale.fairId
+        ? fairOriginLabel(this.fairs.findById(sale.fairId)?.name)
+        : 'Mostrador',
       items,
       total: sale.total,
       cost: economics.cost,
@@ -332,6 +365,7 @@ export class SalesService {
       notes: data.notes?.trim() || undefined,
       method,
       account,
+      fairId: data.fairId?.trim() || undefined,
       soldAt: data.soldAt ?? now,
       createdAt: createdAt ?? now,
     };
@@ -428,4 +462,11 @@ function referenceFromMonth(month?: string): Date {
   if (!year || mon < 1 || mon > 12) return new Date();
   // Mediodía AR del día 15: cae en ese mes sin importar la zona del servidor.
   return fromArLocal(year, mon, 15, 12);
+}
+
+/** «Feria <nombre>», sin repetir el prefijo si el nombre ya empieza con «Feria». */
+export function fairOriginLabel(name?: string): string {
+  const trimmed = name?.trim() ?? '';
+  if (!trimmed) return 'Feria';
+  return /^feria\b/i.test(trimmed) ? trimmed : `Feria ${trimmed}`;
 }

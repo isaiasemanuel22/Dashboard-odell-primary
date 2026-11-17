@@ -261,6 +261,12 @@ export class CalendarService {
     ) {
       throw new BadRequestException('Cliente vinculado no encontrado');
     }
+    if (
+      linkType === CalendarLinkType.FERIA &&
+      !this.store.getFairById(linkId)
+    ) {
+      throw new BadRequestException('Feria vinculada no encontrada');
+    }
   }
 }
 

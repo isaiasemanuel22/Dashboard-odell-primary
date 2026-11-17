@@ -162,6 +162,14 @@ const PATH_RULES: PathRule[] = [
     },
   },
   {
+    matches: (path) => path.includes('/fairs'),
+    meta: {
+      collections: ['fairs', 'treasuryExpenses', 'calendarEntries'],
+      scopes: ['dashboard', 'sales', 'calendar'],
+      entity: 'fair',
+    },
+  },
+  {
     matches: (path) => path.includes('/calendar'),
     meta: {
       collections: ['calendarEntries'],

@@ -37,6 +37,7 @@ describe('SpoolsService', () => {
       retailSales: [],
       treasuryExpenses: [],
       calendarEntries: [],
+      fairs: [],
       suppliers: [],
       spools,
       supplyMovements: [],

@@ -402,6 +402,7 @@ export function createRandomSeedState(): StoreState {
     }),
     treasuryExpenses: [],
     calendarEntries: [],
+    fairs: [],
     suppliers: [],
     spools: [],
     supplyMovements: [],

@@ -25,7 +25,8 @@ export type RealtimeEntity =
   | 'supplier'
   | 'spool'
   | 'settings'
-  | 'calendar-entry';
+  | 'calendar-entry'
+  | 'fair';
 
 export interface RealtimeEvent {
   scope: RealtimeScope;

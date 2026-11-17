@@ -23,6 +23,7 @@ function emptyStore(): StoreService {
     retailSales: [],
     treasuryExpenses: [],
     calendarEntries: [],
+    fairs: [],
     suppliers: [],
     spools: [],
     supplyMovements: [],

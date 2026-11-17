@@ -1,0 +1,136 @@
+<div class="fsell">
+  <header class="fsell__top">
+    <div class="fsell__nav">
+      <a class="fsell__back" routerLink="/ferias" aria-label="Volver a Ferias">
+        <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6" /></svg>
+        Ferias
+      </a>
+      <a class="fsell__close-link" [routerLink]="['/ferias', fairId, 'cierre']">Cierre de caja</a>
+    </div>
+    @if (fair(); as f) {
+      <div class="fsell__ln">
+        <div>
+          <div class="fsell__name">{{ f.name }}</div>
+          <small>
+            {{ dayLabel(f.date) }}
+            @if (f.status === 'closed') {
+              @if (f.closedAt) {
+                · Caja cerrada {{ formatTime(f.closedAt) }}
+              }
+            } @else if (f.openedAt) {
+              · caja abierta {{ formatTime(f.openedAt) }}
+            }
+          </small>
+        </div>
+        @if (f.status === 'closed') {
+          <span class="fsell__badge fsell__badge--closed">Caja cerrada</span>
+        } @else {
+          <span class="fsell__badge">Modo feria</span>
+        }
+      </div>
+      <div class="fsell__ln">
+        <small>Vendido hoy · {{ f.salesCount }} {{ f.salesCount === 1 ? 'venta' : 'ventas' }}</small>
+        <span class="fsell__sold">{{ f.sold | currencyArs }}</span>
+      </div>
+    }
+  </header>
+
+  <div class="fsell__body">
+    @if (loading()) {
+      <p class="fsell__state">Cargando feria...</p>
+    } @else if (loadError()) {
+      <p class="fsell__state fsell__state--err">{{ loadError() }}</p>
+      <a routerLink="/ferias">Volver a Ferias</a>
+    } @else {
+      @if (!canSell()) {
+        <p class="fsell__state fsell__state--warn" role="status">
+          @if (fair()?.status === 'closed') {
+            Esta feria ya está cerrada: no se puede vender.
+          } @else {
+            Esta feria todavía no tiene la caja abierta. Abrila desde Ferias.
+          }
+        </p>
+      }
+      <label class="fsell__search">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+        <input
+          type="search"
+          placeholder="Buscar producto"
+          aria-label="Buscar producto"
+          [ngModel]="search()"
+          (ngModelChange)="onSearch($event)"
+        />
+      </label>
+      @if (error()) {
+        <p class="fsell__state fsell__state--err" role="alert">{{ error() }}</p>
+      }
+      @if (message()) {
+        <p class="fsell__state fsell__state--ok" role="status">{{ message() }}</p>
+      }
+      <div class="fsell__grid">
+        @for (p of visibleProducts(); track p.id) {
+          <div class="fsell__tile">
+            <button
+              type="button"
+              class="fsell__pbtn"
+              [class.is-in-cart]="qtyOf(p) > 0"
+              [class.is-out]="stockOf(p) <= 0"
+              [disabled]="!canSell() || remaining(p) <= 0"
+              (click)="add(p)"
+            >
+              <b>{{ p.name }}</b>
+              <span class="fsell__price">{{ priceOf(p) | currencyArs }}</span>
+              <span class="fsell__stock">
+                @if (stockOf(p) <= 0) {
+                  Sin stock
+                } @else {
+                  Quedan {{ remaining(p) }}
+                }
+              </span>
+            </button>
+            @if (qtyOf(p) > 0) {
+              <span class="fsell__qty" aria-hidden="true">{{ qtyOf(p) }}</span>
+              <button
+                type="button"
+                class="fsell__minus"
+                [attr.aria-label]="'Quitar uno de ' + p.name"
+                (click)="subtract(p)"
+              >
+                −
+              </button>
+            }
+          </div>
+        } @empty {
+          <p class="fsell__state fsell__grid-empty">No hay productos para mostrar.</p>
+        }
+      </div>
+    }
+  </div>
+
+  <div class="fsell__sheet">
+    <div class="fsell__ln">
+      <span class="fsell__units">{{ units() }} {{ units() === 1 ? 'producto' : 'productos' }}</span>
+      <span class="fsell__total">{{ total() | currencyArs }}</span>
+    </div>
+    <div class="fsell__pay" role="group" aria-label="Medio de pago">
+      @for (opt of payOptions; track opt.value) {
+        <button
+          type="button"
+          [class.on]="method() === opt.value"
+          [attr.aria-pressed]="method() === opt.value"
+          (click)="method.set(opt.value)"
+        >
+          {{ opt.label }}
+        </button>
+      }
+    </div>
+    <button
+      type="button"
+      class="fsell__cta"
+      [disabled]="!canSell() || units() === 0 || paying()"
+      (click)="charge()"
+    >
+      {{ paying() ? 'Cobrando...' : payLabel() }}
+    </button>
+  </div>
+</div>
