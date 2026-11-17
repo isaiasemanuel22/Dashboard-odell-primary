@@ -16,8 +16,14 @@ Pendiente: …
 
 ---
 
+## 2026-11-17 · Skills de proyecto: interrogar-plan y revisar-ui
+Rama: fix/barrido-errores · Commits: ver git log (docs(claude): skills…)
+Hecho: a partir del artículo de Firecrawl sobre skills, se crearon dos en `.claude/skills/`. `interrogar-plan` (versión propia de «Grill Me»): pregunta de a una antes de implementar y anota lo confirmado en BUSINESS-RULES. `revisar-ui`: auditoría de interfaz con las Web Interface Guidelines de Vercel, adaptadas a Angular y al español. Se instaló sin `npx skills`: copia fija del commit 434b7f9 de vercel-labs/web-interface-guidelines (MIT, revisada) en vez de bajarla en cada uso.
+Decisiones: de Isaías, sumar esas dos; el resto del artículo ya lo cubren agentes o skills existentes, o no aplica a Angular.
+Pendiente: probar las dos en una sesión nueva.
+
 ## 2026-11-17 · Memoria de Claude: reglas por carpeta
-Rama: fix/barrido-errores · Commits: sin commit
+Rama: fix/barrido-errores · Commits: ec83afe
 Hecho: siguiendo el artículo de Web Reactiva sobre la memoria de Claude Code, se crearon reglas en `.claude/rules/`: `git-y-deploy.md` se carga siempre (git, qué no commitear, deploy, lockfile con npm 10.9.9, comandos), y `frontend.md` / `backend.md` se cargan solo al tocar esas carpetas (`paths`). `docs/CLAUDE.md` quedó solo con la fuente de verdad y el flujo con Cursor; ODELL.md y el CLAUDE.md de la raíz remiten a las reglas. Fuera del repo: `~/.claude/CLAUDE.md` con las preferencias generales de Isaías (español rioplatense, sin reportes parciales), y la memoria automática limpia (sin estado viejo y con lo de Cursor en español).
 Decisiones: de Isaías, aplicar las cinco propuestas; no usar `CLAUDE.local.md`.
 Pendiente: comprobar en una sesión nueva que las reglas se cargan (con `/memory`); commitear `.claude/rules/` junto con los otros cambios de `.claude/`.
