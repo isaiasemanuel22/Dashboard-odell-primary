@@ -15,7 +15,7 @@ interfaz en español rioplatense.
 - `docs/BUSINESS-RULES.md`: reglas de negocio; manda sobre el código.
   §1–§22 confirmadas, §25 lo que hace hoy el código, §26 propuestas `D-xx`
   (no implementar sin confirmación). Si falta una regla: POR DEFINIR, preguntar.
-- `docs/CLAUDE.md`: forma de trabajo (planificar, delegar, revisar, git).
+- `docs/CLAUDE.md`: forma de trabajo (planificar, delegar a Cursor, revisar).
 - `docs/qa/errores-pendientes.md`: errores reportados (🔴/🟡/✅).
 
 ## Stack y estructura
@@ -69,13 +69,7 @@ Monorepo: `backend/` (NestJS + Prisma) y `frontend/` (Angular + NgRx).
   a `ejecutor`.
 - Nunca en `main`: rama `feat/…` o `fix/…`, un commit por tarea, commits en
   español (`feat(modulo): …`). Deploy solo con OK de Isaías.
-- Un solo cálculo de costo para toda la app; no duplicar fórmulas.
-- Cada funcionalidad nueva en su propio módulo Nest y carpeta de página; no
-  sumar enums fijos del rubro.
-- Campos numéricos: todos se comportan igual. Mientras tienen foco muestran lo
-  que se escribe (vacío, 0, fuera de rango); mín/máx y valores por defecto se
-  aplican al salir. Usar `db-input` o, en un `<input>` nativo con `[ngModel]`,
-  la directiva `dbKeepTyping` (`shared/directives/keep-typing.directive.ts`).
+- Reglas de git, deploy, frontend y backend: `.claude/rules/`.
 
 ## Decisiones confirmadas (resumen; el detalle está en BUSINESS-RULES)
 - Margen siempre sobre el costo: (precio − costo) ÷ costo.

@@ -18,7 +18,8 @@ Estado actual del proyecto (se carga solo):
 
 Fuera de estos tres: reglas de negocio en `docs/BUSINESS-RULES.md` (manda
 sobre el código), forma de trabajo en `docs/CLAUDE.md`, errores reportados en
-`docs/qa/errores-pendientes.md`.
+`docs/qa/errores-pendientes.md`, reglas de git, deploy, frontend y backend en
+`.claude/rules/`.
 
 ## Leer
 

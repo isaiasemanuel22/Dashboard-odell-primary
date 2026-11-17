@@ -32,6 +32,8 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   fix/errores-tanda-1, docs/deploy-netlify.
 
 ## Pendientes
+- Reglas de Claude nuevas en `.claude/rules/` (2026-11-17), sin commitear: probar
+  con `/memory` en una sesión nueva y commitearlas.
 - Validar el lector .3mf con un archivo real de Bambu Studio (sobre todo si
   `used_g` ya incluye la purga, función `mapUsedGrams`).
 - Hallazgos de severidad baja del reporte de verificación y dependencias con

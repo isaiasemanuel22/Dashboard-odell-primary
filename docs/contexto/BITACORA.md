@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-17 · Memoria de Claude: reglas por carpeta
+Rama: fix/barrido-errores · Commits: sin commit
+Hecho: siguiendo el artículo de Web Reactiva sobre la memoria de Claude Code, se crearon reglas en `.claude/rules/`: `git-y-deploy.md` se carga siempre (git, qué no commitear, deploy, lockfile con npm 10.9.9, comandos), y `frontend.md` / `backend.md` se cargan solo al tocar esas carpetas (`paths`). `docs/CLAUDE.md` quedó solo con la fuente de verdad y el flujo con Cursor; ODELL.md y el CLAUDE.md de la raíz remiten a las reglas. Fuera del repo: `~/.claude/CLAUDE.md` con las preferencias generales de Isaías (español rioplatense, sin reportes parciales), y la memoria automática limpia (sin estado viejo y con lo de Cursor en español).
+Decisiones: de Isaías, aplicar las cinco propuestas; no usar `CLAUDE.local.md`.
+Pendiente: comprobar en una sesión nueva que las reglas se cargan (con `/memory`); commitear `.claude/rules/` junto con los otros cambios de `.claude/`.
+
 ## 2026-11-17 · Deploy del barrido de errores
 Rama: fix/barrido-errores → main · Commits: be10655
 Hecho: push a origin main y Heroku v47; sin cambios de esquema, sin db:push. Los dos primeros intentos de Heroku fallaron en `npm ci` porque el lockfile lo había regenerado npm 11 local; se rehízo sobre el de 02dbe97 con npm 10.9.9. En producción: `/api/health` solo da status/uptime, headers de helmet presentes, la API pide login; Netlify sirve el bundle nuevo.

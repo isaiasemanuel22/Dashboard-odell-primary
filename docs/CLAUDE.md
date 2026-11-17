@@ -4,6 +4,8 @@ App de gestión de Odell (impresión 3D, estampado, diseño y modelado).
 Frontend en Angular, backend en NestJS. Persistencia en MySQL
 (`DATABASE_URL`); sin base, el backend corre en memoria con datos de seed.
 
+Git, deploy, comandos y convenciones de frontend y backend: `.claude/rules/`.
+
 ## Fuente de verdad
 
 - `BUSINESS-RULES.md` manda sobre el código.
@@ -33,15 +35,16 @@ el código.
 Desde la raíz del repo, con una rama creada:
 
 ```bash
-cursor-agent -p "<tarea>"
+~/.local/bin/cursor-agent -p --trust --force --output-format text "<tarea>"
 ```
 
-> Antes de la primera vez, corré `cursor-agent --help` para confirmar el
-> nombre del comando (`cursor-agent` o `agent`) y el flag para que pueda
-> escribir archivos sin pedir confirmación. Anotalos acá:
-> Confirmado (2026-11-01): `~/.local/bin/cursor-agent -p --trust --force --output-format text "<tarea>"`.
-> `--trust` confía en la carpeta del proyecto y `--force` le deja escribir
-> archivos sin pedir confirmación. `agent` es el mismo binario.
+- Está en `~/.local/bin`, no en el PATH: usá la ruta completa.
+- `--trust` confía en la carpeta del proyecto y `--force` le deja escribir
+  archivos sin pedir confirmación.
+- Necesita el permiso `Bash(~/.local/bin/cursor-agent:*)` en
+  `.claude/settings.local.json`.
+- Decile explícitamente que no haga `git commit`, `git add` ni `git stash`.
+- Si el modo automático lo bloquea, usá el agente `odell-implementador`.
 
 Formato de cada tarea que se le pasa a Cursor:
 
@@ -59,7 +62,7 @@ Después de cada tarea:
 
 1. Mirá `git diff`: el cambio tiene que quedar dentro de los archivos
    permitidos.
-2. Corré build y tests (comandos abajo).
+2. Corré build y tests (comandos en `.claude/rules/git-y-deploy.md`).
 3. Contrastá el comportamiento con la regla citada.
 4. Si algo falla, mandale a Cursor una corrección concreta. Si son una o
    dos líneas, corregilo vos.
@@ -70,29 +73,3 @@ Después de cada tarea:
 
 Hacé un resumen corto: qué tareas se hicieron, qué reglas se cubrieron y
 qué discrepancias o preguntas quedaron abiertas.
-
-## Git
-
-- Nunca trabajes en `main`. Usá una rama por cambio:
-  `feat/<tema>` o `fix/<tema>`.
-- Un commit por tarea. Sin force-push.
-- Que Claude y Cursor no editen los mismos archivos al mismo tiempo.
-
-## Comandos
-
-> Completar con los scripts reales de `package.json`.
-
-| Para qué | Frontend (Angular) | Backend (NestJS) |
-|----------|--------------------|------------------|
-| Build | `npm run build --prefix frontend` | `npm run build --prefix backend` |
-| Tests | `npm test --prefix frontend` | `npm test --prefix backend` |
-| Lint | — (sin script) | `npx eslint "src/**/*.ts"` en `backend/` (sin `--fix`) |
-| Levantar en local | `npm run dev` en la raíz (backend + frontend) | `npm run dev:backend` |
-
-## Convenciones del proyecto
-
-- Insumos en el frontend: store NgRx centralizado (`watchSupplies`). No uses
-  lecturas aisladas (§25.5.6).
-- Un solo cálculo de costo para toda la app: no dupliques fórmulas en
-  componentes.
-- Textos de interfaz en español rioplatense.
