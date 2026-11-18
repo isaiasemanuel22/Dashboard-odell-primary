@@ -2217,3 +2217,76 @@ en un puesto, con su caja y sus gastos.
 - Llevar = máximo entre `ceil(promedio × 1,2)` y `ceil(promedio) + 1`, para
   promedio > 0.
 - A imprimir = máximo entre 0 y (llevar − stock actual).
+
+---
+
+## 28. Automatización: Meta y agentes
+
+Confirmado por Isaías el 2026-11-18 (diseño v7: V7Agentes, V7AgenteWhatsApp,
+V6Integraciones). Los chats en sí (conversaciones, mensajes, pantalla Chats)
+van en §27. Tokens y llaves nunca en el repo: van en variables de entorno.
+
+### 28.1 Conexión con Meta
+
+- Canales: WhatsApp Business (Cloud API), Instagram Direct y Messenger. Los
+  mensajes entrantes llegan por webhook y se guardan como mensajes de Chats
+  (§27); los salientes se mandan desde Chats.
+- La cuenta de Meta Business (portfolio, app, número verificado, Instagram
+  profesional vinculado a la página) la crea y la conecta Isaías. Mientras
+  tanto se desarrolla contra el número de prueba de Meta.
+- Ventana de 24 h: fuera de las 24 h desde el último mensaje del cliente,
+  por WhatsApp solo se pueden mandar plantillas aprobadas por Meta.
+
+### 28.2 Plantillas de WhatsApp
+
+- Se arranca con 4: «Presupuesto enviado», «Diseño para aprobar», «Tu pedido
+  está listo» y «Recordatorio de saldo».
+- Ninguna sale sola: Isaías elige cuándo mandarla, con un botón en el chat o
+  en el pedido.
+
+### 28.3 Agente de atención
+
+- Corre en el backend de Odell con la API de Claude, modelo Sonnet. Tope de
+  gasto de USD 20 por mes: al llegar al tope el agente se pausa solo y avisa
+  a Isaías; los chats siguen llegando para responder a mano.
+- Responde en los 3 canales, a toda hora. Si Isaías escribe en un chat, el
+  agente deja de responder en ese chat hasta que Isaías lo reactive.
+- **Resuelve solo** todo lo que pueda calcular con productos del catálogo:
+  precio, stock, fecha de entrega, presupuesto y pedido.
+  - Precio: solo las reglas de Odell (lista; mayorista si el cliente ya es
+    revendedor y llega a la compra mínima, §10, §16.4). Nunca ofrece ni acepta
+    descuentos aparte.
+  - Fecha de entrega: si hay stock, la de entrega normal; si hay que
+    producir, la fecha que calcula la cola más un margen de días configurable
+    en Ajustes.
+  - Cuando el cliente confirma, crea el pedido marcado «creado por el agente».
+    **No registra pagos ni señas**: los carga Isaías.
+- **Deriva a Isaías**: pedidos personalizados (fuera del catálogo), reclamos,
+  pedidos de descuento o regateo, y todo lo que no pueda calcular (también si
+  la fecha no llega a la que pide el cliente). Al derivar: le dice al cliente
+  que lo consulta y le responde, marca el chat «Te derivó», deja un borrador
+  de respuesta y le manda un WhatsApp a Isaías al instante. Después no
+  responde más en ese chat hasta que Isaías lo reactive.
+- Cliente nuevo: mientras solo consulta, el chat queda sin vincular. Al crear
+  un presupuesto o pedido se crea el cliente como Particular con origen = el
+  canal (WhatsApp, Instagram o Messenger). Antes busca uno existente por
+  teléfono o por usuario del canal.
+
+### 28.4 Llaves de acceso y servidor MCP
+
+- Cada agente o integración usa su propia llave, con permisos limitados;
+  se puede revocar en cualquier momento. La API no responde sin login o llave.
+- Servidor MCP de Odell con `consultar_stock`, `cotizar_producto` y
+  `ver_cola` (solo lectura) y `crear_presupuesto` y `registrar_pago`, que
+  piden la aprobación de Isaías antes de tener efecto (el presupuesto queda en
+  borrador; el pago no se registra hasta aprobarlo). Cada herramienta se
+  puede apagar.
+
+### 28.5 Avisos automáticos
+
+- Pedidos atrasados o que vencen mañana: todos los días a las 9:00, por
+  WhatsApp a Isaías.
+- Stock bajo y «pedir antes del»: cuando pasa, por WhatsApp a Isaías.
+- Resumen de saldos por cobrar: los lunes a las 9:00, por email (Resend).
+- Copia de seguridad en Google Drive y «Presupuesto por vencer» al cliente:
+  quedan para después.
