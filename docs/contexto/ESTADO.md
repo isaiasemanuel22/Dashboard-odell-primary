@@ -1,10 +1,10 @@
-# Estado de Odell — al 2026-11-17
+# Estado de Odell — al 2026-11-18
 
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
 ## Producción
-- GitHub `main` = `fix/barrido-errores` en `be10655` (2026-11-17: barrido de errores
-  de toda la app). Heroku v47 = `be10655` (sin cambios de esquema; suma `helmet`).
+- GitHub `main` = `feat/ferias` en `f6dd554` (2026-11-18: módulo Ferias v4, §26).
+  Heroku v48 = `f6dd554`, esquema aplicado (`fairs`, `retail_sales.fair_id`).
   Netlify ya sirve el frontend nuevo. APK TWA publicada; assetlinks verificado.
   Netlify publica el frontend solo al pushear `main`.
 - Lockfile del backend: regenerarlo siempre con npm 10.9.9 (el de Heroku):
@@ -16,8 +16,8 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `feat/ferias` (módulo Ferias v4, §26; sin deploy). Al publicar hace
-  falta `db:push:heroku` (tabla `fairs`, columna `retail_sales.fair_id`).
+- Rama actual: `feat/ferias`, igual a `main` (publicada 2026-11-18). Falta probar
+  Ferias en producción con sesión iniciada; sin UI para editar feria, fondo o gastos.
 - Producción con sesión iniciada sin revisar (el agente solo vio el login).
 - APK en `~/Escritorio/Odell.apk`; falta probarla en un teléfono. Para regenerar:
   `android-twa/` + Bubblewrap; JDK, SDK y clave de firma en `~/.odell-android`

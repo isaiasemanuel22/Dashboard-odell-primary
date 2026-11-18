@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-18 · Deploy del módulo Ferias
+Rama: feat/ferias → main · Commits: f6dd554
+Hecho: push a origin main y Heroku v48; después `db:push:heroku` sin ACCEPT_DATA_LOSS (tabla `fairs`, columna `retail_sales.fair_id`). En producción: `/api/health` OK, `/api/fairs` mapeado y pide login; Netlify sirve el bundle con `/ferias`.
+Decisiones: Isaías pidió publicar.
+Pendiente: probar Ferias en producción con sesión iniciada (crear, abrir, vender, cerrar).
+
 ## 2026-11-17 · Módulo Ferias (v4): página, venta rápida y cierre de caja
 Rama: feat/ferias · Commits: ver git log (feat(ferias)…)
 Hecho: implementado el diseño v4 del lienzo. Backend: modelo `Fair` (planned/open/closed) y `RetailSale.fairId`, módulo `backend/src/fairs/` (resultados y KPIs del mes, detalle por medio de pago y mejor horario, gastos como egresos categoría `fair`, cierre que solo registra la diferencia de caja, «qué llevar»), `CalendarLinkType.FERIA`, bloqueo de ventas/gastos/anulaciones en feria cerrada. Frontend: `/ferias` (KPIs, tabla, detalle, qué llevar → cola), `/ferias/:id/vender` y `/ferias/:id/cierre` para celular, menú y «Más». Esquema aplicado solo en local. Tester: 6 flujos OK; QA visual «cercano» y sus ajustes aplicados. Jest 546, Angular 145, builds OK.
