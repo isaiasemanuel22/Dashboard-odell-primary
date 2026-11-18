@@ -230,9 +230,6 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       if (!(Number(this.facade.form.controls.printTimeHours.value) > 0)) {
         missing.push('horas de impresión');
       }
-      if (!(Number(this.facade.form.controls.workTimeHours.value) > 0)) {
-        missing.push('mano de obra');
-      }
     }
     return missing;
   }
@@ -289,8 +286,6 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
         return { acc: 'produccion', blockTitle: 'Resina', field: 'select', selector: FIELDS };
       case 'horas de impresión':
         return { acc: 'produccion', blockTitle: 'Impresión', field: 'input[name^="print-hours-"]', selector: FIELDS };
-      case 'mano de obra':
-        return { acc: 'produccion', blockTitle: 'Mano de obra', field: 'input[name^="labor-hours-"]', selector: FIELDS };
       case 'medida del impreso':
         return { acc: 'produccion', blockTitle: 'Impresos', field: '.line-table__measure input, .dynamic-list-dimensions input', selector: FIELDS };
       case 'insumo':
@@ -375,7 +370,6 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
     const titles: string[] = [];
     for (const item of this.missingFields) {
       if (item === 'horas de impresión') titles.push('Impresión');
-      if (item === 'mano de obra') titles.push('Mano de obra');
     }
     if (this.facade.missingRequiredFields.length) this.accProduccion = true;
     if (titles.length) this.openCostBlocks(titles);

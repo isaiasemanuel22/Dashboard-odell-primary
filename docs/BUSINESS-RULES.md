@@ -133,6 +133,11 @@ A ese material se suman energía, máquina, mano de obra y el margen de error
 de Ajustes. Ese conjunto es el costo del proceso. Si con esos datos el costo
 queda en 0, el guardado se rechaza.
 
+La mano de obra **no es obligatoria** (Isaías, 2026-11-18): un producto se
+puede guardar sin horas de mano de obra. Vacía cuenta como $0: no suma al
+costo ni al precio, y el margen se mide sobre el costo completo. Vale para
+FDM, resina y estampado.
+
 El margen de error del proceso se aplica a material, purga, luz y máquina.
 Los insumos del producto llevan su propio margen de error (§16.3,
 confirmado el 2026-11-16). El alcohol de lavado de la resina queda afuera.

@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-18 · Mano de obra opcional en el producto
+Rama: fix/mano-de-obra-opcional · Commits: ver git log (fix(productos)…)
+Hecho: el formulario de producto de Impresión 3D (FDM/resina) exigía horas de mano de obra para guardar (`missingFields` en `product-form.component.ts`); se sacó de los obligatorios. El backend ya la aceptaba opcional (`@IsOptional`, `Number(…) || 0`) y Estampado nunca la exigió. Probado en local: «QA sin mano de obra» (prod-53) se guardó con costo $793 y precio $1.586, mano de obra $0. Jest 546, Angular 145, tsc OK.
+Decisiones: de Isaías: «La mano de obra no es obligatoria cargarla» (BUSINESS-RULES §3). Supuesta: vacía cuenta como $0.
+Pendiente: deploy con OK de Isaías.
+
 ## 2026-11-18 · Deploy del módulo Ferias
 Rama: feat/ferias → main · Commits: f6dd554
 Hecho: push a origin main y Heroku v48; después `db:push:heroku` sin ACCEPT_DATA_LOSS (tabla `fairs`, columna `retail_sales.fair_id`). En producción: `/api/health` OK, `/api/fairs` mapeado y pide login; Netlify sirve el bundle con `/ferias`.

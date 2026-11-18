@@ -16,7 +16,9 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `feat/ferias`, igual a `main` (publicada 2026-11-18). Falta probar
+- `fix/mano-de-obra-opcional` (2026-11-18): mano de obra ya no es obligatoria en
+  el producto 3D; sin deploy, espera OK de Isaías.
+- `feat/ferias` igual a `main` (publicada 2026-11-18). Falta probar
   Ferias en producción con sesión iniciada; sin UI para editar feria, fondo o gastos.
 - Producción con sesión iniciada sin revisar (el agente solo vio el login).
 - APK en `~/Escritorio/Odell.apk`; falta probarla en un teléfono. Para regenerar:
@@ -74,4 +76,4 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   base local, se pisan los datos.
 - Datos de QA en la base local: ferias fair-1 a fair-4 «Feria Plaza España» (cerradas)
   y fair-5 «Mercado de Diseño Güemes» (abierta, 2026-11-17); cust-2 «QA Revendedor», pedidos ord-13 a
-  ord-29, presupuesto quo-18, producto prod-45 «QA taza ×2».
+  ord-29, presupuesto quo-18, productos prod-45 «QA taza ×2» y prod-53 «QA sin mano de obra».
