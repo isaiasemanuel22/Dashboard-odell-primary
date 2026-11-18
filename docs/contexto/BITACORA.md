@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-18 · Deploy de mano de obra opcional
+Rama: fix/mano-de-obra-opcional → main · Commits: 03e7e64
+Hecho: push a origin main y Heroku v49 (sin cambios de esquema, sin `db:push:heroku`). `/api/health` 200; Netlify sirve los chunks del formulario de producto sin la exigencia de mano de obra.
+Decisiones: Isaías pidió publicar.
+Pendiente: probar en producción con sesión iniciada guardar un producto 3D sin mano de obra.
+
 ## 2026-11-18 · Mano de obra opcional en el producto
 Rama: fix/mano-de-obra-opcional · Commits: ver git log (fix(productos)…)
 Hecho: el formulario de producto de Impresión 3D (FDM/resina) exigía horas de mano de obra para guardar (`missingFields` en `product-form.component.ts`); se sacó de los obligatorios. El backend ya la aceptaba opcional (`@IsOptional`, `Number(…) || 0`) y Estampado nunca la exigió. Probado en local: «QA sin mano de obra» (prod-53) se guardó con costo $793 y precio $1.586, mano de obra $0. Jest 546, Angular 145, tsc OK.

@@ -3,8 +3,9 @@
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
 ## Producción
-- GitHub `main` = `feat/ferias` en `f6dd554` (2026-11-18: módulo Ferias v4, §26).
-  Heroku v48 = `f6dd554`, esquema aplicado (`fairs`, `retail_sales.fair_id`).
+- GitHub `main` = `fix/mano-de-obra-opcional` en `03e7e64` (2026-11-18: mano de
+  obra opcional, §3; antes, módulo Ferias v4, §26). Heroku v49 = `03e7e64`,
+  esquema de Ferias aplicado (`fairs`, `retail_sales.fair_id`).
   Netlify ya sirve el frontend nuevo. APK TWA publicada; assetlinks verificado.
   Netlify publica el frontend solo al pushear `main`.
 - Lockfile del backend: regenerarlo siempre con npm 10.9.9 (el de Heroku):
@@ -16,9 +17,8 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- `fix/mano-de-obra-opcional` (2026-11-18): mano de obra ya no es obligatoria en
-  el producto 3D; sin deploy, espera OK de Isaías.
-- `feat/ferias` igual a `main` (publicada 2026-11-18). Falta probar
+- Rama actual: `fix/mano-de-obra-opcional`, igual a `main` (publicada 2026-11-18).
+- `feat/ferias` ya unida a `main` (publicada 2026-11-18). Falta probar
   Ferias en producción con sesión iniciada; sin UI para editar feria, fondo o gastos.
 - Producción con sesión iniciada sin revisar (el agente solo vio el login).
 - APK en `~/Escritorio/Odell.apk`; falta probarla en un teléfono. Para regenerar:
