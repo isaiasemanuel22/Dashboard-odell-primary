@@ -165,6 +165,20 @@ export class UpdateWholesaleDiscountDto {
   serviceTypes?: ServiceType[];
 }
 
+export class UpdateAutomaticAlertsDto {
+  @IsOptional()
+  @IsBoolean()
+  ordersDue?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  lowStock?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  weeklyReceivables?: boolean;
+}
+
 export class UpdatePaperPricesDto {
   @IsObject()
   paperReferenceSheets!: Record<string, Record<string, number>>;

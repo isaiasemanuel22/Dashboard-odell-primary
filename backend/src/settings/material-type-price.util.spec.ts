@@ -33,6 +33,11 @@ function baseSettings(
       percent: 20,
       serviceTypes: [],
     },
+    automaticAlerts: {
+      ordersDue: true,
+      lowStock: true,
+      weeklyReceivables: true,
+    },
     paperPricesPerSqm: { sublimacion: 0, dtf: 0, dtfUv: 0 },
     paperReferenceSheets: normalizePaperReferenceSheets(undefined, {
       sublimacion: 0,

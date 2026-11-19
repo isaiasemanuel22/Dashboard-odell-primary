@@ -262,6 +262,13 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'avisos',
+            loadComponent: () =>
+              import('./pages/settings/alerts-settings/alerts-settings.component').then(
+                (m) => m.AlertsSettingsComponent,
+              ),
+          },
+          {
             path: 'usuarios',
             loadComponent: () =>
               import('./pages/settings/user-access/user-access-layout.component').then(

@@ -28,6 +28,11 @@ describe('SettingsService.patchGeneralSettings', () => {
       ...DEFAULT_WHOLESALE_DISCOUNT,
       serviceTypes: [...DEFAULT_WHOLESALE_DISCOUNT.serviceTypes],
     },
+    automaticAlerts: {
+      ordersDue: true,
+      lowStock: true,
+      weeklyReceivables: true,
+    },
     paperPricesPerSqm: {
       dtf: 0,
       dtfUv: 0,
@@ -217,6 +222,11 @@ describe('SettingsService.updateWholesaleDiscount', () => {
     wholesaleDiscount: {
       ...DEFAULT_WHOLESALE_DISCOUNT,
       serviceTypes: [...DEFAULT_WHOLESALE_DISCOUNT.serviceTypes],
+    },
+    automaticAlerts: {
+      ordersDue: true,
+      lowStock: true,
+      weeklyReceivables: true,
     },
     paperPricesPerSqm: {
       dtf: 0,

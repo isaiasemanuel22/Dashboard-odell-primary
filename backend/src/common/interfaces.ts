@@ -125,6 +125,13 @@ export interface WholesaleDiscountSettings {
   serviceTypes: ServiceType[];
 }
 
+/** Avisos automáticos a Isaías (§28.5): cada uno se prende o apaga. */
+export interface AutomaticAlertsSettings {
+  ordersDue: boolean;
+  lowStock: boolean;
+  weeklyReceivables: boolean;
+}
+
 export interface PowerConsumptionConfig {
   id: string;
   name: string;
@@ -182,6 +189,7 @@ export interface GeneralSettings {
   graphicDesignRatePerHour: number;
   profitMargins: ServiceProfitMargins;
   wholesaleDiscount: WholesaleDiscountSettings;
+  automaticAlerts: AutomaticAlertsSettings;
   paperPricesPerSqm: PaperPricesPerSqm;
   paperReferenceSheets: PaperReferenceSheets;
   filamentPrices: FilamentPriceConfig[];

@@ -172,6 +172,11 @@ export class SettingsHomeComponent implements OnInit {
           hint: 'Llaves de acceso · solo administradores',
           link: '/ajustes/api-y-agentes',
         },
+        {
+          label: 'Avisos',
+          hint: 'Pedidos, stock y saldos por WhatsApp o email',
+          link: '/ajustes/avisos',
+        },
       ],
     },
     ...(environment.production

@@ -32,8 +32,10 @@ import {
   normalizeProfitMargins,
 } from './profit-margins.util';
 import { normalizeWholesaleDiscount } from './wholesale-discount.util';
+import { normalizeAutomaticAlerts } from './automatic-alerts.util';
 import { appendSupplyPriceHistory } from '../supplies/supply-price-history.util';
 import {
+  AutomaticAlertsSettings,
   ColorConfig,
   FilamentPriceConfig,
   FilamentTypeConfig,
@@ -93,6 +95,9 @@ export class SettingsService {
     );
     this.store.generalSettings.wholesaleDiscount = normalizeWholesaleDiscount(
       this.store.generalSettings.wholesaleDiscount,
+    );
+    this.store.generalSettings.automaticAlerts = normalizeAutomaticAlerts(
+      this.store.generalSettings.automaticAlerts,
     );
     this.store.generalSettings.paperReferenceSheets =
       normalizePaperReferenceSheets(
@@ -407,6 +412,25 @@ export class SettingsService {
     });
     this.recordSettingsChange(['settings', 'products']);
     return structuredClone(this.store.generalSettings.wholesaleDiscount);
+  }
+
+  getAutomaticAlerts(): AutomaticAlertsSettings {
+    return normalizeAutomaticAlerts(this.store.generalSettings.automaticAlerts);
+  }
+
+  updateAutomaticAlerts(
+    data: Partial<AutomaticAlertsSettings>,
+  ): AutomaticAlertsSettings {
+    // Solo pisa las claves enviadas: una clave ausente no vuelve al default.
+    const patch = Object.fromEntries(
+      Object.entries(data).filter(([, value]) => value !== undefined),
+    );
+    this.store.generalSettings.automaticAlerts = normalizeAutomaticAlerts({
+      ...this.getAutomaticAlerts(),
+      ...patch,
+    });
+    this.recordSettingsChange(['settings']);
+    return this.getAutomaticAlerts();
   }
 
   updatePaperPrices(

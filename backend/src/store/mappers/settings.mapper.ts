@@ -11,6 +11,7 @@ import {
 } from '../../common/paper-cost.util';
 import { normalizeProfitMargins } from '../../settings/profit-margins.util';
 import { normalizeWholesaleDiscount } from '../../settings/wholesale-discount.util';
+import { normalizeAutomaticAlerts } from '../../settings/automatic-alerts.util';
 import {
   persistedFilamentPrice,
   persistedResinPrice,
@@ -26,6 +27,7 @@ export function mapSettingsFromDb(row: {
   errorMarginPercent?: number;
   profitMargins: Prisma.JsonValue;
   wholesaleDiscount?: Prisma.JsonValue;
+  automaticAlerts?: Prisma.JsonValue;
   paperPricesPerSqm: Prisma.JsonValue;
   paperReferenceSheets?: Prisma.JsonValue;
   powerConsumptions: Prisma.JsonValue;
@@ -57,6 +59,7 @@ export function mapSettingsFromDb(row: {
       row.profitMargins,
     ),
     wholesaleDiscount: normalizeWholesaleDiscount(row.wholesaleDiscount ?? {}),
+    automaticAlerts: normalizeAutomaticAlerts(row.automaticAlerts ?? {}),
     paperPricesPerSqm,
     paperReferenceSheets: normalizePaperReferenceSheets(
       rawSheets,
@@ -102,6 +105,7 @@ export function mapSettingsToDb(settings: GeneralSettings) {
     ...settings,
     profitMargins: normalizeProfitMargins(settings.profitMargins),
     wholesaleDiscount: normalizeWholesaleDiscount(settings.wholesaleDiscount),
+    automaticAlerts: normalizeAutomaticAlerts(settings.automaticAlerts),
     machineProfiles: ensureMachineProfiles(settings),
   };
 
@@ -113,6 +117,7 @@ export function mapSettingsToDb(settings: GeneralSettings) {
     graphicDesignRatePerHour: normalized.graphicDesignRatePerHour ?? 0,
     profitMargins: toInputJson(normalized.profitMargins),
     wholesaleDiscount: toInputJson(normalized.wholesaleDiscount),
+    automaticAlerts: toInputJson(normalized.automaticAlerts),
     paperPricesPerSqm: toInputJson(
       syncPaperPricesFromReferenceSheets(normalized.paperReferenceSheets),
     ),

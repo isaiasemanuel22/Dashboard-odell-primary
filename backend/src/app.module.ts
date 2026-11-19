@@ -26,6 +26,7 @@ import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ApiKeysModule } from './api-keys/api-keys.module';
+import { AlertsModule } from './alerts/alerts.module';
 
 @Module({
   imports: [
@@ -56,6 +57,7 @@ import { ApiKeysModule } from './api-keys/api-keys.module';
     SalesModule,
     FairsModule,
     TreasuryModule,
+    AlertsModule,
   ],
 })
 export class AppModule {}

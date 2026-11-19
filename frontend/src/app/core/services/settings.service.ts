@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  AutomaticAlertsSettings,
   ColorConfig,
   FilamentPriceConfig,
   FilamentTypeConfig,
@@ -82,6 +83,16 @@ export class SettingsService {
         tap((wholesaleDiscount) =>
           this.patchSettings({ wholesaleDiscount }),
         ),
+      );
+  }
+
+  updateAutomaticAlerts(
+    data: Partial<AutomaticAlertsSettings>,
+  ): Observable<AutomaticAlertsSettings> {
+    return this.http
+      .patch<AutomaticAlertsSettings>(`${this.baseUrl}/automatic-alerts`, data)
+      .pipe(
+        tap((automaticAlerts) => this.patchSettings({ automaticAlerts })),
       );
   }
 

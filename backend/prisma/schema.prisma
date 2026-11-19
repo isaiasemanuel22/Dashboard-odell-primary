@@ -15,6 +15,7 @@ model AppSettings {
   errorMarginPercent    Float @default(0) @map("error_margin_percent")
   profitMargins         Json  @map("profit_margins")
   wholesaleDiscount     Json  @default("{}") @map("wholesale_discount")
+  automaticAlerts       Json  @default("{}") @map("automatic_alerts")
   paperPricesPerSqm     Json  @map("paper_prices_per_sqm")
   paperReferenceSheets  Json  @default("{}") @map("paper_reference_sheets")
   powerConsumptions     Json  @map("power_consumptions")
@@ -600,4 +601,14 @@ model ApiKey {
   createdAt       DateTime  @map("created_at")
 
   @@map("api_keys")
+}
+
+model NotificationLog {
+  id        String   @id @db.VarChar(64)
+  kind      String   @db.VarChar(32)
+  dedupeKey String   @unique @map("dedupe_key") @db.VarChar(191)
+  channel   String   @db.VarChar(16)
+  sentAt    DateTime @map("sent_at")
+
+  @@map("notification_logs")
 }

@@ -61,4 +61,20 @@ export class AppConfigService {
       undefined
     );
   }
+
+  get resendApiKey(): string | undefined {
+    return this.config.get('RESEND_API_KEY', { infer: true });
+  }
+
+  get alertsEmailFrom(): string | undefined {
+    return this.config.get('ALERTS_EMAIL_FROM', { infer: true });
+  }
+
+  get alertsEmailTo(): string | undefined {
+    return this.config.get('ALERTS_EMAIL_TO', { infer: true });
+  }
+
+  get alertsWhatsAppTo(): string | undefined {
+    return this.config.get('ALERTS_WHATSAPP_TO', { infer: true });
+  }
 }

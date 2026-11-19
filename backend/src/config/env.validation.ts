@@ -13,6 +13,11 @@ export interface AppEnv {
   /** Código para POST /settings/reset-database. Si falta, el reseteo queda deshabilitado. */
   DATABASE_RESET_CODE?: string;
   ADMIN_EMAIL?: string;
+  /** Avisos automáticos (§28.5): email por Resend y destinatarios. */
+  RESEND_API_KEY?: string;
+  ALERTS_EMAIL_FROM?: string;
+  ALERTS_EMAIL_TO?: string;
+  ALERTS_WHATSAPP_TO?: string;
 }
 
 export function validateEnv(
@@ -61,6 +66,10 @@ export function validateEnv(
     REQUIRE_AUTH: parseBoolean(config.REQUIRE_AUTH, isProd),
     DATABASE_RESET_CODE: optionalString(config.DATABASE_RESET_CODE),
     ADMIN_EMAIL: optionalString(config.ADMIN_EMAIL),
+    RESEND_API_KEY: optionalString(config.RESEND_API_KEY),
+    ALERTS_EMAIL_FROM: optionalString(config.ALERTS_EMAIL_FROM),
+    ALERTS_EMAIL_TO: optionalString(config.ALERTS_EMAIL_TO),
+    ALERTS_WHATSAPP_TO: optionalString(config.ALERTS_WHATSAPP_TO),
   };
 }
 
