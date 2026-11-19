@@ -355,6 +355,157 @@ describe('OrdersService.getOverview', () => {
     ]);
   });
 
+  describe('packaging al entregar (§27.5)', () => {
+    const baseSupply = {
+      category: SupplyCategory.PACKAGING,
+      unit: 'unidad',
+      minStock: 0,
+      unitPrice: 100,
+      priceFromSettings: false,
+      updatedAt: '2026-07-01T10:00:00.000Z',
+    };
+
+    it('descuenta packaging por cada entrega parcial y no antes', () => {
+      store.supplies.push({
+        ...baseSupply,
+        id: 'sup-caja',
+        name: 'Caja',
+        quantity: 10,
+      });
+      const order = store.orders[0];
+      order.items = [
+        {
+          serviceType: ProductType.FDM as never,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity: 3,
+          unitPrice: 100,
+          reservedQuantity: 3,
+          deliveredQuantity: 0,
+          packagingSupplies: [{ id: 'k1', supplyId: 'sup-caja', quantity: 2 }],
+        },
+      ];
+      store.products[0].stock = 3;
+
+      expect(store.supplies[0].quantity).toBe(10);
+      service.deliver(order.id, [{ orderItemIndex: 0, quantity: 1 }]);
+      expect(store.supplies[0].quantity).toBe(8);
+      service.deliver(order.id, [{ orderItemIndex: 0, quantity: 2 }]);
+      expect(store.supplies[0].quantity).toBe(4);
+      expect(store.supplyMovements).toHaveLength(2);
+      expect(store.supplyMovements[0]).toEqual(
+        expect.objectContaining({
+          supplyId: 'sup-caja',
+          delta: -2,
+          reason: 'delivery',
+        }),
+      );
+    });
+
+    it('stock insuficiente: baja hasta 0 sin bloquear la entrega', () => {
+      store.supplies.push({
+        ...baseSupply,
+        id: 'sup-caja',
+        name: 'Caja',
+        quantity: 1,
+      });
+      const order = store.orders[0];
+      order.items = [
+        {
+          serviceType: ProductType.FDM as never,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity: 2,
+          unitPrice: 100,
+          reservedQuantity: 2,
+          deliveredQuantity: 0,
+          packagingSupplies: [{ id: 'k1', supplyId: 'sup-caja', quantity: 1 }],
+        },
+      ];
+      service.deliver(order.id, [{ orderItemIndex: 0, quantity: 2 }]);
+      expect(order.items[0].deliveredQuantity).toBe(2);
+      expect(store.supplies[0].quantity).toBe(0);
+    });
+
+    it('combo con sumPiecesPackaging descuenta también el de las piezas', () => {
+      store.supplies.push(
+        { ...baseSupply, id: 'sup-caja', name: 'Caja', quantity: 10 },
+        { ...baseSupply, id: 'sup-bolsa', name: 'Bolsa', quantity: 20 },
+      );
+      store.products[0].packagingSupplies = [
+        { id: 'b1', supplyId: 'sup-bolsa', quantity: 1 },
+      ];
+      const combo = {
+        ...store.products[0],
+        id: 'prod-combo',
+        name: 'Combo',
+        type: ProductType.COMBO,
+        includesPieces: true,
+        sumPiecesPackaging: true,
+        packagingSupplies: [{ id: 'k1', supplyId: 'sup-caja', quantity: 1 }],
+        components: [{ productId: 'prod-1', quantity: 3 }],
+        stock: 2,
+      } as never;
+      store.products.push(combo);
+      store.indexProduct(combo);
+      const order = store.orders[0];
+      order.items = [
+        {
+          serviceType: ProductType.COMBO as never,
+          productId: 'prod-combo',
+          productName: 'Combo',
+          quantity: 2,
+          unitPrice: 100,
+          reservedQuantity: 2,
+          deliveredQuantity: 0,
+          packagingSupplies: [{ id: 'k1', supplyId: 'sup-caja', quantity: 1 }],
+        },
+      ];
+      service.deliver(order.id, [{ orderItemIndex: 0, quantity: 2 }]);
+      expect(store.supplies[0].quantity).toBe(8);
+      // 1 bolsa × 3 piezas × 2 combos.
+      expect(store.supplies[1].quantity).toBe(14);
+    });
+
+    it('sin sumPiecesPackaging no toca el packaging de las piezas', () => {
+      store.supplies.push({
+        ...baseSupply,
+        id: 'sup-bolsa',
+        name: 'Bolsa',
+        quantity: 20,
+      });
+      store.products[0].packagingSupplies = [
+        { id: 'b1', supplyId: 'sup-bolsa', quantity: 1 },
+      ];
+      const combo = {
+        ...store.products[0],
+        id: 'prod-combo',
+        type: ProductType.COMBO,
+        includesPieces: true,
+        sumPiecesPackaging: false,
+        packagingSupplies: [],
+        components: [{ productId: 'prod-1', quantity: 3 }],
+        stock: 1,
+      } as never;
+      store.products.push(combo);
+      store.indexProduct(combo);
+      const order = store.orders[0];
+      order.items = [
+        {
+          serviceType: ProductType.COMBO as never,
+          productId: 'prod-combo',
+          productName: 'Combo',
+          quantity: 1,
+          unitPrice: 100,
+          reservedQuantity: 1,
+          deliveredQuantity: 0,
+        },
+      ];
+      service.deliver(order.id, [{ orderItemIndex: 0, quantity: 1 }]);
+      expect(store.supplies[0].quantity).toBe(20);
+    });
+  });
+
   it('entrega insumo suelto sin vínculo sin tocar stock', () => {
     store.supplies.push({
       id: 'sup-otro',

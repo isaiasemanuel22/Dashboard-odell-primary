@@ -212,7 +212,10 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   /** Insumos y materiales sin precio: el costo mostrado queda incompleto. */
   get missingPriceItems(): string[] {
     const items: string[] = [];
-    for (const line of this.form.controls.supplyLines.value ?? []) {
+    for (const line of [
+      ...(this.form.controls.supplyLines.value ?? []),
+      ...(this.form.controls.packagingLines.value ?? []),
+    ]) {
       if (!line.supplyId || !(Number(line.quantity) > 0)) continue;
       const supply = this.supplies.find((item) => item.id === line.supplyId);
       if (supply && !(Number(supply.unitPrice) > 0)) items.push(supply.name);
@@ -274,6 +277,16 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     return this.pricing.supplyPrice();
   }
 
+  /** Valor del packaging (propio y, en combo con el tilde, el de las piezas). */
+  get packagingCost(): number {
+    return this.pricing.packagingValue();
+  }
+
+  /** Precio del packaging dentro del precio de venta (valor × 1,25). */
+  get packagingPrice(): number {
+    return this.pricing.packagingPrice();
+  }
+
   get priceManual(): boolean {
     return this.pricing.manualUnitPrice != null && this.pricing.manualUnitPrice > 0;
   }
@@ -311,7 +324,9 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   private calculatedFor(displayedPrice: number): number {
     if (this.facade.usesPieceAssembly) {
       const parts = Number(this.pricing.computedPrice) || 0;
-      return parts > 0 ? parts + this.supplyPrice : Number(displayedPrice) || 0;
+      return parts > 0
+        ? parts + this.supplyPrice + this.packagingPrice
+        : Number(displayedPrice) || 0;
     }
     return Number(this.pricing.computedPrice) || Number(displayedPrice) || 0;
   }

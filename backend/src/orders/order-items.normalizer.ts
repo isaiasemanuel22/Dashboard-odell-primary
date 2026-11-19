@@ -299,6 +299,7 @@ export function normalizeIncomingOrderItems(
       unitCost,
       ...fdmFields,
       ...estampadoFields,
+      packagingSupplies: normalizeEstampadoSupplies(item.packagingSupplies),
       ...thirdPartyFields,
       ...designFields,
       includesPrint:

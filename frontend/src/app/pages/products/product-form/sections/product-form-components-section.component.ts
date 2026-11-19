@@ -18,6 +18,7 @@ import {
   ProductComponent,
   ProductType,
 } from '../../../../core/models';
+import { ProductCostCalculationService } from '../../../../core/services/product-cost-calculation.service';
 import { ProductsService } from '../../../../core/services/products.service';
 import { CatalogFacade } from '../../../../store/catalog/catalog.facade';
 import { SettingsFacade } from '../../../../store/settings/settings.facade';
@@ -56,11 +57,32 @@ export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy 
   private readonly destroyRef = inject(DestroyRef);
   private readonly settingsFacade = inject(SettingsFacade);
   private readonly pricingStore = inject(ProductFormPricingFacade);
+  private readonly productCost = inject(ProductCostCalculationService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroy$ = new Subject<void>();
 
   @Input() productType: ProductType = ProductType.FDM;
   @Input() editingProductId: string | null = null;
+  /**
+   * «Sumar el packaging de las piezas» (§27.4). Apagado, las piezas se
+   * muestran y suman sin su packaging, igual que el cálculo del precio.
+   */
+  @Input() set sumPiecesPackaging(value: boolean) {
+    const next = value === true;
+    if (next === this._sumPiecesPackaging) return;
+    this._sumPiecesPackaging = next;
+    if (this.ready) this.syncPricingContributions();
+    this.cdr.markForCheck();
+  }
+  private _sumPiecesPackaging = false;
+
+  /** Con el tilde apagado, separa el packaging de cada pieza. */
+  readonly pieceSupplyUnitPrice = (supplyId: string): number =>
+    this.productCost.supplyUnitPrice(supplyId);
+
+  get piecePriceResolver(): ((supplyId: string) => number) | undefined {
+    return this._sumPiecesPackaging ? undefined : this.pieceSupplyUnitPrice;
+  }
   @Output() readonly valueChange = new EventEmitter<ProductFormComponentsValue>();
 
   catalogProducts: Product[] = [];
@@ -191,7 +213,11 @@ export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy 
   }
 
   get partsCost(): number {
-    return sumComponentsCost(this.catalogProducts, this.components);
+    return sumComponentsCost(
+      this.catalogProducts,
+      this.components,
+      this.piecePriceResolver,
+    );
   }
 
   get assemblableUnits(): number {
@@ -302,8 +328,16 @@ export class ProductFormComponentsSectionComponent implements OnInit, OnDestroy 
   }
 
   private syncPricingContributions(): void {
-    const partsCost = sumComponentsCost(this.catalogProducts, this.components);
-    const partsPrice = sumComponentsPrice(this.catalogProducts, this.components);
+    const partsCost = sumComponentsCost(
+      this.catalogProducts,
+      this.components,
+      this.piecePriceResolver,
+    );
+    const partsPrice = sumComponentsPrice(
+      this.catalogProducts,
+      this.components,
+      this.piecePriceResolver,
+    );
     this.pricingStore.setCostContribution('components', partsCost);
     this.pricingStore.setComponentsPrice(partsPrice);
   }

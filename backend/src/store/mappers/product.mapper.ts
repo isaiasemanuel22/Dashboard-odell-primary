@@ -53,6 +53,8 @@ export function mapProductFromDb(row: {
   estampadoPrints?: Prisma.JsonValue;
   estampadoPressCycles?: Prisma.JsonValue;
   estampadoSupplies?: Prisma.JsonValue;
+  packagingSupplies?: Prisma.JsonValue;
+  sumPiecesPackaging?: boolean;
   fdmFilaments?: Prisma.JsonValue;
   attachments?: Prisma.JsonValue;
   stock?: number;
@@ -84,6 +86,10 @@ export function mapProductFromDb(row: {
       row.type === (ProductType.COMBO as string),
     components,
     assemblyTimeHours: row.assemblyTimeHours,
+    packagingSupplies: normalizeEstampadoSupplies(
+      fromJson<Product['packagingSupplies']>(row.packagingSupplies ?? []),
+    ),
+    sumPiecesPackaging: row.sumPiecesPackaging === true,
     stock: row.stock ?? 0,
     discountPercent: row.discountPercent ?? null,
     discountAmount: row.discountAmount ?? null,
@@ -236,6 +242,10 @@ export function mapProductToDb(product: Product) {
         (isCombo ? product.supplies : undefined) ??
         [],
     ),
+    packagingSupplies: toInputJson(
+      normalizeEstampadoSupplies(product.packagingSupplies),
+    ),
+    sumPiecesPackaging: product.sumPiecesPackaging === true,
     fdmFilaments: toInputJson(fdmFilaments.map(persistedFdmLine)),
     stock: Math.max(0, Math.trunc(product.stock ?? 0)),
     discountPercent: product.discountPercent ?? null,

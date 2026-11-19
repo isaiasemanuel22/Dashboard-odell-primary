@@ -53,6 +53,8 @@ import { FormDialogService } from '../../../../modals/public-api';
 import { serviceTypeLabel } from '../../../../shared/constants/labels';
 import {
   isCatalogInsumo,
+  catalogCostChangeIgnoringPackaging,
+  packagingPriceFromValue,
   supplyErrorFromValue,
   supplyPriceFromValue,
   supplyLinesValue,
@@ -211,8 +213,12 @@ export class OrderFormLineComponent implements OnInit {
   private profitMargins: ServiceProfitMargins | null = null;
   private supplies: Supply[] = [];
   private impresos: ImpresoWithCost[] = [];
+  /** Packaging de la línea la última vez que se ajustó el precio de catálogo (§27.3). */
+  private packagingBaseline: NonNullable<OrderLineDraft['packagingSupplies']> =
+    [];
 
   ngOnInit(): void {
+    this.packagingBaseline = structuredClone(this.line.packagingSupplies ?? []);
     combineLatest([
       this.settingsFacade.watchGeneralSettings(),
       this.settingsFacade.profitMargins$,
@@ -263,9 +269,15 @@ export class OrderFormLineComponent implements OnInit {
   get catalogCostChange(): number | null {
     if (!this.line.productId?.trim() || !this.hasCostComposition) return null;
     if (this.line.unitCost == null) return null;
-    const catalog = Math.round(this.productUnitCost());
-    if (catalog <= 0) return null;
-    return catalog !== Math.round(Number(this.line.unitCost) || 0) ? catalog : null;
+    const product = this.products.find((p) => p.id === this.line.productId);
+    return catalogCostChangeIgnoringPackaging(
+      Number(this.line.unitCost) || 0,
+      this.packagingValueOf(this.line.packagingSupplies),
+      this.productUnitCost(),
+      product
+        ? this.packagingValueOf(this.productPackagingLines(product))
+        : 0,
+    );
   }
 
   updateCostFromCatalog(): void {
@@ -1083,11 +1095,13 @@ export class OrderFormLineComponent implements OnInit {
 
   onFdmQuoteChange(): void {
     this.syncFdmLine({ preservePrice: !!this.line.unitPriceManual });
+    this.onCatalogPackagingEdited();
     this.emitChanged();
   }
 
   onEstampadoQuoteChange(): void {
     this.syncEstampadoLine({ preservePrice: !!this.line.unitPriceManual });
+    this.onCatalogPackagingEdited();
     this.emitChanged();
   }
 
@@ -1236,6 +1250,7 @@ export class OrderFormLineComponent implements OnInit {
       this.line.printUnitCost = undefined;
       this.line.printUnitPrice = undefined;
     }
+    this.line.packagingSupplies = undefined;
     this.line.designUnitPrice = undefined;
     this.line.filaments = undefined;
     this.line.workTimeHours = undefined;
@@ -1377,6 +1392,57 @@ export class OrderFormLineComponent implements OnInit {
     if (Number(product.cost) > 0) {
       this.line.unitCost = product.cost;
     }
+    // El precio del producto trae su packaging: se ajusta por lo que la línea cambió.
+    this.shiftCatalogPackaging(this.productPackagingLines(product));
+  }
+
+  private packagingValueOf(
+    lines: OrderLineDraft['packagingSupplies'],
+  ): number {
+    return supplyLinesValue(lines, (id) => {
+      const supply = this.supplies.find((item) => item.id === id);
+      return supply ? Number(supply.unitPrice) || 0 : 0;
+    });
+  }
+
+  private productPackagingLines(product: Product) {
+    return product.packagingSupplies ?? [];
+  }
+
+  /**
+   * Línea de catálogo: sumar al costo y al precio la diferencia entre su
+   * packaging actual y el `from` (valor × 1,25 en el precio, §27.2-§27.3).
+   * El precio manual no se toca. Deja el packaging actual como base.
+   */
+  private shiftCatalogPackaging(
+    from: OrderLineDraft['packagingSupplies'],
+  ): void {
+    const current = this.line.packagingSupplies ?? [];
+    const fromValue = this.packagingValueOf(from);
+    const nowValue = this.packagingValueOf(current);
+    if (fromValue !== nowValue) {
+      if (this.line.unitCost != null) {
+        this.line.unitCost = Math.max(
+          0,
+          Number(this.line.unitCost) + nowValue - fromValue,
+        );
+      }
+      if (!this.line.unitPriceManual) {
+        this.line.unitPrice = Math.max(
+          0,
+          (Number(this.line.unitPrice) || 0) +
+            packagingPriceFromValue(nowValue) -
+            packagingPriceFromValue(fromValue),
+        );
+      }
+    }
+    this.packagingBaseline = structuredClone(current);
+  }
+
+  /** Cambió el packaging de una línea de catálogo: ajusta costo y precio. */
+  private onCatalogPackagingEdited(): void {
+    if (!this.line.productId?.trim()) return;
+    this.shiftCatalogPackaging(this.packagingBaseline);
   }
 
   quoteFilaments(): FdmFilamentLine[] {
@@ -1408,16 +1474,20 @@ export class OrderFormLineComponent implements OnInit {
         (Number(this.generalSettings?.laborCostPerHour) || 0),
     );
     const percent = this.errorMarginPercent;
+    // El packaging tampoco lleva margen: costo = valor, precio = valor × 1,25 (§27.2).
+    const packagingValue = this.packagingValueOf(this.line.packagingSupplies);
+    const packagingPrice = packagingPriceFromValue(packagingValue);
     // Los insumos no llevan el margen del área (§16.3): se extraen del costo antes de aplicar
     // el margen, y se suman al precio con su propia fórmula (valor × 2 + error).
     if (isEstampadoLine(this.line.serviceType) && isEstampadoQuoteConfigured(this.line)) {
       const supplyValue = this.estampadoCosts().supplies;
       if (supplyValue > 0) {
         const supplyError = supplyErrorFromValue(supplyValue, percent);
-        const processCost = cost - supplyValue - supplyError;
+        const processCost = cost - supplyValue - supplyError - packagingValue;
         return (
           priceFromCostAndMargin(Math.max(0, processCost), margin, labor) +
-          supplyPriceFromValue(supplyValue, percent)
+          supplyPriceFromValue(supplyValue, percent) +
+          packagingPrice
         );
       }
     }
@@ -1429,14 +1499,18 @@ export class OrderFormLineComponent implements OnInit {
       });
       if (supplyValue > 0) {
         const supplyError = supplyErrorFromValue(supplyValue, percent);
-        const processCost = cost - supplyValue - supplyError;
+        const processCost = cost - supplyValue - supplyError - packagingValue;
         return (
           priceFromCostAndMargin(Math.max(0, processCost), margin, labor) +
-          supplyPriceFromValue(supplyValue, percent)
+          supplyPriceFromValue(supplyValue, percent) +
+          packagingPrice
         );
       }
     }
-    return priceFromCostAndMargin(cost, margin, labor);
+    return (
+      priceFromCostAndMargin(Math.max(0, cost - packagingValue), margin, labor) +
+      packagingPrice
+    );
   }
 
   private unitPriceAnnotation(): string {

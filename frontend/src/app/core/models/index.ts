@@ -21,6 +21,7 @@ export enum SupplyCategory {
   RESINA = 'resina',
   ESTAMPADO = 'estampado',
   GENERAL = 'general',
+  PACKAGING = 'packaging',
 }
 
 export enum OrderStatus {
@@ -565,6 +566,8 @@ export interface CalculateCostPayload {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (insumos de categoría Packaging, §27). */
+  packagingSupplies?: EstampadoSupplyLine[];
   /** Impresora preferida del producto: perfil print para luz/máquina si es válido. */
   preferredPrinterId?: string | null;
 }
@@ -590,6 +593,10 @@ export interface ProductPricingInput {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (insumos de categoría Packaging, §27). */
+  packagingSupplies?: EstampadoSupplyLine[];
+  /** Combo: suma el packaging de las piezas (§27.4). */
+  sumPiecesPackaging?: boolean;
   /** Impresora preferida del producto: perfil print para luz/máquina si es válido. */
   preferredPrinterId?: string | null;
 }
@@ -663,6 +670,10 @@ export interface ProductBase {
   stockOverview?: ProductStockOverview;
   /** Alias de compatibilidad en UI; preferir `stock` desde el backend. */
   finishedStock?: number;
+  /** Packaging del producto (§27). Insumos de categoría Packaging. */
+  packagingSupplies?: EstampadoSupplyLine[];
+  /** Combo: suma además el packaging de cada pieza × cantidad (§27.4). */
+  sumPiecesPackaging?: boolean;
 }
 
 export interface ProductStockOverview {
@@ -841,6 +852,8 @@ export interface OrderItemPayload {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (insumos de categoría Packaging, §27). */
+  packagingSupplies?: EstampadoSupplyLine[];
   budgetedHours?: number;
   chargeMode?: 'hours' | 'fixed';
   workKind?: string;
@@ -1118,6 +1131,8 @@ export interface OrderLineDraft {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (insumos de categoría Packaging, §27). */
+  packagingSupplies?: EstampadoSupplyLine[];
   /** Horas presupuestadas de diseño o modelado. */
   budgetedHours?: number;
 }

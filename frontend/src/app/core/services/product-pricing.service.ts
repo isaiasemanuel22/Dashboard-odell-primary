@@ -12,6 +12,7 @@ import {
 import { SettingsFacade } from '../../store/settings/settings.facade';
 import { ProductCostCalculationService } from './product-cost-calculation.service';
 import {
+  productPackagingValue,
   sumComponentsCost,
   sumComponentsPrice,
 } from '../../shared/utils/product.helpers';
@@ -24,6 +25,7 @@ import {
   totalCostFromBreakdown,
 } from '../../shared/utils/pricing.util';
 import {
+  packagingPriceFromValue,
   supplyCostFromValue,
   supplyErrorFromValue,
   supplyPriceFromValue,
@@ -81,9 +83,10 @@ export class ProductPricingService {
     const supplyValue = this.costCalculation.supplyLinesValue(
       input.estampadoSupplies,
     );
+    const packagingValue = this.packagingValue(input, catalog);
     const { cost, breakdown } = this.resolveCost(input, catalog, settings);
     const resolvedCost =
-      hasComponents || supplyValue > 0
+      hasComponents || supplyValue > 0 || packagingValue > 0
         ? cost
         : cost <= 0 && storedCost > 0
           ? storedCost
@@ -102,6 +105,24 @@ export class ProductPricingService {
       resolvedCost,
       resolvedBreakdown,
       supplyValue,
+      packagingValue,
+    );
+  }
+
+  /**
+   * Valor del packaging (§27): el propio y, en un combo con
+   * `sumPiecesPackaging`, el de sus piezas × cantidad.
+   */
+  packagingValue(input: ProductPricingInput, catalog: Product[]): number {
+    return productPackagingValue(
+      {
+        type: input.type,
+        packagingSupplies: input.packagingSupplies,
+        sumPiecesPackaging: input.sumPiecesPackaging,
+        components: input.components,
+      },
+      catalog,
+      (supplyId) => this.costCalculation.supplyUnitPrice(supplyId),
     );
   }
 
@@ -110,7 +131,8 @@ export class ProductPricingService {
    * de catálogo se suman aparte a valor × 2 + error (`supplyValue` es su
    * valor cantidad × unitario). La mano de obra (`laborCost`, parte de
    * `processCost`) tampoco lleva margen. `cost` del resultado incluye valor
-   * y error del insumo (§16.3).
+   * y error del insumo (§16.3). El packaging (`packagingValue`) entra al costo
+   * a su valor y al precio a valor × 1,25, sin margen de error (§27.2).
    */
   priceWithSupplies(
     input: Pick<
@@ -122,6 +144,7 @@ export class ProductPricingService {
     catalog: Product[],
     settings: GeneralSettings,
     laborCost = 0,
+    packagingValue = 0,
   ): ProductPricingResult {
     const result = this.applyMarginToCost(
       input,
@@ -137,18 +160,31 @@ export class ProductPricingService {
     // Combo / armado de piezas: lista = suma de listas de las piezas + armado
     // sin margen (§16.1.3). Con precio fijo manda el fijo.
     if (hasComponents && !suggested) {
-      const partsPrice = sumComponentsPrice(catalog, input.components ?? []);
+      const partsPrice = sumComponentsPrice(
+        catalog,
+        input.components ?? [],
+        (id) => this.costCalculation.supplyUnitPrice(id),
+      );
       if (partsPrice > 0) processPrice = partsPrice + laborCost;
     }
-    if (supplyValue > 0 && !suggested && !hasComponents && processCost <= 0) {
+    if (
+      (supplyValue > 0 || packagingValue > 0) &&
+      !suggested &&
+      !hasComponents &&
+      processCost <= 0
+    ) {
       processPrice = 0;
     }
     const errorMarginPercent = Number(settings.errorMarginPercent) || 0;
     // Insumos: valor × 2 + error (el error no lleva el recargo) (§16.3).
     const price =
-      processPrice + supplyPriceFromValue(supplyValue, errorMarginPercent);
+      processPrice +
+      supplyPriceFromValue(supplyValue, errorMarginPercent) +
+      packagingPriceFromValue(packagingValue);
     const fullCost =
-      processCost + supplyCostFromValue(supplyValue, errorMarginPercent);
+      processCost +
+      supplyCostFromValue(supplyValue, errorMarginPercent) +
+      Math.round(Number(packagingValue) || 0);
     return {
       ...result,
       cost: fullCost,
@@ -166,6 +202,7 @@ export class ProductPricingService {
     cost: number,
     breakdown: CostBreakdown | null,
     supplyValue = 0,
+    packagingValue = 0,
   ): ProductPricingResult {
     const priced = this.priceWithSupplies(
       input,
@@ -174,6 +211,7 @@ export class ProductPricingService {
       catalog,
       settings,
       breakdown?.laborCost ?? 0,
+      packagingValue,
     );
     const supplyError = supplyErrorFromValue(
       supplyValue,
@@ -243,7 +281,11 @@ export class ProductPricingService {
     components: ProductPricingInput['components'],
     settings: GeneralSettings,
   ): { cost: number; breakdown: CostBreakdown | null } {
-    const partsCost = sumComponentsCost(catalog, components ?? []);
+    const partsCost = sumComponentsCost(
+      catalog,
+      components ?? [],
+      (id) => this.costCalculation.supplyUnitPrice(id),
+    );
     const errorMarginCost = 0;
     const assemblyHours = Number(input.assemblyTimeHours) || 0;
 
@@ -300,7 +342,10 @@ export class ProductPricingService {
     const workTimeHours = Number(input.workTimeHours) || 0;
     const prints = input.estampadoPrints ?? [];
     const pressCycles = input.estampadoPressCycles ?? [];
-    const supplies = input.estampadoSupplies ?? [];
+    const supplies = [
+      ...(input.estampadoSupplies ?? []),
+      ...(input.packagingSupplies ?? []),
+    ];
     const hasPrints = prints.some((print) => isEstampadoPrintValid(print));
     const hasPress = pressCycles.some(
       (cycle) =>

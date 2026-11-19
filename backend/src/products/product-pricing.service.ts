@@ -93,6 +93,8 @@ export class ProductPricingService {
           estampadoData?.supplies ??
           merged.supplies,
       ),
+      packagingSupplies: normalizeEstampadoSupplies(merged.packagingSupplies),
+      sumPiecesPackaging: merged.sumPiecesPackaging === true,
       preferredPrinterId:
         merged.type === ProductType.FDM
           ? product3d?.preferredPrinterId

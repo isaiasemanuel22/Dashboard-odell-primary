@@ -359,6 +359,10 @@ export class OrderItemDto {
   estampadoSupplies?: EstampadoSupplyLine[];
 
   @IsOptional()
+  @IsArray()
+  packagingSupplies?: EstampadoSupplyLine[];
+
+  @IsOptional()
   @IsNumber()
   @Min(0)
   budgetedHours?: number;

@@ -98,6 +98,8 @@ model Product {
   estampadoPrints       Json @default("[]") @map("estampado_prints")
   estampadoPressCycles  Json @default("[]") @map("estampado_press_cycles")
   estampadoSupplies     Json @default("[]") @map("estampado_supplies")
+  packagingSupplies     Json @default("[]") @map("packaging_supplies")
+  sumPiecesPackaging    Boolean @default(false) @map("sum_pieces_packaging")
   fdmFilaments          Json @default("[]") @map("fdm_filaments")
   includesPieces        Boolean @default(false) @map("includes_pieces")
   attachments           Json    @default("[]") @map("attachments")
@@ -275,6 +277,7 @@ model OrderItem {
   estampadoPrints      Json @default("[]") @map("estampado_prints")
   estampadoPressCycles Json @default("[]") @map("estampado_press_cycles")
   estampadoSupplies    Json @default("[]") @map("estampado_supplies")
+  packagingSupplies    Json @default("[]") @map("packaging_supplies")
   deliveredQuantity Int @default(0) @map("delivered_quantity")
   reservedQuantity Int @default(0) @map("reserved_quantity")
   productionRequiredQuantity Int @default(0) @map("production_required_quantity")
@@ -358,6 +361,7 @@ model QuoteItem {
   estampadoPrints      Json @default("[]") @map("estampado_prints")
   estampadoPressCycles Json @default("[]") @map("estampado_press_cycles")
   estampadoSupplies    Json @default("[]") @map("estampado_supplies")
+  packagingSupplies    Json @default("[]") @map("packaging_supplies")
 
   quote Quote @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 

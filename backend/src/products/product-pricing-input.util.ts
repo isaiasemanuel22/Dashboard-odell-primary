@@ -17,6 +17,10 @@ export function productToPricingInput(
     product.components,
     allProducts,
   );
+  const packaging = {
+    packagingSupplies: normalizeEstampadoSupplies(product.packagingSupplies),
+    sumPiecesPackaging: product.sumPiecesPackaging === true,
+  };
 
   if (product.type === ProductType.COMBO) {
     return {
@@ -27,6 +31,7 @@ export function productToPricingInput(
       price: product.price,
       cost: product.cost,
       estampadoSupplies: normalizeEstampadoSupplies(product.supplies),
+      ...packaging,
     };
   }
 
@@ -45,6 +50,7 @@ export function productToPricingInput(
         estampado.pressCycles,
       ),
       estampadoSupplies: normalizeEstampadoSupplies(estampado.supplies),
+      ...packaging,
     };
   }
 
@@ -76,6 +82,7 @@ export function productToPricingInput(
     washMinutes: product3d.washMinutes,
     cureMinutes: product3d.cureMinutes,
     estampadoSupplies: normalizeEstampadoSupplies(product3d.supplies),
+    ...packaging,
     preferredPrinterId:
       product3d.type === ProductType.FDM
         ? product3d.preferredPrinterId

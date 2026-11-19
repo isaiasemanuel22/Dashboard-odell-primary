@@ -86,6 +86,14 @@
     [suppliesCost]="suppliesCost"
     (changed)="onChildChanged()"
   />
+  <app-order-quote-estampado-supplies
+    mode="packaging"
+    [line]="line"
+    [product]="product"
+    [lineIndex]="lineIndex"
+    [suppliesCost]="packagingCost"
+    (changed)="onChildChanged()"
+  />
   <app-order-quote-labor
     [line]="line"
     [product]="product"

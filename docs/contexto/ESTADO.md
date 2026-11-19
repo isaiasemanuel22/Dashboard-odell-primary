@@ -1,4 +1,4 @@
-# Estado de Odell — al 2026-11-18
+# Estado de Odell — al 2026-11-19
 
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
@@ -17,7 +17,14 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `fix/mano-de-obra-opcional`, igual a `main` (publicada 2026-11-18).
+- Rama actual: `feat/packaging` (sale de `main` `0c4fb6f`, sin publicar): packaging §27
+  (categoría de insumo, sección en producto/pedido/presupuesto, × 1,25, stock al entregar).
+  Al publicar hace falta `db:push:heroku` (`products.packaging_supplies`,
+  `products.sum_pieces_packaging`, `order_items.packaging_supplies`, `quote_items.packaging_supplies`).
+  Falta: descuento en venta de mostrador (regla por definir) y que el aviso de «productos
+  afectados» de un insumo cuente el packaging.
+- `feat/chats` (sin publicar): sección Chats v7; necesita `db:push:heroku` (tablas de chats).
+  La sesión de Meta (`claude/meta-agentes-3d0324`) depende de esa rama.
 - `feat/ferias` ya unida a `main` (publicada 2026-11-18). Falta probar
   Ferias en producción con sesión iniciada; sin UI para editar feria, fondo o gastos.
 - Producción con sesión iniciada sin revisar (el agente solo vio el login).
@@ -70,10 +77,16 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
 - Diseño v3 (merch): ¿la seña es obligatoria (50% desde 20 prendas) y frena
   la producción? Choca con §Pagos de BUSINESS-RULES, donde la seña no tiene efectos.
 
+- Packaging: ¿el aviso de «margen bajo el objetivo» descuenta el packaging (va × 1,25)?
+  ¿La venta de mostrador descuenta packaging y lo devuelve al editar/borrar la venta?
+
 ## Entorno local
 - Dev server: launch `odell-dev-4300` (el 4200 lo usa otro proyecto).
 - Cada worktree con backend propio necesita base aparte: si comparten la
   base local, se pisan los datos.
 - Datos de QA en la base local: ferias fair-1 a fair-4 «Feria Plaza España» (cerradas)
   y fair-5 «Mercado de Diseño Güemes» (abierta, 2026-11-17); cust-2 «QA Revendedor», pedidos ord-13 a
-  ord-29, presupuesto quo-18, productos prod-45 «QA taza ×2» y prod-53 «QA sin mano de obra».
+  ord-29, presupuesto quo-18, productos prod-45 «QA taza ×2» (con packaging) y prod-53 «QA sin mano de obra»;
+  packaging: insumo sup-5 «QA Caja kraft», combo prod-54, pedidos ord-66/ord-67, presupuesto qpe-37.
+- La base local ya tiene las columnas de packaging (agregadas a mano: `prisma db push`
+  borraría las tablas de Chats, que no están en esta rama).

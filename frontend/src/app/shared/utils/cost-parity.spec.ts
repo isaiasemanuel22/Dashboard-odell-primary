@@ -17,6 +17,7 @@ import {
 } from './machine-profile.util';
 import { formatFileSizeEsAr } from './file-size.util';
 import {
+  packagingPriceFromValue,
   supplyCostFromValue,
   supplyErrorFromValue,
   supplyLinesPrice,
@@ -169,6 +170,17 @@ describe('paridad de costo con el API', () => {
     expect(supplyPriceFromValue(3000, 0)).toBe(6000);
     // Clamp 100 %: error = valor entero; precio = 6000 + 3000.
     expect(supplyPriceFromValue(3000, 150)).toBe(9000);
+  });
+
+  it('packaging: costo = valor, precio = valor × 1,25 sin margen de error (§27.2)', () => {
+    const lines = [{ id: 'l1', supplyId: 'caja', quantity: 2 }];
+    const value = supplyLinesValue(lines, () => 400);
+    expect(value).toBe(800);
+    expect(packagingPriceFromValue(value)).toBe(1000);
+    expect(packagingPriceFromValue(0)).toBe(0);
+    // Redondeo una sola vez sobre el valor total (paridad con el API).
+    expect(packagingPriceFromValue(801)).toBe(1001);
+    expect(packagingPriceFromValue(3)).toBe(4);
   });
 
   it('el mayorista nunca baja de costo + 10 % ni supera la lista', () => {

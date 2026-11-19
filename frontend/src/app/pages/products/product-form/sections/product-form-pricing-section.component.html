@@ -47,6 +47,12 @@
             <dd>{{ supplyCost | currencyArs }}</dd>
           </div>
         }
+        @if (packagingCost > 0) {
+          <div>
+            <dt>Packaging</dt>
+            <dd>{{ packagingCost | currencyArs }}</dd>
+          </div>
+        }
         @if ((vm.costBreakdown?.errorMarginCost ?? 0) > 0) {
           <div>
             <dt>Margen de error @if (errorMarginLabel) { <span>· {{ errorMarginLabel }}</span> }</dt>
@@ -86,6 +92,12 @@
             <dd>{{ supplyCost | currencyArs }}</dd>
           </div>
         }
+        @if (packagingCost > 0) {
+          <div>
+            <dt>Packaging</dt>
+            <dd>{{ packagingCost | currencyArs }}</dd>
+          </div>
+        }
       }
       <div class="price-lines__total">
         <dt>Costo total</dt>
@@ -93,19 +105,27 @@
       </div>
     </dl>
 
-    @if (!facade.usesPieceAssembly && !priceManual && supplyCost > 0 && vm.price > 0) {
+    @if (!facade.usesPieceAssembly && !priceManual && (supplyCost > 0 || packagingCost > 0) && vm.price > 0) {
       @let labor = vm.costBreakdown?.laborCost ?? 0;
       <div class="price-build">
       <p class="price-build__title">Cómo se arma el precio calculado</p>
       <dl class="price-lines">
         <div>
-          <dt>Costo sin insumos ni mano de obra {{ (vm.totalCost - labor - supplyCostWithError) | currencyArs }} + {{ targetMarginPercent }} %</dt>
-          <dd>{{ (vm.price - supplyPrice - labor) | currencyArs }}</dd>
+          <dt>Costo sin insumos, packaging ni mano de obra {{ (vm.totalCost - labor - supplyCostWithError - packagingCost) | currencyArs }} + {{ targetMarginPercent }} %</dt>
+          <dd>{{ (vm.price - supplyPrice - packagingPrice - labor) | currencyArs }}</dd>
         </div>
-        <div>
-          <dt>Insumos {{ supplyCost | currencyArs }} × 2 + margen de error</dt>
-          <dd>{{ supplyPrice | currencyArs }}</dd>
-        </div>
+        @if (supplyCost > 0) {
+          <div>
+            <dt>Insumos {{ supplyCost | currencyArs }} × 2 + margen de error</dt>
+            <dd>{{ supplyPrice | currencyArs }}</dd>
+          </div>
+        }
+        @if (packagingCost > 0) {
+          <div>
+            <dt>Packaging {{ packagingCost | currencyArs }} + 25 %</dt>
+            <dd>{{ packagingPrice | currencyArs }}</dd>
+          </div>
+        }
         <div>
           <dt>Mano de obra (sin margen)</dt>
           <dd>{{ labor | currencyArs }}</dd>
@@ -184,6 +204,9 @@
       @if (supplyCost > 0 && !(facade.isCombo && priceManual)) {
         <p class="price-note">Insumos (× 2 + margen de error) en el precio: {{ supplyPrice | currencyArs }}</p>
       }
+      @if (packagingCost > 0 && !(facade.isCombo && priceManual)) {
+        <p class="price-note">Packaging (+ 25 %) en el precio: {{ packagingPrice | currencyArs }}</p>
+      }
       @if (priceMode === 'fixed') {
         <button type="button" class="unit-price__reset" (click)="resetUnitPrice()">
           Volver al sugerido
@@ -240,6 +263,12 @@
             <div>
               <span>Insumos (× 2 + margen de error)</span>
               <strong>{{ supplyPrice | currencyArs }}</strong>
+            </div>
+          }
+          @if (packagingPrice > 0) {
+            <div>
+              <span>Packaging (+ 25 %)</span>
+              <strong>{{ packagingPrice | currencyArs }}</strong>
             </div>
           }
           <div>

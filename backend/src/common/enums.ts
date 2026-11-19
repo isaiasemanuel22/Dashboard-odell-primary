@@ -21,6 +21,7 @@ export enum SupplyCategory {
   RESINA = 'resina',
   ESTAMPADO = 'estampado',
   GENERAL = 'general',
+  PACKAGING = 'packaging',
 }
 
 export enum QuoteStatus {

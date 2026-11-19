@@ -452,6 +452,9 @@ export class CalculateCostDto {
 
   @IsOptional()
   estampadoSupplies?: EstampadoSupplyLine[];
+
+  @IsOptional()
+  packagingSupplies?: EstampadoSupplyLine[];
 }
 
 export class CreateImpresoDto {

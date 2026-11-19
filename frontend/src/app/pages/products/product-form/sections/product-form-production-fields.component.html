@@ -17,6 +17,21 @@
       [suppliesCost]="suppliesCost"
       (changed)="onQuoteChanged()"
     />
+    <app-order-quote-estampado-supplies
+      mode="packaging"
+      [line]="line"
+      [lineIndex]="0"
+      [suppliesCost]="packagingCost"
+      (changed)="onQuoteChanged()"
+    />
+  }
+
+  @if (isCombo) {
+    <db-checkbox
+      class="sum-pieces-packaging"
+      label="Sumar el packaging de las piezas"
+      [formControl]="form.controls.sumPiecesPackaging"
+    />
   }
 
   @if (showProductionFields && is3D) {

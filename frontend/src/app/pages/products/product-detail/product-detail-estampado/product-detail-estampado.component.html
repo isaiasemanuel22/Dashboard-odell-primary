@@ -63,4 +63,24 @@
       }
     </div>
   }
+
+  @if (packagingRows.length) {
+    <h4 class="production-subtitle">Packaging</h4>
+    <div class="filament-cards">
+      @for (row of packagingRows; track $index) {
+        <article class="filament-card">
+          <div
+            class="filament-card__swatch"
+            [class.filament-card__swatch--indistinto]="!colorHex(row.colorId)"
+            [style.background-color]="colorHex(row.colorId) || null"
+          ></div>
+          <div class="filament-card__body">
+            <strong class="filament-card__type">{{ row.name }}</strong>
+            <span class="filament-card__grams">{{ row.quantityLabel }}</span>
+            <span class="filament-card__color">{{ colorLabel(row.colorId) }}</span>
+          </div>
+        </article>
+      }
+    </div>
+  }
 </section>

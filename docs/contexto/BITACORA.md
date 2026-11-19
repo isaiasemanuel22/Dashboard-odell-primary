@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · Packaging (§27)
+Rama: feat/packaging · Commits: ver `git log` (feat(packaging))
+Hecho: categoría de insumo «Packaging»; campo `packagingSupplies` en producto, ítem de pedido y de presupuesto, y `sumPiecesPackaging` en producto (columnas JSON/bool nuevas, en local agregadas a mano). Sección «Packaging» debajo de «Insumos» en producto, líneas de pedido y presupuesto (selectores separados). Costo = valor; precio = valor × 1,25 sin margen de error, mismo cálculo en backend y frontend (paridad). Combo: packaging propio + tilde «Sumar el packaging de las piezas» (apagado); las piezas entran sin su packaging. Stock al entregar (`packaging-delivery.util.ts`) y refresco de Insumos tras entregar. Detalle de producto con línea «Packaging». QA en local: prod-45 +$1.000 costo / +$1.250 precio, combo prod-54 con y sin tilde, entregas ord-66/ord-67 descuentan cajas, presupuesto qpe-37. Jest 556, Angular 159, builds OK.
+Decisiones: de Isaías (§27): × 1,25 sin error, por producto y por línea editable, opcional, stock al entregar, tilde de piezas apagado. Supuestas: combo con precio fijo no suma packaging (como los insumos), en los demás tipos va encima del fijo; combo anidado cuenta solo el packaging propio de cada pieza; sin reversión de stock al cancelar.
+Pendiente: venta de mostrador no descuenta packaging (por definir reversión); aviso de margen con packaging (por definir); «productos afectados» de un insumo no cuenta packaging; «Cancelar» en la edición de combo quizá no cierra el modal (sin confirmar); `db:push:heroku` al publicar.
+
 ## 2026-11-18 · Deploy de mano de obra opcional
 Rama: fix/mano-de-obra-opcional → main · Commits: 03e7e64
 Hecho: push a origin main y Heroku v49 (sin cambios de esquema, sin `db:push:heroku`). `/api/health` 200; Netlify sirve los chunks del formulario de producto sin la exigencia de mano de obra.

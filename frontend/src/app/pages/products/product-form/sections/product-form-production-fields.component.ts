@@ -20,7 +20,11 @@ import {
   isProductType3D,
 } from '../../../../core/models';
 import { ProductFormGroup } from '../services/product-form-state-manager.service';
-import { DbColorSelectComponent, DbInputComponent } from '@dashboard-form';
+import {
+  DbCheckboxComponent,
+  DbColorSelectComponent,
+  DbInputComponent,
+} from '@dashboard-form';
 import { OrderQuote3dCompositionComponent } from '../../../orders/order-form/linea/order-quote-3d-composition/order-quote-3d-composition.component';
 import { OrderQuoteEstampadoSuppliesComponent } from '../../../../components/order-quote-estampado-supplies/order-quote-estampado-supplies.component';
 import { supplyLinesValue } from '../../../../shared/utils/supply-line-value.util';
@@ -44,6 +48,7 @@ import { ProductFormAmsPurgeRowComponent } from './product-form-ams-purge-row/pr
     ReactiveFormsModule,
     DbInputComponent,
     DbColorSelectComponent,
+    DbCheckboxComponent,
     OrderQuote3dCompositionComponent,
     OrderQuoteEstampadoCompositionComponent,
     OrderQuoteEstampadoSuppliesComponent,
@@ -138,6 +143,13 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
     });
   }
 
+  get packagingCost(): number {
+    return supplyLinesValue(this.line.packagingSupplies, (supplyId) => {
+      const supply = this.supplies.find((item) => item.id === supplyId);
+      return supply ? Number(supply.unitPrice) || 0 : 0;
+    });
+  }
+
   get printProcess(): 'fdm' | 'resina' | undefined {
     if (this.productType === ProductType.RESINA) return 'resina';
     if (this.productType === ProductType.FDM) return 'fdm';
@@ -167,6 +179,7 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
         cureMinutes: Number(line.cureMinutes) || 0,
         prints: structuredClone(line.estampadoPrints ?? []),
         supplyLines: structuredClone(line.estampadoSupplies ?? []),
+        packagingLines: structuredClone(line.packagingSupplies ?? []),
         pressCycles: structuredClone(line.estampadoPressCycles ?? []),
       },
       { emitEvent: true },
@@ -193,6 +206,7 @@ export class ProductFormProductionFieldsComponent implements OnInit, OnChanges {
     const isFdm = this.productType === ProductType.FDM;
 
     draft.printTimeHours = Number(v.printTimeHours) || 0;
+    draft.packagingSupplies = structuredClone(v.packagingLines ?? []);
     draft.workTimeHours = Number(v.workTimeHours) || 0;
     draft.grams = Number(v.grams) || 0;
 

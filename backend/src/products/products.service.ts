@@ -283,6 +283,8 @@ export class ProductsService {
       includesPieces,
       components,
       assemblyTimeHours,
+      packagingSupplies: normalizeEstampadoSupplies(data.packagingSupplies),
+      sumPiecesPackaging: data.sumPiecesPackaging === true,
       stock: Math.max(0, Math.trunc(Number(data.stock) || 0)),
     };
 
@@ -407,6 +409,16 @@ export class ProductsService {
         ? this.normalizeSuggestedPrice(data.suggestedPrice)
         : this.normalizeSuggestedPrice(existing.suggestedPrice);
 
+    const mergedPackaging = normalizeEstampadoSupplies(
+      data.packagingSupplies !== undefined
+        ? data.packagingSupplies
+        : existing.packagingSupplies,
+    );
+    const mergedSumPiecesPackaging =
+      data.sumPiecesPackaging !== undefined
+        ? data.sumPiecesPackaging === true
+        : existing.sumPiecesPackaging === true;
+
     const mergedForValidation = {
       name: data.name ?? existing.name,
       type: mergedType,
@@ -423,6 +435,8 @@ export class ProductsService {
       components: mergedComponents,
       assemblyTimeHours: mergedAssembly,
       suggestedPrice: mergedSuggestedPrice,
+      packagingSupplies: mergedPackaging,
+      sumPiecesPackaging: mergedSumPiecesPackaging,
       ...(mergedType !== ProductType.ESTAMPADO
         ? {
             grams:
@@ -586,6 +600,8 @@ export class ProductsService {
         mergedComponents.length > 0,
       components: mergedComponents,
       assemblyTimeHours: mergedAssembly,
+      packagingSupplies: mergedPackaging,
+      sumPiecesPackaging: mergedSumPiecesPackaging,
       stock:
         data.stock !== undefined
           ? Math.max(0, Math.trunc(Number(data.stock) || 0))

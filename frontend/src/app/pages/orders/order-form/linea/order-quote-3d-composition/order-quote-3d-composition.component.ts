@@ -135,6 +135,14 @@ export class OrderQuote3dCompositionComponent implements OnInit {
     });
   }
 
+  /** Valor del packaging de la línea (cantidad × precio unitario). */
+  get packagingCost(): number {
+    return supplyLinesValue(this.line.packagingSupplies, (supplyId) => {
+      const supply = this.supplies.find((item) => item.id === supplyId);
+      return supply ? Number(supply.unitPrice) || 0 : 0;
+    });
+  }
+
   get errorMarginCost(): number {
     const processError = this.fdmBreakdown()?.errorMarginCost ?? 0;
     return processError + supplyErrorFromValue(this.suppliesCost, this.errorMarginPercent);

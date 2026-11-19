@@ -343,6 +343,13 @@ export class ProductCostCalculationService {
     return paperCost;
   }
 
+  /** Precio unitario de un insumo del store (0 si no existe). */
+  supplyUnitPrice(supplyId: string, supplies?: Supply[]): number {
+    const catalog = supplies?.length ? supplies : this.suppliesSignal();
+    const supply = catalog.find((item) => item.id === supplyId);
+    return supply ? Number(supply.unitPrice) || 0 : 0;
+  }
+
   /** Valor de insumos del producto o de la línea a medida. No incluye alcohol de lavado. */
   supplyLinesValue(
     lines: CalculateCostPayload['estampadoSupplies'],

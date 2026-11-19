@@ -295,6 +295,13 @@ export class CreateProductDto {
   estampadoSupplies?: EstampadoSupplyLine[];
 
   @IsOptional()
+  packagingSupplies?: EstampadoSupplyLine[];
+
+  @IsOptional()
+  @IsBoolean()
+  sumPiecesPackaging?: boolean;
+
+  @IsOptional()
   supplies?: EstampadoSupplyLine[];
 
   @IsOptional()

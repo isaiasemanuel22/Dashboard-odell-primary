@@ -9,6 +9,14 @@ import { normalizeEstampadoSupplies } from './estampado-product.util';
 /** Los insumos de producto o línea a medida se cobran a costo × 2 (§16.3). */
 export const SUPPLY_PRICE_MULTIPLIER = 2;
 
+/** El packaging se cobra a costo × 1,25, sin margen de error (§27.2). */
+export const PACKAGING_PRICE_MULTIPLIER = 1.25;
+
+/** Precio del packaging: round(valor × 1,25). El costo es el valor. */
+export function packagingPriceFromValue(value: number): number {
+  return Math.round((Number(value) || 0) * PACKAGING_PRICE_MULTIPLIER);
+}
+
 /** Mismo clamp 0–100 que calculateErrorMarginCost. */
 export function clampErrorMarginPercent(percent: number): number {
   return Math.min(Math.max(Number(percent) || 0, 0), 100);

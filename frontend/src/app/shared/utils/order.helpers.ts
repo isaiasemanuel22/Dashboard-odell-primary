@@ -428,6 +428,10 @@ export function buildOrderItems(
           isEstampadoLine(line.serviceType) || isImpresion3DLine(line.serviceType)
             ? line.estampadoSupplies
             : undefined,
+        packagingSupplies:
+          isEstampadoLine(line.serviceType) || isImpresion3DLine(line.serviceType)
+            ? normalizeEstampadoSupplies(line.packagingSupplies)
+            : undefined,
       };
     });
 }
@@ -558,6 +562,9 @@ export function isLineBlank(line: OrderLineDraft): boolean {
       (s) => !!s.supplyId || (Number(s.quantity) || 0) > 0,
     )
   ) {
+    return false;
+  }
+  if (line.packagingSupplies?.some((s) => !!s.supplyId)) {
     return false;
   }
   return true;
@@ -789,6 +796,11 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
       ? normalizeEstampadoSupplies(item.estampadoSupplies)
       : undefined;
 
+  const packagingSupplies =
+    isEstampadoLine(item.serviceType) || isImpresion3DLine(item.serviceType)
+      ? normalizeEstampadoSupplies(item.packagingSupplies)
+      : undefined;
+
   return {
     serviceType: item.serviceType,
     productId: item.productId,
@@ -833,6 +845,7 @@ export function lineFromOrderItem(item: OrderItem): OrderLineDraft {
       ? estampadoPressCycles
       : undefined,
     estampadoSupplies: estampadoSupplies?.length ? estampadoSupplies : undefined,
+    packagingSupplies: packagingSupplies?.length ? packagingSupplies : undefined,
   };
 }
 

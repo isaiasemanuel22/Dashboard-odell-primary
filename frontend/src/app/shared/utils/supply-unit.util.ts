@@ -5,6 +5,7 @@ const DEFAULT_UNITS: Record<SupplyCategory, string> = {
   [SupplyCategory.RESINA]: 'L',
   [SupplyCategory.ESTAMPADO]: 'unidad',
   [SupplyCategory.GENERAL]: 'unidad',
+  [SupplyCategory.PACKAGING]: 'unidad',
 };
 
 export function defaultSupplyUnit(category: SupplyCategory): string {

@@ -29,6 +29,7 @@ import {
 } from '../../../core/models';
 import { RealtimeEvent } from '../../../core/models/realtime.model';
 import { UserAccessService } from '../../../core/services/user-access.service';
+import { SuppliesService } from '../../../core/services/supplies.service';
 import { OrdersService } from '../../../core/services/orders.service';
 import { PrintJobsService } from '../../../core/services/print-jobs.service';
 import { CustomerCatalogService } from '../../../core/services/customer-catalog.service';
@@ -158,6 +159,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   private readonly formDialogs = inject(FormDialogService);
   private readonly customerCatalog = inject(CustomerCatalogService);
   private readonly settingsFacade = inject(SettingsFacade);
+  private readonly suppliesService = inject(SuppliesService);
   private readonly breakpoint = inject(BreakpointService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
@@ -853,6 +855,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     if (!order) return;
     this.closeDeliverySheet();
     const balance = orderBalanceAmount(order);
+    // La entrega descuenta insumos y packaging: se refresca el store (§25.5.6).
+    this.suppliesService.refreshSupplies().subscribe();
     this.loadOrder(order.id);
     if (balance <= 0) return;
 

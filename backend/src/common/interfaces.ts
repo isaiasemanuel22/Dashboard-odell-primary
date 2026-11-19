@@ -336,6 +336,8 @@ export interface CalculateCostDto {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (§27): misma forma que los insumos. */
+  packagingSupplies?: EstampadoSupplyLine[];
   /** Impresora preferida del producto: perfil print para luz/máquina si es válido. */
   preferredPrinterId?: string | null;
 }
@@ -370,7 +372,11 @@ export interface ProductPricingInput {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (§27): misma forma que los insumos. */
+  packagingSupplies?: EstampadoSupplyLine[];
   includesPieces?: boolean;
+  /** Combo: suma además el packaging de cada pieza × cantidad (§27.4). */
+  sumPiecesPackaging?: boolean;
   /** Impresora preferida del producto: perfil print para luz/máquina si es válido. */
   preferredPrinterId?: string | null;
 }
@@ -423,6 +429,10 @@ export interface ProductBase {
   published: boolean;
   /** Si true, el costo se calcula desde piezas incluidas en lugar de producción directa */
   includesPieces: boolean;
+  /** Packaging del producto (§27). */
+  packagingSupplies?: EstampadoSupplyLine[];
+  /** Solo combos / productos con piezas: suma el packaging de las piezas. */
+  sumPiecesPackaging?: boolean;
   components: ProductComponent[];
   assemblyTimeHours: number;
   /** Unidades terminadas en stock físico. */
@@ -592,6 +602,8 @@ export interface OrderItem {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (§27): misma forma que los insumos. */
+  packagingSupplies?: EstampadoSupplyLine[];
   budgetedHours?: number;
   /** Diseño/modelado: cobro por horas o precio fijo. */
   chargeMode?: 'hours' | 'fixed';
@@ -1281,6 +1293,7 @@ export type CreateProductDto = {
   size?: string;
   published?: boolean;
   includesPieces?: boolean;
+  sumPiecesPackaging?: boolean;
   grams?: number;
   printTimeHours?: number;
   workTimeHours?: number;
@@ -1303,6 +1316,8 @@ export type CreateProductDto = {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (§27): misma forma que los insumos. */
+  packagingSupplies?: EstampadoSupplyLine[];
   prints?: EstampadoPrintSpec[];
   pressCycles?: EstampadoPressCycle[];
   supplies?: EstampadoSupplyLine[];

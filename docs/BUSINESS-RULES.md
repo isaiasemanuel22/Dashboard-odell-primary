@@ -2217,3 +2217,40 @@ en un puesto, con su caja y sus gastos.
 - Llevar = máximo entre `ceil(promedio × 1,2)` y `ceil(promedio) + 1`, para
   promedio > 0.
 - A imprimir = máximo entre 0 y (llevar − stock actual).
+
+## 27. Packaging
+
+Decidido por Isaías el 2026-11-19.
+
+### 27.1 Qué es
+
+- El packaging (cajas, bolsas, papel, stickers, etc.) es un **insumo de
+  categoría «Packaging»**, con stock, unidad y precio manual como General.
+- Se carga **por producto**, en una sección «Packaging» debajo de «Insumos»
+  en el formulario de producto, y **por línea** en pedidos y presupuestos,
+  con la misma forma que los insumos. Es **opcional** en todos los casos.
+- Los selectores no se mezclan: en «Insumos» no aparecen los de Packaging y
+  en «Packaging» solo aparecen esos.
+
+### 27.2 Costo y precio
+
+- Costo: el valor del packaging (cantidad × precio unitario) entra al costo
+  del producto.
+- Precio: suma **costo del packaging × 1,25**. No lleva margen de error ni el
+  × 2 de los insumos (§16).
+
+### 27.3 Pedidos y presupuestos
+
+- La línea de catálogo trae el packaging del producto y se puede quitar,
+  cambiar o agregar en la línea, igual que los insumos.
+
+### 27.4 Combos
+
+- El combo lleva su propio packaging, con la regla de §27.2.
+- Tilde «Sumar el packaging de las piezas», **apagado por defecto**: si está
+  prendido, suma además el packaging de cada pieza × su cantidad.
+
+### 27.5 Stock
+
+- El packaging descuenta stock **al entregar** el pedido (no al terminar la
+  tarea de producción).

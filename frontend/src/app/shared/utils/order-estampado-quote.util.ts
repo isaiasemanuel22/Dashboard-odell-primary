@@ -23,6 +23,7 @@ import {
   priceFromCostAndMargin,
 } from './pricing.util';
 import {
+  packagingPriceFromValue,
   supplyCostFromValue,
   supplyPriceFromValue,
 } from './supply-line-value.util';
@@ -35,7 +36,8 @@ export function isEstampadoQuoteConfigured(
   line: Pick<
     OrderLineDraft,
     'estampadoPrints' | 'estampadoPressCycles' | 'estampadoSupplies'
-  >,
+  > &
+    Partial<Pick<OrderLineDraft, 'packagingSupplies'>>,
 ): boolean {
   const prints = normalizeEstampadoPrints(line.estampadoPrints);
   const supplies = normalizeEstampadoSupplies(line.estampadoSupplies);
@@ -47,9 +49,11 @@ export function isEstampadoQuoteConfigured(
       (!!print.paperType && isEstampadoPrintValid(print)) ||
       !!print.impresoId?.trim(),
   );
-  const hasSupplies = supplies.some(
-    (entry) => entry.supplyId && Number(entry.quantity) > 0,
-  );
+  const hasSupplies =
+    supplies.some((entry) => entry.supplyId && Number(entry.quantity) > 0) ||
+    normalizeEstampadoSupplies(line.packagingSupplies).some(
+      (entry) => entry.supplyId && Number(entry.quantity) > 0,
+    );
   const hasPress = cycles.some(
     (cycle) => Number(cycle.pressMinutes) > 0 && Number(cycle.bajadas) >= 1,
   );
@@ -80,6 +84,7 @@ export function applyProductSpecsToEstampadoLine(
   line.estampadoPrints = structuredClone(estampado.prints ?? []);
   line.estampadoPressCycles = structuredClone(estampado.pressCycles ?? []);
   line.estampadoSupplies = structuredClone(estampado.supplies ?? []);
+  line.packagingSupplies = structuredClone(product.packagingSupplies ?? []);
 }
 
 /**
@@ -104,6 +109,7 @@ export function hydrateEstampadoQuoteSpecs(
     line.estampadoPressCycles,
   );
   line.estampadoSupplies = normalizeEstampadoSupplies(line.estampadoSupplies);
+  line.packagingSupplies = normalizeEstampadoSupplies(line.packagingSupplies);
 
   if (!isEstampadoQuoteConfigured(line) && line.productId?.trim()) {
     applyProductSpecsToEstampadoLine(line, product);
@@ -156,6 +162,11 @@ export function syncEstampadoQuotePricing(
     line.estampadoSupplies,
     options?.supplies,
   );
+  // Packaging: costo = valor; precio = valor × 1,25, sin margen de error (§27.2).
+  const packagingValue = costCalculator.supplyLinesValue(
+    line.packagingSupplies,
+    options?.supplies,
+  );
   const errorMarginPercent = Number(settings.errorMarginPercent) || 0;
   const processCost = breakdown.totalCost;
   const keepCost =
@@ -164,7 +175,9 @@ export function syncEstampadoQuotePricing(
     Number.isFinite(Number(line.unitCost));
   if (!keepCost) {
     line.unitCost =
-      processCost + supplyCostFromValue(supplyValue, errorMarginPercent);
+      processCost +
+      supplyCostFromValue(supplyValue, errorMarginPercent) +
+      packagingValue;
   }
   const preserve = options?.preservePrice || !!line.unitPriceManual;
   if (!preserve) {
@@ -173,7 +186,9 @@ export function syncEstampadoQuotePricing(
         processCost,
         marginPercent,
         breakdown.laborCost,
-      ) + supplyPriceFromValue(supplyValue, errorMarginPercent);
+      ) +
+      supplyPriceFromValue(supplyValue, errorMarginPercent) +
+      packagingPriceFromValue(packagingValue);
   }
 }
 

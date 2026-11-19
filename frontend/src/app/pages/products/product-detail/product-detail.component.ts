@@ -77,6 +77,8 @@ import { resolveProductLaborCost } from '../../../shared/utils/product-labor.uti
 import {
   isProductPublished,
   normalizeProductComponents,
+  pieceCostWithoutPackaging,
+  productPackagingValue,
   resolveCategoryNames,
   resolveProductGrams,
   resolveProductPrintTimeHours,
@@ -458,7 +460,7 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
     } else if (this.productEstampado) {
       rows = this.estampadoCostRows(this.productEstampado, settings);
     }
-    rows = [...rows, ...this.supplyCostRows()];
+    rows = [...rows, ...this.supplyCostRows(), ...this.packagingCostRows()];
     if (this.hasComponents) {
       this.pushErrorMarginRow(rows, null, settings, this.catalogSupplyValue());
     }
@@ -501,10 +503,19 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
       (item) => {
         const part = this.catalogProducts.find((p) => p.id === item.productId);
         const quantity = Math.max(1, Number(item.quantity) || 1);
+        // El packaging de la pieza va aparte (§27.4): se separa de su costo.
+        const unitCost = part
+          ? pieceCostWithoutPackaging(
+              part,
+              Number(part.cost) || 0,
+              this.catalogProducts,
+              this.supplyUnitPrice,
+            )
+          : 0;
         return {
           title: `${part?.name ?? 'Pieza'} × ${quantity}`,
-          detail: part ? `${formatCurrencyArs(part.cost)} c/u` : null,
-          amount: part ? Math.round((Number(part.cost) || 0) * quantity) : null,
+          detail: part ? `${formatCurrencyArs(unitCost)} c/u` : null,
+          amount: part ? Math.round(unitCost * quantity) : null,
         };
       },
     );
@@ -515,6 +526,44 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
         title: `Armado · ${formatDecimalEs(assemblyHours)} h`,
         detail: rate > 0 ? `${formatCurrencyArs(rate)} / h · sin margen` : null,
         amount: rate > 0 ? this.laborCost : null,
+      });
+    }
+    return rows;
+  }
+
+  private readonly supplyUnitPrice = (supplyId: string): number =>
+    Number(this.suppliesSignal().find((item) => item.id === supplyId)?.unitPrice) ||
+    0;
+
+  /**
+   * Packaging (§27): líneas propias a costo = valor (sin margen de error) y,
+   * en un combo con «Sumar el packaging de las piezas», el de sus piezas.
+   */
+  private packagingCostRows(): MobileCostCompositionRow[] {
+    const product = this.product;
+    if (!product) return [];
+    const catalog = this.suppliesSignal();
+    const lines = normalizeEstampadoSupplies(product.packagingSupplies);
+    const rows: MobileCostCompositionRow[] = lines.map((line) => {
+      const supply = catalog.find((item) => item.id === line.supplyId);
+      const unitPrice = Number(supply?.unitPrice) || 0;
+      return {
+        title: `Packaging · ${supply?.name ?? 'Packaging'}`,
+        detail: supply
+          ? formatSupplyQuantity(line.quantity, supply.unit)
+          : String(line.quantity),
+        amount: unitPrice > 0 ? Math.round(unitPrice * line.quantity) : null,
+      };
+    });
+    const total = Math.round(
+      productPackagingValue(product, this.catalogProducts, this.supplyUnitPrice),
+    );
+    const own = rows.reduce((sum, row) => sum + (row.amount ?? 0), 0);
+    if (total - own > 0) {
+      rows.push({
+        title: 'Packaging de las piezas',
+        detail: null,
+        amount: total - own,
       });
     }
     return rows;

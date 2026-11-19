@@ -22,6 +22,8 @@ export function productToPricingInput(
       assemblyTimeHours: product.assemblyTimeHours ?? 0,
       price: product.price,
       cost: product.cost,
+      packagingSupplies: product.packagingSupplies ?? [],
+      sumPiecesPackaging: product.sumPiecesPackaging === true,
     };
   }
 
@@ -37,6 +39,7 @@ export function productToPricingInput(
       estampadoPrints: estampado.prints ?? [],
       estampadoPressCycles: estampado.pressCycles ?? [],
       estampadoSupplies: estampado.supplies ?? [],
+      packagingSupplies: product.packagingSupplies ?? [],
     };
   }
 
@@ -56,6 +59,7 @@ export function productToPricingInput(
     assemblyTimeHours: product.assemblyTimeHours ?? 0,
     price: product.price,
     cost: product.cost,
+    packagingSupplies: product.packagingSupplies ?? [],
     grams: product3d.grams,
     purgeGrams:
       product3d.type === ProductType.FDM ? product3d.purgeGrams : undefined,

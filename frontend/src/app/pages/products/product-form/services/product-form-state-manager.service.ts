@@ -61,6 +61,10 @@ export interface ProductFormState {
   prints: EstampadoPrintSpec[];
   pressCycles: EstampadoPressCycle[];
   supplyLines: EstampadoSupplyLine[];
+  /** Packaging del producto (§27). */
+  packagingLines: EstampadoSupplyLine[];
+  /** Combo: suma el packaging de las piezas (§27.4). */
+  sumPiecesPackaging: boolean;
   filamentLines: FdmFilamentLine[];
   filamentType: FilamentType;
   purgeGrams: number | null;
@@ -117,6 +121,8 @@ export type ProductFormGroup = FormGroup<{
   prints: FormControl<ProductFormState['prints']>;
   pressCycles: FormControl<ProductFormState['pressCycles']>;
   supplyLines: FormControl<ProductFormState['supplyLines']>;
+  packagingLines: FormControl<ProductFormState['packagingLines']>;
+  sumPiecesPackaging: FormControl<boolean>;
   filamentLines: FormControl<ProductFormState['filamentLines']>;
 }>;
 
@@ -154,6 +160,8 @@ export class ProductFormStateManagerService {
       prints: [],
       pressCycles: [],
       supplyLines: [],
+      packagingLines: [],
+      sumPiecesPackaging: false,
       filamentLines: [createEmptyFdmFilamentLine()],
       filamentType: FilamentType.PLA,
       purgeGrams: null,
@@ -232,6 +240,12 @@ export class ProductFormStateManagerService {
       prints: new FormControl(state.prints, { nonNullable: true }),
       pressCycles: new FormControl(state.pressCycles, { nonNullable: true }),
       supplyLines: new FormControl(state.supplyLines, { nonNullable: true }),
+      packagingLines: new FormControl(state.packagingLines, {
+        nonNullable: true,
+      }),
+      sumPiecesPackaging: new FormControl(state.sumPiecesPackaging, {
+        nonNullable: true,
+      }),
       filamentLines: new FormControl(state.filamentLines, {
         nonNullable: true,
       }),
@@ -275,6 +289,8 @@ export class ProductFormStateManagerService {
         prints: state.prints,
         pressCycles: state.pressCycles,
         supplyLines: state.supplyLines,
+        packagingLines: state.packagingLines,
+        sumPiecesPackaging: state.sumPiecesPackaging,
         filamentLines: state.filamentLines,
       },
       { emitEvent: false },
@@ -306,6 +322,11 @@ export class ProductFormStateManagerService {
     state.discountAmount =
       Number(product.discountAmount) > 0 ? Number(product.discountAmount) : null;
     state.categoryIds = [...product.categoryIds];
+    state.packagingLines = structuredClone(product.packagingSupplies ?? []).map(
+      (line) => ({ ...line, colorId: normalizeColorId(line.colorId) }),
+    );
+    state.sumPiecesPackaging =
+      product.type === ProductType.COMBO && product.sumPiecesPackaging === true;
 
     const sanitizedImages = sanitizePersistableProductImages(product.images);
     state.images = sanitizedImages.images;
