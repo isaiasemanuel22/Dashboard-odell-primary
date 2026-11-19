@@ -1427,7 +1427,13 @@ export class OrderFormLineComponent implements OnInit {
           Number(this.line.unitCost) + nowValue - fromValue,
         );
       }
-      if (!this.line.unitPriceManual) {
+      // Producto con precio fijo: el fijo es final, el packaging solo mueve el costo (§16.1.1).
+      const fixedPrice =
+        Number(
+          this.products.find((p) => p.id === this.line.productId)
+            ?.suggestedPrice,
+        ) > 0;
+      if (!this.line.unitPriceManual && !fixedPrice) {
         this.line.unitPrice = Math.max(
           0,
           (Number(this.line.unitPrice) || 0) +

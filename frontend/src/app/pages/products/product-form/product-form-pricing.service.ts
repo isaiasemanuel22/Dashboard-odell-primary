@@ -911,12 +911,11 @@ export class ProductFormPricingService {
   }
 
   /**
-   * Insumos que se suman al precio fijo. En un combo el fijo es la lista
-   * completa y no lleva insumos encima (§16.1.3); en el resto, sí (§16.3).
+   * Con precio fijo, el fijo es el precio de lista final en todos los tipos:
+   * no se le suma nada encima (insumos, packaging ni armado) (§16.1.1).
    */
   private fixedPriceSupplyAddon(): number {
-    if (this.context && isFormCombo(this.context.form)) return 0;
-    return this.catalogSupplyPrice() + this.catalogPackagingPrice();
+    return 0;
   }
 
   /** Precio de insumos del catálogo: valor × 2 + error (§16.3). */

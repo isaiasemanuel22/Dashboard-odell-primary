@@ -250,6 +250,8 @@ export function piecePriceWithoutPackaging(
   unitPriceOf?: (supplyId: string) => number,
 ): number {
   if (!part || !unitPriceOf) return price;
+  // Con precio fijo el fijo no trae packaging encima (§16.1.1).
+  if (Number(part.suggestedPrice) > 0) return price;
   return Math.max(
     0,
     price -
@@ -323,7 +325,11 @@ export function resolveProductUnitCost(
 
 export function resolveProductUnitPrice(
   product:
-    | Pick<Product, 'id' | 'type' | 'includesPieces' | 'components' | 'price'>
+    | (Pick<
+        Product,
+        'id' | 'type' | 'includesPieces' | 'components' | 'price'
+      > &
+        Partial<Pick<Product, 'suggestedPrice'>>)
     | undefined,
   catalog: Product[],
   visiting: Set<string> = new Set(),
@@ -331,6 +337,10 @@ export function resolveProductUnitPrice(
 ): number {
   if (!product) return 0;
   if (visiting.has(product.id)) return product.price ?? 0;
+  // Precio fijo (§16.1.1): el fijo es la lista final, sin sumar piezas ni extras.
+  if (Number(product.suggestedPrice) > 0 && (product.price ?? 0) > 0) {
+    return product.price ?? 0;
+  }
   // Combo usado como pieza de otro: cuenta su precio propio, no la suma de sus piezas.
   if (
     visiting.size > 0 &&

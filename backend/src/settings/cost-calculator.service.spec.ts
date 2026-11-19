@@ -686,7 +686,7 @@ describe('CostCalculatorService', () => {
     expect(withSupply.profit).toBe(1300);
   });
 
-  it('suma el insumo (costo × 2) encima del precio sugerido', () => {
+  it('con precio fijo el insumo suma al costo pero no al precio (§16.1.1)', () => {
     store.generalSettings.errorMarginPercent = 0;
     store.supplies.push({
       id: 'sup-polimero',
@@ -712,8 +712,8 @@ describe('CostCalculatorService', () => {
     });
 
     expect(result.cost).toBe(1800);
-    expect(result.price).toBe(2000 + 1600);
-    expect(result.profit).toBe(1800);
+    expect(result.price).toBe(2000);
+    expect(result.profit).toBe(200);
   });
 
   it('no mete los insumos del producto en el costo de material del estampado', () => {

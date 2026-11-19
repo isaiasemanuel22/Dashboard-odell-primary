@@ -23,6 +23,8 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `products.sum_pieces_packaging`, `order_items.packaging_supplies`, `quote_items.packaging_supplies`).
   Falta: descuento en venta de mostrador (regla por definir) y que el aviso de «productos
   afectados» de un insumo cuente el packaging.
+- En la misma rama: precio fijo = precio final en todos los tipos (§16.1.1). Productos
+  FDM/Estampado con fijo guardados antes cobran fijo + insumos hasta recalcular su precio.
 - `feat/chats` (sin publicar): sección Chats v7; necesita `db:push:heroku` (tablas de chats).
   La sesión de Meta (`claude/meta-agentes-3d0324`) depende de esa rama.
 - `feat/ferias` ya unida a `main` (publicada 2026-11-18). Falta probar
@@ -35,8 +37,6 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   margen de error ni con la lista de combos: cada producto con insumos los toma
   al usar «Usar precio calculado» o «Actualizar precios».
 - Errores reportados: corregidos hasta E135 (en la rama); E132 sin reproducir; E136–E138 pendientes.
-- Productos de Estampado con precio fijo guardados antes de `ce64767` tienen la
-  lista sin insumos: se corrigen al volver a guardarlos.
 - Ramas viejas ya unidas (borrables con OK): feat/3mf-purga,
   feat/bobinas-reposicion, feat/cola-por-impresora, feat/rediseno-faltantes,
   fix/errores-tanda-1, docs/deploy-netlify.
@@ -70,8 +70,6 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   Ajustes, borrar productos o cargar egresos (§16.2 y §22 dicen otra cosa). ¿Alcance?
 - Calendario: repetición mensual un día 29–31 (hoy no aparece en meses cortos) y
   completar un recordatorio repetido (hoy se completa en todas las fechas).
-- Precio fijo en FDM/Estampado: hoy suma insumos × 2 + error encima del fijo; §16.1.3
-  solo lo define para combos.
 - Esc en un formulario con datos (Billetera) cierra sin confirmar; tocar afuera en
   Proveedor sí confirma. ¿Unificar?
 - Diseño v3 (merch): ¿la seña es obligatoria (50% desde 20 prendas) y frena

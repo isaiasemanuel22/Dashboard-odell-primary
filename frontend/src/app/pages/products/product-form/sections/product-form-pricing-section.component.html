@@ -105,7 +105,7 @@
       </div>
     </dl>
 
-    @if (!facade.usesPieceAssembly && !priceManual && (supplyCost > 0 || packagingCost > 0) && vm.price > 0) {
+    @if (!facade.usesPieceAssembly && priceMode !== 'fixed' && (supplyCost > 0 || packagingCost > 0) && vm.price > 0) {
       @let labor = vm.costBreakdown?.laborCost ?? 0;
       <div class="price-build">
       <p class="price-build__title">Cómo se arma el precio calculado</p>
@@ -152,7 +152,7 @@
           <span>Margen real (sin mano de obra)</span>
           <strong [class.is-loss]="realMargin < 0">{{ realMargin }}%</strong>
         </div>
-        @if (supplyCost > 0 && realMargin < targetMarginPercent) {
+        @if (supplyCost > 0 && realMargin < targetMarginPercent && priceMode !== 'fixed') {
           <p class="price-margin__note">
             Es menor al objetivo porque los insumos llevan × 2 y no el margen del área.
           </p>
@@ -201,10 +201,10 @@
         />
       </div>
       <p class="price-note">{{ unitPriceHint(vm.price, vm.totalCost, vm.costBreakdown?.laborCost ?? 0) }}</p>
-      @if (supplyCost > 0 && !(facade.isCombo && priceManual)) {
+      @if (supplyCost > 0 && priceMode !== 'fixed') {
         <p class="price-note">Insumos (× 2 + margen de error) en el precio: {{ supplyPrice | currencyArs }}</p>
       }
-      @if (packagingCost > 0 && !(facade.isCombo && priceManual)) {
+      @if (packagingCost > 0 && priceMode !== 'fixed') {
         <p class="price-note">Packaging (+ 25 %) en el precio: {{ packagingPrice | currencyArs }}</p>
       }
       @if (priceMode === 'fixed') {
@@ -253,6 +253,7 @@
           <strong>{{ vm.componentsPrice | currencyArs }}</strong>
         </div>
         @if (hasDiscount) {
+          @if (priceMode !== 'fixed') {
           @if ((vm.costBreakdown?.laborCost ?? 0) > 0) {
             <div>
               <span>Armado</span>
@@ -270,6 +271,7 @@
               <span>Packaging (+ 25 %)</span>
               <strong>{{ packagingPrice | currencyArs }}</strong>
             </div>
+          }
           }
           <div>
             <span>Descuento del combo ({{ discountTag }})</span>

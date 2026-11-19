@@ -177,10 +177,12 @@ export class ProductPricingService {
     }
     const errorMarginPercent = Number(settings.errorMarginPercent) || 0;
     // Insumos: valor × 2 + error (el error no lleva el recargo) (§16.3).
-    const price =
-      processPrice +
-      supplyPriceFromValue(supplyValue, errorMarginPercent) +
-      packagingPriceFromValue(packagingValue);
+    // Precio fijo (todos los tipos): el fijo es la lista final, sin sumar nada (§16.1.1).
+    const price = suggested
+      ? processPrice
+      : processPrice +
+        supplyPriceFromValue(supplyValue, errorMarginPercent) +
+        packagingPriceFromValue(packagingValue);
     const fullCost =
       processCost +
       supplyCostFromValue(supplyValue, errorMarginPercent) +

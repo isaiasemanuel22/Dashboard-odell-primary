@@ -1076,6 +1076,12 @@ obra suma $1.000 al precio, no $2.000. Las líneas de Diseño y Modelado tienen
 tarifa y margen propios y no cambian. Los precios guardados no cambian hasta
 usar «Actualizar precios».
 
+**Precio fijo** (confirmado por Isaías el 2026-11-19): en todos los productos
+(FDM, resina, estampado y combos), si el producto tiene precio fijo, **el fijo
+es el precio de lista final**. No se le suma nada encima: ni insumos, ni
+packaging (§27), ni mano de obra o armado. El costo sigue incluyendo todo,
+así que la ganancia y el margen real lo reflejan.
+
 ### 16.1.2 Descuento del producto
 
 Confirmado el 2026-11-15. Un producto o combo del catálogo puede tener un
@@ -2237,7 +2243,7 @@ Decidido por Isaías el 2026-11-19.
 - Costo: el valor del packaging (cantidad × precio unitario) entra al costo
   del producto.
 - Precio: suma **costo del packaging × 1,25**. No lleva margen de error ni el
-  × 2 de los insumos (§16).
+  × 2 de los insumos (§16). Con precio fijo no se suma (§16.1.1).
 
 ### 27.3 Pedidos y presupuestos
 

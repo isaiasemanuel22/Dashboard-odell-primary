@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · Precio fijo = precio final en todos los productos
+Rama: feat/packaging · Commits: ver `git log` (feat(precios))
+Hecho: con precio fijo, el fijo es la lista final en FDM, resina, estampado y combos: no suma insumos × 2, packaging × 1,25 ni armado; el costo sigue completo. Backend (`cost-calculator.service.ts`) y frontend (`priceWithSupplies`, formulario, líneas de pedido: quitar packaging de una línea con fijo solo baja el costo). En modo Fijo la caja de precio no muestra «Cómo se arma el precio calculado» ni notas de insumos. QA: prod-45 fijo $9.000 exacto (costo $4.911), pedido sin cambio de precio al quitar la caja, combo fijo $10.000 exacto; prod-45 quedó de nuevo en calculado. Jest 559, Angular 163.
+Decisiones: de Isaías (§16.1.1): la regla del combo («el fijo es la lista») vale para todos los productos con precio fijo.
+Pendiente: los productos con fijo guardados antes siguen con su lista vieja (fijo + insumos) hasta recalcular; el texto «Calculado $…» bajo el precio unitario muestra el fijo en vez del calculado; en el combo, «Suma de piezas» de la tarjeta y del editor no coinciden.
+
 ## 2026-11-19 · Packaging (§27)
 Rama: feat/packaging · Commits: ver `git log` (feat(packaging))
 Hecho: categoría de insumo «Packaging»; campo `packagingSupplies` en producto, ítem de pedido y de presupuesto, y `sumPiecesPackaging` en producto (columnas JSON/bool nuevas, en local agregadas a mano). Sección «Packaging» debajo de «Insumos» en producto, líneas de pedido y presupuesto (selectores separados). Costo = valor; precio = valor × 1,25 sin margen de error, mismo cálculo en backend y frontend (paridad). Combo: packaging propio + tilde «Sumar el packaging de las piezas» (apagado); las piezas entran sin su packaging. Stock al entregar (`packaging-delivery.util.ts`) y refresco de Insumos tras entregar. Detalle de producto con línea «Packaging». QA en local: prod-45 +$1.000 costo / +$1.250 precio, combo prod-54 con y sin tilde, entregas ord-66/ord-67 descuentan cajas, presupuesto qpe-37. Jest 556, Angular 159, builds OK.

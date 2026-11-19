@@ -365,9 +365,11 @@ export class CostCalculatorService {
       components.length > 0;
 
     // El precio guardado ya trae su packaging; como pieza se descuenta (§27.4).
-    const ownPackagingPrice = includePackaging
-      ? 0
-      : packagingPriceFromValue(this.supplyValue(product.packagingSupplies));
+    // Con precio fijo el fijo no trae packaging encima (§16.1.1): no se descuenta.
+    const ownPackagingPrice =
+      includePackaging || Number(product.suggestedPrice) > 0
+        ? 0
+        : packagingPriceFromValue(this.supplyValue(product.packagingSupplies));
 
     if (!usesPieceAssembly || components.length === 0) {
       return Math.max(0, (product.price ?? 0) - ownPackagingPrice);
@@ -553,14 +555,14 @@ export class CostCalculatorService {
             laborCost,
           );
     // Insumos: valor × 2 + error del insumo (sin el recargo sobre el error) (§16.3).
-    // Combo con precio fijo: el fijo es la lista completa, no se le suman insumos (§16.1.3).
-    // Packaging: costo × 1,25, sin margen de error ni × 2 (§27.2); sigue la misma regla de precio fijo.
-    const price =
-      input.type === ProductType.COMBO && fixedPrice
-        ? processPrice
-        : processPrice +
-          supplyPriceFromValue(supplyValue, errorMarginPercent) +
-          packagingPriceFromValue(packagingValue);
+    // Precio fijo (todos los tipos): el fijo es la lista final, no se le suma
+    // nada encima (insumos, packaging ni armado) (§16.1.1).
+    // Packaging: costo × 1,25, sin margen de error ni × 2 (§27.2).
+    const price = fixedPrice
+      ? processPrice
+      : processPrice +
+        supplyPriceFromValue(supplyValue, errorMarginPercent) +
+        packagingPriceFromValue(packagingValue);
     const profit = price - cost;
     const configuredMarginPercent = this.getMarginForProductType(input.type);
 

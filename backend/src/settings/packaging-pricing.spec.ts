@@ -65,7 +65,7 @@ describe('packaging (§27)', () => {
       service = new CostCalculatorService(store);
     });
 
-    it('producto con precio fijo: suma el valor al costo y valor × 1,25 al precio', () => {
+    it('producto con precio fijo: suma el valor al costo; el precio queda en el fijo (§16.1.1)', () => {
       const base = {
         type: ProductType.FDM,
         grams: 0,
@@ -77,8 +77,50 @@ describe('packaging (§27)', () => {
         ...base,
         packagingSupplies: [{ id: 'k1', supplyId: 'sup-caja', quantity: 2 }],
       });
-      // 2 × 400 = 800; precio 800 × 1,25 = 1000 (sin margen de error).
+      // 2 × 400 = 800 al costo; el precio fijo no lleva packaging encima.
       expect(result.cost).toBe(without.cost + 800);
+      expect(result.price).toBe(5000);
+      expect(without.price).toBe(5000);
+    });
+
+    it('estampado con precio fijo + insumos + packaging: precio = fijo, costo = todo', () => {
+      store.generalSettings.errorMarginPercent = 0;
+      const result = service.calculateProductPricing({
+        type: ProductType.ESTAMPADO,
+        cost: 1000,
+        suggestedPrice: 7000,
+        estampadoSupplies: [{ id: 's1', supplyId: 'sup-caja', quantity: 1 }],
+        packagingSupplies: [{ id: 'k1', supplyId: 'sup-caja', quantity: 2 }],
+      });
+      expect(result.price).toBe(7000);
+      const withoutFixed = service.calculateProductPricing({
+        type: ProductType.ESTAMPADO,
+        cost: 1000,
+        estampadoSupplies: [{ id: 's1', supplyId: 'sup-caja', quantity: 1 }],
+        packagingSupplies: [{ id: 'k1', supplyId: 'sup-caja', quantity: 2 }],
+      });
+      // El costo incluye todo (insumos y packaging), igual con o sin fijo.
+      expect(result.cost).toBe(withoutFixed.cost);
+      expect(result.cost).toBeGreaterThanOrEqual(800);
+    });
+
+    it('combo con precio fijo: precio = fijo', () => {
+      const result = service.calculateProductPricing({
+        type: ProductType.COMBO,
+        cost: 1000,
+        suggestedPrice: 7000,
+        packagingSupplies: [{ id: 'k1', supplyId: 'sup-caja', quantity: 2 }],
+      });
+      expect(result.price).toBe(7000);
+    });
+
+    it('sin precio fijo sigue sumando packaging × 1,25', () => {
+      const base = { type: ProductType.FDM, grams: 0, cost: 2000 };
+      const without = service.calculateProductPricing(base);
+      const result = service.calculateProductPricing({
+        ...base,
+        packagingSupplies: [{ id: 'k1', supplyId: 'sup-caja', quantity: 2 }],
+      });
       expect(result.price).toBe(without.price + 1000);
     });
 

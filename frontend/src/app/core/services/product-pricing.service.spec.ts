@@ -229,4 +229,40 @@ describe('ProductPricingService.priceWithSupplies', () => {
       expect(result.price).toBe(7000);
     });
   });
+
+  describe('precio fijo (§16.1.1)', () => {
+    for (const type of [
+      ProductType.FDM,
+      ProductType.ESTAMPADO,
+      ProductType.RESINA,
+    ]) {
+      it(`${type} con fijo + insumos + packaging: precio = fijo, costo = todo`, () => {
+        const result = service.priceWithSupplies(
+          { type, suggestedPrice: 9000 },
+          1000,
+          500,
+          [],
+          settings,
+          0,
+          800,
+        );
+        expect(result.price).toBe(9000);
+        expect(result.cost).toBe(1000 + 500 + 800);
+        expect(result.profit).toBe(9000 - 2300);
+      });
+    }
+
+    it('sin precio fijo sigue sumando insumos y packaging', () => {
+      const result = service.priceWithSupplies(
+        { type: ProductType.FDM },
+        1000,
+        500,
+        [],
+        settings,
+        0,
+        800,
+      );
+      expect(result.price).toBe(2000 + 1000 + 1000);
+    });
+  });
 });
