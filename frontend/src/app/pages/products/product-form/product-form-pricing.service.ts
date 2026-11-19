@@ -542,7 +542,7 @@ export class ProductFormPricingService {
 
     this.pricingPreviewSub = this.productPricing
       .preview(
-        this.buildPricingInput(),
+        this.buildPricingInput({ ignoreFixedPrice: true }),
         this.context.catalogProducts,
         settings,
       )
@@ -678,7 +678,7 @@ export class ProductFormPricingService {
     const supplyCost = this.catalogSupplyCost();
     const packagingValue = this.catalogPackagingValue();
     const result = this.productPricing.priceWithSupplies(
-      this.buildPricingInput(),
+      this.buildPricingInput({ ignoreFixedPrice: true }),
       Math.max(0, costValue - supplyCost - packagingValue),
       supplyValue,
       this.context.catalogProducts,
@@ -692,7 +692,11 @@ export class ProductFormPricingService {
     this.emitChange();
   }
 
-  private buildPricingInput() {
+  /**
+   * `ignoreFixedPrice`: el preview calcula el precio «Calculado» aunque haya
+   * precio fijo, para poder mostrarlo al lado del fijo (§16.1.1).
+   */
+  private buildPricingInput(options: { ignoreFixedPrice?: boolean } = {}) {
     if (!this.context) {
       throw new Error('ProductFormPricingService: context not bound');
     }
@@ -705,7 +709,7 @@ export class ProductFormPricingService {
       v.type === ProductType.COMBO || v.includesPieces,
       v.components,
       v.assemblyTimeHours,
-      v.suggestedPrice,
+      options.ignoreFixedPrice ? null : v.suggestedPrice,
       this.cost,
       this.context.product?.cost,
       v.type === ProductType.COMBO,

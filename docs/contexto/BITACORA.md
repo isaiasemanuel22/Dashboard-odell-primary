@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · «Calculado» con precio fijo muestra el calculado real
+Rama: feat/packaging · Commits: ver `git log` (fix(productos))
+Hecho: el preview del formulario de producto usaba el fijo y «Calculado $X» mostraba el fijo; ahora el preview ignora el fijo (`ignoreFixedPrice` en `product-form-pricing.service.ts`). QA: prod-45 fijo $9.000 → «Calculado $ 7.822», combo prod-54 → $ 9.072, reabrir no cambia de modo, Remera estampada DTF abre en Fijo $25.000. Angular 165.
+Decisiones: Isaías pidió corregirlo.
+Pendiente: parpadeo en $0 al abrir la edición; la lista de productos no siempre deja ver si es Fijo o Calculado.
+
 ## 2026-11-19 · Precio fijo = precio final en todos los productos
 Rama: feat/packaging · Commits: ver `git log` (feat(precios))
 Hecho: con precio fijo, el fijo es la lista final en FDM, resina, estampado y combos: no suma insumos × 2, packaging × 1,25 ni armado; el costo sigue completo. Backend (`cost-calculator.service.ts`) y frontend (`priceWithSupplies`, formulario, líneas de pedido: quitar packaging de una línea con fijo solo baja el costo). En modo Fijo la caja de precio no muestra «Cómo se arma el precio calculado» ni notas de insumos. QA: prod-45 fijo $9.000 exacto (costo $4.911), pedido sin cambio de precio al quitar la caja, combo fijo $10.000 exacto; prod-45 quedó de nuevo en calculado. Jest 559, Angular 163.
