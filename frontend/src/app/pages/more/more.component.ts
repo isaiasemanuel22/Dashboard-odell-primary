@@ -11,6 +11,7 @@ import { Router, RouterLink } from '@angular/router';
 import { map } from 'rxjs';
 import { AuthService } from '../../core/auth/auth.service';
 import { BreakpointService } from '../../core/services/breakpoint.service';
+import { ChatsUnreadService } from '../../core/services/chats-unread.service';
 import { RealtimeService } from '../../core/services/realtime.service';
 import { readRealtimeSyncEnabled } from '../../core/services/realtime-sync.preference';
 import { UserAccessService } from '../../core/services/user-access.service';
@@ -49,6 +50,7 @@ export class MoreComponent implements OnInit {
   private readonly router = inject(Router);
   private readonly realtime = inject(RealtimeService);
   private readonly suppliesFacade = inject(SuppliesFacade);
+  private readonly chatsUnread = inject(ChatsUnreadService);
 
   readonly authEnabled = this.auth.enabled;
   readonly realtimeSyncEnabled = signal(readRealtimeSyncEnabled());
@@ -120,6 +122,12 @@ export class MoreComponent implements OnInit {
   readonly tiles = computed<MoreTile[]>(() => {
     const lowStock = this.lowStockCount();
     return [
+      {
+        label: 'Chats',
+        subtitle: `${this.chatsUnread.count()} sin leer`,
+        route: '/chats',
+        icon: 'chats',
+      },
       {
         label: 'Presupuestos',
         subtitle: 'Cotizaciones y PDF',

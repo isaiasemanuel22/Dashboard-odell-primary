@@ -1924,3 +1924,4 @@ export interface CurrentUserProfile extends AppUser {
 export type CurrentUserResponse = CurrentUserProfile | { authenticated: false };
 
 export * from './fair.model';
+export * from './chat.model';

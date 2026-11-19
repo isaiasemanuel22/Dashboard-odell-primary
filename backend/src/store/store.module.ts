@@ -2,6 +2,7 @@ import { forwardRef, Global, Module } from '@nestjs/common';
 import { RealtimeModule } from '../realtime/realtime.module';
 import {
   CategoryRepository,
+  ChatRepository,
   CustomerRepository,
   FairRepository,
   OrderRepository,
@@ -22,6 +23,7 @@ import { StoreService } from './store.service';
     StoreService,
     StorePersistenceService,
     StoreChangeService,
+    ChatRepository,
     CustomerRepository,
     FairRepository,
     OrderRepository,
@@ -36,6 +38,7 @@ import { StoreService } from './store.service';
     StoreService,
     StorePersistenceService,
     StoreChangeService,
+    ChatRepository,
     CustomerRepository,
     FairRepository,
     OrderRepository,

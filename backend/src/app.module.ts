@@ -12,6 +12,7 @@ import { CalendarModule } from './calendar/calendar.module';
 import { PrintJobsModule } from './print-jobs/print-jobs.module';
 import { ProductsModule } from './products/products.module';
 import { FairsModule } from './fairs/fairs.module';
+import { ChatsModule } from './chats/chats.module';
 import { SalesModule } from './sales/sales.module';
 import { SettingsModule } from './settings/settings.module';
 import { StoreModule } from './store/store.module';
@@ -58,6 +59,7 @@ import { McpModule } from './mcp/mcp.module';
     PrintJobsModule,
     SalesModule,
     FairsModule,
+    ChatsModule,
     TreasuryModule,
     AlertsModule,
     AgentApprovalsModule,

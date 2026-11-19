@@ -155,6 +155,7 @@ export const ATTACHMENT_UPLOAD_FOLDERS = [
   'products',
   'orders',
   'quotes',
+  'chats',
 ] as const;
 
 /** Lista blanca de carpeta; `products` por defecto. Lanza si no está permitida. */

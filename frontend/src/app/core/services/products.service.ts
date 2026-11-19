@@ -153,7 +153,7 @@ export class ProductsService {
 
   uploadAttachment(
     file: File,
-    folder?: 'orders' | 'quotes',
+    folder?: 'orders' | 'quotes' | 'chats',
   ): Observable<{
     url: string;
     name: string;

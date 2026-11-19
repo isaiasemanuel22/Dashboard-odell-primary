@@ -1,0 +1,145 @@
+@use '../../shared/styles/variables' as *;
+@use '../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.chats__grid {
+  display: grid;
+  // Laterales más angostos en pantallas chicas para que la conversación tenga ancho.
+  grid-template-columns: clamp(280px, 22vw, 340px) minmax(0, 1fr) clamp(260px, 20vw, 320px);
+  gap: 16px;
+  align-items: stretch;
+  // Alto de pantalla menos encabezado y padding de la página.
+  height: calc(100vh - 9rem);
+  min-height: 560px;
+}
+
+.chats__panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  background: $color-surface;
+  border: 1px solid $color-border-soft;
+  border-radius: 12px;
+  overflow: hidden;
+}
+
+.chats__aside {
+  min-width: 0;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.chats__placeholder {
+  justify-content: center;
+}
+
+.chats-m__unread {
+  font-size: 12px;
+  color: mobile.$m-text-secondary;
+  padding-right: 8px;
+  white-space: nowrap;
+}
+
+// Conversación a pantalla completa por encima de la bandeja: la lista queda
+// debajo con su scroll intacto al volver.
+.chats-m__conv {
+  position: fixed;
+  inset: 0;
+  // Sobre la barra de la lista (195); las hojas y diálogos viven adentro o en el overlay de CDK.
+  z-index: 196;
+  display: flex;
+  flex-direction: column;
+  background: mobile.$m-bg;
+}
+
+// Misma base que `.m-bar` de db-mobile-bar, con avatar y línea de canal.
+.chats-m__bar {
+  height: mobile.$mobile-header-height;
+  background: mobile.$m-surface;
+  border-bottom: 1px solid mobile.$m-border;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  flex: none;
+}
+
+.chats-m__avatar-wrap {
+  position: relative;
+  display: inline-flex;
+  flex: none;
+}
+
+.chats-m__avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: $radius-pill;
+  background: mobile.$m-primary-pale;
+  color: mobile.$m-primary-dark;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 12px;
+}
+
+.chats-m__channel {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: $color-surface;
+  border: 1px solid mobile.$m-border;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chats-m__who {
+  flex: 1;
+  min-width: 0;
+  margin-left: 2px;
+}
+
+.chats-m__name {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: mobile.$m-text;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chats-m__line {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: mobile.$m-text-secondary;
+}
+
+.chats-m__line-text {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.chats-m__empty {
+  align-items: flex-start;
+  gap: 12px;
+
+  p {
+    margin: 0;
+    color: mobile.$m-text-secondary;
+    font-size: 14px;
+  }
+}

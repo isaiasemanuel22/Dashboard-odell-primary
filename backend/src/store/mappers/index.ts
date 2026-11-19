@@ -15,3 +15,4 @@ export * from './fair.mapper';
 export * from './supplier.mapper';
 export * from './spool.mapper';
 export * from './supply-movement.mapper';
+export * from './chat.mapper';

@@ -4,6 +4,11 @@ import {
   CalendarLinkType,
   CalendarNotify,
   CalendarRepeat,
+  ChatAuthor,
+  ChatChannel,
+  ChatDirection,
+  ChatMessageStatus,
+  ChatStatus,
   CustomerSource,
   CustomerType,
   FairStatus,
@@ -1478,4 +1483,79 @@ export interface FairPlanItem {
 export interface FairPlan {
   basedOn: number;
   items: FairPlanItem[];
+}
+
+export interface ChatConversation {
+  id: string;
+  channel: ChatChannel;
+  /** Teléfono (WhatsApp) o id del usuario en Instagram/Messenger. */
+  externalId: string;
+  displayName: string | null;
+  displayPhone: string | null;
+  customerId: string | null;
+  handedOff: boolean;
+  /** El agente automático no responde en este chat. */
+  agentPaused: boolean;
+  lastReadAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  direction: ChatDirection;
+  author: ChatAuthor;
+  authorUserId: string | null;
+  text: string;
+  attachments: ProductAttachment[];
+  status: ChatMessageStatus;
+  externalMessageId: string | null;
+  quoteId: string | null;
+  sentAt: string;
+  updatedAt: string;
+}
+
+export interface ChatSummary {
+  id: string;
+  channel: ChatChannel;
+  externalId: string;
+  displayName: string | null;
+  displayPhone: string | null;
+  /** Nombre del cliente vinculado; si no hay, el del canal. */
+  contactName: string | null;
+  customerId: string | null;
+  status: ChatStatus;
+  agentPaused: boolean;
+  unreadCount: number;
+  pendingSuggestions: number;
+  lastMessageAt: string | null;
+  lastMessagePreview: string | null;
+  lastMessageDirection: ChatDirection | null;
+  lastInboundAt: string | null;
+  windowOpen: boolean;
+  windowExpiresAt: string | null;
+}
+
+export interface ChatDetail {
+  conversation: ChatSummary;
+  messages: ChatMessage[];
+  suggestionQuotes: Record<
+    string,
+    {
+      id: string;
+      status: QuoteStatus;
+      total: number;
+      items: Array<{
+        productName: string;
+        quantity: number;
+        unitPrice: number;
+      }>;
+    }
+  >;
+  customer: Customer | null;
+  customerContext: {
+    lastOrder: { id: string; total: number; createdAt: string } | null;
+    openQuotes: Array<{ id: string; status: QuoteStatus; total: number }>;
+  } | null;
 }

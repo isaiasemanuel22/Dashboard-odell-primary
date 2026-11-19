@@ -25,6 +25,24 @@ describe('route-registry', () => {
     ]);
   });
 
+  it('las rutas de chats solo tocan conversaciones y mensajes', () => {
+    expect(routeMutationMetaFromPath('/api/chats/chat-1/customer')).toEqual({
+      collections: ['chatConversations', 'chatMessages'],
+      scopes: ['chats'],
+      entity: 'chat',
+    });
+    expect(routeMutationMetaFromPath('/api/chats/chat-1/agent-paused')).toEqual(
+      {
+        collections: ['chatConversations', 'chatMessages'],
+        scopes: ['chats'],
+        entity: 'chat',
+      },
+    );
+    expect(
+      shouldTrackHttpMutation('/api/chats/chat-1/agent-paused', 'PUT'),
+    ).toBe(true);
+  });
+
   it('detecta mutaciones HTTP rastreables', () => {
     expect(shouldTrackHttpMutation('/api/products', 'POST')).toBe(true);
     expect(

@@ -6,6 +6,8 @@ import { createSeedState } from '../src/store/store.seed';
 import {
   mapBrandToDb,
   mapCategoryToDb,
+  mapChatConversationToDb,
+  mapChatMessageToDb,
   mapCustomerToDb,
   mapImpresoToDb,
   mapOrderItemToDb,
@@ -71,6 +73,8 @@ async function main(): Promise<void> {
       treasury: await prisma.treasuryExpense.count(),
       printJobs: await prisma.printJob.count(),
       users: await prisma.appUser.count(),
+      chatConversations: await prisma.chatConversation.count(),
+      chatMessages: await prisma.chatMessage.count(),
     };
     console.log('Antes:', counts);
 
@@ -204,6 +208,20 @@ async function main(): Promise<void> {
         data: mapTreasuryExpenseToDb(movement),
       });
       created.push(`movimiento ${movement.name}`);
+    }
+
+    if (counts.chatConversations === 0 && counts.chatMessages === 0) {
+      for (const conversation of state.chatConversations) {
+        await prisma.chatConversation.create({
+          data: mapChatConversationToDb(conversation),
+        });
+      }
+      for (const message of state.chatMessages) {
+        await prisma.chatMessage.create({ data: mapChatMessageToDb(message) });
+      }
+      created.push(
+        `${state.chatConversations.length} chats con ${state.chatMessages.length} mensajes`,
+      );
     }
 
     if (counts.users === 0) {

@@ -13,13 +13,26 @@ import {
   CalendarEntryKind,
   CalendarNotify,
   CalendarRepeat,
+  ChatAuthor,
+  ChatChannel,
+  ChatDirection,
+  ChatMessageStatus,
+  CustomerSource,
   CustomerType,
   FairStatus,
   PaymentMethod,
 } from '../common/enums';
 import { adoptLegacyBrandNames } from './brand-link.util';
 import { StoreState } from './store.state';
-import { Fair, Product, Order, RetailSale } from '../common/interfaces';
+import {
+  ChatConversation,
+  ChatMessage,
+  Fair,
+  Product,
+  Order,
+  Quote,
+  RetailSale,
+} from '../common/interfaces';
 import { defaultAccountForMethod } from '../treasury/treasury-account.util';
 import { createDefaultMachineProfiles } from '../settings/machine-profile.util';
 import { ensureOrderStatusHistory } from '../orders/order-status-history.util';
@@ -100,6 +113,8 @@ export function createEmptyState(): StoreState {
     suppliers: [],
     spools: [],
     supplyMovements: [],
+    chatConversations: [],
+    chatMessages: [],
   };
 }
 
@@ -668,6 +683,15 @@ export function createSeedState(): StoreState {
       wholesaleMinimum: 50000,
       createdAt: '2026-04-22T16:45:00.000Z',
     },
+    {
+      id: 'cust-5',
+      name: 'Martina Paz',
+      email: '',
+      phone: '+54 9 351 555-0142',
+      type: CustomerType.PARTICULAR,
+      source: CustomerSource.INSTAGRAM,
+      createdAt: '2026-11-02T15:20:00.000Z',
+    },
   ];
 
   const orders: Order[] = [
@@ -885,6 +909,7 @@ export function createSeedState(): StoreState {
 
   const { fairs, fairSales } = buildSeedFairs();
   retailSales.push(...fairSales);
+  const seedChats = buildSeedChats(new Date());
 
   const ord1 = orders.find((order) => order.id === 'ord-1');
   if (ord1) {
@@ -977,6 +1002,7 @@ export function createSeedState(): StoreState {
       quotedAt: '2026-07-05T09:00:00.000Z',
       createdAt: '2026-07-05T09:00:00.000Z',
     },
+    seedChats.quote,
   ];
 
   const treasuryExpenses: StoreState['treasuryExpenses'] = [
@@ -1110,6 +1136,8 @@ export function createSeedState(): StoreState {
     suppliers: [],
     spools: [],
     supplyMovements: [],
+    chatConversations: seedChats.chatConversations,
+    chatMessages: seedChats.chatMessages,
   };
   adoptLegacyBrandNames(state);
   adoptLegacySuppliers(state);
@@ -1217,4 +1245,203 @@ function buildSeedFairs(): { fairs: Fair[]; fairSales: RetailSale[] } {
   });
 
   return { fairs, fairSales };
+}
+
+/**
+ * Ejemplo de chats con fechas relativas a `now`: 3 sin leer, 2 para aprobar
+ * y 1 derivado. La sugerencia de Martina trae el presupuesto `quo-4`.
+ */
+export function buildSeedChats(now: Date): {
+  chatConversations: ChatConversation[];
+  chatMessages: ChatMessage[];
+  quote: Quote;
+} {
+  const ago = (minutes: number) =>
+    new Date(now.getTime() - minutes * 60 * 1000).toISOString();
+  const HOUR = 60;
+  const DAY = 24 * HOUR;
+
+  const quote: Quote = {
+    id: 'quo-4',
+    customerId: 'cust-5',
+    customerName: 'Martina Paz',
+    services: [ServiceType.IMPRESION_3D],
+    items: [
+      {
+        serviceType: ServiceType.IMPRESION_3D,
+        productId: 'prod-10',
+        productName: 'Árbol de equilibrio (completo)',
+        quantity: 10,
+        unitPrice: 14500,
+      },
+    ],
+    status: QuoteStatus.BORRADOR,
+    total: 145000,
+    quotedAt: ago(2 * HOUR + 38),
+    createdAt: ago(2 * HOUR + 38),
+  };
+
+  const conversation = (
+    n: number,
+    channel: ChatChannel,
+    externalId: string,
+    data: Partial<ChatConversation> & { since: number },
+  ): ChatConversation => ({
+    id: `chat-${n}`,
+    channel,
+    externalId,
+    displayName: data.displayName ?? null,
+    displayPhone: data.displayPhone ?? null,
+    customerId: data.customerId ?? null,
+    handedOff: data.handedOff ?? false,
+    agentPaused: data.agentPaused ?? false,
+    lastReadAt: data.lastReadAt ?? null,
+    createdAt: ago(data.since),
+    updatedAt: ago(data.since),
+  });
+
+  const chatConversations = [
+    conversation(1, ChatChannel.WHATSAPP, '5493515550142', {
+      displayName: 'Martina Paz',
+      displayPhone: '+54 9 351 555-0142',
+      customerId: 'cust-5',
+      since: 2 * HOUR + 42,
+    }),
+    conversation(2, ChatChannel.INSTAGRAM, '17841400000000002', {
+      displayName: 'Café Aurora',
+      since: 35,
+    }),
+    conversation(3, ChatChannel.WHATSAPP, '5491155550198', {
+      displayName: 'Diego Martínez',
+      displayPhone: '+54 9 11 5555-0198',
+      handedOff: true,
+      agentPaused: true,
+      since: HOUR + 10,
+    }),
+    conversation(4, ChatChannel.WHATSAPP, '541144219087', {
+      displayPhone: '+54 11 4421-9087',
+      lastReadAt: ago(4 * HOUR + 50),
+      since: 5 * HOUR,
+    }),
+    conversation(5, ChatChannel.MESSENGER, '7310000000000005', {
+      displayName: 'Lucía Fernández',
+      customerId: 'cust-3',
+      lastReadAt: ago(21 * HOUR),
+      since: 22 * HOUR,
+    }),
+    conversation(6, ChatChannel.INSTAGRAM, '17841400000000006', {
+      displayName: 'María González',
+      customerId: 'cust-1',
+      lastReadAt: ago(2 * DAY - 10),
+      since: 2 * DAY,
+    }),
+  ];
+
+  const lines: Array<{
+    chat: number;
+    minutesAgo: number;
+    author: ChatAuthor;
+    text: string;
+    status?: ChatMessageStatus;
+    quoteId?: string;
+  }> = [
+    {
+      chat: 1,
+      minutesAgo: 2 * HOUR + 42,
+      author: ChatAuthor.CUSTOMER,
+      text: 'Hola! ¿Cuánto salen 10 árboles de equilibrio? Los necesito para el 28/11, son para regalar en un evento.',
+    },
+    {
+      chat: 1,
+      minutesAgo: 2 * HOUR + 41,
+      author: ChatAuthor.AGENT,
+      text: '¡Hola Martina! Te armo el presupuesto y te lo confirmo en unos minutos.',
+    },
+    {
+      chat: 1,
+      minutesAgo: 2 * HOUR + 38,
+      author: ChatAuthor.AGENT,
+      status: ChatMessageStatus.SUGGESTED,
+      quoteId: 'quo-4',
+      text: 'Martina, los 10 árboles de equilibrio salen $145.000 en total ($14.500 cada uno) y llegan para el 28/11. ¿Te lo confirmo?',
+    },
+    {
+      chat: 2,
+      minutesAgo: 35,
+      author: ChatAuthor.CUSTOMER,
+      text: 'Queremos 20 tazas con el logo',
+    },
+    {
+      chat: 2,
+      minutesAgo: 34,
+      author: ChatAuthor.AGENT,
+      status: ChatMessageStatus.SUGGESTED,
+      text: '¡Hola! Gracias por escribirnos. ¿Nos pasan el logo en buena calidad y para qué fecha las necesitan? Así les armamos el presupuesto.',
+    },
+    {
+      chat: 3,
+      minutesAgo: HOUR + 10,
+      author: ChatAuthor.CUSTOMER,
+      text: 'Necesito hablar por un reclamo',
+    },
+    {
+      chat: 4,
+      minutesAgo: 5 * HOUR,
+      author: ChatAuthor.CUSTOMER,
+      text: 'Hola, ¿hacen llaveros con nombre?',
+    },
+    {
+      chat: 4,
+      minutesAgo: 4 * HOUR + 50,
+      author: ChatAuthor.HUMAN,
+      text: '¡Hola! Sí, los hacemos. ¿Cuántos necesitás y con qué nombres?',
+    },
+    {
+      chat: 5,
+      minutesAgo: 22 * HOUR,
+      author: ChatAuthor.CUSTOMER,
+      text: 'Gracias, ya me llegaron las remeras. ¡Quedaron hermosas!',
+    },
+    {
+      chat: 5,
+      minutesAgo: 21 * HOUR,
+      author: ChatAuthor.HUMAN,
+      text: '¡Qué bueno, Lucía! Cualquier cosa nos escribís.',
+    },
+    {
+      chat: 6,
+      minutesAgo: 2 * DAY,
+      author: ChatAuthor.CUSTOMER,
+      text: '¿Tienen stock del tablero del árbol de equilibrio?',
+    },
+    {
+      chat: 6,
+      minutesAgo: 2 * DAY - 10,
+      author: ChatAuthor.HUMAN,
+      text: 'Sí, María, tenemos. ¿Te reservo uno?',
+    },
+  ];
+
+  const chatMessages: ChatMessage[] = lines.map((line, index) => {
+    const inbound = line.author === ChatAuthor.CUSTOMER;
+    const at = ago(line.minutesAgo);
+    return {
+      id: `cmsg-${index + 1}`,
+      conversationId: `chat-${line.chat}`,
+      direction: inbound ? ChatDirection.IN : ChatDirection.OUT,
+      author: line.author,
+      authorUserId: null,
+      text: line.text,
+      attachments: [],
+      status:
+        line.status ??
+        (inbound ? ChatMessageStatus.RECEIVED : ChatMessageStatus.SENT),
+      externalMessageId: null,
+      quoteId: line.quoteId ?? null,
+      sentAt: at,
+      updatedAt: at,
+    };
+  });
+
+  return { chatConversations, chatMessages, quote };
 }

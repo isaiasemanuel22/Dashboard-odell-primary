@@ -1,0 +1,166 @@
+@if (variant() === 'bar') {
+  <div class="chat-cust-m">
+    <button type="button" class="chat-cust-m__act chat-cust-m__act--p" (click)="createQuote()">
+      Crear presupuesto
+    </button>
+    <button type="button" class="chat-cust-m__act" [disabled]="busy()" (click)="createOrder()">
+      Crear pedido
+    </button>
+    @if (customer(); as c) {
+      <a class="chat-cust-m__act" [routerLink]="['/clientes', c.id]">Ver ficha</a>
+    } @else {
+      <button type="button" class="chat-cust-m__act" [disabled]="busy()" (click)="linkCustomer()">
+        Vincular cliente
+      </button>
+    }
+  </div>
+  @if (error()) {
+    <p class="chat-cust__error chat-cust__error--m" role="alert">{{ error() }}</p>
+  }
+
+  <db-mobile-sheet [open]="menuOpen()" ariaLabel="Más acciones" (closed)="closeMenu()">
+    @if (customer(); as c) {
+      <a class="m-sheet-action" [routerLink]="['/clientes', c.id]" (click)="closeMenu()">
+        Ver ficha de {{ c.name }}
+      </a>
+      <button type="button" class="m-sheet-action" (click)="linkCustomer()">
+        Vincular a otro cliente
+      </button>
+      <button type="button" class="m-sheet-action m-sheet-action--danger" (click)="unlinkCustomer()">
+        Desvincular cliente
+      </button>
+    } @else {
+      <button type="button" class="m-sheet-action" (click)="linkCustomer()">
+        Vincular a un cliente
+      </button>
+    }
+  </db-mobile-sheet>
+} @else {
+  <section class="chat-cust" aria-label="Cliente vinculado">
+    <div class="chat-cust__head">
+      <span class="chat-cust__title">Cliente vinculado</span>
+      @if (customer(); as c) {
+        <a [routerLink]="['/clientes', c.id]">Ver ficha</a>
+      }
+    </div>
+
+    @if (customer(); as c) {
+      <div class="chat-cust__who">
+        <span class="chat-cust__avatar" aria-hidden="true">{{ initials() }}</span>
+        <div>
+          <div class="chat-cust__name">{{ c.name }}</div>
+          @if (writesAs()) {
+            <div class="chat-cust__hint">Escribe como {{ writesAs() }}</div>
+          }
+          @if (typeLabel()) {
+            <span class="chat-cust__pill">{{ typeLabel() }}</span>
+          }
+        </div>
+      </div>
+    } @else {
+      <p class="chat-cust__hint">
+        Este chat todavía no está vinculado a un cliente. Vinculalo para ver sus compras y
+        crear pedidos.
+      </p>
+    }
+
+    <dl class="chat-cust__dl">
+      @if (customer()) {
+        <div>
+          <dt>Llegó por</dt>
+          <dd>{{ sourceLabel() }}</dd>
+        </div>
+      }
+      <div>
+        <dt>Canales del chat</dt>
+        <dd class="chat-cust__channel">
+          <app-chat-channel-icon [channel]="conversation().channel" [size]="16" />
+          {{ channelLine() }}
+        </dd>
+      </div>
+      @if (customer()) {
+        <div>
+          <dt>Última compra</dt>
+          <dd>
+            @if (context()?.lastOrder; as order) {
+              <a [routerLink]="['/pedidos', order.id]">{{ order.id }}</a>
+              · {{ order.total | currencyArs }} · {{ formatDate(order.createdAt) }}
+            } @else {
+              Todavía no compró
+            }
+          </dd>
+        </div>
+        <div>
+          <dt>Presupuestos abiertos</dt>
+          @for (quote of context()?.openQuotes ?? []; track quote.id) {
+            <dd>
+              <a [routerLink]="['/presupuestos', quote.id]">{{ quote.id }}</a>
+              · {{ quoteStatusLabel(quote.status) }} · {{ quote.total | currencyArs }}
+            </dd>
+          } @empty {
+            <dd>Ninguno</dd>
+          }
+        </div>
+      }
+    </dl>
+
+    <div class="chat-cust__actions">
+      <db-button
+        label="Crear presupuesto"
+        variant="primary"
+        format="solid"
+        [block]="true"
+        (clicked)="createQuote()"
+      />
+      <db-button
+        label="Crear pedido"
+        variant="secondary"
+        format="soft"
+        [block]="true"
+        [disabled]="busy()"
+        (clicked)="createOrder()"
+      />
+    </div>
+
+    @if (error()) {
+      <p class="chat-cust__error" role="alert">{{ error() }}</p>
+    }
+
+    <div class="chat-cust__links">
+      @if (customer()) {
+        <button type="button" class="chat-cust__link" [disabled]="busy()" (click)="linkCustomer()">
+          Vincular a otro cliente
+        </button>
+        <button
+          type="button"
+          class="chat-cust__link chat-cust__link--danger"
+          [disabled]="busy()"
+          (click)="unlinkCustomer()"
+        >
+          Desvincular
+        </button>
+      } @else {
+        <button type="button" class="chat-cust__link" [disabled]="busy()" (click)="linkCustomer()">
+          Vincular a un cliente
+        </button>
+      }
+    </div>
+  </section>
+
+  <section class="chat-cust chat-cust--legend" aria-label="Cuándo se puede responder">
+    <span class="chat-cust__subtitle">Cuándo se puede responder</span>
+    <div class="chat-cust__leg">
+      <div>
+        <span class="chat-cust__state chat-cust__state--ok">Abierta</span>
+        <span>Menos de 24 h desde el último mensaje del cliente: texto libre, archivos e imágenes.</span>
+      </div>
+      <div>
+        <span class="chat-cust__state chat-cust__state--d">Cerrada</span>
+        <span>
+          WhatsApp: solo plantilla aprobada. Instagram y Messenger: no se puede enviar hasta que el
+          cliente vuelva a escribir.
+        </span>
+      </div>
+    </div>
+  </section>
+}

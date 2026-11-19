@@ -60,6 +60,8 @@ describe('SuppliesService', () => {
       suppliers: [],
       spools: [],
       supplyMovements: [],
+      chatConversations: [],
+      chatMessages: [],
     });
     for (const supply of supplies) {
       store.indexSupply(supply);

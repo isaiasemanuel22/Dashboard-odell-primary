@@ -2,6 +2,8 @@ import {
   Brand,
   CalendarEntry,
   Category,
+  ChatConversation,
+  ChatMessage,
   Customer,
   Fair,
   GeneralSettings,
@@ -36,6 +38,8 @@ export interface StoreState {
   suppliers: Supplier[];
   spools: Spool[];
   supplyMovements: SupplyMovement[];
+  chatConversations: ChatConversation[];
+  chatMessages: ChatMessage[];
 }
 
 export type StoreCollectionKey = keyof Omit<StoreState, 'generalSettings'>;

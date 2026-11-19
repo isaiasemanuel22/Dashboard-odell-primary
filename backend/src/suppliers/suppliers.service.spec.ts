@@ -62,6 +62,8 @@ describe('SuppliersService', () => {
           at: '2026-10-27T00:00:00.000Z',
         },
       ],
+      chatConversations: [],
+      chatMessages: [],
     });
 
     const reorder = new SuppliesReorderService(store);
@@ -123,6 +125,8 @@ describe('SuppliersService', () => {
       ],
       spools: [],
       supplyMovements: [],
+      chatConversations: [],
+      chatMessages: [],
     });
 
     const reorder = new SuppliesReorderService(store);
