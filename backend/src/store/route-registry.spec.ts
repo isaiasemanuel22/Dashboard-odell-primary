@@ -39,6 +39,14 @@ describe('route-registry', () => {
     expect(shouldTrackHttpMutation('/api/products', 'GET')).toBe(false);
   });
 
+  it('no rastrea llaves, aprobaciones ni MCP', () => {
+    expect(shouldTrackHttpMutation('/api/api-keys', 'POST')).toBe(false);
+    expect(
+      shouldTrackHttpMutation('/api/agent-approvals/apr-1/approve', 'POST'),
+    ).toBe(false);
+    expect(shouldTrackHttpMutation('/api/mcp', 'POST')).toBe(false);
+  });
+
   it('marca products, orders y quotes en bulk-price/apply', () => {
     expect(routeMutationMetaFromPath('/api/products/bulk-price/apply')).toEqual(
       {

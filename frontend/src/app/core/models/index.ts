@@ -428,6 +428,28 @@ export interface Supplier {
   updatedAt: string;
 }
 
+/** Llave de acceso de un agente (§28.4). El secreto nunca vuelve del backend. */
+export interface ApiKey {
+  id: string;
+  name: string;
+  displayPrefix: string;
+  scopes: string[];
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+}
+
+export interface ApiKeyScopeOption {
+  id: string;
+  label: string;
+}
+
+/** Respuesta al crear: el secreto se muestra una sola vez. */
+export interface CreatedApiKey {
+  apiKey: ApiKey;
+  secret: string;
+}
+
 export type SpoolLocation =
   | { kind: 'printer'; printerId: string; slot: number }
   | { kind: 'shelf'; text: string };

@@ -44,6 +44,7 @@ async function bootstrap() {
       'Authorization',
       'X-Request-Id',
       'If-None-Match',
+      'X-Api-Key',
     ],
     exposedHeaders: ['X-Request-Id', 'ETag'],
   });

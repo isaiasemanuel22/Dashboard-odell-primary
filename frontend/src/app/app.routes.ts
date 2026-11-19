@@ -255,6 +255,13 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'api-y-agentes',
+            loadComponent: () =>
+              import('./pages/settings/agents-settings/agents-settings.component').then(
+                (m) => m.AgentsSettingsComponent,
+              ),
+          },
+          {
             path: 'usuarios',
             loadComponent: () =>
               import('./pages/settings/user-access/user-access-layout.component').then(

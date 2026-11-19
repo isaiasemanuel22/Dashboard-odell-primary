@@ -6,6 +6,11 @@ jest.mock('../users/user-access.service', () => ({
   UserAccessService: class UserAccessService {},
 }));
 
+jest.mock('../api-keys/api-keys.service', () => ({
+  API_KEY_PREFIX: 'odl_live_',
+  ApiKeysService: class ApiKeysService {},
+}));
+
 import {
   ExecutionContext,
   ForbiddenException,
@@ -13,9 +18,11 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
+import { ApiKeysService } from '../api-keys/api-keys.service';
 import { CurrentUserProfile } from '../common/interfaces';
 import { AppConfigService } from '../config/app-config.service';
 import { UserAccessService } from '../users/user-access.service';
+import { API_SCOPES_KEY } from './api-scopes.decorator';
 import { FirebaseAdminService } from './firebase-admin.service';
 import { FirebaseAuthGuard } from './firebase-auth.guard';
 import { IS_PUBLIC_KEY } from './public.decorator';
@@ -49,6 +56,7 @@ describe('FirebaseAuthGuard', () => {
     isProduction: boolean;
   };
   let userAccess: { resolveCurrentUser: jest.Mock };
+  let apiKeys: { verify: jest.Mock };
   let guard: FirebaseAuthGuard;
 
   beforeEach(() => {
@@ -66,26 +74,34 @@ describe('FirebaseAuthGuard', () => {
     userAccess = {
       resolveCurrentUser: jest.fn(),
     };
+    apiKeys = {
+      verify: jest.fn().mockResolvedValue(null),
+    };
     guard = new FirebaseAuthGuard(
       reflector as unknown as Reflector,
       firebaseAdmin as unknown as FirebaseAdminService,
       config as unknown as AppConfigService,
       userAccess as unknown as UserAccessService,
+      apiKeys as unknown as ApiKeysService,
     );
   });
 
   function createContext(options?: {
     authorization?: string;
+    apiKey?: string;
     isPublic?: boolean;
+    scopes?: string[];
   }): { context: ExecutionContext; request: Record<string, unknown> } {
     reflector.getAllAndOverride.mockImplementation((key: unknown) => {
       if (key === IS_PUBLIC_KEY) return options?.isPublic ?? false;
+      if (key === API_SCOPES_KEY) return options?.scopes;
       return false;
     });
 
     const request: Record<string, unknown> = {
       headers: {
         authorization: options?.authorization,
+        'x-api-key': options?.apiKey,
       },
     };
 
@@ -181,5 +197,82 @@ describe('FirebaseAuthGuard', () => {
     await expect(guard.canActivate(context)).rejects.toBeInstanceOf(
       UnauthorizedException,
     );
+  });
+
+  describe('llaves de agente', () => {
+    const principal = {
+      id: 'key-1',
+      name: 'Bot WhatsApp',
+      scopes: ['catalogo:leer'],
+    };
+
+    it('llave válida con el permiso de la ruta → pasa y deja la llave', async () => {
+      apiKeys.verify.mockResolvedValue(principal);
+      const { context, request } = createContext({
+        authorization: 'Bearer odl_live_abc',
+        scopes: ['catalogo:leer'],
+      });
+
+      await expect(guard.canActivate(context)).resolves.toBe(true);
+      expect(apiKeys.verify).toHaveBeenCalledWith('odl_live_abc');
+      expect(request.apiKey).toBe(principal);
+      expect(firebaseAdmin.verifyIdToken).not.toHaveBeenCalled();
+    });
+
+    it('llave sin el permiso de la ruta → 403', async () => {
+      apiKeys.verify.mockResolvedValue(principal);
+      const { context } = createContext({
+        apiKey: 'odl_live_abc',
+        scopes: ['pedidos:leer'],
+      });
+
+      await expect(guard.canActivate(context)).rejects.toThrow(
+        'La llave no tiene permiso para esta acción',
+      );
+    });
+
+    it('ruta sin @ApiScopes → 403', async () => {
+      apiKeys.verify.mockResolvedValue(principal);
+      const { context } = createContext({ apiKey: 'odl_live_abc' });
+
+      await expect(guard.canActivate(context)).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+    });
+
+    it('llave revocada o inválida → 401', async () => {
+      const { context } = createContext({
+        apiKey: 'odl_live_revocada',
+        scopes: ['catalogo:leer'],
+      });
+
+      await expect(guard.canActivate(context)).rejects.toThrow(
+        'Llave inválida o revocada',
+      );
+    });
+
+    it('acepta la llave en el header X-Api-Key', async () => {
+      apiKeys.verify.mockResolvedValue(principal);
+      const { context, request } = createContext({
+        apiKey: 'odl_live_abc',
+        scopes: ['catalogo:leer'],
+      });
+
+      await expect(guard.canActivate(context)).resolves.toBe(true);
+      expect(request.apiKey).toBe(principal);
+    });
+
+    it('con REQUIRE_AUTH=false y Firebase apagado la llave se valida igual', async () => {
+      config.requireAuth = false;
+      firebaseAdmin.isEnabled.mockReturnValue(false);
+      const { context } = createContext({
+        apiKey: 'odl_live_revocada',
+        scopes: ['catalogo:leer'],
+      });
+
+      await expect(guard.canActivate(context)).rejects.toBeInstanceOf(
+        UnauthorizedException,
+      );
+    });
   });
 });

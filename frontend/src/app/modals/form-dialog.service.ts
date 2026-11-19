@@ -3,7 +3,9 @@ import { Dialog } from '@angular/cdk/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { Observable, finalize, from, of, switchMap } from 'rxjs';
 import {
+  ApiKeyScopeOption,
   Category,
+  CreatedApiKey,
   Customer,
   ImpresoWithCost,
   Order,
@@ -298,6 +300,19 @@ export class FormDialogService {
         ({ SupplierFormDialogComponent }): Observable<Supplier | undefined> =>
           this.open(SupplierFormDialogComponent, { supplier }, 'md', {
             ariaLabel: supplier ? 'Editar proveedor' : 'Nuevo proveedor',
+          }),
+      ),
+    );
+  }
+
+  openApiKey(
+    scopeOptions: ApiKeyScopeOption[],
+  ): Observable<CreatedApiKey | undefined> {
+    return from(import('./api-key-form-dialog.component')).pipe(
+      switchMap(
+        ({ ApiKeyFormDialogComponent }): Observable<CreatedApiKey | undefined> =>
+          this.open(ApiKeyFormDialogComponent, { scopeOptions }, 'md', {
+            ariaLabel: 'Nueva llave',
           }),
       ),
     );

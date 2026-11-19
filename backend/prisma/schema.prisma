@@ -587,3 +587,17 @@ model UserPermissionOverride {
   @@index([userId])
   @@map("user_permission_overrides")
 }
+
+model ApiKey {
+  id              String    @id @db.VarChar(64)
+  name            String    @db.VarChar(128)
+  lastFour        String    @map("last_four") @db.VarChar(8)
+  secretHash      String    @unique @map("secret_hash") @db.Char(64)
+  scopes          Json
+  createdByUserId String?   @map("created_by_user_id") @db.VarChar(64)
+  lastUsedAt      DateTime? @map("last_used_at")
+  revokedAt       DateTime? @map("revoked_at")
+  createdAt       DateTime  @map("created_at")
+
+  @@map("api_keys")
+}

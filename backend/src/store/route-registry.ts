@@ -227,7 +227,10 @@ export function shouldTrackHttpMutation(path: string, method: string): boolean {
   if (
     path.includes('/events/') ||
     path.includes('/preview-') ||
-    path.endsWith('/preview')
+    path.endsWith('/preview') ||
+    path.includes('/api-keys') ||
+    path.includes('/agent-approvals') ||
+    path.includes('/mcp')
   ) {
     return false;
   }

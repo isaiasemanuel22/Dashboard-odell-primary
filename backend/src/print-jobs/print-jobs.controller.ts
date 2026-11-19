@@ -8,6 +8,7 @@ import {
   Query,
   Req,
 } from '@nestjs/common';
+import { ApiScopes } from '../auth/api-scopes.decorator';
 import type { Request } from 'express';
 import {
   AssignPrintJobPrinterDto,
@@ -38,11 +39,13 @@ export class PrintJobsController {
     return this.printJobsService.getBoard();
   }
 
+  @ApiScopes('cola:leer')
   @Get('printer-queue')
   getPrinterQueue() {
     return this.printerQueueService.getPrinterQueue();
   }
 
+  @ApiScopes('cola:leer')
   @Get('delivery-estimate')
   deliveryEstimate(@Query() query: PrinterQueueHoursQueryDto) {
     return this.printerQueueService.deliveryEstimate(query.hours);

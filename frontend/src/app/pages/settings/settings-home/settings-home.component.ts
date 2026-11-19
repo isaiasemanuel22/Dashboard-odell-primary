@@ -164,6 +164,16 @@ export class SettingsHomeComponent implements OnInit {
         },
       ],
     },
+    {
+      title: 'Integraciones',
+      items: [
+        {
+          label: 'API y agentes',
+          hint: 'Llaves de acceso · solo administradores',
+          link: '/ajustes/api-y-agentes',
+        },
+      ],
+    },
     ...(environment.production
       ? []
       : [

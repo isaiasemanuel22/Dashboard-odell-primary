@@ -25,6 +25,7 @@ import { ReferenceDataModule } from './reference-data/reference-data.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { ApiKeysModule } from './api-keys/api-keys.module';
 
 @Module({
   imports: [
@@ -32,6 +33,7 @@ import { UsersModule } from './users/users.module';
     PrismaModule,
     AuthModule,
     UsersModule,
+    ApiKeysModule,
     HealthModule,
     StoreModule,
     RealtimeModule,

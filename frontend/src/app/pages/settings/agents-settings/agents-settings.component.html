@@ -1,0 +1,125 @@
+@if (isMobile()) {
+  <db-mobile-settings-page title="API y agentes">
+    @if (isAdmin()) {
+      <button
+        barAction
+        type="button"
+        class="m-ib"
+        aria-label="Nueva llave"
+        (click)="openCreate()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="22"
+          height="22"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      </button>
+    }
+
+    @if (message) {
+      <p class="st-m__msg">{{ message }}</p>
+    }
+
+    <p class="agents-note">
+      <b>La API ya no responde sin login.</b> Cada agente usa su propia llave,
+      con permisos limitados, y podés revocarla cuando quieras.
+    </p>
+
+    @if (!isAdmin()) {
+      <span class="st-m__hint"
+        >Solo un administrador puede ver y manejar las llaves de acceso.</span
+      >
+    } @else if (loading) {
+      <div class="m-card"><p class="st-m__hint">Cargando…</p></div>
+    } @else {
+      <div class="m-card m-card--flush">
+        @for (apiKey of apiKeys; track apiKey.id) {
+          <db-mobile-catalog-row
+            [title]="apiKey.name"
+            [subtitle]="mobileSubtitle(apiKey)"
+            (pressed)="revoke(apiKey)"
+          />
+        } @empty {
+          <p class="st-m__hint" style="padding: 12px">
+            Todavía no hay llaves.
+          </p>
+        }
+      </div>
+    }
+  </db-mobile-settings-page>
+} @else {
+  <section class="settings-panel">
+    <div class="panel-head">
+      <div>
+        <h3>API y agentes</h3>
+        <p class="panel-sub">
+          Qué pueden hacer tus agentes y qué avisos manda Odell solo
+        </p>
+      </div>
+    </div>
+
+    @if (message) {
+      <p class="status-notice" role="status">{{ message }}</p>
+    }
+
+    <p class="agents-note">
+      <b>La API ya no responde sin login.</b> Cada agente usa su propia llave,
+      con permisos limitados, y podés revocarla cuando quieras.
+    </p>
+
+    <div class="panel-head">
+      <div>
+        <h3>Llaves de acceso</h3>
+        <p class="panel-sub">Una por agente o integración</p>
+      </div>
+      @if (isAdmin()) {
+        <db-button
+          label="+ Nueva llave"
+          variant="primary"
+          format="solid"
+          (clicked)="openCreate()"
+        />
+      }
+    </div>
+
+    @if (!isAdmin()) {
+      <p class="panel-sub">
+        Solo un administrador puede ver y manejar las llaves de acceso.
+      </p>
+    } @else {
+      <db-state-message
+        [loading]="loading"
+        [empty]="!loading && apiKeys.length === 0"
+        loadingMessage="Cargando llaves..."
+        emptyMessage="Todavía no hay llaves."
+      >
+        <db-button
+          emptyActions
+          label="+ Nueva llave"
+          variant="primary"
+          format="solid"
+          (clicked)="openCreate()"
+        />
+      </db-state-message>
+
+      @if (!loading && apiKeys.length) {
+        <db-data-table
+          label="Llaves de acceso"
+          [rows]="apiKeys"
+          [columns]="columns"
+          [actions]="actions"
+          [clientSide]="false"
+          emptyText="No hay llaves."
+          (action)="onAction($event)"
+        />
+      }
+    }
+  </section>
+}
