@@ -314,6 +314,13 @@ describe('ChatsService', () => {
     );
   });
 
+  it('reactivar el agente saca «Te derivó»', () => {
+    service.setHandedOff('chat-4', true);
+    const chat = service.setAgentPaused('chat-4', false);
+    expect(chat.agentPaused).toBe(false);
+    expect(chat.handedOff).toBe(false);
+  });
+
   it('sendTemplate sale fuera de la ventana, solo por WhatsApp y pausa al agente', async () => {
     const old = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
     const { conversation } = service.registerInbound({

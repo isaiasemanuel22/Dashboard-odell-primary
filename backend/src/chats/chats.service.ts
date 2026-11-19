@@ -463,10 +463,12 @@ export class ChatsService {
     return chat;
   }
 
+  /** Reactivar también saca «Te derivó» (§28.3). */
   setAgentPaused(conversationId: string, value: boolean): ChatConversation {
     const chat = this.chats.saveConversation({
       ...this.require(conversationId),
       agentPaused: value,
+      ...(value ? {} : { handedOff: false }),
       updatedAt: new Date().toISOString(),
     });
     this.recordChange('update', chat.id);

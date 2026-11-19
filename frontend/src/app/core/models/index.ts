@@ -339,6 +339,22 @@ export interface AttendantStatus {
   };
 }
 
+/** Qué hizo el agente en una herramienta, armado por el backend. */
+export interface AgentToolSummary {
+  tool: string;
+  label: string;
+  detail: string;
+}
+
+/** Una corrida del agente de atención en un chat. */
+export interface AgentRun {
+  id: string;
+  conversationId: string;
+  outcome: 'replied' | 'handed_off' | 'suggested' | 'skipped' | 'error';
+  toolSummary: AgentToolSummary[];
+  createdAt: string;
+}
+
 export interface PowerConsumptionConfig {
   id: string;
   name: string;

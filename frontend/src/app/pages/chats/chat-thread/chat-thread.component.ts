@@ -172,7 +172,13 @@ export class ChatThreadComponent {
   messageMeta(message: ChatMessage): string {
     const at = chatTime(message.sentAt);
     if (message.direction === 'in') return `${this.firstName()} · ${at}`;
-    const by = message.author === 'agent' ? 'Enviado por el agente' : 'Enviado por vos';
+    // Sugerencia del agente aprobada por alguien: queda con su usuario.
+    const by =
+      message.author !== 'agent'
+        ? 'Enviado por vos'
+        : message.authorUserId
+          ? 'Aprobado por vos'
+          : 'Enviado por el agente';
     return `${by} · ${at}`;
   }
 

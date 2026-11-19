@@ -14,6 +14,7 @@ import {
   Subject,
   catchError,
   debounceTime,
+  forkJoin,
   map,
   of,
   switchMap,
@@ -25,11 +26,14 @@ import {
   MobileBarComponent,
 } from '@general-components';
 import {
+  AgentRun,
+  AttendantStatus,
   ChatChannel,
   ChatDetail,
   ChatFilter,
   ChatList,
 } from '../../core/models';
+import { AttendantService } from '../../core/services/attendant.service';
 import { BreakpointService } from '../../core/services/breakpoint.service';
 import { ChatsService } from '../../core/services/chats.service';
 import { ChatsUnreadService } from '../../core/services/chats-unread.service';
@@ -38,6 +42,7 @@ import {
   injectMobileListPersistence,
 } from '../../core/services/mobile-list-state.service';
 import { RealtimeService } from '../../core/services/realtime.service';
+import { ChatAgentPanelComponent } from './chat-agent-panel/chat-agent-panel.component';
 import { ChatChannelIconComponent } from './chat-channel-icon/chat-channel-icon.component';
 import { ChatCustomerPanelComponent } from './chat-customer-panel/chat-customer-panel.component';
 import { ChatInboxComponent } from './chat-inbox/chat-inbox.component';
@@ -64,6 +69,7 @@ interface ChatsMobileListState {
     ChatThreadComponent,
     ChatCustomerPanelComponent,
     ChatChannelIconComponent,
+    ChatAgentPanelComponent,
   ],
   templateUrl: './chats.component.html',
   styleUrl: './chats.component.scss',
@@ -72,6 +78,7 @@ interface ChatsMobileListState {
 export class ChatsComponent implements OnInit {
   private readonly chatsService = inject(ChatsService);
   private readonly chatsUnread = inject(ChatsUnreadService);
+  private readonly attendant = inject(AttendantService);
   private readonly realtime = inject(RealtimeService);
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
@@ -96,6 +103,8 @@ export class ChatsComponent implements OnInit {
   readonly selectedId = signal<string | null>(null);
   readonly detail = signal<ChatDetail | null>(null);
   readonly detailError = signal(false);
+  readonly agentStatus = signal<AttendantStatus | null>(null);
+  readonly agentRuns = signal<AgentRun[]>([]);
 
   readonly conversations = computed(() => this.list()?.conversations ?? []);
   readonly counts = computed(() => this.list()?.counts ?? null);
@@ -155,14 +164,18 @@ export class ChatsComponent implements OnInit {
     this.detailReload$
       .pipe(
         switchMap(({ id, markRead }) =>
-          this.chatsService.get(id).pipe(
-            map((detail) => ({ detail, markRead })),
-            catchError(() => of({ detail: null, markRead })),
+          forkJoin({
+            detail: this.chatsService.get(id),
+            // Sin corridas no se pierde el chat: el panel queda sin «Qué revisó».
+            runs: this.attendant.runs(id).pipe(catchError(() => of([]))),
+          }).pipe(
+            map(({ detail, runs }) => ({ detail, runs, markRead })),
+            catchError(() => of({ detail: null, runs: [], markRead })),
           ),
         ),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe(({ detail, markRead }) => {
+      .subscribe(({ detail, runs, markRead }) => {
         if (!detail) {
           this.detailError.set(true);
           return;
@@ -170,6 +183,7 @@ export class ChatsComponent implements OnInit {
         if (detail.conversation.id !== this.selectedId()) return;
         this.detailError.set(false);
         this.detail.set(detail);
+        this.agentRuns.set(runs);
         if (markRead || detail.conversation.unreadCount > 0) {
           this.markRead(detail.conversation.id);
         }
@@ -184,6 +198,7 @@ export class ChatsComponent implements OnInit {
         if (id === this.selectedId()) return;
         this.selectedId.set(id);
         this.detail.set(null);
+        this.agentRuns.set([]);
         this.detailError.set(false);
         if (id) this.detailReload$.next({ id, markRead: true });
       });
@@ -195,6 +210,7 @@ export class ChatsComponent implements OnInit {
     });
 
     this.reloadList();
+    this.reloadAgentStatus();
   }
 
   reloadList(): void {
@@ -206,6 +222,13 @@ export class ChatsComponent implements OnInit {
   reloadDetail(): void {
     const id = this.selectedId();
     if (id) this.detailReload$.next({ id, markRead: false });
+  }
+
+  reloadAgentStatus(): void {
+    this.attendant.status().subscribe({
+      next: (status) => this.agentStatus.set(status),
+      error: () => undefined,
+    });
   }
 
   /** Después de enviar, aprobar, vincular, etc. */

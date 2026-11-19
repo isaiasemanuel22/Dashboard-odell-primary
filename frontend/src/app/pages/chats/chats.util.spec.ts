@@ -1,5 +1,13 @@
-import { ChatDetail, ChatSummary, Customer } from '../../core/models';
 import {
+  AgentRun,
+  AttendantStatus,
+  ChatDetail,
+  ChatSummary,
+  Customer,
+} from '../../core/models';
+import {
+  agentLastReview,
+  agentStateLabel,
   chatAvatar,
   chatChannelLine,
   chatContactLine,
@@ -113,5 +121,31 @@ describe('chats.util', () => {
       'Ayer · martes 17/11',
     );
     expect(chatDateTimeLong(tomorrow)).toBe('jueves 19/11 a las 15:42');
+  });
+
+  it('agentStateLabel: apagado y tope antes que el estado del chat', () => {
+    const status = (enabled: boolean, pausedByBudgetAt: string | null = null) =>
+      ({ settings: { enabled, pausedByBudgetAt } }) as AttendantStatus;
+    const derived = summary({ status: 'handed_off', agentPaused: true });
+    expect(agentStateLabel(summary(), status(true)).label).toBe('Agente activo');
+    expect(agentStateLabel(summary({ agentPaused: true }), status(true)).label).toBe(
+      'Pausado en este chat',
+    );
+    expect(agentStateLabel(derived, status(true)).label).toBe('Te derivó');
+    expect(agentStateLabel(derived, null).label).toBe('Te derivó');
+    expect(agentStateLabel(derived, status(false)).label).toBe('Agente apagado');
+    expect(agentStateLabel(summary(), status(false, '2026-11-19T10:00:00.000Z')).label).toBe(
+      'Pausado por tope',
+    );
+  });
+
+  it('agentLastReview: última corrida que respondió, derivó o sugirió', () => {
+    const run = (outcome: AgentRun['outcome'], label: string) =>
+      ({ outcome, toolSummary: [{ tool: 't', label, detail: '' }] }) as AgentRun;
+    expect(agentLastReview([run('skipped', 'A'), run('replied', 'B'), run('suggested', 'C')])).toEqual([
+      { tool: 't', label: 'B', detail: '' },
+    ]);
+    expect(agentLastReview([run('error', 'A')])).toEqual([]);
+    expect(agentLastReview([])).toEqual([]);
   });
 });

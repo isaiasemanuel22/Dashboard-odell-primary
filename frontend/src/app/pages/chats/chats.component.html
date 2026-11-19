@@ -74,6 +74,13 @@
             [detail]="d"
             (changed)="onChanged()"
           />
+          <app-chat-agent-panel
+            [detail]="d"
+            [status]="agentStatus()"
+            [runs]="agentRuns()"
+            [mobile]="true"
+            (statusChange)="reloadAgentStatus()"
+          />
           <app-chat-thread [detail]="d" [mobile]="true" (changed)="onChanged()" />
         } @else {
           <db-mobile-bar title="Chat" backLink="/chats" />
@@ -130,12 +137,15 @@
 
       @if (detail(); as d) {
         <app-chat-thread class="chats__panel" [detail]="d" (changed)="onChanged()" />
-        <app-chat-customer-panel
-          class="chats__aside"
-          variant="panel"
-          [detail]="d"
-          (changed)="onChanged()"
-        />
+        <div class="chats__aside">
+          <app-chat-agent-panel
+            [detail]="d"
+            [status]="agentStatus()"
+            [runs]="agentRuns()"
+            (statusChange)="reloadAgentStatus()"
+          />
+          <app-chat-customer-panel variant="panel" [detail]="d" (changed)="onChanged()" />
+        </div>
       } @else {
         <section class="chats__panel chats__placeholder">
           @if (!selectedId()) {

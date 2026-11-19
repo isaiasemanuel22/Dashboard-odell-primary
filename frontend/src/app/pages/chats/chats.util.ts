@@ -1,4 +1,10 @@
-import { ChatChannel, ChatDetail, ChatSummary } from '../../core/models';
+import {
+  AgentRun,
+  AttendantStatus,
+  ChatChannel,
+  ChatDetail,
+  ChatSummary,
+} from '../../core/models';
 import { nameInitials } from '../../shared/utils/name-initials.util';
 import { formatFairTime } from '../../shared/utils/fair.util';
 import { formatPhoneArDisplay } from '../../shared/utils/phone-ar.util';
@@ -22,6 +28,33 @@ export function chatListPill(summary: ChatSummary): ChatListPill | null {
   if (!summary.windowOpen) return { label: 'Ventana cerrada', tone: 'd' };
   if (summary.lastMessageDirection === 'out') return { label: 'Respondido', tone: 'neutral' };
   return null;
+}
+
+export interface AgentStatePill {
+  label: string;
+  tone: 'ok' | 'b' | 'd' | 'neutral';
+}
+
+/** Estado del agente en el chat: primero el apagado global, después el del chat (§28.3). */
+export function agentStateLabel(
+  summary: ChatSummary,
+  status: AttendantStatus | null,
+): AgentStatePill {
+  const settings = status?.settings;
+  if (settings && !settings.enabled) {
+    return settings.pausedByBudgetAt
+      ? { label: 'Pausado por tope', tone: 'd' }
+      : { label: 'Agente apagado', tone: 'neutral' };
+  }
+  if (summary.status === 'handed_off') return { label: 'Te derivó', tone: 'b' };
+  if (summary.agentPaused) return { label: 'Pausado en este chat', tone: 'neutral' };
+  return { label: 'Agente activo', tone: 'ok' };
+}
+
+/** Lo que revisó el agente en su última corrida con respuesta, derivación o sugerencia. */
+export function agentLastReview(runs: AgentRun[]): AgentRun['toolSummary'] {
+  const run = runs.find((r) => ['replied', 'handed_off', 'suggested'].includes(r.outcome));
+  return run?.toolSummary ?? [];
 }
 
 /** Nombre del contacto; sin nombre, el teléfono. */

@@ -286,6 +286,11 @@
   color: mobile.$m-text-secondary;
 }
 
+.chat-msg__agent {
+  vertical-align: -1px;
+  color: $color-warning-text;
+}
+
 .chat-msg__failed {
   color: $color-danger-text;
   font-weight: 700;

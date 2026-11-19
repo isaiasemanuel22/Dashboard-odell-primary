@@ -243,6 +243,11 @@
           </a>
         }
         <span class="chat-msg__meta">
+          @if (item.message.author === 'agent') {
+            <svg class="chat-msg__agent" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" />
+            </svg>
+          }
           {{ messageMeta(item.message) }}
           @if (item.message.status === 'failed') {
             · <span class="chat-msg__failed">No se pudo enviar</span>
