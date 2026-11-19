@@ -186,20 +186,24 @@
 
     <div class="unit-price">
       <span class="unit-price__label">Precio unitario</span>
-      <div class="unit-price__box">
-        <input
-          class="unit-price__control"
-          type="text"
-          inputmode="numeric"
-          [ngModel]="unitPriceDraft ?? unitPriceDisplay(vm.price)"
-          (ngModelChange)="onUnitPriceDisplayChange($event)"
-          (focus)="onUnitPriceFocus(vm.price)"
-          (blur)="onUnitPriceBlur()"
-          [ngModelOptions]="{ standalone: true }"
-          autocomplete="off"
-          aria-label="Precio unitario"
-        />
-      </div>
+      @if (priceMode === 'fixed') {
+        <div class="unit-price__box">
+          <input
+            class="unit-price__control"
+            type="text"
+            inputmode="numeric"
+            [ngModel]="unitPriceDraft ?? unitPriceDisplay(vm.price)"
+            (ngModelChange)="onUnitPriceDisplayChange($event)"
+            (focus)="onUnitPriceFocus(vm.price)"
+            (blur)="onUnitPriceBlur()"
+            [ngModelOptions]="{ standalone: true }"
+            autocomplete="off"
+            aria-label="Precio unitario"
+          />
+        </div>
+      } @else {
+        <strong class="unit-price__value">{{ (heldPrice(vm.price) ?? vm.price) | currencyArs }}</strong>
+      }
       <p class="price-note">{{ unitPriceHint(vm.price, vm.totalCost, vm.costBreakdown?.laborCost ?? 0) }}</p>
       @if (supplyCost > 0 && priceMode !== 'fixed') {
         <p class="price-note">Insumos (× 2 + margen de error) en el precio: {{ supplyPrice | currencyArs }}</p>

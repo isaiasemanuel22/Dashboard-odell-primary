@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · Precio calculado sin campo para escribir
+Rama: feat/packaging · Commits: ver `git log` (feat(productos))
+Hecho: en la caja de precio del producto (y combo), en modo Calculado el precio unitario se muestra como texto, sin input; el campo solo aparece en Fijo (con «Volver al sugerido»). QA OK a 800 px y 375 px en prod-45 y prod-54. Angular 167.
+Decisiones: de Isaías: «en precio calculado, sacá el input para poner un precio».
+Pendiente: tras Fijo → escribir → «Volver al sugerido», Cancelar pide «Descartar cambios» aunque el valor quedó igual.
+
 ## 2026-11-19 · «Calculado» con precio fijo muestra el calculado real
 Rama: feat/packaging · Commits: ver `git log` (fix(productos))
 Hecho: el preview del formulario de producto usaba el fijo y «Calculado $X» mostraba el fijo; ahora el preview ignora el fijo (`ignoreFixedPrice` en `product-form-pricing.service.ts`). QA: prod-45 fijo $9.000 → «Calculado $ 7.822», combo prod-54 → $ 9.072, reabrir no cambia de modo, Remera estampada DTF abre en Fijo $25.000. Angular 165.

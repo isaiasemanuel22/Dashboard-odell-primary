@@ -141,6 +141,13 @@
   }
 }
 
+.unit-price__value {
+  display: block;
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: $color-text;
+}
+
 .unit-price__control {
   width: 100%;
   border: 0;
