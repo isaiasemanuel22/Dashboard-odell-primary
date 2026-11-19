@@ -2281,12 +2281,26 @@ van en §27. Tokens y llaves nunca en el repo: van en variables de entorno.
   piden la aprobación de Isaías antes de tener efecto (el presupuesto queda en
   borrador; el pago no se registra hasta aprobarlo). Cada herramienta se
   puede apagar.
+- (2026-11-18) Aprobar un presupuesto de un agente lo deja como borrador
+  normal en Presupuestos; Isaías decide cuándo enviarlo. Rechazarlo lo borra.
+  Aprobar un pago lo registra; rechazarlo no toca nada.
+- (2026-11-18) Cada aprobación pendiente le avisa a Isaías por WhatsApp al
+  instante.
+- (2026-11-18) Las llaves externas solo leen pedidos: no los crean (crear
+  pedidos queda para el agente de atención, §28.3).
+- (2026-11-18) Las herramientas arrancan prendidas, salvo `registrar_pago`,
+  que arranca apagada.
 
 ### 28.5 Avisos automáticos
 
 - Pedidos atrasados o que vencen mañana: todos los días a las 9:00, por
   WhatsApp a Isaías.
-- Stock bajo y «pedir antes del»: cuando pasa, por WhatsApp a Isaías.
+- Stock bajo y «pedir antes del»: se revisa cada 15 minutos de 8 a 21 h y
+  avisa por WhatsApp a Isaías una sola vez por insumo hasta que se repone;
+  «pedir antes del» avisa el día que vence (2026-11-18).
 - Resumen de saldos por cobrar: los lunes a las 9:00, por email (Resend).
+  Incluye lo mismo que el indicador del Dashboard: pedidos entregados con
+  saldo (sin préstamos).
+- Los avisos arrancan prendidos (2026-11-18).
 - Copia de seguridad en Google Drive y «Presupuesto por vencer» al cliente:
   quedan para después.
