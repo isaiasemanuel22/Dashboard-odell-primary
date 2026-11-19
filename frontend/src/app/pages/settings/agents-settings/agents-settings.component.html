@@ -53,6 +53,68 @@
         }
       </div>
     }
+
+    <h2 class="m-sec-t">Servidor MCP de Odell</h2>
+    <div class="mcp-url">
+      <db-input
+        ariaLabel="URL del servidor MCP"
+        [readonly]="true"
+        [ngModel]="mcpUrl"
+      />
+      <db-button
+        label="Copiar"
+        variant="cancel"
+        format="soft"
+        (clicked)="copyMcpUrl()"
+      />
+    </div>
+    @if (agentTools) {
+      <div class="m-card m-card--flush">
+        @for (tool of mcpTools; track tool.key) {
+          <db-mobile-toggle-row
+            [label]="tool.key"
+            [hint]="tool.description + ' · ' + controlBadge(tool).label"
+            [checked]="agentTools[tool.key]"
+            [ariaLabel]="tool.key"
+            (toggled)="toggleTool(tool.key, $event)"
+          />
+        }
+      </div>
+    }
+
+    @if (isAdmin()) {
+      <h2 class="m-sec-t">Pendientes de aprobación</h2>
+      <div class="m-card m-card--flush">
+        @for (approval of approvals; track approval.id) {
+          <div class="approval-row">
+            <db-mobile-catalog-row
+              [title]="approval.summary"
+              [subtitle]="approvalSubtitle(approval)"
+            />
+            @if (approval.status === 'pending') {
+              <div class="approval-row__actions">
+                <db-button
+                  label="Rechazar"
+                  variant="cancel"
+                  format="soft"
+                  (clicked)="decide(approval, false)"
+                />
+                <db-button
+                  label="Aprobar"
+                  variant="primary"
+                  format="solid"
+                  (clicked)="decide(approval, true)"
+                />
+              </div>
+            }
+          </div>
+        } @empty {
+          <p class="st-m__hint" style="padding: 12px">
+            {{ approvalsLoading ? 'Cargando…' : 'No hay nada pendiente.' }}
+          </p>
+        }
+      </div>
+    }
   </db-mobile-settings-page>
 } @else {
   <section class="settings-panel">
@@ -118,6 +180,75 @@
           [clientSide]="false"
           emptyText="No hay llaves."
           (action)="onAction($event)"
+        />
+      }
+    }
+
+    <div class="panel-head agents-section">
+      <div>
+        <h3>Servidor MCP de Odell</h3>
+        <p class="panel-sub">Las herramientas que ve un agente como Claude</p>
+      </div>
+      <div class="mcp-url">
+        <db-input
+          ariaLabel="URL del servidor MCP"
+          [readonly]="true"
+          [ngModel]="mcpUrl"
+        />
+        <db-button
+          label="Copiar"
+          variant="cancel"
+          format="soft"
+          (clicked)="copyMcpUrl()"
+        />
+      </div>
+    </div>
+
+    @if (agentTools) {
+      <db-data-table
+        label="Herramientas del servidor MCP"
+        [rows]="mcpTools"
+        [columns]="toolColumns"
+        [clientSide]="false"
+      >
+        <ng-template odlCell="active" let-tool>
+          <db-checkbox
+            label="Activa"
+            [name]="tool.key"
+            [checked]="isToolActive(tool)"
+            [disabled]="!isAdmin()"
+            (checkedChange)="toggleTool(tool.key, $event)"
+          />
+        </ng-template>
+      </db-data-table>
+    }
+
+    @if (isAdmin()) {
+      <div class="panel-head agents-section">
+        <div>
+          <h3>Pendientes de aprobación</h3>
+          <p class="panel-sub">
+            Lo que un agente pidió hacer y espera tu OK
+          </p>
+        </div>
+      </div>
+
+      <db-state-message
+        [loading]="approvalsLoading"
+        [empty]="!approvalsLoading && approvals.length === 0"
+        loadingMessage="Cargando pendientes..."
+        emptyMessage="No hay nada pendiente."
+      />
+
+      @if (!approvalsLoading && approvals.length) {
+        <db-data-table
+          label="Pendientes de aprobación"
+          [rows]="approvals"
+          [columns]="approvalColumns"
+          [actions]="approvalActions"
+          [clientSide]="false"
+          emptyText="No hay nada pendiente."
+          (action)="onApprovalAction($event)"
         />
       }
     }

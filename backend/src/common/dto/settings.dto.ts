@@ -179,6 +179,28 @@ export class UpdateAutomaticAlertsDto {
   weeklyReceivables?: boolean;
 }
 
+export class UpdateAgentToolsDto {
+  @IsOptional()
+  @IsBoolean()
+  consultar_stock?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  cotizar_producto?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  ver_cola?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  crear_presupuesto?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  registrar_pago?: boolean;
+}
+
 export class UpdatePaperPricesDto {
   @IsObject()
   paperReferenceSheets!: Record<string, Record<string, number>>;

@@ -36,6 +36,7 @@ import {
   UpdateProfitMarginsDto,
   UpdateWholesaleDiscountDto,
   UpdateAutomaticAlertsDto,
+  UpdateAgentToolsDto,
 } from '../common/dto';
 import { CostCalculatorService } from './cost-calculator.service';
 import { SettingsService } from './settings.service';
@@ -80,6 +81,12 @@ export class SettingsController {
   ) {
     assertAdmin(request, this.config.requireAuth);
     return this.settingsService.updateAutomaticAlerts(data);
+  }
+
+  @Patch('agent-tools')
+  updateAgentTools(@Req() request: Request, @Body() data: UpdateAgentToolsDto) {
+    assertAdmin(request, this.config.requireAuth);
+    return this.settingsService.updateAgentTools(data);
   }
 
   @Patch('paper-prices')

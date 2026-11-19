@@ -1,3 +1,4 @@
+import { DEFAULT_AGENT_TOOLS } from './agent-tools.util';
 import { SettingsService } from './settings.service';
 import { StoreService } from '../store/store.service';
 import { StorePersistenceService } from '../store/store-persistence.service';
@@ -33,6 +34,7 @@ describe('SettingsService.patchGeneralSettings', () => {
       lowStock: true,
       weeklyReceivables: true,
     },
+    agentTools: { ...DEFAULT_AGENT_TOOLS },
     paperPricesPerSqm: {
       dtf: 0,
       dtfUv: 0,
@@ -228,6 +230,7 @@ describe('SettingsService.updateWholesaleDiscount', () => {
       lowStock: true,
       weeklyReceivables: true,
     },
+    agentTools: { ...DEFAULT_AGENT_TOOLS },
     paperPricesPerSqm: {
       dtf: 0,
       dtfUv: 0,

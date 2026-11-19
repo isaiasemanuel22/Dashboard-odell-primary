@@ -16,6 +16,7 @@ model AppSettings {
   profitMargins         Json  @map("profit_margins")
   wholesaleDiscount     Json  @default("{}") @map("wholesale_discount")
   automaticAlerts       Json  @default("{}") @map("automatic_alerts")
+  agentTools            Json  @default("{}") @map("agent_tools")
   paperPricesPerSqm     Json  @map("paper_prices_per_sqm")
   paperReferenceSheets  Json  @default("{}") @map("paper_reference_sheets")
   powerConsumptions     Json  @map("power_consumptions")
@@ -611,4 +612,22 @@ model NotificationLog {
   sentAt    DateTime @map("sent_at")
 
   @@map("notification_logs")
+}
+
+model AgentApproval {
+  id              String    @id @db.VarChar(64)
+  kind            String    @db.VarChar(32)
+  status          String    @default("pending") @db.VarChar(16)
+  payload         Json
+  summary         String    @db.VarChar(255)
+  referenceId     String?   @map("reference_id") @db.VarChar(64)
+  apiKeyId        String    @map("api_key_id") @db.VarChar(64)
+  apiKeyName      String    @map("api_key_name") @db.VarChar(128)
+  decidedByUserId String?   @map("decided_by_user_id") @db.VarChar(64)
+  decidedAt       DateTime? @map("decided_at")
+  error           String?   @db.Text
+  createdAt       DateTime  @map("created_at")
+
+  @@index([status])
+  @@map("agent_approvals")
 }

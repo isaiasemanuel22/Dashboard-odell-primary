@@ -3,6 +3,7 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  AgentToolsSettings,
   AutomaticAlertsSettings,
   ColorConfig,
   FilamentPriceConfig,
@@ -94,6 +95,14 @@ export class SettingsService {
       .pipe(
         tap((automaticAlerts) => this.patchSettings({ automaticAlerts })),
       );
+  }
+
+  updateAgentTools(
+    data: Partial<AgentToolsSettings>,
+  ): Observable<AgentToolsSettings> {
+    return this.http
+      .patch<AgentToolsSettings>(`${this.baseUrl}/agent-tools`, data)
+      .pipe(tap((agentTools) => this.patchSettings({ agentTools })));
   }
 
   updatePaperReferenceSheets(

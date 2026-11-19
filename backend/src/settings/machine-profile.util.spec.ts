@@ -1,3 +1,4 @@
+import { DEFAULT_AGENT_TOOLS } from './agent-tools.util';
 import {
   MachineProfileRole,
   ProductType,
@@ -41,6 +42,7 @@ describe('machine-profile.util', () => {
       lowStock: true,
       weeklyReceivables: true,
     },
+    agentTools: { ...DEFAULT_AGENT_TOOLS },
     paperPricesPerSqm: { sublimacion: 0, dtf: 0, dtfUv: 0 },
     paperReferenceSheets: normalizePaperReferenceSheets(undefined, {
       sublimacion: 0,

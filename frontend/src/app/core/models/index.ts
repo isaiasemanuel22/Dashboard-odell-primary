@@ -301,6 +301,15 @@ export interface AutomaticAlertsSettings {
   weeklyReceivables: boolean;
 }
 
+/** Herramientas del servidor MCP de Odell (§28.4): cada una se prende o apaga. */
+export interface AgentToolsSettings {
+  consultar_stock: boolean;
+  cotizar_producto: boolean;
+  ver_cola: boolean;
+  crear_presupuesto: boolean;
+  registrar_pago: boolean;
+}
+
 export interface PowerConsumptionConfig {
   id: string;
   name: string;
@@ -358,6 +367,7 @@ export interface GeneralSettings {
   profitMargins: ServiceProfitMargins;
   wholesaleDiscount: WholesaleDiscountSettings;
   automaticAlerts: AutomaticAlertsSettings;
+  agentTools: AgentToolsSettings;
   paperPricesPerSqm: PaperPricesPerSqm;
   paperReferenceSheets: PaperReferenceSheets;
   filamentPrices: FilamentPriceConfig[];
@@ -456,6 +466,19 @@ export interface ApiKeyScopeOption {
 export interface CreatedApiKey {
   apiKey: ApiKey;
   secret: string;
+}
+
+/** Acción de un agente que espera tu aprobación (§28.4). */
+export interface AgentApproval {
+  id: string;
+  kind: 'quote' | 'payment';
+  status: 'pending' | 'approved' | 'rejected' | 'failed';
+  summary: string;
+  referenceId: string | null;
+  apiKeyName: string;
+  error: string | null;
+  decidedAt: string | null;
+  createdAt: string;
 }
 
 export type SpoolLocation =

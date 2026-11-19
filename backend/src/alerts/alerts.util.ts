@@ -14,7 +14,7 @@ type DigestOrder = Pick<
   'id' | 'customerName' | 'status' | 'dueDate' | 'total'
 >;
 
-function formatMoney(value: number): string {
+export function formatMoney(value: number): string {
   return new Intl.NumberFormat('es-AR', {
     style: 'currency',
     currency: 'ARS',

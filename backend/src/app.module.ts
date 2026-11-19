@@ -27,6 +27,8 @@ import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
 import { ApiKeysModule } from './api-keys/api-keys.module';
 import { AlertsModule } from './alerts/alerts.module';
+import { AgentApprovalsModule } from './agent-approvals/agent-approvals.module';
+import { McpModule } from './mcp/mcp.module';
 
 @Module({
   imports: [
@@ -58,6 +60,8 @@ import { AlertsModule } from './alerts/alerts.module';
     FairsModule,
     TreasuryModule,
     AlertsModule,
+    AgentApprovalsModule,
+    McpModule,
   ],
 })
 export class AppModule {}

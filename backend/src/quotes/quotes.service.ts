@@ -76,17 +76,36 @@ export class QuotesService {
     return quote;
   }
 
-  create(data: CreateQuoteDto): Quote {
-    const { customerId, customerName, customer } = this.resolveCustomer(
-      data.customerId,
-    );
+  /** Precio de las líneas y total como los calcula `create`, sin guardar. */
+  previewPricing(data: CreateQuoteDto): {
+    items: QuoteItem[];
+    total: number;
+    priceType: PriceType;
+    wholesaleApplied: boolean;
+  } {
+    const { customer } = this.resolveCustomer(data.customerId);
     const priceType =
       data.priceType ?? this.defaultPriceTypeForCustomer(customer);
-    const status = this.resolveFormStatus(data.status);
-    const description = this.normalizeDescription(data.description);
     const normalizedItems = this.normalizeItemsForStatus(data.items);
     const priced = this.priceQuoteItems(normalizedItems, priceType, customer);
-    const items = priced.items;
+    const total = this.calculateTotal(
+      priced.items,
+      normalizeDiscountFields(data),
+    );
+    return {
+      items: priced.items,
+      total,
+      priceType,
+      wholesaleApplied: priced.wholesaleApplied,
+    };
+  }
+
+  create(data: CreateQuoteDto): Quote {
+    const { customerId, customerName } = this.resolveCustomer(data.customerId);
+    const status = this.resolveFormStatus(data.status);
+    const description = this.normalizeDescription(data.description);
+    const { items, total, priceType, wholesaleApplied } =
+      this.previewPricing(data);
     const services = this.deriveServices(items);
     const discount = normalizeDiscountFields(data);
     const now = new Date();
@@ -94,7 +113,6 @@ export class QuotesService {
     this.assertCustomerForSent(status, customerId);
     this.assertItemsForSent(status, items);
     this.assertDraftHasContent(status, customerId, description);
-    const total = this.calculateTotal(items, discount);
     const lossFields = this.orders.resolveLossReasonFields(items, total, data);
 
     const quote: Quote = {
@@ -107,7 +125,7 @@ export class QuotesService {
       items,
       status,
       priceType,
-      wholesaleApplied: priced.wholesaleApplied,
+      wholesaleApplied,
       salesChannel: this.normalizeSalesChannel(data.salesChannel),
       total,
       discountPercent: discount.discountPercent,

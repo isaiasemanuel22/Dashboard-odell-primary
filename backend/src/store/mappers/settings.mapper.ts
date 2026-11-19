@@ -12,6 +12,7 @@ import {
 import { normalizeProfitMargins } from '../../settings/profit-margins.util';
 import { normalizeWholesaleDiscount } from '../../settings/wholesale-discount.util';
 import { normalizeAutomaticAlerts } from '../../settings/automatic-alerts.util';
+import { normalizeAgentTools } from '../../settings/agent-tools.util';
 import {
   persistedFilamentPrice,
   persistedResinPrice,
@@ -28,6 +29,7 @@ export function mapSettingsFromDb(row: {
   profitMargins: Prisma.JsonValue;
   wholesaleDiscount?: Prisma.JsonValue;
   automaticAlerts?: Prisma.JsonValue;
+  agentTools?: Prisma.JsonValue;
   paperPricesPerSqm: Prisma.JsonValue;
   paperReferenceSheets?: Prisma.JsonValue;
   powerConsumptions: Prisma.JsonValue;
@@ -60,6 +62,7 @@ export function mapSettingsFromDb(row: {
     ),
     wholesaleDiscount: normalizeWholesaleDiscount(row.wholesaleDiscount ?? {}),
     automaticAlerts: normalizeAutomaticAlerts(row.automaticAlerts ?? {}),
+    agentTools: normalizeAgentTools(row.agentTools ?? {}),
     paperPricesPerSqm,
     paperReferenceSheets: normalizePaperReferenceSheets(
       rawSheets,
@@ -106,6 +109,7 @@ export function mapSettingsToDb(settings: GeneralSettings) {
     profitMargins: normalizeProfitMargins(settings.profitMargins),
     wholesaleDiscount: normalizeWholesaleDiscount(settings.wholesaleDiscount),
     automaticAlerts: normalizeAutomaticAlerts(settings.automaticAlerts),
+    agentTools: normalizeAgentTools(settings.agentTools),
     machineProfiles: ensureMachineProfiles(settings),
   };
 
@@ -118,6 +122,7 @@ export function mapSettingsToDb(settings: GeneralSettings) {
     profitMargins: toInputJson(normalized.profitMargins),
     wholesaleDiscount: toInputJson(normalized.wholesaleDiscount),
     automaticAlerts: toInputJson(normalized.automaticAlerts),
+    agentTools: toInputJson(normalized.agentTools),
     paperPricesPerSqm: toInputJson(
       syncPaperPricesFromReferenceSheets(normalized.paperReferenceSheets),
     ),

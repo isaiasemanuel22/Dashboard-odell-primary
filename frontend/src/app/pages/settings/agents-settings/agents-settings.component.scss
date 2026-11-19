@@ -33,3 +33,24 @@
   color: $color-status-success-text;
   font-size: 0.875rem;
 }
+
+.agents-section {
+  margin-top: 1.5rem;
+}
+
+.mcp-url {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  db-input {
+    width: 16rem;
+  }
+}
+
+.approval-row__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0 12px 12px;
+}

@@ -33,8 +33,10 @@ import {
 } from './profit-margins.util';
 import { normalizeWholesaleDiscount } from './wholesale-discount.util';
 import { normalizeAutomaticAlerts } from './automatic-alerts.util';
+import { normalizeAgentTools } from './agent-tools.util';
 import { appendSupplyPriceHistory } from '../supplies/supply-price-history.util';
 import {
+  AgentToolsSettings,
   AutomaticAlertsSettings,
   ColorConfig,
   FilamentPriceConfig,
@@ -98,6 +100,9 @@ export class SettingsService {
     );
     this.store.generalSettings.automaticAlerts = normalizeAutomaticAlerts(
       this.store.generalSettings.automaticAlerts,
+    );
+    this.store.generalSettings.agentTools = normalizeAgentTools(
+      this.store.generalSettings.agentTools,
     );
     this.store.generalSettings.paperReferenceSheets =
       normalizePaperReferenceSheets(
@@ -431,6 +436,23 @@ export class SettingsService {
     });
     this.recordSettingsChange(['settings']);
     return this.getAutomaticAlerts();
+  }
+
+  getAgentTools(): AgentToolsSettings {
+    return normalizeAgentTools(this.store.generalSettings.agentTools);
+  }
+
+  updateAgentTools(data: Partial<AgentToolsSettings>): AgentToolsSettings {
+    // Solo pisa las claves enviadas: una clave ausente no vuelve al default.
+    const patch = Object.fromEntries(
+      Object.entries(data).filter(([, value]) => value !== undefined),
+    );
+    this.store.generalSettings.agentTools = normalizeAgentTools({
+      ...this.getAgentTools(),
+      ...patch,
+    });
+    this.recordSettingsChange(['settings']);
+    return this.getAgentTools();
   }
 
   updatePaperPrices(
