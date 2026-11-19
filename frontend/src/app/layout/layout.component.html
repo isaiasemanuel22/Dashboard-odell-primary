@@ -45,6 +45,11 @@
             <db-nav-icon [name]="item.icon" />
           </span>
           {{ item.label }}
+          @if (item.route === '/chats' && chatsUnread.count() > 0) {
+            <span class="nav-badge" [attr.aria-label]="chatsUnread.count() + ' chats sin leer'">
+              {{ chatsUnread.count() }}
+            </span>
+          }
         </a>
       }
     </nav>
@@ -128,6 +133,11 @@
               <db-nav-icon [name]="item.icon" />
             </span>
             <span class="bottom-nav__label">{{ item.label }}</span>
+            @if (item.route === '/mas' && chatsUnread.count() > 0) {
+              <span class="bottom-nav__badge" [attr.aria-label]="chatsUnread.count() + ' chats sin leer'">
+                {{ chatsUnread.count() }}
+              </span>
+            }
           </a>
         }
       }

@@ -12,3 +12,4 @@ export * from './user-access.dto';
 export * from './dashboard.dto';
 export * from './supplier.dto';
 export * from './spool.dto';
+export * from './chat.dto';

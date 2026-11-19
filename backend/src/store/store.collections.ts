@@ -15,7 +15,9 @@ export type StoreCollection =
   | 'fairs'
   | 'suppliers'
   | 'spools'
-  | 'supplyMovements';
+  | 'supplyMovements'
+  | 'chatConversations'
+  | 'chatMessages';
 
 export const ALL_STORE_COLLECTIONS: StoreCollection[] = [
   'settings',
@@ -35,4 +37,6 @@ export const ALL_STORE_COLLECTIONS: StoreCollection[] = [
   'suppliers',
   'spools',
   'supplyMovements',
+  'chatConversations',
+  'chatMessages',
 ];

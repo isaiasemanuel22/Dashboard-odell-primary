@@ -24,6 +24,7 @@ import { LayoutUiService } from '../layout/layout-ui.service';
 import { formDialogConfig } from './form-dialog.config';
 import { ModalSize } from './modal-size';
 import type { ConfirmDialogData } from './confirm-dialog.component';
+import type { ChatLinkCustomerDialogData } from './chat-link-customer-dialog.component';
 import type {
   FairAmountDialogData,
   FairAmountDialogResult,
@@ -354,6 +355,20 @@ export class FormDialogService {
         }): Observable<FairAmountDialogResult | undefined> =>
           this.open(FairAmountDialogComponent, data, 'sm', {
             ariaLabel: data.title,
+          }),
+      ),
+    );
+  }
+
+  /** Vincular un chat a un cliente; devuelve el id elegido. */
+  openChatLinkCustomer(
+    data: ChatLinkCustomerDialogData = {},
+  ): Observable<string | undefined> {
+    return from(import('./chat-link-customer-dialog.component')).pipe(
+      switchMap(
+        ({ ChatLinkCustomerDialogComponent }): Observable<string | undefined> =>
+          this.open(ChatLinkCustomerDialogComponent, data, 'sm', {
+            ariaLabel: 'Vincular cliente',
           }),
       ),
     );

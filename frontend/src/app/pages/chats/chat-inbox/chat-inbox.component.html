@@ -1,0 +1,157 @@
+@if (variant() === 'mobile') {
+  <db-mobile-list-toolbar
+    [search]="search()"
+    (searchChange)="searchChange.emit($event)"
+    placeholder="Cliente o teléfono"
+    searchAriaLabel="Buscar chats"
+    chipsAriaLabel="Canal"
+    [chips]="mobileChannelChips()"
+    [chip]="channel() ?? 'all'"
+    (chipChange)="onMobileChannel($event)"
+  />
+  <div class="chat-inbox-m__status m-chips" role="group" aria-label="Estado">
+    @for (chip of statusChips(); track chip.id) {
+      <button
+        type="button"
+        class="m-chip"
+        [class.m-chip--on]="filter() === chip.id"
+        [attr.aria-pressed]="filter() === chip.id"
+        (click)="toggleFilter(chip.id)"
+      >
+        {{ chip.label }}
+        @if (chip.count != null) {
+          <small>{{ chip.count }}</small>
+        }
+      </button>
+    }
+  </div>
+} @else {
+  <div class="chat-inbox__head">
+    <label class="chat-inbox__search">
+      <svg
+        viewBox="0 0 24 24"
+        width="16"
+        height="16"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        aria-hidden="true"
+      >
+        <circle cx="11" cy="11" r="7" />
+        <path d="M20 20l-3.5-3.5" />
+      </svg>
+      <input
+        type="search"
+        placeholder="Buscar por cliente o teléfono"
+        aria-label="Buscar chats"
+        [value]="search()"
+        (input)="searchChange.emit($any($event.target).value)"
+      />
+    </label>
+    <div class="chat-inbox__chips" role="group" aria-label="Canal">
+      <button
+        type="button"
+        class="chat-inbox__chip"
+        [class.chat-inbox__chip--on]="!channel()"
+        [attr.aria-pressed]="!channel()"
+        (click)="channelChange.emit(null)"
+      >
+        Todos
+      </button>
+      @for (ch of channels; track ch) {
+        <button
+          type="button"
+          class="chat-inbox__chip"
+          [class.chat-inbox__chip--on]="channel() === ch"
+          [attr.aria-pressed]="channel() === ch"
+          (click)="channelChange.emit(ch)"
+        >
+          <app-chat-channel-icon [channel]="ch" />
+          {{ channelLabels[ch] }}
+          @if (counts(); as c) {
+            <small>{{ c.byChannel[ch] }}</small>
+          }
+        </button>
+      }
+    </div>
+    <div class="chat-inbox__chips" role="group" aria-label="Estado">
+      @for (chip of statusChips(); track chip.id) {
+        <button
+          type="button"
+          class="chat-inbox__chip"
+          [class.chat-inbox__chip--on]="filter() === chip.id"
+          [attr.aria-pressed]="filter() === chip.id"
+          (click)="toggleFilter(chip.id)"
+        >
+          {{ chip.label }}
+          @if (chip.count != null) {
+            <small>{{ chip.count }}</small>
+          }
+        </button>
+      }
+    </div>
+  </div>
+}
+
+<div class="chat-inbox__list" [class.chat-inbox__list--m]="variant() === 'mobile'">
+  @if (loading()) {
+    <db-skeleton [variant]="variant() === 'mobile' ? 'cards' : 'lines'" [count]="5" />
+  } @else if (loadError()) {
+    <div class="chat-inbox__empty">
+      <p>No se pudieron cargar los chats.</p>
+      <db-button
+        label="Reintentar"
+        variant="secondary"
+        format="soft"
+        (clicked)="retry.emit()"
+      />
+    </div>
+  } @else {
+    @for (chat of conversations(); track chat.id) {
+      <a
+        class="chat-row"
+        [class.chat-row--sel]="variant() === 'desktop' && chat.id === selectedId()"
+        [routerLink]="['/chats', chat.id]"
+        [attr.aria-current]="chat.id === selectedId() ? 'page' : null"
+      >
+        <span class="chat-row__avatar-wrap">
+          <span class="chat-row__avatar" aria-hidden="true">{{ avatar(chat) }}</span>
+          <span class="chat-row__channel">
+            <app-chat-channel-icon [channel]="chat.channel" [size]="13" />
+          </span>
+        </span>
+        <span class="chat-row__body">
+          <span class="chat-row__ln">
+            <span class="chat-row__name" [class.chat-row__name--unread]="chat.unreadCount > 0">
+              {{ title(chat) }}
+              <span class="chat-row__sr">· {{ channelLabels[chat.channel] }}</span>
+            </span>
+            <span class="chat-row__time">{{ time(chat.lastMessageAt) }}</span>
+          </span>
+          <span class="chat-row__ln">
+            <span
+              class="chat-row__preview"
+              [class.chat-row__preview--unread]="chat.unreadCount > 0"
+            >
+              @if (chat.lastMessagePreview) {
+                “{{ chat.lastMessagePreview }}”
+              }
+            </span>
+            @if (chat.unreadCount > 0) {
+              <span class="chat-row__dot" role="img" aria-label="Sin leer"></span>
+            }
+          </span>
+          @if (pill(chat); as p) {
+            <span>
+              <span [class]="'chat-pill chat-pill--' + p.tone">{{ p.label }}</span>
+            </span>
+          }
+        </span>
+      </a>
+    } @empty {
+      <div class="chat-inbox__empty">
+        <p>{{ emptyMessage() }}</p>
+      </div>
+    }
+  }
+</div>

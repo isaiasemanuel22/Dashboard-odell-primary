@@ -88,6 +88,14 @@ const PATH_RULES: PathRule[] = [
     },
   },
   {
+    matches: (path) => path.includes('/chats'),
+    meta: {
+      collections: ['chatConversations', 'chatMessages'],
+      scopes: ['chats'],
+      entity: 'chat',
+    },
+  },
+  {
     matches: (path) => path.includes('/customers'),
     meta: {
       collections: ['customers', 'orders'],

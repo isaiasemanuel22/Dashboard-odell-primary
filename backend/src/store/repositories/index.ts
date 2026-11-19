@@ -1,4 +1,5 @@
 export { CategoryRepository } from './category.repository';
+export { ChatRepository } from './chat.repository';
 export { CustomerRepository } from './customer.repository';
 export { FairRepository } from './fair.repository';
 export { OrderRepository } from './order.repository';

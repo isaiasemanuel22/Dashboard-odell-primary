@@ -504,6 +504,43 @@ model Fair {
   @@map("fairs")
 }
 
+model ChatConversation {
+  id           String    @id @db.VarChar(64)
+  channel      String    @db.VarChar(16)
+  externalId   String    @map("external_id") @db.VarChar(128)
+  displayName  String?   @map("display_name") @db.VarChar(255)
+  displayPhone String?   @map("display_phone") @db.VarChar(64)
+  customerId   String?   @map("customer_id") @db.VarChar(64)
+  handedOff    Boolean   @default(false) @map("handed_off")
+  agentPaused  Boolean   @default(false) @map("agent_paused")
+  lastReadAt   DateTime? @map("last_read_at")
+  createdAt    DateTime  @map("created_at")
+  updatedAt    DateTime  @map("updated_at")
+
+  @@unique([channel, externalId])
+  @@index([customerId])
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id                String   @id @db.VarChar(64)
+  conversationId    String   @map("conversation_id") @db.VarChar(64)
+  direction         String   @db.VarChar(8)
+  author            String   @db.VarChar(16)
+  authorUserId      String?  @map("author_user_id") @db.VarChar(128)
+  text              String   @db.Text
+  attachments       Json     @default("[]")
+  status            String   @db.VarChar(16)
+  externalMessageId String?  @map("external_message_id") @db.VarChar(128)
+  quoteId           String?  @map("quote_id") @db.VarChar(64)
+  sentAt            DateTime @map("sent_at")
+  updatedAt         DateTime @map("updated_at")
+
+  @@index([conversationId])
+  @@index([externalMessageId])
+  @@map("chat_messages")
+}
+
 model WorkArea {
   id        String   @id @db.VarChar(64)
   name      String   @db.VarChar(128)

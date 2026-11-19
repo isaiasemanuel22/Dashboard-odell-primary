@@ -6,6 +6,7 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AuthService } from '../core/auth/auth.service';
 import { UserAccessService } from '../core/services/user-access.service';
 import { RealtimeService } from '../core/services/realtime.service';
+import { ChatsUnreadService } from '../core/services/chats-unread.service';
 import { StoreBootstrapService } from '../store/store-bootstrap.service';
 import { SuppliesFacade } from '../store/supplies/supplies.facade';
 import { DbButtonComponent } from '../components/db-button/db-button.component';
@@ -55,6 +56,7 @@ export class LayoutComponent implements OnInit {
   private readonly printJobsService = inject(PrintJobsService);
   private readonly independentTaskFlow = inject(IndependentTaskFlowService);
   readonly layoutUi = inject(LayoutUiService);
+  readonly chatsUnread = inject(ChatsUnreadService);
 
   readonly user$ = this.auth.currentUser$;
   readonly authEnabled = this.auth.enabled;
@@ -72,6 +74,7 @@ export class LayoutComponent implements OnInit {
 
   readonly navItems: NavItem[] = [
     { label: 'Dashboard', route: '/dashboard', icon: 'dashboard', exact: true },
+    { label: 'Chats', route: '/chats', icon: 'chats' },
     { label: 'Billetera', route: '/billetera', icon: 'wallet' },
     { label: 'Ventas', route: '/ventas', icon: 'sales' },
     { label: 'Pedidos', route: '/pedidos', icon: 'orders' },
@@ -109,6 +112,7 @@ export class LayoutComponent implements OnInit {
     this.userAccess.loadCurrentUser().subscribe({
       error: () => undefined,
     });
+    this.chatsUnread.refresh();
     this.realtime.bindReload(this.destroyRef, 'supplies', () =>
       this.suppliesFacade.refresh(),
     );
@@ -179,6 +183,7 @@ export class LayoutComponent implements OnInit {
       /^\/pedidos\/[^/]+$/.test(path) ||
       /^\/presupuestos\/[^/]+$/.test(path) ||
       /^\/clientes\/[^/]+$/.test(path) ||
+      /^\/chats\/[^/]+$/.test(path) ||
       /^\/ferias\/[^/]+\/(vender|cierre)$/.test(path) ||
       /^\/productos\/[^/]+$/.test(path) ||
       path === '/ajustes/valores-generales' ||

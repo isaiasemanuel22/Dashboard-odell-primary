@@ -53,6 +53,8 @@ describe('SuppliesReorderService', () => {
       ],
       spools: [],
       supplyMovements: [],
+      chatConversations: [],
+      chatMessages: [],
     });
     return store;
   }

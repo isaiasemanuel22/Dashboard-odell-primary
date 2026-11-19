@@ -17,6 +17,7 @@ export const MOBILE_LIST_KEYS = {
   products: 'products',
   supplies: 'supplies',
   printJobs: 'print-jobs',
+  chats: 'chats',
 } as const;
 
 export type MobileListKey =

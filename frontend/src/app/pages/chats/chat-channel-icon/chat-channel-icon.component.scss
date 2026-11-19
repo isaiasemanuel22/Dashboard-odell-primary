@@ -1,0 +1,23 @@
+@use '../../../shared/styles/mobile' as mobile;
+
+:host {
+  display: inline-flex;
+  flex: none;
+}
+
+.chat-channel-icon {
+  display: block;
+
+  &--whatsapp {
+    color: mobile.$m-positive;
+  }
+
+  // Color de marca de Instagram (sin token propio).
+  &--instagram {
+    color: #c13584;
+  }
+
+  &--messenger {
+    color: mobile.$m-primary;
+  }
+}

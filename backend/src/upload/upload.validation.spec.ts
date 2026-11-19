@@ -8,10 +8,11 @@ import {
 } from './upload.validation';
 
 describe('resolveAttachmentFolder', () => {
-  it('usa products por defecto y acepta orders y quotes', () => {
+  it('usa products por defecto y acepta orders, quotes y chats', () => {
     expect(resolveAttachmentFolder()).toBe('products/attachments');
     expect(resolveAttachmentFolder('orders')).toBe('orders/attachments');
     expect(resolveAttachmentFolder(' Quotes ')).toBe('quotes/attachments');
+    expect(resolveAttachmentFolder('chats')).toBe('chats/attachments');
   });
 
   it('rechaza carpetas fuera de la lista blanca', () => {
