@@ -245,6 +245,60 @@ export class ChatsService {
     return sent;
   }
 
+  /** Plantilla aprobada de WhatsApp: sale aunque la ventana de 24 h esté cerrada. */
+  async sendTemplate(
+    conversationId: string,
+    data: {
+      text: string;
+      template: { name: string; language: string; params: string[] };
+    },
+    userId?: string,
+  ): Promise<ChatMessage> {
+    const chat = this.require(conversationId);
+    if (chat.channel !== ChatChannel.WHATSAPP) {
+      throw new BadRequestException('Las plantillas son solo para WhatsApp');
+    }
+    const now = new Date().toISOString();
+    const message = this.chats.createMessage({
+      id: this.chats.nextMessageId(),
+      conversationId: chat.id,
+      direction: ChatDirection.OUT,
+      author: ChatAuthor.HUMAN,
+      authorUserId: userId ?? null,
+      text: data.text,
+      attachments: [],
+      status: ChatMessageStatus.SENT,
+      externalMessageId: null,
+      quoteId: null,
+      sentAt: now,
+      updatedAt: now,
+    });
+    const sent = await this.deliver(chat, message, data.template);
+    // Como en send: si escribe un humano, el agente se calla en este chat.
+    this.chats.saveConversation({
+      ...chat,
+      agentPaused: true,
+      updatedAt: sent.sentAt,
+    });
+    this.recordChange('update', chat.id);
+    return sent;
+  }
+
+  /** Meta avisó que un mensaje saliente no llegó. */
+  markDeliveryFailed(externalMessageId: string): ChatMessage | null {
+    const message = this.chats
+      .findAllMessages()
+      .find((m) => m.externalMessageId === externalMessageId);
+    if (!message || message.direction !== ChatDirection.OUT) return null;
+    const saved = this.chats.saveMessage({
+      ...message,
+      status: ChatMessageStatus.FAILED,
+      updatedAt: new Date().toISOString(),
+    });
+    this.recordChange('update', message.conversationId);
+    return saved;
+  }
+
   markRead(id: string): ChatSummary {
     const now = new Date().toISOString();
     const chat = this.chats.saveConversation({
@@ -453,9 +507,14 @@ export class ChatsService {
   private async deliver(
     chat: ChatConversation,
     message: ChatMessage,
+    template?: { name: string; language: string; params: string[] },
   ): Promise<ChatMessage> {
     try {
-      const result = await this.gateway.send({ conversation: chat, message });
+      const result = await this.gateway.send({
+        conversation: chat,
+        message,
+        template,
+      });
       return this.chats.saveMessage({
         ...message,
         status: ChatMessageStatus.SENT,

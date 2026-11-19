@@ -29,6 +29,14 @@
         En WhatsApp solo se puede mandar una plantilla aprobada; en Instagram y Messenger hay
         que esperar a que el cliente escriba de nuevo.
       </span>
+      @if (canSendTemplate()) {
+        <db-button
+          label="Mandar plantilla"
+          variant="primary"
+          format="link"
+          (clicked)="openTemplate()"
+        />
+      }
     </div>
   }
   @if (agentPaused()) {
@@ -103,6 +111,14 @@
           <b>plantilla aprobada</b>; en Instagram y Messenger hay que esperar a que el cliente
           escriba de nuevo.
         </span>
+        @if (canSendTemplate()) {
+          <db-button
+            label="Mandar plantilla"
+            variant="primary"
+            format="link"
+            (clicked)="openTemplate()"
+          />
+        }
       </div>
     }
     @if (agentPaused()) {

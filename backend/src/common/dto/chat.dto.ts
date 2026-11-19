@@ -12,6 +12,8 @@ import {
   ValidateNested,
 } from 'class-validator';
 import { ChatChannel } from '../enums';
+import { CUSTOMER_TEMPLATE_KEYS } from '../../meta/meta.constants';
+import type { CustomerTemplateKey } from '../../meta/meta.constants';
 import { MAX_DOCUMENT_ATTACHMENTS } from '../../products/product-attachment.util';
 import { ProductAttachmentDto } from './product.dto';
 
@@ -76,4 +78,27 @@ export class ListChatsQueryDto {
   @IsString()
   @MaxLength(255)
   search?: string;
+}
+
+/** A quién va una plantilla de WhatsApp: el chat, o el cliente del pedido o presupuesto. */
+export class TemplateTargetDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  conversationId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  orderId?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  quoteId?: string;
+}
+
+export class SendTemplateDto extends TemplateTargetDto {
+  @IsIn(CUSTOMER_TEMPLATE_KEYS)
+  templateKey!: CustomerTemplateKey;
 }

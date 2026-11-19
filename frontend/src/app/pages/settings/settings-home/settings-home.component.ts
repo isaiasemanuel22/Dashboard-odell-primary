@@ -177,6 +177,11 @@ export class SettingsHomeComponent implements OnInit {
           hint: 'Pedidos, stock y saldos por WhatsApp o email',
           link: '/ajustes/avisos',
         },
+        {
+          label: 'Integraciones',
+          hint: 'WhatsApp, Instagram y Messenger',
+          link: '/ajustes/integraciones',
+        },
       ],
     },
     ...(environment.production

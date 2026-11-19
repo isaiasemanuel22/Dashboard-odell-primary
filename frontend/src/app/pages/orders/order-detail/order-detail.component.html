@@ -412,6 +412,11 @@
           Marcar todo entregado
         </button>
       }
+      @if (order.customerId) {
+        <button type="button" class="m-sheet-action" (click)="onMobileWhatsAppTemplate()">
+          Mandar plantilla de WhatsApp
+        </button>
+      }
       @if (canCancelOrder) {
         <button
           type="button"
@@ -737,6 +742,14 @@
             variant="primary"
             format="solid"
             (clicked)="openEdit()"
+          />
+        }
+        @if (order.customerId) {
+          <db-button
+            label="Mandar plantilla de WhatsApp"
+            variant="secondary"
+            format="soft"
+            (clicked)="openWhatsAppTemplate()"
           />
         }
         @if (canCancelOrder) {

@@ -65,6 +65,14 @@ describe('route-registry', () => {
     expect(shouldTrackHttpMutation('/api/mcp', 'POST')).toBe(false);
   });
 
+  it('no rastrea el webhook de Meta ni el agente de atención', () => {
+    expect(shouldTrackHttpMutation('/api/meta/webhook', 'POST')).toBe(false);
+    expect(shouldTrackHttpMutation('/api/meta/templates/send', 'POST')).toBe(
+      false,
+    );
+    expect(shouldTrackHttpMutation('/api/attendant/pause', 'PUT')).toBe(false);
+  });
+
   it('marca products, orders y quotes en bulk-price/apply', () => {
     expect(routeMutationMetaFromPath('/api/products/bulk-price/apply')).toEqual(
       {

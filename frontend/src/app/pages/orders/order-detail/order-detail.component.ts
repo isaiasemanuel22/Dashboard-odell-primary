@@ -738,7 +738,12 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
   /** «···» solo aparece si hay alguna acción útil (pedido entregado/cancelado no tiene). */
   get showMobileMoreActions(): boolean {
-    return this.canEditOrder || this.canCancelOrder || this.showMobileMarkAllDelivered;
+    return (
+      this.canEditOrder ||
+      this.canCancelOrder ||
+      this.showMobileMarkAllDelivered ||
+      !!this.order?.customerId
+    );
   }
 
   get showMobileMarkAllDelivered(): boolean {
@@ -765,6 +770,18 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   onMobileEdit(): void {
     this.closeMobileActions();
     this.openEdit();
+  }
+
+  onMobileWhatsAppTemplate(): void {
+    this.closeMobileActions();
+    this.openWhatsAppTemplate();
+  }
+
+  /** Plantilla de WhatsApp al cliente del pedido (§28.2); la manda Isaías. */
+  openWhatsAppTemplate(): void {
+    if (!this.order?.customerId) return;
+    // El diálogo se cierra al mandarla; el mensaje queda en el chat.
+    this.formDialogs.openWhatsAppTemplate({ orderId: this.order.id }).subscribe();
   }
 
   onMobileCancel(): void {

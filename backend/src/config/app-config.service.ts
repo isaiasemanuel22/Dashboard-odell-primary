@@ -77,4 +77,46 @@ export class AppConfigService {
   get alertsWhatsAppTo(): string | undefined {
     return this.config.get('ALERTS_WHATSAPP_TO', { infer: true });
   }
+
+  get metaAppSecret(): string | undefined {
+    return this.config.get('META_APP_SECRET', { infer: true });
+  }
+
+  get metaVerifyToken(): string | undefined {
+    return this.config.get('META_VERIFY_TOKEN', { infer: true });
+  }
+
+  /** Token de System User para la WhatsApp Cloud API. */
+  get metaAccessToken(): string | undefined {
+    return this.config.get('META_ACCESS_TOKEN', { infer: true });
+  }
+
+  /** Token de la página para la Send API de Instagram y Messenger. */
+  get metaPageAccessToken(): string | undefined {
+    return this.config.get('META_PAGE_ACCESS_TOKEN', { infer: true });
+  }
+
+  get whatsappPhoneNumberId(): string | undefined {
+    return this.config.get('WHATSAPP_PHONE_NUMBER_ID', { infer: true });
+  }
+
+  get whatsappBusinessAccountId(): string | undefined {
+    return this.config.get('WHATSAPP_BUSINESS_ACCOUNT_ID', { infer: true });
+  }
+
+  get metaPageId(): string | undefined {
+    return this.config.get('META_PAGE_ID', { infer: true });
+  }
+
+  get instagramAccountId(): string | undefined {
+    return this.config.get('INSTAGRAM_ACCOUNT_ID', { infer: true });
+  }
+
+  get whatsappConfigured(): boolean {
+    return !!this.metaAccessToken && !!this.whatsappPhoneNumberId;
+  }
+
+  get pageConfigured(): boolean {
+    return !!this.metaPageAccessToken && !!this.metaPageId;
+  }
 }

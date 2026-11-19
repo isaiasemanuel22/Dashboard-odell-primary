@@ -1,0 +1,97 @@
+<ng-template #content>
+  @if (message) {
+    <p class="status-notice" role="status">{{ message }}</p>
+  }
+
+  @if (loading) {
+    <p class="panel-sub">Cargando…</p>
+  } @else if (error) {
+    <p class="panel-sub">{{ error }}</p>
+  } @else if (status) {
+    <div class="int-card">
+      <span class="int-label">URL del webhook</span>
+      <div class="webhook-url">
+        <db-input
+          ariaLabel="URL del webhook"
+          [readonly]="true"
+          [ngModel]="status.webhookUrl"
+        />
+        <db-button
+          label="Copiar"
+          variant="cancel"
+          format="soft"
+          (clicked)="copyWebhookUrl()"
+        />
+      </div>
+      <span class="int-hint">
+        Token de verificación:
+        {{ status.verifyTokenConfigured ? 'cargado' : 'falta META_VERIFY_TOKEN' }}
+        · Secreto de la app:
+        {{ status.appSecretConfigured ? 'cargado' : 'falta META_APP_SECRET' }}
+      </span>
+    </div>
+
+    @for (channel of channels; track channel.key) {
+      <div class="int-card">
+        <div class="int-bar">
+          <div class="int-row">
+            <span
+              class="int-logo"
+              [class]="'int-logo int-logo--' + channel.key"
+              aria-hidden="true"
+              >{{ channel.logo }}</span
+            >
+            <div>
+              <span class="int-name">{{ channel.name }}</span>
+              <span class="int-detail">{{ channel.detail }}</span>
+            </div>
+          </div>
+          <span
+            class="int-pill"
+            [class]="
+              'int-pill int-pill--' + (channel.connected ? 'ok' : 'warn')
+            "
+            >{{ channel.connected ? 'Conectada' : 'Sin conectar' }}</span
+          >
+        </div>
+
+        @if (channel.key === 'whatsapp') {
+          <span class="int-label">Plantillas</span>
+          @for (template of status.templates; track template.key) {
+            <div class="int-bar int-template">
+              <span>{{ template.label }}</span>
+              <span
+                [class]="
+                  'int-pill int-pill--' +
+                  templateStatus(template.metaStatus).tone
+                "
+                >{{ templateStatus(template.metaStatus).label }}</span
+              >
+            </div>
+          }
+        }
+      </div>
+    }
+
+    <p class="int-hint">
+      Los datos de conexión se cargan en las variables de entorno del
+      servidor.
+    </p>
+  }
+</ng-template>
+
+@if (isMobile()) {
+  <db-mobile-settings-page title="Integraciones">
+    <ng-container [ngTemplateOutlet]="content" />
+  </db-mobile-settings-page>
+} @else {
+  <section class="settings-panel">
+    <div class="panel-head">
+      <div>
+        <h3>Integraciones</h3>
+        <p class="panel-sub">WhatsApp, Instagram y Messenger</p>
+      </div>
+    </div>
+    <ng-container [ngTemplateOutlet]="content" />
+  </section>
+}

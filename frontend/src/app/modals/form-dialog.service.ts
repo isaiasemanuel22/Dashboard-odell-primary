@@ -20,13 +20,14 @@ import {
   SupplyReplacementChoice,
   SupplyShortageReport,
 } from '../core/models';
-import type { CalendarEntry } from '../core/models';
+import type { CalendarEntry, ChatMessage } from '../core/models';
 import { BreakpointService } from '../core/services/breakpoint.service';
 import { LayoutUiService } from '../layout/layout-ui.service';
 import { formDialogConfig } from './form-dialog.config';
 import { ModalSize } from './modal-size';
 import type { ConfirmDialogData } from './confirm-dialog.component';
 import type { ChatLinkCustomerDialogData } from './chat-link-customer-dialog.component';
+import type { WhatsAppTemplateDialogData } from './whatsapp-template-dialog.component';
 import type {
   FairAmountDialogData,
   FairAmountDialogResult,
@@ -384,6 +385,20 @@ export class FormDialogService {
         ({ ChatLinkCustomerDialogComponent }): Observable<string | undefined> =>
           this.open(ChatLinkCustomerDialogComponent, data, 'sm', {
             ariaLabel: 'Vincular cliente',
+          }),
+      ),
+    );
+  }
+
+  /** Mandar una plantilla de WhatsApp; devuelve el mensaje enviado. */
+  openWhatsAppTemplate(
+    data: WhatsAppTemplateDialogData,
+  ): Observable<ChatMessage | undefined> {
+    return from(import('./whatsapp-template-dialog.component')).pipe(
+      switchMap(
+        ({ WhatsAppTemplateDialogComponent }): Observable<ChatMessage | undefined> =>
+          this.open(WhatsAppTemplateDialogComponent, data, 'sm', {
+            ariaLabel: 'Mandar plantilla de WhatsApp',
           }),
       ),
     );

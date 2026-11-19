@@ -12,7 +12,10 @@ import { AppConfigService } from './config/app-config.service';
 import { ensureUploadsDir } from './upload/upload.paths';
 
 async function bootstrap() {
-  const app = await NestFactory.create<NestExpressApplication>(AppModule);
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, {
+    // El webhook de Meta valida la firma sobre el cuerpo crudo.
+    rawBody: true,
+  });
   const config = app.get(AppConfigService);
 
   app.setGlobalPrefix('api');

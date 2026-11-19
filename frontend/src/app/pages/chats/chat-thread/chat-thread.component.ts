@@ -25,6 +25,7 @@ import {
 } from '../../../core/models';
 import { MediaUploadService } from '../../../core/services/media-upload.service';
 import { ChatsService } from '../../../core/services/chats.service';
+import { FormDialogService } from '../../../modals/form-dialog.service';
 import { CurrencyArsPipe, MediaUrlPipe } from '../../../shared/pipes/labels.pipe';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import { createProductAttachmentId } from '../../../shared/utils/product-attachment.helpers';
@@ -57,6 +58,7 @@ type ThreadItem =
 export class ChatThreadComponent {
   private readonly chats = inject(ChatsService);
   private readonly mediaUpload = inject(MediaUploadService);
+  private readonly formDialog = inject(FormDialogService);
 
   readonly detail = input.required<ChatDetail>();
   readonly mobile = input(false);
@@ -94,6 +96,10 @@ export class ChatThreadComponent {
   });
   readonly windowOpen = computed(() => this.conversation().windowOpen);
   readonly agentPaused = computed(() => this.conversation().agentPaused);
+  /** Fuera de las 24 h, por WhatsApp solo sale una plantilla aprobada (§28.1). */
+  readonly canSendTemplate = computed(
+    () => !this.windowOpen() && this.conversation().channel === 'whatsapp',
+  );
   /** « · quedan 21 h 18 min», o vacío si no hay vencimiento. */
   readonly windowLeftSuffix = computed(() => {
     const left = formatWindowLeft(this.conversation().windowExpiresAt, this.now());
@@ -234,6 +240,19 @@ export class ChatThreadComponent {
           this.sending.set(false);
           this.error.set(sendErrorMessage(err));
         },
+      });
+  }
+
+  openTemplate(): void {
+    const context = this.detail().customerContext;
+    this.formDialog
+      .openWhatsAppTemplate({
+        conversationId: this.conversation().id,
+        orderId: context?.lastOrder?.id,
+        quoteId: context?.openQuotes[0]?.id,
+      })
+      .subscribe((message) => {
+        if (message) this.changed.emit();
       });
   }
 

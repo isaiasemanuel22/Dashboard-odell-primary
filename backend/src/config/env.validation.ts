@@ -18,6 +18,15 @@ export interface AppEnv {
   ALERTS_EMAIL_FROM?: string;
   ALERTS_EMAIL_TO?: string;
   ALERTS_WHATSAPP_TO?: string;
+  /** Conexión con Meta (§28.1): WhatsApp Cloud API, Instagram y Messenger. */
+  META_APP_SECRET?: string;
+  META_VERIFY_TOKEN?: string;
+  META_ACCESS_TOKEN?: string;
+  META_PAGE_ACCESS_TOKEN?: string;
+  WHATSAPP_PHONE_NUMBER_ID?: string;
+  WHATSAPP_BUSINESS_ACCOUNT_ID?: string;
+  META_PAGE_ID?: string;
+  INSTAGRAM_ACCOUNT_ID?: string;
 }
 
 export function validateEnv(
@@ -70,6 +79,16 @@ export function validateEnv(
     ALERTS_EMAIL_FROM: optionalString(config.ALERTS_EMAIL_FROM),
     ALERTS_EMAIL_TO: optionalString(config.ALERTS_EMAIL_TO),
     ALERTS_WHATSAPP_TO: optionalString(config.ALERTS_WHATSAPP_TO),
+    META_APP_SECRET: optionalString(config.META_APP_SECRET),
+    META_VERIFY_TOKEN: optionalString(config.META_VERIFY_TOKEN),
+    META_ACCESS_TOKEN: optionalString(config.META_ACCESS_TOKEN),
+    META_PAGE_ACCESS_TOKEN: optionalString(config.META_PAGE_ACCESS_TOKEN),
+    WHATSAPP_PHONE_NUMBER_ID: optionalString(config.WHATSAPP_PHONE_NUMBER_ID),
+    WHATSAPP_BUSINESS_ACCOUNT_ID: optionalString(
+      config.WHATSAPP_BUSINESS_ACCOUNT_ID,
+    ),
+    META_PAGE_ID: optionalString(config.META_PAGE_ID),
+    INSTAGRAM_ACCOUNT_ID: optionalString(config.INSTAGRAM_ACCOUNT_ID),
   };
 }
 

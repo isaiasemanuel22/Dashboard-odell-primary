@@ -239,7 +239,9 @@ export function shouldTrackHttpMutation(path: string, method: string): boolean {
     path.includes('/api-keys') ||
     path.includes('/alerts') ||
     path.includes('/agent-approvals') ||
-    path.includes('/mcp')
+    path.includes('/mcp') ||
+    path.includes('/api/meta') ||
+    path.includes('/attendant')
   ) {
     return false;
   }

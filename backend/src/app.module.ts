@@ -30,6 +30,7 @@ import { ApiKeysModule } from './api-keys/api-keys.module';
 import { AlertsModule } from './alerts/alerts.module';
 import { AgentApprovalsModule } from './agent-approvals/agent-approvals.module';
 import { McpModule } from './mcp/mcp.module';
+import { MetaModule } from './meta/meta.module';
 
 @Module({
   imports: [
@@ -64,6 +65,7 @@ import { McpModule } from './mcp/mcp.module';
     AlertsModule,
     AgentApprovalsModule,
     McpModule,
+    MetaModule,
   ],
 })
 export class AppModule {}

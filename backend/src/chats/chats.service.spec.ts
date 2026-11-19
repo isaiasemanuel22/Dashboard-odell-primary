@@ -313,4 +313,53 @@ describe('ChatsService', () => {
       NotFoundException,
     );
   });
+
+  it('sendTemplate sale fuera de la ventana, solo por WhatsApp y pausa al agente', async () => {
+    const old = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000).toISOString();
+    const { conversation } = service.registerInbound({
+      channel: ChatChannel.WHATSAPP,
+      externalId: '5491100000001',
+      text: 'Hola',
+      sentAt: old,
+    });
+    await expect(
+      service.send(conversation.id, { text: 'Hola' }),
+    ).rejects.toThrow(ConflictException);
+
+    const template = {
+      name: 'pedido_listo',
+      language: 'es_AR',
+      params: ['Ana', 'ord-1'],
+    };
+    const sent = await service.sendTemplate(
+      conversation.id,
+      { text: 'Hola Ana, tu pedido ord-1 está listo para retirar.', template },
+      'u1',
+    );
+    expect(sent).toMatchObject({
+      author: ChatAuthor.HUMAN,
+      authorUserId: 'u1',
+      status: ChatMessageStatus.SENT,
+      externalMessageId: 'x1',
+    });
+    expect(gateway.send).toHaveBeenCalledWith(
+      expect.objectContaining({ template }),
+    );
+    expect(store.chatConversations.at(-1)!.agentPaused).toBe(true);
+
+    await expect(
+      service.sendTemplate('chat-2', { text: 'x', template }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it('markDeliveryFailed marca el saliente como fallido', async () => {
+    const sent = await service.send('chat-1', { text: 'Hola' });
+    recordChange.mockClear();
+    expect(service.markDeliveryFailed('x1')).toMatchObject({
+      id: sent.id,
+      status: ChatMessageStatus.FAILED,
+    });
+    expect(recordChange).toHaveBeenCalledTimes(1);
+    expect(service.markDeliveryFailed('no-existe')).toBeNull();
+  });
 });

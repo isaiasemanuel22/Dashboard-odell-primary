@@ -1,0 +1,143 @@
+@use '../../../shared/styles/variables' as *;
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h3 {
+    margin: 0 0 0.25rem;
+  }
+}
+
+.panel-sub {
+  margin: 0;
+  color: $color-text-label;
+  font-size: 0.875rem;
+}
+
+.status-notice {
+  margin: 0 0 0.75rem;
+  color: $color-success;
+  font-size: 0.875rem;
+}
+
+.int-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding: 1rem;
+  border: 1px solid $color-border;
+  border-radius: 0.75rem;
+  background: $color-surface;
+}
+
+.int-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.int-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.int-logo {
+  display: flex;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.75rem;
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.9375rem;
+
+  &--whatsapp {
+    background: #15803d;
+  }
+
+  &--instagram {
+    background: #c13584;
+  }
+
+  &--messenger {
+    background: #0866ff;
+  }
+}
+
+.int-name {
+  display: block;
+  font-weight: 700;
+  font-size: 0.9375rem;
+}
+
+.int-detail,
+.int-hint {
+  display: block;
+  color: $color-text-label;
+  font-size: 0.8125rem;
+}
+
+.int-hint {
+  margin: 0;
+}
+
+.int-label {
+  color: $color-text-label;
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+.int-template {
+  font-size: 0.8125rem;
+}
+
+.int-pill {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  height: 1.5rem;
+  padding: 0 0.625rem;
+  border-radius: 999px;
+  font-weight: 500;
+  font-size: 0.75rem;
+
+  &--ok {
+    background: $color-status-success-bg;
+    color: $color-status-success-text;
+  }
+
+  &--warn {
+    background: $color-status-warning-bg;
+    color: $color-status-warning-text;
+  }
+
+  &--danger {
+    background: $color-status-danger-bg;
+    color: $color-status-danger-text;
+  }
+
+  &--neutral {
+    background: $color-status-neutral-bg;
+    color: $color-text-label;
+  }
+}
+
+.webhook-url {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  db-input {
+    flex: 1;
+    min-width: 0;
+  }
+}

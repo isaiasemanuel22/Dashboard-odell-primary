@@ -278,6 +278,13 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'integraciones',
+            loadComponent: () =>
+              import('./pages/settings/integrations-settings/integrations-settings.component').then(
+                (m) => m.IntegrationsSettingsComponent,
+              ),
+          },
+          {
             path: 'usuarios',
             loadComponent: () =>
               import('./pages/settings/user-access/user-access-layout.component').then(
