@@ -2271,6 +2271,17 @@ van en §27. Tokens y llaves nunca en el repo: van en variables de entorno.
   un presupuesto o pedido se crea el cliente como Particular con origen = el
   canal (WhatsApp, Instagram o Messenger). Antes busca uno existente por
   teléfono o por usuario del canal.
+- (2026-11-19) Fecha de entrega con stock: hoy + N días, configurable en
+  Ajustes del agente (arranca en 1). Sin stock: fecha de la cola + margen de
+  días **hábiles** (arranca en 2).
+- (2026-11-19) El presupuesto que arma el agente queda Enviado al mandarlo;
+  cuando el cliente confirma, pasa a Aceptado y el pedido se crea desde él.
+- (2026-11-19) En Instagram y Messenger el agente pide nombre y teléfono antes
+  de crear presupuesto o pedido. «Messenger» se suma como origen de cliente y
+  canal de venta.
+- (2026-11-19) Si el cliente dice que pagó o manda un comprobante, el agente
+  deriva a Isaías.
+- (2026-11-19) El agente arranca apagado: Isaías lo prende en Ajustes.
 
 ### 28.4 Llaves de acceso y servidor MCP
 
