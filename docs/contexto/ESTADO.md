@@ -17,7 +17,9 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `fix/mano-de-obra-opcional`, igual a `main` (publicada 2026-11-18).
+- Rama actual: `feat/chats` (`d29f77f`, sin publicar): sección Chats v7. Al publicar
+  hace falta `db:push:heroku` (tablas `chat_conversations`, `chat_messages`). La
+  sesión de Meta trabaja en `claude/meta-agentes-3d0324` (worktree) y depende de esta rama.
 - `feat/ferias` ya unida a `main` (publicada 2026-11-18). Falta probar
   Ferias en producción con sesión iniciada; sin UI para editar feria, fondo o gastos.
 - Producción con sesión iniciada sin revisar (el agente solo vio el login).
@@ -69,6 +71,9 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   Proveedor sí confirma. ¿Unificar?
 - Diseño v3 (merch): ¿la seña es obligatoria (50% desde 20 prendas) y frena
   la producción? Choca con §Pagos de BUSINESS-RULES, donde la seña no tiene efectos.
+- Chats: plantillas de WhatsApp fuera de la ventana de 24 h, cómo se cuentan los no
+  leídos, botón «Respuestas rápidas» del encabezado y sus textos (hoy `[completar]`),
+  seña/entrega en la sugerencia del agente.
 
 ## Entorno local
 - Dev server: launch `odell-dev-4300` (el 4200 lo usa otro proyecto).
