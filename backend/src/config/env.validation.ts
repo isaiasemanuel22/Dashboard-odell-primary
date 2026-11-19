@@ -27,6 +27,9 @@ export interface AppEnv {
   WHATSAPP_BUSINESS_ACCOUNT_ID?: string;
   META_PAGE_ID?: string;
   INSTAGRAM_ACCOUNT_ID?: string;
+  /** Agente de atención (§28.3): API de Claude. */
+  ANTHROPIC_API_KEY?: string;
+  ANTHROPIC_MODEL?: string;
 }
 
 export function validateEnv(
@@ -89,6 +92,8 @@ export function validateEnv(
     ),
     META_PAGE_ID: optionalString(config.META_PAGE_ID),
     INSTAGRAM_ACCOUNT_ID: optionalString(config.INSTAGRAM_ACCOUNT_ID),
+    ANTHROPIC_API_KEY: optionalString(config.ANTHROPIC_API_KEY),
+    ANTHROPIC_MODEL: optionalString(config.ANTHROPIC_MODEL),
   };
 }
 

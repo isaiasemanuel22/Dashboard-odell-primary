@@ -7,6 +7,7 @@ import {
   computed,
   inject,
 } from '@angular/core';
+import { NgTemplateOutlet } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { forkJoin, map } from 'rxjs';
@@ -29,11 +30,14 @@ import {
   AgentApproval,
   AgentToolsSettings,
   ApiKey,
+  AttendantSettings,
+  AttendantStatus,
   ApiKeyScopeOption,
   CurrentUserProfile,
 } from '../../../core/models';
 import { AgentApprovalsService } from '../../../core/services/agent-approvals.service';
 import { ApiKeysService } from '../../../core/services/api-keys.service';
+import { AttendantService } from '../../../core/services/attendant.service';
 import { BreakpointService } from '../../../core/services/breakpoint.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { UserAccessService } from '../../../core/services/user-access.service';
@@ -52,6 +56,7 @@ interface McpToolRow {
   standalone: true,
   imports: [
     FormsModule,
+    NgTemplateOutlet,
     DbButtonComponent,
     DbCheckboxComponent,
     DbInputComponent,
@@ -69,6 +74,7 @@ export class AgentsSettingsComponent implements OnInit, OnDestroy {
   private readonly apiKeysService = inject(ApiKeysService);
   private readonly approvalsService = inject(AgentApprovalsService);
   private readonly settingsService = inject(SettingsService);
+  private readonly attendantService = inject(AttendantService);
   private readonly formDialogs = inject(FormDialogService);
   private readonly breakpoint = inject(BreakpointService);
   private readonly userAccess = inject(UserAccessService);
@@ -98,6 +104,15 @@ export class AgentsSettingsComponent implements OnInit, OnDestroy {
   agentTools: AgentToolsSettings | null = null;
   approvals: AgentApproval[] = [];
   approvalsLoading = true;
+  attendant: AttendantStatus | null = null;
+  attendantDraft: Pick<
+    AttendantSettings,
+    'stockDeliveryDays' | 'deliveryMarginDays' | 'monthlyBudgetUsd'
+  > = { stockDeliveryDays: 1, deliveryMarginDays: 2, monthlyBudgetUsd: 20 };
+  savingAttendant = false;
+
+  readonly missingApiKeyHint =
+    'Falta cargar la llave de la API de Claude en el servidor: sin eso no responde.';
 
   readonly mcpUrl = new URL(
     `${environment.apiUrl}/mcp`,
@@ -214,6 +229,7 @@ export class AgentsSettingsComponent implements OnInit, OnDestroy {
   ngOnInit(): void {
     this.reload();
     this.loadApprovals();
+    this.loadAttendant();
     this.settingsService.getGeneralSettings().subscribe((settings) => {
       this.agentTools = settings.agentTools;
       this.cdr.markForCheck();
@@ -295,6 +311,33 @@ export class AgentsSettingsComponent implements OnInit, OnDestroy {
         );
       },
     });
+  }
+
+  /** «USD 3,20 de 20». */
+  get attendantUsageLabel(): string {
+    if (!this.attendant) return '';
+    const usd = (value: number, digits: number) =>
+      new Intl.NumberFormat('es-AR', {
+        minimumFractionDigits: digits,
+        maximumFractionDigits: 2,
+      }).format(value);
+    return `USD ${usd(this.attendant.month.costUsd, 2)} de ${usd(this.attendant.settings.monthlyBudgetUsd, 0)}`;
+  }
+
+  get attendantPausedByBudget(): boolean {
+    const settings = this.attendant?.settings;
+    return !!settings?.pausedByBudgetAt && !settings.enabled;
+  }
+
+  toggleAttendant(enabled: boolean): void {
+    this.updateAttendant(
+      { enabled },
+      enabled ? 'Agente prendido' : 'Agente apagado',
+    );
+  }
+
+  saveAttendant(): void {
+    this.updateAttendant({ ...this.attendantDraft }, 'Agente guardado');
   }
 
   copyMcpUrl(): void {
@@ -384,6 +427,46 @@ export class AgentsSettingsComponent implements OnInit, OnDestroy {
       clearTimeout(this.messageTimer);
       this.messageTimer = null;
     }
+  }
+
+  private updateAttendant(
+    data: Partial<AttendantSettings>,
+    okMessage: string,
+  ): void {
+    if (!this.attendant || !this.isAdmin() || this.savingAttendant) return;
+    this.savingAttendant = true;
+    this.settingsService.updateAttendant(data).subscribe({
+      next: () => {
+        this.savingAttendant = false;
+        this.flashMessage(okMessage);
+        this.loadAttendant();
+      },
+      error: (err) => {
+        this.savingAttendant = false;
+        // Vuelve a pintar el interruptor con el valor guardado.
+        this.attendant = this.attendant ? { ...this.attendant } : null;
+        this.flashMessage(
+          extractApiErrorMessage(err, 'No se pudo guardar el agente'),
+        );
+      },
+    });
+  }
+
+  private loadAttendant(): void {
+    this.attendantService.status().subscribe({
+      next: (status) => {
+        this.attendant = status;
+        const { stockDeliveryDays, deliveryMarginDays, monthlyBudgetUsd } =
+          status.settings;
+        this.attendantDraft = {
+          stockDeliveryDays,
+          deliveryMarginDays,
+          monthlyBudgetUsd,
+        };
+        this.cdr.markForCheck();
+      },
+      error: () => this.cdr.markForCheck(),
+    });
   }
 
   private loadApprovals(): void {

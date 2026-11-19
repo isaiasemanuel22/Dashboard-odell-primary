@@ -201,6 +201,30 @@ export class UpdateAgentToolsDto {
   registrar_pago?: boolean;
 }
 
+export class UpdateAttendantDto {
+  @IsOptional()
+  @IsBoolean()
+  enabled?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(30)
+  stockDeliveryDays?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(30)
+  deliveryMarginDays?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(500)
+  monthlyBudgetUsd?: number;
+}
+
 export class UpdatePaperPricesDto {
   @IsObject()
   paperReferenceSheets!: Record<string, Record<string, number>>;

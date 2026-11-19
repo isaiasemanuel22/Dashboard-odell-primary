@@ -82,6 +82,31 @@
       </div>
     }
 
+    @if (attendant) {
+      <h2 class="m-sec-t">Agente de atención</h2>
+      @if (attendantPausedByBudget) {
+        <p class="agents-note agents-note--warn">
+          Se pausó solo: llegó al tope de gasto del mes. Subí el tope o esperá
+          al mes que viene.
+        </p>
+      }
+      <div class="m-card m-card--flush">
+        <db-mobile-toggle-row
+          label="Activo"
+          [hint]="'Consumo del mes: ' + attendantUsageLabel"
+          [checked]="attendant.settings.enabled"
+          ariaLabel="Agente de atención activo"
+          (toggled)="toggleAttendant($event)"
+        />
+      </div>
+      <div class="m-card attendant-fields">
+        <ng-container *ngTemplateOutlet="attendantInputs" />
+      </div>
+      @if (!attendant.apiKeyConfigured) {
+        <span class="st-m__hint">{{ missingApiKeyHint }}</span>
+      }
+    }
+
     @if (isAdmin()) {
       <h2 class="m-sec-t">Pendientes de aprobación</h2>
       <div class="m-card m-card--flush">
@@ -223,6 +248,37 @@
       </db-data-table>
     }
 
+    @if (attendant) {
+      <div class="panel-head agents-section">
+        <div>
+          <h3>Agente de atención</h3>
+          <p class="panel-sub">
+            Responde los chats de WhatsApp, Instagram y Messenger con Claude ·
+            Consumo del mes: {{ attendantUsageLabel }}
+          </p>
+        </div>
+        <db-checkbox
+          label="Activo"
+          name="attendantEnabled"
+          [checked]="attendant.settings.enabled"
+          [disabled]="!isAdmin()"
+          (checkedChange)="toggleAttendant($event)"
+        />
+      </div>
+      @if (attendantPausedByBudget) {
+        <p class="agents-note agents-note--warn">
+          Se pausó solo: llegó al tope de gasto del mes. Subí el tope o esperá
+          al mes que viene.
+        </p>
+      }
+      @if (!attendant.apiKeyConfigured) {
+        <p class="panel-sub">{{ missingApiKeyHint }}</p>
+      }
+      <div class="attendant-fields">
+        <ng-container *ngTemplateOutlet="attendantInputs" />
+      </div>
+    }
+
     @if (isAdmin()) {
       <div class="panel-head agents-section">
         <div>
@@ -254,3 +310,48 @@
     }
   </section>
 }
+
+<ng-template #attendantInputs>
+  <db-input
+    label="Entrega con stock (días)"
+    type="number"
+    name="attendantStockDays"
+    [min]="0"
+    [max]="30"
+    [step]="1"
+    hint="Hoy + estos días"
+    [disabled]="!isAdmin()"
+    [(ngModel)]="attendantDraft.stockDeliveryDays"
+  />
+  <db-input
+    label="Margen sin stock (días hábiles)"
+    type="number"
+    name="attendantMarginDays"
+    [min]="0"
+    [max]="30"
+    [step]="1"
+    hint="Se suma a la fecha de la cola"
+    [disabled]="!isAdmin()"
+    [(ngModel)]="attendantDraft.deliveryMarginDays"
+  />
+  <db-input
+    label="Tope por mes (USD)"
+    type="number"
+    name="attendantBudget"
+    [min]="1"
+    [max]="500"
+    [step]="1"
+    hint="Al llegar se pausa y te avisa"
+    [disabled]="!isAdmin()"
+    [(ngModel)]="attendantDraft.monthlyBudgetUsd"
+  />
+  @if (isAdmin()) {
+    <db-button
+      [label]="savingAttendant ? 'Guardando…' : 'Guardar'"
+      variant="primary"
+      format="solid"
+      [disabled]="savingAttendant"
+      (clicked)="saveAttendant()"
+    />
+  }
+</ng-template>

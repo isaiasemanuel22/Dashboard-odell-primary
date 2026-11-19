@@ -1,14 +1,8 @@
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { BadRequestException, Injectable } from '@nestjs/common';
 import { AgentApprovalsService } from '../agent-approvals/agent-approvals.service';
 import { formatMoney } from '../alerts/alerts.util';
 import { ApiKeyPrincipal } from '../api-keys/api-key-scopes';
 import { OrderStatus, PaymentMethod } from '../common/enums';
-import { Product } from '../common/interfaces';
-import { serviceTypeFromProduct } from '../common/service-type.util';
 import { outstandingCents, toCents } from '../common/utils/money.util';
 import { productSalePrice } from '../common/utils/product-discount.util';
 import { OrdersService } from '../orders/orders.service';
@@ -17,6 +11,7 @@ import { buildProductStockOverview } from '../products/product-stock.util';
 import { QuotesService } from '../quotes/quotes.service';
 import { StoreChangeService } from '../store/store-change.service';
 import { StoreService } from '../store/store.service';
+import { catalogLine, findPublishedProduct } from './catalog-line.util';
 
 const PENDING_APPROVAL = 'pendiente de aprobación';
 
@@ -51,10 +46,10 @@ export class McpToolsService {
     quantity: number;
     customerId?: string;
   }) {
-    const product = this.publishedProduct(input.productId);
+    const product = findPublishedProduct(this.store, input.productId);
     const preview = this.quotes.previewPricing({
       customerId: input.customerId,
-      items: [this.catalogLine(product, input.quantity)],
+      items: [catalogLine(product, input.quantity)],
     });
     const [line] = preview.items;
     return {
@@ -97,7 +92,10 @@ export class McpToolsService {
       customerId: input.customerId,
       description: input.description,
       items: input.items.map((item) =>
-        this.catalogLine(this.publishedProduct(item.productId), item.quantity),
+        catalogLine(
+          findPublishedProduct(this.store, item.productId),
+          item.quantity,
+        ),
       ),
     });
     this.storeChange.recordChange({
@@ -158,25 +156,5 @@ export class McpToolsService {
       apiKey,
     });
     return { approvalId: approval.id, estado: PENDING_APPROVAL };
-  }
-
-  private publishedProduct(productId: string): Product {
-    const product = this.store.products.find(
-      (item) => item.id === productId && item.published !== false,
-    );
-    if (!product) {
-      throw new NotFoundException(`Producto ${productId} no encontrado`);
-    }
-    return product;
-  }
-
-  private catalogLine(product: Product, quantity: number) {
-    return {
-      serviceType: serviceTypeFromProduct(product),
-      productId: product.id,
-      productName: product.name,
-      quantity,
-      unitPrice: productSalePrice(product),
-    };
   }
 }

@@ -213,7 +213,10 @@ export class OrdersService {
    */
   create(
     data: CreateOrderDto,
-    options: { keepQuotedPrices?: { wholesaleApplied: boolean } } = {},
+    options: {
+      keepQuotedPrices?: { wholesaleApplied: boolean };
+      createdByAgent?: boolean;
+    } = {},
   ): Order {
     const { customerId, customerName, customer } = this.resolveCustomer(
       data.customerId,
@@ -264,6 +267,7 @@ export class OrdersService {
       statusHistory: [],
       priceHistory: [],
       deliveryHistory: [],
+      ...(options.createdByAgent ? { createdByAgent: true } : {}),
     };
     appendOrderStatusHistory(
       order,

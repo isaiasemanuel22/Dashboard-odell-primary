@@ -156,6 +156,7 @@ export enum SalesChannel {
   TIENDANUBE = 'tiendanube',
   FERIA = 'feria',
   MOSTRADOR = 'mostrador',
+  MESSENGER = 'messenger',
 }
 
 export enum CustomerSource {
@@ -165,6 +166,7 @@ export enum CustomerSource {
   FERIA = 'feria',
   RECOMENDACION = 'recomendacion',
   OTRO = 'otro',
+  MESSENGER = 'messenger',
 }
 
 export enum PaymentMethod {
@@ -310,6 +312,33 @@ export interface AgentToolsSettings {
   registrar_pago: boolean;
 }
 
+/** Agente de atención de Chats (§28.3). */
+export interface AttendantSettings {
+  enabled: boolean;
+  /** Con stock: entrega hoy + estos días corridos. */
+  stockDeliveryDays: number;
+  /** Sin stock: fecha de la cola + estos días hábiles. */
+  deliveryMarginDays: number;
+  /** Tope de gasto en USD por mes. */
+  monthlyBudgetUsd: number;
+  /** Cuándo se pausó por llegar al tope; null si no. */
+  pausedByBudgetAt: string | null;
+}
+
+/** Estado del agente de atención: ajustes y consumo del mes. */
+export interface AttendantStatus {
+  settings: AttendantSettings;
+  apiKeyConfigured: boolean;
+  model: string;
+  month: {
+    inputTokens: number;
+    outputTokens: number;
+    cacheReadTokens: number;
+    cacheWriteTokens: number;
+    costUsd: number;
+  };
+}
+
 export interface PowerConsumptionConfig {
   id: string;
   name: string;
@@ -368,6 +397,7 @@ export interface GeneralSettings {
   wholesaleDiscount: WholesaleDiscountSettings;
   automaticAlerts: AutomaticAlertsSettings;
   agentTools: AgentToolsSettings;
+  attendant: AttendantSettings;
   paperPricesPerSqm: PaperPricesPerSqm;
   paperReferenceSheets: PaperReferenceSheets;
   filamentPrices: FilamentPriceConfig[];
@@ -987,6 +1017,8 @@ export interface Order {
   priceHistory?: OrderPriceHistoryEntry[];
   deliveryHistory?: OrderDelivery[];
   payments?: OrderPayment[];
+  /** Lo creó el agente de atención desde Chats (§28.3). */
+  createdByAgent?: boolean;
 }
 
 export interface OrderPayment {

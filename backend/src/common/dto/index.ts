@@ -14,3 +14,4 @@ export * from './supplier.dto';
 export * from './spool.dto';
 export * from './api-key.dto';
 export * from './chat.dto';
+export * from './attendant.dto';

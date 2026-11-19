@@ -85,6 +85,7 @@ export enum SalesChannel {
   TIENDANUBE = 'tiendanube',
   FERIA = 'feria',
   MOSTRADOR = 'mostrador',
+  MESSENGER = 'messenger',
 }
 
 export enum CustomerSource {
@@ -94,6 +95,7 @@ export enum CustomerSource {
   FERIA = 'feria',
   RECOMENDACION = 'recomendacion',
   OTRO = 'otro',
+  MESSENGER = 'messenger',
 }
 
 export enum PaymentMethod {

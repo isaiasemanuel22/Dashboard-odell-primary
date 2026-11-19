@@ -47,6 +47,7 @@ import {
 import { DEFAULT_WHOLESALE_DISCOUNT } from '../settings/wholesale-discount.util';
 import { DEFAULT_AUTOMATIC_ALERTS } from '../settings/automatic-alerts.util';
 import { DEFAULT_AGENT_TOOLS } from '../settings/agent-tools.util';
+import { DEFAULT_ATTENDANT } from '../settings/attendant-settings.util';
 
 function defaultPaperReferenceSheets() {
   return normalizePaperReferenceSheets(undefined, {
@@ -78,6 +79,7 @@ export function createEmptyState(): StoreState {
       },
       automaticAlerts: { ...DEFAULT_AUTOMATIC_ALERTS },
       agentTools: { ...DEFAULT_AGENT_TOOLS },
+      attendant: { ...DEFAULT_ATTENDANT },
       paperPricesPerSqm: {
         sublimacion: 0,
         dtf: 0,
@@ -150,6 +152,7 @@ export function createSeedState(): StoreState {
     },
     automaticAlerts: { ...DEFAULT_AUTOMATIC_ALERTS },
     agentTools: { ...DEFAULT_AGENT_TOOLS },
+    attendant: { ...DEFAULT_ATTENDANT },
     paperPricesPerSqm: syncPaperPricesFromReferenceSheets(
       defaultPaperReferenceSheets(),
     ),

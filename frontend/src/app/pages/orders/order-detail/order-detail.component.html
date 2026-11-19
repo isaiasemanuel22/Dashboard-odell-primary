@@ -103,13 +103,16 @@
           <a class="customer-link" [routerLink]="['/presupuestos', sourceQuoteId]">Desde presupuesto {{ sourceQuoteId }}</a>
         }
 
-        @if (salesChannelPill || wholesalePill) {
+        @if (salesChannelPill || wholesalePill || order.createdByAgent) {
           <div class="od-m__pills">
             @if (salesChannelPill; as channel) {
               <span class="m-pill od-m__pill-channel">{{ channel }}</span>
             }
             @if (wholesalePill; as wholesale) {
               <span class="m-pill m-pill--b">{{ wholesale }}</span>
+            }
+            @if (order.createdByAgent) {
+              <span class="m-pill m-pill--v">Creado por el agente</span>
             }
           </div>
         }
@@ -516,6 +519,9 @@
               <dt>Origen</dt>
               <dd>
                 <a [routerLink]="['/presupuestos', sourceQuoteId]" class="customer-link">Desde presupuesto {{ sourceQuoteId }}</a>
+                @if (order.createdByAgent) {
+                  · Creado por el agente
+                }
               </dd>
             </div>
           }

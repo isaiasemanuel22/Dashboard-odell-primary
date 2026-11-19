@@ -112,6 +112,17 @@ export class AppConfigService {
     return this.config.get('INSTAGRAM_ACCOUNT_ID', { infer: true });
   }
 
+  get anthropicApiKey(): string | undefined {
+    return this.config.get('ANTHROPIC_API_KEY', { infer: true });
+  }
+
+  /** Modelo del agente de atención (Sonnet). */
+  get anthropicModel(): string {
+    return (
+      this.config.get('ANTHROPIC_MODEL', { infer: true }) ?? 'claude-sonnet-5-5'
+    );
+  }
+
   get whatsappConfigured(): boolean {
     return !!this.metaAccessToken && !!this.whatsappPhoneNumberId;
   }

@@ -4,6 +4,7 @@ import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
   AgentToolsSettings,
+  AttendantSettings,
   AutomaticAlertsSettings,
   ColorConfig,
   FilamentPriceConfig,
@@ -103,6 +104,14 @@ export class SettingsService {
     return this.http
       .patch<AgentToolsSettings>(`${this.baseUrl}/agent-tools`, data)
       .pipe(tap((agentTools) => this.patchSettings({ agentTools })));
+  }
+
+  updateAttendant(
+    data: Partial<AttendantSettings>,
+  ): Observable<AttendantSettings> {
+    return this.http
+      .patch<AttendantSettings>(`${this.baseUrl}/attendant`, data)
+      .pipe(tap((attendant) => this.patchSettings({ attendant })));
   }
 
   updatePaperReferenceSheets(

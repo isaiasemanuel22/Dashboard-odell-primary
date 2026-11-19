@@ -54,3 +54,20 @@
   gap: 0.5rem;
   padding: 0 12px 12px;
 }
+
+.agents-note--warn {
+  border-color: $color-status-warning-text;
+  background: $color-status-warning-bg;
+  color: $color-status-warning-text;
+}
+
+.attendant-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+
+  db-input {
+    width: 14rem;
+  }
+}

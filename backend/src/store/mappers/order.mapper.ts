@@ -178,6 +178,7 @@ export function mapOrderFromDb(row: {
   priceHistory?: Prisma.JsonValue;
   deliveryHistory?: Prisma.JsonValue;
   payments?: Prisma.JsonValue | null;
+  createdByAgent?: boolean | null;
   items: Array<{
     serviceType: string;
     productId: string | null;
@@ -220,6 +221,7 @@ export function mapOrderFromDb(row: {
     deliveryHistory:
       fromJson<Order['deliveryHistory']>(row.deliveryHistory ?? []) ?? [],
     payments: normalizePayments(row.payments),
+    createdByAgent: row.createdByAgent === true,
   };
   ensureOrderStatusHistory(order);
   return order;
@@ -249,6 +251,7 @@ function mapOrderScalarsToDb(order: Order) {
     priceHistory: toInputJson(order.priceHistory ?? []),
     deliveryHistory: toInputJson(order.deliveryHistory ?? []),
     payments: toInputJson(order.payments ?? []),
+    createdByAgent: order.createdByAgent === true,
   };
 }
 

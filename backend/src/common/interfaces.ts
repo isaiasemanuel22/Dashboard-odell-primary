@@ -146,6 +146,19 @@ export interface AgentToolsSettings {
   registrar_pago: boolean;
 }
 
+/** Agente de atención de Chats (§28.3). */
+export interface AttendantSettings {
+  enabled: boolean;
+  /** Con stock: entrega hoy + estos días corridos. */
+  stockDeliveryDays: number;
+  /** Sin stock: fecha de la cola + estos días hábiles. */
+  deliveryMarginDays: number;
+  /** Tope de gasto en USD por mes; al llegar se pausa solo. */
+  monthlyBudgetUsd: number;
+  /** Cuándo se pausó por llegar al tope; null si no. */
+  pausedByBudgetAt: string | null;
+}
+
 export interface PowerConsumptionConfig {
   id: string;
   name: string;
@@ -205,6 +218,7 @@ export interface GeneralSettings {
   wholesaleDiscount: WholesaleDiscountSettings;
   automaticAlerts: AutomaticAlertsSettings;
   agentTools: AgentToolsSettings;
+  attendant: AttendantSettings;
   paperPricesPerSqm: PaperPricesPerSqm;
   paperReferenceSheets: PaperReferenceSheets;
   filamentPrices: FilamentPriceConfig[];
@@ -700,6 +714,8 @@ export interface Order {
   priceHistory?: OrderPriceHistoryEntry[];
   deliveryHistory?: OrderDeliveryHistoryEntry[];
   payments?: OrderPayment[];
+  /** Lo creó el agente de atención desde Chats (§28.3). */
+  createdByAgent?: boolean;
 }
 
 export interface OrderPayment {

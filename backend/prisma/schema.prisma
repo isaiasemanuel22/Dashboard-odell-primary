@@ -17,6 +17,7 @@ model AppSettings {
   wholesaleDiscount     Json  @default("{}") @map("wholesale_discount")
   automaticAlerts       Json  @default("{}") @map("automatic_alerts")
   agentTools            Json  @default("{}") @map("agent_tools")
+  attendant             Json  @default("{}") @map("attendant")
   paperPricesPerSqm     Json  @map("paper_prices_per_sqm")
   paperReferenceSheets  Json  @default("{}") @map("paper_reference_sheets")
   powerConsumptions     Json  @map("power_consumptions")
@@ -227,6 +228,7 @@ model Order {
   priceHistory  Json    @default("[]") @map("price_history")
   deliveryHistory Json  @default("[]") @map("delivery_history")
   payments      Json    @default("[]")
+  createdByAgent Boolean @default(false) @map("created_by_agent")
 
   customer Customer?   @relation(fields: [customerId], references: [id], onDelete: Restrict)
   items    OrderItem[]
@@ -667,4 +669,25 @@ model AgentApproval {
 
   @@index([status])
   @@map("agent_approvals")
+}
+
+model AgentRun {
+  id               String   @id @db.VarChar(64)
+  conversationId   String   @map("conversation_id") @db.VarChar(64)
+  triggerMessageId String   @map("trigger_message_id") @db.VarChar(64)
+  outcome          String   @db.VarChar(16)
+  toolSummary      Json     @default("[]") @map("tool_summary")
+  replyMessageIds  Json     @default("[]") @map("reply_message_ids")
+  model            String   @db.VarChar(64)
+  inputTokens      Int      @default(0) @map("input_tokens")
+  outputTokens     Int      @default(0) @map("output_tokens")
+  cacheReadTokens  Int      @default(0) @map("cache_read_tokens")
+  cacheWriteTokens Int      @default(0) @map("cache_write_tokens")
+  costUsd          Float    @default(0) @map("cost_usd")
+  error            String?  @db.Text
+  createdAt        DateTime @map("created_at")
+
+  @@index([conversationId])
+  @@index([createdAt])
+  @@map("agent_runs")
 }

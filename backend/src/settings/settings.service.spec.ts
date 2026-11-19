@@ -1,4 +1,5 @@
 import { DEFAULT_AGENT_TOOLS } from './agent-tools.util';
+import { DEFAULT_ATTENDANT } from './attendant-settings.util';
 import { SettingsService } from './settings.service';
 import { StoreService } from '../store/store.service';
 import { StorePersistenceService } from '../store/store-persistence.service';
@@ -35,6 +36,7 @@ describe('SettingsService.patchGeneralSettings', () => {
       weeklyReceivables: true,
     },
     agentTools: { ...DEFAULT_AGENT_TOOLS },
+    attendant: { ...DEFAULT_ATTENDANT },
     paperPricesPerSqm: {
       dtf: 0,
       dtfUv: 0,
@@ -231,6 +233,7 @@ describe('SettingsService.updateWholesaleDiscount', () => {
       weeklyReceivables: true,
     },
     agentTools: { ...DEFAULT_AGENT_TOOLS },
+    attendant: { ...DEFAULT_ATTENDANT },
     paperPricesPerSqm: {
       dtf: 0,
       dtfUv: 0,

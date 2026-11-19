@@ -31,6 +31,7 @@ import { AlertsModule } from './alerts/alerts.module';
 import { AgentApprovalsModule } from './agent-approvals/agent-approvals.module';
 import { McpModule } from './mcp/mcp.module';
 import { MetaModule } from './meta/meta.module';
+import { AttendantModule } from './attendant/attendant.module';
 
 @Module({
   imports: [
@@ -66,6 +67,7 @@ import { MetaModule } from './meta/meta.module';
     AgentApprovalsModule,
     McpModule,
     MetaModule,
+    AttendantModule,
   ],
 })
 export class AppModule {}
