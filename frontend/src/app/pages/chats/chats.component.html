@@ -1,8 +1,8 @@
 @if (isMobile()) {
   <div class="mobile-only chats-m">
     <db-mobile-bar title="Chats" backLink="/mas">
-      @if (counts(); as c) {
-        <span class="chats-m__unread">{{ c.unread }} sin leer</span>
+      @if (counts()) {
+        <span class="chats-m__unread">{{ unreadTotal() }} sin leer</span>
       }
     </db-mobile-bar>
 
@@ -103,8 +103,8 @@
         <h2>Chats</h2>
         <p>
           WhatsApp, Instagram y Messenger en una sola bandeja
-          @if (counts(); as c) {
-            · {{ c.unread }} sin leer · {{ c.pendingApproval }} para aprobar
+          @if (pendingApprovalTotal() !== null) {
+            · {{ unreadTotal() }} sin leer · {{ pendingApprovalTotal() }} para aprobar
           }
         </p>
       </div>
