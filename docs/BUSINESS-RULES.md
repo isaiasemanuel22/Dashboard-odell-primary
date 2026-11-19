@@ -2234,6 +2234,10 @@ van en §27. Tokens y llaves nunca en el repo: van en variables de entorno.
 - La cuenta de Meta Business (portfolio, app, número verificado, Instagram
   profesional vinculado a la página) la crea y la conecta Isaías. Mientras
   tanto se desarrolla contra el número de prueba de Meta.
+- (2026-11-19) El número de WhatsApp de Odell (+54 223 677-3255) pasa de la
+  app WhatsApp Business del celular a Cloud API: se atiende solo desde Odell.
+  Portfolio de Meta: ISA 3D. Los avisos a Isaías llegan a su celular personal
+  (`ALERTS_WHATSAPP_TO`, solo en Heroku).
 - Ventana de 24 h: fuera de las 24 h desde el último mensaje del cliente,
   por WhatsApp solo se pueden mandar plantillas aprobadas por Meta.
 

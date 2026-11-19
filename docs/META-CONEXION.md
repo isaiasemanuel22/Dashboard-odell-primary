@@ -16,22 +16,28 @@ las variables de entorno de Heroku.
 | App de desarrollador | — | No hay ninguna |
 | Usuario del sistema | ISA 3D tiene «Conversions API System User» (de anuncios) | Falta uno para Odell |
 
-## Paso 0 — Decidir el número de WhatsApp
+## Paso 0 — El número de WhatsApp (decidido el 2026-11-19)
 
-Odell manda y recibe por **Cloud API**. Un número que está en la app del
-celular no se puede usar así nomás:
+El número de Odell, **+54 223 677-3255**, pasa de la app WhatsApp Business del
+celular a **Cloud API**: desde ese momento se atiende solo desde Odell (Chats).
+Los avisos para Isaías llegan a su **celular personal** (`ALERTS_WHATSAPP_TO`).
 
-- **(a) Número nuevo solo para Odell (recomendado).** Un chip aparte. Seguís
-  usando tu número actual en el celular como hoy, y tu número personal puede
-  recibir los avisos de Odell (`ALERTS_WHATSAPP_TO`).
-- **(b) Pasar el número actual a Cloud API.** Deja de andar en la app del
-  celular: se atiende solo desde Odell (Chats).
-- **(c) Coexistencia (el mismo número en el celular y en Odell).** Según Meta
-  se activa solo con «Embedded Signup», que pide ser Tech Provider; no está
-  confirmado para Argentina ni para uso propio, y no sincroniza grupos,
-  difusiones, etiquetas ni respuestas rápidas. No lo recomiendo por ahora.
+Antes de pasarlo:
 
-Mientras decidís, todo se puede probar con el **número de prueba** de Meta.
+1. **Guardá lo que necesites de la app**: el historial de chats de la app no
+   pasa a Odell. Exportá los chats importantes (Chat › Más › Exportar chat) y
+   anotá las respuestas rápidas y etiquetas que uses.
+2. Avisá a los clientes con pedidos abiertos que por unas horas puede haber
+   demora.
+3. La cuenta «Isaias Odell» hoy está en el portfolio **Odell_print3D**. El
+   número se registra de nuevo en la app de ISA 3D (paso 2); no hace falta
+   mover esa cuenta.
+4. En el celular: **WhatsApp Business › Configuración › Cuenta › Eliminar
+   cuenta** para liberar el número (si no, Meta no deja registrarlo en Cloud
+   API). Hacelo recién cuando estés listo para el paso 2.4.
+
+Mientras tanto, todo se puede probar con el **número de prueba** de Meta sin
+tocar el número real.
 
 ## Paso 1 — Crear la app
 
@@ -50,9 +56,9 @@ Mientras decidís, todo se puede probar con el **número de prueba** de Meta.
 3. Copiá el **identificador del número de teléfono** → `WHATSAPP_PHONE_NUMBER_ID`
    y el **identificador de la cuenta de WhatsApp Business** →
    `WHATSAPP_BUSINESS_ACCOUNT_ID`.
-4. Cuando tengas el número definitivo (paso 0), agregalo ahí mismo con
-   **Agregar número**, verificalo por SMS o llamada y reemplazá el
-   `WHATSAPP_PHONE_NUMBER_ID`.
+4. Con todo probado, liberá el número (paso 0.4), agregá **+54 223
+   677-3255** con **Agregar número**, nombre visible «Odell», verificalo por
+   SMS o llamada y reemplazá el `WHATSAPP_PHONE_NUMBER_ID` en Heroku.
 
 ## Paso 3 — Usuario del sistema y token fijo
 
