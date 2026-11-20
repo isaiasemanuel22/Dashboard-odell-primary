@@ -161,7 +161,7 @@
       @if (totMargin !== null) {
         <div>
           <span>Margen total</span>
-          <strong [class.is-loss]="totMargin < 0">{{ totMargin }} %</strong>
+          <strong [class.is-loss]="totMargin < 0" [class.is-gain]="totMargin > 0">{{ totMargin }} %</strong>
         </div>
       }
       @if (hasDiscount) {

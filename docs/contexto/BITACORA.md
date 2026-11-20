@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · Margen total en el listado y en colores
+Rama: feat/margen-total-listado · Commits: ver `git log` (feat(productos))
+Hecho: las tarjetas del listado (escritorio «Margen total», mobile «M. total») muestran el margen total; verde si hay ganancia, rojo si es negativo, neutro en 0, igual en caja de precio, detalle de producto, barra fija mobile y detalle de pedido (amarillo → rojo). QA: taza 59 % verde, Remera DTF −65 % rojo, Taza Frozen −25 % rojo, fijo $4.000 −19 % rojo. Angular 184.
+Decisiones: de Isaías: margen total en la barra de cada producto, verde con ganancia y rojo negativo.
+Pendiente: el aviso «Se vende a pérdida» del formulario usa la fórmula vieja (−21 % contra −19 %); «Alertas de margen» del dashboard muestra el margen del proceso (−853 %) y el ranking otro número (44 %); el filtro «Bajo margen» incluye productos con ganancia que no llegan al objetivo.
+
 ## 2026-11-19 · Deploy de packaging, precio fijo y márgenes
 Rama: feat/packaging → main · Commits: 57e6510
 Hecho: tests y builds completos OK (Jest 565, Angular 179). Push a origin main y Heroku v50; `db:push:heroku` sin ACCEPT_DATA_LOSS («in sync»). `/api/health` 200; Netlify sirve el bundle con packaging.

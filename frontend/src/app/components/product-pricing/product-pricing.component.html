@@ -39,7 +39,7 @@
   @if (showMargin && totalMarginPercent !== null) {
     <div class="pricing-item">
       <small>Margen total</small>
-      <span [class.negative]="totalMarginPercent < 0">{{ totalMarginPercent }}%</span>
+      <span [class.negative]="totalMarginPercent < 0" [class.positive]="totalMarginPercent > 0">{{ totalMarginPercent }}%</span>
     </div>
   }
 </div>

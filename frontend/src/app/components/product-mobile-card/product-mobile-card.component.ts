@@ -22,10 +22,8 @@ import {
 } from '../../shared/utils/product.helpers';
 import {
   hasFixedCatalogPrice,
-  productProcessMarginRounded,
+  totalMarginPercentRounded,
 } from '../../shared/utils/product-margin.util';
-import { getMarginForProductType } from '../../shared/utils/pricing.util';
-import { resolveProductLaborCost } from '../../shared/utils/product-labor.util';
 import { resolveProfitArea } from '../../shared/utils/profit-area.util';
 import {
   hasProductDiscount,
@@ -59,7 +57,7 @@ export class ProductMobileCardComponent {
   readonly laborCostPerHour = input<number | null>(null);
   readonly profitMargins = input<ServiceProfitMargins | null>(null);
   readonly wholesaleDiscount = input<WholesaleDiscountSettings | null>(null);
-  /** Mismo criterio que el chip «Bajo margen» (alertas del backend); null = calcular. */
+  /** Sin uso en la tarjeta (muestra margen total); lo sigue pasando el listado. */
   readonly belowMargin = input<boolean | null>(null);
 
   protected readonly detailLink = computed(() => [
@@ -130,21 +128,14 @@ export class ProductMobileCardComponent {
     );
   });
 
-  protected readonly markupPercent = computed(() =>
-    productProcessMarginRounded(
-      this.product(),
-      this.salePrice(),
-      resolveProductLaborCost(
-        this.product(),
-        this.catalogProducts(),
-        this.laborCostPerHour(),
-      ),
-    ),
+  /** Margen total (§16.1.1): (precio de venta − costo total) ÷ costo total. */
+  protected readonly totalMargin = computed(() =>
+    totalMarginPercentRounded(this.salePrice(), this.product().cost),
   );
 
   /** «−28 %» / «45 %» con menos tipográfico si es negativo. */
   protected readonly markupLabel = computed(() => {
-    const markup = this.markupPercent();
+    const markup = this.totalMargin();
     if (markup == null) return '';
     const abs = Math.abs(markup);
     const prefix = markup < 0 ? this.minusSign : '';
@@ -164,32 +155,24 @@ export class ProductMobileCardComponent {
       this.subtitle(),
       `${this.hasDiscount() ? 'venta' : 'lista'} ${list}`,
     ];
-    if (margin) parts.push(`margen ${margin}`);
+    if (margin) parts.push(`margen total ${margin}`);
     return parts.join(', ');
   });
 
-  protected readonly targetMarginPercent = computed(() => {
-    const margins = this.profitMargins();
-    if (!margins) return 0;
-    return getMarginForProductType(this.product().type, margins);
-  });
+  /** Ganancia (> 0) → verde. */
+  protected readonly isTotalMarginGain = computed(
+    () => (this.totalMargin() ?? 0) > 0,
+  );
 
-  protected readonly meetsTargetMargin = computed(() => {
-    const below = this.belowMargin();
-    if (below !== null) return !below;
-    const markup = this.markupPercent();
-    if (markup == null) return true;
-    return markup >= this.targetMarginPercent();
-  });
+  /** Pérdida (< 0) → rojo. Exactamente 0 queda neutro. */
+  protected readonly isTotalMarginLoss = computed(
+    () => (this.totalMargin() ?? 0) < 0,
+  );
 
-  /**
-   * Ancho relativo al margen objetivo, entre 4 % y 100 %: con margen negativo
-   * o nulo queda una franja roja mínima en vez de una barra vacía o llena.
-   */
+  /** Ancho de la barra: margen total entre 4 % y 100 % (pérdida = franja mínima). */
   protected readonly marginBarWidth = computed(() => {
-    const markup = this.markupPercent();
-    const target = this.targetMarginPercent();
-    if (markup == null || target <= 0) return 0;
-    return Math.max(4, Math.min(100, (markup / target) * 100));
+    const margin = this.totalMargin();
+    if (margin == null) return 0;
+    return Math.max(4, Math.min(100, margin));
   });
 }

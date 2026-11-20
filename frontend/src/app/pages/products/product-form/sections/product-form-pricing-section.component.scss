@@ -101,7 +101,11 @@
 }
 
 .is-loss {
-  color: #dc2626;
+  color: $color-error;
+}
+
+.is-gain {
+  color: $color-success;
 }
 
 .unit-price {

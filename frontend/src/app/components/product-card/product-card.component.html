@@ -89,31 +89,31 @@
       </div>
     </div>
 
-    @if (markupPercent != null) {
+    @if (totalMargin != null) {
       <div class="product-card__margin">
         <div class="product-card__margin-row">
-          <span class="product-card__margin-label">Margen</span>
+          <span class="product-card__margin-label">Margen total</span>
           <strong
             class="product-card__margin-value"
-            [class.product-card__margin-value--ok]="meetsTargetMargin"
-            [class.product-card__margin-value--low]="!meetsTargetMargin"
+            [class.product-card__margin-value--ok]="isTotalMarginGain"
+            [class.product-card__margin-value--low]="isTotalMarginLoss"
           >
-            {{ markupPercent }}%
+            {{ totalMargin }}%
           </strong>
         </div>
         <div
           class="product-card__margin-track"
           role="meter"
-          [attr.aria-valuenow]="markupPercent"
+          [attr.aria-valuenow]="totalMargin"
           aria-valuemin="0"
           aria-valuemax="100"
           [attr.aria-label]="
-            'Margen ' + markupPercent + '% · objetivo ' + targetMarginPercent + '%'
+            'Margen total ' + totalMargin + '%'
           "
         >
           <div
             class="product-card__margin-fill"
-            [class.product-card__margin-fill--low]="!meetsTargetMargin"
+            [class.product-card__margin-fill--low]="isTotalMarginLoss"
             [style.width.%]="marginBarWidth"
           ></div>
         </div>

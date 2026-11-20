@@ -48,30 +48,30 @@
       </div>
     </div>
 
-    @if (markupPercent(); as markup) {
+    @if (totalMargin() !== null) {
       <div class="pmc__margin">
-        <span class="pmc__price-label">Margen</span>
+        <span class="pmc__price-label">M. total</span>
         <div
           class="pmc__track"
           role="meter"
-          [attr.aria-valuenow]="markup"
+          [attr.aria-valuenow]="totalMargin()"
           aria-valuemin="0"
-          [attr.aria-valuemax]="targetMarginPercent()"
+          aria-valuemax="100"
           [attr.aria-label]="
-            'Margen ' + markup + ' % · objetivo ' + targetMarginPercent() + ' %'
+            'Margen total ' + totalMargin() + ' %'
           "
         >
           <div
             class="pmc__fill"
-            [class.pmc__fill--ok]="meetsTargetMargin()"
-            [class.pmc__fill--low]="!meetsTargetMargin()"
+            [class.pmc__fill--ok]="isTotalMarginGain()"
+            [class.pmc__fill--low]="isTotalMarginLoss()"
             [style.width.%]="marginBarWidth()"
           ></div>
         </div>
         <strong
           class="pmc__margin-pct"
-          [class.pmc__margin-pct--ok]="meetsTargetMargin()"
-          [class.pmc__margin-pct--low]="!meetsTargetMargin()"
+          [class.pmc__margin-pct--ok]="isTotalMarginGain()"
+          [class.pmc__margin-pct--low]="isTotalMarginLoss()"
         >
           {{ markupLabel() }}
         </strong>

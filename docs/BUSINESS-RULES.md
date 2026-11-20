@@ -1096,6 +1096,8 @@ margen total       = (precio de venta − costo total) ÷ costo total
   (en la caja de precio y en el aviso de productos con precio bajo el margen).
 - El **margen total** es otra cifra: lo que se gana sobre todo lo que se gasta
   (incluye insumos, packaging y mano de obra).
+- El margen total se muestra en las tarjetas del listado de productos y se
+  destaca en verde si hay ganancia y en rojo si es negativo (Isaías, 2026-11-19).
 - En combos, el proceso son las piezas: costo del proceso = costo de las
   piezas; precio del proceso = precio de venta − armado − insumos y packaging
   propios.
