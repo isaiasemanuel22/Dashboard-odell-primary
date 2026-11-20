@@ -21,8 +21,7 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   (categoría de insumo, sección en producto/pedido/presupuesto, × 1,25, stock al entregar).
   Al publicar hace falta `db:push:heroku` (`products.suggested_price`, `products.packaging_supplies`,
   `products.sum_pieces_packaging`, `order_items.packaging_supplies`, `quote_items.packaging_supplies`).
-  Falta: descuento en venta de mostrador (regla por definir) y que el aviso de «productos
-  afectados» de un insumo cuente el packaging.
+  Falta: que el aviso de «productos afectados» de un insumo cuente el packaging.
 - En la misma rama: precio fijo = precio final en todos los tipos (§16.1.1); margen del proceso
   vs objetivo y margen total aparte; el precio fijo ahora se guarda (`products.suggested_price`,
   antes no se persistía). Al publicar: `db:push:heroku` también por esa columna, y en producción
@@ -77,7 +76,6 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
 - Diseño v3 (merch): ¿la seña es obligatoria (50% desde 20 prendas) y frena
   la producción? Choca con §Pagos de BUSINESS-RULES, donde la seña no tiene efectos.
 
-- Packaging: ¿la venta de mostrador descuenta packaging y lo devuelve al editar/borrar la venta?
 
 ## Entorno local
 - Dev server: launch `odell-dev-4300` (el 4200 lo usa otro proyecto).

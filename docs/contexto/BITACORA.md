@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · Packaging en mostrador y devoluciones
+Rama: feat/packaging · Commits: ver `git log` (docs)
+Hecho: regla anotada en §27.5; no requiere código (la venta de mostrador ya no descontaba packaging).
+Decisiones: de Isaías: la venta de mostrador no descuenta packaging; al devolver una venta el packaging se ajusta a mano.
+Pendiente: —
+
 ## 2026-11-19 · Tabla de líneas del pedido completa a 1280 px
 Rama: feat/packaging · Commits: ver `git log` (fix(pedidos))
 Hecho: columna lateral del detalle de pedido de 260–320 a 220–250 px; a 1280 px la tabla de líneas (639 px) entra en su caja (641 px) sin scroll. «P. unit.» alineado a la derecha. El formulario de Pagos pasó a una columna y los medios de pago hacen wrap («Mercado Pago» se cortaba). QA OK a 1280, 950, 800 y 375 px.

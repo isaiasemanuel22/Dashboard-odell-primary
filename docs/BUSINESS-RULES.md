@@ -2280,3 +2280,6 @@ Decidido por Isaías el 2026-11-19.
 
 - El packaging descuenta stock **al entregar** el pedido (no al terminar la
   tarea de producción).
+- La **venta de mostrador no descuenta** packaging (Isaías, 2026-11-19).
+- Si se devuelve una venta, el packaging **no vuelve solo** al stock: se
+  ajusta a mano en Insumos.
