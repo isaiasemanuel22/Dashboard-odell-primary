@@ -231,7 +231,6 @@
 
   // Grilla de 3 columnas (RdPedidoDetalle): Monto | Medio | Seña / Cuenta | Comisión | botón.
   &__form {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 12px;
     align-items: end;
 
@@ -240,16 +239,22 @@
       min-width: 0;
     }
 
+    // La columna lateral es angosta (220–250px): los botones hacen wrap en dos
+    // filas (1px de gap sobre fondo de borde hace de separador) sin truncar texto.
     .order-payments__method ::ng-deep .db-seg {
       display: flex;
+      flex-wrap: wrap;
+      gap: 1px;
       width: 100%;
+      background: $color-border-soft;
     }
 
     .order-payments__method ::ng-deep .db-seg__btn {
-      flex: 1;
+      flex: 1 1 auto;
       height: 40px;
       font-size: 13px;
       white-space: nowrap;
+      border-right: 0;
     }
 
     db-checkbox {
@@ -269,13 +274,11 @@
       white-space: nowrap;
     }
 
-    // Pantalla angosta: una columna para que el medio de pago no quede cortado.
-    @media (max-width: 1200px) {
-      grid-template-columns: minmax(0, 1fr);
+    // Siempre una columna: la tarjeta vive en la columna lateral angosta.
+    grid-template-columns: minmax(0, 1fr);
 
-      > db-button {
-        justify-self: stretch;
-      }
+    > db-button {
+      justify-self: stretch;
     }
   }
 

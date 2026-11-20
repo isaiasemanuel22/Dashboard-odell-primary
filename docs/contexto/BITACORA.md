@@ -16,11 +16,17 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · Tabla de líneas del pedido completa a 1280 px
+Rama: feat/packaging · Commits: ver `git log` (fix(pedidos))
+Hecho: columna lateral del detalle de pedido de 260–320 a 220–250 px; a 1280 px la tabla de líneas (639 px) entra en su caja (641 px) sin scroll. «P. unit.» alineado a la derecha. El formulario de Pagos pasó a una columna y los medios de pago hacen wrap («Mercado Pago» se cortaba). QA OK a 1280, 950, 800 y 375 px.
+Decisiones: de Isaías: ensanchar la caja de líneas.
+Pendiente: a 950 y 800 px la tabla sigue con scroll interno (layout de una columna angosta a 950 px).
+
 ## 2026-11-19 · Columna «Margen total» en el detalle de pedido
 Rama: feat/packaging · Commits: ver `git log` (feat(pedidos))
 Hecho: la tabla de líneas de escritorio tiene «Margen total» antes de «Subtotal», con el mismo valor y colores que el pill mobile y «—» sin costo. QA: ord-66 59 % verde; ord-34 100 % y 67 %; ord-10 y ord-11 «—»; sin scroll de página a 800 y 375 px. Angular 179.
 Decisiones: de Isaías: agregar la columna en escritorio.
-Pendiente: a 1280 px la caja de líneas mide ~570 px y «Subtotal» queda cortado hasta desplazar; título «P. unit.» alineado a la izquierda.
+Pendiente: —
 
 ## 2026-11-19 · Cancelar de precios en bloque y tabla del pedido
 Rama: feat/packaging · Commits: ver `git log` (fix)

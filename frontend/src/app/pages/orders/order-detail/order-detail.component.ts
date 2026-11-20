@@ -226,7 +226,7 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
       width: '3.5rem',
       value: (item) => this.itemPending(item),
     },
-    { key: 'unitPrice', header: 'P. unit.', width: '6.5rem' },
+    { key: 'unitPrice', header: 'P. unit.', align: 'end', width: '6.5rem' },
     {
       key: 'margin',
       header: 'Margen total',
