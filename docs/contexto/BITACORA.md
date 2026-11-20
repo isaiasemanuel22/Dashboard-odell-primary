@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · Deploy de packaging, precio fijo y márgenes
+Rama: feat/packaging → main · Commits: 57e6510
+Hecho: tests y builds completos OK (Jest 565, Angular 179). Push a origin main y Heroku v50; `db:push:heroku` sin ACCEPT_DATA_LOSS («in sync»). `/api/health` 200; Netlify sirve el bundle con packaging.
+Decisiones: Isaías pidió publicar.
+Pendiente: marcar de nuevo como «Fijo» los productos con precio fijo en producción antes de usar «Recalcular precios»; probar packaging en producción con sesión iniciada.
+
 ## 2026-11-19 · Packaging en mostrador y devoluciones
 Rama: feat/packaging · Commits: ver `git log` (docs)
 Hecho: regla anotada en §27.5; no requiere código (la venta de mostrador ya no descontaba packaging).

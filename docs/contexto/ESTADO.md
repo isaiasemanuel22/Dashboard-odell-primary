@@ -3,11 +3,13 @@
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
 ## Producción
-- GitHub `main` = `fix/mano-de-obra-opcional` en `03e7e64` (2026-11-18: mano de
-  obra opcional, §3; antes, módulo Ferias v4, §26). Heroku v49 = `03e7e64`,
-  esquema de Ferias aplicado (`fairs`, `retail_sales.fair_id`).
+- GitHub `main` = `feat/packaging` en `57e6510` (2026-11-19: packaging §27, precio fijo =
+  precio final y guardado en `products.suggested_price`, margen del proceso y total §16.1.1).
+  Heroku v50 = `57e6510`; `db:push:heroku` aplicado (columnas de packaging y `suggested_price`).
   Netlify ya sirve el frontend nuevo. APK TWA publicada; assetlinks verificado.
   Netlify publica el frontend solo al pushear `main`.
+- En producción ningún producto tiene el precio fijo guardado (antes no se persistía):
+  volver a marcarlos como «Fijo» y guardarlos antes de usar «Recalcular precios».
 - Lockfile del backend: regenerarlo siempre con npm 10.9.9 (el de Heroku):
   `npx npm@10.9.9 install --package-lock-only --registry=https://registry.npmjs.org`.
   El npm local (11.x) y el registry configurado (almundo) rompen `npm ci` en Heroku.
@@ -17,16 +19,10 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `feat/packaging` (sale de `main` `0c4fb6f`, sin publicar): packaging §27
-  (categoría de insumo, sección en producto/pedido/presupuesto, × 1,25, stock al entregar).
-  Al publicar hace falta `db:push:heroku` (`products.suggested_price`, `products.packaging_supplies`,
-  `products.sum_pieces_packaging`, `order_items.packaging_supplies`, `quote_items.packaging_supplies`).
-  Falta: que el aviso de «productos afectados» de un insumo cuente el packaging.
-- En la misma rama: precio fijo = precio final en todos los tipos (§16.1.1); margen del proceso
-  vs objetivo y margen total aparte; el precio fijo ahora se guarda (`products.suggested_price`,
-  antes no se persistía). Al publicar: `db:push:heroku` también por esa columna, y en producción
-  ningún producto tiene el fijo guardado: hay que volver a marcarlos antes de usar «Recalcular precios».
-- `feat/chats` (sin publicar): sección Chats v7; necesita `db:push:heroku` (tablas de chats).
+- Rama actual: `feat/packaging`, igual a `main` (publicada 2026-11-19). Falta: que el aviso de
+  «productos afectados» de un insumo cuente el packaging; probar en producción con sesión.
+- `feat/chats` (sin publicar): sección Chats v7; necesita `db:push:heroku` (tablas de chats)
+  y traer `main` antes (no tiene packaging ni `suggested_price`).
   La sesión de Meta (`claude/meta-agentes-3d0324`) depende de esa rama.
 - `feat/ferias` ya unida a `main` (publicada 2026-11-18). Falta probar
   Ferias en producción con sesión iniciada; sin UI para editar feria, fondo o gastos.
