@@ -3,10 +3,10 @@
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
 ## Producción
-- GitHub `main` = `feat/packaging` en `57e6510` (2026-11-19: packaging §27, precio fijo =
-  precio final y guardado en `products.suggested_price`, margen del proceso y total §16.1.1).
-  Heroku v50 = `57e6510`; `db:push:heroku` aplicado (columnas de packaging y `suggested_price`).
-  Netlify ya sirve el frontend nuevo. APK TWA publicada; assetlinks verificado.
+- GitHub `main` = `feat/margen-total-listado` en `a779cde` (2026-11-19: margen total en el
+  listado y en colores, aviso/filtro/alertas «Debajo del calculado»; antes, packaging §27,
+  precio fijo guardado y márgenes §16.1.1). Heroku v51 = `a779cde` (sin cambios de esquema
+  desde v50). Netlify ya sirve el frontend nuevo. APK TWA publicada; assetlinks verificado.
   Netlify publica el frontend solo al pushear `main`.
 - En producción ningún producto tiene el precio fijo guardado (antes no se persistía):
   volver a marcarlos como «Fijo» y guardarlos antes de usar «Recalcular precios».
@@ -19,8 +19,9 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `feat/packaging`, igual a `main` (publicada 2026-11-19). Falta: que el aviso de
-  «productos afectados» de un insumo cuente el packaging; probar en producción con sesión.
+- Rama actual: `feat/margen-total-listado`, igual a `main` (publicada 2026-11-19). Falta: que el
+  aviso de «productos afectados» de un insumo cuente el packaging; `product-detail`,
+  `product-pricing` y márgenes por canal del Dashboard con otras fórmulas; probar en producción.
 - `feat/chats` (sin publicar): sección Chats v7; necesita `db:push:heroku` (tablas de chats)
   y traer `main` antes (no tiene packaging ni `suggested_price`).
   La sesión de Meta (`claude/meta-agentes-3d0324`) depende de esa rama.

@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · Deploy de márgenes unificados
+Rama: feat/margen-total-listado → main · Commits: a779cde
+Hecho: tests y builds OK (Jest 565, Angular 190). Push a origin main y Heroku v51, sin cambios de esquema. `/api/health` 200; Netlify con bundle nuevo.
+Decisiones: Isaías pidió publicar al terminar.
+Pendiente: probar en producción con sesión iniciada.
+
 ## 2026-11-19 · Márgenes unificados: margen total y «Debajo del calculado»
 Rama: feat/margen-total-listado · Commits: ver `git log` (feat(productos))
 Hecho: el aviso «Se vende a pérdida» usa el margen total (taza $4.000 → −19 %). El aviso, el filtro y las alertas del Dashboard marcan productos con precio de venta < calculado (diferencia ≥ $1, orden por mayor diferencia en $); chip y textos «Debajo del calculado»; un solo aviso con total = chip y detalle «N se pueden recalcular · N tienen precio fijo». Dashboard: margen total en color, «$X debajo del calculado», barra precio ÷ calculado; ranking en color. QA OK escritorio y mobile; la taza quedó en Calculado $7.822. Jest 565, Angular 190.
