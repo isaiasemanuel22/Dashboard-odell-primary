@@ -20,6 +20,8 @@ describe('ProductFormPricingSection: texto «Calculado» con precio fijo', () =>
       computedPrice: opts.computed,
       supplyPrice: () => 500,
       packagingPrice: () => 250,
+      supplyCostWithError: () => 0,
+      packagingValue: () => 0,
     };
     TestBed.configureTestingModule({
       providers: [

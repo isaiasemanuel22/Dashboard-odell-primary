@@ -45,7 +45,11 @@ import {
   productDiscountLabel,
   productSalePrice,
 } from '../../../../shared/utils/product-discount.util';
-import { markupPercentOnCostRounded } from '../../../../shared/utils/product-margin.util';
+import {
+  markupPercentOnCostRounded,
+  processMarginPercentRounded,
+  totalMarginPercentRounded,
+} from '../../../../shared/utils/product-margin.util';
 import { ProductFormGroup } from '../services/product-form-state-manager.service';
 import { ProductFormPricingFacade } from '../store/product-form-pricing/product-form-pricing.facade';
 import { ProductFormFacade } from '../product-form.facade';
@@ -411,29 +415,46 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     const salePrice = this.salePriceFor(price);
     const margin =
       cost > 0 && salePrice > 0
-        ? markupPercentOnCostRounded(salePrice, cost, laborCost)
+        ? this.processMargin(salePrice, cost, laborCost)
         : null;
     if (this.hasDiscount && margin != null) {
-      return `${calculatedLabel}${this.priceManual ? ' · precio manual' : ''} · margen sobre la venta ${margin}%`;
+      return `${calculatedLabel}${this.priceManual ? ' · precio manual' : ''} · margen del proceso sobre la venta ${margin}%`;
     }
     if (this.priceManual && margin != null && margin < 0) {
-      return `${calculatedLabel} · precio manual · margen ${margin}%`;
+      return `${calculatedLabel} · precio manual · margen del proceso ${margin}%`;
     }
     if (this.priceManual) {
       return `${calculatedLabel} · precio manual`;
     }
     if (margin != null) {
-      return `${calculatedLabel} · margen ${margin}%`;
+      return `${calculatedLabel} · margen del proceso ${margin}%`;
     }
     return calculatedLabel;
   }
 
-  actualMarginPercent(
-    price: number,
-    cost: number,
+  /**
+   * Margen del proceso (§16.1.1): precio del proceso = venta − (mano de obra +
+   * precio de insumos + precio de packaging); costo del proceso = costo total
+   * sin mano de obra, insumos ni packaging.
+   */
+  processMargin(
+    salePrice: number,
+    totalCost: number,
     laborCost = 0,
   ): number | null {
-    return markupPercentOnCostRounded(price, cost, laborCost);
+    const processCost =
+      totalCost - laborCost - this.supplyCostWithError - this.packagingCost;
+    const nonProcessPrice = laborCost + this.supplyPrice + this.packagingPrice;
+    return processMarginPercentRounded(
+      salePrice,
+      Math.max(0, processCost),
+      nonProcessPrice,
+    );
+  }
+
+  /** Margen total: sobre el costo total, con todo adentro. */
+  totalMargin(salePrice: number, totalCost: number): number | null {
+    return totalMarginPercentRounded(salePrice, totalCost);
   }
 
   // ── Descuento propio del producto (§16.1.2) ─────────────────────────

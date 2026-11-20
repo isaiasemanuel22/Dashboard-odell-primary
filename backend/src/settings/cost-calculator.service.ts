@@ -578,6 +578,11 @@ export class CostCalculatorService {
       ),
       configuredMarginPercent,
       breakdown,
+      processCost: Math.max(0, processCost - laborCost),
+      nonProcessPrice:
+        laborCost +
+        supplyPriceFromValue(supplyValue, errorMarginPercent) +
+        packagingPriceFromValue(packagingValue),
     };
   }
 

@@ -53,6 +53,8 @@ describe('ProductsService', () => {
         cost: input.cost ?? 500,
         profit: (input.price ?? 1000) - (input.cost ?? 500),
         breakdown: {},
+        processCost: input.cost ?? 0,
+        nonProcessPrice: 0,
       })),
       toPricingInput: jest.fn((input: unknown) => input),
       productToPricingInput: jest.fn((product: Product) => ({
@@ -282,6 +284,8 @@ describe('ProductsService', () => {
         cost: input.cost ?? 0,
         profit: (input.price ?? 0) - (input.cost ?? 0),
         breakdown: {},
+        processCost: input.cost ?? 0,
+        nonProcessPrice: 0,
       })),
       toPricingInput: jest.fn((input: unknown) => input),
       productToPricingInput: jest.fn((product: Product) => ({
@@ -328,6 +332,8 @@ describe('ProductsService', () => {
         cost: input.cost ?? 0,
         profit: (input.price ?? 0) - (input.cost ?? 0),
         breakdown: { laborCost: 500 },
+        processCost: (input.cost ?? 0) - 500,
+        nonProcessPrice: 500,
       })),
       productToPricingInput: jest.fn((product: Product) => ({
         type: product.type,

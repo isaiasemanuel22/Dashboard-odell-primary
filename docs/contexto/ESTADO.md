@@ -75,8 +75,7 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
 - Diseño v3 (merch): ¿la seña es obligatoria (50% desde 20 prendas) y frena
   la producción? Choca con §Pagos de BUSINESS-RULES, donde la seña no tiene efectos.
 
-- Packaging: ¿el aviso de «margen bajo el objetivo» descuenta el packaging (va × 1,25)?
-  ¿La venta de mostrador descuenta packaging y lo devuelve al editar/borrar la venta?
+- Packaging: ¿la venta de mostrador descuenta packaging y lo devuelve al editar/borrar la venta?
 
 ## Entorno local
 - Dev server: launch `odell-dev-4300` (el 4200 lo usa otro proyecto).

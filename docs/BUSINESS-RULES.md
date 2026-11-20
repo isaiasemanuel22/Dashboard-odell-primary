@@ -1082,6 +1082,24 @@ es el precio de lista final**. No se le suma nada encima: ni insumos, ni
 packaging (§27), ni mano de obra o armado. El costo sigue incluyendo todo,
 así que la ganancia y el margen real lo reflejan.
 
+**Márgenes que se muestran** (confirmado por Isaías el 2026-11-19; solo para
+mostrar, no cambia cómo se arma el precio):
+
+```text
+precio del proceso = precio de venta − (mano de obra + precio de insumos + precio de packaging)
+costo del proceso  = material + purga + luz + máquina + margen de error
+margen del proceso = (precio del proceso − costo del proceso) ÷ costo del proceso
+margen total       = (precio de venta − costo total) ÷ costo total
+```
+
+- El **margen objetivo** del área se compara con el **margen del proceso**
+  (en la caja de precio y en el aviso de productos con precio bajo el margen).
+- El **margen total** es otra cifra: lo que se gana sobre todo lo que se gasta
+  (incluye insumos, packaging y mano de obra).
+- En combos, el proceso son las piezas: costo del proceso = costo de las
+  piezas; precio del proceso = precio de venta − armado − insumos y packaging
+  propios.
+
 ### 16.1.2 Descuento del producto
 
 Confirmado el 2026-11-15. Un producto o combo del catálogo puede tener un

@@ -42,7 +42,7 @@ import { pickMissingControl, scrollToField } from '../../../shared/utils/form-mi
 import { ProductFormPricingService } from './product-form-pricing.service';
 import { ProductFormPricingFacade } from './store/product-form-pricing/product-form-pricing.facade';
 import { formatCurrencyArs } from '../../../shared/utils/currency-ars.util';
-import { markupPercentOnCostRounded } from '../../../shared/utils/product-margin.util';
+import { totalMarginPercentRounded } from '../../../shared/utils/product-margin.util';
 import { productSalePrice } from '../../../shared/utils/product-discount.util';
 import { ProductFormBasicFieldsComponent, ProductFormBasicFieldsValue } from './sections/product-form-basic-fields.component';
 import { ProductFormProductionFieldsComponent } from './sections/product-form-production-fields.component';
@@ -213,11 +213,7 @@ export class ProductFormComponent implements OnInit, OnChanges, OnDestroy {
       discountPercent: this.facade.form.controls.discountPercent.value,
       discountAmount: this.facade.form.controls.discountAmount.value,
     });
-    const margin = markupPercentOnCostRounded(
-      price,
-      vm.totalCost,
-      vm.costBreakdown?.laborCost ?? 0,
-    );
+    const margin = totalMarginPercentRounded(price, vm.totalCost);
     return { price, label: formatCurrencyArs(Math.round(price)), margin };
   }
 

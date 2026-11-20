@@ -72,7 +72,10 @@ import { normalizeProductAttachments } from '../../../shared/utils/product-attac
 import { FormDialogService } from '../../../modals/public-api';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import { resolveColorLabel } from '../../../shared/utils/color.helpers';
-import { markupPercentOnCostRounded } from '../../../shared/utils/product-margin.util';
+import {
+  productProcessMarginRounded,
+  totalMarginPercentRounded,
+} from '../../../shared/utils/product-margin.util';
 import { resolveProductLaborCost } from '../../../shared/utils/product-labor.util';
 import {
   isProductPublished,
@@ -395,13 +398,13 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   get mobileMarginLine(): string {
     const margin = this.marginPercent;
+    const total = this.totalMarginPercent;
     const target = this.targetMarginPercent;
     const nbsp = '\u00a0';
     const marginPart =
-      margin == null
-        ? 'Sin margen'
-        : `${this.laborCost > 0 ? 'Margen (sin mano de obra)' : 'Margen'} ${margin}${nbsp}%`;
-    return `${marginPart} · objetivo ${target}${nbsp}%`;
+      margin == null ? 'Sin margen' : `Margen del proceso ${margin}${nbsp}%`;
+    const totalPart = total == null ? '' : ` · total ${total}${nbsp}%`;
+    return `${marginPart} · objetivo ${target}${nbsp}%${totalPart}`;
   }
 
   /** Mano de obra del producto (armado si es compuesto): no lleva margen. */
@@ -415,11 +418,16 @@ export class ProductDetailComponent implements OnInit, OnDestroy {
 
   /** Margen sobre el costo sin mano de obra (null si no hay base). */
   get marginPercent(): number | null {
-    return markupPercentOnCostRounded(
+    return productProcessMarginRounded(
+      this.product ?? { cost: 0 },
       this.displayPrice,
-      this.displayCost,
       this.laborCost,
     );
+  }
+
+  /** Margen total: sobre el costo total, con todo adentro (§16.1.1). */
+  get totalMarginPercent(): number | null {
+    return totalMarginPercentRounded(this.displayPrice, this.displayCost);
   }
 
   /** Avisos de precio por debajo del costo (lista y mayorista). */

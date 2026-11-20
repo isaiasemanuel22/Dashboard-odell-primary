@@ -63,6 +63,7 @@ import {
 } from '../settings/machine-profile.util';
 import {
   priceForTargetMarkup,
+  processMarginPercent,
   productMarkupPercent,
   roundPrice,
 } from './product-margin.util';
@@ -170,6 +171,8 @@ export class ProductsService {
         ...product,
         cost: result.cost,
         profit: product.price - result.cost,
+        processCost: result.processCost,
+        nonProcessPrice: result.nonProcessPrice,
       };
     } catch {
       return product;
@@ -855,12 +858,13 @@ export class ProductsService {
       const cost = Number(product.cost) || 0;
       const price = Number(product.price) || 0;
       const laborCost = this.resolveLaborCost(product);
-      // Mismo margen que ve Productos: precio de venta (con descuento propio)
-      // sobre el costo sin mano de obra, que no lleva margen (§16.1.1).
-      const markupPercent = productMarkupPercent(
+      // Mismo margen que ve Productos: el del PROCESO (§16.1.1, «Márgenes que
+      // se muestran»), sobre el precio de venta con descuento propio.
+      const split = this.resolveProcessSplit(product);
+      const markupPercent = processMarginPercent(
         Number(productSalePrice(product)) || 0,
-        cost,
-        laborCost,
+        split.processCost,
+        split.nonProcessPrice,
       );
       if (markupPercent == null) continue;
 
@@ -891,6 +895,23 @@ export class ProductsService {
     }
 
     return alerts.sort((a, b) => a.markupPercent - b.markupPercent);
+  }
+
+  private resolveProcessSplit(product: Product): {
+    processCost: number;
+    nonProcessPrice: number;
+  } {
+    try {
+      const result = this.pricing.resolvePricing(
+        this.pricing.productToPricingInput(product),
+      );
+      return {
+        processCost: result.processCost ?? 0,
+        nonProcessPrice: result.nonProcessPrice ?? 0,
+      };
+    } catch {
+      return { processCost: 0, nonProcessPrice: 0 };
+    }
   }
 
   private resolveLaborCost(product: Product): number {

@@ -155,7 +155,7 @@ export class ProductFormDialogComponent implements OnInit {
     const summary = this.form?.dockPriceSummary;
     if (!summary) return '';
     const margin =
-      summary.margin == null ? '' : ` · margen ${summary.margin}\u00a0%`;
+      summary.margin == null ? '' : ` · margen total ${summary.margin}\u00a0%`;
     return `Precio ${summary.label}${margin}`;
   }
 

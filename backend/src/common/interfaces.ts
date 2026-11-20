@@ -389,6 +389,13 @@ export interface ProductPricingResult {
   /** Margen configurado en Ajustes → Ganancias (% sobre costo). */
   configuredMarginPercent?: number;
   breakdown: CostBreakdown | null;
+  /**
+   * Costo del proceso: material, purga, luz, máquina y margen de error, sin
+   * mano de obra, insumos ni packaging (§16.1.1, «Márgenes que se muestran»).
+   */
+  processCost?: number;
+  /** Mano de obra + precio de insumos + precio de packaging (lo que no es proceso). */
+  nonProcessPrice?: number;
 }
 
 /** Campos de pricing devueltos por GET /products/pricing-fields. */
@@ -417,6 +424,10 @@ export interface ProductBase {
   price: number;
   cost: number;
   profit: number;
+  /** Costo del proceso (sin mano de obra, insumos ni packaging); lo calcula el backend al leer. */
+  processCost?: number;
+  /** Mano de obra + precio de insumos + precio de packaging; lo calcula el backend al leer. */
+  nonProcessPrice?: number;
   /** Precio manual del catálogo; si está seteado, no se pisa al recalcular. */
   suggestedPrice?: number | null;
   /** Descuento propio: `price` es la lista; venta = lista − descuento. Uno solo. */

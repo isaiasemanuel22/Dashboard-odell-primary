@@ -650,6 +650,10 @@ export interface ProductBase {
   price: number;
   cost: number;
   profit: number;
+  /** Costo del proceso (sin mano de obra, insumos ni packaging); lo manda el backend. */
+  processCost?: number;
+  /** Mano de obra + precio de insumos + precio de packaging; lo manda el backend. */
+  nonProcessPrice?: number;
   /** Precio manual del catálogo; si está seteado, no se pisa al recalcular. */
   suggestedPrice?: number | null;
   /** Descuento propio: `price` es la lista; venta = lista − descuento. Uno solo. */

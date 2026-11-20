@@ -32,7 +32,7 @@ import {
 } from '../../shared/utils/product.helpers';
 import {
   hasFixedCatalogPrice,
-  markupPercentOnCostRounded,
+  productProcessMarginRounded,
 } from '../../shared/utils/product-margin.util';
 import { getMarginForProductType } from '../../shared/utils/pricing.util';
 import { resolveProductLaborCost } from '../../shared/utils/product-labor.util';
@@ -156,9 +156,9 @@ export class ProductCardComponent {
   }
 
   get markupPercent(): number | null {
-    return markupPercentOnCostRounded(
+    return productProcessMarginRounded(
+      this.product,
       this.salePrice,
-      this.product.cost,
       resolveProductLaborCost(
         this.product,
         this.catalogProducts,

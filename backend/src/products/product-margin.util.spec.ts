@@ -1,5 +1,6 @@
 import {
   priceForTargetMarkup,
+  processMarginPercent,
   productMarkupPercent,
   roundPrice,
 } from './product-margin.util';
@@ -40,5 +41,22 @@ describe('product-margin.util', () => {
       expect(priceForTargetMarkup(1000, 40, 500)).toBe(1500);
       expect(priceForTargetMarkup(1000, 40, 0)).toBe(1400);
     });
+  });
+});
+
+describe('processMarginPercent', () => {
+  it('QA taza x2: proceso 100 %', () => {
+    // 7.822 − (500 + 5.750 + 1.250) = 322 sobre costo 161
+    expect(processMarginPercent(7822, 161, 7500)).toBeCloseTo(100);
+  });
+
+  it('precio fijo: el fijo también descuenta mano de obra, insumos y packaging', () => {
+    expect(Math.round(processMarginPercent(9000, 161, 7500) as number)).toBe(
+      832,
+    );
+  });
+
+  it('devuelve null con costo 0', () => {
+    expect(processMarginPercent(1000, 0, 0)).toBeNull();
   });
 });

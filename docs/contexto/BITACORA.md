@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · Margen del proceso y margen total
+Rama: feat/packaging · Commits: ver `git log` (feat(productos))
+Hecho: se reemplazó «Margen real (sin mano de obra)» por dos cifras (§16.1.1 «Márgenes que se muestran»): margen del proceso (precio − MO − insumos − packaging, sobre material+purga+luz+máquina+error; en combo, sobre las piezas), comparado con el objetivo y usado por el aviso de «precio bajo el margen», y margen total (ganancia ÷ costo total). Backend manda `processCost` y `nonProcessPrice`; helpers en `product-margin.util.ts` (front y back). Caja de precio, detalle, tarjetas y barra mobile. QA: taza 100 %/59 %, fija $9.000 832 %/83 %, Remera DTF 189 %/106 %, Árbol 182 %/151 %; el aviso ya no incluye la taza. Jest 562, Angular 174.
+Decisiones: de Isaías: el objetivo se compara con el margen del proceso; el margen total es otra cifra. Supuesta: el margen total incluye la mano de obra en el costo.
+Pendiente: `priceForTarget` de las alertas sigue con el cálculo viejo; `order-detail` muestra el margen por línea con la fórmula vieja; un producto recién guardado usa el margen viejo hasta recargar la lista; «Actualizar precios en bloque» dice que no hay productos con precio fijo (sin revisar); prod-hx570-11 y prod-hx570-13 tienen precios guardados lejos del calculado.
+
 ## 2026-11-19 · Precio calculado sin campo para escribir
 Rama: feat/packaging · Commits: ver `git log` (feat(productos))
 Hecho: en la caja de precio del producto (y combo), en modo Calculado el precio unitario se muestra como texto, sin input; el campo solo aparece en Fijo (con «Volver al sugerido»). QA OK a 800 px y 375 px en prod-45 y prod-54. Angular 167.
