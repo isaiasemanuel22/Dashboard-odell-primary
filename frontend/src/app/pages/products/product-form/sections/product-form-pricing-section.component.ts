@@ -46,7 +46,6 @@ import {
   productSalePrice,
 } from '../../../../shared/utils/product-discount.util';
 import {
-  markupPercentOnCostRounded,
   processMarginPercentRounded,
   totalMarginPercentRounded,
 } from '../../../../shared/utils/product-margin.util';
@@ -257,13 +256,10 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   }
 
   /** Precio de venta por debajo del costo (se puede guardar, pero se avisa). */
-  belowCostNotice(
-    price: number,
-    cost: number,
-    laborCost = 0,
-  ): string | null {
+  belowCostNotice(price: number, cost: number): string | null {
     if (!(price > 0) || !(cost > 0) || price >= cost) return null;
-    const margin = markupPercentOnCostRounded(price, cost, laborCost);
+    // Margen total: (precio − costo total) ÷ costo total, con mano de obra.
+    const margin = totalMarginPercentRounded(price, cost);
     return `El precio de venta (${this.money(price)}) está por debajo del costo (${this.money(cost)}): margen ${margin}%. Se vende a pérdida.`;
   }
 

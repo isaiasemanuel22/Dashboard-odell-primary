@@ -53,6 +53,10 @@ import {
   clearCreateQuery,
   shouldOpenCreateFromQuery,
 } from '../../shared/utils/create-from-query.util';
+import {
+  buildBelowCalculatedSummary,
+  BelowCalculatedSummary,
+} from './products-alert-summary';
 import { hasFixedCatalogPrice } from '../../shared/utils/product-margin.util';
 import { formatCurrencyArs } from '../../shared/utils/currency-ars.util';
 import {
@@ -313,7 +317,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       { value: 'all', label: 'Todos' },
       {
         value: 'below_margin',
-        label: `Bajo margen · ${below}`,
+        label: `Debajo del calculado · ${below}`,
       },
       {
         value: 'fixed_price',
@@ -344,7 +348,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       },
       {
         id: 'below_margin',
-        label: 'Bajo margen',
+        label: 'Debajo del calculado',
         count: base.filter((p) => this.belowMarginIds.has(p.id)).length,
       },
       {
@@ -411,35 +415,34 @@ export class ProductsComponent implements OnInit, OnDestroy {
     );
   }
 
-  get mobileOutdatedPriceAlertTitle(): string {
-    const n = this.mobileOutdatedPriceAlerts.length;
-    return n === 1 ? '1 precio bajo el margen' : `${n} precios bajo el margen`;
+  get belowSummary(): BelowCalculatedSummary {
+    return buildBelowCalculatedSummary(
+      this.outdatedPriceAlerts.length,
+      this.fixedPriceMarginAlerts.length,
+    );
   }
 
-  get mobileFixedPriceMarginAlertTitle(): string {
-    const n = this.mobileFixedPriceMarginAlerts.length;
-    return n === 1 ? '1 precio fijo' : `${n} precios fijos`;
+  get mobileBelowSummary(): BelowCalculatedSummary {
+    return buildBelowCalculatedSummary(
+      this.mobileOutdatedPriceAlerts.length,
+      this.mobileFixedPriceMarginAlerts.length,
+    );
   }
 
-  get outdatedPriceAlertMessage(): string {
-    const n = this.outdatedPriceAlerts.length;
-    return n === 1
-      ? '1 producto con el precio bajo el margen respecto de su costo'
-      : `${n} productos con el precio bajo el margen respecto de su costo`;
+  get mobileBelowBannerText(): string {
+    const s = this.mobileBelowSummary;
+    return [s.recalculableText, s.fixedText].filter(Boolean).join(' · ');
   }
 
-  get fixedPriceMarginAlertMessage(): string {
-    const n = this.fixedPriceMarginAlerts.length;
-    const base =
-      n === 1
-        ? '1 producto con precio fijo bajo el margen'
-        : `${n} productos con precio fijo bajo el margen`;
+  /** Aumento de insumo que explica los precios fijos desactualizados. */
+  get fixedSupplyNote(): string {
+    if (this.fixedPriceMarginAlerts.length === 0) return '';
     const supply = this.topSupplyIncrease;
-    if (!supply) return base;
+    if (!supply) return '';
     const before = this.currency.transform(supply.priceBefore);
     const now = this.currency.transform(supply.priceNow);
     const unit = supply.unit?.trim() ? `/${supply.unit.trim()}` : '';
-    return `${base} después del aumento del ${supply.name} (${before} → ${now}${unit})`;
+    return ` después del aumento del ${supply.name} (${before} → ${now}${unit})`;
   }
 
   /** Productos filtrados por búsqueda, tipo y categoría (sin chip de lista). */
@@ -673,8 +676,8 @@ export class ProductsComponent implements OnInit, OnDestroy {
         title: 'Recalcular precios',
         message:
           n === 1
-            ? '¿Recalcular el precio del producto bajo el margen según su costo actual?'
-            : `¿Recalcular los precios de ${n} productos bajo el margen según su costo actual?`,
+            ? '¿Recalcular el precio del producto que está debajo del calculado?'
+            : `¿Recalcular los precios de ${n} productos que están debajo del calculado?`,
         lines: alerts.map((alert) => ({
           label: alert.name,
           value: `${formatCurrencyArs(alert.price)} → ${formatCurrencyArs(alert.priceForTarget)}`,
@@ -849,7 +852,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
     return false;
   }
 
-  /** Para la tarjeta mobile: mismo conjunto que el chip «Bajo margen». */
+  /** Para la tarjeta mobile: mismo conjunto que el chip «Debajo del calculado». */
   isBelowMargin(product: Product): boolean {
     return this.belowMarginIds.has(product.id);
   }
@@ -889,8 +892,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
       default:
         // Buscando por nombre también aparecen los no publicados.
         return (
-          product.published !== false ||
-          !!normalizeSearchText(this.search)
+          product.published !== false || !!normalizeSearchText(this.search)
         );
     }
   }

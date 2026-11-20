@@ -1093,7 +1093,10 @@ margen total       = (precio de venta − costo total) ÷ costo total
 ```
 
 - El **margen objetivo** del área se compara con el **margen del proceso**
-  (en la caja de precio y en el aviso de productos con precio bajo el margen).
+  en la caja de precio.
+- El aviso y el filtro del listado (y las alertas del Dashboard) marcan los
+  productos **debajo del calculado**: precio de venta menor que su precio
+  calculado, aunque tengan ganancia (Isaías, 2026-11-19).
 - El **margen total** es otra cifra: lo que se gana sobre todo lo que se gasta
   (incluye insumos, packaging y mano de obra).
 - El margen total se muestra en las tarjetas del listado de productos y se
@@ -1101,8 +1104,6 @@ margen total       = (precio de venta − costo total) ÷ costo total
 - En combos, el proceso son las piezas: costo del proceso = costo de las
   piezas; precio del proceso = precio de venta − armado − insumos y packaging
   propios.
-- Un combo a su precio calculado puede figurar «bajo el margen»: el precio
-  de sus piezas ya trae sus insumos con el error al costo (Isaías, 2026-11-19).
 
 ### 16.1.2 Descuento del producto
 

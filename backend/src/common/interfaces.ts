@@ -1099,9 +1099,11 @@ export interface DashboardMarginAlert {
   name: string;
   price: number;
   cost: number;
-  markupPercent: number;
-  targetPercent: number;
+  /** Margen total ((precio de venta − costo total) ÷ costo total): lo que se muestra. */
+  totalMarginPercent: number | null;
   priceForTarget: number;
+  /** Precio de venta vigente (con descuento propio). */
+  salePrice: number;
   fixedPrice: boolean;
 }
 

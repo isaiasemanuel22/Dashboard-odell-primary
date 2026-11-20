@@ -60,4 +60,13 @@ describe('ProductFormPricingSection: texto «Calculado» con precio fijo', () =>
     const hint = norm(c.unitPriceHint(10000, 5000, 0));
     expect(hint).toContain('Calculado $ 9.072');
   });
+
+  it('aviso bajo el costo: margen total con mano de obra en el costo', () => {
+    const c = build({ combo: false, fixed: 0, computed: 0 });
+    // taza ×2: $4.000 contra costo total $4.911 → −19 %
+    expect(c.belowCostNotice(4000, 4911)).toContain('margen -19%');
+    // Remera DTF: 3.778 contra 10.859 → −65 %
+    expect(c.belowCostNotice(3778, 10859)).toContain('margen -65%');
+    expect(c.belowCostNotice(5000, 4911)).toBeNull();
+  });
 });

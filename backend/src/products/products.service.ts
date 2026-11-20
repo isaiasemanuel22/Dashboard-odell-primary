@@ -62,9 +62,9 @@ import {
   resolvePreferredPrinterId,
 } from '../settings/machine-profile.util';
 import {
-  processMarginPercent,
   productMarkupPercent,
   roundPrice,
+  totalMarginPercent,
 } from './product-margin.util';
 import { normalizeProductComponents } from './product-component.util';
 import {
@@ -92,9 +92,9 @@ export interface ProductMarginAlert {
   name: string;
   price: number;
   cost: number;
-  markupPercent: number;
-  targetPercent: number;
+  totalMarginPercent: number | null;
   priceForTarget: number;
+  salePrice: number;
   fixedPrice: boolean;
 }
 
@@ -847,6 +847,12 @@ export class ProductsService {
     return this.getPricingFields();
   }
 
+  /**
+   * Productos «debajo del precio calculado» (§16.1.1): precio de venta (con
+   * descuento propio) menor al calculado según la regla, aunque dejen
+   * ganancia. Diferencia menor a $1 = redondeo, no entra. Orden: mayor
+   * diferencia en $ primero.
+   */
   getMarginAlerts(): ProductMarginAlert[] {
     const alerts: ProductMarginAlert[] = [];
 
@@ -856,57 +862,26 @@ export class ProductsService {
       const product = this.withCurrentCost(raw);
       const cost = Number(product.cost) || 0;
       const price = Number(product.price) || 0;
-      // Mismo margen que ve Productos: el del PROCESO (§16.1.1, «Márgenes que
-      // se muestran»), sobre el precio de venta con descuento propio.
-      const split = this.resolveProcessSplit(product);
-      const markupPercent = processMarginPercent(
-        Number(productSalePrice(product)) || 0,
-        split.processCost,
-        split.nonProcessPrice,
-      );
-      if (markupPercent == null) continue;
-
-      const configuredPercent = this.costCalculator.getMarginForProductType(
-        product.type,
-      );
-      // El objetivo es el margen configurado del área, el mismo que muestra
-      // Productos (no el markup efectivo sobre el costo total).
-      const targetPercent = configuredPercent;
-      if (markupPercent >= targetPercent) continue;
-      // Precio CALCULADO según la regla (§16.1.1 y §16.1.3): con ese precio el
-      // margen del proceso da el objetivo del área.
+      const salePrice = Number(productSalePrice(product)) || 0;
       const priceForTarget = this.resolveCalculatedPrice(product);
+      if (!(priceForTarget - salePrice >= 1)) continue;
 
       alerts.push({
         productId: product.id,
         name: product.name,
         price,
         cost,
-        markupPercent,
-        targetPercent,
+        totalMarginPercent: totalMarginPercent(salePrice, cost),
         priceForTarget,
+        salePrice,
         fixedPrice: this.hasFixedPrice(product),
       });
     }
 
-    return alerts.sort((a, b) => a.markupPercent - b.markupPercent);
-  }
-
-  private resolveProcessSplit(product: Product): {
-    processCost: number;
-    nonProcessPrice: number;
-  } {
-    try {
-      const result = this.pricing.resolvePricing(
-        this.pricing.productToPricingInput(product),
-      );
-      return {
-        processCost: result.processCost ?? 0,
-        nonProcessPrice: result.nonProcessPrice ?? 0,
-      };
-    } catch {
-      return { processCost: 0, nonProcessPrice: 0 };
-    }
+    return alerts.sort(
+      (a, b) =>
+        b.priceForTarget - b.salePrice - (a.priceForTarget - a.salePrice),
+    );
   }
 
   /** Precio calculado por la calculadora, ignorando el precio fijo. */

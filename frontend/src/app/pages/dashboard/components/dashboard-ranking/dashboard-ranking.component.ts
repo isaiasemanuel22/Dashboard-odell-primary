@@ -76,7 +76,16 @@ export class DashboardRankingComponent {
       key: 'markupPercent',
       header: 'Margen',
       align: 'end',
-      value: (row) => formatPercentIntegerLabel(row.markupPercent),
+      type: 'badge',
+      badge: (row) => ({
+        label: formatPercentIntegerLabel(row.markupPercent),
+        tone:
+          row.markupPercent == null || row.markupPercent === 0
+            ? 'neutral'
+            : row.markupPercent > 0
+              ? 'ok'
+              : 'danger',
+      }),
     },
     {
       key: 'totalProfit',

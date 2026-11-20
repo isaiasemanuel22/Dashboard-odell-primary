@@ -12,7 +12,6 @@ import {
   CurrencyArsPipe,
   PercentIntegerPipe,
 } from '../../../../shared/pipes/labels.pipe';
-import { formatPercentInteger } from '../../../../shared/utils/percent.util';
 import { DbButtonComponent } from '@general-components';
 
 const VISIBLE_ALERTS = 3;
@@ -37,20 +36,10 @@ export class DashboardMarginAlertsComponent {
   readonly alerts = input.required<DashboardMarginAlert[]>();
   readonly raisePrice = output<DashboardMarginAlert>();
 
-  protected readonly targetPercent = computed(() => {
-    const first = this.alerts()[0];
-    const raw = first?.targetPercent ?? 40;
-    return Number(formatPercentInteger(raw) ?? 40);
-  });
-
   protected readonly totalCount = computed(() => this.alerts().length);
 
   protected readonly visibleAlerts = computed(() =>
     this.alerts().slice(0, VISIBLE_ALERTS),
-  );
-
-  protected readonly maxScale = computed(() =>
-    Math.max(this.targetPercent() * 1.5, 60),
   );
 
   protected productsLabel(count: number): string {
@@ -63,21 +52,26 @@ export class DashboardMarginAlertsComponent {
       : `Ver las ${count} alertas →`;
   }
 
-  protected barWidth(percent: number): number {
-    return Math.min(100, Math.max(0, (percent / this.maxScale()) * 100));
+  /** Precio de venta como % del calculado (el relleno de la barra). */
+  protected barWidth(alert: DashboardMarginAlert): number {
+    if (!(alert.priceForTarget > 0)) return 0;
+    return Math.min(
+      100,
+      Math.max(0, (alert.salePrice / alert.priceForTarget) * 100),
+    );
   }
 
-  protected targetMark(): number {
-    return Math.min(100, (this.targetPercent() / this.maxScale()) * 100);
+  /** Cuánto le falta al precio de venta para llegar al calculado. */
+  protected belowCalculated(alert: DashboardMarginAlert): number {
+    return Math.max(0, alert.priceForTarget - alert.salePrice);
   }
 
   protected raiseLabel(price: number): string {
     return `Subir a ${this.currency.transform(price)}`;
   }
 
-  protected barAriaLabel(markupPercent: number): string {
-    const pct = formatPercentInteger(markupPercent) ?? '—';
-    return `Margen ${pct}% contra objetivo ${this.targetPercent()}%`;
+  protected barAriaLabel(alert: DashboardMarginAlert): string {
+    return `Precio de venta ${this.currency.transform(alert.salePrice)} contra calculado ${this.currency.transform(alert.priceForTarget)}`;
   }
 
   protected onRaise(alert: DashboardMarginAlert): void {

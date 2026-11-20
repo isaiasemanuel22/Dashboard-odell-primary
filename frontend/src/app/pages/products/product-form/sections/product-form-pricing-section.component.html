@@ -23,7 +23,7 @@
     @if (incompleteCostNotice; as incomplete) {
       <p class="price-warn price-warn--incomplete" role="alert">{{ incomplete }}</p>
     }
-    @if (belowCostNotice(shownPrice, vm.totalCost, vm.costBreakdown?.laborCost ?? 0); as belowCost) {
+    @if (belowCostNotice(shownPrice, vm.totalCost); as belowCost) {
       <p class="price-warn price-warn--loss" role="alert">El precio de venta queda por debajo del costo</p>
       <p class="price-warn price-warn--loss" role="alert">{{ belowCost }}</p>
     }

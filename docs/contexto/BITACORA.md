@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · Márgenes unificados: margen total y «Debajo del calculado»
+Rama: feat/margen-total-listado · Commits: ver `git log` (feat(productos))
+Hecho: el aviso «Se vende a pérdida» usa el margen total (taza $4.000 → −19 %). El aviso, el filtro y las alertas del Dashboard marcan productos con precio de venta < calculado (diferencia ≥ $1, orden por mayor diferencia en $); chip y textos «Debajo del calculado»; un solo aviso con total = chip y detalle «N se pueden recalcular · N tienen precio fijo». Dashboard: margen total en color, «$X debajo del calculado», barra precio ÷ calculado; ranking en color. QA OK escritorio y mobile; la taza quedó en Calculado $7.822. Jest 565, Angular 190.
+Decisiones: de Isaías: unificar con el margen total; el filtro marca los productos debajo del calculado aunque ganen.
+Pendiente: `product-detail`, `product-pricing` y márgenes por canal del Dashboard con otras fórmulas; el chip «Precio fijo» del filtro mostró 0 con un fijo (sin confirmar).
+
 ## 2026-11-19 · Margen total en el listado y en colores
 Rama: feat/margen-total-listado · Commits: ver `git log` (feat(productos))
 Hecho: las tarjetas del listado (escritorio «Margen total», mobile «M. total») muestran el margen total; verde si hay ganancia, rojo si es negativo, neutro en 0, igual en caja de precio, detalle de producto, barra fija mobile y detalle de pedido (amarillo → rojo). QA: taza 59 % verde, Remera DTF −65 % rojo, Taza Frozen −25 % rojo, fijo $4.000 −19 % rojo. Angular 184.

@@ -1,9 +1,9 @@
-<section class="margin-alerts" aria-label="Alertas de margen">
+<section class="margin-alerts" aria-label="Productos debajo del precio calculado">
   <header class="margin-alerts__head">
     <div>
-      <h3>Alertas de margen <span class="margin-alerts__new">Nuevo</span></h3>
+      <h3>Debajo del precio calculado <span class="margin-alerts__new">Nuevo</span></h3>
       <p>
-        Productos por debajo de tu margen objetivo ({{ targetPercent() }}%)
+        Productos que vendés por menos de lo que da tu regla de precios
       </p>
     </div>
     @if (totalCount()) {
@@ -12,7 +12,7 @@
   </header>
 
   @if (totalCount()) {
-    <ul class="margin-alerts__list" aria-label="Productos con margen bajo">
+    <ul class="margin-alerts__list" aria-label="Productos debajo del precio calculado">
       @for (alert of visibleAlerts(); track alert.productId) {
         <li class="margin-alerts__item">
           <div class="margin-alerts__top">
@@ -23,31 +23,33 @@
                 {{ alert.price | currencyArs }}
               </span>
             </div>
-            <span class="margin-alerts__pct">{{
-              alert.markupPercent | percentInteger
-            }}</span>
+            <span
+              class="margin-alerts__pct"
+              [class.margin-alerts__pct--positive]="(alert.totalMarginPercent ?? 0) > 0"
+              [class.margin-alerts__pct--neutral]="alert.totalMarginPercent === 0"
+              >{{ alert.totalMarginPercent | percentInteger }}</span
+            >
           </div>
 
           <div
             class="margin-alerts__bar"
             role="img"
-            [attr.aria-label]="barAriaLabel(alert.markupPercent)"
+            [attr.aria-label]="barAriaLabel(alert)"
           >
             <div
               class="margin-alerts__fill"
-              [style.width.%]="barWidth(alert.markupPercent)"
+              [style.width.%]="barWidth(alert)"
             ></div>
-            <span
-              class="margin-alerts__mark"
-              [style.left.%]="targetMark()"
-              aria-hidden="true"
-            ></span>
           </div>
 
           <div class="margin-alerts__actions">
             <span>
-              Para llegar al {{ targetPercent() }}%:
-              <strong>{{ alert.priceForTarget | currencyArs }}</strong>
+              <strong class="margin-alerts__gap-amount">
+                {{ belowCalculated(alert) | currencyArs }} debajo del calculado
+              </strong>
+              <small class="margin-alerts__gap">
+                Calculado {{ alert.priceForTarget | currencyArs }}
+              </small>
             </span>
             <db-button
               [label]="raiseLabel(alert.priceForTarget)"
@@ -60,11 +62,6 @@
       }
     </ul>
 
-    <p class="margin-alerts__legend">
-      <span class="margin-alerts__legend-mark" aria-hidden="true"></span>
-      Línea = margen objetivo {{ targetPercent() }}%
-    </p>
-
     <a
       class="margin-alerts__bulk"
       routerLink="/productos"
@@ -74,7 +71,7 @@
     </a>
   } @else {
     <p class="margin-alerts__empty">
-      Ningún producto está por debajo del margen objetivo.
+      Todos los productos están en su precio calculado o por encima.
     </p>
   }
 </section>
