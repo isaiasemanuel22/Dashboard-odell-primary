@@ -16,11 +16,17 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · Cancelar de precios en bloque y tabla del pedido
+Rama: feat/packaging · Commits: ver `git log` (fix)
+Hecho: «Cancelar» de «Actualizar precios en bloque» no avisaba al padre; ahora cierra (escritorio y mobile). El parpadeo era el reseteo + nueva vista previa de cada clic. Detalle de pedido: la grilla usa `minmax(0, 1fr)` bajo 900 px y la tabla de líneas scrollea dentro de su caja; líneas mobile con wrap. QA OK a 800 px y 375 px. Angular 175.
+Decisiones: Isaías pidió arreglarlos.
+Pendiente: el margen total por línea solo se ve en mobile (la tabla de escritorio no tiene esa columna); historial de precios de pedido entregado muestra cambio sin cambio de total.
+
 ## 2026-11-19 · Precio fijo persistido y márgenes viejos restantes
 Rama: feat/packaging · Commits: ver `git log` (fix(productos))
 Hecho: el precio fijo (`suggestedPrice`) no se guardaba en MySQL (sin columna ni mapper): se perdía al reiniciar y «Actualizar precios en bloque» no listaba fijos. Columna nueva `products.suggested_price` (local con ALTER aditivo). `priceForTarget` = precio calculado por la calculadora; la confirmación de «Recalcular precios» lista producto, actual → nuevo; el detalle de pedido muestra «Margen total» por línea; la tarjeta usa la respuesta de guardar. QA: fijo $9.000 persiste tras recargar y entra al bloque; tarjeta 832 % / 100 % sin recargar; ord-66 línea 59 %.
 Decisiones: de Isaías: seguir con los márgenes viejos. Supuesta: en el pedido, la pastilla del margen total es verde si ≥ 0 y amarilla si es pérdida.
-Pendiente: `db:push:heroku` (`suggested_price`); en producción ningún producto tiene el fijo guardado: hay que marcarlos de nuevo, y hasta entonces «Recalcular precios» los pisa; «Cancelar» de «Actualizar precios en bloque» no cierra y el listado parpadea; historial de precios de un pedido entregado muestra cambio aunque el total no cambió; tabla de líneas del pedido se corta en ventana angosta.
+Pendiente: `db:push:heroku` (`suggested_price`); en producción ningún producto tiene el fijo guardado: hay que marcarlos de nuevo, y hasta entonces «Recalcular precios» los pisa; «Cancelar» de «Actualizar precios en bloque» no cierra y el listado parpadea; historial de precios de un pedido entregado muestra cambio aunque el total no cambió.
 
 ## 2026-11-19 · Margen del proceso y margen total
 Rama: feat/packaging · Commits: ver `git log` (feat(productos))

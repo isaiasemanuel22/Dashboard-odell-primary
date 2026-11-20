@@ -181,6 +181,7 @@
           <app-products-bulk-price
             [categories]="categories"
             (applied)="onBulkPriceApplied(); closeMobileBulkPrice()"
+            (closed)="closeMobileBulkPrice()"
           />
         }
       </div>
@@ -262,6 +263,7 @@
       <app-products-bulk-price
         [categories]="categories"
         (applied)="onBulkPriceApplied()"
+        (closed)="desktopBulkOpen = false"
       />
     }
   }

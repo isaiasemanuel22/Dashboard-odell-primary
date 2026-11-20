@@ -43,7 +43,9 @@
   max-width: 100%;
 
   @media (max-width: 900px) {
-    grid-template-columns: 1fr;
+    // minmax(0, …): con `1fr` a secas la columna crece al ancho de la tabla de
+    // líneas y la página se corta; así la tabla scrollea dentro de su caja.
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 
@@ -692,9 +694,15 @@
   .od-m__line-top,
   .od-m__line-mid {
     display: flex;
+    flex-wrap: wrap;
     justify-content: space-between;
     align-items: flex-start;
-    gap: 8px;
+    gap: 4px 8px;
+    min-width: 0;
+  }
+
+  .od-m__line-mid .m-pill {
+    flex: none;
   }
 
   .od-m__line-name {

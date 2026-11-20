@@ -11,14 +11,7 @@ import {
 } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormsModule } from '@angular/forms';
-import {
-  Subject,
-  catchError,
-  debounceTime,
-  of,
-  switchMap,
-  tap,
-} from 'rxjs';
+import { Subject, catchError, debounceTime, of, switchMap, tap } from 'rxjs';
 import {
   BulkPricePayload,
   BulkPricePreviewItem,
@@ -65,6 +58,8 @@ export class ProductsBulkPriceComponent implements OnInit {
 
   @Input() categories: Category[] = [];
   @Output() applied = new EventEmitter<void>();
+  /** El usuario canceló: el padre cierra el panel. */
+  @Output() closed = new EventEmitter<void>();
 
   scope: BulkPriceScope = 'all';
   categoryId = '';
@@ -212,8 +207,9 @@ export class ProductsBulkPriceComponent implements OnInit {
     this.percentError = '';
     this.error = '';
     this.preview = null;
-    this.queuePreview();
+    this.previewLoading = false;
     this.cdr.markForCheck();
+    this.closed.emit();
   }
 
   apply(): void {
