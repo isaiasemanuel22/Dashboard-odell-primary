@@ -228,6 +228,12 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     },
     { key: 'unitPrice', header: 'P. unit.', width: '6.5rem' },
     {
+      key: 'margin',
+      header: 'Margen total',
+      align: 'end',
+      width: '6rem',
+    },
+    {
       key: 'subtotal',
       header: 'Subtotal',
       type: 'money',

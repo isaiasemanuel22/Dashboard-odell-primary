@@ -16,11 +16,17 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · Columna «Margen total» en el detalle de pedido
+Rama: feat/packaging · Commits: ver `git log` (feat(pedidos))
+Hecho: la tabla de líneas de escritorio tiene «Margen total» antes de «Subtotal», con el mismo valor y colores que el pill mobile y «—» sin costo. QA: ord-66 59 % verde; ord-34 100 % y 67 %; ord-10 y ord-11 «—»; sin scroll de página a 800 y 375 px. Angular 179.
+Decisiones: de Isaías: agregar la columna en escritorio.
+Pendiente: a 1280 px la caja de líneas mide ~570 px y «Subtotal» queda cortado hasta desplazar; título «P. unit.» alineado a la izquierda.
+
 ## 2026-11-19 · Cancelar de precios en bloque y tabla del pedido
 Rama: feat/packaging · Commits: ver `git log` (fix)
 Hecho: «Cancelar» de «Actualizar precios en bloque» no avisaba al padre; ahora cierra (escritorio y mobile). El parpadeo era el reseteo + nueva vista previa de cada clic. Detalle de pedido: la grilla usa `minmax(0, 1fr)` bajo 900 px y la tabla de líneas scrollea dentro de su caja; líneas mobile con wrap. QA OK a 800 px y 375 px. Angular 175.
 Decisiones: Isaías pidió arreglarlos.
-Pendiente: el margen total por línea solo se ve en mobile (la tabla de escritorio no tiene esa columna); historial de precios de pedido entregado muestra cambio sin cambio de total.
+Pendiente: historial de precios de pedido entregado muestra cambio sin cambio de total.
 
 ## 2026-11-19 · Precio fijo persistido y márgenes viejos restantes
 Rama: feat/packaging · Commits: ver `git log` (fix(productos))

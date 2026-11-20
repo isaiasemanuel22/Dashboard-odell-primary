@@ -602,6 +602,18 @@
                 {{ item.productName }}
               }
             </ng-template>
+            <ng-template odlCell="margin" let-item>
+              @if (lineMarginPercent(item); as margin) {
+                <span
+                  class="order-item__margin"
+                  [class.order-item__margin--ok]="lineMarginOk(item)"
+                  [class.order-item__margin--w]="!lineMarginOk(item)"
+                  >{{ margin }} %</span
+                >
+              } @else {
+                —
+              }
+            </ng-template>
             <ng-template odlCell="unitPrice" let-item>
               @if (isDesignService(item.serviceType)) {
                 <span class="order-item__unit">
