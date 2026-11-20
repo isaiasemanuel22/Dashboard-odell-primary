@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · Precio fijo persistido y márgenes viejos restantes
+Rama: feat/packaging · Commits: ver `git log` (fix(productos))
+Hecho: el precio fijo (`suggestedPrice`) no se guardaba en MySQL (sin columna ni mapper): se perdía al reiniciar y «Actualizar precios en bloque» no listaba fijos. Columna nueva `products.suggested_price` (local con ALTER aditivo). `priceForTarget` = precio calculado por la calculadora; la confirmación de «Recalcular precios» lista producto, actual → nuevo; el detalle de pedido muestra «Margen total» por línea; la tarjeta usa la respuesta de guardar. QA: fijo $9.000 persiste tras recargar y entra al bloque; tarjeta 832 % / 100 % sin recargar; ord-66 línea 59 %.
+Decisiones: de Isaías: seguir con los márgenes viejos. Supuesta: en el pedido, la pastilla del margen total es verde si ≥ 0 y amarilla si es pérdida.
+Pendiente: `db:push:heroku` (`suggested_price`); en producción ningún producto tiene el fijo guardado: hay que marcarlos de nuevo, y hasta entonces «Recalcular precios» los pisa; «Cancelar» de «Actualizar precios en bloque» no cierra y el listado parpadea; combo «QA combo packaging» figura bajo el margen (68 %) aunque está a precio calculado; historial de precios de un pedido entregado muestra cambio aunque el total no cambió; tabla de líneas del pedido se corta en ventana angosta.
+
 ## 2026-11-19 · Margen del proceso y margen total
 Rama: feat/packaging · Commits: ver `git log` (feat(productos))
 Hecho: se reemplazó «Margen real (sin mano de obra)» por dos cifras (§16.1.1 «Márgenes que se muestran»): margen del proceso (precio − MO − insumos − packaging, sobre material+purga+luz+máquina+error; en combo, sobre las piezas), comparado con el objetivo y usado por el aviso de «precio bajo el margen», y margen total (ganancia ÷ costo total). Backend manda `processCost` y `nonProcessPrice`; helpers en `product-margin.util.ts` (front y back). Caja de precio, detalle, tarjetas y barra mobile. QA: taza 100 %/59 %, fija $9.000 832 %/83 %, Remera DTF 189 %/106 %, Árbol 182 %/151 %; el aviso ya no incluye la taza. Jest 562, Angular 174.

@@ -51,3 +51,17 @@ describe('product.mapper descuento', () => {
     expect(none.discountAmount).toBeNull();
   });
 });
+
+describe('product.mapper precio fijo', () => {
+  it('persiste y lee el precio fijo (suggestedPrice)', () => {
+    const product = mapProductFromDb({ ...row, suggestedPrice: 25000 });
+    expect(product.suggestedPrice).toBe(25000);
+    expect(mapProductToDb(product).suggestedPrice).toBe(25000);
+  });
+
+  it('sin precio fijo queda en null', () => {
+    const none = mapProductFromDb(row);
+    expect(none.suggestedPrice).toBeNull();
+    expect(mapProductToDb(none).suggestedPrice).toBeNull();
+  });
+});

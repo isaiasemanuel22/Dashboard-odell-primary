@@ -279,14 +279,23 @@ describe('ProductsService', () => {
     ]);
 
     const pricing = {
-      resolvePricing: jest.fn((input: { price?: number; cost?: number }) => ({
-        price: input.price ?? 0,
-        cost: input.cost ?? 0,
-        profit: (input.price ?? 0) - (input.cost ?? 0),
-        breakdown: {},
-        processCost: input.cost ?? 0,
-        nonProcessPrice: 0,
-      })),
+      // Sin precio fijo, el precio es el calculado: costo × (1 + 40 %).
+      resolvePricing: jest.fn(
+        (input: {
+          price?: number;
+          cost?: number;
+          suggestedPrice?: number | null;
+        }) => ({
+          price: input.suggestedPrice
+            ? input.suggestedPrice
+            : (input.cost ?? 0) * 1.4,
+          cost: input.cost ?? 0,
+          profit: (input.price ?? 0) - (input.cost ?? 0),
+          breakdown: {},
+          processCost: input.cost ?? 0,
+          nonProcessPrice: 0,
+        }),
+      ),
       toPricingInput: jest.fn((input: unknown) => input),
       productToPricingInput: jest.fn((product: Product) => ({
         type: product.type,
@@ -311,7 +320,9 @@ describe('ProductsService', () => {
     expect(alerts.map((a) => a.productId)).toEqual(['prod-lower', 'prod-low']);
     expect(alerts[0].fixedPrice).toBe(true);
     expect(alerts[0].targetPercent).toBe(40);
+    // El precio sugerido es el calculado, no el fijo guardado.
     expect(alerts[0].priceForTarget).toBe(1400);
+    expect(alerts[1].priceForTarget).toBe(1400);
   });
 
   it('getMarginAlerts mide el margen sin mano de obra y contra el margen configurado', () => {
@@ -383,6 +394,31 @@ describe('ProductsService', () => {
 
     const alerts = service.getMarginAlerts();
     expect(alerts.map((a) => a.productId)).toEqual(['prod-low']);
+  });
+
+  it('crear y actualizar devuelven processCost y nonProcessPrice para la tarjeta', () => {
+    const store = new StoreService();
+    seedStore(store, [baseProduct({ id: 'prod-1', name: 'Uno' })]);
+    const service = createService(store);
+
+    const updated = service.update('prod-1', { name: 'Uno editado' });
+    expect(updated.processCost).toBeDefined();
+    expect(updated.nonProcessPrice).toBeDefined();
+
+    const created = service.create({
+      name: 'Nuevo',
+      type: ProductType.FDM,
+      price: 1000,
+      cost: 500,
+      size: '10 cm',
+      categoryIds: ['cat-1'],
+      grams: 50,
+      printTimeHours: 2,
+      workTimeHours: 1,
+      filamentType: FilamentType.PLA,
+    });
+    expect(created.processCost).toBeDefined();
+    expect(created.nonProcessPrice).toBeDefined();
   });
 
   it('preview de precios en bloque no guarda y solo incluye precio fijo', () => {

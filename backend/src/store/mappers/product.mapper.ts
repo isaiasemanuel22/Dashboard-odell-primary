@@ -64,6 +64,7 @@ export function mapProductFromDb(row: {
   preferredPrinterId?: string | null;
   discountPercent?: number | null;
   discountAmount?: number | null;
+  suggestedPrice?: number | null;
 }): Product {
   const components = normalizeProductComponents(fromJson(row.components));
   const base = {
@@ -93,6 +94,10 @@ export function mapProductFromDb(row: {
     stock: row.stock ?? 0,
     discountPercent: row.discountPercent ?? null,
     discountAmount: row.discountAmount ?? null,
+    suggestedPrice:
+      row.suggestedPrice != null && row.suggestedPrice > 0
+        ? row.suggestedPrice
+        : null,
   };
 
   if (row.type === (ProductType.COMBO as string)) {
@@ -250,6 +255,10 @@ export function mapProductToDb(product: Product) {
     stock: Math.max(0, Math.trunc(product.stock ?? 0)),
     discountPercent: product.discountPercent ?? null,
     discountAmount: product.discountAmount ?? null,
+    suggestedPrice:
+      product.suggestedPrice != null && Number(product.suggestedPrice) > 0
+        ? Number(product.suggestedPrice)
+        : null,
     colorId:
       product3d?.type === ProductType.RESINA
         ? (product3d.colorId ?? null)

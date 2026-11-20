@@ -54,6 +54,7 @@ import {
   shouldOpenCreateFromQuery,
 } from '../../shared/utils/create-from-query.util';
 import { hasFixedCatalogPrice } from '../../shared/utils/product-margin.util';
+import { formatCurrencyArs } from '../../shared/utils/currency-ars.util';
 import {
   DEFAULT_PROFIT_MARGINS,
   normalizeProfitMargins,
@@ -662,9 +663,10 @@ export class ProductsComponent implements OnInit, OnDestroy {
   }
 
   recalculateOutdatedPrices(): void {
-    const n = this.breakpoint.isMobile()
-      ? this.mobileOutdatedPriceAlerts.length
-      : this.outdatedPriceAlerts.length;
+    const alerts = this.breakpoint.isMobile()
+      ? this.mobileOutdatedPriceAlerts
+      : this.outdatedPriceAlerts;
+    const n = alerts.length;
     if (n === 0) return;
     this.formDialogs
       .openConfirm({
@@ -673,6 +675,10 @@ export class ProductsComponent implements OnInit, OnDestroy {
           n === 1
             ? '¿Recalcular el precio del producto bajo el margen según su costo actual?'
             : `¿Recalcular los precios de ${n} productos bajo el margen según su costo actual?`,
+        lines: alerts.map((alert) => ({
+          label: alert.name,
+          value: `${formatCurrencyArs(alert.price)} → ${formatCurrencyArs(alert.priceForTarget)}`,
+        })),
         confirmLabel: 'Recalcular precios',
       })
       .subscribe((confirmed) => {
@@ -706,6 +712,9 @@ export class ProductsComponent implements OnInit, OnDestroy {
   openCreateProduct(): void {
     this.formDialogs.openProduct().subscribe((saved) => {
       if (saved) {
+        // La respuesta trae processCost/nonProcessPrice: la tarjeta muestra el
+        // margen del proceso enseguida, sin esperar la recarga.
+        this.catalog.upsertProduct(saved);
         this.reloadProducts();
         this.reloadMarginAlerts();
       }
@@ -724,6 +733,7 @@ export class ProductsComponent implements OnInit, OnDestroy {
           .pipe(finalize(() => (this.editOpening = false)))
           .subscribe((saved) => {
             if (saved) {
+              this.catalog.upsertProduct(saved);
               this.reloadProducts();
               this.reloadMarginAlerts();
             }

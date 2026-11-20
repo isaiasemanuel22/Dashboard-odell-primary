@@ -62,7 +62,6 @@ import {
   resolvePreferredPrinterId,
 } from '../settings/machine-profile.util';
 import {
-  priceForTargetMarkup,
   processMarginPercent,
   productMarkupPercent,
   roundPrice,
@@ -857,7 +856,6 @@ export class ProductsService {
       const product = this.withCurrentCost(raw);
       const cost = Number(product.cost) || 0;
       const price = Number(product.price) || 0;
-      const laborCost = this.resolveLaborCost(product);
       // Mismo margen que ve Productos: el del PROCESO (§16.1.1, «Márgenes que
       // se muestran»), sobre el precio de venta con descuento propio.
       const split = this.resolveProcessSplit(product);
@@ -875,12 +873,9 @@ export class ProductsService {
       // Productos (no el markup efectivo sobre el costo total).
       const targetPercent = configuredPercent;
       if (markupPercent >= targetPercent) continue;
-      const priceForTarget = priceForTargetMarkup(
-        cost,
-        configuredPercent,
-        100,
-        laborCost,
-      );
+      // Precio CALCULADO según la regla (§16.1.1 y §16.1.3): con ese precio el
+      // margen del proceso da el objetivo del área.
+      const priceForTarget = this.resolveCalculatedPrice(product);
 
       alerts.push({
         productId: product.id,
@@ -914,14 +909,15 @@ export class ProductsService {
     }
   }
 
-  private resolveLaborCost(product: Product): number {
+  /** Precio calculado por la calculadora, ignorando el precio fijo. */
+  private resolveCalculatedPrice(product: Product): number {
     try {
-      return (
-        this.pricing.resolvePricing(this.pricing.productToPricingInput(product))
-          .breakdown?.laborCost ?? 0
-      );
+      return this.pricing.resolvePricing({
+        ...this.pricing.productToPricingInput(product),
+        suggestedPrice: null,
+      }).price;
     } catch {
-      return 0;
+      return Number(product.price) || 0;
     }
   }
 

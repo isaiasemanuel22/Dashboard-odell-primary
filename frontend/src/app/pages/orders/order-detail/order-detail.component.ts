@@ -86,10 +86,9 @@ import {
   PlainTextLengthPipe,
 } from '../../../shared/pipes/labels.pipe';
 import { priorityTierClass } from '../../../shared/utils/priority.helpers';
-import { markupPercentOnCostRounded } from '../../../shared/utils/product-margin.util';
+import { totalMarginPercentRounded } from '../../../shared/utils/product-margin.util';
 import {
   DEFAULT_PROFIT_MARGINS,
-  getMarginForService,
   normalizeProfitMargins,
 } from '../../../shared/utils/pricing.util';
 import {
@@ -831,14 +830,16 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   lineMarginPercent(item: OrderItem): number | null {
     const cost = Number(item.unitCost);
     if (!Number.isFinite(cost) || cost <= 0) return null;
-    return markupPercentOnCostRounded(this.lineAppliedUnitPrice(item), cost);
+    // Margen total (§16.1.1): (precio − costo con todo) ÷ costo.
+    return totalMarginPercentRounded(this.lineAppliedUnitPrice(item), cost);
   }
 
   lineMarginOk(item: OrderItem): boolean {
     const margin = this.lineMarginPercent(item);
     if (margin == null) return true;
-    const minimum = getMarginForService(item.serviceType, this.profitMargins);
-    return margin >= minimum;
+    // El margen total incluye mano de obra e insumos: no se compara con el
+    // objetivo del proceso, solo se avisa si la línea da pérdida.
+    return margin >= 0;
   }
 
   lineProgressLabel(item: OrderItem): string {

@@ -19,12 +19,14 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
 ## Ramas y trabajo en curso
 - Rama actual: `feat/packaging` (sale de `main` `0c4fb6f`, sin publicar): packaging §27
   (categoría de insumo, sección en producto/pedido/presupuesto, × 1,25, stock al entregar).
-  Al publicar hace falta `db:push:heroku` (`products.packaging_supplies`,
+  Al publicar hace falta `db:push:heroku` (`products.suggested_price`, `products.packaging_supplies`,
   `products.sum_pieces_packaging`, `order_items.packaging_supplies`, `quote_items.packaging_supplies`).
   Falta: descuento en venta de mostrador (regla por definir) y que el aviso de «productos
   afectados» de un insumo cuente el packaging.
-- En la misma rama: precio fijo = precio final en todos los tipos (§16.1.1). Productos
-  FDM/Estampado con fijo guardados antes cobran fijo + insumos hasta recalcular su precio.
+- En la misma rama: precio fijo = precio final en todos los tipos (§16.1.1); margen del proceso
+  vs objetivo y margen total aparte; el precio fijo ahora se guarda (`products.suggested_price`,
+  antes no se persistía). Al publicar: `db:push:heroku` también por esa columna, y en producción
+  ningún producto tiene el fijo guardado: hay que volver a marcarlos antes de usar «Recalcular precios».
 - `feat/chats` (sin publicar): sección Chats v7; necesita `db:push:heroku` (tablas de chats).
   La sesión de Meta (`claude/meta-agentes-3d0324`) depende de esa rama.
 - `feat/ferias` ya unida a `main` (publicada 2026-11-18). Falta probar

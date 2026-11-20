@@ -114,6 +114,8 @@ model Product {
   /** Descuento propio del producto: % (0–99) o monto fijo; nunca los dos. */
   discountPercent       Float?  @map("discount_percent")
   discountAmount        Float?  @map("discount_amount")
+  /** Precio fijo de catálogo (null = precio calculado). */
+  suggestedPrice        Float?  @map("suggested_price")
 
   @@map("products")
 }
