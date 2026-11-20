@@ -1099,6 +1099,8 @@ margen total       = (precio de venta − costo total) ÷ costo total
 - En combos, el proceso son las piezas: costo del proceso = costo de las
   piezas; precio del proceso = precio de venta − armado − insumos y packaging
   propios.
+- Un combo a su precio calculado puede figurar «bajo el margen»: el precio
+  de sus piezas ya trae sus insumos con el error al costo (Isaías, 2026-11-19).
 
 ### 16.1.2 Descuento del producto
 
