@@ -6,7 +6,7 @@ import {
   NestInterceptor,
 } from '@nestjs/common';
 import { Request, Response } from 'express';
-import { Observable, tap } from 'rxjs';
+import { Observable, finalize, tap } from 'rxjs';
 
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
@@ -25,6 +25,19 @@ export class LoggingInterceptor implements NestInterceptor {
     const userId = req.user?.uid ?? '-';
 
     this.logger.log(`→ [${requestId}] ${method} ${path} user=${userId}`);
+
+    // El stream SSE emite un mensaje por evento y un ping cada 25 s: se loguea solo al cerrar.
+    if (path.startsWith('/api/events/stream')) {
+      return next
+        .handle()
+        .pipe(
+          finalize(() =>
+            this.logger.log(
+              `← [${requestId}] ${method} ${path} cerrado ${Date.now() - started}ms user=${userId}`,
+            ),
+          ),
+        );
+    }
 
     return next.handle().pipe(
       tap({

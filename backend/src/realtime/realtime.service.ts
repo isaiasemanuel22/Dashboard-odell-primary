@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { Subject } from 'rxjs';
 import {
   RealtimeAction,
   RealtimeEntity,
@@ -17,6 +18,10 @@ const MAX_BUFFERED_EVENTS = 250;
 @Injectable()
 export class RealtimeService {
   private readonly recentEvents: RealtimeEvent[] = [];
+  private readonly eventSubject = new Subject<RealtimeEvent>();
+
+  /** Eventos nuevos, para el stream SSE. */
+  readonly events$ = this.eventSubject.asObservable();
 
   notify(
     scopes: RealtimeScope | RealtimeScope[],
@@ -59,5 +64,6 @@ export class RealtimeService {
         this.recentEvents.length - MAX_BUFFERED_EVENTS,
       );
     }
+    this.eventSubject.next(event);
   }
 }

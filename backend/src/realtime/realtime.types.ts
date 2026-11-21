@@ -37,3 +37,8 @@ export interface RealtimeEvent {
   entity?: RealtimeEntity;
   id?: string;
 }
+
+export interface RealtimePing {
+  type: 'ping';
+  at: string;
+}

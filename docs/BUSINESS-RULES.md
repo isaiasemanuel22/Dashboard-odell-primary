@@ -2139,9 +2139,16 @@ el cálculo de overhead energético y de máquina por tipo de producto.
 ### 25.11 Autenticación y sincronización
 
 - Acceso protegido por **login**; rutas internas requieren sesión activa.
-- **Sincronización en tiempo real** opcional (polling): cuando está activa,
-  las pantallas recargan datos al recibir eventos del servidor (dashboard,
-  insumos, pedidos, etc.).
+- **Sincronización en tiempo real** (confirmado por Isaías el 2026-11-21):
+  Odell suele estar abierto en varios lugares a la vez, y un cambio hecho en
+  uno tiene que verse **al instante** en los demás, sin recargar.
+  - Viene **activada por defecto** en todos los dispositivos. El interruptor
+    «Sincronizar en tiempo real» (Más) la apaga solo en ese dispositivo.
+  - El servidor avisa cada cambio por una conexión abierta (SSE,
+    `GET /api/events/stream`) y las pantallas recargan solo lo afectado
+    (dashboard, insumos, pedidos, etc.).
+  - Si la conexión se corta, la app se reconecta sola y recupera lo que se
+    perdió con la consulta `GET /api/events/poll`, que queda de respaldo.
 
 Al registrar una **compra de insumos** desde Billetera, el backend emite
 eventos de realtime con scopes `dashboard`, `supplies` y `print-jobs`, de
