@@ -158,6 +158,29 @@ describe('order.mapper payments', () => {
     expect(mapOrderToDbCreate(plain).lossReason).toBeNull();
   });
 
+  it('hace ida y vuelta de la marca «creado por el agente»', () => {
+    const base = {
+      id: 'ord-g',
+      customerId: null,
+      customerName: 'Ana',
+      services: [ServiceType.IMPRESION_3D] as never,
+      status: OrderStatus.PENDIENTE,
+      total: 0,
+      description: null,
+      notes: null,
+      createdAt: new Date('2026-08-01T12:00:00.000Z'),
+      dueDate: new Date('2026-08-10T12:00:00.000Z'),
+      statusHistory: [] as never,
+      items: [],
+    };
+    const order = mapOrderFromDb({ ...base, createdByAgent: true });
+    expect(order.createdByAgent).toBe(true);
+    expect(mapOrderToDbCreate(order).createdByAgent).toBe(true);
+    const plain = mapOrderFromDb(base);
+    expect(plain.createdByAgent).toBe(false);
+    expect(mapOrderToDbCreate(plain).createdByAgent).toBe(false);
+  });
+
   it('mapea pagos ausentes a []', () => {
     const fromDb = mapOrderFromDb({
       id: 'ord-2',

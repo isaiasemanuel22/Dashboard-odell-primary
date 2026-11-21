@@ -1,0 +1,357 @@
+@if (isMobile()) {
+  <db-mobile-settings-page title="API y agentes">
+    @if (isAdmin()) {
+      <button
+        barAction
+        type="button"
+        class="m-ib"
+        aria-label="Nueva llave"
+        (click)="openCreate()"
+      >
+        <svg
+          viewBox="0 0 24 24"
+          width="22"
+          height="22"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2.2"
+          stroke-linecap="round"
+          aria-hidden="true"
+        >
+          <path d="M12 5v14M5 12h14" />
+        </svg>
+      </button>
+    }
+
+    @if (message) {
+      <p class="st-m__msg">{{ message }}</p>
+    }
+
+    <p class="agents-note">
+      <b>La API ya no responde sin login.</b> Cada agente usa su propia llave,
+      con permisos limitados, y podés revocarla cuando quieras.
+    </p>
+
+    @if (!isAdmin()) {
+      <span class="st-m__hint"
+        >Solo un administrador puede ver y manejar las llaves de acceso.</span
+      >
+    } @else if (loading) {
+      <div class="m-card"><p class="st-m__hint">Cargando…</p></div>
+    } @else {
+      <div class="m-card m-card--flush">
+        @for (apiKey of apiKeys; track apiKey.id) {
+          <db-mobile-catalog-row
+            [title]="apiKey.name"
+            [subtitle]="mobileSubtitle(apiKey)"
+            (pressed)="revoke(apiKey)"
+          />
+        } @empty {
+          <p class="st-m__hint" style="padding: 12px">
+            Todavía no hay llaves.
+          </p>
+        }
+      </div>
+    }
+
+    <h2 class="m-sec-t">Servidor MCP de Odell</h2>
+    <div class="mcp-url">
+      <db-input
+        ariaLabel="URL del servidor MCP"
+        [readonly]="true"
+        [ngModel]="mcpUrl"
+      />
+      <db-button
+        label="Copiar"
+        variant="cancel"
+        format="soft"
+        (clicked)="copyMcpUrl()"
+      />
+    </div>
+    @if (agentTools) {
+      <div class="m-card m-card--flush">
+        @for (tool of mcpTools; track tool.key) {
+          <db-mobile-toggle-row
+            [label]="tool.key"
+            [hint]="tool.description + ' · ' + controlBadge(tool).label"
+            [checked]="agentTools[tool.key]"
+            [ariaLabel]="tool.key"
+            (toggled)="toggleTool(tool.key, $event)"
+          />
+        }
+      </div>
+    }
+
+    @if (attendant) {
+      <h2 class="m-sec-t">Agente de atención</h2>
+      @if (attendantPausedByBudget) {
+        <p class="agents-note agents-note--warn">
+          Se pausó solo: llegó al tope de gasto del mes. Subí el tope o esperá
+          al mes que viene.
+        </p>
+      }
+      <div class="m-card m-card--flush">
+        <db-mobile-toggle-row
+          label="Activo"
+          [hint]="'Consumo del mes: ' + attendantUsageLabel"
+          [checked]="attendant.settings.enabled"
+          ariaLabel="Agente de atención activo"
+          (toggled)="toggleAttendant($event)"
+        />
+      </div>
+      <div class="m-card attendant-fields">
+        <ng-container *ngTemplateOutlet="attendantInputs" />
+      </div>
+      @if (!attendant.apiKeyConfigured) {
+        <span class="st-m__hint">{{ missingApiKeyHint }}</span>
+      }
+    }
+
+    @if (isAdmin()) {
+      <h2 class="m-sec-t">Pendientes de aprobación</h2>
+      <div class="m-card m-card--flush">
+        @for (approval of approvals; track approval.id) {
+          <div class="approval-row">
+            <db-mobile-catalog-row
+              [title]="approval.summary"
+              [subtitle]="approvalSubtitle(approval)"
+            />
+            @if (approval.status === 'pending') {
+              <div class="approval-row__actions">
+                <db-button
+                  label="Rechazar"
+                  variant="cancel"
+                  format="soft"
+                  (clicked)="decide(approval, false)"
+                />
+                <db-button
+                  label="Aprobar"
+                  variant="primary"
+                  format="solid"
+                  (clicked)="decide(approval, true)"
+                />
+              </div>
+            }
+          </div>
+        } @empty {
+          <p class="st-m__hint" style="padding: 12px">
+            {{ approvalsLoading ? 'Cargando…' : 'No hay nada pendiente.' }}
+          </p>
+        }
+      </div>
+    }
+  </db-mobile-settings-page>
+} @else {
+  <section class="settings-panel">
+    <div class="panel-head">
+      <div>
+        <h3>API y agentes</h3>
+        <p class="panel-sub">
+          Qué pueden hacer tus agentes y qué avisos manda Odell solo
+        </p>
+      </div>
+    </div>
+
+    @if (message) {
+      <p class="status-notice" role="status">{{ message }}</p>
+    }
+
+    <p class="agents-note">
+      <b>La API ya no responde sin login.</b> Cada agente usa su propia llave,
+      con permisos limitados, y podés revocarla cuando quieras.
+    </p>
+
+    <div class="panel-head">
+      <div>
+        <h3>Llaves de acceso</h3>
+        <p class="panel-sub">Una por agente o integración</p>
+      </div>
+      @if (isAdmin()) {
+        <db-button
+          label="+ Nueva llave"
+          variant="primary"
+          format="solid"
+          (clicked)="openCreate()"
+        />
+      }
+    </div>
+
+    @if (!isAdmin()) {
+      <p class="panel-sub">
+        Solo un administrador puede ver y manejar las llaves de acceso.
+      </p>
+    } @else {
+      <db-state-message
+        [loading]="loading"
+        [empty]="!loading && apiKeys.length === 0"
+        loadingMessage="Cargando llaves..."
+        emptyMessage="Todavía no hay llaves."
+      >
+        <db-button
+          emptyActions
+          label="+ Nueva llave"
+          variant="primary"
+          format="solid"
+          (clicked)="openCreate()"
+        />
+      </db-state-message>
+
+      @if (!loading && apiKeys.length) {
+        <db-data-table
+          label="Llaves de acceso"
+          [rows]="apiKeys"
+          [columns]="columns"
+          [actions]="actions"
+          [clientSide]="false"
+          emptyText="No hay llaves."
+          (action)="onAction($event)"
+        />
+      }
+    }
+
+    <div class="panel-head agents-section">
+      <div>
+        <h3>Servidor MCP de Odell</h3>
+        <p class="panel-sub">Las herramientas que ve un agente como Claude</p>
+      </div>
+      <div class="mcp-url">
+        <db-input
+          ariaLabel="URL del servidor MCP"
+          [readonly]="true"
+          [ngModel]="mcpUrl"
+        />
+        <db-button
+          label="Copiar"
+          variant="cancel"
+          format="soft"
+          (clicked)="copyMcpUrl()"
+        />
+      </div>
+    </div>
+
+    @if (agentTools) {
+      <db-data-table
+        label="Herramientas del servidor MCP"
+        [rows]="mcpTools"
+        [columns]="toolColumns"
+        [clientSide]="false"
+      >
+        <ng-template odlCell="active" let-tool>
+          <db-checkbox
+            label="Activa"
+            [name]="tool.key"
+            [checked]="isToolActive(tool)"
+            [disabled]="!isAdmin()"
+            (checkedChange)="toggleTool(tool.key, $event)"
+          />
+        </ng-template>
+      </db-data-table>
+    }
+
+    @if (attendant) {
+      <div class="panel-head agents-section">
+        <div>
+          <h3>Agente de atención</h3>
+          <p class="panel-sub">
+            Responde los chats de WhatsApp, Instagram y Messenger con Claude ·
+            Consumo del mes: {{ attendantUsageLabel }}
+          </p>
+        </div>
+        <db-checkbox
+          label="Activo"
+          name="attendantEnabled"
+          [checked]="attendant.settings.enabled"
+          [disabled]="!isAdmin()"
+          (checkedChange)="toggleAttendant($event)"
+        />
+      </div>
+      @if (attendantPausedByBudget) {
+        <p class="agents-note agents-note--warn">
+          Se pausó solo: llegó al tope de gasto del mes. Subí el tope o esperá
+          al mes que viene.
+        </p>
+      }
+      @if (!attendant.apiKeyConfigured) {
+        <p class="panel-sub">{{ missingApiKeyHint }}</p>
+      }
+      <div class="attendant-fields">
+        <ng-container *ngTemplateOutlet="attendantInputs" />
+      </div>
+    }
+
+    @if (isAdmin()) {
+      <div class="panel-head agents-section">
+        <div>
+          <h3>Pendientes de aprobación</h3>
+          <p class="panel-sub">
+            Lo que un agente pidió hacer y espera tu OK
+          </p>
+        </div>
+      </div>
+
+      <db-state-message
+        [loading]="approvalsLoading"
+        [empty]="!approvalsLoading && approvals.length === 0"
+        loadingMessage="Cargando pendientes..."
+        emptyMessage="No hay nada pendiente."
+      />
+
+      @if (!approvalsLoading && approvals.length) {
+        <db-data-table
+          label="Pendientes de aprobación"
+          [rows]="approvals"
+          [columns]="approvalColumns"
+          [actions]="approvalActions"
+          [clientSide]="false"
+          emptyText="No hay nada pendiente."
+          (action)="onApprovalAction($event)"
+        />
+      }
+    }
+  </section>
+}
+
+<ng-template #attendantInputs>
+  <db-input
+    label="Entrega con stock (días)"
+    type="number"
+    name="attendantStockDays"
+    [min]="0"
+    [max]="30"
+    [step]="1"
+    hint="Hoy + estos días"
+    [disabled]="!isAdmin()"
+    [(ngModel)]="attendantDraft.stockDeliveryDays"
+  />
+  <db-input
+    label="Margen sin stock (días hábiles)"
+    type="number"
+    name="attendantMarginDays"
+    [min]="0"
+    [max]="30"
+    [step]="1"
+    hint="Se suma a la fecha de la cola"
+    [disabled]="!isAdmin()"
+    [(ngModel)]="attendantDraft.deliveryMarginDays"
+  />
+  <db-input
+    label="Tope por mes (USD)"
+    type="number"
+    name="attendantBudget"
+    [min]="1"
+    [max]="500"
+    [step]="1"
+    hint="Al llegar se pausa y te avisa"
+    [disabled]="!isAdmin()"
+    [(ngModel)]="attendantDraft.monthlyBudgetUsd"
+  />
+  @if (isAdmin()) {
+    <db-button
+      [label]="savingAttendant ? 'Guardando…' : 'Guardar'"
+      variant="primary"
+      format="solid"
+      [disabled]="savingAttendant"
+      (clicked)="saveAttendant()"
+    />
+  }
+</ng-template>

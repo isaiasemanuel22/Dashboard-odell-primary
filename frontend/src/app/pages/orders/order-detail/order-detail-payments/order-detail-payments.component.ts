@@ -242,7 +242,7 @@ export class OrderDetailPaymentsComponent {
     this.paymentFee = value === null || value === '' ? null : Number(value);
   }
 
-  /** Comisión por defecto de Mercado Pago (§28.1) mientras no se toque. */
+  /** Comisión por defecto de Mercado Pago (§29.1) mientras no se toque. */
   private autoFee(): void {
     if (this.feeTouched) return;
     const fee = defaultPaymentFee(

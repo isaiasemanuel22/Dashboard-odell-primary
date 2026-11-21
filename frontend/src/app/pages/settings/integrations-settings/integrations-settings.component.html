@@ -1,55 +1,46 @@
-<ng-template #templateEditor let-tpl>
-  <div class="int-editor">
-    <label class="int-editor__field">
-      <span class="int-editor__label">Nombre</span>
-      <input dbKeepTyping
-        class="int-editor__input"
-        type="text"
-        maxlength="60"
-        [(ngModel)]="tpl.name"
-        [name]="'tplName-' + tpl.key"
-        placeholder="Ej.: Pedido en camino"
+<ng-template #webhookBody>
+  @if (metaStatus; as status) {
+    <span class="int-sub">URL del webhook de Meta</span>
+    <div class="webhook-url">
+      <db-input
+        ariaLabel="URL del webhook"
+        [readonly]="true"
+        [ngModel]="status.webhookUrl"
+        name="metaWebhookUrl"
       />
-    </label>
-    <label class="int-editor__field">
-      <span class="int-editor__label">Mensaje</span>
-      <textarea
-        #bodyArea
-        (blur)="rememberSelection(bodyArea)"
-        class="int-editor__textarea"
-        rows="6"
-        maxlength="1000"
-        [(ngModel)]="tpl.body"
-        [name]="'tplBody-' + tpl.key"
-        placeholder="Hola {cliente}, …"
-      ></textarea>
-    </label>
-    <div class="int-editor__vars" role="group" aria-label="Variables disponibles">
-      <span class="int-editor__label">Insertar variable</span>
-      <div class="int-editor__chips">
-        @for (v of variables; track v.key) {
-          <button
-            type="button"
-            class="int-chip"
-            [title]="'Ejemplo: ' + v.example"
-            (click)="insertVariable(v.key)"
-          >
-            {{ '{' + v.key + '}' }}
-          </button>
-        }
-      </div>
+      <db-button label="Copiar" variant="cancel" format="soft" (clicked)="copyWebhookUrl()" />
     </div>
-    <div class="int-editor__actions">
-      @if (!tpl.builtIn) {
-        <button type="button" class="int-link int-link--danger" (click)="removeTemplate(tpl)">
-          Borrar plantilla
-        </button>
-      } @else {
-        <small>Plantilla por defecto: se puede editar, no borrar.</small>
-      }
-      <button type="button" class="int-link" (click)="editingKey = null">Cerrar</button>
-    </div>
+    <span class="int-hint">
+      Token de verificación:
+      {{ status.verifyTokenConfigured ? 'cargado' : 'falta META_VERIFY_TOKEN' }}
+      · Secreto de la app:
+      {{ status.appSecretConfigured ? 'cargado' : 'falta META_APP_SECRET' }}
+    </span>
+    @if (copyNotice) {
+      <span class="int-hint" role="status">{{ copyNotice }}</span>
+    }
+  }
+</ng-template>
+
+<ng-template #channelBody let-channel>
+  <div class="int-head">
+    <span class="int-logo" [class]="'int-logo int-logo--' + channel.key" aria-hidden="true">{{ channel.logo }}</span>
+    <div class="int-head__text"><b>{{ channel.name }}</b><span>{{ channel.detail }}</span></div>
+    <span class="int-pill" [class]="'int-pill int-pill--' + (channel.connected ? 'ok' : 'warn')">{{
+      channel.connected ? 'Conectada' : 'Sin conectar'
+    }}</span>
   </div>
+  @if (channel.key === 'whatsapp' && metaStatus) {
+    <span class="int-sub">Plantillas (las que se envían desde pedidos y presupuestos)</span>
+    @for (template of metaStatus.templates; track template.key) {
+      <div class="int-tpl__row">
+        <span>{{ template.label }}</span>
+        <span [class]="'int-pill int-pill--' + templateStatus(template.metaStatus).tone">{{
+          templateStatus(template.metaStatus).label
+        }}</span>
+      </div>
+    }
+  }
 </ng-template>
 
 @if (draft) {
@@ -102,39 +93,22 @@
         <button type="button" class="int-btn" disabled>Conectar: próximamente</button>
       </div>
 
-      <h2 class="m-sec-t">WhatsApp</h2>
-      <div class="m-card">
-        <div class="int-head">
-          <span class="int-logo int-logo--wa" aria-hidden="true">WA</span>
-          <div class="int-head__text"><b>WhatsApp</b><span>Avisos a tus clientes</span></div>
+      <h2 class="m-sec-t">Meta · WhatsApp, Instagram y Messenger</h2>
+      @if (metaLoading) {
+        <div class="m-card"><span class="int-hint">Cargando…</span></div>
+      } @else if (metaError) {
+        <div class="m-card"><span class="int-hint">{{ metaError }}</span></div>
+      } @else {
+        <div class="m-card">
+          <ng-container *ngTemplateOutlet="webhookBody" />
         </div>
-        <db-mobile-field-group label="Número del negocio" labelFor="m-wa-phone">
-          <input dbKeepTyping
-            id="m-wa-phone"
-            class="st-m__inp"
-            type="tel"
-            inputmode="tel"
-            [(ngModel)]="draft.businessPhone"
-            name="mWaPhone"
-            placeholder="Ej.: 223 677-3255"
-          />
-        </db-mobile-field-group>
-        <span class="int-sub">Plantillas</span>
-        @for (tpl of draft.templates; track tpl.key) {
-          <div class="int-tpl">
-            <div class="int-tpl__row">
-              <span>{{ tpl.name || 'Plantilla nueva' }}</span>
-              <button type="button" class="int-link" (click)="toggleEdit(tpl)">
-                {{ editingKey === tpl.key ? 'Cerrar' : 'Editar' }}
-              </button>
-            </div>
-            @if (editingKey === tpl.key) {
-              <ng-container *ngTemplateOutlet="templateEditor; context: { $implicit: tpl }" />
-            }
+        @for (channel of channels; track channel.key) {
+          <div class="m-card">
+            <ng-container *ngTemplateOutlet="channelBody; context: { $implicit: channel }" />
           </div>
         }
-        <button type="button" class="int-btn int-btn--sec" (click)="addTemplate()">+ Nueva plantilla</button>
-      </div>
+        <p class="int-hint">Los datos de conexión se cargan en las variables de entorno del servidor.</p>
+      }
 
       <h2 class="m-sec-t">ARCA · Facturación</h2>
       <div class="m-card">
@@ -228,36 +202,6 @@
         </div>
       </section>
 
-      <section class="settings-card int-card" aria-labelledby="int-wa">
-        <div class="int-head">
-          <span class="int-logo int-logo--wa" aria-hidden="true">WA</span>
-          <div class="int-head__text"><h3 id="int-wa">WhatsApp</h3><span>Avisos a tus clientes</span></div>
-        </div>
-        <db-input
-          label="Número del negocio"
-          name="waBusinessPhone"
-          placeholder="Ej.: 223 677-3255"
-          [(ngModel)]="draft.businessPhone"
-        />
-        <span class="int-sub">Plantillas</span>
-        @for (tpl of draft.templates; track tpl.key) {
-          <div class="int-tpl">
-            <div class="int-tpl__row">
-              <span>{{ tpl.name || 'Plantilla nueva' }}</span>
-              <button type="button" class="int-link" (click)="toggleEdit(tpl)">
-                {{ editingKey === tpl.key ? 'Cerrar' : 'Editar' }}
-              </button>
-            </div>
-            @if (editingKey === tpl.key) {
-              <ng-container *ngTemplateOutlet="templateEditor; context: { $implicit: tpl }" />
-            }
-          </div>
-        }
-        <div class="int-actions">
-          <db-button label="+ Nueva plantilla" variant="secondary" format="solid" (clicked)="addTemplate()" />
-        </div>
-      </section>
-
       <section class="settings-card int-card" aria-labelledby="int-ar">
         <div class="int-head">
           <span class="int-logo int-logo--ar" aria-hidden="true">AR</span>
@@ -291,6 +235,25 @@
         </div>
       </section>
     </div>
+
+    <h3 class="int-group">Meta · WhatsApp, Instagram y Messenger</h3>
+    @if (metaLoading) {
+      <p class="int-hint">Cargando…</p>
+    } @else if (metaError) {
+      <p class="int-hint">{{ metaError }}</p>
+    } @else {
+      <div class="int-grid">
+        <section class="settings-card int-card int-card--wide" aria-label="Webhook de Meta">
+          <ng-container *ngTemplateOutlet="webhookBody" />
+        </section>
+        @for (channel of channels; track channel.key) {
+          <section class="settings-card int-card" [attr.aria-label]="channel.name">
+            <ng-container *ngTemplateOutlet="channelBody; context: { $implicit: channel }" />
+          </section>
+        }
+      </div>
+      <p class="int-hint">Los datos de conexión se cargan en las variables de entorno del servidor.</p>
+    }
   }
 } @else {
   @if (isMobile()) {

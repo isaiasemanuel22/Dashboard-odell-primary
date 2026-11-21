@@ -31,6 +31,15 @@ Monorepo: `backend/` (NestJS + Prisma) y `frontend/` (Angular + NgRx).
 - Plataforma: `auth/`, `users/`, `settings/` (Ajustes), `config/` (env),
   `upload/` (Firebase Storage), `realtime/`, `health/`, `reference-data/`,
   `common/`.
+- Agentes (§28): `api-keys/` llaves por agente (el guard de `auth/` acepta
+  `X-Api-Key` o `Bearer odl_live_…`, con permisos por `@ApiScopes`), `mcp/`
+  servidor MCP en `/api/mcp`, `agent-approvals/` cola de aprobaciones y
+  `alerts/` avisos programados (`@nestjs/schedule`, Resend), `meta/` webhook
+  firmado `/api/meta/webhook`, envío por Graph API y plantillas de WhatsApp
+  (gateway de Chats), `attendant/` agente de atención con Claude (corridas en
+  `agent_runs`). Estos módulos
+  van directo a Prisma (como `users/`), no por `store/`, y están excluidos
+  del guardado automático por ruta (`store/route-registry.ts`).
 - **Persistencia:** el estado vive en `store/` (memoria). Con `DATABASE_URL`
   se guarda a MySQL vía `store/store-persistence.service.ts` (en serie, con
   reintento). Sin base, corre en memoria con `store/store.seed.ts`.

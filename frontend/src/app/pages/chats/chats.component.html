@@ -1,0 +1,176 @@
+@if (isMobile()) {
+  <div class="mobile-only chats-m">
+    <db-mobile-bar title="Chats" backLink="/mas">
+      @if (counts()) {
+        <span class="chats-m__unread">{{ unreadTotal() }} sin leer</span>
+      }
+    </db-mobile-bar>
+
+    <app-chat-inbox
+      variant="mobile"
+      [conversations]="conversations()"
+      [counts]="counts()"
+      [channel]="channel()"
+      [filter]="filter()"
+      [search]="search()"
+      [selectedId]="selectedId()"
+      [loading]="listLoading()"
+      [loadError]="listError()"
+      (channelChange)="onChannelChange($event)"
+      (filterChange)="onFilterChange($event)"
+      (searchChange)="onSearchChange($event)"
+      (retry)="reloadList()"
+    />
+
+    @if (selectedId()) {
+      <section
+        class="chats-m__conv"
+        [attr.aria-label]="detail() ? 'Conversación con ' + title(detail()!.conversation) : 'Conversación'"
+      >
+        @if (detail(); as d) {
+          <!-- db-mobile-bar solo admite un título de texto: barra propia con avatar y canal. -->
+          <header class="chats-m__bar">
+            <a class="m-ib" routerLink="/chats" aria-label="Volver" (click)="onBack($event)">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+            </a>
+            <span class="chats-m__avatar-wrap">
+              <span class="chats-m__avatar" aria-hidden="true">{{ avatar(d.conversation) }}</span>
+              <span class="chats-m__channel">
+                <app-chat-channel-icon [channel]="d.conversation.channel" [size]="12" />
+              </span>
+            </span>
+            <div class="chats-m__who">
+              <h1 class="chats-m__name">{{ title(d.conversation) }}</h1>
+              <div class="chats-m__line">
+                <app-chat-channel-icon [channel]="d.conversation.channel" [size]="12" />
+                <span class="chats-m__line-text">· {{ contactLine(d) }}</span>
+              </div>
+            </div>
+            <button
+              type="button"
+              class="m-ib"
+              aria-label="Más acciones: ver ficha, vincular cliente"
+              (click)="customerPanel.openMenu()"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                width="22"
+                height="22"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2.4"
+                stroke-linecap="round"
+                aria-hidden="true"
+              >
+                <path d="M5 12h.01M12 12h.01M19 12h.01" />
+              </svg>
+            </button>
+          </header>
+          <app-chat-customer-panel
+            #customerPanel
+            variant="bar"
+            [detail]="d"
+            (changed)="onChanged()"
+          />
+          <app-chat-agent-panel
+            [detail]="d"
+            [status]="agentStatus()"
+            [runs]="agentRuns()"
+            [mobile]="true"
+            (statusChange)="reloadAgentStatus()"
+          />
+          <app-chat-thread [detail]="d" [mobile]="true" (changed)="onChanged()" />
+        } @else {
+          <db-mobile-bar title="Chat" backLink="/chats" />
+          <div class="m-body">
+            @if (detailError()) {
+              <div class="m-card chats-m__empty">
+                <p>No se pudo cargar la conversación.</p>
+                <db-button
+                  label="Reintentar"
+                  variant="secondary"
+                  format="soft"
+                  (clicked)="reloadDetail()"
+                />
+              </div>
+            } @else {
+              <db-skeleton variant="detail" />
+            }
+          </div>
+        }
+      </section>
+    }
+  </div>
+} @else {
+  <div class="desktop-only chats">
+    <header class="page-header">
+      <div>
+        <h2>Chats</h2>
+        <p>
+          WhatsApp, Instagram y Messenger en una sola bandeja
+          @if (pendingApprovalTotal() !== null) {
+            · {{ unreadTotal() }} sin leer · {{ pendingApprovalTotal() }} para aprobar
+          }
+        </p>
+      </div>
+    </header>
+
+    <div class="chats__grid">
+      <app-chat-inbox
+        class="chats__panel"
+        variant="desktop"
+        [conversations]="conversations()"
+        [counts]="counts()"
+        [channel]="channel()"
+        [filter]="filter()"
+        [search]="search()"
+        [selectedId]="selectedId()"
+        [loading]="listLoading()"
+        [loadError]="listError()"
+        (channelChange)="onChannelChange($event)"
+        (filterChange)="onFilterChange($event)"
+        (searchChange)="onSearchChange($event)"
+        (retry)="reloadList()"
+      />
+
+      @if (detail(); as d) {
+        <app-chat-thread class="chats__panel" [detail]="d" (changed)="onChanged()" />
+        <div class="chats__aside">
+          <app-chat-agent-panel
+            [detail]="d"
+            [status]="agentStatus()"
+            [runs]="agentRuns()"
+            (statusChange)="reloadAgentStatus()"
+          />
+          <app-chat-customer-panel variant="panel" [detail]="d" (changed)="onChanged()" />
+        </div>
+      } @else {
+        <section class="chats__panel chats__placeholder">
+          @if (!selectedId()) {
+            <db-state-message
+              [empty]="true"
+              emptyMessage="Elegí un chat de la bandeja para ver la conversación."
+            />
+          } @else if (detailError()) {
+            <db-state-message
+              [empty]="true"
+              emptyMessage="No se pudo cargar la conversación."
+            >
+              <db-button
+                emptyActions
+                label="Reintentar"
+                variant="secondary"
+                format="soft"
+                (clicked)="reloadDetail()"
+              />
+            </db-state-message>
+          } @else {
+            <db-state-message [loading]="true" loadingMessage="Cargando conversación..." />
+          }
+        </section>
+      }
+    </div>
+  </div>
+}

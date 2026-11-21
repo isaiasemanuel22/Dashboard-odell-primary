@@ -26,7 +26,6 @@ import {
   PrintJob,
   Customer,
   ServiceProfitMargins,
-  WhatsAppTemplate,
 } from '../../../core/models';
 import { RealtimeEvent } from '../../../core/models/realtime.model';
 import { UserAccessService } from '../../../core/services/user-access.service';
@@ -111,11 +110,7 @@ import {
   WhatsAppNotifySent,
 } from '../../../components/whatsapp-notify/whatsapp-notify.component';
 import { whatsAppDigitsAr } from '../../../shared/utils/quote-share.util';
-import {
-  buildOrderTemplateVars,
-  defaultOrderTemplateId,
-  WhatsAppTemplateVars,
-} from '../../../shared/utils/whatsapp-template.util';
+import { defaultOrderTemplateKey } from '../../../shared/utils/whatsapp-template-key.util';
 import { LossSaleNoticeComponent } from '../../../components/loss-sale-notice/loss-sale-notice.component';
 import { DocumentAttachmentsViewComponent } from '../../../components/document-attachments-view/document-attachments-view.component';
 import { shortId, sortAndDisambiguateOptions } from '../../../shared/utils/search-text.util';
@@ -308,7 +303,6 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   mobileAlertsExpanded = false;
   mobilePaymentSheetOpen = false;
   mobileDeliverySheetOpen = false;
-  integrationsWhatsApp: { businessPhone: string; templates: WhatsAppTemplate[] } | null = null;
   arcaPointOfSale: number | null = null;
 
   private readonly mobileOpenAccordions = new Set<MobileAccordionKey>();
@@ -575,18 +569,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     return normalized ? `https://wa.me/${normalized}` : null;
   }
 
-  get whatsappTemplates(): WhatsAppTemplate[] {
-    return this.integrationsWhatsApp?.templates ?? [];
-  }
-
-  get whatsappVars(): WhatsAppTemplateVars | null {
-    return this.order ? buildOrderTemplateVars(this.order) : null;
-  }
-
-  get whatsappDefaultTemplateId(): string | null {
-    return this.order
-      ? defaultOrderTemplateId(this.order, this.whatsappTemplates)
-      : null;
+  get whatsappDefaultTemplateKey(): string | null {
+    return this.order ? defaultOrderTemplateKey(this.order) : null;
   }
 
   /** Receptor de la factura: CUIT del cliente o consumidor final. */
@@ -614,8 +598,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     if (!this.order) return;
     this.ordersService
       .logWhatsApp(this.order.id, {
-        templateId: event.template.id,
-        templateName: event.template.name,
+        templateId: event.templateKey,
+        templateName: event.templateLabel,
         via: event.via,
       })
       .subscribe({
@@ -761,7 +745,6 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (settings) => {
-          this.integrationsWhatsApp = settings.integrations?.whatsapp ?? null;
           this.arcaPointOfSale = settings.integrations?.arca?.pointOfSale ?? null;
           this.profitMargins = normalizeProfitMargins(settings.profitMargins);
           this.wholesalePercentSetting = normalizeWholesaleDiscount(
@@ -834,7 +817,12 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
 
   /** «···» solo aparece si hay alguna acción útil (pedido entregado/cancelado no tiene). */
   get showMobileMoreActions(): boolean {
-    return this.canEditOrder || this.canCancelOrder || this.showMobileMarkAllDelivered;
+    return (
+      this.canEditOrder ||
+      this.canCancelOrder ||
+      this.showMobileMarkAllDelivered ||
+      !!this.order?.customerId
+    );
   }
 
   get showMobileMarkAllDelivered(): boolean {

@@ -1,4 +1,4 @@
-import { Routes } from '@angular/router';
+import { Routes, UrlMatchResult, UrlSegment } from '@angular/router';
 import { authGuard, guestGuard } from './core/auth/auth.guard';
 import { LayoutComponent } from './layout/layout.component';
 import { unsavedDialogGuard } from './modals/unsaved-dialog-guard';
@@ -22,6 +22,15 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./pages/dashboard/dashboard.component').then(
             (m) => m.DashboardComponent,
+          ),
+      },
+      {
+        // `chats` y `chats/:id` en una sola ruta: al elegir otra conversación
+        // se reutiliza el componente (la bandeja no se vuelve a cargar).
+        matcher: chatsMatcher,
+        loadComponent: () =>
+          import('./pages/chats/chats.component').then(
+            (m) => m.ChatsComponent,
           ),
       },
       {
@@ -255,6 +264,20 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'api-y-agentes',
+            loadComponent: () =>
+              import('./pages/settings/agents-settings/agents-settings.component').then(
+                (m) => m.AgentsSettingsComponent,
+              ),
+          },
+          {
+            path: 'avisos',
+            loadComponent: () =>
+              import('./pages/settings/alerts-settings/alerts-settings.component').then(
+                (m) => m.AlertsSettingsComponent,
+              ),
+          },
+          {
             path: 'integraciones',
             canDeactivate: [settingsUnsavedChangesGuard],
             loadComponent: () =>
@@ -303,3 +326,12 @@ export const routes: Routes = [
   },
   { path: '**', redirectTo: '' },
 ];
+
+/** `chats` o `chats/:id`. */
+export function chatsMatcher(segments: UrlSegment[]): UrlMatchResult | null {
+  if (segments[0]?.path !== 'chats' || segments.length > 2) return null;
+  return {
+    consumed: segments,
+    posParams: segments[1] ? { id: segments[1] } : {},
+  };
+}

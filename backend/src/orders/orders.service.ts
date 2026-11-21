@@ -219,7 +219,10 @@ export class OrdersService {
    */
   create(
     data: CreateOrderDto,
-    options: { keepQuotedPrices?: { wholesaleApplied: boolean } } = {},
+    options: {
+      keepQuotedPrices?: { wholesaleApplied: boolean };
+      createdByAgent?: boolean;
+    } = {},
   ): Order {
     const { customerId, customerName, customer } = this.resolveCustomer(
       data.customerId,
@@ -270,6 +273,7 @@ export class OrdersService {
       statusHistory: [],
       priceHistory: [],
       deliveryHistory: [],
+      ...(options.createdByAgent ? { createdByAgent: true } : {}),
     };
     appendOrderStatusHistory(
       order,
@@ -636,7 +640,7 @@ export class OrdersService {
     return this.orders.save(order);
   }
 
-  /** Marca (o corrige) la factura C del pedido (§28.4). Queda en el historial. */
+  /** Marca (o corrige) la factura C del pedido (§29.4). Queda en el historial. */
   markInvoice(id: string, data: { number: string; issuedAt?: string }): Order {
     const order = this.findOne(id);
     if (order.status === OrderStatus.CANCELADO) {
@@ -671,15 +675,15 @@ export class OrdersService {
     return this.orders.save(order);
   }
 
-  /** Registra un aviso por WhatsApp (abierto o copiado) en el historial. */
+  /** Registra un aviso por WhatsApp (enviado por Meta o copiado) en el historial. */
   logWhatsApp(
     id: string,
-    data: { templateId: string; templateName: string; via: 'open' | 'copy' },
+    data: { templateId: string; templateName: string; via: 'send' | 'copy' },
   ): Order {
     const order = this.findOne(id);
     appendActivity(order, {
       kind: 'whatsapp',
-      detail: `${data.via === 'copy' ? 'Mensaje copiado' : 'WhatsApp abierto'}: ${data.templateName.trim()}`,
+      detail: `${data.via === 'copy' ? 'Mensaje copiado' : 'WhatsApp enviado'}: ${data.templateName.trim()}`,
       templateId: data.templateId,
       via: data.via,
     });

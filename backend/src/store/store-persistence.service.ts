@@ -25,6 +25,10 @@ import {
   mapCalendarEntryToDb,
   mapCategoryFromDb,
   mapCategoryToDb,
+  mapChatConversationFromDb,
+  mapChatConversationToDb,
+  mapChatMessageFromDb,
+  mapChatMessageToDb,
   mapCustomerFromDb,
   mapCustomerToDb,
   mapImpresoFromDb,
@@ -364,6 +368,28 @@ export class StorePersistenceService
     }
   }
 
+  private async loadChatConversations() {
+    try {
+      return await this.db.chatConversation.findMany();
+    } catch (error) {
+      this.logger.warn(
+        `No se pudieron cargar las conversaciones (${this.errorMessage(error)}).`,
+      );
+      return [];
+    }
+  }
+
+  private async loadChatMessages() {
+    try {
+      return await this.db.chatMessage.findMany();
+    } catch (error) {
+      this.logger.warn(
+        `No se pudieron cargar los mensajes de chats (${this.errorMessage(error)}).`,
+      );
+      return [];
+    }
+  }
+
   private async loadState(): Promise<StoreState> {
     const [
       settingsRow,
@@ -383,6 +409,8 @@ export class StorePersistenceService
       suppliers,
       spools,
       supplyMovements,
+      chatConversations,
+      chatMessages,
     ] = await Promise.all([
       this.db.appSettings.findUnique({ where: { id: 1 } }),
       this.db.brand.findMany(),
@@ -407,6 +435,8 @@ export class StorePersistenceService
       this.loadSuppliers(),
       this.loadSpools(),
       this.loadSupplyMovements(),
+      this.loadChatConversations(),
+      this.loadChatMessages(),
     ]);
 
     if (!settingsRow) {
@@ -439,6 +469,10 @@ export class StorePersistenceService
       supplyMovements: supplyMovements.map((row) =>
         mapSupplyMovementFromDb(row),
       ),
+      chatConversations: chatConversations.map((row) =>
+        mapChatConversationFromDb(row),
+      ),
+      chatMessages: chatMessages.map((row) => mapChatMessageFromDb(row)),
     };
     adoptLegacyBrandNames(state);
     adoptLegacySuppliers(state);
@@ -681,6 +715,50 @@ export class StorePersistenceService
         } catch (error) {
           this.noteSecondaryFailure(
             `No se pudieron guardar movimientos de stock (${this.errorMessage(error)}).`,
+          );
+        }
+      }
+      if (dirty.has('chatConversations')) {
+        try {
+          await this.syncCollection(
+            tx,
+            state.chatConversations,
+            (ids) =>
+              tx.chatConversation.deleteMany({
+                where: { id: { notIn: ids } },
+              }),
+            (row) =>
+              tx.chatConversation.upsert({
+                where: { id: row.id },
+                create: mapChatConversationToDb(row),
+                update: mapChatConversationToDb(row),
+              }),
+          );
+        } catch (error) {
+          this.noteSecondaryFailure(
+            `No se pudieron guardar las conversaciones (${this.errorMessage(error)}).`,
+          );
+        }
+      }
+      if (dirty.has('chatMessages')) {
+        try {
+          await this.syncCollection(
+            tx,
+            state.chatMessages,
+            (ids) =>
+              tx.chatMessage.deleteMany({
+                where: { id: { notIn: ids } },
+              }),
+            (row) =>
+              tx.chatMessage.upsert({
+                where: { id: row.id },
+                create: mapChatMessageToDb(row),
+                update: mapChatMessageToDb(row),
+              }),
+          );
+        } catch (error) {
+          this.noteSecondaryFailure(
+            `No se pudieron guardar los mensajes de chats (${this.errorMessage(error)}).`,
           );
         }
       }

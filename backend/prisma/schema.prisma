@@ -15,6 +15,9 @@ model AppSettings {
   errorMarginPercent    Float @default(0) @map("error_margin_percent")
   profitMargins         Json  @map("profit_margins")
   wholesaleDiscount     Json  @default("{}") @map("wholesale_discount")
+  automaticAlerts       Json  @default("{}") @map("automatic_alerts")
+  agentTools            Json  @default("{}") @map("agent_tools")
+  attendant             Json  @default("{}") @map("attendant")
   paperPricesPerSqm     Json  @map("paper_prices_per_sqm")
   paperReferenceSheets  Json  @default("{}") @map("paper_reference_sheets")
   powerConsumptions     Json  @map("power_consumptions")
@@ -231,10 +234,11 @@ model Order {
   deliveryHistory Json  @default("[]") @map("delivery_history")
   payments      Json    @default("[]")
   activityHistory Json  @default("[]") @map("activity_history")
-  /// Factura C marcada a mano (§28.4).
+  /// Factura C marcada a mano (§29.4).
   invoiceType   String? @map("invoice_type") @db.VarChar(8)
   invoiceNumber String? @map("invoice_number") @db.VarChar(32)
   invoicedAt    DateTime? @map("invoiced_at")
+  createdByAgent Boolean @default(false) @map("created_by_agent")
 
   customer Customer?   @relation(fields: [customerId], references: [id], onDelete: Restrict)
   items    OrderItem[]
@@ -521,6 +525,43 @@ model Fair {
   @@map("fairs")
 }
 
+model ChatConversation {
+  id           String    @id @db.VarChar(64)
+  channel      String    @db.VarChar(16)
+  externalId   String    @map("external_id") @db.VarChar(128)
+  displayName  String?   @map("display_name") @db.VarChar(255)
+  displayPhone String?   @map("display_phone") @db.VarChar(64)
+  customerId   String?   @map("customer_id") @db.VarChar(64)
+  handedOff    Boolean   @default(false) @map("handed_off")
+  agentPaused  Boolean   @default(false) @map("agent_paused")
+  lastReadAt   DateTime? @map("last_read_at")
+  createdAt    DateTime  @map("created_at")
+  updatedAt    DateTime  @map("updated_at")
+
+  @@unique([channel, externalId])
+  @@index([customerId])
+  @@map("chat_conversations")
+}
+
+model ChatMessage {
+  id                String   @id @db.VarChar(64)
+  conversationId    String   @map("conversation_id") @db.VarChar(64)
+  direction         String   @db.VarChar(8)
+  author            String   @db.VarChar(16)
+  authorUserId      String?  @map("author_user_id") @db.VarChar(128)
+  text              String   @db.Text
+  attachments       Json     @default("[]")
+  status            String   @db.VarChar(16)
+  externalMessageId String?  @map("external_message_id") @db.VarChar(128)
+  quoteId           String?  @map("quote_id") @db.VarChar(64)
+  sentAt            DateTime @map("sent_at")
+  updatedAt         DateTime @map("updated_at")
+
+  @@index([conversationId])
+  @@index([externalMessageId])
+  @@map("chat_messages")
+}
+
 model WorkArea {
   id        String   @id @db.VarChar(64)
   name      String   @db.VarChar(128)
@@ -603,4 +644,67 @@ model UserPermissionOverride {
   @@unique([userId, areaId, action])
   @@index([userId])
   @@map("user_permission_overrides")
+}
+
+model ApiKey {
+  id              String    @id @db.VarChar(64)
+  name            String    @db.VarChar(128)
+  lastFour        String    @map("last_four") @db.VarChar(8)
+  secretHash      String    @unique @map("secret_hash") @db.Char(64)
+  scopes          Json
+  createdByUserId String?   @map("created_by_user_id") @db.VarChar(64)
+  lastUsedAt      DateTime? @map("last_used_at")
+  revokedAt       DateTime? @map("revoked_at")
+  createdAt       DateTime  @map("created_at")
+
+  @@map("api_keys")
+}
+
+model NotificationLog {
+  id        String   @id @db.VarChar(64)
+  kind      String   @db.VarChar(32)
+  dedupeKey String   @unique @map("dedupe_key") @db.VarChar(191)
+  channel   String   @db.VarChar(16)
+  sentAt    DateTime @map("sent_at")
+
+  @@map("notification_logs")
+}
+
+model AgentApproval {
+  id              String    @id @db.VarChar(64)
+  kind            String    @db.VarChar(32)
+  status          String    @default("pending") @db.VarChar(16)
+  payload         Json
+  summary         String    @db.VarChar(255)
+  referenceId     String?   @map("reference_id") @db.VarChar(64)
+  apiKeyId        String    @map("api_key_id") @db.VarChar(64)
+  apiKeyName      String    @map("api_key_name") @db.VarChar(128)
+  decidedByUserId String?   @map("decided_by_user_id") @db.VarChar(64)
+  decidedAt       DateTime? @map("decided_at")
+  error           String?   @db.Text
+  createdAt       DateTime  @map("created_at")
+
+  @@index([status])
+  @@map("agent_approvals")
+}
+
+model AgentRun {
+  id               String   @id @db.VarChar(64)
+  conversationId   String   @map("conversation_id") @db.VarChar(64)
+  triggerMessageId String   @map("trigger_message_id") @db.VarChar(64)
+  outcome          String   @db.VarChar(16)
+  toolSummary      Json     @default("[]") @map("tool_summary")
+  replyMessageIds  Json     @default("[]") @map("reply_message_ids")
+  model            String   @db.VarChar(64)
+  inputTokens      Int      @default(0) @map("input_tokens")
+  outputTokens     Int      @default(0) @map("output_tokens")
+  cacheReadTokens  Int      @default(0) @map("cache_read_tokens")
+  cacheWriteTokens Int      @default(0) @map("cache_write_tokens")
+  costUsd          Float    @default(0) @map("cost_usd")
+  error            String?  @db.Text
+  createdAt        DateTime @map("created_at")
+
+  @@index([conversationId])
+  @@index([createdAt])
+  @@map("agent_runs")
 }

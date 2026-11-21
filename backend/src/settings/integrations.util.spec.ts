@@ -3,7 +3,6 @@ import {
   applyIntegrationsPatch,
   assertInvoiceNumberFree,
   buildSaleInvoice,
-  DEFAULT_WHATSAPP_TEMPLATES,
   defaultIntegrations,
   invoiceFromColumns,
   invoiceToColumns,
@@ -13,18 +12,10 @@ import {
 
 describe('integrations.util', () => {
   describe('normalizeIntegrations', () => {
-    it('sin datos devuelve los valores por defecto con las 4 plantillas', () => {
+    it('sin datos devuelve los valores por defecto', () => {
       const result = normalizeIntegrations(undefined);
       expect(result.mercadoPago.feePercent).toBe(0);
       expect(result.arca).toEqual({ pointOfSale: null, annualCap: null });
-      expect(result.whatsapp.businessPhone).toBe('');
-      expect(result.whatsapp.templates.map((t) => t.id)).toEqual([
-        'tpl-presupuesto',
-        'tpl-diseno',
-        'tpl-listo',
-        'tpl-saldo',
-      ]);
-      expect(result.whatsapp.templates.every((t) => t.builtIn)).toBe(true);
     });
 
     it('tolera nulo y basura', () => {
@@ -46,20 +37,11 @@ describe('integrations.util', () => {
       ).toEqual({ pointOfSale: null, annualCap: null });
     });
 
-    it('conserva plantillas guardadas, no repone si templates es un arreglo con las builtIn', () => {
-      const saved = DEFAULT_WHATSAPP_TEMPLATES.map((t) => ({
-        ...t,
-        name: `${t.name} 2`,
-      }));
-      const result = normalizeIntegrations({ whatsapp: { templates: saved } });
-      expect(result.whatsapp.templates[0].name).toBe('Presupuesto enviado 2');
-      expect(result.whatsapp.templates).toHaveLength(4);
-    });
-
-    it('las plantillas por defecto ya no traen horario de retiro', () => {
-      for (const t of DEFAULT_WHATSAPP_TEMPLATES) {
-        expect(t.body.toLowerCase()).not.toContain('horario');
-      }
+    it('descarta el bloque whatsapp de datos viejos (las plantillas son las de Meta)', () => {
+      const result = normalizeIntegrations({
+        whatsapp: { businessPhone: '1', templates: [{ name: 'x', body: 'y' }] },
+      });
+      expect(result).toEqual(defaultIntegrations());
     });
   });
 
@@ -92,55 +74,6 @@ describe('integrations.util', () => {
       ).toThrow(BadRequestException);
       expect(() =>
         applyIntegrationsPatch(undefined, { mercadoPago: { feePercent: -1 } }),
-      ).toThrow(BadRequestException);
-    });
-
-    it('reemplaza la lista, genera ids y repone las builtIn que faltan', () => {
-      const next = applyIntegrationsPatch(undefined, {
-        whatsapp: {
-          templates: [
-            { id: 'tpl-listo', name: 'Listo!', body: 'Hola {cliente}' },
-            { name: 'Nueva', body: 'Chau {cliente}' },
-          ],
-        },
-      });
-      const templates = next.whatsapp.templates;
-      expect(templates).toHaveLength(5);
-      expect(
-        templates
-          .filter((t) => t.builtIn)
-          .map((t) => t.id)
-          .sort(),
-      ).toEqual(['tpl-diseno', 'tpl-listo', 'tpl-presupuesto', 'tpl-saldo']);
-      expect(templates.find((t) => t.id === 'tpl-listo')?.name).toBe('Listo!');
-      const created = templates.find((t) => t.name === 'Nueva')!;
-      expect(created.builtIn).toBe(false);
-      expect(created.id).toMatch(/^tpl-/);
-    });
-
-    it('el cliente no puede marcar builtIn una plantilla propia', () => {
-      const next = applyIntegrationsPatch(undefined, {
-        whatsapp: {
-          templates: [
-            {
-              id: 'custom',
-              name: 'X',
-              body: 'Y',
-              builtIn: true,
-            } as never,
-          ],
-        },
-      });
-      expect(
-        next.whatsapp.templates.find((t) => t.id === 'custom')?.builtIn,
-      ).toBe(false);
-    });
-
-    it('rechaza plantilla sin nombre o sin mensaje', () => {
-      expect(() =>
-        applyIntegrationsPatch(undefined, {
-          whatsapp: { templates: [{ name: ' ', body: 'x' }] },
-        }),
       ).toThrow(BadRequestException);
     });
   });

@@ -3,46 +3,50 @@
     @if (showTitle) {
       <h3 class="wa-notify__title">Avisar por WhatsApp</h3>
     }
-    @if (templates.length) {
+    @if (previews.length) {
       <label class="wa-notify__select-wrap" [attr.for]="selectId">
         <span class="wa-notify__label">Plantilla</span>
         <select
           class="wa-notify__select"
           [id]="selectId"
-          [ngModel]="selectedId"
-          (ngModelChange)="selectedId = $event"
+          [ngModel]="selectedKey"
+          (ngModelChange)="selectTemplate($event)"
         >
-          @for (template of templates; track template.id) {
-            <option [value]="template.id">{{ template.name }}</option>
+          @for (preview of previews; track preview.key) {
+            <option [value]="preview.key" [disabled]="!preview.text">
+              {{ preview.label }}
+            </option>
           }
         </select>
       </label>
     }
   </div>
 
-  @if (!templates.length) {
-    <p class="wa-notify__warn">
-      No hay plantillas de mensaje. Cargalas en Ajustes → Integraciones.
-    </p>
+  @if (loading) {
+    <p class="wa-notify__foot">Cargando plantillas…</p>
+  } @else if (loadError) {
+    <p class="wa-notify__warn" role="alert">{{ loadError }}</p>
   } @else {
-    <div class="wa-notify__preview" aria-label="Vista previa del mensaje">
-      {{ message }}
-    </div>
+    @if (message) {
+      <div class="wa-notify__preview" aria-label="Vista previa del mensaje">
+        {{ message }}
+      </div>
+    }
 
-    @if (!hasPhone) {
-      <p class="wa-notify__warn" role="note">
-        Este cliente no tiene teléfono cargado: no se puede abrir WhatsApp.
-        Podés copiar el mensaje.
-      </p>
+    @if (blockReason) {
+      <p class="wa-notify__warn" role="note">{{ blockReason }}</p>
+    }
+    @if (sendError) {
+      <p class="wa-notify__warn" role="alert">{{ sendError }}</p>
     }
 
     <div class="wa-notify__actions">
       <db-button
-        label="Abrir en WhatsApp"
+        [label]="sending ? 'Enviando…' : 'Enviar por WhatsApp'"
         variant="primary"
         format="solid"
         [disabled]="!canSend"
-        (clicked)="open()"
+        (clicked)="send()"
       />
       <db-button
         [label]="copied ? 'Copiado' : 'Copiar mensaje'"
@@ -52,7 +56,11 @@
         (clicked)="copy()"
       />
     </div>
-    @if (copied) {
+    @if (sentOk) {
+      <p class="wa-notify__copied" role="status">
+        Mensaje enviado por WhatsApp (queda en Chats)
+      </p>
+    } @else if (copied) {
       <p class="wa-notify__copied" role="status">Mensaje copiado</p>
     }
     @if (footnote) {

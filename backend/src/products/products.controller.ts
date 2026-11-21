@@ -8,6 +8,7 @@ import {
   Post,
   Query,
 } from '@nestjs/common';
+import { ApiScopes } from '../auth/api-scopes.decorator';
 import { ProductType } from '../common/enums';
 import {
   BulkPriceDto,
@@ -21,6 +22,7 @@ import { ProductsService } from './products.service';
 export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
+  @ApiScopes('catalogo:leer')
   @Get()
   findAll(@Query('type') type?: ProductType, @Query('all') all?: string) {
     const includeUnpublished = all === 'true' || all === '1';
@@ -70,6 +72,7 @@ export class ProductsController {
     return this.productsService.getOverview(id);
   }
 
+  @ApiScopes('catalogo:leer')
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.productsService.findOne(id);

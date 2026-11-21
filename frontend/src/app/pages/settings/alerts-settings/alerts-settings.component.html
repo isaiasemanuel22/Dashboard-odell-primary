@@ -1,0 +1,69 @@
+@if (isMobile()) {
+  <db-mobile-settings-page title="Avisos">
+    @if (message) {
+      <p class="st-m__msg">{{ message }}</p>
+    }
+
+    @if (!isAdmin()) {
+      <span class="st-m__hint"
+        >Solo un administrador puede cambiar los avisos.</span
+      >
+    }
+
+    @if (alerts) {
+      <div class="m-card m-card--flush">
+        @for (option of options; track option.key) {
+          <db-mobile-toggle-row
+            [label]="option.label"
+            [hint]="option.hint"
+            [checked]="alerts[option.key]"
+            [ariaLabel]="option.label"
+            (toggled)="toggle(option.key, $event)"
+          />
+        }
+      </div>
+    }
+
+    <p class="alerts-note">
+      WhatsApp: los avisos salen con la plantilla «aviso_odell». Sin WhatsApp conectado en Integraciones, quedan en el registro del servidor.
+    </p>
+  </db-mobile-settings-page>
+} @else {
+  <section class="settings-panel">
+    <div class="panel-head">
+      <div>
+        <h3>Avisos</h3>
+        <p class="panel-sub">Lo que Odell te avisa solo</p>
+      </div>
+    </div>
+
+    @if (message) {
+      <p class="status-notice" role="status">{{ message }}</p>
+    }
+
+    @if (!isAdmin()) {
+      <p class="panel-sub">Solo un administrador puede cambiar los avisos.</p>
+    }
+
+    @if (alerts) {
+      <div class="alerts-list">
+        @for (option of options; track option.key) {
+          <div class="alerts-row">
+            <db-checkbox
+              [label]="option.label"
+              [name]="option.key"
+              [checked]="alerts[option.key]"
+              [disabled]="!isAdmin()"
+              (checkedChange)="toggle(option.key, $event)"
+            />
+            <span class="alerts-row__hint">{{ option.hint }}</span>
+          </div>
+        }
+      </div>
+    }
+
+    <p class="alerts-note">
+      WhatsApp: los avisos salen con la plantilla «aviso_odell». Sin WhatsApp conectado en Integraciones, quedan en el registro del servidor.
+    </p>
+  </section>
+}

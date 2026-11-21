@@ -14,6 +14,7 @@ const CHANNEL_COLORS: Record<string, string> = {
   [SalesChannel.FERIA]: '#b45309',
   [SalesChannel.TIENDANUBE]: '#6b21a8',
   [SalesChannel.MOSTRADOR]: '#0d7aaa',
+  [SalesChannel.MESSENGER]: '#0866ff',
   sin_canal: '#64748b',
 };
 

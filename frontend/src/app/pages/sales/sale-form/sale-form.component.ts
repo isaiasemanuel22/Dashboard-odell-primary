@@ -255,7 +255,7 @@ export class SaleFormComponent implements OnChanges {
     );
   }
 
-  /** Comisión del cobro: precargada con la de Mercado Pago mientras no se toque (§28.1). */
+  /** Comisión del cobro: precargada con la de Mercado Pago mientras no se toque (§29.1). */
   get feeValue(): number | null {
     if (this.feeTouched) return this.feeInput;
     const fee = defaultPaymentFee(

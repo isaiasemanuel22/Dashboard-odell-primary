@@ -4,6 +4,11 @@ import {
   CalendarLinkType,
   CalendarNotify,
   CalendarRepeat,
+  ChatAuthor,
+  ChatChannel,
+  ChatDirection,
+  ChatMessageStatus,
+  ChatStatus,
   CustomerSource,
   CustomerType,
   FairStatus,
@@ -125,6 +130,35 @@ export interface WholesaleDiscountSettings {
   serviceTypes: ServiceType[];
 }
 
+/** Avisos automáticos a Isaías (§28.5): cada uno se prende o apaga. */
+export interface AutomaticAlertsSettings {
+  ordersDue: boolean;
+  lowStock: boolean;
+  weeklyReceivables: boolean;
+}
+
+/** Herramientas del servidor MCP de Odell (§28.4): cada una se prende o apaga. */
+export interface AgentToolsSettings {
+  consultar_stock: boolean;
+  cotizar_producto: boolean;
+  ver_cola: boolean;
+  crear_presupuesto: boolean;
+  registrar_pago: boolean;
+}
+
+/** Agente de atención de Chats (§28.3). */
+export interface AttendantSettings {
+  enabled: boolean;
+  /** Con stock: entrega hoy + estos días corridos. */
+  stockDeliveryDays: number;
+  /** Sin stock: fecha de la cola + estos días hábiles. */
+  deliveryMarginDays: number;
+  /** Tope de gasto en USD por mes; al llegar se pausa solo. */
+  monthlyBudgetUsd: number;
+  /** Cuándo se pausó por llegar al tope; null si no. */
+  pausedByBudgetAt: string | null;
+}
+
 export interface PowerConsumptionConfig {
   id: string;
   name: string;
@@ -182,6 +216,9 @@ export interface GeneralSettings {
   graphicDesignRatePerHour: number;
   profitMargins: ServiceProfitMargins;
   wholesaleDiscount: WholesaleDiscountSettings;
+  automaticAlerts: AutomaticAlertsSettings;
+  agentTools: AgentToolsSettings;
+  attendant: AttendantSettings;
   paperPricesPerSqm: PaperPricesPerSqm;
   paperReferenceSheets: PaperReferenceSheets;
   filamentPrices: FilamentPriceConfig[];
@@ -195,11 +232,11 @@ export interface GeneralSettings {
   filamentTypes: FilamentTypeConfig[];
   /** Catálogo editable de tipos de resina (Ajustes). */
   resinTypes: ResinTypeConfig[];
-  /** Integraciones (v6, §28). */
+  /** Integraciones (v6, §29). */
   integrations: IntegrationsSettings;
 }
 
-/** Solo factura C (monotributo, §28.4). */
+/** Solo factura C (monotributo, §29.4). */
 export type InvoiceType = 'C';
 
 export interface SaleInvoice {
@@ -209,17 +246,9 @@ export interface SaleInvoice {
   issuedAt: string;
 }
 
-export interface WhatsAppTemplate {
-  id: string;
-  name: string;
-  body: string;
-  builtIn: boolean;
-}
-
 export interface IntegrationsSettings {
   mercadoPago: { feePercent: number };
   arca: { pointOfSale: number | null; annualCap: number | null };
-  whatsapp: { businessPhone: string; templates: WhatsAppTemplate[] };
 }
 
 export type OrderActivityKind = 'whatsapp' | 'invoice';
@@ -230,7 +259,8 @@ export interface OrderActivityEntry {
   kind: OrderActivityKind;
   detail: string;
   templateId?: string;
-  via?: 'open' | 'copy';
+  /** `send`: mandado por Meta desde Odell; `copy`: copiado al portapapeles. */
+  via?: 'send' | 'copy';
 }
 
 export interface Impreso {
@@ -738,6 +768,8 @@ export interface Order {
   payments?: OrderPayment[];
   invoice?: SaleInvoice;
   activityHistory?: OrderActivityEntry[];
+  /** Lo creó el agente de atención desde Chats (§28.3). */
+  createdByAgent?: boolean;
 }
 
 export interface OrderPayment {
@@ -1554,4 +1586,79 @@ export interface FairPlanItem {
 export interface FairPlan {
   basedOn: number;
   items: FairPlanItem[];
+}
+
+export interface ChatConversation {
+  id: string;
+  channel: ChatChannel;
+  /** Teléfono (WhatsApp) o id del usuario en Instagram/Messenger. */
+  externalId: string;
+  displayName: string | null;
+  displayPhone: string | null;
+  customerId: string | null;
+  handedOff: boolean;
+  /** El agente automático no responde en este chat. */
+  agentPaused: boolean;
+  lastReadAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  conversationId: string;
+  direction: ChatDirection;
+  author: ChatAuthor;
+  authorUserId: string | null;
+  text: string;
+  attachments: ProductAttachment[];
+  status: ChatMessageStatus;
+  externalMessageId: string | null;
+  quoteId: string | null;
+  sentAt: string;
+  updatedAt: string;
+}
+
+export interface ChatSummary {
+  id: string;
+  channel: ChatChannel;
+  externalId: string;
+  displayName: string | null;
+  displayPhone: string | null;
+  /** Nombre del cliente vinculado; si no hay, el del canal. */
+  contactName: string | null;
+  customerId: string | null;
+  status: ChatStatus;
+  agentPaused: boolean;
+  unreadCount: number;
+  pendingSuggestions: number;
+  lastMessageAt: string | null;
+  lastMessagePreview: string | null;
+  lastMessageDirection: ChatDirection | null;
+  lastInboundAt: string | null;
+  windowOpen: boolean;
+  windowExpiresAt: string | null;
+}
+
+export interface ChatDetail {
+  conversation: ChatSummary;
+  messages: ChatMessage[];
+  suggestionQuotes: Record<
+    string,
+    {
+      id: string;
+      status: QuoteStatus;
+      total: number;
+      items: Array<{
+        productName: string;
+        quantity: number;
+        unitPrice: number;
+      }>;
+    }
+  >;
+  customer: Customer | null;
+  customerContext: {
+    lastOrder: { id: string; total: number; createdAt: string } | null;
+    openQuotes: Array<{ id: string; status: QuoteStatus; total: number }>;
+  } | null;
 }

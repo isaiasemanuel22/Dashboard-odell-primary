@@ -109,7 +109,7 @@ export class FairSellComponent implements OnInit {
     this.settingsService.watchGeneralSettings(),
     { initialValue: null },
   );
-  /** Comisión escrita a mano; sin tocar, la de Mercado Pago por defecto (§28.1). */
+  /** Comisión escrita a mano; sin tocar, la de Mercado Pago por defecto (§29.1). */
   private readonly feeInput = signal<number | null>(null);
   private readonly feeTouched = signal(false);
   readonly fee = computed<number | null>(() => {

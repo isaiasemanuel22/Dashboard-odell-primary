@@ -10,6 +10,7 @@ import {
   Put,
   Query,
 } from '@nestjs/common';
+import { ApiScopes } from '../auth/api-scopes.decorator';
 import {
   CreateOrderDto,
   CreateOrderDeliveryDto,
@@ -28,6 +29,7 @@ import { OrdersService } from './orders.service';
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
+  @ApiScopes('pedidos:leer')
   @Get()
   findAll(
     @Query('customerId') customerId?: string,
@@ -50,6 +52,7 @@ export class OrdersController {
     return this.ordersService.getOverview(id);
   }
 
+  @ApiScopes('pedidos:leer')
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.ordersService.findOne(id);

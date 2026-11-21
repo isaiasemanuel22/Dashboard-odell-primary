@@ -3,6 +3,9 @@ import { HttpClient } from '@angular/common/http';
 import { Observable, tap } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import {
+  AgentToolsSettings,
+  AttendantSettings,
+  AutomaticAlertsSettings,
   ColorConfig,
   FilamentPriceConfig,
   FilamentTypeConfig,
@@ -93,6 +96,32 @@ export class SettingsService {
           this.patchSettings({ wholesaleDiscount }),
         ),
       );
+  }
+
+  updateAutomaticAlerts(
+    data: Partial<AutomaticAlertsSettings>,
+  ): Observable<AutomaticAlertsSettings> {
+    return this.http
+      .patch<AutomaticAlertsSettings>(`${this.baseUrl}/automatic-alerts`, data)
+      .pipe(
+        tap((automaticAlerts) => this.patchSettings({ automaticAlerts })),
+      );
+  }
+
+  updateAgentTools(
+    data: Partial<AgentToolsSettings>,
+  ): Observable<AgentToolsSettings> {
+    return this.http
+      .patch<AgentToolsSettings>(`${this.baseUrl}/agent-tools`, data)
+      .pipe(tap((agentTools) => this.patchSettings({ agentTools })));
+  }
+
+  updateAttendant(
+    data: Partial<AttendantSettings>,
+  ): Observable<AttendantSettings> {
+    return this.http
+      .patch<AttendantSettings>(`${this.baseUrl}/attendant`, data)
+      .pipe(tap((attendant) => this.patchSettings({ attendant })));
   }
 
   updatePaperReferenceSheets(

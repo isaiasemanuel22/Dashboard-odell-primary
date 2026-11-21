@@ -198,6 +198,7 @@ export function mapOrderFromDb(row: {
   invoiceType?: string | null;
   invoiceNumber?: string | null;
   invoicedAt?: Date | null;
+  createdByAgent?: boolean | null;
   items: Array<{
     serviceType: string;
     productId: string | null;
@@ -242,6 +243,7 @@ export function mapOrderFromDb(row: {
     payments: normalizePayments(row.payments),
     activityHistory: normalizeActivityHistory(row.activityHistory),
     invoice: invoiceFromColumns(row),
+    createdByAgent: row.createdByAgent === true,
   };
   ensureOrderStatusHistory(order);
   return order;
@@ -273,6 +275,7 @@ function mapOrderScalarsToDb(order: Order) {
     payments: toInputJson(order.payments ?? []),
     activityHistory: toInputJson(order.activityHistory ?? []),
     ...invoiceToColumns(order.invoice),
+    createdByAgent: order.createdByAgent === true,
   };
 }
 

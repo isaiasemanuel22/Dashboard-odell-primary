@@ -48,6 +48,12 @@ import {
   sanitizeRichTextHtml,
 } from '../orders/rich-text.util';
 
+/** Fecha y marca del pedido que sale del presupuesto (agente de atención, §28.3). */
+export interface QuoteOrderOptions {
+  dueDate?: string;
+  createdByAgent?: boolean;
+}
+
 @Injectable()
 export class QuotesService {
   constructor(
@@ -76,17 +82,36 @@ export class QuotesService {
     return quote;
   }
 
-  create(data: CreateQuoteDto): Quote {
-    const { customerId, customerName, customer } = this.resolveCustomer(
-      data.customerId,
-    );
+  /** Precio de las líneas y total como los calcula `create`, sin guardar. */
+  previewPricing(data: CreateQuoteDto): {
+    items: QuoteItem[];
+    total: number;
+    priceType: PriceType;
+    wholesaleApplied: boolean;
+  } {
+    const { customer } = this.resolveCustomer(data.customerId);
     const priceType =
       data.priceType ?? this.defaultPriceTypeForCustomer(customer);
-    const status = this.resolveFormStatus(data.status);
-    const description = this.normalizeDescription(data.description);
     const normalizedItems = this.normalizeItemsForStatus(data.items);
     const priced = this.priceQuoteItems(normalizedItems, priceType, customer);
-    const items = priced.items;
+    const total = this.calculateTotal(
+      priced.items,
+      normalizeDiscountFields(data),
+    );
+    return {
+      items: priced.items,
+      total,
+      priceType,
+      wholesaleApplied: priced.wholesaleApplied,
+    };
+  }
+
+  create(data: CreateQuoteDto): Quote {
+    const { customerId, customerName } = this.resolveCustomer(data.customerId);
+    const status = this.resolveFormStatus(data.status);
+    const description = this.normalizeDescription(data.description);
+    const { items, total, priceType, wholesaleApplied } =
+      this.previewPricing(data);
     const services = this.deriveServices(items);
     const discount = normalizeDiscountFields(data);
     const now = new Date();
@@ -94,7 +119,6 @@ export class QuotesService {
     this.assertCustomerForSent(status, customerId);
     this.assertItemsForSent(status, items);
     this.assertDraftHasContent(status, customerId, description);
-    const total = this.calculateTotal(items, discount);
     const lossFields = this.orders.resolveLossReasonFields(items, total, data);
 
     const quote: Quote = {
@@ -107,7 +131,7 @@ export class QuotesService {
       items,
       status,
       priceType,
-      wholesaleApplied: priced.wholesaleApplied,
+      wholesaleApplied,
       salesChannel: this.normalizeSalesChannel(data.salesChannel),
       total,
       discountPercent: discount.discountPercent,
@@ -236,7 +260,12 @@ export class QuotesService {
     return this.quotes.save(updated);
   }
 
-  updateStatus(id: string, status: QuoteStatus, actorUserId?: string): Quote {
+  updateStatus(
+    id: string,
+    status: QuoteStatus,
+    actorUserId?: string,
+    orderOptions?: QuoteOrderOptions,
+  ): Quote {
     const quote = this.findOne(id);
     if (quote.status === status) {
       return quote;
@@ -270,7 +299,7 @@ export class QuotesService {
     this.quotes.save(quote);
     if (status === QuoteStatus.ACEPTADO && !quote.orderId) {
       try {
-        this.createOrderFromQuote(quote.id, actorUserId);
+        this.createOrderFromQuote(quote.id, actorUserId, orderOptions);
       } catch (error) {
         // Si el pedido no se pudo crear, el presupuesto no queda aceptado.
         const current = this.quotes.findById(id);
@@ -302,7 +331,11 @@ export class QuotesService {
     }
   }
 
-  createOrderFromQuote(id: string, actorUserId?: string): Order {
+  createOrderFromQuote(
+    id: string,
+    actorUserId?: string,
+    orderOptions: QuoteOrderOptions = {},
+  ): Order {
     const quote = this.findOne(id);
 
     if (quote.status !== QuoteStatus.ACEPTADO) {
@@ -328,7 +361,12 @@ export class QuotesService {
     let order: Order;
     try {
       items = this.attachCatalogProducts(quote.items, createdProductIds);
-      order = this.createOrderFromQuoteItems(quote, items, actorUserId);
+      order = this.createOrderFromQuoteItems(
+        quote,
+        items,
+        actorUserId,
+        orderOptions,
+      );
     } catch (error) {
       // No dejar productos huérfanos si el pedido no se pudo crear.
       for (const productId of createdProductIds) {
@@ -353,6 +391,7 @@ export class QuotesService {
     quote: Quote,
     items: QuoteItem[],
     actorUserId?: string,
+    orderOptions: QuoteOrderOptions = {},
   ): Order {
     // Copia priceType, canal y precios cotizados sin recalcularlos (§16.2).
     return this.orders.create(
@@ -369,11 +408,12 @@ export class QuotesService {
         attachments: quote.attachments?.length
           ? quote.attachments.map((item) => ({ ...item }))
           : undefined,
-        dueDate: this.defaultOrderDueDate(),
+        dueDate: orderOptions.dueDate ?? this.defaultOrderDueDate(),
         responsibleUserId: actorUserId?.trim() || undefined,
       },
       {
         keepQuotedPrices: { wholesaleApplied: quote.wholesaleApplied === true },
+        createdByAgent: orderOptions.createdByAgent,
       },
     );
   }

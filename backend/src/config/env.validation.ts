@@ -13,6 +13,23 @@ export interface AppEnv {
   /** Código para POST /settings/reset-database. Si falta, el reseteo queda deshabilitado. */
   DATABASE_RESET_CODE?: string;
   ADMIN_EMAIL?: string;
+  /** Avisos automáticos (§28.5): email por Resend y destinatarios. */
+  RESEND_API_KEY?: string;
+  ALERTS_EMAIL_FROM?: string;
+  ALERTS_EMAIL_TO?: string;
+  ALERTS_WHATSAPP_TO?: string;
+  /** Conexión con Meta (§28.1): WhatsApp Cloud API, Instagram y Messenger. */
+  META_APP_SECRET?: string;
+  META_VERIFY_TOKEN?: string;
+  META_ACCESS_TOKEN?: string;
+  META_PAGE_ACCESS_TOKEN?: string;
+  WHATSAPP_PHONE_NUMBER_ID?: string;
+  WHATSAPP_BUSINESS_ACCOUNT_ID?: string;
+  META_PAGE_ID?: string;
+  INSTAGRAM_ACCOUNT_ID?: string;
+  /** Agente de atención (§28.3): API de Claude. */
+  ANTHROPIC_API_KEY?: string;
+  ANTHROPIC_MODEL?: string;
 }
 
 export function validateEnv(
@@ -61,6 +78,22 @@ export function validateEnv(
     REQUIRE_AUTH: parseBoolean(config.REQUIRE_AUTH, isProd),
     DATABASE_RESET_CODE: optionalString(config.DATABASE_RESET_CODE),
     ADMIN_EMAIL: optionalString(config.ADMIN_EMAIL),
+    RESEND_API_KEY: optionalString(config.RESEND_API_KEY),
+    ALERTS_EMAIL_FROM: optionalString(config.ALERTS_EMAIL_FROM),
+    ALERTS_EMAIL_TO: optionalString(config.ALERTS_EMAIL_TO),
+    ALERTS_WHATSAPP_TO: optionalString(config.ALERTS_WHATSAPP_TO),
+    META_APP_SECRET: optionalString(config.META_APP_SECRET),
+    META_VERIFY_TOKEN: optionalString(config.META_VERIFY_TOKEN),
+    META_ACCESS_TOKEN: optionalString(config.META_ACCESS_TOKEN),
+    META_PAGE_ACCESS_TOKEN: optionalString(config.META_PAGE_ACCESS_TOKEN),
+    WHATSAPP_PHONE_NUMBER_ID: optionalString(config.WHATSAPP_PHONE_NUMBER_ID),
+    WHATSAPP_BUSINESS_ACCOUNT_ID: optionalString(
+      config.WHATSAPP_BUSINESS_ACCOUNT_ID,
+    ),
+    META_PAGE_ID: optionalString(config.META_PAGE_ID),
+    INSTAGRAM_ACCOUNT_ID: optionalString(config.INSTAGRAM_ACCOUNT_ID),
+    ANTHROPIC_API_KEY: optionalString(config.ANTHROPIC_API_KEY),
+    ANTHROPIC_MODEL: optionalString(config.ANTHROPIC_MODEL),
   };
 }
 

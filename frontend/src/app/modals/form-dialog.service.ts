@@ -3,7 +3,9 @@ import { Dialog } from '@angular/cdk/dialog';
 import { Overlay } from '@angular/cdk/overlay';
 import { Observable, finalize, from, of, switchMap } from 'rxjs';
 import {
+  ApiKeyScopeOption,
   Category,
+  CreatedApiKey,
   Customer,
   ImpresoWithCost,
   Order,
@@ -18,12 +20,14 @@ import {
   SupplyReplacementChoice,
   SupplyShortageReport,
 } from '../core/models';
-import type { CalendarEntry } from '../core/models';
+import type { CalendarEntry, ChatMessage } from '../core/models';
 import { BreakpointService } from '../core/services/breakpoint.service';
 import { LayoutUiService } from '../layout/layout-ui.service';
 import { formDialogConfig } from './form-dialog.config';
 import { ModalSize } from './modal-size';
 import type { ConfirmDialogData } from './confirm-dialog.component';
+import type { ChatLinkCustomerDialogData } from './chat-link-customer-dialog.component';
+import type { WhatsAppTemplateDialogData } from './whatsapp-template-dialog.component';
 import type {
   FairAmountDialogData,
   FairAmountDialogResult,
@@ -307,6 +311,19 @@ export class FormDialogService {
     );
   }
 
+  openApiKey(
+    scopeOptions: ApiKeyScopeOption[],
+  ): Observable<CreatedApiKey | undefined> {
+    return from(import('./api-key-form-dialog.component')).pipe(
+      switchMap(
+        ({ ApiKeyFormDialogComponent }): Observable<CreatedApiKey | undefined> =>
+          this.open(ApiKeyFormDialogComponent, { scopeOptions }, 'md', {
+            ariaLabel: 'Nueva llave',
+          }),
+      ),
+    );
+  }
+
   openImpreso(
     impreso: ImpresoWithCost | null = null,
   ): Observable<ImpresoWithCost | undefined> {
@@ -358,6 +375,34 @@ export class FormDialogService {
         }): Observable<FairAmountDialogResult | undefined> =>
           this.open(FairAmountDialogComponent, data, 'sm', {
             ariaLabel: data.title,
+          }),
+      ),
+    );
+  }
+
+  /** Vincular un chat a un cliente; devuelve el id elegido. */
+  openChatLinkCustomer(
+    data: ChatLinkCustomerDialogData = {},
+  ): Observable<string | undefined> {
+    return from(import('./chat-link-customer-dialog.component')).pipe(
+      switchMap(
+        ({ ChatLinkCustomerDialogComponent }): Observable<string | undefined> =>
+          this.open(ChatLinkCustomerDialogComponent, data, 'sm', {
+            ariaLabel: 'Vincular cliente',
+          }),
+      ),
+    );
+  }
+
+  /** Mandar una plantilla de WhatsApp; devuelve el mensaje enviado. */
+  openWhatsAppTemplate(
+    data: WhatsAppTemplateDialogData,
+  ): Observable<ChatMessage | undefined> {
+    return from(import('./whatsapp-template-dialog.component')).pipe(
+      switchMap(
+        ({ WhatsAppTemplateDialogComponent }): Observable<ChatMessage | undefined> =>
+          this.open(WhatsAppTemplateDialogComponent, data, 'sm', {
+            ariaLabel: 'Mandar plantilla de WhatsApp',
           }),
       ),
     );
@@ -423,7 +468,7 @@ export class FormDialogService {
     );
   }
 
-  /** Marcar una venta como facturada (factura C manual, §28.4). */
+  /** Marcar una venta como facturada (factura C manual, §29.4). */
   openInvoiceMark(
     data: InvoiceMarkDialogData,
   ): Observable<InvoiceMarkDialogResult | undefined> {

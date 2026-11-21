@@ -88,6 +88,14 @@ const PATH_RULES: PathRule[] = [
     },
   },
   {
+    matches: (path) => path.includes('/chats'),
+    meta: {
+      collections: ['chatConversations', 'chatMessages'],
+      scopes: ['chats'],
+      entity: 'chat',
+    },
+  },
+  {
     matches: (path) => path.includes('/customers'),
     meta: {
       collections: ['customers', 'orders'],
@@ -227,7 +235,13 @@ export function shouldTrackHttpMutation(path: string, method: string): boolean {
   if (
     path.includes('/events/') ||
     path.includes('/preview-') ||
-    path.endsWith('/preview')
+    path.endsWith('/preview') ||
+    path.includes('/api-keys') ||
+    path.includes('/alerts') ||
+    path.includes('/agent-approvals') ||
+    path.includes('/mcp') ||
+    path.includes('/api/meta') ||
+    path.includes('/attendant')
   ) {
     return false;
   }

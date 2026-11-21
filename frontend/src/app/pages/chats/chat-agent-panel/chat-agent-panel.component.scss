@@ -1,0 +1,131 @@
+@use '../../../shared/styles/variables' as *;
+@use '../../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+// Misma tarjeta que el panel del cliente.
+.chat-agent {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 16px;
+  background: $color-surface;
+  border: 1px solid $color-border-soft;
+  border-radius: 12px;
+}
+
+.chat-agent__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-agent__title {
+  font-size: 16px;
+  font-weight: 700;
+  color: mobile.$m-text;
+}
+
+.chat-agent__subtitle {
+  font-size: 14px;
+  font-weight: 700;
+  color: mobile.$m-text;
+}
+
+.chat-agent__pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: $radius-pill;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: mobile.$m-bg;
+  color: mobile.$m-text-label;
+
+  &--ok {
+    background: $color-status-success-bg;
+    color: $color-status-success-text;
+  }
+
+  &--b {
+    background: mobile.$m-primary-pale;
+    color: mobile.$m-primary-dark;
+  }
+
+  &--d {
+    background: $color-status-danger-bg;
+    color: $color-status-danger-text;
+  }
+}
+
+.chat-agent__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: mobile.$m-positive;
+}
+
+.chat-agent__note {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: mobile.$m-bg;
+  font-size: 13px;
+  color: mobile.$m-text;
+}
+
+.chat-agent__hint {
+  margin: 0;
+  font-size: 13px;
+  color: mobile.$m-text-secondary;
+}
+
+.chat-agent__error {
+  margin: 0;
+  font-size: 13px;
+  color: $color-danger-text;
+}
+
+// Mobile: una línea con el estado; lo revisado se despliega.
+.chat-agent-m {
+  background: mobile.$m-surface;
+  border-bottom: 1px solid mobile.$m-border;
+
+  summary {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 6px 16px;
+    list-style: none;
+    cursor: pointer;
+    color: mobile.$m-text-secondary;
+
+    &::-webkit-details-marker {
+      display: none;
+    }
+  }
+
+  &[open] .chat-agent-m__chevron {
+    transform: rotate(180deg);
+  }
+}
+
+.chat-agent-m__chevron {
+  flex: none;
+}
+
+.chat-agent-m__body {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 0 16px 10px;
+}

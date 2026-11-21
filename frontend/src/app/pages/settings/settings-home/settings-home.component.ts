@@ -155,22 +155,32 @@ export class SettingsHomeComponent implements OnInit {
       ],
     },
     {
-      title: 'Conexiones',
-      items: [
-        {
-          label: 'Integraciones',
-          hint: 'Mercado Pago, WhatsApp, ARCA y Tiendanube',
-          link: '/ajustes/integraciones',
-        },
-      ],
-    },
-    {
       title: 'Equipo',
       items: [
         {
           label: 'Usuarios, roles y áreas',
           hint: this.usersSummary(),
           link: '/ajustes/usuarios',
+        },
+      ],
+    },
+    {
+      title: 'Integraciones',
+      items: [
+        {
+          label: 'API y agentes',
+          hint: 'Llaves de acceso · solo administradores',
+          link: '/ajustes/api-y-agentes',
+        },
+        {
+          label: 'Avisos',
+          hint: 'Pedidos, stock y saldos por WhatsApp o email',
+          link: '/ajustes/avisos',
+        },
+        {
+          label: 'Integraciones',
+          hint: 'Meta (WhatsApp, Instagram, Messenger), Mercado Pago, ARCA y Tiendanube',
+          link: '/ajustes/integraciones',
         },
       ],
     },

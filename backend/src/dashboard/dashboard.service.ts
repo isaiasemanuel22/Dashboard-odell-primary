@@ -1,9 +1,6 @@
-import {
-  arStartOfDay,
-  arTodayKey,
-  toArParts,
-} from '../common/utils/ar-date.util';
-import { calendarDay } from '../orders/due-date.util';
+import { arStartOfDay, toArParts } from '../common/utils/ar-date.util';
+import { isOrderOverdue } from '../orders/due-date.util';
+import { computeReceivables } from './receivables.util';
 import { Injectable } from '@nestjs/common';
 import {
   OrderStatus,
@@ -12,7 +9,6 @@ import {
   ServiceType,
 } from '../common/enums';
 import {
-  ClientReceivable,
   DashboardLowStockItem,
   DashboardNotification,
   DashboardPeriod,
@@ -35,7 +31,6 @@ import { computeDebtorBalances } from '../treasury/treasury-debtor.util';
 import { productSalePrice } from '../common/utils/product-discount.util';
 import { listOrderPriceNotices } from '../orders/order-price-notice.util';
 import {
-  outstandingCents,
   paymentFeeCents,
   paymentNetCents,
   toCents,
@@ -103,7 +98,7 @@ export class DashboardService {
       )
       .slice(0, 5);
 
-    const receivables = this.listReceivables();
+    const receivables = computeReceivables(this.store);
     const lowStockItems = this.listLowStockItems();
 
     return {
@@ -111,12 +106,11 @@ export class DashboardService {
       pendingOrders: this.store.orders.filter(
         (o) => o.status === OrderStatus.PENDIENTE,
       ).length,
-      overdueOrders: this.store.orders.filter((order) =>
-        this.isOrderOverdue(order),
-      ).length,
+      overdueOrders: this.store.orders.filter((order) => isOrderOverdue(order))
+        .length,
       overduePendingOrders: this.store.orders.filter(
         (order) =>
-          order.status === OrderStatus.PENDIENTE && this.isOrderOverdue(order),
+          order.status === OrderStatus.PENDIENTE && isOrderOverdue(order),
       ).length,
       inProductionOrders: this.store.orders.filter(
         (o) => o.status === OrderStatus.EN_PRODUCCION,
@@ -436,7 +430,7 @@ export class DashboardService {
     }
 
     for (const order of this.store.orders) {
-      if (!this.isOrderOverdue(order)) continue;
+      if (!isOrderOverdue(order)) continue;
       notifications.push({
         id: `overdue-${order.id}`,
         type: 'warning',
@@ -530,87 +524,6 @@ export class DashboardService {
     }).length;
   }
 
-  /** Saldo impago de pedidos ya entregados. No entra en la caja. */
-  private listReceivables(): {
-    clientDebt: number;
-    rows: ClientReceivable[];
-    orderCount: number;
-  } {
-    const grouped = new Map<
-      string,
-      {
-        customerId: string;
-        customerName: string;
-        phone?: string;
-        company?: string;
-        cents: number;
-        orders: ClientReceivable['orders'];
-      }
-    >();
-    let totalCents = 0;
-    let orderCount = 0;
-
-    for (const order of this.store.orders) {
-      if (order.status !== OrderStatus.ENTREGADO) continue;
-      const cents = outstandingCents(order);
-      if (cents <= 0) continue;
-      totalCents += cents;
-      orderCount += 1;
-      const key = order.customerId || order.customerName;
-      const customer = order.customerId
-        ? this.store.getCustomerById(order.customerId)
-        : undefined;
-      const row = grouped.get(key) ?? {
-        customerId: order.customerId ?? '',
-        customerName: order.customerName,
-        phone: customer?.phone || undefined,
-        company: customer?.company || undefined,
-        cents: 0,
-        orders: [] as ClientReceivable['orders'],
-      };
-      row.cents += cents;
-      row.orders.push({
-        id: order.id,
-        amount: cents / 100,
-        total: Number(order.total) || 0,
-        deliveredAt: resolveOrderSoldAt(order),
-        summary: this.receivableSummary(order),
-      });
-      grouped.set(key, row);
-    }
-
-    const rows = [...grouped.values()]
-      .map((row) => ({
-        customerId: row.customerId,
-        customerName: row.customerName,
-        ...(row.phone ? { phone: row.phone } : {}),
-        ...(row.company ? { company: row.company } : {}),
-        amount: row.cents / 100,
-        orders: row.orders,
-      }))
-      .sort(
-        (a, b) =>
-          b.amount - a.amount ||
-          a.customerName.localeCompare(b.customerName, 'es'),
-      );
-
-    return { clientDebt: totalCents / 100, rows, orderCount };
-  }
-
-  private receivableSummary(order: {
-    items?: { productName?: string }[];
-    description?: string;
-  }): string {
-    const names = (order.items ?? [])
-      .map((item) => item.productName?.trim())
-      .filter((name): name is string => !!name);
-    if (names.length) return names.join(' · ');
-    return (order.description ?? '')
-      .replace(/<[^>]+>/g, ' ')
-      .replace(/\s+/g, ' ')
-      .trim();
-  }
-
   private computeMonthRevenue(monthStart: Date, monthEnd: Date): number {
     const retailRevenue = this.store.retailSales
       .filter((sale) => {
@@ -628,22 +541,6 @@ export class DashboardService {
       .reduce((sum, order) => sum + order.total, 0);
 
     return retailRevenue + ordersRevenue;
-  }
-
-  private isOrderOverdue(order: {
-    status: OrderStatus;
-    dueDate: string;
-  }): boolean {
-    if (
-      order.status === OrderStatus.ENTREGADO ||
-      order.status === OrderStatus.CANCELADO
-    ) {
-      return false;
-    }
-
-    const dueDay = calendarDay(order.dueDate);
-    if (!dueDay) return false;
-    return dueDay < arTodayKey();
   }
 
   private formatNotificationDate(value: string): string {

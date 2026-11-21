@@ -1622,7 +1622,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       raw === null || raw === ('' as unknown) ? null : Number(raw);
   }
 
-  /** Comisión por defecto de Mercado Pago (§28.1) mientras no se toque. */
+  /** Comisión por defecto de Mercado Pago (§29.1) mientras no se toque. */
   private autoDepositFee(): void {
     if (this.depositFeeTouched) return;
     const fee = defaultPaymentFee(

@@ -157,6 +157,7 @@ export enum SalesChannel {
   TIENDANUBE = 'tiendanube',
   FERIA = 'feria',
   MOSTRADOR = 'mostrador',
+  MESSENGER = 'messenger',
 }
 
 export enum CustomerSource {
@@ -166,6 +167,7 @@ export enum CustomerSource {
   FERIA = 'feria',
   RECOMENDACION = 'recomendacion',
   OTRO = 'otro',
+  MESSENGER = 'messenger',
 }
 
 export enum PaymentMethod {
@@ -295,6 +297,65 @@ export interface WholesaleDiscountSettings {
   serviceTypes: ServiceType[];
 }
 
+/** Avisos automáticos a Isaías (§28.5): cada uno se prende o apaga. */
+export interface AutomaticAlertsSettings {
+  ordersDue: boolean;
+  lowStock: boolean;
+  weeklyReceivables: boolean;
+}
+
+/** Herramientas del servidor MCP de Odell (§28.4): cada una se prende o apaga. */
+export interface AgentToolsSettings {
+  consultar_stock: boolean;
+  cotizar_producto: boolean;
+  ver_cola: boolean;
+  crear_presupuesto: boolean;
+  registrar_pago: boolean;
+}
+
+/** Agente de atención de Chats (§28.3). */
+export interface AttendantSettings {
+  enabled: boolean;
+  /** Con stock: entrega hoy + estos días corridos. */
+  stockDeliveryDays: number;
+  /** Sin stock: fecha de la cola + estos días hábiles. */
+  deliveryMarginDays: number;
+  /** Tope de gasto en USD por mes. */
+  monthlyBudgetUsd: number;
+  /** Cuándo se pausó por llegar al tope; null si no. */
+  pausedByBudgetAt: string | null;
+}
+
+/** Estado del agente de atención: ajustes y consumo del mes. */
+export interface AttendantStatus {
+  settings: AttendantSettings;
+  apiKeyConfigured: boolean;
+  model: string;
+  month: {
+    inputTokens: number;
+    outputTokens: number;
+    cacheReadTokens: number;
+    cacheWriteTokens: number;
+    costUsd: number;
+  };
+}
+
+/** Qué hizo el agente en una herramienta, armado por el backend. */
+export interface AgentToolSummary {
+  tool: string;
+  label: string;
+  detail: string;
+}
+
+/** Una corrida del agente de atención en un chat. */
+export interface AgentRun {
+  id: string;
+  conversationId: string;
+  outcome: 'replied' | 'handed_off' | 'suggested' | 'skipped' | 'error';
+  toolSummary: AgentToolSummary[];
+  createdAt: string;
+}
+
 export interface PowerConsumptionConfig {
   id: string;
   name: string;
@@ -351,6 +412,9 @@ export interface GeneralSettings {
   graphicDesignRatePerHour: number;
   profitMargins: ServiceProfitMargins;
   wholesaleDiscount: WholesaleDiscountSettings;
+  automaticAlerts: AutomaticAlertsSettings;
+  agentTools: AgentToolsSettings;
+  attendant: AttendantSettings;
   paperPricesPerSqm: PaperPricesPerSqm;
   paperReferenceSheets: PaperReferenceSheets;
   filamentPrices: FilamentPriceConfig[];
@@ -363,11 +427,11 @@ export interface GeneralSettings {
   colors: ColorConfig[];
   filamentTypes: FilamentTypeConfig[];
   resinTypes: ResinTypeConfig[];
-  /** Integraciones (v6, §28): Mercado Pago, ARCA y WhatsApp. */
+  /** Integraciones (v6, §29): Mercado Pago y ARCA. */
   integrations: IntegrationsSettings;
 }
 
-/** Solo factura C (monotributo, §28.4). */
+/** Solo factura C (monotributo, §29.4). */
 export type InvoiceType = 'C';
 
 export interface SaleInvoice {
@@ -378,36 +442,15 @@ export interface SaleInvoice {
   issuedAt: string;
 }
 
-export interface WhatsAppTemplate {
-  id: string;
-  name: string;
-  body: string;
-  /** Plantilla por defecto: editable, no borrable. */
-  builtIn: boolean;
-}
-
 export interface IntegrationsSettings {
   /** Comisión que descuenta Mercado Pago (0–99.99, default 0). */
   mercadoPago: { feePercent: number };
   arca: { pointOfSale: number | null; annualCap: number | null };
-  whatsapp: { businessPhone: string; templates: WhatsAppTemplate[] };
 }
-
-export type UpdateWhatsAppTemplatePayload = {
-  /** Sin id: lo genera el servidor. */
-  id?: string;
-  name: string;
-  body: string;
-};
 
 export type UpdateIntegrationsPayload = {
   mercadoPago?: { feePercent?: number };
   arca?: { pointOfSale?: number | null; annualCap?: number | null };
-  whatsapp?: {
-    businessPhone?: string;
-    /** Reemplaza la lista; las builtIn que falten se reponen. */
-    templates?: UpdateWhatsAppTemplatePayload[];
-  };
 };
 
 export type MarkInvoicePayload = {
@@ -424,13 +467,13 @@ export interface OrderActivityEntry {
   kind: OrderActivityKind;
   detail: string;
   templateId?: string;
-  via?: 'open' | 'copy';
+  via?: 'send' | 'copy';
 }
 
 export type OrderWhatsAppLogPayload = {
   templateId: string;
   templateName: string;
-  via: 'open' | 'copy';
+  via: 'send' | 'copy';
 };
 
 export interface Impreso {
@@ -495,6 +538,41 @@ export interface Supplier {
   notes?: string;
   createdAt: string;
   updatedAt: string;
+}
+
+/** Llave de acceso de un agente (§28.4). El secreto nunca vuelve del backend. */
+export interface ApiKey {
+  id: string;
+  name: string;
+  displayPrefix: string;
+  scopes: string[];
+  lastUsedAt: string | null;
+  revokedAt: string | null;
+  createdAt: string;
+}
+
+export interface ApiKeyScopeOption {
+  id: string;
+  label: string;
+}
+
+/** Respuesta al crear: el secreto se muestra una sola vez. */
+export interface CreatedApiKey {
+  apiKey: ApiKey;
+  secret: string;
+}
+
+/** Acción de un agente que espera tu aprobación (§28.4). */
+export interface AgentApproval {
+  id: string;
+  kind: 'quote' | 'payment';
+  status: 'pending' | 'approved' | 'rejected' | 'failed';
+  summary: string;
+  referenceId: string | null;
+  apiKeyName: string;
+  error: string | null;
+  decidedAt: string | null;
+  createdAt: string;
 }
 
 export type SpoolLocation =
@@ -1002,7 +1080,7 @@ export interface Order {
   wholesaleApplied?: boolean;
   /** Canal de venta (opcional). */
   salesChannel?: SalesChannel;
-  /** Factura C marcada a mano (§28.4). */
+  /** Factura C marcada a mano (§29.4). */
   invoice?: SaleInvoice;
   /** Avisos por WhatsApp y marcas de factura. */
   activityHistory?: OrderActivityEntry[];
@@ -1023,6 +1101,8 @@ export interface Order {
   priceHistory?: OrderPriceHistoryEntry[];
   deliveryHistory?: OrderDelivery[];
   payments?: OrderPayment[];
+  /** Lo creó el agente de atención desde Chats (§28.3). */
+  createdByAgent?: boolean;
 }
 
 export interface OrderPayment {
@@ -1998,3 +2078,4 @@ export interface CurrentUserProfile extends AppUser {
 export type CurrentUserResponse = CurrentUserProfile | { authenticated: false };
 
 export * from './fair.model';
+export * from './chat.model';

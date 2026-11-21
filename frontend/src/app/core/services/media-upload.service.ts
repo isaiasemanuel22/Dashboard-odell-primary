@@ -3,7 +3,7 @@ import { Observable, map } from 'rxjs';
 import { ProductsService } from './products.service';
 import { UploadedAttachmentMeta } from '../../components/dashboard-form/db-attachment-upload/db-attachment-upload.types';
 
-export type AttachmentUploadFolder = 'orders' | 'quotes';
+export type AttachmentUploadFolder = 'orders' | 'quotes' | 'chats';
 
 @Injectable({ providedIn: 'root' })
 export class MediaUploadService {
@@ -20,7 +20,7 @@ export class MediaUploadService {
     return this.productsService.uploadAttachment(file);
   }
 
-  /** Adjuntos de pedidos y presupuestos (carpeta propia en el storage). */
+  /** Adjuntos de pedidos, presupuestos y chats (carpeta propia en el storage). */
   uploadDocumentAttachment(
     file: File,
     folder: AttachmentUploadFolder,

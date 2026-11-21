@@ -167,6 +167,66 @@ export class UpdateWholesaleDiscountDto {
   serviceTypes?: ServiceType[];
 }
 
+export class UpdateAutomaticAlertsDto {
+  @IsOptional()
+  @IsBoolean()
+  ordersDue?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  lowStock?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  weeklyReceivables?: boolean;
+}
+
+export class UpdateAgentToolsDto {
+  @IsOptional()
+  @IsBoolean()
+  consultar_stock?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  cotizar_producto?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  ver_cola?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  crear_presupuesto?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  registrar_pago?: boolean;
+}
+
+export class UpdateAttendantDto {
+  @IsOptional()
+  @IsBoolean()
+  enabled?: boolean;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(30)
+  stockDeliveryDays?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(0)
+  @Max(30)
+  deliveryMarginDays?: number;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(1)
+  @Max(500)
+  monthlyBudgetUsd?: number;
+}
+
 export class UpdatePaperPricesDto {
   @IsObject()
   paperReferenceSheets!: Record<string, Record<string, number>>;
@@ -641,37 +701,6 @@ export class ArcaIntegrationDto {
   annualCap?: number | null;
 }
 
-export class WhatsAppTemplateInputDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(64)
-  id?: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(80)
-  name!: string;
-
-  @IsString()
-  @IsNotEmpty()
-  @MaxLength(2000)
-  body!: string;
-}
-
-export class WhatsAppIntegrationDto {
-  @IsOptional()
-  @IsString()
-  @MaxLength(32)
-  businessPhone?: string;
-
-  @IsOptional()
-  @IsArray()
-  @ArrayMaxSize(50)
-  @ValidateNested({ each: true })
-  @Type(() => WhatsAppTemplateInputDto)
-  templates?: WhatsAppTemplateInputDto[];
-}
-
 export class UpdateIntegrationsDto {
   @IsOptional()
   @ValidateNested()
@@ -682,9 +711,4 @@ export class UpdateIntegrationsDto {
   @ValidateNested()
   @Type(() => ArcaIntegrationDto)
   arca?: ArcaIntegrationDto;
-
-  @IsOptional()
-  @ValidateNested()
-  @Type(() => WhatsAppIntegrationDto)
-  whatsapp?: WhatsAppIntegrationDto;
 }

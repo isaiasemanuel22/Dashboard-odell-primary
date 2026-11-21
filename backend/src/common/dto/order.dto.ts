@@ -440,8 +440,8 @@ export class OrderWhatsAppLogDto {
   @MaxLength(80)
   templateName!: string;
 
-  @IsIn(['open', 'copy'])
-  via!: 'open' | 'copy';
+  @IsIn(['send', 'copy'])
+  via!: 'send' | 'copy';
 }
 
 export class CreateOrderDto {

@@ -1,4 +1,6 @@
 import { defaultIntegrations } from './integrations.util';
+import { DEFAULT_AGENT_TOOLS } from './agent-tools.util';
+import { DEFAULT_ATTENDANT } from './attendant-settings.util';
 import { SettingsService } from './settings.service';
 import { StoreService } from '../store/store.service';
 import { StorePersistenceService } from '../store/store-persistence.service';
@@ -29,6 +31,13 @@ describe('SettingsService.patchGeneralSettings', () => {
       ...DEFAULT_WHOLESALE_DISCOUNT,
       serviceTypes: [...DEFAULT_WHOLESALE_DISCOUNT.serviceTypes],
     },
+    automaticAlerts: {
+      ordersDue: true,
+      lowStock: true,
+      weeklyReceivables: true,
+    },
+    agentTools: { ...DEFAULT_AGENT_TOOLS },
+    attendant: { ...DEFAULT_ATTENDANT },
     paperPricesPerSqm: {
       dtf: 0,
       dtfUv: 0,
@@ -220,6 +229,13 @@ describe('SettingsService.updateWholesaleDiscount', () => {
       ...DEFAULT_WHOLESALE_DISCOUNT,
       serviceTypes: [...DEFAULT_WHOLESALE_DISCOUNT.serviceTypes],
     },
+    automaticAlerts: {
+      ordersDue: true,
+      lowStock: true,
+      weeklyReceivables: true,
+    },
+    agentTools: { ...DEFAULT_AGENT_TOOLS },
+    attendant: { ...DEFAULT_ATTENDANT },
     paperPricesPerSqm: {
       dtf: 0,
       dtfUv: 0,

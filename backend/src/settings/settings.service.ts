@@ -38,8 +38,14 @@ import {
 } from './integrations.util';
 import { IntegrationsSettings } from '../common/interfaces';
 import { normalizeWholesaleDiscount } from './wholesale-discount.util';
+import { normalizeAutomaticAlerts } from './automatic-alerts.util';
+import { normalizeAgentTools } from './agent-tools.util';
+import { normalizeAttendant } from './attendant-settings.util';
 import { appendSupplyPriceHistory } from '../supplies/supply-price-history.util';
 import {
+  AgentToolsSettings,
+  AttendantSettings,
+  AutomaticAlertsSettings,
   ColorConfig,
   FilamentPriceConfig,
   FilamentTypeConfig,
@@ -102,6 +108,15 @@ export class SettingsService {
     );
     this.store.generalSettings.integrations = normalizeIntegrations(
       this.store.generalSettings.integrations,
+    );
+    this.store.generalSettings.automaticAlerts = normalizeAutomaticAlerts(
+      this.store.generalSettings.automaticAlerts,
+    );
+    this.store.generalSettings.agentTools = normalizeAgentTools(
+      this.store.generalSettings.agentTools,
+    );
+    this.store.generalSettings.attendant = normalizeAttendant(
+      this.store.generalSettings.attendant,
     );
     this.store.generalSettings.paperReferenceSheets =
       normalizePaperReferenceSheets(
@@ -425,6 +440,59 @@ export class SettingsService {
     );
     this.recordSettingsChange(['settings']);
     return structuredClone(this.store.generalSettings.integrations);
+  }
+
+  getAutomaticAlerts(): AutomaticAlertsSettings {
+    return normalizeAutomaticAlerts(this.store.generalSettings.automaticAlerts);
+  }
+
+  updateAutomaticAlerts(
+    data: Partial<AutomaticAlertsSettings>,
+  ): AutomaticAlertsSettings {
+    // Solo pisa las claves enviadas: una clave ausente no vuelve al default.
+    const patch = Object.fromEntries(
+      Object.entries(data).filter(([, value]) => value !== undefined),
+    );
+    this.store.generalSettings.automaticAlerts = normalizeAutomaticAlerts({
+      ...this.getAutomaticAlerts(),
+      ...patch,
+    });
+    this.recordSettingsChange(['settings']);
+    return this.getAutomaticAlerts();
+  }
+
+  getAgentTools(): AgentToolsSettings {
+    return normalizeAgentTools(this.store.generalSettings.agentTools);
+  }
+
+  updateAgentTools(data: Partial<AgentToolsSettings>): AgentToolsSettings {
+    // Solo pisa las claves enviadas: una clave ausente no vuelve al default.
+    const patch = Object.fromEntries(
+      Object.entries(data).filter(([, value]) => value !== undefined),
+    );
+    this.store.generalSettings.agentTools = normalizeAgentTools({
+      ...this.getAgentTools(),
+      ...patch,
+    });
+    this.recordSettingsChange(['settings']);
+    return this.getAgentTools();
+  }
+
+  getAttendant(): AttendantSettings {
+    return normalizeAttendant(this.store.generalSettings.attendant);
+  }
+
+  updateAttendant(data: Partial<AttendantSettings>): AttendantSettings {
+    // Solo pisa las claves enviadas: una clave ausente no vuelve al default.
+    const patch = Object.fromEntries(
+      Object.entries(data).filter(([, value]) => value !== undefined),
+    );
+    this.store.generalSettings.attendant = normalizeAttendant({
+      ...this.getAttendant(),
+      ...patch,
+    });
+    this.recordSettingsChange(['settings']);
+    return this.getAttendant();
   }
 
   updatePaperPrices(

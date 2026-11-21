@@ -1,0 +1,73 @@
+@use '../../../shared/styles/variables' as *;
+
+.panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+
+  h3 {
+    margin: 0 0 0.25rem;
+  }
+}
+
+.panel-sub {
+  margin: 0;
+  color: $color-text-label;
+  font-size: 0.875rem;
+}
+
+.status-notice {
+  margin: 0 0 0.75rem;
+  color: $color-success;
+  font-size: 0.875rem;
+}
+
+.agents-note {
+  margin: 0 0 1rem;
+  padding: 0.75rem 0.875rem;
+  border: 1px solid $color-status-success-text;
+  border-radius: 0.75rem;
+  background: $color-status-success-bg;
+  color: $color-status-success-text;
+  font-size: 0.875rem;
+}
+
+.agents-section {
+  margin-top: 1.5rem;
+}
+
+.mcp-url {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  db-input {
+    width: 16rem;
+  }
+}
+
+.approval-row__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  padding: 0 12px 12px;
+}
+
+.agents-note--warn {
+  border-color: $color-status-warning-text;
+  background: $color-status-warning-bg;
+  color: $color-status-warning-text;
+}
+
+.attendant-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 0.75rem;
+
+  db-input {
+    width: 14rem;
+  }
+}

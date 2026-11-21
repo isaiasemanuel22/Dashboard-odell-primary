@@ -12,6 +12,7 @@ import { CalendarModule } from './calendar/calendar.module';
 import { PrintJobsModule } from './print-jobs/print-jobs.module';
 import { ProductsModule } from './products/products.module';
 import { FairsModule } from './fairs/fairs.module';
+import { ChatsModule } from './chats/chats.module';
 import { SalesModule } from './sales/sales.module';
 import { SettingsModule } from './settings/settings.module';
 import { StoreModule } from './store/store.module';
@@ -25,6 +26,12 @@ import { ReferenceDataModule } from './reference-data/reference-data.module';
 import { PrismaModule } from './prisma/prisma.module';
 import { AuthModule } from './auth/auth.module';
 import { UsersModule } from './users/users.module';
+import { ApiKeysModule } from './api-keys/api-keys.module';
+import { AlertsModule } from './alerts/alerts.module';
+import { AgentApprovalsModule } from './agent-approvals/agent-approvals.module';
+import { McpModule } from './mcp/mcp.module';
+import { MetaModule } from './meta/meta.module';
+import { AttendantModule } from './attendant/attendant.module';
 
 @Module({
   imports: [
@@ -32,6 +39,7 @@ import { UsersModule } from './users/users.module';
     PrismaModule,
     AuthModule,
     UsersModule,
+    ApiKeysModule,
     HealthModule,
     StoreModule,
     RealtimeModule,
@@ -53,7 +61,13 @@ import { UsersModule } from './users/users.module';
     PrintJobsModule,
     SalesModule,
     FairsModule,
+    ChatsModule,
     TreasuryModule,
+    AlertsModule,
+    AgentApprovalsModule,
+    McpModule,
+    MetaModule,
+    AttendantModule,
   ],
 })
 export class AppModule {}

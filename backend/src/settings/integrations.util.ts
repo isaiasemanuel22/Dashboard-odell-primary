@@ -1,64 +1,12 @@
 import { BadRequestException } from '@nestjs/common';
-import { randomUUID } from 'crypto';
-import {
-  IntegrationsSettings,
-  SaleInvoice,
-  WhatsAppTemplate,
-} from '../common/interfaces';
+import { IntegrationsSettings, SaleInvoice } from '../common/interfaces';
 
 export const MAX_FEE_PERCENT = 99.99;
-const TEMPLATE_NAME_MAX = 80;
-const TEMPLATE_BODY_MAX = 2000;
-const TEMPLATE_ID_MAX = 64;
-const PHONE_MAX = 32;
-
-/** Plantillas por defecto (§28.1). Sin horario de retiro. */
-export const DEFAULT_WHATSAPP_TEMPLATES: readonly WhatsAppTemplate[] = [
-  {
-    id: 'tpl-presupuesto',
-    name: 'Presupuesto enviado',
-    body:
-      'Hola {cliente}, te paso el presupuesto {pedido}:\n{items}\n\nTotal: {total}.\n' +
-      '¿Lo confirmamos? Cualquier duda, avisame.',
-    builtIn: true,
-  },
-  {
-    id: 'tpl-diseno',
-    name: 'Diseño para aprobar',
-    body:
-      'Hola {cliente}, te mando el diseño de tu pedido {pedido} para que lo revises.\n' +
-      'Si está todo bien, avisame y seguimos con la producción.',
-    builtIn: true,
-  },
-  {
-    id: 'tpl-listo',
-    name: 'Tu pedido está listo',
-    body:
-      'Hola {cliente}, tu pedido {pedido} está listo.\n{items}\n' +
-      'Saldo a abonar: {saldo}. Avisame cuándo pasás a retirarlo.',
-    builtIn: true,
-  },
-  {
-    id: 'tpl-saldo',
-    name: 'Recordatorio de saldo',
-    body:
-      'Hola {cliente}, te recuerdo que tu pedido {pedido} tiene un saldo pendiente de {saldo} ' +
-      '(total {total}, pagado {pagado}). ¡Gracias!',
-    builtIn: true,
-  },
-];
-
-const BUILT_IN_IDS = new Set(DEFAULT_WHATSAPP_TEMPLATES.map((t) => t.id));
-
-function cloneDefaultTemplates(): WhatsAppTemplate[] {
-  return DEFAULT_WHATSAPP_TEMPLATES.map((t) => ({ ...t }));
-}
 
 export function defaultIntegrations(): IntegrationsSettings {
   return {
     mercadoPago: { feePercent: 0 },
     arca: { pointOfSale: null, annualCap: null },
-    whatsapp: { businessPhone: '', templates: cloneDefaultTemplates() },
   };
 }
 
@@ -86,53 +34,16 @@ function normalizeAnnualCap(value: unknown): number | null {
   return Number.isFinite(n) && n >= 0 ? Math.round(n * 100) / 100 : null;
 }
 
-function normalizeTemplates(raw: unknown): WhatsAppTemplate[] {
-  if (!Array.isArray(raw)) return cloneDefaultTemplates();
-  const seen = new Set<string>();
-  const result: WhatsAppTemplate[] = [];
-  for (const item of raw) {
-    const rec = asRecord(item);
-    const name = typeof rec.name === 'string' ? rec.name.trim() : '';
-    const body = typeof rec.body === 'string' ? rec.body.trim() : '';
-    if (!name || !body) continue;
-    let id =
-      typeof rec.id === 'string' && rec.id.trim()
-        ? rec.id.trim().slice(0, TEMPLATE_ID_MAX)
-        : '';
-    if (!id || seen.has(id)) id = `tpl-${randomUUID().slice(0, 8)}`;
-    seen.add(id);
-    result.push({
-      id,
-      name: name.slice(0, TEMPLATE_NAME_MAX),
-      body: body.slice(0, TEMPLATE_BODY_MAX),
-      builtIn: BUILT_IN_IDS.has(id),
-    });
-  }
-  // Las plantillas por defecto no se borran: si faltan, se reponen al principio.
-  const missing = DEFAULT_WHATSAPP_TEMPLATES.filter((t) => !seen.has(t.id)).map(
-    (t) => ({ ...t }),
-  );
-  return [...missing, ...result];
-}
-
 /** Lee `integrations` desde la base o un cliente; tolera nulo y datos viejos. */
 export function normalizeIntegrations(raw: unknown): IntegrationsSettings {
   const rec = asRecord(raw);
   const mp = asRecord(rec.mercadoPago);
   const arca = asRecord(rec.arca);
-  const wa = asRecord(rec.whatsapp);
   return {
     mercadoPago: { feePercent: normalizeFeePercent(mp.feePercent) },
     arca: {
       pointOfSale: normalizePointOfSale(arca.pointOfSale),
       annualCap: normalizeAnnualCap(arca.annualCap),
-    },
-    whatsapp: {
-      businessPhone:
-        typeof wa.businessPhone === 'string'
-          ? wa.businessPhone.trim().slice(0, PHONE_MAX)
-          : '',
-      templates: normalizeTemplates(wa.templates),
     },
   };
 }
@@ -140,10 +51,6 @@ export function normalizeIntegrations(raw: unknown): IntegrationsSettings {
 export interface IntegrationsPatch {
   mercadoPago?: { feePercent?: number };
   arca?: { pointOfSale?: number | null; annualCap?: number | null };
-  whatsapp?: {
-    businessPhone?: string;
-    templates?: Array<{ id?: string; name: string; body: string }>;
-  };
 }
 
 /** Aplica un parche parcial validando; las claves ausentes no se tocan. */
@@ -178,21 +85,6 @@ export function applyIntegrationsPatch(
     base.arca.annualCap = normalizeAnnualCap(cap);
   }
 
-  if (patch.whatsapp?.businessPhone !== undefined) {
-    base.whatsapp.businessPhone = String(patch.whatsapp.businessPhone)
-      .trim()
-      .slice(0, PHONE_MAX);
-  }
-  if (patch.whatsapp?.templates !== undefined) {
-    for (const t of patch.whatsapp.templates) {
-      if (!t.name?.trim() || !t.body?.trim()) {
-        throw new BadRequestException(
-          'Cada plantilla necesita nombre y mensaje',
-        );
-      }
-    }
-    base.whatsapp.templates = normalizeTemplates(patch.whatsapp.templates);
-  }
   return base;
 }
 

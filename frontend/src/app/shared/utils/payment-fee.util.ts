@@ -2,7 +2,7 @@ import { PaymentMethod } from '../../core/models';
 
 /**
  * Comisión sugerida (en pesos enteros) para un cobro: solo Mercado Pago
- * descuenta comisión; efectivo y transferencia dan 0 (§28.1).
+ * descuenta comisión; efectivo y transferencia dan 0 (§29.1).
  */
 export function defaultPaymentFee(
   amount: number | null | undefined,

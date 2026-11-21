@@ -103,13 +103,16 @@
           <a class="customer-link" [routerLink]="['/presupuestos', sourceQuoteId]">Desde presupuesto {{ sourceQuoteId }}</a>
         }
 
-        @if (salesChannelPill || wholesalePill) {
+        @if (salesChannelPill || wholesalePill || order.createdByAgent) {
           <div class="od-m__pills">
             @if (salesChannelPill; as channel) {
               <span class="m-pill od-m__pill-channel">{{ channel }}</span>
             }
             @if (wholesalePill; as wholesale) {
               <span class="m-pill m-pill--b">{{ wholesale }}</span>
+            }
+            @if (order.createdByAgent) {
+              <span class="m-pill m-pill--v">Creado por el agente</span>
             }
           </div>
         }
@@ -356,14 +359,14 @@
         [open]="isAccordionOpen('whatsapp')"
         (toggled)="setAccordionOpen('whatsapp', $event)"
       >
-        @if (isMobile() && whatsappVars; as vars) {
+        @if (isMobile()) {
           <app-whatsapp-notify
             selectId="wa-template-m"
             [showTitle]="false"
-            [templates]="whatsappTemplates"
-            [vars]="vars"
+            [orderId]="order.id"
+            [refresh]="order"
             [phone]="assignedCustomerPhone"
-            [defaultTemplateId]="whatsappDefaultTemplateId"
+            [defaultTemplateKey]="whatsappDefaultTemplateKey"
             footnote="Se registra en el historial del pedido"
             (sent)="onWhatsAppSent($event)"
           />
@@ -553,6 +556,9 @@
               <dt>Origen</dt>
               <dd>
                 <a [routerLink]="['/presupuestos', sourceQuoteId]" class="customer-link">Desde presupuesto {{ sourceQuoteId }}</a>
+                @if (order.createdByAgent) {
+                  · Creado por el agente
+                }
               </dd>
             </div>
           }
@@ -744,19 +750,17 @@
         </section>
 
         @if (!isMobile()) {
-          @if (whatsappVars; as vars) {
-            <section class="panel">
-              <app-whatsapp-notify
-                selectId="wa-template-d"
-                [templates]="whatsappTemplates"
-                [vars]="vars"
-                [phone]="assignedCustomerPhone"
-                [defaultTemplateId]="whatsappDefaultTemplateId"
-                footnote="Se registra en el historial del pedido"
-                (sent)="onWhatsAppSent($event)"
-              />
-            </section>
-          }
+          <section class="panel">
+            <app-whatsapp-notify
+              selectId="wa-template-d"
+              [orderId]="order.id"
+              [refresh]="order"
+              [phone]="assignedCustomerPhone"
+              [defaultTemplateKey]="whatsappDefaultTemplateKey"
+              footnote="Se registra en el historial del pedido"
+              (sent)="onWhatsAppSent($event)"
+            />
+          </section>
 
           <app-order-detail-invoice
             [order]="order"

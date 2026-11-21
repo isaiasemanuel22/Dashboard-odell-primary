@@ -1,6 +1,16 @@
-import { ServiceType } from './enums';
+import { ProductType, ServiceType } from './enums';
 
 export const LEGACY_DESIGN_SERVICE = 'diseno';
+
+/** Servicio de una línea de catálogo (misma regla que el frontend). */
+export function serviceTypeFromProduct(product: {
+  type: ProductType;
+}): ServiceType {
+  if (product.type === ProductType.ESTAMPADO) {
+    return ServiceType.ESTAMPADO;
+  }
+  return ServiceType.IMPRESION_3D;
+}
 
 export function isDesignService(serviceType: ServiceType): boolean {
   return (

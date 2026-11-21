@@ -1,4 +1,4 @@
--- v6 fase 1 (§28): integraciones, factura y comisión en ventas de mostrador/feria.
+-- v6 fase 1 (§29): integraciones, factura y comisión en ventas de mostrador/feria.
 -- NO se ejecuta desde el repo: aplicarlo a mano (primero local, después Heroku con OK de Isaías).
 -- Equivale al cambio en backend/prisma/schema.prisma (Float = DOUBLE en MySQL).
 

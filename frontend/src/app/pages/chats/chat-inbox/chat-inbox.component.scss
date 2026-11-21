@@ -1,0 +1,300 @@
+@use '../../../shared/styles/variables' as *;
+@use '../../../shared/styles/mobile' as mobile;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.chat-inbox__head {
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  border-bottom: 1px solid mobile.$m-border;
+}
+
+.chat-inbox__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 38px;
+  border: 1px solid mobile.$m-border-input;
+  border-radius: 10px;
+  padding: 0 10px;
+  background: $color-surface;
+  box-sizing: border-box;
+  color: mobile.$m-text-secondary;
+
+  input {
+    border: 0;
+    outline: 0;
+    font-family: inherit;
+    font-size: 13px;
+    flex: 1;
+    min-width: 0;
+    background: transparent;
+    color: mobile.$m-text;
+  }
+
+  &:focus-within {
+    border-color: mobile.$m-primary;
+  }
+}
+
+.chat-inbox__chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chat-inbox__chip {
+  height: 32px;
+  padding: 0 11px;
+  border-radius: $radius-pill;
+  border: 1px solid mobile.$m-border-input;
+  background: $color-surface;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 500;
+  color: mobile.$m-text-label;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+
+  small {
+    font-size: 11px;
+    opacity: 0.75;
+  }
+
+  &--on {
+    background: mobile.$m-text;
+    border-color: mobile.$m-text;
+    color: #fff;
+  }
+}
+
+// Canal y estado se leen como un solo bloque: sin línea entre las dos filas.
+db-mobile-list-toolbar ::ng-deep .m-tools {
+  border-bottom: 0;
+}
+
+.chat-inbox-m__status {
+  background: mobile.$m-surface;
+  margin: 0;
+  padding: 0 16px 12px;
+  border-bottom: 1px solid mobile.$m-border;
+
+  small {
+    font-size: 11px;
+    opacity: 0.75;
+  }
+}
+
+.chat-inbox__list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 6px;
+  gap: 2px;
+
+  &--m {
+    overflow: visible;
+    padding: 12px 16px;
+    gap: 10px;
+  }
+}
+
+.chat-inbox__empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 14px;
+
+  p {
+    margin: 0;
+    font-size: 13px;
+    color: mobile.$m-text-secondary;
+  }
+}
+
+.chat-row {
+  display: flex;
+  gap: 10px;
+  padding: 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: inherit;
+
+  &:hover {
+    background: $color-surface-muted;
+  }
+
+  &--sel,
+  &--sel:hover {
+    background: mobile.$m-primary-pale;
+  }
+}
+
+.chat-inbox__list--m .chat-row {
+  background: mobile.$m-surface;
+  border: 1px solid mobile.$m-border;
+  border-radius: mobile.$m-radius-md;
+  padding: 12px 14px;
+  gap: 12px;
+}
+
+.chat-row__avatar-wrap {
+  position: relative;
+  display: inline-flex;
+  align-self: flex-start;
+  flex: none;
+}
+
+.chat-row__avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: $radius-pill;
+  background: mobile.$m-primary-pale;
+  color: mobile.$m-primary-dark;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+
+  .chat-inbox__list--m & {
+    width: 44px;
+    height: 44px;
+    font-size: 15px;
+  }
+}
+
+.chat-row__channel {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: $color-surface;
+  border: 1px solid mobile.$m-border;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-row__body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .chat-inbox__list--m & {
+    gap: 6px;
+  }
+}
+
+.chat-row__ln {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat-row__name {
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: mobile.$m-text;
+
+  &--unread {
+    font-weight: 700;
+  }
+
+  .chat-inbox__list--m & {
+    font-size: 15px;
+    font-weight: 700;
+  }
+}
+
+// Canal para lectores de pantalla (el ícono es decorativo).
+.chat-row__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
+
+.chat-row__time {
+  font-size: 11px;
+  color: mobile.$m-text-secondary;
+  flex: none;
+
+  .chat-inbox__list--m & {
+    font-size: 12px;
+  }
+}
+
+.chat-row__preview {
+  font-size: 12px;
+  color: mobile.$m-text-secondary;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  &--unread {
+    color: mobile.$m-text;
+    font-weight: 500;
+  }
+
+  .chat-inbox__list--m & {
+    font-size: 13px;
+  }
+}
+
+.chat-row__dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: mobile.$m-primary;
+  flex: none;
+}
+
+.chat-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 22px;
+  padding: 0 9px;
+  border-radius: $radius-pill;
+  font-size: 11px;
+  font-weight: 700;
+  white-space: nowrap;
+  background: mobile.$m-bg;
+  color: mobile.$m-text-label;
+
+  &--w {
+    background: $color-status-warning-bg;
+    color: $color-status-warning-text;
+  }
+
+  &--b {
+    background: mobile.$m-primary-pale;
+    color: mobile.$m-primary-dark;
+  }
+
+  &--d {
+    background: $color-status-danger-bg;
+    color: $color-status-danger-text;
+  }
+}

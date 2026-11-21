@@ -15,7 +15,6 @@ import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import {
   Quote,
-  WhatsAppTemplate,
   QuoteItem,
   QuoteStatus,
 } from '../../../core/models';
@@ -50,16 +49,12 @@ import {
   isQuoteExpired,
   quoteValidUntilNumeric,
 } from '../../../shared/utils/quote-validity.util';
-import { buildQuoteShareText } from '../../../shared/utils/quote-share.util';
 import {
-  WA_TEMPLATE_QUOTE,
-  buildQuoteTemplateVars,
-  renderWhatsAppTemplate,
-  WhatsAppTemplateVars,
-  whatsAppMessageUrl,
-} from '../../../shared/utils/whatsapp-template.util';
+  buildQuoteShareText,
+  quoteWhatsAppUrl,
+} from '../../../shared/utils/quote-share.util';
+import { WA_KEY_QUOTE } from '../../../shared/utils/whatsapp-template-key.util';
 import { WhatsAppNotifyComponent } from '../../../components/whatsapp-notify/whatsapp-notify.component';
-import { SettingsFacade } from '../../../store/settings/settings.facade';
 import {
   calculateLinePriceTotal,
   calculateOrderDiscount,
@@ -116,7 +111,6 @@ export class QuoteDetailComponent implements OnInit {
   private readonly destroyRef = inject(DestroyRef);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly currencyArs = inject(CurrencyArsPipe);
-  private readonly settingsFacade = inject(SettingsFacade);
 
   quote: Quote | null = null;
   loading = true;
@@ -126,8 +120,7 @@ export class QuoteDetailComponent implements OnInit {
   mobileActionsOpen = false;
   renewing = false;
   customerPhone: string | null = null;
-  whatsappTemplates: WhatsAppTemplate[] = [];
-  readonly quoteTemplateId = WA_TEMPLATE_QUOTE;
+  readonly quoteTemplateKey = WA_KEY_QUOTE;
 
   readonly expiredHint = QUOTE_EXPIRED_HINT;
 
@@ -136,18 +129,6 @@ export class QuoteDetailComponent implements OnInit {
   readonly isDesignService = isDesignService;
 
   ngOnInit(): void {
-    this.settingsFacade
-      .ensureLoaded()
-      .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe({
-        next: (settings) => {
-          this.whatsappTemplates =
-            settings.integrations?.whatsapp?.templates ?? [];
-          this.cdr.markForCheck();
-        },
-        error: () => undefined,
-      });
-
     this.route.paramMap
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((params) => {
@@ -226,25 +207,8 @@ export class QuoteDetailComponent implements OnInit {
     return null;
   }
 
-  get whatsappVars(): WhatsAppTemplateVars | null {
-    return this.quote ? buildQuoteTemplateVars(this.quote) : null;
-  }
-
-  /** Mensaje con la plantilla «Presupuesto enviado»; sin ella, el texto fijo. */
-  get shareMessage(): string {
-    if (!this.quote) return '';
-    const template = this.whatsappTemplates.find(
-      (tpl) => tpl.id === WA_TEMPLATE_QUOTE,
-    );
-    return template
-      ? renderWhatsAppTemplate(template.body, buildQuoteTemplateVars(this.quote))
-      : buildQuoteShareText(this.quote);
-  }
-
   get whatsappHref(): string {
-    return this.quote
-      ? whatsAppMessageUrl(this.customerPhone, this.shareMessage)
-      : '';
+    return this.quote ? quoteWhatsAppUrl(this.quote, this.customerPhone) : '';
   }
 
   get canShare(): boolean {
@@ -265,7 +229,7 @@ export class QuoteDetailComponent implements OnInit {
     void navigator
       .share({
         title: `Presupuesto ${this.quote.id}`,
-        text: this.shareMessage,
+        text: buildQuoteShareText(this.quote),
       })
       .catch(() => undefined);
   }

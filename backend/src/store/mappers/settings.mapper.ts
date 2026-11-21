@@ -12,6 +12,9 @@ import {
 import { normalizeProfitMargins } from '../../settings/profit-margins.util';
 import { normalizeIntegrations } from '../../settings/integrations.util';
 import { normalizeWholesaleDiscount } from '../../settings/wholesale-discount.util';
+import { normalizeAutomaticAlerts } from '../../settings/automatic-alerts.util';
+import { normalizeAgentTools } from '../../settings/agent-tools.util';
+import { normalizeAttendant } from '../../settings/attendant-settings.util';
 import {
   persistedFilamentPrice,
   persistedResinPrice,
@@ -27,6 +30,9 @@ export function mapSettingsFromDb(row: {
   errorMarginPercent?: number;
   profitMargins: Prisma.JsonValue;
   wholesaleDiscount?: Prisma.JsonValue;
+  automaticAlerts?: Prisma.JsonValue;
+  agentTools?: Prisma.JsonValue;
+  attendant?: Prisma.JsonValue;
   paperPricesPerSqm: Prisma.JsonValue;
   paperReferenceSheets?: Prisma.JsonValue;
   powerConsumptions: Prisma.JsonValue;
@@ -59,6 +65,9 @@ export function mapSettingsFromDb(row: {
       row.profitMargins,
     ),
     wholesaleDiscount: normalizeWholesaleDiscount(row.wholesaleDiscount ?? {}),
+    automaticAlerts: normalizeAutomaticAlerts(row.automaticAlerts ?? {}),
+    agentTools: normalizeAgentTools(row.agentTools ?? {}),
+    attendant: normalizeAttendant(row.attendant ?? {}),
     paperPricesPerSqm,
     paperReferenceSheets: normalizePaperReferenceSheets(
       rawSheets,
@@ -107,6 +116,9 @@ export function mapSettingsToDb(settings: GeneralSettings) {
     ...settings,
     profitMargins: normalizeProfitMargins(settings.profitMargins),
     wholesaleDiscount: normalizeWholesaleDiscount(settings.wholesaleDiscount),
+    automaticAlerts: normalizeAutomaticAlerts(settings.automaticAlerts),
+    agentTools: normalizeAgentTools(settings.agentTools),
+    attendant: normalizeAttendant(settings.attendant),
     machineProfiles: ensureMachineProfiles(settings),
   };
 
@@ -118,6 +130,9 @@ export function mapSettingsToDb(settings: GeneralSettings) {
     graphicDesignRatePerHour: normalized.graphicDesignRatePerHour ?? 0,
     profitMargins: toInputJson(normalized.profitMargins),
     wholesaleDiscount: toInputJson(normalized.wholesaleDiscount),
+    automaticAlerts: toInputJson(normalized.automaticAlerts),
+    agentTools: toInputJson(normalized.agentTools),
+    attendant: toInputJson(normalized.attendant),
     paperPricesPerSqm: toInputJson(
       syncPaperPricesFromReferenceSheets(normalized.paperReferenceSheets),
     ),

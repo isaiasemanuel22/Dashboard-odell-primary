@@ -31,7 +31,7 @@ export interface MarkInvoicePayload {
 export interface WhatsAppLogPayload {
   templateId: string;
   templateName: string;
-  via: 'open' | 'copy';
+  via: 'send' | 'copy';
 }
 
 @Injectable({ providedIn: 'root' })

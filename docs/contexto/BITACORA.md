@@ -100,6 +100,24 @@ Hecho: categoría de insumo «Packaging»; campo `packagingSupplies` en producto
 Decisiones: de Isaías (§27): × 1,25 sin error, por producto y por línea editable, opcional, stock al entregar, tilde de piezas apagado. Supuestas: combo con precio fijo no suma packaging (como los insumos), en los demás tipos va encima del fijo; combo anidado cuenta solo el packaging propio de cada pieza; sin reversión de stock al cancelar.
 Pendiente: venta de mostrador no descuenta packaging (por definir reversión); aviso de margen con packaging (por definir); «productos afectados» de un insumo no cuenta packaging; «Cancelar» en la edición de combo quizá no cierra el modal (sin confirmar); `db:push:heroku` al publicar.
 
+## 2026-11-19 · Chats: contador de no leídos
+Rama: feat/chats · Commits: ver `git log` (fix(chats))
+Hecho: QA en celular del globito de «Más», el mosaico y la barra lateral: andaban. Fallo corregido: al leer un chat, el encabezado «N sin leer» y el filtro «Sin leer» no bajaban hasta recargar; ahora se recarga la lista y `ChatsUnreadService`. El encabezado muestra el total aunque haya búsqueda. Repetición de QA: OK en mobile y escritorio.
+Decisiones: los números de los filtros siguen la búsqueda (ya decidido).
+Pendiente: para repetir la prueba hay que dejar `last_read_at` en NULL en chat-1 y chat-2 de la base local.
+
+## 2026-11-18 · Sección Chats (v7) en la app
+Rama: feat/chats · Commits: d29f77f
+Hecho: módulo `chats` en el backend (tablas `chat_conversations` y `chat_messages`; gateway local que no sale a la red) y sección Chats en el frontend (bandeja, hilo y panel del cliente, escritorio y mobile, ítem propio en la barra lateral y en «Más»). Para la sesión de Meta: `sendOutbound`, `agentPaused` (columna `agent_paused`, franja «Agente en pausa» con «Reactivar agente») y `linkCustomer`. Hora 24 h y fechas dd/mm; a 1280×768 los mensajes tienen 292 px. Esquema aplicado en la base local. Tester: 7/7 puntos OK; QA visual: cercano al diseño.
+Decisiones: Isaías (vía sesión Meta, §28 en su rama): el agente responde solo en los 3 canales a toda hora; si Isaías escribe, el agente se pausa en ese chat hasta reactivarlo; al cotizar o vender crea el cliente. Supuestas: `sendOutbound` no rechaza chats en pausa (lo chequea el agente); `setHandedOff(false)` no reactiva.
+Pendiente: `db:push:heroku` al publicar; badges de no leídos sin probar (no hay datos sin leer); íconos en los chips de canal mobile (el toolbar compartido no los admite); botón «Respuestas rápidas» del encabezado y seña/entrega en la sugerencia, sin definir; textos de respuestas rápidas con `[completar]`; confirmar que Firebase `dashboard-odell-2` no es producción.
+
+## 2026-11-18 · Diseño v7: sección «Chats» (WhatsApp, Instagram, Messenger)
+Rama: — · Commits: sin commit (solo lienzo de diseño, versión 152)
+Hecho: 3 artboards nuevos en la página v7: V7Chats (desktop: bandeja multicanal, chat con caja de respuesta, sugerencia del agente, aviso de ventana de 24 h de Meta, ficha del cliente con Crear presupuesto/pedido), MobV7Chats (lista) y MobV7Chat (conversación). Estilo de la app actual, como v3.
+Decisiones: Isaías 2026-11-18: todos los canales que permite Meta, sección «Chats» propia en la barra lateral, desktop y mobile. Supuestas: en mobile «Chats» entra por «Más»; el agente sugiere solo en WhatsApp.
+Pendiente: definir plantillas de WhatsApp (selector al cerrarse la ventana), si un chat sin vincular crea cliente con origen = canal, y cómo se cuentan los no leídos. Falta dibujar el ítem «Chats» dentro de MobMas.
+
 ## 2026-11-18 · Deploy de mano de obra opcional
 Rama: fix/mano-de-obra-opcional → main · Commits: 03e7e64
 Hecho: push a origin main y Heroku v49 (sin cambios de esquema, sin `db:push:heroku`). `/api/health` 200; Netlify sirve los chunks del formulario de producto sin la exigencia de mano de obra.

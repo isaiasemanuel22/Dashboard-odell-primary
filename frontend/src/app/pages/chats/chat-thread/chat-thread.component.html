@@ -1,0 +1,374 @@
+@if (mobile()) {
+  @if (windowOpen()) {
+    <details class="chat-thread__m-window chat-thread__window">
+      <summary>
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </svg>
+        <span class="chat-thread__window-line">
+          <b>Ventana de 24 h abierta{{ windowLeftSuffix() }}</b>
+        </span>
+        <svg class="chat-thread__window-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M6 9l6 6 6-6" />
+        </svg>
+      </summary>
+      <p class="chat-thread__window-detail">
+        Después, en WhatsApp solo se puede mandar una plantilla aprobada; en Instagram y
+        Messenger el chat se cierra.
+      </p>
+    </details>
+  } @else {
+    <div class="chat-thread__m-window chat-thread__m-window--closed">
+      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="12" cy="12" r="9" />
+        <path d="M12 7v5l3 2" />
+      </svg>
+      <span>
+        <b>Ventana de 24 h cerrada.</b>
+        En WhatsApp solo se puede mandar una plantilla aprobada; en Instagram y Messenger hay
+        que esperar a que el cliente escriba de nuevo.
+      </span>
+      @if (canSendTemplate()) {
+        <db-button
+          label="Mandar plantilla"
+          variant="primary"
+          format="link"
+          (clicked)="openTemplate()"
+        />
+      }
+    </div>
+  }
+  @if (agentPaused()) {
+    <div class="chat-thread__m-window chat-thread__paused">
+      <span class="chat-thread__window-line">Agente en pausa</span>
+      <db-button
+        label="Reactivar agente"
+        variant="primary"
+        format="link"
+        [disabled]="resuming()"
+        (clicked)="resumeAgent()"
+      />
+    </div>
+  }
+} @else {
+  <div class="chat-thread__head">
+    <span class="chat-thread__avatar" aria-hidden="true">{{ avatar() }}</span>
+    <div class="chat-thread__who">
+      <div class="chat-thread__name" [title]="title()">{{ title() }}</div>
+      <div class="chat-thread__hint">
+        <app-chat-channel-icon [channel]="conversation().channel" />
+        <span class="chat-thread__ellipsis" [title]="contactLine()">{{ contactLine() }}</span>
+      </div>
+    </div>
+    @if (windowOpen()) {
+      <span
+        class="chat-thread__pill chat-thread__pill--ok"
+        [title]="'Ventana abierta' + windowLeftSuffix()"
+      >
+        <span class="chat-thread__pill-dot" aria-hidden="true"></span>
+        {{ windowPill() }}
+      </span>
+    } @else {
+      <span class="chat-thread__pill chat-thread__pill--d" title="Ventana cerrada">Cerrada</span>
+    }
+  </div>
+  <div class="chat-thread__notice-wrap">
+    @if (windowOpen()) {
+      <details class="chat-thread__notice chat-thread__window">
+        <summary>
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9" />
+            <path d="M12 7v5l3 2" />
+          </svg>
+          <span class="chat-thread__window-line">
+            <b>Ventana de 24 h de Meta</b>
+            @if (windowUntil()) {
+              · podés responder hasta el {{ windowUntil() }}
+            }
+          </span>
+          <svg class="chat-thread__window-chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </summary>
+        <p class="chat-thread__window-detail">
+          @if (windowUntil()) {
+            Podés responder libremente hasta el {{ windowUntil() }} (24 h después del último
+            mensaje de {{ firstName() }}).
+          }
+          Pasado ese plazo, en WhatsApp solo se puede mandar una <b>plantilla aprobada</b>; en
+          Instagram y Messenger el chat queda <b>cerrado</b> hasta que el cliente escriba de nuevo.
+        </p>
+      </details>
+    } @else {
+      <div class="chat-thread__notice">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </svg>
+        <span>
+          <b>Ventana de 24 h cerrada.</b> En WhatsApp solo se puede mandar una
+          <b>plantilla aprobada</b>; en Instagram y Messenger hay que esperar a que el cliente
+          escriba de nuevo.
+        </span>
+        @if (canSendTemplate()) {
+          <db-button
+            label="Mandar plantilla"
+            variant="primary"
+            format="link"
+            (clicked)="openTemplate()"
+          />
+        }
+      </div>
+    }
+    @if (agentPaused()) {
+      <div class="chat-thread__notice chat-thread__paused">
+        <span class="chat-thread__window-line">Agente en pausa</span>
+        <db-button
+          label="Reactivar agente"
+          variant="primary"
+          format="link"
+          [disabled]="resuming()"
+          (clicked)="resumeAgent()"
+        />
+      </div>
+    }
+  </div>
+}
+
+<div #scroller class="chat-thread__messages" [class.chat-thread__messages--m]="mobile()">
+  @for (item of items(); track item.key) {
+    @if (item.kind === 'day') {
+      <span class="chat-thread__day">{{ item.label }}</span>
+    } @else if (item.message.status === 'suggested') {
+      <div class="chat-sug">
+        <div class="chat-sug__head">
+          <span class="chat-sug__title">
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" />
+            </svg>
+            Sugerencia del agente
+            @if (item.message.quoteId) {
+              · borrador {{ item.message.quoteId }}
+            }
+          </span>
+          <span class="chat-thread__pill chat-thread__pill--w">No enviado</span>
+        </div>
+
+        @if (suggestionQuote(item.message); as quote) {
+          @for (line of quote.items; track $index) {
+            <div class="chat-sug__line">
+              <span>{{ line.quantity }} × {{ line.productName }}</span>
+              <span>{{ line.unitPrice | currencyArs }} c/u</span>
+            </div>
+          }
+          <div class="chat-sug__line">
+            <span>Total</span>
+            <b>{{ quote.total | currencyArs }}</b>
+          </div>
+        }
+
+        @if (editingId() === item.message.id) {
+          <textarea
+            class="chat-sug__edit"
+            aria-label="Editar la sugerencia"
+            [value]="editText()"
+            (input)="editText.set($any($event.target).value)"
+          ></textarea>
+        } @else {
+          <div class="chat-sug__text">“{{ item.message.text }}”</div>
+        }
+
+        <div class="chat-sug__actions">
+          <db-button
+            label="Aprobar y enviar"
+            variant="primary"
+            format="solid"
+            [disabled]="!windowOpen() || busySuggestionId() === item.message.id"
+            (clicked)="approve(item.message)"
+          />
+          @if (editingId() === item.message.id) {
+            <db-button
+              label="Guardar"
+              variant="secondary"
+              format="soft"
+              [disabled]="!editText().trim() || busySuggestionId() === item.message.id"
+              (clicked)="saveEdit(item.message)"
+            />
+            <db-button label="Cancelar" variant="secondary" format="soft" (clicked)="cancelEdit()" />
+          } @else {
+            <db-button
+              label="Editar"
+              variant="secondary"
+              format="soft"
+              [disabled]="busySuggestionId() === item.message.id"
+              (clicked)="startEdit(item.message)"
+            />
+          }
+          <db-button
+            label="Descartar"
+            variant="delete"
+            format="soft"
+            [disabled]="busySuggestionId() === item.message.id"
+            (clicked)="discard(item.message)"
+          />
+          <span class="chat-thread__hint">
+            @if (windowOpen()) {
+              No se manda nada hasta que lo apruebes.
+            } @else {
+              Con la ventana cerrada no se puede enviar.
+            }
+          </span>
+        </div>
+      </div>
+    } @else {
+      <div
+        class="chat-msg"
+        [class.chat-msg--in]="item.message.direction === 'in'"
+        [class.chat-msg--out]="item.message.direction === 'out'"
+      >
+        @if (item.message.text) {
+          <span class="chat-msg__text">{{ item.message.text }}</span>
+        }
+        @for (att of item.message.attachments; track att.id) {
+          <a class="chat-msg__att" [href]="att.url | mediaUrl" target="_blank" rel="noopener">
+            @if (isImage(att)) {
+              <img [src]="att.url | mediaUrl" [alt]="att.name" loading="lazy" />
+            } @else {
+              <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M20 11l-8 8a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7-7" />
+              </svg>
+              {{ att.name }}
+            }
+          </a>
+        }
+        <span class="chat-msg__meta">
+          @if (item.message.author === 'agent') {
+            <svg class="chat-msg__agent" viewBox="0 0 24 24" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3l1.8 4.7L18.5 9.5l-4.7 1.8L12 16l-1.8-4.7L5.5 9.5l4.7-1.8z" />
+            </svg>
+          }
+          {{ messageMeta(item.message) }}
+          @if (item.message.status === 'failed') {
+            · <span class="chat-msg__failed">No se pudo enviar</span>
+          }
+        </span>
+      </div>
+    }
+  } @empty {
+    <p class="chat-thread__hint">Todavía no hay mensajes.</p>
+  }
+</div>
+
+<div class="chat-comp" [class.chat-comp--m]="mobile()">
+  @if (error()) {
+    <p class="chat-comp__error" role="alert">{{ error() }}</p>
+  }
+  <div class="chat-comp__quick" role="group" aria-label="Respuestas rápidas">
+    @if (!mobile()) {
+      <span class="chat-thread__hint">Respuestas rápidas:</span>
+    }
+    @for (reply of quickReplies; track reply.label) {
+      <button
+        type="button"
+        class="chat-comp__q"
+        [disabled]="!windowOpen()"
+        (click)="insertQuickReply(reply.text)"
+      >
+        {{ reply.label }}
+      </button>
+    }
+  </div>
+
+  @if (attachments().length) {
+    <ul class="chat-comp__files" aria-label="Archivos para enviar">
+      @for (att of attachments(); track att.id) {
+        <li>
+          <span>{{ att.name }}</span>
+          <button type="button" [attr.aria-label]="'Quitar ' + att.name" (click)="removeAttachment(att.id)">✕</button>
+        </li>
+      }
+    </ul>
+  }
+
+  <input #fileInput type="file" multiple hidden (change)="onFiles($event)" />
+
+  @if (mobile()) {
+    <div class="chat-comp__row">
+      <button
+        type="button"
+        class="m-ib"
+        aria-label="Adjuntar archivo o imagen"
+        [disabled]="uploading() || !windowOpen()"
+        (click)="pickFile('')"
+      >
+        <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M20 11l-8 8a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7-7" />
+        </svg>
+      </button>
+      <textarea
+        #composer
+        class="chat-comp__ta"
+        rows="1"
+        aria-label="Mensaje"
+        [placeholder]="'Escribí a ' + firstName() + '…'"
+        [value]="draft()"
+        (input)="draft.set($any($event.target).value)"
+      ></textarea>
+      <db-button
+        [label]="sending() ? 'Enviando...' : 'Enviar'"
+        variant="primary"
+        format="solid"
+        [disabled]="!canSend()"
+        (clicked)="send()"
+      />
+    </div>
+  } @else {
+    <textarea
+      #composer
+      class="chat-comp__ta"
+      rows="1"
+      [attr.aria-label]="'Escribir mensaje a ' + title()"
+      [placeholder]="'Escribí tu respuesta a ' + firstName() + '…'"
+      [value]="draft()"
+      (input)="draft.set($any($event.target).value)"
+    ></textarea>
+    <div class="chat-comp__tools">
+      <div class="chat-comp__tools-l">
+        <button type="button" class="chat-comp__ib" [disabled]="uploading() || !windowOpen()" (click)="pickFile('')">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20 11l-8 8a5 5 0 0 1-7-7l8-8a3.5 3.5 0 0 1 5 5l-8 8a2 2 0 0 1-3-3l7-7" />
+          </svg>
+          Adjuntar archivo
+        </button>
+        <button type="button" class="chat-comp__ib" [disabled]="uploading() || !windowOpen()" (click)="pickFile('image/*')">
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="3" y="4" width="18" height="16" rx="2" />
+            <circle cx="9" cy="10" r="1.6" />
+            <path d="M4 18l5-5 4 4 3-3 4 4" />
+          </svg>
+          Imagen
+        </button>
+        @if (uploading()) {
+          <span class="chat-thread__hint" role="status">Subiendo...</span>
+        }
+      </div>
+      <div class="chat-comp__tools-r">
+        <span class="chat-thread__hint">
+          @if (windowOpen()) {
+            Se envía por {{ channelLabel() }}
+          } @else {
+            Ventana cerrada: no se puede enviar
+          }
+        </span>
+        <db-button
+          [label]="sending() ? 'Enviando...' : 'Enviar'"
+          variant="primary"
+          format="solid"
+          [disabled]="!canSend()"
+          (clicked)="send()"
+        />
+      </div>
+    </div>
+  }
+</div>

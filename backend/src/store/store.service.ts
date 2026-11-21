@@ -3,6 +3,8 @@ import {
   Brand,
   CalendarEntry,
   Category,
+  ChatConversation,
+  ChatMessage,
   Customer,
   Fair,
   GeneralSettings,
@@ -44,6 +46,8 @@ export class StoreService {
   suppliers: Supplier[] = [];
   spools: Spool[] = [];
   supplyMovements: SupplyMovement[] = [];
+  chatConversations: ChatConversation[] = [];
+  chatMessages: ChatMessage[] = [];
 
   private categoryIndexLen = -1;
   private productIndexLen = -1;
@@ -83,6 +87,8 @@ export class StoreService {
     this.suppliers = state.suppliers ?? [];
     this.spools = state.spools ?? [];
     this.supplyMovements = state.supplyMovements ?? [];
+    this.chatConversations = state.chatConversations ?? [];
+    this.chatMessages = state.chatMessages ?? [];
     this.invalidateIndexes();
   }
 
@@ -105,6 +111,8 @@ export class StoreService {
       suppliers: this.suppliers,
       spools: this.spools,
       supplyMovements: this.supplyMovements,
+      chatConversations: this.chatConversations,
+      chatMessages: this.chatMessages,
     };
   }
 
@@ -397,6 +405,14 @@ export class StoreService {
 
   getSupplyMovementById(id: string): SupplyMovement | undefined {
     return this.supplyMovements.find((entry) => entry.id === id);
+  }
+
+  nextChatId(): string {
+    return this.nextId('chat', this.chatConversations);
+  }
+
+  nextChatMessageId(): string {
+    return this.nextId('cmsg', this.chatMessages);
   }
 
   private invalidateIndexes(): void {

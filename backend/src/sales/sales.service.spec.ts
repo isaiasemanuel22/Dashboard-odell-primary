@@ -351,7 +351,7 @@ describe('SalesService order revenue', () => {
   });
 });
 
-describe('SalesService §28: comisiones, canal, factura', () => {
+describe('SalesService §29: comisiones, canal, factura', () => {
   let store: StoreService;
   let service: SalesService;
 
@@ -391,7 +391,6 @@ describe('SalesService §28: comisiones, canal, factura', () => {
     store.generalSettings.integrations = {
       mercadoPago: { feePercent: 0 },
       arca: { pointOfSale: 3, annualCap: 5000000 },
-      whatsapp: { businessPhone: '', templates: [] },
     };
     service = new SalesService(
       new RetailSaleRepository(store),

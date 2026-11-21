@@ -1,3 +1,5 @@
+import { DEFAULT_AGENT_TOOLS } from './agent-tools.util';
+import { DEFAULT_ATTENDANT } from './attendant-settings.util';
 import { FilamentType, ResinType, SupplyCategory } from '../common/enums';
 import { GeneralSettings, Supply } from '../common/interfaces';
 import { normalizePaperReferenceSheets } from '../common/paper-cost.util';
@@ -35,6 +37,13 @@ function baseSettings(
       percent: 20,
       serviceTypes: [],
     },
+    automaticAlerts: {
+      ordersDue: true,
+      lowStock: true,
+      weeklyReceivables: true,
+    },
+    agentTools: { ...DEFAULT_AGENT_TOOLS },
+    attendant: { ...DEFAULT_ATTENDANT },
     paperPricesPerSqm: { sublimacion: 0, dtf: 0, dtfUv: 0 },
     paperReferenceSheets: normalizePaperReferenceSheets(undefined, {
       sublimacion: 0,

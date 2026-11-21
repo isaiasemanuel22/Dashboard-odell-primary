@@ -27,6 +27,8 @@ function emptyStore(): StoreService {
     suppliers: [],
     spools: [],
     supplyMovements: [],
+    chatConversations: [],
+    chatMessages: [],
   });
   return store;
 }

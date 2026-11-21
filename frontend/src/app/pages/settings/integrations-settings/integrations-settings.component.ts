@@ -1,10 +1,8 @@
 import {
   ChangeDetectorRef,
   Component,
-  ElementRef,
   OnDestroy,
   OnInit,
-  ViewChild,
   inject,
 } from '@angular/core';
 import { NgTemplateOutlet } from '@angular/common';
@@ -22,12 +20,9 @@ import {
   UpdateIntegrationsPayload,
 } from '../../../core/models';
 import { BreakpointService } from '../../../core/services/breakpoint.service';
+import { MetaService, MetaStatus } from '../../../core/services/meta.service';
 import { SettingsService } from '../../../core/services/settings.service';
 import { MobileDockAction } from '../../../components/mobile-dock/mobile-dock.component';
-import {
-  DEFAULT_WHATSAPP_TEMPLATES,
-  WHATSAPP_TEMPLATE_VARIABLES,
-} from '../../../shared/constants/whatsapp-template.constants';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
 import { KeepTypingDirective } from '../../../shared/directives/keep-typing.directive';
 import {
@@ -35,23 +30,35 @@ import {
   SettingsUnsavedChanges,
 } from '../settings-unsaved-changes';
 
-/** Plantilla en edición. `id` vacío = nueva (la crea el servidor al guardar). */
-interface TemplateDraft {
-  key: string;
-  id: string;
+interface ChannelCard {
+  key: 'whatsapp' | 'instagram' | 'messenger';
+  logo: string;
   name: string;
-  body: string;
-  builtIn: boolean;
+  connected: boolean;
+  detail: string;
 }
+
+type PillTone = 'ok' | 'warn' | 'danger' | 'neutral';
+
+const TEMPLATE_STATUS: Record<string, { label: string; tone: PillTone }> = {
+  APPROVED: { label: 'Aprobada', tone: 'ok' },
+  PENDING: { label: 'En revisión', tone: 'warn' },
+  REJECTED: { label: 'Rechazada', tone: 'danger' },
+  PAUSED: { label: 'Pausada', tone: 'warn' },
+  DISABLED: { label: 'Desactivada', tone: 'danger' },
+};
 
 interface IntegrationsDraft {
   feePercent: number | null;
   pointOfSale: number | null;
   annualCap: number | null;
-  businessPhone: string;
-  templates: TemplateDraft[];
 }
 
+/**
+ * Ajustes → Integraciones (§29.1): conexión con Meta (§28.1, solo lectura:
+ * los ids y tokens van en variables de entorno) y las tarjetas editables de
+ * Mercado Pago y ARCA, más Tiendanube sin conectar.
+ */
 @Component({
   selector: 'app-integrations-settings',
   standalone: true,
@@ -72,21 +79,22 @@ export class IntegrationsSettingsComponent
   implements OnInit, OnDestroy, SettingsUnsavedChanges
 {
   private readonly settingsService = inject(SettingsService);
+  private readonly metaService = inject(MetaService);
   private readonly breakpoint = inject(BreakpointService);
   private readonly cdr = inject(ChangeDetectorRef);
   private settingsSub?: Subscription;
   private readonly editBaseline = new SettingsEditBaseline();
-  private nextKey = 0;
+  private messageTimer: ReturnType<typeof setTimeout> | null = null;
   readonly warnOnDesktop = true;
-  private lastSelection: { start: number; end: number } | null = null;
-
-  @ViewChild('bodyArea') private bodyArea?: ElementRef<HTMLTextAreaElement>;
 
   readonly isMobile = this.breakpoint.isMobile;
-  readonly variables = WHATSAPP_TEMPLATE_VARIABLES;
 
   draft: IntegrationsDraft | null = null;
-  editingKey: string | null = null;
+  metaStatus: MetaStatus | null = null;
+  channels: ChannelCard[] = [];
+  metaLoading = true;
+  metaError = '';
+  copyNotice = '';
   saving = false;
   message = '';
   messageIsError = false;
@@ -101,19 +109,17 @@ export class IntegrationsSettingsComponent
         this.cdr.markForCheck();
       });
     this.settingsService.getGeneralSettings(false).subscribe();
+    this.loadMeta();
   }
 
   ngOnDestroy(): void {
     this.settingsSub?.unsubscribe();
+    if (this.messageTimer) clearTimeout(this.messageTimer);
   }
 
   hasUnsavedChanges(): boolean {
     if (!this.draft) return false;
     return this.editBaseline.isDirty(this.editState());
-  }
-
-  get editingTemplate(): TemplateDraft | null {
-    return this.draft?.templates.find((t) => t.key === this.editingKey) ?? null;
   }
 
   get mobileDockActions(): MobileDockAction[] {
@@ -142,60 +148,21 @@ export class IntegrationsSettingsComponent
         : Number(value);
   }
 
-  toggleEdit(template: TemplateDraft): void {
-    this.editingKey = this.editingKey === template.key ? null : template.key;
+  templateStatus(metaStatus: string | null): { label: string; tone: PillTone } {
+    if (!metaStatus) return { label: 'Sin dar de alta', tone: 'neutral' };
+    return TEMPLATE_STATUS[metaStatus] ?? { label: metaStatus, tone: 'neutral' };
   }
 
-  addTemplate(): void {
-    if (!this.draft) return;
-    const template: TemplateDraft = {
-      key: `new-${++this.nextKey}`,
-      id: '',
-      name: '',
-      body: '',
-      builtIn: false,
-    };
-    this.draft.templates = [...this.draft.templates, template];
-    this.editingKey = template.key;
-  }
-
-  removeTemplate(template: TemplateDraft): void {
-    if (!this.draft || template.builtIn) return;
-    this.draft.templates = this.draft.templates.filter(
-      (t) => t.key !== template.key,
-    );
-    if (this.editingKey === template.key) this.editingKey = null;
-  }
-
-  /** Guarda la selección del textarea al perder el foco (los chips la usan). */
-  rememberSelection(area: HTMLTextAreaElement): void {
-    this.lastSelection = {
-      start: area.selectionStart ?? area.value.length,
-      end: area.selectionEnd ?? area.selectionStart ?? area.value.length,
-    };
-  }
-
-  /** Inserta `{variable}` donde estaba el cursor del cuerpo de la plantilla. */
-  insertVariable(key: string): void {
-    const template = this.editingTemplate;
-    if (!template) return;
-    const area = this.bodyArea?.nativeElement;
-    const body = template.body;
-    const sel = this.lastSelection;
-    const start = Math.min(sel?.start ?? body.length, body.length);
-    const end = Math.min(sel?.end ?? start, body.length);
-    const before = body.slice(0, start);
-    const needsSpace = before.length > 0 && !/\s$/.test(before);
-    const token = `${needsSpace ? ' ' : ''}{${key}}`;
-    template.body = before + token + body.slice(end);
-    const caret = start + token.length;
-    this.lastSelection = { start: caret, end: caret };
-    queueMicrotask(() => {
-      if (!area) return;
-      area.value = template.body;
-      area.focus();
-      area.setSelectionRange(caret, caret);
-    });
+  copyWebhookUrl(): void {
+    if (!this.metaStatus) return;
+    try {
+      void navigator.clipboard.writeText(this.metaStatus.webhookUrl).then(
+        () => this.flashCopy('URL copiada'),
+        () => this.flashCopy('No se pudo copiar'),
+      );
+    } catch {
+      this.flashCopy('No se pudo copiar');
+    }
   }
 
   save(): void {
@@ -209,21 +176,12 @@ export class IntegrationsSettingsComponent
     const payload: UpdateIntegrationsPayload = {
       mercadoPago: { feePercent: draft.feePercent ?? 0 },
       arca: { pointOfSale: draft.pointOfSale, annualCap: draft.annualCap },
-      whatsapp: {
-        businessPhone: draft.businessPhone.trim(),
-        templates: draft.templates.map((t) => ({
-          ...(t.id ? { id: t.id } : {}),
-          name: t.name.trim(),
-          body: t.body,
-        })),
-      },
     };
     this.saving = true;
     this.setMessage('', false);
     this.settingsService.updateIntegrations(payload).subscribe({
       next: (saved) => {
         this.saving = false;
-        this.editingKey = null;
         this.applySaved(saved);
         this.setMessage('Integraciones guardadas correctamente', false);
       },
@@ -249,35 +207,14 @@ export class IntegrationsSettingsComponent
     if (draft.annualCap !== null && draft.annualCap < 0) {
       return 'El tope anual no puede ser negativo';
     }
-    for (const t of draft.templates) {
-      if (!t.name.trim()) {
-        this.editingKey = t.key;
-        return 'Cada plantilla necesita un nombre';
-      }
-      if (!t.body.trim()) {
-        this.editingKey = t.key;
-        return `La plantilla «${t.name.trim()}» no tiene mensaje`;
-      }
-    }
     return '';
   }
 
   private applySaved(saved: IntegrationsSettings | undefined): void {
-    const templates = saved?.whatsapp?.templates ?? [
-      ...DEFAULT_WHATSAPP_TEMPLATES,
-    ];
     this.draft = {
       feePercent: saved?.mercadoPago?.feePercent ?? 0,
       pointOfSale: saved?.arca?.pointOfSale ?? null,
       annualCap: saved?.arca?.annualCap ?? null,
-      businessPhone: saved?.whatsapp?.businessPhone ?? '',
-      templates: templates.map((t) => ({
-        key: t.id,
-        id: t.id,
-        name: t.name,
-        body: t.body,
-        builtIn: t.builtIn,
-      })),
     };
     this.editBaseline.capture(this.editState());
     this.cdr.markForCheck();
@@ -290,14 +227,72 @@ export class IntegrationsSettingsComponent
       feePercent: d.feePercent,
       pointOfSale: d.pointOfSale,
       annualCap: d.annualCap,
-      businessPhone: d.businessPhone,
-      templates: d.templates.map((t) => [t.id, t.name, t.body]),
     };
   }
 
   private setMessage(text: string, isError: boolean): void {
     this.message = text;
     this.messageIsError = isError;
+    this.cdr.markForCheck();
+  }
+
+  private loadMeta(): void {
+    this.metaService.status().subscribe({
+      next: (status) => {
+        this.metaStatus = status;
+        this.channels = [
+          {
+            key: 'whatsapp',
+            logo: 'WA',
+            name: 'WhatsApp',
+            connected: status.whatsapp.connected,
+            detail:
+              status.whatsapp.displayPhoneNumber ??
+              (status.whatsapp.phoneNumberId
+                ? `Número ${status.whatsapp.phoneNumberId}`
+                : 'Falta WHATSAPP_PHONE_NUMBER_ID'),
+          },
+          {
+            key: 'instagram',
+            logo: 'IG',
+            name: 'Instagram',
+            connected: status.instagram.connected,
+            detail: status.instagram.accountId
+              ? `Cuenta ${status.instagram.accountId}`
+              : 'Falta INSTAGRAM_ACCOUNT_ID',
+          },
+          {
+            key: 'messenger',
+            logo: 'FB',
+            name: 'Messenger',
+            connected: status.messenger.connected,
+            detail: status.messenger.pageId
+              ? `Página ${status.messenger.pageId}`
+              : 'Falta META_PAGE_ID',
+          },
+        ];
+        this.metaLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: (err) => {
+        this.metaError = extractApiErrorMessage(
+          err,
+          'No se pudo leer la conexión con Meta',
+        );
+        this.metaLoading = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
+  private flashCopy(text: string): void {
+    this.copyNotice = text;
+    if (this.messageTimer) clearTimeout(this.messageTimer);
+    this.messageTimer = setTimeout(() => {
+      this.copyNotice = '';
+      this.messageTimer = null;
+      this.cdr.markForCheck();
+    }, 3000);
     this.cdr.markForCheck();
   }
 }

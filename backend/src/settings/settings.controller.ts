@@ -9,6 +9,8 @@ import {
   Req,
 } from '@nestjs/common';
 import type { Request } from 'express';
+import { assertAdmin } from '../auth/admin.util';
+import { AppConfigService } from '../config/app-config.service';
 import {
   ColorConfigDto,
   UpdateColorConfigDto,
@@ -34,6 +36,8 @@ import {
   UpdatePaperPricesDto,
   UpdateProfitMarginsDto,
   UpdateWholesaleDiscountDto,
+  UpdateAutomaticAlertsDto,
+  UpdateAgentToolsDto,
 } from '../common/dto';
 import { CostCalculatorService } from './cost-calculator.service';
 import { SettingsService } from './settings.service';
@@ -43,6 +47,7 @@ export class SettingsController {
   constructor(
     private readonly settingsService: SettingsService,
     private readonly costCalculator: CostCalculatorService,
+    private readonly config: AppConfigService,
   ) {}
 
   @Get('general')
@@ -73,6 +78,21 @@ export class SettingsController {
   @Patch('wholesale-discount')
   updateWholesaleDiscount(@Body() data: UpdateWholesaleDiscountDto) {
     return this.settingsService.updateWholesaleDiscount(data);
+  }
+
+  @Patch('automatic-alerts')
+  updateAutomaticAlerts(
+    @Req() request: Request,
+    @Body() data: UpdateAutomaticAlertsDto,
+  ) {
+    assertAdmin(request, this.config.requireAuth);
+    return this.settingsService.updateAutomaticAlerts(data);
+  }
+
+  @Patch('agent-tools')
+  updateAgentTools(@Req() request: Request, @Body() data: UpdateAgentToolsDto) {
+    assertAdmin(request, this.config.requireAuth);
+    return this.settingsService.updateAgentTools(data);
   }
 
   @Patch('paper-prices')

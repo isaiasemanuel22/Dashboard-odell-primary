@@ -14,7 +14,7 @@ import { FormDialogService } from '../../../../modals/public-api';
 import { extractApiErrorMessage } from '../../../../shared/utils/api-error';
 import { DateShortPipe } from '../../../../shared/pipes/labels.pipe';
 
-/** Tarjeta «Factura» del pedido: factura C marcada a mano (§28.4). */
+/** Tarjeta «Factura» del pedido: factura C marcada a mano (§29.4). */
 @Component({
   selector: 'app-order-detail-invoice',
   standalone: true,

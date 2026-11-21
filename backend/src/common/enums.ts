@@ -86,6 +86,7 @@ export enum SalesChannel {
   TIENDANUBE = 'tiendanube',
   FERIA = 'feria',
   MOSTRADOR = 'mostrador',
+  MESSENGER = 'messenger',
 }
 
 export enum CustomerSource {
@@ -95,6 +96,7 @@ export enum CustomerSource {
   FERIA = 'feria',
   RECOMENDACION = 'recomendacion',
   OTRO = 'otro',
+  MESSENGER = 'messenger',
 }
 
 export enum PaymentMethod {
@@ -127,6 +129,38 @@ export enum FairStatus {
   PLANNED = 'planned',
   OPEN = 'open',
   CLOSED = 'closed',
+}
+
+export enum ChatChannel {
+  WHATSAPP = 'whatsapp',
+  INSTAGRAM = 'instagram',
+  MESSENGER = 'messenger',
+}
+
+export enum ChatDirection {
+  IN = 'in',
+  OUT = 'out',
+}
+
+export enum ChatAuthor {
+  CUSTOMER = 'customer',
+  AGENT = 'agent',
+  HUMAN = 'human',
+}
+
+export enum ChatMessageStatus {
+  RECEIVED = 'received',
+  SENT = 'sent',
+  FAILED = 'failed',
+  SUGGESTED = 'suggested',
+  DISCARDED = 'discarded',
+}
+
+/** Estado derivado de una conversación (no se guarda). */
+export enum ChatStatus {
+  OPEN = 'open',
+  PENDING_APPROVAL = 'pending_approval',
+  HANDED_OFF = 'handed_off',
 }
 
 export enum TreasuryMovementDirection {

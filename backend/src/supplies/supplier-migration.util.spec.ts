@@ -21,6 +21,8 @@ function emptyState(overrides: Partial<StoreState> = {}): StoreState {
     suppliers: [],
     spools: [],
     supplyMovements: [],
+    chatConversations: [],
+    chatMessages: [],
     ...overrides,
   };
 }

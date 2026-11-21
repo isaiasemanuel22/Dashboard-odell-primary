@@ -406,6 +406,8 @@ export function createRandomSeedState(): StoreState {
     suppliers: [],
     spools: [],
     supplyMovements: [],
+    chatConversations: [],
+    chatMessages: [],
   };
 
   addExtraCustomers(state, run, state.customers.length + 1);

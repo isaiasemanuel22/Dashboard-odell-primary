@@ -20,6 +20,7 @@ export const CUSTOMER_SOURCE_LABELS: Record<CustomerSource, string> = {
   [CustomerSource.FERIA]: 'Feria',
   [CustomerSource.RECOMENDACION]: 'Recomendación',
   [CustomerSource.OTRO]: 'Otro',
+  [CustomerSource.MESSENGER]: 'Messenger',
 };
 
 export const SALES_CHANNEL_LABELS: Record<SalesChannel, string> = {
@@ -29,6 +30,7 @@ export const SALES_CHANNEL_LABELS: Record<SalesChannel, string> = {
   [SalesChannel.TIENDANUBE]: 'Tienda Nube',
   [SalesChannel.FERIA]: 'Feria',
   [SalesChannel.MOSTRADOR]: 'Mostrador',
+  [SalesChannel.MESSENGER]: 'Messenger',
 };
 
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {

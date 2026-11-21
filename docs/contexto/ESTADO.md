@@ -72,6 +72,9 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   Proveedor sí confirma. ¿Unificar?
 - Diseño v3 (merch): ¿la seña es obligatoria (50% desde 20 prendas) y frena
   la producción? Choca con §Pagos de BUSINESS-RULES, donde la seña no tiene efectos.
+- Chats: plantillas de WhatsApp fuera de la ventana de 24 h, cómo se cuentan los no
+  leídos, botón «Respuestas rápidas» del encabezado y sus textos (hoy `[completar]`),
+  seña/entrega en la sugerencia del agente.
 
 
 ## Entorno local

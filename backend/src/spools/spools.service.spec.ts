@@ -41,6 +41,8 @@ describe('SpoolsService', () => {
       suppliers: [],
       spools,
       supplyMovements: [],
+      chatConversations: [],
+      chatMessages: [],
     });
     return store;
   }

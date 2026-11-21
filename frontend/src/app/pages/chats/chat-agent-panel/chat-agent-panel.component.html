@@ -1,0 +1,56 @@
+<ng-template #body>
+  @if (review().length) {
+    <span class="chat-agent__subtitle">Qué revisó el agente</span>
+    @for (item of review(); track $index) {
+      <p class="chat-agent__note"><b>{{ item.label }}:</b> {{ item.detail }}</p>
+    }
+  }
+  @if (isAdmin() && status()) {
+    <db-button
+      [label]="enabled() ? 'Pausar agente' : 'Activar agente'"
+      variant="secondary"
+      format="soft"
+      [block]="!mobile()"
+      [disabled]="saving()"
+      (clicked)="toggle()"
+    />
+  }
+  @if (error()) {
+    <p class="chat-agent__error" role="alert">{{ error() }}</p>
+  }
+</ng-template>
+
+@if (mobile()) {
+  <details class="chat-agent-m">
+    <summary>
+      <span class="chat-agent__pill chat-agent__pill--{{ state().tone }}">
+        @if (state().tone === 'ok') {
+          <span class="chat-agent__dot" aria-hidden="true"></span>
+        }
+        {{ state().label }}
+      </span>
+      <svg class="chat-agent-m__chevron" viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M6 9l6 6 6-6" />
+      </svg>
+    </summary>
+    <div class="chat-agent-m__body">
+      <ng-container [ngTemplateOutlet]="body" />
+      @if (!review().length && !(isAdmin() && status())) {
+        <p class="chat-agent__hint">El agente todavía no revisó nada en este chat.</p>
+      }
+    </div>
+  </details>
+} @else {
+  <section class="chat-agent" aria-label="Agente de atención">
+    <div class="chat-agent__head">
+      <span class="chat-agent__title">Agente</span>
+      <span class="chat-agent__pill chat-agent__pill--{{ state().tone }}">
+        @if (state().tone === 'ok') {
+          <span class="chat-agent__dot" aria-hidden="true"></span>
+        }
+        {{ state().label }}
+      </span>
+    </div>
+    <ng-container [ngTemplateOutlet]="body" />
+  </section>
+}

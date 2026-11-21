@@ -739,3 +739,62 @@ describe('QuotesService aceptar con pedido fallido', () => {
     expect(store.products).toHaveLength(0);
   });
 });
+
+describe('QuotesService.previewPricing', () => {
+  it('da el mismo precio y total que create, sin guardar', () => {
+    const store = new StoreService();
+    const state = createEmptyState();
+    state.customers.push({
+      id: 'cust-rev',
+      name: 'Revendedor',
+      email: 'rev@test.com',
+      phone: '111',
+      type: CustomerType.REVENDEDOR,
+      createdAt: '2026-10-21T12:00:00.000Z',
+    });
+    state.products.push({
+      id: 'prod-1',
+      name: 'Pieza',
+      type: ProductType.FDM,
+      images: [],
+      attachments: [],
+      updatedAt: '2026-10-21T12:00:00.000Z',
+      price: 1000,
+      cost: 400,
+      profit: 600,
+      categoryIds: [],
+      size: '10 cm',
+      published: true,
+      components: [],
+      assemblyTimeHours: 0,
+      includesPieces: false,
+      grams: 10,
+      printTimeHours: 1,
+      workTimeHours: 0,
+      stock: 5,
+    });
+    store.applyState(state);
+    const service = buildQuotesService(store);
+    const data = {
+      customerId: 'cust-rev',
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productId: 'prod-1',
+          productName: 'Pieza',
+          quantity: 2,
+          unitPrice: 1000,
+        },
+      ],
+    };
+
+    const preview = service.previewPricing(data);
+    expect(store.quotes).toHaveLength(0);
+    const quote = service.create(data);
+
+    expect(preview.total).toBe(quote.total);
+    expect(preview.priceType).toBe(quote.priceType);
+    expect(preview.wholesaleApplied).toBe(true);
+    expect(preview.items[0].unitPrice).toBe(quote.items[0].unitPrice);
+  });
+});

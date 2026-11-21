@@ -11,7 +11,7 @@ import { createEmptyState } from '../store/store.seed';
 import { StoreService } from '../store/store.service';
 import { OrdersService } from './orders.service';
 
-describe('OrdersService factura y WhatsApp (§28)', () => {
+describe('OrdersService factura y WhatsApp (§29)', () => {
   let store: StoreService;
   let service: OrdersService;
 
@@ -116,16 +116,22 @@ describe('OrdersService factura y WhatsApp (§28)', () => {
     expect(() => service.removeInvoice('ord-1')).toThrow('no tiene factura');
   });
 
-  it('registra el aviso por WhatsApp (abrir o copiar)', () => {
+  it('registra el aviso por WhatsApp (enviar o copiar)', () => {
     const order = service.logWhatsApp('ord-1', {
-      templateId: 'tpl-listo',
+      templateId: 'pedido_listo',
       templateName: 'Tu pedido está listo',
       via: 'copy',
     });
     expect(order.activityHistory?.[0]).toMatchObject({
       kind: 'whatsapp',
-      templateId: 'tpl-listo',
+      templateId: 'pedido_listo',
       via: 'copy',
     });
+    const sent = service.logWhatsApp('ord-1', {
+      templateId: 'pedido_listo',
+      templateName: 'Tu pedido está listo',
+      via: 'send',
+    });
+    expect(sent.activityHistory?.[1].detail).toContain('WhatsApp enviado');
   });
 });
