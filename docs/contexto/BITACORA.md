@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · Chats: contador de no leídos
+Rama: feat/chats · Commits: ver `git log` (fix(chats))
+Hecho: QA en celular del globito de «Más», el mosaico y la barra lateral: andaban. Fallo corregido: al leer un chat, el encabezado «N sin leer» y el filtro «Sin leer» no bajaban hasta recargar; ahora se recarga la lista y `ChatsUnreadService`. El encabezado muestra el total aunque haya búsqueda. Repetición de QA: OK en mobile y escritorio.
+Decisiones: los números de los filtros siguen la búsqueda (ya decidido).
+Pendiente: para repetir la prueba hay que dejar `last_read_at` en NULL en chat-1 y chat-2 de la base local.
+
 ## 2026-11-18 · Sección Chats (v7) en la app
 Rama: feat/chats · Commits: d29f77f
 Hecho: módulo `chats` en el backend (tablas `chat_conversations` y `chat_messages`; gateway local que no sale a la red) y sección Chats en el frontend (bandeja, hilo y panel del cliente, escritorio y mobile, ítem propio en la barra lateral y en «Más»). Para la sesión de Meta: `sendOutbound`, `agentPaused` (columna `agent_paused`, franja «Agente en pausa» con «Reactivar agente») y `linkCustomer`. Hora 24 h y fechas dd/mm; a 1280×768 los mensajes tienen 292 px. Esquema aplicado en la base local. Tester: 7/7 puntos OK; QA visual: cercano al diseño.

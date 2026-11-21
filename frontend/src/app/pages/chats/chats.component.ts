@@ -108,6 +108,9 @@ export class ChatsComponent implements OnInit {
 
   readonly conversations = computed(() => this.list()?.conversations ?? []);
   readonly counts = computed(() => this.list()?.counts ?? null);
+  /** Totales del encabezado, sin la búsqueda. */
+  readonly unreadTotal = this.chatsUnread.count;
+  readonly pendingApprovalTotal = signal<number | null>(null);
 
   private readonly listReload$ = new Subject<void>();
   private readonly searchInput$ = new Subject<string>();
@@ -128,21 +131,24 @@ export class ChatsComponent implements OnInit {
 
     this.listReload$
       .pipe(
-        switchMap(() =>
-          this.chatsService
-            .list({
+        switchMap(() => {
+          const search = this.search().trim();
+          // Los conteos del backend siguen la búsqueda: sin ella, son el total.
+          const totals$ = search
+            ? this.chatsService.list().pipe(map((all) => all.counts))
+            : of(null);
+          return forkJoin({
+            list: this.chatsService.list({
               channel: this.channel(),
               filter: this.filter(),
-              search: this.search(),
-            })
-            .pipe(
-              map((list) => ({ list })),
-              catchError(() => of({ list: null })),
-            ),
-        ),
+              search,
+            }),
+            totals: totals$,
+          }).pipe(catchError(() => of({ list: null, totals: null })));
+        }),
         takeUntilDestroyed(this.destroyRef),
       )
-      .subscribe(({ list }) => {
+      .subscribe(({ list, totals }) => {
         this.listLoading.set(false);
         if (!list) {
           if (!this.list()) this.listError.set(true);
@@ -150,6 +156,7 @@ export class ChatsComponent implements OnInit {
         }
         this.listError.set(false);
         this.list.set(list);
+        this.pendingApprovalTotal.set((totals ?? list.counts).pendingApproval);
         this.listPersistence.onListReady();
       });
 
@@ -268,15 +275,7 @@ export class ChatsComponent implements OnInit {
         if (current?.conversation.id === summary.id) {
           this.detail.set({ ...current, conversation: summary });
         }
-        const list = this.list();
-        if (list) {
-          this.list.set({
-            ...list,
-            conversations: list.conversations.map((chat) =>
-              chat.id === summary.id ? summary : chat,
-            ),
-          });
-        }
+        this.reloadList();
         this.chatsUnread.refresh();
       },
       error: () => undefined,
