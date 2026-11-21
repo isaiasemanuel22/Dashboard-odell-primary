@@ -350,6 +350,44 @@
       </db-mobile-collapsible>
 
       <db-mobile-collapsible
+        panelId="od-m-acc-whatsapp"
+        title="Avisar por WhatsApp"
+        [summary]="whatsappAccordionSummary"
+        [open]="isAccordionOpen('whatsapp')"
+        (toggled)="setAccordionOpen('whatsapp', $event)"
+      >
+        @if (isMobile() && whatsappVars; as vars) {
+          <app-whatsapp-notify
+            selectId="wa-template-m"
+            [showTitle]="false"
+            [templates]="whatsappTemplates"
+            [vars]="vars"
+            [phone]="assignedCustomerPhone"
+            [defaultTemplateId]="whatsappDefaultTemplateId"
+            footnote="Se registra en el historial del pedido"
+            (sent)="onWhatsAppSent($event)"
+          />
+        }
+      </db-mobile-collapsible>
+
+      <db-mobile-collapsible
+        panelId="od-m-acc-invoice"
+        title="Factura"
+        [summary]="invoiceAccordionSummary"
+        [open]="isAccordionOpen('invoice')"
+        (toggled)="setAccordionOpen('invoice', $event)"
+      >
+        @if (isMobile()) {
+          <app-order-detail-invoice
+            [order]="order"
+            [receiver]="invoiceReceiver"
+            [pointOfSale]="arcaPointOfSale"
+            (orderChange)="onInvoiceChanged($event)"
+          />
+        }
+      </db-mobile-collapsible>
+
+      <db-mobile-collapsible
         panelId="od-m-acc-history"
         title="Historial"
         [summary]="historyAccordionSummary"
@@ -360,6 +398,7 @@
           <app-order-detail-history
             [statusHistory]="statusHistory"
             [priceHistory]="priceHistory"
+            [activityHistory]="order.activityHistory ?? []"
             [sourceQuoteId]="sourceQuoteId"
           />
         }
@@ -464,6 +503,9 @@
             [statusClass]="order.status"
             [label]="order.status | orderStatusLabel"
           />
+          @if (salesChannelName) {
+            <span class="channel-pill">{{ salesChannelName }}</span>
+          }
         </div>
         <p class="meta-line">Creado: {{ order.createdAt | dateShort }}</p>
         <app-loss-sale-notice [reason]="order.lossReason" [note]="order.lossReasonNote" />
@@ -702,6 +744,27 @@
         </section>
 
         @if (!isMobile()) {
+          @if (whatsappVars; as vars) {
+            <section class="panel">
+              <app-whatsapp-notify
+                selectId="wa-template-d"
+                [templates]="whatsappTemplates"
+                [vars]="vars"
+                [phone]="assignedCustomerPhone"
+                [defaultTemplateId]="whatsappDefaultTemplateId"
+                footnote="Se registra en el historial del pedido"
+                (sent)="onWhatsAppSent($event)"
+              />
+            </section>
+          }
+
+          <app-order-detail-invoice
+            [order]="order"
+            [receiver]="invoiceReceiver"
+            [pointOfSale]="arcaPointOfSale"
+            (orderChange)="onInvoiceChanged($event)"
+          />
+
           <app-order-detail-deliveries
             [order]="order"
             [tasks]="tasks"
@@ -712,6 +775,7 @@
           <app-order-detail-history
             [statusHistory]="statusHistory"
             [priceHistory]="priceHistory"
+            [activityHistory]="order.activityHistory ?? []"
             [sourceQuoteId]="sourceQuoteId"
           />
         }

@@ -1,3 +1,4 @@
+import { defaultIntegrations } from './integrations.util';
 import { SettingsService } from './settings.service';
 import { StoreService } from '../store/store.service';
 import { StorePersistenceService } from '../store/store-persistence.service';
@@ -48,6 +49,7 @@ describe('SettingsService.patchGeneralSettings', () => {
     colors: [],
     filamentTypes: [],
     resinTypes: [],
+    integrations: defaultIntegrations(),
   });
 
   function createService(initial: GeneralSettings): SettingsService {
@@ -238,6 +240,7 @@ describe('SettingsService.updateWholesaleDiscount', () => {
     colors: [],
     filamentTypes: [],
     resinTypes: [],
+    integrations: defaultIntegrations(),
   });
 
   function createService(initial: GeneralSettings): SettingsService {

@@ -1,0 +1,99 @@
+@use '../../../../shared/styles/variables' as *;
+@use '../../../../shared/styles/mobile' as mobile;
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.oi {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.oi__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.oi__title {
+  margin: 0;
+}
+
+.oi__pill {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: $radius-pill;
+  font-size: 12px;
+  font-weight: 500;
+
+  &--ok {
+    background: $color-status-success-bg;
+    color: $color-status-success-text;
+  }
+
+  &--warn {
+    background: $color-status-warning-bg;
+    color: $color-status-warning-text;
+  }
+}
+
+.oi__list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin: 0;
+  font-size: 13px;
+
+  div {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  dt {
+    color: $color-text-muted;
+  }
+
+  dd {
+    margin: 0;
+    font-weight: 500;
+    text-align: right;
+    overflow-wrap: anywhere;
+  }
+}
+
+.oi__error {
+  margin: 0;
+  font-size: 13px;
+  color: $color-danger-text;
+}
+
+.oi__note {
+  margin: 0;
+  font-size: 12px;
+  color: $color-text-muted;
+}
+
+// Dentro del acordeón mobile la tarjeta no lleva borde ni título propio.
+@include mobile.mobile-only {
+  .oi.panel {
+    border: 0;
+    padding: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .oi__title {
+    display: none;
+  }
+
+  .oi__head {
+    justify-content: flex-start;
+  }
+}

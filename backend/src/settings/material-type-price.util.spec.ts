@@ -10,6 +10,8 @@ import {
   resolveResinPricePerLiter,
 } from './material-type-price.util';
 
+import { defaultIntegrations } from './integrations.util';
+
 function baseSettings(
   overrides: Partial<GeneralSettings> = {},
 ): GeneralSettings {
@@ -45,6 +47,7 @@ function baseSettings(
     resinTypeAverages: {},
     filamentTypes: [],
     resinTypes: [],
+    integrations: defaultIntegrations(),
     colors: [],
     ...overrides,
   };

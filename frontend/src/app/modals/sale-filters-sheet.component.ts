@@ -5,10 +5,10 @@ import {
   inject,
 } from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
-import { SaleEntry, SaleSource, ServiceType } from '../core/models';
+import { SaleEntry, ServiceType } from '../core/models';
+import { salesChannelLabel } from '../shared/utils/v1-labels.util';
 import {
   AreaServiceType,
-  SALE_SOURCE_LABELS,
   SERVICE_TYPE_LABELS,
 } from '../shared/constants/labels';
 import {
@@ -16,7 +16,8 @@ import {
   MobileChipGroupComponent,
 } from '@general-components';
 
-export type SaleMobileSourceFilter = SaleSource | 'all';
+/** Canal de la venta, `sin_facturar` o todas. */
+export type SaleMobileSourceFilter = string;
 export type SaleMobileAreaFilter = AreaServiceType | 'all';
 
 export interface SaleMobileSheetFilters {
@@ -52,17 +53,8 @@ export class SaleFiltersSheetComponent {
 
   draft: SaleMobileSheetFilters = cloneFilters(this.data.filters);
 
-  readonly sourceOptions: { value: SaleMobileSourceFilter; label: string }[] = [
-    { value: 'all', label: 'Todas' },
-    {
-      value: SaleSource.RETAIL,
-      label: SALE_SOURCE_LABELS[SaleSource.RETAIL],
-    },
-    {
-      value: SaleSource.ORDER,
-      label: SALE_SOURCE_LABELS[SaleSource.ORDER],
-    },
-  ];
+  readonly sourceOptions: { value: SaleMobileSourceFilter; label: string }[] =
+    buildChannelOptions(this.data.entries);
 
   readonly areaOptions: { value: SaleMobileAreaFilter; label: string }[] = [
     { value: 'all', label: 'Todas' },
@@ -109,6 +101,21 @@ export class SaleFiltersSheetComponent {
   }
 }
 
+function buildChannelOptions(
+  entries: SaleEntry[],
+): { value: SaleMobileSourceFilter; label: string }[] {
+  const channels = [...new Set(entries.map((entry) => entry.channel))];
+  const uninvoiced = entries.filter((entry) => !entry.invoice).length;
+  return [
+    { value: 'all', label: 'Todas' },
+    ...channels.map((channel) => ({
+      value: channel,
+      label: salesChannelLabel(channel) || 'Sin canal',
+    })),
+    { value: 'sin_facturar', label: `Sin facturar · ${uninvoiced}` },
+  ];
+}
+
 export function emptySaleMobileSheetFilters(): SaleMobileSheetFilters {
   return { source: 'all', area: 'all' };
 }
@@ -127,7 +134,9 @@ export function matchesSaleSheetFilters(
   entry: SaleEntry,
   filters: SaleMobileSheetFilters,
 ): boolean {
-  if (filters.source !== 'all' && entry.source !== filters.source) {
+  if (filters.source === 'sin_facturar') {
+    if (entry.invoice) return false;
+  } else if (filters.source !== 'all' && entry.channel !== filters.source) {
     return false;
   }
   if (filters.area !== 'all') {

@@ -16,6 +16,7 @@ import {
 } from '@angular/core';
 import { scrollToField } from '../../../shared/utils/form-missing.util';
 import { isSupplyOrderLine } from '../../../shared/utils/service-type.util';
+import { defaultPaymentFee } from '../../../shared/utils/payment-fee.util';
 import {
   MissingSummaryComponent,
   MissingSummaryItem,
@@ -317,6 +318,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
   depositMethod: PaymentMethod = PaymentMethod.EFECTIVO;
   depositAccount: TreasuryAccount = defaultAccountForMethod(PaymentMethod.EFECTIVO);
   depositFeeInput: number | null = null;
+  private depositFeeTouched = false;
 
   /**
    * Mobile «DETALLES»: plegado si descripción y notas están vacías.
@@ -1599,11 +1601,13 @@ export class OrderFormComponent implements OnChanges, OnInit {
   onDepositAmountChange(raw: number | null): void {
     this.depositAmountInput =
       raw === null || raw === ('' as unknown) ? null : Number(raw);
+    this.autoDepositFee();
   }
 
   onDepositMethodChange(method: PaymentMethod): void {
     this.depositMethod = method;
     this.depositAccount = defaultAccountForMethod(method);
+    this.autoDepositFee();
   }
 
   onDepositAccountChange(value: string): void {
@@ -1613,8 +1617,20 @@ export class OrderFormComponent implements OnChanges, OnInit {
   }
 
   onDepositFeeChange(raw: number | null): void {
+    this.depositFeeTouched = true;
     this.depositFeeInput =
       raw === null || raw === ('' as unknown) ? null : Number(raw);
+  }
+
+  /** Comisión por defecto de Mercado Pago (§28.1) mientras no se toque. */
+  private autoDepositFee(): void {
+    if (this.depositFeeTouched) return;
+    const fee = defaultPaymentFee(
+      this.depositAmountValue,
+      this.depositMethod,
+      this.generalSettings?.integrations?.mercadoPago?.feePercent,
+    );
+    this.depositFeeInput = fee > 0 ? fee : null;
   }
 
   /**
@@ -2051,6 +2067,7 @@ export class OrderFormComponent implements OnChanges, OnInit {
       : (this.order?.responsibleUserId ?? this.sessionFirebaseUid);
     this.depositAmountInput = null;
     this.depositFeeInput = null;
+    this.depositFeeTouched = false;
     this.depositMethod = PaymentMethod.EFECTIVO;
     this.depositAccount = defaultAccountForMethod(this.depositMethod);
 

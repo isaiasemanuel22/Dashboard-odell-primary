@@ -1,5 +1,9 @@
 import { PaymentMethod, TreasuryAccount } from '../../common/enums';
 import { RetailSale, RetailSaleItem } from '../../common/interfaces';
+import {
+  invoiceFromColumns,
+  invoiceToColumns,
+} from '../../settings/integrations.util';
 import { defaultAccountForMethod } from '../../treasury/treasury-account.util';
 
 function normalizeMethod(value?: string | null): PaymentMethod | undefined {
@@ -42,6 +46,10 @@ export function mapRetailSaleFromDb(row: {
   notes: string | null;
   method?: string | null;
   account?: string | null;
+  fee?: number | null;
+  invoiceType?: string | null;
+  invoiceNumber?: string | null;
+  invoicedAt?: Date | null;
   fairId?: string | null;
   soldAt: Date;
   createdAt: Date;
@@ -67,6 +75,8 @@ export function mapRetailSaleFromDb(row: {
     notes: row.notes ?? undefined,
     method,
     account,
+    fee: row.fee ?? 0,
+    invoice: invoiceFromColumns(row),
     fairId: row.fairId ?? undefined,
     soldAt: row.soldAt.toISOString(),
     createdAt: row.createdAt.toISOString(),
@@ -86,6 +96,8 @@ export function mapRetailSaleToDb(sale: RetailSale) {
     notes: sale.notes ?? null,
     method,
     account: sale.account ?? defaultAccountForMethod(method),
+    fee: sale.fee ?? 0,
+    ...invoiceToColumns(sale.invoice),
     fairId: sale.fairId ?? null,
     soldAt: new Date(sale.soldAt),
     createdAt: new Date(sale.createdAt),

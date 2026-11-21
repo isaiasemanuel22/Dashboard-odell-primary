@@ -150,6 +150,20 @@
         [rows]="mobileTotalRows"
       />
 
+      @if (whatsappVars; as vars) {
+        <h2 class="m-sec-t">Avisar por WhatsApp</h2>
+        <section class="m-card">
+          <app-whatsapp-notify
+            selectId="wa-template-m"
+            [showTitle]="false"
+            [templates]="whatsappTemplates"
+            [vars]="vars"
+            [phone]="customerPhone"
+            [defaultTemplateId]="quoteTemplateId"
+          />
+        </section>
+      }
+
       <h2 class="m-sec-t">Descripción</h2>
       <section class="m-card">
         @if (quote.description) {
@@ -379,6 +393,18 @@
         }
 
         <app-quote-detail-lines [quote]="quote" />
+
+        @if (whatsappVars; as vars) {
+          <section class="panel">
+            <app-whatsapp-notify
+              selectId="wa-template-d"
+              [templates]="whatsappTemplates"
+              [vars]="vars"
+              [phone]="customerPhone"
+              [defaultTemplateId]="quoteTemplateId"
+            />
+          </section>
+        }
 
         @if (editable || quote.status !== 'aceptado') {
           <section class="panel quote-actions">

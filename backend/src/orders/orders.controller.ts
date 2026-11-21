@@ -7,12 +7,15 @@ import {
   Param,
   Patch,
   Post,
+  Put,
   Query,
 } from '@nestjs/common';
 import {
   CreateOrderDto,
   CreateOrderDeliveryDto,
   CreateOrderPaymentDto,
+  MarkInvoiceDto,
+  OrderWhatsAppLogDto,
   VoidOrderPaymentDto,
   OrderPriceDecisionDto,
   UpdateOrderDto,
@@ -75,6 +78,21 @@ export class OrdersController {
     return body.action === 'apply'
       ? this.ordersService.applyCatalogPrices(id)
       : this.ordersService.keepCatalogPrices(id);
+  }
+
+  @Put(':id/invoice')
+  markInvoice(@Param('id') id: string, @Body() body: MarkInvoiceDto) {
+    return this.ordersService.markInvoice(id, body);
+  }
+
+  @Delete(':id/invoice')
+  removeInvoice(@Param('id') id: string) {
+    return this.ordersService.removeInvoice(id);
+  }
+
+  @Post(':id/whatsapp-log')
+  logWhatsApp(@Param('id') id: string, @Body() body: OrderWhatsAppLogDto) {
+    return this.ordersService.logWhatsApp(id, body);
   }
 
   @Post(':id/payments')

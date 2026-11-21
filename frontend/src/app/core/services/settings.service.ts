@@ -7,6 +7,7 @@ import {
   FilamentPriceConfig,
   FilamentTypeConfig,
   GeneralSettings,
+  IntegrationsSettings,
   MachineCostConfig,
   MachineProfile,
   PaperPricesPerSqm,
@@ -15,6 +16,7 @@ import {
   ResinTypeConfig,
   ServiceProfitMargins,
   SupplyCategory,
+  UpdateIntegrationsPayload,
   WholesaleDiscountSettings,
 } from '../models';
 import { SettingsFacade } from '../../store/settings/settings.facade';
@@ -68,6 +70,14 @@ export class SettingsService {
           }),
         ),
       );
+  }
+
+  updateIntegrations(
+    data: UpdateIntegrationsPayload,
+  ): Observable<IntegrationsSettings> {
+    return this.http
+      .patch<IntegrationsSettings>(`${this.baseUrl}/integrations`, data)
+      .pipe(tap((integrations) => this.patchSettings({ integrations })));
   }
 
   updateWholesaleDiscount(

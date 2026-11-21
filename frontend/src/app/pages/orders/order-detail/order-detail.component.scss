@@ -24,6 +24,18 @@
   }
 }
 
+.channel-pill {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: $radius-pill;
+  background: $color-status-info-bg;
+  color: $color-status-info-text;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 .meta-line {
   margin: 0.25rem 0 0;
   font-size: 0.875rem;

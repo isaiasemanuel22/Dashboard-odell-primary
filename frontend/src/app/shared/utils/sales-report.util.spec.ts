@@ -1,4 +1,4 @@
-import { ProductType, SaleSource, ServiceType } from '../../core/models';
+import { ProductType, SaleSource, SalesChannel, ServiceType } from '../../core/models';
 import { buildSalesReportAreaSections } from './sales-report.util';
 
 describe('sales-report.util', () => {
@@ -29,6 +29,10 @@ describe('sales-report.util', () => {
           cost: 1400,
           profit: 2100,
           soldAt: '2026-08-10T12:00:00.000Z',
+          channel: SalesChannel.MOSTRADOR,
+          fees: 0,
+          netProfit: 0,
+          paymentMethods: [],
           editable: true,
         },
       ],
@@ -74,6 +78,10 @@ describe('sales-report.util', () => {
           total: 6000,
           cost: 0,
           profit: 6000,
+          channel: SalesChannel.MOSTRADOR,
+          fees: 0,
+          netProfit: 6000,
+          paymentMethods: [],
           soldAt: '2026-08-10T12:00:00.000Z',
           editable: true,
         },

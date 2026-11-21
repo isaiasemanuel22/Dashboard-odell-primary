@@ -1,0 +1,60 @@
+<section class="oi panel" aria-label="Factura">
+  <div class="oi__head">
+    <h3 class="oi__title">Factura</h3>
+    @if (order.invoice) {
+      <span class="oi__pill oi__pill--ok">Facturada</span>
+    } @else {
+      <span class="oi__pill oi__pill--warn">Sin facturar</span>
+    }
+  </div>
+
+  <dl class="oi__list">
+    <div>
+      <dt>Tipo</dt>
+      <dd>Factura {{ order.invoice?.type ?? 'C' }}</dd>
+    </div>
+    @if (order.invoice; as invoice) {
+      <div>
+        <dt>Número</dt>
+        <dd>{{ invoice.type }} {{ invoice.number }}</dd>
+      </div>
+      <div>
+        <dt>Emitida</dt>
+        <dd>{{ invoice.issuedAt | dateShort }}</dd>
+      </div>
+    }
+    <div>
+      <dt>Receptor</dt>
+      <dd>{{ receiver }}</dd>
+    </div>
+  </dl>
+
+  @if (errorMessage) {
+    <p class="oi__error" role="alert">{{ errorMessage }}</p>
+  }
+
+  @if (order.invoice) {
+    <db-button
+      label="Quitar factura"
+      variant="secondary"
+      format="soft"
+      [disabled]="loading"
+      (clicked)="removeInvoice()"
+    />
+  } @else {
+    <db-button
+      label="Marcar facturada"
+      variant="secondary"
+      format="solid"
+      [disabled]="loading || cancelled"
+      (clicked)="markInvoice()"
+    />
+    @if (cancelled) {
+      <p class="oi__note">Un pedido cancelado no se factura.</p>
+    } @else {
+      <p class="oi__note">
+        Emití la factura C en ARCA y cargá acá el número para llevar el control.
+      </p>
+    }
+  }
+</section>

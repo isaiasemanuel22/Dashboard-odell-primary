@@ -1,4 +1,9 @@
-import { OrderStatus, ProductType, ServiceType } from '../common/enums';
+import {
+  OrderStatus,
+  PaymentMethod,
+  ProductType,
+  ServiceType,
+} from '../common/enums';
 import { CostCalculatorService } from '../settings/cost-calculator.service';
 import {
   OrderRepository,
@@ -343,5 +348,312 @@ describe('SalesService order revenue', () => {
     expect(() => service.removeRetail(sale.id)).not.toThrow();
     expect(store.products.find((p) => p.id === 'prod-a')?.stock).toBe(5);
     expect(store.retailSales.find((s) => s.id === sale.id)).toBeUndefined();
+  });
+});
+
+describe('SalesService §28: comisiones, canal, factura', () => {
+  let store: StoreService;
+  let service: SalesService;
+
+  const noon = (iso: string) => `${iso}T15:00:00.000Z`;
+
+  function order(partial: Record<string, unknown>) {
+    return {
+      customerId: 'cust-1',
+      customerName: 'Ana',
+      services: [ServiceType.IMPRESION_3D],
+      items: [
+        {
+          serviceType: ServiceType.IMPRESION_3D,
+          productName: 'Pieza',
+          quantity: 1,
+          unitPrice: 1000,
+        },
+      ],
+      status: OrderStatus.ENTREGADO,
+      total: 1000,
+      createdAt: noon('2026-11-05'),
+      dueDate: noon('2026-11-05'),
+      deliveryHistory: [
+        {
+          id: 'd1',
+          deliveredAt: noon('2026-11-05'),
+          items: [{ orderItemIndex: 0, quantity: 1 }],
+        },
+      ],
+      ...partial,
+    } as never;
+  }
+
+  beforeEach(() => {
+    store = new StoreService();
+    store.applyState(createEmptyState());
+    store.generalSettings.integrations = {
+      mercadoPago: { feePercent: 0 },
+      arca: { pointOfSale: 3, annualCap: 5000000 },
+      whatsapp: { businessPhone: '', templates: [] },
+    };
+    service = new SalesService(
+      new RetailSaleRepository(store),
+      new OrderRepository(store),
+      new ProductRepository(store),
+      {
+        resolveCatalogUnitCost: () => 0,
+        resolveCatalogUnitPrice: () => 100,
+        resolveDesignUnitCost: () => 0,
+        resolveOrderItemUnitCost: () => 400,
+      } as unknown as CostCalculatorService,
+      new FairRepository(store),
+      store,
+    );
+  });
+
+  it('pedido: canal, comisiones de pagos vigentes y ganancia neta', () => {
+    store.orders.push(
+      order({
+        id: 'ord-a',
+        salesChannel: 'instagram',
+        payments: [
+          {
+            id: 'p1',
+            amount: 600,
+            deposit: true,
+            createdAt: noon('2026-11-01'),
+            method: PaymentMethod.MERCADO_PAGO,
+            fee: 30,
+          },
+          {
+            id: 'p2',
+            amount: 400,
+            deposit: false,
+            createdAt: noon('2026-11-05'),
+            method: PaymentMethod.EFECTIVO,
+          },
+          {
+            id: 'p3',
+            amount: 100,
+            deposit: false,
+            createdAt: noon('2026-11-05'),
+            method: PaymentMethod.TRANSFERENCIA,
+            fee: 99,
+            voidedAt: noon('2026-11-06'),
+          },
+        ],
+      }),
+      order({ id: 'ord-b' }),
+    );
+    const { entries } = service.getOverview('2026-11');
+    const a = entries.find((e) => e.orderId === 'ord-a')!;
+    const b = entries.find((e) => e.orderId === 'ord-b')!;
+    expect(a.channel).toBe('instagram');
+    expect(a.fees).toBe(30);
+    expect(a.profit).toBe(600);
+    expect(a.netProfit).toBe(570);
+    expect(a.paymentMethods.sort()).toEqual(
+      [PaymentMethod.EFECTIVO, PaymentMethod.MERCADO_PAGO].sort(),
+    );
+    expect(b.channel).toBe('sin_canal');
+    expect(b.fees).toBe(0);
+    expect(b.netProfit).toBe(b.profit);
+  });
+
+  it('mostrador y feria: una fila por venta con su canal y comisión', () => {
+    store.retailSales.push(
+      {
+        id: 'r-1',
+        items: [],
+        total: 500,
+        fee: 25,
+        method: PaymentMethod.MERCADO_PAGO,
+        soldAt: noon('2026-11-03'),
+        createdAt: noon('2026-11-03'),
+      },
+      {
+        id: 'r-2',
+        items: [],
+        total: 700,
+        fairId: 'fair-1',
+        soldAt: noon('2026-11-03'),
+        createdAt: noon('2026-11-03'),
+      },
+    );
+    const { entries, stats } = service.getOverview('2026-11');
+    const r1 = entries.find((e) => e.retailSaleId === 'r-1')!;
+    const r2 = entries.find((e) => e.retailSaleId === 'r-2')!;
+    expect(r1.channel).toBe('mostrador');
+    expect(r1.fees).toBe(25);
+    expect(r1.netProfit).toBe(r1.profit - 25);
+    expect(r2.channel).toBe('feria');
+    expect(r2.fairId).toBe('fair-1');
+    expect(r2.fees).toBe(0);
+    expect(stats.monthlyFees).toBe(25);
+    expect(stats.monthlyNetProfit).toBe(stats.monthlyProfit - 25);
+    expect(stats.monthlyRetailFees).toBe(25);
+    expect(stats.monthlyOrdersFees).toBe(0);
+    expect(
+      stats.monthlyRetailNetProfit + stats.monthlyOrdersNetProfit,
+    ).toBeCloseTo(stats.monthlyNetProfit, 2);
+  });
+
+  it('facturado, sin facturar y últimos 12 meses por fecha de factura', () => {
+    store.orders.push(
+      order({
+        id: 'ord-1',
+        invoice: {
+          type: 'C',
+          number: '0003-00000001',
+          issuedAt: noon('2026-11-06'),
+        },
+      }),
+      order({ id: 'ord-2', total: 2000 }),
+      // Vendido en octubre 2025 (fuera del mes) pero facturado en noviembre 2026
+      order({
+        id: 'ord-old',
+        total: 4000,
+        deliveryHistory: [
+          {
+            id: 'd',
+            deliveredAt: noon('2025-10-10'),
+            items: [{ orderItemIndex: 0, quantity: 1 }],
+          },
+        ],
+        invoice: {
+          type: 'C',
+          number: '0003-00000002',
+          issuedAt: noon('2026-11-02'),
+        },
+      }),
+      // Facturado hace más de 12 meses (2025-11-30 queda afuera de dic-2025..nov-2026)
+      order({
+        id: 'ord-out',
+        total: 8000,
+        deliveryHistory: [
+          {
+            id: 'd',
+            deliveredAt: noon('2025-11-20'),
+            items: [{ orderItemIndex: 0, quantity: 1 }],
+          },
+        ],
+        invoice: {
+          type: 'C',
+          number: '0003-00000003',
+          issuedAt: noon('2025-11-30'),
+        },
+      }),
+    );
+    store.retailSales.push({
+      id: 'r-1',
+      items: [],
+      total: 300,
+      soldAt: noon('2026-03-01'),
+      createdAt: noon('2026-03-01'),
+      invoice: {
+        type: 'C',
+        number: '0003-00000004',
+        issuedAt: noon('2026-03-02'),
+      },
+    });
+    const { stats } = service.getOverview('2026-11');
+    expect(stats.invoicedCount).toBe(1);
+    expect(stats.invoicedRevenue).toBe(1000);
+    expect(stats.uninvoicedCount).toBe(1);
+    expect(stats.uninvoicedRevenue).toBe(2000);
+    // ord-1 (1000) + ord-old (4000) + r-1 (300); ord-out queda afuera
+    expect(stats.last12MonthsInvoicedRevenue).toBe(5300);
+    expect(stats.annualInvoiceCap).toBe(5000000);
+  });
+
+  it('el tope anual es null si no está cargado', () => {
+    store.generalSettings.integrations.arca.annualCap = null;
+    expect(service.getOverview().stats.annualInvoiceCap).toBeNull();
+  });
+
+  it('venta de mostrador guarda la comisión y valida 0 ≤ fee ≤ total', () => {
+    const sale = service.createRetail({
+      items: [{ productName: 'Taza', quantity: 1, unitPrice: 1000 }],
+      method: PaymentMethod.MERCADO_PAGO,
+      fee: 50.5,
+    });
+    expect(sale.fee).toBe(50.5);
+    expect(() =>
+      service.createRetail({
+        items: [{ productName: 'Taza', quantity: 1, unitPrice: 1000 }],
+        fee: 1001,
+      }),
+    ).toThrow('comisión');
+    const noFee = service.createRetail({
+      items: [{ productName: 'Taza', quantity: 1, unitPrice: 1000 }],
+    });
+    expect(noFee.fee).toBe(0);
+  });
+
+  it('editar la venta conserva la factura y la comisión', () => {
+    const sale = service.createRetail({
+      items: [{ productName: 'Taza', quantity: 1, unitPrice: 1000 }],
+      fee: 40,
+    });
+    service.markRetailInvoice(sale.id, { number: '3-9' });
+    const updated = service.updateRetail(sale.id, { notes: 'x' });
+    expect(updated.fee).toBe(40);
+    expect(updated.invoice?.number).toBe('0003-00000009');
+  });
+
+  it('factura de venta: repetida rechazada, se puede quitar y vale con feria cerrada', () => {
+    store.fairs.push({
+      id: 'fair-1',
+      name: 'Plaza',
+      status: 'closed',
+    } as never);
+    store.retailSales.push(
+      {
+        id: 'r-a',
+        items: [],
+        total: 10,
+        fairId: 'fair-1',
+        soldAt: noon('2026-11-03'),
+        createdAt: noon('2026-11-03'),
+      },
+      {
+        id: 'r-b',
+        items: [],
+        total: 10,
+        soldAt: noon('2026-11-03'),
+        createdAt: noon('2026-11-03'),
+      },
+    );
+    const marked = service.markRetailInvoice('r-a', { number: '3-5' });
+    expect(marked.invoice?.type).toBe('C');
+    expect(() =>
+      service.markRetailInvoice('r-b', { number: '0003-00000005' }),
+    ).toThrow('ya está asignada');
+    store.orders.push(
+      order({
+        id: 'ord-z',
+        invoice: {
+          type: 'C',
+          number: '0003-00000077',
+          issuedAt: noon('2026-11-06'),
+        },
+      }),
+    );
+    expect(() => service.markRetailInvoice('r-b', { number: '3-77' })).toThrow(
+      'ya está asignada',
+    );
+    expect(service.removeRetailInvoice('r-a').invoice).toBeUndefined();
+    expect(() => service.removeRetailInvoice('r-a')).toThrow(
+      'no tiene factura',
+    );
+  });
+
+  it('la caja descuenta la comisión de las ventas de mostrador', () => {
+    store.retailSales.push({
+      id: 'r-f',
+      items: [],
+      total: 1000,
+      fee: 60,
+      soldAt: noon('2026-11-03'),
+      createdAt: noon('2026-11-03'),
+    });
+    expect(service.getCollectedIncome()).toBe(940);
   });
 });

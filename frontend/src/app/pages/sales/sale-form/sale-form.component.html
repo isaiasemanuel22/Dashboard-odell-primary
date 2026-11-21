@@ -161,6 +161,17 @@
           />
         </div>
 
+        <db-input
+          label="Comisión"
+          type="number"
+          [ngModel]="feeValue"
+          (ngModelChange)="onFeeInput($event)"
+          name="saleFeeMobile"
+          [min]="0"
+          [step]="1"
+          placeholder="0"
+        />
+
         <div class="m-field">
           <span class="m-fl">Descuento</span>
           <db-segmented-control
@@ -370,6 +381,17 @@
           [(ngModel)]="account"
           name="saleAccountDesktop"
           [options]="accountOptions"
+        />
+
+        <db-input
+          label="Comisión del medio de pago"
+          type="number"
+          [ngModel]="feeValue"
+          (ngModelChange)="onFeeInput($event)"
+          name="saleFeeDesktop"
+          [min]="0"
+          [step]="1"
+          placeholder="0"
         />
 
         <div class="sale-d__two">

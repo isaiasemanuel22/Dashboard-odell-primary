@@ -26,6 +26,7 @@ import {
   PrintJob,
   Customer,
   ServiceProfitMargins,
+  WhatsAppTemplate,
 } from '../../../core/models';
 import { RealtimeEvent } from '../../../core/models/realtime.model';
 import { UserAccessService } from '../../../core/services/user-access.service';
@@ -102,13 +103,30 @@ import {
   treasuryAccountLabel,
 } from '../../../shared/utils/v1-labels.util';
 import { OrderDetailHistoryComponent } from './order-detail-history/order-detail-history.component';
+import { OrderDetailInvoiceComponent } from './order-detail-invoice/order-detail-invoice.component';
 import { OrderDetailPaymentsComponent } from './order-detail-payments/order-detail-payments.component';
 import { OrderDetailDeliveriesComponent } from './order-detail-deliveries/order-detail-deliveries.component';
+import {
+  WhatsAppNotifyComponent,
+  WhatsAppNotifySent,
+} from '../../../components/whatsapp-notify/whatsapp-notify.component';
+import { whatsAppDigitsAr } from '../../../shared/utils/quote-share.util';
+import {
+  buildOrderTemplateVars,
+  defaultOrderTemplateId,
+  WhatsAppTemplateVars,
+} from '../../../shared/utils/whatsapp-template.util';
 import { LossSaleNoticeComponent } from '../../../components/loss-sale-notice/loss-sale-notice.component';
 import { DocumentAttachmentsViewComponent } from '../../../components/document-attachments-view/document-attachments-view.component';
 import { shortId, sortAndDisambiguateOptions } from '../../../shared/utils/search-text.util';
 
-type MobileAccordionKey = 'payments' | 'tasks' | 'deliveries' | 'history';
+type MobileAccordionKey =
+  | 'payments'
+  | 'tasks'
+  | 'deliveries'
+  | 'whatsapp'
+  | 'invoice'
+  | 'history';
 
 @Component({
   selector: 'app-order-detail',
@@ -117,6 +135,8 @@ type MobileAccordionKey = 'payments' | 'tasks' | 'deliveries' | 'history';
     CdkTrapFocus,
     LossSaleNoticeComponent,
     DocumentAttachmentsViewComponent,
+    WhatsAppNotifyComponent,
+    OrderDetailInvoiceComponent,
     FormsModule,
     RouterLink,
     DateShortPipe,
@@ -288,6 +308,9 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   mobileAlertsExpanded = false;
   mobilePaymentSheetOpen = false;
   mobileDeliverySheetOpen = false;
+  integrationsWhatsApp: { businessPhone: string; templates: WhatsAppTemplate[] } | null = null;
+  arcaPointOfSale: number | null = null;
+
   private readonly mobileOpenAccordions = new Set<MobileAccordionKey>();
   private profitMargins: ServiceProfitMargins = { ...DEFAULT_PROFIT_MARGINS };
   private wholesalePercentSetting = 0;
@@ -527,6 +550,10 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     return label ? `Canal: ${label}` : null;
   }
 
+  get salesChannelName(): string {
+    return salesChannelLabel(this.order?.salesChannel);
+  }
+
   get wholesalePill(): string | null {
     if (!this.order?.wholesaleApplied) return null;
     const percent = this.wholesaleDiscountPercent();
@@ -544,8 +571,65 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   get whatsappHref(): string | null {
     const phone = this.assignedCustomerPhone;
     if (!phone) return null;
-    const normalized = this.normalizeWhatsAppPhone(phone);
+    const normalized = whatsAppDigitsAr(phone);
     return normalized ? `https://wa.me/${normalized}` : null;
+  }
+
+  get whatsappTemplates(): WhatsAppTemplate[] {
+    return this.integrationsWhatsApp?.templates ?? [];
+  }
+
+  get whatsappVars(): WhatsAppTemplateVars | null {
+    return this.order ? buildOrderTemplateVars(this.order) : null;
+  }
+
+  get whatsappDefaultTemplateId(): string | null {
+    return this.order
+      ? defaultOrderTemplateId(this.order, this.whatsappTemplates)
+      : null;
+  }
+
+  /** Receptor de la factura: CUIT del cliente o consumidor final. */
+  get invoiceReceiver(): string {
+    const customer = this.order?.customerId
+      ? this.customers.find((item) => item.id === this.order!.customerId)
+      : null;
+    const taxId = customer?.taxId?.trim();
+    return taxId ? `CUIT ${taxId}` : 'Consumidor final';
+  }
+
+  get invoiceAccordionSummary(): string {
+    const invoice = this.order?.invoice;
+    return invoice ? `Facturada ${invoice.type} ${invoice.number}` : 'Sin facturar';
+  }
+
+  get whatsappAccordionSummary(): string {
+    const count = (this.order?.activityHistory ?? []).filter(
+      (entry) => entry.kind === 'whatsapp',
+    ).length;
+    return count > 0 ? pluralize(count, 'aviso', 'avisos') : 'Sin avisos';
+  }
+
+  onWhatsAppSent(event: WhatsAppNotifySent): void {
+    if (!this.order) return;
+    this.ordersService
+      .logWhatsApp(this.order.id, {
+        templateId: event.template.id,
+        templateName: event.template.name,
+        via: event.via,
+      })
+      .subscribe({
+        next: (order) => {
+          this.order = order;
+          this.cdr.markForCheck();
+        },
+        error: () => undefined,
+      });
+  }
+
+  onInvoiceChanged(order: Order): void {
+    this.order = order;
+    this.cdr.markForCheck();
   }
 
   get telHref(): string | null {
@@ -598,7 +682,10 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
   }
 
   get historyAccordionSummary(): string {
-    const changes = this.statusHistory.length + this.priceHistory.length;
+    const changes =
+      this.statusHistory.length +
+      this.priceHistory.length +
+      (this.order?.activityHistory?.length ?? 0);
     if (changes <= 0) return 'Sin cambios';
     return pluralize(changes, 'cambio', 'cambios');
   }
@@ -674,6 +761,8 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
         next: (settings) => {
+          this.integrationsWhatsApp = settings.integrations?.whatsapp ?? null;
+          this.arcaPointOfSale = settings.integrations?.arca?.pointOfSale ?? null;
           this.profitMargins = normalizeProfitMargins(settings.profitMargins);
           this.wholesalePercentSetting = normalizeWholesaleDiscount(
             settings.wholesaleDiscount,
@@ -1191,13 +1280,5 @@ export class OrderDetailComponent implements OnInit, OnDestroy {
     const account = treasuryAccountLabel(payment.account) || 'Caja efectivo';
     const date = this.formatDayMonth(payment.createdAt);
     return `Seña ${amount} · ${method} · ${account} · ${date}`;
-  }
-
-  private normalizeWhatsAppPhone(phone: string): string {
-    const digits = phone.replace(/\D/g, '');
-    if (!digits) return '';
-    if (digits.startsWith('54')) return digits;
-    if (digits.startsWith('0')) return `54${digits.slice(1)}`;
-    return `54${digits}`;
   }
 }

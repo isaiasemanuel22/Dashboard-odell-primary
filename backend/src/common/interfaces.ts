@@ -195,6 +195,42 @@ export interface GeneralSettings {
   filamentTypes: FilamentTypeConfig[];
   /** Catálogo editable de tipos de resina (Ajustes). */
   resinTypes: ResinTypeConfig[];
+  /** Integraciones (v6, §28). */
+  integrations: IntegrationsSettings;
+}
+
+/** Solo factura C (monotributo, §28.4). */
+export type InvoiceType = 'C';
+
+export interface SaleInvoice {
+  type: InvoiceType;
+  /** Formato `0003-00000041`. */
+  number: string;
+  issuedAt: string;
+}
+
+export interface WhatsAppTemplate {
+  id: string;
+  name: string;
+  body: string;
+  builtIn: boolean;
+}
+
+export interface IntegrationsSettings {
+  mercadoPago: { feePercent: number };
+  arca: { pointOfSale: number | null; annualCap: number | null };
+  whatsapp: { businessPhone: string; templates: WhatsAppTemplate[] };
+}
+
+export type OrderActivityKind = 'whatsapp' | 'invoice';
+
+export interface OrderActivityEntry {
+  id: string;
+  at: string;
+  kind: OrderActivityKind;
+  detail: string;
+  templateId?: string;
+  via?: 'open' | 'copy';
 }
 
 export interface Impreso {
@@ -700,6 +736,8 @@ export interface Order {
   priceHistory?: OrderPriceHistoryEntry[];
   deliveryHistory?: OrderDeliveryHistoryEntry[];
   payments?: OrderPayment[];
+  invoice?: SaleInvoice;
+  activityHistory?: OrderActivityEntry[];
 }
 
 export interface OrderPayment {
@@ -957,6 +995,9 @@ export interface RetailSale {
   notes?: string;
   method?: PaymentMethod;
   account?: TreasuryAccount;
+  /** Comisión del medio de pago en pesos (ausente = 0). */
+  fee?: number;
+  invoice?: SaleInvoice;
   /** Feria donde se vendió (§26); sin feria es venta de mostrador común. */
   fairId?: string;
   soldAt: string;
@@ -980,6 +1021,8 @@ export type CreateRetailSaleDto = {
   lossReasonNote?: string;
   method?: PaymentMethod;
   account?: TreasuryAccount;
+  /** Comisión del medio de pago en pesos (≥ 0, ≤ total). */
+  fee?: number;
   fairId?: string;
 };
 
@@ -1041,6 +1084,13 @@ export interface SaleEntry {
   retailSaleId?: string;
   /** Canal del pedido; ausente en mostrador o pedidos sin canal. */
   salesChannel?: SalesChannel;
+  /** Pedido → su canal o `sin_canal`; mostrador → `mostrador`; feria → `feria`. */
+  channel: SalesChannel | 'sin_canal';
+  fees: number;
+  netProfit: number;
+  paymentMethods: PaymentMethod[];
+  invoice?: SaleInvoice;
+  fairId?: string;
   editable: boolean;
 }
 
@@ -1057,6 +1107,22 @@ export interface SalesStats {
   monthlyOrdersCount: number;
   monthlyRetailCount: number;
   profitByArea: AreaProfitBalance[];
+  monthlyFees: number;
+  /** Comisiones de las ventas de mostrador/feria del mes. */
+  monthlyRetailFees: number;
+  /** Comisiones de los pedidos entregados del mes. */
+  monthlyOrdersFees: number;
+  /** Ganancia neta (menos comisiones) de mostrador/feria. */
+  monthlyRetailNetProfit: number;
+  /** Ganancia neta (menos comisiones) de pedidos. */
+  monthlyOrdersNetProfit: number;
+  monthlyNetProfit: number;
+  invoicedRevenue: number;
+  invoicedCount: number;
+  uninvoicedRevenue: number;
+  uninvoicedCount: number;
+  last12MonthsInvoicedRevenue: number;
+  annualInvoiceCap: number | null;
 }
 
 export interface SalesOverview {

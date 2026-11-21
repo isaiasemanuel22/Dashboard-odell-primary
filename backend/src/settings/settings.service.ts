@@ -31,6 +31,12 @@ import {
   mergeProfitMargins,
   normalizeProfitMargins,
 } from './profit-margins.util';
+import {
+  applyIntegrationsPatch,
+  IntegrationsPatch,
+  normalizeIntegrations,
+} from './integrations.util';
+import { IntegrationsSettings } from '../common/interfaces';
 import { normalizeWholesaleDiscount } from './wholesale-discount.util';
 import { appendSupplyPriceHistory } from '../supplies/supply-price-history.util';
 import {
@@ -93,6 +99,9 @@ export class SettingsService {
     );
     this.store.generalSettings.wholesaleDiscount = normalizeWholesaleDiscount(
       this.store.generalSettings.wholesaleDiscount,
+    );
+    this.store.generalSettings.integrations = normalizeIntegrations(
+      this.store.generalSettings.integrations,
     );
     this.store.generalSettings.paperReferenceSheets =
       normalizePaperReferenceSheets(
@@ -407,6 +416,15 @@ export class SettingsService {
     });
     this.recordSettingsChange(['settings', 'products']);
     return structuredClone(this.store.generalSettings.wholesaleDiscount);
+  }
+
+  updateIntegrations(patch: IntegrationsPatch): IntegrationsSettings {
+    this.store.generalSettings.integrations = applyIntegrationsPatch(
+      this.store.generalSettings.integrations,
+      patch,
+    );
+    this.recordSettingsChange(['settings']);
+    return structuredClone(this.store.generalSettings.integrations);
   }
 
   updatePaperPrices(

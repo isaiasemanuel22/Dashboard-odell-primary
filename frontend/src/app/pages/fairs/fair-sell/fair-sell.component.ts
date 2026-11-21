@@ -7,6 +7,7 @@ import {
   inject,
   signal,
 } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { LayoutUiService } from '../../../layout/layout-ui.service';
@@ -18,6 +19,7 @@ import {
 } from '../../../core/models';
 import { FairsService } from '../../../core/services/fairs.service';
 import { ProductsService } from '../../../core/services/products.service';
+import { SettingsService } from '../../../core/services/settings.service';
 import { SalesService } from '../../../core/services/sales.service';
 import { CurrencyArsPipe } from '../../../shared/pipes/labels.pipe';
 import { extractApiErrorMessage } from '../../../shared/utils/api-error';
@@ -26,6 +28,7 @@ import {
   formatFairDateLong,
   formatFairTime,
 } from '../../../shared/utils/fair.util';
+import { defaultPaymentFee } from '../../../shared/utils/payment-fee.util';
 import { productSalePrice } from '../../../shared/utils/product-discount.util';
 import { matchesSearchText } from '../../../shared/utils/search-text.util';
 import { productStockOverview } from '../../../shared/utils/stock.helpers';
@@ -49,6 +52,7 @@ export class FairSellComponent implements OnInit {
   private readonly fairsService = inject(FairsService);
   private readonly productsService = inject(ProductsService);
   private readonly salesService = inject(SalesService);
+  private readonly settingsService = inject(SettingsService);
   private readonly layoutUi = inject(LayoutUiService);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -99,6 +103,23 @@ export class FairSellComponent implements OnInit {
       (sum, p) => sum + (cart[p.id] ?? 0) * productSalePrice(p),
       0,
     );
+  });
+
+  private readonly settings = toSignal(
+    this.settingsService.watchGeneralSettings(),
+    { initialValue: null },
+  );
+  /** Comisión escrita a mano; sin tocar, la de Mercado Pago por defecto (§28.1). */
+  private readonly feeInput = signal<number | null>(null);
+  private readonly feeTouched = signal(false);
+  readonly fee = computed<number | null>(() => {
+    if (this.feeTouched()) return this.feeInput();
+    const fee = defaultPaymentFee(
+      this.total(),
+      this.method(),
+      this.settings()?.integrations?.mercadoPago?.feePercent,
+    );
+    return fee > 0 ? fee : null;
   });
 
   readonly payLabel = computed(
@@ -188,6 +209,11 @@ export class FairSellComponent implements OnInit {
     });
   }
 
+  onFee(value: number | string | null): void {
+    this.feeTouched.set(true);
+    this.feeInput.set(value === null || value === '' ? null : Number(value));
+  }
+
   onSearch(value: string): void {
     this.search.set(value);
   }
@@ -208,6 +234,10 @@ export class FairSellComponent implements OnInit {
       method,
       account: defaultAccountForMethod(method),
       fairId: this.fairId,
+      fee: Math.min(
+        Math.max(0, Math.round(Number(this.fee()) || 0)),
+        Math.max(0, this.total()),
+      ),
     };
     const total = this.total();
     this.paying.set(true);
@@ -233,6 +263,8 @@ export class FairSellComponent implements OnInit {
             : f,
         );
         this.cart.set({});
+        this.feeInput.set(null);
+        this.feeTouched.set(false);
         this.message.set(`Venta cobrada: ${formatCurrencyArs(total)}`);
         this.loadFair();
         this.loadProducts();

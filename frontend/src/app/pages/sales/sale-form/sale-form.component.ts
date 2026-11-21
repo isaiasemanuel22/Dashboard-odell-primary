@@ -1,3 +1,5 @@
+import { SettingsService } from '../../../core/services/settings.service';
+import { defaultPaymentFee } from '../../../shared/utils/payment-fee.util';
 import { productSalePrice } from '../../../shared/utils/product-discount.util';
 import {
   Component,
@@ -127,6 +129,7 @@ export class SaleFormComponent implements OnChanges {
   private readonly formDialogs = inject(FormDialogService);
   private readonly injector = inject(Injector);
   private readonly router = inject(Router);
+  private readonly settingsService = inject(SettingsService);
   private readonly hostRef = inject<ElementRef<HTMLElement>>(ElementRef);
   private confirmingDiscard = false;
 
@@ -154,6 +157,9 @@ export class SaleFormComponent implements OnChanges {
   discountPercent = 0;
   discountAmount = 0;
   method: PaymentMethod = PaymentMethod.EFECTIVO;
+  /** Comisión escrita a mano; null y sin tocar = la de Mercado Pago por defecto. */
+  private feeInput: number | null = null;
+  private feeTouched = false;
   account: TreasuryAccount = defaultAccountForMethod(PaymentMethod.EFECTIVO);
   /** Valor `YYYY-MM-DD` para el input date mobile. */
   soldAtLocal = '';
@@ -247,6 +253,23 @@ export class SaleFormComponent implements OnChanges {
       discount.discountPercent,
       discount.discountAmount,
     );
+  }
+
+  /** Comisión del cobro: precargada con la de Mercado Pago mientras no se toque (§28.1). */
+  get feeValue(): number | null {
+    if (this.feeTouched) return this.feeInput;
+    const fee = defaultPaymentFee(
+      this.cartTotal,
+      this.method,
+      this.settingsService.peekGeneralSettings()?.integrations?.mercadoPago
+        ?.feePercent,
+    );
+    return fee > 0 ? fee : null;
+  }
+
+  onFeeInput(value: number | string | null): void {
+    this.feeTouched = true;
+    this.feeInput = value === null || value === '' ? null : Number(value);
   }
 
   get cartTotal(): number {
@@ -614,6 +637,10 @@ export class SaleFormComponent implements OnChanges {
       discountAmount: discount.discountAmount,
       method: this.method,
       account: this.account,
+      fee: Math.min(
+        Math.max(0, Math.round(Number(this.feeValue) || 0)),
+        Math.max(0, this.cartTotal),
+      ),
     });
   }
 
@@ -722,6 +749,8 @@ export class SaleFormComponent implements OnChanges {
     this.discountPercent = 0;
     this.discountAmount = 0;
     this.method = PaymentMethod.EFECTIVO;
+    this.feeInput = null;
+    this.feeTouched = false;
     this.account = defaultAccountForMethod(PaymentMethod.EFECTIVO);
     this.soldAtLocal = this.todayInputValue();
 
@@ -736,6 +765,8 @@ export class SaleFormComponent implements OnChanges {
       this.method = this.sale.method ?? PaymentMethod.EFECTIVO;
       this.account =
         this.sale.account ?? defaultAccountForMethod(this.method);
+      this.feeInput = this.sale.fee > 0 ? this.sale.fee : null;
+      this.feeTouched = true;
       this.soldAtLocal = this.toDateInputValue(this.sale.soldAt);
       this.editCart = this.sale.items.map((item) => ({
         key: `line-${++cartLineKey}`,

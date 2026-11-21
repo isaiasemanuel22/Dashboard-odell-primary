@@ -39,6 +39,10 @@ import type {
 } from './task-detail-dialog.component';
 import type { PromptDialogData } from './prompt-dialog.component';
 import type {
+  InvoiceMarkDialogData,
+  InvoiceMarkDialogResult,
+} from './invoice-mark-dialog.component';
+import type {
   LossSaleDialogData,
   LossSaleDialogResult,
 } from './loss-sale-dialog.component';
@@ -414,6 +418,27 @@ export class FormDialogService {
             data,
           });
           return ref.closed as Observable<string | undefined>;
+        },
+      ),
+    );
+  }
+
+  /** Marcar una venta como facturada (factura C manual, §28.4). */
+  openInvoiceMark(
+    data: InvoiceMarkDialogData,
+  ): Observable<InvoiceMarkDialogResult | undefined> {
+    return from(import('./invoice-mark-dialog.component')).pipe(
+      switchMap(
+        ({
+          InvoiceMarkDialogComponent,
+        }): Observable<InvoiceMarkDialogResult | undefined> => {
+          const base = this.baseConfig('sm');
+          const ref = this.dialog.open(InvoiceMarkDialogComponent, {
+            ...base,
+            ariaLabel: 'Marcar facturada',
+            data,
+          });
+          return ref.closed as Observable<InvoiceMarkDialogResult | undefined>;
         },
       ),
     );

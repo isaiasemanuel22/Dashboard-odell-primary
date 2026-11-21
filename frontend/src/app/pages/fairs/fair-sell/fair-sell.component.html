@@ -124,6 +124,18 @@
         </button>
       }
     </div>
+    <label class="fsell__fee">
+      <span>Comisión</span>
+      <input
+        type="number"
+        min="0"
+        step="1"
+        placeholder="0"
+        aria-label="Comisión del medio de pago"
+        [ngModel]="fee()"
+        (ngModelChange)="onFee($event)"
+      />
+    </label>
     <button
       type="button"
       class="fsell__cta"

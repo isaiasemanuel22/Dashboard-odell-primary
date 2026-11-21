@@ -429,6 +429,21 @@ export class VoidOrderPaymentDto {
   reason!: string;
 }
 
+export class OrderWhatsAppLogDto {
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(64)
+  templateId!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(80)
+  templateName!: string;
+
+  @IsIn(['open', 'copy'])
+  via!: 'open' | 'copy';
+}
+
 export class CreateOrderDto {
   @IsOptional()
   @IsString()

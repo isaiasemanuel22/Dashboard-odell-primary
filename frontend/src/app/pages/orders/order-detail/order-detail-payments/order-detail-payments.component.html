@@ -45,7 +45,8 @@
       <db-input
         label="Comisión"
         type="number"
-        [(ngModel)]="paymentFee"
+        [ngModel]="paymentFee"
+        (ngModelChange)="onFeeInput($event)"
         name="paymentFeeSheet"
         [min]="0"
         [step]="1"
@@ -169,7 +170,8 @@
         <db-input
           label="Monto del pago"
           type="number"
-          [(ngModel)]="paymentAmount"
+          [ngModel]="paymentAmount"
+          (ngModelChange)="onAmountInput($event)"
           name="paymentAmount"
           [step]="0.01"
         />
@@ -204,7 +206,8 @@
         <db-input
           label="Comisión (opcional)"
           type="number"
-          [(ngModel)]="paymentFee"
+          [ngModel]="paymentFee"
+          (ngModelChange)="onFeeInput($event)"
           name="paymentFee"
           [min]="0"
           [step]="1"

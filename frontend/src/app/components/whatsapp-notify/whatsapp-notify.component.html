@@ -1,0 +1,62 @@
+<div class="wa-notify">
+  <div class="wa-notify__head">
+    @if (showTitle) {
+      <h3 class="wa-notify__title">Avisar por WhatsApp</h3>
+    }
+    @if (templates.length) {
+      <label class="wa-notify__select-wrap" [attr.for]="selectId">
+        <span class="wa-notify__label">Plantilla</span>
+        <select
+          class="wa-notify__select"
+          [id]="selectId"
+          [ngModel]="selectedId"
+          (ngModelChange)="selectedId = $event"
+        >
+          @for (template of templates; track template.id) {
+            <option [value]="template.id">{{ template.name }}</option>
+          }
+        </select>
+      </label>
+    }
+  </div>
+
+  @if (!templates.length) {
+    <p class="wa-notify__warn">
+      No hay plantillas de mensaje. Cargalas en Ajustes → Integraciones.
+    </p>
+  } @else {
+    <div class="wa-notify__preview" aria-label="Vista previa del mensaje">
+      {{ message }}
+    </div>
+
+    @if (!hasPhone) {
+      <p class="wa-notify__warn" role="note">
+        Este cliente no tiene teléfono cargado: no se puede abrir WhatsApp.
+        Podés copiar el mensaje.
+      </p>
+    }
+
+    <div class="wa-notify__actions">
+      <db-button
+        label="Abrir en WhatsApp"
+        variant="primary"
+        format="solid"
+        [disabled]="!canSend"
+        (clicked)="open()"
+      />
+      <db-button
+        [label]="copied ? 'Copiado' : 'Copiar mensaje'"
+        variant="secondary"
+        format="soft"
+        [disabled]="!message"
+        (clicked)="copy()"
+      />
+    </div>
+    @if (copied) {
+      <p class="wa-notify__copied" role="status">Mensaje copiado</p>
+    }
+    @if (footnote) {
+      <p class="wa-notify__foot">{{ footnote }}</p>
+    }
+  }
+</div>

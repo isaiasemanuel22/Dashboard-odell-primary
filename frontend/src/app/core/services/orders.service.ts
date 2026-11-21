@@ -22,6 +22,18 @@ export interface OrderListQuery {
   q?: string;
 }
 
+export interface MarkInvoicePayload {
+  /** «0003-00000041»; el server rellena a 4-8 dígitos. */
+  number: string;
+  issuedAt?: string;
+}
+
+export interface WhatsAppLogPayload {
+  templateId: string;
+  templateName: string;
+  via: 'open' | 'copy';
+}
+
 @Injectable({ providedIn: 'root' })
 export class OrdersService {
   private readonly baseUrl = environment.apiUrl;
@@ -109,6 +121,21 @@ export class OrdersService {
   deleteOrder(id: string): Observable<{ deleted: boolean }> {
     return this.http.delete<{ deleted: boolean }>(
       `${this.baseUrl}/orders/${id}`,
+    );
+  }
+
+  markInvoice(id: string, data: MarkInvoicePayload): Observable<Order> {
+    return this.http.put<Order>(`${this.baseUrl}/orders/${id}/invoice`, data);
+  }
+
+  removeInvoice(id: string): Observable<Order> {
+    return this.http.delete<Order>(`${this.baseUrl}/orders/${id}/invoice`);
+  }
+
+  logWhatsApp(id: string, data: WhatsAppLogPayload): Observable<Order> {
+    return this.http.post<Order>(
+      `${this.baseUrl}/orders/${id}/whatsapp-log`,
+      data,
     );
   }
 }

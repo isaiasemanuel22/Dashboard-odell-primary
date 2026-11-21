@@ -43,6 +43,28 @@
   }
 }
 
+.sales-invoice {
+  display: inline-flex;
+  align-items: center;
+  height: 24px;
+  padding: 0 10px;
+  border-radius: $radius-pill;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+
+  &--ok {
+    background: $color-status-success-bg;
+    color: $color-status-success-text;
+  }
+}
+
+.sales-foot {
+  margin: 0;
+  font-size: 0.8rem;
+  color: $color-text-muted;
+}
+
 @include mobile.mobile-only {
   .sales-m {
     display: flex;
@@ -136,6 +158,36 @@
       font-weight: 400;
       color: mobile.$m-text-secondary;
     }
+  }
+
+  .sales-m__item {
+    border-bottom: 1px solid mobile.$m-border;
+
+    &:last-child {
+      border-bottom: 0;
+    }
+  }
+
+  .sales-m__invoice {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 0 14px 10px 66px;
+    font-size: 12px;
+    color: mobile.$m-text-secondary;
+  }
+
+  .sales-m__invoice-btn {
+    background: transparent;
+    border: 0;
+    min-height: 32px;
+    padding: 0 4px;
+    font-family: inherit;
+    font-size: 13px;
+    font-weight: 600;
+    color: mobile.$m-primary-dark;
+    cursor: pointer;
   }
 
   .sales-m__pos {

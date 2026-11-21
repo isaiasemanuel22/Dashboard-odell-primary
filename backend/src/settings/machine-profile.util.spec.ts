@@ -1,3 +1,4 @@
+import { defaultIntegrations } from './integrations.util';
 import {
   MachineProfileRole,
   ProductType,
@@ -49,6 +50,7 @@ describe('machine-profile.util', () => {
     resinTypeAverages: {},
     filamentTypes: [],
     resinTypes: [],
+    integrations: defaultIntegrations(),
     colors: [],
     machineProfiles: createDefaultMachineProfiles().map((profile) =>
       profile.id === 'mp-res-wash'

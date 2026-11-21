@@ -452,6 +452,7 @@ export class TreasuryService {
 
   private retailMovement(sale: RetailSale): TreasuryMovement {
     const amount = Number(sale.total) || 0;
+    const fee = Number(sale.fee) || 0;
     return {
       id: sale.id,
       source: 'retail_sale',
@@ -463,8 +464,8 @@ export class TreasuryService {
       account: this.resolveSaleAccount(sale),
       method: sale.method ?? PaymentMethod.EFECTIVO,
       amount,
-      fee: 0,
-      net: amount,
+      fee,
+      net: amount - fee,
       voided: false,
     };
   }

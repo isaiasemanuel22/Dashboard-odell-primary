@@ -10,6 +10,8 @@ import { FormDialogService } from '../../modals/form-dialog.service';
  */
 export interface SettingsUnsavedChanges {
   hasUnsavedChanges(): boolean;
+  /** Si es true, el aviso también se muestra en escritorio. */
+  warnOnDesktop?: boolean;
 }
 
 /**
@@ -20,7 +22,7 @@ export const settingsUnsavedChangesGuard: CanDeactivateFn<
   SettingsUnsavedChanges
 > = (component): Observable<boolean> | boolean => {
   const breakpoint = inject(BreakpointService);
-  if (!breakpoint.isMobile()) {
+  if (!breakpoint.isMobile() && !component?.warnOnDesktop) {
     return true;
   }
   if (!component?.hasUnsavedChanges?.()) {

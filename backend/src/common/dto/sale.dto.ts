@@ -4,6 +4,7 @@ import {
   IsNumber,
   IsOptional,
   IsString,
+  Matches,
   MaxLength,
   Min,
   ValidateNested,
@@ -74,10 +75,28 @@ export class CreateRetailSaleDto {
   @IsEnum(TreasuryAccount)
   account?: TreasuryAccount;
 
+  /** Comisión del medio de pago en pesos (≤ total: lo valida el servicio). */
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  fee?: number;
+
   @IsOptional()
   @IsString()
   @MaxLength(64)
   fairId?: string;
+}
+
+export class MarkInvoiceDto {
+  @IsString()
+  @Matches(/^\d{1,5}-\d{1,8}$/, {
+    message: 'El número de factura debe tener el formato 0003-00000041',
+  })
+  number!: string;
+
+  @IsOptional()
+  @IsString()
+  issuedAt?: string;
 }
 
 export class UpdateRetailSaleDto extends PartialType(CreateRetailSaleDto) {}

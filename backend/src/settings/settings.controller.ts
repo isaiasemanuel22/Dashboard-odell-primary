@@ -12,6 +12,7 @@ import type { Request } from 'express';
 import {
   ColorConfigDto,
   UpdateColorConfigDto,
+  UpdateIntegrationsDto,
   FilamentPriceDto,
   UpdateFilamentPriceDto,
   FilamentTypeConfigDto,
@@ -52,6 +53,11 @@ export class SettingsController {
   @Patch('general')
   updateGeneral(@Body() data: LegacyPatchGeneralSettingsDto) {
     return this.settingsService.patchGeneralSettings(data);
+  }
+
+  @Patch('integrations')
+  updateIntegrations(@Body() data: UpdateIntegrationsDto) {
+    return this.settingsService.updateIntegrations(data);
   }
 
   @Patch('core-values')

@@ -74,6 +74,8 @@ describe('order.mapper payments', () => {
       customerId: toDb.customerId ?? null,
       customerName: String(toDb.customerName),
       services: toDb.services as never,
+      activityHistory: toDb.activityHistory as never,
+      invoicedAt: (toDb.invoicedAt as Date | null) ?? null,
       status: String(toDb.status),
       total: Number(toDb.total),
       description: (toDb.description as string | null) ?? null,

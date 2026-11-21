@@ -8,6 +8,7 @@ import {
   SalesOverview,
   UpdateRetailSalePayload,
 } from '../models';
+import { MarkInvoicePayload } from './orders.service';
 
 @Injectable({ providedIn: 'root' })
 export class SalesService {
@@ -39,5 +40,16 @@ export class SalesService {
     return this.http.delete<{ deleted: boolean }>(
       `${this.baseUrl}/retail/${id}`,
     );
+  }
+
+  markRetailInvoice(
+    id: string,
+    data: MarkInvoicePayload,
+  ): Observable<RetailSale> {
+    return this.http.put<RetailSale>(`${this.baseUrl}/retail/${id}/invoice`, data);
+  }
+
+  removeRetailInvoice(id: string): Observable<RetailSale> {
+    return this.http.delete<RetailSale>(`${this.baseUrl}/retail/${id}/invoice`);
   }
 }

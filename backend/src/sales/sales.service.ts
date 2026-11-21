@@ -1,10 +1,19 @@
-import { fromArLocal } from '../common/utils/ar-date.util';
+import {
+  arStartOfDay,
+  fromArLocal,
+  toArParts,
+} from '../common/utils/ar-date.util';
 import {
   BadRequestException,
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import { FairStatus, PaymentMethod, SaleSource } from '../common/enums';
+import {
+  FairStatus,
+  PaymentMethod,
+  SaleSource,
+  SalesChannel,
+} from '../common/enums';
 import {
   CreateRetailSaleDto,
   CreateRetailSaleItemDto,
@@ -35,7 +44,17 @@ import {
   calculateTotalWithDiscount,
   normalizeDiscountFields,
 } from '../common/utils/discount.util';
-import { collectedPaymentsCents, toCents } from '../common/utils/money.util';
+import {
+  activePayments,
+  collectedPaymentsCents,
+  paymentFeeCents,
+  toCents,
+} from '../common/utils/money.util';
+import {
+  assertInvoiceNumberFree,
+  buildSaleInvoice,
+} from '../settings/integrations.util';
+import { StoreService } from '../store/store.service';
 import { defaultAccountForMethod } from '../treasury/treasury-account.util';
 import { isRevenueOrder, resolveOrderSoldAt } from './sales-order.util';
 import { calculateOrderLineSubtotal } from '../orders/order-pricing.util';
@@ -53,18 +72,26 @@ export class SalesService {
     private readonly products: ProductRepository,
     private readonly costCalculator: CostCalculatorService,
     private readonly fairs: FairRepository,
+    private readonly store?: StoreService,
   ) {}
 
   getOverview(month?: string): SalesOverview {
-    const monthRange = getMonthRange(referenceFromMonth(month));
-    const entries = this.buildEntries().filter((entry) =>
+    const reference = referenceFromMonth(month);
+    const monthRange = getMonthRange(reference);
+    const allEntries = this.buildEntries();
+    const entries = allEntries.filter((entry) =>
       isDateInMonthRange(new Date(entry.soldAt), monthRange),
     );
 
-    return {
-      stats: this.computeStats(entries),
-      entries,
-    };
+    const stats = this.computeStats(entries);
+    stats.last12MonthsInvoicedRevenue = last12MonthsInvoicedRevenue(
+      allEntries,
+      reference,
+    );
+    stats.annualInvoiceCap =
+      this.store?.generalSettings.integrations?.arca?.annualCap ?? null;
+
+    return { stats, entries };
   }
 
   /** Entradas de venta con economía ya calculada (un solo cálculo de costo). */
@@ -84,13 +111,13 @@ export class SalesService {
 
   /**
    * Dinero efectivamente cobrado para la Billetera:
-   * ventas de mostrador + pagos/señas de pedidos netos de comisión
+   * ventas de mostrador y pagos/señas de pedidos, netos de comisión
    * (no el total al entregar).
    */
   getCollectedIncome(): number {
     const retailCents = this.retailSales
       .findAll()
-      .reduce((sum, sale) => sum + toCents(sale.total), 0);
+      .reduce((sum, sale) => sum + toCents(sale.total) - toCents(sale.fee), 0);
     const orderPaymentsCents = this.orders
       .findAll()
       .reduce((sum, order) => sum + collectedPaymentsCents(order), 0);
@@ -155,6 +182,7 @@ export class SalesService {
           : current.discountAmount,
       method: data.method ?? current.method,
       account: data.account ?? current.account,
+      fee: data.fee !== undefined ? data.fee : current.fee,
       lossReason: data.lossReason ?? current.lossReason,
       lossReasonNote:
         data.lossReason !== undefined
@@ -162,9 +190,40 @@ export class SalesService {
           : (data.lossReasonNote ?? current.lossReasonNote),
     };
 
-    const updated = this.buildRetailSale(merged, id, current.createdAt);
+    const updated = this.buildRetailSale(
+      merged,
+      id,
+      current.createdAt,
+      current.invoice,
+    );
     this.applyRetailStockChange(current.items, updated.items);
     return this.retailSales.save(updated);
+  }
+
+  /** Marca la factura C de una venta de mostrador o de feria (aunque la feria esté cerrada). */
+  markRetailInvoice(
+    id: string,
+    data: { number: string; issuedAt?: string },
+  ): RetailSale {
+    const sale = this.findRetailSale(id);
+    const invoice = buildSaleInvoice(data.number, data.issuedAt);
+    assertInvoiceNumberFree(
+      invoice.number,
+      this.orders.findAll(),
+      this.retailSales.findAll(),
+      { retailSaleId: sale.id },
+    );
+    sale.invoice = invoice;
+    return this.retailSales.save(sale);
+  }
+
+  removeRetailInvoice(id: string): RetailSale {
+    const sale = this.findRetailSale(id);
+    if (!sale.invoice) {
+      throw new BadRequestException('La venta no tiene factura marcada');
+    }
+    sale.invoice = undefined;
+    return this.retailSales.save(sale);
   }
 
   removeRetail(id: string): void {
@@ -205,6 +264,7 @@ export class SalesService {
   private toRetailEntry(sale: RetailSale): SaleEntry {
     const items = sale.items.map((item) => ({ ...item }));
     const economics = this.computeEntryEconomics(items, sale.total);
+    const fees = toCents(sale.fee) / 100;
 
     return {
       id: `retail-${sale.id}`,
@@ -220,6 +280,12 @@ export class SalesService {
       soldAt: sale.soldAt,
       notes: sale.notes,
       retailSaleId: sale.id,
+      channel: sale.fairId ? SalesChannel.FERIA : SalesChannel.MOSTRADOR,
+      fees,
+      netProfit: roundCents(economics.profit - fees),
+      paymentMethods: [sale.method ?? PaymentMethod.EFECTIVO],
+      invoice: sale.invoice,
+      fairId: sale.fairId,
       editable: true,
     };
   }
@@ -243,6 +309,15 @@ export class SalesService {
       cureMinutes: item.cureMinutes,
     }));
     const economics = this.computeEntryEconomics(items, order.total);
+    const payments = activePayments(order.payments);
+    const fees =
+      payments.reduce((sum, payment) => sum + paymentFeeCents(payment), 0) /
+      100;
+    const paymentMethods = [
+      ...new Set(
+        payments.map((payment) => payment.method ?? PaymentMethod.EFECTIVO),
+      ),
+    ];
 
     return {
       id: `order-${order.id}`,
@@ -257,6 +332,11 @@ export class SalesService {
       notes: order.description,
       orderId: order.id,
       salesChannel: order.salesChannel,
+      channel: order.salesChannel ?? 'sin_canal',
+      fees,
+      netProfit: roundCents(economics.profit - fees),
+      paymentMethods,
+      invoice: order.invoice,
       editable: false,
     };
   }
@@ -308,6 +388,19 @@ export class SalesService {
       (sum, entry) => sum + entry.profit,
       0,
     );
+    const monthlyFees = entries.reduce((sum, entry) => sum + entry.fees, 0);
+    const monthlyRetailFees = retailEntries.reduce(
+      (sum, entry) => sum + entry.fees,
+      0,
+    );
+    const monthlyOrdersFees = orderEntries.reduce(
+      (sum, entry) => sum + entry.fees,
+      0,
+    );
+    const invoiced = entries.filter((entry) => entry.invoice);
+    const uninvoiced = entries.filter((entry) => !entry.invoice);
+    const sumTotal = (list: SaleEntry[]) =>
+      list.reduce((sum, entry) => sum + entry.total, 0);
     const monthlyCost = monthlyRetailCost + monthlyOrdersCost;
     const monthlyProfit = monthlyRetailProfit + monthlyOrdersProfit;
     const profitByArea = computeAreaProfitBalances(
@@ -329,6 +422,22 @@ export class SalesService {
       monthlyOrdersCount: orderEntries.length,
       monthlyRetailCount: retailEntries.length,
       profitByArea,
+      monthlyFees,
+      monthlyRetailFees,
+      monthlyOrdersFees,
+      monthlyRetailNetProfit: roundCents(
+        monthlyRetailProfit - monthlyRetailFees,
+      ),
+      monthlyOrdersNetProfit: roundCents(
+        monthlyOrdersProfit - monthlyOrdersFees,
+      ),
+      monthlyNetProfit: roundCents(monthlyProfit - monthlyFees),
+      invoicedRevenue: sumTotal(invoiced),
+      invoicedCount: invoiced.length,
+      uninvoicedRevenue: sumTotal(uninvoiced),
+      uninvoicedCount: uninvoiced.length,
+      last12MonthsInvoicedRevenue: 0,
+      annualInvoiceCap: null,
     };
   }
 
@@ -336,6 +445,7 @@ export class SalesService {
     data: CreateRetailSaleDto,
     id?: string,
     createdAt?: string,
+    invoice?: RetailSale['invoice'],
   ): RetailSale {
     if (!data.items?.length) {
       throw new BadRequestException('Agregá al menos un producto al carrito');
@@ -353,6 +463,15 @@ export class SalesService {
       this.costCalculator.resolveOrderItemUnitCost(item),
     );
     const lossFields = resolveLossReason(loss, data);
+    const feeCents = toCents(data.fee ?? 0);
+    if (feeCents < 0) {
+      throw new BadRequestException('La comisión no puede ser negativa');
+    }
+    if (feeCents > toCents(total)) {
+      throw new BadRequestException(
+        'La comisión no puede superar el total de la venta',
+      );
+    }
 
     return {
       id: id ?? this.retailSales.nextId(),
@@ -365,6 +484,8 @@ export class SalesService {
       notes: data.notes?.trim() || undefined,
       method,
       account,
+      fee: feeCents / 100,
+      invoice,
       fairId: data.fairId?.trim() || undefined,
       soldAt: data.soldAt ?? now,
       createdAt: createdAt ?? now,
@@ -454,6 +575,33 @@ export class SalesService {
       this.products.save(product);
     }
   }
+}
+
+function roundCents(value: number): number {
+  return Math.round(value * 100) / 100;
+}
+
+/**
+ * Facturado cuyo `invoice.issuedAt` cae en los 12 meses que terminan al fin del
+ * mes de `reference` (hora AR), sin importar la fecha de la venta.
+ */
+export function last12MonthsInvoicedRevenue(
+  entries: SaleEntry[],
+  reference: Date,
+): number {
+  const { year, month } = toArParts(reference);
+  const range = {
+    start: arStartOfDay(year, month - 11, 1),
+    end: new Date(arStartOfDay(year, month + 1, 1).getTime() - 1),
+  };
+  return entries.reduce(
+    (sum, entry) =>
+      entry.invoice &&
+      isDateInMonthRange(new Date(entry.invoice.issuedAt), range)
+        ? sum + entry.total
+        : sum,
+    0,
+  );
 }
 
 function referenceFromMonth(month?: string): Date {

@@ -17,6 +17,8 @@ import {
   TreasuryAccount,
 } from '../../../../core/models';
 import { OrdersService } from '../../../../core/services/orders.service';
+import { SettingsService } from '../../../../core/services/settings.service';
+import { defaultPaymentFee } from '../../../../shared/utils/payment-fee.util';
 import {
   DbButtonComponent,
   DbCheckboxComponent,
@@ -71,6 +73,7 @@ type AmountShortcut = 'full' | 'half' | 'other';
 })
 export class OrderDetailPaymentsComponent {
   private readonly ordersService = inject(OrdersService);
+  private readonly settingsService = inject(SettingsService);
   private readonly cdr = inject(ChangeDetectorRef);
   private readonly destroyRef = inject(DestroyRef);
 
@@ -87,6 +90,7 @@ export class OrderDetailPaymentsComponent {
   paymentMethod: PaymentMethod = PaymentMethod.EFECTIVO;
   paymentAccount: TreasuryAccount = TreasuryAccount.CAJA;
   paymentFee: number | null = null;
+  private feeTouched = false;
   paymentLoading = false;
   paymentError = '';
   amountShortcut: AmountShortcut | null = 'full';
@@ -182,6 +186,7 @@ export class OrderDetailPaymentsComponent {
   preparePayment(amount: number, options?: { scroll?: boolean }): void {
     this.paymentAmount = amount;
     this.syncShortcutFromAmount();
+    this.autoFee();
     this.paymentError = '';
     this.cdr.markForCheck();
     if (options?.scroll === false) return;
@@ -194,6 +199,7 @@ export class OrderDetailPaymentsComponent {
   onMethodChange(method: PaymentMethod): void {
     this.paymentMethod = method;
     this.paymentAccount = defaultAccountForMethod(method);
+    this.autoFee();
   }
 
   onMethodChipChange(method: PaymentMethod | null): void {
@@ -211,16 +217,41 @@ export class OrderDetailPaymentsComponent {
       this.paymentAmount = this.roundCents(this.balanceAmount / 2);
     } else if (shortcut === 'other') {
       this.paymentAmount = null;
+      this.autoFee();
       this.cdr.markForCheck();
       queueMicrotask(() => this.amountInput?.focus());
       return;
     }
+    this.autoFee();
     this.cdr.markForCheck();
   }
 
   onAmountShortcutSynced(): void {
     this.syncShortcutFromAmount();
+    this.autoFee();
     this.cdr.markForCheck();
+  }
+
+  onAmountInput(value: number | string | null): void {
+    this.paymentAmount = value === null || value === '' ? null : Number(value);
+    this.autoFee();
+  }
+
+  onFeeInput(value: number | string | null): void {
+    this.feeTouched = true;
+    this.paymentFee = value === null || value === '' ? null : Number(value);
+  }
+
+  /** Comisión por defecto de Mercado Pago (§28.1) mientras no se toque. */
+  private autoFee(): void {
+    if (this.feeTouched) return;
+    const fee = defaultPaymentFee(
+      this.paymentAmount,
+      this.paymentMethod,
+      this.settingsService.peekGeneralSettings()?.integrations?.mercadoPago
+        ?.feePercent,
+    );
+    this.paymentFee = fee > 0 ? fee : null;
   }
 
   onDepositToggle(checked: boolean): void {
@@ -318,6 +349,7 @@ export class OrderDetailPaymentsComponent {
           this.paymentAmount = null;
           this.paymentDeposit = false;
           this.paymentFee = null;
+          this.feeTouched = false;
           this.paymentMethod = PaymentMethod.EFECTIVO;
           this.paymentAccount = defaultAccountForMethod(this.paymentMethod);
           this.paymentLoading = false;

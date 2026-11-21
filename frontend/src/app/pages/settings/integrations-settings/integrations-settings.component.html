@@ -1,0 +1,303 @@
+<ng-template #templateEditor let-tpl>
+  <div class="int-editor">
+    <label class="int-editor__field">
+      <span class="int-editor__label">Nombre</span>
+      <input dbKeepTyping
+        class="int-editor__input"
+        type="text"
+        maxlength="60"
+        [(ngModel)]="tpl.name"
+        [name]="'tplName-' + tpl.key"
+        placeholder="Ej.: Pedido en camino"
+      />
+    </label>
+    <label class="int-editor__field">
+      <span class="int-editor__label">Mensaje</span>
+      <textarea
+        #bodyArea
+        (blur)="rememberSelection(bodyArea)"
+        class="int-editor__textarea"
+        rows="6"
+        maxlength="1000"
+        [(ngModel)]="tpl.body"
+        [name]="'tplBody-' + tpl.key"
+        placeholder="Hola {cliente}, …"
+      ></textarea>
+    </label>
+    <div class="int-editor__vars" role="group" aria-label="Variables disponibles">
+      <span class="int-editor__label">Insertar variable</span>
+      <div class="int-editor__chips">
+        @for (v of variables; track v.key) {
+          <button
+            type="button"
+            class="int-chip"
+            [title]="'Ejemplo: ' + v.example"
+            (click)="insertVariable(v.key)"
+          >
+            {{ '{' + v.key + '}' }}
+          </button>
+        }
+      </div>
+    </div>
+    <div class="int-editor__actions">
+      @if (!tpl.builtIn) {
+        <button type="button" class="int-link int-link--danger" (click)="removeTemplate(tpl)">
+          Borrar plantilla
+        </button>
+      } @else {
+        <small>Plantilla por defecto: se puede editar, no borrar.</small>
+      }
+      <button type="button" class="int-link" (click)="editingKey = null">Cerrar</button>
+    </div>
+  </div>
+</ng-template>
+
+@if (draft) {
+  @if (isMobile()) {
+    <db-mobile-settings-page
+      title="Integraciones"
+      [dockActions]="mobileDockActions"
+      (dockAction)="onMobileDockAction($event)"
+    >
+      @if (message) {
+        <p class="st-m__msg" [class.int-msg--error]="messageIsError">{{ message }}</p>
+      }
+
+      <h2 class="m-sec-t">Tiendanube</h2>
+      <div class="m-card">
+        <div class="int-head">
+          <span class="int-logo int-logo--tn" aria-hidden="true">TN</span>
+          <div class="int-head__text"><b>Tiendanube</b><span>Tu tienda online</span></div>
+          <span class="int-pill int-pill--warn">Sin conectar</span>
+        </div>
+        <button type="button" class="int-btn" disabled>Próximamente</button>
+      </div>
+
+      <h2 class="m-sec-t">Mercado Pago</h2>
+      <div class="m-card">
+        <div class="int-head">
+          <span class="int-logo int-logo--mp" aria-hidden="true">MP</span>
+          <div class="int-head__text"><b>Mercado Pago</b><span>Cobros con link y QR</span></div>
+          <span class="int-pill int-pill--warn">Sin conectar</span>
+        </div>
+        <db-mobile-field-group
+          label="Comisión que te descuenta (%)"
+          labelFor="m-mp-fee"
+          suffix="%"
+          hint="Se completa sola al registrar un cobro con Mercado Pago"
+        >
+          <input dbKeepTyping
+            id="m-mp-fee"
+            class="st-m__inp"
+            type="number"
+            inputmode="decimal"
+            min="0"
+            max="99.99"
+            step="0.01"
+            [ngModel]="draft.feePercent"
+            (ngModelChange)="setNumber('feePercent', $event)"
+            name="mMpFee"
+          />
+        </db-mobile-field-group>
+        <button type="button" class="int-btn" disabled>Conectar: próximamente</button>
+      </div>
+
+      <h2 class="m-sec-t">WhatsApp</h2>
+      <div class="m-card">
+        <div class="int-head">
+          <span class="int-logo int-logo--wa" aria-hidden="true">WA</span>
+          <div class="int-head__text"><b>WhatsApp</b><span>Avisos a tus clientes</span></div>
+        </div>
+        <db-mobile-field-group label="Número del negocio" labelFor="m-wa-phone">
+          <input dbKeepTyping
+            id="m-wa-phone"
+            class="st-m__inp"
+            type="tel"
+            inputmode="tel"
+            [(ngModel)]="draft.businessPhone"
+            name="mWaPhone"
+            placeholder="Ej.: 223 677-3255"
+          />
+        </db-mobile-field-group>
+        <span class="int-sub">Plantillas</span>
+        @for (tpl of draft.templates; track tpl.key) {
+          <div class="int-tpl">
+            <div class="int-tpl__row">
+              <span>{{ tpl.name || 'Plantilla nueva' }}</span>
+              <button type="button" class="int-link" (click)="toggleEdit(tpl)">
+                {{ editingKey === tpl.key ? 'Cerrar' : 'Editar' }}
+              </button>
+            </div>
+            @if (editingKey === tpl.key) {
+              <ng-container *ngTemplateOutlet="templateEditor; context: { $implicit: tpl }" />
+            }
+          </div>
+        }
+        <button type="button" class="int-btn int-btn--sec" (click)="addTemplate()">+ Nueva plantilla</button>
+      </div>
+
+      <h2 class="m-sec-t">ARCA · Facturación</h2>
+      <div class="m-card">
+        <div class="int-head">
+          <span class="int-logo int-logo--ar" aria-hidden="true">AR</span>
+          <div class="int-head__text"><b>ARCA</b><span>Factura C para monotributo</span></div>
+          <span class="int-pill int-pill--warn">Sin conectar</span>
+        </div>
+        <db-mobile-field-group label="Punto de venta" labelFor="m-ar-pos">
+          <input dbKeepTyping
+            id="m-ar-pos"
+            class="st-m__inp"
+            type="number"
+            inputmode="numeric"
+            min="1"
+            max="99999"
+            step="1"
+            [ngModel]="draft.pointOfSale"
+            (ngModelChange)="setNumber('pointOfSale', $event)"
+            name="mArPos"
+            placeholder="Ej.: 3"
+          />
+        </db-mobile-field-group>
+        <db-mobile-field-group
+          label="Tope anual de tu categoría"
+          labelFor="m-ar-cap"
+          prefix="$"
+          hint="Lo usamos para avisarte cuánto te falta. Confirmalo con tu contador."
+        >
+          <input dbKeepTyping
+            id="m-ar-cap"
+            class="st-m__inp"
+            type="number"
+            inputmode="numeric"
+            min="0"
+            step="1"
+            [ngModel]="draft.annualCap"
+            (ngModelChange)="setNumber('annualCap', $event)"
+            name="mArCap"
+            placeholder="Cargá el monto vigente"
+          />
+        </db-mobile-field-group>
+        <button type="button" class="int-btn" disabled>Conectar con certificado</button>
+      </div>
+    </db-mobile-settings-page>
+  } @else {
+    <div class="int-toolbar">
+      @if (message) {
+        <p class="int-message" [class.int-message--error]="messageIsError" role="status">{{ message }}</p>
+      }
+      <db-button
+        [label]="saving ? 'Guardando...' : 'Guardar integraciones'"
+        variant="primary"
+        format="solid"
+        [disabled]="saving"
+        (clicked)="save()"
+      />
+    </div>
+
+    <div class="int-grid">
+      <section class="settings-card int-card" aria-labelledby="int-tn">
+        <div class="int-head">
+          <span class="int-logo int-logo--tn" aria-hidden="true">TN</span>
+          <div class="int-head__text"><h3 id="int-tn">Tiendanube</h3><span>Tu tienda online</span></div>
+          <span class="int-pill int-pill--warn">Sin conectar</span>
+        </div>
+        <div class="int-actions">
+          <db-button label="Próximamente" variant="secondary" format="solid" [disabled]="true" />
+        </div>
+      </section>
+
+      <section class="settings-card int-card" aria-labelledby="int-mp">
+        <div class="int-head">
+          <span class="int-logo int-logo--mp" aria-hidden="true">MP</span>
+          <div class="int-head__text"><h3 id="int-mp">Mercado Pago</h3><span>Cobros con link y QR</span></div>
+          <span class="int-pill int-pill--warn">Sin conectar</span>
+        </div>
+        <db-input
+          label="Comisión que te descuenta (%)"
+          type="number"
+          name="mpFeePercent"
+          [min]="0"
+          [max]="99.99"
+          [step]="0.01"
+          hint="Se completa sola al registrar un cobro con Mercado Pago"
+          [ngModel]="draft.feePercent"
+          (ngModelChange)="setNumber('feePercent', $event)"
+        />
+        <div class="int-actions">
+          <db-button label="Próximamente" variant="secondary" format="solid" [disabled]="true" />
+        </div>
+      </section>
+
+      <section class="settings-card int-card" aria-labelledby="int-wa">
+        <div class="int-head">
+          <span class="int-logo int-logo--wa" aria-hidden="true">WA</span>
+          <div class="int-head__text"><h3 id="int-wa">WhatsApp</h3><span>Avisos a tus clientes</span></div>
+        </div>
+        <db-input
+          label="Número del negocio"
+          name="waBusinessPhone"
+          placeholder="Ej.: 223 677-3255"
+          [(ngModel)]="draft.businessPhone"
+        />
+        <span class="int-sub">Plantillas</span>
+        @for (tpl of draft.templates; track tpl.key) {
+          <div class="int-tpl">
+            <div class="int-tpl__row">
+              <span>{{ tpl.name || 'Plantilla nueva' }}</span>
+              <button type="button" class="int-link" (click)="toggleEdit(tpl)">
+                {{ editingKey === tpl.key ? 'Cerrar' : 'Editar' }}
+              </button>
+            </div>
+            @if (editingKey === tpl.key) {
+              <ng-container *ngTemplateOutlet="templateEditor; context: { $implicit: tpl }" />
+            }
+          </div>
+        }
+        <div class="int-actions">
+          <db-button label="+ Nueva plantilla" variant="secondary" format="solid" (clicked)="addTemplate()" />
+        </div>
+      </section>
+
+      <section class="settings-card int-card" aria-labelledby="int-ar">
+        <div class="int-head">
+          <span class="int-logo int-logo--ar" aria-hidden="true">AR</span>
+          <div class="int-head__text"><h3 id="int-ar">ARCA · Facturación</h3><span>Factura C para monotributo</span></div>
+          <span class="int-pill int-pill--warn">Sin conectar</span>
+        </div>
+        <db-input
+          label="Punto de venta"
+          type="number"
+          name="arPointOfSale"
+          [min]="1"
+          [max]="99999"
+          [step]="1"
+          placeholder="Ej.: 3"
+          [ngModel]="draft.pointOfSale"
+          (ngModelChange)="setNumber('pointOfSale', $event)"
+        />
+        <db-input
+          label="Tope anual de tu categoría"
+          type="number"
+          name="arAnnualCap"
+          [min]="0"
+          [step]="1"
+          placeholder="Cargá el monto vigente"
+          hint="Lo usamos para avisarte cuánto te falta. Confirmalo con tu contador."
+          [ngModel]="draft.annualCap"
+          (ngModelChange)="setNumber('annualCap', $event)"
+        />
+        <div class="int-actions">
+          <db-button label="Conectar con certificado" variant="secondary" format="solid" [disabled]="true" />
+        </div>
+      </section>
+    </div>
+  }
+} @else {
+  @if (isMobile()) {
+    <db-mobile-settings-page title="Integraciones">
+      <db-state-message [loading]="true" loadingMessage="Cargando integraciones..." />
+    </db-mobile-settings-page>
+  } @else {
+    <db-state-message [loading]="true" loadingMessage="Cargando integraciones..." />
+  }
+}

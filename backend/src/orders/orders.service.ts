@@ -23,6 +23,11 @@ import {
   OrderOverview,
 } from '../common/interfaces';
 import { CreateOrderDto, UpdateOrderDto } from '../common/dto';
+import {
+  assertInvoiceNumberFree,
+  buildSaleInvoice,
+} from '../settings/integrations.util';
+import { appendActivity } from './order-activity.util';
 import { isAreaService, isSupplyOrderLine } from '../common/service-type.util';
 import { applyStockChange } from '../supplies/apply-stock-change.util';
 import { packagingConsumptionOnDelivery } from './packaging-delivery.util';
@@ -627,6 +632,56 @@ export class OrdersService {
       method,
       account,
       fee: feeCents / 100,
+    });
+    return this.orders.save(order);
+  }
+
+  /** Marca (o corrige) la factura C del pedido (§28.4). Queda en el historial. */
+  markInvoice(id: string, data: { number: string; issuedAt?: string }): Order {
+    const order = this.findOne(id);
+    if (order.status === OrderStatus.CANCELADO) {
+      throw new BadRequestException('No se puede facturar un pedido cancelado');
+    }
+    const invoice = buildSaleInvoice(data.number, data.issuedAt);
+    assertInvoiceNumberFree(
+      invoice.number,
+      this.orders.findAll(),
+      this.store.retailSales,
+      { orderId: order.id },
+    );
+    order.invoice = invoice;
+    appendActivity(order, {
+      kind: 'invoice',
+      detail: `Factura C ${invoice.number} marcada`,
+    });
+    return this.orders.save(order);
+  }
+
+  removeInvoice(id: string): Order {
+    const order = this.findOne(id);
+    if (!order.invoice) {
+      throw new BadRequestException('El pedido no tiene factura marcada');
+    }
+    const previous = order.invoice.number;
+    order.invoice = undefined;
+    appendActivity(order, {
+      kind: 'invoice',
+      detail: `Factura C ${previous} quitada`,
+    });
+    return this.orders.save(order);
+  }
+
+  /** Registra un aviso por WhatsApp (abierto o copiado) en el historial. */
+  logWhatsApp(
+    id: string,
+    data: { templateId: string; templateName: string; via: 'open' | 'copy' },
+  ): Order {
+    const order = this.findOne(id);
+    appendActivity(order, {
+      kind: 'whatsapp',
+      detail: `${data.via === 'copy' ? 'Mensaje copiado' : 'WhatsApp abierto'}: ${data.templateName.trim()}`,
+      templateId: data.templateId,
+      via: data.via,
     });
     return this.orders.save(order);
   }

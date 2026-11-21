@@ -1,3 +1,4 @@
+import { whatsAppDigitsAr } from '../../../shared/utils/quote-share.util';
 import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
@@ -199,7 +200,7 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
   get whatsappHref(): string | null {
     const phone = this.customer?.phone?.trim();
     if (!phone) return null;
-    const normalized = normalizeWhatsAppPhone(phone);
+    const normalized = whatsAppDigitsAr(phone);
     return normalized ? `https://wa.me/${normalized}` : null;
   }
 
@@ -412,14 +413,6 @@ export class CustomerDetailComponent implements OnInit, OnDestroy {
     const balance = orderBalanceAmount(order);
     return balance > 0 ? balance : null;
   }
-}
-
-function normalizeWhatsAppPhone(phone: string): string {
-  const digits = phone.replace(/\D/g, '');
-  if (!digits) return '';
-  if (digits.startsWith('54')) return digits;
-  if (digits.startsWith('0')) return `54${digits.slice(1)}`;
-  return `54${digits}`;
 }
 
 function formatDayMonth(value: string | null | undefined): string {

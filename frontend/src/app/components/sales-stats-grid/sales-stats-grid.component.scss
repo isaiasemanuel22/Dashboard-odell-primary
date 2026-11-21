@@ -3,9 +3,51 @@
   gap: 1.25rem;
   margin-bottom: 1.5rem;
 
+  &__cap {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    min-width: 0;
+    padding: 1rem;
+    border: 1px solid #e3ecf2;
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  &__cap-label {
+    font-size: 0.8rem;
+    color: #5b7083;
+  }
+
+  &__cap-value {
+    font-size: 1.35rem;
+    color: #0f2a3a;
+  }
+
+  &__cap-note {
+    font-size: 0.78rem;
+    color: #5b7083;
+  }
+
+  &__track {
+    height: 8px;
+    border-radius: 999px;
+    background: #eef4f8;
+    overflow: hidden;
+  }
+
+  &__fill {
+    height: 100%;
+    background: #0e7aab;
+
+    &--warn {
+      background: #d97706;
+    }
+  }
+
   &__cards {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+    grid-template-columns: repeat(4, minmax(0, 1fr));
     gap: 1rem;
   }
 }

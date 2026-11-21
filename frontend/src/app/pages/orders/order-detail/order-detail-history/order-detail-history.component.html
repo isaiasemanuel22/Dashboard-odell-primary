@@ -81,3 +81,27 @@
     <p class="empty-group">Sin cambios de precio registrados.</p>
   }
 </section>
+
+<section class="panel status-history-panel">
+  <h3>Avisos y facturación</h3>
+  @if (activityEntries.length) {
+    <ol class="status-history">
+      @for (entry of activityEntries; track entry.id) {
+        <li class="status-history__item">
+          <div class="status-history__marker" aria-hidden="true"></div>
+          <div class="status-history__content">
+            <div class="status-history__row">
+              <time [dateTime]="entry.at">{{ entry.at | dateTime }}</time>
+              <span class="status-history__source">
+                {{ activityKindLabels[entry.kind] }}
+              </span>
+            </div>
+            <p class="status-history__transition">{{ entry.detail }}</p>
+          </div>
+        </li>
+      }
+    </ol>
+  } @else {
+    <p class="empty-group">Sin avisos ni facturas registrados.</p>
+  }
+</section>

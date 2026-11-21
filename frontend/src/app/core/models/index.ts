@@ -363,7 +363,75 @@ export interface GeneralSettings {
   colors: ColorConfig[];
   filamentTypes: FilamentTypeConfig[];
   resinTypes: ResinTypeConfig[];
+  /** Integraciones (v6, §28): Mercado Pago, ARCA y WhatsApp. */
+  integrations: IntegrationsSettings;
 }
+
+/** Solo factura C (monotributo, §28.4). */
+export type InvoiceType = 'C';
+
+export interface SaleInvoice {
+  type: InvoiceType;
+  /** Formato `0003-00000041`. */
+  number: string;
+  /** ISO. */
+  issuedAt: string;
+}
+
+export interface WhatsAppTemplate {
+  id: string;
+  name: string;
+  body: string;
+  /** Plantilla por defecto: editable, no borrable. */
+  builtIn: boolean;
+}
+
+export interface IntegrationsSettings {
+  /** Comisión que descuenta Mercado Pago (0–99.99, default 0). */
+  mercadoPago: { feePercent: number };
+  arca: { pointOfSale: number | null; annualCap: number | null };
+  whatsapp: { businessPhone: string; templates: WhatsAppTemplate[] };
+}
+
+export type UpdateWhatsAppTemplatePayload = {
+  /** Sin id: lo genera el servidor. */
+  id?: string;
+  name: string;
+  body: string;
+};
+
+export type UpdateIntegrationsPayload = {
+  mercadoPago?: { feePercent?: number };
+  arca?: { pointOfSale?: number | null; annualCap?: number | null };
+  whatsapp?: {
+    businessPhone?: string;
+    /** Reemplaza la lista; las builtIn que falten se reponen. */
+    templates?: UpdateWhatsAppTemplatePayload[];
+  };
+};
+
+export type MarkInvoicePayload = {
+  /** `^\d{1,5}-\d{1,8}$`; el servidor rellena a 4-8 dígitos. */
+  number: string;
+  issuedAt?: string;
+};
+
+export type OrderActivityKind = 'whatsapp' | 'invoice';
+
+export interface OrderActivityEntry {
+  id: string;
+  at: string;
+  kind: OrderActivityKind;
+  detail: string;
+  templateId?: string;
+  via?: 'open' | 'copy';
+}
+
+export type OrderWhatsAppLogPayload = {
+  templateId: string;
+  templateName: string;
+  via: 'open' | 'copy';
+};
 
 export interface Impreso {
   id: string;
@@ -934,6 +1002,10 @@ export interface Order {
   wholesaleApplied?: boolean;
   /** Canal de venta (opcional). */
   salesChannel?: SalesChannel;
+  /** Factura C marcada a mano (§28.4). */
+  invoice?: SaleInvoice;
+  /** Avisos por WhatsApp y marcas de factura. */
+  activityHistory?: OrderActivityEntry[];
   /** uid de Firebase de quien puede mover las tareas de este pedido. */
   responsibleUserId?: string;
   discountPercent?: number;
@@ -992,6 +1064,8 @@ export type CreateOrderPayload = Omit<
   | 'deliveryHistory'
   | 'payments'
   | 'salesChannel'
+  | 'invoice'
+  | 'activityHistory'
 > & {
   customerId?: string | null;
   items: OrderItemPayload[];
@@ -1677,6 +1751,9 @@ export interface RetailSale {
   notes?: string;
   method?: PaymentMethod;
   account?: TreasuryAccount;
+  /** Comisión del medio de pago en pesos (default 0). */
+  fee: number;
+  invoice?: SaleInvoice;
   soldAt: string;
   createdAt: string;
 }
@@ -1698,6 +1775,8 @@ export type CreateRetailSalePayload = {
   lossReasonNote?: string;
   method?: PaymentMethod;
   account?: TreasuryAccount;
+  /** Comisión del medio de pago en pesos (≥ 0, ≤ total). */
+  fee?: number;
   /** Venta hecha en una feria (módulo Ferias). */
   fairId?: string;
 };
@@ -1760,6 +1839,15 @@ export interface SaleEntry {
   retailSaleId?: string;
   /** Canal del pedido; ausente en mostrador o pedidos sin canal. */
   salesChannel?: SalesChannel;
+  /** Pedido → su canal o `sin_canal`; mostrador → `mostrador`; feria → `feria`. */
+  channel: SalesChannel | 'sin_canal';
+  /** Comisiones de los cobros vigentes. */
+  fees: number;
+  /** profit − fees. */
+  netProfit: number;
+  paymentMethods: PaymentMethod[];
+  invoice?: SaleInvoice;
+  fairId?: string;
   editable: boolean;
 }
 
@@ -1802,6 +1890,24 @@ export interface SalesStats {
   monthlyOrdersCount: number;
   monthlyRetailCount: number;
   profitByArea: AreaProfitBalance[];
+  monthlyFees: number;
+  /** Comisiones de las ventas de mostrador/feria del mes. */
+  monthlyRetailFees: number;
+  /** Comisiones de los pedidos entregados del mes. */
+  monthlyOrdersFees: number;
+  /** Ganancia neta (menos comisiones) de mostrador/feria. */
+  monthlyRetailNetProfit: number;
+  /** Ganancia neta (menos comisiones) de pedidos. */
+  monthlyOrdersNetProfit: number;
+  monthlyNetProfit: number;
+  invoicedRevenue: number;
+  invoicedCount: number;
+  uninvoicedRevenue: number;
+  uninvoicedCount: number;
+  /** Facturado en los 12 meses que terminan al fin del mes elegido (por fecha de factura). */
+  last12MonthsInvoicedRevenue: number;
+  /** Tope anual cargado en Integraciones → ARCA. */
+  annualInvoiceCap: number | null;
 }
 
 export interface SalesOverview {

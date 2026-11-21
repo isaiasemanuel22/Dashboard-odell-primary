@@ -27,6 +27,7 @@ model AppSettings {
   colors                Json  @default("[]")
   filamentTypes         Json  @default("[]") @map("filament_types")
   resinTypes            Json  @default("[]") @map("resin_types")
+  integrations          Json  @default("{}")
 
   @@map("app_settings")
 }
@@ -229,6 +230,11 @@ model Order {
   priceHistory  Json    @default("[]") @map("price_history")
   deliveryHistory Json  @default("[]") @map("delivery_history")
   payments      Json    @default("[]")
+  activityHistory Json  @default("[]") @map("activity_history")
+  /// Factura C marcada a mano (§28.4).
+  invoiceType   String? @map("invoice_type") @db.VarChar(8)
+  invoiceNumber String? @map("invoice_number") @db.VarChar(32)
+  invoicedAt    DateTime? @map("invoiced_at")
 
   customer Customer?   @relation(fields: [customerId], references: [id], onDelete: Restrict)
   items    OrderItem[]
@@ -421,6 +427,11 @@ model RetailSale {
   notes           String?          @db.Text
   method          String           @default("efectivo") @db.VarChar(32)
   account         String           @default("caja") @db.VarChar(32)
+  /// Comisión del medio de pago en pesos.
+  fee             Float            @default(0)
+  invoiceType     String?          @map("invoice_type") @db.VarChar(8)
+  invoiceNumber   String?          @map("invoice_number") @db.VarChar(32)
+  invoicedAt      DateTime?        @map("invoiced_at")
   /// Feria donde se hizo la venta (null = mostrador común).
   fairId    String?          @map("fair_id") @db.VarChar(64)
   soldAt    DateTime         @map("sold_at")

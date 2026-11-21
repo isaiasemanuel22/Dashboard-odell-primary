@@ -13,12 +13,12 @@
   </header>
 
   <div class="modal__body sale-filters-sheet__body">
-    <section class="sale-filters-sheet__group" aria-label="Tipo">
-      <h4 class="m-sec-t">Tipo</h4>
+    <section class="sale-filters-sheet__group" aria-label="Canal">
+      <h4 class="m-sec-t">Canal y factura</h4>
       <db-mobile-chip-group
         [options]="sourceOptions"
         [value]="draft.source"
-        ariaLabel="Tipo de venta"
+        ariaLabel="Canal de venta"
         (valueChange)="onSourceChange($event)"
       />
     </section>

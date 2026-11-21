@@ -281,6 +281,26 @@
   }
 }
 
+.fsell__fee {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+  color: mobile.$m-text;
+
+  input {
+    width: 7rem;
+    min-height: 40px;
+    padding: 0 10px;
+    border: 1px solid mobile.$m-border-input;
+    border-radius: mobile.$m-radius-sm;
+    font-family: inherit;
+    font-size: 14px;
+    text-align: right;
+  }
+}
+
 .fsell__cta {
   min-height: 54px;
   width: 100%;

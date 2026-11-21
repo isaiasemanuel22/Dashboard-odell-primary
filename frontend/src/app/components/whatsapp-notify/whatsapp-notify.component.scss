@@ -1,0 +1,92 @@
+@use '../../shared/styles/variables' as *;
+
+:host {
+  display: block;
+  min-width: 0;
+}
+
+.wa-notify {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.wa-notify__head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.wa-notify__title {
+  margin: 0;
+}
+
+.wa-notify__select-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.wa-notify__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: $color-text-muted;
+}
+
+.wa-notify__select {
+  height: 40px;
+  max-width: 100%;
+  padding: 0 10px;
+  border: 1px solid $color-border-input;
+  border-radius: 10px;
+  background: $color-surface;
+  color: $color-text;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.wa-notify__preview {
+  align-self: flex-start;
+  max-width: min(420px, 100%);
+  padding: 10px 12px;
+  border-radius: 12px 12px 12px 2px;
+  background: $color-status-success-bg;
+  color: $color-status-success-text;
+  font-size: 13px;
+  line-height: 1.45;
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+
+.wa-notify__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.wa-notify__warn {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: $color-status-warning-bg;
+  color: $color-status-warning-text;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.wa-notify__copied {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: $color-success;
+}
+
+.wa-notify__foot {
+  margin: 0;
+  font-size: 12px;
+  color: $color-text-muted;
+}

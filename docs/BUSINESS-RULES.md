@@ -2286,3 +2286,55 @@ Decidido por Isaías el 2026-11-19.
 - La **venta de mostrador no descuenta** packaging (Isaías, 2026-11-19).
 - Si se devuelve una venta, el packaging **no vuelve solo** al stock: se
   ajusta a mano en Insumos.
+
+---
+
+## 28. Integraciones, WhatsApp y facturación (v6)
+
+Decidido por Isaías el 2026-11-20. Se implementa por fases: fase 1 sin
+servicios externos; después links de pago de Mercado Pago, Tiendanube y
+emisión por ARCA, una rama cada una.
+
+### 28.1 Ajustes → Integraciones
+- Cuatro tarjetas: Tiendanube, Mercado Pago, WhatsApp y ARCA. Mientras no
+  estén conectadas muestran «Sin conectar» y la conexión queda «Próximamente».
+- Mercado Pago guarda la **comisión que descuenta (%)**: es el valor por
+  defecto que se completa al registrar un cobro con Mercado Pago (pago de
+  pedido, seña, venta de mostrador y de feria). En cada cobro se puede cambiar.
+- ARCA guarda el **punto de venta** y el **tope anual de la categoría** del
+  monotributo.
+- WhatsApp guarda el número del negocio y las **plantillas** de mensaje. Hay
+  cuatro por defecto (Presupuesto enviado, Diseño para aprobar, Tu pedido está
+  listo, Recordatorio de saldo), editables; se pueden crear nuevas. Usan
+  variables con los datos del pedido o presupuesto (cliente, ítems, total,
+  pagado, saldo, entrega). Ninguna plantilla trae horario de retiro.
+
+### 28.2 Avisar por WhatsApp
+- En el pedido y en el presupuesto se elige una plantilla, se ve el mensaje
+  armado y se abre WhatsApp con el texto (link wa.me) o se copia. Cada envío
+  o copia queda en el historial del pedido.
+- Los teléfonos argentinos se normalizan para wa.me: 549 + código de área sin
+  0 + número sin 15.
+- El envío por la API de Meta es otra rama; esta fase no envía nada sola.
+
+### 28.3 Comisiones y ganancia neta
+- La venta de mostrador y la de feria también registran la comisión del
+  medio de pago.
+- La **ganancia neta** de cada venta en Ventas = ganancia − comisiones de sus
+  cobros vigentes.
+
+### 28.4 Factura (manual hasta ARCA)
+- Solo **factura C** (monotributo). Se marca a mano con su número
+  (`0003-00000041`) en cualquier pedido no cancelado y en cada venta de
+  mostrador o de feria (una factura por venta; las ferias no se agrupan).
+- La marca se puede quitar. Un número repetido se rechaza.
+- Marcar o quitar la factura queda en el historial del pedido.
+
+### 28.5 Ventas
+- Cada fila muestra canal, costo, ganancia neta, total y factura. Filtros por
+  canal y «Sin facturar».
+- KPIs: Vendido, Facturado (con cuántas ventas y cuánto falta facturar) y
+  **facturado en los últimos 12 meses** (por fecha de factura) contra el tope
+  anual cargado en Integraciones.
+- «Exportar para el contador»: Excel (.xlsx) del mes elegido con fecha,
+  venta, cliente, canal, total, medio de pago, comisión y factura.

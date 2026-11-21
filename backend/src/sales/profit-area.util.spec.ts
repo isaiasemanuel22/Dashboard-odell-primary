@@ -65,6 +65,10 @@ describe('profit-area.util', () => {
           profit: 1200,
           soldAt: new Date().toISOString(),
           editable: true,
+          channel: 'sin_canal' as const,
+          fees: 0,
+          netProfit: 0,
+          paymentMethods: [],
         },
         {
           id: 'order-1',
@@ -84,6 +88,10 @@ describe('profit-area.util', () => {
           profit: 1000,
           soldAt: new Date().toISOString(),
           editable: false,
+          channel: 'sin_canal' as const,
+          fees: 0,
+          netProfit: 0,
+          paymentMethods: [],
         },
       ];
 
@@ -157,6 +165,10 @@ describe('profit-area.util', () => {
           profit: 900,
           soldAt: new Date().toISOString(),
           editable: true,
+          channel: 'sin_canal' as const,
+          fees: 0,
+          netProfit: 0,
+          paymentMethods: [],
         },
       ];
 
@@ -202,6 +214,10 @@ describe('profit-area.util', () => {
           profit: 0,
           soldAt: new Date().toISOString(),
           editable: false,
+          channel: 'sin_canal' as const,
+          fees: 0,
+          netProfit: 0,
+          paymentMethods: [],
         },
       ];
 

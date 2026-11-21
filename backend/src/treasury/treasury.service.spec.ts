@@ -103,6 +103,23 @@ describe('TreasuryService', () => {
     );
   });
 
+  it('la venta de mostrador muestra su comisión y el neto en movimientos', () => {
+    store.retailSales.push({
+      id: 'sale-fee',
+      items: [],
+      total: 2000,
+      fee: 120,
+      method: PaymentMethod.MERCADO_PAGO,
+      soldAt: '2026-08-02T12:00:00.000Z',
+      createdAt: '2026-08-02T12:00:00.000Z',
+    });
+    const movement = service
+      .getOverview()
+      .movements.find((m) => m.id === 'sale-fee')!;
+    expect(movement.fee).toBe(120);
+    expect(movement.net).toBe(1880);
+  });
+
   it('rechaza un total que no coincide en centavos con la suma de gastos', () => {
     expect(() =>
       service.recordExpense({

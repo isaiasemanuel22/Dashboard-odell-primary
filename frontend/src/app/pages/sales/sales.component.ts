@@ -1,4 +1,4 @@
-import { Subscription } from 'rxjs';
+import { Observable, Subscription } from 'rxjs';
 import { Component, DestroyRef, OnInit, inject } from '@angular/core';
 import { Router } from '@angular/router';
 import {
@@ -11,6 +11,8 @@ import {
 import { RealtimeService } from '../../core/services/realtime.service';
 import { BreakpointService } from '../../core/services/breakpoint.service';
 import { SalesService } from '../../core/services/sales.service';
+import { OrdersService } from '../../core/services/orders.service';
+import { SettingsFacade } from '../../store/settings/settings.facade';
 import { FormDialogService } from '../../modals/public-api';
 import {
   DB_DATA_TABLE,
@@ -29,7 +31,6 @@ import {
 } from '@general-components';
 import {
   AreaServiceType,
-  SALE_SOURCE_LABELS,
   SERVICE_TYPE_LABELS,
 } from '../../shared/constants/labels';
 import { extractApiErrorMessage } from '../../shared/utils/api-error';
@@ -37,6 +38,9 @@ import { formatDateDayMonth } from '../../shared/utils/date-format.util';
 import { pluralize } from '../../shared/utils/order.helpers';
 import { downloadSalesReportPdf } from '../../shared/utils/sales-report.util';
 import { salesChannelLabel } from '../../shared/utils/v1-labels.util';
+import { downloadAccountantExport } from '../../shared/utils/sales-accountant-export.util';
+import { annualCapPercentLabel, uninvoicedDetail } from '../../shared/utils/sales-invoice.util';
+import { formatCurrencyArs } from '../../shared/utils/currency-ars.util';
 import { CurrencyArsPipe } from '../../shared/pipes/labels.pipe';
 import { ProductsService } from '../../core/services/products.service';
 import {
@@ -45,6 +49,25 @@ import {
   emptySaleMobileSheetFilters,
   matchesSaleSheetFilters,
 } from '../../modals/sale-filters-sheet.component';
+
+/** Chips de la tabla: Todas, canales presentes y «Sin facturar · N». */
+function buildChannelFilters(entries: SaleEntry[]): OdlFilter<SaleEntry>[] {
+  const channels = [...new Set(entries.map((entry) => entry.channel))];
+  const uninvoiced = entries.filter((entry) => !entry.invoice).length;
+  return [
+    { id: 'all', label: 'Todas' },
+    ...channels.map((channel) => ({
+      id: channel,
+      label: salesChannelLabel(channel) || 'Sin canal',
+      predicate: (entry: SaleEntry) => entry.channel === channel,
+    })),
+    {
+      id: 'sin_facturar',
+      label: `Sin facturar · ${uninvoiced}`,
+      predicate: (entry: SaleEntry) => !entry.invoice,
+    },
+  ];
+}
 
 const SALE_AREAS: AreaServiceType[] = [
   ServiceType.IMPRESION_3D,
@@ -72,6 +95,8 @@ const SALE_AREAS: AreaServiceType[] = [
 })
 export class SalesComponent implements OnInit {
   private readonly salesService = inject(SalesService);
+  private readonly ordersService = inject(OrdersService);
+  private readonly settingsFacade = inject(SettingsFacade);
   private readonly productsService = inject(ProductsService);
   private readonly realtime = inject(RealtimeService);
   private readonly formDialogs = inject(FormDialogService);
@@ -87,6 +112,9 @@ export class SalesComponent implements OnInit {
   entries: SaleEntry[] = [];
   mobileSheetFilters: SaleMobileSheetFilters = emptySaleMobileSheetFilters();
   private viewMonth = new Date();
+  private pointOfSale: number | null = null;
+  /** Chips de canal: solo los presentes en el mes + «Sin facturar · N». */
+  channelFilters: OdlFilter<SaleEntry>[] = buildChannelFilters([]);
 
   get monthLabel(): string {
     return this.viewMonth
@@ -149,15 +177,22 @@ export class SalesComponent implements OnInit {
         hint: this.salesCountLabel,
       },
       {
-        label: 'Ganancia',
-        value: this.currencyArs.transform(this.stats.monthlyProfit),
+        label: 'Ganancia neta',
+        value: this.currencyArs.transform(this.stats.monthlyNetProfit),
         hint: `Costo ${this.currencyArs.transform(this.stats.monthlyCost)}`,
-        tone:
-          this.stats.monthlyProfit >= 0
-            ? 'success'
-            : this.stats.monthlyProfit < 0
-              ? 'danger'
-              : 'default',
+        tone: this.stats.monthlyNetProfit >= 0 ? 'success' : 'danger',
+      },
+      {
+        label: 'Facturado',
+        value: this.currencyArs.transform(this.stats.invoicedRevenue),
+        hint: uninvoicedDetail(this.stats),
+      },
+      {
+        label: 'Últimos 12 meses',
+        value: this.currencyArs.transform(this.stats.last12MonthsInvoicedRevenue),
+        hint: this.stats.annualInvoiceCap
+          ? `${annualCapPercentLabel(this.stats)} % del tope de ${formatCurrencyArs(this.stats.annualInvoiceCap)}`
+          : 'Sin tope cargado',
       },
     ];
   }
@@ -175,20 +210,6 @@ export class SalesComponent implements OnInit {
       ...entry.items.map((item) => `${item.productName} ${item.quantity}`),
     ].join(' ');
 
-  readonly sourceFilters: OdlFilter<SaleEntry>[] = [
-    { id: 'all', label: 'Todas' },
-    {
-      id: SaleSource.RETAIL,
-      label: SALE_SOURCE_LABELS[SaleSource.RETAIL],
-      predicate: (entry) => entry.source === SaleSource.RETAIL,
-    },
-    {
-      id: SaleSource.ORDER,
-      label: SALE_SOURCE_LABELS[SaleSource.ORDER],
-      predicate: (entry) => entry.source === SaleSource.ORDER,
-    },
-  ];
-
   readonly areaFilters: OdlFilter<SaleEntry>[] = [
     { id: 'all', label: 'Todas' },
     ...SALE_AREAS.map((area) => ({
@@ -202,18 +223,20 @@ export class SalesComponent implements OnInit {
     { id: 'editar', label: 'Editar', hidden: (entry) => !entry.editable },
     { id: 'eliminar', label: 'Eliminar', danger: true, hidden: (entry) => !entry.editable },
     { id: 'ver', label: 'Ver pedido', hidden: (entry) => entry.editable || !entry.orderId },
+    { id: 'facturar', label: 'Marcar facturada', hidden: (entry) => !!entry.invoice },
+    { id: 'quitar-factura', label: 'Quitar factura', hidden: (entry) => !entry.invoice },
   ];
 
   readonly columns: OdlColumn<SaleEntry>[] = [
     { key: 'saleId', header: 'Venta', type: 'primary' },
     { key: 'customerName', header: 'Cliente', value: (entry) => entry.customerName || 'Sin cliente' },
     {
-      key: 'source',
-      header: 'Tipo',
+      key: 'channel',
+      header: 'Canal',
       type: 'badge',
       badge: (entry) => ({
-        label: SALE_SOURCE_LABELS[entry.source],
-        tone: entry.source === SaleSource.ORDER ? 'info' : 'neutral',
+        label: salesChannelLabel(entry.channel) || 'Sin canal',
+        tone: entry.channel === 'sin_canal' ? 'neutral' : 'info',
       }),
     },
     {
@@ -231,8 +254,9 @@ export class SalesComponent implements OnInit {
     },
     { key: 'soldAt', header: 'Fecha', type: 'date' },
     { key: 'cost', header: 'Costo', type: 'money' },
-    { key: 'profit', header: 'Ganancia', type: 'signedMoney' },
+    { key: 'netProfit', header: 'Ganancia neta', type: 'signedMoney' },
     { key: 'total', header: 'Total', type: 'money' },
+    { key: 'invoice', header: 'Factura', type: 'custom' },
   ];
 
   get emptyText(): string {
@@ -240,6 +264,12 @@ export class SalesComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.settingsFacade.ensureLoaded().subscribe({
+      next: (settings) => {
+        this.pointOfSale = settings.integrations?.arca?.pointOfSale ?? null;
+      },
+      error: () => undefined,
+    });
     this.loadData();
     this.realtime.bindReload(this.destroyRef, ['sales', 'orders'], () =>
       this.loadData(),
@@ -303,21 +333,95 @@ export class SalesComponent implements OnInit {
 
   entryMeta(entry: SaleEntry): string {
     const day = formatDateDayMonth(entry.soldAt);
+    const channel = salesChannelLabel(entry.channel) || 'Sin canal';
     if (entry.source === SaleSource.RETAIL) {
-      if (entry.editable) return `${day} · editable`;
       const count = entry.items.reduce((sum, item) => sum + item.quantity, 0);
-      return `${day} · ${pluralize(count, 'producto', 'productos')}`;
+      const editable = entry.editable ? ' · editable' : '';
+      return `${day} · ${channel} · ${pluralize(count, 'producto', 'productos')}${editable}`;
     }
-    const channel = salesChannelLabel(entry.salesChannel);
-    return channel ? `Entregado ${day} · ${channel}` : `Entregado ${day}`;
+    return `Entregado ${day} · ${channel}`;
+  }
+
+  toggleInvoice(entry: SaleEntry): void {
+    if (entry.invoice) this.removeInvoice(entry);
+    else this.markInvoice(entry);
   }
 
   onAction(event: OdlActionEvent<SaleEntry>): void {
     if (event.actionId === 'editar') this.openEditSale(event.row);
     if (event.actionId === 'eliminar') this.deleteSale(event.row);
+    if (event.actionId === 'facturar') this.markInvoice(event.row);
+    if (event.actionId === 'quitar-factura') this.removeInvoice(event.row);
     if (event.actionId === 'ver' && event.row.orderId) {
       void this.router.navigate(['/pedidos', event.row.orderId]);
     }
+  }
+
+  markInvoice(entry: SaleEntry): void {
+    this.formDialogs
+      .openInvoiceMark({ saleLabel: entry.saleId, pointOfSale: this.pointOfSale })
+      .subscribe((result) => {
+        if (!result) return;
+        const request = entry.retailSaleId
+          ? this.salesService.markRetailInvoice(entry.retailSaleId, result)
+          : entry.orderId
+            ? this.ordersService.markInvoice(entry.orderId, result)
+            : null;
+        this.runInvoiceRequest(request, 'No se pudo marcar la factura');
+      });
+  }
+
+  removeInvoice(entry: SaleEntry): void {
+    if (!entry.invoice) return;
+    this.formDialogs
+      .openConfirm({
+        title: 'Quitar factura',
+        message: `¿Quitar la factura ${entry.invoice.number} de ${entry.saleId}? Solo se desmarca en Odell.`,
+        confirmLabel: 'Quitar factura',
+        confirmVariant: 'delete',
+      })
+      .subscribe((confirmed) => {
+        if (!confirmed) return;
+        const request = entry.retailSaleId
+          ? this.salesService.removeRetailInvoice(entry.retailSaleId)
+          : entry.orderId
+            ? this.ordersService.removeInvoice(entry.orderId)
+            : null;
+        this.runInvoiceRequest(request, 'No se pudo quitar la factura');
+      });
+  }
+
+  private runInvoiceRequest(
+    request: Observable<unknown> | null,
+    fallback: string,
+  ): void {
+    if (!request) return;
+    request.subscribe({
+      next: () => this.loadData(),
+      error: (err) => {
+        this.reportMessage = extractApiErrorMessage(err, fallback);
+      },
+    });
+  }
+
+  exportForAccountant(): void {
+    if (this.loading || !this.entries.length) {
+      this.reportMessage = 'No hay ventas en el mes para exportar.';
+      return;
+    }
+    const month = this.monthParam();
+    const label = this.monthLabel;
+    downloadAccountantExport(this.entries, month)
+      .then(() => {
+        this.reportMessage = `Listo: se descargó la planilla de ${label} para el contador.`;
+      })
+      .catch((err) => {
+        this.reportMessage = extractApiErrorMessage(err, 'No se pudo generar la planilla');
+      });
+  }
+
+  invoiceLabel(entry: SaleEntry): string {
+    return entry.invoice ? `${entry.invoice.type} ${entry.invoice.number}` : '';
   }
 
   private initials(name: string): string {
@@ -391,6 +495,7 @@ export class SalesComponent implements OnInit {
       next: ({ stats, entries }) => {
         this.stats = stats;
         this.entries = entries;
+        this.channelFilters = buildChannelFilters(entries);
         this.loading = false;
       },
       error: () => {

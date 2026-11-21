@@ -13,8 +13,9 @@
       variant="cost"
     />
     <app-sale-stat-card
-      label="Ganancias del mes"
-      [value]="stats.monthlyProfit"
+      label="Ganancia neta del mes"
+      [value]="stats.monthlyNetProfit"
+      [detail]="netProfitDetail"
       [breakdown]="profitBreakdown"
       variant="profit"
     />
@@ -30,6 +31,41 @@
       [detail]="retailDetail"
       variant="revenue-soft"
     />
+    <app-sale-stat-card
+      label="Facturado"
+      [value]="stats.invoicedRevenue"
+      [detail]="invoicedDetail"
+      variant="accent"
+    />
+    <article class="sales-stats-grid__cap">
+      <span class="sales-stats-grid__cap-label">Facturado últimos 12 meses</span>
+      <strong class="sales-stats-grid__cap-value">
+        {{ stats.last12MonthsInvoicedRevenue | currencyArs }}
+      </strong>
+      @if (stats.annualInvoiceCap) {
+        <div
+          class="sales-stats-grid__track"
+          role="progressbar"
+          aria-label="Facturado contra el tope de la categoría"
+          aria-valuemin="0"
+          aria-valuemax="100"
+          [attr.aria-valuenow]="capPercent"
+        >
+          <div
+            class="sales-stats-grid__fill"
+            [class.sales-stats-grid__fill--warn]="capPercent >= 85"
+            [style.width.%]="capPercent"
+          ></div>
+        </div>
+        <small class="sales-stats-grid__cap-note">
+          {{ capPercentLabel }} % del tope de {{ stats.annualInvoiceCap | currencyArs }}
+        </small>
+      } @else {
+        <small class="sales-stats-grid__cap-note">
+          <a routerLink="/ajustes/integraciones">Cargá el tope de tu categoría en Integraciones</a>
+        </small>
+      }
+    </article>
   </div>
 
   <app-area-profit-balance [balances]="stats.profitByArea" />

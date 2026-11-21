@@ -8,6 +8,14 @@
     >
       PDF
     </button>
+    <button
+      type="button"
+      class="m-ib txt"
+      [disabled]="loading || !entries.length"
+      (click)="exportForAccountant()"
+    >
+      Excel
+    </button>
   </db-mobile-bar>
 
   <div class="m-tools">
@@ -117,20 +125,41 @@
       } @else {
         <div class="m-card m-card--flush">
           @for (entry of mobileFilteredEntries; track entry.id) {
-            <button
-              type="button"
-              class="m-row"
-              (click)="openMobileEntry(entry)"
-            >
-              <span class="sales-m__av" aria-hidden="true">{{
-                entryAvatar(entry)
-              }}</span>
-              <div class="m-row__text">
-                <b>{{ entryTitle(entry) }}</b>
-                <span>{{ entryMeta(entry) }}</span>
+            <div class="sales-m__item">
+              <button
+                type="button"
+                class="m-row"
+                (click)="openMobileEntry(entry)"
+              >
+                <span class="sales-m__av" aria-hidden="true">{{
+                  entryAvatar(entry)
+                }}</span>
+                <div class="m-row__text">
+                  <b>{{ entryTitle(entry) }}</b>
+                  <span>{{ entryMeta(entry) }}</span>
+                </div>
+                <div class="sales-m__end">
+                  {{ entry.total | currencyArs }}
+                  <small
+                    [class.sales-m__pos]="entry.netProfit >= 0"
+                    [class.sales-m__neg]="entry.netProfit < 0"
+                    >Neto {{ entry.netProfit | currencyArs }}</small
+                  >
+                </div>
+              </button>
+              <div class="sales-m__invoice">
+                <span class="sales-m__invoice-state">{{
+                  entry.invoice ? 'Factura ' + invoiceLabel(entry) : 'Sin factura'
+                }}</span>
+                <button
+                  type="button"
+                  class="sales-m__invoice-btn"
+                  (click)="toggleInvoice(entry)"
+                >
+                  {{ entry.invoice ? 'Quitar factura' : 'Marcar facturada' }}
+                </button>
               </div>
-              <div class="sales-m__end">{{ entry.total | currencyArs }}</div>
-            </button>
+            </div>
           }
         </div>
       }
@@ -143,12 +172,19 @@
     <div>
       <h2>Ventas</h2>
       <p>
-        Vendido, costos y ganancias de {{ monthLabel }} · {{ entries.length }} ventas registradas
+        Vendido, costos y ganancias de {{ monthLabel }} · {{ entries.length }} {{ entries.length === 1 ? 'venta registrada' : 'ventas registradas' }}@if (stats?.uninvoicedCount) { · {{ stats?.uninvoicedCount }} sin facturar }
       </p>
     </div>
     <div class="header-actions">
       <db-button label="Mes anterior" variant="secondary" format="soft" (clicked)="shiftMonth(-1)" />
       <db-button label="Mes siguiente" variant="secondary" format="soft" (clicked)="shiftMonth(1)" />
+      <db-button
+        label="Exportar para el contador"
+        variant="secondary"
+        format="soft"
+        [disabled]="loading || !entries.length"
+        (clicked)="exportForAccountant()"
+      />
       <db-button
         label="Generar reporte"
         variant="secondary"
@@ -200,19 +236,33 @@
         [rows]="entries"
         [columns]="columns"
         [actions]="actions"
-        [filters]="sourceFilters"
+        [filters]="channelFilters"
         [areaFilters]="areaFilters"
-        filterPanelTitle="Filtrar ventas"
-        filterGroupLabel="Tipo"
-        panelEntityOne="venta"
-        panelEntityMany="ventas"
+        minWidth="1000px"
         searchPlaceholder="Buscar por ID, producto o cliente"
         [searchText]="searchText"
         [emptyText]="emptyText"
         emptyActionLabel="Registrar una venta de mostrador"
         (action)="onAction($event)"
         (emptyAction)="openCreateSale()"
-      />
+      >
+        <ng-template odlCell="invoice" let-entry>
+          @if (entry.invoice) {
+            <span class="sales-invoice sales-invoice--ok">{{ invoiceLabel(entry) }}</span>
+          } @else {
+            <db-button
+              label="Marcar facturada"
+              variant="secondary"
+              format="soft"
+              (clicked)="markInvoice(entry)"
+            />
+          }
+        </ng-template>
+      </db-data-table>
+      <p class="sales-foot">
+        Costo y ganancia salen del mismo cálculo que Productos y Pedidos, con la
+        comisión del medio de pago descontada.
+      </p>
     </section>
   }
 </div>

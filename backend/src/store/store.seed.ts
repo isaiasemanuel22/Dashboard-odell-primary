@@ -31,6 +31,7 @@ import {
   normalizePaperReferenceSheets,
   syncPaperPricesFromReferenceSheets,
 } from '../common/paper-cost.util';
+import { defaultIntegrations } from '../settings/integrations.util';
 import { DEFAULT_WHOLESALE_DISCOUNT } from '../settings/wholesale-discount.util';
 
 function defaultPaperReferenceSheets() {
@@ -61,6 +62,7 @@ export function createEmptyState(): StoreState {
         ...DEFAULT_WHOLESALE_DISCOUNT,
         serviceTypes: [...DEFAULT_WHOLESALE_DISCOUNT.serviceTypes],
       },
+      integrations: defaultIntegrations(),
       paperPricesPerSqm: {
         sublimacion: 0,
         dtf: 0,
@@ -129,6 +131,7 @@ export function createSeedState(): StoreState {
       ...DEFAULT_WHOLESALE_DISCOUNT,
       serviceTypes: [...DEFAULT_WHOLESALE_DISCOUNT.serviceTypes],
     },
+    integrations: defaultIntegrations(),
     paperPricesPerSqm: syncPaperPricesFromReferenceSheets(
       defaultPaperReferenceSheets(),
     ),

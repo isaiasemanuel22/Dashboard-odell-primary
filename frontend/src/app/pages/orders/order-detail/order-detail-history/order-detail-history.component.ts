@@ -4,6 +4,7 @@ import {
   Input,
 } from '@angular/core';
 import {
+  OrderActivityEntry,
   OrderPriceHistoryEntry,
   OrderStatusHistoryEntry,
 } from '../../../../core/models';
@@ -32,8 +33,22 @@ import {
 export class OrderDetailHistoryComponent {
   @Input() statusHistory: OrderStatusHistoryEntry[] = [];
   @Input() priceHistory: OrderPriceHistoryEntry[] = [];
+  /** Avisos por WhatsApp y marcas de factura. */
+  @Input() activityHistory: OrderActivityEntry[] = [];
   /** Presupuesto de origen, para rotular la creación del pedido. */
   @Input() sourceQuoteId: string | null = null;
+
+  readonly activityKindLabels: Record<OrderActivityEntry['kind'], string> = {
+    whatsapp: 'WhatsApp',
+    invoice: 'Factura',
+  };
+
+  /** Más reciente primero, como los otros historiales. */
+  get activityEntries(): OrderActivityEntry[] {
+    return [...(this.activityHistory ?? [])].sort((a, b) =>
+      b.at.localeCompare(a.at),
+    );
+  }
 
   readonly sourceLabels = ORDER_STATUS_CHANGE_SOURCE_LABELS;
   readonly priceTriggerLabels: Record<OrderPriceHistoryEntry['trigger'], string> = {

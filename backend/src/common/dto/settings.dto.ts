@@ -1,3 +1,4 @@
+import { Type } from 'class-transformer';
 import {
   ArrayMaxSize,
   IsArray,
@@ -10,6 +11,7 @@ import {
   IsOptional,
   IsString,
   Matches,
+  ValidateNested,
   MaxLength,
   Max,
   Min,
@@ -616,4 +618,73 @@ export class ResetDatabaseDto {
   @MaxLength(64)
   @IsNotEmpty()
   code!: string;
+}
+
+export class MercadoPagoIntegrationDto {
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(99.99)
+  feePercent?: number;
+}
+
+export class ArcaIntegrationDto {
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(99999)
+  pointOfSale?: number | null;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  annualCap?: number | null;
+}
+
+export class WhatsAppTemplateInputDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(64)
+  id?: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(80)
+  name!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(2000)
+  body!: string;
+}
+
+export class WhatsAppIntegrationDto {
+  @IsOptional()
+  @IsString()
+  @MaxLength(32)
+  businessPhone?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(50)
+  @ValidateNested({ each: true })
+  @Type(() => WhatsAppTemplateInputDto)
+  templates?: WhatsAppTemplateInputDto[];
+}
+
+export class UpdateIntegrationsDto {
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => MercadoPagoIntegrationDto)
+  mercadoPago?: MercadoPagoIntegrationDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => ArcaIntegrationDto)
+  arca?: ArcaIntegrationDto;
+
+  @IsOptional()
+  @ValidateNested()
+  @Type(() => WhatsAppIntegrationDto)
+  whatsapp?: WhatsAppIntegrationDto;
 }

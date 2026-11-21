@@ -155,6 +155,16 @@ export class SettingsHomeComponent implements OnInit {
       ],
     },
     {
+      title: 'Conexiones',
+      items: [
+        {
+          label: 'Integraciones',
+          hint: 'Mercado Pago, WhatsApp, ARCA y Tiendanube',
+          link: '/ajustes/integraciones',
+        },
+      ],
+    },
+    {
       title: 'Equipo',
       items: [
         {
