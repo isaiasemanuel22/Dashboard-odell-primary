@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-21 · Diseño v6 fase 1 publicado (Integraciones, factura C, Ventas) + unión con Meta
+Rama: feat/v6-integraciones → main · Commits: ed04afb, bb2d4eb (merge de main con Chats/Meta), c333d5d
+Hecho: Ajustes → Integraciones única (Meta: webhook, canales y plantillas; Mercado Pago con comisión %; ARCA con punto de venta y tope; Tiendanube «Próximamente»). Comisión por defecto MP en pagos, seña, mostrador y feria (`retail_sales.fee`). «Avisar por WhatsApp» en pedido y presupuesto: envía plantilla por Meta desde el número de Odell, «Copiar mensaje» siempre; queda en el historial del pedido (`activity_history`). Factura C manual en pedidos y ventas (número único). Ventas: canal, costo, ganancia neta, factura, chips por canal y «Sin facturar», KPIs Facturado y últimos 12 meses contra el tope, export .xlsx (`write-excel-file`); mobile con canal, neto y factura por fila. `whatsAppDigitsAr` normaliza a 549 sin 15. Jest 706, Angular 216. Heroku v53 + `db:push:heroku` sin pérdida de datos. Ronda completa escritorio/mobile en local: todo opera igual; fallos E139–E146.
+Decisiones: de Isaías: fases (1 sin servicios externos; después MP links, Tiendanube, ARCA); factura manual solo C; comisión MP como valor por defecto; ferias una fila por venta; facturado últimos 12 meses por fecha de factura; export Excel; mobile adaptado sin artboards; aviso por Meta en vez de wa.me. Reglas en §29 (la §28 es Meta).
+Pendiente: cliente con teléfono pero sin chat no se puede avisar por Meta (solo copiar); quote-detail conserva el botón wa.me viejo; paridad mobile (Productos sin Carrito/Actualizar precios/+Categoría; escritorio sin chips «Con saldo» ni saldo por cliente); fases 2–4; probar en producción con sesión.
+
 ## 2026-11-19 · Deploy de márgenes unificados
 Rama: feat/margen-total-listado → main · Commits: a779cde
 Hecho: tests y builds OK (Jest 565, Angular 190). Push a origin main y Heroku v51, sin cambios de esquema. `/api/health` 200; Netlify con bundle nuevo.

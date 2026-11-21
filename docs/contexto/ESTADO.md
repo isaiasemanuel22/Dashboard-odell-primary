@@ -1,13 +1,12 @@
-# Estado de Odell — al 2026-11-19
+# Estado de Odell — al 2026-11-21
 
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
 ## Producción
-- GitHub `main` = `feat/margen-total-listado` en `a779cde` (2026-11-19: margen total en el
-  listado y en colores, aviso/filtro/alertas «Debajo del calculado»; antes, packaging §27,
-  precio fijo guardado y márgenes §16.1.1). Heroku v51 = `a779cde` (sin cambios de esquema
-  desde v50). Netlify ya sirve el frontend nuevo. APK TWA publicada; assetlinks verificado.
-  Netlify publica el frontend solo al pushear `main`.
+- GitHub `main` = `feat/v6-integraciones` en `c333d5d` (2026-11-21: diseño v6 fase 1 §29 —
+  Integraciones, factura C manual, comisión MP, Ventas con canal/neto/export — más Chats, Meta y
+  agentes §28 que ya estaban en `07f5475`). Heroku v53 = `c333d5d`, esquema aplicado
+  (`db:push:heroku` in sync). Netlify publica el frontend solo al pushear `main`.
 - En producción ningún producto tiene el precio fijo guardado (antes no se persistía):
   volver a marcarlos como «Fijo» y guardarlos antes de usar «Recalcular precios».
 - Lockfile del backend: regenerarlo siempre con npm 10.9.9 (el de Heroku):
@@ -19,12 +18,14 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `feat/margen-total-listado`, igual a `main` (publicada 2026-11-19). Falta: que el
-  aviso de «productos afectados» de un insumo cuente el packaging; `product-detail`,
-  `product-pricing` y márgenes por canal del Dashboard con otras fórmulas; probar en producción.
-- `feat/chats` (sin publicar): sección Chats v7; necesita `db:push:heroku` (tablas de chats)
-  y traer `main` antes (no tiene packaging ni `suggested_price`).
-  La sesión de Meta (`claude/meta-agentes-3d0324`) depende de esa rama.
+- Rama actual del v6: `feat/v6-integraciones` (worktree `../dashboard-v6`, dev `odell-v6-4500`,
+  backend en memoria), igual a `main`. Siguen: fase 2 links de pago MP, fase 3 Tiendanube,
+  fase 4 ARCA (Isaías tiene las tres cuentas; claves en `.env`, nunca en el chat). Falta: avisar
+  por Meta a un cliente sin chat (hoy solo copiar), botón wa.me viejo en presupuesto, paridad
+  mobile (Productos sin Carrito/Actualizar precios/+Categoría; escritorio sin «Con saldo»).
+- `feat/chats` y `claude/meta-agentes-3d0324` ya unidas a `main` y publicadas (2026-11-20).
+- Pendiente de `feat/margen-total-listado`: «productos afectados» de un insumo sin packaging;
+  `product-detail`, `product-pricing` y márgenes por canal del Dashboard con otras fórmulas.
 - `feat/ferias` ya unida a `main` (publicada 2026-11-18). Falta probar
   Ferias en producción con sesión iniciada; sin UI para editar feria, fondo o gastos.
 - Producción con sesión iniciada sin revisar (el agente solo vio el login).
@@ -34,7 +35,7 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
 - Precios de catálogo guardados no se recalcularon con la regla de insumos × 2 +
   margen de error ni con la lista de combos: cada producto con insumos los toma
   al usar «Usar precio calculado» o «Actualizar precios».
-- Errores reportados: corregidos hasta E135 (en la rama); E132 sin reproducir; E136–E138 pendientes.
+- Errores reportados: corregidos hasta E135; E132 sin reproducir; E136–E146 pendientes (E139–E146 de la ronda 2026-11-21).
 - Ramas viejas ya unidas (borrables con OK): feat/3mf-purga,
   feat/bobinas-reposicion, feat/cola-por-impresora, feat/rediseno-faltantes,
   fix/errores-tanda-1, docs/deploy-netlify.
@@ -60,7 +61,9 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
 ## Por definir (preguntar a Isaías antes de tocar)
 - ¿Un presupuesto borrador sin líneas puede pasar a Rechazado/Cancelado? Hoy sí.
 - ¿Se puede vender por encima del stock? Hoy el stepper se limita al stock.
-- ¿Aviso al salir de Ajustes con cambios sin guardar?
+- ¿Aviso al salir de Ajustes con cambios sin guardar? (Integraciones ya avisa, también en escritorio.)
+- ¿Responsable obligatorio al crear un pedido? (desde presupuesto se crea sin, E139.)
+- ¿El balance por área descuenta comisiones? (E140)
 - ¿Se puede editar un pedido ENTREGADO o CANCELADO (ítems, total)? Hoy sí; solo se
   impide bajar una cantidad por debajo de lo entregado.
 - ¿Se puede cancelar un pedido ENTREGADO, y qué pasa con el stock ya descontado?
@@ -85,5 +88,6 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   y fair-5 «Mercado de Diseño Güemes» (abierta, 2026-11-17); cust-2 «QA Revendedor», pedidos ord-13 a
   ord-29, presupuesto quo-18, productos prod-45 «QA taza ×2» (con packaging) y prod-53 «QA sin mano de obra»;
   packaging: insumo sup-5 «QA Caja kraft», combo prod-54, pedidos ord-66/ord-67, presupuesto qpe-37.
+- La base local NO tiene las columnas del v6 ni las de Chats/Meta: script `backend/scripts/sql/v6-integraciones.sql`.
 - La base local ya tiene las columnas de packaging (agregadas a mano: `prisma db push`
   borraría las tablas de Chats, que no están en esta rama).

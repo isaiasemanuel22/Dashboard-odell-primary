@@ -146,6 +146,14 @@ Vista: desktop, mobile o ambas; «(prod)» si se vio en producción. Si no dice 
 | E136 | 2026-11-16 | desktop | Productos › nuevo producto | [QA barrido] El clic en un tipo (Estampado) justo al abrir el modal se pierde: queda en FDM. Hay que esperar 1–2 s | El primer clic cuenta | 🔴 pendiente |
 | E137 | 2026-11-16 | desktop | Productos › formulario › Cancelar | [QA barrido] «Descartar cambios» aparece con demora; un clic antes de que aparezca no hace nada y el modal queda abierto | Confirmación inmediata | 🔴 pendiente |
 | E138 | 2026-11-16 | desktop | Productos › panel Precio | [QA barrido] Al cargar la medida de un impreso, la fila y el pie se actualizan al instante, pero el panel «Precio» queda en $0 durante 1–2 s | Panel al día enseguida o con indicador de «calculando» | 🔴 pendiente |
+| E139 | 2026-11-21 | ambos | Pedidos › nuevo pedido | [QA ronda completa] «Responsable» es obligatorio al crear un pedido, pero desde «Aceptar presupuesto» el pedido se crea «Sin responsable». En el backend local sin base la lista está vacía y no se puede crear el pedido | Mismo criterio en los dos caminos (por definir si es obligatorio) | 🔴 pendiente |
+| E140 | 2026-11-21 | ambos | Ventas › Balance por área | [QA v6] El balance por área muestra la ganancia sin descontar comisiones ($19.055) y el KPI «Ganancia neta» sí la descuenta ($17.755) | Por definir si el balance por área descuenta comisiones | 🔴 pendiente |
+| E141 | 2026-11-21 | ambos | Pedidos › registrar pago | [QA] En un pedido ya entregado el formulario ofrece «Es una seña» | Sin opción de seña en pedidos entregados | 🔴 pendiente |
+| E142 | 2026-11-21 | ambos | Presupuestos › resumen | [QA] «Seña 50 % $750» y debajo «Saldo antes del despacho $1.500» (el total); no se entiende si la seña está descontada | Saldo coherente con la seña | 🔴 pendiente |
+| E143 | 2026-11-21 | ambos | Pedidos y clientes › entregado | [QA] «Entregado 28/11» muestra la fecha prevista, no la de la entrega real; «Marcar todo entregado» queda en el historial como «COLA DE TRABAJO» | Fecha real de entrega y origen correcto en el historial | 🔴 pendiente |
+| E144 | 2026-11-21 | mobile | Clientes › ficha | [QA] «+54 223 555-0001» se muestra «+54 22 3555-0001» | Formato de teléfono correcto | 🔴 pendiente |
+| E145 | 2026-11-21 | desktop | Login | [QA, local] Con clave incorrecta aparece «Google no está habilitado…» en vez de «clave incorrecta» | Mensaje de clave incorrecta | 🔴 pendiente (revisar si pasa en producción) |
+| E146 | 2026-11-21 | ambos | Pagos | [QA] «Mercado Pago · Mercado Pago» repetido (medio y cuenta) en cada pago | Mostrar la cuenta solo si difiere del medio | 🔴 pendiente |
 
 ## Por definir (reporte QA 2026-11-13)
 
