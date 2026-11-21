@@ -74,4 +74,25 @@ describe('MetaTemplatesService', () => {
       'Hola Martina Paz, tu pedido ord-1 está listo para retirar.',
     );
   });
+
+  it('vista previa: sin chat de WhatsApp igual arma el texto y marca que no se puede mandar', () => {
+    order.customerId = 'cust-9';
+    const previews = service.preview({ orderId: 'ord-1' });
+    order.customerId = 'cust-5';
+    expect(previews.find((p) => p.key === 'pedido_listo')).toMatchObject({
+      text: 'Hola Martina Paz, tu pedido ord-1 está listo para retirar.',
+      error: null,
+      canSend: false,
+      blockedReason: 'El cliente no tiene chat de WhatsApp',
+    });
+  });
+
+  it('vista previa: no consulta la conexión de Meta y con chat se puede mandar', () => {
+    const previews = service.preview({ orderId: 'ord-1' });
+    expect(previews.find((p) => p.key === 'pedido_listo')).toMatchObject({
+      canSend: true,
+      blockedReason: null,
+    });
+    expect(sendTemplate).not.toHaveBeenCalled();
+  });
 });

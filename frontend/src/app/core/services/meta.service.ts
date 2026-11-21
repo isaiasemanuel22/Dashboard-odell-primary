@@ -37,8 +37,12 @@ export interface WhatsAppTemplateTarget {
 export interface WhatsAppTemplatePreview {
   key: string;
   label: string;
+  /** Texto armado: no depende de la conexión ni del chat (null si faltan datos). */
   text: string | null;
   error: string | null;
+  /** Hay chat de WhatsApp al que mandarlo. */
+  canSend: boolean;
+  blockedReason: string | null;
 }
 
 @Injectable({ providedIn: 'root' })

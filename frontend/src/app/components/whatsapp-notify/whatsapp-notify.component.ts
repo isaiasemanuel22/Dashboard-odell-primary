@@ -65,6 +65,8 @@ export class WhatsAppNotifyComponent implements OnChanges, OnDestroy {
   loadError = '';
   /** null = todavía no se sabe. */
   channelConnected: boolean | null = null;
+  /** Estado en Meta por clave de plantilla (null = sin dar de alta). */
+  private templateStatus: Record<string, string | null> = {};
   private channelRequested = false;
   sending = false;
   sendError = '';
@@ -115,8 +117,16 @@ export class WhatsAppNotifyComponent implements OnChanges, OnDestroy {
       return 'Este cliente no tiene teléfono cargado: no se puede enviar por WhatsApp. Podés copiar el mensaje.';
     }
     const selected = this.selected;
-    if (selected && !selected.text && selected.error) {
-      return selected.error;
+    if (selected && this.channelConnected === true) {
+      const status = this.templateStatus[selected.key];
+      if (status !== undefined && status !== 'APPROVED') {
+        return status
+          ? `La plantilla está «${status}» en Meta: todavía no se puede enviar. Podés copiar el mensaje.`
+          : 'La plantilla no está dada de alta en Meta: no se puede enviar. Podés copiar el mensaje.';
+      }
+    }
+    if (selected && !selected.canSend && selected.blockedReason) {
+      return `${selected.blockedReason}. ${this.message ? 'Podés copiar el mensaje.' : ''}`.trim();
     }
     return '';
   }
@@ -127,8 +137,15 @@ export class WhatsAppNotifyComponent implements OnChanges, OnDestroy {
       !this.sending &&
       !!this.message &&
       this.channelConnected === true &&
-      this.hasPhone
+      this.hasPhone &&
+      !!this.selected?.canSend &&
+      this.templateApproved
     );
+  }
+
+  private get templateApproved(): boolean {
+    const status = this.templateStatus[this.selectedKey];
+    return status === undefined || status === 'APPROVED';
   }
 
   selectTemplate(key: string): void {
@@ -222,6 +239,9 @@ export class WhatsAppNotifyComponent implements OnChanges, OnDestroy {
     this.metaService.status().subscribe({
       next: (status) => {
         this.channelConnected = status.whatsapp.connected;
+        this.templateStatus = Object.fromEntries(
+          status.templates.map((t) => [t.key, t.metaStatus]),
+        );
         this.cdr.markForCheck();
       },
       // Sin saber el estado, el envío queda bloqueado: mejor que mandar a ciegas.

@@ -1,4 +1,9 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  inject,
+  signal,
+} from '@angular/core';
 import { DIALOG_DATA, DialogRef } from '@angular/cdk/dialog';
 import { DbButtonComponent } from '@general-components';
 import { ChatMessage } from '../core/models';
@@ -117,14 +122,14 @@ export type WhatsAppTemplateDialogData = WhatsAppTemplateTarget;
             <label
               class="tpl-option"
               [class.tpl-option--checked]="selected() === preview.key"
-              [class.tpl-option--disabled]="!preview.text"
+              [class.tpl-option--disabled]="!preview.canSend"
             >
               <input
                 type="radio"
                 name="whatsappTemplate"
                 [value]="preview.key"
                 [checked]="selected() === preview.key"
-                [disabled]="!preview.text"
+                [disabled]="!preview.canSend"
                 (change)="selected.set(preview.key)"
               />
               <span class="tpl-body">
@@ -132,7 +137,7 @@ export type WhatsAppTemplateDialogData = WhatsAppTemplateTarget;
                 @if (preview.text) {
                   <span class="tpl-preview">{{ preview.text }}</span>
                 } @else {
-                  <span class="tpl-error">{{ preview.error }}</span>
+                  <span class="tpl-error">{{ preview.blockedReason }}</span>
                 }
               </span>
             </label>

@@ -28,15 +28,23 @@ import {
 export interface TemplatePreview {
   key: CustomerTemplateKey;
   label: string;
-  /** Texto como le llega al cliente; null si no se puede mandar. */
+  /** Texto como le llega al cliente; null solo si faltan datos (pedido/presupuesto). */
   text: string | null;
+  /** Por qué no se pudo armar el texto. */
   error: string | null;
+  /** Hay chat de WhatsApp al que mandarlo (la conexión la valida el envío). */
+  canSend: boolean;
+  blockedReason: string | null;
 }
 
 interface ResolvedTarget {
-  conversation: ChatConversation;
+  conversation: ChatConversation | null;
   order: Order | null;
   quote: Quote | null;
+}
+
+interface SendTarget extends ResolvedTarget {
+  conversation: ChatConversation;
 }
 
 /** Plantillas de WhatsApp para clientes (§28.2): las manda Isaías con un botón. */
@@ -71,39 +79,65 @@ export class MetaTemplatesService {
     );
   }
 
-  /** Las 4 plantillas armadas para el destino, o por qué no se pueden mandar. */
+  /**
+   * Las 4 plantillas armadas con los datos del pedido o presupuesto. El texto
+   * no depende del chat ni de la conexión: si falta el chat, `canSend` es
+   * false y `blockedReason` dice por qué (el envío sigue validando igual).
+   */
   preview(data: TemplateTargetDto): TemplatePreview[] {
-    let target: ResolvedTarget | null = null;
-    let targetError: string | null = null;
+    const order = data.orderId ? this.orders.findOne(data.orderId) : null;
+    const quote = data.quoteId ? this.quotes.findOne(data.quoteId) : null;
+    let conversation: ChatConversation | null = null;
+    let blockedReason: string | null = null;
     try {
-      target = this.resolve(data);
+      conversation = this.findConversation(data, order, quote);
     } catch (error) {
-      if (!(error instanceof BadRequestException)) throw error;
-      targetError = error.message;
+      if (
+        !(error instanceof BadRequestException) &&
+        !(error instanceof NotFoundException)
+      ) {
+        throw error;
+      }
+      blockedReason = error.message;
     }
     return CUSTOMER_TEMPLATE_KEYS.map((key) => {
       const template = META_TEMPLATES[key];
-      if (!target) {
-        return { key, label: template.label, text: null, error: targetError };
-      }
       try {
-        const params = this.params(key, target);
+        const params = this.params(key, { conversation, order, quote });
         return {
           key,
           label: template.label,
           text: renderTemplateBody(template.body, params),
           error: null,
+          canSend: !!conversation,
+          blockedReason,
         };
       } catch (error) {
         if (!(error instanceof BadRequestException)) throw error;
-        return { key, label: template.label, text: null, error: error.message };
+        return {
+          key,
+          label: template.label,
+          text: null,
+          error: error.message,
+          canSend: false,
+          blockedReason: error.message,
+        };
       }
     });
   }
 
-  private resolve(data: TemplateTargetDto): ResolvedTarget {
+  private resolve(data: TemplateTargetDto): SendTarget {
     const order = data.orderId ? this.orders.findOne(data.orderId) : null;
     const quote = data.quoteId ? this.quotes.findOne(data.quoteId) : null;
+    const conversation = this.findConversation(data, order, quote);
+    return { conversation, order, quote };
+  }
+
+  private findConversation(
+    data: TemplateTargetDto,
+    order: Order | null,
+    quote: Quote | null,
+  ): ChatConversation {
     if (data.conversationId) {
       const conversation = this.chats.findConversationById(data.conversationId);
       if (!conversation) {
@@ -112,7 +146,7 @@ export class MetaTemplatesService {
       if (conversation.channel !== ChatChannel.WHATSAPP) {
         throw new BadRequestException('Las plantillas son solo para WhatsApp');
       }
-      return { conversation, order, quote };
+      return conversation;
     }
     const customerId = order?.customerId ?? quote?.customerId;
     const conversation = customerId
@@ -128,7 +162,7 @@ export class MetaTemplatesService {
     if (!conversation) {
       throw new BadRequestException('El cliente no tiene chat de WhatsApp');
     }
-    return { conversation, order, quote };
+    return conversation;
   }
 
   private params(key: CustomerTemplateKey, target: ResolvedTarget): string[] {
@@ -142,10 +176,10 @@ export class MetaTemplatesService {
           : 'Esta plantilla necesita un pedido',
       );
     }
-    const customerId = conversation.customerId ?? source.customerId;
+    const customerId = conversation?.customerId ?? source.customerId;
     const name =
       (customerId ? this.customers.findById(customerId)?.name : undefined) ??
-      conversation.displayName ??
+      conversation?.displayName ??
       source.customerName;
     const amount =
       template.source === 'quote'
