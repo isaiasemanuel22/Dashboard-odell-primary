@@ -53,6 +53,8 @@ describe('ProductsService', () => {
         cost: input.cost ?? 500,
         profit: (input.price ?? 1000) - (input.cost ?? 500),
         breakdown: {},
+        processCost: input.cost ?? 0,
+        nonProcessPrice: 0,
       })),
       toPricingInput: jest.fn((input: unknown) => input),
       productToPricingInput: jest.fn((product: Product) => ({
@@ -249,7 +251,7 @@ describe('ProductsService', () => {
     });
   });
 
-  it('lista alertas de margen por debajo del objetivo, ordenadas ascendente', () => {
+  it('lista productos debajo del precio calculado, mayor diferencia primero', () => {
     const store = new StoreService();
     seedStore(store, [
       baseProduct({
@@ -279,12 +281,23 @@ describe('ProductsService', () => {
     ]);
 
     const pricing = {
-      resolvePricing: jest.fn((input: { price?: number; cost?: number }) => ({
-        price: input.price ?? 0,
-        cost: input.cost ?? 0,
-        profit: (input.price ?? 0) - (input.cost ?? 0),
-        breakdown: {},
-      })),
+      // Sin precio fijo, el precio es el calculado: costo × (1 + 40 %).
+      resolvePricing: jest.fn(
+        (input: {
+          price?: number;
+          cost?: number;
+          suggestedPrice?: number | null;
+        }) => ({
+          price: input.suggestedPrice
+            ? input.suggestedPrice
+            : (input.cost ?? 0) * 1.4,
+          cost: input.cost ?? 0,
+          profit: (input.price ?? 0) - (input.cost ?? 0),
+          breakdown: {},
+          processCost: input.cost ?? 0,
+          nonProcessPrice: 0,
+        }),
+      ),
       toPricingInput: jest.fn((input: unknown) => input),
       productToPricingInput: jest.fn((product: Product) => ({
         type: product.type,
@@ -306,32 +319,73 @@ describe('ProductsService', () => {
     );
 
     const alerts = service.getMarginAlerts();
+    // prod-ok está en su calculado (1400): no entra. Más diferencia, primero.
     expect(alerts.map((a) => a.productId)).toEqual(['prod-lower', 'prod-low']);
     expect(alerts[0].fixedPrice).toBe(true);
-    expect(alerts[0].targetPercent).toBe(40);
+    // El precio sugerido es el calculado, no el fijo guardado.
     expect(alerts[0].priceForTarget).toBe(1400);
+    expect(alerts[1].priceForTarget).toBe(1400);
   });
 
-  it('getMarginAlerts mide el margen sin mano de obra y contra el margen configurado', () => {
+  it('getMarginAlerts: criterio = precio de venta debajo del calculado', () => {
     const store = new StoreService();
     seedStore(store, [
       baseProduct({
-        id: 'prod-labor',
-        name: 'Con mano de obra',
-        price: 1150,
-        cost: 1000,
-        profit: 150,
-        suggestedPrice: 1150,
+        id: 'taza-baja',
+        name: 'QA taza ×2 baja',
+        price: 4000,
+        cost: 4911,
+        profit: -911,
+        suggestedPrice: 4000,
+      }),
+      baseProduct({
+        id: 'taza-calc',
+        name: 'QA taza ×2 calculada',
+        price: 7822,
+        cost: 4911,
+        profit: 2911,
+        suggestedPrice: null,
+      }),
+      baseProduct({
+        id: 'combo-calc',
+        name: 'QA combo packaging',
+        price: 9000,
+        cost: 5000,
+        profit: 4000,
+        suggestedPrice: 9000,
+      }),
+      baseProduct({
+        id: 'remera-fija',
+        name: 'Remera DTF',
+        price: 25000,
+        cost: 10859,
+        profit: 14141,
+        suggestedPrice: 25000,
       }),
     ]);
+    const calculated: Record<string, number> = {
+      'taza-baja': 7822,
+      'taza-calc': 7822,
+      'combo-calc': 9000,
+      'remera-fija': 22190,
+    };
+    const costs: Record<string, number> = {
+      'taza-baja': 4911,
+      'taza-calc': 4911,
+      'combo-calc': 5000,
+      'remera-fija': 10859,
+    };
     const pricing = {
-      resolvePricing: jest.fn((input: { price?: number; cost?: number }) => ({
-        price: input.price ?? 0,
-        cost: input.cost ?? 0,
-        profit: (input.price ?? 0) - (input.cost ?? 0),
-        breakdown: { laborCost: 500 },
+      resolvePricing: jest.fn((input: { id?: string }) => ({
+        price: calculated[input.id ?? ''] ?? 0,
+        cost: costs[input.id ?? ''] ?? 0,
+        profit: 0,
+        breakdown: {},
+        processCost: 0,
+        nonProcessPrice: 0,
       })),
       productToPricingInput: jest.fn((product: Product) => ({
+        id: product.id,
         type: product.type,
         price: product.price,
         cost: product.cost,
@@ -347,10 +401,12 @@ describe('ProductsService', () => {
       { getMarginForProductType: () => 40 } as never,
     );
 
-    const [alert] = service.getMarginAlerts();
-    // (1150 − 1000) ÷ (1000 − 500 de mano de obra) = 30 %
-    expect(alert.markupPercent).toBe(30);
-    expect(alert.targetPercent).toBe(40);
+    const alerts = service.getMarginAlerts();
+    expect(alerts.map((a) => a.productId)).toEqual(['taza-baja']);
+    // Margen total que se muestra: (4000 − 4911) ÷ 4911 = −19 %
+    expect(Math.round(alerts[0].totalMarginPercent ?? 0)).toBe(-19);
+    expect(alerts[0].salePrice).toBe(4000);
+    expect(alerts[0].priceForTarget).toBe(7822);
   });
 
   it('getMarginAlerts excluye productos no publicados', () => {
@@ -376,9 +432,41 @@ describe('ProductsService', () => {
       }),
     ]);
     const service = createService(store);
+    // El calculado de cualquier producto es $2.000: prod-low queda debajo.
+    jest
+      .spyOn(
+        service as unknown as { resolveCalculatedPrice: () => number },
+        'resolveCalculatedPrice',
+      )
+      .mockReturnValue(2000);
 
     const alerts = service.getMarginAlerts();
     expect(alerts.map((a) => a.productId)).toEqual(['prod-low']);
+  });
+
+  it('crear y actualizar devuelven processCost y nonProcessPrice para la tarjeta', () => {
+    const store = new StoreService();
+    seedStore(store, [baseProduct({ id: 'prod-1', name: 'Uno' })]);
+    const service = createService(store);
+
+    const updated = service.update('prod-1', { name: 'Uno editado' });
+    expect(updated.processCost).toBeDefined();
+    expect(updated.nonProcessPrice).toBeDefined();
+
+    const created = service.create({
+      name: 'Nuevo',
+      type: ProductType.FDM,
+      price: 1000,
+      cost: 500,
+      size: '10 cm',
+      categoryIds: ['cat-1'],
+      grams: 50,
+      printTimeHours: 2,
+      workTimeHours: 1,
+      filamentType: FilamentType.PLA,
+    });
+    expect(created.processCost).toBeDefined();
+    expect(created.nonProcessPrice).toBeDefined();
   });
 
   it('preview de precios en bloque no guarda y solo incluye precio fijo', () => {

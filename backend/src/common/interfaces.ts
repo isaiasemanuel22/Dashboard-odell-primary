@@ -373,6 +373,8 @@ export interface CalculateCostDto {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (§27): misma forma que los insumos. */
+  packagingSupplies?: EstampadoSupplyLine[];
   /** Impresora preferida del producto: perfil print para luz/máquina si es válido. */
   preferredPrinterId?: string | null;
 }
@@ -407,7 +409,11 @@ export interface ProductPricingInput {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (§27): misma forma que los insumos. */
+  packagingSupplies?: EstampadoSupplyLine[];
   includesPieces?: boolean;
+  /** Combo: suma además el packaging de cada pieza × cantidad (§27.4). */
+  sumPiecesPackaging?: boolean;
   /** Impresora preferida del producto: perfil print para luz/máquina si es válido. */
   preferredPrinterId?: string | null;
 }
@@ -420,6 +426,13 @@ export interface ProductPricingResult {
   /** Margen configurado en Ajustes → Ganancias (% sobre costo). */
   configuredMarginPercent?: number;
   breakdown: CostBreakdown | null;
+  /**
+   * Costo del proceso: material, purga, luz, máquina y margen de error, sin
+   * mano de obra, insumos ni packaging (§16.1.1, «Márgenes que se muestran»).
+   */
+  processCost?: number;
+  /** Mano de obra + precio de insumos + precio de packaging (lo que no es proceso). */
+  nonProcessPrice?: number;
 }
 
 /** Campos de pricing devueltos por GET /products/pricing-fields. */
@@ -448,6 +461,10 @@ export interface ProductBase {
   price: number;
   cost: number;
   profit: number;
+  /** Costo del proceso (sin mano de obra, insumos ni packaging); lo calcula el backend al leer. */
+  processCost?: number;
+  /** Mano de obra + precio de insumos + precio de packaging; lo calcula el backend al leer. */
+  nonProcessPrice?: number;
   /** Precio manual del catálogo; si está seteado, no se pisa al recalcular. */
   suggestedPrice?: number | null;
   /** Descuento propio: `price` es la lista; venta = lista − descuento. Uno solo. */
@@ -460,6 +477,10 @@ export interface ProductBase {
   published: boolean;
   /** Si true, el costo se calcula desde piezas incluidas en lugar de producción directa */
   includesPieces: boolean;
+  /** Packaging del producto (§27). */
+  packagingSupplies?: EstampadoSupplyLine[];
+  /** Solo combos / productos con piezas: suma el packaging de las piezas. */
+  sumPiecesPackaging?: boolean;
   components: ProductComponent[];
   assemblyTimeHours: number;
   /** Unidades terminadas en stock físico. */
@@ -629,6 +650,8 @@ export interface OrderItem {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (§27): misma forma que los insumos. */
+  packagingSupplies?: EstampadoSupplyLine[];
   budgetedHours?: number;
   /** Diseño/modelado: cobro por horas o precio fijo. */
   chargeMode?: 'hours' | 'fixed';
@@ -1115,9 +1138,11 @@ export interface DashboardMarginAlert {
   name: string;
   price: number;
   cost: number;
-  markupPercent: number;
-  targetPercent: number;
+  /** Margen total ((precio de venta − costo total) ÷ costo total): lo que se muestra. */
+  totalMarginPercent: number | null;
   priceForTarget: number;
+  /** Precio de venta vigente (con descuento propio). */
+  salePrice: number;
   fixedPrice: boolean;
 }
 
@@ -1320,6 +1345,7 @@ export type CreateProductDto = {
   size?: string;
   published?: boolean;
   includesPieces?: boolean;
+  sumPiecesPackaging?: boolean;
   grams?: number;
   printTimeHours?: number;
   workTimeHours?: number;
@@ -1342,6 +1368,8 @@ export type CreateProductDto = {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (§27): misma forma que los insumos. */
+  packagingSupplies?: EstampadoSupplyLine[];
   prints?: EstampadoPrintSpec[];
   pressCycles?: EstampadoPressCycle[];
   supplies?: EstampadoSupplyLine[];

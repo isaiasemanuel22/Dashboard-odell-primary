@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { priceFromCostAndMargin } from '../../../../../shared/utils/pricing.util';
 import {
+  packagingPriceFromValue,
   supplyCostFromValue,
   supplyPriceFromValue,
 } from '../../../../../shared/utils/supply-line-value.util';
@@ -13,6 +14,8 @@ export interface ProductFormPricingCalculationInput {
   catalogPrice?: number | null;
   /** Parte de totalCost que es valor de insumos (cantidad × unitario), sin error. */
   supplyValue?: number;
+  /** Parte de totalCost que es packaging (valor, sin margen de error): precio = valor × 1,25 (§27.2). */
+  packagingValue?: number;
   /** Margen de error de Ajustes (0–100); el error del insumo no lleva el recargo. */
   errorMarginPercent?: number;
   /** Parte de totalCost que es mano de obra: se suma sin margen. */
@@ -42,6 +45,8 @@ export class ProductFormPricingCalculationService {
     const componentsPrice = Math.max(0, Number(input.componentsPrice) || 0);
     const errorMarginPercent = Number(input.errorMarginPercent) || 0;
     const supplyValue = Math.max(0, Number(input.supplyValue) || 0);
+    const packagingValue = Math.max(0, Number(input.packagingValue) || 0);
+    const packagingPrice = packagingPriceFromValue(packagingValue);
 
     let price = 0;
 
@@ -52,7 +57,8 @@ export class ProductFormPricingCalculationService {
       price =
         componentsPrice +
         Math.max(0, Number(input.laborCost) || 0) +
-        supplyPriceFromValue(supplyValue, errorMarginPercent);
+        supplyPriceFromValue(supplyValue, errorMarginPercent) +
+        packagingPrice;
     } else if (Number.isFinite(catalogPrice) && catalogPrice > 0) {
       price = catalogPrice;
     } else if (totalCost > 0) {
@@ -61,12 +67,18 @@ export class ProductFormPricingCalculationService {
         cappedSupply,
         errorMarginPercent,
       );
+      const cappedPackaging = Math.min(
+        Math.max(0, totalCost - supplyCost),
+        packagingValue,
+      );
       price =
         priceFromCostAndMargin(
-          Math.max(0, totalCost - supplyCost),
+          Math.max(0, totalCost - supplyCost - cappedPackaging),
           input.profitMarginPercent,
           input.laborCost,
-        ) + supplyPriceFromValue(cappedSupply, errorMarginPercent);
+        ) +
+        supplyPriceFromValue(cappedSupply, errorMarginPercent) +
+        packagingPriceFromValue(cappedPackaging);
     }
 
     return {

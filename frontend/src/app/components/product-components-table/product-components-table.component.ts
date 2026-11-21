@@ -21,6 +21,7 @@ import {
   getComponentLineCost,
   getProductName,
   isProductPublished,
+  pieceCostWithoutPackaging,
   resolveProductUnitCost,
 } from '../../shared/utils/product.helpers';
 import {
@@ -53,6 +54,12 @@ export class ProductComponentsTableComponent {
   @Input() embedded = false;
   /** Solo para labels de color en modo lectura. */
   @Input() colorCatalog: ColorConfig[] = [];
+  /**
+   * Precios de insumo: con ellos cada pieza se muestra sin su packaging
+   * (combo con «Sumar el packaging de las piezas» apagado, §27.4).
+   * Sin ellos, el costo guardado de la pieza tal cual.
+   */
+  @Input() supplyUnitPrice?: (supplyId: string) => number;
   @Output() remove = new EventEmitter<string>();
   @Output() colorChange = new EventEmitter<{
     productId: string;
@@ -68,11 +75,22 @@ export class ProductComponentsTableComponent {
   }
 
   getUnitCost(productId: string): number {
-    return resolveProductUnitCost(this.getPieceProduct(productId), this.catalog);
+    const part = this.getPieceProduct(productId);
+    return pieceCostWithoutPackaging(
+      part,
+      resolveProductUnitCost(part, this.catalog),
+      this.catalog,
+      this.supplyUnitPrice,
+    );
   }
 
   getLineCost(item: ProductComponent): number {
-    return getComponentLineCost(this.catalog, item.productId, item.quantity);
+    return getComponentLineCost(
+      this.catalog,
+      item.productId,
+      item.quantity,
+      this.supplyUnitPrice,
+    );
   }
 
   getPieceProduct(productId: string): Product | undefined {

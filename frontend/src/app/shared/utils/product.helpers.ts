@@ -10,7 +10,12 @@ import {
   ServiceType,
 } from '../../core/models';
 import { isDesignService } from './service-type.util';
-import { supplyLinesCost, supplyLinesPrice } from './supply-line-value.util';
+import {
+  packagingPriceFromValue,
+  supplyLinesCost,
+  supplyLinesPrice,
+  supplyLinesValue,
+} from './supply-line-value.util';
 
 export function normalizeProductComponents(
   raw: ProductComponent[] | unknown,
@@ -173,6 +178,87 @@ export interface ProductUnitCostOptions {
   errorMarginPercent?: number;
 }
 
+/**
+ * Valor del packaging de las piezas de un combo × cantidad (§27.4). Cada
+ * pieza aporta solo su packaging propio: una pieza combo no suma el de sus
+ * piezas (sin ciclos).
+ */
+export function componentsPackagingValue(
+  catalog: Product[],
+  components: ProductComponent[],
+  unitPriceOf: (supplyId: string) => number,
+): number {
+  return components.reduce((sum, item) => {
+    const part = findProductById(catalog, item.productId);
+    if (!part) return sum;
+    const qty = Math.max(1, Number(item.quantity) || 1);
+    return (
+      sum + supplyLinesValue(part.packagingSupplies, unitPriceOf) * qty
+    );
+  }, 0);
+}
+
+/**
+ * Valor del packaging propio de un producto más, en un combo con
+ * `sumPiecesPackaging`, el de sus piezas (§27.2, §27.4). Costo = valor;
+ * precio = `packagingPriceFromValue(valor)`.
+ */
+export function productPackagingValue(
+  product: {
+    type?: ProductType;
+    packagingSupplies?: EstampadoSupplyLine[];
+    sumPiecesPackaging?: boolean;
+    components?: ProductComponent[];
+  },
+  catalog: Product[],
+  unitPriceOf: (supplyId: string) => number,
+): number {
+  const own = supplyLinesValue(product.packagingSupplies, unitPriceOf);
+  if (product.type !== ProductType.COMBO || !product.sumPiecesPackaging) {
+    return own;
+  }
+  const components = normalizeProductComponents(
+    product.components ?? [],
+    catalog,
+  );
+  return own + componentsPackagingValue(catalog, components, unitPriceOf);
+}
+
+/**
+ * Costo de una pieza de combo sin su packaging (§27.4): el costo guardado de
+ * la pieza lo incluye. Sin precios de insumo (`unitPriceOf`) no se puede
+ * separar y queda el costo tal cual.
+ */
+export function pieceCostWithoutPackaging(
+  part: Product | undefined,
+  cost: number,
+  catalog: Product[],
+  unitPriceOf?: (supplyId: string) => number,
+): number {
+  if (!part || !unitPriceOf) return cost;
+  return Math.max(
+    0,
+    cost - Math.round(productPackagingValue(part, catalog, unitPriceOf)),
+  );
+}
+
+/** Precio de una pieza de combo sin su packaging (valor × 1,25). */
+export function piecePriceWithoutPackaging(
+  part: Product | undefined,
+  price: number,
+  catalog: Product[],
+  unitPriceOf?: (supplyId: string) => number,
+): number {
+  if (!part || !unitPriceOf) return price;
+  // Con precio fijo el fijo no trae packaging encima (§16.1.1).
+  if (Number(part.suggestedPrice) > 0) return price;
+  return Math.max(
+    0,
+    price -
+      packagingPriceFromValue(productPackagingValue(part, catalog, unitPriceOf)),
+  );
+}
+
 export function resolveProductUnitCost(
   product:
     | Pick<Product, 'id' | 'type' | 'includesPieces' | 'components' | 'cost'>
@@ -199,7 +285,16 @@ export function resolveProductUnitCost(
   const partsCost = components.reduce((sum, item) => {
     const part = findProductById(catalog, item.productId);
     const qty = Math.max(1, Number(item.quantity) || 1);
-    return sum + resolveProductUnitCost(part, catalog, visiting, options) * qty;
+    return (
+      sum +
+      pieceCostWithoutPackaging(
+        part,
+        resolveProductUnitCost(part, catalog, visiting, options),
+        catalog,
+        options?.supplyUnitPrice,
+      ) *
+        qty
+    );
   }, 0);
   visiting.delete(product.id);
 
@@ -218,12 +313,23 @@ export function resolveProductUnitCost(
         options.errorMarginPercent,
       )
     : 0;
-  return partsCost + assembly + supplies;
+  const packaging = options.supplyUnitPrice
+    ? productPackagingValue(
+        product as Product,
+        catalog,
+        options.supplyUnitPrice,
+      )
+    : 0;
+  return partsCost + assembly + supplies + packaging;
 }
 
 export function resolveProductUnitPrice(
   product:
-    | Pick<Product, 'id' | 'type' | 'includesPieces' | 'components' | 'price'>
+    | (Pick<
+        Product,
+        'id' | 'type' | 'includesPieces' | 'components' | 'price'
+      > &
+        Partial<Pick<Product, 'suggestedPrice'>>)
     | undefined,
   catalog: Product[],
   visiting: Set<string> = new Set(),
@@ -231,6 +337,10 @@ export function resolveProductUnitPrice(
 ): number {
   if (!product) return 0;
   if (visiting.has(product.id)) return product.price ?? 0;
+  // Precio fijo (§16.1.1): el fijo es la lista final, sin sumar piezas ni extras.
+  if (Number(product.suggestedPrice) > 0 && (product.price ?? 0) > 0) {
+    return product.price ?? 0;
+  }
   // Combo usado como pieza de otro: cuenta su precio propio, no la suma de sus piezas.
   if (
     visiting.size > 0 &&
@@ -255,7 +365,16 @@ export function resolveProductUnitPrice(
   const partsPrice = components.reduce((sum, item) => {
     const part = findProductById(catalog, item.productId);
     const qty = Math.max(1, Number(item.quantity) || 1);
-    return sum + resolveProductUnitPrice(part, catalog, visiting, options) * qty;
+    return (
+      sum +
+      piecePriceWithoutPackaging(
+        part,
+        resolveProductUnitPrice(part, catalog, visiting, options),
+        catalog,
+        options?.supplyUnitPrice,
+      ) *
+        qty
+    );
   }, 0);
   visiting.delete(product.id);
 
@@ -274,7 +393,16 @@ export function resolveProductUnitPrice(
         options.errorMarginPercent,
       )
     : 0;
-  return partsPrice + assembly + ownSupplies;
+  const packaging = options.supplyUnitPrice
+    ? packagingPriceFromValue(
+        productPackagingValue(
+          product as Product,
+          catalog,
+          options.supplyUnitPrice,
+        ),
+      )
+    : 0;
+  return partsPrice + assembly + ownSupplies + packaging;
 }
 
 export function getProductName(
@@ -289,33 +417,46 @@ export function getComponentLineCost(
   catalog: Product[],
   productId: string,
   quantity: number,
+  /** Con precios de insumo, la pieza se toma sin su packaging (§27.4). */
+  unitPriceOf?: (supplyId: string) => number,
 ): number {
   const part = findProductById(catalog, productId);
   const qty = Math.max(1, Number(quantity) || 1);
-  return resolveProductUnitCost(part, catalog) * qty;
+  return (
+    pieceCostWithoutPackaging(
+      part,
+      resolveProductUnitCost(part, catalog),
+      catalog,
+      unitPriceOf,
+    ) * qty
+  );
 }
 
 export function getComponentLinePrice(
   catalog: Product[],
   productId: string,
   quantity: number,
+  unitPriceOf?: (supplyId: string) => number,
 ): number {
   const part = findProductById(catalog, productId);
   const qty = Math.max(1, Number(quantity) || 1);
   // Pieza que es combo: su precio propio, no la suma de sus piezas.
-  if (part?.type === ProductType.COMBO && (part.price ?? 0) > 0) {
-    return part.price * qty;
-  }
-  return resolveProductUnitPrice(part, catalog) * qty;
+  const unit =
+    part?.type === ProductType.COMBO && (part.price ?? 0) > 0
+      ? part.price
+      : resolveProductUnitPrice(part, catalog);
+  return piecePriceWithoutPackaging(part, unit, catalog, unitPriceOf) * qty;
 }
 
 export function sumComponentsCost(
   catalog: Product[],
   components: ProductComponent[],
+  unitPriceOf?: (supplyId: string) => number,
 ): number {
   return components.reduce(
     (sum, item) =>
-      sum + getComponentLineCost(catalog, item.productId, item.quantity),
+      sum +
+      getComponentLineCost(catalog, item.productId, item.quantity, unitPriceOf),
     0,
   );
 }
@@ -377,10 +518,12 @@ export function calculateOrderLinesCost(
 export function sumComponentsPrice(
   catalog: Product[],
   components: ProductComponent[],
+  unitPriceOf?: (supplyId: string) => number,
 ): number {
   return components.reduce(
     (sum, item) =>
-      sum + getComponentLinePrice(catalog, item.productId, item.quantity),
+      sum +
+      getComponentLinePrice(catalog, item.productId, item.quantity, unitPriceOf),
     0,
   );
 }

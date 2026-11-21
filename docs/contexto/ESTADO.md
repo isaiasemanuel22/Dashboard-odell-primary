@@ -1,13 +1,15 @@
-# Estado de Odell — al 2026-11-18
+# Estado de Odell — al 2026-11-19
 
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
 ## Producción
-- GitHub `main` = `fix/mano-de-obra-opcional` en `03e7e64` (2026-11-18: mano de
-  obra opcional, §3; antes, módulo Ferias v4, §26). Heroku v49 = `03e7e64`,
-  esquema de Ferias aplicado (`fairs`, `retail_sales.fair_id`).
-  Netlify ya sirve el frontend nuevo. APK TWA publicada; assetlinks verificado.
+- GitHub `main` = `feat/margen-total-listado` en `a779cde` (2026-11-19: margen total en el
+  listado y en colores, aviso/filtro/alertas «Debajo del calculado»; antes, packaging §27,
+  precio fijo guardado y márgenes §16.1.1). Heroku v51 = `a779cde` (sin cambios de esquema
+  desde v50). Netlify ya sirve el frontend nuevo. APK TWA publicada; assetlinks verificado.
   Netlify publica el frontend solo al pushear `main`.
+- En producción ningún producto tiene el precio fijo guardado (antes no se persistía):
+  volver a marcarlos como «Fijo» y guardarlos antes de usar «Recalcular precios».
 - Lockfile del backend: regenerarlo siempre con npm 10.9.9 (el de Heroku):
   `npx npm@10.9.9 install --package-lock-only --registry=https://registry.npmjs.org`.
   El npm local (11.x) y el registry configurado (almundo) rompen `npm ci` en Heroku.
@@ -17,9 +19,12 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual: `feat/chats` (`d29f77f`, sin publicar): sección Chats v7. Al publicar
-  hace falta `db:push:heroku` (tablas `chat_conversations`, `chat_messages`). La
-  sesión de Meta trabaja en `claude/meta-agentes-3d0324` (worktree) y depende de esta rama.
+- Rama actual: `feat/margen-total-listado`, igual a `main` (publicada 2026-11-19). Falta: que el
+  aviso de «productos afectados» de un insumo cuente el packaging; `product-detail`,
+  `product-pricing` y márgenes por canal del Dashboard con otras fórmulas; probar en producción.
+- `feat/chats` (sin publicar): sección Chats v7; necesita `db:push:heroku` (tablas de chats)
+  y traer `main` antes (no tiene packaging ni `suggested_price`).
+  La sesión de Meta (`claude/meta-agentes-3d0324`) depende de esa rama.
 - `feat/ferias` ya unida a `main` (publicada 2026-11-18). Falta probar
   Ferias en producción con sesión iniciada; sin UI para editar feria, fondo o gastos.
 - Producción con sesión iniciada sin revisar (el agente solo vio el login).
@@ -30,8 +35,6 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   margen de error ni con la lista de combos: cada producto con insumos los toma
   al usar «Usar precio calculado» o «Actualizar precios».
 - Errores reportados: corregidos hasta E135 (en la rama); E132 sin reproducir; E136–E138 pendientes.
-- Productos de Estampado con precio fijo guardados antes de `ce64767` tienen la
-  lista sin insumos: se corrigen al volver a guardarlos.
 - Ramas viejas ya unidas (borrables con OK): feat/3mf-purga,
   feat/bobinas-reposicion, feat/cola-por-impresora, feat/rediseno-faltantes,
   fix/errores-tanda-1, docs/deploy-netlify.
@@ -65,8 +68,6 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   Ajustes, borrar productos o cargar egresos (§16.2 y §22 dicen otra cosa). ¿Alcance?
 - Calendario: repetición mensual un día 29–31 (hoy no aparece en meses cortos) y
   completar un recordatorio repetido (hoy se completa en todas las fechas).
-- Precio fijo en FDM/Estampado: hoy suma insumos × 2 + error encima del fijo; §16.1.3
-  solo lo define para combos.
 - Esc en un formulario con datos (Billetera) cierra sin confirmar; tocar afuera en
   Proveedor sí confirma. ¿Unificar?
 - Diseño v3 (merch): ¿la seña es obligatoria (50% desde 20 prendas) y frena
@@ -75,10 +76,14 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   leídos, botón «Respuestas rápidas» del encabezado y sus textos (hoy `[completar]`),
   seña/entrega en la sugerencia del agente.
 
+
 ## Entorno local
 - Dev server: launch `odell-dev-4300` (el 4200 lo usa otro proyecto).
 - Cada worktree con backend propio necesita base aparte: si comparten la
   base local, se pisan los datos.
 - Datos de QA en la base local: ferias fair-1 a fair-4 «Feria Plaza España» (cerradas)
   y fair-5 «Mercado de Diseño Güemes» (abierta, 2026-11-17); cust-2 «QA Revendedor», pedidos ord-13 a
-  ord-29, presupuesto quo-18, productos prod-45 «QA taza ×2» y prod-53 «QA sin mano de obra».
+  ord-29, presupuesto quo-18, productos prod-45 «QA taza ×2» (con packaging) y prod-53 «QA sin mano de obra»;
+  packaging: insumo sup-5 «QA Caja kraft», combo prod-54, pedidos ord-66/ord-67, presupuesto qpe-37.
+- La base local ya tiene las columnas de packaging (agregadas a mano: `prisma db push`
+  borraría las tablas de Chats, que no están en esta rama).

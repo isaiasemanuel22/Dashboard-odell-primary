@@ -21,6 +21,7 @@ export enum SupplyCategory {
   RESINA = 'resina',
   ESTAMPADO = 'estampado',
   GENERAL = 'general',
+  PACKAGING = 'packaging',
 }
 
 export enum OrderStatus {
@@ -664,6 +665,8 @@ export interface CalculateCostPayload {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (insumos de categoría Packaging, §27). */
+  packagingSupplies?: EstampadoSupplyLine[];
   /** Impresora preferida del producto: perfil print para luz/máquina si es válido. */
   preferredPrinterId?: string | null;
 }
@@ -689,6 +692,10 @@ export interface ProductPricingInput {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (insumos de categoría Packaging, §27). */
+  packagingSupplies?: EstampadoSupplyLine[];
+  /** Combo: suma el packaging de las piezas (§27.4). */
+  sumPiecesPackaging?: boolean;
   /** Impresora preferida del producto: perfil print para luz/máquina si es válido. */
   preferredPrinterId?: string | null;
 }
@@ -742,6 +749,10 @@ export interface ProductBase {
   price: number;
   cost: number;
   profit: number;
+  /** Costo del proceso (sin mano de obra, insumos ni packaging); lo manda el backend. */
+  processCost?: number;
+  /** Mano de obra + precio de insumos + precio de packaging; lo manda el backend. */
+  nonProcessPrice?: number;
   /** Precio manual del catálogo; si está seteado, no se pisa al recalcular. */
   suggestedPrice?: number | null;
   /** Descuento propio: `price` es la lista; venta = lista − descuento. Uno solo. */
@@ -762,6 +773,10 @@ export interface ProductBase {
   stockOverview?: ProductStockOverview;
   /** Alias de compatibilidad en UI; preferir `stock` desde el backend. */
   finishedStock?: number;
+  /** Packaging del producto (§27). Insumos de categoría Packaging. */
+  packagingSupplies?: EstampadoSupplyLine[];
+  /** Combo: suma además el packaging de cada pieza × cantidad (§27.4). */
+  sumPiecesPackaging?: boolean;
 }
 
 export interface ProductStockOverview {
@@ -940,6 +955,8 @@ export interface OrderItemPayload {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (insumos de categoría Packaging, §27). */
+  packagingSupplies?: EstampadoSupplyLine[];
   budgetedHours?: number;
   chargeMode?: 'hours' | 'fixed';
   workKind?: string;
@@ -1219,6 +1236,8 @@ export interface OrderLineDraft {
   estampadoPrints?: EstampadoPrintSpec[];
   estampadoPressCycles?: EstampadoPressCycle[];
   estampadoSupplies?: EstampadoSupplyLine[];
+  /** Packaging (insumos de categoría Packaging, §27). */
+  packagingSupplies?: EstampadoSupplyLine[];
   /** Horas presupuestadas de diseño o modelado. */
   budgetedHours?: number;
 }
@@ -1536,9 +1555,11 @@ export interface DashboardMarginAlert {
   name: string;
   price: number;
   cost: number;
-  markupPercent: number;
-  targetPercent: number;
+  /** Margen total ((precio de venta − costo total) ÷ costo total): lo que se muestra. */
+  totalMarginPercent: number | null;
   priceForTarget: number;
+  /** Precio de venta vigente (con descuento propio). */
+  salePrice: number;
   fixedPrice: boolean;
 }
 

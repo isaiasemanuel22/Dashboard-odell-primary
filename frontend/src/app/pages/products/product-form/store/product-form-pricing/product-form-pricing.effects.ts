@@ -62,6 +62,7 @@ export class ProductFormPricingEffects {
           componentsPrice: state.componentsPrice,
           catalogPrice: state.catalogPrice,
           supplyValue: state.contributions['supplies'],
+          packagingValue: state.contributions['packaging'],
           errorMarginPercent: Number(settings?.errorMarginPercent) || 0,
           laborCost: state.costBreakdown?.laborCost,
         });

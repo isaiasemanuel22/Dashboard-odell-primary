@@ -45,7 +45,10 @@ import {
   productDiscountLabel,
   productSalePrice,
 } from '../../../../shared/utils/product-discount.util';
-import { markupPercentOnCostRounded } from '../../../../shared/utils/product-margin.util';
+import {
+  processMarginPercentRounded,
+  totalMarginPercentRounded,
+} from '../../../../shared/utils/product-margin.util';
 import { ProductFormGroup } from '../services/product-form-state-manager.service';
 import { ProductFormPricingFacade } from '../store/product-form-pricing/product-form-pricing.facade';
 import { ProductFormFacade } from '../product-form.facade';
@@ -212,7 +215,10 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   /** Insumos y materiales sin precio: el costo mostrado queda incompleto. */
   get missingPriceItems(): string[] {
     const items: string[] = [];
-    for (const line of this.form.controls.supplyLines.value ?? []) {
+    for (const line of [
+      ...(this.form.controls.supplyLines.value ?? []),
+      ...(this.form.controls.packagingLines.value ?? []),
+    ]) {
       if (!line.supplyId || !(Number(line.quantity) > 0)) continue;
       const supply = this.supplies.find((item) => item.id === line.supplyId);
       if (supply && !(Number(supply.unitPrice) > 0)) items.push(supply.name);
@@ -250,13 +256,10 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   }
 
   /** Precio de venta por debajo del costo (se puede guardar, pero se avisa). */
-  belowCostNotice(
-    price: number,
-    cost: number,
-    laborCost = 0,
-  ): string | null {
+  belowCostNotice(price: number, cost: number): string | null {
     if (!(price > 0) || !(cost > 0) || price >= cost) return null;
-    const margin = markupPercentOnCostRounded(price, cost, laborCost);
+    // Margen total: (precio − costo total) ÷ costo total, con mano de obra.
+    const margin = totalMarginPercentRounded(price, cost);
     return `El precio de venta (${this.money(price)}) está por debajo del costo (${this.money(cost)}): margen ${margin}%. Se vende a pérdida.`;
   }
 
@@ -272,6 +275,16 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   /** Precio de los insumos dentro del precio de venta (valor × 2 + error). */
   get supplyPrice(): number {
     return this.pricing.supplyPrice();
+  }
+
+  /** Valor del packaging (propio y, en combo con el tilde, el de las piezas). */
+  get packagingCost(): number {
+    return this.pricing.packagingValue();
+  }
+
+  /** Precio del packaging dentro del precio de venta (valor × 1,25). */
+  get packagingPrice(): number {
+    return this.pricing.packagingPrice();
   }
 
   get priceManual(): boolean {
@@ -311,7 +324,9 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
   private calculatedFor(displayedPrice: number): number {
     if (this.facade.usesPieceAssembly) {
       const parts = Number(this.pricing.computedPrice) || 0;
-      return parts > 0 ? parts + this.supplyPrice : Number(displayedPrice) || 0;
+      return parts > 0
+        ? parts + this.supplyPrice + this.packagingPrice
+        : Number(displayedPrice) || 0;
     }
     return Number(this.pricing.computedPrice) || Number(displayedPrice) || 0;
   }
@@ -396,29 +411,46 @@ export class ProductFormPricingSectionComponent implements OnInit, OnDestroy {
     const salePrice = this.salePriceFor(price);
     const margin =
       cost > 0 && salePrice > 0
-        ? markupPercentOnCostRounded(salePrice, cost, laborCost)
+        ? this.processMargin(salePrice, cost, laborCost)
         : null;
     if (this.hasDiscount && margin != null) {
-      return `${calculatedLabel}${this.priceManual ? ' · precio manual' : ''} · margen sobre la venta ${margin}%`;
+      return `${calculatedLabel}${this.priceManual ? ' · precio manual' : ''} · margen del proceso sobre la venta ${margin}%`;
     }
     if (this.priceManual && margin != null && margin < 0) {
-      return `${calculatedLabel} · precio manual · margen ${margin}%`;
+      return `${calculatedLabel} · precio manual · margen del proceso ${margin}%`;
     }
     if (this.priceManual) {
       return `${calculatedLabel} · precio manual`;
     }
     if (margin != null) {
-      return `${calculatedLabel} · margen ${margin}%`;
+      return `${calculatedLabel} · margen del proceso ${margin}%`;
     }
     return calculatedLabel;
   }
 
-  actualMarginPercent(
-    price: number,
-    cost: number,
+  /**
+   * Margen del proceso (§16.1.1): precio del proceso = venta − (mano de obra +
+   * precio de insumos + precio de packaging); costo del proceso = costo total
+   * sin mano de obra, insumos ni packaging.
+   */
+  processMargin(
+    salePrice: number,
+    totalCost: number,
     laborCost = 0,
   ): number | null {
-    return markupPercentOnCostRounded(price, cost, laborCost);
+    const processCost =
+      totalCost - laborCost - this.supplyCostWithError - this.packagingCost;
+    const nonProcessPrice = laborCost + this.supplyPrice + this.packagingPrice;
+    return processMarginPercentRounded(
+      salePrice,
+      Math.max(0, processCost),
+      nonProcessPrice,
+    );
+  }
+
+  /** Margen total: sobre el costo total, con todo adentro. */
+  totalMargin(salePrice: number, totalCost: number): number | null {
+    return totalMarginPercentRounded(salePrice, totalCost);
   }
 
   // ── Descuento propio del producto (§16.1.2) ─────────────────────────

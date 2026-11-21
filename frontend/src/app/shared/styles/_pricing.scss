@@ -28,6 +28,11 @@
   .negative {
     color: $color-error;
   }
+
+  .positive {
+    color: $color-success;
+    font-weight: 600;
+  }
 }
 
 .pricing,

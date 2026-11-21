@@ -55,6 +55,7 @@ export function mapQuoteItemFromDb(item: {
   estampadoPrints?: Prisma.JsonValue;
   estampadoPressCycles?: Prisma.JsonValue;
   estampadoSupplies?: Prisma.JsonValue;
+  packagingSupplies?: Prisma.JsonValue;
 }): QuoteItem {
   const filaments = normalizeFdmFilaments(
     fromJson<FdmFilamentLine[]>(item.fdmFilaments ?? []),
@@ -121,6 +122,9 @@ export function mapQuoteItemFromDb(item: {
     ),
     estampadoSupplies: fromJson<QuoteItem['estampadoSupplies']>(
       item.estampadoSupplies ?? [],
+    ),
+    packagingSupplies: fromJson<QuoteItem['packagingSupplies']>(
+      item.packagingSupplies ?? [],
     ),
   };
 }
@@ -276,5 +280,6 @@ export function mapQuoteItemToDb(
     estampadoPrints: toInputJson(item.estampadoPrints ?? []),
     estampadoPressCycles: toInputJson(item.estampadoPressCycles ?? []),
     estampadoSupplies: toInputJson(item.estampadoSupplies ?? []),
+    packagingSupplies: toInputJson(item.packagingSupplies ?? []),
   };
 }

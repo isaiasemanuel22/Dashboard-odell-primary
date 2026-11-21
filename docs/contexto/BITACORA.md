@@ -16,6 +16,90 @@ Pendiente: …
 
 ---
 
+## 2026-11-19 · Deploy de márgenes unificados
+Rama: feat/margen-total-listado → main · Commits: a779cde
+Hecho: tests y builds OK (Jest 565, Angular 190). Push a origin main y Heroku v51, sin cambios de esquema. `/api/health` 200; Netlify con bundle nuevo.
+Decisiones: Isaías pidió publicar al terminar.
+Pendiente: probar en producción con sesión iniciada.
+
+## 2026-11-19 · Márgenes unificados: margen total y «Debajo del calculado»
+Rama: feat/margen-total-listado · Commits: ver `git log` (feat(productos))
+Hecho: el aviso «Se vende a pérdida» usa el margen total (taza $4.000 → −19 %). El aviso, el filtro y las alertas del Dashboard marcan productos con precio de venta < calculado (diferencia ≥ $1, orden por mayor diferencia en $); chip y textos «Debajo del calculado»; un solo aviso con total = chip y detalle «N se pueden recalcular · N tienen precio fijo». Dashboard: margen total en color, «$X debajo del calculado», barra precio ÷ calculado; ranking en color. QA OK escritorio y mobile; la taza quedó en Calculado $7.822. Jest 565, Angular 190.
+Decisiones: de Isaías: unificar con el margen total; el filtro marca los productos debajo del calculado aunque ganen.
+Pendiente: `product-detail`, `product-pricing` y márgenes por canal del Dashboard con otras fórmulas; el chip «Precio fijo» del filtro mostró 0 con un fijo (sin confirmar).
+
+## 2026-11-19 · Margen total en el listado y en colores
+Rama: feat/margen-total-listado · Commits: ver `git log` (feat(productos))
+Hecho: las tarjetas del listado (escritorio «Margen total», mobile «M. total») muestran el margen total; verde si hay ganancia, rojo si es negativo, neutro en 0, igual en caja de precio, detalle de producto, barra fija mobile y detalle de pedido (amarillo → rojo). QA: taza 59 % verde, Remera DTF −65 % rojo, Taza Frozen −25 % rojo, fijo $4.000 −19 % rojo. Angular 184.
+Decisiones: de Isaías: margen total en la barra de cada producto, verde con ganancia y rojo negativo.
+Pendiente: el aviso «Se vende a pérdida» del formulario usa la fórmula vieja (−21 % contra −19 %); «Alertas de margen» del dashboard muestra el margen del proceso (−853 %) y el ranking otro número (44 %); el filtro «Bajo margen» incluye productos con ganancia que no llegan al objetivo.
+
+## 2026-11-19 · Deploy de packaging, precio fijo y márgenes
+Rama: feat/packaging → main · Commits: 57e6510
+Hecho: tests y builds completos OK (Jest 565, Angular 179). Push a origin main y Heroku v50; `db:push:heroku` sin ACCEPT_DATA_LOSS («in sync»). `/api/health` 200; Netlify sirve el bundle con packaging.
+Decisiones: Isaías pidió publicar.
+Pendiente: marcar de nuevo como «Fijo» los productos con precio fijo en producción antes de usar «Recalcular precios»; probar packaging en producción con sesión iniciada.
+
+## 2026-11-19 · Packaging en mostrador y devoluciones
+Rama: feat/packaging · Commits: ver `git log` (docs)
+Hecho: regla anotada en §27.5; no requiere código (la venta de mostrador ya no descontaba packaging).
+Decisiones: de Isaías: la venta de mostrador no descuenta packaging; al devolver una venta el packaging se ajusta a mano.
+Pendiente: —
+
+## 2026-11-19 · Tabla de líneas del pedido completa a 1280 px
+Rama: feat/packaging · Commits: ver `git log` (fix(pedidos))
+Hecho: columna lateral del detalle de pedido de 260–320 a 220–250 px; a 1280 px la tabla de líneas (639 px) entra en su caja (641 px) sin scroll. «P. unit.» alineado a la derecha. El formulario de Pagos pasó a una columna y los medios de pago hacen wrap («Mercado Pago» se cortaba). QA OK a 1280, 950, 800 y 375 px.
+Decisiones: de Isaías: ensanchar la caja de líneas.
+Pendiente: a 950 y 800 px la tabla sigue con scroll interno (layout de una columna angosta a 950 px).
+
+## 2026-11-19 · Columna «Margen total» en el detalle de pedido
+Rama: feat/packaging · Commits: ver `git log` (feat(pedidos))
+Hecho: la tabla de líneas de escritorio tiene «Margen total» antes de «Subtotal», con el mismo valor y colores que el pill mobile y «—» sin costo. QA: ord-66 59 % verde; ord-34 100 % y 67 %; ord-10 y ord-11 «—»; sin scroll de página a 800 y 375 px. Angular 179.
+Decisiones: de Isaías: agregar la columna en escritorio.
+Pendiente: —
+
+## 2026-11-19 · Cancelar de precios en bloque y tabla del pedido
+Rama: feat/packaging · Commits: ver `git log` (fix)
+Hecho: «Cancelar» de «Actualizar precios en bloque» no avisaba al padre; ahora cierra (escritorio y mobile). El parpadeo era el reseteo + nueva vista previa de cada clic. Detalle de pedido: la grilla usa `minmax(0, 1fr)` bajo 900 px y la tabla de líneas scrollea dentro de su caja; líneas mobile con wrap. QA OK a 800 px y 375 px. Angular 175.
+Decisiones: Isaías pidió arreglarlos.
+Pendiente: historial de precios de pedido entregado muestra cambio sin cambio de total.
+
+## 2026-11-19 · Precio fijo persistido y márgenes viejos restantes
+Rama: feat/packaging · Commits: ver `git log` (fix(productos))
+Hecho: el precio fijo (`suggestedPrice`) no se guardaba en MySQL (sin columna ni mapper): se perdía al reiniciar y «Actualizar precios en bloque» no listaba fijos. Columna nueva `products.suggested_price` (local con ALTER aditivo). `priceForTarget` = precio calculado por la calculadora; la confirmación de «Recalcular precios» lista producto, actual → nuevo; el detalle de pedido muestra «Margen total» por línea; la tarjeta usa la respuesta de guardar. QA: fijo $9.000 persiste tras recargar y entra al bloque; tarjeta 832 % / 100 % sin recargar; ord-66 línea 59 %.
+Decisiones: de Isaías: seguir con los márgenes viejos. Supuesta: en el pedido, la pastilla del margen total es verde si ≥ 0 y amarilla si es pérdida.
+Pendiente: `db:push:heroku` (`suggested_price`); en producción ningún producto tiene el fijo guardado: hay que marcarlos de nuevo, y hasta entonces «Recalcular precios» los pisa; «Cancelar» de «Actualizar precios en bloque» no cierra y el listado parpadea; historial de precios de un pedido entregado muestra cambio aunque el total no cambió.
+
+## 2026-11-19 · Margen del proceso y margen total
+Rama: feat/packaging · Commits: ver `git log` (feat(productos))
+Hecho: se reemplazó «Margen real (sin mano de obra)» por dos cifras (§16.1.1 «Márgenes que se muestran»): margen del proceso (precio − MO − insumos − packaging, sobre material+purga+luz+máquina+error; en combo, sobre las piezas), comparado con el objetivo y usado por el aviso de «precio bajo el margen», y margen total (ganancia ÷ costo total). Backend manda `processCost` y `nonProcessPrice`; helpers en `product-margin.util.ts` (front y back). Caja de precio, detalle, tarjetas y barra mobile. QA: taza 100 %/59 %, fija $9.000 832 %/83 %, Remera DTF 189 %/106 %, Árbol 182 %/151 %; el aviso ya no incluye la taza. Jest 562, Angular 174.
+Decisiones: de Isaías: el objetivo se compara con el margen del proceso; el margen total es otra cifra. Supuesta: el margen total incluye la mano de obra en el costo.
+Pendiente: `priceForTarget` de las alertas sigue con el cálculo viejo; `order-detail` muestra el margen por línea con la fórmula vieja; un producto recién guardado usa el margen viejo hasta recargar la lista; «Actualizar precios en bloque» dice que no hay productos con precio fijo (sin revisar); prod-hx570-11 y prod-hx570-13 tienen precios guardados lejos del calculado.
+
+## 2026-11-19 · Precio calculado sin campo para escribir
+Rama: feat/packaging · Commits: ver `git log` (feat(productos))
+Hecho: en la caja de precio del producto (y combo), en modo Calculado el precio unitario se muestra como texto, sin input; el campo solo aparece en Fijo (con «Volver al sugerido»). QA OK a 800 px y 375 px en prod-45 y prod-54. Angular 167.
+Decisiones: de Isaías: «en precio calculado, sacá el input para poner un precio».
+Pendiente: tras Fijo → escribir → «Volver al sugerido», Cancelar pide «Descartar cambios» aunque el valor quedó igual.
+
+## 2026-11-19 · «Calculado» con precio fijo muestra el calculado real
+Rama: feat/packaging · Commits: ver `git log` (fix(productos))
+Hecho: el preview del formulario de producto usaba el fijo y «Calculado $X» mostraba el fijo; ahora el preview ignora el fijo (`ignoreFixedPrice` en `product-form-pricing.service.ts`). QA: prod-45 fijo $9.000 → «Calculado $ 7.822», combo prod-54 → $ 9.072, reabrir no cambia de modo, Remera estampada DTF abre en Fijo $25.000. Angular 165.
+Decisiones: Isaías pidió corregirlo.
+Pendiente: parpadeo en $0 al abrir la edición; la lista de productos no siempre deja ver si es Fijo o Calculado.
+
+## 2026-11-19 · Precio fijo = precio final en todos los productos
+Rama: feat/packaging · Commits: ver `git log` (feat(precios))
+Hecho: con precio fijo, el fijo es la lista final en FDM, resina, estampado y combos: no suma insumos × 2, packaging × 1,25 ni armado; el costo sigue completo. Backend (`cost-calculator.service.ts`) y frontend (`priceWithSupplies`, formulario, líneas de pedido: quitar packaging de una línea con fijo solo baja el costo). En modo Fijo la caja de precio no muestra «Cómo se arma el precio calculado» ni notas de insumos. QA: prod-45 fijo $9.000 exacto (costo $4.911), pedido sin cambio de precio al quitar la caja, combo fijo $10.000 exacto; prod-45 quedó de nuevo en calculado. Jest 559, Angular 163.
+Decisiones: de Isaías (§16.1.1): la regla del combo («el fijo es la lista») vale para todos los productos con precio fijo.
+Pendiente: los productos con fijo guardados antes siguen con su lista vieja (fijo + insumos) hasta recalcular; el texto «Calculado $…» bajo el precio unitario muestra el fijo en vez del calculado; en el combo, «Suma de piezas» de la tarjeta y del editor no coinciden.
+
+## 2026-11-19 · Packaging (§27)
+Rama: feat/packaging · Commits: ver `git log` (feat(packaging))
+Hecho: categoría de insumo «Packaging»; campo `packagingSupplies` en producto, ítem de pedido y de presupuesto, y `sumPiecesPackaging` en producto (columnas JSON/bool nuevas, en local agregadas a mano). Sección «Packaging» debajo de «Insumos» en producto, líneas de pedido y presupuesto (selectores separados). Costo = valor; precio = valor × 1,25 sin margen de error, mismo cálculo en backend y frontend (paridad). Combo: packaging propio + tilde «Sumar el packaging de las piezas» (apagado); las piezas entran sin su packaging. Stock al entregar (`packaging-delivery.util.ts`) y refresco de Insumos tras entregar. Detalle de producto con línea «Packaging». QA en local: prod-45 +$1.000 costo / +$1.250 precio, combo prod-54 con y sin tilde, entregas ord-66/ord-67 descuentan cajas, presupuesto qpe-37. Jest 556, Angular 159, builds OK.
+Decisiones: de Isaías (§27): × 1,25 sin error, por producto y por línea editable, opcional, stock al entregar, tilde de piezas apagado. Supuestas: combo con precio fijo no suma packaging (como los insumos), en los demás tipos va encima del fijo; combo anidado cuenta solo el packaging propio de cada pieza; sin reversión de stock al cancelar.
+Pendiente: venta de mostrador no descuenta packaging (por definir reversión); aviso de margen con packaging (por definir); «productos afectados» de un insumo no cuenta packaging; «Cancelar» en la edición de combo quizá no cierra el modal (sin confirmar); `db:push:heroku` al publicar.
+
 ## 2026-11-19 · Chats: contador de no leídos
 Rama: feat/chats · Commits: ver `git log` (fix(chats))
 Hecho: QA en celular del globito de «Más», el mosaico y la barra lateral: andaban. Fallo corregido: al leer un chat, el encabezado «N sin leer» y el filtro «Sin leer» no bajaban hasta recargar; ahora se recarga la lista y `ChatsUnreadService`. El encabezado muestra el total aunque haya búsqueda. Repetición de QA: OK en mobile y escritorio.

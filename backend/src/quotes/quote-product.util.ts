@@ -53,6 +53,7 @@ export function unpublishedProductFromQuoteLine(
     components: [],
     assemblyTimeHours: 0,
     stock: 0,
+    packagingSupplies: normalizeEstampadoSupplies(item.packagingSupplies),
   };
 
   if (item.serviceType === ServiceType.ESTAMPADO) {

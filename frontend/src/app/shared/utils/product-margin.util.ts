@@ -42,3 +42,80 @@ export function hasFixedCatalogPrice(
     product?.suggestedPrice != null && Number(product.suggestedPrice) > 0
   );
 }
+
+/**
+ * Margen del proceso (§16.1.1, «Márgenes que se muestran»):
+ * (precio del proceso − costo del proceso) ÷ costo del proceso × 100.
+ * Precio del proceso = precio de venta − `nonProcessPrice` (mano de obra +
+ * precio de insumos + precio de packaging). Costo 0 → null.
+ * Misma fórmula que `backend/src/products/product-margin.util.ts`.
+ */
+export function processMarginPercent(
+  salePrice: number,
+  processCost: number,
+  nonProcessPrice: number,
+): number | null {
+  const cost = Number(processCost);
+  const price = Number(salePrice) - (Number(nonProcessPrice) || 0);
+  if (!Number.isFinite(cost) || cost <= 0 || !Number.isFinite(price)) {
+    return null;
+  }
+  return ((price - cost) / cost) * 100;
+}
+
+export function processMarginPercentRounded(
+  salePrice: number,
+  processCost: number,
+  nonProcessPrice: number,
+): number | null {
+  const raw = processMarginPercent(salePrice, processCost, nonProcessPrice);
+  return raw == null ? null : Math.round(raw);
+}
+
+/**
+ * Margen total: (precio de venta − costo total) ÷ costo total × 100.
+ * El costo total incluye todo (también mano de obra, insumos y packaging).
+ */
+export function totalMarginPercent(
+  salePrice: number,
+  totalCost: number,
+): number | null {
+  const cost = Number(totalCost);
+  const price = Number(salePrice);
+  if (!Number.isFinite(cost) || cost <= 0 || !Number.isFinite(price)) {
+    return null;
+  }
+  return ((price - cost) / cost) * 100;
+}
+
+export function totalMarginPercentRounded(
+  salePrice: number,
+  totalCost: number,
+): number | null {
+  const raw = totalMarginPercent(salePrice, totalCost);
+  return raw == null ? null : Math.round(raw);
+}
+
+/**
+ * Margen del proceso de un producto del catálogo (el backend manda
+ * `processCost` y `nonProcessPrice`). Sin esos datos (producto recién
+ * guardado, aún sin recargar) cae al margen sin mano de obra de siempre.
+ */
+export function productProcessMarginRounded(
+  product: {
+    cost: number;
+    processCost?: number;
+    nonProcessPrice?: number;
+  },
+  salePrice: number,
+  laborCost = 0,
+): number | null {
+  if (product.processCost == null) {
+    return markupPercentOnCostRounded(salePrice, product.cost, laborCost);
+  }
+  return processMarginPercentRounded(
+    salePrice,
+    product.processCost,
+    product.nonProcessPrice ?? 0,
+  );
+}

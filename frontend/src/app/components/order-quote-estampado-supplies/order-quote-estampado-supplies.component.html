@@ -1,7 +1,7 @@
 <details class="cost-composition__block">
   <summary class="cost-composition__summary">
     <span class="cost-composition__chevron" aria-hidden="true"></span>
-    <span class="cost-composition__summary-title">Insumos</span>
+    <span class="cost-composition__summary-title">{{ title }}</span>
     <span class="cost-composition__summary-meta">
       {{ suppliesInfo.text }}
       @if (suppliesInfo.missingPrice) {
@@ -14,8 +14,9 @@
     <app-supply-line-list
       [embedded]="true"
       [locked]="catalogLocked"
+      [mode]="mode"
       [ngModel]="displayedSupplies"
-      [name]="'estampado-supplies-' + lineIndex"
+      [name]="(isPackaging ? 'packaging-' : 'estampado-supplies-') + lineIndex"
       (ngModelChange)="onSuppliesChange($event)"
     />
   </div>

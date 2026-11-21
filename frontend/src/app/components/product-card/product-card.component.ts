@@ -32,10 +32,8 @@ import {
 } from '../../shared/utils/product.helpers';
 import {
   hasFixedCatalogPrice,
-  markupPercentOnCostRounded,
+  totalMarginPercentRounded,
 } from '../../shared/utils/product-margin.util';
-import { getMarginForProductType } from '../../shared/utils/pricing.util';
-import { resolveProductLaborCost } from '../../shared/utils/product-labor.util';
 import { resolveProfitArea } from '../../shared/utils/profit-area.util';
 import { productListStock } from '../../shared/utils/stock.helpers';
 import {
@@ -155,33 +153,25 @@ export class ProductCardComponent {
     );
   }
 
-  get markupPercent(): number | null {
-    return markupPercentOnCostRounded(
-      this.salePrice,
-      this.product.cost,
-      resolveProductLaborCost(
-        this.product,
-        this.catalogProducts,
-        this.laborCostPerHour,
-      ),
-    );
+  /** Margen total (§16.1.1): (precio de venta − costo total) ÷ costo total. */
+  get totalMargin(): number | null {
+    return totalMarginPercentRounded(this.salePrice, this.product.cost);
   }
 
-  get targetMarginPercent(): number {
-    if (!this.profitMargins) return 0;
-    return getMarginForProductType(this.product.type, this.profitMargins);
+  /** Ganancia (> 0) → verde. */
+  get isTotalMarginGain(): boolean {
+    return (this.totalMargin ?? 0) > 0;
   }
 
-  get meetsTargetMargin(): boolean {
-    const markup = this.markupPercent;
-    if (markup == null) return true;
-    return markup >= this.targetMarginPercent;
+  /** Pérdida (< 0) → rojo. Exactamente 0 queda neutro. */
+  get isTotalMarginLoss(): boolean {
+    return (this.totalMargin ?? 0) < 0;
   }
 
   get marginBarWidth(): number {
-    const markup = this.markupPercent;
-    if (markup == null) return 0;
-    return Math.min(Math.max(markup, 0), 100);
+    const margin = this.totalMargin;
+    if (margin == null) return 0;
+    return Math.min(Math.max(margin, 0), 100);
   }
 
   get specLine(): string {

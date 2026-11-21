@@ -8,10 +8,7 @@ import {
   forwardRef,
   inject,
 } from '@angular/core';
-import {
-  ControlValueAccessor,
-  NG_VALUE_ACCESSOR,
-} from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
   EstampadoSupplyLine,
   INDISTINTO_COLOR_ID,
@@ -19,14 +16,20 @@ import {
 } from '../../../core/models';
 import { SuppliesService } from '../../../core/services/settings.service';
 import { createEmptyEstampadoSupplyLine } from '../../../shared/utils/estampado.helpers';
-import { isCatalogInsumo } from '../../../shared/utils/supply-line-value.util';
+import {
+  SupplyLineMode,
+  suppliesForMode,
+} from '../../../shared/utils/supply-line-value.util';
 import type { DbSelectOption } from '@dashboard-form';
 import { Subject, takeUntil } from 'rxjs';
 import {
   DynamicListComponent,
   DynamicListConfig,
 } from '../dynamic-list/dynamic-list.component';
-import { shortId, sortAndDisambiguateOptions } from '../../../shared/utils/search-text.util';
+import {
+  shortId,
+  sortAndDisambiguateOptions,
+} from '../../../shared/utils/search-text.util';
 import { formatSupplyQuantity } from '../../../shared/utils/supply-unit.util';
 
 @Component({
@@ -56,6 +59,8 @@ export class SupplyLineListComponent
 {
   @Input() embedded = false;
   @Input() locked = false;
+  /** «packaging»: lista de Packaging (solo insumos de esa categoría). */
+  @Input() mode: SupplyLineMode = 'supplies';
   initialValue: EstampadoSupplyLine[] | null = null;
 
   private readonly suppliesService = inject(SuppliesService);
@@ -65,71 +70,83 @@ export class SupplyLineListComponent
   private onChange: (value: EstampadoSupplyLine[]) => void = () => {};
   private onTouched: () => void = () => {};
 
-  readonly supplyConfig: DynamicListConfig<EstampadoSupplyLine> = {
-    legend: 'Insumos',
-    description:
-      'Del catálogo de insumos. El valor es cantidad × precio unitario, sin margen.',
-    layout: 'table',
-    addPlacement: 'inside',
-    tableColumns: 'minmax(14rem, 2.2fr) 7.5rem 5.75rem 4.75rem 2rem',
-    itemLabel: (index) => `Insumo ${index + 1}`,
-    addButtonLabel: '+ Agregar insumo',
-    emptyMessage: 'Sin insumos configurados',
-    totalValueFn: (items) => {
-      const total = items.reduce((sum, line) => sum + this.lineCost(line), 0);
-      return `Insumos ${this.money(total)}`;
-    },
-    rowCost: (item) => this.lineCost(item),
-    displayColumns: [
-      {
-        label: 'Precio / u',
-        render: (item) => this.unitPriceCell(item),
+  supplyConfig: DynamicListConfig<EstampadoSupplyLine> = this.buildConfig();
+
+  private buildConfig(): DynamicListConfig<EstampadoSupplyLine> {
+    const packaging = this.mode === 'packaging';
+    return {
+      legend: packaging ? 'Packaging' : 'Insumos',
+      description: packaging
+        ? 'Insumos de categoría Packaging. El precio suma el costo × 1,25.'
+        : 'Del catálogo de insumos. El valor es cantidad × precio unitario, sin margen.',
+      layout: 'table',
+      addPlacement: 'inside',
+      tableColumns: 'minmax(14rem, 2.2fr) 7.5rem 5.75rem 4.75rem 2rem',
+      itemLabel: (index) =>
+        `${packaging ? 'Packaging' : 'Insumo'} ${index + 1}`,
+      addButtonLabel: packaging ? '+ Agregar packaging' : '+ Agregar insumo',
+      emptyMessage: packaging
+        ? 'Sin packaging configurado'
+        : 'Sin insumos configurados',
+      totalValueFn: (items) => {
+        const total = items.reduce((sum, line) => sum + this.lineCost(line), 0);
+        return `${packaging ? 'Packaging' : 'Insumos'} ${this.money(total)}`;
       },
-    ],
-    minItems: 0,
-    createItem: () => createEmptyEstampadoSupplyLine(),
-    fields: [
-      {
-        type: 'select',
-        name: 'supplyId',
-        label: 'Insumo',
-        placeholder: 'Seleccionar insumo...',
-        optionsFn: (item, items) => this.getSupplyOptionsFor(item, items),
-        changeFn: (item) => {
-          item.colorId = INDISTINTO_COLOR_ID;
+      rowCost: (item) => this.lineCost(item),
+      displayColumns: [
+        {
+          label: 'Precio / u',
+          render: (item) => this.unitPriceCell(item),
         },
-      },
-      {
-        type: 'input',
-        name: 'quantity',
-        label: 'Cantidad',
-        inputType: 'number',
-        min: 0.01,
-        step: 1,
-        control: 'stepper',
-      },
-      {
-        type: 'input',
-        name: 'label',
-        label: 'Etiqueta',
-        hidden: true,
-      },
-      {
-        type: 'color-select',
-        name: 'colorId',
-        label: 'Color',
-        hidden: true,
-        supplyIdFrom: (item) => item?.supplyId ?? null,
-      },
-    ],
-  };
+      ],
+      minItems: 0,
+      createItem: () => createEmptyEstampadoSupplyLine(),
+      fields: [
+        {
+          type: 'select',
+          name: 'supplyId',
+          label: packaging ? 'Packaging' : 'Insumo',
+          placeholder: packaging
+            ? 'Seleccionar packaging...'
+            : 'Seleccionar insumo...',
+          optionsFn: (item, items) => this.getSupplyOptionsFor(item, items),
+          changeFn: (item) => {
+            item.colorId = INDISTINTO_COLOR_ID;
+          },
+        },
+        {
+          type: 'input',
+          name: 'quantity',
+          label: 'Cantidad',
+          inputType: 'number',
+          min: 0.01,
+          step: 1,
+          control: 'stepper',
+        },
+        {
+          type: 'input',
+          name: 'label',
+          label: 'Etiqueta',
+          hidden: true,
+        },
+        {
+          type: 'color-select',
+          name: 'colorId',
+          label: 'Color',
+          hidden: true,
+          supplyIdFrom: (item) => item?.supplyId ?? null,
+        },
+      ],
+    };
+  }
 
   ngOnInit(): void {
+    this.supplyConfig = this.buildConfig();
     this.suppliesService
       .watchSupplies()
       .pipe(takeUntil(this.destroy$))
       .subscribe((items: Supply[]) => {
-        this.suppliesCatalog = items.filter(isCatalogInsumo);
+        this.suppliesCatalog = suppliesForMode(items, this.mode);
         this.cdr.markForCheck();
       });
   }
@@ -185,16 +202,24 @@ export class SupplyLineListComponent
   }
 
   private unitPriceCell(line: EstampadoSupplyLine) {
-    const supply = this.suppliesCatalog.find((item) => item.id === line.supplyId);
+    const supply = this.suppliesCatalog.find(
+      (item) => item.id === line.supplyId,
+    );
     const price = Number(supply?.unitPrice) || 0;
     if (!supply || price <= 0) {
-      return { text: this.money(0), hint: 'Falta precio', tone: 'missing' as const };
+      return {
+        text: this.money(0),
+        hint: 'Falta precio',
+        tone: 'missing' as const,
+      };
     }
     return { text: this.money(price), tone: 'plain' as const };
   }
 
   private lineCost(line: EstampadoSupplyLine): number {
-    const supply = this.suppliesCatalog.find((item) => item.id === line.supplyId);
+    const supply = this.suppliesCatalog.find(
+      (item) => item.id === line.supplyId,
+    );
     if (!supply) return 0;
     return (Number(supply.unitPrice) || 0) * (Number(line.quantity) || 0);
   }

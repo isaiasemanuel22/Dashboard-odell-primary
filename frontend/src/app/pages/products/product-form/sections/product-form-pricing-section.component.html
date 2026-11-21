@@ -23,7 +23,7 @@
     @if (incompleteCostNotice; as incomplete) {
       <p class="price-warn price-warn--incomplete" role="alert">{{ incomplete }}</p>
     }
-    @if (belowCostNotice(shownPrice, vm.totalCost, vm.costBreakdown?.laborCost ?? 0); as belowCost) {
+    @if (belowCostNotice(shownPrice, vm.totalCost); as belowCost) {
       <p class="price-warn price-warn--loss" role="alert">El precio de venta queda por debajo del costo</p>
       <p class="price-warn price-warn--loss" role="alert">{{ belowCost }}</p>
     }
@@ -45,6 +45,12 @@
           <div>
             <dt>Insumos</dt>
             <dd>{{ supplyCost | currencyArs }}</dd>
+          </div>
+        }
+        @if (packagingCost > 0) {
+          <div>
+            <dt>Packaging</dt>
+            <dd>{{ packagingCost | currencyArs }}</dd>
           </div>
         }
         @if ((vm.costBreakdown?.errorMarginCost ?? 0) > 0) {
@@ -86,6 +92,12 @@
             <dd>{{ supplyCost | currencyArs }}</dd>
           </div>
         }
+        @if (packagingCost > 0) {
+          <div>
+            <dt>Packaging</dt>
+            <dd>{{ packagingCost | currencyArs }}</dd>
+          </div>
+        }
       }
       <div class="price-lines__total">
         <dt>Costo total</dt>
@@ -93,19 +105,27 @@
       </div>
     </dl>
 
-    @if (!facade.usesPieceAssembly && !priceManual && supplyCost > 0 && vm.price > 0) {
+    @if (!facade.usesPieceAssembly && priceMode !== 'fixed' && (supplyCost > 0 || packagingCost > 0) && vm.price > 0) {
       @let labor = vm.costBreakdown?.laborCost ?? 0;
       <div class="price-build">
       <p class="price-build__title">Cómo se arma el precio calculado</p>
       <dl class="price-lines">
         <div>
-          <dt>Costo sin insumos ni mano de obra {{ (vm.totalCost - labor - supplyCostWithError) | currencyArs }} + {{ targetMarginPercent }} %</dt>
-          <dd>{{ (vm.price - supplyPrice - labor) | currencyArs }}</dd>
+          <dt>Costo sin insumos, packaging ni mano de obra {{ (vm.totalCost - labor - supplyCostWithError - packagingCost) | currencyArs }} + {{ targetMarginPercent }} %</dt>
+          <dd>{{ (vm.price - supplyPrice - packagingPrice - labor) | currencyArs }}</dd>
         </div>
-        <div>
-          <dt>Insumos {{ supplyCost | currencyArs }} × 2 + margen de error</dt>
-          <dd>{{ supplyPrice | currencyArs }}</dd>
-        </div>
+        @if (supplyCost > 0) {
+          <div>
+            <dt>Insumos {{ supplyCost | currencyArs }} × 2 + margen de error</dt>
+            <dd>{{ supplyPrice | currencyArs }}</dd>
+          </div>
+        }
+        @if (packagingCost > 0) {
+          <div>
+            <dt>Packaging {{ packagingCost | currencyArs }} + 25 %</dt>
+            <dd>{{ packagingPrice | currencyArs }}</dd>
+          </div>
+        }
         <div>
           <dt>Mano de obra (sin margen)</dt>
           <dd>{{ labor | currencyArs }}</dd>
@@ -123,25 +143,27 @@
       [class.price-margin--loss]="shownPrice > 0 && vm.totalCost > 0 && shownPrice < vm.totalCost"
       [class.price-margin--incomplete]="missingPriceItems.length > 0"
     >
+      @let procMargin = processMargin(shownPrice, vm.totalCost, vm.costBreakdown?.laborCost ?? 0);
+      @let totMargin = totalMargin(shownPrice, vm.totalCost);
       <div>
         <span>Margen objetivo ({{ targetMarginLabel }}): {{ targetMarginPercent }} %</span>
       </div>
-      @let realMargin = actualMarginPercent(shownPrice, vm.totalCost, vm.costBreakdown?.laborCost ?? 0);
-      @if (realMargin !== null) {
+      @if (procMargin !== null) {
         <div>
-          <span>Margen real (sin mano de obra)</span>
-          <strong [class.is-loss]="realMargin < 0">{{ realMargin }}%</strong>
+          <span>Margen del proceso</span>
+          <strong [class.is-loss]="procMargin < targetMarginPercent">{{ procMargin }} %</strong>
         </div>
-        @if (supplyCost > 0 && realMargin < targetMarginPercent) {
-          <p class="price-margin__note">
-            Es menor al objetivo porque los insumos llevan × 2 y no el margen del área.
-          </p>
-        }
       }
       <div>
         <span>Ganancia</span>
         <strong [class.is-loss]="shownPrice - vm.totalCost < 0">{{ shownPrice - vm.totalCost | currencyArs }}</strong>
       </div>
+      @if (totMargin !== null) {
+        <div>
+          <span>Margen total</span>
+          <strong [class.is-loss]="totMargin < 0" [class.is-gain]="totMargin > 0">{{ totMargin }} %</strong>
+        </div>
+      }
       @if (hasDiscount) {
         <div>
           <span>Precio de lista</span>
@@ -166,23 +188,30 @@
 
     <div class="unit-price">
       <span class="unit-price__label">Precio unitario</span>
-      <div class="unit-price__box">
-        <input
-          class="unit-price__control"
-          type="text"
-          inputmode="numeric"
-          [ngModel]="unitPriceDraft ?? unitPriceDisplay(vm.price)"
-          (ngModelChange)="onUnitPriceDisplayChange($event)"
-          (focus)="onUnitPriceFocus(vm.price)"
-          (blur)="onUnitPriceBlur()"
-          [ngModelOptions]="{ standalone: true }"
-          autocomplete="off"
-          aria-label="Precio unitario"
-        />
-      </div>
+      @if (priceMode === 'fixed') {
+        <div class="unit-price__box">
+          <input
+            class="unit-price__control"
+            type="text"
+            inputmode="numeric"
+            [ngModel]="unitPriceDraft ?? unitPriceDisplay(vm.price)"
+            (ngModelChange)="onUnitPriceDisplayChange($event)"
+            (focus)="onUnitPriceFocus(vm.price)"
+            (blur)="onUnitPriceBlur()"
+            [ngModelOptions]="{ standalone: true }"
+            autocomplete="off"
+            aria-label="Precio unitario"
+          />
+        </div>
+      } @else {
+        <strong class="unit-price__value">{{ (heldPrice(vm.price) ?? vm.price) | currencyArs }}</strong>
+      }
       <p class="price-note">{{ unitPriceHint(vm.price, vm.totalCost, vm.costBreakdown?.laborCost ?? 0) }}</p>
-      @if (supplyCost > 0 && !(facade.isCombo && priceManual)) {
+      @if (supplyCost > 0 && priceMode !== 'fixed') {
         <p class="price-note">Insumos (× 2 + margen de error) en el precio: {{ supplyPrice | currencyArs }}</p>
+      }
+      @if (packagingCost > 0 && priceMode !== 'fixed') {
+        <p class="price-note">Packaging (+ 25 %) en el precio: {{ packagingPrice | currencyArs }}</p>
       }
       @if (priceMode === 'fixed') {
         <button type="button" class="unit-price__reset" (click)="resetUnitPrice()">
@@ -230,6 +259,7 @@
           <strong>{{ vm.componentsPrice | currencyArs }}</strong>
         </div>
         @if (hasDiscount) {
+          @if (priceMode !== 'fixed') {
           @if ((vm.costBreakdown?.laborCost ?? 0) > 0) {
             <div>
               <span>Armado</span>
@@ -241,6 +271,13 @@
               <span>Insumos (× 2 + margen de error)</span>
               <strong>{{ supplyPrice | currencyArs }}</strong>
             </div>
+          }
+          @if (packagingPrice > 0) {
+            <div>
+              <span>Packaging (+ 25 %)</span>
+              <strong>{{ packagingPrice | currencyArs }}</strong>
+            </div>
+          }
           }
           <div>
             <span>Descuento del combo ({{ discountTag }})</span>

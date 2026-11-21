@@ -75,12 +75,23 @@ export interface ProductFormDialogData {
                 (select)="form?.goToMissing($event)"
               />
               @if (priceHint) {
-                <p class="product-form-dialog__dock-hint">{{ priceHint }}</p>
+                <p class="product-form-dialog__dock-hint">
+                  {{ priceHint }}<span
+                    [class.product-form-dialog__margin--loss]="dockMargin < 0"
+                    [class.product-form-dialog__margin--gain]="dockMargin > 0"
+                    >{{ dockMarginText }}</span
+                  >
+                </p>
               }
             </div>
           } @else if (priceHint) {
             <p dockHint class="product-form-dialog__dock-hint" role="status">
-              {{ priceHint }}
+              {{ priceHint
+              }}<span
+                [class.product-form-dialog__margin--loss]="dockMargin < 0"
+                [class.product-form-dialog__margin--gain]="dockMargin > 0"
+                >{{ dockMarginText }}</span
+              >
             </p>
           } @else if (form?.show3mfFooterHint) {
             <p dockHint class="product-form-dialog__dock-hint">
@@ -106,6 +117,14 @@ export interface ProductFormDialogData {
         text-align: center;
         font-size: 12px;
         color: #5b7083;
+      }
+      .product-form-dialog__margin--gain {
+        color: #059669;
+        font-weight: 700;
+      }
+      .product-form-dialog__margin--loss {
+        color: #dc2626;
+        font-weight: 700;
       }
     `,
   ],
@@ -154,9 +173,17 @@ export class ProductFormDialogComponent implements OnInit {
   get dockPriceHint(): string {
     const summary = this.form?.dockPriceSummary;
     if (!summary) return '';
-    const margin =
-      summary.margin == null ? '' : ` · margen ${summary.margin}\u00a0%`;
-    return `Precio ${summary.label}${margin}`;
+    return `Precio ${summary.label}`;
+  }
+
+  get dockMargin(): number {
+    return this.form?.dockPriceSummary?.margin ?? 0;
+  }
+
+  /** « · margen total Y %»: va aparte para pintarlo verde (ganancia) o rojo (pérdida). */
+  get dockMarginText(): string {
+    const margin = this.form?.dockPriceSummary?.margin;
+    return margin == null ? '' : ` · margen total ${margin}\u00a0%`;
   }
 
   get mobileDockActions(): MobileDockAction[] {

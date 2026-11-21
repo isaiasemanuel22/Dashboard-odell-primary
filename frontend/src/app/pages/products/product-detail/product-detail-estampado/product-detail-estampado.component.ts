@@ -146,11 +146,23 @@ export class ProductDetailEstampadoComponent implements OnInit {
   }
 
   get supplyRows(): SupplyRow[] {
+    return this.rowsFor(this.product.supplies, 'Insumo');
+  }
+
+  /** Packaging del producto (§27), listado igual que los insumos. */
+  get packagingRows(): SupplyRow[] {
+    return this.rowsFor(this.product.packagingSupplies, 'Packaging');
+  }
+
+  private rowsFor(
+    lines: ProductEstampado['supplies'] | undefined,
+    fallbackName: string,
+  ): SupplyRow[] {
     const supplies = this.suppliesSignal();
-    return normalizeEstampadoSupplies(this.product.supplies).map((line) => {
+    return normalizeEstampadoSupplies(lines).map((line) => {
       const supply = supplies.find((item) => item.id === line.supplyId);
       return {
-        name: supply?.name ?? 'Insumo',
+        name: supply?.name ?? fallbackName,
         quantity: line.quantity,
         unit: supply?.unit ?? '',
         quantityLabel: supply

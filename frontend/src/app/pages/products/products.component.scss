@@ -1,5 +1,5 @@
-@use '../../shared/styles/variables' as *;
-@use '../../shared/styles/mobile' as mobile;
+@use "../../shared/styles/variables" as *;
+@use "../../shared/styles/mobile" as mobile;
 
 .products-alert {
   display: flex;
@@ -107,7 +107,6 @@
   z-index: 50;
   background: rgba(15, 42, 58, 0.45);
 }
-
 
 .products-m__panel {
   position: fixed;

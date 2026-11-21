@@ -438,6 +438,8 @@ export class ProductFormFacade {
       prints: v.prints,
       pressCycles: v.pressCycles,
       supplyLines: v.supplyLines,
+      packagingLines: v.packagingLines,
+      sumPiecesPackaging: v.sumPiecesPackaging,
       sizeWidthCm: v.sizeWidthCm,
       sizeLengthCm: v.sizeLengthCm,
       sizeHeightCm: v.sizeHeightCm,
@@ -487,6 +489,8 @@ export class ProductFormFacade {
       this.form.controls.prints.valueChanges,
       this.form.controls.pressCycles.valueChanges,
       this.form.controls.supplyLines.valueChanges,
+      this.form.controls.packagingLines.valueChanges,
+      this.form.controls.sumPiecesPackaging.valueChanges,
       this.form.controls.purgeGrams.valueChanges,
       this.form.controls.preferredPrinterId.valueChanges,
     )

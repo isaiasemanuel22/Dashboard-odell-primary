@@ -126,6 +126,21 @@ export class OrderQuoteEstampadoCompositionComponent implements OnInit {
     return this.estampadoCosts();
   }
 
+  /** Valor del packaging de la línea (cantidad × precio unitario). */
+  get packagingCost(): number {
+    return Math.round(
+      normalizeEstampadoSupplies(this.line.packagingSupplies).reduce(
+        (sum, entry) => {
+          const supply = this.supplies.find((item) => item.id === entry.supplyId);
+          return supply
+            ? sum + (Number(supply.unitPrice) || 0) * (Number(entry.quantity) || 0)
+            : sum;
+        },
+        0,
+      ),
+    );
+  }
+
   onChildChanged(): void {
     this.changed.emit();
     this.cdr.markForCheck();

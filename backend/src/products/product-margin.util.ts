@@ -26,6 +26,41 @@ export function productMarkupPercent(
 }
 
 /**
+ * Margen del proceso: (precio del proceso − costo del proceso) ÷ costo del
+ * proceso × 100. El precio del proceso es el de venta menos lo que no es
+ * proceso (mano de obra, insumos y packaging). Null si el costo es <= 0.
+ * Misma fórmula que frontend/src/app/shared/utils/product-margin.util.ts.
+ */
+export function processMarginPercent(
+  salePrice: number,
+  processCost: number,
+  nonProcessPrice: number,
+): number | null {
+  const cost = Number(processCost);
+  const price = Number(salePrice) - (Number(nonProcessPrice) || 0);
+  if (!Number.isFinite(cost) || cost <= 0 || !Number.isFinite(price)) {
+    return null;
+  }
+  return ((price - cost) / cost) * 100;
+}
+
+/**
+ * Margen total: (precio de venta − costo total) ÷ costo total × 100.
+ * Misma fórmula que frontend/src/app/shared/utils/product-margin.util.ts.
+ */
+export function totalMarginPercent(
+  salePrice: number,
+  totalCost: number,
+): number | null {
+  const cost = Number(totalCost);
+  const price = Number(salePrice);
+  if (!Number.isFinite(cost) || cost <= 0 || !Number.isFinite(price)) {
+    return null;
+  }
+  return ((price - cost) / cost) * 100;
+}
+
+/**
  * Precio de lista para alcanzar el markup objetivo sobre el costo sin mano de
  * obra (+ mano de obra sin margen), redondeado hacia arriba
  * al múltiplo `roundTo` (por defecto 100).

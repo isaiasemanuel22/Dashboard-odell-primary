@@ -27,6 +27,7 @@
         [embedded]="true"
         [components]="components"
         [catalog]="catalogProducts"
+        [supplyUnitPrice]="piecePriceResolver"
         [colorCatalog]="colorCatalog"
         (remove)="removeComponent($event)"
         (colorChange)="updateComponentColor($event.productId, $event.colorId)"

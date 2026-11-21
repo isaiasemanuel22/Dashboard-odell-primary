@@ -51,6 +51,7 @@ import {
 import {
   supplyCostFromValue,
   supplyErrorFromValue,
+  packagingPriceFromValue,
   supplyLinesValue,
   supplyPriceFromValue,
 } from '../products/supply-line-value.util';
@@ -232,6 +233,7 @@ export class CostCalculatorService {
   resolveProductUnitCost(
     productId: string,
     visiting: Set<string> = new Set(),
+    includePackaging = false,
   ): number {
     if (visiting.has(productId)) {
       return 0;
@@ -266,7 +268,8 @@ export class CostCalculatorService {
           supplyCostFromValue(
             this.supplyValue(this.productSupplies(product)),
             this.store.generalSettings.errorMarginPercent,
-          )
+          ) +
+          (includePackaging ? this.productPackagingValue(product) : 0)
         );
       } finally {
         visiting.delete(productId);
@@ -274,14 +277,58 @@ export class CostCalculatorService {
     }
 
     try {
+      const input = productToPricingInput(product, this.store.products);
+      // Como pieza de un combo, el packaging propio no entra (§27.4).
       const cost = this.calculateProductPricing(
-        productToPricingInput(product, this.store.products),
+        includePackaging
+          ? input
+          : { ...input, packagingSupplies: [], sumPiecesPackaging: false },
       ).cost;
       if (Number.isFinite(cost) && cost >= 0) return cost;
     } catch {
       // Sin datos para recalcular: queda el costo guardado.
     }
-    return product.cost ?? 0;
+    const stored = product.cost ?? 0;
+    return includePackaging
+      ? stored
+      : Math.max(0, stored - this.supplyValue(product.packagingSupplies));
+  }
+
+  /**
+   * Valor del packaging del producto (§27): el propio y, si está prendido
+   * «Sumar el packaging de las piezas», el de cada pieza × cantidad.
+   * Una pieza que es combo aporta solo su packaging propio (no recursivo).
+   */
+  productPackagingValue(
+    product: Pick<Product, 'packagingSupplies' | 'sumPiecesPackaging'> & {
+      components?: ProductComponent[];
+    },
+  ): number {
+    return this.packagingValueOf({
+      packagingSupplies: product.packagingSupplies,
+      sumPiecesPackaging: product.sumPiecesPackaging,
+      components: normalizeProductComponents(
+        product.components,
+        this.store.products,
+      ),
+    });
+  }
+
+  private packagingValueOf(input: {
+    packagingSupplies?: ProductPricingInput['packagingSupplies'];
+    sumPiecesPackaging?: boolean;
+    components?: ProductComponent[];
+  }): number {
+    let value = this.supplyValue(input.packagingSupplies);
+    if (input.sumPiecesPackaging === true) {
+      for (const item of input.components ?? []) {
+        const piece = this.store.getProductById(item.productId);
+        if (!piece) continue;
+        value +=
+          this.supplyValue(piece.packagingSupplies) * Number(item.quantity);
+      }
+    }
+    return value;
   }
 
   /** Suma de precios de LISTA de las piezas × cantidad (sin descuentos de pieza). */
@@ -295,6 +342,7 @@ export class CostCalculatorService {
   resolveProductUnitPrice(
     productId: string,
     visiting: Set<string> = new Set(),
+    includePackaging = false,
   ): number {
     if (visiting.has(productId)) {
       return 0;
@@ -316,13 +364,20 @@ export class CostCalculatorService {
       product.includesPieces === true ||
       components.length > 0;
 
+    // El precio guardado ya trae su packaging; como pieza se descuenta (§27.4).
+    // Con precio fijo el fijo no trae packaging encima (§16.1.1): no se descuenta.
+    const ownPackagingPrice =
+      includePackaging || Number(product.suggestedPrice) > 0
+        ? 0
+        : packagingPriceFromValue(this.supplyValue(product.packagingSupplies));
+
     if (!usesPieceAssembly || components.length === 0) {
-      return product.price ?? 0;
+      return Math.max(0, (product.price ?? 0) - ownPackagingPrice);
     }
 
     // Combo anidado: cuenta su precio guardado, no la suma de sus piezas.
     if ((product.price ?? 0) > 0) {
-      return product.price;
+      return Math.max(0, product.price - ownPackagingPrice);
     }
 
     visiting.add(productId);
@@ -340,7 +395,10 @@ export class CostCalculatorService {
       supplyPriceFromValue(
         this.supplyValue(this.productSupplies(product)),
         this.store.generalSettings.errorMarginPercent,
-      )
+      ) +
+      (includePackaging
+        ? packagingPriceFromValue(this.productPackagingValue(product))
+        : 0)
     );
   }
 
@@ -449,9 +507,19 @@ export class CostCalculatorService {
     const errorMarginPercent =
       Number(this.store.generalSettings.errorMarginPercent) || 0;
     const supplyError = supplyErrorFromValue(supplyValue, errorMarginPercent);
+    const packagingValue = this.packagingValueOf({
+      packagingSupplies: input.packagingSupplies,
+      sumPiecesPackaging: input.sumPiecesPackaging,
+      components: hasComponents ? components : [],
+    });
     const storedCost = Number(input.cost) || 0;
     // El costo guardado ya incluye insumos. No usarlo si hay que sumarlos de nuevo.
-    if (cost <= 0 && storedCost > 0 && supplyValue <= 0) {
+    if (
+      cost <= 0 &&
+      storedCost > 0 &&
+      supplyValue <= 0 &&
+      packagingValue <= 0
+    ) {
       cost = storedCost;
       if (breakdown?.totalCost === 0) {
         breakdown = null;
@@ -460,7 +528,10 @@ export class CostCalculatorService {
 
     const processCost = cost;
     // Valor del insumo + su margen de error (§16.3); el valor se muestra aparte.
-    cost = processCost + supplyCostFromValue(supplyValue, errorMarginPercent);
+    cost =
+      processCost +
+      supplyCostFromValue(supplyValue, errorMarginPercent) +
+      packagingValue;
     if (breakdown && supplyError > 0) {
       breakdown = {
         ...breakdown,
@@ -480,15 +551,18 @@ export class CostCalculatorService {
         : this.resolveProductPrice(
             input,
             processCost,
-            supplyValue <= 0,
+            supplyValue <= 0 && packagingValue <= 0,
             laborCost,
           );
     // Insumos: valor × 2 + error del insumo (sin el recargo sobre el error) (§16.3).
-    // Combo con precio fijo: el fijo es la lista completa, no se le suman insumos (§16.1.3).
-    const price =
-      input.type === ProductType.COMBO && fixedPrice
-        ? processPrice
-        : processPrice + supplyPriceFromValue(supplyValue, errorMarginPercent);
+    // Precio fijo (todos los tipos): el fijo es la lista final, no se le suma
+    // nada encima (insumos, packaging ni armado) (§16.1.1).
+    // Packaging: costo × 1,25, sin margen de error ni × 2 (§27.2).
+    const price = fixedPrice
+      ? processPrice
+      : processPrice +
+        supplyPriceFromValue(supplyValue, errorMarginPercent) +
+        packagingPriceFromValue(packagingValue);
     const profit = price - cost;
     const configuredMarginPercent = this.getMarginForProductType(input.type);
 
@@ -504,6 +578,11 @@ export class CostCalculatorService {
       ),
       configuredMarginPercent,
       breakdown,
+      processCost: Math.max(0, processCost - laborCost),
+      nonProcessPrice:
+        laborCost +
+        supplyPriceFromValue(supplyValue, errorMarginPercent) +
+        packagingPriceFromValue(packagingValue),
     };
   }
 
@@ -626,7 +705,7 @@ export class CostCalculatorService {
 
   resolveCatalogUnitCost(productId: string): number {
     try {
-      return this.resolveProductUnitCost(productId);
+      return this.resolveProductUnitCost(productId, new Set(), true);
     } catch {
       return 0;
     }
@@ -842,6 +921,7 @@ export class CostCalculatorService {
       estampadoPrints: input.estampadoPrints,
       estampadoPressCycles: input.estampadoPressCycles,
       estampadoSupplies: input.estampadoSupplies,
+      packagingSupplies: input.packagingSupplies,
       preferredPrinterId: input.preferredPrinterId,
     };
   }

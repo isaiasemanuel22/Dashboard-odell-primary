@@ -28,10 +28,7 @@ import {
   OrderStatus,
   ServiceType,
 } from '../../core/models';
-import {
-  formatPercentInteger,
-  formatPercentIntegerLabel,
-} from '../../shared/utils/percent.util';
+import { formatPercentIntegerLabel } from '../../shared/utils/percent.util';
 import { DashboardService } from '../../core/services/dashboard.service';
 import { OrdersService } from '../../core/services/orders.service';
 import { ProductsService } from '../../core/services/products.service';
@@ -182,13 +179,15 @@ export class DashboardComponent implements OnInit {
 
   stats$ = this.refresh$.pipe(
     switchMap(() =>
-      this.dashboard.getStats({ period: this.period, rankBy: this.rankBy }).pipe(
-        catchError(() => {
-          this.loadError = true;
-          this.cdr.markForCheck();
-          return of(null);
-        }),
-      ),
+      this.dashboard
+        .getStats({ period: this.period, rankBy: this.rankBy })
+        .pipe(
+          catchError(() => {
+            this.loadError = true;
+            this.cdr.markForCheck();
+            return of(null);
+          }),
+        ),
     ),
   );
 
@@ -329,7 +328,9 @@ export class DashboardComponent implements OnInit {
   mobileRankingRows(
     ranking: DashboardProfitabilityRankingItem[],
   ): (DashboardProfitabilityRankingItem & { rank: number })[] {
-    return ranking.slice(0, 5).map((row, index) => ({ ...row, rank: index + 1 }));
+    return ranking
+      .slice(0, 5)
+      .map((row, index) => ({ ...row, rank: index + 1 }));
   }
 
   /** Valor principal según `rankBy` (ganancia / margen / unidades). */
@@ -545,15 +546,13 @@ export class DashboardComponent implements OnInit {
 
     if (profit.marginAlerts.length > 0) {
       const count = profit.marginAlerts.length;
-      const target =
-        formatPercentInteger(profit.marginAlerts[0]?.targetPercent) ?? '40';
       items.push({
         id: 'margin',
         tone: 'warn',
         title:
           count === 1
-            ? `1 producto con el precio bajo el margen (${target}%)`
-            : `${count} productos con el precio bajo el margen (${target}%)`,
+            ? '1 producto debajo del precio calculado'
+            : `${count} productos debajo del precio calculado`,
         detail: 'revisá costos y precios',
         actionLabel: 'Actualizar precios',
         route: '/productos',
@@ -610,7 +609,7 @@ export class DashboardComponent implements OnInit {
 
   bucketAmount(lines: ReceivableLine[], older: boolean): number {
     return lines
-      .filter((line) => (line.days > DEBT_RECENT_DAYS) === older)
+      .filter((line) => line.days > DEBT_RECENT_DAYS === older)
       .reduce((sum, line) => sum + line.balance, 0);
   }
 

@@ -15,6 +15,8 @@ export interface ConfirmDialogData {
    * (ícono y botón rojos) y el resto «info».
    */
   tone?: ConfirmTone;
+  /** Detalle opcional bajo el mensaje: una fila por ítem (nombre y valor). */
+  lines?: { label: string; value: string }[];
   /** Un solo botón, para avisos que antes salían por alert(). */
   alertOnly?: boolean;
 }
@@ -31,6 +33,16 @@ export interface ConfirmDialogData {
     >
       <app-confirm-lead [tone]="tone" [title]="data.title">
         <p>{{ data.message }}</p>
+        @if (data.lines?.length) {
+          <ul class="confirm-lines">
+            @for (line of data.lines; track $index) {
+              <li>
+                <span class="confirm-lines__label">{{ line.label }}</span>
+                <span class="confirm-lines__value">{{ line.value }}</span>
+              </li>
+            }
+          </ul>
+        }
       </app-confirm-lead>
       @if (!data.alertOnly) {
         <db-button
@@ -51,6 +63,36 @@ export interface ConfirmDialogData {
       />
     </app-form-dialog-shell>
   `,
+  styles: [
+    `
+      .confirm-lines {
+        list-style: none;
+        margin: 12px 0 0;
+        padding: 0;
+        max-height: 40vh;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        font-size: 13px;
+      }
+      .confirm-lines li {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+      .confirm-lines__label {
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+      .confirm-lines__value {
+        flex: none;
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
+        text-align: right;
+      }
+    `,
+  ],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ConfirmDialogComponent {

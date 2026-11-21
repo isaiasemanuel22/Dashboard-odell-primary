@@ -26,7 +26,7 @@ describe('E134: precio cargado distinto del calculado pasa a «Precio fijo»', (
     TestBed.configureTestingModule({
       providers: [
         ProductFormPricingService,
-        { provide: ProductPricingService, useValue: {} },
+        { provide: ProductPricingService, useValue: { packagingValue: () => 0 } },
         {
           provide: ProductCostCalculationService,
           useValue: { supplyLinesValue: () => 0 },

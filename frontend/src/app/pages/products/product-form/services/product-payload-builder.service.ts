@@ -58,6 +58,8 @@ export interface ProductPayloadInput {
   prints: EstampadoPrintSpec[];
   pressCycles: EstampadoPressCycle[];
   supplyLines: EstampadoSupplyLine[];
+  packagingLines?: EstampadoSupplyLine[];
+  sumPiecesPackaging?: boolean;
   sizeWidthCm: number;
   sizeLengthCm: number;
   sizeHeightCm: number;
@@ -142,6 +144,8 @@ export class ProductPayloadBuilderService {
       components: usesPieceAssembly ? input.components : [],
       assemblyTimeHours:
         usesPieceAssembly ? Number(input.assemblyTimeHours) || 0 : 0,
+      packagingSupplies: input.packagingLines ?? [],
+      sumPiecesPackaging: input.isCombo ? input.sumPiecesPackaging === true : false,
       ...(input.isCombo
         ? { supplies: input.supplyLines }
         : input.is3D
@@ -222,6 +226,8 @@ export class ProductPayloadBuilderService {
   supplyLines: EstampadoSupplyLine[],
   purgeGrams: number | null = null,
   preferredPrinterId: string | null = null,
+  packagingLines: EstampadoSupplyLine[] = [],
+  sumPiecesPackaging = false,
   ): any {
     const storedCost = Number(cost) || Number(productCost) || 0;
 
@@ -231,6 +237,8 @@ export class ProductPayloadBuilderService {
       assemblyTimeHours: Number(assemblyTimeHours) || 0,
       suggestedPrice,
       cost: usesPieceAssembly ? 0 : storedCost,
+      packagingSupplies: packagingLines,
+      sumPiecesPackaging: isCombo ? sumPiecesPackaging : false,
       ...(isCombo
         ? { estampadoSupplies: supplyLines }
         : is3D

@@ -53,6 +53,8 @@ export function mapProductFromDb(row: {
   estampadoPrints?: Prisma.JsonValue;
   estampadoPressCycles?: Prisma.JsonValue;
   estampadoSupplies?: Prisma.JsonValue;
+  packagingSupplies?: Prisma.JsonValue;
+  sumPiecesPackaging?: boolean;
   fdmFilaments?: Prisma.JsonValue;
   attachments?: Prisma.JsonValue;
   stock?: number;
@@ -62,6 +64,7 @@ export function mapProductFromDb(row: {
   preferredPrinterId?: string | null;
   discountPercent?: number | null;
   discountAmount?: number | null;
+  suggestedPrice?: number | null;
 }): Product {
   const components = normalizeProductComponents(fromJson(row.components));
   const base = {
@@ -84,9 +87,17 @@ export function mapProductFromDb(row: {
       row.type === (ProductType.COMBO as string),
     components,
     assemblyTimeHours: row.assemblyTimeHours,
+    packagingSupplies: normalizeEstampadoSupplies(
+      fromJson<Product['packagingSupplies']>(row.packagingSupplies ?? []),
+    ),
+    sumPiecesPackaging: row.sumPiecesPackaging === true,
     stock: row.stock ?? 0,
     discountPercent: row.discountPercent ?? null,
     discountAmount: row.discountAmount ?? null,
+    suggestedPrice:
+      row.suggestedPrice != null && row.suggestedPrice > 0
+        ? row.suggestedPrice
+        : null,
   };
 
   if (row.type === (ProductType.COMBO as string)) {
@@ -236,10 +247,18 @@ export function mapProductToDb(product: Product) {
         (isCombo ? product.supplies : undefined) ??
         [],
     ),
+    packagingSupplies: toInputJson(
+      normalizeEstampadoSupplies(product.packagingSupplies),
+    ),
+    sumPiecesPackaging: product.sumPiecesPackaging === true,
     fdmFilaments: toInputJson(fdmFilaments.map(persistedFdmLine)),
     stock: Math.max(0, Math.trunc(product.stock ?? 0)),
     discountPercent: product.discountPercent ?? null,
     discountAmount: product.discountAmount ?? null,
+    suggestedPrice:
+      product.suggestedPrice != null && Number(product.suggestedPrice) > 0
+        ? Number(product.suggestedPrice)
+        : null,
     colorId:
       product3d?.type === ProductType.RESINA
         ? (product3d.colorId ?? null)

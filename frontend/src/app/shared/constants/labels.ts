@@ -43,6 +43,7 @@ export const SUPPLY_CATEGORY_LABELS: Record<SupplyCategory, string> = {
   [SupplyCategory.RESINA]: 'Resina',
   [SupplyCategory.ESTAMPADO]: 'Estampado',
   [SupplyCategory.GENERAL]: 'General',
+  [SupplyCategory.PACKAGING]: 'Packaging',
 };
 
 export const PAPER_TYPE_LABELS: Record<PaperType, string> = {

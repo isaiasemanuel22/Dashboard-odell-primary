@@ -31,6 +31,7 @@ const CATEGORY_AREA: Record<SupplyCategory, OdlArea> = {
   [SupplyCategory.RESINA]: 'impresion3d',
   [SupplyCategory.ESTAMPADO]: 'estampado',
   [SupplyCategory.GENERAL]: 'general',
+  [SupplyCategory.PACKAGING]: 'general',
 };
 
 @Component({

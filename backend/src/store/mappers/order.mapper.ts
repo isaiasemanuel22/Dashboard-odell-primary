@@ -74,6 +74,7 @@ export function mapOrderItemFromDb(item: {
   estampadoPrints?: Prisma.JsonValue;
   estampadoPressCycles?: Prisma.JsonValue;
   estampadoSupplies?: Prisma.JsonValue;
+  packagingSupplies?: Prisma.JsonValue;
   deliveredQuantity?: number;
   reservedQuantity?: number;
   productionRequiredQuantity?: number;
@@ -145,6 +146,9 @@ export function mapOrderItemFromDb(item: {
     ),
     estampadoSupplies: fromJson<OrderItem['estampadoSupplies']>(
       item.estampadoSupplies ?? [],
+    ),
+    packagingSupplies: fromJson<OrderItem['packagingSupplies']>(
+      item.packagingSupplies ?? [],
     ),
     deliveredQuantity: item.deliveredQuantity ?? 0,
     reservedQuantity: item.reservedQuantity ?? 0,
@@ -325,6 +329,7 @@ export function mapOrderItemToDb(
     estampadoPrints: toInputJson(item.estampadoPrints ?? []),
     estampadoPressCycles: toInputJson(item.estampadoPressCycles ?? []),
     estampadoSupplies: toInputJson(item.estampadoSupplies ?? []),
+    packagingSupplies: toInputJson(item.packagingSupplies ?? []),
     deliveredQuantity: item.deliveredQuantity ?? 0,
     reservedQuantity: item.reservedQuantity ?? 0,
     productionRequiredQuantity: item.productionRequiredQuantity ?? 0,

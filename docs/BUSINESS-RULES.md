@@ -1076,6 +1076,35 @@ obra suma $1.000 al precio, no $2.000. Las líneas de Diseño y Modelado tienen
 tarifa y margen propios y no cambian. Los precios guardados no cambian hasta
 usar «Actualizar precios».
 
+**Precio fijo** (confirmado por Isaías el 2026-11-19): en todos los productos
+(FDM, resina, estampado y combos), si el producto tiene precio fijo, **el fijo
+es el precio de lista final**. No se le suma nada encima: ni insumos, ni
+packaging (§27), ni mano de obra o armado. El costo sigue incluyendo todo,
+así que la ganancia y el margen real lo reflejan.
+
+**Márgenes que se muestran** (confirmado por Isaías el 2026-11-19; solo para
+mostrar, no cambia cómo se arma el precio):
+
+```text
+precio del proceso = precio de venta − (mano de obra + precio de insumos + precio de packaging)
+costo del proceso  = material + purga + luz + máquina + margen de error
+margen del proceso = (precio del proceso − costo del proceso) ÷ costo del proceso
+margen total       = (precio de venta − costo total) ÷ costo total
+```
+
+- El **margen objetivo** del área se compara con el **margen del proceso**
+  en la caja de precio.
+- El aviso y el filtro del listado (y las alertas del Dashboard) marcan los
+  productos **debajo del calculado**: precio de venta menor que su precio
+  calculado, aunque tengan ganancia (Isaías, 2026-11-19).
+- El **margen total** es otra cifra: lo que se gana sobre todo lo que se gasta
+  (incluye insumos, packaging y mano de obra).
+- El margen total se muestra en las tarjetas del listado de productos y se
+  destaca en verde si hay ganancia y en rojo si es negativo (Isaías, 2026-11-19).
+- En combos, el proceso son las piezas: costo del proceso = costo de las
+  piezas; precio del proceso = precio de venta − armado − insumos y packaging
+  propios.
+
 ### 16.1.2 Descuento del producto
 
 Confirmado el 2026-11-15. Un producto o combo del catálogo puede tener un
@@ -2218,19 +2247,59 @@ en un puesto, con su caja y sus gastos.
   promedio > 0.
 - A imprimir = máximo entre 0 y (llevar − stock actual).
 
+## 27. Packaging
+
+Decidido por Isaías el 2026-11-19.
+
+### 27.1 Qué es
+
+- El packaging (cajas, bolsas, papel, stickers, etc.) es un **insumo de
+  categoría «Packaging»**, con stock, unidad y precio manual como General.
+- Se carga **por producto**, en una sección «Packaging» debajo de «Insumos»
+  en el formulario de producto, y **por línea** en pedidos y presupuestos,
+  con la misma forma que los insumos. Es **opcional** en todos los casos.
+- Los selectores no se mezclan: en «Insumos» no aparecen los de Packaging y
+  en «Packaging» solo aparecen esos.
+
+### 27.2 Costo y precio
+
+- Costo: el valor del packaging (cantidad × precio unitario) entra al costo
+  del producto.
+- Precio: suma **costo del packaging × 1,25**. No lleva margen de error ni el
+  × 2 de los insumos (§16). Con precio fijo no se suma (§16.1.1).
+
+### 27.3 Pedidos y presupuestos
+
+- La línea de catálogo trae el packaging del producto y se puede quitar,
+  cambiar o agregar en la línea, igual que los insumos.
+
+### 27.4 Combos
+
+- El combo lleva su propio packaging, con la regla de §27.2.
+- Tilde «Sumar el packaging de las piezas», **apagado por defecto**: si está
+  prendido, suma además el packaging de cada pieza × su cantidad.
+
+### 27.5 Stock
+
+- El packaging descuenta stock **al entregar** el pedido (no al terminar la
+  tarea de producción).
+- La **venta de mostrador no descuenta** packaging (Isaías, 2026-11-19).
+- Si se devuelve una venta, el packaging **no vuelve solo** al stock: se
+  ajusta a mano en Insumos.
+
 ---
 
 ## 28. Automatización: Meta y agentes
 
 Confirmado por Isaías el 2026-11-18 (diseño v7: V7Agentes, V7AgenteWhatsApp,
 V6Integraciones). Los chats en sí (conversaciones, mensajes, pantalla Chats)
-van en §27. Tokens y llaves nunca en el repo: van en variables de entorno.
+son la sección Chats (v7). Tokens y llaves nunca en el repo: van en variables de entorno.
 
 ### 28.1 Conexión con Meta
 
 - Canales: WhatsApp Business (Cloud API), Instagram Direct y Messenger. Los
   mensajes entrantes llegan por webhook y se guardan como mensajes de Chats
-  (§27); los salientes se mandan desde Chats.
+  (sección Chats); los salientes se mandan desde Chats.
 - La cuenta de Meta Business (portfolio, app, número verificado, Instagram
   profesional vinculado a la página) la crea y la conecta Isaías. Mientras
   tanto se desarrolla contra el número de prueba de Meta.

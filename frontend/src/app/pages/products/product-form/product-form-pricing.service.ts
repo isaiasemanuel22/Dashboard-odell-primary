@@ -22,6 +22,7 @@ import {
   totalCostFromBreakdown,
 } from '../../../shared/utils/pricing.util';
 import {
+  packagingPriceFromValue,
   supplyCostFromValue,
   supplyErrorFromValue,
   supplyPriceFromValue,
@@ -54,6 +55,10 @@ export class ProductFormPricingService {
   private readonly payloadBuilder = inject(ProductPayloadBuilderService);
   private readonly settingsFacade = inject(SettingsFacade);
   private readonly pricingStore = inject(ProductFormPricingFacade);
+
+  /** Precio unitario de insumo: separa el packaging de las piezas (§27.4). */
+  private readonly pieceUnitPrice = (supplyId: string): number =>
+    this.productCost.supplyUnitPrice?.(supplyId) ?? 0;
 
   private context: ProductFormPricingContext | null = null;
   private costCalcTimer: ReturnType<typeof setTimeout> | null = null;
@@ -217,14 +222,11 @@ export class ProductFormPricingService {
         ? undefined
         : this.context.product?.cost,
       costBreakdown: this.costBreakdown,
-      componentsCostTotal: componentsCostTotal(
-        this.context.catalogProducts,
-        form,
-      ),
+      componentsCostTotal: componentsCostTotal(this.context.catalogProducts, form, this.pieceUnitPrice),
       components: form.controls.components.value,
     });
     if (usesFormPieceAssembly(form)) {
-      return base + this.catalogSupplyCost();
+      return base + this.catalogSupplyCost() + this.catalogPackagingCost();
     }
     return base;
   }
@@ -235,6 +237,8 @@ export class ProductFormPricingService {
     const suggestedPrice = form.controls.suggestedPrice.value;
     // Los insumos entran al precio a costo × 2 (§16.3).
     const supplyPrice = this.catalogSupplyPrice();
+    // El packaging entra al precio a costo × 1,25, sin margen de error (§27.2).
+    const packagingPrice = this.catalogPackagingPrice();
 
     if (suggestedPrice != null && Number(suggestedPrice) > 0) {
       return Number(suggestedPrice) + this.fixedPriceSupplyAddon();
@@ -244,7 +248,7 @@ export class ProductFormPricingService {
       const assemblyCost = Math.max(0, Number(this.cost) || 0);
       const listBase =
         this.assemblyPrice(assemblyCost, this.costBreakdown?.laborCost ?? 0) ?? 0;
-      return listBase + supplyPrice;
+      return listBase + supplyPrice + packagingPrice;
     }
 
     if (this.computedPrice != null) {
@@ -281,7 +285,7 @@ export class ProductFormPricingService {
       isFormResina(form),
       form.controls.grams.value,
       isForm3D(form),
-      this.catalogSupplyValue() > 0,
+      this.catalogSupplyValue() + this.catalogPackagingValue() > 0,
     );
   }
 
@@ -291,7 +295,7 @@ export class ProductFormPricingService {
    */
   private assemblyPrice(totalCost: number, laborCost = 0): number | null {
     const partsPrice = this.context
-      ? componentsPriceTotal(this.context.catalogProducts, this.context.form)
+      ? componentsPriceTotal(this.context.catalogProducts, this.context.form, this.pieceUnitPrice)
       : 0;
     if (partsPrice > 0) return partsPrice + laborCost;
     return totalCost > 0
@@ -316,7 +320,7 @@ export class ProductFormPricingService {
       return;
     }
 
-    const partsCost = componentsCostTotal(this.context.catalogProducts, form);
+    const partsCost = componentsCostTotal(this.context.catalogProducts, form, this.pieceUnitPrice);
     const assemblyHours = Number(form.controls.assemblyTimeHours.value) || 0;
     const settings = this.settingsFacade.peekGeneralSettings();
     const laborCost =
@@ -479,7 +483,8 @@ export class ProductFormPricingService {
     }
 
     if (!isForm3D(form) && !isFormEstampado(form)) return;
-    const hasSupplies = this.catalogSupplyValue() > 0;
+    const hasSupplies =
+      this.catalogSupplyValue() + this.catalogPackagingValue() > 0;
     if (
       isForm3D(form) &&
       isFormResina(form) &&
@@ -537,7 +542,7 @@ export class ProductFormPricingService {
 
     this.pricingPreviewSub = this.productPricing
       .preview(
-        this.buildPricingInput(),
+        this.buildPricingInput({ ignoreFixedPrice: true }),
         this.context.catalogProducts,
         settings,
       )
@@ -555,7 +560,7 @@ export class ProductFormPricingService {
             this.cost =
               resolvedCost > 0
                 ? resolvedCost
-                : componentsCostTotal(this.context!.catalogProducts, form);
+                : componentsCostTotal(this.context!.catalogProducts, form, this.pieceUnitPrice);
             this.computedPrice =
               this.cost > 0
                 ? priceFromCostAndMargin(
@@ -636,7 +641,7 @@ export class ProductFormPricingService {
     }
 
     if (usesFormPieceAssembly(form)) {
-      const partsCost = componentsCostTotal(this.context.catalogProducts, form);
+      const partsCost = componentsCostTotal(this.context.catalogProducts, form, this.pieceUnitPrice);
       const assemblyHours = Number(form.controls.assemblyTimeHours.value) || 0;
       const settings = this.settingsFacade.peekGeneralSettings();
       const laborCost =
@@ -671,13 +676,15 @@ export class ProductFormPricingService {
     // costValue incluye valor + error de insumos: el margen va solo sobre el proceso.
     const supplyValue = this.catalogSupplyValue();
     const supplyCost = this.catalogSupplyCost();
+    const packagingValue = this.catalogPackagingValue();
     const result = this.productPricing.priceWithSupplies(
-      this.buildPricingInput(),
-      Math.max(0, costValue - supplyCost),
+      this.buildPricingInput({ ignoreFixedPrice: true }),
+      Math.max(0, costValue - supplyCost - packagingValue),
       supplyValue,
       this.context.catalogProducts,
       settings,
       this.costBreakdown?.laborCost ?? 0,
+      packagingValue,
     );
     this.cost = costValue;
     this.computedPrice = result.price;
@@ -685,7 +692,11 @@ export class ProductFormPricingService {
     this.emitChange();
   }
 
-  private buildPricingInput() {
+  /**
+   * `ignoreFixedPrice`: el preview calcula el precio «Calculado» aunque haya
+   * precio fijo, para poder mostrarlo al lado del fijo (§16.1.1).
+   */
+  private buildPricingInput(options: { ignoreFixedPrice?: boolean } = {}) {
     if (!this.context) {
       throw new Error('ProductFormPricingService: context not bound');
     }
@@ -698,7 +709,7 @@ export class ProductFormPricingService {
       v.type === ProductType.COMBO || v.includesPieces,
       v.components,
       v.assemblyTimeHours,
-      v.suggestedPrice,
+      options.ignoreFixedPrice ? null : v.suggestedPrice,
       this.cost,
       this.context.product?.cost,
       v.type === ProductType.COMBO,
@@ -720,6 +731,8 @@ export class ProductFormPricingService {
       v.supplyLines,
       v.purgeGrams,
       v.preferredPrinterId,
+      v.packagingLines,
+      v.sumPiecesPackaging,
     );
   }
 
@@ -744,14 +757,8 @@ export class ProductFormPricingService {
     const form = this.context.form;
     this.pricingStore.setCalculating(this.calculatingCost);
     if (usesFormPieceAssembly(form)) {
-      const partsCost = componentsCostTotal(
-        this.context.catalogProducts,
-        form,
-      );
-      const partsPrice = componentsPriceTotal(
-        this.context.catalogProducts,
-        form,
-      );
+      const partsCost = componentsCostTotal(this.context.catalogProducts, form, this.pieceUnitPrice);
+      const partsPrice = componentsPriceTotal(this.context.catalogProducts, form, this.pieceUnitPrice);
       const laborCost = Math.max(0, (Number(this.cost) || 0) - partsCost);
       this.pricingStore.setCostContribution('components', partsCost);
       if (laborCost > 0) {
@@ -774,6 +781,7 @@ export class ProductFormPricingService {
         this.pricingStore.clearCostContribution('supplies');
         this.pricingStore.clearCostContribution('supplyError');
       }
+      this.syncPackagingContribution();
       this.pricingStore.setComponentsPrice(partsPrice);
       this.pricingStore.setCostBreakdown(this.costBreakdown);
     } else {
@@ -785,8 +793,12 @@ export class ProductFormPricingService {
       const supplyValue = this.catalogSupplyValue();
       this.pricingStore.setCostContribution(
         'production',
-        Math.max(0, this.effectiveCost - supplyValue),
+        Math.max(
+          0,
+          this.effectiveCost - supplyValue - this.catalogPackagingValue(),
+        ),
       );
+      this.syncPackagingContribution();
       if (supplyValue > 0) {
         this.pricingStore.setCostContribution('supplies', supplyValue);
       } else {
@@ -841,6 +853,16 @@ export class ProductFormPricingService {
     return this.catalogSupplyValue();
   }
 
+  /** Valor del packaging del producto (y de las piezas con el tilde). */
+  packagingValue(): number {
+    return this.catalogPackagingValue();
+  }
+
+  /** Precio del packaging: valor × 1,25 (§27.2). */
+  packagingPrice(): number {
+    return this.catalogPackagingPrice();
+  }
+
   /** Precio de los insumos de catálogo (valor × 2 + error). */
   supplyPrice(): number {
     return this.catalogSupplyPrice();
@@ -893,12 +915,11 @@ export class ProductFormPricingService {
   }
 
   /**
-   * Insumos que se suman al precio fijo. En un combo el fijo es la lista
-   * completa y no lleva insumos encima (§16.1.3); en el resto, sí (§16.3).
+   * Con precio fijo, el fijo es el precio de lista final en todos los tipos:
+   * no se le suma nada encima (insumos, packaging ni armado) (§16.1.1).
    */
   private fixedPriceSupplyAddon(): number {
-    if (this.context && isFormCombo(this.context.form)) return 0;
-    return this.catalogSupplyPrice();
+    return 0;
   }
 
   /** Precio de insumos del catálogo: valor × 2 + error (§16.3). */
@@ -923,6 +944,43 @@ export class ProductFormPricingService {
     return this.productCost.supplyLinesValue(
       this.context.form.controls.supplyLines.value,
     );
+  }
+
+  /**
+   * Valor del packaging: el propio más, en un combo con el tilde, el de las
+   * piezas × cantidad (§27.4). La lógica vive en `productPackagingValue`.
+   */
+  private catalogPackagingValue(): number {
+    if (!this.context) return 0;
+    const form = this.context.form;
+    return this.productPricing.packagingValue(
+      {
+        type: formType(form),
+        components: form.controls.components?.value ?? [],
+        packagingSupplies: form.controls.packagingLines?.value ?? [],
+        sumPiecesPackaging: form.controls.sumPiecesPackaging?.value === true,
+      },
+      this.context.catalogProducts,
+    );
+  }
+
+  /** Costo del packaging = su valor (§27.2). */
+  private catalogPackagingCost(): number {
+    return Math.round(this.catalogPackagingValue());
+  }
+
+  /** Precio del packaging: valor × 1,25, sin margen de error (§27.2). */
+  private catalogPackagingPrice(): number {
+    return packagingPriceFromValue(this.catalogPackagingValue());
+  }
+
+  private syncPackagingContribution(): void {
+    const value = this.catalogPackagingValue();
+    if (value > 0) {
+      this.pricingStore.setCostContribution('packaging', value);
+    } else {
+      this.pricingStore.clearCostContribution('packaging');
+    }
   }
 
   private errorMarginPercent(): number {

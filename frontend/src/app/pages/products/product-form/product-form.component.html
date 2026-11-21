@@ -101,6 +101,7 @@
               <app-product-form-components-section
                 [productType]="productType"
                 [editingProductId]="product?.id || null"
+                [sumPiecesPackaging]="facade.form.controls.sumPiecesPackaging.value"
                 [value]="componentsValue ?? facade.componentsValue"
                 (valueChange)="onComponentsChange($event)"
               />

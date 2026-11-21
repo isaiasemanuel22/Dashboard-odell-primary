@@ -25,6 +25,7 @@ import {
 import { CreateOrderDto, UpdateOrderDto } from '../common/dto';
 import { isAreaService, isSupplyOrderLine } from '../common/service-type.util';
 import { applyStockChange } from '../supplies/apply-stock-change.util';
+import { packagingConsumptionOnDelivery } from './packaging-delivery.util';
 import {
   calculateTotalWithDiscount,
   normalizeDiscountFields,
@@ -779,6 +780,7 @@ export class OrdersService {
         (line.quantity - fromStock);
       item.deliveredQuantity = (item.deliveredQuantity ?? 0) + line.quantity;
       this.deductSupplyStockOnDelivery(item, line.quantity);
+      this.deductPackagingStockOnDelivery(item, line.quantity);
     }
 
     order.deliveryHistory ??= [];
@@ -859,6 +861,28 @@ export class OrdersService {
     if (!(take > 0)) return;
 
     applyStockChange(this.store, supply, -take, 'delivery');
+  }
+
+  /**
+   * Packaging de la línea (y de las piezas si el combo lo suma): descuenta al
+   * entregar, por cada entrega. Si el stock no alcanza, baja hasta 0 sin bloquear (§27.5).
+   */
+  private deductPackagingStockOnDelivery(
+    item: OrderItem,
+    deliveredQty: number,
+  ): void {
+    const consumption = packagingConsumptionOnDelivery(
+      item,
+      deliveredQty,
+      (productId) => this.products.findById(productId),
+    );
+    for (const { supplyId, amount } of consumption) {
+      const supply = this.store.getSupplyById(supplyId);
+      if (!supply) continue;
+      const take = Math.min(Number(supply.quantity) || 0, amount);
+      if (!(take > 0)) continue;
+      applyStockChange(this.store, supply, -take, 'delivery');
+    }
   }
 
   private normalizeServices(items: OrderItem[]): ServiceType[] {

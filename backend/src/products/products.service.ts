@@ -62,9 +62,9 @@ import {
   resolvePreferredPrinterId,
 } from '../settings/machine-profile.util';
 import {
-  priceForTargetMarkup,
   productMarkupPercent,
   roundPrice,
+  totalMarginPercent,
 } from './product-margin.util';
 import { normalizeProductComponents } from './product-component.util';
 import {
@@ -92,9 +92,9 @@ export interface ProductMarginAlert {
   name: string;
   price: number;
   cost: number;
-  markupPercent: number;
-  targetPercent: number;
+  totalMarginPercent: number | null;
   priceForTarget: number;
+  salePrice: number;
   fixedPrice: boolean;
 }
 
@@ -170,6 +170,8 @@ export class ProductsService {
         ...product,
         cost: result.cost,
         profit: product.price - result.cost,
+        processCost: result.processCost,
+        nonProcessPrice: result.nonProcessPrice,
       };
     } catch {
       return product;
@@ -283,6 +285,8 @@ export class ProductsService {
       includesPieces,
       components,
       assemblyTimeHours,
+      packagingSupplies: normalizeEstampadoSupplies(data.packagingSupplies),
+      sumPiecesPackaging: data.sumPiecesPackaging === true,
       stock: Math.max(0, Math.trunc(Number(data.stock) || 0)),
     };
 
@@ -407,6 +411,16 @@ export class ProductsService {
         ? this.normalizeSuggestedPrice(data.suggestedPrice)
         : this.normalizeSuggestedPrice(existing.suggestedPrice);
 
+    const mergedPackaging = normalizeEstampadoSupplies(
+      data.packagingSupplies !== undefined
+        ? data.packagingSupplies
+        : existing.packagingSupplies,
+    );
+    const mergedSumPiecesPackaging =
+      data.sumPiecesPackaging !== undefined
+        ? data.sumPiecesPackaging === true
+        : existing.sumPiecesPackaging === true;
+
     const mergedForValidation = {
       name: data.name ?? existing.name,
       type: mergedType,
@@ -423,6 +437,8 @@ export class ProductsService {
       components: mergedComponents,
       assemblyTimeHours: mergedAssembly,
       suggestedPrice: mergedSuggestedPrice,
+      packagingSupplies: mergedPackaging,
+      sumPiecesPackaging: mergedSumPiecesPackaging,
       ...(mergedType !== ProductType.ESTAMPADO
         ? {
             grams:
@@ -586,6 +602,8 @@ export class ProductsService {
         mergedComponents.length > 0,
       components: mergedComponents,
       assemblyTimeHours: mergedAssembly,
+      packagingSupplies: mergedPackaging,
+      sumPiecesPackaging: mergedSumPiecesPackaging,
       stock:
         data.stock !== undefined
           ? Math.max(0, Math.trunc(Number(data.stock) || 0))
@@ -829,6 +847,12 @@ export class ProductsService {
     return this.getPricingFields();
   }
 
+  /**
+   * Productos «debajo del precio calculado» (§16.1.1): precio de venta (con
+   * descuento propio) menor al calculado según la regla, aunque dejen
+   * ganancia. Diferencia menor a $1 = redondeo, no entra. Orden: mayor
+   * diferencia en $ primero.
+   */
   getMarginAlerts(): ProductMarginAlert[] {
     const alerts: ProductMarginAlert[] = [];
 
@@ -838,53 +862,37 @@ export class ProductsService {
       const product = this.withCurrentCost(raw);
       const cost = Number(product.cost) || 0;
       const price = Number(product.price) || 0;
-      const laborCost = this.resolveLaborCost(product);
-      // Mismo margen que ve Productos: precio de venta (con descuento propio)
-      // sobre el costo sin mano de obra, que no lleva margen (§16.1.1).
-      const markupPercent = productMarkupPercent(
-        Number(productSalePrice(product)) || 0,
-        cost,
-        laborCost,
-      );
-      if (markupPercent == null) continue;
-
-      const configuredPercent = this.costCalculator.getMarginForProductType(
-        product.type,
-      );
-      // El objetivo es el margen configurado del área, el mismo que muestra
-      // Productos (no el markup efectivo sobre el costo total).
-      const targetPercent = configuredPercent;
-      if (markupPercent >= targetPercent) continue;
-      const priceForTarget = priceForTargetMarkup(
-        cost,
-        configuredPercent,
-        100,
-        laborCost,
-      );
+      const salePrice = Number(productSalePrice(product)) || 0;
+      const priceForTarget = this.resolveCalculatedPrice(product);
+      if (!(priceForTarget - salePrice >= 1)) continue;
 
       alerts.push({
         productId: product.id,
         name: product.name,
         price,
         cost,
-        markupPercent,
-        targetPercent,
+        totalMarginPercent: totalMarginPercent(salePrice, cost),
         priceForTarget,
+        salePrice,
         fixedPrice: this.hasFixedPrice(product),
       });
     }
 
-    return alerts.sort((a, b) => a.markupPercent - b.markupPercent);
+    return alerts.sort(
+      (a, b) =>
+        b.priceForTarget - b.salePrice - (a.priceForTarget - a.salePrice),
+    );
   }
 
-  private resolveLaborCost(product: Product): number {
+  /** Precio calculado por la calculadora, ignorando el precio fijo. */
+  private resolveCalculatedPrice(product: Product): number {
     try {
-      return (
-        this.pricing.resolvePricing(this.pricing.productToPricingInput(product))
-          .breakdown?.laborCost ?? 0
-      );
+      return this.pricing.resolvePricing({
+        ...this.pricing.productToPricingInput(product),
+        suggestedPrice: null,
+      }).price;
     } catch {
-      return 0;
+      return Number(product.price) || 0;
     }
   }
 

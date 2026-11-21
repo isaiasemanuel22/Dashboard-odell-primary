@@ -55,21 +55,13 @@
   />
 
   <div class="products-m__list">
-    @if (mobileOutdatedPriceAlerts.length > 0) {
+    @if (mobileBelowSummary.total > 0) {
       <db-mobile-banner
-        [title]="mobileOutdatedPriceAlertTitle"
-        text="bajo el margen respecto de su costo actual"
-        actionLabel="Recalcular"
+        [title]="mobileBelowSummary.title"
+        [text]="mobileBelowBannerText"
+        [actionLabel]="mobileBelowSummary.recalculable > 0 ? 'Recalcular' : ''"
         [showIcon]="false"
         (action)="recalculateOutdatedPrices()"
-      />
-    }
-
-    @if (mobileFixedPriceMarginAlerts.length > 0) {
-      <db-mobile-banner
-        [title]="mobileFixedPriceMarginAlertTitle"
-        text="con precio fijo bajo el margen"
-        [showIcon]="false"
       />
     }
 
@@ -181,6 +173,7 @@
           <app-products-bulk-price
             [categories]="categories"
             (applied)="onBulkPriceApplied(); closeMobileBulkPrice()"
+            (closed)="closeMobileBulkPrice()"
           />
         }
       </div>
@@ -262,11 +255,12 @@
       <app-products-bulk-price
         [categories]="categories"
         (applied)="onBulkPriceApplied()"
+        (closed)="desktopBulkOpen = false"
       />
     }
   }
 
-  @if (outdatedPriceAlerts.length > 0 || fixedPriceMarginAlerts.length > 0) {
+  @if (belowSummary.total > 0) {
     <div class="products-alert" role="status">
       <svg
         viewBox="0 0 24 24"
@@ -281,21 +275,27 @@
         <path d="M12 3l9 16H3zM12 10v4M12 17h.01"></path>
       </svg>
       <div class="products-alert__body">
-        @if (outdatedPriceAlerts.length > 0) {
+        <p>
+          <strong>{{ belowSummary.title }}</strong>{{ fixedSupplyNote }}.
+        </p>
+        @if (belowSummary.recalculableText) {
           <p>
-            <strong>{{ outdatedPriceAlertMessage }}</strong>.
+            {{ belowSummary.recalculableText }} ·
+            <db-button
+              label="Recalcular precios"
+              variant="primary"
+              format="soft"
+              (clicked)="recalculateOutdatedPrices()"
+            />
           </p>
-          <db-button
-            label="Recalcular precios"
-            variant="primary"
-            format="soft"
-            (clicked)="recalculateOutdatedPrices()"
-          />
         }
-        @if (fixedPriceMarginAlerts.length > 0) {
+        @if (belowSummary.fixedText) {
           <p>
-            <strong>{{ fixedPriceMarginAlertMessage }}</strong>.
-            <a href="#masiva" (click)="scrollToBulkPrice(); $event.preventDefault()">
+            {{ belowSummary.fixedText }} ·
+            <a
+              href="#masiva"
+              (click)="scrollToBulkPrice(); $event.preventDefault()"
+            >
               Revisar precios en bloque
             </a>
           </p>
@@ -358,7 +358,6 @@
   }
 
   @if (!isMobile()) {
-
     <app-products-supply-price-changes
       [rows]="supplyPriceChanges"
       [loading]="supplyChangesLoading"

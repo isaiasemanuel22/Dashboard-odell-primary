@@ -22,6 +22,7 @@ import {
   resolveProductPrintTimeHours,
 } from './product.helpers';
 import {
+  packagingPriceFromValue,
   supplyCostFromValue,
   supplyPriceFromValue,
 } from './supply-line-value.util';
@@ -66,11 +67,13 @@ export function isImpresion3DLine(serviceType: ServiceType): boolean {
 export function lineHasCatalogSupplies(
   line: {
     estampadoSupplies?: { supplyId?: string; quantity?: number }[] | null;
+    packagingSupplies?: { supplyId?: string; quantity?: number }[] | null;
   },
 ): boolean {
-  return (line.estampadoSupplies ?? []).some(
-    (entry) => !!entry.supplyId?.trim() && Number(entry.quantity) > 0,
-  );
+  return [
+    ...(line.estampadoSupplies ?? []),
+    ...(line.packagingSupplies ?? []),
+  ].some((entry) => !!entry.supplyId?.trim() && Number(entry.quantity) > 0);
 }
 
 /** Catálogo RESINA o presupuesto manual en modo resina. */
@@ -142,6 +145,7 @@ export function applyProductSpecsToFdmLine(
     }
     line.workTimeHours = resolveQuoteLaborHoursFromProduct(product, catalog);
     line.estampadoSupplies = structuredClone(product.supplies ?? []);
+    line.packagingSupplies = structuredClone(product.packagingSupplies ?? []);
 
     if (product.type === ProductType.RESINA) {
       // Resina no usa filamentos; alcanza grams + tiempos del producto.
@@ -186,6 +190,7 @@ export function applyProductSpecsToFdmLine(
     line.grams = resolveProductGrams(product, catalog);
     line.printTimeHours = resolveProductPrintTimeHours(product, catalog);
     line.workTimeHours = resolveQuoteLaborHoursFromProduct(product, catalog);
+    line.packagingSupplies = structuredClone(product.packagingSupplies ?? []);
   }
 }
 
@@ -260,6 +265,11 @@ export function syncFdmQuotePricing(
     line.estampadoSupplies,
     options?.supplies,
   );
+  // Packaging: costo = valor; precio = valor × 1,25, sin margen de error (§27.2).
+  const packagingValue = costCalculator.supplyLinesValue(
+    line.packagingSupplies,
+    options?.supplies,
+  );
   const errorMarginPercent = Number(settings.errorMarginPercent) || 0;
   const keepCost =
     options?.preserveCost &&
@@ -267,13 +277,16 @@ export function syncFdmQuotePricing(
     Number.isFinite(Number(line.unitCost));
   if (!keepCost) {
     line.unitCost =
-      processCost + supplyCostFromValue(supplyValue, errorMarginPercent);
+      processCost +
+      supplyCostFromValue(supplyValue, errorMarginPercent) +
+      packagingValue;
   }
   const preserve = options?.preservePrice || !!line.unitPriceManual;
   if (!preserve) {
     line.unitPrice =
       priceFromCostAndMargin(processCost, marginPercent, laborCost) +
-      supplyPriceFromValue(supplyValue, errorMarginPercent);
+      supplyPriceFromValue(supplyValue, errorMarginPercent) +
+      packagingPriceFromValue(packagingValue);
   }
 }
 

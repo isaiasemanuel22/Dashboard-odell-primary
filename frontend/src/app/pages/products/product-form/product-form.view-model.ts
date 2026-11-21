@@ -84,15 +84,17 @@ export function formCategoryIds(form: ProductFormGroup): string[] {
 export function componentsCostTotal(
   catalogProducts: Product[],
   form: ProductFormGroup,
+  unitPriceOf?: (supplyId: string) => number,
 ): number {
-  return sumComponentsCost(catalogProducts, formComponents(form));
+  return sumComponentsCost(catalogProducts, formComponents(form), unitPriceOf);
 }
 
 export function componentsPriceTotal(
   catalogProducts: Product[],
   form: ProductFormGroup,
+  unitPriceOf?: (supplyId: string) => number,
 ): number {
-  return sumComponentsPrice(catalogProducts, formComponents(form));
+  return sumComponentsPrice(catalogProducts, formComponents(form), unitPriceOf);
 }
 
 export function filteredCategories(ctx: ProductFormViewContext): Category[] {
@@ -153,9 +155,10 @@ export function hasEstampadoPricingInput(form: ProductFormGroup): boolean {
   const workTimeHours = form.controls.workTimeHours.value;
 
   const hasPrints = prints.some((print) => isEstampadoPrintValid(print));
-  const hasSupplies = supplyLines.some(
-    (line) => line.supplyId && Number(line.quantity) > 0,
-  );
+  const hasSupplies = [
+    ...supplyLines,
+    ...form.controls.packagingLines.value,
+  ].some((line) => line.supplyId && Number(line.quantity) > 0);
   const hasValidPressCycles = pressCycles.some(
     (cycle) => Number(cycle.pressMinutes) > 0 && Number(cycle.bajadas) >= 1,
   );
