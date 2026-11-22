@@ -1,12 +1,12 @@
-# Estado de Odell — al 2026-11-21
+# Estado de Odell — al 2026-11-22
 
 Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/contexto/BITACORA.md`.
 
 ## Producción
-- GitHub `main` = `feat/v6-integraciones` en `c333d5d` (2026-11-21: diseño v6 fase 1 §29 —
-  Integraciones, factura C manual, comisión MP, Ventas con canal/neto/export — más Chats, Meta y
-  agentes §28 que ya estaban en `07f5475`). Heroku v53 = `c333d5d`, esquema aplicado
-  (`db:push:heroku` in sync). Netlify publica el frontend solo al pushear `main`.
+- GitHub `main` = `feat/sync-instantanea` en `131594c` (2026-11-22: cambios al instante entre
+  pantallas con SSE, activada por defecto, §25.11; antes v6 fase 1 §29 y Chats/Meta §28).
+  Heroku v54 = `131594c`, sin cambios de esquema desde v53. Netlify publica el frontend solo
+  al pushear `main`.
 - En producción ningún producto tiene el precio fijo guardado (antes no se persistía):
   volver a marcarlos como «Fijo» y guardarlos antes de usar «Recalcular precios».
 - Lockfile del backend: regenerarlo siempre con npm 10.9.9 (el de Heroku):
@@ -18,11 +18,17 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
   `git push origin HEAD:main` y `git push heroku HEAD:main`.
 
 ## Ramas y trabajo en curso
-- Rama actual del v6: `feat/v6-integraciones` (worktree `../dashboard-v6`, dev `odell-v6-4500`,
-  backend en memoria), igual a `main`. Siguen: fase 2 links de pago MP, fase 3 Tiendanube,
-  fase 4 ARCA (Isaías tiene las tres cuentas; claves en `.env`, nunca en el chat). Falta: avisar
-  por Meta a un cliente sin chat (hoy solo copiar), botón wa.me viejo en presupuesto, paridad
-  mobile (Productos sin Carrito/Actualizar precios/+Categoría; escritorio sin «Con saldo»).
+- v6 fase 2 Mercado Pago: `feat/v6-mercadopago` en `4727d47` (worktree `../dashboard-v6`, dev
+  `odell-v6-4500`, usa la base local `odell_dashboard`), sin publicar. Espera que Isaías cargue
+  `MP_ACCESS_TOKEN` (cuenta vendedor de prueba) en `backend/.env`; después túnel cloudflared,
+  URL del webhook → `MP_WEBHOOK_SECRET`, probar link/seña/QR. Al publicar: aplicar
+  `payment_links` (`db:push:heroku`) y plantilla Meta `link_de_pago`. Siguen fase 3 Tiendanube y
+  fase 4 ARCA. Falta: avisar por Meta a un cliente sin chat, botón wa.me viejo en presupuesto,
+  paridad mobile (Productos sin Carrito/Actualizar precios/+Categoría; escritorio sin «Con saldo»).
+- `feat/3mf-placas` en `7baf2cb` (worktree `../dashboard-3mf`, §30): elegir placa del .3mf y
+  «Generar todas las placas» + combo. Sin publicar; falta probar con un .gcode.3mf real de Isaías.
+- Sync instantánea publicada; falta: token vencido con stream abierto sigue hasta cortarse;
+  con más de un dyno haría falta Redis.
 - `feat/chats` y `claude/meta-agentes-3d0324` ya unidas a `main` y publicadas (2026-11-20).
 - Pendiente de `feat/margen-total-listado`: «productos afectados» de un insumo sin packaging;
   `product-detail`, `product-pricing` y márgenes por canal del Dashboard con otras fórmulas.
@@ -82,12 +88,12 @@ Se reescribe cuando cambia algo (ver reglas en `CLAUDE.md`). Historia: `docs/con
 
 ## Entorno local
 - Dev server: launch `odell-dev-4300` (el 4200 lo usa otro proyecto).
-- Cada worktree con backend propio necesita base aparte: si comparten la
-  base local, se pisan los datos.
+- Los worktrees usan la base local `odell_dashboard` (pedido de Isaías, 2026-11-21): lo que se carga
+  en uno aparece en los otros. Dev de la sync: `odell-sync-4600` (`../dashboard-sync`).
 - Datos de QA en la base local: ferias fair-1 a fair-4 «Feria Plaza España» (cerradas)
   y fair-5 «Mercado de Diseño Güemes» (abierta, 2026-11-17); cust-2 «QA Revendedor», pedidos ord-13 a
   ord-29, presupuesto quo-18, productos prod-45 «QA taza ×2» (con packaging) y prod-53 «QA sin mano de obra»;
   packaging: insumo sup-5 «QA Caja kraft», combo prod-54, pedidos ord-66/ord-67, presupuesto qpe-37.
-- La base local NO tiene las columnas del v6 ni las de Chats/Meta: script `backend/scripts/sql/v6-integraciones.sql`.
-- La base local ya tiene las columnas de packaging (agregadas a mano: `prisma db push`
-  borraría las tablas de Chats, que no están en esta rama).
+- La base local está al día con el esquema de `feat/v6-mercadopago` (v6, Chats/Meta, packaging,
+  `payment_links`), aplicado con SQL aditivo el 2026-11-21. Clientes QA «QA Sync SSE» y
+  «QA Sync reconexion».

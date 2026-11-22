@@ -16,6 +16,12 @@ Pendiente: …
 
 ---
 
+## 2026-11-22 · Sincronización instantánea entre pantallas (SSE) publicada
+Rama: feat/sync-instantanea → main · Commits: 131594c
+Hecho: `GET /api/events/stream` (SSE, ping cada 25 s); el frontend lo lee con fetch + token, no pollea mientras está abierto, se reconecta solo (1, 2, 5, 15 s) y recupera lo perdido con `/events/poll`. Activada por defecto; el interruptor de Más la apaga por dispositivo. El log HTTP no registra cada mensaje del stream. Probado en local con la base de Odell: un cliente creado desde afuera aparece en 0,3 s; reconecta tras reiniciar el backend. Jest 709, Angular 224. Heroku v54 sin cambios de esquema; Netlify con el bundle nuevo; en producción el stream responde 401 sin token.
+Decisiones: de Isaías: Odell abierto en 3 lugares, los cambios se tienen que ver al instante; SSE (no WebSocket ni servicios externos); activada por defecto (§25.11).
+Pendiente: si el token vence con el stream abierto, sigue hasta que se corte; con más de un dyno los eventos no cruzan entre dynos (haría falta Redis). Base local `odell_dashboard` actualizada a mano con lo del v6, Meta y `payment_links` (backup previo en el scratchpad de la sesión); la app de `../dashboard-v6` ahora usa esa base. Rama `feat/3mf-placas` (7baf2cb, elegir placa y «Generar todas las placas», §30) sin publicar: falta un .gcode.3mf real. Fase 2 MP (`feat/v6-mercadopago`, 4727d47) espera credenciales de prueba de Isaías.
+
 ## 2026-11-21 · Diseño v6 fase 1 publicado (Integraciones, factura C, Ventas) + unión con Meta
 Rama: feat/v6-integraciones → main · Commits: ed04afb, bb2d4eb (merge de main con Chats/Meta), c333d5d
 Hecho: Ajustes → Integraciones única (Meta: webhook, canales y plantillas; Mercado Pago con comisión %; ARCA con punto de venta y tope; Tiendanube «Próximamente»). Comisión por defecto MP en pagos, seña, mostrador y feria (`retail_sales.fee`). «Avisar por WhatsApp» en pedido y presupuesto: envía plantilla por Meta desde el número de Odell, «Copiar mensaje» siempre; queda en el historial del pedido (`activity_history`). Factura C manual en pedidos y ventas (número único). Ventas: canal, costo, ganancia neta, factura, chips por canal y «Sin facturar», KPIs Facturado y últimos 12 meses contra el tope, export .xlsx (`write-excel-file`); mobile con canal, neto y factura por fila. `whatsAppDigitsAr` normaliza a 549 sin 15. Jest 706, Angular 216. Heroku v53 + `db:push:heroku` sin pérdida de datos. Ronda completa escritorio/mobile en local: todo opera igual; fallos E139–E146.
